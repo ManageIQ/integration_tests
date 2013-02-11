@@ -5,7 +5,7 @@
 
 from selenium.webdriver.support.ui import WebDriverWait
 from pages.page import Page
-
+from selenium.webdriver.common.by import By
 
 class Base(Page):
     '''
@@ -16,5 +16,23 @@ class Base(Page):
         WebDriverWait(self.selenium, 10).until(lambda s: self.selenium.title)
         return self.selenium.title
 
-    def go_to_home_page(self):
+    @property
+    def header_region(self):
+        return Base.HeaderRegion(self.testsetup)
+
+    @property
+    def is_logged_in(self):
+        return self.header_region.is_logout_visible
+
+    def go_to_login_page(self):
         self.selenium.get(self.base_url)
+
+    class HeaderRegion(Page):
+        _logout_link_locator = (By.CSS_SELECTOR, "#time a")
+
+        @property
+        def is_logout_visible(self):
+            return self.is_element_visible(*self._logout_link_locator)
+
+        def logout(self):
+            self.selenium.find_element(*self._logout_link_locator).click()

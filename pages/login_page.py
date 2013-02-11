@@ -6,9 +6,9 @@ from page import Page
 
 class LoginPage(Base):
 
-    _username = (By.CSS_SELECTOR, '#user_name')
-    _password = (By.CSS_SELECTOR, '#user_password')
-    _login_button = (By.CSS_SELECTOR, '#login')
+    _login_username_field_locator = (By.CSS_SELECTOR, '#user_name')
+    _login_password_field_locator = (By.CSS_SELECTOR, '#user_password')
+    _login_submit_button_locator = (By.CSS_SELECTOR, '#login')
 
     # Demo locators
     #_page_title = u"Mozilla \u2014 Home of the Mozilla Project \u2014 mozilla.org"
@@ -32,4 +32,12 @@ class LoginPage(Base):
 
     def click_on_login_button(self):
         self.selenium.find_element(*self._login_button).click()
+
+    def login(self, user='default'):
+        credentials = self.testsetup.credentials[user]
+        self.selenium.find_element(*self._login_username_field_locator).send_keys(credentials['username'])
+        self.selenium.find_element(*self._login_password_field_locator).send_keys(credentials['password'])
+        self.selenium.find_element(*self._login_submit_button_locator).click()
+        from pages.dashboard_page import DashboardPage
+        return DashboardPage(self.testsetup)
 
