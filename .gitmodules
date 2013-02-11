@@ -1,0 +1,3 @@
+[submodule "manageiq.pages"]
+	path = manageiq.pages
+	url = git://github.com/bcrochet/manageiq.pages.git
