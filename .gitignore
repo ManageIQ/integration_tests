@@ -25,7 +25,7 @@ pip-log.txt
 .coverage
 .tox
 nosetests.xml
-
+chromedriver.log
 mozwebqa.cfg
 credentials.yaml
 results
