@@ -18,7 +18,13 @@ class Base(Page):
 
     @property
     def header_region(self):
-        return Base.HeaderRegion(self.testsetup)
+        from regions.header import HeaderRegion
+        return HeaderRegion(self.testsetup)
+
+    @property
+    def main_navigation_region(self):
+        from regions.main_navigation import MainNavigationRegion
+        return MainNavigationRegion(self.testsetup)
 
     @property
     def is_logged_in(self):
@@ -27,12 +33,3 @@ class Base(Page):
     def go_to_login_page(self):
         self.selenium.get(self.base_url)
 
-    class HeaderRegion(Page):
-        _logout_link_locator = (By.CSS_SELECTOR, "#time a")
-
-        @property
-        def is_logout_visible(self):
-            return self.is_element_visible(*self._logout_link_locator)
-
-        def logout(self):
-            self.selenium.find_element(*self._logout_link_locator).click()
