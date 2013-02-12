@@ -17,25 +17,21 @@ class LoginPage(Base):
 
     @property
     def username(self):
-        return self.selenium.find_element(*self._username)
+        return self.selenium.find_element(*self._login_username_field_locator)
 
     @property
     def password(self):
-        return self.selenium.find_element(*self._password)
+        return self.selenium.find_element(*self._login_password_field_locator)
 
     @property
     def login_button(self):
-        return self.selenium.find_element(*self._login_button)
-
-    @property
-    def elements_count(self):
-        return len(self.selenium.find_elements(*self._username))
+        return self.selenium.find_element(*self._login_submit_button_locator)
 
     def _click_on_login_button(self):
-        self.selenium.find_element(*self._login_submit_button_locator).click()
+        self.login_button.click()
 
     def _press_enter_on_login_button(self):
-        self.selenium.find_element(*self._login_submit_button_locator).send_keys(Keys.RETURN)
+        self.login_button.send_keys(Keys.RETURN)
 
     def login(self, user='default'):
         return self.login_with_mouse_click(user)
@@ -54,6 +50,6 @@ class LoginPage(Base):
 
     def __set_login_fields(self, user='default'):
         credentials = self.testsetup.credentials[user]
-        self.selenium.find_element(*self._login_username_field_locator).send_keys(credentials['username'])
-        self.selenium.find_element(*self._login_password_field_locator).send_keys(credentials['password'])
+        self.username.send_keys(credentials['username'])
+        self.password.send_keys(credentials['password'])
 
