@@ -18,15 +18,20 @@ class Page(object):
         self.testsetup = testsetup
         self.base_url = testsetup.base_url
         self.selenium = testsetup.selenium
+        self.timeout = testsetup.timeout
 
     @property
     def is_the_current_page(self):
         if self._page_title:
-            WebDriverWait(self.selenium, 10).until(lambda s: self.selenium.title)
+            WebDriverWait(self.selenium, self.timeout).until(lambda s: self.selenium.title)
 
         Assert.equal(self.selenium.title, self._page_title,
             "Expected page title: %s. Actual page title: %s" % (self._page_title, self.selenium.title))
         return True
+
+    def get_url_current_page(self):
+        WebDriverWait(self.selenium, self.timeout).until(lambda s: self.selenium.title)
+        return self.selenium.current_url
 
     def is_element_present(self, *locator):
         self.selenium.implicitly_wait(0)
@@ -45,5 +50,9 @@ class Page(object):
         except NoSuchElementException, ElementNotVisibleException:
             return False
 
-    def get_url_current_page(self):
-        return(self.selenium.current_url)
+    def return_to_previous_page(self):
+        self.selenium.back()
+
+    def get_element(self, *element):
+        return self.selenium.find_element(*element)
+
