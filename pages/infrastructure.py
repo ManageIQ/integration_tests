@@ -11,7 +11,5 @@ class Infrastructure(Base):
             from pages.regions.quadicons import Quadicons
             return Quadicons(self.testsetup).quadicons
 
-        def get_
-
     class PXE(Base):
         _page_title = 'ManageIQ EVM: PXE'
