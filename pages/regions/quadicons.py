@@ -19,13 +19,13 @@ class Quadicons(Page):
                 return tile
 
     class QuadiconItem(Page):
-        _quadlink_locator = (By.CSS_SELECTOR, '#quadicon > a:nth-child(0)')
+        _quadlink_locator = (By.CSS_SELECTOR, '#quadicon > div > a')
         _checkbox_locator = (By.CSS_SELECTOR, '#listcheckbox')
-        _label_link_locator = (By.CSS_SELECTOR, 'a:nth-child(1)')
-        _quad_tl_locator = (By.CSS_SELECTOR, '#quadicon > div:nth-child(1)')
-        _quad_tr_locator = (By.CSS_SELECTOR, '#quadicon > div:nth-child(2)')
-        _quad_bl_locator = (By.CSS_SELECTOR, '#quadicon > div:nth-child(3)')
-        _quad_br_locator = (By.CSS_SELECTOR, '#quadicon > div:nth-child(4)')
+        _label_link_locator = (By.CSS_SELECTOR, 'tr > td > a')
+        _quad_tl_locator = (By.CSS_SELECTOR, '#quadicon > div.a72')
+        _quad_tr_locator = (By.CSS_SELECTOR, '#quadicon > div.b72')
+        _quad_bl_locator = (By.CSS_SELECTOR, '#quadicon > div.c72')
+        _quad_br_locator = (By.CSS_SELECTOR, '#quadicon > div.d72')
 
         def __init__(self, testsetup, quadicon_list_element):
             Page.__init__(self, testsetup)
@@ -36,11 +36,11 @@ class Quadicons(Page):
 
         @property
         def title(self):
-            return self._root_element._quadlink_locator.title
+            return self._root_element.find_element(*self._quadlink_locator).get_attribute('title')
 
         @property
         def name(self):
-            return self._root_element._quadlink_locator.title
+            return self._root_element.find_element(*self._label_link_locator).text
 
         @property
         def href_value(self):
@@ -50,10 +50,13 @@ class Quadicons(Page):
         def is_selected(self):
             return self._root_element.find_element(*self._checkbox_locator).is_selected()
 
-        def markCheckbox(self):
-            if not self.is_selected():
-                self._root_element.find_element(*self._checkbox_locator).click()
+        def toggle_checkbox(self):
+            self._root_element.find_element(*self._checkbox_locator).click()
 
-        def unmarkCheckbox(self):
-            if self.is_selected():
-                self._root_element.find_element(*self._checkbox_locator).click()
+        def mark_checkbox(self):
+            if not self.is_selected:
+                self.toggle_checkbox()
+
+        def unmark_checkbox(self):
+            if self.is_selected:
+                self.toggle_checkbox()
