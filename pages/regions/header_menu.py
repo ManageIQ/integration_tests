@@ -105,4 +105,7 @@ class HeaderMenu(Page):
             elif "PXE" in my_name:
                 from pages.infrastructure import Infrastructure
                 return Infrastructure.PXE(self.testsetup)
+            elif "Virtual Machines" in my_name:
+                from pages.services import Services
+                return Services.VirtualMachines(self.testsetup)
 

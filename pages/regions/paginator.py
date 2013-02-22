@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
+from pages.page import Page
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 
 class Paginator(Page):
-
-    #Numbering
-    _page_number_locator = (By.CSS_SELECTOR, '#paging_div .num > a:nth-child(1)')
-    _total_page_number_locator = (By.CSS_SELECTOR, '#paging_div .num > a:nth-child(2)')
 
     #Navigation
     _first_page_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='First']")
@@ -13,22 +12,13 @@ class Paginator(Page):
     _last_page_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='Last']")
 
     #Position
-    _position_text_locator = (By.CSS_SELECTOR, '#paging_div .pos b:nth-child(1)')
+    _position_text_locator = (By.CSS_SELECTOR, '#paging_div > #pc_div_1 > table > tbody > tr > td > table > tbody > tr > td:last-child')
     
-
-    _updating_locator = (By.CSS_SELECTOR, "div.updating")
+    _updating_locator = (By.CSS_SELECTOR, "div#notification > div:first-child")
 
     def _wait_for_results_refresh(self):
         # On pages that do not have ajax refresh this wait will have no effect.
-        WebDriverWait(self.selenium, self.timeout).until(lambda s: not self.is_element_present(*self._updating_locator))
-
-    @property
-    def page_number(self):
-        return int(self.selenium.find_element(*self._page_number_locator).text)
-
-    @property
-    def total_page_number(self):
-        return int(self.selenium.find_element(*self._total_page_number_locator).text)
+        WebDriverWait(self.selenium, self.timeout).until(lambda s: not self.is_element_visible(*self._updating_locator))
 
     def click_first_page(self):
         self.selenium.find_element(*self._first_page_locator).click()
@@ -61,16 +51,3 @@ class Paginator(Page):
     @property
     def is_last_page_disabled(self):
         return 'dimmed' in self.selenium.find_element(*self._last_page_locator).get_attribute('class')
-
-    @property
-    def start_item(self):
-        return int(self.selenium.find_element(*self._start_item_number_locator).text)
-
-    @property
-    def end_item(self):
-        return int(self.selenium.find_element(*self._end_item_number_locator).text)
-
-    @property
-    def total_items(self):
-        text = self.selenium.find_element(*self._total_item_number).text
-        return int(self.selenium.find_element(*self._total_item_number).text)
