@@ -7,6 +7,21 @@ from pages.regions.quadiconitem import QuadiconItem
 
 
 class Quadicons(Page):
+    '''Represents a Quadicon on a page
+    
+    To use:
+    
+    Create a quadicons property on your page that passes on a call to the property in this class.
+    
+    Example:
+    @property
+    def quadicons(self):
+        from pages.regions.quadicons import Quadicons
+        return Quadicons(self.testsetup).quadicons
+        
+    To extend the items returned, create a subclass of QuadiconItem, and add any additional properties
+
+    '''
     _quadicons_locator = (By.CSS_SELECTOR, "#records_div > table > tbody > tr > td > div")
     
     def __init__(self, setup, item_class = QuadiconItem):

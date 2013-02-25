@@ -4,6 +4,11 @@ from pages.page import Page
 from selenium.webdriver.common.by import By
 
 class QuadiconItem(Page):
+    '''Extend this class to create a custom QuadiconItem
+    
+    Add additional properties in order to customize the lookup
+    
+    '''
     _quadlink_locator = (By.CSS_SELECTOR, '#quadicon > div > a')
     _checkbox_locator = (By.CSS_SELECTOR, '#listcheckbox')
     _label_link_locator = (By.CSS_SELECTOR, 'tr > td > a')

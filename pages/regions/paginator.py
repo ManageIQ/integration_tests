@@ -4,7 +4,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
 class Paginator(Page):
-
+    '''Add this region to your page with a property called paginator
+    
+    Example:
+    @property
+    def paginator(self):
+        from pages.regions.paginator import Paginator
+        return Paginator(self.testsetup)
+        
+    '''
     #Navigation
     _first_page_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='First']")
     _prev_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='Previous']")
