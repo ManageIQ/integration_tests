@@ -7,7 +7,7 @@ class Infrastructure(Base):
         _page_title = 'ManageIQ EVM: Management Systems'
 
         @property
-        def management_systems(self):
+        def quadicons(self):
             from pages.regions.quadicons import Quadicons
             return Quadicons(self.testsetup).quadicons
         
