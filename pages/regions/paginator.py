@@ -22,12 +22,6 @@ class Paginator(Page):
     #Position
     _position_text_locator = (By.CSS_SELECTOR, '#paging_div > #pc_div_1 > table > tbody > tr > td > table > tbody > tr > td:last-child')
     
-    _updating_locator = (By.CSS_SELECTOR, "div#notification > div:first-child")
-
-    def _wait_for_results_refresh(self):
-        # On pages that do not have ajax refresh this wait will have no effect.
-        WebDriverWait(self.selenium, self.timeout).until(lambda s: not self.is_element_visible(*self._updating_locator))
-
     def click_first_page(self):
         self.selenium.find_element(*self._first_page_locator).click()
         self._wait_for_results_refresh()

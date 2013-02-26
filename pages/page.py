@@ -4,12 +4,14 @@ from unittestzero import Assert
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import ElementNotVisibleException
+from selenium.webdriver.common.by import By
 
 
 class Page(object):
     '''
     Base class for all Pages
     '''
+    _updating_locator = (By.CSS_SELECTOR, "div#notification > div:first-child")
 
     def __init__(self, testsetup):
         '''
@@ -19,6 +21,10 @@ class Page(object):
         self.base_url = testsetup.base_url
         self.selenium = testsetup.selenium
         self.timeout = testsetup.timeout
+
+    def _wait_for_results_refresh(self):
+        # On pages that do not have ajax refresh this wait will have no effect.
+        WebDriverWait(self.selenium, self.timeout).until(lambda s: not self.is_element_visible(*self._updating_locator))
 
     @property
     def is_the_current_page(self):

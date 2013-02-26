@@ -17,6 +17,11 @@ class Services(Base):
         def paginator(self):
             from pages.regions.paginator import Paginator
             return Paginator(self.testsetup)
+
+        @property
+        def accordion(self):
+            from pages.regions.accordion import Accordion
+            return Accordion(self.testsetup)
         
         class VirtualMachineQuadIconItem(QuadiconItem):
             @property

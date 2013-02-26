@@ -36,6 +36,6 @@ class Quadicons(Page):
 
     def get_quadicon_by_title(self, title):
         for tile in self.quadicons:
-            if tile.find_elements_by_css_selector('a')[1].get_attribute('title') == title:
+            if tile.title == title:
                 return tile
 
