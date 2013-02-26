@@ -55,9 +55,6 @@ class HeaderMenu(Page):
             pass
         elif "Optimize" in name:
             pass
-        elif "PXE" in name:
-            from pages.infrastructure import Infrastructure
-            return Infrastructure.PXE(self.testsetup)
 
     def hover(self):
         element = self._root_element.find_element(*self._name_locator)
