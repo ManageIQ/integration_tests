@@ -15,7 +15,7 @@ class TestServices:
         vm_pg = home_pg.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
         Assert.true(vm_pg.is_the_current_page)
         vm_pg.paginator.click_next_page()
-        for vm in vm_pg.quadicons:
+        for vm in vm_pg.quadicon_region.quadicons:
             print "Snapshots " + vm.snapshots
         vm_pg.paginator.click_last_page()
         time.sleep(2)
@@ -23,4 +23,3 @@ class TestServices:
         time.sleep(2)
         vm_pg.paginator.click_first_page()
         time.sleep(2)
-        
