@@ -58,7 +58,11 @@ class HeaderMenu(Page):
 
     def hover(self):
         element = self._root_element.find_element(*self._name_locator)
-        ActionChains(self.selenium).move_to_element(element).perform()
+        # Workaround for Firefox
+        chain = ActionChains(self.selenium).move_to_element(element)
+        if self.selenium.firefox_profile:
+            chain.move_by_offset(0, element.size['height'])
+        chain.perform()
 
     @property
     def is_menu_submenu_visible(self):
