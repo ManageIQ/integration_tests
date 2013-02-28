@@ -17,6 +17,6 @@ class CenterButtons(Button):
     _center_buttons_locator = (By.CSS_SELECTOR, "#center_buttons_div")
     
     def __init__(self,setup):
-        Button.__init__(self, setup, *self._center_buttons_locator)
+        Button.__init__(self, setup, self._center_buttons_locator)
         
         

@@ -23,6 +23,11 @@ class Services(Base):
             from pages.regions.accordion import Accordion
             return Accordion(self.testsetup)
         
+        @property
+        def taskbar(self):
+            from pages.regions.taskbar.taskbar import Taskbar
+            return Taskbar(self.testsetup)
+        
         class VirtualMachineQuadIconItem(QuadiconItem):
             @property
             def os(self):
