@@ -1,3 +1,6 @@
 [submodule "manageiq.pages"]
 	path = manageiq.pages
-	url = git://github.com/bcrochet/manageiq.pages.git
+	url = git://github.com/bcrochet/miq_pages.git
+[submodule "miq_pages"]
+	path = miq_pages
+	url = git://github.com/bcrochet/miq_pages.git
