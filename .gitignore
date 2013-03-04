@@ -20,6 +20,7 @@ lib64
 
 # Installer logs
 pip-log.txt
+chromedriver.log
 
 # Unit test / coverage reports
 .coverage
