@@ -14,9 +14,12 @@ class CenterButtons(Button):
     classdocs
     '''
 
-    _center_buttons_locator = (By.CSS_SELECTOR, "#center_buttons_div")
+    _center_buttons_locator = (By.CSS_SELECTOR, "#center_buttons_div > #center_tb")
+    _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration'] > div")
+    _policy_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Policy'] > div")
+    _lifecycle_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Lifecycle'] > div")
+    _power_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Power'] > div")
     
     def __init__(self,setup):
         Button.__init__(self, setup, self._center_buttons_locator)
-        
         
