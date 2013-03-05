@@ -47,7 +47,7 @@ class HeaderMenu(Page):
             return Services(self.testsetup).current_subpage
         elif "Infrastructure" in name:
             from pages.infrastructure import Infrastructure
-            return Infrastructure.ManagementSystems(self.testsetup)
+            return Infrastructure(self.testsetup).current_subpage
         elif "VDI" in name:
             pass
         elif "Storage" in name:
@@ -60,7 +60,7 @@ class HeaderMenu(Page):
             pass
         elif "Configuration" in name:
             from pages.configuration import Configuration
-            return Configuration.MySettings(self.testsetup)
+            return Configuration(self.testsetup).current_subpage
 
     def hover(self):
         element = self._root_element.find_element(*self._name_locator)
