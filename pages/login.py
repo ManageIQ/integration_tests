@@ -53,7 +53,7 @@ class LoginPage(Base):
     def __do_login(self, continue_function, user='default'):
         self.__set_login_fields(user)
         continue_function()
-        from pages.dashboard_page import DashboardPage
+        from pages.dashboard import DashboardPage
         return DashboardPage(self.testsetup)
 
     def __set_login_fields(self, user='default'):

@@ -24,6 +24,11 @@ class Base(Page):
     def is_logged_in(self):
         return self.header.is_logged_in
 
+    @property
+    def current_subpage(self):
+        submenu_name = self.selenium.execute_script("return miq_controller;")
+        return self.submenus[submenu_name](self.testsetup)
+        
     def go_to_login_page(self):
         self.selenium.get(self.base_url)
 
@@ -34,7 +39,7 @@ class Base(Page):
         _user_options_button_locator = (By.CSS_SELECTOR, "ul#login > li > div > img")
         _user_options_locator = (By.CSS_SELECTOR, "ul#login > li > div#user_options_div")
 
-        _site_navigation_menus_locator = (By.CSS_SELECTOR, "div.navbar > ul > li:not(.nav-doc)")
+        _site_navigation_menus_locator = (By.CSS_SELECTOR, "div.navbar > ul > li")
         _site_navigation_min_number_menus = 8
 
         @property
@@ -50,7 +55,7 @@ class Base(Page):
             options = self.selenium.find_element(*self._user_options_locator)
             logout_link = options.find_element(*self._logout_link_locator)
             ActionChains(self.selenium).move_to_element(options_button).click().move_to_element(logout_link).click().perform()
-            from pages.login_page import LoginPage
+            from pages.login import LoginPage
             return LoginPage(self.testsetup)
 
         def site_navigation_menu(self, value):

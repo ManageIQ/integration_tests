@@ -6,6 +6,19 @@ from pages.regions.quadicons import Quadicons
 from pages.regions.quadiconitem import QuadiconItem
 
 class Services(Base):
+    @property
+    def submenus(self):
+        return {"service": lambda: None,
+                "catalog": lambda: None,
+                "miq_request": lambda: None,
+                "vm_or_template": lambda: Services.VirtualMachines,
+                }
+
+    @property
+    def is_the_current_page(self):
+        '''Override for top-level menu class'''
+        return self.current_subpage.is_the_current_page
+    
     class VirtualMachines(Base):
         _page_title = 'CloudForms Management Engine: Virtual Machines'
         

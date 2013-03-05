@@ -3,14 +3,11 @@
 import pytest
 import time
 from unittestzero import Assert
-from pages.login_page import LoginPage
 
 @pytest.mark.nondestructive
 class TestAccordion:
-    def test_accordion(self, mozwebqa):
-        login_pg = LoginPage(mozwebqa)
-        login_pg.go_to_login_page()
-        home_pg = login_pg.login()
+    def test_accordion(self, mozwebqa, home_page_logged_in):
+        home_pg = home_page_logged_in
         Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
         vm_pg = home_pg.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
         Assert.true(vm_pg.is_the_current_page)

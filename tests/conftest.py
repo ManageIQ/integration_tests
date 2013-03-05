@@ -9,7 +9,7 @@ from unittestzero import Assert
 
 @pytest.fixture
 def home_page_logged_in(mozwebqa):
-    from pages.login_page import LoginPage
+    from pages.login import LoginPage
     login_pg = LoginPage(mozwebqa)
     login_pg.go_to_login_page()
     home_pg = login_pg.login()

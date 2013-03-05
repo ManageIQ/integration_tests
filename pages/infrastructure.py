@@ -3,6 +3,12 @@
 from pages.base import Base
 
 class Infrastructure(Base):
+    @property
+    def submenus(self):
+        return {"management_system": lambda: Infrastructure.ManagementSystems,
+                "pxe": lambda: Infrastructure.PXE
+                }
+        
     class ManagementSystems(Base):
         _page_title = 'CloudForms Management Engine: Management Systems'
 

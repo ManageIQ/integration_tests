@@ -29,10 +29,12 @@ class HeaderMenu(Page):
 
     @property
     def name(self):
-        # FIXED: Select :not(.nav-doc)
-        # TODO: File a bug :)
         # The page is encoded in UTF-8. Convert to it.
-        return self._root_element.find_element(*self._name_locator).text.encode('utf-8')
+        name = self._root_element.find_element(*self._name_locator).text.encode('utf-8')
+        if not name:
+            # If name is empty, assume Configuration menu
+            name = "Configuration"
+        return name
 
     def click(self):
         name = self.name
@@ -41,7 +43,8 @@ class HeaderMenu(Page):
         if "Virtual Intelligence" in name:
             pass
         elif "Services" in name:
-            pass
+            from pages.services import Services
+            return Services(self.testsetup).current_subpage
         elif "Infrastructure" in name:
             from pages.infrastructure import Infrastructure
             return Infrastructure.ManagementSystems(self.testsetup)
@@ -55,6 +58,9 @@ class HeaderMenu(Page):
             pass
         elif "Optimize" in name:
             pass
+        elif "Configuration" in name:
+            from pages.configuration import Configuration
+            return Configuration.MySettings(self.testsetup)
 
     def hover(self):
         element = self._root_element.find_element(*self._name_locator)
