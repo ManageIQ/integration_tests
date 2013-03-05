@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.action_chains import ActionChains
 from pages.page import Page
 from selenium.webdriver.common.by import By
 
@@ -21,14 +22,17 @@ class Base(Page):
 
     @property
     def is_logged_in(self):
-        return self.header.is_logout_visible
+        return self.header.is_logged_in
 
     def go_to_login_page(self):
         self.selenium.get(self.base_url)
 
     class HeaderRegion(Page):
-        # LoggedIn
-        _logout_link_locator = (By.CSS_SELECTOR, "#time a")
+        # LoggedIn        
+        _logout_link_locator = (By.CSS_SELECTOR, "a[title='Logout of EVM']")
+        _user_indicator_locator = (By.CSS_SELECTOR, "ul#login > li > div > span")
+        _user_options_button_locator = (By.CSS_SELECTOR, "ul#login > li > div > img")
+        _user_options_locator = (By.CSS_SELECTOR, "ul#login > li > div#user_options_div")
 
         _site_navigation_menus_locator = (By.CSS_SELECTOR, "div.navbar > ul > li:not(.nav-doc)")
         _site_navigation_min_number_menus = 8
@@ -37,8 +41,17 @@ class Base(Page):
         def is_logout_visible(self):
             return self.is_element_visible(*self._logout_link_locator)
 
+        @property
+        def is_logged_in(self):
+            return self.is_element_visible(*self._user_indicator_locator)
+
         def logout(self):
-            self.selenium.find_element(*self._logout_link_locator).click()
+            options_button = self.selenium.find_element(*self._user_options_button_locator)
+            options = self.selenium.find_element(*self._user_options_locator)
+            logout_link = options.find_element(*self._logout_link_locator)
+            ActionChains(self.selenium).move_to_element(options_button).click().move_to_element(logout_link).click().perform()
+            from pages.login_page import LoginPage
+            return LoginPage(self.testsetup)
 
         def site_navigation_menu(self, value):
             # used to access on specific menu

@@ -6,7 +6,8 @@ from base import Base
 from page import Page
 
 class LoginPage(Base):
-
+    # TODO: This obviously should change. File bug
+    _page_title = "CloudForms Management Engine: Dashboard"
     _login_username_field_locator = (By.CSS_SELECTOR, '#user_name')
     _login_password_field_locator = (By.CSS_SELECTOR, '#user_password')
     _login_submit_button_locator = (By.CSS_SELECTOR, '#login img')
@@ -14,6 +15,13 @@ class LoginPage(Base):
     # Demo locators
     #_page_title = u"Mozilla \u2014 Home of the Mozilla Project \u2014 mozilla.org"
     #_header_locator = (By.CSS_SELECTOR, 'h1')
+
+    @property
+    def is_the_current_page(self):
+        '''Override the base implementation to make sure that we are actually on the login screen
+        and not the actual dashboard
+        '''
+        return Base.is_the_current_page and self.is_element_visible(*self._login_submit_button_locator)
 
     @property
     def username(self):

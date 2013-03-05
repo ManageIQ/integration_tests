@@ -4,7 +4,7 @@ from pages.base import Base
 
 class Infrastructure(Base):
     class ManagementSystems(Base):
-        _page_title = 'ManageIQ EVM: Management Systems'
+        _page_title = 'CloudForms Management Engine: Management Systems'
 
         @property
         def quadicons(self):
@@ -17,4 +17,4 @@ class Infrastructure(Base):
             return Paginator(self.testsetup)
 
     class PXE(Base):
-        _page_title = 'ManageIQ EVM: PXE'
+        _page_title = 'CloudForms Management Engine: PXE'

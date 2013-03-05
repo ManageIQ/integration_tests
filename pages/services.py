@@ -7,7 +7,7 @@ from pages.regions.quadiconitem import QuadiconItem
 
 class Services(Base):
     class VirtualMachines(Base):
-        _page_title = 'ManageIQ EVM: Virtual Machines'
+        _page_title = 'CloudForms Management Engine: Virtual Machines'
         
         @property
         def quadicon_region(self):
