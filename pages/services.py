@@ -34,7 +34,8 @@ class Services(Base):
         @property
         def accordion(self):
             from pages.regions.accordion import Accordion
-            return Accordion(self.testsetup)
+            from pages.regions.treeaccordionitem import TreeAccordionItem
+            return Accordion(self.testsetup,TreeAccordionItem)
         
         @property
         def taskbar(self):

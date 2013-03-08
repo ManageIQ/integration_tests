@@ -53,6 +53,7 @@ class LoginPage(Base):
     def __do_login(self, continue_function, user='default'):
         self.__set_login_fields(user)
         continue_function()
+        self._wait_for_results_refresh()
         from pages.dashboard import DashboardPage
         return DashboardPage(self.testsetup)
 

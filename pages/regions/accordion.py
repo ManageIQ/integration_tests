@@ -28,3 +28,16 @@ class Accordion(Page):
         return [self.item_class(self.testsetup, accordion_item)
                 for accordion_item in self.selenium.find_elements(*self._accordion_locator)]
 
+    @property
+    def current_content(self):
+        for item in self.accordion_items:
+            if item.content.is_displayed():
+                return item.content
+
+    def accordion_by_name(self,target_name):
+        the_item = None
+        for item in self.accordion_items:
+            if target_name in item.name:
+                the_item = item
+        return the_item
+    

@@ -19,9 +19,8 @@ class AccordionItem(Page):
     @property
     def content(self):
         return self._root_element.find_element(*self._item_content_locator)
-    
+
     def click(self):
-        name = self.name
         self._root_element.find_element(*self._item_label_locator).click()
         self._wait_for_results_refresh()
         
