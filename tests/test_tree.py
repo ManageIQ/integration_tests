@@ -14,4 +14,7 @@ class TestAccordion:
         vm_pg.accordion.accordion_by_name('My VMs').click()
         tree = vm_pg.accordion.current_content
         Assert.true(tree.children[0].children[4].name == "Environment / Prod")
+        did_collapse = tree.children[0].twisty.collapse()
+        Assert.true(did_collapse, "Was not collapsible, or was already collapsed")        
+        assert 0 == 1
         

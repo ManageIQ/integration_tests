@@ -40,6 +40,11 @@ class QuadiconItem(Page):
     def is_selected(self):
         return self._root_element.find_element(*self._checkbox_locator).is_selected()
     
+    @property
+    def has_policy(self):
+        # TODO: Check for policy icon
+        return False
+    
     def toggle_checkbox(self):
         self._root_element.find_element(*self._checkbox_locator).click()
     
