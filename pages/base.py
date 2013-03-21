@@ -21,6 +21,10 @@ class Base(Page):
         return Base.HeaderRegion(self.testsetup)
 
     @property
+    def flash(self):
+        return Base.FlashRegion(self.testsetup)
+
+    @property
     def is_logged_in(self):
         return self.header.is_logged_in
 
@@ -74,4 +78,14 @@ class Base(Page):
             from pages.regions.header_menu import HeaderMenu
             return [HeaderMenu(self.testsetup, web_element) for web_element in self.selenium.find_elements(*self._site_navigation_menus_locator)]
 
-
+    class FlashRegion(Page):
+        _flash_div_locator = (By.CSS_SELECTOR, "div#flash_text_div")
+        _flash_message_locator = (By.CSS_SELECTOR, "ul li")
+        
+        def __init__(self,setup):
+            self.testsetup = setup
+            self._root_element = self.testsetup.selenium.find_element(*self._flash_div_locator)
+        
+        @property
+        def message(self):
+            return self._root_element.find_element(*self._flash_message_locator).text
