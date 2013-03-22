@@ -31,11 +31,10 @@ class TestManagementSystems:
         ms_pg = msd_pg.discover_systems(management_system_types, from_address, to_address)
         Assert.true(ms_pg.is_the_current_page)
         Assert.true(ms_pg.flash.message == "Management System: Discovery successfully initiated")
-    
+
 #    def test_that_management_systems_discovered(self, mozwebqa):
 #        # Loop until the quadicon shows up
 #        pass
-            
         
     def test_that_checks_flash_with_no_management_types_checked(self, mozwebqa, home_page_logged_in):
         home_pg = home_page_logged_in

@@ -3,7 +3,7 @@
 import pytest
 import time
 from unittestzero import Assert
-from pages.login_page import LoginPage
+from pages.login import LoginPage
 
 @pytest.mark.nondestructive
 class TestLogin:
