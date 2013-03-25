@@ -72,20 +72,8 @@ class Services(Base):
             self.quadicon_region.mark_icon_checkbox(vm_names)
             self._power_button.suspend(click_cancel)
 
-        #def is_host_pingable(self, ip_address):
-        #    pass
-
-        #def get_host_ip_addr(self, host_quadicon_title):
-        #    pass
-
-        def get_vm_power_state(self, vm_quadicon_title):
-            return self.quadicon_region.get_quadicon_by_title(vm_quadicon_title).current_state
-
-        def does_vm_exist(self, vm_quadicon_title):
-            return self.quadicon_region.does_quadicon_exist(vm_quadicon_title) 
-
         def wait_for_vm_state_change(self, vm_quadicon_title, desired_state, timeout_in_minutes):
-            current_state = self.get_vm_power_state(vm_quadicon_title)
+            current_state = self.quadicon_region.get_quadicon_by_title(vm_quadicon_title).current_state
             print "Desired state: " + desired_state + "    Current state: " + current_state
             minute_count = 0
             while (minute_count < timeout_in_minutes):
@@ -95,7 +83,7 @@ class Services(Base):
                 sleep(60)
                 minute_count += 1
                 self.history_buttons.refresh_button.click()
-                current_state = self.get_vm_power_state(vm_quadicon_title)
+                current_state = self.quadicon_region.get_quadicon_by_title(vm_quadicon_title).current_state
                 if (minute_count==timeout_in_minutes) and (current_state != desired_state):
                     raise Exception("timeout reached("+str(timeout_in_minutes)+" minutes) before desired state (" + 
                                      desired_state+") reached... current state("+current_state+")")
