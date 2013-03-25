@@ -26,7 +26,7 @@ class QuadiconItem(Page):
     
     @property
     def title(self):
-        return self._root_element.find_element(*self._quadlink_locator).get_attribute('title')
+        return self._root_element.find_element(*self._label_link_locator).get_attribute('title')
     
     @property
     def name(self):

@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import ElementNotVisibleException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 
 
 class Page(object):
@@ -61,4 +62,10 @@ class Page(object):
 
     def get_element(self, *element):
         return self.selenium.find_element(*element)
+
+    def handle_popup(self,cancel):
+        wait = WebDriverWait(self.selenium, self.timeout)
+        wait.until(EC.alert_is_present())    # throws timeout exception if not found
+        popup = self.selenium.switch_to_alert()
+        popup.dismiss() if cancel else popup.accept()
 

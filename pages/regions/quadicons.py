@@ -34,8 +34,20 @@ class Quadicons(Page):
         return [self.item_class(self.testsetup, quadicon_list_item)
                 for quadicon_list_item in self.selenium.find_elements(*self._quadicons_locator)]
 
+    def mark_icon_checkbox(self, vm_names):
+        for name in vm_names:
+            tile = self.get_quadicon_by_title(name)
+            tile.mark_checkbox()
+
     def get_quadicon_by_title(self, title):
         for tile in self.quadicons:
             if tile.title == title:
                 return tile
 
+    def does_quadicon_exist(self, title):
+        found = False
+        for tile in self.quadicons:
+            if tile.title == title:
+                found = 1
+                break
+        return found
