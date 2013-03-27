@@ -67,5 +67,7 @@ class Page(object):
         wait = WebDriverWait(self.selenium, self.timeout)
         wait.until(EC.alert_is_present())    # throws timeout exception if not found
         popup = self.selenium.switch_to_alert()
+        answer = 'cancel' if cancel else 'ok'
+        print popup.text + " ...clicking " + answer
         popup.dismiss() if cancel else popup.accept()
 

@@ -27,7 +27,7 @@ class PowerButton(Button):
     def restart(self, cancel):
         item = self.selenium.find_element(*self._restart_option_locator)
         ActionChains(self.selenium).click(self._root_element).click(item).perform() 
-        self.handle_popup(self,cancel)
+        self.handle_popup(cancel)
 
     def power_on(self, cancel):
         item = self.selenium.find_element(*self._power_on_option_locator)
