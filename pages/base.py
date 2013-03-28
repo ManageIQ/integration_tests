@@ -44,7 +44,7 @@ class Base(Page):
         _user_options_locator = (By.CSS_SELECTOR, "ul#login > li > div#user_options_div")
 
         _site_navigation_menus_locator = (By.CSS_SELECTOR, "div.navbar > ul > li")
-        _site_navigation_min_number_menus = 8
+        _site_navigation_min_number_menus = 1
 
         @property
         def is_logout_visible(self):
