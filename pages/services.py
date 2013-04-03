@@ -48,6 +48,11 @@ class Services(Base):
             self._wait_for_results_refresh()
         
         @property
+        def search(self):
+            from pages.regions.search import Search
+            return Search(self.testsetup)
+        
+        @property
         def _power_button(self):
             from pages.regions.taskbar.power import PowerButton
             return PowerButton(self.testsetup)
