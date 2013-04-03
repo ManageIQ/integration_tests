@@ -2,6 +2,7 @@
 from pages.page import Page
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.select import Select
 
 class Paginator(Page):
     '''Add this region to your page with a property called paginator
@@ -18,6 +19,7 @@ class Paginator(Page):
     _prev_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='Previous']")
     _next_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='Next']")
     _last_page_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='Last']")
+    _per_page_locator = (By.CSS_SELECTOR, "#paging_div * select[name='ppsetting']")
 
     #Position
     _position_text_locator = (By.CSS_SELECTOR, '#paging_div > #pc_div_1 > table > tbody > tr > td > table > tbody > tr > td:last-child')
