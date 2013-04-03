@@ -3,13 +3,14 @@
 import pytest
 import time
 from unittestzero import Assert
+import os
 
-# FIXME: full path required. pull from custom test env file
-# TODO: enable list of alerts and profiles to import
+# TODO: get import files via http
 @pytest.fixture(scope="module",
-                params=["/home/aaron/dev/proj/cfme/cfme_tests/tests/ui/control/policies.yaml"])
+                params=["policies.yaml"])
 def import_policy_file(request):
-    return request.param
+    policy_file = "%s/%s" % (os.getcwd(), request.param)
+    return policy_file
 
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized")
