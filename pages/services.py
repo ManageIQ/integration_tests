@@ -42,6 +42,10 @@ class Services(Base):
         def history_buttons(self):
             from pages.regions.taskbar.history import HistoryButtons
             return HistoryButtons(self.testsetup)
+
+        def refresh(self):
+            self.history_buttons.refresh_button.click()
+            self._wait_for_results_refresh()
         
         @property
         def _power_button(self):
@@ -72,6 +76,30 @@ class Services(Base):
             self.quadicon_region.mark_icon_checkbox(vm_names)
             self._power_button.suspend(click_cancel)
 
+        def find_vm_page(self, vm_name, vm_type, mark_checkbox):
+            found = False
+            while not found:
+                for quadicon in self.quadicon_region.quadicons:
+                    # find exact title/type match
+                    if quadicon.title == vm_name and quadicon.current_state == vm_type:
+                        found = quadicon
+                        break
+                    # no title but first type
+                    elif vm_name == None and quadicon.current_state == vm_type:
+                        found = quadicon
+                        break
+                    # first title no type
+                    elif quadicon.title == vm_name and vm_type == None:
+                        found = quadicon
+                        break
+                    # if nothing found try turning the page
+                if not found and not self.paginator.is_next_page_disabled:
+                    self.paginator.click_next_page()
+                elif not found and self.paginator.is_next_page_disabled:
+                    raise Exception("vm("+str(vm_name)+") with type("+str(vm_type)+") could not be found")            
+            if found and mark_checkbox:
+                found.mark_checkbox()
+
         def wait_for_vm_state_change(self, vm_quadicon_title, desired_state, timeout_in_minutes):
             current_state = self.quadicon_region.get_quadicon_by_title(vm_quadicon_title).current_state
             print "Desired state: " + desired_state + "    Current state: " + current_state
@@ -82,7 +110,8 @@ class Services(Base):
                 print "Sleeping 60 seconds for next check, iteration " + str(minute_count+1) + " of " + str(timeout_in_minutes)
                 sleep(60)
                 minute_count += 1
-                self.history_buttons.refresh_button.click()
+                self.refresh()
+                self.find_vm_page(vm_quadicon_title,None,False)
                 current_state = self.quadicon_region.get_quadicon_by_title(vm_quadicon_title).current_state
                 if (minute_count==timeout_in_minutes) and (current_state != desired_state):
                     raise Exception("timeout reached("+str(timeout_in_minutes)+" minutes) before desired state (" + 

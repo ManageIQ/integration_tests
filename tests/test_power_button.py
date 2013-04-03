@@ -4,17 +4,7 @@ from unittestzero import Assert
 @pytest.fixture
 def pick_random_vm_template(mozwebqa, home_page_logged_in):
     vm_pg = home_page_logged_in.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
-    found = False
-    while not found:
-        for quadicon in vm_pg.quadicon_region.quadicons:
-            if quadicon.current_state == 'template':
-                quadicon.mark_checkbox()
-                found = True
-                break
-        if not found and not vm_pg.paginator.is_next_page_disabled:
-            vm_pg.paginator.click_next_page()
-        elif not found and vm_pg.paginator.is_next_page_disabled:
-            raise Exception("no template found")
+    vm_pg.find_vm_page(None,'template',True)
     return vm_pg
 
 class TestPowerButton:        
