@@ -9,7 +9,7 @@ import os
 @pytest.fixture(scope="module",
                 params=["policies.yaml"])
 def import_policy_file(request):
-    policy_file = "%s/%s" % (os.getcwd(), request.param)
+    policy_file = "%s/tests/ui/control/%s" % (os.getcwd(), request.param)
     return policy_file
 
 @pytest.mark.nondestructive
