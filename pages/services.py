@@ -4,6 +4,7 @@ import re
 from pages.base import Base
 from pages.regions.quadicons import Quadicons
 from pages.regions.quadiconitem import QuadiconItem
+from pages.regions.paginator import PaginatorMixin
 from time import time, sleep
 
 class Services(Base):
@@ -20,18 +21,13 @@ class Services(Base):
         '''Override for top-level menu class'''
         return self.current_subpage.is_the_current_page
     
-    class VirtualMachines(Base):
+    class VirtualMachines(Base, PaginatorMixin):
         _page_title = 'CloudForms Management Engine: Virtual Machines'
         
         @property
         def quadicon_region(self):
             return Quadicons(self.testsetup,Services.VirtualMachines.VirtualMachineQuadIconItem)
         
-        @property
-        def paginator(self):
-            from pages.regions.paginator import Paginator
-            return Paginator(self.testsetup)
-
         @property
         def accordion(self):
             from pages.regions.accordion import Accordion

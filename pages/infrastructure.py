@@ -2,6 +2,7 @@
 
 from pages.base import Base
 from selenium.webdriver.common.by import By
+from pages.regions.paginator import PaginatorMixin
 
 class Infrastructure(Base):
     @property
@@ -10,7 +11,7 @@ class Infrastructure(Base):
                 "pxe": lambda: Infrastructure.PXE
                 }
         
-    class ManagementSystems(Base):
+    class ManagementSystems(Base, PaginatorMixin):
         _page_title = 'CloudForms Management Engine: Management Systems'
         _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
         _discover_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Discover Management Systems']")
@@ -19,11 +20,6 @@ class Infrastructure(Base):
         def quadicon_region(self):
             from pages.regions.quadicons import Quadicons
             return Quadicons(self.testsetup, ["Configuration", "Policy"])
-        
-        @property
-        def paginator(self):
-            from pages.regions.paginator import Paginator
-            return Paginator(self.testsetup)
         
         @property
         def taskbar(self):

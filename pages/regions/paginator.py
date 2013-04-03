@@ -53,3 +53,8 @@ class Paginator(Page):
     @property
     def is_last_page_disabled(self):
         return 'dimmed' in self.selenium.find_element(*self._last_page_locator).get_attribute('class')
+
+class PaginatorMixin(object):
+    @property
+    def paginator(self):
+        return Paginator(self.testsetup)
