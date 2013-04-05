@@ -1,0 +1,4 @@
+[DEFAULT]
+api = webdriver
+baseurl = https://my.appliance.example.com
+tags = useful_for_sauce_labs

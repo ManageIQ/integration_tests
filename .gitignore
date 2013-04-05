@@ -41,4 +41,6 @@ pytest.ini
 .project
 .pydevproject
 .settings
+pytest.ini
+mozwebqa.cfg
 
