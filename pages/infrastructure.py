@@ -219,3 +219,9 @@ class Infrastructure(Base):
         
     class PXE(Base):
         _page_title = 'CloudForms Management Engine: PXE'
+
+        @property
+        def accordion_region(self):
+            from pages.regions.accordion import Accordion
+            from pages.regions.treeaccordionitem import TreeAccordionItem
+            return Accordion(self.testsetup, TreeAccordionItem)
