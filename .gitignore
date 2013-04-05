@@ -29,6 +29,8 @@ chromedriver.log
 mozwebqa.cfg
 credentials.yaml
 results
+pytest.ini
+
 # Translations
 *.mo
 
