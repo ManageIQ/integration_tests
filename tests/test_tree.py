@@ -16,5 +16,3 @@ class TestAccordion:
         Assert.true(tree.children[0].children[4].name == "Environment / Prod")
         did_collapse = tree.children[0].twisty.collapse()
         Assert.true(did_collapse, "Was not collapsible, or was already collapsed")        
-        assert 0 == 1
-        

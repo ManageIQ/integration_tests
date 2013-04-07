@@ -37,6 +37,11 @@ class Services(Base):
             from pages.regions.taskbar.history import HistoryButtons
             return HistoryButtons(self.testsetup)
 
+        @property
+        def view_buttons(self):
+            from pages.regions.taskbar.view import ViewButtons
+            return ViewButtons(self.testsetup)
+
         def refresh(self):
             self.history_buttons.refresh_button.click()
             self._wait_for_results_refresh()
