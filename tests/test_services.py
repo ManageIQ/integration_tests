@@ -4,6 +4,13 @@ import pytest
 import time
 from unittestzero import Assert
 
+@pytest.fixture
+def pick_random_vm(mozwebqa, home_page_logged_in):
+    vm_pg = home_page_logged_in.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+    vm_details = vm_pg.find_vm_page(None,'on',False,True)
+    return vm_details
+
+
 @pytest.mark.nondestructive
 class TestServices:
     def test_virtual_machines(self, mozwebqa, home_page_logged_in):
@@ -20,3 +27,9 @@ class TestServices:
         time.sleep(2)
         vm_pg.paginator.click_first_page()
         time.sleep(2)
+
+    @pytest.mark.nondestructive
+    def test_vm_details(self, pick_random_vm):
+        vm_details = pick_random_vm
+        Assert.true(vm_details.details.does_info_section_exist('Properties'))
+        Assert.true(vm_details.details.fetch_info_section_key_value('Properties', 'Name') != None)

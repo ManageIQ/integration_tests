@@ -4,7 +4,7 @@ from unittestzero import Assert
 @pytest.fixture
 def pick_random_vm_template(mozwebqa, home_page_logged_in):
     vm_pg = home_page_logged_in.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
-    vm_pg.find_vm_page(None,'template',True)
+    vm_pg.find_vm_page(None,'template',True, False)
     return vm_pg
 
 class TestPowerButton:        

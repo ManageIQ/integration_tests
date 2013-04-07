@@ -6,6 +6,7 @@ from pages.regions.quadicons import Quadicons
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.paginator import PaginatorMixin
 from time import time, sleep
+from selenium.webdriver.common.by import By
 
 class Services(Base):
     @property
@@ -21,13 +22,10 @@ class Services(Base):
         '''Override for top-level menu class'''
         return self.current_subpage.is_the_current_page
     
-    class VirtualMachines(Base, PaginatorMixin):
+    class VmCommonComponents(Base, PaginatorMixin):
+
         _page_title = 'CloudForms Management Engine: Virtual Machines'
-        
-        @property
-        def quadicon_region(self):
-            return Quadicons(self.testsetup,Services.VirtualMachines.VirtualMachineQuadIconItem)
-        
+
         @property
         def accordion(self):
             from pages.regions.accordion import Accordion
@@ -44,14 +42,21 @@ class Services(Base):
             self._wait_for_results_refresh()
         
         @property
-        def search(self):
-            from pages.regions.search import Search
-            return Search(self.testsetup)
-        
-        @property
         def _power_button(self):
             from pages.regions.taskbar.power import PowerButton
             return PowerButton(self.testsetup)
+
+
+    class VirtualMachines(VmCommonComponents):
+
+        @property
+        def quadicon_region(self):
+            return Quadicons(self.testsetup,Services.VirtualMachines.VirtualMachineQuadIconItem)
+
+        @property
+        def search(self):
+            from pages.regions.search import Search
+            return Search(self.testsetup)
 
         def shutdown(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
@@ -77,7 +82,7 @@ class Services(Base):
             self.quadicon_region.mark_icon_checkbox(vm_names)
             self._power_button.suspend(click_cancel)
 
-        def find_vm_page(self, vm_name, vm_type, mark_checkbox):
+        def find_vm_page(self, vm_name, vm_type, mark_checkbox, load_details = False):
             found = False
             while not found:
                 for quadicon in self.quadicon_region.quadicons:
@@ -100,6 +105,8 @@ class Services(Base):
                     raise Exception("vm("+str(vm_name)+") with type("+str(vm_type)+") could not be found")            
             if found and mark_checkbox:
                 found.mark_checkbox()
+            if found and load_details:
+                return found.click()
 
         def wait_for_vm_state_change(self, vm_quadicon_title, desired_state, timeout_in_minutes):
             current_state = self.quadicon_region.get_quadicon_by_title(vm_quadicon_title).current_state
@@ -117,6 +124,7 @@ class Services(Base):
                 if (minute_count==timeout_in_minutes) and (current_state != desired_state):
                     raise Exception("timeout reached("+str(timeout_in_minutes)+" minutes) before desired state (" + 
                                      desired_state+") reached... current state("+current_state+")")
+
 
         class VirtualMachineQuadIconItem(QuadiconItem):
             @property
@@ -137,4 +145,15 @@ class Services(Base):
             @property
             def snapshots(self):
                 return self._root_element.find_element(*self._quad_br_locator).text
-            
+
+            def click(self):
+                self._root_element.click()
+                self._wait_for_results_refresh()
+                return Services.VirtualMachineDetails(self.testsetup)
+ 
+    class VirtualMachineDetails(VmCommonComponents):
+
+        @property
+        def details(self):
+            from pages.regions.details import Details
+            return Details(self.testsetup)
