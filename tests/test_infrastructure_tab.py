@@ -25,5 +25,30 @@ class TestInfrastructureTab:
 
         pxe_pg.accordion_region.accordion_by_name("Customization Templates").click()
 
-        content = pxe_pg.accordion_region.current_content
-        Assert.true(3 == 2, content)
+        #content = pxe_pg.accordion_region.current_content
+        #pxe_pg.accordion_region.current_content.children[0].click()
+
+        #Assert.true(3 == 2, pxe_pg.accordion_region.current_content.children[0].twisty._twisty_state)
+        pxe_pg.accordion_region.current_content.children[0].twisty.expand()
+        #Assert.true(3 == 2, pxe_pg.accordion_region.current_content.children[0].twisty._twisty_state)
+        #pxe_pg.accordion_region.current_content.children[0].children[2].click_on_server_pxe()
+        pxe_pg.accordion_region.current_content.children[0].children[2].click()
+
+
+        #pxe_pg.center_buttons().configuration_button.click()
+        #pxe_pg.center_buttons()
+
+        #history = pxe_pg.history_buttons()
+        #history.refresh_button.click()
+
+        time.sleep(1)
+
+        #pxe_pg.history_buttons.refresh_button.click()
+        pxe_pg.center_buttons.configuration_button.click()
+
+        time.sleep(1)
+
+        pxe_pg.center_buttons.configuration_button_copy.click()
+
+        #Assert.true(3 == 2, config)
+

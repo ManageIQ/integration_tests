@@ -80,4 +80,5 @@ class Page(object):
 
     def select_dropdown(self, value, *element):
         select = Select(self.selenium.find_element(*element))
-        select.select_by_visible_text(value) 
+        select.select_by_visible_text(value)
+

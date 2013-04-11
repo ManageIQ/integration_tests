@@ -225,3 +225,15 @@ class Infrastructure(Base):
             from pages.regions.accordion import Accordion
             from pages.regions.treeaccordionitem import TreeAccordionItem
             return Accordion(self.testsetup, TreeAccordionItem)
+
+        @property
+        def center_buttons(self):
+            from pages.regions.taskbar.center import CenterButtons
+            return CenterButtons(self.testsetup)
+
+        #TODO: unused in test
+        @property
+        def history_buttons(self):
+            from pages.regions.taskbar.history import HistoryButtons
+            return HistoryButtons(self.testsetup)
+
