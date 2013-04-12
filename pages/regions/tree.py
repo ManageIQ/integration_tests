@@ -48,6 +48,9 @@ class Tree(Page):
         
     def is_displayed(self):
         return self._root_element.is_displayed()
+    
+    def click(self):
+        return self._root_element.click()
 
     def find_node_by_regexp(self, regexp_str):
         # finds first node by name in the whole tree, breadth first

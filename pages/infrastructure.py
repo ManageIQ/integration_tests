@@ -224,6 +224,8 @@ class Infrastructure(Base):
         _template_name_locator = (By.CSS_SELECTOR, "input#name")
         _image_type_locator = (By.CSS_SELECTOR, "select#img_typ")
         _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Add']")
+        _refresh_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Refresh this PXE Server']")
+        _pxe_image_names_locator = (By.CSS_SELECTOR, "div#pxe_info_div > fieldset > table[class='style3'] > tbody")
 
         _add_pxe_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New PXE Server']")
         #TODO duplicate
@@ -235,6 +237,7 @@ class Infrastructure(Base):
         _pxe_windows_images_directory_locator = (By.CSS_SELECTOR, "input#windows_images_directory")
         _pxe_customization_directory_locator = (By.CSS_SELECTOR, "input#customization_directory")
         _pxe_image_menus_filename_locator = (By.CSS_SELECTOR, "input#pxemenu_0")
+
 
         @property
         def accordion_region(self):
@@ -265,6 +268,11 @@ class Infrastructure(Base):
             self._wait_for_results_refresh()
             return Infrastructure.PXE(self.testsetup)
 
+        #TODO these clicks can be merged
+        def click_on_refresh(self):
+            self.selenium.find_element(*self._refresh_locator).click()
+            return Infrastructure.PXE(self.testsetup)
+
         def rename_template(self, name):
             template_name = self.selenium.find_element(*self._template_name_locator)
             template_name.clear()
@@ -282,6 +290,7 @@ class Infrastructure(Base):
         def select_depot_type(self, depot_type):
             self.select_dropdown(depot_type, *self._pxe_depot_type_locator)
             self._wait_for_results_refresh()
+            return Infrastructure.PXE(self.testsetup)
 
         def new_pxe_server_fill_data(self, name, uri, access_url, pxe_dir, windows_img_dir, customization_dir, pxe_img_menus_filename):
             #name
@@ -298,3 +307,13 @@ class Infrastructure(Base):
             self.selenium.find_element(*self._pxe_customization_directory_locator).send_keys(customization_dir or "customization")
             #pxe image menus filename
             self.selenium.find_element(*self._pxe_image_menus_filename_locator).send_keys(pxe_img_menus_filename or "menu.php")
+
+        def pxe_image_names(self):
+            element_text = self.selenium.find_element(*self._pxe_image_names_locator).text
+            lines = element_text.split('\n')
+            names = []
+            for line in lines:
+                name, space, test = line.partition(' ')
+                names.append(name)
+            return names
+

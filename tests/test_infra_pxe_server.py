@@ -18,13 +18,10 @@ class TestPXEServer:
 
         pxe_pg.center_buttons.configuration_button.click()
         add_pg = pxe_pg.click_on_add_pxe_server()
-        add_pg.select_depot_type("Network File System")
-
-        #This needs to be here. We need to wait until URI input is displayed.
-        time.sleep(1)
+        refreshed_pg = add_pg.select_depot_type("Network File System")
 
         #use default values
-        add_pg.new_pxe_server_fill_data(
+        refreshed_pg.new_pxe_server_fill_data(
             name = None,
             uri = None,
             access_url = None,
@@ -32,7 +29,7 @@ class TestPXEServer:
             windows_img_dir = None,
             customization_dir = None,
             pxe_img_menus_filename = None)
-        add_pg.click_on_add()
+        refreshed_pg.click_on_add()
 
-        Assert.true(add_pg.flash.message == 'PXE Server "rhel_pxe_server" was added', "Flash message: %s" % add_pg.flash.message)
+        Assert.true(refreshed_pg.flash.message == 'PXE Server "rhel_pxe_server" was added', "Flash message: %s" % refreshed_pg.flash.message)
 
