@@ -35,6 +35,9 @@ class AccessControl(Base):
             return self.selenium.find_element(*self._name_field).send_keys(name)
 
         def save(self):
+            # when editing an existing role, wait until "save" button shows up
+            # after ajax validation
+            self._wait_for_visible_element(*self._submit_role_button)
             self.selenium.find_element(*self._submit_role_button).click()
             self._wait_for_results_refresh()
             return AccessControl.ShowRole(self.testsetup)
@@ -50,8 +53,6 @@ class AccessControl(Base):
             field = self.selenium.find_element(*self._name_field)
             field.clear()
             field.send_keys(name)
-            # wait for ajax check which enables save button
-            self._wait_for_results_refresh()
 
     class ShowRole(Base):
         _edit_role_button = (By.CSS_SELECTOR, "a[title='Edit this Role']")
