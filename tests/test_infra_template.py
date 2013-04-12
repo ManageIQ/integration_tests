@@ -32,5 +32,5 @@ class TestInfrastructurePXETemplate:
         #And: 'Element must be displayed to click'
         time.sleep(1)
         added_pg = copy_pg.click_on_add()
-        Assert.true(added_pg.flash.message == 'Customization Template "This is a test" was added', added_pg.flash.message)
+        Assert.true(added_pg.flash.message == 'Customization Template "This is a test" was added', "Flash message: %s" % added_pg.flash.message)
 

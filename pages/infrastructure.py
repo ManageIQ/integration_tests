@@ -223,8 +223,18 @@ class Infrastructure(Base):
         _copy_template_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Copy this Customization Template']")
         _template_name_locator = (By.CSS_SELECTOR, "input#name")
         _image_type_locator = (By.CSS_SELECTOR, "select#img_typ")
-
         _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Add']")
+
+        _add_pxe_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New PXE Server']")
+        #TODO duplicate
+        _pxe_name_locator = (By.CSS_SELECTOR, "input#name")
+        _pxe_uri_locator = (By.CSS_SELECTOR, "input#uri")
+        _pxe_depot_type_locator = (By.CSS_SELECTOR, "select#log_protocol")
+        _pxe_access_url_locator = (By.CSS_SELECTOR, "input#access_url")
+        _pxe_directory_locator = (By.CSS_SELECTOR, "input#pxe_directory")
+        _pxe_windows_images_directory_locator = (By.CSS_SELECTOR, "input#windows_images_directory")
+        _pxe_customization_directory_locator = (By.CSS_SELECTOR, "input#customization_directory")
+        _pxe_image_menus_filename_locator = (By.CSS_SELECTOR, "input#pxemenu_0")
 
         @property
         def accordion_region(self):
@@ -243,8 +253,15 @@ class Infrastructure(Base):
             from pages.regions.taskbar.history import HistoryButtons
             return HistoryButtons(self.testsetup)
 
+        #TODO these clicks can be merged
         def click_on_copy_template(self):
             self.selenium.find_element(*self._copy_template_locator).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXE(self.testsetup)
+
+        #TODO these clicks can be merged
+        def click_on_add_pxe_server(self):
+            self.selenium.find_element(*self._add_pxe_locator).click()
             self._wait_for_results_refresh()
             return Infrastructure.PXE(self.testsetup)
 
@@ -261,3 +278,23 @@ class Infrastructure(Base):
             self.selenium.find_element(*self._add_button_locator).click()
             self._wait_for_results_refresh()
             return Infrastructure.PXE(self.testsetup)
+
+        def select_depot_type(self, depot_type):
+            self.select_dropdown(depot_type, *self._pxe_depot_type_locator)
+            self._wait_for_results_refresh()
+
+        def new_pxe_server_fill_data(self, name, uri, access_url, pxe_dir, windows_img_dir, customization_dir, pxe_img_menus_filename):
+            #name
+            self.selenium.find_element(*self._pxe_name_locator).send_keys(name or "rhel_pxe_server")
+            #uri
+            self.selenium.find_element(*self._pxe_uri_locator).send_keys(uri or "10.16.120.11/var/www/html/pub/miq/ipxe/")
+            #access url
+            self.selenium.find_element(*self._pxe_access_url_locator).send_keys(access_url or "http://mgmt1.rhq.lab.eng.bos.redhat.com/ipxe")
+            #pxe directory
+            self.selenium.find_element(*self._pxe_directory_locator).send_keys(pxe_dir or "pxe")
+            #windows images directory
+            self.selenium.find_element(*self._pxe_windows_images_directory_locator).send_keys(windows_img_dir or "sources/microsoft")
+            #customization directory
+            self.selenium.find_element(*self._pxe_customization_directory_locator).send_keys(customization_dir or "customization")
+            #pxe image menus filename
+            self.selenium.find_element(*self._pxe_image_menus_filename_locator).send_keys(pxe_img_menus_filename or "menu.php")
