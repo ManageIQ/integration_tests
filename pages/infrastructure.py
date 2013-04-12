@@ -220,6 +220,12 @@ class Infrastructure(Base):
     class PXE(Base):
         _page_title = 'CloudForms Management Engine: PXE'
 
+        _copy_template_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Copy this Customization Template']")
+        _template_name_locator = (By.CSS_SELECTOR, "input#name")
+        _image_type_locator = (By.CSS_SELECTOR, "select#img_typ")
+
+        _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Add']")
+
         @property
         def accordion_region(self):
             from pages.regions.accordion import Accordion
@@ -237,3 +243,21 @@ class Infrastructure(Base):
             from pages.regions.taskbar.history import HistoryButtons
             return HistoryButtons(self.testsetup)
 
+        def click_on_copy_template(self):
+            self.selenium.find_element(*self._copy_template_locator).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXE(self.testsetup)
+
+        def rename_template(self, name):
+            template_name = self.selenium.find_element(*self._template_name_locator)
+            template_name.clear()
+            template_name.send_keys(name)
+
+        def select_image_type(self, image_type):
+            self.select_dropdown(image_type, *self._image_type_locator)
+            self._wait_for_results_refresh()
+
+        def click_on_add(self):
+            self.selenium.find_element(*self._add_button_locator).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXE(self.testsetup)
