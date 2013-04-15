@@ -8,6 +8,7 @@ from unittestzero import Assert
 
 @pytest.mark.nondestructive
 class TestNavigation:
+    @pytest.mark.usefixtures('maximized')
     def test_navigation(self, mozwebqa, home_page_logged_in):
         home_pg = home_page_logged_in
         Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
