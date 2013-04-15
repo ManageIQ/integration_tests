@@ -1,4 +1,5 @@
 from pages.base import Base
+from pages.regions.checkboxtree import CheckboxTree
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 
@@ -30,6 +31,11 @@ class AccessControl(Base):
         _submit_role_button = (By.CSS_SELECTOR, "img[title='Add this Role']")
         _name_field = (By.CSS_SELECTOR, "input[name='name']")
         _access_restriction_field = (By.CSS_SELECTOR, "select[name='vm_restriction']")
+        _product_features_tree = (By.CSS_SELECTOR, "#features_treebox")
+
+        @property
+        def product_features(self):
+            return CheckboxTree(self.testsetup, self.selenium.find_element(*self._product_features_tree))
 
         def fill_name(self, name):
             return self.selenium.find_element(*self._name_field).send_keys(name)
