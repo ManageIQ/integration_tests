@@ -47,4 +47,17 @@ class Tree(Page):
         
     def is_displayed(self):
         return self._root_element.is_displayed()
-    
+
+    def find_node_by_name(self, name):
+        # finds first node by name in the whole tree, breadth first
+        if self.name == name:
+            return self
+        self.twisty.expand()
+        queue = self.children
+        while queue:
+            child = queue.pop(0)
+            if child.name == name:
+                return child
+            else:
+                child.twisty.expand()
+                queue += child.children
