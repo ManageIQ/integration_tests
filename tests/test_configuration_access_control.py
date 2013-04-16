@@ -69,3 +69,54 @@ class TestGroups:
         show_group_pg = config_pg.click_on_access_control().click_on_groups().click_on_group(self._group_description_edit)
         show_group_pg = show_group_pg.click_on_delete()
         Assert.true(show_group_pg.flash.message.startswith('EVM Group "%s": Delete successful' % self._group_description_edit))
+
+    def test_tag_group(self, mozwebqa, home_page_logged_in):
+        _category = "Provisioning Scope"
+        _value = "All"
+        _group = "EvmGroup-super_administrator"
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_tags_pg = config_pg.click_on_access_control().click_on_groups().click_on_group(_group).click_on_edit_tags()
+        edit_tags_pg.select_category(_category)
+        edit_tags_pg.select_value(_value)
+        Assert.true(edit_tags_pg.is_tag_displayed(_category, _value))
+        edit_tags_pg.save
+        Assert.true(edit_tags_pg.flash.message.startswith('Tag edits were successfully saved'))
+
+    def test_delete_group_tag(self, mozwebqa, home_page_logged_in):
+        _category = "Provisioning Scope"
+        _value = "All"
+        _group = "EvmGroup-super_administrator"
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_tags_pg = config_pg.click_on_access_control().click_on_groups().click_on_group(_group).click_on_edit_tags()
+        edit_tags_pg.delete_tag(_category)
+        Assert.false(edit_tags_pg.is_tag_displayed(_category, _value))
+        edit_tags_pg.save
+        Assert.true(edit_tags_pg.flash.message.startswith('Tag edits were successfully saved'))
+
+    def test_cancel_tag_edit(self, mozwebqa, home_page_logged_in):
+        _group = "EvmGroup-super_administrator"
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_tags_pg = config_pg.click_on_access_control().click_on_groups().click_on_group(_group).click_on_edit_tags()
+        edit_tags_pg.cancel
+        Assert.true(edit_tags_pg.flash.message.startswith('Tag Edit was cancelled by the user'))
+
+    def test_reset_tag_edit(self, mozwebqa, home_page_logged_in):
+        _category = "Provisioning Scope"
+        _value = "All"
+        _group = "EvmGroup-super_administrator"
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_tags_pg = config_pg.click_on_access_control().click_on_groups().click_on_group(_group).click_on_edit_tags()
+        edit_tags_pg.select_category(_category)
+        edit_tags_pg.select_value(_value)
+        Assert.true(edit_tags_pg.is_tag_displayed(_category, _value))
+        edit_tags_pg.reset
+        Assert.false(edit_tags_pg.is_tag_displayed(_category, _value))
+        Assert.true(edit_tags_pg.flash.message.startswith('All changes have been reset'))

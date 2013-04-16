@@ -2,6 +2,7 @@ from pages.base import Base
 from pages.regions.checkboxtree import CheckboxTree
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from pages.regions.taggable import TaggableMixin
 
 class AccessControl(Base):
     _page_title = 'CloudForms Management Engine: Configuration'
@@ -150,6 +151,7 @@ class AccessControl(Base):
         _edit_group_button = (By.CSS_SELECTOR, "a[title='Edit this Group']")
         _delete_group_button = (By.CSS_SELECTOR, "a[title='Delete this Group']")
         _group_name_label = (By.CSS_SELECTOR, ".style1 tr:nth-child(1) td:nth-child(2)")
+        _edit_tags_button = (By.CSS_SELECTOR, "li#tag > a")
 
         def click_on_edit(self):
             self.selenium.find_element(*self._edit_group_button).click()
@@ -162,6 +164,24 @@ class AccessControl(Base):
             self._wait_for_results_refresh()
             return AccessControl.Groups(self.testsetup)
 
+        def click_on_edit_tags(self):
+            self.selenium.find_element(*self._edit_tags_button).click()
+            self._wait_for_results_refresh
+            return AccessControl.TagGroup(self.testsetup)
+
         @property
         def group_name(self):
             return self.selenium.find_element(*self._group_name_label).text.strip()
+
+    class TagGroup(ShowGroup, TaggableMixin):
+        @property
+        def save(self):
+            return self.save_tag_edits
+
+        @property
+        def cancel(self):
+            return self.cancel_tag_edits
+
+        @property
+        def reset(self):
+            return self.reset_tag_edits
