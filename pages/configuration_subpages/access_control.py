@@ -2,7 +2,7 @@ from pages.base import Base
 from pages.regions.checkboxtree import CheckboxTree
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from pages.regions.taggable import TaggableMixin
+from pages.regions.taggable import Taggable
 
 class AccessControl(Base):
     _page_title = 'CloudForms Management Engine: Configuration'
@@ -173,7 +173,7 @@ class AccessControl(Base):
         def group_name(self):
             return self.selenium.find_element(*self._group_name_label).text.strip()
 
-    class TagGroup(ShowGroup, TaggableMixin):
+    class TagGroup(ShowGroup, Taggable):
         @property
         def save(self):
             return self.save_tag_edits

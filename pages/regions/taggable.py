@@ -4,10 +4,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
 
-class TaggableMixin(Page):
+class Taggable(Page):
     '''Add this mixin to your page in 3 easy steps:
-        * import: from pages.regions.taggable import TaggableMixin
-        * add to class: class MyClass(Base, TaggableMixin):
+        * import: from pages.regions.taggable import Taggable
+        * add to class: class MyClass(Base, Taggable):
         * call directly from test or page
     
     '''
