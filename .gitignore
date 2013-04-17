@@ -43,4 +43,4 @@ pytest.ini
 .settings
 pytest.ini
 mozwebqa.cfg
-
+credentials.yaml
