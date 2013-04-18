@@ -5,8 +5,10 @@
 import pytest
 import time
 from unittestzero import Assert
+from selenium.common.exceptions import NoSuchElementException
 
 EXPECTED_NAMES = ["rhel63server", "winpex64"]
+PXE_SERVER_NAME = "rhel_pxe_server"
 
 @pytest.mark.nondestructive
 class TestInfrastructureRefreshPXEServer:
@@ -32,16 +34,23 @@ class TestInfrastructureRefreshPXEServer:
         pxe_pg.click_on_refresh()
         pxe_pg.handle_popup()
 
-        Assert.true(pxe_pg.flash.message == 'PXE Server "rhel_pxe_server": synchronize_advertised_images_queue successfully initiated', "Flash message: %s" % pxe_pg.flash.message)
+        flash_message = 'PXE Server "%s": synchronize_advertised_images_queue successfully initiated' % PXE_SERVER_NAME
 
-        #This is experimental value. We need to wait for the refresh to take place
-        time.sleep(15)
+        Assert.true(pxe_pg.flash.message == flash_message, "Flash message: %s" % pxe_pg.flash.message)
 
-        #To refresh the page
-        #TODO for now, I'm refreshing only the first PXE server in line
-        pxe_pg.accordion_region.current_content.children[0].click()
-
-        pxe_image_names = pxe_pg.pxe_image_names()
+        for i in range(1, 8):
+            try:
+                #To refresh the page
+                #TODO for now, I'm refreshing only the first PXE server in line
+                pxe_pg.accordion_region.current_content.children[0].click()
+                #This needs to be here
+                time.sleep(2)
+                pxe_image_names = pxe_pg.pxe_image_names()
+            except NoSuchElementException:
+                print("Waiting....")
+                pass
+            else:
+                break
 
         for name in EXPECTED_NAMES:
             Assert.true(name in pxe_image_names, "This image has not been found: '%s'" % name)

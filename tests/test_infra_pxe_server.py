@@ -6,6 +6,8 @@ import pytest
 import time
 from unittestzero import Assert
 
+NAME = "rhel_pxe_server"
+
 @pytest.mark.nondestructive
 class TestPXEServer:
     def test_pxe_server(self, mozwebqa, home_page_logged_in):
@@ -22,7 +24,7 @@ class TestPXEServer:
 
         #use default values
         refreshed_pg.new_pxe_server_fill_data(
-            name = None,
+            name = NAME,
             uri = None,
             access_url = None,
             pxe_dir = None,
@@ -31,5 +33,7 @@ class TestPXEServer:
             pxe_img_menus_filename = None)
         refreshed_pg.click_on_add()
 
-        Assert.true(refreshed_pg.flash.message == 'PXE Server "rhel_pxe_server" was added', "Flash message: %s" % refreshed_pg.flash.message)
+        flash_message = 'PXE Server "%s" was added' % NAME
+
+        Assert.true(refreshed_pg.flash.message == flash_message, "Flash message: %s" % refreshed_pg.flash.message)
 
