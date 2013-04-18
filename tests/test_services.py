@@ -32,4 +32,4 @@ class TestServices:
     def test_vm_details(self, pick_random_vm):
         vm_details = pick_random_vm
         Assert.true(vm_details.details.does_info_section_exist('Properties'))
-        Assert.true(vm_details.details.fetch_info_section_key_value('Properties', 'Name') != None)
+        Assert.true(vm_details.details.get_section('Properties').get_item('Name') != None)

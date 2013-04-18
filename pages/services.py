@@ -157,8 +157,10 @@ class Services(Base):
                 return Services.VirtualMachineDetails(self.testsetup)
  
     class VirtualMachineDetails(VmCommonComponents):
-
+        _details_locator = (By.CSS_SELECTOR, "div#textual_div")
+        
         @property
         def details(self):
             from pages.regions.details import Details
-            return Details(self.testsetup)
+            root_element = self.selenium.find_element(*self._details_locator)
+            return Details(self.testsetup, root_element)
