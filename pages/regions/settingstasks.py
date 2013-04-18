@@ -24,7 +24,7 @@ class SettingsTasks(Page):
     def ST_item_by_name(self, target_name):
         picked = None
 
-        for item in ST_items:
+        for item in self.ST_items:
             if target_name in item.name:
                 picked = item
                 break

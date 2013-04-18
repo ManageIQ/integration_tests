@@ -69,7 +69,7 @@ class Services(Base):
         
         def reboot(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
-            self._power_button.reboot(click_cancel)
+            self._power_button.restart(click_cancel)
         
         def power_on(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
@@ -88,7 +88,7 @@ class Services(Base):
             self._power_button.suspend(click_cancel)
 
         def find_vm_page(self, vm_name, vm_type, mark_checkbox, load_details = False):
-            found = False
+            found = None
             while not found:
                 for quadicon in self.quadicon_region.quadicons:
                     # find exact title/type match
