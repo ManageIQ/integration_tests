@@ -1,0 +1,28 @@
+management_systems:
+    vsphere5:
+        name: vsphere 5
+        credentials: credential_name
+        hostname: vsphere5.example.com
+        ipaddress: 10.0.0.1
+        host_vnc_port:
+            start: 5900
+            end: 5980
+        server_zone: default
+        type: virtualcenter
+        discovery_range:
+            start: 10.0.0.1
+            end: 10.0.0.2
+    rhevm31:
+        name: RHEV 3.1
+        credentials: rhev_credential_name
+        hostname: rhevm.example.com
+        ipaddress: 10.0.0.1
+        host_vnc_port:
+            start: 5901
+            end: 5999
+        server_zone: default
+        type: rhevm
+        discovery_range:
+            start: 10.0.0.3
+            end: 10.0.0.3
+
