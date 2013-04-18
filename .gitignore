@@ -28,6 +28,7 @@ nosetests.xml
 chromedriver.log
 mozwebqa.cfg
 credentials.yaml
+cfme_data.yaml
 results
 pytest.ini
 
