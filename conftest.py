@@ -14,11 +14,11 @@ def pytest_addoption(parser):
                      help='location of yaml file containing fixture data') 
 
 def pytest_runtest_setup(item):
-    if item.config.option.cfme_data_file:
+    if item.config.option.cfme_data_filename:
         CfmeSetup.data = _read(item.config.option.cfme_data_filename)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def cfme_data(request):
     return CfmeSetup(request)
 
