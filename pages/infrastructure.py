@@ -191,15 +191,15 @@ class Infrastructure(Base):
                 # Special cases
                 if "host_vnc_port" in key:
                     self.host_default_vnc_port_start.clear()
-                    self.host_default_vnc_port_start.send_keys(value[0])
+                    self.host_default_vnc_port_start.send_keys(value["start"])
                     self.host_default_vnc_port_end.clear()
-                    self.host_default_vnc_port_end.send_keys(value[1])
+                    self.host_default_vnc_port_end.send_keys(value["end"])
                 elif "server_zone" in key:
                     from selenium.webdriver.support.select import Select
                     if self.server_zone.tag_name == "select":
                         select = Select(self.server_zone)
                         select.select_by_visible_text(value)
-                elif "user" in key:
+                elif "credentials" in key:
                     # use credentials
                     credentials = self.testsetup.credentials[value]
                     self.default_userid.clear()
@@ -229,33 +229,35 @@ class Infrastructure(Base):
     class ManagementSystemsDetail(Base):
         _page_title = 'CloudForms Management Engine: Management Systems'
         _management_system_detail_name_locator = (By.XPATH, '//*[@id="accordion"]/div[1]/div[1]/a')
-        _management_system_detail_hostname_locator = (By.XPATH, '//*[@id="textual_div"]/dl/dd[1]/div[1]/table/tbody/tr[1]/td[2]')
-        _management_system_detail_ip_address_locator = (By.XPATH, '//*[@id="textual_div"]/dl/dd[1]/div[1]/table/tbody/tr[2]/td[2]')
-        _management_system_detail_zone_locator = (By.XPATH, '//*[@id="table_div"]/table/tbody/tr[1]/td[2]')
-        _management_system_detail_credentials_validity_locator = (By.XPATH, '//*[@id="textual_div"]/dl/dd[1]/div[2]/table/tbody/tr/td[2]')
-        _management_system_detail_vnc_port_range_locator = (By.XPATH, '//*[@id="textual_div"]/dl/dd[1]/div[1]/table/tbody/tr[9]/td[2]')
+        _details_locator = (By.CSS_SELECTOR, "div#textual_div")
 
         @property
+        def details(self):
+            from pages.regions.details import Details
+            root_element = self.selenium.find_element(*self._details_locator)
+            return Details(self.testsetup, root_element)
+            
+        @property
         def name(self):
-            element_text = self.selenium.find_element(*self._management_system_detail_name_locator).text
-            return re.search('.*(?=[ ]\(Summary\))', element_text).group(0)
+            return self.selenium.find_element(*self._management_system_detail_name_locator).text.encode('utf-8')
 
         @property
         def hostname(self):
-            return self.selenium.find_element(*self._management_system_detail_hostname_locator).text
+            return self.details.get_section("Properties").get_item("Hostname").value
 
         @property
         def zone(self):
-            return self.selenium.find_element(*self._management_system_detail_zone_locator).text
+            return self.details.get_section("Smart Management").get_item("Managed by Zone").value
 
         @property
         def credentials_validity(self):
-            return self.selenium.find_element(*self._management_system_detail_credentials_validity_locator).text
+            return self.details.get_section("Authentication Status").get_item("Default Credentials").value
 
         @property
         def vnc_port_range(self):
-            element_text = self.selenium.find_element(*self._management_system_detail_vnc_port_range_locator).text
-            return element_text.split('-')
+            element_text = self.details.get_section("Properties").get_item("Host Default VNC Port Range").value
+            start, end = element_text.encode('utf-8').split('-')
+            return { "start": int(start), "end": int(end) }
 
         
     class PXE(Base):
