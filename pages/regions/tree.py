@@ -8,6 +8,7 @@ Created on Mar 7, 2013
 
 from pages.page import Page
 from selenium.webdriver.common.by import By
+import re
 
 class Tree(Page):
     '''
@@ -48,16 +49,23 @@ class Tree(Page):
     def is_displayed(self):
         return self._root_element.is_displayed()
 
-    def find_node_by_name(self, name):
+    def find_node_by_regexp(self, regexp_str):
         # finds first node by name in the whole tree, breadth first
-        if self.name == name:
+        regexp = re.compile(regexp_str)
+        if regexp.match(self.name):
             return self
         self.twisty.expand()
         queue = self.children
         while queue:
             child = queue.pop(0)
-            if child.name == name:
+            if regexp.match(child.name):
                 return child
             else:
                 child.twisty.expand()
                 queue += child.children
+
+    def find_node_by_name(self, name):
+        return self.find_node_by_regexp("\A%s\Z" % re.escape(name))
+
+    def find_node_by_substr(self, name):
+        return self.find_node_by_regexp(re.escape(name))
