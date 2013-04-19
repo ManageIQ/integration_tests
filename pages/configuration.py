@@ -8,6 +8,7 @@ Created on Mar 5, 2013
 
 from pages.base import Base
 from pages.configuration_subpages.access_control import AccessControl
+from pages.configuration_subpages.settings import Settings
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
@@ -42,6 +43,11 @@ class Configuration(Base):
             self.accordion.accordion_by_name('Access Control').click()
             self._wait_for_results_refresh()
             return AccessControl(self.testsetup)
+
+        def click_on_settings(self):
+            self.accordion.accordion_by_name('Settings').click()
+            self._wait_for_results_refresh()
+            return Settings(self.testsetup)
 
     class MySettings(Base):
         _page_title = "CloudForms Management Engine: Configuration"
