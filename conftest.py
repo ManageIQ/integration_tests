@@ -18,7 +18,7 @@ def pytest_runtest_setup(item):
         CfmeSetup.data = _read(item.config.option.cfme_data_filename)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module")  # IGNORE:E1101
 def cfme_data(request):
     return CfmeSetup(request)
 
