@@ -18,6 +18,7 @@ class Infrastructure(Base):
         _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
         _discover_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Discover Management Systems']")
         _edit_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Select a single Management System to edit']")
+        _remove_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Remove selected Management Systems from the VMDB']")
 
         _add_new_management_system_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New Management System']")
         _management_system_name_locator = (By.CSS_SELECTOR, "input#name")
@@ -48,20 +49,38 @@ class Infrastructure(Base):
         def configuration_button(self):
             return self.selenium.find_element(*self._configuration_button_locator)
 
+        @property
+        def discover_button(self):
+            return self.selenium.find_element(*self._discover_management_systems_locator)
+
+        @property
+        def edit_button(self):
+            return self.selenium.find_element(*self._edit_management_systems_locator)
+
+        @property
+        def remove_button(self):
+            return self.selenium.find_element(*self._remove_management_systems_locator)
+
         def select_management_system(self, management_system_name):
             self.quadicon_region.get_quadicon_by_title(management_system_name).mark_checkbox()
 
         def click_on_discover_management_systems(self):
-            from selenium.webdriver.common.action_chains import ActionChains
-            config_button = self.selenium.find_element(*self._configuration_button_locator)
-            discover_button = self.selenium.find_element(*self._discover_management_systems_locator)
-            ActionChains(self.selenium).click(self.configuration_button).click(discover_button).perform()
+            ActionChains(self.selenium).click(self.configuration_button).click(self.discover_button).perform()
             return Infrastructure.ManagementSystemsDiscovery(self.testsetup)
 
         def click_on_edit_management_systems(self):
-            edit_button = self.selenium.find_element(*self._edit_management_systems_locator)
-            ActionChains(self.selenium).click(self.configuration_button).click(edit_button).perform()
+            ActionChains(self.selenium).click(self.configuration_button).click(self.edit_button).perform()
             return Infrastructure.ManagementSystemsEdit(self.testsetup)
+
+        def click_on_remove_management_system(self):
+            ActionChains(self.selenium).click(self.configuration_button).click(self.remove_button).perform()
+            self.handle_popup()
+            return self
+
+        def click_on_remove_management_system_and_cancel(self):
+            ActionChains(self.selenium).click(self.configuration_button).click(self.remove_button).perform()
+            self.handle_popup(True)
+            return self
 
         def management_system_click_on_add(self):
             self.selenium.find_element(*self._management_system_add_new_locator).click()
