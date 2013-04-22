@@ -5,7 +5,7 @@ import time
 from unittestzero import Assert
 from pages.login import LoginPage
 
-@pytest.mark.nondestructive
+@pytest.mark.nondestructive  # IGNORE:E1101
 class TestLogin:
     def test_login(self, mozwebqa):
         login_pg = LoginPage(mozwebqa)
