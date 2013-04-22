@@ -47,7 +47,7 @@ class Services(Base):
             self._wait_for_results_refresh()
         
         @property
-        def _power_button(self):
+        def power_button(self):
             from pages.regions.taskbar.power import PowerButton
             return PowerButton(self.testsetup)
 
@@ -65,27 +65,27 @@ class Services(Base):
 
         def shutdown(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
-            self._power_button.shutdown(click_cancel)
+            self.power_button.shutdown(click_cancel)
         
-        def reboot(self,vm_names,click_cancel):
+        def restart(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
-            self._power_button.restart(click_cancel)
+            self.power_button.restart(click_cancel)
         
         def power_on(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
-            self._power_button.power_on(click_cancel)
+            self.power_button.power_on(click_cancel)
         
         def power_off(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
-            self._power_button.power_off(click_cancel)
+            self.power_button.power_off(click_cancel)
 
         def reset(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
-            self._power_button.reset(click_cancel)
+            self.power_button.reset(click_cancel)
 
         def suspend(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
-            self._power_button.suspend(click_cancel)
+            self.power_button.suspend(click_cancel)
 
         def find_vm_page(self, vm_name, vm_type, mark_checkbox, load_details = False):
             found = None
@@ -114,6 +114,7 @@ class Services(Base):
                 return found.click()
 
         def wait_for_vm_state_change(self, vm_quadicon_title, desired_state, timeout_in_minutes):
+            self.find_vm_page(vm_quadicon_title,None,False)
             current_state = self.quadicon_region.get_quadicon_by_title(vm_quadicon_title).current_state
             print "Desired state: " + desired_state + "    Current state: " + current_state
             minute_count = 0
@@ -156,11 +157,41 @@ class Services(Base):
                 self._wait_for_results_refresh()
                 return Services.VirtualMachineDetails(self.testsetup)
  
+
     class VirtualMachineDetails(VmCommonComponents):
         _details_locator = (By.CSS_SELECTOR, "div#textual_div")
-        
+
+        @property
+        def power_state(self):
+            return self.details.get_section('Power Management').get_item('Power State').value
+
+        @property
+        def last_boot_time(self):
+            return self.details.get_section('Power Management').get_item('Last Boot Time').value
+
+        @property
+        def last_pwr_state_change(self):
+            return self.details.get_section('Power Management').get_item('State Changed On').value
+
         @property
         def details(self):
             from pages.regions.details import Details
             root_element = self.selenium.find_element(*self._details_locator)
             return Details(self.testsetup, root_element)
+
+        def wait_for_vm_state_change(self, desired_state, timeout_in_minutes):
+            current_state = self.power_state
+            print "Desired state: " + desired_state + "    Current state: " + current_state
+            minute_count = 0
+            while (minute_count < timeout_in_minutes):
+                if (current_state == desired_state):
+                    break
+                print "Sleeping 60 seconds for next check, iteration " + str(minute_count+1) + " of " + str(timeout_in_minutes)
+                sleep(60)
+                minute_count += 1
+                self.refresh()
+                current_state = self.power_state
+                if (minute_count==timeout_in_minutes) and (current_state != desired_state):
+                    raise Exception("timeout reached("+str(timeout_in_minutes)+" minutes) before desired state (" +
+                                     desired_state+") reached... current state("+current_state+")")
+
