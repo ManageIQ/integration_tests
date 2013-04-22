@@ -6,7 +6,7 @@ import pytest
 import time
 from unittestzero import Assert
 
-@pytest.mark.nondestructive
+@pytest.mark.nondestructive  # IGNORE:E1101
 class TestNavigation:
     def test_navigation(self, mozwebqa, home_page_logged_in):
         home_pg = home_page_logged_in

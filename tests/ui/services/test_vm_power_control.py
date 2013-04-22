@@ -6,18 +6,19 @@ from unittestzero import Assert
 
 # TODO: write snmp trap receiver fixture to verify host shutdown/reboots
 
-@pytest.fixture
+@pytest.fixture  # IGNORE:E1101
 def vm_system():
     return 'pwr-ctl-vm-1-dnd'
     
-@pytest.fixture
+@pytest.fixture  # IGNORE:E1101
 def vm_pg(mozwebqa, home_page_logged_in, vm_system):
     vm_pg = home_page_logged_in.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
     Assert.true(vm_pg.is_the_current_page, "not on correct page")
     vm_pg.find_vm_page(vm_system,None,False)
     return vm_pg
 
-@pytest.fixture    # TODO: change this to use calls to the correct virt api to setup state
+@pytest.fixture  # IGNORE:E1101
+# TODO: change this to use calls to the correct virt api to setup state
 def verify_vm_running(vm_pg, vm_system):
     Assert.true(vm_pg.quadicon_region.does_quadicon_exist(vm_system), "vm not found")
     if vm_pg.quadicon_region.get_quadicon_by_title(vm_system).current_state != 'on': 
@@ -25,7 +26,8 @@ def verify_vm_running(vm_pg, vm_system):
         vm_pg.wait_for_vm_state_change(vm_system, 'on', 10)
     return vm_pg
 
-@pytest.fixture    # TODO: change this to use calls to the correct virt api to setup state
+@pytest.fixture  # IGNORE:E1101
+# TODO: change this to use calls to the correct virt api to setup state
 def verify_vm_stopped(vm_pg, vm_system):
     Assert.true(vm_pg.quadicon_region.does_quadicon_exist(vm_system), "vm not found")
     if vm_pg.quadicon_region.get_quadicon_by_title(vm_system).current_state != 'off':
@@ -34,7 +36,7 @@ def verify_vm_stopped(vm_pg, vm_system):
     return vm_pg
 
 
-@pytest.mark.nondestructive
+@pytest.mark.nondestructive  # IGNORE:E1101
 class TestVmPowerControl:
 
     def test_vm_power_on(self, vm_system, verify_vm_stopped):
