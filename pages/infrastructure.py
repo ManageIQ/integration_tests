@@ -19,16 +19,8 @@ class Infrastructure(Base):
         _discover_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Discover Management Systems']")
         _edit_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Select a single Management System to edit']")
         _remove_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Remove selected Management Systems from the VMDB']")
+        _add_new_management_system_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Add a New Management System']")
 
-        _add_new_management_system_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New Management System']")
-        _management_system_name_locator = (By.CSS_SELECTOR, "input#name")
-        _management_system_host_name_locator = (By.CSS_SELECTOR, "input#hostname")
-        _management_system_ip_address_locator = (By.CSS_SELECTOR, "input#ipaddress")
-        _management_system_type_locator = (By.CSS_SELECTOR, "select#server_emstype")
-        _management_system_user_id_locator = (By.CSS_SELECTOR, "input#default_userid")
-        _management_system_password_locator = (By.CSS_SELECTOR, "input#default_password")
-        _management_system_verify_password_locator = (By.CSS_SELECTOR, "input#default_verify")
-        _management_system_add_new_locator = (By.CSS_SELECTOR, "img.button[title='Add this Add this Management System']")
 
         @property
         def quadicon_region(self):
@@ -60,6 +52,10 @@ class Infrastructure(Base):
         @property
         def remove_button(self):
             return self.selenium.find_element(*self._remove_management_systems_locator)
+        
+        @property
+        def add_button(self):
+            return self.selenium.find_element(*self._add_new_management_system_locator)
 
         def select_management_system(self, management_system_name):
             self.quadicon_region.get_quadicon_by_title(management_system_name).mark_checkbox()
@@ -75,37 +71,18 @@ class Infrastructure(Base):
         def click_on_remove_management_system(self):
             ActionChains(self.selenium).click(self.configuration_button).click(self.remove_button).perform()
             self.handle_popup()
-            return self
+            return Infrastructure.ManagementSystems(self.testsetup)
 
         def click_on_remove_management_system_and_cancel(self):
             ActionChains(self.selenium).click(self.configuration_button).click(self.remove_button).perform()
             self.handle_popup(True)
-            return self
-
-        def management_system_click_on_add(self):
-            self.selenium.find_element(*self._management_system_add_new_locator).click()
-            self._wait_for_results_refresh()
             return Infrastructure.ManagementSystems(self.testsetup)
 
-        def select_management_system_type(self, management_system_type):
-            self.select_dropdown(management_system_type, *self._management_system_type_locator)
-            self._wait_for_results_refresh()
-            return Infrastructure.ManagementSystems(self.testsetup)
+        def click_on_add_new_management_system(self):
+            ActionChains(self.selenium).click(self.configuration_button).click(self.add_button).perform()
+            return Infrastructure.ManagementSystemsAdd(self.testsetup)
 
-        def new_management_system_fill_data(self, name, hostname, ip_address, user_id, password):
-            #name
-            self.selenium.find_element(*self._management_system_name_locator).send_keys(name or "test_name")
-            #host name
-            self.selenium.find_element(*self._management_system_host_name_locator).send_keys(hostname or "test_hostname")
-            #ip address
-            self.selenium.find_element(*self._management_system_ip_address_locator).send_keys(ip_address or "127.0.0.1")
-            #user id
-            self.selenium.find_element(*self._management_system_user_id_locator).send_keys(user_id or "test_user")
-            #password
-            self.selenium.find_element(*self._management_system_password_locator).send_keys(password or "test_password")
-            #verify password
-            self.selenium.find_element(*self._management_system_verify_password_locator).send_keys(password or "test_password")
-    
+
     class ManagementSystemsDiscovery(Base):
         _page_title = 'CloudForms Management Engine: Management Systems'
         _start_button_locator = (By.CSS_SELECTOR, "input[name='start']")
@@ -278,6 +255,30 @@ class Infrastructure(Base):
             start, end = element_text.encode('utf-8').split('-')
             return { "start": int(start), "end": int(end) }
 
+    class ManagementSystemsAdd(Base):
+        _page_title = 'CloudForms Management Engine: Management Systems'
+
+        _management_system_name_locator = (By.CSS_SELECTOR, "input#name")
+        _management_system_host_name_locator = (By.CSS_SELECTOR, "input#hostname")
+        _management_system_ip_address_locator = (By.CSS_SELECTOR, "input#ipaddress")
+        _management_system_type_locator = (By.CSS_SELECTOR, "select#server_emstype")
+        _management_system_user_id_locator = (By.CSS_SELECTOR, "input#default_userid")
+        _management_system_password_locator = (By.CSS_SELECTOR, "input#default_password")
+        _management_system_verify_password_locator = (By.CSS_SELECTOR, "input#default_verify")
+
+        def new_management_system_fill_data(self, name="test_name", hostname="test_hostname", ip_address="127.0.0.1", user_id="test_user", password="test_password"):
+            self.selenium.find_element(*self._management_system_name_locator).send_keys(name)
+            self.selenium.find_element(*self._management_system_host_name_locator).send_keys(hostname)
+            self.selenium.find_element(*self._management_system_ip_address_locator).send_keys(ip_address)
+            self.selenium.find_element(*self._management_system_user_id_locator).send_keys(user_id)
+            self.selenium.find_element(*self._management_system_password_locator).send_keys(password)
+            self.selenium.find_element(*self._management_system_verify_password_locator).send_keys(password)
+
+        def select_management_system_type(self, management_system_type):
+            self.select_dropdown(management_system_type, *self._management_system_type_locator)
+            self._wait_for_results_refresh()
+            return Infrastructure.ManagementSystemsAdd(self.testsetup)
+    
         
     class PXE(Base):
         _page_title = 'CloudForms Management Engine: PXE'
