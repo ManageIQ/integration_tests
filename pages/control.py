@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 class Control(Base):
     @property
     def submenus(self):
-        return {"miq_policy": lambda: Control.ImportExport
+        return {"miq_policy_export": Control.ImportExport
                 }
         
     class ImportExport(Base):

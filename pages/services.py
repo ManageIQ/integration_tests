@@ -11,10 +11,10 @@ from selenium.webdriver.common.by import By
 class Services(Base):
     @property
     def submenus(self):
-        return {"service": lambda: None,
-                "catalog": lambda: None,
-                "miq_request": lambda: None,
-                "vm_or_template": lambda: Services.VirtualMachines,
+        return {"services"       : None,
+                "catalogs"       : None,
+                "miq_request_vm" : None,
+                "vmx"            : Services.VirtualMachines,
                 }
 
     @property

@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 class Automate(Base):
     @property
     def submenus(self):
-        return {"miq_ae_tools": lambda: Automate.ImportExport
+        return {"miq_ae_export": Automate.ImportExport
                 }
         
     class ImportExport(Base):

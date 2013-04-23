@@ -15,11 +15,11 @@ from selenium.webdriver.common.action_chains import ActionChains
 class Configuration(Base):
     @property
     def submenus(self):
-        return {"configuration" : lambda: Configuration.Configuration,
-                "mysettings"    : lambda: Configuration.MySettings,
-                "tasks"         : lambda: Configuration.Tasks,
-                "smartproxies"  : lambda: Configuration.SmartProxies,
-                "about"         : lambda: Configuration.About
+        return {"ops"        : Configuration.Configuration,
+                "ui"         : Configuration.MySettings,
+                "my_tasks"   : Configuration.Tasks,
+                "miq_proxy"  : Configuration.SmartProxies,
+                "about"      : Configuration.About
                 }
         
     def __init__(self,setup):

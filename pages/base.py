@@ -30,8 +30,8 @@ class Base(Page):
 
     @property
     def current_subpage(self):
-        submenu_name = self.selenium.execute_script("return miq_controller;")
-        return self.submenus[submenu_name]()(self.testsetup)
+        submenu_name = self.selenium.find_element_by_tag_name("body").get_attribute("id")
+        return self.submenus[submenu_name](self.testsetup) #IGNORE:E1101
         
     def go_to_login_page(self):
         self.selenium.get(self.base_url)

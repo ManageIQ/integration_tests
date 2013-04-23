@@ -9,8 +9,8 @@ import re
 class Infrastructure(Base):
     @property
     def submenus(self):
-        return {"management_system": lambda: Infrastructure.ManagementSystems,
-                "pxe": lambda: Infrastructure.PXE
+        return {"management_system" : Infrastructure.ManagementSystems,
+                "pxe"               : Infrastructure.PXE
                 }
         
     class ManagementSystems(Base, PaginatorMixin):
