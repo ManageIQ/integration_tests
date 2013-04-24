@@ -20,3 +20,9 @@ class ServerSettings(Base):
         self.tabbutton_region.tabbutton_by_name('Server').click()
         self._wait_for_results_refresh()
         return ServerSettingsTab(self.testsetup)
+
+    def click_on_database_tab(self):
+        from pages.configuration_subpages.settings_subpages.server_settings_subpages.database_settings_tab import DatabaseSettingsTab
+        self.tabbutton_region.tabbutton_by_name('Database').click()
+        self._wait_for_results_refresh()
+        return DatabaseSettingsTab(self.testsetup)
