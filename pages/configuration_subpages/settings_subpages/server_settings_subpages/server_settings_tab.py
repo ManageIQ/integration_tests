@@ -1,10 +1,12 @@
 from pages.base import Base
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
 
 class ServerSettingsTab(Base):
     _page_title = 'CloudForms Management Engine: Configuration'
     _server_roles_selector = (By.CSS_SELECTOR, ".col2 > dd > fieldset:nth-child(2) input[name*='server_roles']")
     _submit_button = (By.CSS_SELECTOR, "img[title='Save Changes']")
+    _zone_selector = (By.CSS_SELECTOR, "select[name='server_zone']")
 
     @property
     def _server_role_elements(self):
@@ -36,6 +38,9 @@ class ServerSettingsTab(Base):
                 role.select()
             else:
                 role.unselect()
+
+    def set_zone(self, zone):
+        Select(self.selenium.find_element(*self._zone_selector)).select_by_value(zone)
 
     class ServerRole:
         def __init__(self, element):
