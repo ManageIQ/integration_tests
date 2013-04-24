@@ -41,7 +41,8 @@ class HeaderMenu(Page):
         self._root_element.find_element(*self._name_locator).click()
         
         if "Virtual Intelligence" in name:
-            pass
+            from pages.virtual_intelligence import VirtualIntelligence
+            return VirtualIntelligence(self.testsetup).current_subpage 
         elif "Services" in name:
             from pages.services import Services
             return Services(self.testsetup).current_subpage
@@ -139,3 +140,6 @@ class HeaderMenu(Page):
             elif "About" in my_name:
                 from pages.configuration import Configuration
                 return Configuration.About(self.testsetup)
+            elif "Reports" in my_name:
+                from pages.virtual_intelligence import VirtualIntelligence
+                return VirtualIntelligence.Reports(self.testsetup) 
