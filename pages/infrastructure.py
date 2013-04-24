@@ -258,28 +258,69 @@ class Infrastructure(Base):
     class ManagementSystemsAdd(Base):
         _page_title = 'CloudForms Management Engine: Management Systems'
 
+        _management_system_add_button_locator = (By.CSS_SELECTOR, "img[title='Add this Add this Management System']")
+        _management_system_credentials_verify_button_locator = (By.CSS_SELECTOR, "img['Host IP, UID and matching password fields are needed to perform verification of credentials']")
         _management_system_name_locator = (By.CSS_SELECTOR, "input#name")
-        _management_system_host_name_locator = (By.CSS_SELECTOR, "input#hostname")
-        _management_system_ip_address_locator = (By.CSS_SELECTOR, "input#ipaddress")
+        _management_system_hostname_locator = (By.CSS_SELECTOR, "input#hostname")
+        _management_system_ipaddress_locator = (By.CSS_SELECTOR, "input#ipaddress")
         _management_system_type_locator = (By.CSS_SELECTOR, "select#server_emstype")
-        _management_system_user_id_locator = (By.CSS_SELECTOR, "input#default_userid")
+        _management_system_userid_locator = (By.CSS_SELECTOR, "input#default_userid")
         _management_system_password_locator = (By.CSS_SELECTOR, "input#default_password")
         _management_system_verify_password_locator = (By.CSS_SELECTOR, "input#default_verify")
 
+        @property
+        def add_button(self):
+            return self.get_element(*self._management_system_add_button_locator)
+
+        @property
+        def verify_button(self):
+            return self.get_element(*self._management_system_credentials_verify_button_locator)
+
+        @property
+        def name_input(self):
+            return self.get_element(*self._management_system_name_locator)
+
+        @property
+        def hostname_input(self):
+            return self.get_element(*self._management_system_hostname_locator)
+
+        @property
+        def ipaddress_input(self):
+            return self.get_element(*self._management_system_ipaddress_locator)
+
+        @property
+        def userid_input(self):
+            return self.get_element(*self._management_system_userid_locator)
+
+        @property
+        def password_input(self):
+            return self.get_element(*self._management_system_password_locator)
+
+        @property
+        def password_verify_input(self):
+            return self.get_element(*self._management_system_verify_password_locator)
+
         def new_management_system_fill_data(self, name="test_name", hostname="test_hostname", ip_address="127.0.0.1", user_id="test_user", password="test_password"):
-            self.selenium.find_element(*self._management_system_name_locator).send_keys(name)
-            self.selenium.find_element(*self._management_system_host_name_locator).send_keys(hostname)
-            self.selenium.find_element(*self._management_system_ip_address_locator).send_keys(ip_address)
-            self.selenium.find_element(*self._management_system_user_id_locator).send_keys(user_id)
-            self.selenium.find_element(*self._management_system_password_locator).send_keys(password)
-            self.selenium.find_element(*self._management_system_verify_password_locator).send_keys(password)
+            self.name_input.send_keys(name)
+            self.hostname_input.send_keys(hostname)
+            self.ipaddress_input.send_keys(ip_address)
+            self.userid_input.send_keys(user_id)
+            self.password_input.send_keys(password)
+            self.password_verify_input.send_keys(password)
 
         def select_management_system_type(self, management_system_type):
             self.select_dropdown(management_system_type, *self._management_system_type_locator)
             self._wait_for_results_refresh()
             return Infrastructure.ManagementSystemsAdd(self.testsetup)
-    
+
+        def click_on_add(self):
+            self.add_button.click()
+            return Infrastructure.ManagementSystems(self.testsetup)
         
+        def click_on_credentials_verify(self):
+            self.verify_button.click()
+            return Infrastructure.ManagementSystemsAdd(self.testsetup)
+
     class PXE(Base):
         _page_title = 'CloudForms Management Engine: PXE'
 
@@ -352,24 +393,34 @@ class Infrastructure(Base):
 
         def select_depot_type(self, depot_type):
             self.select_dropdown(depot_type, *self._pxe_depot_type_locator)
-            self._wait_for_results_refresh()
+            # Wait for the form to refresh (show URI element) before continuing
+            self._wait_for_visible_element(*self._pxe_uri_locator)
             return Infrastructure.PXE(self.testsetup)
 
-        def new_pxe_server_fill_data(self, name, uri, access_url, pxe_dir, windows_img_dir, customization_dir, pxe_img_menus_filename):
+        def new_pxe_server_fill_data(
+                                     self,
+                                     name="pxe_server",
+                                     uri="127.0.0.1/var/www/html/pub/miq/ipxe/",
+                                     access_url="http://127.0.0.1/ipxe",
+                                     pxe_dir="pxe",
+                                     windows_img_dir="sources/microsoft",
+                                     customization_dir="customization",
+                                     pxe_img_menus_filename="menu.php"
+                                     ):
             #name
-            self.selenium.find_element(*self._pxe_name_locator).send_keys(name or "rhel_pxe_server")
+            self.selenium.find_element(*self._pxe_name_locator).send_keys(name)
             #uri
-            self.selenium.find_element(*self._pxe_uri_locator).send_keys(uri or "10.16.120.11/var/www/html/pub/miq/ipxe/")
+            self.selenium.find_element(*self._pxe_uri_locator).send_keys(uri)
             #access url
-            self.selenium.find_element(*self._pxe_access_url_locator).send_keys(access_url or "http://mgmt1.rhq.lab.eng.bos.redhat.com/ipxe")
+            self.selenium.find_element(*self._pxe_access_url_locator).send_keys(access_url)
             #pxe directory
-            self.selenium.find_element(*self._pxe_directory_locator).send_keys(pxe_dir or "pxe")
+            self.selenium.find_element(*self._pxe_directory_locator).send_keys(pxe_dir)
             #windows images directory
-            self.selenium.find_element(*self._pxe_windows_images_directory_locator).send_keys(windows_img_dir or "sources/microsoft")
+            self.selenium.find_element(*self._pxe_windows_images_directory_locator).send_keys(windows_img_dir)
             #customization directory
-            self.selenium.find_element(*self._pxe_customization_directory_locator).send_keys(customization_dir or "customization")
+            self.selenium.find_element(*self._pxe_customization_directory_locator).send_keys(customization_dir)
             #pxe image menus filename
-            self.selenium.find_element(*self._pxe_image_menus_filename_locator).send_keys(pxe_img_menus_filename or "menu.php")
+            self.selenium.find_element(*self._pxe_image_menus_filename_locator).send_keys(pxe_img_menus_filename)
 
         def pxe_image_names(self):
             element_text = self.selenium.find_element(*self._pxe_image_names_locator).text

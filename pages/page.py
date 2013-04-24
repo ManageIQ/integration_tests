@@ -37,11 +37,11 @@ class Page(object):
 
     @property
     def is_the_current_page(self):
-        if self._page_title:
+        if self._page_title:  # IGNORE:E1101
             WebDriverWait(self.selenium, self.timeout).until(lambda s: self.selenium.title)
 
-        Assert.equal(self.selenium.title, self._page_title,
-            "Expected page title: %s. Actual page title: %s" % (self._page_title, self.selenium.title))
+        Assert.equal(self.selenium.title, self._page_title,  # IGNORE:E1101
+            "Expected page title: %s. Actual page title: %s" % (self._page_title, self.selenium.title))  # IGNORE:E1101
         return True
 
     def get_url_current_page(self):

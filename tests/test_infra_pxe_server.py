@@ -8,7 +8,7 @@ from unittestzero import Assert
 
 NAME = "rhel_pxe_server"
 
-@pytest.mark.nondestructive
+@pytest.mark.nondestructive  # IGNORE:E1101
 class TestPXEServer:
     def test_pxe_server(self, mozwebqa, home_page_logged_in):
         home_pg = home_page_logged_in
@@ -23,14 +23,7 @@ class TestPXEServer:
         refreshed_pg = add_pg.select_depot_type("Network File System")
 
         #use default values
-        refreshed_pg.new_pxe_server_fill_data(
-            name = NAME,
-            uri = None,
-            access_url = None,
-            pxe_dir = None,
-            windows_img_dir = None,
-            customization_dir = None,
-            pxe_img_menus_filename = None)
+        refreshed_pg.new_pxe_server_fill_data(name=NAME)
         refreshed_pg.click_on_add()
 
         flash_message = 'PXE Server "%s" was added' % NAME
