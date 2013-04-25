@@ -118,6 +118,9 @@ class HeaderMenu(Page):
             elif "Virtual Machines" in my_name:
                 from pages.services import Services
                 return Services.VirtualMachines(self.testsetup)
+            elif "Explorer" in my_name:
+                from pages.control import Control
+                return Control.Explorer(self.testsetup)
             elif "Import / Export" in my_name:
                 if "Control" in menu_name:
                     from pages.control import Control
