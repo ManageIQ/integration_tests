@@ -21,12 +21,12 @@ class Control(Base):
             from pages.regions.treeaccordionitem import TreeAccordionItem
             return Accordion(self.testsetup, TreeAccordionItem)
 
-        def click_on_events(self):
+        def click_on_events_accordion(self):
             self.accordion.accordion_by_name("Events").click()
             self._wait_for_results_refresh()
             return Control.Events(self.testsetup)
 
-        def click_on_actions(self):
+        def click_on_actions_accordion(self):
             self.accordion.accordion_by_name("Actions").click()
             self._wait_for_results_refresh()
             return Control.Actions(self.testsetup)
@@ -84,11 +84,11 @@ class Control(Base):
         @property
         def actions(self):
             elements = [element.find_elements(*self._action_items_locator) for element in self.root]
-            actions = [[img, a_desc.text, a_type.text] for img, a_desc, a_type in elements]
-            return actions
+            return [[img, a_desc.text, a_type.text] for img, a_desc, a_type in elements]
 
         @property
         def actions_list(self):
+            elements = [element.find_elements(*self._action_items_locator) for element in self.root]
             return [(action[1], action[2]) for action in self.actions]
 
         @property
