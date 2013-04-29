@@ -1,3 +1,0 @@
-[submodule "cfme_pages"]
-	path = cfme_pages
-	url = git://github.com/RedHatQE/cfme_pages.git
