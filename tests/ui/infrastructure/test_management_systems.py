@@ -55,8 +55,10 @@ class TestManagementSystems:
         ms_pg = msd_pg.click_on_cancel()
         Assert.true(ms_pg.is_the_current_page)
         Assert.true(ms_pg.flash.message == "Management System Discovery was cancelled by the user")
-
-    @pytest.mark.usefixtures("has_at_least_one_management_system")  # IGNORE:E1101
+        
+    # TODO: Change to use a fixture that uses Add Management System, instead of Discover.
+    # This will allow to more easily specify the start and end states
+    @pytest.mark.usefixtures("has_at_least_one_management_system") #IGNORE:E1101
     def test_edit_management_system(self, mozwebqa, mgmtsys_page, management_system):
         ms_pg = mgmtsys_page
         ms_pg.select_management_system(management_system["default_name"])
