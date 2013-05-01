@@ -7,6 +7,7 @@ from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.paginator import PaginatorMixin
 from time import time, sleep
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 
 class Services(Base):
     @property
@@ -42,6 +43,11 @@ class Services(Base):
             from pages.regions.taskbar.view import ViewButtons
             return ViewButtons(self.testsetup)
 
+        @property
+        def center_buttons(self):
+            from pages.regions.taskbar.center import CenterButtons
+            return CenterButtons(self.testsetup)
+
         def refresh(self):
             self.history_buttons.refresh_button.click()
             self._wait_for_results_refresh()
@@ -58,6 +64,7 @@ class Services(Base):
 
 
     class VirtualMachines(VmCommonComponents):
+        _provision_vms_button_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Request to Provision VMs']")
 
         @property
         def quadicon_region(self):
@@ -115,6 +122,12 @@ class Services(Base):
         def remove_from_vmdb(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
             self.config_button.remove_from_vmdb(click_cancel)
+
+        def click_on_provision_vms(self):
+            provision_vms_button = self.get_element(*self._provision_vms_button_locator)
+            ActionChains(self.selenium).click(self.center_buttons.lifecycle_button).click(provision_vms_button).perform()
+            from pages.services_subpages.provision import ProvisionStart
+            return ProvisionStart(self.testsetup)
 
         def find_vm_page(self, vm_name, vm_type, mark_checkbox, load_details = False):
             found = None

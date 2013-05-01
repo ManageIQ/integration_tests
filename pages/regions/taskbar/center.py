@@ -19,11 +19,14 @@ class CenterButtons(Button):
     _policy_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Policy'] > div")
     _lifecycle_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Lifecycle'] > div")
     _power_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Power'] > div")
-    
-    def __init__(self,setup):
+
+    def __init__(self, setup):
         Button.__init__(self, setup, *self._center_buttons_locator)
-        
+
     @property
     def configuration_button(self):
         return self._root_element.find_element(*self._configuration_button_locator)
 
+    @property
+    def lifecycle_button(self):
+        return self._root_element.find_element(*self._lifecycle_button_locator)
