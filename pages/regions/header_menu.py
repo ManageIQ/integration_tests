@@ -39,10 +39,10 @@ class HeaderMenu(Page):
     def click(self):
         name = self.name
         self._root_element.find_element(*self._name_locator).click()
-        
+
         if "Virtual Intelligence" in name:
             from pages.virtual_intelligence import VirtualIntelligence
-            return VirtualIntelligence(self.testsetup).current_subpage 
+            return VirtualIntelligence(self.testsetup).current_subpage
         elif "Services" in name:
             from pages.services import Services
             return Services(self.testsetup).current_subpage
@@ -55,10 +55,10 @@ class HeaderMenu(Page):
             pass
         elif "Control" in name:
             from pages.control import Control
-            return Control(self.testsetup).current_subpage 
+            return Control(self.testsetup).current_subpage
         elif "Automate" in name:
             from pages.automate import Automate
-            return Automate(self.testsetup).current_subpage 
+            return Automate(self.testsetup).current_subpage
         elif "Optimize" in name:
             pass
         elif "Configuration" in name:
@@ -145,4 +145,11 @@ class HeaderMenu(Page):
                 return Configuration.About(self.testsetup)
             elif "Reports" in my_name:
                 from pages.virtual_intelligence import VirtualIntelligence
-                return VirtualIntelligence.Reports(self.testsetup) 
+                return VirtualIntelligence.Reports(self.testsetup)
+            elif "Explorer" in my_name:
+                if "Control" in menu_name:
+                    from pages.control import Control
+                    return Control.Explorer(self.testsetup)
+                elif "Automate" in menu_name:
+                    from pages.automate import Automate
+                    return Automate.Explorer(self.testsetup)
