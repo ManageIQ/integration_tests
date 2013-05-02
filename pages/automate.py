@@ -102,14 +102,10 @@ class Automate(Base):
             return self.selenium.find_element(*self._add_namespace_button)
 
         @property
-        def flash(self):
-            return Base.FlashRegion(self.testsetup)
-
-        @property
         def return_flash_message(self):
             return self.selenium.find_element(*self._flash_message_area).text
 
-        def click_add_new_namespace(self):
+        def click_on_add_new_namespace(self):
             ActionChains(self.selenium).click(self.configuration_button).click(self.add_namespace_button).perform()
             self._wait_for_results_refresh()
             return Automate.Explorer(self.testsetup)
