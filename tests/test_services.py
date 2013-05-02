@@ -33,3 +33,9 @@ class TestServices:
         vm_details = pick_random_vm
         Assert.true(vm_details.details.does_info_section_exist('Properties'))
         Assert.true(vm_details.details.get_section('Properties').get_item('Name') != None)
+
+    @pytest.mark.nondestructive
+    def test_vm_smart_state_scan(self, pick_random_vm):
+        vm_details = pick_random_vm
+        vm_details.config_button.refresh_relationships(False)
+        Assert.true(vm_details.flash.message.startswith("Refresh Ems initiated"))

@@ -51,6 +51,11 @@ class Services(Base):
             from pages.regions.taskbar.power import PowerButton
             return PowerButton(self.testsetup)
 
+        @property
+        def config_button(self):
+            from pages.regions.taskbar.vm_configuration import ConfigButton
+            return ConfigButton(self.testsetup)
+
 
     class VirtualMachines(VmCommonComponents):
 
@@ -86,6 +91,30 @@ class Services(Base):
         def suspend(self,vm_names,click_cancel):
             self.quadicon_region.mark_icon_checkbox(vm_names)
             self.power_button.suspend(click_cancel)
+
+        def smart_state_scan(self,vm_names,click_cancel):
+            self.quadicon_region.mark_icon_checkbox(vm_names)
+            self.config_button.perform_smart_state_analysis(click_cancel)
+
+        def refresh_relationships(self,vm_names,click_cancel):
+            self.quadicon_region.mark_icon_checkbox(vm_names)
+            self.config_button.refresh_relationships(click_cancel)
+
+        def extract_running_processes(self,vm_names,click_cancel):
+            self.quadicon_region.mark_icon_checkbox(vm_names)
+            self.config_button.extract_running_processes(click_cancel)
+
+        #def edit_vm(self,vm_name,click_cancel):
+        #    self.quadicon_region.mark_icon_checkbox([vm_name])
+        #    return Services.EditVm(self.testsetup, vm_name)
+
+        #def set_ownership(self,vm_names,click_cancel):
+        #    self.quadicon_region.mark_icon_checkbox(vm_names)
+        #    return Services.SetOwnership(self.testsetup, vm_names)
+
+        def remove_from_vmdb(self,vm_names,click_cancel):
+            self.quadicon_region.mark_icon_checkbox(vm_names)
+            self.config_button.remove_from_vmdb(click_cancel)
 
         def find_vm_page(self, vm_name, vm_type, mark_checkbox, load_details = False):
             found = None
@@ -194,4 +223,28 @@ class Services(Base):
                 if (minute_count==timeout_in_minutes) and (current_state != desired_state):
                     raise Exception("timeout reached("+str(timeout_in_minutes)+" minutes) before desired state (" +
                                      desired_state+") reached... current state("+current_state+")")
+
+
+    #class EditVm(Base):
+    #    _page_title = 'CloudForms Management Engine: Virtual Machines' 
+    #    _custom_identifier_locator = (By.ID, 'custom_1')
+    #    _description_locator = (By.ID, 'description')        
+    #    _parent_select_location = (By.ID, 'chosen_parent')
+    #    _child_vms_chosen_locator = (By.ID, 'kids_chosen')
+    #    _available_vms_chosen_locator = (By.ID, 'choices_chosen')
+    #
+    #    # TODO: how do I know which page its going back to, All_VMs or vm_details
+    #    def click_on_cancel(self):
+    #        self.selenium.find_element(*self._cancel_button_locator).click()
+    #        return 
+
+
+    #class SetOwnership(Base):
+    #    pass
+
+    #class RightSizeRecommendations(Base):
+    #    pass
+
+    #class ReconfigureVm(Base):
+    #    pass
 
