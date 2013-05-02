@@ -14,6 +14,6 @@ class TestAutomate:
         Assert.true(ae_pg.is_the_current_page)
         ae_tree = ae_pg.accordion.current_content
         ae_pg.accordion.current_content.find_node_by_name("Datastore").click()
-        ae_pg = ae_pg.click_add_new_namespace()
+        ae_pg = ae_pg.click_on_add_new_namespace()
         ae_pg = ae_pg.fill_info()
         print ae_pg.return_flash_message
