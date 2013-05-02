@@ -4,12 +4,15 @@ from pages.base import Base
 from selenium.webdriver.common.by import By
 from pages.regions.paginator import PaginatorMixin
 from selenium.webdriver.common.action_chains import ActionChains
+from pages.regions.quadicons import Quadicons
+from pages.regions.quadiconitem import QuadiconItem
 import re
 
 class Infrastructure(Base):
     @property
     def submenus(self):
         return {"management_system" : Infrastructure.ManagementSystems,
+                "host"              : Infrastructure.Hosts,
                 "pxe"               : Infrastructure.PXE
                 }
         
@@ -24,8 +27,7 @@ class Infrastructure(Base):
 
         @property
         def quadicon_region(self):
-            from pages.regions.quadicons import Quadicons
-            return Quadicons(self.testsetup)
+            return Quadicons(self.testsetup,Infrastructure.ManagementSystems.ManagementSystemsQuadIconItem)
         
         @property
         def taskbar(self):
@@ -81,6 +83,32 @@ class Infrastructure(Base):
         def click_on_add_new_management_system(self):
             ActionChains(self.selenium).click(self.configuration_button).click(self.add_button).perform()
             return Infrastructure.ManagementSystemsAdd(self.testsetup)
+
+        class ManagementSystemsQuadIconItem(QuadiconItem):
+            @property
+            def hypervisor_count(self):
+                return self._root_element.find_element(*self._quad_tl_locator).text
+
+            #@property
+            #def current_state(self):
+            #    image_src = self._root_element.find_element(*self._quad_tr_locator).find_element_by_tag_name("img").get_attribute("src")
+            #    return re.search('.+/currentstate-(.+)\.png',image_src).group(1)
+
+            @property
+            def vendor(self):
+                image_src = self._root_element.find_element(*self._quad_bl_locator).find_element_by_tag_name("img").get_attribute("src")
+                return re.search('.+/vendor-(.+)\.png', image_src).group(1)
+
+            @property
+            def valid_credentials(self):
+                image_src = self._root_element.find_element(*self._quad_br_locator).find_element_by_tag_name("img").get_attribute("src")
+                return 'checkmark' in image_src
+
+            def click(self):
+                self._root_element.click()
+                self._wait_for_results_refresh()
+                return Infrastructure.ManagementSystemsDetail(self.testsetup)
+
 
 
     class ManagementSystemsDiscovery(Base):
@@ -320,6 +348,51 @@ class Infrastructure(Base):
         def click_on_credentials_verify(self):
             self.verify_button.click()
             return Infrastructure.ManagementSystemsAdd(self.testsetup)
+
+
+    class Hosts(Base):
+        _page_title = 'CloudForms Management Engine: Hosts'
+
+        @property
+        def quadicon_region(self):
+            return Quadicons(self.testsetup,Infrastructure.Hosts.HostQuadIconItem)
+
+        @property
+        def accordion_region(self):
+            from pages.regions.accordion import Accordion
+            from pages.regions.treeaccordionitem import TreeAccordionItem
+            return Accordion(self.testsetup, TreeAccordionItem)
+
+        @property
+        def taskbar(self):
+            from pages.regions.taskbar.taskbar import Taskbar
+            return Taskbar(self.testsetup)
+
+        class HostQuadIconItem(QuadiconItem):
+            @property
+            def vm_count(self):
+                return self._root_element.find_element(*self._quad_tl_locator).text
+
+            @property
+            def current_state(self):
+                image_src = self._root_element.find_element(*self._quad_tr_locator).find_element_by_tag_name("img").get_attribute("src")
+                return re.search('.+/currentstate-(.+)\.png',image_src).group(1)
+
+            @property
+            def vendor(self):
+                image_src = self._root_element.find_element(*self._quad_bl_locator).find_element_by_tag_name("img").get_attribute("src")
+                return re.search('.+/vendor-(.+)\.png', image_src).group(1)
+
+            @property
+            def valid_credentials(self):
+                image_src = self._root_element.find_element(*self._quad_br_locator).find_element_by_tag_name("img").get_attribute("src")
+                return 'checkmark' in image_src
+
+            #def click(self):
+            #    self._root_element.click()
+            #    self._wait_for_results_refresh()
+            #    return Infrastructure.HostsDetail(self.testsetup)
+
 
     class PXE(Base):
         _page_title = 'CloudForms Management Engine: PXE'

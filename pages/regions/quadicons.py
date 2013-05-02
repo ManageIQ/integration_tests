@@ -48,6 +48,7 @@ class Quadicons(Page):
         for tile in self.quadicons:
             if tile.title == title:
                 return tile
+        raise Exception("quadicon with title="+str(title)+" not found") 
 
     def does_quadicon_exist(self, title):
         found = False

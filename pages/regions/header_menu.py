@@ -112,6 +112,9 @@ class HeaderMenu(Page):
             if "Management Systems" in my_name:
                 from pages.infrastructure import Infrastructure
                 return Infrastructure.ManagementSystems(self.testsetup)
+            elif "Hosts" in my_name:
+                from pages.infrastructure import Infrastructure
+                return Infrastructure.Hosts(self.testsetup)
             elif "PXE" in my_name:
                 from pages.infrastructure import Infrastructure
                 return Infrastructure.PXE(self.testsetup)
