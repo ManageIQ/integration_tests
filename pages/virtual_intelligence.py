@@ -16,7 +16,7 @@ class VirtualIntelligence(Base):
         def accordion(self):
             from pages.regions.accordion import Accordion
             from pages.regions.treeaccordionitem import TreeAccordionItem
-            return Accordion(self.testsetup,TreeAccordionItem)
+            return Accordion(self.testsetup, TreeAccordionItem)
 
         def click_on_import_export(self):
             self.accordion.accordion_by_name("Import/Export").click()
@@ -32,21 +32,12 @@ class VirtualIntelligence(Base):
         def upload(self):
             return self.selenium.find_element(*self._upload_button)
         
-        @property
-        def commit(self):
-            return self.selenium.find_element(*self._commit_button)
-
         def check_overwrite_box(self):
             if not self.selenium.find_element(*self._overwrite_checkbox).is_selected():
                 self.selenium.find_element(*self._overwrite_checkbox).click()
 
         def click_on_upload(self):
             self.upload.click()
-            self._wait_for_results_refresh()
-            return VirtualIntelligence.Reports(self.testsetup)
-
-        def click_on_commit(self):
-            self.commit.click()
             self._wait_for_results_refresh()
             return VirtualIntelligence.Reports(self.testsetup)
 
