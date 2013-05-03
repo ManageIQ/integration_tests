@@ -18,15 +18,19 @@ class TestPXEServer:
         pxe_pg.accordion_region.accordion_by_name("PXE Servers").click()
         pxe_pg.accordion_region.current_content.click()
 
+        time.sleep(1)
+
         pxe_pg.center_buttons.configuration_button.click()
         add_pg = pxe_pg.click_on_add_pxe_server()
         refreshed_pg = add_pg.select_depot_type("Network File System")
 
-        #use default values
-        refreshed_pg.new_pxe_server_fill_data(name=NAME)
-        refreshed_pg.click_on_add()
+        # END OF PAGES TEST
 
-        flash_message = 'PXE Server "%s" was added' % NAME
+        #use default values (except the name)
+        #refreshed_pg.new_pxe_server_fill_data(name=NAME)
+        #refreshed_pg.click_on_add()
 
-        Assert.true(refreshed_pg.flash.message == flash_message, "Flash message: %s" % refreshed_pg.flash.message)
+        #flash_message = 'PXE Server "%s" was added' % NAME
+
+        #Assert.true(refreshed_pg.flash.message == flash_message, "Flash message: %s" % refreshed_pg.flash.message)
 

@@ -398,23 +398,10 @@ class Infrastructure(Base):
         _page_title = 'CloudForms Management Engine: PXE'
 
         _copy_template_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Copy this Customization Template']")
-        _template_name_locator = (By.CSS_SELECTOR, "input#name")
-        _image_type_locator = (By.CSS_SELECTOR, "select#img_typ")
-        _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Add']")
         _refresh_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Refresh this PXE Server']")
         _pxe_image_names_locator = (By.CSS_SELECTOR, "div#pxe_info_div > fieldset > table[class='style3'] > tbody")
 
         _add_pxe_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New PXE Server']")
-        #TODO duplicate
-        _pxe_name_locator = (By.CSS_SELECTOR, "input#name")
-        _pxe_uri_locator = (By.CSS_SELECTOR, "input#uri")
-        _pxe_depot_type_locator = (By.CSS_SELECTOR, "select#log_protocol")
-        _pxe_access_url_locator = (By.CSS_SELECTOR, "input#access_url")
-        _pxe_directory_locator = (By.CSS_SELECTOR, "input#pxe_directory")
-        _pxe_windows_images_directory_locator = (By.CSS_SELECTOR, "input#windows_images_directory")
-        _pxe_customization_directory_locator = (By.CSS_SELECTOR, "input#customization_directory")
-        _pxe_image_menus_filename_locator = (By.CSS_SELECTOR, "input#pxemenu_0")
-
 
         @property
         def accordion_region(self):
@@ -427,28 +414,33 @@ class Infrastructure(Base):
             from pages.regions.taskbar.center import CenterButtons
             return CenterButtons(self.testsetup)
 
-        #TODO: unused in test
-        @property
-        def history_buttons(self):
-            from pages.regions.taskbar.history import HistoryButtons
-            return HistoryButtons(self.testsetup)
-
-        #TODO these clicks can be merged
         def click_on_copy_template(self):
             self.selenium.find_element(*self._copy_template_locator).click()
             self._wait_for_results_refresh()
-            return Infrastructure.PXE(self.testsetup)
+            return Infrastructure.PXECopyTemplate(self.testsetup)
 
-        #TODO these clicks can be merged
         def click_on_add_pxe_server(self):
             self.selenium.find_element(*self._add_pxe_locator).click()
             self._wait_for_results_refresh()
-            return Infrastructure.PXE(self.testsetup)
+            return Infrastructure.PXEAddServer(self.testsetup)
 
-        #TODO these clicks can be merged
         def click_on_refresh(self):
             self.selenium.find_element(*self._refresh_locator).click()
-            return Infrastructure.PXE(self.testsetup)
+
+        def pxe_image_names(self):
+            element_text = self.selenium.find_element(*self._pxe_image_names_locator).text
+            lines = element_text.split('\n')
+            names = []
+            for line in lines:
+                name, space, test = line.partition(' ')
+                names.append(name)
+            return names
+
+    class PXECopyTemplate(Base):
+
+        _template_name_locator = (By.CSS_SELECTOR, "input#name")
+        _image_type_locator = (By.CSS_SELECTOR, "select#img_typ")
+        _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Add']")
 
         def rename_template(self, name):
             template_name = self.selenium.find_element(*self._template_name_locator)
@@ -462,13 +454,33 @@ class Infrastructure(Base):
         def click_on_add(self):
             self.selenium.find_element(*self._add_button_locator).click()
             self._wait_for_results_refresh()
-            return Infrastructure.PXE(self.testsetup)
+            return Infrastructure.PXEAdded(self.testsetup)
+
+    class PXEAdded(Base):
+        #no new methods here
+        pass
+
+    class PXEAddServer(Base):
+
+        _pxe_depot_type_locator = (By.CSS_SELECTOR, "select#log_protocol")
+        _pxe_uri_locator = (By.CSS_SELECTOR, "input#uri")
 
         def select_depot_type(self, depot_type):
             self.select_dropdown(depot_type, *self._pxe_depot_type_locator)
             # Wait for the form to refresh (show URI element) before continuing
             self._wait_for_visible_element(*self._pxe_uri_locator)
-            return Infrastructure.PXE(self.testsetup)
+            return Infrastructure.PXERefreshed(self.testsetup)
+
+    class PXERefreshed(Base):
+
+        _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Add']")
+        _pxe_name_locator = (By.CSS_SELECTOR, "input#name")
+        _pxe_uri_locator = (By.CSS_SELECTOR, "input#uri")
+        _pxe_access_url_locator = (By.CSS_SELECTOR, "input#access_url")
+        _pxe_directory_locator = (By.CSS_SELECTOR, "input#pxe_directory")
+        _pxe_windows_images_directory_locator = (By.CSS_SELECTOR, "input#windows_images_directory")
+        _pxe_customization_directory_locator = (By.CSS_SELECTOR, "input#customization_directory")
+        _pxe_image_menus_filename_locator = (By.CSS_SELECTOR, "input#pxemenu_0")
 
         def new_pxe_server_fill_data(
                                      self,
@@ -495,12 +507,8 @@ class Infrastructure(Base):
             #pxe image menus filename
             self.selenium.find_element(*self._pxe_image_menus_filename_locator).send_keys(pxe_img_menus_filename)
 
-        def pxe_image_names(self):
-            element_text = self.selenium.find_element(*self._pxe_image_names_locator).text
-            lines = element_text.split('\n')
-            names = []
-            for line in lines:
-                name, space, test = line.partition(' ')
-                names.append(name)
-            return names
+        def click_on_add(self):
+            self.selenium.find_element(*self._add_button_locator).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXEAdded(self.testsetup)
 

@@ -24,13 +24,15 @@ class TestInfrastructurePXETemplate:
         time.sleep(1)
         pxe_pg.center_buttons.configuration_button.click()
 
-        copy_pg = pxe_pg.click_on_copy_template()
-        copy_pg.rename_template("This is a test")
-        copy_pg.select_image_type("RHEL-6")
+        #END OF PAGE TEST
+
+        #copy_pg = pxe_pg.click_on_copy_template()
+        #copy_pg.rename_template("This is a test")
+        #copy_pg.select_image_type("RHEL-6")
 
         #This needs to be here. Add button is displayed only after a short time after selecting the image type.
         #And: 'Element must be displayed to click'
-        time.sleep(1)
-        added_pg = copy_pg.click_on_add()
-        Assert.true(added_pg.flash.message == 'Customization Template "This is a test" was added', "Flash message: %s" % added_pg.flash.message)
+        #time.sleep(1)
+        #added_pg = copy_pg.click_on_add()
+        #Assert.true(added_pg.flash.message == 'Customization Template "This is a test" was added', "Flash message: %s" % added_pg.flash.message)
 
