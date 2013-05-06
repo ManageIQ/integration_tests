@@ -76,7 +76,8 @@ class HeaderMenu(Page):
     @property
     def items(self):
         return [self.HeaderMenuItem(self.testsetup, web_element, self)
-                for web_element in self._root_element.find_elements(*self._menu_items_locator)]
+                for web_element in self._root_element.find_elements(
+                        *self._menu_items_locator)]
 
     class HeaderMenuItem(Page):
         _name_locator = (By.CSS_SELECTOR, 'a')
@@ -104,12 +105,21 @@ class HeaderMenu(Page):
         @property
         def name(self):
             self._menu.hover()
-            return self._root_element.find_element(*self._name_locator).text.encode('utf-8')
+            return self._root_element.find_element(
+                    *self._name_locator).text.encode('utf-8')
 
         def click(self):
+            from pages.infrastructure import Infrastructure
+            from pages.services import Services
+            from pages.control import Control
+            from pages.automate import Automate
+            from pages.configuration import Configuration
+            from pages.virtual_intelligence import VirtualIntelligence
+
             menu_name = self._menu.name
             self._menu.hover()
             my_name = self.name
-            ActionChains(self.selenium).move_to_element(self._root_element).click().perform()
+            ActionChains(self.selenium).move_to_element(
+                    self._root_element).click().perform()
 
             return self._item_page[menu_name][my_name](self.testsetup)
