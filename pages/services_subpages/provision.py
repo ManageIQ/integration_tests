@@ -4,6 +4,7 @@
 '''
 from pages.page import Page
 from pages.regions.list import ListRegion, ListItem
+from pages.regions.tabbuttonitem import TabButtonItem
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
@@ -50,6 +51,28 @@ class ProvisionFormButtonMixin(object):
         '''The cancel button. Will select the "visible" one'''
         return self._form_buttons.find_element(
                 *self._template_cancel_button_locator)
+
+class ProvisionTabButtonItem(TabButtonItem):
+    '''Specialization of TabButtonItem'''
+    from pages.services_subpages.provision_subpages.provision_request import ProvisionRequest
+    from pages.services_subpages.provision_subpages.provision_catalog import ProvisionCatalog
+    from pages.services_subpages.provision_subpages.provision_purpose import ProvisionPurpose
+    from pages.services_subpages.provision_subpages.provision_environment import ProvisionEnvironment
+    from pages.services_subpages.provision_subpages.provision_hardware import ProvisionHardware
+    from pages.services_subpages.provision_subpages.provision_network import ProvisionNetwork
+    from pages.services_subpages.provision_subpages.provision_customize import ProvisionCustomize
+    from pages.services_subpages.provision_subpages.provision_schedule import ProvisionSchedule
+
+    _item_page = {
+                "Request": ProvisionRequest,
+                "Purpose": ProvisionPurpose,
+                "Catalog": ProvisionCatalog,
+                "Environment": ProvisionEnvironment,
+                "Hardware": ProvisionHardware,
+                "Network": ProvisionNetwork,
+                "Customize": ProvisionCustomize,
+                "Schedule": ProvisionSchedule
+            }
 
 class ProvisionStart(Page, ProvisionFormButtonMixin):
     '''Page representing the start of the Provision VMs "wizard"'''
@@ -137,7 +160,9 @@ class Provision(Page, ProvisionFormButtonMixin):
     def tabbutton_region(self):
         '''Return the tab button region'''
         from pages.regions.tabbuttons import TabButtons
-        return TabButtons(self.testsetup, self._tab_button_locator)
+        return TabButtons(self.testsetup,
+                self._tab_button_locator,
+                ProvisionTabButtonItem)
 
     def click_on_cancel(self):
         '''Click on cancel button. Return to Services.VirtualMachines'''
