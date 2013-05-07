@@ -1,26 +1,23 @@
+#!/usr/bin/env python
+
 # -*- coding: utf-8 -*-
 
 import pytest
 import time
 from unittestzero import Assert
+from pages.login import LoginPage
 
-@pytest.fixture(scope="module",  # IGNORE:E1101
-                params=["vsphere5"])
-def management_system(request, cfme_data, mgmtsys_page):
+@pytest.fixture(scope="module", # IGNORE:E1101
+                params=["vsphere5", "rhevm31"])
+def management_system(request, cfme_data):
     param = request.param
-    def fin():
-        # Go back to the Management Systems list
-        ms_pg = mgmtsys_page.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Management Systems").click()
-        ms_pg.select_management_system(cfme_data.data["management_systems"][param]["name"])
-        ms_pg.click_on_remove_management_system()
-    request.addfinalizer(fin)
     return cfme_data.data["management_systems"][param]
 
-@pytest.fixture  # IGNORE:E1101
+@pytest.fixture # IGNORE:E1101
 def mgmtsys_page(home_page_logged_in):
     return home_page_logged_in.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Management Systems").click()
 
-@pytest.fixture  # IGNORE:E1101
+@pytest.fixture # IGNORE:E1101
 def has_at_least_one_management_system(home_page_logged_in):
     ms_pg = home_page_logged_in.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Management Systems").click()
     sleep_time = 1
@@ -29,8 +26,8 @@ def has_at_least_one_management_system(home_page_logged_in):
         time.sleep(sleep_time)
         sleep_time *= 2
 
-@pytest.mark.nondestructive  # IGNORE:E1101
-@pytest.mark.usefixtures("maximized")  # IGNORE:E1101
+@pytest.mark.nondestructive # IGNORE:E1101
+@pytest.mark.usefixtures("maximized") # IGNORE:E1101
 class TestManagementSystems:
     def test_discover_management_systems_starts(self, mozwebqa, mgmtsys_page, management_system):
         ms_pg = mgmtsys_page
@@ -41,23 +38,6 @@ class TestManagementSystems:
         Assert.true(ms_pg.is_the_current_page)
         Assert.true(ms_pg.flash.message == "Management System: Discovery successfully initiated")
 
-    def test_that_checks_flash_with_no_management_types_checked(self, mozwebqa, mgmtsys_page):
-        ms_pg = mgmtsys_page
-        Assert.true(ms_pg.is_the_current_page)
-        msd_pg = ms_pg.click_on_discover_management_systems()
-        msd_pg.click_on_start()
-        Assert.true(msd_pg.flash.message == "At least 1 item must be selected for discovery")
-
-    def test_that_checks_flash_when_discovery_canceled(self, mozwebqa, mgmtsys_page):
-        ms_pg = mgmtsys_page
-        Assert.true(ms_pg.is_the_current_page)
-        msd_pg = ms_pg.click_on_discover_management_systems()
-        ms_pg = msd_pg.click_on_cancel()
-        Assert.true(ms_pg.is_the_current_page)
-        Assert.true(ms_pg.flash.message == "Management System Discovery was cancelled by the user")
-        
-    # TODO: Change to use a fixture that uses Add Management System, instead of Discover.
-    # This will allow to more easily specify the start and end states
     @pytest.mark.usefixtures("has_at_least_one_management_system") #IGNORE:E1101
     def test_edit_management_system(self, mozwebqa, mgmtsys_page, management_system):
         ms_pg = mgmtsys_page
@@ -71,8 +51,42 @@ class TestManagementSystems:
         Assert.true(msdetail_pg.zone == management_system["server_zone"])
         if "host_vnc_port" in management_system:
             Assert.true(msdetail_pg.vnc_port_range == management_system["host_vnc_port"])
-        # if msdetail_pg.credentials_validity == "None":
-            # Try reloading the page once. If we get valid then, ok. Otherwise, failure
-        #    msdetail_pg.selenium.refresh()
-        # Assert.true(msdetail_pg.credentials_validity == "Valid")
+
+@pytest.mark.usefixtures("maximized")
+@pytest.mark.nondestructive  # IGNORE:E1101
+@pytest.mark.parametrize("ldap_groups", [
+    "evmgroup-administrator",
+    "evmgroup-approver",
+    "evmgroup-auditor",
+    "evmgroup-desktop",
+    "evmgroup-operator",
+    "evmgroup-security",
+    "evmgroup-super_administrator",
+    "evmgroup-support",
+    "evmgroup-user",
+    "evmgroup-user_limited_self_service",
+    "evmgroup-user_self_service",
+    "evmgroup-vm_user" ])
+class TestLdap:
+    def test_default_ldap_group_roles(self, mozwebqa, ldap_groups, cfme_data):
+        """Basic default LDAP group role RBAC test
+        
+        Validates expected menu and submenu names are present for default 
+        LDAP group roles
+        """
+        if ldap_groups not in cfme_data.data['group_roles']:
+            pytest.xfail("No match in cfme_data for group '%s'" % ldap_groups)
+        _group_roles = cfme_data.data['group_roles'][ldap_groups]
+        login_pg = LoginPage(mozwebqa)
+        login_pg.go_to_login_page()
+        if ldap_groups not in login_pg.testsetup.credentials:
+            pytest.xfail("No match in credentials file for group '%s'" % ldap_groups)
+        # login as LDAP user
+        home_pg = login_pg.login(user=ldap_groups)
+        Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
+        for menu in _group_roles["menus"]:
+            Assert.true(home_pg.header.site_navigation_menu(menu).name == menu)
+            for item in home_pg.header.site_navigation_menu(menu).items:
+                Assert.true(item.name in _group_roles["menus"][menu])
+        # TODO: click through submenu pages, assert is_the_current_page
 
