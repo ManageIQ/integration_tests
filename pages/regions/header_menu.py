@@ -6,8 +6,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
-
 from pages.page import Page
+from pages.infrastructure import Infrastructure
+from pages.services import Services
+from pages.automate import Automate
+from pages.control import Control
+from pages.configuration import Configuration
+from pages.virtual_intelligence import VirtualIntelligence
+
 
 class HeaderMenu(Page):
     """
@@ -22,7 +28,12 @@ class HeaderMenu(Page):
 
     _menu_items_locator = (By.CSS_SELECTOR, 'ul > li')
     _name_locator = (By.CSS_SELECTOR, 'a')
-
+    _item_page = {"Virtual Intelligence": VirtualIntelligence,
+                  "Services": Services,
+                  "Infrastructure": Infrastructure,
+                  "Control": Control,
+                  "Automate": Automate,
+                  "Configuration": Configuration}
     def __init__(self, testsetup, element):
         Page.__init__(self, testsetup)
         self._root_element = element
@@ -40,30 +51,7 @@ class HeaderMenu(Page):
         name = self.name
         self._root_element.find_element(*self._name_locator).click()
 
-        if "Virtual Intelligence" in name:
-            from pages.virtual_intelligence import VirtualIntelligence
-            return VirtualIntelligence(self.testsetup).current_subpage
-        elif "Services" in name:
-            from pages.services import Services
-            return Services(self.testsetup).current_subpage
-        elif "Infrastructure" in name:
-            from pages.infrastructure import Infrastructure
-            return Infrastructure(self.testsetup).current_subpage
-        elif "VDI" in name:
-            pass
-        elif "Storage" in name:
-            pass
-        elif "Control" in name:
-            from pages.control import Control
-            return Control(self.testsetup).current_subpage
-        elif "Automate" in name:
-            from pages.automate import Automate
-            return Automate(self.testsetup).current_subpage
-        elif "Optimize" in name:
-            pass
-        elif "Configuration" in name:
-            from pages.configuration import Configuration
-            return Configuration(self.testsetup).current_subpage
+        return self._item_page[name](self.testsetup).current_subpage
 
     def hover(self):
         element = self._root_element.find_element(*self._name_locator)
@@ -92,6 +80,21 @@ class HeaderMenu(Page):
 
     class HeaderMenuItem(Page):
         _name_locator = (By.CSS_SELECTOR, 'a')
+        # The first level of the dictionary is the top-level menu item. The second level is the sub page
+        _item_page = {"Infrastructure": {"Management Systems" : Infrastructure.ManagementSystems,
+                                         "Hosts": Infrastructure.Hosts,
+                                         "PXE": Infrastructure.PXE},
+                      "Services": {"Virtual Machines": Services.VirtualMachines},
+                      "Control": {"Explorer": Control.Explorer,
+                                  "Import / Export": Control.ImportExport},
+                      "Automate": {"Explorer": Automate.Explorer,
+                                   "Import / Export": Automate.ImportExport},
+                      "Configuration": {"Configuration": Configuration.Configuration,
+                                        "My Settings": Configuration.MySettings,
+                                        "Tasks": Configuration.Tasks,
+                                        "SmartProxies": Configuration.SmartProxies,
+                                        "About": Configuration.About},
+                      "Virtual Intelligence": {"Reports": VirtualIntelligence.Reports}}
 
         def __init__(self, testsetup, element, menu):
             Page.__init__(self, testsetup)
@@ -109,50 +112,4 @@ class HeaderMenu(Page):
             my_name = self.name
             ActionChains(self.selenium).move_to_element(self._root_element).click().perform()
 
-            if "Management Systems" in my_name:
-                from pages.infrastructure import Infrastructure
-                return Infrastructure.ManagementSystems(self.testsetup)
-            elif "Hosts" in my_name:
-                from pages.infrastructure import Infrastructure
-                return Infrastructure.Hosts(self.testsetup)
-            elif "PXE" in my_name:
-                from pages.infrastructure import Infrastructure
-                return Infrastructure.PXE(self.testsetup)
-            elif "Virtual Machines" in my_name:
-                from pages.services import Services
-                return Services.VirtualMachines(self.testsetup)
-            elif "Explorer" in my_name:
-                from pages.control import Control
-                return Control.Explorer(self.testsetup)
-            elif "Import / Export" in my_name:
-                if "Control" in menu_name:
-                    from pages.control import Control
-                    return Control.ImportExport(self.testsetup)
-                elif "Automate" in menu_name:
-                    from pages.automate import Automate
-                    return Automate.ImportExport(self.testsetup)
-            elif "Configuration" in my_name:
-                from pages.configuration import Configuration
-                return Configuration.Configuration(self.testsetup)
-            elif "My Settings" in my_name:
-                from pages.configuration import Configuration
-                return Configuration.MySettings(self.testsetup)
-            elif "Tasks" in my_name:
-                from pages.configuration import Configuration
-                return Configuration.Tasks(self.testsetup)
-            elif "SmartProxies" in my_name:
-                from pages.configuration import Configuration
-                return Configuration.SmartProxies(self.testsetup)
-            elif "About" in my_name:
-                from pages.configuration import Configuration
-                return Configuration.About(self.testsetup)
-            elif "Reports" in my_name:
-                from pages.virtual_intelligence import VirtualIntelligence
-                return VirtualIntelligence.Reports(self.testsetup)
-            elif "Explorer" in my_name:
-                if "Control" in menu_name:
-                    from pages.control import Control
-                    return Control.Explorer(self.testsetup)
-                elif "Automate" in menu_name:
-                    from pages.automate import Automate
-                    return Automate.Explorer(self.testsetup)
+            return self._item_page[menu_name][my_name](self.testsetup)
