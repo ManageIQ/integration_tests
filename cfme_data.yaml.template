@@ -1,7 +1,8 @@
 management_systems:
     vsphere5:
         name: vsphere 5
-        credentials: credential_name
+        default_name: Virtual Center (10.0.0.2)
+        credentials: vsphere5-credential_name_from_credentials.yaml
         hostname: vsphere5.example.com
         ipaddress: 10.0.0.1
         host_vnc_port:
@@ -14,15 +15,289 @@ management_systems:
             end: 10.0.0.2
     rhevm31:
         name: RHEV 3.1
-        credentials: rhev_credential_name
+        default_name: RHEV-M (10.0.0.3)
+        credentials: rhevm31-credential_name_from_credentials.yaml
         hostname: rhevm.example.com
         ipaddress: 10.0.0.1
-        host_vnc_port:
-            start: 5901
-            end: 5999
         server_zone: default
         type: rhevm
         discovery_range:
             start: 10.0.0.3
             end: 10.0.0.3
-
+group_roles:
+    evmgroup-administrator:
+        menus:
+            Virtual Intelligence:
+                - Dashboard
+                - Reports
+                - Usage
+                - Chargeback
+                - Timelines
+                - RSS
+            Services:
+                - My Services
+                - Requests
+                - Virtual Machines
+            Infrastructure:
+                - Management Systems
+                - Clusters
+                - Hosts
+                - Resource Pools
+                - Datastores
+                - Repositories
+                - PXE
+                - Requests
+            Control:
+                - Explorer
+                - Simulation
+                - Import / Export
+                - Log
+            Automate:
+                - Explorer
+                - Simulation
+                - Customization
+                - Import / Export
+                - Log
+                - Requests
+            Optimize:
+                - Utilization
+                - Planning
+                - Bottlenecks
+            Configuration:
+                - My Settings
+                - Tasks
+                - SmartProxies
+                - About
+    evmgroup-approver:
+        menus:
+            Virtual Intelligence:
+                - Dashboard
+                - Reports
+                - Usage
+                - Chargeback
+                - Timelines
+                - RSS
+            Services:
+                - Requests
+                - Virtual Machines
+            Infrastructure:
+                - Management Systems
+                - Clusters
+                - Hosts
+                - Resource Pools
+                - Datastores
+                - Repositories
+                - Requests
+            Control:
+                - Explorer
+                - Simulation
+                - Log
+            Configuration:
+                - My Settings
+                - Tasks
+                - About
+    evmgroup-auditor:
+        menus:
+            Virtual Intelligence:
+                - Dashboard
+                - Reports
+                - Usage
+                - Chargeback
+                - Timelines
+                - RSS
+            Services:
+                - Virtual Machines
+            Infrastructure:
+                - Management Systems
+                - Clusters
+                - Hosts
+                - Resource Pools
+                - Datastores
+                - Repositories
+            Control:
+                - Explorer
+                - Simulation
+                - Log
+            Optimize:
+                - Utilization
+                - Planning
+                - Bottlenecks
+            Configuration:
+                - My Settings
+                - Tasks
+                - About
+    evmgroup-desktop:
+        menus:
+            Virtual Intelligence:
+                - Dashboard
+            Services:
+                - Requests
+                - Virtual Machines
+            Configuration:
+                - My Settings
+                - About
+    evmgroup-operator:
+        menus:
+            Virtual Intelligence:
+                - Dashboard
+                - Reports
+                - Usage
+                - Chargeback
+                - Timelines
+                - RSS
+            Services:
+                - Virtual Machines
+            Infrastructure:
+                - Management Systems
+                - Clusters
+                - Hosts
+                - Resource Pools
+                - Datastores
+                - Repositories
+            Configuration:
+                - My Settings
+                - Tasks
+                - About
+    evmgroup-security:
+        menus:
+            Virtual Intelligence:
+                - Dashboard
+                - Reports
+                - Usage
+                - Chargeback
+                - Timelines
+                - RSS
+            Services:
+                - Virtual Machines
+            Infrastructure:
+                - Management Systems
+                - Clusters
+                - Hosts
+                - Resource Pools
+                - Datastores
+                - Repositories
+            Control:
+                - Explorer
+                - Simulation
+                - Log
+            Configuration:
+                - My Settings
+                - Tasks
+                - About
+    evmgroup-super_administrator:
+        menus:
+            Virtual Intelligence:
+                - Dashboard
+                - Reports
+                - Usage
+                - Chargeback
+                - Timelines
+                - RSS
+            Services:
+                - My Services
+                - Catalogs
+                - Requests
+                - Virtual Machines
+            Infrastructure:
+                - Management Systems
+                - Clusters
+                - Hosts
+                - Resource Pools
+                - Datastores
+                - Repositories
+                - PXE
+                - Requests
+            Control:
+                - Explorer
+                - Simulation
+                - Import / Export
+                - Log
+            Automate:
+                - Explorer
+                - Simulation
+                - Customization
+                - Import / Export
+                - Log
+                - Requests
+            Optimize:
+                - Utilization
+                - Planning
+                - Bottlenecks
+            Configuration:
+                - My Settings
+                - Tasks
+                - Configuration
+                - SmartProxies
+                - About
+    evmgroup-support:
+        menus:
+            Virtual Intelligence:
+                - Dashboard
+                - Reports
+                - Usage
+                - Chargeback
+                - Timelines
+                - RSS
+            Services:
+                - Virtual Machines
+            Infrastructure:
+                - Management Systems
+                - Clusters
+                - Hosts
+                - Resource Pools
+                - Datastores
+                - Repositories
+            Control:
+                - Explorer
+                - Simulation
+                - Log
+            Configuration:
+                - My Settings
+                - Tasks
+                - About
+    evmgroup-user:
+        menus:
+            Virtual Intelligence:
+                - Dashboard
+                - Reports
+                - Usage
+                - Chargeback
+                - Timelines
+                - RSS
+            Services:
+                - Virtual Machines
+            Infrastructure:
+                - Management Systems
+                - Clusters
+                - Hosts
+                - Resource Pools
+                - Datastores
+                - Repositories
+            Configuration:
+                - My Settings
+                - Tasks
+                - About
+    evmgroup-user_limited_self_service:
+        menus:
+            Services:
+                - Requests
+                - Virtual Machines
+            Configuration:
+                - My Settings
+                - About
+    evmgroup-user_self_service:
+        menus:
+            Services:
+                - Requests
+                - Virtual Machines
+            Configuration:
+                - My Settings
+                - About
+    evmgroup-vm_user:
+        menus:
+            Services:
+                - Requests
+                - Virtual Machines
+            Configuration:
+                - My Settings
+                - About

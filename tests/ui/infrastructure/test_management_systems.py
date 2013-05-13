@@ -69,7 +69,8 @@ class TestManagementSystems:
         Assert.true(msdetail_pg.name == management_system["name"])
         Assert.true(msdetail_pg.hostname == management_system["hostname"])
         Assert.true(msdetail_pg.zone == management_system["server_zone"])
-        Assert.true(msdetail_pg.vnc_port_range == management_system["host_vnc_port"])
+        if "host_vnc_port" in management_system:
+            Assert.true(msdetail_pg.vnc_port_range == management_system["host_vnc_port"])
         # if msdetail_pg.credentials_validity == "None":
             # Try reloading the page once. If we get valid then, ok. Otherwise, failure
         #    msdetail_pg.selenium.refresh()
