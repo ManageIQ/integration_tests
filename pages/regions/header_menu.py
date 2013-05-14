@@ -84,6 +84,7 @@ class HeaderMenu(Page):
         # The first level of the dictionary is the top-level menu item. The second level is the sub page
         _item_page = {"Infrastructure": {"Management Systems" : Infrastructure.ManagementSystems,
                                          "Hosts": Infrastructure.Hosts,
+                                         "Datastores": Infrastructure.Datastores,
                                          "PXE": Infrastructure.PXE},
                       "Services": {"Virtual Machines": Services.VirtualMachines},
                       "Control": {"Explorer": Control.Explorer,
