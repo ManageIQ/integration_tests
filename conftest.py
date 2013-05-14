@@ -1,30 +1,27 @@
 import pytest
 
-def _read(filename):
-    stream = file(filename, 'r')
-    import yaml
-    return yaml.load(stream)
+def add_cfme_pages_to_path():
+    try:
+        import pages.page
+    except ImportError:
+        import os
+        import sys
+        HOMEDIR = os.environ['HOME']
+        pages_dirs = ["cfme_pages", "../cfme_pages", "%s/workspace/cfme_pages" % (HOMEDIR), "%s/cfme_pages" % (HOMEDIR)]
+        for pages_dir in pages_dirs:
+            oldpath = sys.path
+            try:
+                sys.path.append(pages_dir)
+                import pages.page
+                break
+            except ImportError:
+                sys.path.remove(pages_dir)
+                continue
+        if not 'pages.page' in sys.modules:
+            print "Could not find cfme_pages. Please clone to one of the standard locations, or set PYTHONPATH"
+            raise ImportError
 
-def pytest_addoption(parser):
-    group = parser.getgroup('cfme', 'cfme')
-    group._addoption('--cfmedata',
-                     action='store',
-                     dest='cfme_data_filename',
-                     metavar='path',
-                     help='location of yaml file containing fixture data') 
+add_cfme_pages_to_path()
 
-def pytest_runtest_setup(item):
-    if item.config.option.cfme_data_filename:
-        CfmeSetup.data = _read(item.config.option.cfme_data_filename)
+pytest_plugins = "plugin.highlight", "fixtures.cfmedata"
 
-
-@pytest.fixture(scope="module")  # IGNORE:E1101
-def cfme_data(request):
-    return CfmeSetup(request)
-
-class CfmeSetup:
-    '''
-        This class is just used for monkey patching
-    '''
-    def __init__(self, request):
-        self.request = request
