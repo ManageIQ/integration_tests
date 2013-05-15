@@ -13,6 +13,13 @@ management_systems:
         discovery_range:
             start: 10.0.0.1
             end: 10.0.0.2
+        clusters:
+            - iscsi
+        hosts:
+            - name: myhost
+              credentials: myhost
+        datastores:
+            - iscsi
         tags:
             Provisioning Scope: All
     rhevm31:
@@ -26,24 +33,13 @@ management_systems:
         discovery_range:
             start: 10.0.0.3
             end: 10.0.0.3
-        tags:
-            Provisioning Scope: All
-hosts:
-    vsphere5:
-        name: host_name
-        tags:
-            Provisioning Scope: All
-    rhevm31:
-        name: host_name
-        tags:
-            Provisioning Scope: All
-datastores:
-    vsphere5:
-        name: datastore1
-        tags:
-            Provisioning Scope: All
-    rhevm31:
-        name: iscsi_data
+        clusters:
+            - iscsi
+        hosts:
+            - name: myhost
+              credentials: myhost
+        datastores:
+            - iscsi
         tags:
             Provisioning Scope: All
 group_roles:
