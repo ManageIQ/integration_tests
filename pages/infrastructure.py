@@ -6,29 +6,26 @@ from pages.regions.paginator import PaginatorMixin
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.quadicons import Quadicons
 from pages.regions.quadiconitem import QuadiconItem
-from pages.regions.taggable import Taggable
+from pages.regions.policy_menu import PolicyMenu
 import re
 
 class Infrastructure(Base):
     @property
     def submenus(self):
         return {"management_system" : Infrastructure.ManagementSystems,
+                "ems_cluster"       : Infrastructure.Clusters,
                 "host"              : Infrastructure.Hosts,
                 "storage"           : Infrastructure.Datastores,
                 "pxe"               : Infrastructure.PXE
                 }
         
-    class ManagementSystems(Base, PaginatorMixin):
+    class ManagementSystems(Base, PaginatorMixin, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Management Systems'
         _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
         _discover_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Discover Management Systems']")
         _edit_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Select a single Management System to edit']")
         _remove_management_systems_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Remove selected Management Systems from the VMDB']")
         _add_new_management_system_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Add a New Management System']")
-        _policy_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Policy']")
-        _manage_policies_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Manage Policies for the selected Management Systems']")
-        _edit_tags_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Edit Tags for the selected Management Systems']")
-
 
         @property
         def quadicon_region(self):
@@ -64,18 +61,6 @@ class Infrastructure(Base):
         def add_button(self):
             return self.selenium.find_element(*self._add_new_management_system_locator)
 
-        @property
-        def policy_button(self):
-            return self.selenium.find_element(*self._policy_button_locator)
-
-        @property
-        def manage_policies_button(self):
-            return self.selenium.find_element(*self._manage_policies_locator)
-
-        @property
-        def edit_tags_button(self):
-            return self.selenium.find_element(*self._edit_tags_locator)
-
         def select_management_system(self, management_system_name):
             self.quadicon_region.get_quadicon_by_title(management_system_name).mark_checkbox()
 
@@ -100,14 +85,6 @@ class Infrastructure(Base):
         def click_on_add_new_management_system(self):
             ActionChains(self.selenium).click(self.configuration_button).click(self.add_button).perform()
             return Infrastructure.ManagementSystemsAdd(self.testsetup)
-
-        def click_on_manage_policies(self):
-            ActionChains(self.selenium).click(self.policy_button).click(self.manage_policies_button).perform()
-            return Infrastructure.ManagePolicies(self.testsetup)
-
-        def click_on_edit_tags(self):
-            ActionChains(self.selenium).click(self.policy_button).click(self.edit_tags_button).perform()
-            return Infrastructure.EditTags(self.testsetup)
 
         class ManagementSystemsQuadIconItem(QuadiconItem):
             @property
@@ -375,11 +352,54 @@ class Infrastructure(Base):
             return Infrastructure.ManagementSystemsAdd(self.testsetup)
 
 
-    class Hosts(Base):
+    class Clusters(Base, PolicyMenu):
+        _page_title = 'CloudForms Management Engine: Clusters'
+
+        @property
+        def quadicon_region(self):
+            return Quadicons(self.testsetup,Infrastructure.Clusters.ClusterQuadIconItem)
+
+        @property
+        def accordion_region(self):
+            from pages.regions.accordion import Accordion
+            from pages.regions.treeaccordionitem import TreeAccordionItem
+            return Accordion(self.testsetup, TreeAccordionItem)
+
+        def select_cluster(self, cluster_name):
+            self.quadicon_region.get_quadicon_by_title(cluster_name).mark_checkbox()
+
+        @property
+        def taskbar(self):
+            from pages.regions.taskbar.taskbar import Taskbar
+            return Taskbar(self.testsetup)
+
+        class ClusterQuadIconItem(QuadiconItem):
+            @property
+            def vm_count(self):
+                return self._root_element.find_element(*self._quad_tl_locator).text
+
+            @property
+            def current_state(self):
+                image_src = self._root_element.find_element(*self._quad_tr_locator).find_element_by_tag_name("img").get_attribute("src")
+                return re.search('.+/currentstate-(.+)\.png',image_src).group(1)
+
+            @property
+            def vendor(self):
+                image_src = self._root_element.find_element(*self._quad_bl_locator).find_element_by_tag_name("img").get_attribute("src")
+                return re.search('.+/vendor-(.+)\.png', image_src).group(1)
+
+            @property
+            def valid_credentials(self):
+                image_src = self._root_element.find_element(*self._quad_br_locator).find_element_by_tag_name("img").get_attribute("src")
+                return 'checkmark' in image_src
+
+            #def click(self):
+            #    self._root_element.click()
+            #    self._wait_for_results_refresh()
+            #    return Infrastructure.HostsDetail(self.testsetup)
+
+    class Hosts(Base, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Hosts'
-        _policy_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Policy']")
-        _manage_policies_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Manage Policies for the selected Hosts']")
-        _edit_tags_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Edit Tags for the selected Hosts']")
 
         @property
         def quadicon_region(self):
@@ -398,26 +418,6 @@ class Infrastructure(Base):
         def taskbar(self):
             from pages.regions.taskbar.taskbar import Taskbar
             return Taskbar(self.testsetup)
-
-        @property
-        def policy_button(self):
-            return self.selenium.find_element(*self._policy_button_locator)
-
-        @property
-        def manage_policies_button(self):
-            return self.selenium.find_element(*self._manage_policies_locator)
-
-        @property
-        def edit_tags_button(self):
-            return self.selenium.find_element(*self._edit_tags_locator)
-
-        def click_on_manage_policies(self):
-            ActionChains(self.selenium).click(self.policy_button).click(self.manage_policies_button).perform()
-            return Infrastructure.ManagePolicies(self.testsetup)
-
-        def click_on_edit_tags(self):
-            ActionChains(self.selenium).click(self.policy_button).click(self.edit_tags_button).perform()
-            return Infrastructure.EditTags(self.testsetup)
 
         class HostQuadIconItem(QuadiconItem):
             @property
@@ -444,10 +444,8 @@ class Infrastructure(Base):
             #    self._wait_for_results_refresh()
             #    return Infrastructure.HostsDetail(self.testsetup)
 
-    class Datastores(Base):
+    class Datastores(Base, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Datastores'
-        _policy_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Policy']")
-        _edit_tags_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Edit Tags for the selected Datastores']")
 
         @property
         def quadicon_region(self):
@@ -466,18 +464,6 @@ class Infrastructure(Base):
         def taskbar(self):
             from pages.regions.taskbar.taskbar import Taskbar
             return Taskbar(self.testsetup)
-
-        @property
-        def policy_button(self):
-            return self.selenium.find_element(*self._policy_button_locator)
-
-        @property
-        def edit_tags_button(self):
-            return self.selenium.find_element(*self._edit_tags_locator)
-
-        def click_on_edit_tags(self):
-            ActionChains(self.selenium).click(self.policy_button).click(self.edit_tags_button).perform()
-            return Infrastructure.EditTags(self.testsetup)
 
         class DatastoreQuadIconItem(QuadiconItem):
             @property
@@ -503,23 +489,6 @@ class Infrastructure(Base):
             #    self._root_element.click()
             #    self._wait_for_results_refresh()
             #    return Infrastructure.HostsDetail(self.testsetup)
-
-    class EditTags(Base, Taggable):
-        @property
-        def save(self):
-            return self.save_tag_edits
-
-        @property
-        def cancel(self):
-            return self.cancel_tag_edits
-
-        @property
-        def reset(self):
-            return self.reset_tag_edits
-       
-    class ManagePolicies(Base):
-        # TODO: create policy mixin
-        _page_title = 'CloudForms Management Engine: Management Systems'
 
     class PXE(Base):
         _page_title = 'CloudForms Management Engine: PXE'
