@@ -1,15 +1,20 @@
-manageiq.tests
+cfme_tests
 ==============
 
-ManageIQ Tests
+CloudForms: Management Engine Tests
 
 Setup:
 
 1. Copy credentials.yaml.template, mozwebqa.cfg.template, pytest.ini.template from cfme_pages project, and remove the .template extension.
 2. Edit to reflect your environment (these should NOT be checked in to source control)
 3. Create a virtualenv to run pytest from
-4. pip install -Ur /path/to/cfme_pages/requirements.txt
-5. PYTHONPATH=/path/to/cfme_pages py.test --driver=firefox --credentials=credentials.yaml --untrusted
+4. pip install -Ur /path/to/cfme_tests/requirements.txt
+5. When tests are run in cfme_tests, the system will look for the cfme_pages repo in 4 locations. If they are not there, PYTHONPATH must be set.
+    1. $(cwd)/cfme_pages
+    2. $(cwd)/../cfme_pages
+    3. ${HOME}/workspace/cfme_pages
+    4. ${HOME}/cfme_pages
+5. py.test --driver=firefox --credentials=credentials.yaml --untrusted
 6. Some of the items in the previous step can be put into your environment, and into pytest.ini so you can then just run py.test. That exercise is left for the reader.
 
 To setup up for chrome:
