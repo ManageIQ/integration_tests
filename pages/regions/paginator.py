@@ -3,6 +3,7 @@ from pages.page import Page
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
+import re
 
 class Paginator(Page):
     '''Add this region to your page with a property called paginator
@@ -27,7 +28,11 @@ class Paginator(Page):
 
     #Position
     _position_text_locator = (By.CSS_SELECTOR, '#pc_div_1 > table > tbody > tr > td > table > tbody > tr > td:last-child')
+    _position_regex = '(\d+)[-]?(\d+)? of (\d+)\)'
     
+    # Selection
+    _select_all_checkbox_locator = (By.ID, "masterToggle")
+
     def click_first_page(self):
         self.selenium.find_element(*self._first_page_locator).click()
         self._wait_for_results_refresh()

@@ -13,6 +13,7 @@ from pages.automate import Automate
 from pages.control import Control
 from pages.configuration import Configuration
 from pages.virtual_intelligence import VirtualIntelligence
+from pages.infrastructure_subpages.management_systems import ManagementSystems
 
 
 class HeaderMenu(Page):
@@ -50,8 +51,10 @@ class HeaderMenu(Page):
     def click(self):
         name = self.name
         self._root_element.find_element(*self._name_locator).click()
-
-        return self._item_page[name](self.testsetup).current_subpage
+        current_subpage = self._item_page[name](self.testsetup).current_subpage
+        if current_subpage is None:
+            current_subpage = Page(self.testsetup)
+        return current_subpage
 
     def hover(self):
         element = self._root_element.find_element(*self._name_locator)
@@ -82,7 +85,7 @@ class HeaderMenu(Page):
     class HeaderMenuItem(Page):
         _name_locator = (By.CSS_SELECTOR, 'a')
         # The first level of the dictionary is the top-level menu item. The second level is the sub page
-        _item_page = {"Infrastructure": {"Management Systems" : Infrastructure.ManagementSystems,
+        _item_page = {"Infrastructure": {"Management Systems" : ManagementSystems,
                                          "Hosts": Infrastructure.Hosts,
                                          "Clusters": Infrastructure.Clusters,
                                          "Datastores": Infrastructure.Datastores,
