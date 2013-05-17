@@ -146,6 +146,7 @@ class Automate(Base):
         def fill_namespace_info(self, namespace_name, namespace_description):
             self.selenium.find_element(*self._name_text_field).send_keys(namespace_name)
             self.selenium.find_element(*self._description_text_field).send_keys(namespace_description)
+            self._wait_for_visible_element(*self._add_system_button)
             self.selenium.find_element(*self._add_system_button).click()
             self._wait_for_results_refresh()
             return Automate.Explorer(self.testsetup)
