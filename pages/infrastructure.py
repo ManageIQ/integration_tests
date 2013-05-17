@@ -356,8 +356,8 @@ class Infrastructure(Base):
         _page_title = 'CloudForms Management Engine: Clusters'
 
         @property
-        def quadicon_region(self):
-            return Quadicons(self.testsetup,Infrastructure.Clusters.ClusterQuadIconItem)
+        def icon(self):
+            return Quadicons(self.testsetup)
 
         @property
         def accordion_region(self):
@@ -366,37 +366,44 @@ class Infrastructure(Base):
             return Accordion(self.testsetup, TreeAccordionItem)
 
         def select_cluster(self, cluster_name):
-            self.quadicon_region.get_quadicon_by_title(cluster_name).mark_checkbox()
+            self.icon.get_quadicon_by_title(cluster_name).mark_checkbox()
+
+        def click_cluster(self, cluster_name):
+            self.icon.get_quadicon_by_title(cluster_name).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.ClustersDetail(self.testsetup)
 
         @property
         def taskbar(self):
             from pages.regions.taskbar.taskbar import Taskbar
             return Taskbar(self.testsetup)
 
-        class ClusterQuadIconItem(QuadiconItem):
-            @property
-            def vm_count(self):
-                return self._root_element.find_element(*self._quad_tl_locator).text
+    class ClustersDetail(Base, PolicyMenu):
+        _page_title = 'CloudForms Management Engine: Clusters'
+        _cluster_detail_name_locator = (By.XPATH, '//*[@id="accordion"]/div[1]/div[1]/a')
+        _details_locator = (By.CSS_SELECTOR, "div#textual_div")
 
-            @property
-            def current_state(self):
-                image_src = self._root_element.find_element(*self._quad_tr_locator).find_element_by_tag_name("img").get_attribute("src")
-                return re.search('.+/currentstate-(.+)\.png',image_src).group(1)
+        @property
+        def details(self):
+            from pages.regions.details import Details
+            root_element = self.selenium.find_element(*self._details_locator)
+            return Details(self.testsetup, root_element)
 
-            @property
-            def vendor(self):
-                image_src = self._root_element.find_element(*self._quad_bl_locator).find_element_by_tag_name("img").get_attribute("src")
-                return re.search('.+/vendor-(.+)\.png', image_src).group(1)
+        @property
+        def name(self):
+            return self.selenium.find_element(*self._cluster_detail_name_locator).text.encode('utf-8')
 
-            @property
-            def valid_credentials(self):
-                image_src = self._root_element.find_element(*self._quad_br_locator).find_element_by_tag_name("img").get_attribute("src")
-                return 'checkmark' in image_src
+        @property
+        def management_system(self):
+            return self.details.get_section("Relationships").get_item("Management System").value
 
-            #def click(self):
-            #    self._root_element.click()
-            #    self._wait_for_results_refresh()
-            #    return Infrastructure.HostsDetail(self.testsetup)
+        @property
+        def datacenter(self):
+            return self.details.get_section("Relationships").get_item("Datacenter").value
+
+        @property
+        def host_count(self):
+            return self.details.get_section("Relationships").get_item("Hosts").value
 
     class Hosts(Base, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Hosts'
@@ -460,35 +467,44 @@ class Infrastructure(Base):
         def select_datastore(self, datastore_name):
             self.quadicon_region.get_quadicon_by_title(datastore_name).mark_checkbox()
 
+        def click_datastore(self, datastore_name):
+            self.quadicon_region.get_quadicon_by_title(datastore_name).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.DatastoresDetail(self.testsetup)
+
         @property
         def taskbar(self):
             from pages.regions.taskbar.taskbar import Taskbar
             return Taskbar(self.testsetup)
 
         class DatastoreQuadIconItem(QuadiconItem):
+
             @property
             def vm_count(self):
-                return self._root_element.find_element(*self._quad_tl_locator).text
+                return self._root_element.find_element(*self._quad_tr_locator).text
 
             @property
-            def current_state(self):
-                image_src = self._root_element.find_element(*self._quad_tr_locator).find_element_by_tag_name("img").get_attribute("src")
-                return re.search('.+/currentstate-(.+)\.png',image_src).group(1)
+            def host_count(self):
+                return self._root_element.find_element(*self._quad_bl_locator).text
 
-            @property
-            def vendor(self):
-                image_src = self._root_element.find_element(*self._quad_bl_locator).find_element_by_tag_name("img").get_attribute("src")
-                return re.search('.+/vendor-(.+)\.png', image_src).group(1)
+    class DatastoresDetail(Base, PolicyMenu):
+        _page_title = 'CloudForms Management Engine: Datastores'
+        _datastore_detail_name_locator = (By.XPATH, '//*[@id="accordion"]/div[1]/div[1]/a')
+        _details_locator = (By.CSS_SELECTOR, "div#textual_div")
 
-            @property
-            def valid_credentials(self):
-                image_src = self._root_element.find_element(*self._quad_br_locator).find_element_by_tag_name("img").get_attribute("src")
-                return 'checkmark' in image_src
+        @property
+        def details(self):
+            from pages.regions.details import Details
+            root_element = self.selenium.find_element(*self._details_locator)
+            return Details(self.testsetup, root_element)
 
-            #def click(self):
-            #    self._root_element.click()
-            #    self._wait_for_results_refresh()
-            #    return Infrastructure.HostsDetail(self.testsetup)
+        @property
+        def name(self):
+            return self.selenium.find_element(*self._datastore_detail_name_locator).text.encode('utf-8')
+
+        @property
+        def ds_type(self):
+            return self.details.get_section("Properties").get_item("Datastore Type").value
 
     class PXE(Base):
         _page_title = 'CloudForms Management Engine: PXE'
