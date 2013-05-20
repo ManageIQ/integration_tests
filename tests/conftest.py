@@ -6,6 +6,7 @@ Created on Mar 4, 2013
 import pytest
 from unittestzero import Assert
 import time
+from common.MgmtSystem import VMWareSystem, RHEVMSystem
 
 @pytest.fixture # IGNORE:E1101
 def home_page_logged_in(mozwebqa):
@@ -72,3 +73,28 @@ def maximized(mozwebqa):
     mozwebqa.selenium.maximize_window()
     return True
 
+@pytest.fixture(scope='module') # IGNORE:E1101
+def mgmt_sys_api_clients(mozwebqa, cfme_data):
+    clients = []
+    for sys_name, mgmt_sys in cfme_data.data['management_systems'].items():
+        cred = mgmt_sys['credentials'].strip()
+        host = mgmt_sys['ipaddress']
+        user = mozwebqa.credentials[cred]['username']
+        pwd = mozwebqa.credentials[cred]['password']
+        sys_type = mgmt_sys['type']
+
+        if 'virtual' in sys_type.lower():
+            # create pysphere client
+            client = VMWareSystem(hostname=host, 
+                    username=user, 
+                    password=pwd)
+            clients.append(client)
+        elif 'rhevm' in sys_type.lower():
+        # create rhevm client
+            client = RHEVMSystem(hostname=host, 
+                    username=user, 
+                    password=pwd)
+            clients.append(client)
+        else:
+            logging.info('Can\'t create client for %s type, ignoring...' % sys_type)
+    return clients
