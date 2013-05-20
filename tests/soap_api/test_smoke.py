@@ -16,19 +16,6 @@ request_id = None
 pytestmark = pytestmark = [pytest.mark.skip_selenium,
                            pytest.mark.nondestructive]
 
-@pytest.fixture(scope='module')
-def soap_base(mozwebqa, cfme_data):
-    return SoapClient(mozwebqa, cfme_data)
-
-@pytest.fixture(scope='module')
-def soap_client(soap_base):
-    return soap_base.client
-
-@pytest.fixture(scope='module')
-def api_clients(soap_base):
-    clients = soap_base.setup_mgmt_clients()
-    return clients
-
 def test_create_request(mozwebqa, soap_base, soap_client):
     # Make psql call 
     psql_cmd = 'psql -d vmdb_production -c \'select name,guid from vms where template=true;\''
