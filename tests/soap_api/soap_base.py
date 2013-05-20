@@ -38,8 +38,8 @@ class SoapClient:
             hostname = mgmt_sys['ipaddress']
             username = testsetup.credentials[cred]['username']
             password = testsetup.credentials[cred]['password']
-            name = mgmt_sys['name']
-            self.mgmt_system.append((name, hostname, username, password))
+            sys_type = mgmt_sys['type']
+            self.mgmt_system.append((sys_type, hostname, username, password))
 
     def ssh_client(self, hostname=None, user=None, pwd=None):
         """ Create a ssh client """
@@ -57,19 +57,19 @@ class SoapClient:
     def setup_mgmt_clients(self):
         """ Create management system API clients """
         mgmt_clients = []
-        for name, host, user, pwd in self.mgmt_system:
-            if 'vsphere' in name.lower():
+        for sys_type, host, user, pwd in self.mgmt_system:
+            if 'virtual' in sys_type.lower():
                 # create pysphere client
                 client = VMWareSystem(hostname=host, 
                                       username=user, 
                                       password=pwd)
                 mgmt_clients.append(client)
-            elif 'rhev' in name.lower():
+            elif 'rhevm' in sys_type.lower():
                 # create rhevm client
                 client = RHEVMSystem(hostname=host, 
                                      username=user, 
                                      password=pwd)
                 mgmt_clients.append(client)
             else:
-                logging.info('Can\'t create client for %s, ignoring...' % name)
+                logging.info('Can\'t create client for %s type, ignoring...' % sys_type)
         return mgmt_clients
