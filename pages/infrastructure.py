@@ -63,6 +63,11 @@ class Infrastructure(Base):
 
         def select_management_system(self, management_system_name):
             self.quadicon_region.get_quadicon_by_title(management_system_name).mark_checkbox()
+  
+        def load_mgmt_system_details(self, management_system_name):
+            self.quadicon_region.get_quadicon_by_title(management_system_name).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.ManagementSystemsDetail(self.testsetup)
 
         def click_on_discover_management_systems(self):
             ActionChains(self.selenium).click(self.configuration_button).click(self.discover_button).perform()
@@ -278,6 +283,12 @@ class Infrastructure(Base):
         @property
         def credentials_validity(self):
             return self.details.get_section("Authentication Status").get_item("Default Credentials").value
+
+        def all_vms(self):
+            self.details.get_section("Relationships").click_item("VMs")
+            self._wait_for_results_refresh()
+            from pages.services import Services
+            return Services.VirtualMachines(self.testsetup)
 
         @property
         def vnc_port_range(self):

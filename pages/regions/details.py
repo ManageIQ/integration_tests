@@ -49,6 +49,13 @@ class Details(Page):
                     item_found = item
             return item_found
         
+        def click_item(self, item_key):
+            item_found = None
+            for item in self.items:
+                if item_key == item.key:
+                    item.click()
+                    break
+        
         class DetailsItem(Page):
             _details_section_data_key_locator = (By.CSS_SELECTOR, "td.label")
             _details_section_data_value_locator = (By.CSS_SELECTOR, "td:not(.label)")
@@ -64,3 +71,10 @@ class Details(Page):
             @property
             def value(self):
                 return self._root_element.find_element(*self._details_section_data_value_locator).text
+
+            #@property
+            #def has_click_through(self):
+            #    return self._root_element.find_element(*self._root_element).text
+
+            def click(self):
+                self._root_element.click() 
