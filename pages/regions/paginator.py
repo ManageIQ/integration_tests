@@ -14,15 +14,19 @@ class Paginator(Page):
         return Paginator(self.testsetup)
         
     '''
+
+    # TODO: so there is a paginator on the top and bottom of the region, should we randomize which one is selected
+    # 130529 - dajo - had to change from #paging_div since the classes are slightly different depending on how the page
+    #                   is loaded... mgmt_system all_vms click through versus services tab > VMs                   
     #Navigation
-    _first_page_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='First']")
-    _prev_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='Previous']")
-    _next_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='Next']")
-    _last_page_locator = (By.CSS_SELECTOR, "#paging_div * img[alt='Last']")
-    _per_page_locator = (By.CSS_SELECTOR, "#paging_div * select[name='ppsetting']")
+    _first_page_locator = (By.CSS_SELECTOR, "#pc_div_1 * img[alt='First']")
+    _prev_locator = (By.CSS_SELECTOR, "#pc_div_1 * img[alt='Previous']")
+    _next_locator = (By.CSS_SELECTOR, "#pc_div_1 * img[alt='Next']")
+    _last_page_locator = (By.CSS_SELECTOR, "#pc_div_1 * img[alt='Last']")
+    _per_page_locator = (By.CSS_SELECTOR, "#pc_div_1 * select[name='ppsetting']")
 
     #Position
-    _position_text_locator = (By.CSS_SELECTOR, '#paging_div > #pc_div_1 > table > tbody > tr > td > table > tbody > tr > td:last-child')
+    _position_text_locator = (By.CSS_SELECTOR, '#pc_div_1 > table > tbody > tr > td > table > tbody > tr > td:last-child')
     
     def click_first_page(self):
         self.selenium.find_element(*self._first_page_locator).click()
