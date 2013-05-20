@@ -8,6 +8,7 @@ from pages.regions.paginator import PaginatorMixin
 from time import time, sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException
 
 class Services(Base):
     @property
@@ -49,8 +50,18 @@ class Services(Base):
             return CenterButtons(self.testsetup)
 
         def refresh(self):
-            self.history_buttons.refresh_button.click()
-            self._wait_for_results_refresh()
+            """Refresh the page by clicking the refresh button that is part of the history button region.
+            
+            Note:
+                Contains try/except because of page differences depending on how the page
+                is loaded... mgmt_system all_vms click through (which does not have the refresh button) versus services tab > VMs
+                When the refresh button is not found, a browser refresh is performed.
+            """
+            try:
+                self.history_buttons.refresh_button.click()
+                self._wait_for_results_refresh()
+            except NoSuchElementException:
+                self.selenium.refresh()
         
         @property
         def power_button(self):
