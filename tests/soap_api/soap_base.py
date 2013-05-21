@@ -42,5 +42,5 @@ class SoapClient:
             pwd = self.password
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(hostname, username=user, password=pwd)
+        client.connect(hostname, username=user, password=pwd, allow_agent=False)
         return client
