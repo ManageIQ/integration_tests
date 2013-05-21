@@ -82,7 +82,6 @@ def mgmt_sys_api_clients(mozwebqa, cfme_data):
         user = mozwebqa.credentials[cred]['username']
         pwd = mozwebqa.credentials[cred]['password']
         sys_type = mgmt_sys['type']
-        sys_name = mgmt_sys['name']
 
         if 'virtual' in sys_type.lower():
             # create pysphere client
