@@ -75,26 +75,33 @@ def maximized(mozwebqa):
 
 @pytest.fixture(scope='module') # IGNORE:E1101
 def mgmt_sys_api_clients(mozwebqa, cfme_data):
-    clients = []
+    clients = {}
     for sys_name, mgmt_sys in cfme_data.data['management_systems'].items():
         cred = mgmt_sys['credentials'].strip()
         host = mgmt_sys['ipaddress']
         user = mozwebqa.credentials[cred]['username']
         pwd = mozwebqa.credentials[cred]['password']
         sys_type = mgmt_sys['type']
+        sys_name = mgmt_sys['name']
 
         if 'virtual' in sys_type.lower():
             # create pysphere client
             client = VMWareSystem(hostname=host, 
                     username=user, 
                     password=pwd)
-            clients.append(client)
+            if sys_name in clients:
+                # Overlapping sys_name entry in cfme_data.yaml
+                logging.warning('Overriding existing entry for %s.' % sys_name)
+            clients[sys_name] = client
         elif 'rhevm' in sys_type.lower():
         # create rhevm client
             client = RHEVMSystem(hostname=host, 
                     username=user, 
                     password=pwd)
-            clients.append(client)
+            if sys_name in clients:
+                # Overlapping sys_name entry in cfme_data.yaml
+                logging.warning('Overriding existing entry for %s.' % sys_name)
+            clients[sys_name] = client
         else:
-            logging.info('Can\'t create client for %s type, ignoring...' % sys_type)
+            logging.info('Can\'t create client for %s, ignoring...' % sys_name)
     return clients
