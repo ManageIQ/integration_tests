@@ -84,8 +84,10 @@ def test_stop_vm(mozwebqa, soap_client):
     Assert.equal(result.result, 'true')
     return test_start_vm
 
-def test_delete_vm(mozwebqa, soap_client, api_clients):
+def test_delete_vm(mozwebqa, soap_client, mgmt_sys_api_clients):
     result = soap_client.service.EVMDeleteVmByName('auto_test_vm')
     Assert.equal(result.result, 'true')
-    for mgmt_sys in api_clients:
+    # TODO: Insert some smart logic to figure out which mgmt_sys
+    # was the VM launched on, instead of calling delete from all.
+    for mgmt_sys in mgmt_sys_api_clients.values():
         result = mgmt_sys.delete_vm('auto_test_vm')
