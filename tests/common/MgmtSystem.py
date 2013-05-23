@@ -98,6 +98,54 @@ class MgmtSystemAPIBase(object):
         '''
         raise NotImplementedError('disconnect not implemented.')
 
+    @abstractmethod
+    def vm_status(self, vm_name):
+        '''
+            Status of VM.
+
+            :param vm_name: name of the vm to get status 
+            :type  vm_name: str
+            :return: state of the vm
+            :rtype: string
+        '''
+        raise NotImplementedError('vm_status not implemented.')
+
+    @abstractmethod
+    def is_vm_running(self, vm_name):
+        '''
+            Is the vm running?
+
+            :param vm_name: name of the vm
+            :type  vm_name: str
+            :return: whether the vm is running or not 
+            :rtype: boolean
+        '''
+        raise NotImplementedError('is_vm_running not implemented.')
+
+    @abstractmethod
+    def is_vm_stopped(self, vm_name):
+        '''
+            Is the vm stopped?
+
+            :param vm_name: name of the vm 
+            :type  vm_name: str
+            :return: whether the vm is stopped or not 
+            :rtype: boolean
+        '''
+        raise NotImplementedError('is_vm_stopped not implemented.')
+
+    @abstractmethod
+    def is_vm_suspended(self, vm_name):
+        '''
+            Is the vm suspended?
+
+            :param vm_name: name of the vm 
+            :type  vm_name: str
+            :return: whether the vm is suspended or not 
+            :rtype: boolean
+        '''
+        raise NotImplementedError('is_vm_suspended not implemented.')
+
 
 class VMWareSystem(MgmtSystemAPIBase):
     """
@@ -124,69 +172,60 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.api = VIServer()
         self.api.connect(hostname, username, password)
 
-    def start_vm(self, vm_name):
-        """ VMWareSystem implementation of start_vm. """
+    def _get_vm(self, vm_name=None):
+        """ RHEVMSystem implementation in _get_vm. """
         if vm_name is None:
             raise Exception('Could not find a VM named %s.' % vm_name)
         else:
             try:
                 vm = self.api.get_vm_by_name(vm_name)
+                return vm
             except VIException as ex:
                 raise Exception(ex)
 
-            if vm.is_powered_on():
-                raise Exception('Could not start %s because it\'s already running.' % vm_name)
-            else:
-                vm.power_on()
-                ack = vm.get_status()
-                if ack == 'POWERED ON':
-                    return True
+    def start_vm(self, vm_name):
+        """ VMWareSystem implementation of start_vm. """
+        vm = self._get_vm(vm_name)
+        if vm.is_powered_on():
+            raise Exception('Could not start %s because it\'s already running.' % vm_name)
+        else:
+            vm.power_on()
+            ack = vm.get_status()
+            if ack == 'POWERED ON':
+                return True
         return False
 
     def stop_vm(self, vm_name):
         """ VMWareSystem implementation of stop_vm. """
-        if vm_name is None:
-            raise Exception('Could not find a VM named %s.' % vm_name)
+        vm = self._get_vm(vm_name)
+        if vm.is_powered_off():
+            raise Exception('Could not stop %s because it\'s not running.' % vm_name)
         else:
-            try:
-                vm = self.api.get_vm_by_name(vm_name)
-            except VIException as ex:
-                raise Exception(ex)
-
-            if vm.is_powered_off():
-                raise Exception('Could not stop %s because it\'s not running.' % vm_name)
-            else:
-                vm.power_off()
-                ack = vm.get_status()
-                if ack == 'POWERED OFF':
-                    return True
+            vm.power_off()
+            ack = vm.get_status()
+            if ack == 'POWERED OFF':
+                return True
         return False
 
     def delete_vm(self, vm_name):
         """ VMWareSystem implementation of delete_vm. """
-        if vm_name is None:
-            raise Exception('Could not find a VM named %s.' % vm_name)
+        vm = self._get_vm(vm_name)
+
+        if vm.is_powered_on():
+            raise Exception('Could not stop %s because it\'s still running.' % vm_name)
         else:
-            try:
-                vm = self.api.get_vm_by_name(vm_name)
-            except VIException as ex:
-                raise Exception(ex)
+            # When pysphere moves up to 0.1.8, we can just do:
+            # vm.destroy()
+            request = VI.Destroy_TaskRequestMsg()
+            _this = request.new__this(vm._mor)
+            _this.set_attribute_type(vm._mor.get_attribute_type())
+            request.set_element__this(_this)
+            rtn = self.api._proxy.Destroy_Task(request)._returnval
 
-            if vm.is_powered_on():
-                raise Exception('Could not stop %s because it\'s still running.' % vm_name)
-            else:
-                # When pysphere moves up to 0.1.8, we can just do:
-                # vm.destroy()
-                request = VI.Destroy_TaskRequestMsg()
-                _this = request.new__this(vm._mor)
-                _this.set_attribute_type(vm._mor.get_attribute_type())
-                request.set_element__this(_this)
-                rtn = self.api._proxy.Destroy_Task(request)._returnval
-
-                task = VITask(rtn, self.api)
-                status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
-                if status == task.STATE_SUCCESS:
-                    return True
+            task = VITask(rtn, self.api)
+            status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
+            if status == task.STATE_SUCCESS:
+                return True
         return False
 
     def create_vm(self, vm_name):
@@ -213,6 +252,27 @@ class VMWareSystem(MgmtSystemAPIBase):
     def disconnect(self):
         """ VMWareSystem implementation of disconnect. """
         self.api.disconnect()
+
+    def vm_status(self, vm_name):
+        """ VMWareSystem implementation of vm.get_status """
+        state = self._get_vm(vm_name).get_status()
+        print "vm " + vm_name + " status is " + state 
+        return state
+
+    def is_vm_running(self, vm_name):
+        """ VMWareSystem implementation of is_vm_running. """
+        state = self.vm_status(vm_name)
+        return "POWERED ON" == state
+
+    def is_vm_stopped(self, vm_name):
+        """ VMWareSystem implementation of is_vm_stopped. """
+        state = self.vm_status(vm_name)
+        return "POWERED OFF" == state
+
+    def is_vm_suspended(self, vm_name):
+        """ VMWareSystem implementation of is_vm_suspended. """
+        state = self.vm_status(vm_name)
+        return "SUSPENDED" == state
 
 
 class RHEVMSystem(MgmtSystemAPIBase):
@@ -269,52 +329,47 @@ virtsdk.xml.params.Status
 
         self.api = API(url=hostname, username=username, password=password, insecure=True)
 
-    def start_vm(self, vm_name=None):
-        """ RHEVMSystem implementation of start_vm. """
+    def _get_vm(self, vm_name=None):
+        """ RHEVMSystem implementation in _get_vm. """
         if vm_name is None:
             raise Exception('Could not find a VM named %s.' % vm_name)
         else:
             vm = self.api.vms.get(name=vm_name)
             if vm is None:
                 raise Exception('Could not find a VM named %s.' % vm_name)
-            if vm.status.get_state() == 'up':
-                raise Exception('Could not start %s because it\'s already running.' % vm_name)
-            else:
-                ack = vm.start()
-                if ack.get_status().get_state() == 'complete':
-                    return True
+            return vm
+
+    def start_vm(self, vm_name=None):
+        """ RHEVMSystem implementation of start_vm. """
+        vm = self._get_vm(vm_name)
+        if vm.status.get_state() == 'up':
+            raise Exception('Could not start %s because it\'s already running.' % vm_name)
+        else:
+            ack = vm.start()
+            if ack.get_status().get_state() == 'complete':
+                return True
         return False
 
     def stop_vm(self, vm_name):
         """ RHEVMSystem implementation of stop_vm. """
-        if vm_name is None:
-            raise Exception('Could not find a VM named %s.' % vm_name)
+        vm = self._get_vm(vm_name)
+        if vm.status.get_state() == 'down':
+            raise Exception('Could not stop %s because it\'s not running.' % vm_name)
         else:
-            vm = self.api.vms.get(name=vm_name)
-            if vm is None:
-                raise Exception('Could not find a VM named %s.' % vm_name)
-            if vm.status.get_state() == 'down':
-                raise Exception('Could not stop %s because it\'s not running.' % vm_name)
-            else:
-                ack = vm.stop()
-                if ack.get_status().get_state() == 'complete':
-                    return True
+            ack = vm.stop()
+            if ack.get_status().get_state() == 'complete':
+                return True
         return False
 
     def delete_vm(self, vm_name):
         """ RHEVMSystem implementation of delete_vm. """
-        if vm_name is None:
-            raise Exception('Could not find a VM named %s.' % vm_name)
+        vm = self._get_vm(vm_name)
+        if vm.status.get_state() == 'up':
+            raise Exception('Could not delete %s because it\'s still running.' % vm_name)
         else:
-            vm = self.api.vms.get(name=vm_name)
-            if vm is None:
-                raise Exception('Could not find a VM named %s.' % vm_name)
-            if vm.status.get_state() == 'up':
-                raise Exception('Could not delete %s because it\'s still running.' % vm_name)
-            else:
-                ack = vm.delete()
-                if ack.get_status().get_state() == '':
-                    return True
+            ack = vm.delete()
+            if ack.get_status().get_state() == '':
+                return True
         return False
 
     def create_vm(self, vm_name):
@@ -345,3 +400,24 @@ virtsdk.xml.params.Status
     def disconnect(self):
         """ RHEVMSystem implementation of disconnect. """
         self.api.disconnect()
+
+    def vm_status(self, vm_name=None):
+        """ RHEVMSystem implementation of vm_status. """
+        state = self._get_vm(vm_name).get_status().get_state()
+        print "vm " + vm_name + " status is " + state 
+        return state
+
+    def is_vm_running(self, vm_name):
+        """ RHEVMSystem implementation of is_vm_running. """
+        state = self.vm_status(vm_name)
+        return "up" == state
+
+    def is_vm_stopped(self, vm_name):
+        """ RHEVMSystem implementation of is_vm_stopped. """
+        state = self.vm_status(vm_name)
+        return "down" == state
+
+    def is_vm_suspended(self, vm_name):
+        """ RHEVMSystem implementation of is_vm_suspended. """
+        state = self.vm_status(vm_name)
+        return "suspended" == state
