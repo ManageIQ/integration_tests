@@ -146,6 +146,18 @@ class MgmtSystemAPIBase(object):
         '''
         raise NotImplementedError('is_vm_suspended not implemented.')
 
+    @abstractmethod
+    def suspend_vm(self, vm_name):
+        '''
+            Suspend a vm.
+
+            :param vm_name: name of the vm to be suspended
+            :type  vm_name: str
+            :return: whether vm suspend has been initiated properly
+            :rtype: boolean
+        '''
+        raise NotImplementedError('restart_vm not implemented.')
+
 
 class VMWareSystem(MgmtSystemAPIBase):
     """
@@ -273,6 +285,16 @@ class VMWareSystem(MgmtSystemAPIBase):
         """ VMWareSystem implementation of is_vm_suspended. """
         state = self.vm_status(vm_name)
         return "SUSPENDED" == state
+
+    def suspend_vm(self, vm_name):
+        """ VMWareSystem implementation of suspend_vm. """
+        vm = self._get_vm(vm_name)
+        if vm.is_powered_off():
+            raise Exception('Could not suspend %s because it\'s not running.' % vm_name)
+        else:
+            vm.suspend()
+            return vm.get_status()
+        return False
 
 
 class RHEVMSystem(MgmtSystemAPIBase):
@@ -421,3 +443,14 @@ virtsdk.xml.params.Status
         """ RHEVMSystem implementation of is_vm_suspended. """
         state = self.vm_status(vm_name)
         return "suspended" == state
+
+    def suspend_vm(self, vm_name):
+        """ RHEVMSystem implementation of suspend_vm. """
+        vm = self._get_vm(vm_name)
+        if vm.status.get_state() == 'down':
+            raise Exception('Could not suspend %s because it\'s not running.' % vm_name)
+        else:
+            ack = vm.suspend()
+            return ack.get_status().get_state() == 'complete'
+        return False
+
