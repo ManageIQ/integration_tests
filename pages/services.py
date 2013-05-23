@@ -86,41 +86,63 @@ class Services(Base):
             from pages.regions.search import Search
             return Search(self.testsetup)
 
-        def shutdown(self,vm_names,click_cancel):
+        def _mark_icon_and_call_method(self, vm_names, op_func):
             self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.power_button.shutdown(click_cancel)
-        
-        def restart(self,vm_names,click_cancel):
-            self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.power_button.restart(click_cancel)
-        
-        def power_on(self,vm_names,click_cancel):
-            self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.power_button.power_on(click_cancel)
-        
-        def power_off(self,vm_names,click_cancel):
-            self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.power_button.power_off(click_cancel)
+            op_func()
 
-        def reset(self,vm_names,click_cancel):
-            self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.power_button.reset(click_cancel)
+        def shutdown(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.shutdown )
 
-        def suspend(self,vm_names,click_cancel):
-            self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.power_button.suspend(click_cancel)
+        def shutdown_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.shutdown_and_cancel )
 
-        def smart_state_scan(self,vm_names,click_cancel):
-            self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.config_button.perform_smart_state_analysis(click_cancel)
+        def restart(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.restart )
 
-        def refresh_relationships(self,vm_names,click_cancel):
-            self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.config_button.refresh_relationships(click_cancel)
+        def restart_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.restart_and_cancel )
 
-        def extract_running_processes(self,vm_names,click_cancel):
-            self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.config_button.extract_running_processes(click_cancel)
+        def power_on(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.power_on )
+
+        def power_on_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.power_on_and_cancel )
+
+        def power_off(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.power_off )
+
+        def power_off_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.power_off_and_cancel )
+
+        def reset(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.reset )
+
+        def reset_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.reset_and_cancel )
+
+        def suspend(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.suspend )
+
+        def suspend_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.power_button.suspend_and_cancel )
+
+        def smart_state_scan(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.config_button.perform_smart_state_analysis )
+
+        def smart_state_scan_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.config_button.perform_smart_state_analysis_and_cancel )
+
+        def refresh_relationships(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.config_button.refresh_relationships )
+
+        def refresh_relationships_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.config_button.refresh_relationships_and_cancel )
+
+        def extract_running_processes(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.config_button.extract_running_processes )
+
+        def extract_running_processes_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.config_button.extract_running_processes_and_cancel )
 
         #def edit_vm(self,vm_name,click_cancel):
         #    self.quadicon_region.mark_icon_checkbox([vm_name])
@@ -130,9 +152,11 @@ class Services(Base):
         #    self.quadicon_region.mark_icon_checkbox(vm_names)
         #    return Services.SetOwnership(self.testsetup, vm_names)
 
-        def remove_from_vmdb(self,vm_names,click_cancel):
-            self.quadicon_region.mark_icon_checkbox(vm_names)
-            self.config_button.remove_from_vmdb(click_cancel)
+        def remove_from_vmdb(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.config_button.remove_from_vmdb )
+
+        def remove_from_vmdb_and_cancel(self,vm_names):
+            self._mark_icon_and_call_method(vm_names, self.config_button.remove_from_vmdb_and_cancel )
 
         def click_on_provision_vms(self):
             provision_vms_button = self.get_element(*self._provision_vms_button_locator)
@@ -174,7 +198,7 @@ class Services(Base):
             while (minute_count < timeout_in_minutes):
                 if (current_state == desired_state):
                     break
-                print "Sleeping 60 seconds for next check, iteration " + str(minute_count+1) + " of " + str(timeout_in_minutes)
+                print "Sleeping 60 seconds, iteration " + str(minute_count+1) + " of " + str(timeout_in_minutes) + ", desired state (" + desired_state+") != current state("+current_state+")"
                 sleep(60)
                 minute_count += 1
                 self.refresh()
@@ -239,7 +263,7 @@ class Services(Base):
             while (minute_count < timeout_in_minutes):
                 if (current_state == desired_state):
                     break
-                print "Sleeping 60 seconds for next check, iteration " + str(minute_count+1) + " of " + str(timeout_in_minutes)
+                print "Sleeping 60 seconds, iteration " + str(minute_count+1) + " of " + str(timeout_in_minutes) + ", desired state (" + desired_state+") != current state("+current_state+")"
                 sleep(60)
                 minute_count += 1
                 self.refresh()
