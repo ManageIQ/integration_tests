@@ -42,6 +42,30 @@ management_systems:
             - iscsi
         tags:
             Provisioning Scope: All
+pxe:
+    pxe_servers:
+        rhel:
+            name: rhel
+            depot_type: Network File System
+            uri: 10.0.0.1
+            access_url: http://10.0.0.1
+            pxe_dir: pxe
+            windows_img_dir: microsoft
+            customization_dir: customization
+            pxe_img_menus_filename: menu.php
+    images:
+        - image1
+        - image2
+    templates:
+        rhel:
+            name: rhel6
+            description: my description
+            image_type: RHEL-6
+            template_type: Kickstart
+            script: anaconda.ks #localfile?
+    datastores:
+        - datastore1
+        - datastore2
 group_roles:
     evmgroup-administrator:
         menus:
