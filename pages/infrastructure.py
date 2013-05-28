@@ -520,11 +520,11 @@ class Infrastructure(Base):
     class PXE(Base):
         _page_title = 'CloudForms Management Engine: PXE'
 
-        _copy_template_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Copy this Customization Template']")
+        _add_template_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New Customization Template']")
         _refresh_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Refresh this PXE Server']")
         _pxe_image_names_locator = (By.CSS_SELECTOR, "div#pxe_info_div > fieldset > table[class='style3'] > tbody")
-
         _add_pxe_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New PXE Server']")
+        _add_iso_datastore_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New ISO Datastore']")
 
         @property
         def accordion_region(self):
@@ -537,10 +537,11 @@ class Infrastructure(Base):
             from pages.regions.taskbar.center import CenterButtons
             return CenterButtons(self.testsetup)
 
-        def click_on_copy_template(self):
-            self.selenium.find_element(*self._copy_template_locator).click()
+        def click_on_add_template(self):
+            self.selenium.find_element(*self._add_template_locator).click()
             self._wait_for_results_refresh()
-            return Infrastructure.PXECopyTemplate(self.testsetup)
+            #return Infrastructure.PXE(self.testsetup)
+            return Infrastructure.PXEAddTemplate(self.testsetup)
 
         def click_on_add_pxe_server(self):
             self.selenium.find_element(*self._add_pxe_locator).click()
@@ -559,19 +560,18 @@ class Infrastructure(Base):
                 names.append(name)
             return names
 
-    class PXECopyTemplate(Base):
+        def click_on_add_iso_datastore(self):
+            self.selenium.find_element(*self._add_iso_datastore_locator).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXEAddISODatastore(self.testsetup)
 
-        _template_name_locator = (By.CSS_SELECTOR, "input#name")
-        _image_type_locator = (By.CSS_SELECTOR, "select#img_typ")
-        _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Add']")
+    class PXEAddISODatastore(Base):
+        _management_system_locator = (By.CSS_SELECTOR, "select#ems_id")
+        _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[alt='Add']")
+        _datastore_name_locator = (By.CSS_SELECTOR, "table[class='style3'] > tbody")
 
-        def rename_template(self, name):
-            template_name = self.selenium.find_element(*self._template_name_locator)
-            template_name.clear()
-            template_name.send_keys(name)
-
-        def select_image_type(self, image_type):
-            self.select_dropdown(image_type, *self._image_type_locator)
+        def select_management_system(self, name):
+            self.select_dropdown(name, *self._management_system_locator)
             self._wait_for_results_refresh()
 
         def click_on_add(self):
@@ -579,9 +579,64 @@ class Infrastructure(Base):
             self._wait_for_results_refresh()
             return Infrastructure.PXEAdded(self.testsetup)
 
+        def datastore_name(self):
+            element_text = self.selenium.find_element(*self._datastore_name_locator).text
+            return element_text
+
+    class PXEAddTemplate(Base):
+
+        _template_type_locator = (By.CSS_SELECTOR, "select#typ")
+
+        def new_pxe_template_select_type(self,
+                                         template_type="Kickstart"
+                                        ):
+            self.select_dropdown(template_type, *self._template_type_locator)
+            return Infrastructure.PXETemplateData(self.testsetup)
+
+    class PXETemplateData(Base):
+
+        _template_name_locator = (By.CSS_SELECTOR, "input#name")
+        _template_description_locator = (By.CSS_SELECTOR, "input#description")
+        _template_script_locator = (By.CSS_SELECTOR, "div[class='CodeMirror'] > div > textarea")
+        _image_type_locator = (By.CSS_SELECTOR, "select#img_typ")
+        _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Add']")
+
+        #Template type is selected independently.
+        #This is because it modifies the page, and we need to wait for the modification to take effect.
+        #No visible elements are modified, _wait_for_visible_element and _wait_for_results_refresh
+        #are out of the question. Other possibility would be to insert time.sleep into this function.
+        def new_pxe_template_fill_data(
+                                       self,
+                                       name="rhel",
+                                       description="my description",
+                                       image_type="RHEL-6",
+                                       template_type="",
+                                       #TODO treat this as a local file?
+                                       #assume anaconda.ks_template
+                                       script="anaconda.ks"
+                                       ):
+            #name
+            self.selenium.find_element(*self._template_name_locator).send_keys(name)
+            #description
+            self.selenium.find_element(*self._template_description_locator).send_keys(description)
+            #image type
+            self.select_dropdown(image_type, *self._image_type_locator)
+            #script
+            self.selenium.find_element(*self._template_script_locator).send_keys(script)
+
+        def click_on_add(self):
+            self.selenium.find_element(*self._add_button_locator).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXEAdded(self.testsetup)
+
     class PXEAdded(Base):
-        #no new methods here
-        pass
+
+        _datastore_name_locator = (By.CSS_SELECTOR, "table[class='style3'] > tbody")
+
+        def datastore_name(self):
+            element_text = self.selenium.find_element(*self._datastore_name_locator).text
+            text = element_text.split('\n')
+            return text[0]
 
     class PXEAddServer(Base):
 
@@ -605,8 +660,12 @@ class Infrastructure(Base):
         _pxe_customization_directory_locator = (By.CSS_SELECTOR, "input#customization_directory")
         _pxe_image_menus_filename_locator = (By.CSS_SELECTOR, "input#pxemenu_0")
 
+        #empty depot_type parameter needed to successfuly run this function from a test
+        #this is because we have all the data in cfme_data file
+        #depot type needs to be set up separatelly, but also needs to be here
         def new_pxe_server_fill_data(
                                      self,
+                                     depot_type="",
                                      name="pxe_server",
                                      uri="127.0.0.1/var/www/html/pub/miq/ipxe/",
                                      access_url="http://127.0.0.1/ipxe",
