@@ -22,6 +22,8 @@ management_systems:
             - iscsi
         tags:
             Provisioning Scope: All
+        test_vm_power_control:
+            - vm_name
     rhevm31:
         name: RHEV 3.1
         default_name: RHEV-M (10.0.0.3)
@@ -42,6 +44,8 @@ management_systems:
             - iscsi
         tags:
             Provisioning Scope: All
+        test_vm_power_control:
+            - vm_name            
 pxe:
     pxe_servers:
         rhel:
