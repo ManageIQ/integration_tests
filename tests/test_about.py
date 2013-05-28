@@ -6,6 +6,7 @@ import pytest
 import time
 from unittestzero import Assert
 
+@pytest.mark.usefixtures("maximized")
 @pytest.mark.nondestructive
 class TestAbout:
     def test_about(self, mozwebqa, home_page_logged_in):
