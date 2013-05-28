@@ -13,149 +13,149 @@ class MgmtSystemAPIBase(object):
 
     @abstractmethod
     def start_vm(self, vm_name):
-        '''
+        """
             Starts a vm.
 
             :param vm_name: name of the vm to be started
             :type  vm_name: str
             :return: whether vm action has been initiated properly
             :rtype: boolean
-        '''
+        """
         raise NotImplementedError('start_vm not implemented.')
 
     @abstractmethod
     def stop_vm(self, vm_name):
-        '''
+        """
             Stops a vm.
 
             :param vm_name: name of the vm to be stopped
             :type  vm_name: str
             :return: whether vm action has been initiated properly
             :rtype: boolean
-        '''
+        """
         raise NotImplementedError('stop_vm not implemented.')
 
     @abstractmethod
     def create_vm(self, vm_name):
-        '''
+        """
             Creates a vm.
 
             :param vm_name: name of the vm to be created
             :type  vm_name: str
             :return: whether vm action has been initiated properly
             :rtype: boolean
-        '''
+        """
         raise NotImplementedError('create_vm not implemented.')
 
     @abstractmethod
     def delete_vm(self, vm_name):
-        '''
+        """
             Deletes a vm.
 
             :param vm_name: name of the vm to be deleted
             :type  vm_name: str
             :return: whether vm action has been initiated properly
             :rtype: boolean
-        '''
+        """
         raise NotImplementedError('delete_vm not implemented.')
 
     @abstractmethod
     def restart_vm(self, vm_name):
-        '''
+        """
             Restart a vm.
 
             :param vm_name: name of the vm to be restarted
             :type  vm_name: str
             :return: whether vm stop/start have been initiated properly
             :rtype: boolean
-        '''
+        """
         raise NotImplementedError('restart_vm not implemented.')
 
     @abstractmethod
     def list_vm(self, **kwargs):
-        '''
+        """
             Returns a list of vm names.
 
             :return: list of vm names
             :rtype: list
-        '''
+        """
         raise NotImplementedError('list_vm not implemented.')
 
     @abstractmethod
     def info(self):
-        '''
+        """
             Returns basic information about the mgmt system.
 
             :return: string representation of name/version of mgmt system.
             :rtype: str
-        '''
+        """
         raise NotImplementedError('info not implemented.')
 
     @abstractmethod
     def disconnect(self):
-        '''
+        """
             Disconnect the API from mgmt system.
-        '''
+        """
         raise NotImplementedError('disconnect not implemented.')
 
     @abstractmethod
     def vm_status(self, vm_name):
-        '''
+        """
             Status of VM.
 
-            :param vm_name: name of the vm to get status 
+            :param vm_name: name of the vm to get status
             :type  vm_name: str
             :return: state of the vm
             :rtype: string
-        '''
+        """
         raise NotImplementedError('vm_status not implemented.')
 
     @abstractmethod
     def is_vm_running(self, vm_name):
-        '''
+        """
             Is the vm running?
 
             :param vm_name: name of the vm
             :type  vm_name: str
-            :return: whether the vm is running or not 
+            :return: whether the vm is running or not
             :rtype: boolean
-        '''
+        """
         raise NotImplementedError('is_vm_running not implemented.')
 
     @abstractmethod
     def is_vm_stopped(self, vm_name):
-        '''
+        """
             Is the vm stopped?
 
-            :param vm_name: name of the vm 
+            :param vm_name: name of the vm
             :type  vm_name: str
-            :return: whether the vm is stopped or not 
+            :return: whether the vm is stopped or not
             :rtype: boolean
-        '''
+        """
         raise NotImplementedError('is_vm_stopped not implemented.')
 
     @abstractmethod
     def is_vm_suspended(self, vm_name):
-        '''
+        """
             Is the vm suspended?
 
-            :param vm_name: name of the vm 
+            :param vm_name: name of the vm
             :type  vm_name: str
-            :return: whether the vm is suspended or not 
+            :return: whether the vm is suspended or not
             :rtype: boolean
-        '''
+        """
         raise NotImplementedError('is_vm_suspended not implemented.')
 
     @abstractmethod
     def suspend_vm(self, vm_name):
-        '''
+        """
             Suspend a vm.
 
             :param vm_name: name of the vm to be suspended
             :type  vm_name: str
             :return: whether vm suspend has been initiated properly
             :rtype: boolean
-        '''
+        """
         raise NotImplementedError('restart_vm not implemented.')
 
 
@@ -168,10 +168,10 @@ class VMWareSystem(MgmtSystemAPIBase):
     Benefits of pysphere:
       - Don't need intimate knowledge w/ vsphere api itself.
     Detriments of pysphere:
-      - Response often are not detailed enough. 
+      - Response often are not detailed enough.
     """
     def __init__(self, hostname='localhost', username='root', password='rootpwd'):
-        """ Initialize VMWareSystem """     
+        """ Initialize VMWareSystem """
         # sanitize hostname
         if hostname.startswith('https://'):
             hostname.replace('https://', '')
@@ -242,7 +242,7 @@ class VMWareSystem(MgmtSystemAPIBase):
 
     def create_vm(self, vm_name):
         """ VMWareSystem implementation of create_vm. """
-        #Unfortunately, there are not enough smurf slaves in the village to build this functionality yet. 
+        #Unfortunately, there are not enough smurf slaves in the village to build this functionality yet.
         pass
 
     def restart_vm(self, vm_name):
@@ -268,7 +268,7 @@ class VMWareSystem(MgmtSystemAPIBase):
     def vm_status(self, vm_name):
         """ VMWareSystem implementation of vm.get_status """
         state = self._get_vm(vm_name).get_status()
-        print "vm " + vm_name + " status is " + state 
+        print "vm " + vm_name + " status is " + state
         return state
 
     def is_vm_running(self, vm_name):
@@ -303,35 +303,39 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
     This class piggy backs off ovirtsdk.
 
-    Benefits of ovirtsdk: 
-    - Don't need intimite knowledge w/ RHEVM api itself. 
+    Benefits of ovirtsdk:
+    - Don't need intimite knowledge w/ RHEVM api itself.
     Detriments of ovirtsdk:
-    - Response to most quaries are returned as an object rather than a string. 
+    - Response to most quaries are returned as an object rather than a string.
       This makes it harder to do simple stuff like getting the status of a vm.
-    - Because of this, it makes listing VMs based on **kwargs impossible 
-      since ovirtsdk relies on re class to find matches. 
+    - Because of this, it makes listing VMs based on **kwargs impossible
+      since ovirtsdk relies on re class to find matches.
 
     I.E. List out VM with this name (positive case)
       Ideal: self.api.vms.list(name='test_vm')
-      Underneath the hood: 
-        - ovirtsdk fetches list of all vms [ovirtsdk.infrastructure.brokers.VM object, ...]
+      Underneath the hood:
+        - ovirtsdk fetches list of all vms [ovirtsdk.infrastructure.brokers.VM
+          object, ...]
         - ovirtsdk then tries to filter the result using re.
-          - tries to look for 'name' attr in ovirtsdk.infrastructure.brokers.VM object
-          - found name attribute, in this case, the type of the value of the attribute is string.
+          - tries to look for 'name' attr in ovirtsdk.infrastructure.brokers.VM
+            object
+          - found name attribute, in this case, the type of the value of the
+            attribute is string.
           - match() succeed in comparing the value to 'test_vm'
 
     I.E. List out VM with that's powered on (negative case)
       Ideal: self.api.vms.list(status='up')
-      Underneath the hood: 
+      Underneath the hood:
         - '^same step as above except^'
-            - found status attribute, in this case, the type of the value of the attribute is .
-virtsdk.xml.params.Status
+            - found status attribute, in this case, the type of the value of
+              the attribute is ovirtsdk.xml.params.Status
             - match() failed because class is compared to string 'up'
 
-     This problem should be attributed to how RHEVM api was designed rather than how ovirtsdk handles RHEVM api responses. 
+     This problem should be attributed to how RHEVM api was designed rather
+     than how ovirtsdk handles RHEVM api responses.
 
     - Obj. are not updated after action calls.
-      - I.E. 
+      - I.E.
         vm = api.vms.get(name='test_vm')
         vm.status.get_state() # returns 'down'
         vm.start()
@@ -342,7 +346,7 @@ virtsdk.xml.params.Status
         vm.status.get_state() # returns 'up'
     """
     def __init__(self, hostname='localhost', username='root', password='rootpwd'):
-        """ Initialize RHEVMSystem """     
+        """ Initialize RHEVMSystem """
         # sanitize hostname
         if not hostname.startswith('https://'):
             hostname = 'https://%s' % hostname
@@ -396,7 +400,7 @@ virtsdk.xml.params.Status
 
     def create_vm(self, vm_name):
         """ RHEVMSystem implementation of create_vm. """
-        #Unfortunately, there are not enough smurf slaves in the village to build this functionality yet. 
+        #Unfortunately, there are not enough smurf slaves in the village to build this functionality yet.
         pass
 
     def restart_vm(self, vm_name):
@@ -426,7 +430,7 @@ virtsdk.xml.params.Status
     def vm_status(self, vm_name=None):
         """ RHEVMSystem implementation of vm_status. """
         state = self._get_vm(vm_name).get_status().get_state()
-        print "vm " + vm_name + " status is " + state 
+        print "vm " + vm_name + " status is " + state
         return state
 
     def is_vm_running(self, vm_name):
