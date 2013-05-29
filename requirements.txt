@@ -10,5 +10,6 @@ requests==0.13.3
 selenium
 paramiko
 suds
+boto
 pysphere
 ovirt-engine-sdk
