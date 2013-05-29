@@ -6,7 +6,7 @@ Created on Mar 4, 2013
 import pytest
 from unittestzero import Assert
 import time
-from common.MgmtSystem import VMWareSystem, RHEVMSystem
+from common.mgmt_system import VMWareSystem, RHEVMSystem
 
 @pytest.fixture # IGNORE:E1101
 def home_page_logged_in(mozwebqa):

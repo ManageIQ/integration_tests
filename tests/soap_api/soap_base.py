@@ -10,7 +10,7 @@ from suds.transport.https import HttpAuthenticated
 from suds.xsd.doctor import ImportDoctor, Import
 import paramiko
 from unittestzero import Assert
-from common.MgmtSystem import VMWareSystem, RHEVMSystem
+from common.mgmt_system import VMWareSystem, RHEVMSystem
 
 class SoapClient:
     """ SoapClient to EVM """
