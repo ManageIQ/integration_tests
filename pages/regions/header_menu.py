@@ -57,7 +57,7 @@ class HeaderMenu(Page):
         element = self._root_element.find_element(*self._name_locator)
         # Workaround for Firefox
         chain = ActionChains(self.selenium).move_to_element(element)
-        if hasattr(self.selenium, "firefox_profile"):
+        if "firefox" in self.selenium.desired_capabilities["browserName"]:
             chain.move_by_offset(0, element.size['height'])
         chain.perform()
 
