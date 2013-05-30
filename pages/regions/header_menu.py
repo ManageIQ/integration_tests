@@ -98,7 +98,8 @@ class HeaderMenu(Page):
                                         "Tasks": Configuration.Tasks,
                                         "SmartProxies": Configuration.SmartProxies,
                                         "About": Configuration.About},
-                      "Virtual Intelligence": {"Reports": VirtualIntelligence.Reports}}
+                      "Virtual Intelligence": {"Reports": VirtualIntelligence.Reports,
+					       "Chargeback": VirtualIntelligence.Chargeback }}
 
         def __init__(self, testsetup, element, menu):
             Page.__init__(self, testsetup)
