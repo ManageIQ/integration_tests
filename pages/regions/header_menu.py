@@ -111,13 +111,6 @@ class HeaderMenu(Page):
                     *self._name_locator).text.encode('utf-8')
 
         def click(self):
-            from pages.infrastructure import Infrastructure
-            from pages.services import Services
-            from pages.control import Control
-            from pages.automate import Automate
-            from pages.configuration import Configuration
-            from pages.virtual_intelligence import VirtualIntelligence
-
             menu_name = self._menu.name
             self._menu.hover()
             my_name = self.name
