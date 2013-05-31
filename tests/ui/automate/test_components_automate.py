@@ -23,7 +23,10 @@ class TestAutomate:
 
         ae_pg.accordion.current_content.find_node_by_name("Student1").click()
         ae_pg = ae_pg.click_on_add_new_class()
-        ae_pg = ae_pg.fill_class_info("Methods", "Methods", "Methods")
+        ae_pg = ae_pg.fill_class_info("TestMethods", "TestMethods", "TestMethods")
 
-        #ae_pg.accordion.current_content.find_node_by_name("Methods (Methods)").click()
+       # ae_pg.accordion.current_content.find_node_by_name("TestMethods (TestMethods)").click()
+       # ae_pg = ae_pg.click_on_method_table_row()
+        ae_pg = ae_pg.click_on_edit_schema()
+
 
