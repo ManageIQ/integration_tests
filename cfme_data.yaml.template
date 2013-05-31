@@ -362,3 +362,17 @@ group_roles:
             Configuration:
                 - My Settings
                 - About
+provisioning:
+    linux_template_workflow:
+        template: linux_template
+        node: purpose_node
+        child_node: purpose_child_node
+        provision_type: VMware
+        count: 1
+        vm_name: aTestVM
+        vm_description: My Test VM Description
+        host: host.server.name.com
+        datastore: datastore1
+        when_to_provision: 1
+        power_on: True
+        time_until_retirement: 1 Month
