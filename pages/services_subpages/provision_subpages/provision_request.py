@@ -33,6 +33,20 @@ class ProvisionRequest(Base):
         return self.get_element(*self._last_name_input_locator)
 
     @property
+    def notes(self):
+        '''Notse input field'''
+        return self.get_element(*self._notes_input_locator)
+
+    @property
     def manager(self):
         '''Manager input field'''
         return self.get_element(*self._manager_input_locator)
+
+    def fill_fields(self, email_text, first_name_text, last_name_text, notes_text, manager_text):
+        self._wait_for_results_refresh()
+        self.email.send_keys(email_text)
+        self.first_name.send_keys(first_name_text)
+        self.last_name.send_keys(last_name_text)
+        self.notes.send_keys(notes_text)
+        self.manager.send_keys(manager_text)
+        return self.testsetup

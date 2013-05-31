@@ -13,9 +13,9 @@ from selenium.common.exceptions import NoSuchElementException
 class Services(Base):
     @property
     def submenus(self):
-        return {"services"       : None,
+        return {"services"       : Services.MyServices,
                 "catalogs"       : None,
-                "miq_request_vm" : None,
+                "miq_request_vm" : Service.Requests,
                 "vmx"            : Services.VirtualMachines,
                 }
 
@@ -23,7 +23,15 @@ class Services(Base):
     def is_the_current_page(self):
         '''Override for top-level menu class'''
         return self.current_subpage.is_the_current_page
-    
+
+    class MyServices(Base, PaginatorMixin):
+
+        _page_title = 'CloudForms Management Engine: My Services'
+
+    class Requests(Base, PaginatorMixin):
+
+        _page_title = 'CloudForms Management Engine: Requests'
+
     class VmCommonComponents(Base, PaginatorMixin):
 
         _page_title = 'CloudForms Management Engine: Virtual Machines'
@@ -51,7 +59,7 @@ class Services(Base):
 
         def refresh(self):
             """Refresh the page by clicking the refresh button that is part of the history button region.
-            
+
             Note:
                 Contains try/except because of page differences depending on how the page
                 is loaded... mgmt_system all_vms click through (which does not have the refresh button) versus services tab > VMs
@@ -62,7 +70,7 @@ class Services(Base):
                 self._wait_for_results_refresh()
             except NoSuchElementException:
                 self.selenium.refresh()
-        
+
         @property
         def power_button(self):
             from pages.regions.taskbar.power import PowerButton
@@ -73,8 +81,8 @@ class Services(Base):
             from pages.regions.taskbar.vm_configuration import ConfigButton
             return ConfigButton(self.testsetup)
 
-
     class VirtualMachines(VmCommonComponents):
+
         _provision_vms_button_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Request to Provision VMs']")
 
         @property
@@ -184,7 +192,7 @@ class Services(Base):
                 if not found and not self.paginator.is_next_page_disabled:
                     self.paginator.click_next_page()
                 elif not found and self.paginator.is_next_page_disabled:
-                    raise Exception("vm("+str(vm_name)+") with type("+str(vm_type)+") could not be found")            
+                    raise Exception("vm("+str(vm_name)+") with type("+str(vm_type)+") could not be found")
             if found and mark_checkbox:
                 found.mark_checkbox()
             if found and load_details:
@@ -205,7 +213,7 @@ class Services(Base):
                 self.find_vm_page(vm_quadicon_title,None,False)
                 current_state = self.quadicon_region.get_quadicon_by_title(vm_quadicon_title).current_state
                 if (minute_count==timeout_in_minutes) and (current_state != desired_state):
-                    raise Exception("timeout reached("+str(timeout_in_minutes)+" minutes) before desired state (" + 
+                    raise Exception("timeout reached("+str(timeout_in_minutes)+" minutes) before desired state (" +
                                      desired_state+") reached... current state("+current_state+")")
 
 
@@ -214,7 +222,7 @@ class Services(Base):
             def os(self):
                 image_src = self._root_element.find_element(*self._quad_tl_locator).find_element_by_tag_name("img").get_attribute("src")
                 return re.search('.+/os-(.+)\.png', image_src).group(1)
-                
+
             @property
             def current_state(self):
                 image_src = self._root_element.find_element(*self._quad_tr_locator).find_element_by_tag_name("img").get_attribute("src")
@@ -233,7 +241,7 @@ class Services(Base):
                 self._root_element.click()
                 self._wait_for_results_refresh()
                 return Services.VirtualMachineDetails(self.testsetup)
- 
+
 
     class VirtualMachineDetails(VmCommonComponents):
         _details_locator = (By.CSS_SELECTOR, "div#textual_div")
@@ -274,9 +282,9 @@ class Services(Base):
 
 
     #class EditVm(Base):
-    #    _page_title = 'CloudForms Management Engine: Virtual Machines' 
+    #    _page_title = 'CloudForms Management Engine: Virtual Machines'
     #    _custom_identifier_locator = (By.ID, 'custom_1')
-    #    _description_locator = (By.ID, 'description')        
+    #    _description_locator = (By.ID, 'description')
     #    _parent_select_location = (By.ID, 'chosen_parent')
     #    _child_vms_chosen_locator = (By.ID, 'kids_chosen')
     #    _available_vms_chosen_locator = (By.ID, 'choices_chosen')
@@ -284,7 +292,7 @@ class Services(Base):
     #    # TODO: how do I know which page its going back to, All_VMs or vm_details
     #    def click_on_cancel(self):
     #        self.selenium.find_element(*self._cancel_button_locator).click()
-    #        return 
+    #        return
 
 
     #class SetOwnership(Base):

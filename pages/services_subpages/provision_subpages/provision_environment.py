@@ -11,6 +11,7 @@ from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.select import Select
+from time import sleep
 
 class ProvisionEnvironment(Base):
     '''Represents the Environment tab in the Provision VM wizard'''
@@ -42,8 +43,8 @@ class ProvisionEnvironment(Base):
 
     @property
     def datacenter(self):
-        '''Datacenter - Name 
-        
+        '''Datacenter - Name
+
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._datacenter_select_locator))
@@ -51,7 +52,7 @@ class ProvisionEnvironment(Base):
     @property
     def cluster(self):
         '''Cluster - Name
-        
+
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._cluster_select_locator))
@@ -59,7 +60,7 @@ class ProvisionEnvironment(Base):
     @property
     def resource_pool(self):
         '''Resource Pool - Name
-        
+
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._resource_pool_select_locator))
@@ -67,7 +68,7 @@ class ProvisionEnvironment(Base):
     @property
     def folder_name(self):
         '''Folder - Name
-        
+
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._folder_name_select_locator))
@@ -75,7 +76,7 @@ class ProvisionEnvironment(Base):
     @property
     def host_filter(self):
         '''Host - Filter
-        
+
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._host_filter_select_locator))
@@ -106,13 +107,36 @@ class ProvisionEnvironment(Base):
                 self.get_element(*self._datastore_list_locator),
                 self.DatastoreItem)
 
+    def click_on_host_item(self, item_name):
+            '''Select host item from list by name'''
+            host_items = self.host_list.items
+            sleep(6)
+            selected_item = host_items[[item for item in range(len(host_items)) if host_items[item].name == item_name][0]]
+            selected_item.click()
+            self._wait_for_results_refresh()
+            return self.HostItem(selected_item)
+
+    def click_on_datastore_item(self, item_name):
+            '''Select datastore item by name'''
+            datastore_items = self.datastore_list.items
+            selected_item = datastore_items[[item for item in range(len(datastore_items)) if datastore_items[item].name == item_name][0]]
+            selected_item.click()
+            self._wait_for_results_refresh()
+            return self.DatastoreItem(selected_item)
+
+    def fill_fields(self, host_name, datastore_name):
+            self.click_on_host_item(host_name)
+            self.click_on_datastore_item(datastore_name)
+            self._wait_for_results_refresh()
+            return ProvisionEnvironment(self.testsetup)
+
     class HostItem(ListItem):
         '''Represents a host in the list'''
         _columns = ["name", "total_vms", "platform", "version", "state"]
 
         @property
         def name(self):
-            pass
+            return self._item_data[0].text
 
         @property
         def total_vms(self):
@@ -136,7 +160,7 @@ class ProvisionEnvironment(Base):
 
         @property
         def name(self):
-            pass
+            return self._item_data[0].text
 
         @property
         def free_space(self):
@@ -145,3 +169,4 @@ class ProvisionEnvironment(Base):
         @property
         def total_space(self):
             pass
+

@@ -10,6 +10,7 @@ from pages.base import Base
 from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from unittestzero import Assert
 
 class ProvisionCatalog(Base):
     '''Represents the Catalog tab in the Provision wizard'''
@@ -27,7 +28,7 @@ class ProvisionCatalog(Base):
     @property
     def catalog_filter(self):
         '''Select - Filter
-        
+
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._filter_select_locator))
@@ -35,7 +36,7 @@ class ProvisionCatalog(Base):
     @property
     def catalog_list(self):
         '''Select - Name
-        
+
         Returns a list region
         '''
         return ListRegion(self.testsetup,
@@ -45,7 +46,7 @@ class ProvisionCatalog(Base):
     @property
     def provision_type(self):
         '''Select - Provision Type
-        
+
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._provision_type_select_locator))
@@ -58,10 +59,10 @@ class ProvisionCatalog(Base):
     @property
     def number_of_vms(self):
         '''Number of VMs
-        
+
         Returns a Select webelement
         '''
-        return self.get_element(*self._number_of_vms_select_locator)
+        return Select(self.get_element(*self._number_of_vms_select_locator))
 
     @property
     def vm_name(self):
@@ -77,6 +78,15 @@ class ProvisionCatalog(Base):
     def vm_description_count(self):
         '''VM Naming - Description character count'''
         return self.get_element(*self._vm_description_char_count_locator)
+
+    def fill_fields(self, provision_type_text, number_of_vms_text, vm_name_text, vm_description_text):
+        self.provision_type.select_by_visible_text(provision_type_text)
+        self.number_of_vms.select_by_visible_text(number_of_vms_text)
+        self._wait_for_visible_element(*self._vm_name_locator)
+        self.vm_name.send_keys(vm_name_text)
+        self.vm_description.send_keys(vm_description_text)
+        Assert.true(self.vm_description_count.text == unicode(len(vm_description_text)))
+        return ProvisionCatalog(self.testsetup)
 
     class CatalogItem(ListItem):
         '''Represents a catalog item from the list'''

@@ -20,7 +20,7 @@ class ProvisionSchedule(Base):
     @property
     def when_to_provision(self):
         '''Schedule Info - When to Provision
-        
+
         Returns a list of elements for the radio buttons
         '''
         return self.selenium.find_elements(
@@ -34,7 +34,18 @@ class ProvisionSchedule(Base):
     @property
     def retirement(self):
         '''Lifespan - Time until Retirement
-        
+
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._retirement_select_locator))
+
+    def fill_fields(self, when_to_provision_selection, power_on_after_creation_check, retirement_selection):
+        self.when_to_provision[0].click()
+        self._wait_for_results_refresh()
+        self.when_to_provision[when_to_provision_selection].click()
+        self._wait_for_results_refresh()
+        if power_on_after_creation_check:
+            self.power_on_after_creation.click()
+        self._wait_for_results_refresh()
+        self.retirement.select_by_visible_text(retirement_selection)
+        return ProvisionSchedule(self.testsetup)

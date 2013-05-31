@@ -21,8 +21,7 @@ class ProvisionFormButtonMixin(object):
             "li img[alt='Submit']")
     _template_cancel_button_locator = (
             By.CSS_SELECTOR,
-            "li img[title='Cancel']")
-
+            "li img[alt='Cancel']")
 
     # NOTE: Not sure if this is the best way to go about this. Should the test
     # itself worry about what set of buttons is enabled/disabled? I certainly
@@ -74,6 +73,21 @@ class ProvisionTabButtonItem(TabButtonItem):
                 "Schedule": ProvisionSchedule
             }
 
+class ProvisionSelectionChain():
+    _provision_vms_button_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Request to Provision VMs']")
+
+    @property
+    def center_buttons(self):
+        from pages.regions.taskbar.center import CenterButtons
+        return CenterButtons(self.testsetup)
+
+    def click_on_lifecycle(self):
+        provision_vms_button = self.get_element(*self._provision_vms_button_locator)
+
+        ActionChains(self.selenium).click(self.center_buttons.lifecycle_button).click(provision_vms_button).perform()
+        from pages.services_subpages.provision import ProvisionStart
+        return ProvisionStart(self.testsetup)
+
 class ProvisionStart(Page, ProvisionFormButtonMixin):
     '''Page representing the start of the Provision VMs "wizard"'''
     _page_title = "CloudForms Management Engine: Virtual Machines"
@@ -105,6 +119,14 @@ class ProvisionStart(Page, ProvisionFormButtonMixin):
                 self.testsetup,
                 self.get_element(*self._template_list_locator),
                 self.TemplateItem)
+
+    def click_on_template_item(self, item_name):
+        '''Select template item by name'''
+        template_items = self.template_list.items
+        selected_item = template_items[[item for item in range(len(template_items)) if template_items[item].name == item_name][0]]
+        selected_item.click()
+        self._wait_for_results_refresh()
+        return self.TemplateItem(selected_item)
 
     class TemplateItem(ListItem):
         '''Represents an item in the template list'''
@@ -170,3 +192,10 @@ class Provision(Page, ProvisionFormButtonMixin):
         self._wait_for_results_refresh()
         from pages.services import Services
         return Services.VirtualMachines(self.testsetup)
+
+    def click_on_submit(self):
+        ''' Click on the submit button. Go to Requests page'''
+        self.continue_button.click()
+        self._wait_for_results_refresh()
+        from pages.services import Services
+        return Services.Requests(self.testsetup)
