@@ -16,6 +16,14 @@ class ServerSettingsTab(Base):
     def server_roles(self):
         return [ServerSettingsTab.ServerRole(el) for el in self._server_role_elements]
 
+    @property
+    def selected_server_role_names(self):
+        role_names = list()
+        for role in self.server_roles:
+            if role.is_selected:
+                role_names.append(role.name)
+        return role_names
+
     def save(self):
         self._wait_for_visible_element(*self._submit_button)
         self.selenium.find_element(*self._submit_button).click()
@@ -28,12 +36,12 @@ class ServerSettingsTab(Base):
                 role.select()
 
     def unselect_server_role(self, role_name):
-        for role in self._server_role_elements:
+        for role in self.server_roles:
             if role.name == role_name:
                 role.unselect()
 
     def set_server_roles(self, roles):
-        for role in self._server_role_elements:
+        for role in self.server_roles:
             if role.name in roles:
                 role.select()
             else:
@@ -54,7 +62,9 @@ class ServerSettingsTab(Base):
 
         @property
         def name(self):
-            return self.element.get_attribute('name')
+            # The 'server_roles_' prefix isn't part of the actual role name,
+            # it's only part of this page's implementation, so strip it off
+            return self.element.get_attribute('name').replace('server_roles_', '', 1)
 
         @property
         def is_selected(self):
