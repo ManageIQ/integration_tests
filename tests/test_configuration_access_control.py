@@ -36,7 +36,7 @@ class TestRoles:
         Assert.true(roles_pg.flash.message.startswith('Role "testrole2": Delete successful'))
 
 
-@pytest.mark.destructive
+@pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized")
 class TestGroups:
     _group_description = "test_group"
@@ -81,7 +81,7 @@ class TestGroups:
         edit_tags_pg.select_category(_category)
         edit_tags_pg.select_value(_value)
         Assert.true(edit_tags_pg.is_tag_displayed(_category, _value))
-        edit_tags_pg.save
+        edit_tags_pg.save()
         Assert.true(edit_tags_pg.flash.message.startswith('Tag edits were successfully saved'))
 
     def test_delete_group_tag(self, mozwebqa, home_page_logged_in):
@@ -94,7 +94,7 @@ class TestGroups:
         edit_tags_pg = config_pg.click_on_access_control().click_on_groups().click_on_group(_group).click_on_edit_tags()
         edit_tags_pg.delete_tag(_category)
         Assert.false(edit_tags_pg.is_tag_displayed(_category, _value))
-        edit_tags_pg.save
+        edit_tags_pg.save()
         Assert.true(edit_tags_pg.flash.message.startswith('Tag edits were successfully saved'))
 
     def test_cancel_tag_edit(self, mozwebqa, home_page_logged_in):
@@ -103,7 +103,7 @@ class TestGroups:
         config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
         Assert.true(config_pg.is_the_current_page)
         edit_tags_pg = config_pg.click_on_access_control().click_on_groups().click_on_group(_group).click_on_edit_tags()
-        edit_tags_pg.cancel
+        edit_tags_pg.cancel()
         Assert.true(edit_tags_pg.flash.message.startswith('Tag Edit was cancelled by the user'))
 
     def test_reset_tag_edit(self, mozwebqa, home_page_logged_in):
@@ -117,6 +117,99 @@ class TestGroups:
         edit_tags_pg.select_category(_category)
         edit_tags_pg.select_value(_value)
         Assert.true(edit_tags_pg.is_tag_displayed(_category, _value))
-        edit_tags_pg.reset
+        edit_tags_pg.reset()
         Assert.false(edit_tags_pg.is_tag_displayed(_category, _value))
         Assert.true(edit_tags_pg.flash.message.startswith('All changes have been reset'))
+
+@pytest.mark.destructive
+@pytest.mark.usefixtures("maximized")
+class TestUsers:
+    _user_name = 'testuser'
+    _user_name_edit = 'test_user_edit'
+    _user_name_copy = 'test_user_copy'
+    _user_id = 'testuser'
+    _user_id_edit = 'test_user_edit'
+    _user_id_copy = 'test_user_copy'
+    _user_pswd = 'test'
+    _user_email = 'test@test.com'
+    _user_group = 'EvmGroup-administrator'
+    def test_add_new_user(self, mozwebqa, home_page_logged_in):
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        new_user_pg = config_pg.click_on_access_control().click_on_users().click_on_add_new()
+        new_user_pg.fill_info(self._user_name, self._user_id, self._user_pswd, self._user_pswd, self._user_email, self._user_group)
+        show_user_pg = new_user_pg.click_on_add()
+        Assert.true(show_user_pg.flash.message.startswith('User "testuser" was saved'))
+
+    def test_edit_user(self, mozwebqa, home_page_logged_in):
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_user_pg = config_pg.click_on_access_control().click_on_users().click_on_user(self._user_name).click_on_edit()
+        edit_user_pg.fill_info(self._user_name_edit, self._user_id_edit, "", "", "", "")
+        show_user_pg = edit_user_pg.click_on_save()
+        Assert.true(show_user_pg.flash.message.startswith('User "test_user_edit" was saved'))
+
+    def test_tag_user(self, mozwebqa, home_page_logged_in):
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_tags_pg = config_pg.click_on_access_control().click_on_users().click_on_user(self._user_name_edit).click_on_edit_tags()
+        edit_tags_pg.select_category("Department")
+        edit_tags_pg.select_value("Engineering")
+        Assert.true(edit_tags_pg.is_tag_displayed("Department", "Engineering"))
+        edit_tags_pg.save()
+        Assert.true(edit_tags_pg.flash.message.startswith('Tag edits were successfully saved'))
+
+    def test_delete_user_tag(self, mozwebqa, home_page_logged_in):
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_tags_pg = config_pg.click_on_access_control().click_on_users().click_on_user(self._user_name_edit).click_on_edit_tags()
+        edit_tags_pg.delete_tag("Department")
+        Assert.false(edit_tags_pg.is_tag_displayed("Department", "Engineering"))
+        edit_tags_pg.save()
+        Assert.true(edit_tags_pg.flash.message.startswith('Tag edits were successfully saved'))
+
+    def test_cancel_tag_edits(self, mozwebqa, home_page_logged_in):
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_tags_pg = config_pg.click_on_access_control().click_on_users().click_on_user(self._user_name_edit).click_on_edit_tags()
+        edit_tags_pg.cancel()
+        Assert.true(edit_tags_pg.flash.message.startswith('Tag Edit was cancelled by the user'))
+
+    def test_reset_tag_edit(self, mozwebqa, home_page_logged_in):
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_tags_pg = config_pg.click_on_access_control().click_on_users().click_on_user(self._user_name_edit).click_on_edit_tags()
+        edit_tags_pg.select_category("Department")       
+        edit_tags_pg.select_value("Engineering")       
+        Assert.true(edit_tags_pg.is_tag_displayed("Department", "Engineering"))
+        edit_tags_pg.reset()
+        Assert.false(edit_tags_pg.is_tag_displayed("Department", "Engineering"))
+        Assert.true(edit_tags_pg.flash.message.startswith('All changes have been reset'))
+
+    def test_copy_user(self, mozwebqa, home_page_logged_in):
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        copy_user_pg = config_pg.click_on_access_control().click_on_users().click_on_user(self._user_name_edit).click_on_copy()
+        copy_user_pg.fill_info(self._user_name_copy, self._user_id_copy, "", "", "", "")
+        show_user_pg = copy_user_pg.click_on_add()
+        Assert.true(show_user_pg.flash.message.startswith('User "test_user_copy" was saved'))
+        
+    def test_delete_user(self, mozwebqa, home_page_logged_in):
+        home_pg = home_page_logged_in
+        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        Assert.true(config_pg.is_the_current_page)
+        edit_user_pg = config_pg.click_on_access_control().click_on_users().click_on_user(self._user_name_edit)
+        users_pg = edit_user_pg.click_on_delete()
+        Assert.true(users_pg.flash.message.startswith('EVM User "test_user_edit": Delete successful'))
+        edit_user_pg = users_pg.click_on_user(self._user_name_copy)
+        users_pg = edit_user_pg.click_on_delete()
+        Assert.true(users_pg.flash.message.startswith('EVM User "test_user_copy": Delete successful'))
+
+        
