@@ -23,5 +23,5 @@ def add_cfme_pages_to_path():
 
 add_cfme_pages_to_path()
 
-pytest_plugins = "plugin.highlight", "fixtures.cfmedata"
+pytest_plugins = "plugin.highlight", "fixtures.cfmedata", "fixtures.server_roles"
 
