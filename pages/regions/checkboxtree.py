@@ -27,15 +27,9 @@ class CheckboxTree(Tree):
             return True
         return self._checkbox.click()
 
-
     @property
     def is_checked(self):
         return "iconCheckAll" in self._checkbox_img
-
-    @property
-    def children(self):
-        return [CheckboxTree(self.testsetup, web_element, self)
-                for web_element in self.root.find_elements(*self._sub_item_locator)]
 
     @property
     def _checkbox(self):

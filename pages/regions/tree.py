@@ -16,8 +16,7 @@ class Tree(Page):
     '''
 
     _main_tree_item_locator = (By.CSS_SELECTOR, "table > tbody > tr > td > table > tbody")
-    _root_item_locator = (By.XPATH, "tr")
-    _sub_item_locator = (By.XPATH, "following-sibling::*")
+    _tree_items_locator = (By.XPATH, "tr")
 
     def __init__(self,setup,root_element,parent = None):
         Page.__init__(self, setup)
@@ -26,12 +25,18 @@ class Tree(Page):
 
     @property
     def root(self):
-        return self._root_element.find_element(*self._main_tree_item_locator).find_element(*self._root_item_locator)
+        # First tree item element is the root
+        return self._root_element.find_element(*self._main_tree_item_locator).find_element(*self._tree_items_locator)
 
     @property
     def children(self):
-        return [Tree(self.testsetup, web_element, self)
-                for web_element in self.root.find_elements(*self._sub_item_locator)]
+        tree_element =  self._root_element.find_element(*self._main_tree_item_locator)
+        child_elements = tree_element.find_elements(*self._tree_items_locator)
+        # Pop off the root element, iterate over the rest
+        child_elements.pop(0)
+        # Remaining tree item elements are children, instantiate them as
+        # the same type as self to support different tree types in subclasses
+        return [type(self)(self.testsetup, element, self) for element in child_elements]
 
     @property
     def name(self):
@@ -45,10 +50,10 @@ class Tree(Page):
     @property
     def parent(self):
         return self._parent
-        
+
     def is_displayed(self):
         return self._root_element.is_displayed()
-    
+
     def click(self):
         element = self.root.click()
         self._wait_for_results_refresh()
@@ -57,17 +62,14 @@ class Tree(Page):
     def find_node_by_regexp(self, regexp_str):
         # finds first node by name in the whole tree, breadth first
         regexp = re.compile(regexp_str)
-        if regexp.match(self.name):
-            return self
-        self.twisty.expand()
-        queue = self.children
+        queue = [self]
         while queue:
-            child = queue.pop(0)
-            if regexp.match(child.name):
-                return child
+            node = queue.pop(0)
+            if regexp.match(node.name):
+                return node
             else:
-                child.twisty.expand()
-                queue += child.children
+                node.twisty.expand()
+                queue.extend(node.children)
 
     def find_node_by_name(self, name):
         return self.find_node_by_regexp("\A%s\Z" % re.escape(name))
