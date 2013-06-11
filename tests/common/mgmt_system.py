@@ -1,11 +1,15 @@
 """ Base module for Management Systems classes. """
 
+import time
 from abc import ABCMeta, abstractmethod
+
+import boto
 from pysphere import *
 from pysphere.resources.vi_exception import VIException
 from pysphere.resources import VimService_services as VI
 from pysphere.vi_task import VITask
 from ovirtsdk.api import API
+
 
 class MgmtSystemAPIBase(object):
     """ Base interface class for Management Systems. """
@@ -170,6 +174,7 @@ class VMWareSystem(MgmtSystemAPIBase):
     Detriments of pysphere:
       - Response often are not detailed enough.
     """
+
     def __init__(self, hostname='localhost', username='root', password='rootpwd'):
         """ Initialize VMWareSystem """
         # sanitize hostname
@@ -294,7 +299,6 @@ class VMWareSystem(MgmtSystemAPIBase):
         else:
             vm.suspend()
             return vm.get_status()
-        return False
 
 
 class RHEVMSystem(MgmtSystemAPIBase):
@@ -345,6 +349,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         vm = api.vms.get(name='test_vm')
         vm.status.get_state() # returns 'up'
     """
+
     def __init__(self, hostname='localhost', username='root', password='rootpwd'):
         """ Initialize RHEVMSystem """
         # sanitize hostname
@@ -456,5 +461,256 @@ class RHEVMSystem(MgmtSystemAPIBase):
         else:
             ack = vm.suspend()
             return ack.get_status().get_state() == 'complete'
-        return False
+
+
+class EC2System(MgmtSystemAPIBase):
+    """EC2 Management System, powered by boto
+
+    Wraps the EC2 API and mimics the behavior of other implementors of
+    MgmtServiceAPIBase for us in VM control testing
+
+    Instead of username and password, accepts access_key_id and
+    secret_access_key, the AWS analogs to those ideas. These are passed, along
+    with any kwargs, straight through to boto's EC2 connection factory. This
+    allows customization of the EC2 connection, to connect to another region,
+    for example.
+
+    For the purposes of the EC2 system, a VM's instance ID is its name because
+    EC2 instances don't have to have unique names.
+
+    """
+
+    states = {
+        'running': ('running',),
+        'stopped': ('stopped', 'terminated'),
+        'suspended': (),
+        'deleted': ('terminated',),
+    }
+
+    def __init__(self, access_key_id, secret_access_key, **kwargs):
+        self.api = boto.connect_ec2(access_key_id, secret_access_key, **kwargs)
+
+    def disconnect(self):
+        """Disconnect from the EC2 API -- NOOP
+
+        AWS EC2 service is stateless, so there's nothing to disconnect from
+        """
+        pass
+
+    def info(self):
+        """Returns the current versions of boto and the EC2 API being used"""
+        return '%s %s' % (boto.UserAgent, self.api.APIVersion)
+
+    def list_vm(self):
+        """Returns a list from instance IDs currently known to EC2"""
+        return [instance.id for instance in self._get_all_instances()]
+
+    def vm_status(self, instance_id):
+        """Returns the status of the requested instance
+
+        :param  instance_id: ID of the instance to inspect
+        :type   instance_id: basestring
+        :return: Instance status.
+        :rtype:  basestring
+
+        See this page for possible return values:
+        http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-ItemType-InstanceStateType.html
+
+        """
+        instance_id = self._get_instance_id_by_name(instance_id)
+        reservations = self.api.get_all_instances([instance_id])
+        instances = self._get_instances_from_reservations(reservations)
+        for instance in instances:
+            if instance.id == instance_id:
+                return instance.state
+
+    def create_vm(self, ami_id, *args, **kwargs):
+        """Instantiate the requested VM image
+
+        :param  ami_id: AMI ID to instantiate
+        :type   ami_id: basestring
+        :return: Instance ID of the created instance
+        :rtype:  basestring
+
+        Packed arguments are passed along to boto's run_instances method.
+
+        min_count and max_count will be forced to '1'; if you're trying to do
+        anything fancier than that, you might be in the wrong place
+
+        """
+        # Enforce create_vm only creating one VM
+        kwargs.update({
+            'min_count': 1,
+            'max_count': 1,
+        })
+        reservation = self.api.run_instances(ami_id, *args, **kwargs)
+        instances = self._get_instances_from_reservations([reservation])
+        # Should have only made one VM; return its ID for use in other methods
+        return instances[0].id
+
+    def delete_vm(self, instance_id):
+        """Deletes the an instance
+
+        :param  instance_id: ID of the instance to act on
+        :type   instance_id: basestring
+        :return: Whether or not the backend reports the action completed
+        :rtype:  bool
+
+        """
+        instance_id = self._get_instance_id_by_name(instance_id)
+        try:
+            self.api.terminate_instances([instance_id])
+            self._block_until(instance_id, self.states['deleted'])
+            return True
+        except ActionTimedOutError:
+            return False
+
+    def start_vm(self, instance_id):
+        """Start an instance
+
+        :param  instance_id: ID of the instance to act on
+        :type   instance_id: basestring
+        :return: Whether or not the backend reports the action completed
+        :rtype:  bool
+
+        """
+        instance_id = self._get_instance_id_by_name(instance_id)
+        try:
+            self.api.start_instances([instance_id])
+            self._block_until(instance_id, self.states['running'])
+            return True
+        except ActionTimedOutError:
+            return False
+
+    def stop_vm(self, instance_id):
+        """Stop an instance
+
+        :param  instance_id: ID of the instance to act on
+        :type   instance_id: basestring
+        :return: Whether or not the backend reports the action completed
+        :rtype:  bool
+
+        """
+        instance_id = self._get_instance_id_by_name(instance_id)
+        try:
+            self.api.stop_instances([instance_id])
+            self._block_until(instance_id, self.states['stopped'])
+            return True
+        except ActionTimedOutError:
+            return False
+
+    def restart_vm(self, instance_id):
+        """Restart an instance
+
+        :param  instance_id: ID of the instance to act on
+        :type   instance_id: basestring
+        :return: Whether or not the backend reports the action completed
+        :rtype:  bool
+
+        The action is taken in two separate calls to EC2. A 'False' return can
+        indicate a failure of either the stop action or the start action.
+        """
+        # There is a reboot_instances call available on the API, but it provides
+        # less insight than blocking on stop_vm and start_vm. Furthermore,
+        # there is no "rebooting" state, so there are potential monitoring
+        # issues that are avoided by completing these steps atomically
+        return self.stop_vm(instance_id) and self.start_vm(instance_id)
+
+    def is_vm_running(self, instance_id):
+        """Is the VM running?
+
+        :param  instance_id: ID of the instance to inspect
+        :type   instance_id: basestring
+        :return: Whether or not the requested instance is running
+        :rtype: bool
+
+        """
+        return self.vm_status(instance_id) in self.states['running']
+
+    def is_vm_stopped(self, instance_id):
+        """Is the VM stopped?
+
+        :param  instance_id: ID of the instance to inspect
+        :type   instance_id: basestring
+        :return: Whether or not the requested instance is stopped
+        :rtype: bool
+
+        """
+        return self.vm_status(instance_id) in self.states['stopped']
+
+    def suspend_vm(self, instance_id):
+        """Suspend a VM: Unsupported by EC2
+
+        :param  instance_id: ID of the instance to act on
+        :type   instance_id: basestring
+        :raises: Exception
+
+        The action is taken in two separate calls to EC2. A 'False' return can
+        indicate a failure of either the stop action or the start action.
+
+        """
+        raise Exception('Requested action is not supported by this system')
+
+    def is_vm_suspended(self, instance_id):
+        """Is the VM suspended? We'll never know because EC2 don't support this.
+
+        :param  instance_id: ID of the instance to inspect
+        :type   instance_id: basestring
+        :raises: Exception
+
+        """
+        raise Exception('Requested action is not supported by this system')
+
+    def _get_instance_id_by_name(self, instance_name):
+        # Quick validation that the instance name isn't actually an ID
+        # If people start naming their instances in such a way to break this,
+        # check, that would be silly, but we can upgrade to regex if necessary.
+        if instance_name.startswith('i-') and len(instance_name) == 10:
+            # This is already an instance id, return it!
+            return instance_name
+
+        # Filter by the 'Name' tag
+        filters = {
+            'tag:Name': instance_name,
+        }
+        reservations = self.api.get_all_instances(filters=filters)
+        instances = self._get_instances_from_reservations(reservations)
+        if not instances:
+            raise Exception('Instance with name "%s" not found.' % instance_name)
+        elif len(instances) > 1:
+            raise Exception('Instance name "%s" is not unique' % instance_name)
+        else:
+            # We have an instance! return its ID
+            return instances[0].id
+
+    def _get_instances_from_reservations(self, reservations):
+        """Takes a sequence of reservations and returns their instances"""
+        instances = list()
+        for reservation in reservations:
+            for instance in reservation.instances:
+                instances.append(instance)
+        return instances
+
+    def _get_all_instances(self):
+        """Gets all instances that EC2 can see"""
+        reservations = self.api.get_all_instances()
+        instances = self._get_instances_from_reservations(reservations)
+        return instances
+
+    def _block_until(self, instance_id, expected, timeout=90):
+        """Blocks until the given instance is in one of the expected states
+
+        Takes an optional timeout value; set this to None to disable the timeout
+        (probably a bad idea). The timeout has a sane default.
+
+        """
+        start = time.time()
+        while self.vm_status(instance_id) not in expected:
+            if timeout is not None and time.time() - start > 90:
+                raise ActionTimedOutError
+            time.sleep(3)
+
+
+class ActionTimedOutError(Exception):
+    pass
 

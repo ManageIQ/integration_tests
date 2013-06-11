@@ -45,7 +45,22 @@ management_systems:
         tags:
             Provisioning Scope: All
         test_vm_power_control:
-            - vm_name            
+            - vm_name
+    ec2:
+        name: EC2 US East
+        default_name: EC2 US East
+        credentials: aws
+        hostname: ec2.us-east-1.amazonaws.com
+        ipaddress: 207.171.162.181
+        server_zone: default
+        type: ec2
+        clusters:
+            - us-east-1
+        tags:
+            Provisioning Scope: All
+        # EC2 Power Control is currently broken
+        #test_vm_power_control:
+        #    - instance_id_or_name
 pxe:
     pxe_servers:
         rhel:
