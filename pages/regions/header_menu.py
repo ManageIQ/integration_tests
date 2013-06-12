@@ -14,7 +14,7 @@ from pages.control import Control
 from pages.configuration import Configuration
 from pages.virtual_intelligence import VirtualIntelligence
 from pages.infrastructure_subpages.management_systems import ManagementSystems
-
+from pages.optimize import Optimize
 
 class HeaderMenu(Page):
     """
@@ -34,6 +34,7 @@ class HeaderMenu(Page):
                   "Infrastructure": Infrastructure,
                   "Control": Control,
                   "Automate": Automate,
+                  "Optimize": Optimize,
                   "Configuration": Configuration}
     def __init__(self, testsetup, element):
         Page.__init__(self, testsetup)
@@ -103,6 +104,7 @@ class HeaderMenu(Page):
                                         "Tasks": Configuration.Tasks,
                                         "SmartProxies": Configuration.SmartProxies,
                                         "About": Configuration.About},
+                      "Optimize": {"Utilization": Optimize.Utilization},
                       "Virtual Intelligence": {"Reports": VirtualIntelligence.Reports,
 					       "Chargeback": VirtualIntelligence.Chargeback }}
 

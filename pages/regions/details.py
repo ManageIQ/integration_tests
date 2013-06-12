@@ -26,8 +26,8 @@ class Details(Page):
         return self.get_section(section_name) != None
 
     class DetailsSection(Page):
-        _details_section_name_locator = (By.CSS_SELECTOR, ".modtitle")
-        _details_section_data_locator = (By.CSS_SELECTOR, "tr")
+        _details_section_name_locator = (By.CSS_SELECTOR, ".modtitle") 
+        _details_section_data_locator = (By.CSS_SELECTOR, "tr") 
         
         def __init__(self, testsetup, element):
             Page.__init__(self, testsetup)
@@ -45,7 +45,7 @@ class Details(Page):
         def get_item(self, item_key):
             item_found = None
             for item in self.items:
-                if item_key in item.key:
+                if item_key == item.key:
                     item_found = item
             return item_found
         
@@ -58,7 +58,7 @@ class Details(Page):
         
         class DetailsItem(Page):
             _details_section_data_key_locator = (By.CSS_SELECTOR, "td.label")
-            _details_section_data_value_locator = (By.CSS_SELECTOR, "td:not(.label)")
+            _details_section_data_value_locator = (By.CSS_SELECTOR, "td:not(.label)") 
             
             def __init__(self, testsetup, element):
                 Page.__init__(self, testsetup)
