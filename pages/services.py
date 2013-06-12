@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import re
+import time
 from pages.base import Base
 from pages.regions.quadicons import Quadicons
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.paginator import PaginatorMixin
-from time import time, sleep
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
@@ -361,7 +361,7 @@ class Services(Base):
         _details_locator = (By.CSS_SELECTOR, "div#textual_div")
         _set_retirement_date_button_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Set Retirement Dates for this VM']")
         _immediately_retire_vm_button_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Immediately Retire this VM']")
-
+        _utilization_button_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Show Capacity & Utilization data for this VM']")
 
         @property
         def set_retirement_date_button(self):
@@ -371,6 +371,10 @@ class Services(Base):
         def immediately_retire_vm_button(self):
             return self.selenium.find_element(*self._immediately_retire_vm_button_locator)
 
+
+        @property
+        def utilization_button(self):
+            return self.selenium.find_element(*self._utilization_button_locator)
         @property
         def power_state(self):
             return self.details.get_section('Power Management').get_item('Power State').value
@@ -399,6 +403,11 @@ class Services(Base):
             self.handle_popup(cancel)
             self._wait_for_results_refresh()
             return Services.VirtualMachines(self.testsetup)
+
+        def click_on_utilization(self):
+            ActionChains(self.selenium).click(self.center_buttons.monitoring_button).click(self.utilization_button).perform()
+            self._wait_for_results_refresh()
+            return Services.VirtualMachineUtil(self.testsetup)
 
         def wait_for_vm_state_change(self, desired_state, timeout_in_minutes):
             current_state = self.power_state
@@ -466,6 +475,41 @@ class Services(Base):
                 self._wait_for_results_refresh()       
  
     #class ImmediatelyRetireVm(Base):
+
+    class VirtualMachineUtil(Base):
+        _interval_input_field_locator = (By.CSS_SELECTOR, "select#perf_typ")
+        _show_edit_field_locator = (By.CSS_SELECTOR, "select#perf_days")
+        _time_zone_edit_field_locator = (By.CSS_SELECTOR, "select#time_zone")
+        _compare_to_edit_field_locator = (By.CSS_SELECTOR, "select#compare_to")
+        _date_edit_field_locator = (By.CSS_SELECTOR, "input#miq_date_1")
+
+        @property
+        def date_field(self):
+            return self.selenium.find_element(*self._date_edit_field_locator)        
+
+        def fill_data(self, interval,  show, time_zone, compare_to, date):
+            if(interval):
+                self.select_dropdown(interval, *self._interval_input_field_locator)
+                self._wait_for_results_refresh()
+                time.sleep(20) #issue 104 workaround
+            if(date):
+                self.date_field._parent.execute_script("$j('#miq_date_1').attr('value', '%s')" % date)                
+                self._wait_for_results_refresh()
+                time.sleep(20) #issue 104 workaround            
+            if(show and interval == "Daily"):
+                self.select_dropdown(show, *self._show_edit_field_locator)
+                self._wait_for_results_refresh()
+                time.sleep(20) #issue 104 workaround
+            if(time_zone):
+                self.select_dropdown(time_zone, *self._time_zone_edit_field_locator)
+                self._wait_for_results_refresh()
+                time.sleep(20) #issue 104 workaround
+            if(compare_to):
+                self.select_dropdown(compare_to, *self._compare_to_edit_field_locator)
+                self._wait_for_results_refresh()
+                time.sleep(20) #issue 104 workaround
+            self._wait_for_results_refresh()
+            time.sleep(20) #issue 104 workaround
 
     #class EditVm(Base):
     #    _page_title = 'CloudForms Management Engine: Virtual Machines'

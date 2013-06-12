@@ -14,7 +14,7 @@ def pick_random_vm(mozwebqa, home_page_logged_in):
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized") 
 class TestServices:
-#    def test_virtual_machines(self, mozwebqa, home_page_logged_in):
+ #    def test_virtual_machines(self, mozwebqa, home_page_logged_in):
 #        home_pg = home_page_logged_in
 #        Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
 #        vm_pg = home_pg.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
@@ -64,3 +64,23 @@ class TestServices:
         vm_name = vm_pg.details.get_section("Properties").get_item("Name").value
         vm_pg.click_on_immediately_retire_vm(cancel=True)
         Assert.true(vm_pg.details.get_section("Properties").get_item("Name").value == vm_name)        
+
+
+    def test_vm_util(self, mozwebqa, home_page_logged_in, pick_random_vm):
+        home_pg = home_page_logged_in
+        Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
+        vm_pg = home_pg.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+        Assert.true(vm_pg.is_the_current_page)
+        vm_details_pg = pick_random_vm
+        util_pg = vm_details_pg.click_on_utilization()
+
+        interval = "Daily"
+        date = "06/19/2013"
+        show = "2 Weeks"
+        time_zone = ""
+        compare_to = ""
+        #assert 0
+        util_pg.fill_data(interval, show, time_zone, compare_to, date)
+        util_pg._wait_for_results_refresh()
+        Assert.true(util_pg.date_field.get_attribute("value") == date)
+
