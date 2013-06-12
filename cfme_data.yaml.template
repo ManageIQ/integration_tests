@@ -30,9 +30,11 @@ management_systems:
         name: RHEV 3.1
         default_name: RHEV-M (10.0.0.3)
         credentials: rhevm31-credential_name_from_credentials.yaml
+        cu_credentials: rhevm31-cu_db_cred_name_from_credentials.yaml
         hostname: rhevm.example.com
         ipaddress: 10.0.0.1
         server_zone: default
+        api_port: 3000
         type: rhevm
         discovery_range:
             start: 10.0.0.3
