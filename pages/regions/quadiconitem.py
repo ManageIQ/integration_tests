@@ -12,10 +12,10 @@ class QuadiconItem(Page):
     _quadlink_locator = (By.CSS_SELECTOR, '#quadicon > div > a')
     _checkbox_locator = (By.CSS_SELECTOR, '#listcheckbox')
     _label_link_locator = (By.CSS_SELECTOR, 'tr > td > a')
-    _quad_tl_locator = (By.CSS_SELECTOR, '#quadicon > div.a72')
-    _quad_tr_locator = (By.CSS_SELECTOR, '#quadicon > div.b72')
-    _quad_bl_locator = (By.CSS_SELECTOR, '#quadicon > div.c72')
-    _quad_br_locator = (By.CSS_SELECTOR, '#quadicon > div.d72')
+    _quad_tl_locator = (By.CSS_SELECTOR, '#quadicon > .a72')
+    _quad_tr_locator = (By.CSS_SELECTOR, '#quadicon > .b72')
+    _quad_bl_locator = (By.CSS_SELECTOR, '#quadicon > .c72')
+    _quad_br_locator = (By.CSS_SELECTOR, '#quadicon > .d72')
     
     def __init__(self, testsetup, quadicon_list_element):
         Page.__init__(self, testsetup)

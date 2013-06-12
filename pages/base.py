@@ -39,9 +39,9 @@ class Base(Page):
     class HeaderRegion(Page):
         # LoggedIn        
         _logout_link_locator = (By.CSS_SELECTOR, "a[title='Click to Logout']")
-        _user_indicator_locator = (By.CSS_SELECTOR, "ul#login > li > div > span")
-        _user_options_button_locator = (By.CSS_SELECTOR, "ul#login > li > div > img")
-        _user_options_locator = (By.CSS_SELECTOR, "ul#login > li > div#user_options_div")
+        _user_indicator_locator = (By.CSS_SELECTOR, "#login span")
+        _user_options_button_locator = (By.CSS_SELECTOR, "#login img")
+        _user_options_locator = (By.CSS_SELECTOR, "#login #user_options_div")
 
         _site_navigation_menus_locator = (By.CSS_SELECTOR, "div.navbar > ul > li")
         _site_navigation_min_number_menus = 1
