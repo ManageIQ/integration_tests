@@ -3,8 +3,8 @@ from unittestzero import Assert
 import re
 import time
 
-on_regex = re.compile('up|POWERED\ ON')
-down_regex = re.compile('down|POWERED\ OFF')
+on_regex = re.compile('up|POWERED\ ON|running')
+down_regex = re.compile('down|POWERED\ OFF|stopped')
 suspend_regex = re.compile('SUSPENDED|suspended')
 
 @pytest.fixture()  # IGNORE:E1101

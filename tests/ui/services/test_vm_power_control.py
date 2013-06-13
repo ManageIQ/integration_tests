@@ -18,9 +18,12 @@ def _read(filename):
     import yaml
     return yaml.load(stream)
 
-def fetch_list(data):
+def fetch_list(data, skip_if_ec2 = False):
     tests = []
     for provider in data["management_systems"]:
+        if skip_if_ec2 and 'ec2' in data["management_systems"][provider]["type"]:
+            next
+        else:
             if "test_vm_power_control" in data["management_systems"][provider]:
                 for vm_name in data["management_systems"][provider]["test_vm_power_control"]:
                     tests.append( [ '', provider, vm_name ] )
@@ -33,10 +36,13 @@ def pytest_generate_tests(metafunc):
 
     if 'pwr_ctl_vms' in metafunc.fixturenames:
         argnames = [ 'pwr_ctl_vms', 'provider', 'vm_name' ]
-        metafunc.parametrize(argnames, fetch_list(data), scope="module")
+        if 'suspend' in metafunc.function.func_name:
+            metafunc.parametrize(argnames, fetch_list(data, skip_if_ec2 = True), scope="module")
+        else:
+            metafunc.parametrize(argnames, fetch_list(data, skip_if_ec2 = False), scope="module")
     elif 'random_pwr_ctl_vm' in metafunc.fixturenames:
         argnames = [ 'random_pwr_ctl_vm', 'provider', 'vm_name' ] 
-        all_tests = fetch_list(data)
+        all_tests = fetch_list(data, skip_if_ec2 = False)
         tests.append( all_tests[ randrange( len(all_tests) ) ] )
         metafunc.parametrize(argnames, tests, scope="module")
 
@@ -150,6 +156,7 @@ class TestVmDetailsPowerControlPerProvider:
     # this will fail on rhev without clicking refresh relationships, seems like a event is not sent when rhev finishes saving state
     def test_suspend(self, load_vm_details, provider, vm_name, verify_vm_running, mgmt_sys_api_clients):
         ''' Test suspend operation from a vm details page.  Verify vm transitions to suspended. ''' 
+
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('on', 10)
         last_boot_time = vm_details.last_boot_time
@@ -174,6 +181,7 @@ class TestVmDetailsPowerControlPerProvider:
             
     def test_start_from_suspend(self, load_vm_details, provider, vm_name, verify_vm_suspended, mgmt_sys_api_clients):
         ''' Test power_on operation on a suspended vm.  Verify vm transitions to running. ''' 
+
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('suspended', 10)
         last_boot_time = vm_details.last_boot_time
@@ -203,4 +211,5 @@ class TestMiscPowerControl:
     def test_power_off_multiple_quadicon_vms
 
 TESTS: add checks around options, when off, off shouldn't be listed, etc.
+       when vm is ec2, no suspend button
 '''
