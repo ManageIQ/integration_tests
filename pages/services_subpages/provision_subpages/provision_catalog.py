@@ -16,7 +16,7 @@ class ProvisionCatalog(Base):
     '''Represents the Catalog tab in the Provision wizard'''
     _filter_select_locator = (By.ID, "service__vm_filter")
     _name_list_locator = (
-            By.CSS_SELECTOR, "div#prov_vm_div > table > tbody > tr")
+            By.CSS_SELECTOR, "div#prov_vm_div > table > tbody")
     _provision_type_select_locator = (By.ID, "service__provision_type")
     _linked_clone_checkbox_locator = (By.ID, "service__linked_clone")
     _number_of_vms_select_locator = (By.ID, "service__number_of_vms")
@@ -92,3 +92,43 @@ class ProvisionCatalog(Base):
         '''Represents a catalog item from the list'''
         _columns = ["name", "operating_system", "platform", "cpus", "memory",
                 "disk_size", "management_system", "snapshots"]
+        
+        @property
+        def name(self):
+            '''Template name'''
+            return self._item_data[0].text
+
+        @property
+        def operating_system(self):
+            '''Template operating system'''
+            return self._item_data[1].text
+
+        @property
+        def platform(self):
+            '''Template platform'''
+            return self._item_data[2].text
+
+        @property
+        def cpus(self):
+            '''Template CPU count'''
+            return self._item_data[3].text
+
+        @property
+        def memory(self):
+            '''Template memory'''
+            return self._item_data[4].text
+
+        @property
+        def disk_size(self):
+            '''Template disk size'''
+            return self._item_data[5].text
+
+        @property
+        def management_system(self):
+            '''Template management system'''
+            return self._item_data[6].text
+
+        @property
+        def snapshots(self):
+            '''Template snapshot count'''
+            return self._item_data[7].text

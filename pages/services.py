@@ -10,13 +10,15 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 from pages.regions.list import ListRegion, ListItem
+from pages.services_subpages.catalog_subpages.catalog_items import CatalogItems
+from pages.services_subpages.catalog_subpages.service_catalogs import ServiceCatalogs
 
 class Services(Base):
     @property
     def submenus(self):
         return {"services"       : Services.MyServices,
-                "catalogs"       : None,
-                "miq_request_vm" : Services.Requests,
+                "catalogs"       : Services.Catalogs,
+                "miq_request_vm" : Service.Requests,
                 "vmx"            : Services.VirtualMachines,
                 }
 
@@ -119,6 +121,30 @@ class Services(Base):
         @property
         def region(self):
             pass
+        
+        
+    class Catalogs(Base):
+        _page_title = 'CloudForms Management Engine: Catalogs'
+           
+        @property
+        def accordion(self):
+            from pages.regions.accordion import Accordion
+            return Accordion(self.testsetup)
+
+        def click_on_catalogs_accordion(self):
+             self.accordion.accordion_by_name('Catalogs').click()
+             self._wait_for_results_refresh()
+             return Catalogs(self.testsetup)
+
+        def click_on_catalog_item_accordion(self):
+            self.accordion.accordion_by_name('Catalog Items').click()
+            self._wait_for_results_refresh()
+            return CatalogItems(self.testsetup)
+
+        def click_on_service_catalogs_accordion(self):
+            self.accordion.accordion_by_name('Service Catalogs').click()
+            self._wait_for_results_refresh()
+            return ServiceCatalogs(self.testsetup)
 
     class VmCommonComponents(Base, PaginatorMixin):
 

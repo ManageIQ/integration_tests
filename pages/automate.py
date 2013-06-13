@@ -6,6 +6,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.support.select import Select
 from time import sleep
+from pages.automate_subpages.customization import Customization
 
 class Automate(Base):
     @property
@@ -242,3 +243,17 @@ class Automate(Base):
         @property
         def description(self):
             pass
+
+        
+    class Customization(Base):
+        _page_title = 'CloudForms Management Engine: Customization'
+           
+        @property
+        def accordion(self):
+            from pages.regions.accordion import Accordion
+            return Accordion(self.testsetup)
+
+        def click_on_service_dialog_accordion(self):
+            self.accordion.accordion_by_name('Service Dialog').click()
+            self._wait_for_results_refresh()
+            return Customization(self.testsetup)
