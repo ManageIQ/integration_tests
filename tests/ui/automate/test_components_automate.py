@@ -15,18 +15,20 @@ class TestAutomate:
         ae_tree = ae_pg.accordion.current_content
         ae_pg.accordion.current_content.find_node_by_name("Datastore").click()
         ae_pg = ae_pg.click_on_add_new_namespace()
-        ae_pg = ae_pg.fill_namespace_info("Training", "Training")
+        ae_pg = ae_pg.fill_namespace_info("ATraining", "ATraining")
 
-        ae_pg.accordion.current_content.find_node_by_name("Training").click()
+        ae_pg.accordion.current_content.find_node_by_name("ATraining").click()
         ae_pg = ae_pg.click_on_add_new_namespace()
-        ae_pg = ae_pg.fill_namespace_info("Student1", "Student1")
+        ae_pg = ae_pg.fill_namespace_info("AStudent", "AStudent")
 
-        ae_pg.accordion.current_content.find_node_by_name("Student1").click()
+        ae_pg.accordion.current_content.find_node_by_name("AStudent").click()
         ae_pg = ae_pg.click_on_add_new_class()
-        ae_pg = ae_pg.fill_class_info("TestMethods", "TestMethods", "TestMethods")
+        ae_pg = ae_pg.fill_class_info("ATestMethods", "ATestMethods", "ATestMethods")
 
-       # ae_pg.accordion.current_content.find_node_by_name("TestMethods (TestMethods)").click()
-       # ae_pg = ae_pg.click_on_method_table_row()
-        ae_pg = ae_pg.click_on_edit_schema()
+        ae_pg.accordion.current_content.find_node_by_name("ATestMethods (ATestMethods)").click()
+
+        ae_pg.accordion.current_content.find_node_by_name("Datastore").click()
+        ae_pg.click_on_namespace_item("ATraining", 0)
+        ae_pg.click_on_remove_selected_namespaces()
 
 
