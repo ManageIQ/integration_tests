@@ -76,7 +76,7 @@ class ManagementSystemsEdit(Base):
             elif "server_zone" in key:
                 if self.server_zone.tag_name == "select":
                     self.select_dropdown(value)
-            elif "name_for_edit" in key:
+            elif "edit_name" in key:
                 self.name.clear()
                 self.name.send_keys(value)
             elif "credentials" in key:
