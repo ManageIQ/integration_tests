@@ -10,10 +10,8 @@ from pages.page import Page
 from selenium.webdriver.common.by import By
 from pages.regions.tree import Tree
 
-class CheckboxTree(Tree):
-    '''
-    classdocs
-    '''
+
+class Checkbox(object):
 
     _checkbox_locator = (By.CSS_SELECTOR, "tr > td:nth-child(2) > img")
 
@@ -38,3 +36,9 @@ class CheckboxTree(Tree):
     @property
     def _checkbox_img(self):
         return self._checkbox.get_attribute('src')
+
+
+class CheckboxTree(Tree, Checkbox):
+    '''
+    Checkbox tree with parent-child nodes
+    '''

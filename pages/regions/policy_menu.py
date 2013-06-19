@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.taggable import Taggable
+from pages.regions.policy_mixin import PolicyMixin
 
 class PolicyMenu(Page):
     '''Add this mixin to your page in 3 easy steps:
@@ -52,8 +53,17 @@ class PolicyMenu(Page):
         def reset(self):
             return self.reset_tag_edits
 
-    class ManagePolicies(Base):
-        # TODO: create policy mixin
-        _page_title = ""
+    class ManagePolicies(Base, PolicyMixin):
+        @property
+        def save(self):
+            return self.save_policy_assignment
+
+        @property
+        def cancel(self):
+            return self.cancel_policy_assignment
+
+        @property
+        def reset(self):
+            return self.reset_policy_assignment
 
 
