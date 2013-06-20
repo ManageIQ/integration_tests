@@ -13,3 +13,5 @@ suds
 boto
 pysphere
 ovirt-engine-sdk
+sqlalchemy
+psycopg2
