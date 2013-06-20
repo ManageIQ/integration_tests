@@ -40,6 +40,6 @@ pytest_plugins = (
     'fixtures.cfmedata',
     'fixtures.cfmedb',
     'fixtures.server_roles',
-    'fixtures.soap',
+    'fixtures.soap_client',
     'markers',
 )
