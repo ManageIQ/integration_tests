@@ -28,7 +28,7 @@ class TestAutomate:
         ae_pg.accordion.current_content.find_node_by_name("ATestMethods (ATestMethods)").click()
 
         ae_pg.accordion.current_content.find_node_by_name("Datastore").click()
-        ae_pg.click_on_namespace_item("ATraining", 0)
+        ae_pg.click_on_namespace_item("ATraining")
         ae_pg.click_on_remove_selected_namespaces()
 
 
