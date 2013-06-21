@@ -14,10 +14,12 @@ class TabButtons(Page):
     _button_locator = (By.CSS_SELECTOR, "ul#tab > li")
     _active_tab_locator = (By.CSS_SELECTOR, "li.ui-state-active")
 
-    def __init__(self, testsetup, locator_override=None, cls=TabButtonItem):
+    def __init__(self, testsetup, locator_override=None, active_override=None, cls=TabButtonItem):
         Page.__init__(self, testsetup)
         if locator_override is not None:
             self._button_locator = locator_override
+        if active_override is not None:
+            self._active_tab_locator = active_override
         self._item_cls = cls
 
     @property
