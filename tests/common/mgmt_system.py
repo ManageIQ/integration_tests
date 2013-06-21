@@ -706,7 +706,7 @@ class EC2System(MgmtSystemAPIBase):
         """
         start = time.time()
         while self.vm_status(instance_id) not in expected:
-            if timeout is not None and time.time() - start > 90:
+            if timeout is not None and time.time() - start > timeout:
                 raise ActionTimedOutError
             time.sleep(3)
 
