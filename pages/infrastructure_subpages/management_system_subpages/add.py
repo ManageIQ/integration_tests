@@ -125,6 +125,7 @@ class ManagementSystemsAdd(Base):
                 if self.server_zone.tag_name == "select":
                     self.select_dropdown(value)
             elif "cu_credentials" in key:
+                self.click_on_metrics_credentials()
                 credentials = self.testsetup.credentials[value]
                 self.metrics_userid.clear()
                 self.metrics_userid.send_keys(credentials['username'])
@@ -134,6 +135,7 @@ class ManagementSystemsAdd(Base):
                 self.metrics_verify.send_keys(credentials['password'])
                 continue
             elif "credentials" in key:
+                self.click_on_default_credentials()
                 credentials = self.testsetup.credentials[value]
                 self.default_userid.clear()
                 self.default_userid.send_keys(credentials['username'])
