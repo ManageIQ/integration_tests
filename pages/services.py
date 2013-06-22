@@ -15,7 +15,7 @@ class Services(Base):
     def submenus(self):
         return {"services"       : Services.MyServices,
                 "catalogs"       : None,
-                "miq_request_vm" : Service.Requests,
+                "miq_request_vm" : Services.Requests,
                 "vmx"            : Services.VirtualMachines,
                 }
 
