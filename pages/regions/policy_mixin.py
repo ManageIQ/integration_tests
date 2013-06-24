@@ -15,19 +15,16 @@ class PolicyMixin(Page):
     _cancel_changes_button = (By.CSS_SELECTOR, "a[title='Cancel']")
     _reset_changes_button = (By.CSS_SELECTOR, "a[title='Reset Changes']")
 
-    @property
     def save_policy_assignment(self):
         self._wait_for_visible_element(*self._save_changes_button)
         self.selenium.find_element(*self._save_changes_button).click()
         return self._wait_for_results_refresh()
 
-    @property
     def cancel_policy_assignment(self):
         self._wait_for_visible_element(*self._cancel_changes_button)
         self.selenium.find_element(*self._cancel_changes_button).click()
         return self._wait_for_results_refresh()
 
-    @property
     def reset_policy_assignment(self):
         self._wait_for_visible_element(*self._reset_changes_button)
         self.selenium.find_element(*self._reset_changes_button).click()

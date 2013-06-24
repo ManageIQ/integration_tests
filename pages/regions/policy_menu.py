@@ -54,16 +54,13 @@ class PolicyMenu(Page):
             return self.reset_tag_edits
 
     class ManagePolicies(Base, PolicyMixin):
-        @property
         def save(self):
-            return self.save_policy_assignment
+            return self.save_policy_assignment()
 
-        @property
         def cancel(self):
-            return self.cancel_policy_assignment
+            return self.cancel_policy_assignment()
 
-        @property
         def reset(self):
-            return self.reset_policy_assignment
+            return self.reset_policy_assignment()
 
 
