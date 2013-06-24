@@ -1,0 +1,243 @@
+---
+- MiqPolicySet:
+    name: b3549dd2-f0b7-11e2-96aa-005056924c3d
+    description: Automate event policies
+    set_type: MiqPolicySet
+    guid: b3549dd2-f0b7-11e2-96aa-005056924c3d
+    read_only: 
+    set_data: 
+    mode: 
+    owner_type: 
+    owner_id: 
+    MiqPolicy:
+    - name: 662edb8e-f301-11e2-96aa-005056924c3d
+      description: auth_change
+      expression: 
+      towhat: Vm
+      guid: 662edb8e-f301-11e2-96aa-005056924c3d
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: ems_auth_changed
+          description: Mgmt Sys Auth Changed
+          guid: f7f0821e-ed72-11e2-a4a9-005056924c3d
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 03f49262-f0b6-11e2-96aa-005056924c3d
+          description: ! 'automate: mgmt_sys_auth_change'
+          guid: 03f49262-f0b6-11e2-96aa-005056924c3d
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: mgmt_sys_auth_change
+      Condition: []
+    - name: caf645ea-f0b6-11e2-96aa-005056924c3d
+      description: tag_complete
+      expression: 
+      towhat: Vm
+      guid: caf645ea-f0b6-11e2-96aa-005056924c3d
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: assigned_company_tag
+          description: Tag Complete
+          guid: f82e7fd8-ed72-11e2-a4a9-005056924c3d
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 39a6d21c-f0b6-11e2-96aa-005056924c3d
+          description: ! 'automate: tag_complete'
+          guid: 39a6d21c-f0b6-11e2-96aa-005056924c3d
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: tag_complete
+      Condition: []
+    - name: a4a28a52-f0b6-11e2-96aa-005056924c3d
+      description: tag_req
+      expression: 
+      towhat: Vm
+      guid: a4a28a52-f0b6-11e2-96aa-005056924c3d
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_assign_company_tag
+          description: Tag Request
+          guid: f82c1c70-ed72-11e2-a4a9-005056924c3d
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 27d15008-f0b6-11e2-96aa-005056924c3d
+          description: ! 'automate: tag_req'
+          guid: 27d15008-f0b6-11e2-96aa-005056924c3d
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: tag_req
+      Condition: []
+    - name: 306e0728-f0b7-11e2-96aa-005056924c3d
+      description: vm_power_off
+      expression: 
+      towhat: Vm
+      guid: 306e0728-f0b7-11e2-96aa-005056924c3d
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_poweroff
+          description: VM Power Off
+          guid: f88b187e-ed72-11e2-a4a9-005056924c3d
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: da993dd2-f0b5-11e2-96aa-005056924c3d
+          description: ! 'automate: vm_power_off'
+          guid: da993dd2-f0b5-11e2-96aa-005056924c3d
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_power_off
+      Condition: []
+    - name: 18617b24-f0b7-11e2-96aa-005056924c3d
+      description: vm_power_off_req
+      expression: 
+      towhat: Vm
+      guid: 18617b24-f0b7-11e2-96aa-005056924c3d
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_poweroff
+          description: VM Power Off Request
+          guid: f88dbaca-ed72-11e2-a4a9-005056924c3d
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: eace0200-f0b5-11e2-96aa-005056924c3d
+          description: ! 'automate: vm_power_off_req'
+          guid: eace0200-f0b5-11e2-96aa-005056924c3d
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_power_off_req
+      Condition: []
+    - name: 03c32be0-f0b7-11e2-96aa-005056924c3d
+      description: vm_power_on
+      expression: 
+      towhat: Vm
+      guid: 03c32be0-f0b7-11e2-96aa-005056924c3d
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_start
+          description: VM Power On
+          guid: f87981ae-ed72-11e2-a4a9-005056924c3d
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: b6c937b8-f0b5-11e2-96aa-005056924c3d
+          description: ! 'automate: vm_power_on'
+          guid: b6c937b8-f0b5-11e2-96aa-005056924c3d
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_power_on
+      Condition: []
+    - name: e1d3fb0e-f0b6-11e2-96aa-005056924c3d
+      description: vm_power_on_req
+      expression: 
+      towhat: Vm
+      guid: e1d3fb0e-f0b6-11e2-96aa-005056924c3d
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_start
+          description: VM Power On Request
+          guid: f87bee80-ed72-11e2-a4a9-005056924c3d
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: c950502e-f0b5-11e2-96aa-005056924c3d
+          description: ! 'automate: vm_power_on_req'
+          guid: c950502e-f0b5-11e2-96aa-005056924c3d
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_power_on_req
+      Condition: []
