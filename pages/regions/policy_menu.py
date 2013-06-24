@@ -55,12 +55,12 @@ class PolicyMenu(Page):
 
     class ManagePolicies(Base, PolicyMixin):
         def save(self):
-            return self.save_policy_assignment()
+            self.save_policy_assignment()
 
         def cancel(self):
-            return self.cancel_policy_assignment()
+            self.cancel_policy_assignment()
 
         def reset(self):
-            return self.reset_policy_assignment()
+            self.reset_policy_assignment()
 
 

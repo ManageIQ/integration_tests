@@ -18,17 +18,17 @@ class PolicyMixin(Page):
     def save_policy_assignment(self):
         self._wait_for_visible_element(*self._save_changes_button)
         self.selenium.find_element(*self._save_changes_button).click()
-        return self._wait_for_results_refresh()
+        self._wait_for_results_refresh()
 
     def cancel_policy_assignment(self):
         self._wait_for_visible_element(*self._cancel_changes_button)
         self.selenium.find_element(*self._cancel_changes_button).click()
-        return self._wait_for_results_refresh()
+        self._wait_for_results_refresh()
 
     def reset_policy_assignment(self):
         self._wait_for_visible_element(*self._reset_changes_button)
         self.selenium.find_element(*self._reset_changes_button).click()
-        return self._wait_for_results_refresh()
+        self._wait_for_results_refresh()
 
     def select_profile_item(self, profile):
         '''Select profile checkbox'''
