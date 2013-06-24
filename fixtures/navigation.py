@@ -68,6 +68,11 @@ def infra_pxe_pg(home_page_logged_in):
     '''Navigate to Infrastructure -> PXE page and return it'''
     return _infrastructure_submenu(home_page_logged_in, 'PXE')
 
+@pytest.fixture # IGNORE:E1101
+def infra_vms_pg(home_page_logged_in):
+    '''Navigate to Infrastructure -> Virtual Machines page and return it'''
+    return _infrastructure_submenu(home_page_logged_in, 'Virtual Machines')
+
 @pytest.fixture
 def automate_explorer_pg(home_page_logged_in):
     '''Navigate to Automate -> Explorer'''

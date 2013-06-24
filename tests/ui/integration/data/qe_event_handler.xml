@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MiqAeDatastore version="1.0">
+  <MiqAeClass name="APIMethods" namespace="QE/Automation" description="APIMethods" display_name="APIMethods">
+    <MiqAeMethod name="relay_events" language="ruby" scope="instance" location="inline" display_name="relay_events"><![CDATA[#
+#            Automate Method
+#
+$evm.log("info", "Automate Method Started")
+#
+#            Method Code Goes here
+#
+#
+#$evm.root.attributes.sort.each { |k, v| $evm.log("info", "#### Root #{k}: #{v}")}
+#$evm.object.attributes.sort.each { |k, v| $evm.log("info", "#### Object  #{k}: #{v}")}
+
+# example call: curl X PUT http://localhost:8080/events/VmRedhat/vm_name?event=vm_power_on
+# example call: curl X PUT http://localhost:8080/events/EmsRedhat/ems_name?event=ems_auth_changed
+
+# TODO:
+# * replace curl with proper ruby api call
+# * url-encode names (names with spaces fail)
+# * support other resource types like host
+str = ""
+vm = $evm.root['vm']
+mgmt_sys = $evm.root['ext_management_system']
+#host = $evm.root['host']
+
+if !mgmt_sys.nil? 
+   mgmt_sys.attributes.sort.each { |k, v| $evm.log("info", "#### MGMT_SYS #{k}: #{v}")}
+   str = "%s/%s" % [mgmt_sys.type, mgmt_sys.name]
+# TODO
+#elsif !host.nil?
+#   host.attributes.sort.each { |k, v| $evm.log("info", "#### HOST #{k}: #{v}")}
+#   str = "%s/%s" % [host.type, host.name]
+elsif !vm.nil?
+   #vm.attributes.sort.each { |k, v| $evm.log("info", "#### VM #{k}: #{v}")}
+   str = "%s/%s" % [vm.type, vm.name]
+end
+call = "curl -X PUT http://"
+call << $evm.object['url']
+call << ":"
+call << $evm.object['port']
+call << "/"
+call << $evm.object['route1']
+call << "/"
+call << str
+call << "?event="
+call << $evm.root['event']
+
+$evm.log("info","call_test_api request: #{call}")
+out = `#{call}`
+$evm.log("info", "call_test_api response: #{out}")
+
+#
+#
+#
+$evm.log("info", "Automate Method Ended")
+exit MIQ_OK]]>    </MiqAeMethod>
+    <MiqAeSchema>
+      <MiqAeField name="url" substitute="true" aetype="attribute" datatype="string" priority="1" message="create">
+localhost      </MiqAeField>
+      <MiqAeField name="route1" substitute="true" aetype="attribute" datatype="string" priority="2" message="create">
+events      </MiqAeField>
+      <MiqAeField name="port" substitute="true" aetype="attribute" datatype="string" priority="3" message="create">
+8080      </MiqAeField>
+      <MiqAeField name="script" substitute="true" aetype="method" datatype="string" priority="4" message="create">
+relay_events      </MiqAeField>
+    </MiqAeSchema>
+    <MiqAeInstance name="relay_events" display_name="relay_events" description="relay events to API listener">
+      <MiqAeField name="url">
+        <![CDATA[]]>
+      </MiqAeField>
+      <MiqAeField name="route1">
+        <![CDATA[]]>
+      </MiqAeField>
+      <MiqAeField name="port">
+        <![CDATA[]]>
+      </MiqAeField>
+      <MiqAeField name="script">
+        <![CDATA[]]>
+      </MiqAeField>
+    </MiqAeInstance>
+  </MiqAeClass>
+</MiqAeDatastore>

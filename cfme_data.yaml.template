@@ -123,6 +123,9 @@ server_roles:
         - smartproxy
         - smartstate
         - user_interface
+listener:
+    url: "http://localhost"
+    port: 8080
 group_roles:
     evmgroup-administrator:
         menus:
