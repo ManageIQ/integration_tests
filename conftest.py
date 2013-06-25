@@ -1,6 +1,13 @@
+'''
+Top-level conftest.py does a couple of things:
+
+1) Add cfme_pages repo to the sys.path automatically
+2) Load a number of plugins and fixtures automatically
+'''
 import pytest
 
 def add_cfme_pages_to_path():
+    '''Automatically add the cfme_pages repo to the sys.path'''
     try:
         import pages.page
     except ImportError:
@@ -28,5 +35,5 @@ def add_cfme_pages_to_path():
 add_cfme_pages_to_path()
 
 pytest_plugins = 'plugin.highlight', 'fixtures.cfmedata', 'fixtures.cfmedb', \
-        'fixtures.server_roles'
+        'fixtures.server_roles', 'fixtures.soap'
 
