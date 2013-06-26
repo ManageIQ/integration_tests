@@ -26,3 +26,10 @@ class ServerSettings(Base):
         self.tabbutton_region.tabbutton_by_name('Database').click()
         self._wait_for_results_refresh()
         return DatabaseSettingsTab(self.testsetup)
+
+    def click_on_authentication_tab(self):
+        from pages.configuration_subpages.settings_subpages.server_settings_subpages.authentication_settings_tab import AuthenticationSettingsTab
+        self.tabbutton_region.tabbutton_by_name('Authentication').click()
+        self._wait_for_results_refresh()
+        return AuthenticationSettingsTab(self.testsetup)
+
