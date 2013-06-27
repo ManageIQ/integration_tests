@@ -91,6 +91,22 @@ pxe:
     datastores:
         - datastore1
         - datastore2
+ldap_server:
+    session_timeout_hours: "1"
+    session_timeout_mins: "0"
+    mode: LDAP
+    hostname1: ad.example.com
+    hostname2:
+    hostname3:
+    port: "389"
+    user_type: userprincipalname
+    user_suffix: ad.example.com
+    get_groups: True
+    get_roles: True
+    follow_referrals: False
+    base_dn: dc=ad,dc=example,dc=com
+    bind_dn: administrator@ad.example.com
+    bind_passwd: password
 group_roles:
     evmgroup-administrator:
         menus:
