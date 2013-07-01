@@ -31,6 +31,8 @@ class TestProvisionVms:
 
     def __pick_random_template(self, vm_pg):
         number_of_templates = len(vm_pg.template_list.items)
+        if not number_of_templates:
+            raise IndexError("No templates defined")
         template = random.randint(0, number_of_templates - 1)
         vm_pg.template_list.items[template].click()
         

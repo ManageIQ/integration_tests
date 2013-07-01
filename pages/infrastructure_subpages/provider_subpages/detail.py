@@ -6,10 +6,10 @@ Created on May 31, 2013
 from pages.base import Base
 from selenium.webdriver.common.by import By
 
-class ManagementSystemsDetail(Base):
-    '''The Management Systems Detail page'''
-    _page_title = 'CloudForms Management Engine: Management Systems'
-    _management_system_detail_name_locator = (
+class ProvidersDetail(Base):
+    '''The Infrastructure Providers Detail page'''
+    _page_title = 'CloudForms Management Engine: Infrastructure Providers'
+    _provider_detail_name_locator = (
             By.XPATH, '//*[@id="accordion"]/div[1]/div[1]/a')
     _details_locator = (By.CSS_SELECTOR, 'div#textual_div')
 
@@ -25,20 +25,20 @@ class ManagementSystemsDetail(Base):
 
     @property
     def name(self):
-        '''Name of the management system'''
+        '''Name of the provider'''
         return self.selenium.find_element(
-                *self._management_system_detail_name_locator).get_attribute(
+                *self._provider_detail_name_locator).get_attribute(
                         'title').encode('utf-8')
 
     @property
     def hostname(self):
-        '''Hostname of the management system'''
+        '''Hostname of the provider'''
         return self.details.get_section('Properties').get_item(
                 'Hostname').value
 
     @property
     def zone(self):
-        '''Zone of the managment system'''
+        '''Zone of the provider'''
         return self.details.get_section('Smart Management').get_item(
                 'Managed by Zone').value
 

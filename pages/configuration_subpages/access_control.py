@@ -1,8 +1,16 @@
+'''
+Access Control pages
+'''
+# -*- coding: utf-8 -*-
+
 from pages.base import Base
+from pages.page import Page
 from pages.regions.checkboxtree import CheckboxTree
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.taggable import Taggable
+from pages.regions.taskbar.taskbar import TaskbarMixin
 
 class AccessControl(Base):
     _page_title = 'CloudForms Management Engine: Configuration'
@@ -10,36 +18,81 @@ class AccessControl(Base):
     _groups_button = (By.CSS_SELECTOR, "div[title='View Groups']")
     _users_button = (By.CSS_SELECTOR, "div[title='View Users']")
 
-    # ROLES
-    def click_on_roles(self):
-        self.selenium.find_element(*self._roles_button).click()
-        self._wait_for_results_refresh()
-        return AccessControl.Roles(self.testsetup)
+    class MixinBase(Page):
+        _locator_suffix = ">td.td_btn_txt>div.btn_sel_text"
+        _locator_css = """tr[title="%s"] %s"""
 
-    class Roles(Base):
-        _page_title = 'CloudForms Management Engine: Configuration'
-        _add_role_button = (By.CSS_SELECTOR, "a[title='Add a new Role']")
+        def _get_button(self, title):
+            _locator = (By.CSS_SELECTOR, self._locator_css
+                    % (title, self._locator_suffix))
+            return self.get_element(*_locator)
 
-        def click_on_add_new(self):
-            self.selenium.find_element(*self._add_role_button).click()
+        def _click_on_configuration_subbutton(self, button, _class):
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(button).perform()
             self._wait_for_results_refresh()
-            return AccessControl.NewRole(self.testsetup)
+            return _class(self.testsetup)
 
-        def click_on_role(self, role_name):
-            selector = "td[title='%s']" % role_name
+        def _click_on_policy_subbutton(self, button, _class):
+            ActionChains(self.selenium).click(self.policy_button)\
+                    .click(button).perform()
+            self._wait_for_results_refresh()
+            return _class(self.testsetup)
+
+    class UrgMixin(MixinBase):
+        @property
+        def add_button(self):
+            return self._get_button(self._add_button_title)
+
+        def _click_on_add_new(self, _new_class):
+            return self._click_on_configuration_subbutton(
+                    self.add_button, _new_class)
+
+        def _click_on_type(self, name, _show_class):
+            selector = "td[title='%s']" % name
             self.selenium.find_element_by_css_selector(selector).click()
             self._wait_for_results_refresh()
-            return AccessControl.ShowRole(self.testsetup)
+            return _show_class(self.testsetup)
+
+    class EditTagsMixin(MixinBase):
+        @property
+        def edit_tags_button(self):
+            return self._get_button(self._edit_tags_title)
+
+        def _click_on_edit_tags(self, _edit_tags_class):
+            return self._click_on_policy_subbutton(
+                    self.edit_tags_button, _edit_tags_class)
+
+    def __click_on_main_section(self, cls, *locator):
+        self.get_element(*locator).click()
+        self._wait_for_results_refresh()
+        return cls(self.testsetup)
+
+    # ROLES
+    def click_on_roles(self):
+        return self.__click_on_main_section(self.Roles, *self._roles_button)
+
+    class Roles(Base, TaskbarMixin, UrgMixin):
+        _page_title = 'CloudForms Management Engine: Configuration'
+        _add_button_title = 'Add a new Role'
+
+        def click_on_add_new(self):
+            return self._click_on_add_new(AccessControl.NewRole)
+
+        def click_on_role(self, role_name):
+            return self._click_on_type(role_name, AccessControl.ShowRole)
 
     class NewRole(Base):
-        _submit_role_button = (By.CSS_SELECTOR, "img[title='Add this Role']")
+        _submit_role_button = (By.CSS_SELECTOR, "img[alt='Add']")
         _name_field = (By.CSS_SELECTOR, "input[name='name']")
-        _access_restriction_field = (By.CSS_SELECTOR, "select[name='vm_restriction']")
-        _product_features_tree = (By.CSS_SELECTOR, "#features_treebox")
+        _access_restriction_field = (By.CSS_SELECTOR,
+                "select[name='vm_restriction']")
+        _product_features_tree = (By.ID, "new__everything")
 
         @property
         def product_features(self):
-            return CheckboxTree(self.testsetup, self.selenium.find_element(*self._product_features_tree))
+            return CheckboxTree(self.testsetup,
+                    self.selenium.find_element(*self._product_features_tree))
 
         def fill_name(self, name):
             field = self.selenium.find_element(*self._name_field)
@@ -66,25 +119,46 @@ class AccessControl(Base):
             field.clear()
             field.send_keys(name)
 
-    class ShowRole(Base):
-        _edit_role_button = (By.CSS_SELECTOR, "a[title='Edit this Role']")
-        _delete_role_button = (By.CSS_SELECTOR, "a[title='Delete this Role']")
-        _copy_role_button = (By.CSS_SELECTOR, "a[title='Copy this Role to a new Role']")
-        _role_name_label = (By.CSS_SELECTOR, ".style1 tr:nth-child(1) td:nth-child(2)")
+    class ShowRole(Base, TaskbarMixin):
+        _edit_role_button = (By.CSS_SELECTOR,
+                "tr[title='Edit this Role'] > td.td_btn_txt > div.btn_sel_text")
+        _delete_role_button = (By.CSS_SELECTOR,
+                "tr[title='Delete this Role'] > td.td_btn_txt > \
+                        div.btn_sel_text")
+        _copy_role_button = (By.CSS_SELECTOR,
+                "tr[title='Copy this Role to a new Role'] > td.td_btn_txt > \
+                        div.btn_sel_text")
+        _role_name_label = (By.CSS_SELECTOR,
+                ".style1 tr:nth-child(1) td:nth-child(2)")
+
+        @property
+        def edit_button(self):
+            return self.get_element(*self._edit_role_button)
+
+        @property
+        def delete_button(self):
+            return self.get_element(*self._delete_role_button)
+
+        @property
+        def copy_button(self):
+            return self.get_element(*self._copy_role_button)
 
         def click_on_edit(self):
-            self.selenium.find_element(*self._edit_role_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.edit_button).perform()
             self._wait_for_results_refresh()
             return AccessControl.EditRole(self.testsetup)
 
         def click_on_delete(self):
-            self.selenium.find_element(*self._delete_role_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.delete_button).perform()
             self.handle_popup()
             self._wait_for_results_refresh()
             return AccessControl.Roles(self.testsetup)
         
         def click_on_copy(self):
-            self.selenium.find_element(*self._copy_role_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.copy_button).perform()
             self._wait_for_results_refresh()
             return AccessControl.NewRole(self.testsetup)
 
@@ -92,29 +166,23 @@ class AccessControl(Base):
         def role_name(self):
             return self.selenium.find_element(*self._role_name_label).text.strip()
 
+
     # GROUPS
     def click_on_groups(self):
-        self.selenium.find_element(*self._groups_button).click()
-        self._wait_for_results_refresh()
-        return AccessControl.Groups(self.testsetup)
+        return self.__click_on_main_section(self.Groups, *self._groups_button)
 
-    class Groups(Base):
+    class Groups(Base, TaskbarMixin, UrgMixin):
         _page_title = 'CloudForms Management Engine: Configuration'
-        _add_group_button = (By.CSS_SELECTOR, "a[title='Add a new Group']")
+        _add_button_title = 'Add a new Group'
 
         def click_on_add_new(self):
-            self.selenium.find_element(*self._add_group_button).click()
-            self._wait_for_results_refresh()
-            return AccessControl.NewGroup(self.testsetup)
+            return self._click_on_add_new(AccessControl.NewGroup)
 
         def click_on_group(self, group_name):
-            selector = "td[title='%s']" % group_name
-            self.selenium.find_element_by_css_selector(selector).click()
-            self._wait_for_results_refresh()
-            return AccessControl.ShowGroup(self.testsetup)
+            return self._click_on_type(group_name, AccessControl.ShowGroup)
 
     class NewGroup(Base):
-        _submit_group_button = (By.CSS_SELECTOR, "img[title='Add this Group']")
+        _submit_group_button = (By.CSS_SELECTOR, "img[alt='Add']")
         _group_description_field = (By.ID, "description")
         _role_selector= (By.ID, "group_role")
         _company_tags_tree = (By.CSS_SELECTOR, "#myco_treebox")
@@ -156,65 +224,66 @@ class AccessControl(Base):
             field.send_keys(description)
             return self.select_dropdown(role, *self._role_selector)
 
-    class ShowGroup(Base):
-        _edit_group_button = (By.CSS_SELECTOR, "a[title='Edit this Group']")
-        _delete_group_button = (By.CSS_SELECTOR, "a[title='Delete this Group']")
-        _group_name_label = (By.CSS_SELECTOR, ".style1 tr:nth-child(1) td:nth-child(2)")
-        _edit_tags_button = (By.CSS_SELECTOR, "li#tag > a")
+    class ShowGroup(Base, EditTagsMixin, TaskbarMixin):
+        _edit_group_button = (By.CSS_SELECTOR,
+                "tr[title='Edit this Group'] > td.td_btn_txt > \
+                div.btn_sel_text")
+        _delete_group_button = (By.CSS_SELECTOR,
+                "tr[title='Delete this Group'] > td.td_btn_txt > \
+                div.btn_sel_text")
+        _group_name_label = (By.CSS_SELECTOR,
+                ".style1 tr:nth-child(1) td:nth-child(2)")
+        _edit_tags_title = "Edit 'My Company' Tags for this Group"
+
+        @property
+        def edit_button(self):
+            return self.get_element(*self._edit_group_button)
+
+        @property
+        def delete_button(self):
+            return self.get_element(*self._delete_group_button)
 
         def click_on_edit(self):
-            self.selenium.find_element(*self._edit_group_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.edit_button).perform()
             self._wait_for_results_refresh()
             return AccessControl.EditGroup(self.testsetup)
 
         def click_on_delete(self):
-            self.selenium.find_element(*self._delete_group_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.delete_button).perform()
             self.handle_popup()
             self._wait_for_results_refresh()
             return AccessControl.Groups(self.testsetup)
         
         def click_on_edit_tags(self):
-            self.selenium.find_element(*self._edit_tags_button).click()
-            self._wait_for_results_refresh
-            return AccessControl.TagGroup(self.testsetup)
+            return self._click_on_edit_tags(AccessControl.TagGroup)
 
         @property
         def group_name(self):
-            return self.selenium.find_element(*self._group_name_label).text.strip()
+            return self.selenium.find_element(
+                    *self._group_name_label).text.strip()
 
-    class TagGroup(ShowGroup, Taggable):
-        def save(self):
-            return self.save_tag_edits
-
-        def cancel(self):
-            return self.cancel_tag_edits
-
-        def reset(self):
-            return self.reset_tag_edits
-
+    class TagGroup(Base, Taggable):
+        _cancel_edits_button = (
+                By.CSS_SELECTOR, "div#buttons_off img[title='Cancel']"
+)
     # USERS
     def click_on_users(self):
-        self.selenium.find_element(*self._users_button).click()
-        self._wait_for_results_refresh()
-        return AccessControl.Users(self.testsetup)
+        return self.__click_on_main_section(self.Users, *self._users_button)
 
-    class Users(Base):
+    class Users(Base, TaskbarMixin, UrgMixin):
         _page_title = 'CloudForms Management Engine: Configuration'
-        _add_user_button = (By.CSS_SELECTOR, "a[title='Add a new User']")
+        _add_button_title = 'Add a new User'
 
         def click_on_add_new(self):
-            self.selenium.find_element(*self._add_user_button).click()
-            self._wait_for_results_refresh()
-            return AccessControl.NewEditUser(self.testsetup)
+            return self._click_on_add_new(AccessControl.NewEditUser)
 
         def click_on_user(self, user_name):
-            selector = "td[title='%s']" % user_name
-            self.selenium.find_element_by_css_selector(selector).click()
-            self._wait_for_results_refresh()
-            return AccessControl.ShowUser(self.testsetup)
+            return self._click_on_type(user_name, AccessControl.ShowUser)
 
     class NewEditUser(Base):
-        _submit_user_button = (By.CSS_SELECTOR, "img[title='Add this User']")
+        _submit_user_button = (By.CSS_SELECTOR, "img[alt='Add']")
         _save_user_button = (By.CSS_SELECTOR, "img[title='Save Changes']")
         _user_name_field = (By.ID, "name")
         _user_id_field= (By.ID, "userid")
@@ -261,45 +330,56 @@ class AccessControl(Base):
             self._wait_for_results_refresh()
             return AccessControl.ShowUser(self.testsetup)
 
-    class ShowUser(Base):
-        _edit_user_button = (By.CSS_SELECTOR, "a[title='Edit this User']")
-        _delete_user_button = (By.CSS_SELECTOR, "a[title='Delete this User']")
-        _copy_user_button = (By.CSS_SELECTOR, "a[title='Copy this User to a new User']")
-        _edit_user_tags_button = (By.CSS_SELECTOR, "a[title='Edit My Company Tags for this User']")
+    class ShowUser(Base, EditTagsMixin, TaskbarMixin, Taggable):
+        _edit_user_button = (By.CSS_SELECTOR,
+                "tr[title='Edit this User'] > td.td_btn_txt > div.btn_sel_text")
+        _delete_user_button = (By.CSS_SELECTOR,
+                "tr[title='Delete this User'] > td.td_btn_txt > \
+                div.btn_sel_text")
+        _copy_user_button = (By.CSS_SELECTOR,
+                "tr[title='Copy this User to a new User'] > \
+                td.td_btn_txt > div.btn_sel_text")
+        _edit_tags_title = "Edit 'My Company' Tags for this User"
         _user_name_label = (By.CSS_SELECTOR, ".style1 tr:nth-child(1) td:nth-child(2)")
 
+        @property
+        def edit_user_button(self):
+            return self.get_element(*self._edit_user_button)
+
+        @property
+        def delete_user_button(self):
+            return self.get_element(*self._delete_user_button)
+
+        @property
+        def copy_user_button(self):
+            return self.get_element(*self._copy_user_button)
+
         def click_on_edit(self):
-            self.selenium.find_element(*self._edit_user_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.edit_user_button).perform()
             self._wait_for_results_refresh()
             return AccessControl.NewEditUser(self.testsetup)
 
         def click_on_delete(self):
-            self.selenium.find_element(*self._delete_user_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.delete_user_button).perform()
             self.handle_popup()
             self._wait_for_results_refresh()
             return AccessControl.Users(self.testsetup)
         
         def click_on_copy(self):
-            self.selenium.find_element(*self._copy_user_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.copy_user_button).perform()
             self._wait_for_results_refresh()
             return AccessControl.NewEditUser(self.testsetup)
 
         def click_on_edit_tags(self):
-            self.selenium.find_element(*self._edit_user_tags_button).click()
-            self._wait_for_results_refresh
-            return AccessControl.TagUser(self.testsetup)
+            return self._click_on_edit_tags(AccessControl.TagUser)
 
         @property
         def user_name(self):
             return self.selenium.find_element(*self._user_name_label).text.strip()
 
-    class TagUser(ShowUser, Taggable):
-        def save(self):
-            return self.save_tag_edits
-
-        def cancel(self):
-            return self.cancel_tag_edits
-
-        def reset(self):
-            return self.reset_tag_edits
- 
+    class TagUser(Base, Taggable):
+        _cancel_edits_button = (
+                By.CSS_SELECTOR, "div#buttons_off img[title='Cancel']")

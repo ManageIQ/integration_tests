@@ -26,12 +26,15 @@ def highlight(element):
             """, element)
 
 def pytest_configure(config):
+    from selenium.webdriver.remote.webelement import WebElement
     def _execute(self, command, params=None):
         highlight(self)
         return self._old_execute(command, params)
 
+    # Let's add highlight as a method to WebDriver so we can call it arbitrarily
+    WebElement.highlight = highlight
+
     if (config.option.highlight):
-        from selenium.webdriver.remote.webelement import WebElement
         WebElement._old_execute = WebElement._execute
         WebElement._execute = _execute
 

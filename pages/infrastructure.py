@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pages.base import Base
-from pages.infrastructure_subpages.management_systems import ManagementSystems
+from pages.infrastructure_subpages.providers import Providers
 from pages.regions.policy_menu import PolicyMenu
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
@@ -11,7 +11,7 @@ import re
 class Infrastructure(Base):
     @property
     def submenus(self):
-        return {"management_system" : ManagementSystems,
+        return {"ems_infra" : Providers,
                 "ems_cluster"       : Infrastructure.Clusters,
                 "host"              : Infrastructure.Hosts,
                 "storage"           : Infrastructure.Datastores,
@@ -46,7 +46,8 @@ class Infrastructure(Base):
 
     class ClustersDetail(Base, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Clusters'
-        _cluster_detail_name_locator = (By.XPATH, '//*[@id="accordion"]/div[1]/div[1]/a')
+        _cluster_detail_name_locator = (By.XPATH,
+                '//*[@id="accordion"]/div[1]/div[1]/a')
         _details_locator = (By.CSS_SELECTOR, "div#textual_div")
 
         @property
@@ -57,19 +58,23 @@ class Infrastructure(Base):
 
         @property
         def name(self):
-            return self.selenium.find_element(*self._cluster_detail_name_locator).text.encode('utf-8')
+            return self.selenium.find_element(
+                    *self._cluster_detail_name_locator).text.encode('utf-8')
 
         @property
-        def management_system(self):
-            return self.details.get_section("Relationships").get_item("Management System").value
+        def provider(self):
+            return self.details.get_section("Relationships").get_item(
+                    "Provider").value
 
         @property
         def datacenter(self):
-            return self.details.get_section("Relationships").get_item("Datacenter").value
+            return self.details.get_section("Relationships").get_item(
+                    "Datacenter").value
 
         @property
         def host_count(self):
-            return self.details.get_section("Relationships").get_item("Hosts").value
+            return self.details.get_section("Relationships").get_item(
+                    "Hosts").value
 
     class Hosts(Base, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Hosts'
@@ -86,7 +91,8 @@ class Infrastructure(Base):
             return Accordion(self.testsetup, TreeAccordionItem)
 
         def select_host(self, host_name):
-            self.quadicon_region.get_quadicon_by_title(host_name).mark_checkbox()
+            self.quadicon_region.get_quadicon_by_title(
+                    host_name).mark_checkbox()
 
         @property
         def taskbar(self):
@@ -104,14 +110,15 @@ class Infrastructure(Base):
                 image_src = self._root_element.find_element(
                         *self._quad_tr_locator).find_element_by_tag_name(
                                 "img").get_attribute("src")
-                return re.search('.+/currentstate-(.+)\.png', image_src).group(1)
+                return re.search(r'.+/currentstate-(.+)\.png',
+                        image_src).group(1)
 
             @property
             def vendor(self):
                 image_src = self._root_element.find_element(
                         *self._quad_bl_locator).find_element_by_tag_name(
                                 "img").get_attribute("src")
-                return re.search('.+/vendor-(.+)\.png', image_src).group(1)
+                return re.search(r'.+/vendor-(.+)\.png', image_src).group(1)
 
             @property
             def valid_credentials(self):
@@ -130,7 +137,8 @@ class Infrastructure(Base):
 
         @property
         def quadicon_region(self):
-            return Quadicons(self.testsetup, Infrastructure.Datastores.DatastoreQuadIconItem)
+            return Quadicons(self.testsetup, 
+                    Infrastructure.Datastores.DatastoreQuadIconItem)
 
         @property
         def accordion_region(self):
@@ -139,7 +147,8 @@ class Infrastructure(Base):
             return Accordion(self.testsetup, TreeAccordionItem)
 
         def select_datastore(self, datastore_name):
-            self.quadicon_region.get_quadicon_by_title(datastore_name).mark_checkbox()
+            self.quadicon_region.get_quadicon_by_title(
+                    datastore_name).mark_checkbox()
 
         def click_datastore(self, datastore_name):
             self.quadicon_region.get_quadicon_by_title(datastore_name).click()
@@ -155,15 +164,18 @@ class Infrastructure(Base):
 
             @property
             def vm_count(self):
-                return self._root_element.find_element(*self._quad_tr_locator).text
+                return self._root_element.find_element(
+                        *self._quad_tr_locator).text
 
             @property
             def host_count(self):
-                return self._root_element.find_element(*self._quad_bl_locator).text
+                return self._root_element.find_element(
+                        *self._quad_bl_locator).text
 
     class DatastoresDetail(Base, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Datastores'
-        _datastore_detail_name_locator = (By.XPATH, '//*[@id="accordion"]/div[1]/div[1]/a')
+        _datastore_detail_name_locator = (By.XPATH,
+                '//*[@id="accordion"]/div[1]/div[1]/a')
         _details_locator = (By.CSS_SELECTOR, "div#textual_div")
 
         @property
@@ -174,17 +186,21 @@ class Infrastructure(Base):
 
         @property
         def name(self):
-            return self.selenium.find_element(*self._datastore_detail_name_locator).text.encode('utf-8')
+            return self.selenium.find_element(
+                    *self._datastore_detail_name_locator).text.encode('utf-8')
 
         @property
         def ds_type(self):
-            return self.details.get_section("Properties").get_item("Datastore Type").value
+            return self.details.get_section("Properties").get_item(
+                    "Datastore Type").value
 
     class PXE(Base):
         _page_title = 'CloudForms Management Engine: PXE'
 
-        _add_template_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New Customization Template']")
-        _add_iso_datastore_locator = (By.CSS_SELECTOR, "tr.tr_btn[title='Add a New ISO Datastore']")
+        _add_template_locator = (By.CSS_SELECTOR,
+                "tr.tr_btn[title='Add a New Customization Template']")
+        _add_iso_datastore_locator = (By.CSS_SELECTOR,
+                "tr.tr_btn[title='Add a New ISO Datastore']")
         _copy_template_locator = (
                 By.CSS_SELECTOR,
                 "tr.tr_btn[title='Copy this Customization Template']")
@@ -201,8 +217,8 @@ class Infrastructure(Base):
         @property
         def accordion_region(self):
             from pages.regions.accordion import Accordion
-            from pages.regions.treeaccordionitem import TreeAccordionItem
-            return Accordion(self.testsetup, TreeAccordionItem)
+            from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
+            return Accordion(self.testsetup, LegacyTreeAccordionItem)
 
         @property
         def center_buttons(self):
@@ -239,12 +255,14 @@ class Infrastructure(Base):
             return Infrastructure.PXEAddISODatastore(self.testsetup)
 
     class PXEAddISODatastore(Base):
-        _management_system_locator = (By.CSS_SELECTOR, "select#ems_id")
-        _add_button_locator = (By.CSS_SELECTOR, "div#buttons_on > ul > li > img[alt='Add']")
-        _datastore_name_locator = (By.CSS_SELECTOR, "table[class='style3'] > tbody")
+        _provider_locator = (By.CSS_SELECTOR, "select#ems_id")
+        _add_button_locator = (By.CSS_SELECTOR,
+                "div#buttons_on > ul > li > img[alt='Add']")
+        _datastore_name_locator = (By.CSS_SELECTOR,
+                "table[class='style3'] > tbody")
 
-        def select_management_system(self, name):
-            self.select_dropdown(name, *self._management_system_locator)
+        def select_provider(self, name):
+            self.select_dropdown(name, *self._provider_locator)
             self._wait_for_results_refresh()
 
         def click_on_add(self):
@@ -253,7 +271,8 @@ class Infrastructure(Base):
             return Infrastructure.PXEAdded(self.testsetup)
 
         def datastore_name(self):
-            element_text = self.selenium.find_element(*self._datastore_name_locator).text
+            element_text = self.selenium.find_element(
+                    *self._datastore_name_locator).text
             return element_text
 
     class PXEAddTemplate(Base):
@@ -270,16 +289,18 @@ class Infrastructure(Base):
 
         _template_name_locator = (By.CSS_SELECTOR, "input#name")
         _template_description_locator = (By.CSS_SELECTOR, "input#description")
-        _template_script_locator = (By.CSS_SELECTOR, "div[class='CodeMirror'] > div > textarea")
+        _template_script_locator = (By.CSS_SELECTOR,
+                "div[class='CodeMirror'] > div > textarea")
         _image_type_locator = (By.CSS_SELECTOR, "select#img_typ")
         _add_button_locator = (
                 By.CSS_SELECTOR,
                 "div#buttons_on > ul > li > img[title='Add']")
 
         # Template type is selected independently.
-        # This is because it modifies the page, and we need to wait for the modification to take effect.
-        # No visible elements are modified, _wait_for_visible_element and _wait_for_results_refresh
-        # are out of the question. Other possibility would be to insert time.sleep into this function.
+        # This is because it modifies the page, and we need to wait for the 
+        # modification to take effect.
+        # No visible elements are modified, _wait_for_visible_element and 
+        # _wait_for_results_refresh are out of the question.
         def new_pxe_template_fill_data(
                                        self,
                                        name="rhel",
@@ -291,13 +312,16 @@ class Infrastructure(Base):
                                        script="anaconda.ks"
                                        ):
             # name
-            self.selenium.find_element(*self._template_name_locator).send_keys(name)
+            self.selenium.find_element(
+                    *self._template_name_locator).send_keys(name)
             # description
-            self.selenium.find_element(*self._template_description_locator).send_keys(description)
+            self.selenium.find_element(
+                    *self._template_description_locator).send_keys(description)
             # image type
             self.select_dropdown(image_type, *self._image_type_locator)
             # script
-            self.selenium.find_element(*self._template_script_locator).send_keys(script)
+            self.selenium.find_element(
+                    *self._template_script_locator).send_keys(script)
 
         def click_on_add(self):
             self.selenium.find_element(*self._add_button_locator).click()
@@ -306,10 +330,12 @@ class Infrastructure(Base):
 
     class PXEAdded(Base):
 
-        _datastore_name_locator = (By.CSS_SELECTOR, "table[class='style3'] > tbody")
+        _datastore_name_locator = (By.CSS_SELECTOR,
+                "table[class='style3'] > tbody")
 
         def datastore_name(self):
-            element_text = self.selenium.find_element(*self._datastore_name_locator).text
+            element_text = self.selenium.find_element(
+                    *self._datastore_name_locator).text
             text = element_text.split('\n')
             return text[0]
 
@@ -339,8 +365,8 @@ class Infrastructure(Base):
         _pxe_image_menus_filename_locator = (
                 By.CSS_SELECTOR, "input#pxemenu_0")
 
-        # empty depot_type parameter needed to successfuly run this function from a test
-        # this is because we have all the data in cfme_data file
+        # empty depot_type parameter needed to successfuly run this function 
+        # from a test this is because we have all the data in cfme_data file
         # depot type needs to be set up separatelly, but also needs to be here
         def new_pxe_server_fill_data(
                                      self,

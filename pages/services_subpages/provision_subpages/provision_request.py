@@ -8,8 +8,9 @@ Created on May 2, 2013
 
 from pages.base import Base
 from selenium.webdriver.common.by import By
+from pages.services_subpages.provision import ProvisionFormButtonMixin
 
-class ProvisionRequest(Base):
+class ProvisionRequest(Base, ProvisionFormButtonMixin):
     '''Provision request tab'''
     _email_input_locator = (By.ID, "requester__owner_email")
     _first_name_input_locator = (By.ID, "requester__owner_first_name")
@@ -42,7 +43,13 @@ class ProvisionRequest(Base):
         '''Manager input field'''
         return self.get_element(*self._manager_input_locator)
 
-    def fill_fields(self, email_text, first_name_text, last_name_text, notes_text, manager_text):
+    def fill_fields(
+            self,
+            email_text,
+            first_name_text,
+            last_name_text,
+            notes_text,
+            manager_text):
         self._wait_for_results_refresh()
         self.email.send_keys(email_text)
         self.first_name.send_keys(first_name_text)

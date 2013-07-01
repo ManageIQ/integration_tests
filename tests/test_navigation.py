@@ -14,13 +14,16 @@ class TestNavigation:
         Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
         infra_pg = home_pg.header.site_navigation_menu("Infrastructure").click()
         Assert.true(infra_pg.is_the_current_page)
-        pxe_pg = infra_pg.header.site_navigation_menu("Infrastructure").sub_navigation_menu("PXE").click()
+        pxe_pg = infra_pg.header.site_navigation_menu(
+                "Infrastructure").sub_navigation_menu("PXE").click()
         Assert.true(pxe_pg.is_the_current_page)
-        ms_pg = pxe_pg.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Management Systems").click()
-        Assert.true(ms_pg.is_the_current_page)
-        config_pg = ms_pg.header.site_navigation_menu("Configuration").click()
+        prov_pg = pxe_pg.header.site_navigation_menu(
+                "Infrastructure").sub_navigation_menu("Providers").click()
+        Assert.true(prov_pg.is_the_current_page)
+        config_pg = prov_pg.header.site_navigation_menu("Configuration").click()
         Assert.true(config_pg.is_the_current_page)
-        vm_pg = config_pg.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+        vm_pg = config_pg.header.site_navigation_menu(
+                "Services").sub_navigation_menu("Virtual Machines").click()
         Assert.true(vm_pg.is_the_current_page)
         from pages.services import Services
         Assert.true(type(vm_pg) is Services.VirtualMachines)

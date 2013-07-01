@@ -24,10 +24,12 @@ class Taggable(Page):
     _tag_items_locator = (By.XPATH, "td")
 
     def select_category(self, category):
+        self._wait_for_visible_element(*self._tag_category_selector)
         self.select_dropdown(category, *self._tag_category_selector)
         self._wait_for_results_refresh()
 
     def select_value(self, value):
+        self._wait_for_visible_element(*self._tag_value_selector)
         self.select_dropdown(value, *self._tag_value_selector)
         self._wait_for_results_refresh()
 
@@ -51,19 +53,16 @@ class Taggable(Page):
         self.current_tags[category][1].click()
         return self._wait_for_results_refresh()
 
-    @property
     def save_tag_edits(self):
         self._wait_for_visible_element(*self._save_edits_button)
         self.selenium.find_element(*self._save_edits_button).click()
         return self._wait_for_results_refresh()
 
-    @property
     def cancel_tag_edits(self):
         self._wait_for_visible_element(*self._cancel_edits_button)
         self.selenium.find_element(*self._cancel_edits_button).click()
         return self._wait_for_results_refresh()
 
-    @property
     def reset_tag_edits(self):
         self._wait_for_visible_element(*self._reset_edits_button)
         self.selenium.find_element(*self._reset_edits_button).click()

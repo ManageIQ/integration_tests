@@ -2,8 +2,8 @@ from pages.base import Base
 from selenium.webdriver.common.by import By
 from pages.configuration_subpages.settings_subpages.zone_settings import ZoneSettings
 from pages.regions.list import ListRegion, ListItem
-from pages.regions.checkboxtree import Checkbox
-from pages.regions.twisty import Twisty
+from pages.regions.checkboxtree import LegacyCheckbox
+from pages.regions.twisty import LegacyTwisty
 
 class RegionSettings(Base):
     _page_title = 'CloudForms Management Engine: Configuration'
@@ -145,12 +145,12 @@ class RegionSettings(Base):
             self._wait_for_results_refresh()
             return RegionSettings.CapAndUtil(self.testsetup)
 
-        class ClusterItem(ListItem, Checkbox, Twisty):
+        class ClusterItem(ListItem, LegacyCheckbox, LegacyTwisty):
             @property
             def name(self):
                 return self._item_data[3].text.encode('utf-8')
 
-        class DatastoreItem(ListItem, Checkbox, Twisty):
+        class DatastoreItem(ListItem, LegacyCheckbox, LegacyTwisty):
             @property
             def name(self):
                 return self._item_data[3].text.encode('utf-8')

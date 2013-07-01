@@ -7,13 +7,14 @@ Created on May 6, 2013
 # -*- coding: utf-8 -*-
 
 from pages.base import Base
+from pages.services_subpages.provision import ProvisionFormButtonMixin
 from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.select import Select
 from time import sleep
 
-class ProvisionEnvironment(Base):
+class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
     '''Represents the Environment tab in the Provision VM wizard'''
     _place_automatically_checkbox_locator = (
             By.ID, "environment__placement_auto")

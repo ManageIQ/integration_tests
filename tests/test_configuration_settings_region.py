@@ -6,7 +6,7 @@ from unittestzero import Assert
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized")
 class TestConfigurationSettingsRegion:
-    def test_cap_and_util_all_clusters(self, mozwebqa, home_page_logged_in):
+    def test_cap_and_util_all_clusters(self, home_page_logged_in):
         home_pg = home_page_logged_in
         config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
         Assert.true(config_pg.is_the_current_page)
@@ -30,18 +30,23 @@ class TestConfigurationSettingsRegion:
             cap_and_util_pg.click_on_reset()
             Assert.true(cap_and_util_pg.flash.message.startswith("All changes have been reset"))
 
-    def test_cap_and_util_specific_clusters(self, mozwebqa, home_page_logged_in):
+    def test_cap_and_util_specific_clusters(self, home_page_logged_in):
         home_pg = home_page_logged_in
-        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        config_pg = home_pg.header.site_navigation_menu(
+                "Configuration").sub_navigation_menu("Configuration").click()
         Assert.true(config_pg.is_the_current_page)
-        cap_and_util_pg = config_pg.click_on_settings().click_on_first_region().click_on_cap_and_util()
+        cap_and_util_pg = config_pg.click_on_settings()\
+                .click_on_first_region().click_on_cap_and_util()
         cap_and_util_pg.uncheck_all_clusters()
-        Assert.true(cap_and_util_pg.check_all_clusters_checkbox.get_attribute("checked") != "true")
+        Assert.not_equal(
+                cap_and_util_pg.check_all_clusters_checkbox.get_attribute(
+                        "checked"), "true")
         cap_and_util_pg.check_specific_cluster("Default")
         cap_and_util_pg.uncheck_specific_cluster("Default")
         cap_and_util_pg.check_specific_cluster("qeblade21asdasd")
         cap_and_util_pg.click_on_reset()
-        Assert.true(cap_and_util_pg.flash.message.startswith("All changes have been reset"))
+        Assert.true(cap_and_util_pg.flash.message.startswith(
+                "All changes have been reset"))
 
     def test_cap_and_util_datastores(self, mozwebqa, home_page_logged_in):
         home_pg = home_page_logged_in

@@ -1,4 +1,3 @@
-from pages.page import Page
 from pages.base import Base
 import random
 from pages.regions.checkboxtree import CheckboxTree
@@ -39,7 +38,7 @@ class CatalogItems(Base):
          ActionChains(self.selenium).click(self.configuration_button).click(self.add_catalogbundle_button).perform()
          return CatalogItems.NewCatalogBundle(self.testsetup)
     
-     class NewCatalogItem(Base,Provision):
+     class NewCatalogItem(Provision):
          _catalog_item_type = (By.CSS_SELECTOR, "select#st_prov_type")
          _name_field = (By.CSS_SELECTOR, "input[name='name']")
          _desc_field = (By.CSS_SELECTOR, "input[name='description']")
@@ -120,7 +119,7 @@ class CatalogItems(Base):
              return CatalogItems.NewCatalogItem(self.testsetup)
              
     
-     class NewCatalogBundle(Base,Provision):
+     class NewCatalogBundle(Provision):
          _bundlename_field = (By.CSS_SELECTOR, "input[name='name']")
          _bundledesc_field = (By.CSS_SELECTOR, "input[name='description']")
          _bundledisplay_checkbox = (By.CSS_SELECTOR, "input[name='display']")

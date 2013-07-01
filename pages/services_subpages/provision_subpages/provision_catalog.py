@@ -7,12 +7,13 @@ Created on May 2, 2013
 # -*- coding: utf-8 -*-
 
 from pages.base import Base
+from pages.services_subpages.provision import ProvisionFormButtonMixin
 from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from unittestzero import Assert
 
-class ProvisionCatalog(Base):
+class ProvisionCatalog(Base, ProvisionFormButtonMixin):
     '''Represents the Catalog tab in the Provision wizard'''
     _filter_select_locator = (By.ID, "service__vm_filter")
     _name_list_locator = (
@@ -79,13 +80,21 @@ class ProvisionCatalog(Base):
         '''VM Naming - Description character count'''
         return self.get_element(*self._vm_description_char_count_locator)
 
-    def fill_fields(self, provision_type_text, number_of_vms_text, vm_name_text, vm_description_text):
+    def fill_fields(
+            self,
+            provision_type_text,
+            number_of_vms_text,
+            vm_name_text,
+            vm_description_text):
+        '''Fill fields on Catalog page'''
         self.provision_type.select_by_visible_text(provision_type_text)
         self.number_of_vms.select_by_visible_text(number_of_vms_text)
         self._wait_for_visible_element(*self._vm_name_locator)
         self.vm_name.send_keys(vm_name_text)
         self.vm_description.send_keys(vm_description_text)
-        Assert.true(self.vm_description_count.text == unicode(len(vm_description_text)))
+        Assert.equal(self.vm_description_count.text,
+                unicode(len(vm_description_text)),
+                "Description count does not match size of description text")
         return ProvisionCatalog(self.testsetup)
 
     class CatalogItem(ListItem):

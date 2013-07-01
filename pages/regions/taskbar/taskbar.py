@@ -19,9 +19,6 @@ class Taskbar(Page):
     
     _taskbar_locator = (By.CSS_SELECTOR, "div#taskbar_div")
 
-    def __init__(self,setup):
-        Page.__init__(self, setup)
-        
     @property
     def history_buttons(self):
         return HistoryButtons(self.testsetup)
@@ -33,4 +30,19 @@ class Taskbar(Page):
     @property
     def view_buttons(self):
         return ViewButtons(self.testsetup)
-    
+
+class TaskbarMixin(Page):
+    '''Taskbar mixin'''
+    @property
+    def taskbar_region(self):
+        return Taskbar(self.testsetup)
+
+    @property
+    def configuration_button(self):
+        return self.taskbar_region.center_buttons.configuration_button
+
+    @property
+    def policy_button(self):
+        return self.taskbar_region.center_buttons.policy_button
+
+

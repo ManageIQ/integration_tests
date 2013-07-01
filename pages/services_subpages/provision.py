@@ -2,7 +2,7 @@
 
 @author: bcrochet
 '''
-from pages.page import Page
+from pages.base import Base
 from pages.regions.list import ListRegion, ListItem
 from pages.regions.tabbuttonitem import TabButtonItem
 from selenium.webdriver.common.by import By
@@ -51,16 +51,42 @@ class ProvisionFormButtonMixin(object):
         return self._form_buttons.find_element(
                 *self._template_cancel_button_locator)
 
+    def click_on_cancel(self):
+        '''Click on cancel button. Return to Services.VirtualMachines'''
+        self.cancel_button.click()
+        self._wait_for_results_refresh()
+        from pages.services import Services
+        return Services.VirtualMachines(self.testsetup)
+
+    def click_on_continue(self):
+        '''Alias for click_on_submit'''
+        return click_on_submit()
+
+    def click_on_submit(self):
+        ''' Click on the submit button. Go to Requests page'''
+        self.continue_button.click()
+        self._wait_for_results_refresh()
+        from pages.services import Services
+        return Services.Requests(self.testsetup)        
+
 class ProvisionTabButtonItem(TabButtonItem):
     '''Specialization of TabButtonItem'''
-    from pages.services_subpages.provision_subpages.provision_request import ProvisionRequest
-    from pages.services_subpages.provision_subpages.provision_catalog import ProvisionCatalog
-    from pages.services_subpages.provision_subpages.provision_purpose import ProvisionPurpose
-    from pages.services_subpages.provision_subpages.provision_environment import ProvisionEnvironment
-    from pages.services_subpages.provision_subpages.provision_hardware import ProvisionHardware
-    from pages.services_subpages.provision_subpages.provision_network import ProvisionNetwork
-    from pages.services_subpages.provision_subpages.provision_customize import ProvisionCustomize
-    from pages.services_subpages.provision_subpages.provision_schedule import ProvisionSchedule
+    from pages.services_subpages.provision_subpages.provision_request \
+            import ProvisionRequest
+    from pages.services_subpages.provision_subpages.provision_catalog \
+            import ProvisionCatalog
+    from pages.services_subpages.provision_subpages.provision_purpose \
+            import ProvisionPurpose
+    from pages.services_subpages.provision_subpages.provision_environment \
+            import ProvisionEnvironment
+    from pages.services_subpages.provision_subpages.provision_hardware \
+            import ProvisionHardware
+    from pages.services_subpages.provision_subpages.provision_network \
+            import ProvisionNetwork
+    from pages.services_subpages.provision_subpages.provision_customize \
+            import ProvisionCustomize
+    from pages.services_subpages.provision_subpages.provision_schedule \
+            import ProvisionSchedule
 
     _item_page = {
                 "Request": ProvisionRequest,
@@ -74,7 +100,8 @@ class ProvisionTabButtonItem(TabButtonItem):
             }
 
 class ProvisionSelectionChain():
-    _provision_vms_button_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Request to Provision VMs']")
+    _provision_vms_button_locator = (By.CSS_SELECTOR,
+            "table.buttons_cont tr[title='Request to Provision VMs']")
 
     @property
     def center_buttons(self):
@@ -82,13 +109,16 @@ class ProvisionSelectionChain():
         return CenterButtons(self.testsetup)
 
     def click_on_lifecycle(self):
-        provision_vms_button = self.get_element(*self._provision_vms_button_locator)
+        provision_vms_button = self.get_element(
+                *self._provision_vms_button_locator)
 
-        ActionChains(self.selenium).click(self.center_buttons.lifecycle_button).click(provision_vms_button).perform()
+        ActionChains(self.selenium).click(
+                self.center_buttons.lifecycle_button).click(
+                        provision_vms_button).perform()
         from pages.services_subpages.provision import ProvisionStart
         return ProvisionStart(self.testsetup)
 
-class ProvisionStart(Page, ProvisionFormButtonMixin):
+class ProvisionStart(Base, ProvisionFormButtonMixin):
     '''Page representing the start of the Provision VMs "wizard"'''
     _page_title = "CloudForms Management Engine: Virtual Machines"
     _template_list_locator = (
@@ -123,7 +153,8 @@ class ProvisionStart(Page, ProvisionFormButtonMixin):
     def click_on_template_item(self, item_name):
         '''Select template item by name'''
         template_items = self.template_list.items
-        selected_item = template_items[[item for item in range(len(template_items)) if template_items[item].name == item_name][0]]
+        selected_item = template_items[[item for item in range(len(
+                template_items)) if template_items[item].name == item_name][0]]
         selected_item.click()
         self._wait_for_results_refresh()
         return self.TemplateItem(selected_item)
@@ -173,7 +204,7 @@ class ProvisionStart(Page, ProvisionFormButtonMixin):
             '''Template snapshot count'''
             return self._item_data[7].text
 
-class Provision(Page, ProvisionFormButtonMixin):
+class Provision(Base, ProvisionFormButtonMixin):
     '''Represents the final page in the Provision VM wizard'''
     _page_title = "CloudForms Management Engine: Virtual Machines"
     _tab_button_locator = (By.CSS_SELECTOR, "div#prov_tabs > ul > li")

@@ -6,37 +6,37 @@ Created on May 31, 2013
 from pages.base import Base
 from selenium.webdriver.common.by import By
 
-class ManagementSystemsAdd(Base):
-    '''Management Systems - Add a management system page'''
-    _page_title = 'CloudForms Management Engine: Management Systems'
+class ProvidersAdd(Base):
+    '''Infrastructure Providers - Add an Infrastructure Provider page'''
+    _page_title = 'CloudForms Management Engine: Infrastructure Providers'
 
-    _management_system_add_button_locator = (
+    _provider_add_button_locator = (
             By.CSS_SELECTOR,
-            "img[alt='Add this Management System']")
-    _management_system_credentials_verify_button_locator = (
+            "img[alt='Add this Infrastructure Provider']")
+    _provider_credentials_verify_button_locator = (
             By.CSS_SELECTOR,
             "div#default_validate_buttons_on > ul#form_buttons > li > a > img")
-    _management_system_credentials_verify_disabled_button_locator = (
+    _provider_credentials_verify_disabled_button_locator = (
             By.CSS_SELECTOR,
             "div#default_validate_buttons_off > ul#form_buttons > li > a > img")
-    _management_system_cancel_button_locator = (
+    _provider_cancel_button_locator = (
             By.CSS_SELECTOR, "img[title='Cancel']")
-    _management_system_name_locator = (By.ID, "name")
-    _management_system_hostname_locator = (By.ID, "hostname")
-    _management_system_ipaddress_locator = (By.ID, "ipaddress")
-    _management_system_type_locator = (By.ID, "server_emstype")
-    _management_system_userid_locator = (By.ID, "default_userid")
-    _management_system_password_locator = (By.ID, "default_password")
-    _management_system_verify_password_locator = (By.ID, "default_verify")
-    _management_system_cu_userid_locator = (By.ID, "metrics_userid")
-    _management_system_cu_password_locator = (By.ID, "metrics_password")
-    _management_system_cu_verify_locator = (By.ID, "metrics_verify")
+    _provider_name_locator = (By.ID, "name")
+    _provider_hostname_locator = (By.ID, "hostname")
+    _provider_ipaddress_locator = (By.ID, "ipaddress")
+    _provider_type_locator = (By.ID, "server_emstype")
+    _provider_userid_locator = (By.ID, "default_userid")
+    _provider_password_locator = (By.ID, "default_password")
+    _provider_verify_password_locator = (By.ID, "default_verify")
+    _provider_cu_userid_locator = (By.ID, "metrics_userid")
+    _provider_cu_password_locator = (By.ID, "metrics_password")
+    _provider_cu_verify_locator = (By.ID, "metrics_verify")
     _server_zone_edit_field_locator = (By.ID, "server_zone")
     _default_credentials_button_locator = (
             By.CSS_SELECTOR, "div#auth_tabs > ul > li > a#ui-id-1")
     _metrics_credentials_button_locator = (
             By.CSS_SELECTOR, "div#auth_tabs > ul > li > a#ui-id-2")
-    _management_system_api_port_locator = (
+    _provider_api_port_locator = (
             By.ID, "port")
 
     @property
@@ -44,7 +44,7 @@ class ManagementSystemsAdd(Base):
         '''Add button
 
         Returns a WebElement'''
-        return self.get_element(*self._management_system_add_button_locator)
+        return self.get_element(*self._provider_add_button_locator)
 
     @property
     def verify_button(self):
@@ -52,7 +52,7 @@ class ManagementSystemsAdd(Base):
 
         Returns a WebElement'''
         return self.get_element(
-                *self._management_system_credentials_verify_button_locator)
+                *self._provider_credentials_verify_button_locator)
 
     @property
     def cancel_button(self):
@@ -60,59 +60,59 @@ class ManagementSystemsAdd(Base):
 
         Returns a WebElement'''
         return self.get_element(
-                *self._management_system_cancel_button_locator)
+                *self._provider_cancel_button_locator)
 
     @property
     def name(self):
-        '''Name of the management system'''
-        return self.get_element(*self._management_system_name_locator)
+        '''Name of the infrastructure provider'''
+        return self.get_element(*self._provider_name_locator)
 
     @property
     def hostname(self):
-        '''Hostname of the management system'''
-        return self.get_element(*self._management_system_hostname_locator)
+        '''Hostname of the infrastructure provider'''
+        return self.get_element(*self._provider_hostname_locator)
 
     @property
     def ipaddress(self):
-        '''IP address of the management system'''
-        return self.get_element(*self._management_system_ipaddress_locator)
+        '''IP address of the infrastructure provider'''
+        return self.get_element(*self._provider_ipaddress_locator)
 
     @property
     def default_userid(self):
         '''Userid on default credentials tab'''
-        return self.get_element(*self._management_system_userid_locator)
+        return self.get_element(*self._provider_userid_locator)
 
     @property
     def default_password(self):
         '''Password on default credentials tab'''
-        return self.get_element(*self._management_system_password_locator)
+        return self.get_element(*self._provider_password_locator)
 
     @property
     def default_verify(self):
         '''Verify password on default credentials tab'''
         return self.get_element(
-                *self._management_system_verify_password_locator)
+                *self._provider_verify_password_locator)
 
     @property
     def metrics_userid(self):
         '''Userid on C&U credentials tab'''
-        return self.get_element(*self._management_system_cu_userid_locator)
+        return self.get_element(*self._provider_cu_userid_locator)
 
     @property
     def metrics_password(self):
         '''Password on C&U credentials tab'''
         return self.get_element(
-                *self._management_system_cu_password_locator)
+                *self._provider_cu_password_locator)
 
     @property
     def metrics_verify(self):
         '''Verify password on C&U credentials tab'''
-        return self.get_element(*self._management_system_cu_verify_locator)
+        return self.get_element(*self._provider_cu_verify_locator)
 
     @property
     def api_port(self):
         '''API port'''
-        return self.get_element(*self._management_system_api_port_locator)
+        return self.get_element(*self._provider_api_port_locator)
 
     @property
     def server_zone(self):
@@ -127,14 +127,14 @@ class ManagementSystemsAdd(Base):
         '''Click on the C&U credentials tab'''
         self.get_element(*self._metrics_credentials_button_locator).click()
 
-    def new_management_system_fill_data(
+    def new_provider_fill_data(
             self,
             name="test_name",
             hostname="test_hostname",
             ip_address="127.0.0.1",
             user_id="test_user",
             password="test_password"):
-        '''Fill a management system with individual args'''
+        '''Fill a infrastructure provider with individual args'''
         self.name.send_keys(name)
         self.hostname.send_keys(hostname)
         self.ipaddress.send_keys(ip_address)
@@ -142,9 +142,9 @@ class ManagementSystemsAdd(Base):
         self.default_password.send_keys(password)
         self.default_verify.send_keys(password)
 
-    def _fill_management_system(self, management_system):
-        '''Fill a management system given a dictionary'''
-        for key, value in management_system.iteritems():
+    def _fill_provider(self, provider):
+        '''Fill a infrastructure provider given a dictionary'''
+        for key, value in provider.iteritems():
             # Special cases
             if "server_zone" in key:
                 if self.server_zone.tag_name == "select":
@@ -177,69 +177,72 @@ class ManagementSystemsAdd(Base):
                     attr.send_keys(value)
         self._wait_for_results_refresh()
 
-    def add_vmware_management_system(self, management_system):
+    def add_vmware_provider(self, provider):
         '''Fill and click on add for a vmware system'''
-        self.select_management_system_type("VMware vCenter")
-        self._fill_management_system(management_system)
+        self.select_provider_type("VMware vCenter")
+        self._fill_provider(provider)
         return self.click_on_add()
 
-    def add_rhevm_management_system(self, management_system):
+    def add_rhevm_provider(self, provider):
         '''Fill and click on add for a RHEV system'''
-        self.select_management_system_type(
+        self.select_provider_type(
                 "Red Hat Enterprise Virtualization Manager")
-        self._fill_management_system(management_system)
+        self._fill_provider(provider)
         return self.click_on_add()
 
-    def add_management_system(self, management_system):
-        '''Generic add. Will determine the correct management system to add'''
-        if "virtualcenter" in management_system["type"]:
-            return self.add_vmware_management_system(management_system)
-        elif "rhevm" in management_system["type"]:
-            return self.add_rhevm_management_system(management_system)
-        raise Exception("Unknown management system type")
+    def add_provider(self, provider):
+        '''Generic add.
 
-    def add_management_system_with_bad_credentials(self, management_system):
-        '''Add a management system and click verify, expecting bad creds'''
-        if "virtualcenter" in management_system["type"]:
-            self.select_management_system_type("VMware vCenter")
-        elif "rhevm" in management_system["type"]:
-            self.select_management_system_type(
+        Will determine the correct infrastructure provider to add'''
+        if "virtualcenter" in provider["type"]:
+            return self.add_vmware_provider(provider)
+        elif "rhevm" in provider["type"]:
+            return self.add_rhevm_provider(provider)
+        raise Exception("Unknown infrastructure provider type")
+
+    def add_provider_with_bad_credentials(self, provider):
+        '''Add a infrastructure provider and click verify,
+        expecting bad creds'''
+        if "virtualcenter" in provider["type"]:
+            self.select_provider_type("VMware vCenter")
+        elif "rhevm" in provider["type"]:
+            self.select_provider_type(
                     "Red Hat Enterprise Virtualization Manager")
-        self._fill_management_system(management_system)
+        self._fill_provider(provider)
         self._wait_for_visible_element(
-                *self._management_system_credentials_verify_button_locator)
+                *self._provider_credentials_verify_button_locator)
         self.click_on_credentials_verify()
         self._wait_for_results_refresh()
         return self
 
-    def select_management_system_type(self, management_system_type):
-        '''Select a management system type from the dropdown, and wait for 
-        the page to refresh'''
+    def select_provider_type(self, provider_type):
+        '''Select a infrastructure provider type from the dropdown,
+        and wait for the page to refresh'''
         self.select_dropdown(
-                management_system_type,
-                *self._management_system_type_locator)
+                provider_type,
+                *self._provider_type_locator)
         self._wait_for_results_refresh()
-        return ManagementSystemsAdd(self.testsetup)
+        return ProvidersAdd(self.testsetup)
 
     def click_on_add(self):
         '''Click on the add button'''
         self.add_button.click()
-        from pages.infrastructure_subpages.management_systems \
-                import ManagementSystems
-        return ManagementSystems(self.testsetup)
+        from pages.infrastructure_subpages.providers \
+                import Providers
+        return Providers(self.testsetup)
 
     def click_on_credentials_verify(self):
         '''Click on the verify credentials button and wait for page refresh'''
         self.verify_button.click()
         self._wait_for_results_refresh()
-        return ManagementSystemsAdd(self.testsetup)
+        return ProvidersAdd(self.testsetup)
 
     def click_on_cancel(self):
         '''Click on cancel
 
-        Returns ManagementSystems page'''
+        Returns Providers page'''
         self.cancel_button.click()
-        from pages.infrastructure_subpages.management_systems \
-                import ManagementSystems
-        return ManagementSystems(self.testsetup)
+        from pages.infrastructure_subpages.providers \
+                import Providers
+        return Providers(self.testsetup)
 

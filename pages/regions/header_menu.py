@@ -4,8 +4,6 @@
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import NoSuchElementException
 from pages.page import Page
 from pages.infrastructure import Infrastructure
 from pages.services import Services
@@ -13,8 +11,8 @@ from pages.automate import Automate
 from pages.control import Control
 from pages.configuration import Configuration
 from pages.virtual_intelligence import VirtualIntelligence
-from pages.infrastructure_subpages.management_systems import ManagementSystems
 from pages.optimize import Optimize
+from pages.infrastructure_subpages.providers import Providers
 
 class HeaderMenu(Page):
     """
@@ -43,7 +41,8 @@ class HeaderMenu(Page):
     @property
     def name(self):
         # The page is encoded in UTF-8. Convert to it.
-        name = self._root_element.find_element(*self._name_locator).text.encode('utf-8')
+        name = self._root_element.find_element(
+                *self._name_locator).text.encode('utf-8')
         if not name:
             # If name is empty, assume Configuration menu
             name = "Configuration"
@@ -75,7 +74,8 @@ class HeaderMenu(Page):
         for menu in self.items:
             if menu.name == value:
                 return menu
-        raise Exception("Menu not found: '%s'. Menus: %s" % (value, [menu.name for menu in self.items]))
+        raise Exception("Menu not found: '%s'. Menus: %s" % (
+                value, [menu.name for menu in self.items]))
 
     @property
     def items(self):
@@ -85,11 +85,13 @@ class HeaderMenu(Page):
 
     class HeaderMenuItem(Page):
         _name_locator = (By.CSS_SELECTOR, 'a')
-        # The first level of the dictionary is the top-level menu item. The second level is the sub page
-        _item_page = {"Infrastructure": {"Management Systems" : ManagementSystems,
+        # The first level of the dictionary is the top-level menu item.
+        # The second level is the sub page
+        _item_page = {"Infrastructure": {"Providers" : Providers,
                                          "Hosts": Infrastructure.Hosts,
                                          "Clusters": Infrastructure.Clusters,
-                                         "Datastores": Infrastructure.Datastores,
+                                         "Datastores":
+                                            Infrastructure.Datastores,
                                          "PXE": Infrastructure.PXE},
                       "Services": {"My Services": Services.MyServices,
                                    "Virtual Machines": Services.VirtualMachines,
@@ -99,13 +101,16 @@ class HeaderMenu(Page):
                       "Automate": {"Explorer": Automate.Explorer,
                                    "Import / Export": Automate.ImportExport,
                                    "Customization": Automate.Customization},
-                      "Configuration": {"Configuration": Configuration.Configuration,
+                      "Configuration": {"Configuration": 
+                                            Configuration.Configuration,
                                         "My Settings": Configuration.MySettings,
                                         "Tasks": Configuration.Tasks,
-                                        "SmartProxies": Configuration.SmartProxies,
+                                        "SmartProxies":
+                                            Configuration.SmartProxies,
                                         "About": Configuration.About},
                       "Optimize": {"Utilization": Optimize.Utilization},
-                      "Virtual Intelligence": {"Reports": VirtualIntelligence.Reports,
+                      "Virtual Intelligence": {"Reports": 
+                                                  VirtualIntelligence.Reports,
 					       "Chargeback": VirtualIntelligence.Chargeback }}
 
         def __init__(self, testsetup, element, menu):

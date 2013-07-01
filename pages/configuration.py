@@ -22,10 +22,6 @@ class Configuration(Base):
                 "about"      : Configuration.About
                 }
         
-    def __init__(self,setup):
-        Base.__init__(self, setup)
-        # TODO: Add more initialization here
-    
     class Configuration(Base):
         _page_title = "CloudForms Management Engine: Configuration"
 

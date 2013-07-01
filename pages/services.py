@@ -321,7 +321,7 @@ class Services(Base):
                 if (current_state == desired_state):
                     break
                 print "Sleeping 60 seconds, iteration " + str(minute_count+1) + " of " + str(timeout_in_minutes) + ", desired state (" + desired_state+") != current state("+current_state+")"
-                sleep(60)
+                time.sleep(60)
                 minute_count += 1
                 self.refresh()
                 self.find_vm_page(vm_quadicon_title,None,False)
@@ -417,7 +417,7 @@ class Services(Base):
                 if (current_state == desired_state):
                     break
                 print "Sleeping 60 seconds, iteration " + str(minute_count+1) + " of " + str(timeout_in_minutes) + ", desired state (" + desired_state+") != current state("+current_state+")"
-                sleep(60)
+                time.sleep(60)
                 minute_count += 1
                 self.refresh()
                 current_state = self.power_state

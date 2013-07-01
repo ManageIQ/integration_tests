@@ -9,8 +9,9 @@ Created on May 6, 2013
 from pages.base import Base
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from pages.services_subpages.provision import ProvisionFormButtonMixin
 
-class ProvisionSchedule(Base):
+class ProvisionSchedule(Base, ProvisionFormButtonMixin):
     '''Provision wizard - Schedule tab'''
     _when_to_provision_radio_locator = (
             By.CSS_SELECTOR, "input[name='schedule__schedule_type']")
@@ -39,7 +40,11 @@ class ProvisionSchedule(Base):
         '''
         return Select(self.get_element(*self._retirement_select_locator))
 
-    def fill_fields(self, when_to_provision_selection, power_on_after_creation_check, retirement_selection):
+    def fill_fields(
+            self,
+            when_to_provision_selection,
+            power_on_after_creation_check,
+            retirement_selection):
         self.when_to_provision[0].click()
         self._wait_for_results_refresh()
         self.when_to_provision[when_to_provision_selection].click()

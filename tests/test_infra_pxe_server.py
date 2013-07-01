@@ -12,7 +12,8 @@ NAME = "rhel_pxe_server"
 class TestPXEServer:
     def test_pxe_server(self, mozwebqa, home_page_logged_in):
         home_pg = home_page_logged_in
-        pxe_pg = home_pg.header.site_navigation_menu("Infrastructure").sub_navigation_menu("PXE").click()
+        pxe_pg = home_pg.header.site_navigation_menu(
+                "Infrastructure").sub_navigation_menu("PXE").click()
         Assert.true(pxe_pg.is_the_current_page)
 
         pxe_pg.accordion_region.accordion_by_name("PXE Servers").click()

@@ -7,10 +7,11 @@ Created on May 6, 2013
 # -*- coding: utf-8 -*-
 
 from pages.base import Base
+from pages.services_subpages.provision import ProvisionFormButtonMixin
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 
-class ProvisionHardware(Base):
+class ProvisionHardware(Base, ProvisionFormButtonMixin):
     '''Provision Wizard - Hardware tab'''
     _number_of_sockets_select_locator = (By.ID, "hardware__number_of_sockets")
     _cores_per_socket_select_locator = (By.ID, "hardware__cores_per_socket")

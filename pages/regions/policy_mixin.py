@@ -3,7 +3,7 @@ from pages.page import Page
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
-from pages.regions.checkboxtree import Checkbox
+from pages.regions.checkboxtree import LegacyCheckbox
 from pages.regions.list import ListRegion, ListItem
 
 
@@ -45,18 +45,20 @@ class PolicyMixin(Page):
     def item_by_name(self, profile):
         '''get profile item from list by name'''
         profile_items = self.profile_list.items
-        return profile_items[[item for item in range(len(profile_items)) if profile_items[item].name == profile][0]]
+        return profile_items[[item for item in range(
+                len(profile_items)) if profile_items[item].name == profile][0]]
 
     @property
     def profile_list(self):
         '''Returns the template list region'''
-        _root_item_locator = (By.CSS_SELECTOR, "div#treebox > div > table > tbody")
+        _root_item_locator = (By.CSS_SELECTOR,
+                "div#treebox > div > table > tbody")
         return ListRegion(
                 self.testsetup,
                 self.get_element(*_root_item_locator),
                 self.ProfileItem)
 
-    class ProfileItem(ListItem, Checkbox):
+    class ProfileItem(ListItem, LegacyCheckbox):
         '''Represents an item in the profile list'''
 
         @property

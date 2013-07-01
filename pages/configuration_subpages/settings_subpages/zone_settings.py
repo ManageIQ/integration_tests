@@ -1,14 +1,22 @@
 from pages.base import Base
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from pages.regions.taskbar.taskbar import TaskbarMixin
+from selenium.webdriver.common.action_chains import ActionChains
 
-class ZoneSettings(Base):
+class ZoneSettings(Base, TaskbarMixin):
     _page_title = 'CloudForms Management Engine: Configuration'
-    _add_new_button = (By.CSS_SELECTOR, "img[alt='Add a new zone']")
+    _add_new_button = (By.CSS_SELECTOR,
+            "tr[title='Add a new Zone'] > td.td_btn_txt > div")
     _zones_rows_selector = (By.CSS_SELECTOR, ".style3 tr > td:nth-child(2)")
 
+    @property
+    def add_new_button(self):
+        return self.selenium.find_element(*self._add_new_button)
+
     def click_on_add_new(self):
-        self.selenium.find_element(*self._add_new_button).click()
+        ActionChains(self.selenium).click(self.configuration_button)\
+                .click(self.add_new_button).perform()
         self._wait_for_results_refresh()
         return ZoneSettings.NewZone(self.testsetup)
 
@@ -64,17 +72,29 @@ class ZoneSettings(Base):
             self._set_field('description', description)
             self._set_field('proxy_server_ip', proxy_server_ip)
 
-    class ShowZone(Base):
-        _delete_button =(By.CSS_SELECTOR, "img[alt='Delete this Zone']")
-        _edit_button =(By.CSS_SELECTOR, "img[alt='Edit this Zone']")
+    class ShowZone(Base, TaskbarMixin):
+        _delete_button =(By.CSS_SELECTOR,
+                "tr[title='Delete this Zone'] > td.td_btn_txt > div")
+        _edit_button = (By.CSS_SELECTOR,
+                "tr[title='Edit this Zone'] > td.td_btn_txt > div")
+
+        @property
+        def edit_button(self):
+            return self.selenium.find_element(*self._edit_button)
+
+        @property
+        def delete_button(self):
+            return self.selenium.find_element(*self._delete_button)
 
         def click_on_edit(self):
-            self.selenium.find_element(*self._edit_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.edit_button).perform()
             self._wait_for_results_refresh()
             return ZoneSettings.EditZone(self.testsetup)
 
         def click_on_delete(self):
-            self.selenium.find_element(*self._delete_button).click()
+            ActionChains(self.selenium).click(self.configuration_button)\
+                    .click(self.delete_button).perform()
             self.handle_popup()
             self._wait_for_results_refresh()
             return ZoneSettings(self.testsetup)

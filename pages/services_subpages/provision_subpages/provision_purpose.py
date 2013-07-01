@@ -7,10 +7,11 @@ Created on May 2, 2013
 # -*- coding: utf-8 -*-
 
 from pages.base import Base
+from pages.services_subpages.provision import ProvisionFormButtonMixin
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
-class ProvisionPurpose(Base):
+class ProvisionPurpose(Base, ProvisionFormButtonMixin):
     '''Models the Purpose subpage in the Provision wizard'''
    # _tag_tree_locator = (By.CSS_SELECTOR, "div#all_tags_treebox")
     _tag_tree_locator = (By.ID, "all_tags_treebox")
