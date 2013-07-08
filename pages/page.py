@@ -86,6 +86,16 @@ class Page(object):
         print popup.text + " ...clicking " + answer
         popup.dismiss() if cancel else popup.accept()
 
+    def fill_field_element(self, data, field_element):
+        field_element.clear()
+        field_element.send_keys(data)
+        return field_element
+
+    def fill_field_by_locator(self, data, *locator):
+        field_element = self.get_element(*locator)
+        self.fill_field_element(data, field_element)
+        return field_element
+
     def select_dropdown(self, value, *element):
         select = Select(self.selenium.find_element(*element))
         select.select_by_visible_text(value)
