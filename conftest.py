@@ -36,6 +36,7 @@ add_cfme_pages_to_path()
 
 pytest_plugins = (
     'plugin.highlight',
+    'fixtures.navigation',
     'fixtures.baseurl',
     'fixtures.cfmedata',
     'fixtures.cfmedb',
