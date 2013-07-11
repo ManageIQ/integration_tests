@@ -64,7 +64,7 @@ class Infrastructure(Base):
         @property
         def provider(self):
             return self.details.get_section("Relationships").get_item(
-                    "Provider").value
+                    "Infrastructure Provider").value
 
         @property
         def datacenter(self):
