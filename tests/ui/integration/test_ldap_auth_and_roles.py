@@ -21,7 +21,7 @@ from pages.login import LoginPage
     "evmgroup-user_limited_self_service",
     "evmgroup-user_self_service",
     "evmgroup-vm_user" ])
-@pytest.mark.usefixtures("maximized", "setup_mgmt_systems")
+@pytest.mark.usefixtures("maximized", "setup_infrastructure_providers")
 class TestLdap:
     def test_default_ldap_group_roles(self, mozwebqa, ldap_groups, cfme_data):
         """Basic default LDAP group role RBAC test
@@ -35,7 +35,8 @@ class TestLdap:
         login_pg = LoginPage(mozwebqa)
         login_pg.go_to_login_page()
         if ldap_groups not in login_pg.testsetup.credentials:
-            pytest.xfail("No match in credentials file for group '%s'" % ldap_groups)
+            pytest.xfail(
+                    "No match in credentials file for group '%s'" % ldap_groups)
         # login as LDAP user
         home_pg = login_pg.login(user=ldap_groups)
         Assert.true(home_pg.is_logged_in, "Could not determine if logged in")

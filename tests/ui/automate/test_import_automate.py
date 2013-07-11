@@ -15,10 +15,13 @@ def import_automate_file(request):
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized")
 class TestAutomate:
-    def test_import_automate(self, mozwebqa, home_page_logged_in, import_automate_file):
+    def test_import_automate(self, home_page_logged_in, import_automate_file):
         home_pg = home_page_logged_in
-        ms_pg = home_pg.header.site_navigation_menu("Automate").sub_navigation_menu("Import / Export").click()
-        Assert.true(ms_pg.is_the_current_page)
-        ms_pg = ms_pg.import_automate(import_automate_file)
-        Assert.true(ms_pg.flash.message == "Import file was uploaded successfully")
+        ae_pg = home_pg.header.site_navigation_menu(
+                "Automate").sub_navigation_menu("Import / Export").click()
+        Assert.true(ae_pg.is_the_current_page)
+        ae_pg = ae_pg.import_automate(import_automate_file)
+        Assert.equal(ae_pg.flash.message,
+                "Import file was uploaded successfully",
+                "Flash message not matched")
 
