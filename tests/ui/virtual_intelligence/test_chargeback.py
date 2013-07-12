@@ -5,14 +5,6 @@ import pytest
 import time
 from unittestzero import Assert
 
-@pytest.fixture
-def random_string():
-    rand_string = ""
-    letters = 'abcdefghijklmnopqrstuvwxyz'
-    for i in xrange(8):
-        rand_string += random.choice(letters)
-    return rand_string
-
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized") 
 class TestChargeback:
