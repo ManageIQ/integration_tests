@@ -14,13 +14,16 @@ class TabButtonItem(Page):
     _button_name_locator = (By.CSS_SELECTOR, "a")
 
     def __init__(self, testsetup, tabbutton_element):
-        Page.__init__(self, testsetup)
-        self._root_element = tabbutton_element
+        Page.__init__(self, testsetup, tabbutton_element)
+        self._name = None
 
     @property
     def name(self):
         '''The tab button name'''
-        return self._root_element.find_element(*self._button_name_locator).text
+        if not self._name:
+            self._name = self._root_element.find_element(
+                    *self._button_name_locator).text
+        return self._name
 
     @property
     def page(self):

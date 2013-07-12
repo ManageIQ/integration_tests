@@ -25,8 +25,10 @@ class TabButtons(Page):
         '''Return the current tab page, None if _item_cls does not have a 
         _item_page dictionary
         '''
-        this_tab = self.get_element(*self._active_tab_locator)
-        return self.tabbutton_by_name(this_tab.text).page
+        this_tab = self._item_cls(
+                self.testsetup,
+                self.get_element(*self._active_tab_locator))
+        return this_tab.page
     
     @property
     def tabbuttons(self):
