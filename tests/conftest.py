@@ -14,21 +14,6 @@ from common.mgmt_system import VMWareSystem, RHEVMSystem, EC2System
 
 logger = logging.getLogger(__name__)
 
-@pytest.fixture  # IGNORE:E1101
-def random_uuid_as_string():
-    '''Creates a random uuid and returns is as a string'''
-    import uuid
-    return str(uuid.uuid4())
-
-@pytest.fixture
-def random_string():
-    '''Generate a random string for use in tests'''
-    rand_string = ""
-    letters = 'abcdefghijklmnopqrstuvwxyz'
-    for _ in xrange(8):
-        rand_string += random.choice(letters)
-    return rand_string
-
 @pytest.fixture
 def maximized(mozwebqa):
     '''Maximizes the browser window'''

@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import random
+import re
+import time
 
 import pytest
-import time
 from unittestzero import Assert
-from random import randrange
-import re
+
+from utils.cfme_data import load_cfme_data
 
 # TODO: write snmp trap receiver fixture to verify host shutdown/reboots
 # TODO: write event receiver
@@ -30,7 +32,7 @@ def fetch_list(data, skip_if_ec2 = False):
     return tests
 
 def pytest_generate_tests(metafunc):
-    data = _read(metafunc.config.option.cfme_data_filename)
+    data = load_cfme_data()
     argnames = []
     tests = []
 
@@ -44,7 +46,7 @@ def pytest_generate_tests(metafunc):
         argnames = [ 'random_pwr_ctl_vm', 'provider', 'vm_name' ] 
         all_tests = fetch_list(data, skip_if_ec2 = False)
         if all_tests:
-            tests.append( all_tests[ randrange( len(all_tests) ) ] )
+            tests.append(random.choice(all_tests))
         metafunc.parametrize(argnames, tests, scope="module")
 
 """
