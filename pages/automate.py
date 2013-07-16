@@ -7,6 +7,8 @@ from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.support.select import Select
 from time import sleep
 from pages.automate_subpages.customization import Customization
+from pages.automate_subpages.explorer_subpages.explorer_namespace import ExplorerNamespace
+from pages.automate_subpages.explorer_subpages.explorer_class import ExplorerClass
 
 class Automate(Base):
     @property
@@ -91,36 +93,9 @@ class Automate(Base):
                 "div.dhx_toolbar_btn[title='Configuration']")
         _add_namespace_button = (By.CSS_SELECTOR,
                 "table.buttons_cont tr[title='Add a New Namespace']")
-        _remove_namespaces_button = (By.CSS_SELECTOR,
-                "table.buttons_cont tr[title='Remove selected Namespaces']")
-        _namespace_list_locator = (By.CSS_SELECTOR,
-                "div#ns_list_grid_div > div.objbox > table > tbody")
-        _name_text_field = (By.ID, "ns_name")
-        _description_text_field = (By.ID, "ns_description")
-        _add_system_button = (By.CSS_SELECTOR,
-                "ul#form_buttons > li > img[title='Add']")
-        _flash_message_area = (By.ID, "flash_msg_div_ns_list")
         _add_class_button = (By.CSS_SELECTOR,
                 "table.buttons_cont tr[title='Add a New Class']")
-        _name_class_field = (By.ID, "name")
-        _display_name_class_field = (By.ID, "display_name")
-        _description_class_field = (By.ID, "description")
-        _schema_button = (By.ID, "ui-id-5")
-        _edit_schema_button = (By.CSS_SELECTOR,
-                "table.buttons_cont tr[title='Edit selected Schema']")
-        _add_new_field_schema_button = (By.CSS_SELECTOR,
-                "fieldset > table > tbody >\
-                tr[title='Click to add a new field']")
-        _methods_button = (By.ID, "ui-id-32")
-        _add_method_button = (By.CSS_SELECTOR,
-                "table.buttons_cont tr[title='Add a New Method']")
-        _name_method_field = (By.ID, "cls_method_name")
-        _display_name_method_field = (By.ID, "cls_method_display_name")
-        _location_method_choice = (By.ID, "cls_method_location")
-        _methods_table_cell = (By.CSS_SELECTOR,
-                "fieldset > table > tbody > tr > td[title='Methods']")
-        _validate_button = (By.CSS_SELECTOR,
-                "ul#form_buttons > li > img[title='Validate']")
+        _flash_message_area = (By.ID, "flash_msg_div_ns_list")
 
         @property
         def accordion(self):
@@ -137,143 +112,34 @@ class Automate(Base):
             return self.selenium.find_element(*self._add_namespace_button)
 
         @property
-        def remove_namespaces_button(self):
-            return self.selenium.find_element(*self._remove_namespaces_button)
-
-        @ property
-        def namespace_list(self):
-            return ListRegion(
-                self.testsetup,
-                self.get_element(*self._namespace_list_locator),
-                Automate.NamespaceItem)
-
-        @property
         def add_class_button(self):
             return self.selenium.find_element(*self._add_class_button)
-
-        @property
-        def add_method_button(self):
-            return self.selenium.find_element(*self._add_method_button)
-
-        @property
-        def method_table_cell(self):
-            return self.selenium.find_element(*self._methods_table_cell)
 
         @property
         def return_flash_message(self):
             return self.selenium.find_element(*self._flash_message_area).text
 
+        def click_on_namespace_access_node(self, node_name):
+            self.accordion.current_content.find_node_by_name(node_name).click()
+            self._wait_for_results_refresh()
+            return ExplorerNamespace(self.testsetup)
+
         def click_on_add_new_namespace(self):
             self._wait_for_results_refresh()
-            ActionChains(self.selenium).click(self.configuration_button).click(
-                    self.add_namespace_button).perform()
+            ActionChains(self.selenium).click(self.configuration_button).click(self.add_namespace_button).perform()
             self._wait_for_results_refresh()
-            return Automate.Explorer(self.testsetup)
-
-        def click_on_remove_selected_namespaces(self):
-            self._wait_for_results_refresh()
-            ActionChains(self.selenium).click(self.configuration_button).click(
-                    self.remove_namespaces_button).perform()
-            self.handle_popup(cancel=False)
-            return Automate.Explorer(self.testsetup)
-
-        def click_on_namespace_item(self, item_name):
-            namespace_items = self.namespace_list.items
-            selected_item = None
-            for i in range(1, len(namespace_items)):
-                if namespace_items[i].iname == item_name:
-                    selected_item = namespace_items[i]
-                    namespace_items[i].checkbox.find_element_by_tag_name(
-                            'img').click()
-            self._wait_for_results_refresh()
-            return Automate.NamespaceItem(selected_item)
+            return ExplorerNamespace(self.testsetup)
 
         def click_on_add_new_class(self):
             self._wait_for_results_refresh()
-            ActionChains(self.selenium).click(self.configuration_button).click(
-                    self.add_class_button).perform()
+            ActionChains(self.selenium).click(self.configuration_button).click(self.add_class_button).perform()
             self._wait_for_results_refresh()
-            return Automate.Explorer(self.testsetup)
-
-        def fill_namespace_info(self, namespace_name, namespace_description):
-            self.selenium.find_element(*self._name_text_field).send_keys(
-                    namespace_name)
-            self.selenium.find_element(*self._description_text_field).send_keys(
-                    namespace_description)
-            self._wait_for_visible_element(*self._add_system_button)
-            self.selenium.find_element(*self._add_system_button).click()
-            self._wait_for_results_refresh()
-            return Automate.Explorer(self.testsetup)
-
-        def fill_class_info(self, class_name, class_display_name, class_description):
-            self.get_element(*self._name_class_field).send_keys(class_name)
-            self.get_element(*self._display_name_class_field).send_keys(
-                    class_display_name)
-            self.get_element(*self._description_class_field).send_keys(
-                    class_description)
-            self._wait_for_visible_element(*self._add_system_button)
-            self.selenium.find_element(*self._add_system_button).click()
-            self._wait_for_results_refresh()
-            return Automate.Explorer(self.testsetup)
-
-        def click_on_add_new_method(self):
-            self._wait_for_results_refresh()
-            self.selenium.find_element(*self._methods_button).click()
-            self._wait_for_results_refresh()
-            ActionChains(self.selenium).click(self.configuration_button).click(
-                    self.add_method_button).perform()
-            self._wait_for_results_refresh()
-            return Automate.Explorer(self.testsetup)
-
-        def fill_method_info(self, method_name, method_display_name, location_choice):
-            #TODO: complete interactions
-            self._wait_for_visible_element(*self._add_system_button)
-            self._wait_for_results_refresh()
-            return Automate.Explorer(self.testsetup)
-
-        def click_on_method_table_cell(self, cell):
-            self._wait_for_results_refresh()
-            self.selenium.find_element(cell.click())
-            self._wait_for_results_refresh()
-            return Automate.Explorer(self.testsetup)
-
-        def click_on_edit_schema(self):
-            self._wait_for_results_refresh()
-            self.selenium.find_element(*self._schema_button).click()
-            self._wait_for_results_refresh()
-            ActionChains(self.selenium).click(
-                    self.configuration_button).click(
-                            *self._edit_schema_button).perform()
-            self._wait_for_results_refresh()
-            self.selenium.find_element(
-                    *self._add_new_field_schema_button).click()
-            return Automate.Explorer(self.testsetup)
+            return ExplorerClass(self.testsetup)
 
 
-    class NamespaceItem(ListItem):
-        '''Represents a namespace in the list'''
-        _columns = ["checkbox", "folder", "name", "description"]
-
-        @property
-        def checkbox(self):
-            return self._item_data[0]
-
-        @property
-        def folder(self):
-            pass
-
-        @property
-        def iname(self):
-            return self._item_data[2].text
-
-        @property
-        def description(self):
-            pass
-
-        
     class Customization(Base):
         _page_title = 'CloudForms Management Engine: Customization'
-           
+
         @property
         def accordion(self):
             from pages.regions.accordion import Accordion
