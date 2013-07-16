@@ -67,3 +67,9 @@ def infra_datastores_pg(home_page_logged_in):
 def infra_pxe_pg(home_page_logged_in):
     '''Navigate to Infrastructure -> PXE page and return it'''
     return _infrastructure_submenu(home_page_logged_in, 'PXE')
+
+@pytest.fixture
+def automate_explorer_pg(home_page_logged_in):
+    '''Navigate to Automate -> Explorer'''
+    return home_page_logged_in.header.site_navigation_menu(
+            "Automate").sub_navigation_menu("Explorer").click()
