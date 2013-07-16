@@ -98,27 +98,27 @@ class ExplorerClass(Base):
 
     @property
     def configuration_button(self):
-       return self.selenium.find_element(*self._configuration_button)
+        return self.selenium.find_element(*self._configuration_button)
 
     @property
     def add_new_method_button(self):
-       return self.selenium.find_element(*self._add_method_button)
+        return self.selenium.find_element(*self._add_method_button)
 
     @property
     def add_new_instance_button(self):
-       return self.selenium.find_element(*self._add_instance_button)
+        return self.selenium.find_element(*self._add_instance_button)
 
     @property
     def edit_this_class_button(self):
-       return self.selenium.find_element(*self._edit_this_class_button)
+        return self.selenium.find_element(*self._edit_this_class_button)
 
     @property
     def remove_this_class_button(self):
-       return self.selenium.find_element(*self._remove_this_class_button)
+        return self.selenium.find_element(*self._remove_this_class_button)
 
     @property
     def edit_schema_button(self):
-       return self.selenium.find_element(*self._edit_schema_button)
+        return self.selenium.find_element(*self._edit_schema_button)
 
     @property
     def tabbutton_region(self):
@@ -129,43 +129,43 @@ class ExplorerClass(Base):
                 ClassTabButtonItem)
 
     def fill_class_info(self, class_name, class_display_name, class_description):
-       self.selenium.find_element(*self._name_class_field).send_keys(class_name)
-       self.selenium.find_element(*self._display_name_class_field).send_keys(class_display_name)
-       self.selenium.find_element(*self._description_class_field).send_keys(class_description)
-       self._wait_for_visible_element(*self._add_system_button)
-       self.selenium.find_element(*self._add_system_button).click()
-       self._wait_for_results_refresh()
-       return ExplorerClass(self.testsetup)
+        self.selenium.find_element(*self._name_class_field).send_keys(class_name)
+        self.selenium.find_element(*self._display_name_class_field).send_keys(class_display_name)
+        self.selenium.find_element(*self._description_class_field).send_keys(class_description)
+        self._wait_for_visible_element(*self._add_system_button)
+        self.selenium.find_element(*self._add_system_button).click()
+        self._wait_for_results_refresh()
+        return ExplorerClass(self.testsetup)
 
     def click_on_add_new_instance(self):
-       self._wait_for_results_refresh()
-       ActionChains(self.selenium).click(self.configuration_button).click(self.add_new_instance_button).perform()
-       self._wait_for_results_refresh()
-       return ExplorerInstance(self.testsetup)
+        self._wait_for_results_refresh()
+        ActionChains(self.selenium).click(self.configuration_button).click(self.add_new_instance_button).perform()
+        self._wait_for_results_refresh()
+        return ExplorerInstance(self.testsetup)
 
     def click_on_add_new_method(self):
-       self._wait_for_results_refresh()
-       ActionChains(self.selenium).click(self.configuration_button).click(self.add_new_method_button).perform()
-       self._wait_for_results_refresh()
-       return ExplorerMethod(self.testsetup)
+        self._wait_for_results_refresh()
+        ActionChains(self.selenium).click(self.configuration_button).click(self.add_new_method_button).perform()
+        self._wait_for_results_refresh()
+        return ExplorerMethod(self.testsetup)
 
     def click_on_edit_this_class(self):
-       self._wait_for_results_refresh()
-       ActionChains(self.selenium).click(self.configuration_button).click(self.edit_this_class_button).perform()
-       self._wait_for_results_refresh()
-       return ExplorerClass(self.testsetup)
+        self._wait_for_results_refresh()
+        ActionChains(self.selenium).click(self.configuration_button).click(self.edit_this_class_button).perform()
+        self._wait_for_results_refresh()
+        return ExplorerClass(self.testsetup)
 
     def click_on_remove_this_class(self):
-       self._wait_for_results_refresh()
-       ActionChains(self.selenium).click(self.configuration_button).click(self.remove_this_class_button).perform()
-       self.handle_popup(cancel=False)
-       self._wait_for_results_refresh()
-       from pages.automate import Automate
-       return Automate.Explorer(self.testsetup)
+        self._wait_for_results_refresh()
+        ActionChains(self.selenium).click(self.configuration_button).click(self.remove_this_class_button).perform()
+        self.handle_popup(cancel=False)
+        self._wait_for_results_refresh()
+        from pages.automate import Automate
+        return Automate.Explorer(self.testsetup)
 
     def click_on_edit_schema(self):
-       self._wait_for_results_refresh()
-       ActionChains(self.selenium).click(self.configuration_button).click(self.edit_schema_button).perform()
-       self._wait_for_results_refresh()
-       return ExplorerSchema(self.testsetup)
+        self._wait_for_results_refresh()
+        ActionChains(self.selenium).click(self.configuration_button).click(self.edit_schema_button).perform()
+        self._wait_for_results_refresh()
+        return ExplorerSchema(self.testsetup)
 

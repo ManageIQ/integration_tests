@@ -20,41 +20,41 @@ class ExplorerMethod(Base):
 
     @property
     def method_table_cell(self):
-       return self.selenium.find_element(*self._methods_table_cell)
+        return self.selenium.find_element(*self._methods_table_cell)
 
     @property
     def method_text_area(self):
-       return self.selenium.find_element(*self._method_text_area)
+        return self.selenium.find_element(*self._method_text_area)
 
     @property
     def location_select(self):
-       return Select(self.get_element(*self._location_method_choice))
+        return Select(self.get_element(*self._location_method_choice))
 
     @property
     def validate_method_button(self):
-       return self.selenium.find_element(*self._validate_method_button)
+        return self.selenium.find_element(*self._validate_method_button)
 
     @property
     def add_system_button(self):
-       return self.selenium.find_element(*self._add_system_button)
+        return self.selenium.find_element(*self._add_system_button)
 
     @property
     def flash_message_method(self):
-       return self.selenium.find_element(*self._flash_message)
+        return self.selenium.find_element(*self._flash_message)
 
     def fill_method_info(self, method_name, method_display_name, location_choice, method_text):
-       self._wait_for_results_refresh()
-       self.selenium.find_element(*self._name_method_field).send_keys(method_name)
-       self.selenium.find_element(*self._display_name_method_field).send_keys(method_display_name)
-       self.location_select.select_by_visible_text(location_choice)
-       #self.selenium.find_element(*self._method_text_area).setValue(method_text)
-       self._wait_for_visible_element(*self._add_system_button)
-       self._wait_for_results_refresh()
-       return ExplorerMethod(self.testsetup)
+        self._wait_for_results_refresh()
+        self.selenium.find_element(*self._name_method_field).send_keys(method_name)
+        self.selenium.find_element(*self._display_name_method_field).send_keys(method_display_name)
+        self.location_select.select_by_visible_text(location_choice)
+        #self.selenium.find_element(*self._method_text_area).setValue(method_text)
+        self._wait_for_visible_element(*self._add_system_button)
+        self._wait_for_results_refresh()
+        return ExplorerMethod(self.testsetup)
 
     def click_on_method_table_cell(self, cell):
-       self._wait_for_results_refresh()
-       self.selenium.find_element(cell.click())
-       self._wait_for_results_refresh()
-       return ExplorerMethod(self.testsetup)
+        self._wait_for_results_refresh()
+        self.selenium.find_element(cell.click())
+        self._wait_for_results_refresh()
+        return ExplorerMethod(self.testsetup)
 

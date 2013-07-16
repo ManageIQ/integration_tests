@@ -22,55 +22,55 @@ class ExplorerSchema(Base):
 
     @property
     def schema_type_select(self):
-       return self.selenium.find_element(*self._schema_type_select)
+        return self.selenium.find_element(*self._schema_type_select)
 
     @property
     def schema_data_type_select(self):
-       return self.selenium.find_element(*self._schema_data_type_select)
+        return self.selenium.find_element(*self._schema_data_type_select)
 
     @property
     def schema_save_button(self):
-       return self.selenium.find_element(*self._schema_save_button)
+        return self.selenium.find_element(*self._schema_save_button)
 
     def schema_type_attribute_button(self):
-       return self.selenium.find_element(*self._schema_type_attribute)
+        return self.selenium.find_element(*self._schema_type_attribute)
 
     def schema_type_method_button(self):
-       return self.selenium.find_element(*self._schema_type_method)
+        return self.selenium.find_element(*self._schema_type_method)
 
     def schema_type_relationship_button(self):
-       return self.selenium.find_element(*self._schema_type_relationship)
+        return self.selenium.find_element(*self._schema_type_relationship)
 
     def schema_data_type_string_button(self):
-       return self.selenium.find_element(*self._schema_data_type_string)
+        return self.selenium.find_element(*self._schema_data_type_string)
 
     def type_select(self, name_string):
-       return{
-          'Attribute'    : self.schema_type_attribute_button(),
-          'Method'       : self.schema_type_method_button(),
-          'Relationship' : self.schema_type_relationship_button()
-          # 'State'
-          # 'Assertion'
-       }[name_string]
+        return{
+            'Attribute'    : self.schema_type_attribute_button(),
+            'Method'       : self.schema_type_method_button(),
+            'Relationship' : self.schema_type_relationship_button()
+            # 'State'
+            # 'Assertion'
+        }[name_string]
 
     def data_type_select(self, name_string):
-       return{
-          'String' : self.schema_data_type_string_button()
-          # 'Symbol'
-          # 'Integer'
-       }[name_string]
+        return{
+            'String' : self.schema_data_type_string_button()
+            # 'Symbol'
+            # 'Integer'
+        }[name_string]
 
     def add_new_field(self, param_name, param_type, param_data_type):
-       self._wait_for_results_refresh()
-       self.selenium.find_element(*self._add_new_field_schema_button).click()
-       self._wait_for_results_refresh()
-       self.selenium.find_element(*self._schema_name_field).send_keys(param_name)
-       ActionChains(self.selenium).click(self.schema_type_select).click(self.type_select(param_type)).perform()
-       self._wait_for_results_refresh()
-       ActionChains(self.selenium).click(self.schema_data_type_select).click(self.data_type_select(param_data_type)).perform()
-       self._wait_for_results_refresh()
-       self.selenium.find_element(*self._add_this_entry_checkmark).click()
-       self._wait_for_results_refresh()
-       return ExplorerSchema(self.testsetup)
+        self._wait_for_results_refresh()
+        self.selenium.find_element(*self._add_new_field_schema_button).click()
+        self._wait_for_results_refresh()
+        self.selenium.find_element(*self._schema_name_field).send_keys(param_name)
+        ActionChains(self.selenium).click(self.schema_type_select).click(self.type_select(param_type)).perform()
+        self._wait_for_results_refresh()
+        ActionChains(self.selenium).click(self.schema_data_type_select).click(self.data_type_select(param_data_type)).perform()
+        self._wait_for_results_refresh()
+        self.selenium.find_element(*self._add_this_entry_checkmark).click()
+        self._wait_for_results_refresh()
+        return ExplorerSchema(self.testsetup)
 
 
