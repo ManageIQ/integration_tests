@@ -25,12 +25,6 @@ def setup_infrastructure_providers(home_page_logged_in, cfme_data):
                         prov_data['name']):
             # add it
             add_pg = prov_pg.click_on_add_new_provider()
-            add_pg.new_provider_fill_data(
-                    prov_data['name'],
-                    prov_data['hostname'],
-                    prov_data['ipaddress'],
-                    prov_cred['username'],
-                    prov_cred['password'])
             if prov_data['type'] == 'virtualcenter':
                 add_pg.select_provider_type('VMware vCenter')
             elif prov_data['type'] == 'rhevm':
@@ -40,6 +34,12 @@ def setup_infrastructure_providers(home_page_logged_in, cfme_data):
                 add_pg.select_provider_type('Amazon EC2')
             else:
                 add_pg.select_provider_type(prov_data['type'])
+            add_pg.new_provider_fill_data(
+                    prov_data['name'],
+                    prov_data['hostname'],
+                    prov_data['ipaddress'],
+                    prov_cred['username'],
+                    prov_cred['password'])
             prov_pg = add_pg.click_on_add()
             Assert.equal(prov_pg.flash.message,
                     'Infrastructure Providers "%s" was saved'
