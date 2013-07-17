@@ -286,7 +286,7 @@ class Services(Base):
             from pages.services_subpages.provision import ProvisionStart
             return ProvisionStart(self.testsetup)
 
-        def find_vm_page(self, vm_name, vm_type, mark_checkbox, load_details = False):
+        def find_vm_page(self, vm_name = None, vm_type = None, mark_checkbox = False, load_details = False):
             found = None
             while not found:
                 for quadicon in self.quadicon_region.quadicons:
@@ -474,15 +474,19 @@ class Services(Base):
                 self.select_dropdown(retirement_warning, *self._retirement_warning_edit_field_locator)
                 self._wait_for_results_refresh()       
  
-    #class ImmediatelyRetireVm(Base):
-
     class VirtualMachineUtil(Base):
         _interval_input_field_locator = (By.CSS_SELECTOR, "select#perf_typ")
-        _show_edit_field_locator = (By.CSS_SELECTOR, "select#perf_days")
+        _daily_show_edit_field_locator = (By.CSS_SELECTOR, "select#perf_days")
+        _recent_show_edit_field_locator = (By.CSS_SELECTOR, "select#perf_minutes")
         _time_zone_edit_field_locator = (By.CSS_SELECTOR, "select#time_zone")
         _compare_to_edit_field_locator = (By.CSS_SELECTOR, "select#compare_to")
         _date_edit_field_locator = (By.CSS_SELECTOR, "input#miq_date_1")
+        _options_frame_locator = (By.ID, "perf_options_div")
 
+        @property
+        def options_frame(self):
+            return self.selenium.find_element(*self._options_frame_locator)
+ 
         @property
         def date_field(self):
             return self.selenium.find_element(*self._date_edit_field_locator)        
@@ -497,9 +501,13 @@ class Services(Base):
                 self._wait_for_results_refresh()
                 time.sleep(20) #issue 104 workaround            
             if(show and interval == "Daily"):
-                self.select_dropdown(show, *self._show_edit_field_locator)
+                self.select_dropdown(show, *self._daily_show_edit_field_locator)
                 self._wait_for_results_refresh()
                 time.sleep(20) #issue 104 workaround
+            if (show and interval == "Most Recent Hour"):
+                self.select_dropdown(show, *self._recent_show_edit_field_locator)
+                self._wait_for_results_refresh()
+                time.sleep(20) #issue 104 workaround  
             if(time_zone):
                 self.select_dropdown(time_zone, *self._time_zone_edit_field_locator)
                 self._wait_for_results_refresh()
