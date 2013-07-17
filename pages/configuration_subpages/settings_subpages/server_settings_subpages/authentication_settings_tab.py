@@ -58,6 +58,7 @@ class AuthenticationSettingsTab(Base):
         self.select_dropdown_by_value(session_timeout_mins, *self._session_timeout_mins_selector)
         self.select_dropdown_by_value(mode, *self._auth_mode_selector)
         if mode != "database":
+            self._wait_for_results_refresh()
             self.fill_field(hostname1, *self._ldap_host1_field)
             if hostname2:
                 self.fill_field(hostname2, *self._ldap_host2_field)
