@@ -46,31 +46,32 @@ class AuthenticationSettingsTab(Base):
                               bind_passwd="",
                               session_timeout_hours="1",
                               session_timeout_mins="0",
-                              mode="LDAP",
+                              mode="ldap",
                               hostname2=None,
                               hostname3=None,
                               port="389",
-                              user_type="User Principle Name",
+                              user_type="userprinciplename",
                               get_groups=True,
                               get_roles=True,
                               follow_referrals=False):
-        self.select_dropdown(session_timeout_hours, *self._session_timeout_hours_selector)
-        self.select_dropdown(session_timeout_mins, *self._session_timeout_mins_selector)
-        self.select_dropdown(mode, *self._auth_mode_selector)
-        self.fill_field(hostname1, *self._ldap_host1_field)
-        if hostname2:
-            self.fill_field(hostname2, *self._ldap_host2_field)
-        if hostname3:
-            self.fill_field(hostname3, *self._ldap_host3_field)
-        self.fill_field(port, *self._ldap_port_field)
-        self.select_dropdown(user_type, *self._ldap_usertype_selector)
-        self.fill_field(user_suffix, *self._ldap_usersuffix_field)
-        self.toggle_checkbox(get_groups, *self._ldap_get_groups_checkbox)
-        self.toggle_checkbox(get_roles, *self._ldap_get_roles_forest_checkbox)
-        self.toggle_checkbox(follow_referrals, *self._ldap_follow_referrals_checkbox)
-        self.fill_field(base_dn, *self._ldap_basedn_field)
-        self.fill_field(bind_dn, *self._ldap_binddn_field)
-        self.fill_field(bind_passwd, *self._ldap_bind_passwd_field)
+        self.select_dropdown_by_value(session_timeout_hours, *self._session_timeout_hours_selector)
+        self.select_dropdown_by_value(session_timeout_mins, *self._session_timeout_mins_selector)
+        self.select_dropdown_by_value(mode, *self._auth_mode_selector)
+        if mode != "database":
+            self.fill_field(hostname1, *self._ldap_host1_field)
+            if hostname2:
+                self.fill_field(hostname2, *self._ldap_host2_field)
+            if hostname3:
+                self.fill_field(hostname3, *self._ldap_host3_field)
+            self.fill_field(port, *self._ldap_port_field)
+            self.select_dropdown_by_value(user_type, *self._ldap_usertype_selector)
+            self.fill_field(user_suffix, *self._ldap_usersuffix_field)
+            self.toggle_checkbox(get_groups, *self._ldap_get_groups_checkbox)
+            self.toggle_checkbox(get_roles, *self._ldap_get_roles_forest_checkbox)
+            self.toggle_checkbox(follow_referrals, *self._ldap_follow_referrals_checkbox)
+            self.fill_field(base_dn, *self._ldap_basedn_field)
+            self.fill_field(bind_dn, *self._ldap_binddn_field)
+            self.fill_field(bind_passwd, *self._ldap_bind_passwd_field)
 
     def fill_field(self, data, *element):
         field = self.selenium.find_element(*element)
@@ -91,3 +92,7 @@ class AuthenticationSettingsTab(Base):
         self.selenium.find_element(*self._validate_button).click()
         self._wait_for_results_refresh()
         return AuthenticationSettingsTab(self.testsetup)
+
+    @property
+    def current_auth_mode(self):
+        return self.selenium.find_element(*self._auth_mode_selector).get_attribute("value")
