@@ -73,4 +73,7 @@ class ExplorerSchema(Base):
         self._wait_for_results_refresh()
         return ExplorerSchema(self.testsetup)
 
-
+    def click_on_schema_save_button(self):
+        self.schema_save_button.click()
+        self._wait_for_results_refresh()
+        return ExplorerSchema(self.testsetup)

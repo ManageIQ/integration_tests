@@ -58,3 +58,13 @@ class ExplorerMethod(Base):
         self._wait_for_results_refresh()
         return ExplorerMethod(self.testsetup)
 
+    def click_on_add_system_button(self):
+        self.add_system_button.click()
+        self._wait_for_results_refresh()
+        return ExplorerMethod(self.testsetup)
+
+    def click_on_validate_method_button(self):
+        self.validate_method_button.click()
+        self._wait_for_results_refresh()
+        return ExplorerMethod(self.testsetup)
+

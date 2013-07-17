@@ -73,6 +73,12 @@ class ExplorerInstance(Base):
             field_array[i].click()
             field_array[i].send_keys(value_array[i])
             field_array[i].send_keys(Keys.RETURN)
+        self._wait_for_results_refresh()
+        return ExplorerInstance(self.testsetup)
+
+    def click_on_add_system_button(self):
+        self.add_system_button.click()
+        self._wait_for_results_refresh()
         return ExplorerInstance(self.testsetup)
 
 
