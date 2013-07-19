@@ -6,7 +6,7 @@ from unittestzero import Assert
 
 @pytest.fixture
 def pick_random_vm(mozwebqa, home_page_logged_in):
-    vm_pg = home_page_logged_in.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+    vm_pg = home_page_logged_in.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Virtual Machines").click()
     vm_details = vm_pg.find_vm_page(None,'on',False,True)
     return vm_details
 

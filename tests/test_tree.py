@@ -13,7 +13,7 @@ def test_tree(home_page_logged_in):
     '''Test the tree control'''
     home_pg = home_page_logged_in
     vm_pg = home_pg.header.site_navigation_menu(
-            "Services").sub_navigation_menu("Virtual Machines").click()
+            "Infrastructure").sub_navigation_menu("Virtual Machines").click()
     Assert.true(vm_pg.is_the_current_page)
     Assert.equal(len(vm_pg.accordion.accordion_items), 3,
             "Should be 3 accordion items")

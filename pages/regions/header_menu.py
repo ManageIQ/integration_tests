@@ -90,11 +90,11 @@ class HeaderMenu(Page):
         _item_page = {"Infrastructure": {"Providers" : Providers,
                                          "Hosts": Infrastructure.Hosts,
                                          "Clusters": Infrastructure.Clusters,
+                                         "Virtual Machines": Services.VirtualMachines,
                                          "Datastores":
                                             Infrastructure.Datastores,
                                          "PXE": Infrastructure.PXE},
                       "Services": {"My Services": Services.MyServices,
-                                   "Virtual Machines": Services.VirtualMachines,
                                    "Catalogs": Services.Catalogs},
                       "Control": {"Explorer": Control.Explorer,
                                   "Import / Export": Control.ImportExport},

@@ -23,7 +23,7 @@ class TestNavigation:
         config_pg = prov_pg.header.site_navigation_menu("Configuration").click()
         Assert.true(config_pg.is_the_current_page)
         vm_pg = config_pg.header.site_navigation_menu(
-                "Services").sub_navigation_menu("Virtual Machines").click()
+                "Infrastructure").sub_navigation_menu("Virtual Machines").click()
         Assert.true(vm_pg.is_the_current_page)
         from pages.services import Services
         Assert.true(type(vm_pg) is Services.VirtualMachines)

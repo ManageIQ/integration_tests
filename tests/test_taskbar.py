@@ -12,7 +12,7 @@ from unittestzero import Assert
 class TestTaskbar:        
     @pytest.mark.nondestructive
     def test_history_buttons(self, mozwebqa, home_page_logged_in):
-        vm_pg = home_page_logged_in.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+        vm_pg = home_page_logged_in.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Virtual Machines").click()
         history_buttons = vm_pg.history_buttons
         history_buttons.refresh_button.click()
         time.sleep(5)
@@ -23,7 +23,7 @@ class TestTaskbar:
         the view buttons are obscured by the search box. The maximized figure just 
         maximizes the browser window.
         '''
-        vm_pg = home_page_logged_in.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+        vm_pg = home_page_logged_in.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Virtual Machines").click()
         view_buttons = vm_pg.view_buttons
         Assert.true(view_buttons.is_grid_view, "Not default grid view")
         view_buttons.change_to_tile_view()

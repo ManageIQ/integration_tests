@@ -12,7 +12,7 @@ from unittestzero import Assert
 
 @pytest.fixture  # IGNORE:E1101
 def vm_page(request,mozwebqa,home_page_logged_in):
-    return home_page_logged_in.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+    return home_page_logged_in.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Virtual Machines").click()
 
 @pytest.mark.nondestructive  # IGNORE:E1101
 class TestProvisionVms:
