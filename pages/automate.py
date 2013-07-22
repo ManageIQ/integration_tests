@@ -95,8 +95,6 @@ class Automate(Base):
                 "table.buttons_cont tr[title='Add a New Namespace']")
         _add_class_button = (By.CSS_SELECTOR,
                 "table.buttons_cont tr[title='Add a New Class']")
-        _edit_instance_button = (By.CSS_SELECTOR,
-                "table.buttons_cont tr[title='Edit this Instance']")
         _flash_message_area = (By.ID, "flash_msg_div_ns_list")
 
         @property
@@ -118,11 +116,7 @@ class Automate(Base):
             return self.selenium.find_element(*self._add_class_button)
 
         @property
-        def edit_instance_button(self):
-            return self.selenium.find_element(*self._edit_instance_button)
-
-        @property
-        def return_flash_message(self):
+        def namespace_flash_message_text(self):
             return self.selenium.find_element(*self._flash_message_area).text
 
         def click_on_namespace_access_node(self, node_name):
@@ -146,13 +140,6 @@ class Automate(Base):
             ActionChains(self.selenium).click(self.configuration_button).click(self.add_class_button).perform()
             self._wait_for_results_refresh()
             return ExplorerClass(self.testsetup)
-
-        def click_on_edit_instance(self):
-            self._wait_for_results_refresh()
-            ActionChains(self.selenium).click(self.configuration_button).click(self.edit_instance_button).perform()
-            self._wait_for_results_refresh()
-            return ExplorerInstance(self.testsetup)
-
 
     class Customization(Base):
         _page_title = 'CloudForms Management Engine: Customization'

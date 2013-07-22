@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from pages.base import Base
-from pages.page import Page
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.list import ListRegion, ListItem
@@ -81,12 +80,14 @@ class ExplorerClass(Base):
     _add_system_button = (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Add']")
     _configuration_button = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
     _tab_button_locator = (By.CSS_SELECTOR, "div#ae_tabs > ul > li")
+    _instance_list_locator = (By.CSS_SELECTOR, "div#cls_inst_grid_div > div.objbox > table > tbody")
 
     # _methods
     _add_method_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Add a New Method']")
 
     # instances
     _add_instance_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Add a New Instance']")
+    _edit_this_instance_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Select a single Instance to edit']")
 
     # properties
     _edit_this_class_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Edit this Class']")
@@ -95,6 +96,12 @@ class ExplorerClass(Base):
     #_schema
     _edit_schema_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Edit selected Schema']")
 
+    _flash_message = (By.CSS_SELECTOR, "div#flash_text_div_class_instances > ul > li")
+
+
+    @property
+    def flash_message_class(self):
+        return self.selenium.find_element(*self._flash_message).text
 
     @property
     def configuration_button(self):
@@ -107,6 +114,10 @@ class ExplorerClass(Base):
     @property
     def add_new_instance_button(self):
         return self.selenium.find_element(*self._add_instance_button)
+
+    @property
+    def edit_this_instance_button(self):
+        return self.selenium.find_element(*self._edit_this_instance_button)
 
     @property
     def edit_this_class_button(self):
@@ -143,6 +154,12 @@ class ExplorerClass(Base):
         self._wait_for_results_refresh()
         return ExplorerInstance(self.testsetup)
 
+    def click_on_edit_this_instance(self):
+        self._wait_for_results_refresh()
+        ActionChains(self.selenium).click(self.configuration_button).click(self.edit_this_instance_button).perform()
+        self._wait_for_results_refresh()
+        return ExplorerInstance(self.testsetup)
+
     def click_on_add_new_method(self):
         self._wait_for_results_refresh()
         ActionChains(self.selenium).click(self.configuration_button).click(self.add_new_method_button).perform()
@@ -168,4 +185,41 @@ class ExplorerClass(Base):
         ActionChains(self.selenium).click(self.configuration_button).click(self.edit_schema_button).perform()
         self._wait_for_results_refresh()
         return ExplorerSchema(self.testsetup)
+
+    def select_instance_item(self, item_name):
+        instance_items = self.instance_list.items
+        selected_item = None
+        for i in range(1, len(instance_items)):
+            if instance_items[i]._item_data[2].text == item_name:
+                selected_item = instance_items[i]
+                instance_items[i]._item_data[0].find_element_by_tag_name('img').click()
+        self._wait_for_results_refresh()
+        return ExplorerClass(self.testsetup)
+
+    @property
+    def instance_list(self):
+        return ListRegion(
+            self.testsetup,
+            self.get_element(*self._instance_list_locator),
+                 ExplorerClass.InstanceItem)
+
+    class InstanceItem(ListItem):
+        '''Represents an instance in the list'''
+        _columns = ["checkbox", "folder", "name", "description"]
+
+        @property
+        def checkbox(self):
+            pass
+
+        @property
+        def folder(self):
+            pass
+
+        @property
+        def iname(self):
+            return self._item_data[2].text
+
+        @property
+        def description(self):
+            pass
 
