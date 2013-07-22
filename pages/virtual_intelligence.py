@@ -68,8 +68,8 @@ class VirtualIntelligence(Base):
             return VirtualIntelligence.Rates(self.testsetup)
     
     class Rates(Base):
-        _compute_button = (By.CSS_SELECTOR, "tr[title='Compute']")
-        _storage_button = (By.CSS_SELECTOR, "tr[title='Storage']")
+        _compute_button = (By.CSS_SELECTOR, "a[title='Compute']")
+        _storage_button = (By.CSS_SELECTOR, "a[title='Storage']")
         
         @property
         def compute(self):
