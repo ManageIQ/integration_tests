@@ -50,7 +50,7 @@ class AuthenticationSettingsTab(Base):
                               hostname2=None,
                               hostname3=None,
                               port="389",
-                              user_type="userprinciplename",
+                              user_type="userprincipalname",
                               get_groups=True,
                               get_roles=True,
                               follow_referrals=False):
@@ -58,7 +58,6 @@ class AuthenticationSettingsTab(Base):
         self.select_dropdown_by_value(session_timeout_mins, *self._session_timeout_mins_selector)
         self.select_dropdown_by_value(mode, *self._auth_mode_selector)
         if mode != "database":
-            self._wait_for_visible_element(*self._ldap_host1_field)
             self.fill_field(hostname1, *self._ldap_host1_field)
             if hostname2:
                 self.fill_field(hostname2, *self._ldap_host2_field)
@@ -75,6 +74,7 @@ class AuthenticationSettingsTab(Base):
             self.fill_field(bind_passwd, *self._ldap_bind_passwd_field)
 
     def fill_field(self, data, *element):
+        self._wait_for_visible_element(*element)
         field = self.selenium.find_element(*element)
         field.clear()
         return field.send_keys(data)
