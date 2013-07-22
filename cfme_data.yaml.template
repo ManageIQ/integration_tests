@@ -406,3 +406,60 @@ provisioning:
         when_to_provision: 1
         power_on: True
         time_until_retirement: 1 Month
+database:
+    management_system:
+        id: 3141593
+        name: rhevm-scripted
+        count: 3
+    cluster:
+        id: 3141592
+        management_system_id: 3141593
+        name: scripted_cluster
+        #name: Default
+        count: 3
+    datastore:
+        id: 3141596
+        name: scripted_datastore
+        #name: iso [qeblade21.rhq.lab.eng.bos.redhat.com:/home/rhev/iso]
+        count: 3
+    virtual_machine:
+        id: 3141595
+        cluster_id: 3141592
+        management_system_id: 3141593
+        host_id: 3141594
+        storage_id: 3141596
+        name: scripted_vm
+        count: 3
+    template:
+        id: 3141597
+        management_system_id: 3141593
+        name: scripted_template
+        count: 3
+    host:
+        id: 3141594
+        management_system_id: 3141593
+        cluster_id: 3141592
+        name: scripted_host
+        count: 3
+    hardware:
+        id: 3141598
+        template_id: 3141597
+    metrics:
+        id: 3141599
+        vm_id: 3141595
+        vm_name: scripted_vm
+    rollups:
+        id: 31415001
+        vm_id: 3141595
+        vm_name: scripted_vm
+        date_year: 2013
+        date_month: 06
+        date_day: 20
+    links:
+        link_datastore_vm:
+            datastore_id: 3141596
+            vm_id: 3141595
+        link_datastore_host:
+            datastore_id: 3141596
+            host_id: 3141594
+
