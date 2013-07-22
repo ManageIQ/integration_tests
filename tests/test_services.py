@@ -44,7 +44,7 @@ class TestServices:
     def test_set_vm_retirement_date(self, mozwebqa, home_page_logged_in, pick_random_vm):
         home_pg = home_page_logged_in
         Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
-        vm_pg = home_pg.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+        vm_pg = home_pg.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Virtual Machines").click()
         Assert.true(vm_pg.is_the_current_page)
         vm_pg = pick_random_vm
         set_retirement_date_pg = vm_pg.click_on_set_retirement_date()
@@ -58,7 +58,7 @@ class TestServices:
     def test_immediately_retire_vm(self, mozwebqa, home_page_logged_in, pick_random_vm):
         home_pg = home_page_logged_in
         Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
-        vm_pg = home_pg.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+        vm_pg = home_pg.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Virtual Machines").click()
         Assert.true(vm_pg.is_the_current_page)
         vm_pg = pick_random_vm 
         vm_name = vm_pg.details.get_section("Properties").get_item("Name").value
@@ -69,7 +69,7 @@ class TestServices:
     def test_vm_util(self, mozwebqa, home_page_logged_in, pick_random_vm):
         home_pg = home_page_logged_in
         Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
-        vm_pg = home_pg.header.site_navigation_menu("Services").sub_navigation_menu("Virtual Machines").click()
+        vm_pg = home_pg.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Virtual Machines").click()
         Assert.true(vm_pg.is_the_current_page)
         vm_details_pg = pick_random_vm
         util_pg = vm_details_pg.click_on_utilization()
