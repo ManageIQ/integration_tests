@@ -252,7 +252,7 @@ class Db(object):
         'Vm': 'vms',
         'VmdbDatabase': 'vmdb_databases',
         'VmdbDatabaseMetric': 'vmdb_database_metrics',
-        'VmdbIndexe': 'vmdb_indexes',
+        'VmdbIndex': 'vmdb_indexes',
         'VmdbMetric': 'vmdb_metrics',
         'VmdbTable': 'vmdb_tables',
         'Volume': 'volumes',
