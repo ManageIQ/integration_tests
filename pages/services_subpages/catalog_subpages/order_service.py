@@ -10,26 +10,26 @@ from pages.regions.list import ListRegion, ListItem
 
 
 class OrderService(Base):
-     _order_list_locator = (By.CSS_SELECTOR, "div#list_grid > div.objbox > table > tbody")
+    _order_list_locator = (By.CSS_SELECTOR, "div#list_grid > div.objbox > table > tbody")
           
-     @property
-     def order_catalog_list(self):
-              return ListRegion(self.testsetup,self.get_element(*self._order_list_locator),self.OrderListItem)
+    @property
+    def order_catalog_list(self):
+        return ListRegion(self.testsetup,self.get_element(*self._order_list_locator),self.OrderListItem)
           
-     class OrderListItem(ListItem):
+    class OrderListItem(ListItem):
         _columns = ["name", "description", "cost"]
         
         @property
         def name(self):
-            print  len(self._item_data)
-            return self._item_data[2].text
+           print  len(self._item_data)
+           return self._item_data[2].text
 
         @property
         def description(self):
-            return self._item_data[3].text
+           return self._item_data[3].text
 
         @property
         def cost(self):
-            return self._item_data[4].text
+           return self._item_data[4].text
 
     

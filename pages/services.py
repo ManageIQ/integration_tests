@@ -10,6 +10,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException
 from pages.regions.list import ListRegion, ListItem
+from pages.services_subpages.catalog_subpages.catalogs import Catalogs
 from pages.services_subpages.catalog_subpages.catalog_items import CatalogItems
 from pages.services_subpages.catalog_subpages.service_catalogs import ServiceCatalogs
 
