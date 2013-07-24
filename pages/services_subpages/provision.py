@@ -52,11 +52,12 @@ class ProvisionFormButtonMixin(object):
                 *self._template_cancel_button_locator)
 
     def click_on_cancel(self):
-        '''Click on cancel button. Return to Services.VirtualMachines'''
+        '''Click on cancel button. Return to 
+           Infrastructure.VirtualMachines'''
         self.cancel_button.click()
         self._wait_for_results_refresh()
-        from pages.services import Services
-        return Services.VirtualMachines(self.testsetup)
+        from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
+        return VirtualMachines(self.testsetup)
 
     def click_on_continue(self):
         '''Alias for click_on_submit'''
@@ -135,12 +136,12 @@ class ProvisionStart(Base, ProvisionFormButtonMixin):
 
     def click_on_cancel(self):
         '''Click on the cancel button. Returns the
-        Services.VirtualMachines page.
+        Infrastructure.VirtualMachines page.
         '''
-        from pages.services import Services
+        from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
         self.cancel_button.click()
         self._wait_for_results_refresh()
-        return Services.VirtualMachines(self.testsetup)
+        return VirtualMachines(self.testsetup)
 
     @property
     def template_list(self):
@@ -218,11 +219,12 @@ class Provision(Base, ProvisionFormButtonMixin):
                 cls=ProvisionTabButtonItem)
 
     def click_on_cancel(self):
-        '''Click on cancel button. Return to Services.VirtualMachines'''
+        '''Click on cancel button. Return to 
+           Infrastructure.VirtualMachines'''
         self.cancel_button.click()
         self._wait_for_results_refresh()
-        from pages.services import Services
-        return Services.VirtualMachines(self.testsetup)
+        from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
+        return VirtualMachines(self.testsetup)
 
     def click_on_submit(self):
         ''' Click on the submit button. Go to Requests page'''

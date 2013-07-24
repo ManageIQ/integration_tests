@@ -62,11 +62,11 @@ class ProvidersDetail(Base):
     def all_vms(self):
         '''VMs list
 
-        Returns Services.VirtualMachines pages
+        Returns Infrastructure.VirtualMachines pages
         '''
         self.details.get_section('Relationships').click_item('VMs')
         self._wait_for_results_refresh()
-        from pages.services import Services
-        return Services.VirtualMachines(self.testsetup)
+        from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
+        return VirtualMachines(self.testsetup)
 
 

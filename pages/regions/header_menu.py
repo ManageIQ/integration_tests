@@ -11,6 +11,7 @@ from pages.automate import Automate
 from pages.control import Control
 from pages.configuration import Configuration
 from pages.configuration_subpages.tasks_tabs import Tasks
+from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
 from pages.virtual_intelligence import VirtualIntelligence
 from pages.optimize import Optimize
 from pages.infrastructure_subpages.providers import Providers
@@ -91,7 +92,7 @@ class HeaderMenu(Page):
         _item_page = {"Infrastructure": {"Providers" : Providers,
                                          "Hosts": Infrastructure.Hosts,
                                          "Clusters": Infrastructure.Clusters,
-                                         "Virtual Machines": Services.VirtualMachines,
+                                         "Virtual Machines": VirtualMachines,
                                          "Datastores":
                                             Infrastructure.Datastores,
                                          "PXE": Infrastructure.PXE},

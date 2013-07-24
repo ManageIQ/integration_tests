@@ -2,6 +2,7 @@
 
 from pages.base import Base
 from pages.infrastructure_subpages.providers import Providers
+from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
 from pages.regions.policy_menu import PolicyMenu
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
@@ -11,11 +12,12 @@ import re
 class Infrastructure(Base):
     @property
     def submenus(self):
-        return {"ems_infra" : Providers,
+        return {"ems_infra"         : Providers,
                 "ems_cluster"       : Infrastructure.Clusters,
                 "host"              : Infrastructure.Hosts,
                 "storage"           : Infrastructure.Datastores,
-                "pxe"               : Infrastructure.PXE
+                "pxe"               : Infrastructure.PXE,
+                "vmx"               : VirtualMachines
                 }
 
     class Clusters(Base, PolicyMenu):
