@@ -1,4 +1,5 @@
 import paramiko
+from scp import SCPClient
 
 class SSHClient(paramiko.SSHClient):
     """paramiko.SSHClient wrapper
@@ -15,6 +16,8 @@ class SSHClient(paramiko.SSHClient):
             connect_kwargs['timeout'] = 10
         if 'allow_agent' not in connect_kwargs:
             connect_kwargs['allow_agent'] = False
+        if 'look_for_keys' not in connect_kwargs:
+            connect_kwargs['look_for_keys'] = False
         self._connect_kwargs = connect_kwargs
 
     def __call__(self, **connect_kwargs):
@@ -41,6 +44,11 @@ class SSHClient(paramiko.SSHClient):
     def run_rake_command(self, command):
         return rake_runner(self, command)
 
+    def put_file(self, local_file, remote_file = '.'):
+        return scp_putter(self, local_file, remote_file)
+
+    def get_file(self, remote_file, local_path = ''):
+        return scp_getter(self, remote_file, local_path)
 
 def command_runner(client, command):
     template = '%s\n'
@@ -64,4 +72,14 @@ def rails_runner(client, command):
 def rake_runner(client, command):
     template = '/var/www/miq/vmdb/script/rake -f /var/www/miq/vmdb/Rakefile %s'
     return rails_runner(client, template % command)
+
+def scp_putter(client, local_file, remote_file):
+    with client as ctx:
+        transport = ctx.get_transport()
+        SCPClient(transport).put(local_file, remote_file)
+
+def scp_getter(client, remote_file, local_path):
+    with client as ctx:
+        transport = ctx.get_transport()
+        SCPClient(transport).get(remote_file, local_path)
 
