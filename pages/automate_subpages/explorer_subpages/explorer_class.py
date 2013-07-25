@@ -136,8 +136,8 @@ class ExplorerClass(Base):
         '''Return the tab button region'''
         from pages.regions.tabbuttons import TabButtons
         return TabButtons(self.testsetup,
-                self._tab_button_locator,
-                ClassTabButtonItem)
+                locator_override=self._tab_button_locator,
+                cls=ClassTabButtonItem)
 
     def fill_class_info(self, class_name, class_display_name, class_description):
         self.selenium.find_element(*self._name_class_field).send_keys(class_name)

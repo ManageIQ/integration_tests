@@ -214,8 +214,8 @@ class Provision(Base, ProvisionFormButtonMixin):
         '''Return the tab button region'''
         from pages.regions.tabbuttons import TabButtons
         return TabButtons(self.testsetup,
-                self._tab_button_locator,
-                ProvisionTabButtonItem)
+                locator_override=self._tab_button_locator,
+                cls=ProvisionTabButtonItem)
 
     def click_on_cancel(self):
         '''Click on cancel button. Return to Services.VirtualMachines'''
