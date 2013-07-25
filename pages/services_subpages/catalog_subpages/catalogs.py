@@ -47,7 +47,6 @@ class Catalogs(Base):
     def edit_catalog_button(self):
         return self.selenium.find_element(*self._edit_catalog_button_locator)
         
-        
     @property
     def del_catalog_button(self):
          return self.selenium.find_element(*self._del_catalog_button_locator)

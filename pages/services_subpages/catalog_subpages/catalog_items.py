@@ -109,7 +109,6 @@ class CatalogItems(Base):
             time.sleep(5)
             return CatalogItems.NewCatalogItem(self.testsetup)
              
-    
     class NewCatalogBundle(Provision):
         _bundlename_field = (By.CSS_SELECTOR, "input[name='name']")
         _bundledesc_field = (By.CSS_SELECTOR, "input[name='description']")
@@ -119,6 +118,7 @@ class CatalogItems(Base):
         _bundle_cost_field = (By.CSS_SELECTOR, "input[name='provision_cost']")
         _resource_locator = (By.CSS_SELECTOR, "select#resource_id")
         _add_button = (By.CSS_SELECTOR,"div#buttons_on > ul#form_buttons > li > img[alt='Add']")
+        
         @property
         def tabbutton_region(self):
             from pages.regions.tabbuttons import TabButtons
