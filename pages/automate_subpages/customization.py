@@ -10,25 +10,25 @@ import time
 
 
 class Customization(Base):
-     _page_title = 'CloudForms Management Engine: Automate'
-     _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
-     _add_dialog_button_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Add a new Dialog']")
+    _page_title = 'CloudForms Management Engine: Automate'
+    _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
+    _add_dialog_button_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Add a new Dialog']")
      
      
-     @property
-     def configuration_button(self):
-         return self.selenium.find_element(*self._configuration_button_locator)
+    @property
+    def configuration_button(self):
+        return self.selenium.find_element(*self._configuration_button_locator)
 
-     @property
-     def _add_dialog_button(self):
-         return self.selenium.find_element(*self._add_dialog_button_locator)
+    @property
+    def _add_dialog_button(self):
+        return self.selenium.find_element(*self._add_dialog_button_locator)
         
-     def add_new_service_dialog(self):
-        ActionChains(self.selenium).click(self.configuration_button).click(self._add_dialog_button).perform()
-        return Customization.NewServiceDialog(self.testsetup)
+    def add_new_service_dialog(self):
+       ActionChains(self.selenium).click(self.configuration_button).click(self._add_dialog_button).perform()
+       return Customization.NewServiceDialog(self.testsetup)
         
         
-     class NewServiceDialog(Base):
+    class NewServiceDialog(Base):
         _label_field = (By.CSS_SELECTOR, "input[name='label']")
         _desc_field = (By.CSS_SELECTOR, "input[name='description']")
         _submit_button_checkbox = (By.CSS_SELECTOR, "input[name='chkbx_submit']")
