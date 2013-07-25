@@ -57,27 +57,25 @@ class AuthenticationSettingsTab(Base):
         self.select_dropdown_by_value(session_timeout_hours, *self._session_timeout_hours_selector)
         self.select_dropdown_by_value(session_timeout_mins, *self._session_timeout_mins_selector)
         self.select_dropdown_by_value(mode, *self._auth_mode_selector)
+        self._wait_for_results_refresh()
         if mode != "database":
-            self.fill_field(hostname1, *self._ldap_host1_field)
+            self._wait_for_results_refresh()
+            self.fill_field_by_locator(hostname1, *self._ldap_host1_field)
             if hostname2:
-                self.fill_field(hostname2, *self._ldap_host2_field)
+                self.fill_field_by_locator(hostname2, *self._ldap_host2_field)
             if hostname3:
-                self.fill_field(hostname3, *self._ldap_host3_field)
-            self.fill_field(port, *self._ldap_port_field)
+                self.fill_field_by_locator(hostname3, *self._ldap_host3_field)
+            self.fill_field_by_locator(port, *self._ldap_port_field)
             self.select_dropdown_by_value(user_type, *self._ldap_usertype_selector)
-            self.fill_field(user_suffix, *self._ldap_usersuffix_field)
+            self.fill_field_by_locator_with_wait(user_suffix, *self._ldap_usersuffix_field)
             self.toggle_checkbox(get_groups, *self._ldap_get_groups_checkbox)
+            self._wait_for_results_refresh()
             self.toggle_checkbox(get_roles, *self._ldap_get_roles_forest_checkbox)
             self.toggle_checkbox(follow_referrals, *self._ldap_follow_referrals_checkbox)
-            self.fill_field(base_dn, *self._ldap_basedn_field)
-            self.fill_field(bind_dn, *self._ldap_binddn_field)
-            self.fill_field(bind_passwd, *self._ldap_bind_passwd_field)
-
-    def fill_field(self, data, *element):
-        self._wait_for_visible_element(*element)
-        field = self.selenium.find_element(*element)
-        field.clear()
-        return field.send_keys(data)
+            self.fill_field_by_locator(base_dn, *self._ldap_basedn_field)
+            self.fill_field_by_locator(bind_dn, *self._ldap_binddn_field)
+            self.fill_field_by_locator_with_wait(bind_passwd, *self._ldap_bind_passwd_field)
+            self._wait_for_results_refresh()
 
     def toggle_checkbox(self, state, *element):
         checkbox = self.selenium.find_element(*element)
