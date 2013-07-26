@@ -7,7 +7,7 @@ import time
 from unittestzero import Assert
 from pages.login import LoginPage
 
-@pytest.mark.nondestructive  # IGNORE:E1101
+
 @pytest.mark.parametrize("ldap_groups", [
     "evmgroup-administrator",
     "evmgroup-approver",
@@ -41,8 +41,6 @@ class TestLdap:
         home_pg = login_pg.login(user=ldap_groups)
         Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
         for menu in _group_roles["menus"]:
-            Assert.true(home_pg.header.site_navigation_menu(menu).name == menu)
+            Assert.equal(home_pg.header.site_navigation_menu(menu).name, menu)
             for item in home_pg.header.site_navigation_menu(menu).items:
-                Assert.true(item.name in _group_roles["menus"][menu])
-        # TODO: click through submenu pages, assert is_the_current_page
-
+                Assert.contains(item.name, _group_roles["menus"][menu])
