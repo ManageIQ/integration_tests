@@ -21,7 +21,7 @@ from pages.login import LoginPage
     "evmgroup-user_limited_self_service",
     "evmgroup-user_self_service",
     "evmgroup-vm_user" ])
-@pytest.mark.usefixtures("maximized", "setup_infrastructure_providers")
+@pytest.mark.usefixtures("maximized", "setup_infrastructure_providers", "configure_auth_mode")
 class TestLdap:
     def test_default_ldap_group_roles(self, mozwebqa, ldap_groups, cfme_data):
         """Basic default LDAP group role RBAC test

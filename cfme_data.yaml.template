@@ -91,6 +91,22 @@ pxe:
     datastores:
         - datastore1
         - datastore2
+ldap_server:
+    session_timeout_hours: "1"
+    session_timeout_mins: "0"
+    mode: LDAP
+    hostname1: ad.example.com
+    hostname2:
+    hostname3:
+    port: "389"
+    user_type: userprincipalname
+    user_suffix: ad.example.com
+    get_groups: True
+    get_roles: True
+    follow_referrals: False
+    base_dn: dc=ad,dc=example,dc=com
+    bind_dn: administrator@ad.example.com
+    bind_passwd: password
 group_roles:
     evmgroup-administrator:
         menus:
@@ -104,11 +120,12 @@ group_roles:
             Services:
                 - My Services
                 - Requests
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -146,11 +163,12 @@ group_roles:
                 - RSS
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -173,11 +191,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -199,7 +218,7 @@ group_roles:
                 - Dashboard
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Configuration:
                 - My Settings
                 - About
@@ -213,11 +232,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -235,11 +255,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -264,11 +285,12 @@ group_roles:
                 - My Services
                 - Catalogs
                 - Requests
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -306,11 +328,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -332,11 +355,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -348,7 +372,7 @@ group_roles:
         menus:
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Configuration:
                 - My Settings
                 - About
@@ -356,7 +380,7 @@ group_roles:
         menus:
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Configuration:
                 - My Settings
                 - About
@@ -364,7 +388,7 @@ group_roles:
         menus:
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Configuration:
                 - My Settings
                 - About
