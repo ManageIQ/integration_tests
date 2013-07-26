@@ -59,7 +59,7 @@ class AuthenticationSettingsTab(Base):
         self.select_dropdown_by_value(mode, *self._auth_mode_selector)
         self._wait_for_results_refresh()
         if mode != "database":
-            self._wait_for_results_refresh()
+            self._wait_for_visible_element(*self._ldap_host1_field)
             self.fill_field_by_locator(hostname1, *self._ldap_host1_field)
             if hostname2:
                 self.fill_field_by_locator(hostname2, *self._ldap_host2_field)
@@ -69,13 +69,14 @@ class AuthenticationSettingsTab(Base):
             self.select_dropdown_by_value(user_type, *self._ldap_usertype_selector)
             self.fill_field_by_locator_with_wait(user_suffix, *self._ldap_usersuffix_field)
             self.toggle_checkbox(get_groups, *self._ldap_get_groups_checkbox)
-            self._wait_for_results_refresh()
-            self.toggle_checkbox(get_roles, *self._ldap_get_roles_forest_checkbox)
-            self.toggle_checkbox(follow_referrals, *self._ldap_follow_referrals_checkbox)
-            self.fill_field_by_locator(base_dn, *self._ldap_basedn_field)
-            self.fill_field_by_locator(bind_dn, *self._ldap_binddn_field)
-            self.fill_field_by_locator_with_wait(bind_passwd, *self._ldap_bind_passwd_field)
-            self._wait_for_results_refresh()
+            if get_groups:
+                self._wait_for_visible_element(*self._ldap_follow_referrals_checkbox)
+                self.toggle_checkbox(get_roles, *self._ldap_get_roles_forest_checkbox)
+                self.toggle_checkbox(follow_referrals, *self._ldap_follow_referrals_checkbox)
+                self.fill_field_by_locator(base_dn, *self._ldap_basedn_field)
+                self.fill_field_by_locator(bind_dn, *self._ldap_binddn_field)
+                self.fill_field_by_locator_with_wait(bind_passwd, *self._ldap_bind_passwd_field)
+                self._wait_for_results_refresh()
 
     def toggle_checkbox(self, state, *element):
         checkbox = self.selenium.find_element(*element)
