@@ -120,11 +120,12 @@ group_roles:
             Services:
                 - My Services
                 - Requests
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -162,11 +163,12 @@ group_roles:
                 - RSS
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -189,11 +191,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -215,7 +218,7 @@ group_roles:
                 - Dashboard
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Configuration:
                 - My Settings
                 - About
@@ -229,11 +232,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -251,11 +255,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -280,11 +285,12 @@ group_roles:
                 - My Services
                 - Catalogs
                 - Requests
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -322,11 +328,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -348,11 +355,12 @@ group_roles:
                 - Timelines
                 - RSS
             Services:
-                - Virtual Machines
+                - Workloads
             Infrastructure:
-                - Management Systems
+                - Providers
                 - Clusters
                 - Hosts
+                - Virtual Machines
                 - Resource Pools
                 - Datastores
                 - Repositories
@@ -364,7 +372,7 @@ group_roles:
         menus:
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Configuration:
                 - My Settings
                 - About
@@ -372,7 +380,7 @@ group_roles:
         menus:
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Configuration:
                 - My Settings
                 - About
@@ -380,7 +388,7 @@ group_roles:
         menus:
             Services:
                 - Requests
-                - Virtual Machines
+                - Workloads
             Configuration:
                 - My Settings
                 - About
