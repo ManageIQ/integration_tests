@@ -61,7 +61,7 @@ class ProvisionFormButtonMixin(object):
 
     def click_on_continue(self):
         '''Alias for click_on_submit'''
-        return click_on_submit()
+        return self.click_on_submit()
 
     def click_on_submit(self):
         ''' Click on the submit button. Go to Requests page'''

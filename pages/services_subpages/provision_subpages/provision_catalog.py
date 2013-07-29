@@ -19,7 +19,10 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
     _name_list_locator = (
             By.CSS_SELECTOR, "div#prov_vm_div > table > tbody")
     _provision_type_select_locator = (By.ID, "service__provision_type")
+    _pxe_server_select_locator = (By.ID, "service__pxe_server_id")
     _linked_clone_checkbox_locator = (By.ID, "service__linked_clone")
+    _pxe_image_list_locator = (
+            By.CSS_SELECTOR, "div#prov_pxe_img_div > table > tbody")
     _number_of_vms_select_locator = (By.ID, "service__number_of_vms")
     _vm_name_locator = (By.ID, "service__vm_name")
     _vm_description_locator = (By.ID, "service__vm_description")
@@ -45,12 +48,28 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
                 self.CatalogItem)
 
     @property
+    def server_image_pxe_list(self):
+        return ListRegion(self.testsetup,
+                self.get_element(*self._pxe_image_list_locator),
+                self.CatalogItem)
+
+    @property
     def provision_type(self):
         '''Select - Provision Type
 
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._provision_type_select_locator))
+
+    @property
+    def pxe_server(self):
+        '''Select - PXE Server
+
+        Returns a Select webelement
+        '''
+        return Select(self.get_element(*self._pxe_server_select_locator))
+
+
 
     @property
     def linked_clone(self):
@@ -80,14 +99,32 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
         '''VM Naming - Description character count'''
         return self.get_element(*self._vm_description_char_count_locator)
 
+    def select_server_image(self, server_image_name):
+        si_items = self.server_image_pxe_list.items
+        selected_item = None
+        for i in range(1, len(si_items)):
+            if si_items[i].name == server_image_name:
+                selected_item = si_items[i]
+                selected_item.click()
+        self._wait_for_results_refresh()
+        return ProvisionCatalog.ServerImageItem(selected_item)
+
     def fill_fields(
             self,
             provision_type_text,
+            pxe_server_name,
+            server_image_name,
             number_of_vms_text,
             vm_name_text,
             vm_description_text):
         '''Fill fields on Catalog page'''
         self.provision_type.select_by_visible_text(provision_type_text)
+        self._wait_for_results_refresh()
+        if 'PXE' in provision_type_text:
+            self.pxe_server.select_by_visible_text(pxe_server_name)
+            self._wait_for_results_refresh()
+        if server_image_name:
+            self.select_server_image(server_image_name)
         self.number_of_vms.select_by_visible_text(number_of_vms_text)
         self._wait_for_visible_element(*self._vm_name_locator)
         self.vm_name.send_keys(vm_name_text)
@@ -101,7 +138,7 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
         '''Represents a catalog item from the list'''
         _columns = ["name", "operating_system", "platform", "cpus", "memory",
                 "disk_size", "management_system", "snapshots"]
-        
+
         @property
         def name(self):
             '''Template name'''
@@ -141,3 +178,17 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
         def snapshots(self):
             '''Template snapshot count'''
             return self._item_data[7].text
+
+
+    class ServerImageItem(ListItem):
+        '''Represents a server image item from the list'''
+        _columns = ["name", "description"]
+
+        @property
+        def name(self):
+            return self._item_data[0].text
+
+        @property
+        def description(self):
+            return self._item_data[1].text
+
