@@ -15,11 +15,6 @@ pytestmark = [pytest.mark.nondestructive,
               pytest.mark.usefixtures("setup_infrastructure_providers"), 
               pytest.mark.usefixtures("maximized") ]
 
-def _read(filename):
-    stream = file(filename, 'r')
-    import yaml
-    return yaml.load(stream)
-
 def fetch_list(data, skip_if_ec2 = False):
     tests = []
     for provider in data["management_systems"]:
@@ -32,7 +27,7 @@ def fetch_list(data, skip_if_ec2 = False):
     return tests
 
 def pytest_generate_tests(metafunc):
-    data = load_cfme_data()
+    data = load_cfme_data(metafunc.config.option.cfme_data_filename)
     argnames = []
     tests = []
 
