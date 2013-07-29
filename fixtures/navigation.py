@@ -73,3 +73,8 @@ def automate_explorer_pg(home_page_logged_in):
     '''Navigate to Automate -> Explorer'''
     return home_page_logged_in.header.site_navigation_menu(
             "Automate").sub_navigation_menu("Explorer").click()
+
+@pytest.fixture
+def automate_infrastructure_vms_pg(home_page_logged_in):
+    '''Navigate to Service -> Workloads'''
+    return home_page_logged_in.header.site_navigation_menu("Infrastructure").sub_navigation_menu("Virtual Machines").click()
