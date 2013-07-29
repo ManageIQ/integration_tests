@@ -12,6 +12,6 @@ def configure_auth_mode(configuration_pg, cfme_data):
         auth_pg.ldap_server_fill_data(**server_data)
         if server_data['get_groups'] and server_data['mode'] != "database":
             auth_pg.validate()
-            Assert.true(auth_pg.flash.message.startswith("LDAP Settings validation was successful"))
+            Assert.contains("LDAP Settings validation was successful", auth_pg.flash.message, "Validate flash message did not match")
         auth_pg = auth_pg.save()
-        Assert.true(auth_pg.flash.message.startswith("Authentication settings saved"))
+        Assert.contains("Authentication settings saved", auth_pg.flash.message, "Auth page save flash message did not match")
