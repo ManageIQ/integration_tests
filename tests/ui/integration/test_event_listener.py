@@ -5,43 +5,10 @@
 import pytest
 import time
 from unittestzero import Assert
-import os
 import re
-import subprocess
 import requests
 import logging
-from urlparse import urlparse
-
-#
-# This test requires complex setup so events can be validated through automate.
-# The API listener (bottle) runs alongside this test as a bridge between
-# automate and py.test. See tests/common/listener.py
-#
-
-# Global var used to record listener process info
-listener = None
-
-logging.basicConfig(filename='test_events.log', level=logging.INFO)
-
-
-def setup_module(module):
-    global listener
-    listener_script = "/usr/bin/env python tests/common/listener.py"
-    logging.info("Starting listener ... ")
-    listener = subprocess.Popen(listener_script,
-            stderr=subprocess.PIPE,
-            shell=True)
-    logging.info("(%s)\n" % listener.pid)
-    # Wait for listener to start ...
-    time.sleep(1)
-
-
-def teardown_module(module):
-    global listener
-    logging.info("\nKilling listener (%s)..." % (listener.pid))
-    listener.kill()
-    (stdout, stderr) = listener.communicate()
-    logging.info("%s\n%s" % (stdout, stderr))
+import shutil
 
 
 @pytest.fixture(scope="module",  # IGNORE:E1101
@@ -52,14 +19,19 @@ def mgmt_sys(request, cfme_data):
 
 
 class APIMethods():
+    '''Helper methods to read/write to running API listener
+    '''
     def __init__(self, cfme_data):
         self.listener_host = cfme_data['listener']
 
-    def get(self, route):
+    def _get(self, route):
+        '''query event listener
+        '''
         listener_url = "%s:%s" % (self.listener_host['url'], self.listener_host['port'])
-        logging.debug("api request to %s%s" % (listener_url, route))
+        logging.info("checking api: %s%s" % (listener_url, route))
         r = requests.get(listener_url + route)
         r.raise_for_status()
+        logging.debug("Response: %s" % r.json)
         return r.json
 
     def check_db(self, sys_type, obj_type, obj, event):
@@ -70,7 +42,7 @@ class APIMethods():
         req = "/events/%s/%s?event=%s" % (self.mgmt_sys_type(sys_type, obj_type), obj, event)
         for attempt in range(1, max_attempts+1):
             try:
-                assert len(self.get(req)) == 1
+                assert len(self._get(req)) == 1
             except AssertionError as e:
                 if attempt < max_attempts:
                     logging.debug("Waiting for DB (%s/%s): %s" % (attempt, max_attempts, e))
@@ -90,8 +62,8 @@ class APIMethods():
     def mgmt_sys_type(self, sys_type, obj_type):
         '''Map management system type from cfme_data.yaml to match event string
         '''
-        # FIXME: obj_type ('ems' or 'vm') is the same for all tests in class
-        #        there must be a better way than to pass this around
+        # TODO: obj_type ('ems' or 'vm') is the same for all tests in class
+        #       there must be a better way than to pass this around
         ems_map = {"rhevm": "EmsRedhat",
                         "virtualcenter": "EmsVmware"}
         vm_map = {"rhevm": "VmRedhat",
@@ -109,42 +81,47 @@ def api_methods(request, cfme_data):
 
 @pytest.mark.destructive  # IGNORE:E1101
 class TestCustomizeAutomate():
+    '''Setup tests to prepare appliance for events testing
+    '''
     @pytest.mark.skip_selenium
     def test_import_namespace(self, mozwebqa, cfme_data, ssh_client):
         '''Update custom automate namespace xml file with listener URL,
            copy to appliance, import using rake method
         '''
-        # FIXME: custom automate ruby script doesn't support spaces in 
-        #        mgmt_system name. Need to url-encode url string in ruby method
         qe_automate_namespace_xml = "qe_event_handler.xml"
-        qe_automate_path = os.getcwd() + "/tests/ui/integration/data/" + qe_automate_namespace_xml
-        rake_cmd = "evm:automate:import FILE=/root/%s" % qe_automate_namespace_xml
-        listener_url = cfme_data.data['listener']['url'].strip('http://')
+        local_automate_file = "%s/tests/ui/integration/data/%s" % \
+            (mozwebqa.request.session.fspath, qe_automate_namespace_xml)
+        tmp_automate_file = "/tmp/%s" % qe_automate_namespace_xml
 
-        # update xml file
-        with open(qe_automate_path, "r") as sources:
+        # create temp xml file to work with
+        shutil.copyfile(local_automate_file, tmp_automate_file)
+
+        # update temp xml file with listener IP address from cfme_data
+        listener_url = cfme_data.data['listener']['url'].strip('http://')
+        with open(tmp_automate_file, "r") as sources:
             lines = sources.readlines()
-        with open(qe_automate_path, "w") as sources:
+        with open(tmp_automate_file, "w") as sources:
             for line in lines:
                 sources.write(re.sub(r'localhost', listener_url, line))
 
         # copy xml file to appliance
-        parsed_url = urlparse(mozwebqa.base_url)
-        os.system("sshpass -p '%s' scp %s %s@%s:/root/" % 
-            (mozwebqa.credentials['ssh']['password'], 
-             qe_automate_path, 
-             mozwebqa.credentials['ssh']['username'], 
-             parsed_url.hostname))
+        ssh_client.put_file(tmp_automate_file, '/root/')
 
-        # run rake cmd on appliance to import xml
+        # run rake cmd on appliance to import automate namespace
+        rake_cmd = "evm:automate:import FILE=/root/%s" % \
+            qe_automate_namespace_xml
         ssh_client.run_rake_command(rake_cmd)
 
-    @pytest.mark.usefixtures("maximized") # IGNORE:E1101
+    @pytest.mark.usefixtures("maximized")  # IGNORE:E1101
     def test_create_automate_instance_hook(self, automate_explorer_pg):
         '''Add automate instance that follows relationship to custom namespace
         '''
         parent_class = "Automation Requests (Request)"
-        instance_details = ["RelayEvents", "RelayEvents", "relationship hook to link to custom QE events relay namespace"]
+        instance_details = [
+            "RelayEvents", 
+            "RelayEvents", 
+            "relationship hook to link to custom QE events relay namespace"
+            ]
         instance_row = 2
         instance_value = "/QE/Automation/APIMethods/relay_events?event=$evm.object['event']"
 
@@ -153,33 +130,37 @@ class TestCustomizeAutomate():
         instance_pg.fill_instance_info(*instance_details)
         instance_pg.fill_instance_field_row_info(instance_row, instance_value)
         class_pg = instance_pg.click_on_add_system_button()
-        Assert.true(class_pg.flash_message_class == 'Automate Instance "%s" was added' % instance_details[0])
+        Assert.equal(class_pg.flash_message_class, 
+            'Automate Instance "%s" was added' % instance_details[0])
 
     @pytest.mark.usefixtures("maximized")
-    def test_import_policies(self, home_page_logged_in):
+    def test_import_policies(self, request, home_page_logged_in):
         '''Import policy profile that raises automate model based on events
         '''
         policy_yaml = "profile_relay_events.yaml"
-        policy_path = os.getcwd() + "/tests/ui/integration/data/" + policy_yaml
+        policy_path = "%s/tests/ui/integration/data/%s" % \
+            (request.session.fspath, policy_yaml)
 
         home_pg = home_page_logged_in
         import_pg = home_pg.header.site_navigation_menu("Control").sub_navigation_menu("Import / Export").click()
         import_pg = import_pg.import_policies(policy_path)
-        Assert.true(import_pg.flash.message == "Press commit to Import")
+        Assert.equal(import_pg.flash.message, "Press commit to Import")
         import_pg = import_pg.click_on_commit()
-        Assert.true(import_pg.flash.message == "Import file was uploaded successfully")
+        Assert.equal(import_pg.flash.message, 
+            "Import file was uploaded successfully")
 
     @pytest.mark.usefixtures("maximized")  # IGNORE:E1101
     def test_assign_policy_profile(self, setup_infrastructure_providers, infra_providers_pg, mgmt_sys):
         '''Assign policy profile to management system
         '''
-        profile = "Automate event policies"
+        policy_profile = "Automate event policies"
         infra_providers_pg.select_provider(mgmt_sys['name'])
         policy_pg = infra_providers_pg.click_on_manage_policies()
-        policy_pg.select_profile_item(profile)
+        policy_pg.select_profile_item(policy_profile)
         policy_pg.save()
-        Assert.true(policy_pg.flash.message.startswith(
-                'Policy assignments successfully changed'))
+        Assert.equal(policy_pg.flash.message,
+            'Policy assignments successfully changed',
+            'Save policy assignment flash message did not match')
 
 
 @pytest.mark.usefixtures("maximized")  # IGNORE:E1101
@@ -187,9 +168,12 @@ class TestVmPowerEvents():
     '''Toggle power state of VM(s) listed in cfme_data.yaml under 
        'test_vm_power_control' and verify event(s) passed through automate
        and into running event listener
+
+       Listener is managed by fixture setup_api_listener
+       Listener code is tests/common/listener.py
     '''
 
-    def test_vm_power_on_ui(self, infra_vms_pg, mgmt_sys, api_methods):
+    def test_vm_power_on_ui(self, setup_api_listener, infra_vms_pg, mgmt_sys, api_methods):
         '''Power on guest via UI
         '''
         for vm in mgmt_sys['test_vm_power_control']:
@@ -198,7 +182,8 @@ class TestVmPowerEvents():
             vm_pg.power_button.power_on()
             events = ["vm_power_on_req", "vm_power_on"]
             for event in events:
-                assert api_methods.check_db(mgmt_sys['type'], "vm", vm, event)
+                Assert.true(api_methods.check_db(
+                    mgmt_sys['type'], "vm", vm, event))
 
     def test_vm_power_off_ui(self, infra_vms_pg, mgmt_sys, api_methods):
         '''Power off guest via UI
@@ -207,4 +192,5 @@ class TestVmPowerEvents():
             infra_vms_pg.wait_for_vm_state_change(vm, 'on', 3)
             vm_pg = infra_vms_pg.find_vm_page(vm, 'on', True, True)
             vm_pg.power_button.power_off()
-            assert api_methods.check_db(mgmt_sys['type'], "vm", vm, "vm_power_off")
+            Assert.true(api_methods.check_db(
+                mgmt_sys['type'], "vm", vm, "vm_power_off"))
