@@ -1,27 +1,15 @@
 #!/usr/bin/env python
 
-# parse API get requests from CFME automate
-# requires:
-# * bottle, sqlite
-# * port 8080 open
-# example: curl -X PUT http://localhost:8080/events/VmRedhat/vm_name?event=vm_start
+# API listener to handle CFME automate events
+# example calls
+#    curl -X PUT http://localhost:8080/events/VmRedhat/vm_name?event=vm_start
+#    curl -X GET http://localhost:8080/events
 
 import os
-import sys
 import json
 import sqlite3
-from socket import gethostname
-try:
-    from bottle import run, route, request, response, install
-except ImportError, e:
-    print "Unable to import bottle.  Is python-bottle installed?"
-    sys.exit(1)
-
-try:
-    from bottle_sqlite import SQLitePlugin
-except ImportError, e:
-    print "Unable to import bottle_sqlite.  Is python-bottle-sqlite installed?"
-    sys.exit(1)
+from bottle import run, route, request, response, install
+from bottle_sqlite import SQLitePlugin
 
 # If required, remove existing db
 # FIXME, check perms too

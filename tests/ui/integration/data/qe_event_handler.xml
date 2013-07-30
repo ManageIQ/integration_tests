@@ -2,53 +2,47 @@
 <MiqAeDatastore version="1.0">
   <MiqAeClass name="APIMethods" namespace="QE/Automation" description="APIMethods" display_name="APIMethods">
     <MiqAeMethod name="relay_events" language="ruby" scope="instance" location="inline" display_name="relay_events"><![CDATA[#
-#            Automate Method
+# Author: mawagner
+require "rest-client"
+
+#
+# Automate Method
 #
 $evm.log("info", "Automate Method Started")
 #
-#            Method Code Goes here
+# Method Code Goes here
 #
 #
 #$evm.root.attributes.sort.each { |k, v| $evm.log("info", "#### Root #{k}: #{v}")}
-#$evm.object.attributes.sort.each { |k, v| $evm.log("info", "#### Object  #{k}: #{v}")}
+#$evm.object.attributes.sort.each { |k, v| $evm.log("info", "#### Object #{k}: #{v}")}
+ 
+# example PUT call: curl X PUT http://localhost:8080/events/VmRedhat/vm_name?event=vm_power_on
+# example PUT call: curl X PUT http://localhost:8080/events/EmsRedhat/ems_name?event=ems_auth_changed
+# example GET call (for debugging only): curl X GET http://localhost:8080/events
+ 
+def base_url
+url = "http://#{$evm.object['url']}:#{$evm.object['port']}/#{$evm.object['route1']}"
+end
+ 
+def suffix
+"?event=#{$evm.root['event']}"
+end
+ 
+def put(*opts)
+response = RestClient.put(opts.join('/') + suffix, "")
+$evm.log("info", "API Call: #{opts.join('/')}#{suffix}")
+$evm.log("info", "API Response: #{response.code}")
+end
 
-# example call: curl X PUT http://localhost:8080/events/VmRedhat/vm_name?event=vm_power_on
-# example call: curl X PUT http://localhost:8080/events/EmsRedhat/ems_name?event=ems_auth_changed
-
-# TODO:
-# * replace curl with proper ruby api call
-# * url-encode names (names with spaces fail)
-# * support other resource types like host
-str = ""
 vm = $evm.root['vm']
 mgmt_sys = $evm.root['ext_management_system']
-#host = $evm.root['host']
+ 
+if !mgmt_sys.nil?
+put(base_url, CGI::escape(mgmt_sys.type), CGI::escape(mgmt_sys.name))
 
-if !mgmt_sys.nil? 
-   mgmt_sys.attributes.sort.each { |k, v| $evm.log("info", "#### MGMT_SYS #{k}: #{v}")}
-   str = "%s/%s" % [mgmt_sys.type, mgmt_sys.name]
-# TODO
-#elsif !host.nil?
-#   host.attributes.sort.each { |k, v| $evm.log("info", "#### HOST #{k}: #{v}")}
-#   str = "%s/%s" % [host.type, host.name]
 elsif !vm.nil?
-   #vm.attributes.sort.each { |k, v| $evm.log("info", "#### VM #{k}: #{v}")}
-   str = "%s/%s" % [vm.type, vm.name]
+put(base_url, CGI::escape(vm.type), CGI::escape(vm.name))
 end
-call = "curl -X PUT http://"
-call << $evm.object['url']
-call << ":"
-call << $evm.object['port']
-call << "/"
-call << $evm.object['route1']
-call << "/"
-call << str
-call << "?event="
-call << $evm.root['event']
-
-$evm.log("info","call_test_api request: #{call}")
-out = `#{call}`
-$evm.log("info", "call_test_api response: #{out}")
 
 #
 #
