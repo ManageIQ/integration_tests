@@ -93,6 +93,13 @@ class Page(object):
         time.sleep(2)
         return field_element
 
+    def fill_field_element_clears_text(self, data, field_element):
+        '''Fill field with workaround for javascript clearing behavior'''
+        field_element.click()
+        time.sleep(1)
+        field_element.clear()
+        field_element.send_keys(data)
+
     def fill_field_element(self, data, field_element):
         field_element.clear()
         field_element.send_keys(data)

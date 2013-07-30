@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from pages.base import Base
-from pages.page import Page 
+from pages.page import Page
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.list import ListRegion, ListItem
@@ -76,29 +76,24 @@ class ExplorerInstance(Base):
         self._wait_for_results_refresh()
         return ExplorerInstance(self.testsetup)
 
-    def fill_instance_field_row_info(self, 
-                                     row_number, 
-                                     param_value, 
-                                     param_on_entry=None, 
-                                     param_on_exit=None, 
-                                     param_on_error=None, 
+    def fill_instance_field_row_info(self,
+                                     row_number,
+                                     param_value,
+                                     param_on_entry=None,
+                                     param_on_exit=None,
+                                     param_on_error=None,
                                      param_collect=None):
         param_items = self.param_list.items
-        # workaround javascript clearing behavior
-        param_items[row_number]._item_data[1].find_element_by_id('cls_inst_value_' + str(row_number)).click()
-        sleep(1)
-        param_items[row_number]._item_data[1].find_element_by_id('cls_inst_value_' + str(row_number)).clear()
-        param_items[row_number]._item_data[1].find_element_by_id('cls_inst_value_' + str(row_number)).send_keys(param_value)
+        self.fill_field_element_clears_text(param_value, \
+            param_items[row_number].value.find_element_by_id('cls_inst_value_' + str(row_number)))
         self._wait_for_results_refresh()
         return ExplorerInstance(self.testsetup)
 
     def fill_instance_field_value_only(self, field_array, value_array):
         Assert.true(len(field_array) == len(value_array))
-        for i in range(0, len(field_array)):
+        for i, field in enumerate(field_array):
             self._wait_for_results_refresh()
-            field_array[i].click()
-            field_array[i].send_keys(value_array[i])
-            field_array[i].send_keys(Keys.RETURN)
+            self.fill_field_element_clears_text(value_array[i], field)
         self._wait_for_results_refresh()
         return ExplorerInstance(self.testsetup)
 
@@ -138,7 +133,7 @@ class ExplorerInstance(Base):
 
         @property
         def value(self):
-            return self._item_data[1].text
+            return self._item_data[1]
 
         @property
         def on_entry(self):
