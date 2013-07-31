@@ -84,6 +84,7 @@ class AccessControl(Base):
 
     class NewRole(Base):
         _submit_role_button = (By.CSS_SELECTOR, "img[alt='Add']")
+        _cancel_role_button = (By.CSS_SELECTOR, "img[title='Cancel']")
         _name_field = (By.CSS_SELECTOR, "input[name='name']")
         _access_restriction_field = (By.CSS_SELECTOR,
                 "select[name='vm_restriction']")
@@ -100,10 +101,14 @@ class AccessControl(Base):
             return field.send_keys(name)
 
         def save(self):
-            # when editing an existing role, wait until "save" button shows up
-            # after ajax validation
             self._wait_for_visible_element(*self._submit_role_button)
             self.selenium.find_element(*self._submit_role_button).click()
+            self._wait_for_results_refresh()
+            return AccessControl.ShowRole(self.testsetup)
+
+        def cancel(self):
+            self._wait_for_visible_element(*self._cancel_role_button)
+            self.selenium.find_element(*self._cancel_role_button).click()
             self._wait_for_results_refresh()
             return AccessControl.ShowRole(self.testsetup)
 
@@ -183,6 +188,7 @@ class AccessControl(Base):
 
     class NewGroup(Base):
         _submit_group_button = (By.CSS_SELECTOR, "img[alt='Add']")
+        _cancel_group_button = (By.CSS_SELECTOR, "img[title='Cancel']")
         _group_description_field = (By.ID, "description")
         _role_selector= (By.ID, "group_role")
         _company_tags_tree = (By.CSS_SELECTOR, "#myco_treebox")
@@ -206,10 +212,14 @@ class AccessControl(Base):
             return self.select_dropdown(role, *self._role_selector)
 
         def save(self):
-            # when editing an existing group, wait until "save" button shows up
-            # after ajax validation
             self._wait_for_visible_element(*self._submit_group_button)
             self.selenium.find_element(*self._submit_group_button).click()
+            self._wait_for_results_refresh()
+            return AccessControl.ShowGroup(self.testsetup)
+
+        def cancel(self):
+            self._wait_for_visible_element(*self._cancel_group_button)
+            self.selenium.find_element(*self._cancel_group_button).click()
             self._wait_for_results_refresh()
             return AccessControl.ShowGroup(self.testsetup)
 
@@ -284,6 +294,7 @@ class AccessControl(Base):
 
     class NewEditUser(Base):
         _submit_user_button = (By.CSS_SELECTOR, "img[alt='Add']")
+        _cancel_user_button = (By.CSS_SELECTOR, "img[title='Cancel']")
         _save_user_button = (By.CSS_SELECTOR, "img[title='Save Changes']")
         _user_name_field = (By.ID, "name")
         _user_id_field= (By.ID, "userid")
@@ -292,7 +303,7 @@ class AccessControl(Base):
         _user_email_field = (By.ID, "email")
         _user_group_selector = (By.ID, "chosen_group")
 
-        def fill_info(self, name, userid, pswd, pswd2, email, group):
+        def fill_info(self, name, userid, email, group):
             if(name):
                 field = self.selenium.find_element(*self._user_name_field)
                 field.clear()
@@ -301,14 +312,6 @@ class AccessControl(Base):
                 field = self.selenium.find_element(*self._user_id_field)
                 field.clear()
                 field.send_keys(userid)
-            if(pswd):
-                field = self.selenium.find_element(*self._user_password_field)
-                field.clear()
-                field.send_keys(pswd)
-            if(pswd2):
-                field = self.selenium.find_element(*self._user_confirm_password_field)
-                field.clear()
-                field.send_keys(pswd2)
             if(email):
                 field = self.selenium.find_element(*self._user_email_field)
                 field.clear()
@@ -317,8 +320,6 @@ class AccessControl(Base):
                 self.select_dropdown(group, *self._user_group_selector)
 
         def click_on_add(self):
-            # when editing an existing group, wait until "save" button shows up
-            # after ajax validation
             self._wait_for_visible_element(*self._submit_user_button)
             self.selenium.find_element(*self._submit_user_button).click()
             self._wait_for_results_refresh()
@@ -327,6 +328,12 @@ class AccessControl(Base):
         def click_on_save(self):
             self._wait_for_visible_element(*self._save_user_button)
             self.selenium.find_element(*self._save_user_button).click()
+            self._wait_for_results_refresh()
+            return AccessControl.ShowUser(self.testsetup)
+
+        def click_on_cancel(self):
+            self._wait_for_visible_element(*self._cancel_user_button)
+            self.selenium.find_element(*self._cancel_user_button).click()
             self._wait_for_results_refresh()
             return AccessControl.ShowUser(self.testsetup)
 
