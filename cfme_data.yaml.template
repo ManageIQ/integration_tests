@@ -107,6 +107,14 @@ ldap_server:
     base_dn: dc=ad,dc=example,dc=com
     bind_dn: administrator@ad.example.com
     bind_passwd: password
+zones:
+    test_zone:
+        name: CloudForms
+        description: CFME 2 zone description
+        ntp_servers:
+            - 0.us.pool.ntp.org
+            - 1.us.pool.ntp.org
+            - 2.us.pool.ntp.org
 group_roles:
     evmgroup-administrator:
         menus:
