@@ -72,12 +72,6 @@ class RegionSettings(Base):
             if(self.cluster_checkbox.get_attribute("checked") == "true"):
                 self.cluster_checkbox.click()
                 self._wait_for_results_refresh()
-
-            if(self.check_all_clusters_checkbox.get_attribute("checked") != "true"):
-                self.check_all_clusters_checkbox.click()
-                #self._wait_for_results_refresh()
-            self.check_all_clusters_checkbox.click()
-            #self._wait_for_results_refresh()
             return RegionSettings.CapAndUtil(self.testsetup)            
         
         def check_specific_cluster(self, cluster_name):
@@ -109,12 +103,6 @@ class RegionSettings(Base):
             if(self.datastore_checkbox.get_attribute("checked") == "true"):
                 self.datastore_checkbox.click()
                 self._wait_for_results_refresh()
-
-            if(self.check_all_datastores_checkbox.get_attribute("checked") != "true"):
-                self.check_all_datastores_checkbox.click()
-                #self._wait_for_results_refresh()
-            self.check_all_datastores_checkbox.click()
-            #self._wait_for_results_refresh()
             return RegionSettings.CapAndUtil(self.testsetup)
 
         def check_specific_datastore(self, datastore_name):
