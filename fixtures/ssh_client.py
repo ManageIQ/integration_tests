@@ -2,7 +2,7 @@ from urlparse import urlparse
 
 import pytest
 
-from utils.ssh import SSHClient
+from common.ssh import SSHClient
 
 @pytest.fixture
 def ssh_client(mozwebqa):
