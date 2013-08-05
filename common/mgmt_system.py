@@ -1,6 +1,7 @@
 """ Base module for Management Systems classes. """
 
 import time
+import re
 from abc import ABCMeta, abstractmethod
 
 import boto
@@ -162,6 +163,19 @@ class MgmtSystemAPIBase(object):
         """
         raise NotImplementedError('restart_vm not implemented.')
 
+    @abstractmethod
+    def clone_vm(self, source_name, vm_name):
+        """
+            Clone a VM.
+
+            :param source_name: The source VM to clone from
+            :type  source_name: str
+            :param vm_name: The name of the new VM
+            :type  vm_name: str
+            :return: IP address of the clone
+            :rtype: str
+        """
+        raise NotImplementedError('clone_vm not implemented.')
 
 class VMWareSystem(MgmtSystemAPIBase):
     """
@@ -190,7 +204,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.api.connect(hostname, username, password)
 
     def _get_vm(self, vm_name=None):
-        """ RHEVMSystem implementation in _get_vm. """
+        """ VMWareSystem implementation in _get_vm. """
         if vm_name is None:
             raise Exception('Could not find a VM named %s.' % vm_name)
         else:
@@ -199,6 +213,32 @@ class VMWareSystem(MgmtSystemAPIBase):
                 return vm
             except VIException as ex:
                 raise Exception(ex)
+
+    def _get_resource_pool(self, resource_pool_name=None):
+        rps = self.api.get_resource_pools()
+        for mor, path in rps.iteritems():
+            if re.match('.*%s' % resource_pool_name,path):
+                return mor
+        # Just pick the first
+        return rps.keys()[0]
+
+    def _find_ip(self, vm, ipv6=False):
+        maxwait = 120
+        net_info = None
+        waitcount = 0
+        while net_info is None:
+            if waitcount > maxwait:
+                break
+            net_info = vm.get_property('net',False)
+            waitcount += 5
+            time.sleep(5)
+        if net_info:
+            for ip in net_info[0]['ip_addresses']:
+                if ipv6 and re.match(r'\d{1,4}\:.*',ip) and not re.match('fe83\:.*',ip):
+                    return ip
+                elif not ipv6 and re.match(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',ip) and ip != '127.0.0.1':
+                    return ip
+        return None
 
     def start_vm(self, vm_name):
         """ VMWareSystem implementation of start_vm. """
@@ -300,6 +340,14 @@ class VMWareSystem(MgmtSystemAPIBase):
             vm.suspend()
             return vm.get_status()
 
+    def clone_vm(self, source_name, vm_name, resourcepool=None):
+        """ VMWareSystem implementation of clone_vm. """
+        vm = self._get_vm(source_name)
+        if vm:
+            clone = vm.clone(vm_name, sync_run=True, resourcepool=self._get_resource_pool(resourcepool))
+            return self._find_ip(clone)
+        else:
+            raise Exception('Could not clone %s' % source_name)
 
 class RHEVMSystem(MgmtSystemAPIBase):
     """
@@ -461,6 +509,10 @@ class RHEVMSystem(MgmtSystemAPIBase):
         else:
             ack = vm.suspend()
             return ack.get_status().get_state() == 'complete'
+
+    def clone_vm(self, source_name, vm_name):
+        """ RHEVMSystem implementation of clone_vm. """
+        pass
 
 
 class EC2System(MgmtSystemAPIBase):
@@ -660,6 +712,10 @@ class EC2System(MgmtSystemAPIBase):
 
         """
         raise Exception('Requested action is not supported by this system')
+
+    def clone_vm(self, source_name, vm_name):
+        """ EC2System implementation of clone_vm. """
+        pass
 
     def _get_instance_id_by_name(self, instance_name):
         # Quick validation that the instance name isn't actually an ID
