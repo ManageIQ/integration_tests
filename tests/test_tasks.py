@@ -7,43 +7,36 @@
 import pytest
 from unittestzero import Assert
 
-@pytest.fixture
-def load_tasks(home_page_logged_in):
-    ''' Fixture to navigate to the tasks page '''
-    tasks_pg = home_page_logged_in.header.site_navigation_menu(
-                        "Configuration").sub_navigation_menu("Tasks").click()
-    return tasks_pg 
-
 @pytest.mark.nondestructive
 class TestTasks:
 
-    def test_my_analysis_tab(self, load_tasks):
+    def test_my_analysis_tab(self, cnf_tasks_pg):
         ''' Test the my analysis tab components '''
-        page = load_tasks.current_subtab.load_my_vm_analysis_tasks_tab()
+        page = cnf_tasks_pg.current_subtab.load_my_vm_analysis_tasks_tab()
         Assert.false(page.current_subtab.task_buttons.is_cancel_button_present)
         self.check_common_tab(page)
         page.filter_for_zone('<All Zones>')
         page.filter_for_task_state('Aborting')
 
-    def test_my_other_tab(self, load_tasks):
+    def test_my_other_tab(self, cnf_tasks_pg):
         ''' Test the my other ui tasks tab components '''
-        page = load_tasks.current_subtab.load_my_other_tasks_tab()
+        page = cnf_tasks_pg.current_subtab.load_my_other_tasks_tab()
         Assert.false(page.current_subtab.task_buttons.is_cancel_button_present)
         self.check_common_tab(page)
         page.filter_for_task_state('Active')
 
-    def test_all_analysis_tab(self, load_tasks):
+    def test_all_analysis_tab(self, cnf_tasks_pg):
         ''' Test the all vm analysis tab components '''
-        page = load_tasks.current_subtab.load_all_vm_analysis_tasks_tab()
+        page = cnf_tasks_pg.current_subtab.load_all_vm_analysis_tasks_tab()
         Assert.true(page.current_subtab.task_buttons.is_cancel_button_present)
         self.check_common_tab(page)
         page.filter_for_zone('<All Zones>')
         page.filter_for_username('All Users')
         page.filter_for_task_state('Aborting')
 
-    def test_all_other_tab(self, load_tasks):
+    def test_all_other_tab(self, cnf_tasks_pg):
         ''' Test the all other tasks tab components '''
-        page = load_tasks.current_subtab.load_all_other_tasks_tab()
+        page = cnf_tasks_pg.current_subtab.load_all_other_tasks_tab()
         Assert.true(page.current_subtab.task_buttons.is_cancel_button_present)
         self.check_common_tab(page)
         page.filter_for_username('All Users')
@@ -81,4 +74,4 @@ class TestTasks:
         Assert.true(page.task_buttons.is_delete_older_option_disabled)
         Assert.false(page.task_buttons.is_delete_all_option_disabled)
         page.filter_for_time_period('1 Day Ago')
-        
+

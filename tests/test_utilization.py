@@ -1,17 +1,14 @@
 import pytest
 import time
-import datetime
 from unittestzero import Assert
 
 @pytest.mark.nondestructive #IGNORE:E1101
-@pytest.mark.usefixtures("maximized") 
+@pytest.mark.usefixtures("maximized")
 class TestUtilization:
-    def test_datastores(self, mozwebqa, home_page_logged_in):
-        home_pg = home_page_logged_in
-        utilization_pg = home_pg.header.site_navigation_menu("Optimize").sub_navigation_menu("Utilization").click()
-        Assert.true(utilization_pg.is_the_current_page)  
-        node_name = "datastore1" 
-        node_pg = utilization_pg.click_on_node(node_name)        
+    def test_datastores(self, optimize_utilization_pg):
+        Assert.true(optimize_utilization_pg.is_the_current_page)
+        node_name = "datastore1"
+        node_pg = optimize_utilization_pg.click_on_node(node_name)
         summary_pg = node_pg.click_on_summary()
         #Assert.true(summary_pg.tab_buttons.current_tab == "Summary")
         sum_trends = "2 Weeks"
@@ -46,12 +43,10 @@ class TestUtilization:
             Assert.true(report_pg.date_field.get_attribute("value") == rep_date)
         Assert.true(report_pg.details.get_section("Basic Information").get_item("Utilization Trend Summary for").value == "Datastore [%s]" %node_name)
 
-    def test_mgmt_systems(self, mozwebqa, home_page_logged_in):
-        home_pg = home_page_logged_in
-        utilization_pg = home_pg.header.site_navigation_menu("Optimize").sub_navigation_menu("Utilization").click()
-        Assert.true(utilization_pg.is_the_current_page)
+    def test_providers(self, optimize_utilization_pg):
+        Assert.true(optimize_utilization_pg.is_the_current_page)
         node_name = "RHEV 3.1"
-        node_pg = utilization_pg.click_on_node(node_name)
+        node_pg = optimize_utilization_pg.click_on_node(node_name)
         summary_pg = node_pg.click_on_summary()
         #Assert.true(summary_pg.tab_buttons.current_tab == "Summary")
         sum_trends = "2 Weeks"
@@ -81,7 +76,7 @@ class TestUtilization:
         if(summary_pg.date_field.get_attribute("value") == initial_sum_date):
              Assert.true(report_pg.date_field.get_attribute("value") == rep_date, "There is no utilization date for the specified date")
         else:
-            Assert.true(report_pg.date_field.get_attribute("value") == rep_date)        
+            Assert.true(report_pg.date_field.get_attribute("value") == rep_date)
         Assert.true(report_pg.details.get_section("Basic Information").get_item("Utilization Trend Summary for").value == "Management System [%s]" %node_name)
 
-        
+

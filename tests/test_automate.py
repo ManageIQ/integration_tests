@@ -10,22 +10,22 @@ def namespace(random_string):
 
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized")
-
-def test_automate_components(home_page_logged_in, namespace):
+def test_automate_components(automate_explorer_pg, namespace):
     '''Tests components for Automate Explorer Tree'''
-    home_pg = home_page_logged_in
-    ae_pg = home_pg.header.site_navigation_menu("Automate").\
-        sub_navigation_menu("Explorer").click()
+    ae_pg = automate_explorer_pg
     ae_tree = ae_pg.accordion.current_content
     Assert.true(ae_pg.is_the_current_page)
 
-    ae_pg.accordion.current_content.find_node_by_name("Datastore").click()
-    ae_pg.accordion.current_content.find_node_by_name("Alert").click()
-    ae_pg.accordion.current_content.find_node_by_name("Automation").click()
-    ae_pg.accordion.current_content.\
-        find_node_by_name("EVMApplications").click()
-    ae_pg.accordion.current_content.find_node_by_name("Factory").click()
-    ae_pg.accordion.current_content.find_node_by_name("Integration").click()
+    nodes = [
+        "Datastore",
+        "Alert",
+        "Automation",
+        "EVMApplications",
+        "Factory",
+        "Integration"
+        ]
+    for node in nodes:
+        ae_pg.accordion.current_content.find_node_by_name(node).click()
 
     ae_pg.click_on_namespace_access_node("Sample")
     Assert.equal(ae_tree.children[5].children[0].name, "Methods")

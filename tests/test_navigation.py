@@ -3,13 +3,12 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import time
 from unittestzero import Assert
 
 @pytest.mark.nondestructive
 class TestNavigation:
     @pytest.mark.usefixtures('maximized')
-    def test_navigation(self, mozwebqa, home_page_logged_in):
+    def test_navigation(self, home_page_logged_in):
         home_pg = home_page_logged_in
         Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
         infra_pg = home_pg.header.site_navigation_menu("Infrastructure").click()
@@ -23,7 +22,9 @@ class TestNavigation:
         config_pg = prov_pg.header.site_navigation_menu("Configure").click()
         Assert.true(config_pg.is_the_current_page)
         vm_pg = config_pg.header.site_navigation_menu(
-                "Infrastructure").sub_navigation_menu("Virtual Machines").click()
+                "Infrastructure").sub_navigation_menu("Virtual Machines")\
+                .click()
         Assert.true(vm_pg.is_the_current_page)
-        from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
+        from pages.infrastructure_subpages.vms_subpages.virtual_machines \
+                import VirtualMachines
         Assert.true(type(vm_pg) is VirtualMachines)

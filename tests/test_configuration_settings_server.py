@@ -3,16 +3,14 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import time
 from unittestzero import Assert
 
 @pytest.mark.nondestructive
 class TestConfigurationSettingsServer:
-    def test_edit_server_settings(self, mozwebqa, home_page_logged_in):
-        home_pg = home_page_logged_in
-        config_pg = home_pg.header.site_navigation_menu("Configure").sub_navigation_menu("Configuration").click()
-        Assert.true(config_pg.is_the_current_page)
-        server_pg = config_pg.click_on_settings().click_on_current_server_tree_node().click_on_server_tab()
+    def test_edit_server_settings(self, cnf_configuration_pg):
+        Assert.true(cnf_configuration_pg.is_the_current_page)
+        server_pg = cnf_configuration_pg.click_on_settings()\
+                .click_on_current_server_tree_node().click_on_server_tab()
         # select first unselected role
         role = [r for r in server_pg.server_roles if not r.is_selected][0]
         role.select()
