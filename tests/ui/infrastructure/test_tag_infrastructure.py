@@ -8,7 +8,7 @@ from unittestzero import Assert
 from pages.login import LoginPage
 
 @pytest.fixture(scope="module",
-                params=["vsphere5", "rhevm31"]) 
+                params=["vsphere5", "rhevm31"])
 def provider(request, cfme_data):
     param = request.param
     return cfme_data.data["management_systems"][param]

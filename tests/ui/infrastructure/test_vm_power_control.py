@@ -11,8 +11,8 @@ from utils.cfme_data import load_cfme_data
 # TODO: write snmp trap receiver fixture to verify host shutdown/reboots
 # TODO: write event receiver
 
-pytestmark = [pytest.mark.nondestructive, 
-              pytest.mark.usefixtures("setup_infrastructure_providers"), 
+pytestmark = [pytest.mark.nondestructive,
+              pytest.mark.usefixtures("setup_infrastructure_providers"),
               pytest.mark.usefixtures("maximized") ]
 
 def fetch_list(data, skip_if_ec2 = False):
@@ -38,14 +38,14 @@ def pytest_generate_tests(metafunc):
         else:
             metafunc.parametrize(argnames, fetch_list(data, skip_if_ec2 = False), scope="module")
     elif 'random_pwr_ctl_vm' in metafunc.fixturenames:
-        argnames = [ 'random_pwr_ctl_vm', 'provider', 'vm_name' ] 
+        argnames = [ 'random_pwr_ctl_vm', 'provider', 'vm_name' ]
         all_tests = fetch_list(data, skip_if_ec2 = False)
         if all_tests:
             tests.append(random.choice(all_tests))
         metafunc.parametrize(argnames, tests, scope="module")
 
 """
-These are in place for the reboot/reset/shutdown tests 
+These are in place for the reboot/reset/shutdown tests
 
 def is_host_online(host):
     return 0 == call(["ping", "-c 1", host], stdout=PIPE)
@@ -57,7 +57,7 @@ def wait_for_host_to_go_offline(host, timeout_in_minutes):
     while (count < max_count):
         if ( not is_host_online(host) ):
             return True
-        else: 
+        else:
             time.sleep(15)
             count += 1
     raise Exception("host never went offline in alloted time ("
@@ -70,7 +70,7 @@ def wait_for_host_to_come_online(host, timeout_in_minutes):
     while (count < max_count):
         if ( is_host_online(host) ):
             return True
-        else: 
+        else:
             time.sleep(15)
             count += 1
     raise Exception("host came online in alloted time ("
@@ -87,13 +87,13 @@ class TestControlOnQuadicons:
                 vm_name,
                 verify_vm_running,
                 mgmt_sys_api_clients):
-        ''' Test the cancelling of a power off operation from the vm quadicon 
-        list.  Verify vm stays running''' 
+        ''' Test the cancelling of a power off operation from the vm quadicon
+        list.  Verify vm stays running'''
         vm_pg = load_providers_vm_list
         vm_pg.wait_for_vm_state_change(vm_name, 'on', 12)
         vm_pg.power_off_and_cancel([vm_name])
         time.sleep(45)
-        vm_pg.refresh() 
+        vm_pg.refresh()
         vm_pg.find_vm_page(vm_name, None, False)
         Assert.equal(vm_pg.quadicon_region.get_quadicon_by_title(vm_name)
                 .current_state, 'on', "vm not running")
@@ -108,7 +108,7 @@ class TestControlOnQuadicons:
                 verify_vm_running,
                 mgmt_sys_api_clients):
         ''' Test power off operation on a single quadicon.  Verify vm
-        transitions to stopped. ''' 
+        transitions to stopped. '''
         vm_pg = load_providers_vm_list
         vm_pg.wait_for_vm_state_change(vm_name, 'on', 12)
         vm_pg.power_off([vm_name])
@@ -118,7 +118,7 @@ class TestControlOnQuadicons:
                 .current_state, 'off', "vm running")
         Assert.true(mgmt_sys_api_clients[provider].is_vm_stopped(vm_name),
                 "vm running")
-   
+
     def test_power_on_cancel(
                 self,
                 load_providers_vm_list,
@@ -127,12 +127,12 @@ class TestControlOnQuadicons:
                 verify_vm_stopped,
                 mgmt_sys_api_clients):
         ''' Test the cancelling of a power on operation from the vm quadicon
-        list.  Verify vm stays off.''' 
+        list.  Verify vm stays off.'''
         vm_pg = load_providers_vm_list
         vm_pg.wait_for_vm_state_change(vm_name, 'off', 12)
         vm_pg.power_on_and_cancel([vm_name])
         time.sleep(45)
-        vm_pg.refresh() 
+        vm_pg.refresh()
         vm_pg.find_vm_page(vm_name, None, False)
         Assert.equal(vm_pg.quadicon_region.get_quadicon_by_title(vm_name)
                 .current_state, 'off', "vm running")
@@ -146,8 +146,8 @@ class TestControlOnQuadicons:
                 vm_name,
                 verify_vm_stopped,
                 mgmt_sys_api_clients):
-        ''' Test power on operation for a single quadicon.  Verify vm 
-        transitions to running. ''' 
+        ''' Test power on operation for a single quadicon.  Verify vm
+        transitions to running. '''
         vm_pg = load_providers_vm_list
         vm_pg.wait_for_vm_state_change(vm_name, 'off', 12)
         vm_pg.power_on([vm_name])
@@ -157,8 +157,8 @@ class TestControlOnQuadicons:
                 .current_state, 'on', "vm not running")
         Assert.true(mgmt_sys_api_clients[provider].is_vm_running(vm_name),
                 "vm not running")
-    
- 
+
+
 @pytest.mark.usefixtures("pwr_ctl_vms")
 class TestVmDetailsPowerControlPerProvider:
 
@@ -170,7 +170,7 @@ class TestVmDetailsPowerControlPerProvider:
             verify_vm_running,
             mgmt_sys_api_clients):
         '''Test power off operation from a vm details page. Verify vm
-        transitions to stopped. ''' 
+        transitions to stopped. '''
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('on', 12)
         last_boot_time = vm_details.last_boot_time
@@ -193,7 +193,7 @@ class TestVmDetailsPowerControlPerProvider:
             verify_vm_stopped,
             mgmt_sys_api_clients):
         ''' Test power on operation from a vm details page.  Verify vm
-        transitions to running. ''' 
+        transitions to running. '''
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('off', 12)
         last_boot_time = vm_details.last_boot_time
@@ -222,7 +222,7 @@ class TestVmDetailsPowerControlPerProvider:
             verify_vm_running,
             mgmt_sys_api_clients):
         ''' Test suspend operation from a vm details page.  Verify vm
-        transitions to suspended. ''' 
+        transitions to suspended. '''
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('on', 10)
         last_boot_time = vm_details.last_boot_time
@@ -252,10 +252,10 @@ class TestVmDetailsPowerControlPerProvider:
             print "Sleeping 60 seconds, iteration " + str(minute_count+1)\
                     + " of " + str(timeout_in_minutes) \
                     + ", still no timestamp change"
-            time.sleep(60) 
+            time.sleep(60)
             minute_count += 1
             vm_details.refresh()
-            
+
     def test_start_from_suspend(
             self,
             load_vm_details,
@@ -265,7 +265,7 @@ class TestVmDetailsPowerControlPerProvider:
             mgmt_sys_api_clients):
         '''Test power_on operation on a suspended vm.
 
-        Verify vm transitions to running. ''' 
+        Verify vm transitions to running. '''
 
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('suspended', 10)

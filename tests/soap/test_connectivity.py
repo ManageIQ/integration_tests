@@ -12,5 +12,5 @@ pytestmark = [
     pytest.mark.nondestructive,
 ]
 
-def test_connectivity(mozwebqa, soap_client):
+def test_connectivity(soap_client):
     Assert.true(soap_client.service.EVMPing())
