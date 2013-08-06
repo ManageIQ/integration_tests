@@ -35,7 +35,7 @@ class HeaderMenu(Page):
                   "Control": Control,
                   "Automate": Automate,
                   "Optimize": Optimize,
-                  "Configuration": Configuration}
+                  "Configure": Configuration}
     def __init__(self, testsetup, element):
         Page.__init__(self, testsetup)
         self._root_element = element
@@ -103,7 +103,7 @@ class HeaderMenu(Page):
                       "Automate": {"Explorer": Automate.Explorer,
                                    "Import / Export": Automate.ImportExport,
                                    "Customization": Automate.Customization},
-                      "Configuration": {"Configuration": 
+                      "Configure": {"Configuration": 
                                             Configuration.Configuration,
                                         "My Settings": Configuration.MySettings,
                                         "Tasks": Tasks.MyVmAnalysisTasks,

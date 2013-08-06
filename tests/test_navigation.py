@@ -20,7 +20,7 @@ class TestNavigation:
         prov_pg = pxe_pg.header.site_navigation_menu(
                 "Infrastructure").sub_navigation_menu("Providers").click()
         Assert.true(prov_pg.is_the_current_page)
-        config_pg = prov_pg.header.site_navigation_menu("Configuration").click()
+        config_pg = prov_pg.header.site_navigation_menu("Configure").click()
         Assert.true(config_pg.is_the_current_page)
         vm_pg = config_pg.header.site_navigation_menu(
                 "Infrastructure").sub_navigation_menu("Virtual Machines").click()

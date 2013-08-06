@@ -8,7 +8,7 @@ from unittestzero import Assert
 class TestConfigurationSettingsRegion:
     def test_cap_and_util_all_clusters(self, home_page_logged_in):
         home_pg = home_page_logged_in
-        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        config_pg = home_pg.header.site_navigation_menu("Configure").sub_navigation_menu("Configuration").click()
         Assert.true(config_pg.is_the_current_page)
         cap_and_util_pg = config_pg.click_on_settings().click_on_first_region().click_on_cap_and_util()
         current_clusters_checkbox = cap_and_util_pg.cluster_checkbox.get_attribute("checked")
@@ -35,7 +35,7 @@ class TestConfigurationSettingsRegion:
 
     def test_cap_and_util_all_datastores(self, mozwebqa, home_page_logged_in):
         home_pg = home_page_logged_in
-        config_pg = home_pg.header.site_navigation_menu("Configuration").sub_navigation_menu("Configuration").click()
+        config_pg = home_pg.header.site_navigation_menu("Configure").sub_navigation_menu("Configuration").click()
         Assert.true(config_pg.is_the_current_page)
         cap_and_util_pg = config_pg.click_on_settings().click_on_first_region().click_on_cap_and_util()
         current_datastores_checkbox = cap_and_util_pg.datastore_checkbox.get_attribute("checked")
