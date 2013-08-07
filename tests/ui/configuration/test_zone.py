@@ -1,7 +1,7 @@
 import pytest
 from unittestzero import Assert
 from urlparse import urlparse
-
+import re
 
 @pytest.fixture(scope="module",  # IGNORE:E1101
                 params=["test_zone"])
@@ -37,7 +37,14 @@ class TestZone:
             zones_pg.flash.message,
             'Flash save message does not match')
 
-    def test_set_zone(self, configuration_pg, zone):
+    def test_verify_add_zone(self, configuration_pg, zone):
+        '''verify zone added 
+        '''
+        Assert.true(configuration_pg.click_on_settings().click_on_zones()\
+            .click_on_zone(zone['description']),
+            "Cannot navigate to zone '%s'" % zone['description'])
+
+    def test_assign_zone(self, configuration_pg, zone):
         '''Assign appliance to zone
         '''
         server_pg = configuration_pg.click_on_settings().\
@@ -45,6 +52,16 @@ class TestZone:
         server_pg.set_zone(zone['name'])
         server_pg = server_pg.save()
         Assert.contains(
-            'Configuration settings saved for EVM Server',
+            'Configuration settings saved',
             server_pg.flash.message,
             'Flash save message does not match')
+
+    def test_verify_assign_zone(self, configuration_pg, zone):
+        '''Verify appliance in expected zone
+        '''
+        zones_pg = configuration_pg.click_on_settings().click_on_zones()\
+            .click_on_zone(zone['description'])
+        servers = [server.name for server in zones_pg.server_list_items]
+        regex = re.compile("\AServer:.*current")
+        Assert.true(filter(regex.match, servers), 
+            "Current CFME appliance not found in zone '%s'" % zone['description'])
