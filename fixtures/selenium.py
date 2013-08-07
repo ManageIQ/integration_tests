@@ -4,7 +4,7 @@ import pytest
 from pytest_mozwebqa import split_class_and_test_names
 from pytest_mozwebqa.selenium_client import Client
 
-from fixtures import navigation
+from plugin import navigation
 from pages.page import Page
 
 def pytest_runtest_setup(item):
