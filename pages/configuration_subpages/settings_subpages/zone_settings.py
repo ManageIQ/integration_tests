@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from selenium.webdriver.common.action_chains import ActionChains
+from pages.regions.list import ListRegion, ListItem
 
 class ZoneSettings(Base, TaskbarMixin):
     _page_title = 'CloudForms Management Engine: Configuration'
@@ -23,7 +24,7 @@ class ZoneSettings(Base, TaskbarMixin):
     def click_on_zone(self, zone_name):
         zone_element = None
         for el in self.selenium.find_elements(*self._zones_rows_selector):
-            if el.text.strip() == zone_name:
+            if el.text.strip() == "Zone: %s" % zone_name:
               zone_element = el
               break
         if not zone_element:
@@ -98,3 +99,26 @@ class ZoneSettings(Base, TaskbarMixin):
             self.handle_popup()
             self._wait_for_results_refresh()
             return ZoneSettings(self.testsetup)
+
+        @property
+        def server_list_items(self):
+            return self.server_list.items
+
+        @property
+        def server_list(self):
+            '''Returns the server list region'''
+            _server_list_locator = ( By.CSS_SELECTOR, 'fieldset > table.style3 > tbody')
+            return ListRegion(
+                self.testsetup,
+                self.get_element(*_server_list_locator),
+                self.ServerItem)
+
+        class ServerItem(ListItem):
+            '''Represents an item in the server list'''
+            _columns = ['name']
+
+            @property
+            def name(self):
+                '''server description text'''
+                return self._item_data[1].text.encode('utf-8')
+
