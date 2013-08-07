@@ -107,7 +107,7 @@ ldap_server:
     base_dn: dc=ad,dc=example,dc=com
     bind_dn: administrator@ad.example.com
     bind_passwd: password
-roles:
+server_roles:
     default:
         - automate
         - ems_metrics_coordinator
