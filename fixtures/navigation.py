@@ -23,7 +23,7 @@ def home_page_logged_in(mozwebqa):
 def configuration_pg(home_page_logged_in):
     '''Navigate to the Configuration -> Configuration page and return it'''
     return home_page_logged_in.header.site_navigation_menu(
-            'Configuration').sub_navigation_menu('Configuration').click()
+            'Configure').sub_navigation_menu('Configuration').click()
 
 def _services_submenu(home_pg, submenu):
     return home_pg.header.site_navigation_menu(
