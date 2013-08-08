@@ -50,15 +50,15 @@ class Services(Base):
             "div#center_tb > div.float_left \
             > div[title='Reload the current display']")
         _request_id_heading = (
-            By.CSS_SELECTOR, 
+            By.CSS_SELECTOR,
             "div#list_grid > div.xhdr > table.hdr \
             > tbody > tr > td> div[innertext='Request ID']")
         _approve_this_request_button = (
-            By.CSS_SELECTOR, 
+            By.CSS_SELECTOR,
             "div#center_tb > div.float_left \
             > div[title='Approve this Request']")
         _reason_text_field = (By.ID, "reason")
-        _submit_button = (By.CSS_SELECTOR, 
+        _submit_button = (By.CSS_SELECTOR,
             "span#buttons_on > a > img[alt='Submit']")
         _time_period_select_locator = (By.ID, "time_period")
 
@@ -96,8 +96,10 @@ class Services(Base):
 
             if self.requests_list.items[item_number].approval_state is not None:
                 self.requests_list.items[
-                    item_number].approval_state.find_element_by_tag_name('img').click()
-                self.seleniium.find_element(*self._approve_this_request_button).click()
+                    item_number].approval_state\
+                    .find_element_by_tag_name('img').click()
+                self.selenium.find_element(
+                    *self._approve_this_request_button).click()
                 self._wait_for_results_refresh()
                 self.selenium.find_element(
                     *self._reason_text_field).send_keys("Test provisioning")
@@ -107,7 +109,8 @@ class Services(Base):
                 self._wait_for_results_refresh()
             return Services.Requests(self.testsetup)
 
-        def wait_for_request_status(self, time_period_text, request_status, timeout_in_minutes):
+        def wait_for_request_status(self, time_period_text,
+            request_status, timeout_in_minutes):
             '''Wait for request status'''
             if not self.get_element(*self._check_box_approved).is_selected():
                 self.get_element(*self._check_box_approved).click()
@@ -123,11 +126,13 @@ class Services(Base):
             requests_items = self.requests_list.items
             for i in range(1, len(requests_items)):
                 data.update({i:requests_items[i].request_id})
-            sorted_data = sorted(data.iteritems(), key=operator.itemgetter(1), reverse=True)
+            sorted_data = sorted(data.iteritems(), \
+                key=operator.itemgetter(1), reverse=True)
             requests_index = sorted_data[0][0]
             minute_count = 0
             while (minute_count < timeout_in_minutes):
-                if self.requests_list.items[requests_index].status == request_status:
+                if self.requests_list.items[requests_index]\
+                    .status == request_status:
                     break
                 print "Waiting for provisioning status: " + request_status
                 sleep(60)
@@ -135,18 +140,20 @@ class Services(Base):
                 self.get_element(*self._reload_button).click()
                 self._wait_for_results_refresh()
                 if (minute_count==timeout_in_minutes) and \
-                   (self.requests_list.items[requests_index].status != request_status):
+                   (self.requests_list.items[requests_index]\
+                    .status != request_status):
                     raise Exception("timeout reached("+str(timeout_in_minutes)+
                        " minutes) before desired state (" +
-                       request_status +") reached... current state("+ 
+                       request_status +") reached... current state("+
                        self.requests_list.items[requests_index].status +")")
             return Services.Requests(self.testsetup)
 
     class RequestItem(ListItem):
         '''Represents a request in the list'''
-        _columns = ["view_this_item", "approval_state", "status", "request_id", "requester", 
+        _columns = ["view_this_item", "approval_state", "status",
+                    "request_id", "requester",
                     "request _type", "completed", "description", "approved_on",
-                    "created_on", "last_update", "reason", 
+                    "created_on", "last_update", "reason",
                     "last_message", "region"]
 
         @property
@@ -218,8 +225,8 @@ class Services(Base):
         def region(self):
             '''Region'''
             pass
-        
-        
+
+
     class Catalogs(Base):
         '''Service -- Catalogs'''
         _page_title = 'CloudForms Management Engine: Catalogs'
