@@ -5,9 +5,8 @@ from time import sleep
 from unittestzero import Assert
 
 @pytest.fixture
-def provisioning_start_page(svc_vms_pg):
-    vm_pg = svc_vms_pg
-    return vm_pg.click_on_provision_vms()
+def provisioning_start_page(infra_vms_pg):
+    return infra_vms_pg.click_on_provision_vms()
 
 @pytest.fixture(scope="module", # IGNORE:E1101
                 params=["linux_template_workflow"])
@@ -110,7 +109,7 @@ def remove_vm(provisioning_data, current_page, provider_api_clients):
             provisioning_data["vm_name"]).current_state, 'off',
             "vm running")
     for provider in provider_api_clients.values():
-        if (provisioning_data["vm_name"] + "/" + 
+        if (provisioning_data["vm_name"] + "/" +
                 provisioning_data["vm_name"] + ".vmx"
                 ) in provider.list_vm() or provisioning_data["vm_name"] \
                         in provider.list_vm():
