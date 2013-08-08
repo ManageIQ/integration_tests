@@ -21,12 +21,15 @@ from pages.login import LoginPage
     "evmgroup-user_limited_self_service",
     "evmgroup-user_self_service",
     "evmgroup-vm_user" ])
-@pytest.mark.usefixtures("maximized", "setup_infrastructure_providers", "configure_auth_mode")
+@pytest.mark.usefixtures(
+        "maximized",
+        "setup_infrastructure_providers",
+        "configure_auth_mode")
 class TestLdap:
     def test_default_ldap_group_roles(self, mozwebqa, ldap_groups, cfme_data):
         """Basic default LDAP group role RBAC test
-        
-        Validates expected menu and submenu names are present for default 
+
+        Validates expected menu and submenu names are present for default
         LDAP group roles
         """
         if ldap_groups not in cfme_data.data['group_roles']:

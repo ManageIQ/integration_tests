@@ -2,20 +2,20 @@ import pytest
 from unittestzero import Assert
 
 @pytest.fixture  # IGNORE:E1101
-def ac_control_roles_pg(configuration_pg):
-    ac_pg = configuration_pg.click_on_access_control()
+def ac_control_roles_pg(cnf_configuration_pg):
+    ac_pg = cnf_configuration_pg.click_on_access_control()
     Assert.true(ac_pg.is_the_current_page)
     return ac_pg.click_on_roles()
 
 @pytest.fixture
-def ac_control_groups_pg(configuration_pg):
-    ac_pg = configuration_pg.click_on_access_control()
+def ac_control_groups_pg(cnf_configuration_pg):
+    ac_pg = cnf_configuration_pg.click_on_access_control()
     Assert.true(ac_pg.is_the_current_page)
     return ac_pg.click_on_groups()
 
 @pytest.fixture
-def ac_control_users_pg(configuration_pg):
-    ac_pg = configuration_pg.click_on_access_control()
+def ac_control_users_pg(cnf_configuration_pg):
+    ac_pg = cnf_configuration_pg.click_on_access_control()
     Assert.true(ac_pg.is_the_current_page)
     return ac_pg.click_on_users()
 
@@ -51,7 +51,7 @@ class TestAccessControl:
         roles_pg = edit_role_pg.save()
         Assert.true(roles_pg.flash.message.startswith(
                 'Role "%s" was saved' % new_role_name))
-        
+
     def test_copy_role(self, ac_control_roles_pg, random_string):
         roles_pg = ac_control_roles_pg
         select_role_name = self._roles_list[0]
@@ -64,14 +64,14 @@ class TestAccessControl:
         roles_pg = copy_role_pg.save()
         Assert.true(roles_pg.flash.message.startswith(
                 'Role "%s" was saved' % copy_role_name))
-        
+
 
     def test_delete_role(self, ac_control_roles_pg):
-        roles_pg = ac_control_roles_pg 
+        roles_pg = ac_control_roles_pg
         while len(self._roles_list) > 0:
             select_role_pg = roles_pg.click_on_role(
                     self._roles_list[len(self._roles_list) - 1])
-            Assert.equal(select_role_pg.role_name, 
+            Assert.equal(select_role_pg.role_name,
                     self._roles_list[len(self._roles_list) - 1])
             roles_pg = select_role_pg.click_on_delete()
             Assert.true(roles_pg.flash.message.startswith(
@@ -83,12 +83,12 @@ class TestAccessControl:
         groups_pg = ac_control_groups_pg
         add_new_group_pg = groups_pg.click_on_add_new()
         group_name = random_string
-        self._groups_list.append(group_name)        
+        self._groups_list.append(group_name)
         add_new_group_pg.fill_info(random_string, "EvmRole-administrator")
         groups_pg = add_new_group_pg.save()
         Assert.true(groups_pg.flash.message.startswith(
                 'Group "%s" was saved' % group_name))
-        
+
     def test_edit_group(self, ac_control_groups_pg, random_string):
         groups_pg = ac_control_groups_pg
         old_group_name = self._groups_list[0]
@@ -102,7 +102,7 @@ class TestAccessControl:
         groups_pg = edit_groups_pg.save()
         Assert.true(groups_pg.flash.message.startswith(
                 'Group "%s" was saved' % new_group_name))
-   
+
     def test_edit_group_tags(self, ac_control_groups_pg):
         groups_pg = ac_control_groups_pg
         old_group_name = self._groups_list[0]
@@ -116,7 +116,7 @@ class TestAccessControl:
                 'Tag edits were successfully saved'))
 
     def test_delete_group(self, ac_control_groups_pg):
-        groups_pg = ac_control_groups_pg 
+        groups_pg = ac_control_groups_pg
         while len(self._groups_list) > 0:
             select_group_pg = groups_pg.click_on_group(
                     self._groups_list[len(self._groups_list) - 1])
@@ -195,7 +195,7 @@ class TestAccessControl:
         edit_tags_pg.save_tag_edits()
         Assert.true(select_user_pg.flash.message.startswith(
                 'Tag edits were successfully saved'))
-   
+
     def test_delete_user(self, ac_control_users_pg):
         users_pg = ac_control_users_pg
         while len(self._users_list) > 0:

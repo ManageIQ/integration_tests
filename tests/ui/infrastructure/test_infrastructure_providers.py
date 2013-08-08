@@ -24,14 +24,14 @@ def provider(request, infra_providers_pg, provider_data):
     '''Create a management system
 
     Creates a management system based on the data from cfme_data.
-    Ideally, this fixture would clean up after itself, but currently 
+    Ideally, this fixture would clean up after itself, but currently
     the only way to do that is via the UI, and we lose the selenium session
     before the finalizer gets an opportunity to run.
 
     This fixture will modify the db directly in the near future'''
     prov_add_pg = infra_providers_pg.click_on_add_new_provider()
     prov_pg = prov_add_pg.add_provider(provider_data)
-    # TODO: Finalizer doesn't actually work. The selenium session is 
+    # TODO: Finalizer doesn't actually work. The selenium session is
     #       killed prior to its running.
     # def fin():
     #     infra_providers_pg = mgmtsys_page.header.site_navigation_menu(
@@ -58,7 +58,7 @@ def has_no_providers(db_session):
 
 @pytest.mark.usefixtures('maximized')  # IGNORE:E1101
 class TestInfrastructureProviders:
-    @pytest.mark.nondestructive  # IGNORE:E1101 
+    @pytest.mark.nondestructive  # IGNORE:E1101
     def test_that_checks_flash_with_no_provider_types_checked(self,
             infra_providers_pg):
         '''Tests that the flash message is correct when no management systems
@@ -143,7 +143,7 @@ class TestInfrastructureProviders:
                  % provider_data['name'],
                 FLASH_MESSAGE_NOT_MATCHED)
 
-    @pytest.mark.usefixtures('has_no_providers')    
+    @pytest.mark.usefixtures('has_no_providers')
     def test_provider_add_with_bad_credentials(
             self, infra_providers_pg, provider_data):
         '''Tests adding a new management system with bad credentials

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import time
 from unittestzero import Assert
 import os
 
@@ -15,13 +14,11 @@ def import_automate_file(request):
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized")
 class TestAutomate:
-    def test_import_automate(self, home_page_logged_in, import_automate_file):
-        home_pg = home_page_logged_in
-        ae_pg = home_pg.header.site_navigation_menu(
-                "Automate").sub_navigation_menu("Import / Export").click()
-        Assert.true(ae_pg.is_the_current_page)
-        ae_pg = ae_pg.import_automate(import_automate_file)
-        Assert.equal(ae_pg.flash.message,
+    def test_import_automate(self, automate_importexport_pg, import_automate_file):
+        Assert.true(automate_importexport_pg.is_the_current_page)
+        automate_importexport_pg = automate_importexport_pg\
+                .import_automate(import_automate_file)
+        Assert.equal(automate_importexport_pg.flash.message,
                 "Import file was uploaded successfully",
                 "Flash message not matched")
 
