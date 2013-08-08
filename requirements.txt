@@ -16,3 +16,5 @@ pysphere
 ovirt-engine-sdk
 sqlalchemy
 psycopg2
+bottle
+bottle-sqlite
