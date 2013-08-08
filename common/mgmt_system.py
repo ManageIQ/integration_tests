@@ -223,7 +223,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         return rps.keys()[0]
 
     def _find_ip(self, vm, ipv6=False):
-        maxwait = 120
+        maxwait = 600
         net_info = None
         waitcount = 0
         while net_info is None:
