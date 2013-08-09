@@ -1,0 +1,123 @@
+management_systems:
+    rhevm31:
+        name: RHEV 3.1
+        default_name: RHEV-M (10.0.0.3)
+        credentials: rhevm31-credential_name_from_credentials.yaml
+        cu_credentials: rhevm31-cu_db_cred_name_from_credentials.yaml
+        hostname: rhevm.example.com
+        ipaddress: 10.0.0.1
+        server_zone: default
+        api_port: 3000
+        type: rhevm
+        discovery_range:
+            start: 10.0.0.3
+            end: 10.0.0.3
+        hosts:
+            host1:
+                name: myhost
+                credentials: myhost
+        clusters:
+            iscsi: iscsi
+        datastores:
+            iscsi: iscsi_data
+        isos:
+            - RHEL6.iso
+            - Fedora-19.iso
+        tags:
+            Provisioning Scope: All
+            Environment *: Production
+        policy_profiles:
+            - "Websrv Provision Automation"
+        test_vm_power_control: 
+            - vm_name
+        # for setting mgmt eng relationship
+        appliances: 
+            - name: EVM (1)
+              vm_name: vm_name
+pxe:
+    pxe_servers:
+        rhel:
+            name: rhel
+            depot_type: Network File System
+            uri: 10.0.0.1
+            access_url: http://10.0.0.1
+            pxe_dir: pxe
+            windows_img_dir: microsoft
+            customization_dir: customization
+            pxe_img_menus_filename: menu.php
+    images:
+        - image1
+        - image2
+    templates:
+        rhel:
+            name: rhel6
+            description: my description
+            image_type: RHEL-6
+            template_type: Kickstart
+            script: anaconda.ks #localfile?
+    datastores:
+        - datastore1
+        - datastore2
+user_groups:
+    dev:
+        name: dev-group 
+        role: EvmRole-user_self_service
+    test:
+        name: user-group-ad 
+        role: EvmRole-user_self_service
+ldap_server:
+    session_timeout_hours: "1"
+    session_timeout_mins: "0"
+    mode: LDAP
+    hostname1: ad.example.com
+    hostname2:
+    hostname3:
+    port: "389"
+    user_type: userprincipalname
+    user_suffix: ad.example.com
+    get_groups: True
+    get_roles: True
+    follow_referrals: False
+    base_dn: dc=ad,dc=example,dc=com
+    bind_dn: administrator@ad.example.com
+    bind_passwd: password
+zones:
+    refarch_zone:
+        name: CloudForms
+        description: CF 2.0 RHEV Integration
+        ntp_servers:
+            - 0.us.pool.ntp.org
+            - 1.us.pool.ntp.org
+            - 2.us.pool.ntp.org
+server_roles:
+    default:
+        - automate
+        - ems_metrics_coordinator
+        - ems_metrics_collector
+        - ems_metrics_processor
+        - database_operations
+        - event
+        - notifier
+        - ems_inventory
+        - ems_operations
+        - reporting
+        - scheduler
+        - smartproxy
+        - smartstate
+        - user_interface
+policies:
+    import: "tests/scenarios/refarch_2013_rhev/data/policies.yaml"
+automate:
+    import: 
+        path: "tests/scenarios/refarch_2013_rhev/data"
+        file: "refarch.xml"
+    instance:
+        parent_class: Automation Requests (Request)
+        details:
+            - scalewebsrv
+            - scalewebsrv
+            - Auto-scale web server
+        hook:
+            row: 2
+            value: "/RefArch/Service/scalewebsrv"
+

@@ -1,0 +1,43 @@
+---
+- MiqPolicySet:
+    name: 3b4c1cde-0138-11e3-beb9-001a4a10566f
+    description: Websrv Provision Automation
+    set_type: MiqPolicySet
+    guid: 3b4c1cde-0138-11e3-beb9-001a4a10566f
+    read_only: 
+    set_data: 
+    mode: 
+    owner_type: 
+    owner_id: 
+    MiqPolicy:
+    - name: dcd65278-0137-11e3-beb9-001a4a10566f
+      description: Websrv Resiliency
+      expression: 
+      towhat: Vm
+      guid: dcd65278-0137-11e3-beb9-001a4a10566f
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_poweroff
+          description: VM Power Off
+          guid: 3ff9c71c-ee88-11e2-bd38-001a4a10566f
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: c903b894-0137-11e3-beb9-001a4a10566f
+          description: automate
+          guid: c903b894-0137-11e3-beb9-001a4a10566f
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: scalewebsrv
+      Condition: []
