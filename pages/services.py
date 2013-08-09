@@ -34,7 +34,7 @@ class Services(Base):
 
     class MyServices(Base, PaginatorMixin):
 
-        _page_title = 'CloudForms Management Engine: My Services'
+        _page_title = 'CloudForms Management Engine: Services'
 
     class Requests(Base, PaginatorMixin):
         '''Requests page'''

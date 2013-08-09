@@ -142,7 +142,7 @@ class Automate(Base):
             return ExplorerClass(self.testsetup)
 
     class Customization(Base):
-        _page_title = 'CloudForms Management Engine: Customization'
+        _page_title = 'CloudForms Management Engine: Automate'
 
         @property
         def accordion(self):

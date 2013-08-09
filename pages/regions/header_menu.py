@@ -89,31 +89,65 @@ class HeaderMenu(Page):
         _name_locator = (By.CSS_SELECTOR, 'a')
         # The first level of the dictionary is the top-level menu item.
         # The second level is the sub page
-        _item_page = {"Infrastructure": {"Providers" : Providers,
-                                         "Hosts": Infrastructure.Hosts,
-                                         "Clusters": Infrastructure.Clusters,
-                                         "Virtual Machines": VirtualMachines,
-                                         "Datastores":
-                                            Infrastructure.Datastores,
-                                         "PXE": Infrastructure.PXE},
-                      "Services": {"My Services": Services.MyServices,
-                                   "Catalogs": Services.Catalogs},
-                      "Control": {"Explorer": Control.Explorer,
-                                  "Import / Export": Control.ImportExport},
-                      "Automate": {"Explorer": Automate.Explorer,
-                                   "Import / Export": Automate.ImportExport,
-                                   "Customization": Automate.Customization},
-                      "Configure": {"Configuration": 
-                                            Configuration.Configuration,
-                                        "My Settings": Configuration.MySettings,
-                                        "Tasks": Tasks.MyVmAnalysisTasks,
-                                        "SmartProxies":
-                                            Configuration.SmartProxies,
-                                        "About": Configuration.About},
-                      "Optimize": {"Utilization": Optimize.Utilization},
-                      "Virtual Intelligence": {"Reports": 
-                                                  VirtualIntelligence.Reports,
-					       "Chargeback": VirtualIntelligence.Chargeback }}
+        _item_page = {
+            "Virtual Intelligence": {
+                #"Dashboard":
+                "Reports": VirtualIntelligence.Reports,
+                #"Usage":
+                "Chargeback": VirtualIntelligence.Chargeback,
+                #"Timelines":
+                #"RSS":
+            },
+            "Services": {
+                "My Services": Services.MyServices,
+                "Catalogs": Services.Catalogs,
+                #"Requests":
+                #"Workloads":
+            },
+            "Cloud": {
+                #"Providers":
+                #"Availability Zones":
+                #"Flavors":
+                #"Instances":
+            },
+            "Infrastructure": {
+                "Providers" : Providers,
+                "Clusters": Infrastructure.Clusters,
+                "Hosts": Infrastructure.Hosts,
+                "Virtual Machines": VirtualMachines,
+                #"Resource Pools":
+                "Datastores": Infrastructure.Datastores,
+                #"Repositories":
+                "PXE": Infrastructure.PXE,
+                #"Requests"
+            },
+            "Control": {
+                "Explorer": Control.Explorer,
+                #"Simulation":
+                "Import / Export": Control.ImportExport,
+                #"Log":
+            },
+            "Automate": {
+                "Explorer": Automate.Explorer,
+                #"Simulation":
+                "Customization": Automate.Customization,
+                "Import / Export": Automate.ImportExport,
+                #"Log":
+                #"Requests":
+            },
+            "Optimize": {
+                "Utilization": Optimize.Utilization,
+                #"Planning":
+                #"Bottlenecks":
+            },
+            "Configure": {
+                "My Settings": Configuration.MySettings,
+                "Tasks": Tasks.MyVmAnalysisTasks,
+                "Configuration": Configuration.Configuration,
+                "SmartProxies": Configuration.SmartProxies,
+                "About": Configuration.About,
+            },
+        }
 
         def __init__(self, testsetup, element, menu):
             Page.__init__(self, testsetup)
