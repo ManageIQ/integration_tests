@@ -41,6 +41,11 @@ class LoginPage(Base):
     def _press_enter_on_login_button(self):
         self.login_button.send_keys(Keys.RETURN)
 
+    def _click_on_login_and_send_window_size(self):
+        self.login_button.click()
+        driver = self.login_button.parent
+        driver.execute_script("""miqResetSizeTimer();""")
+
     def login(self, user='default'):
         return self.login_with_mouse_click(user)
 
@@ -49,6 +54,9 @@ class LoginPage(Base):
 
     def login_with_mouse_click(self, user='default'):
         return self.__do_login(self._click_on_login_button, user)
+
+    def login_and_send_window_size(self, user='default'):
+        return self.__do_login(self._click_on_login_and_send_window_size, user)
 
     def __do_login(self, continue_function, user='default'):
         self.__set_login_fields(user)
