@@ -55,6 +55,11 @@ class Page(object):
                 lambda s: self.selenium.title)
         return self.selenium.current_url
 
+    def get_context_current_page(self):
+        url = self.get_url_current_page()
+        stripped = url.lstrip('https://')
+        return stripped[stripped.find('/'):stripped.rfind('?')]
+
     def is_element_present(self, *locator):
         self.selenium.implicitly_wait(0)
         try:
