@@ -2,21 +2,20 @@
 
 from pages.base import Base
 from pages.infrastructure_subpages.providers import Providers
+from pages.infrastructure_subpages.hosts import Hosts
 from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
 from pages.regions.policy_menu import PolicyMenu
-from pages.regions.taskbar.taskbar import TaskbarMixin
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-import re
+
 
 class Infrastructure(Base):
     @property
     def submenus(self):
         return {"ems_infra"         : Providers,
                 "ems_cluster"       : Infrastructure.Clusters,
-                "host"              : Infrastructure.Hosts,
+                "host"              : Hosts,
                 "storage"           : Infrastructure.Datastores,
                 "pxe"               : Infrastructure.PXE,
                 "vmx"               : VirtualMachines
@@ -79,231 +78,6 @@ class Infrastructure(Base):
         def host_count(self):
             return self.details.get_section("Relationships").get_item(
                     "Hosts").value
-
-    class Hosts(Base, PolicyMenu, TaskbarMixin):
-        _page_title = 'CloudForms Management Engine: Hosts'
-
-        @property
-        def quadicon_region(self):
-            return Quadicons(
-                    self.testsetup, Infrastructure.Hosts.HostQuadIconItem)
-
-        @property
-        def accordion_region(self):
-            from pages.regions.accordion import Accordion
-            from pages.regions.treeaccordionitem import TreeAccordionItem
-            return Accordion(self.testsetup, TreeAccordionItem)
-
-        def select_host(self, host_name):
-            self.quadicon_region.get_quadicon_by_title(
-                    host_name).mark_checkbox()
-
-        def click_host(self, host_name):
-            self.quadicon_region.get_quadicon_by_title(host_name).click()
-            self._wait_for_results_refresh()
-            return Infrastructure.HostsDetail(self.testsetup)
-
-        def add_credentials_and_save(self, host):
-            host_pg = self.click_host(host['name']).click_on_edit_host()
-            host_pg.edit_host(host)
-            return host_pg.click_on_save()
-
-        def add_credentials_and_cancel(self, host):
-            host_pg = self.click_host(host['name']).click_on_edit_host()
-            host_pg.edit_host(host)
-            return host_pg.click_on_cancel()
-
-        @property
-        def taskbar(self):
-            from pages.regions.taskbar.taskbar import Taskbar
-            return Taskbar(self.testsetup)
-
-        class HostQuadIconItem(QuadiconItem):
-            @property
-            def vm_count(self):
-                return self._root_element.find_element(
-                        *self._quad_tl_locator).text
-
-            @property
-            def current_state(self):
-                image_src = self._root_element.find_element(
-                        *self._quad_tr_locator).find_element_by_tag_name(
-                                "img").get_attribute("src")
-                return re.search(r'.+/currentstate-(.+)\.png',
-                        image_src).group(1)
-
-            @property
-            def vendor(self):
-                image_src = self._root_element.find_element(
-                        *self._quad_bl_locator).find_element_by_tag_name(
-                                "img").get_attribute("src")
-                return re.search(r'.+/vendor-(.+)\.png', image_src).group(1)
-
-            @property
-            def valid_credentials(self):
-                image_src = self._root_element.find_element(
-                        *self._quad_br_locator).find_element_by_tag_name(
-                                "img").get_attribute("src")
-                return 'checkmark' in image_src
-
-            def click(self):
-                self._root_element.click()
-                self._wait_for_results_refresh()
-                return Infrastructure.HostsDetail(self.testsetup)
-
-
-    class HostsDetail(Base, PolicyMenu, TaskbarMixin):
-        _page_title = 'CloudForms Management Engine: Hosts'
-        _host_detail_name_locator = (By.CSS_SELECTOR,
-                'div#accordion > div > div > a')
-        _details_locator = (By.CSS_SELECTOR, "div#textual_div")
-        _edit_hosts_locator = (By.CSS_SELECTOR,
-                "tr[title='Edit this Host']\
-                >td.td_btn_txt>div.btn_sel_text")
-
-        @property
-        def edit_button(self):
-            '''The edit button'''
-            return self.selenium.find_element(
-                    *self._edit_hosts_locator)
-
-        def click_on_edit_host(self):
-            '''Click on edit host button'''
-            ActionChains(self.selenium).click(
-                    self.configuration_button).click(
-                            self.edit_button).perform()
-            return Infrastructure.HostsEdit(self.testsetup)
-
-        @property
-        def details(self):
-            from pages.regions.details import Details
-            root_element = self.selenium.find_element(*self._details_locator)
-            return Details(self.testsetup, root_element)
-
-        @property
-        def name(self):
-            return self.selenium.find_element(
-                    *self._host_detail_name_locator).text.encode('utf-8')
-
-        @property
-        def hostname(self):
-            return self.details.get_section("Properties").get_item(
-                    "Hostname").value
-
-        @property
-        def ip_address(self):
-            return self.details.get_section("Properties").get_item(
-                    "IP Address").value
-
-        @property
-        def provider(self):
-            return self.details.get_section("Relationships").get_item(
-                    "Infrastructure Provider").value
-
-        @property
-        def cluster(self):
-            return self.details.get_section("Relationships").get_item(
-                    "Cluster").value
-
-        @property
-        def datastores(self):
-            return self.details.get_section("Relationships").get_item(
-                    "Datastores").value
-
-        @property
-        def vms(self):
-            return self.details.get_section("Relationships").get_item(
-                    "VMs").value
-
-    class HostsEdit(Base):
-        '''Edit Infrastructure Host page'''
-        _page_title = 'CloudForms Management Engine: Hosts'
-        _save_button_locator = (By.CSS_SELECTOR,
-            "div#buttons_on > ul#form_buttons > li > img[title='Save Changes']")
-        _cancel_button_locator = (By.CSS_SELECTOR, 
-            "ul#form_buttons > li > img[title='Cancel Changes']")
-        _name_edit_field_locator = (By.ID, "name")
-        _hostname_edit_field_locator = (By.ID, "hostname")
-        _ipaddress_edit_field_locator = (By.ID, "ipaddress")
-        _default_userid_edit_field_locator = (By.ID, "default_userid")
-        _default_password_edit_field_locator = (By.ID, "default_password")
-        _default_verify_edit_field_locator = (By.ID, "default_verify")
-
-        @property
-        def name(self):
-            '''Host name'''
-            return self.get_element(*self._name_edit_field_locator)
-
-        @property
-        def hostname(self):
-            '''Host hostname'''
-            return self.get_element(*self._hostname_edit_field_locator)
-
-        @property
-        def ipaddress(self):
-            '''Host ip address'''
-            return self.get_element(*self._ipaddress_edit_field_locator)
-
-        @property
-        def default_userid(self):
-            '''Host user id'''
-            return self.get_element(*self._default_userid_edit_field_locator)
-
-        @property
-        def default_password(self):
-            '''Host password'''
-            return self.get_element(*self._default_password_edit_field_locator)
-
-        @property
-        def default_verify(self):
-            '''Host password verify'''
-            return self.get_element(*self._default_verify_edit_field_locator)
-
-        def edit_host(self, host):
-            '''Edit a provider given a provider dict'''
-            for key, value in host.iteritems():
-                # Special cases
-                if "credentials" in key:
-                    # use credentials
-                    credentials = self.testsetup.credentials[value]
-                    self.default_userid.clear()
-                    self.default_userid.send_keys(credentials['username'])
-                    self.default_password.clear()
-                    self.default_password.send_keys(credentials['password'])
-                    self.default_verify.clear()
-                    self.default_verify.send_keys(credentials['password'])
-                else:
-                    # Skip name
-                    if "name" in key:
-                        continue
-                    # Only try to send keys if there is actually a property
-                    if hasattr(self, key):
-                        attr = getattr(self, key)
-                        attr.clear()
-                        attr.send_keys(value)
-
-        @property
-        def save_button(self):
-            '''Save button'''
-            return self.get_element(*self._save_button_locator)
-
-        @property
-        def cancel_button(self):
-            '''Cancel button'''
-            return self.get_element(*self._cancel_button_locator)
-
-        def click_on_save(self):
-            '''Click on save button'''
-            self._wait_for_visible_element(*self._save_button_locator)
-            self.save_button.click()
-            self._wait_for_results_refresh()
-            return Infrastructure.HostsDetail(self.testsetup)
-
-        def click_on_cancel(self):
-            '''Click on cancel button'''
-            self.cancel_button.click()
-            self._wait_for_results_refresh()
-            return Infrastructure.HostsDetail(self.testsetup)
 
 
     class Datastores(Base, PolicyMenu):

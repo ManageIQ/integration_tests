@@ -15,6 +15,7 @@ from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualM
 from pages.virtual_intelligence import VirtualIntelligence
 from pages.optimize import Optimize
 from pages.infrastructure_subpages.providers import Providers
+from pages.infrastructure_subpages.hosts import Hosts
 
 class HeaderMenu(Page):
     """
@@ -113,7 +114,7 @@ class HeaderMenu(Page):
             "Infrastructure": {
                 "Providers" : Providers,
                 "Clusters": Infrastructure.Clusters,
-                "Hosts": Infrastructure.Hosts,
+                "Hosts": Hosts,
                 "Virtual Machines": VirtualMachines,
                 #"Resource Pools":
                 "Datastores": Infrastructure.Datastores,
