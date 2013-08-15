@@ -52,3 +52,5 @@ def _pytest_plugins_generator(*extension_pkgs):
                 yield modname
 
 pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers, plugin))
+
+collect_ignore = ["tests/scenarios"]
