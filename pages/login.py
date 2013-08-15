@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-
+import time
 from base import Base
 from page import Page
 
@@ -60,6 +60,8 @@ class LoginPage(Base):
 
     def __do_login(self, continue_function, user='default'):
         self.__set_login_fields(user)
+        # TODO: Remove once bug is fixed
+        time.sleep(1.25)
         continue_function()
         self._wait_for_results_refresh()
         from pages.dashboard import DashboardPage

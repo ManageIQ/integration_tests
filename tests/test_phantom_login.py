@@ -7,6 +7,7 @@ import pytest
 from unittestzero import Assert
 from pages.login import LoginPage
 
+@pytest.mark.xfail(run=True)
 @pytest.mark.nondestructive
 def test_that_checks_for_phantom_login(mozwebqa):
     login_pg = LoginPage(mozwebqa)
