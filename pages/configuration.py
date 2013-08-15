@@ -23,9 +23,13 @@ class Configuration(Base):
                 "miq_proxy"  : Configuration.SmartProxies,
                 "about"      : Configuration.About
                 }
-        
+
     class Configuration(Base):
         _page_title = "CloudForms Management Engine: Configuration"
+        _checkbox_automation_engine = (By.ID, "server_roles_automate")
+        _save_button = (By.CSS_SELECTOR, \
+                      "div#buttons_on > ul#form_buttons > li > \
+                      img[alt='Save Changes']")
 
         @property
         def tabbutton_region(self):
@@ -37,6 +41,14 @@ class Configuration(Base):
             from pages.regions.accordion import Accordion
             return Accordion(self.testsetup)
 
+        @property
+        def automation_engine_checkbox(self):
+            return self.get_element(*self._checkbox_automation_engine)
+
+        @property
+        def save_button(self):
+            return self.get_element(*self._save_button)
+
         def click_on_access_control(self):
             self.accordion.accordion_by_name('Access Control').click()
             self._wait_for_results_refresh()
@@ -44,6 +56,15 @@ class Configuration(Base):
 
         def click_on_settings(self):
             self.accordion.accordion_by_name('Settings').click()
+            self._wait_for_results_refresh()
+            return Settings(self.testsetup)
+
+        def enable_automation_engine(self):
+            '''Enables Automation Engine'''
+            if not automation_engine_checkbox.is_selected():
+                automation_engine_checkbox.click()
+                self._wait_for_visible_element(*self._save_button)
+                save_button.click()
             self._wait_for_results_refresh()
             return Settings(self.testsetup)
 
