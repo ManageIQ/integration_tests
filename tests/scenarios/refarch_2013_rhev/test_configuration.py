@@ -11,34 +11,10 @@ from unittestzero import Assert
 from urlparse import urlparse
 
 
+pytestmark = [pytest.mark.usefixtures("maximized")]
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 
 
-@pytest.fixture(scope="module",
-                params=["refarch_zone"])
-def zone(request, cfme_data):
-    '''Returns appliance zone from cfme_data'''
-    param = request.param
-    return cfme_data.data['zones'][param]
-
-
-@pytest.fixture(scope="module",
-                params=["default"])
-def roles(request, cfme_data):
-    '''Returns server roles from cfme_data'''
-    param = request.param
-    return cfme_data.data['server_roles'][param]
-
-
-@pytest.fixture(scope="module",
-                params=["dev", "test"])
-def user_group(request, cfme_data):
-    '''Returns user groups from cfme_data'''
-    param = request.param
-    return cfme_data.data['user_groups'][param]
-
-
-@pytest.mark.usefixtures("maximized")
 def test_configure_auth_mode(cnf_configuration_pg, cfme_data):
     '''Configure authentication mode
     '''
@@ -58,7 +34,6 @@ def test_configure_auth_mode(cnf_configuration_pg, cfme_data):
             FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_add_new_group(cnf_configuration_pg, user_group):
     '''Add new user group
     '''
@@ -71,12 +46,11 @@ def test_add_new_group(cnf_configuration_pg, user_group):
         FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
-def test_add_new_zone(mozwebqa, cnf_configuration_pg, zone, cfme_data):
+def test_add_new_zone(cnf_configuration_pg, zone, cfme_data):
     '''Add new zone
     '''
     win_domain_data = cfme_data.data['ldap_server']
-    smartproxy_ip = urlparse(mozwebqa.base_url).netloc
+    smartproxy_ip = urlparse(cnf_configuration_pg.testsetup.base_url).netloc
 
     zone_pg = cnf_configuration_pg.click_on_settings().click_on_zones()\
         .click_on_add_new()
@@ -95,7 +69,6 @@ def test_add_new_zone(mozwebqa, cnf_configuration_pg, zone, cfme_data):
         FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_assign_zone(cnf_configuration_pg, zone):
     '''Assign appliance to zone
     '''
@@ -109,7 +82,6 @@ def test_assign_zone(cnf_configuration_pg, zone):
         FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_edit_server_roles(cnf_configuration_pg, roles):
     '''Set roles for appliance
     '''
@@ -123,7 +95,6 @@ def test_edit_server_roles(cnf_configuration_pg, roles):
         FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_enable_cap_and_util(cnf_configuration_pg):
     '''Enabled capacity and utilization collection for clusters and datastores
     '''

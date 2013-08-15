@@ -1,6 +1,6 @@
 management_systems:
-    rhevm31:
-        name: RHEV 3.1
+    rhevm32:
+        name: RHEV 3.2
         default_name: RHEV-M (10.0.0.3)
         credentials: rhevm31-credential_name_from_credentials.yaml
         cu_credentials: rhevm31-cu_db_cred_name_from_credentials.yaml

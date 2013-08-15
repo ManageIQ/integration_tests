@@ -13,19 +13,12 @@ from unittestzero import Assert
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 
 
-@pytest.fixture(params=['rhevm31'])
-def provider_data(request, cfme_data):
-    '''Returns management system data from cfme_data'''
-    param = request.param
-    return cfme_data.data['management_systems'][param]
-
-
 @pytest.mark.usefixtures("maximized")
-def test_import_policies(mozwebqa, control_importexport_pg, cfme_data):
+def test_import_policies(request, control_importexport_pg, cfme_data):
     '''Import policies
     '''
     policy_file = cfme_data.data['policies']['import']
-    policy_file = "%s/%s" % (mozwebqa.request.session.fspath, policy_file)
+    policy_file = "%s/%s" % (request.session.fspath, policy_file)
 
     control_importexport_pg = control_importexport_pg.import_policies(
         policy_file)
@@ -37,12 +30,12 @@ def test_import_policies(mozwebqa, control_importexport_pg, cfme_data):
 
 
 @pytest.mark.usefixtures("maximized")
-def test_policy_assignment(infra_providers_pg, provider_data):
+def test_policy_assignment(infra_providers_pg, provider):
     '''Assigns policy profile(s) defined in cfme_data to management system
     '''
-    infra_providers_pg.select_provider(provider_data["name"])
+    infra_providers_pg.select_provider(provider["name"])
     policy_pg = infra_providers_pg.click_on_manage_policies()
-    for profile in provider_data["policy_profiles"]:
+    for profile in provider["policy_profiles"]:
         policy_pg.select_profile_item(profile)
     policy_pg.save()
     Assert.contains('Policy assignments successfully changed',
@@ -51,13 +44,13 @@ def test_policy_assignment(infra_providers_pg, provider_data):
 
 
 @pytest.mark.skip_selenium
-def test_import_namespace(mozwebqa, cfme_data, ssh_client):
+def test_import_namespace(request, cfme_data, ssh_client):
     ''''Import automate method namespace (rake method)
     '''
     filename = cfme_data.data['automate']['import']['file']
     automate_path = cfme_data.data['automate']['import']['path']
     automate_file = "%s/%s/%s" % \
-        (mozwebqa.request.session.fspath, automate_path, filename)
+        (request.session.fspath, automate_path, filename)
 
     # copy xml file to appliance
     ssh_client.put_file(automate_file, '/root/')

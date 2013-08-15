@@ -12,81 +12,20 @@ from unittestzero import Assert
 from selenium.common.exceptions import NoSuchElementException
 
 
+pytestmark = [pytest.mark.usefixtures("maximized")]
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 
 
-@pytest.fixture(params=['rhevm31'])
-def provider(request, cfme_data):
-    '''Returns management system data from cfme_data'''
-    param = request.param
-    return cfme_data.data['management_systems'][param]
-
-
-@pytest.fixture(params=['qeblade29'])
-def host(request, cfme_data):
-    '''Returns host data from cfme_data'''
-    param = request.param
-    return cfme_data.data['management_systems']['rhevm31']['hosts'][param]
-
-
-@pytest.fixture(scope="module",
-                params=["rhel"])
-def pxe_server(request, cfme_data):
-    '''Returns pxe server data from cfme_data'''
-    param = request.param
-    return cfme_data.data['pxe']['pxe_servers'][param]
-
-
-@pytest.fixture(scope="module")
-def pxe_image_names(cfme_data):
-    '''Returns pxe image names from cfme_data'''
-    return cfme_data.data['pxe']['images']
-
-
-@pytest.fixture(scope="module")
-def pxe_datastore_names(cfme_data):
-    '''Returns pxe datastore names from cfme_data'''
-    return cfme_data.data['pxe']['datastores']
-
-
-@pytest.fixture(scope="module",
-                params=["rhel"])
-def pxe_templates(request, cfme_data):
-    '''Returns pxe templates from cfme_data'''
-    param = request.param
-    return cfme_data.data['pxe']['templates'][param]
-
-
-@pytest.fixture(scope="module",
-                params=["rhel"])
-def pxe_template_type(request, cfme_data):
-    '''Returns pxe template type from cfme_data'''
-    param = request.param
-    return cfme_data.data["pxe"]["templates"][param]["template_type"]
-
-# TODO: delete if using fixture
-#@pytest.mark.usefixtures("maximized")
-#def test_add_infra_provider(infra_providers_pg, provider):
-#    '''Add new management system
-#    '''
-#    prov_add_pg = infra_providers_pg.click_on_add_new_provider()
-#    prov_pg = prov_add_pg.add_provider(provider)
-#    Assert.equal(prov_pg.flash.message,
-#        'Infrastructure Providers "%s" was saved' % provider['name'],
-#        FLASH_MESSAGE_NOT_MATCHED)
-
-
-@pytest.mark.usefixtures("maximized")
-def test_add_host_credentials(setup_infrastructure_providers, infra_hosts_pg, host):
+@pytest.mark.usefixtures("setup_infrastructure_providers")
+def test_add_host_credentials(infra_hosts_pg, host):
     '''Add host credentials
     '''
-    hosts_pg = infra_hosts_pg.add_credentials_and_save(host)
+    hosts_pg = infra_hosts_pg.edit_host_and_save(host)
     Assert.contains(hosts_pg.flash.message,
         'Host "%s" was saved' % host['name'],
         FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_add_pxe_server(infra_pxe_pg, pxe_server):
     '''Add pxe server
     '''
@@ -104,7 +43,6 @@ def test_add_pxe_server(infra_pxe_pg, pxe_server):
         FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_refresh_pxe_server(infra_pxe_pg, pxe_server, pxe_image_names):
     '''Refresh pxe server
     '''
@@ -147,7 +85,6 @@ def test_refresh_pxe_server(infra_pxe_pg, pxe_server, pxe_image_names):
                 "This image has not been found: '%s'" % name)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_add_customization_template(
         infra_pxe_pg, 
         pxe_templates, 
@@ -164,11 +101,7 @@ def test_add_customization_template(
     add_pg = infra_pxe_pg.click_on_add_template()
     temp_pg = add_pg.new_pxe_template_select_type(pxe_template_type)
     pxe_templates['script'] = "new text in ks textarea"
-    # FIXME: ks script textarea not visible. either need wait or new locator?
     temp_pg.new_pxe_template_fill_data(**pxe_templates)
-    #This needs to be here. Add button is displayed only after a short time
-    #after selecting the image type.
-    #And: 'Element must be displayed to click'
     time.sleep(1)
     added_pg = temp_pg.click_on_add()
     flash_message = 'Customization Template "%s" was added' % \
@@ -177,7 +110,6 @@ def test_add_customization_template(
             FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_iso_datastores(infra_pxe_pg, provider):
     '''Add iso datastores
     '''

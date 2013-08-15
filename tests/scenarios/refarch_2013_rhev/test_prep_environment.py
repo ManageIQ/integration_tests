@@ -10,38 +10,10 @@ import pytest
 from unittestzero import Assert
 
 
+pytestmark = [pytest.mark.usefixtures("maximized")]
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 
 
-@pytest.fixture(params=['rhevm31'])
-def provider(request, cfme_data):
-    '''Returns management system data from cfme_data'''
-    param = request.param
-    return cfme_data.data['management_systems'][param]
-
-
-@pytest.fixture(params=['qeblade29'])
-def host(request, cfme_data):
-    '''Returns host data from cfme_data'''
-    param = request.param
-    return cfme_data.data['management_systems']['rhevm31']['hosts'][param]
-
-
-@pytest.fixture(params=['iscsi'])
-def datastore(request, cfme_data):
-    '''Returns datastore data from cfme_data'''
-    param = request.param
-    return cfme_data.data['management_systems']['rhevm31']['datastores'][param]
-
-
-@pytest.fixture(params=['iscsi'])
-def cluster(request, cfme_data):
-    '''Returns cluster data from cfme_data'''
-    param = request.param
-    return cfme_data.data['management_systems']['rhevm31']['clusters'][param]
-
-
-@pytest.mark.usefixtures("maximized")
 def test_tag_providers(infra_providers_pg, provider):
     '''Tag management systems to prepare for provisioning
     '''
@@ -59,7 +31,6 @@ def test_tag_providers(infra_providers_pg, provider):
         FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_tag_clusters(infra_clusters_pg, provider, cluster):
     '''Tag clusters to prepare for provisioning
     '''
@@ -77,7 +48,6 @@ def test_tag_clusters(infra_clusters_pg, provider, cluster):
         FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_tag_hosts(infra_hosts_pg, provider, host):
     '''Tag hosts to prepare for provisioning
     '''
@@ -95,7 +65,6 @@ def test_tag_hosts(infra_hosts_pg, provider, host):
         FLASH_MESSAGE_NOT_MATCHED)
 
 
-@pytest.mark.usefixtures("maximized")
 def test_tag_datastores(infra_datastores_pg, provider, datastore):
     '''Tag datastores to prepare for provisioning
     '''
