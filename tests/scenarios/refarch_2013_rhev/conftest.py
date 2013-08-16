@@ -73,6 +73,20 @@ def zone(request, cfme_data):
     return cfme_data.data['zones'][param]
 
 
+@pytest.fixture(params=['rhevm32'])
+def appliance(request, cfme_data):
+    '''Returns appliance data from cfme_data'''
+    param = request.param
+    return cfme_data.data['management_systems'][param]['appliance']
+
+
+@pytest.fixture(params=['linux_template_workflow'])
+def provision(request, cfme_data):
+    '''Returns provisioning data from cfme_data'''
+    param = request.param
+    return cfme_data.data['provisioning'][param]
+
+
 @pytest.fixture(scope="module",
                 params=["default"])
 def roles(request, cfme_data):
