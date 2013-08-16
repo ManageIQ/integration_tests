@@ -26,6 +26,19 @@ class CatalogItems(Base):
     _add_catalogbundle_button_locator = (
         By.CSS_SELECTOR, 
         "table.buttons_cont tr[title='Add a New Catalog Bundle']")
+    _del_catalog_item_locator = (
+            By.CSS_SELECTOR, 
+            "table.buttons_cont tr[title='Remove this Item from the VMDB']")
+    _edit_catalog_bundle_locator = (
+            By.CSS_SELECTOR, 
+            "table.buttons_cont tr[title='Edit this Item']")
+    
+    @property
+    def accordion(self):
+        '''accordion'''
+        from pages.regions.accordion import Accordion
+        from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
+        return Accordion(self.testsetup, LegacyTreeAccordionItem)
      
     @property
     def configuration_button(self):
@@ -56,6 +69,37 @@ class CatalogItems(Base):
             self.configuration_button).click(
                 self.add_catalogbundle_button).perform()
         return CatalogItems.NewCatalogBundle(self.testsetup)
+    
+    @property
+    def del_catalog_item_btn(self):
+        '''Delete catalog button'''
+        return self.selenium.find_element(*self._del_catalog_item_locator)
+    
+    def delete_catalog_item(self):
+        '''Delete catalog'''
+        ActionChains(self.selenium).click(
+            self.configuration_button).click(self.del_catalog_item_btn).perform()
+        self.handle_popup()
+        self._wait_for_results_refresh()
+        return CatalogItems(self.testsetup)
+    
+    @property
+    def edit_catalog_bundle_btn(self):
+        '''Delete catalog button'''
+        return self.selenium.find_element(*self._edit_catalog_bundle_locator)
+    
+    def edit_catalog_bundle(self):
+        '''Delete catalog'''
+        ActionChains(self.selenium).click(
+            self.configuration_button).click(self.edit_catalog_bundle_btn).perform()
+        self._wait_for_results_refresh()
+        return CatalogItems.NewCatalogBundle(self.testsetup)
+    
+    def click_on_catalog_item(self, _catalog_item):
+        '''Click on catalog to edit or delete'''
+        self.accordion.current_content.find_node_by_name(_catalog_item).click()
+        self._wait_for_results_refresh()
+        return CatalogItems(self.testsetup)
     
     class NewCatalogItem(Provision):
         '''New Catalog Item page'''
@@ -154,6 +198,8 @@ class CatalogItems(Base):
         _resource_locator = (By.CSS_SELECTOR, "select#resource_id")
         _add_button = (By.CSS_SELECTOR,
                 "div#buttons_on > ul#form_buttons > li > img[alt='Add']")
+        _edit_button = (By.CSS_SELECTOR,
+                "div#buttons_on > ul#form_buttons > li > img[alt='Save Changes']")
         
         @property
         def tabbutton_region(self):
@@ -181,10 +227,14 @@ class CatalogItems(Base):
             self._wait_for_results_refresh()
             return self 
         
-        def select_catalog_item(self, catalog_item_name):
+        def select_catalog_item(self, catalog_item_name, add):
             '''select catalog item and save bundle'''
             self.select_dropdown(catalog_item_name, *self._resource_locator)
             self._wait_for_results_refresh()
-            self.selenium.find_element(*self._add_button).click()
-            self._wait_for_results_refresh()
+            if(add==True) :
+                self.selenium.find_element(*self._add_button).click()
+                self._wait_for_results_refresh()
+            else:
+                self.selenium.find_element(*self._edit_button).click()
+                self._wait_for_results_refresh()
             return self   

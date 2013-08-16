@@ -25,6 +25,22 @@ class ServiceCatalogs(Base):
         self._wait_for_results_refresh()
         return ServiceCatalogs(self.testsetup)
     
+    def is_catalog_present(self, _catalog_name):
+        '''Select catalog'''
+        if(self.accordion.current_content.find_node_by_name(_catalog_name)):
+            self._wait_for_results_refresh()
+            return True
+        else:
+            return False
+        
+    def is_catalog_item_present(self, _catalog_item):
+        '''Select catalog'''
+        if(self.accordion.current_content.find_node_by_name(_catalog_item)):
+            self._wait_for_results_refresh()
+            return True
+        else:
+            return False
+    
     def select_catalog_item(self, catalog_item_name):
         '''Select catalog Item'''
         number_of_templates = len(OrderService(self).order_catalog_list.items)
