@@ -72,15 +72,12 @@ class ConfigButton(Button):
     #    ActionChains(self.selenium).click(self._root_element).click(item).perform() 
     #    #return Services.EditVm(self.testsetup)
 
-    #def set_ownership(self):
-    #    item = self.selenium.find_element(*self._set_ownership_locator)
-    #    ActionChains(self.selenium).click(self._root_element).click(item).perform() 
-    #    return Services.SetOwnership(self.testsetup)
-
-    #def set_ownership_and_cancel(self):
-    #    item = self.selenium.find_element(*self._set_ownership_locator)
-    #    ActionChains(self.selenium).click(self._root_element).click(item).perform() 
-    #    #return Services.SetOwnership(self.testsetup)
+    def set_ownership(self):
+        item = self.selenium.find_element(*self._set_ownership_locator)
+        ActionChains(self.selenium).click(self._root_element).click(item).perform() 
+        from pages.infrastructure_subpages.vms_subpages.details \
+            import VirtualMachineDetails
+        return VirtualMachineDetails.SetOwnership(self.testsetup)
 
     def remove_from_vmdb(self):
         item = self.selenium.find_element(*self._vmdb_removal_locator)
@@ -92,15 +89,12 @@ class ConfigButton(Button):
         ActionChains(self.selenium).click(self._root_element).click(item).perform() 
         self.handle_popup(True)
 
-    #def edit_mgmt_engine_relationship(self):
-    #    item = self.selenium.find_element(*self._edit_mgmt_relationship_locator)
-    #    ActionChains(self.selenium).click(self._root_element).click(item).perform() 
-    #    self.handle_popup(cancel)
-
-    #def edit_mgmt_engine_relationship_and_cancel(self):
-    #    item = self.selenium.find_element(*self._edit_mgmt_relationship_locator)
-    #    ActionChains(self.selenium).click(self._root_element).click(item).perform() 
-    #    self.handle_popup(cancel)
+    def edit_mgmt_engine_relationship(self):
+        item = self.selenium.find_element(*self._edit_mgmt_relationship_locator)
+        ActionChains(self.selenium).click(self._root_element).click(item).perform() 
+        from pages.infrastructure_subpages.vms_subpages.details \
+            import VirtualMachineDetails
+        return VirtualMachineDetails.EditCfmeRelationship(self.testsetup)
 
     #def right_sized_recommendations(self):
     #    item = self.selenium.find_element(*self._size_recommendations_locator)
