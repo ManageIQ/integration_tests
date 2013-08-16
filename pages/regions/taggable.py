@@ -3,6 +3,7 @@ from pages.page import Page
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
+from unittestzero import Assert
 
 class Taggable(Page):
     '''Add this mixin to your page in 3 easy steps:
@@ -23,12 +24,26 @@ class Taggable(Page):
     _tag_row_locator = (By.XPATH, "tr")
     _tag_items_locator = (By.XPATH, "td")
 
+    def assign_tags_and_save(self, tags):
+        '''Service method to assign tags and save'''
+        self.assign_tags(tags)
+        return self.save_tag_edits()
+
+    def assign_tags(self, tags):
+        '''Assign list of key, value tags'''
+        for category, value in tags.iteritems():
+            self.select_category(category)
+            self.select_value(value)
+            Assert.true(self.is_tag_displayed(category, value))
+
     def select_category(self, category):
+        '''Select tag category'''
         self._wait_for_visible_element(*self._tag_category_selector)
         self.select_dropdown(category, *self._tag_category_selector)
         self._wait_for_results_refresh()
 
     def select_value(self, value):
+        '''Select tag value'''
         self._wait_for_visible_element(*self._tag_value_selector)
         self.select_dropdown(value, *self._tag_value_selector)
         self._wait_for_results_refresh()
