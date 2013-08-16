@@ -227,14 +227,28 @@ class CatalogItems(Base):
             self._wait_for_results_refresh()
             return self 
         
-        def select_catalog_item(self, catalog_item_name, add):
-            '''select catalog item and save bundle'''
-            self.select_dropdown(catalog_item_name, *self._resource_locator)
+        def click_on_add_btn(self):
+            '''Click on add catalog bundle btn'''
             self._wait_for_results_refresh()
-            if(add==True) :
-                self.selenium.find_element(*self._add_button).click()
-                self._wait_for_results_refresh()
-            else:
-                self.selenium.find_element(*self._edit_button).click()
-                self._wait_for_results_refresh()
+            self.selenium.find_element(*self._add_button).click()
+            self._wait_for_results_refresh()
+            return self 
+        
+        def click_on_edit_save_btn(self):
+            '''Click on edit catalog bundle btn'''
+            self._wait_for_results_refresh()
+            self.selenium.find_element(*self._edit_button).click()
+            self._wait_for_results_refresh()
+            return self 
+        
+        def select_catalog_item_and_add(self, catalog_item_name):
+            '''select catalog item and add and save bundle'''
+            self.select_dropdown(catalog_item_name, *self._resource_locator)
+            self.click_on_add_btn()
+            return self   
+        
+        def select_catalog_item_and_edit(self, catalog_item_name):
+            '''select catalog item and edit and save bundle'''
+            self.select_dropdown(catalog_item_name, *self._resource_locator)
+            self.click_on_edit_save_btn()
             return self   
