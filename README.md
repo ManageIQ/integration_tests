@@ -16,7 +16,7 @@ Setup:
    * easy_install virtualenv (yum install python-virtualenv also works for those preferring rpm)
    * virtualenv <name>
    * source <name>/bin/activate
-4. sudo yum install postgresql-devel
+4. sudo yum install gcc postgresql-devel libxml2-devel libxslt-devel
 5. pip install -Ur /path/to/cfme_tests/requirements.txt
 6. When tests are run in cfme_tests, the system will look for the cfme_pages repo in 4 locations. If they are not there, PYTHONPATH must be set.
     1. $(cwd)/cfme_pages
@@ -28,7 +28,7 @@ Setup:
 
 To setup up for chrome:
 
-1. Download from http://code.google.com/p/chromedriver/downloads/list. Use the latest available for your arch. There is currently a problem with the chromedriver2, so use the latest that is NOT chromedriver2.
+1. Download from http://code.google.com/p/chromedriver/downloads/list. Use the latest available for your arch. 
 2. Unzip that file to somewhere on your path.
 3. Substitue --driver=firefox with --driver=chrome
 
