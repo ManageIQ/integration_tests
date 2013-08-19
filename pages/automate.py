@@ -71,8 +71,8 @@ class Automate(Base):
         def click_on_reset_and_wait(self):
             self.click_on_reset()
             # reset takes ~30 secs. prevent selenium timeout
-            # imp_wait will return sooner if completed earlier
-            self.selenium.implicitly_wait(60)
+            self.timeout = 60
+            self._wait_for_results_refresh()
             return Automate.ImportExport(self.testsetup)
 
         def import_automate(self, import_automate_file):
