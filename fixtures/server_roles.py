@@ -18,7 +18,7 @@ default_roles = (
 )
 
 @pytest.fixture
-def server_roles(request, cfme_data, home_page_logged_in):
+def server_roles(request, cfme_data, cnf_configuration_pg):
     """Set the server roles based on a list of roles attached to the test using this fixture
 
     Usage examples:
@@ -95,9 +95,7 @@ def server_roles(request, cfme_data, home_page_logged_in):
         raise Exception('Refusing to remove the user_interface role')
 
     # Nav to the settings tab
-    conf_pg = home_page_logged_in.header.site_navigation_menu("Configuration").\
-        sub_navigation_menu("Configuration").click()
-    settings_pg = conf_pg.click_on_settings()
+    settings_pg = cnf_configuration_pg.click_on_settings()
     server_settings_pg = settings_pg.click_on_current_server_tree_node()
     # sst is a configuration_subpages.settings_subpages.server_settings_subpages.
     #   server_settings_tab.ServerSettingsTab
