@@ -1,34 +1,24 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=W0621
 import pytest
-from time import sleep
 from unittestzero import Assert
-
-@pytest.fixture
-def provisioning_start_page(infra_vms_pg):
-    return infra_vms_pg.click_on_provision_vms()
-
-@pytest.fixture(scope="module", # IGNORE:E1101
-                params=["linux_template_workflow"])
-def provisioning_data(request, cfme_data):
-    param = request.param
-    return cfme_data.data["provisioning"][param]
-
+from fixtures.server_roles import default_roles, server_roles
 
 @pytest.mark.nondestructive
+@pytest.mark.fixtureconf(server_roles=default_roles+('automate',))
 @pytest.mark.usefixtures(
         "maximized",
         "setup_infrastructure_providers",
+        "setup_pxe_provision",
         "mgmt_sys_api_clients")
 class TestTemplateProvisioning:
-
     def test_linux_template_cancel(
             self,
             provisioning_start_page,
-            provisioning_data):
+            provisioning_data_basic_only):
         '''Test Cancel button'''
         provisioning_start_page.click_on_template_item(
-                provisioning_data["template"])
+                provisioning_data_basic_only["template"])
         provision_pg = provisioning_start_page.click_on_continue()
         vm_pg = provision_pg.click_on_cancel()
         Assert.true(vm_pg.is_the_current_page,
@@ -36,18 +26,25 @@ class TestTemplateProvisioning:
 
     def test_linux_template_workflow(
             self,
+            server_roles,
             provisioning_start_page,
             provisioning_data,
-            mgmt_sys_api_clients):
+            mgmt_sys_api_clients,
+            random_name):
         '''Test Basic Provisioning Workflow'''
+        assert len(server_roles) == len(default_roles) + 1
         provisioning_start_page.click_on_template_item(
-                provisioning_data["template"])
+            provisioning_data["template"])
         provision_pg = provisioning_start_page.click_on_continue()
-        self.complete_provision_pages_info(provisioning_data, provision_pg)
-        vm_pg = assert_vm_state(provisioning_data, provision_pg, "on")
-        remove_vm(provisioning_data, vm_pg, mgmt_sys_api_clients)
+        self.complete_provision_pages_info(provisioning_data, provision_pg, \
+            random_name)
+        vm_pg = assert_vm_state(provisioning_data, provision_pg, "on", \
+            random_name)
+        remove_vm(provisioning_data, vm_pg, mgmt_sys_api_clients, \
+            random_name)
 
-    def complete_provision_pages_info(self, provisioning_data, provision_pg):
+    def complete_provision_pages_info(self,
+        provisioning_data, provision_pg, random_name):
         ''' Fills in data for Provisioning tabs'''
         tab_buttons = provision_pg.tabbutton_region
         request_pg = tab_buttons.tabbutton_by_name("Request").click()
@@ -63,8 +60,10 @@ class TestTemplateProvisioning:
         catalog_pg = tab_buttons.tabbutton_by_name("Catalog").click()
         catalog_pg.fill_fields(
                 provisioning_data["provision_type"],
+                provisioning_data["pxe_server"],
+                provisioning_data["server_image"],
                 str(provisioning_data["count"]),
-                provisioning_data["vm_name"],
+                '%s%s' % (provisioning_data["vm_name"], random_name),
                 provisioning_data["vm_description"])
         environment_pg = tab_buttons.tabbutton_by_name("Environment").click()
         environment_pg.fill_fields(
@@ -72,7 +71,13 @@ class TestTemplateProvisioning:
                 unicode(provisioning_data["datastore"]))
         hardware_pg = tab_buttons.tabbutton_by_name("Hardware").click()
         network_pg = tab_buttons.tabbutton_by_name("Network").click()
-        customize_pg = tab_buttons.tabbutton_by_name("Customize").click()
+        if ("PXE" in provisioning_data["provision_type"]) or \
+           ("ISO" in provisioning_data["provision_type"]):
+            customize_pg = tab_buttons.tabbutton_by_name("Customize").click()
+            customize_pg.fill_fields(
+                provisioning_data["root_password"],
+                provisioning_data["address_node_value"],
+                provisioning_data["customization_template"])
         schedule_pg = tab_buttons.tabbutton_by_name("Schedule").click()
         schedule_pg.fill_fields(
                 provisioning_data["when_to_provision"],
@@ -82,36 +87,45 @@ class TestTemplateProvisioning:
         services_requests_pg = schedule_pg.click_on_submit()
         Assert.true(services_requests_pg.is_the_current_page,
                 "not returned to the correct page")
-        Assert.equal(services_requests_pg.flash.message,
-                "VM Provision Request was Submitted, you will be notified when your VMs are ready")
+        Assert.equal(services_requests_pg.flash_message,
+                "VM Provision Request was Submitted, "\
+                "you will be notified when your VMs are ready")
         services_requests_pg.approve_request(1)
+        services_requests_pg.wait_for_request_status("Last 24 Hours", \
+                "Finished", 12)
 
-def assert_vm_state(provisioning_data, current_page, current_state):
+def assert_vm_state(provisioning_data, current_page, \
+    current_state, random_name):
     ''' Asserts that the VM is created in the expected state '''
     vm_pg = current_page.header.site_navigation_menu(
-            'Services').sub_navigation_menu('Virtual Machines').click()
-    sleep(180)
+            'Infrastructure').sub_navigation_menu('Virtual Machines').click()
     vm_pg.refresh()
-    vm_pg.wait_for_vm_state_change(provisioning_data["vm_name"], 'on', 12)
+    vm_pg.wait_for_vm_state_change( '%s%s' % (provisioning_data["vm_name"],
+            random_name), 'on', 12)
     Assert.equal(vm_pg.quadicon_region.get_quadicon_by_title(
-        provisioning_data["vm_name"]).current_state, current_state,
+        '%s%s' % (provisioning_data["vm_name"], random_name))\
+        .current_state, current_state,
         "vm not in correct state: " + current_state)
     return vm_pg
 
-def remove_vm(provisioning_data, current_page, provider_api_clients):
+def remove_vm(provisioning_data,
+    current_page, provider_api_clients, random_name):
     '''Powers off and removes the VM'''
     vm_pg = current_page.header.site_navigation_menu(
-            'Services').sub_navigation_menu('Virtual Machines').click()
-    vm_pg.power_off([provisioning_data["vm_name"]])
+            'Infrastructure').sub_navigation_menu('Virtual Machines').click()
+    vm_pg.power_off(['%s%s' % (provisioning_data["vm_name"], random_name)])
     Assert.true(vm_pg.flash.message.startswith("Stop initiated"))
-    vm_pg.wait_for_vm_state_change(provisioning_data["vm_name"], 'off', 12)
+    vm_pg.wait_for_vm_state_change(
+            '%s%s' % (provisioning_data["vm_name"], random_name), 'off', 12)
     Assert.equal(vm_pg.quadicon_region.get_quadicon_by_title(
-            provisioning_data["vm_name"]).current_state, 'off',
-            "vm running")
+            '%s%s' % (provisioning_data["vm_name"], random_name))\
+            .current_state, 'off', "vm running")
     for provider in provider_api_clients.values():
-        if (provisioning_data["vm_name"] + "/" +
-                provisioning_data["vm_name"] + ".vmx"
-                ) in provider.list_vm() or provisioning_data["vm_name"] \
-                        in provider.list_vm():
-            provider.delete_vm(provisioning_data["vm_name"])
+        if ('%s%s' % (provisioning_data["vm_name"], random_name) + "/" +
+                '%s%s' % (provisioning_data["vm_name"], random_name) + ".vmx"
+                ) in provider.list_vm() or \
+                '%s%s' % (provisioning_data["vm_name"], random_name) \
+                in provider.list_vm():
+            provider.delete_vm('%s%s' % (provisioning_data["vm_name"], \
+                random_name))
 
