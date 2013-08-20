@@ -18,7 +18,7 @@ default_roles = (
 )
 
 @pytest.fixture
-def server_roles(request, cfme_data, cnf_configuration_pg):
+def server_roles(fixtureconf, cfme_data, cnf_configuration_pg):
     """Set the server roles based on a list of roles attached to the test using this fixture
 
     Usage examples:
@@ -34,8 +34,6 @@ def server_roles(request, cfme_data, cnf_configuration_pg):
         Roles can be pulled from the cfme_data fixture using yaml selectors,
         which will do a 'set' with the list of roles found at the target path:
 
-        from fixtures.roles import server_roles_cfme_data
-        @server_roles_cfme_data('level1', 'sublevel2'))
         @pytest.mark.fixtureconf(server_roles_cfmedata=('level1', 'sublevel2'))
         def test_appliance_roles(server_roles):
             assert len(server_roles) == 3
@@ -50,7 +48,7 @@ def server_roles(request, cfme_data, cnf_configuration_pg):
 
         To ensure the appliance has the default roles:
 
-        from fixtures.roles import server_roles_set, default_roles
+        from fixtures.server_roles import default_roles
 
         @pytest.mark.fixtureconf(server_roles=default_roles)
         def test_appliance_roles(server_roles):
@@ -77,14 +75,14 @@ def server_roles(request, cfme_data, cnf_configuration_pg):
 
     """
 
-    if 'server_roles' in request.node._fixtureconf:
-        roles_list = list(request.node._fixtureconf['server_roles'])
-    elif 'server_roles_cfmedata' in request.node._fixtureconf:
+    if 'server_roles' in fixtureconf:
+        roles_list = list(fixtureconf['server_roles'])
+    elif 'server_roles_cfmedata' in fixtureconf:
         roles_list = cfme_data.data
         # Drills down into cfme_data YAML by selector, expecting a list
         # of roles at the end. A KeyError here probably means the YAMe
         # selector is wrong
-        for selector in request.node._fixtureconf['server_roles_cfmedata']:
+        for selector in fixtureconf['server_roles_cfmedata']:
             roles_list = roles_list[selector]
     else:
         raise Exception('server_roles config not found on test callable')
