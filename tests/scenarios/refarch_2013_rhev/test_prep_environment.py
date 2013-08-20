@@ -80,3 +80,21 @@ def test_tag_datastores(infra_datastores_pg, provider, datastore):
         'Tag edits were successfully saved',
         edit_tags_pg.flash.message,
         FLASH_MESSAGE_NOT_MATCHED)
+
+
+def test_edit_cfme_server_relationship(infra_vms_pg, appliance):
+    '''Set the CFME server relationship
+    '''
+    vm_pg = infra_vms_pg.find_vm_page(appliance['vm_name'], None, False, True)
+    vm_pg = vm_pg.edit_cfme_relationship_and_save(appliance['appliance_name'])
+    Assert.equal(vm_pg.flash.message, "Management Engine Relationship saved",
+        FLASH_MESSAGE_NOT_MATCHED)
+
+
+def test_set_template_ownership(infra_vms_pg, provision):
+    '''Set template ownership
+    '''
+    vm_pg = infra_vms_pg.find_vm_page(provision['template'], None, False, True)
+    vm_pg = vm_pg.set_ownership_and_save(provision['user'])
+    Assert.equal(vm_pg.flash.message, "Ownership saved for selected VMs",
+        FLASH_MESSAGE_NOT_MATCHED)
