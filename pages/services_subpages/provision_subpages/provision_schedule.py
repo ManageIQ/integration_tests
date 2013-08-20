@@ -54,4 +54,5 @@ class ProvisionSchedule(Base, ProvisionFormButtonMixin):
             self.power_on_after_creation.click()
         self._wait_for_results_refresh()
         self.retirement.select_by_visible_text(retirement_selection)
+        self._wait_for_results_refresh()
         return ProvisionSchedule(self.testsetup)
