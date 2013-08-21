@@ -414,6 +414,8 @@ provisioning:
         node: purpose_node
         child_node: purpose_child_node
         provision_type: VMware
+        pxe_server:
+        server_image:
         count: 1
         vm_name: aTestVM
         vm_description: My Test VM Description
@@ -422,3 +424,48 @@ provisioning:
         when_to_provision: 1
         power_on: True
         time_until_retirement: 1 Month
+    rhevm_pxe_workflow:
+        template: rhevm_linux_template
+        node: purpose_node_x
+        child_node: purpose_chile_node_x
+        provision_type: PXE
+        pxe_server: pxe_nfs_test
+        server_image: rhel_server_image
+        count: 1
+        vm_name: aTestRhevmPxeVM
+        vm_description: My Test VM Description
+        host: host.server.name.com
+        datastore: iscsi_data
+        root_password: root_password
+        address_node_value: dhcp
+        customization_template: RHEL 6 Server PXE
+        when_to_provision: 1
+        power_on: True
+        time_until_retirement: Indefinite
+provisioning_setup:
+    rhevm_pxe_setup:
+        pxe_image_type_name: RHEL-6
+        pxe_server_name: pxe_nfs_test
+        access_url: http://server.com/ipxe
+        pxe_directory: pxe
+        customization_directory: customization
+        windows_image_directory: sources/m
+        uri: 11.11.11.11/var/www/html/ipxe/
+        uri_prefix: nfs
+        visibility: ---\n...
+        pxe_menu_file: http://server.com/ipxe/menu.php
+        menu_file_name: menu.php
+        menu_type: PxeMenuIpxe
+        default_for_windows: None
+        image_description: RHEL 6 x86_64 Server
+        initrd: http://${next-server}/server-dirs/images/pxeboot//initrd.img
+        kernel: http://${next-server}/server-dirs/images/pxeboot/vmlinuz
+        kernel_options: ramdisk_size=10000
+        image_name: rhel6server
+        image_path: menu.php
+        image_type: PxeImageIpxe
+        ks_file: px-ks.cfg
+        ct_description: PXE - RHEL 6 Server
+        ct_name: RHEL 6 Server PXE
+        ct_system: True
+        ct_type: CustomizationTemplateKickstart
