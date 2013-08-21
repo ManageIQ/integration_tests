@@ -58,6 +58,11 @@ def svc_catalogs_pg(home_page_logged_in):
     return _submenu(home_page_logged_in, 'Services', 'Catalogs')
 
 @pytest.fixture
+def cloud_providers_pg(home_page_logged_in):
+    '''Navigate to Cloud -> Providers page and return it'''
+    return _submenu(home_page_logged_in, 'Cloud', 'Providers')
+
+@pytest.fixture
 def infra_providers_pg(home_page_logged_in):
     '''Navigate to Infrastructure -> Providers page and return it'''
     return _submenu(home_page_logged_in, 'Infrastructure', 'Providers')

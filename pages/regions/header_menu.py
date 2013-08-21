@@ -16,6 +16,10 @@ from pages.virtual_intelligence import VirtualIntelligence
 from pages.optimize import Optimize
 from pages.infrastructure_subpages.providers import Providers
 from pages.infrastructure_subpages.hosts import Hosts
+from pages.cloud.providers import CloudProviders
+#from pages.cloud.availability_zones import AvailabilityZones
+#from pages.cloud.flavors import Flavors
+#from pages.cloud.instances import Instances
 
 class HeaderMenu(Page):
     """
@@ -106,10 +110,10 @@ class HeaderMenu(Page):
                 #"Workloads":
             },
             "Cloud": {
-                #"Providers":
-                #"Availability Zones":
-                #"Flavors":
-                #"Instances":
+                "Providers": CloudProviders,
+                #"Availability Zones": AvailabilityZones,
+                #"Flavors": Flavors,
+                #"Instances": Instances,
             },
             "Infrastructure": {
                 "Providers" : Providers,
