@@ -202,6 +202,62 @@ class Infrastructure(Base):
             self._wait_for_results_refresh()
             return Infrastructure.PXEAddISODatastore(self.testsetup)
 
+        def click_on_customization_templates(self):
+            self.accordion_region.accordion_by_name("Customization Templates").click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXETemplates(self.testsetup)
+
+    class PXETemplates(Base):
+        @property
+        def accordion_region(self):
+            from pages.regions.accordion import Accordion
+            from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
+            return Accordion(self.testsetup, LegacyTreeAccordionItem)
+
+        def click_on_examples_rhel_pxe(self):
+            self.accordion_region.current_content.children[0]\
+                .twisty.expand()
+            self.accordion_region.current_content.children[0]\
+                .children[2].click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXETemplatesRHELPXE(self.testsetup)
+
+    class PXETemplatesRHELPXE(Base):
+        _copy_template_locator = (
+            By.CSS_SELECTOR,"tr.tr_btn[title='Copy this Customization Template']")
+
+        @property
+        def center_buttons(self):
+             from pages.regions.taskbar.center import CenterButtons 
+             return CenterButtons(self.testsetup) 
+
+        def click_on_copy_template(self):
+            self.center_buttons.configuration_button.click()
+            self.selenium.find_element(*self._copy_template_locator).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXETemplatesCopy(self.testsetup)
+
+    class PXETemplatesCopy(Base):
+        _image_type_dropdown_locator = (By.CSS_SELECTOR, "select#img_typ")
+        _type_dropdown_locator = (By.CSS_SELECTOR, "select#typ")
+        _name_field_locator = (By.CSS_SELECTOR, "input#name")
+        _description_field_locator = (By.CSS_SELECTOR, "input#description")
+        _cancel_button_locator = (By.CSS_SELECTOR,
+            "div#buttons_on > ul > li > img[title='Cancel']")
+
+        def fill_data(self, name, description, image_type, template_type):
+            self.fill_field_by_locator(name, *self._name_field_locator)
+            self.fill_field_by_locator(description, *self._description_field_locator)
+            self.select_dropdown(image_type, *self._image_type_dropdown_locator)
+            self.select_dropdown(template_type, *self._type_dropdown_locator)
+            self._wait_for_visible_element(*self._cancel_button_locator)
+
+        def click_on_cancel(self):
+            self.selenium.find_element(*self._cancel_button_locator).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXECancelled(self.testsetup)
+
+
     class PXEAddISODatastore(Base):
         _provider_locator = (By.CSS_SELECTOR, "select#ems_id")
         _add_button_locator = (By.CSS_SELECTOR,
@@ -302,6 +358,8 @@ class Infrastructure(Base):
 
         _add_button_locator = (
                 By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Add']")
+        _cancel_button_locator = (
+                By.CSS_SELECTOR, "div#buttons_on > ul > li > img[title='Cancel']")
         _pxe_name_locator = (By.CSS_SELECTOR, "input#name")
         _pxe_uri_locator = (By.CSS_SELECTOR, "input#uri")
         _pxe_access_url_locator = (By.CSS_SELECTOR, "input#access_url")
@@ -354,4 +412,13 @@ class Infrastructure(Base):
             self.selenium.find_element(*self._add_button_locator).click()
             self._wait_for_results_refresh()
             return Infrastructure.PXEAdded(self.testsetup)
+
+        def click_on_cancel(self):
+            self.selenium.find_element(*self._cancel_button_locator).click()
+            self._wait_for_results_refresh()
+            return Infrastructure.PXECancelled(self.testsetup)
+
+    class PXECancelled(Base):
+
+        pass
 

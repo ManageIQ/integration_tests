@@ -17,14 +17,16 @@ class TestInfrastructurePXETemplate:
         Assert.equal(len(infra_pxe_pg.accordion_region.accordion_items),
                 4, error_text)
 
-        infra_pxe_pg.accordion_region.accordion_by_name(
-                "Customization Templates").click()
-        infra_pxe_pg.accordion_region.current_content.children[0]\
-                .twisty.expand()
-        infra_pxe_pg.accordion_region.current_content.children[0]\
-                .children[2].click()
+        templates_pg = infra_pxe_pg.click_on_customization_templates()
+        rhel_pxe_pg = templates_pg.click_on_examples_rhel_pxe()
+        copy_template_pg = rhel_pxe_pg.click_on_copy_template()
+        template_data = dict(
+          name='test_name',
+          description='test_description',
+          image_type='RHEL-6',
+          template_type='Kickstart')
+        copy_template_pg.fill_data(**template_data)
+        cancel_pg = copy_template_pg.click_on_cancel()
+        flash_message = "Add of new Customization Template was cancelled by the user"
+        Assert.equal(cancel_pg.flash.message, flash_message, cancel_pg.flash.message)
 
-        #This needs to be here. Configuration button is not clickable immediately.
-        # TODO: This needs to be fixed. No sleeps please
-        time.sleep(1)
-        infra_pxe_pg.center_buttons.configuration_button.click()
