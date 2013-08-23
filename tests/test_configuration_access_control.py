@@ -41,6 +41,7 @@ class TestAccessControl:
         _user_id = 'testuser'
         _user_email = 'test@test.com'
         _user_group = 'EvmGroup-administrator'
+        _password = 'password'
 
         Assert.true(cnf_configuration_pg.is_the_current_page)
         new_user_pg = cnf_configuration_pg.click_on_access_control()\
@@ -48,6 +49,8 @@ class TestAccessControl:
         new_user_pg.fill_info(
                 _user_name,
                 _user_id,
+                _password,
+                _password,
                 _user_email,
                 _user_group)
         show_user_pg = new_user_pg.click_on_cancel()

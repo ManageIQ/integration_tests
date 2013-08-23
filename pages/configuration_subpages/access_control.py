@@ -119,10 +119,12 @@ class AccessControl(Base):
         _name_field = (By.CSS_SELECTOR, "input[name='name']")
         _submit_role_button = (By.CSS_SELECTOR, "img[title='Save Changes']")
 
+        @property
+        def name_field(self):
+            return self.selenium.find_element(*self._name_field)
+
         def fill_name(self, name):
-            field = self.selenium.find_element(*self._name_field)
-            field.clear()
-            field.send_keys(name)
+            self.fill_field_element(name, self.name_field)
 
     class ShowRole(Base, TaskbarMixin):
         _edit_role_button = (By.CSS_SELECTOR,
@@ -228,10 +230,12 @@ class AccessControl(Base):
         _role_selector= (By.ID, "group_role")
         _submit_group_button = (By.CSS_SELECTOR, "img[title='Save Changes']")
 
+        @property
+        def description_field(self):
+            return self.selenium.find_element(*self._group_description_field)
+
         def fill_info(self, description, role):
-            field = self.selenium.find_element(*self._group_description_field)
-            field.clear()
-            field.send_keys(description)
+            self.fill_field_element(description, self.description_field)
             return self.select_dropdown(role, *self._role_selector)
 
     class ShowGroup(Base, EditTagsMixin, TaskbarMixin):
@@ -303,19 +307,37 @@ class AccessControl(Base):
         _user_email_field = (By.ID, "email")
         _user_group_selector = (By.ID, "chosen_group")
 
-        def fill_info(self, name, userid, email, group):
+        @property
+        def username_field(self):
+            return self.selenium.find_element(*self._user_name_field)
+
+        @property
+        def userid_field(self):
+            return self.selenium.find_element(*self._user_id_field)
+
+        @property
+        def password_field(self):
+            return self.selenium.find_element(*self._user_password_field)
+
+        @property
+        def password_confirm_field(self):
+            return self.selenium.find_element(*self._user_confirm_password_field)
+
+        @property
+        def email_field(self):
+            return self.selenium.find_element(*self._user_email_field)
+
+        def fill_info(self, name, userid, password, verify, email, group):
             if(name):
-                field = self.selenium.find_element(*self._user_name_field)
-                field.clear()
-                field.send_keys(name)
+                self.fill_field_element(name, self.username_field)
             if(userid):
-                field = self.selenium.find_element(*self._user_id_field)
-                field.clear()
-                field.send_keys(userid)
+                self.fill_field_element(userid, self.userid_field)
+            if(password):
+                self.fill_field_element(password, self.password_field)
+            if(verify):
+                self.fill_field_element(verify, self.password_confirm_field)        
             if(email):
-                field = self.selenium.find_element(*self._user_email_field)
-                field.clear()
-                field.send_keys(email)
+                self.fill_field_element(email, self.email_field)
             if(group):
                 self.select_dropdown(group, *self._user_group_selector)
 
