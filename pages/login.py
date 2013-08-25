@@ -10,7 +10,7 @@ class LoginPage(Base):
     _page_title = "CloudForms Management Engine: Dashboard"
     _login_username_field_locator = (By.CSS_SELECTOR, '#user_name')
     _login_password_field_locator = (By.CSS_SELECTOR, '#user_password')
-    _login_submit_button_locator = (By.CSS_SELECTOR, '#login img')
+    _login_submit_button_locator = (By.ID, 'login')
 
     # Demo locators
     #_page_title = u"Mozilla \u2014 Home of the Mozilla Project \u2014 mozilla.org"
