@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
 from unittestzero import Assert
+from random import choice
 
 class Taggable(Page):
     '''Add this mixin to your page in 3 easy steps:
@@ -31,6 +32,7 @@ class Taggable(Page):
 
     def assign_tags(self, tags):
         '''Assign list of key, value tags'''
+
         for category, value in tags.iteritems():
             self.select_category(category)
             self.select_value(value)
@@ -47,6 +49,48 @@ class Taggable(Page):
         self._wait_for_visible_element(*self._tag_value_selector)
         self.select_dropdown(value, *self._tag_value_selector)
         self._wait_for_results_refresh()
+
+    @property
+    def categories_dropdown(self):
+        ''' New tag category dropdown '''
+        return Select(self.selenium.find_element(*self._tag_category_selector))
+
+    @property
+    def category_values_dropdown(self):
+        ''' Values dropdown for adding a tag '''
+        return Select(self.selenium.find_element(*self._tag_value_selector))
+
+    @property
+    def available_categories(self):
+        ''' Get a list of current available categories that could be assigned '''
+        return [option.text for option in self.categories_dropdown.options]
+
+    def category_values(self, category):
+        ''' Get a list of current available values for a particular category '''
+        self.select_category(category)
+        values = []
+        for option in self.category_values_dropdown.options:
+            if "<Select" not in option.text: 
+                values.append(option.text)
+        return values
+
+    def add_random_tag(self):
+        ''' Add a random tag 
+
+        Returns the category and value text as strings '''
+
+        still_searching = True
+        while still_searching:
+            # For some reason, several options in the dropdown have a "  " that 
+            #    is not seen in the current tags table
+            cat_text = choice(self.available_categories).replace("  ", " ")
+            value_text = choice(self.category_values(cat_text))
+            # multiple runs may assign all the values 
+            #    which would result in a error, pick again if we hit that
+            if "<All values are assigned>" not in value_text:
+                still_searching = False
+        self.assign_tags( { cat_text: value_text } )
+        return cat_text, value_text
 
     @property
     def root(self):
