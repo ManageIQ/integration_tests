@@ -9,11 +9,9 @@ Created on Jun 14, 2013
 # -*- coding: utf-8 -*-
 # pylint: disable=C0103
 # pylint: disable=E1101
-import sys
 import pytest
+from urlparse import urlparse
 from sqlalchemy import create_engine
-from sqlalchemy import MetaData
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import ConfigParser
 
@@ -36,10 +34,13 @@ def pytest_sessionstart(session):
     '''Setup run for tests'''
     import db
     db.cfme_db_url = session.config.option.cfme_db_url
-    if db.cfme_db_url:
-        db.engine = create_engine(db.cfme_db_url)
-    else:
-        print "No cfme_db_url defined"
+    if not db.cfme_db_url:
+        # Let's try to figure it out
+        baseurl = session.config.option.base_url
+        baseip = urlparse(baseurl).hostname
+        db.cfme_db_url = "postgres://root:smartvm@%s:5432/vmdb_production" \
+                % baseip
+    db.engine = create_engine(db.cfme_db_url)
 
 @pytest.fixture
 def db_session():
@@ -47,8 +48,8 @@ def db_session():
 
     Usage example:
 
-    This is a SQLalchemy (http://www.sqlalchemy.org/) session. You can make 
-    queries and create new rows in the database with this session. 
+    This is a SQLalchemy (http://www.sqlalchemy.org/) session. You can make
+    queries and create new rows in the database with this session.
 
     The available classes are dynamically generated from the database. Consult
     db/__init__.py for a list of available class -> table mappings.
@@ -63,7 +64,7 @@ def db_session():
             db.ExtManagementSystem.id):
         print instance.name, instance.hostname
 
-    This 'test' prints the management systems from the database. 
+    This 'test' prints the management systems from the database.
     '''
     import db
     Session = sessionmaker(bind=db.engine)
