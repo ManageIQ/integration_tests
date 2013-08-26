@@ -18,7 +18,8 @@ class PolicyMenu(Page):
     # https://github.com/ManageIQ/cfme/issues/352
     _policy_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Policy']")
     _manage_policies_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title^='Manage Policies for']")
-    _edit_tags_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title^='Edit Tags for']")
+    # dajo - 130826 - opting for img locator, found inconsitent text capitialization on some menus
+    _edit_tags_locator = (By.CSS_SELECTOR, "table.buttons_cont td img[src='/images/toolbars/tag.png']")
 
     @property
     def policy_button(self):
