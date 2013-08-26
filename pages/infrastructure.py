@@ -47,6 +47,13 @@ class Infrastructure(Base):
             from pages.regions.taskbar.taskbar import Taskbar
             return Taskbar(self.testsetup)
 
+        class DatastoreQuadIconItem(QuadiconItem):
+
+            def click(self):
+                self._root_element.click()
+                self._wait_for_results_refresh()
+                return Infrastructure.ClustersDetail(self.testsetup)
+
     class ClustersDetail(Base, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Clusters'
         _cluster_detail_name_locator = (By.XPATH,
@@ -119,6 +126,11 @@ class Infrastructure(Base):
             def host_count(self):
                 return self._root_element.find_element(
                         *self._quad_bl_locator).text
+
+            def click(self):
+                self._root_element.click()
+                self._wait_for_results_refresh()
+                return Infrastructure.DatastoresDetail(self.testsetup)
 
     class DatastoresDetail(Base, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Datastores'

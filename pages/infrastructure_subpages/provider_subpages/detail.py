@@ -69,4 +69,43 @@ class ProvidersDetail(Base):
         from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
         return VirtualMachines(self.testsetup)
 
+    def all_clusters(self):
+        '''Clusters list
 
+        Returns Infrastructure.Clusters pages
+        '''
+        self.details.get_section('Relationships').click_item('Clusters')
+        self._wait_for_results_refresh()
+        from pages.infrastructure import Infrastructure
+        return Infrastructure.Clusters(self.testsetup)
+
+    def all_datastores(self):
+        '''Datastores list
+
+        Returns Infrastructure.Datastores pages
+        '''
+        self.details.get_section('Relationships').click_item('Datastores')
+        self._wait_for_results_refresh()
+        from pages.infrastructure import Infrastructure
+        return Infrastructure.Datastores(self.testsetup)
+
+    def all_hosts(self):
+        '''Hosts list
+
+        Returns Hosts pages
+        '''
+        self.details.get_section('Relationships').click_item('Hosts')
+        self._wait_for_results_refresh()
+        from pages.infrastructure_subpages.hosts import Hosts
+        return Hosts(self.testsetup)
+
+    def all_templates(self):
+        '''Templates list
+
+        Returns Infrastructure.VirtualMachines pages
+        '''
+        self.details.get_section('Relationships').click_item('Templates')
+        self._wait_for_results_refresh()
+        from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
+        return VirtualMachines(self.testsetup)
+        
