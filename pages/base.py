@@ -32,7 +32,28 @@ class Base(Page):
     def current_subpage(self):
         submenu_name = self.selenium.find_element_by_tag_name("body").get_attribute("id")
         return self.submenus[submenu_name](self.testsetup) #IGNORE:E1101
-        
+
+    @property
+    def csrf_token(self):
+        csrf_meta = self.selenium.find_element_by_css_selector("meta[name=csrf-token]")
+        return csrf_meta.get_attribute('content')
+
+    @csrf_token.setter
+    def csrf_token(self, value):
+        # Changing the CSRF Token on the fly via the DOM by iterating
+        # over the meta tags
+        script = '''
+            var elements = document.getElementsByTagName("meta");
+            for (var i=0, element; element = elements[i]; i++) {
+                var ename = element.getAttribute("name");
+                if (ename != null && ename.toLowerCase() == "csrf-token") {
+                    element.setAttribute("content", "%s");
+                    break;
+                }
+            }
+        ''' % value
+        self.selenium.execute_script(script)
+
     def go_to_login_page(self):
         self.selenium.get(self.base_url)
 
