@@ -1,10 +1,10 @@
 '''
-The 'real' module is actually a class, and implements the __getattr__ to 
-intercept attribute calls to generate (and cache) the individual classes. 
+The 'real' module is actually a class, and implements the __getattr__ to
+intercept attribute calls to generate (and cache) the individual classes.
 
 Currently, the table_lookup contains a class -> table mapping. This will soon
-be augmented with a 'generator' that will derive the table name from the class 
-being requested, and if there is no table by that name, it will throw an 
+be augmented with a 'generator' that will derive the table name from the class
+being requested, and if there is no table by that name, it will throw an
 AttributeError.
 
 Created on Jun 19, 2013
@@ -16,7 +16,6 @@ Created on Jun 19, 2013
 # pylint: disable=C0103
 import sys
 from sqlalchemy import MetaData
-from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
 class Db(object):
@@ -35,7 +34,7 @@ class Db(object):
             self.metadata.reflect(bind=self.engine,only=[table_name])
             table = self.metadata.tables[table_name]
             # Now, create the class to represent this thing
-            cls = type(name, (self.Base,), 
+            cls = type(name, (self.Base,),
                     dict(__table__=table, __module__=self.__module__))
             setattr(self, name, cls)
             return cls
@@ -252,7 +251,7 @@ class Db(object):
         'Vm': 'vms',
         'VmdbDatabase': 'vmdb_databases',
         'VmdbDatabaseMetric': 'vmdb_database_metrics',
-        'VmdbIndexe': 'vmdb_indexes',
+        'VmdbIndex': 'vmdb_indexes',
         'VmdbMetric': 'vmdb_metrics',
         'VmdbTable': 'vmdb_tables',
         'Volume': 'volumes',
