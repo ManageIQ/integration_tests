@@ -4,8 +4,9 @@
 from pages.base import Base
 from pages.regions.paginator import PaginatorMixin
 from selenium.common.exceptions import NoSuchElementException
+from pages.regions.policy_menu import PolicyMenu
 
-class VmCommonComponents(Base, PaginatorMixin):
+class VmCommonComponents(Base, PolicyMenu, PaginatorMixin):
 
     _page_title = 'CloudForms Management Engine: Virtual Machines'
 
