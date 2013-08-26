@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 
 from pages.page import Page
 from pages.regions.quadiconitem import QuadiconItem
+from random import choice
 
 
 class Quadicons(Page):
@@ -39,8 +40,8 @@ class Quadicons(Page):
         return [self.item_class(self.testsetup, quadicon_list_item)
                 for quadicon_list_item in self.quadicons if quadicon_list_item.is_selected]
 
-    def mark_icon_checkbox(self, vm_names):
-        for name in vm_names:
+    def mark_icon_checkbox(self, names):
+        for name in names:
             tile = self.get_quadicon_by_title(name)
             tile.mark_checkbox()
 
@@ -58,3 +59,18 @@ class Quadicons(Page):
                 break
         return found
 
+    def mark_random_quadicon_checkbox(self):
+        ''' Picks a random quadicon and marks it's mark_checkbox
+
+        Returns quadicon's title as a String
+        '''
+        random_icon = choice(self.quadicons)
+        random_icon.mark_checkbox()
+        return random_icon.title
+
+    def click_random_quadicon(self):
+        ''' Click on a random quadicon
+
+        Returns object from subclass'd item's click()
+        '''
+        return choice(self.quadicons).click()
