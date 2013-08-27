@@ -34,12 +34,14 @@ class Configuration(Base):
         @property
         def tabbutton_region(self):
             from pages.regions.tabbuttons import TabButtons
-            return TabButtons(self.testsetup, locator_override = (By.CSS_SELECTOR, "div#ops_tabs > ul > li"))
+            return TabButtons(self.testsetup, locator_override = \
+                    (By.CSS_SELECTOR, "div#ops_tabs > ul > li"))
 
         @property
         def accordion(self):
             from pages.regions.accordion import Accordion
-            return Accordion(self.testsetup)
+            from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
+            return Accordion(self.testsetup, LegacyTreeAccordionItem)
 
         @property
         def automation_engine_checkbox(self):
@@ -67,6 +69,15 @@ class Configuration(Base):
                 save_button.click()
             self._wait_for_results_refresh()
             return Settings(self.testsetup)
+
+        def click_on_redhat_updates(self):
+            from pages.configuration_subpages.settings_subpages.\
+                    region_subpages.redhat_updates import RedhatUpdates
+            self.accordion.current_content.click()
+            self._wait_for_results_refresh()
+            self.tabbutton_region.tabbutton_by_name("Red Hat Updates").click()
+            self._wait_for_results_refresh()
+            return RedhatUpdates(self.testsetup)
 
     class MySettings(Base):
         _page_title = "CloudForms Management Engine: Configuration"
