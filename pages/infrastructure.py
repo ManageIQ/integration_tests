@@ -335,9 +335,6 @@ class Infrastructure(Base):
                     *self._template_description_locator).send_keys(description)
             # image type
             self.select_dropdown(image_type, *self._image_type_locator)
-            # script
-            self.selenium.find_element(
-                    *self._template_script_locator).send_keys(script)
 
         def click_on_add(self):
             self.selenium.find_element(*self._add_button_locator).click()
