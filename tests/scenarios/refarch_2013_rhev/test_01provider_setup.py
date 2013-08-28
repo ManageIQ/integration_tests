@@ -20,6 +20,16 @@ FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 def test_add_host_credentials(infra_hosts_pg, host):
     '''Add host credentials
     '''
+    # wait for host quadicon to show up
+    sleep_time = 1
+    while not infra_hosts_pg.quadicon_region.does_quadicon_exist(
+            host['name']):
+        infra_hosts_pg.selenium.refresh()
+        time.sleep(sleep_time)
+        sleep_time *= 2
+        if sleep_time > 90:
+            raise Exception(
+                    'timeout reached for host icon to show up')
     hosts_pg = infra_hosts_pg.edit_host_and_save(host)
     Assert.contains(hosts_pg.flash.message,
         'Host "%s" was saved' % host['name'],
