@@ -45,8 +45,8 @@ class Optimize(Base):
         @property
         def accordion(self):
             from pages.regions.accordion import Accordion
-            from pages.regions.treeaccordionitem import TreeAccordionItem
-            return Accordion(self.testsetup, TreeAccordionItem)
+            from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
+            return Accordion(self.testsetup, LegacyTreeAccordionItem)
 
         def click_on_node(self, node_name):
             node_pg = self.accordion.accordion_by_name("Utilization").click()
