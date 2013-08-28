@@ -60,7 +60,7 @@ def svc_catalogs_pg(home_page_logged_in):
 @pytest.fixture
 def cloud_providers_pg(home_page_logged_in):
     '''Navigate to Cloud -> Providers page and return it'''
-    return _submenu(home_page_logged_in, 'Cloud', 'Providers')
+    return _submenu(home_page_logged_in, 'Clouds', 'Providers')
 
 @pytest.fixture
 def infra_providers_pg(home_page_logged_in):
@@ -123,11 +123,11 @@ def optimize_utilization_pg(home_page_logged_in):
     return _submenu(home_page_logged_in, 'Optimize', 'Utilization')
 
 @pytest.fixture
-def vi_chargeback_pg(home_page_logged_in):
-    '''Navigate to Virtual Intelligence -> Chargeback page and return it'''
-    return _submenu(home_page_logged_in, 'Virtual Intelligence', 'Chargeback')
+def intel_chargeback_pg(home_page_logged_in):
+    '''Navigate to Cloud Intelligence -> Chargeback page and return it'''
+    return _submenu(home_page_logged_in, 'Cloud Intelligence', 'Chargeback')
 
 @pytest.fixture
-def vi_reports_pg(home_page_logged_in):
-    '''Navigate to Virtual Intelligence -> Reports page and return it'''
-    return _submenu(home_page_logged_in, 'Virtual Intelligence', 'Reports')
+def intel_reports_pg(home_page_logged_in):
+    '''Navigate to Cloud Intelligence -> Reports page and return it'''
+    return _submenu(home_page_logged_in, 'Cloud Intelligence', 'Reports')

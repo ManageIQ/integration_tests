@@ -34,8 +34,9 @@ class HeaderMenu(Page):
 
     _menu_items_locator = (By.CSS_SELECTOR, 'ul > li')
     _name_locator = (By.CSS_SELECTOR, 'a')
-    _item_page = {"Virtual Intelligence": VirtualIntelligence,
+    _item_page = {"Cloud Intelligence": VirtualIntelligence,
                   "Services": Services,
+                  "Clouds": Services,
                   "Infrastructure": Infrastructure,
                   "Control": Control,
                   "Automate": Automate,
@@ -95,7 +96,7 @@ class HeaderMenu(Page):
         # The first level of the dictionary is the top-level menu item.
         # The second level is the sub page
         _item_page = {
-            "Virtual Intelligence": {
+            "Cloud Intelligence": {
                 #"Dashboard":
                 "Reports": VirtualIntelligence.Reports,
                 #"Usage":
@@ -109,7 +110,7 @@ class HeaderMenu(Page):
                 #"Requests":
                 #"Workloads":
             },
-            "Cloud": {
+            "Clouds": {
                 "Providers": CloudProviders,
                 #"Availability Zones": AvailabilityZones,
                 #"Flavors": Flavors,
