@@ -44,19 +44,15 @@ class ServiceCatalogs(Base):
     def select_catalog_item(self, catalog_item_name):
         '''Select catalog Item'''
         number_of_templates = len(OrderService(self).order_catalog_list.items)
-        print number_of_templates
         catalog_item = None
         '''First item in list is empty so skipped'''
         for item in OrderService(self).order_catalog_list.items[1:]:
             if item.name == catalog_item_name:
-                catalog_item = item
-                print "abcd"
-                catalog_item.click()
+                item.click()
         self._wait_for_results_refresh()
         self.selenium.find_element(*self._order_button).click()
         self._wait_for_results_refresh()
         self.selenium.find_element(*self._submit_button).click()
         self._wait_for_results_refresh()
-        print "abcdefhgh"
         from pages.services import Services
         return Services.Requests(self.testsetup)    

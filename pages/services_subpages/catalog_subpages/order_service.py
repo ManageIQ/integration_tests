@@ -22,22 +22,20 @@ class OrderService(Base):
           
     class OrderListItem(ListItem):
         '''Order Item table'''
-        _columns = ["name", "description", "cost"]
+        _columns = ["icon", "name", "description"]
         
+        def click(self):
+            ''' Click '''
+            self._item_data[1].click()
+
+
         @property
         def name(self):
             '''Name'''
-            print  len(self._item_data)
             return self._item_data[2].text
 
         @property
         def description(self):
             '''Desc'''
             return self._item_data[3].text
-
-        @property
-        def cost(self):
-            '''Cost'''
-            return self._item_data[4].text
-
     

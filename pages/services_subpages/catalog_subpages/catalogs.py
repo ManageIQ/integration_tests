@@ -90,17 +90,16 @@ class Catalogs(Base):
         self._wait_for_results_refresh()
         return Catalogs(self.testsetup)
     
-    def click_on_catalog(self, _catalog_name):
+    def click_on_catalog(self, catalog_name):
         '''Click on catalog to edit or delete'''
-        self.accordion.current_content.find_node_by_name(_catalog_name).click()
+        self.accordion.current_content.find_node_by_name(catalog_name).click()
         self._wait_for_results_refresh()
         return Catalogs(self.testsetup)
          
-    def fill_basic_info_tab(self, name):
+    def fill_basic_info_tab(self, name, descr):
         '''Fill catalog create form'''
         self.selenium.find_element(*self._name_field).send_keys(name)
-        self.selenium.find_element(*self._desc_field).send_keys(
-                    "desc_"+self.random_string())
+        self.selenium.find_element(*self._desc_field).send_keys(descr)
         self._wait_for_visible_element(*self._add_button)
         self.selenium.find_element(*self._add_button).click()
         self._wait_for_results_refresh()

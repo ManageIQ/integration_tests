@@ -109,7 +109,6 @@ class CatalogItems(Base):
         _display_checkbox = (By.CSS_SELECTOR, "input[name='display']")
         _select_catalog = (By.CSS_SELECTOR, "select#catalog_id")
         _select_dialog = (By.CSS_SELECTOR, "select#dialog_id")
-        _cost_field = (By.CSS_SELECTOR, "input[name='provision_cost']")
          
         @property
         def tabbutton_region(self):
@@ -138,7 +137,7 @@ class CatalogItems(Base):
             self._wait_for_results_refresh()
             return CatalogItems.NewCatalogItem(self.testsetup)
          
-        def fill_basic_info(self, name, desc, catalog, dialog, cost):
+        def fill_basic_info(self, name, desc, catalog, dialog):
             '''Fill basic info form'''
             self.selenium.find_element(*self._display_checkbox).click()
             time.sleep(2)
@@ -149,16 +148,14 @@ class CatalogItems(Base):
             self._wait_for_results_refresh()
             self.select_dropdown(dialog, *self._select_dialog)
             self._wait_for_results_refresh()
-            self.selenium.find_element(*self._cost_field).send_keys(cost)
             
         def fill_catalog_tab(self, template_name, _vm_name):
             '''Provisioning form - catalog tab'''
             catalog_item = None
             for item in ProvisionCatalog(self).catalog_list.items:
                 if item.name == template_name:
-                    catalog_item = item
-                    print item.name
-            catalog_item.click()
+                    item.click()
+                    break
             self._wait_for_results_refresh()
             ProvisionCatalog(self).vm_name.send_keys(_vm_name)
             return CatalogItems.NewCatalogItem(self.testsetup)
@@ -178,8 +175,6 @@ class CatalogItems(Base):
             self.select_dropdown("Default for Cluster test_cluster",
                  *self._resource_pool_select_locator)
             self._wait_for_results_refresh()
-            print host_name
-            print datastore_name
             self.fill_fields(host_name, datastore_name)
             self._wait_for_results_refresh()
             self.selenium.find_element(*self._add_button_locator).click()
@@ -194,7 +189,6 @@ class CatalogItems(Base):
         _bundledisplay_checkbox = (By.CSS_SELECTOR, "input[name='display']")
         _bundle_select_catalog = (By.CSS_SELECTOR, "select#catalog_id")
         _bundle_select_dialog = (By.CSS_SELECTOR, "select#dialog_id")
-        _bundle_cost_field = (By.CSS_SELECTOR, "input[name='provision_cost']")
         _resource_locator = (By.CSS_SELECTOR, "select#resource_id")
         _add_button = (By.CSS_SELECTOR,
                 "div#buttons_on > ul#form_buttons > li > img[alt='Add']")
@@ -208,17 +202,19 @@ class CatalogItems(Base):
             return TabButtons(self.testsetup, locator_override = (
                     By.CSS_SELECTOR, "div#st_form_tabs > ul > li"))
          
-        def fill_bundle_basic_info(self, name, desc, catalog, dialog, cost):
+        def fill_bundle_basic_info(self, name, desc, catalog, dialog):
             '''Fill bundle basic info page'''
             self.selenium.find_element(*self._bundledisplay_checkbox).click()
             self._wait_for_results_refresh()
+            # beware of js voodoo, make sure the form is updates after the 
+            #   checkbox is marked
+            self._wait_for_visible_element(*self._bundle_select_catalog)
             self.selenium.find_element(*self._bundlename_field).send_keys(name)
             self.selenium.find_element(*self._bundledesc_field).send_keys(desc)
             self.select_dropdown(catalog, *self._bundle_select_catalog)
             self._wait_for_results_refresh()
             self.select_dropdown(dialog, *self._bundle_select_dialog)
             self._wait_for_results_refresh()
-            self.selenium.find_element(*self._bundle_cost_field).send_keys(cost)
             
         def click_on_resources_tab(self):
             '''Click on resources tab'''
