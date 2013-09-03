@@ -7,9 +7,9 @@ class TestChargeback:
     _compute_chargeback_list = []
     _storage_chargeback_list = []
 
-    def test_add_new_compute_chargeback(self, vi_chargeback_pg, random_string):
+    def test_add_new_compute_chargeback(self, intel_chargeback_pg, random_string):
         #Add a new Compute Chargeback
-        rates_pg = vi_chargeback_pg.click_on_rates()
+        rates_pg = intel_chargeback_pg.click_on_rates()
         compute_pg = rates_pg.click_on_compute()
         add_compute_chargeback_pg = compute_pg\
                 .click_on_add_new_chargeback_rate()
@@ -59,10 +59,10 @@ class TestChargeback:
         #cancel_add_compute_chargeback = add_compute_chargeback_pg.click_on_cancel()
 
 
-    def test_add_new_storage_chargeback(self, vi_chargeback_pg, random_string):
+    def test_add_new_storage_chargeback(self, intel_chargeback_pg, random_string):
         #Add a new Storage Chargeback
-        Assert.true(vi_chargeback_pg.is_the_current_page)
-        rates_pg = vi_chargeback_pg.click_on_rates()
+        Assert.true(intel_chargeback_pg.is_the_current_page)
+        rates_pg = intel_chargeback_pg.click_on_rates()
         storage_pg = rates_pg.click_on_storage()
         add_storage_chargeback_pg = storage_pg\
                 .click_on_add_new_chargeback_rate()
@@ -96,10 +96,10 @@ class TestChargeback:
         #cancel_add_storage_chargeback = add_storage_chargeback_pg\
         #       .click_on_cancel()
 
-    def test_edit_compute_chargeback(self, vi_chargeback_pg, random_string):
+    def test_edit_compute_chargeback(self, intel_chargeback_pg, random_string):
         #Edit Compute Chargeback
-        Assert.true(vi_chargeback_pg.is_the_current_page)
-        rates_pg = vi_chargeback_pg.click_on_rates()
+        Assert.true(intel_chargeback_pg.is_the_current_page)
+        rates_pg = intel_chargeback_pg.click_on_rates()
         compute_pg = rates_pg.click_on_compute()
         existing_chargeback = self._compute_chargeback_list[0]
         new_description = random_string
@@ -136,10 +136,10 @@ class TestChargeback:
         #cancel_changed = edit_selected_chargeback_pg.click_on_cancel()
         #reset_selected_chargeback = edit_selected_chargeback_pg.click_on_reset()
 
-    def test_edit_storage_chargeback(self, vi_chargeback_pg, random_string):
+    def test_edit_storage_chargeback(self, intel_chargeback_pg, random_string):
         #Edit Storage Chargeback
-        Assert.true(vi_chargeback_pg.is_the_current_page)
-        rates_pg = vi_chargeback_pg.click_on_rates()
+        Assert.true(intel_chargeback_pg.is_the_current_page)
+        rates_pg = intel_chargeback_pg.click_on_rates()
         storage_pg = rates_pg.click_on_storage()
         existing_chargeback = self._storage_chargeback_list[0]
         new_description = random_string
@@ -177,10 +177,10 @@ class TestChargeback:
         #cancel_changed = edit_selected_chargeback_pg.click_on_cancel()
         #reset_selected_chargeback = edit_selected_chargeback_pg.click_on_reset()
 
-    def test_delete_compute_chargeback(self, vi_chargeback_pg):
+    def test_delete_compute_chargeback(self, intel_chargeback_pg):
         #Delete Compute Chargeback
-        Assert.true(vi_chargeback_pg.is_the_current_page)
-        rates_pg = vi_chargeback_pg.click_on_rates()
+        Assert.true(intel_chargeback_pg.is_the_current_page)
+        rates_pg = intel_chargeback_pg.click_on_rates()
         compute_pg = rates_pg.click_on_compute()
         while len(self._compute_chargeback_list) > 0:
             existing_chargeback = self._compute_chargeback_list[
@@ -192,10 +192,10 @@ class TestChargeback:
                     'The selected Chargeback Rate was deleted'))
             self._compute_chargeback_list.pop()
 
-    def test_delete_storage_chargeback(self, vi_chargeback_pg):
+    def test_delete_storage_chargeback(self, intel_chargeback_pg):
         #Delete Storage Chargeback
-        Assert.true(vi_chargeback_pg.is_the_current_page)
-        rates_pg = vi_chargeback_pg.click_on_rates()
+        Assert.true(intel_chargeback_pg.is_the_current_page)
+        rates_pg = intel_chargeback_pg.click_on_rates()
         storage_pg = rates_pg.click_on_storage()
         while len(self._storage_chargeback_list) > 0:
             existing_chargeback = self._storage_chargeback_list[
