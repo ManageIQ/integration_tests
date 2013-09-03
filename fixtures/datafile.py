@@ -51,7 +51,25 @@ def datafile(request):
     """
     return FixtureDataFile(request)
 
+
+def pytest_addoption(parser):
+    group = parser.getgroup('cfme', 'cfme')
+    group._addoption('--udf-report', action='store_true', default=False,
+        dest='udf_report',
+        help='flag to generate an unused data files report')
+
+
 def pytest_sessionfinish(session, exitstatus):
+    udf_log_file = session.fspath.join('unused_data_files.log')
+
+    if udf_log_file.check():
+        # Clean up old udf log if it exists
+        udf_log_file.remove()
+
+    if session.config.option.udf_report is False:
+        # Short out here if not making a report
+        return
+
     # Output an unused data files log after a test run
     data_path = os.path.join(str(session.fspath), 'data/')
     data_files = set()
@@ -61,8 +79,6 @@ def pytest_sessionfinish(session, exitstatus):
             data_files.add(filepath)
     unused_data_files = data_files - seen_data_files
 
-    udf_log_file_name = 'unused_data_files.log'
-    udf_log_file = session.fspath.join(udf_log_file_name)
     if unused_data_files:
         # Write the log of unused data files out, minus the data dir prefix
         udf_log = ''.join(
@@ -76,13 +92,9 @@ def pytest_sessionfinish(session, exitstatus):
         reporter.write_sep(
             '-',
             '%d unused data files after test run, check %s' % (
-                len(unused_data_files), udf_log_file_name
+                len(unused_data_files), udf_log_file.basename
             )
         )
-    elif udf_log_file.check():
-        # Clean up old udf log if it exists
-        udf_log_file.remove()
-
 
 class FixtureDataFile(object):
     def __init__(self, request):
