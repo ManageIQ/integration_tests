@@ -11,8 +11,8 @@ class RedhatUpdates(Base):
     _save_button_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
     _cancel_button_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
 
-    _cfme_version_locator = (By.CSS_SELECTOR, "div#form_div > table > tbody \
-            > tr:nth-of-type(2) > td:nth-of-type(6)")
+    _all_appliances_locator = (By.CSS_SELECTOR, "div#form_div > table > tbody \
+            > tr:nth-of-type(2)")
     _appliance_checkbox_locator = (By.CSS_SELECTOR, "input#listcheckbox")
     _apply_cfme_updates_button = (By.CSS_SELECTOR, "button#rhn_update_button_on_1")
 
@@ -57,16 +57,78 @@ class RedhatUpdates(Base):
         self._wait_for_results_refresh()
         return RedhatUpdates.Cancelled(self.testsetup)
 
-    def compare_versions(self, version_from_cfme_data):
-        version_from_page = self.selenium.find_element(*self._cfme_version_locator).text
-        #here we can use compare version function from rpm package
-        return version_from_page == version_from_cfme_data
+    @property
+    def appliance_list(self):
+        return [RedhatUpdates.ApplianceItem(self.testsetup, appliance)
+                for appliance in self.selenium.find_elements(
+                        *self._all_appliances_locator)]
 
-    def apply_updates(self):
-        self.selenium.find_element(*self._appliance_checkbox_locator).click()
+    @property
+    def is_registered(self):
+        if self.appliance_list:
+            return True
+        return False
+
+    def are_old_versions_before_update(self, old_versions):
+        for appliance in self.appliance_list:
+            for appliance_from_cfme_data in old_versions:
+                if appliance.name == appliance_from_cfme_data['name']:
+                    if appliance.version != appliance_from_cfme_data['version']:
+                        return False
+        return True
+
+    def is_current_version_after_update(self, current_version):
+        for appliance in self.appliance_list:
+            if appliance.version != current_version:
+                return False
+        return True
+
+    def apply_updates(self, appliances_to_update):
+        for appliance in self.appliance_list:
+            for appliance_to_update in appliances_to_update:
+                if appliance.name == appliance_to_update:
+                    appliance.checkbox.click()
         self._wait_for_visible_element(*self._apply_cfme_updates_button)
         self.selenium.find_element(*self._apply_cfme_updates_button).click()
         self._wait_for_results_refresh()
+
+    class ApplianceItem(Base):
+        _checkbox_locator = (By.CSS_SELECTOR, "td:nth-of-type(1) > input")
+        _name_locator = (By.CSS_SELECTOR, "td:nth-of-type(2)")
+        _zone_locator = (By.CSS_SELECTOR, "td:nth-of-type(3)")
+        _status_locator = (By.CSS_SELECTOR, "td:nth-of-type(4)")
+        _last_checked_locator = (By.CSS_SELECTOR, "td:nth-of-type(5)")
+        _version_locator = (By.CSS_SELECTOR, "td:nth-of-type(6)")
+        _updates_available_locator = (By.CSS_SELECTOR, "td:nth-of-type(7)")
+
+        @property
+        def checkbox(self):
+            return self._root_element.find_element(*self._checkbox_locator)
+
+        @property
+        def name(self):
+            return self._root_element.find_element(*self._name_locator).text
+
+        @property
+        def zone(self):
+            return self._root_element.find_element(*self._zone_locator).text
+
+        @property
+        def status(self):
+            return self._root_element.find_element(*self._status_locator).text
+
+        @property
+        def last_checked(self):
+            return self._root_element.find_element(*self._last_checked_locator).text
+
+        @property
+        def version(self):
+            return self._root_element.find_element(*self._version_locator).text
+
+        @property
+        def updates_available(self):
+            return self._root_element.find_element(*self._updates_available_locator).text \
+                    == "Yes"
 
     class Registered(Base):
         pass
