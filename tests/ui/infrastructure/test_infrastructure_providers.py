@@ -143,6 +143,24 @@ class TestInfrastructureProviders:
                  % provider_data['name'],
                 FLASH_MESSAGE_NOT_MATCHED)
 
+    @pytest.mark.xfail(reason='https://bugzilla.redhat.com/show_bug.cgi?id=1003060')
+    @pytest.mark.usefixtures('has_no_providers')
+    def test_providers_add_but_set_type_last(
+            self, infra_providers_pg, provider_data, soap_client):
+        # Just let server_zone be default
+        del(provider_data['server_zone'])
+
+        prov_add_pg = infra_providers_pg.click_on_add_new_provider()
+        prov_add_pg._fill_provider(provider_data)
+        prov_add_pg.select_provider_type("VMware vCenter")
+        prov_pg = prov_add_pg.click_on_add()
+        errmsg = FLASH_MESSAGE_NOT_MATCHED + ''' Flash message received:
+        %s''' % prov_pg.flash.message
+
+        Assert.equal(prov_pg.flash.message,
+                'Infrastructure Providers "%s" was saved' \
+                 % provider_data['name'], errmsg)
+
     @pytest.mark.usefixtures('has_no_providers')
     def test_provider_add_with_bad_credentials(
             self, infra_providers_pg, provider_data):
