@@ -6,10 +6,10 @@ from unittestzero import Assert
 @pytest.mark.usefixtures("maximized")
 class TestChargeback():
 
-    def test_chargeback(self, vi_chargeback_pg):
+    def test_chargeback(self, intel_chargeback_pg):
         #Add a new Compute Chargeback
-        Assert.true(vi_chargeback_pg.is_the_current_page)
-        rates_pg = vi_chargeback_pg.click_on_rates()
+        Assert.true(intel_chargeback_pg.is_the_current_page)
+        rates_pg = intel_chargeback_pg.click_on_rates()
         compute_pg = rates_pg.click_on_compute()
         add_compute_chargeback_pg = compute_pg\
                 .click_on_add_new_chargeback_rate()
