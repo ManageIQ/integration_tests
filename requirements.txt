@@ -13,6 +13,6 @@ scp
 suds
 boto
 pysphere
-ovirt-engine-sdk
+ovirt-engine-sdk-python
 sqlalchemy
 psycopg2
