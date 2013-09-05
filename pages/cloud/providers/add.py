@@ -103,7 +103,7 @@ class Add(AddFormCommon):
             self.select_provider_type("Amazon EC2")
             self.select_amazon_region()
         elif "openstack" in provider["type"]:
-            self.select_provider_type("Openstack")
+            self.select_provider_type("OpenStack")
         self._fill_provider(provider)
         self._wait_for_visible_element(
                 *self._provider_credentials_verify_button_locator)
