@@ -6,6 +6,7 @@ from pages.regions.taskbar.taskbar import TaskbarMixin
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
 import re
+import time
 
 
 class Hosts(Base, PolicyMenu, TaskbarMixin):
@@ -52,6 +53,24 @@ class Hosts(Base, PolicyMenu, TaskbarMixin):
         edit_host_pg = self.click_host(host['name']).click_on_edit_host()
         edit_host_pg.edit_host(host)
         return edit_host_pg.click_on_cancel()
+
+    def wait_for_host_or_timeout(self, host_name, timeout=120):
+        '''Wait for a host to become available or timeout trying'''
+        max_time = timeout
+        wait_time = 1
+        total_time = 0
+        host = None
+        while total_time <= max_time and host is None:
+            try:
+                self.selenium.refresh()
+                host = self.quadicon_region.get_quadicon_by_title(
+                        host_name)
+            except:
+                total_time += wait_time
+                time.sleep(wait_time)
+                wait_time *= 2
+        if total_time > max_time:
+            raise Exception("Could not find host in time")
 
     @property
     def taskbar(self):
