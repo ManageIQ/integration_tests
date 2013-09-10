@@ -8,8 +8,8 @@ import pytest
 from unittestzero import Assert
 
 
-@pytest.fixture(scope="module",  # IGNORE:E1101
-                params=["rhevm31"])
+@pytest.fixture(scope="module",
+                params=["rhevm32"])
 def infra_provider(request, cfme_data):
     '''Return the data for a particular provider'''
     param = request.param
@@ -17,7 +17,7 @@ def infra_provider(request, cfme_data):
 
 
 @pytest.mark.usefixtures("maximized", "setup_infrastructure_providers")
-@pytest.mark.nondestructive  # IGNORE:E1101
+@pytest.mark.nondestructive
 class TestPolicy:
     def test_policy_assignment(self, infra_providers_pg, infra_provider):
         '''
