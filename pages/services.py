@@ -94,7 +94,9 @@ class Services(Base):
             self.get_element(*self._reload_button).click()
             self._wait_for_results_refresh()
 
-            if self.requests_list.items[item_number].approval_state is not None:
+            if len(self.requests_list.items) > 0 and \
+                    self.requests_list.items[item_number]\
+                    .approval_state is not None:
                 self.requests_list.items[
                     item_number].approval_state\
                     .find_element_by_tag_name('img').click()
