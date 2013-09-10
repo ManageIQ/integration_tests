@@ -13,7 +13,7 @@ CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 DETAIL_NOT_MATCHED_TEMPLATE = '%s did not match'
 
-@pytest.fixture(params=['vsphere5', 'rhevm31'])  # IGNORE:E1101
+@pytest.fixture(params=['vsphere5', 'rhevm32'])
 def provider_data(request, cfme_data):
     '''Returns management system data from cfme_data'''
     param = request.param
@@ -56,9 +56,9 @@ def has_no_providers(db_session):
     session.query(db.ExtManagementSystem).delete()
     session.commit()
 
-@pytest.mark.usefixtures('maximized')  # IGNORE:E1101
+@pytest.mark.usefixtures('maximized')
 class TestInfrastructureProviders:
-    @pytest.mark.nondestructive  # IGNORE:E1101
+    @pytest.mark.nondestructive
     def test_that_checks_flash_with_no_provider_types_checked(self,
             infra_providers_pg):
         '''Tests that the flash message is correct when no management systems
@@ -72,7 +72,7 @@ class TestInfrastructureProviders:
                 'At least 1 item must be selected for discovery',
                 FLASH_MESSAGE_NOT_MATCHED)
 
-    @pytest.mark.nondestructive  # IGNORE:E1101
+    @pytest.mark.nondestructive
     def test_that_checks_flash_when_discovery_cancelled(self,
             infra_providers_pg):
         '''Tests that the flash message is correct when discovery is cancelled
