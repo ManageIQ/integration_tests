@@ -20,7 +20,7 @@ FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 def test_add_host_credentials(infra_hosts_pg, host):
     '''Add host credentials
     '''
-    infra_hosts_pg.wait_for_host_or_timeout(host['name'])
+    infra_hosts_pg.wait_for_host_or_timeout(host['name'], 180)
     hosts_pg = infra_hosts_pg.edit_host_and_save(host)
     Assert.contains(hosts_pg.flash.message,
         'Host "%s" was saved' % host['name'],
