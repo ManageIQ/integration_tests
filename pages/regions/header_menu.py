@@ -19,7 +19,7 @@ from pages.infrastructure_subpages.hosts import Hosts
 from pages.cloud.providers import CloudProviders
 #from pages.cloud.availability_zones import AvailabilityZones
 #from pages.cloud.flavors import Flavors
-#from pages.cloud.instances import Instances
+from pages.cloud.instances import Instances
 
 class HeaderMenu(Page):
     """
@@ -114,7 +114,7 @@ class HeaderMenu(Page):
                 "Providers": CloudProviders,
                 #"Availability Zones": AvailabilityZones,
                 #"Flavors": Flavors,
-                #"Instances": Instances,
+                "Instances": Instances,
             },
             "Infrastructure": {
                 "Providers" : Providers,

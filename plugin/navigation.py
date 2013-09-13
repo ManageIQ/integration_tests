@@ -63,6 +63,11 @@ def cloud_providers_pg(home_page_logged_in):
     return _submenu(home_page_logged_in, 'Clouds', 'Providers')
 
 @pytest.fixture
+def cloud_instances_pg(home_page_logged_in):
+    '''Navigate to Cloud -> Instances page and return it'''
+    return _submenu(home_page_logged_in, 'Clouds', 'Instances')
+
+@pytest.fixture
 def infra_providers_pg(home_page_logged_in):
     '''Navigate to Infrastructure -> Providers page and return it'''
     return _submenu(home_page_logged_in, 'Infrastructure', 'Providers')
