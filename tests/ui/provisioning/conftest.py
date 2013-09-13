@@ -28,6 +28,13 @@ def provisioning_data_basic_only(request, cfme_data):
     param = request.param
     return cfme_data.data["provisioning"][param]
 
+@pytest.fixture(scope="module", # IGNORE:E1101
+               params=["vmware_linux_workflow"])
+def vmware_linux_setup_data(request, cfme_data):
+    ''' Returns data for first VM for clone/retire tests'''
+    param = request.param
+    return cfme_data.data["clone_retire_setup"][param]
+
 @pytest.fixture
 def enables_automation_engine(cnf_configuration_pg):
     '''Enables Automate Engine in Configure'''
