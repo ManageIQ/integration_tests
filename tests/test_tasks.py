@@ -8,6 +8,7 @@ import pytest
 from unittestzero import Assert
 
 @pytest.mark.nondestructive
+@pytest.mark.usefixtures("maximized")
 class TestTasks:
 
     def test_my_analysis_tab(self, cnf_tasks_pg):
