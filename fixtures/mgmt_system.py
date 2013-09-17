@@ -62,17 +62,17 @@ def setup_infrastructure_providers(infra_providers_pg, cfme_data):
                 prov_added = True
 
                 # wait for the quadicon to show up
-                sleep_time = 1
+                sleep_time = 0
                 infra_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
                 Assert.true(infra_providers_pg.taskbar_region.view_buttons.is_grid_view)
                 while not infra_providers_pg.quadicon_region.does_quadicon_exist(
                         prov_data['name']):
-                    infra_providers_pg.selenium.refresh()
-                    time.sleep(sleep_time)
-                    sleep_time *= 2
-                    if sleep_time > 90:
+                    if sleep_time > 300:
                         raise Exception(
                                 'timeout reached for provider icon to show up')
+                    infra_providers_pg.selenium.refresh()
+                    time.sleep(10)
+                    sleep_time += 10
 
             # Are the credentials valid?
             infra_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
@@ -81,17 +81,17 @@ def setup_infrastructure_providers(infra_providers_pg, cfme_data):
                     prov_data['name'])
             valid_creds = prov_quadicon.valid_credentials
             if prov_added and not valid_creds:
-                sleep_time = 1
+                sleep_time = 0
                 while not valid_creds:
+                    if sleep_time > 300:
+                        raise Exception(
+                                'timeout reached for valid provider credentials')
                     infra_providers_pg.selenium.refresh()
-                    time.sleep(sleep_time)
                     prov_quadicon = infra_providers_pg.quadicon_region.get_quadicon_by_title(
                             prov_data['name'])
                     valid_creds = prov_quadicon.valid_credentials
-                    sleep_time *= 2
-                    if sleep_time > 90:
-                        raise Exception(
-                                'timeout reached for valid provider credentials')
+                    time.sleep(10)
+                    sleep_time += 10
             elif not prov_quadicon.valid_credentials:
                 # update them
                 infra_providers_pg.select_provider(prov_data['name'])
@@ -139,7 +139,7 @@ def setup_cloud_providers(cloud_providers_pg, cfme_data):
                 # add it
                 add_pg = cloud_providers_pg.click_on_add_new_provider()
                 add_pg.add_provider(prov_data)
-                
+
                 Assert.equal(cloud_providers_pg.flash.message,
                         'Cloud Providers "%s" was saved'
                                 % prov_data['name'],
@@ -147,17 +147,17 @@ def setup_cloud_providers(cloud_providers_pg, cfme_data):
                 prov_added = True
 
                 # wait for the quadicon to show up
-                sleep_time = 1
+                sleep_time = 0
                 cloud_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
                 Assert.true(cloud_providers_pg.taskbar_region.view_buttons.is_grid_view)
                 while not cloud_providers_pg.quadicon_region.does_quadicon_exist(
                         prov_data['name']):
-                    cloud_providers_pg.selenium.refresh()
-                    time.sleep(sleep_time)
-                    sleep_time *= 2
-                    if sleep_time > 90:
+                    if sleep_time > 300:
                         raise Exception(
                                 'timeout reached for provider icon to show up')
+                    cloud_providers_pg.selenium.refresh()
+                    sleep_time += 10
+                    time.sleep(10)
 
             # Are the credentials valid?
             cloud_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
@@ -166,17 +166,17 @@ def setup_cloud_providers(cloud_providers_pg, cfme_data):
                     prov_data['name'])
             valid_creds = prov_quadicon.valid_credentials
             if prov_added and not valid_creds:
-                sleep_time = 1
+                sleep_time = 0
                 while not valid_creds:
+                    if sleep_time > 300:
+                        raise Exception(
+                                'timeout reached for valid provider credentials')
                     cloud_providers_pg.selenium.refresh()
-                    time.sleep(sleep_time)
                     prov_quadicon = cloud_providers_pg.quadicon_region.get_quadicon_by_title(
                             prov_data['name'])
                     valid_creds = prov_quadicon.valid_credentials
-                    sleep_time *= 2
-                    if sleep_time > 150:
-                        raise Exception(
-                                'timeout reached for valid provider credentials')
+                    sleep_time += 10
+                    time.sleep(10)
             elif not prov_quadicon.valid_credentials:
                 # update them
                 cloud_providers_pg.select_provider(prov_data['name'])
