@@ -242,7 +242,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         """VMWareSystem implementation of start_vm"""
         vm = self._get_vm(vm_name)
         if vm.is_powered_on():
-            raise Exception('Could not start %s because it\'s already running.' % vm_name)
+            return True
         else:
             vm.power_on()
             ack = vm.get_status()
@@ -254,7 +254,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         """VMWareSystem implementation of stop_vm"""
         vm = self._get_vm(vm_name)
         if vm.is_powered_off():
-            raise Exception('Could not stop %s because it\'s not running.' % vm_name)
+            return True
         else:
             vm.power_off()
             ack = vm.get_status()
@@ -267,21 +267,22 @@ class VMWareSystem(MgmtSystemAPIBase):
         vm = self._get_vm(vm_name)
 
         if vm.is_powered_on():
-            raise Exception('Could not stop %s because it\'s still running.' % vm_name)
-        else:
-            # When pysphere moves up to 0.1.8, we can just do:
-            # vm.destroy()
-            request = VI.Destroy_TaskRequestMsg()
-            _this = request.new__this(vm._mor)
-            _this.set_attribute_type(vm._mor.get_attribute_type())
-            request.set_element__this(_this)
-            rtn = self.api._proxy.Destroy_Task(request)._returnval
+            self.stop_vm(vm_name)
 
-            task = VITask(rtn, self.api)
-            status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
-            if status == task.STATE_SUCCESS:
-                return True
-        return False
+        # When pysphere moves up to 0.1.8, we can just do:
+        # vm.destroy()
+        request = VI.Destroy_TaskRequestMsg()
+        _this = request.new__this(vm._mor)
+        _this.set_attribute_type(vm._mor.get_attribute_type())
+        request.set_element__this(_this)
+        rtn = self.api._proxy.Destroy_Task(request)._returnval
+
+        task = VITask(rtn, self.api)
+        status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
+        if status == task.STATE_SUCCESS:
+            return True
+        else:
+            return False
 
     def create_vm(self, vm_name):
         """VMWareSystem implementation of create_vm"""
@@ -297,7 +298,17 @@ class VMWareSystem(MgmtSystemAPIBase):
     def list_vm(self, **kwargs):
         """VMWareSystem implementation of list_vm"""
         vm_list = self.api.get_registered_vms(**kwargs)
-        return [vm.split(']', 1)[-1].strip() for vm in vm_list]
+
+        # The vms come back in an unhelpful format, so run them through a regex
+        # Example vm name: '[datastore] vmname/vmname.vmx'
+        def vm_name_generator():
+            for vm in vm_list:
+                match = re.match(r'\[.*\] (.*)/\1\..*',  vm)
+                if match:
+                    yield match.group(1)
+
+        # Unroll the VM name generator, and sort it to be more user-friendly
+        return sorted(list(vm_name_generator()))
 
     def info(self):
         """VMWareSystem implementation of info"""
@@ -335,7 +346,7 @@ class VMWareSystem(MgmtSystemAPIBase):
             raise Exception('Could not suspend %s because it\'s not running.' % vm_name)
         else:
             vm.suspend()
-            return vm.get_status()
+            return self.is_vm_suspended(vm_name)
 
     def clone_vm(self, source_name, vm_name, resourcepool=None):
         """VMWareSystem implementation of clone_vm"""
@@ -419,7 +430,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         """RHEVMSystem implementation of start_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'up':
-            raise Exception('Could not start %s because it\'s already running.' % vm_name)
+            return True
         else:
             ack = vm.start()
             if ack.get_status().get_state() == 'complete':
@@ -430,7 +441,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         """RHEVMSystem implementation of stop_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'down':
-            raise Exception('Could not stop %s because it\'s not running.' % vm_name)
+            return True
         else:
             ack = vm.stop()
             if ack.get_status().get_state() == 'complete':
@@ -441,12 +452,12 @@ class RHEVMSystem(MgmtSystemAPIBase):
         """RHEVMSystem implementation of delete_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'up':
-            raise Exception('Could not delete %s because it\'s still running.' % vm_name)
+            self.stop_vm(vm_name)
+        ack = vm.delete()
+        if ack.get_status().get_state() == '':
+            return True
         else:
-            ack = vm.delete()
-            if ack.get_status().get_state() == '':
-                return True
-        return False
+            return False
 
     def create_vm(self, vm_name):
         """RHEVMSystem implementation of create_vm"""
