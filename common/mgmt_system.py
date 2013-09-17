@@ -1,4 +1,4 @@
-""" Base module for Management Systems classes. """
+"""Base module for Management Systems classes"""
 
 import time
 import re
@@ -13,173 +13,170 @@ from ovirtsdk.api import API
 
 
 class MgmtSystemAPIBase(object):
-    """ Base interface class for Management Systems. """
+    """Base interface class for Management Systems"""
     __metaclass__ = ABCMeta
 
     @abstractmethod
     def start_vm(self, vm_name):
-        """
-            Starts a vm.
+        """Starts a vm.
 
-            :param vm_name: name of the vm to be started
-            :type  vm_name: str
-            :return: whether vm action has been initiated properly
-            :rtype: boolean
+        :param vm_name: name of the vm to be started
+        :type  vm_name: str
+        :return: whether vm action has been initiated properly
+        :rtype: boolean
+
         """
         raise NotImplementedError('start_vm not implemented.')
 
     @abstractmethod
     def stop_vm(self, vm_name):
-        """
-            Stops a vm.
+        """Stops a vm.
 
-            :param vm_name: name of the vm to be stopped
-            :type  vm_name: str
-            :return: whether vm action has been initiated properly
-            :rtype: boolean
+        :param vm_name: name of the vm to be stopped
+        :type  vm_name: str
+        :return: whether vm action has been initiated properly
+        :rtype: boolean
+
         """
         raise NotImplementedError('stop_vm not implemented.')
 
     @abstractmethod
     def create_vm(self, vm_name):
-        """
-            Creates a vm.
+        """Creates a vm.
 
-            :param vm_name: name of the vm to be created
-            :type  vm_name: str
-            :return: whether vm action has been initiated properly
-            :rtype: boolean
+        :param vm_name: name of the vm to be created
+        :type  vm_name: str
+        :return: whether vm action has been initiated properly
+        :rtype: boolean
+
         """
         raise NotImplementedError('create_vm not implemented.')
 
     @abstractmethod
     def delete_vm(self, vm_name):
-        """
-            Deletes a vm.
+        """Deletes a vm.
 
-            :param vm_name: name of the vm to be deleted
-            :type  vm_name: str
-            :return: whether vm action has been initiated properly
-            :rtype: boolean
+        :param vm_name: name of the vm to be deleted
+        :type  vm_name: str
+        :return: whether vm action has been initiated properly
+        :rtype: boolean
+
         """
         raise NotImplementedError('delete_vm not implemented.')
 
     @abstractmethod
     def restart_vm(self, vm_name):
-        """
-            Restart a vm.
+        """Restart a vm.
 
-            :param vm_name: name of the vm to be restarted
-            :type  vm_name: str
-            :return: whether vm stop/start have been initiated properly
-            :rtype: boolean
+        :param vm_name: name of the vm to be restarted
+        :type  vm_name: str
+        :return: whether vm stop/start have been initiated properly
+        :rtype: boolean
+
         """
         raise NotImplementedError('restart_vm not implemented.')
 
     @abstractmethod
     def list_vm(self, **kwargs):
-        """
-            Returns a list of vm names.
+        """Returns a list of vm names.
 
-            :return: list of vm names
-            :rtype: list
+        :return: list of vm names
+        :rtype: list
+
         """
         raise NotImplementedError('list_vm not implemented.')
 
     @abstractmethod
     def info(self):
-        """
-            Returns basic information about the mgmt system.
+        """Returns basic information about the mgmt system.
 
-            :return: string representation of name/version of mgmt system.
-            :rtype: str
+        :return: string representation of name/version of mgmt system.
+        :rtype: str
+
         """
         raise NotImplementedError('info not implemented.')
 
     @abstractmethod
     def disconnect(self):
-        """
-            Disconnect the API from mgmt system.
-        """
+        """Disconnect the API from mgmt system"""
         raise NotImplementedError('disconnect not implemented.')
 
     @abstractmethod
     def vm_status(self, vm_name):
-        """
-            Status of VM.
+        """Status of VM.
 
-            :param vm_name: name of the vm to get status
-            :type  vm_name: str
-            :return: state of the vm
-            :rtype: string
+        :param vm_name: name of the vm to get status
+        :type  vm_name: str
+        :return: state of the vm
+        :rtype: string
+
         """
         raise NotImplementedError('vm_status not implemented.')
 
     @abstractmethod
     def is_vm_running(self, vm_name):
-        """
-            Is the vm running?
+        """Is the vm running?
 
-            :param vm_name: name of the vm
-            :type  vm_name: str
-            :return: whether the vm is running or not
-            :rtype: boolean
+        :param vm_name: name of the vm
+        :type  vm_name: str
+        :return: whether the vm is running or not
+        :rtype: boolean
+
         """
         raise NotImplementedError('is_vm_running not implemented.')
 
     @abstractmethod
     def is_vm_stopped(self, vm_name):
-        """
-            Is the vm stopped?
+        """Is the vm stopped?
 
-            :param vm_name: name of the vm
-            :type  vm_name: str
-            :return: whether the vm is stopped or not
-            :rtype: boolean
+        :param vm_name: name of the vm
+        :type  vm_name: str
+        :return: whether the vm is stopped or not
+        :rtype: boolean
+
         """
         raise NotImplementedError('is_vm_stopped not implemented.')
 
     @abstractmethod
     def is_vm_suspended(self, vm_name):
-        """
-            Is the vm suspended?
+        """Is the vm suspended?
 
-            :param vm_name: name of the vm
-            :type  vm_name: str
-            :return: whether the vm is suspended or not
-            :rtype: boolean
+        :param vm_name: name of the vm
+        :type  vm_name: str
+        :return: whether the vm is suspended or not
+        :rtype: boolean
+
         """
         raise NotImplementedError('is_vm_suspended not implemented.')
 
     @abstractmethod
     def suspend_vm(self, vm_name):
-        """
-            Suspend a vm.
+        """Suspend a vm.
 
-            :param vm_name: name of the vm to be suspended
-            :type  vm_name: str
-            :return: whether vm suspend has been initiated properly
-            :rtype: boolean
+        :param vm_name: name of the vm to be suspended
+        :type  vm_name: str
+        :return: whether vm suspend has been initiated properly
+        :rtype: boolean
+
         """
         raise NotImplementedError('restart_vm not implemented.')
 
     @abstractmethod
     def clone_vm(self, source_name, vm_name):
-        """
-            Clone a VM.
+        """Clone a VM.
 
-            :param source_name: The source VM to clone from
-            :type  source_name: str
-            :param vm_name: The name of the new VM
-            :type  vm_name: str
-            :return: IP address of the clone
-            :rtype: str
+        :param source_name: The source VM to clone from
+        :type  source_name: str
+        :param vm_name: The name of the new VM
+        :type  vm_name: str
+        :return: IP address of the clone
+        :rtype: str
+
         """
         raise NotImplementedError('clone_vm not implemented.')
 
 class VMWareSystem(MgmtSystemAPIBase):
-    """
-    Client to Vsphere API
+    """Client to Vsphere API
 
     This class piggy backs off pysphere.
 
@@ -187,10 +184,11 @@ class VMWareSystem(MgmtSystemAPIBase):
       - Don't need intimate knowledge w/ vsphere api itself.
     Detriments of pysphere:
       - Response often are not detailed enough.
+
     """
 
     def __init__(self, hostname='localhost', username='root', password='rootpwd'):
-        """ Initialize VMWareSystem """
+        """Initialize VMWareSystem"""
         # sanitize hostname
         if hostname.startswith('https://'):
             hostname.replace('https://', '')
@@ -204,7 +202,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.api.connect(hostname, username, password)
 
     def _get_vm(self, vm_name=None):
-        """ VMWareSystem implementation in _get_vm. """
+        """VMWareSystem implementation in _get_vm"""
         if vm_name is None:
             raise Exception('Could not find a VM named %s.' % vm_name)
         else:
@@ -241,7 +239,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         return None
 
     def start_vm(self, vm_name):
-        """ VMWareSystem implementation of start_vm. """
+        """VMWareSystem implementation of start_vm"""
         vm = self._get_vm(vm_name)
         if vm.is_powered_on():
             raise Exception('Could not start %s because it\'s already running.' % vm_name)
@@ -253,7 +251,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         return False
 
     def stop_vm(self, vm_name):
-        """ VMWareSystem implementation of stop_vm. """
+        """VMWareSystem implementation of stop_vm"""
         vm = self._get_vm(vm_name)
         if vm.is_powered_off():
             raise Exception('Could not stop %s because it\'s not running.' % vm_name)
@@ -265,7 +263,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         return False
 
     def delete_vm(self, vm_name):
-        """ VMWareSystem implementation of delete_vm. """
+        """VMWareSystem implementation of delete_vm"""
         vm = self._get_vm(vm_name)
 
         if vm.is_powered_on():
@@ -286,53 +284,52 @@ class VMWareSystem(MgmtSystemAPIBase):
         return False
 
     def create_vm(self, vm_name):
-        """ VMWareSystem implementation of create_vm. """
-        #Unfortunately, there are not enough smurf slaves in the village to build this functionality yet.
-        pass
+        """VMWareSystem implementation of create_vm"""
+        raise NotImplementedError('This function has not yet been implemented.')
 
     def restart_vm(self, vm_name):
-        """ VMWareSystem implementation of restart_vm. """
+        """VMWareSystem implementation of restart_vm"""
         if not self.stop_vm(vm_name):
             return False
         else:
             return self.start_vm(vm_name)
 
     def list_vm(self, **kwargs):
-        """ VMWareSystem implementation of list_vm. """
+        """VMWareSystem implementation of list_vm"""
         vm_list = self.api.get_registered_vms(**kwargs)
         return [vm.split(']', 1)[-1].strip() for vm in vm_list]
 
     def info(self):
-        """ VMWareSystem implementation of info. """
+        """VMWareSystem implementation of info"""
         return '%s %s' % (self.api.get_server_type(), self.api.get_api_version())
 
     def disconnect(self):
-        """ VMWareSystem implementation of disconnect. """
+        """VMWareSystem implementation of disconnect"""
         self.api.disconnect()
 
     def vm_status(self, vm_name):
-        """ VMWareSystem implementation of vm.get_status """
+        """VMWareSystem implementation of vm.get_status"""
         state = self._get_vm(vm_name).get_status()
         print "vm " + vm_name + " status is " + state
         return state
 
     def is_vm_running(self, vm_name):
-        """ VMWareSystem implementation of is_vm_running. """
+        """VMWareSystem implementation of is_vm_running"""
         state = self.vm_status(vm_name)
         return "POWERED ON" == state
 
     def is_vm_stopped(self, vm_name):
-        """ VMWareSystem implementation of is_vm_stopped. """
+        """VMWareSystem implementation of is_vm_stopped"""
         state = self.vm_status(vm_name)
         return "POWERED OFF" == state
 
     def is_vm_suspended(self, vm_name):
-        """ VMWareSystem implementation of is_vm_suspended. """
+        """VMWareSystem implementation of is_vm_suspended"""
         state = self.vm_status(vm_name)
         return "SUSPENDED" == state
 
     def suspend_vm(self, vm_name):
-        """ VMWareSystem implementation of suspend_vm. """
+        """VMWareSystem implementation of suspend_vm"""
         vm = self._get_vm(vm_name)
         if vm.is_powered_off():
             raise Exception('Could not suspend %s because it\'s not running.' % vm_name)
@@ -341,7 +338,7 @@ class VMWareSystem(MgmtSystemAPIBase):
             return vm.get_status()
 
     def clone_vm(self, source_name, vm_name, resourcepool=None):
-        """ VMWareSystem implementation of clone_vm. """
+        """VMWareSystem implementation of clone_vm"""
         vm = self._get_vm(source_name)
         if vm:
             clone = vm.clone(vm_name, sync_run=True, resourcepool=self._get_resource_pool(resourcepool))
@@ -399,7 +396,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
     """
 
     def __init__(self, hostname='localhost', username='root', password='rootpwd'):
-        """ Initialize RHEVMSystem """
+        """Initialize RHEVMSystem"""
         # sanitize hostname
         if not hostname.startswith('https://'):
             hostname = 'https://%s' % hostname
@@ -409,7 +406,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         self.api = API(url=hostname, username=username, password=password, insecure=True)
 
     def _get_vm(self, vm_name=None):
-        """ RHEVMSystem implementation in _get_vm. """
+        """RHEVMSystem implementation in _get_vm"""
         if vm_name is None:
             raise Exception('Could not find a VM named %s.' % vm_name)
         else:
@@ -419,7 +416,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             return vm
 
     def start_vm(self, vm_name=None):
-        """ RHEVMSystem implementation of start_vm. """
+        """RHEVMSystem implementation of start_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'up':
             raise Exception('Could not start %s because it\'s already running.' % vm_name)
@@ -430,7 +427,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return False
 
     def stop_vm(self, vm_name):
-        """ RHEVMSystem implementation of stop_vm. """
+        """RHEVMSystem implementation of stop_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'down':
             raise Exception('Could not stop %s because it\'s not running.' % vm_name)
@@ -441,7 +438,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return False
 
     def delete_vm(self, vm_name):
-        """ RHEVMSystem implementation of delete_vm. """
+        """RHEVMSystem implementation of delete_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'up':
             raise Exception('Could not delete %s because it\'s still running.' % vm_name)
@@ -452,19 +449,18 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return False
 
     def create_vm(self, vm_name):
-        """ RHEVMSystem implementation of create_vm. """
-        #Unfortunately, there are not enough smurf slaves in the village to build this functionality yet.
-        pass
+        """RHEVMSystem implementation of create_vm"""
+        raise NotImplementedError('This function has not yet been implemented.')
 
     def restart_vm(self, vm_name):
-        """ RHEVMSystem implementation of restart_vm. """
+        """RHEVMSystem implementation of restart_vm"""
         if not self.stop_vm(vm_name):
             return False
         else:
             return self.start_vm(vm_name)
 
     def list_vm(self, **kwargs):
-        """ RHEVMSystem implementation of list_vm. """
+        """RHEVMSystem implementation of list_vm"""
         # list vm based on kwargs can be buggy
         # i.e. you can't return a list of powered on vm
         # but you can return a vm w/ a matched name
@@ -472,37 +468,37 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return [vm.name for vm in vm_list]
 
     def info(self):
-        """ RHEVMSystem implementation of info. """
+        """RHEVMSystem implementation of info"""
         # and we got nothing!
         pass
 
     def disconnect(self):
-        """ RHEVMSystem implementation of disconnect. """
+        """RHEVMSystem implementation of disconnect"""
         self.api.disconnect()
 
     def vm_status(self, vm_name=None):
-        """ RHEVMSystem implementation of vm_status. """
+        """RHEVMSystem implementation of vm_status"""
         state = self._get_vm(vm_name).get_status().get_state()
         print "vm " + vm_name + " status is " + state
         return state
 
     def is_vm_running(self, vm_name):
-        """ RHEVMSystem implementation of is_vm_running. """
+        """RHEVMSystem implementation of is_vm_running"""
         state = self.vm_status(vm_name)
         return "up" == state
 
     def is_vm_stopped(self, vm_name):
-        """ RHEVMSystem implementation of is_vm_stopped. """
+        """RHEVMSystem implementation of is_vm_stopped"""
         state = self.vm_status(vm_name)
         return "down" == state
 
     def is_vm_suspended(self, vm_name):
-        """ RHEVMSystem implementation of is_vm_suspended. """
+        """RHEVMSystem implementation of is_vm_suspended"""
         state = self.vm_status(vm_name)
         return "suspended" == state
 
     def suspend_vm(self, vm_name):
-        """ RHEVMSystem implementation of suspend_vm. """
+        """RHEVMSystem implementation of suspend_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'down':
             raise Exception('Could not suspend %s because it\'s not running.' % vm_name)
@@ -511,7 +507,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             return ack.get_status().get_state() == 'complete'
 
     def clone_vm(self, source_name, vm_name):
-        """ RHEVMSystem implementation of clone_vm. """
+        """RHEVMSystem implementation of clone_vm"""
         pass
 
 
@@ -714,7 +710,7 @@ class EC2System(MgmtSystemAPIBase):
         raise Exception('Requested action is not supported by this system')
 
     def clone_vm(self, source_name, vm_name):
-        """ EC2System implementation of clone_vm. """
+        """EC2System implementation of clone_vm"""
         pass
 
     def _get_instance_id_by_name(self, instance_name):
