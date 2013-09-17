@@ -469,3 +469,11 @@ provisioning_setup:
         ct_name: RHEL 6 Server PXE
         ct_system: True
         ct_type: CustomizationTemplateKickstart
+clone_retire_setup:
+    vmware_linux_workflow:
+        vm_name: firstVM
+        number_of_cpu: 1
+        vm_memory: 1024
+        owner_first_name: testFirst
+        owner_last_name: testLast
+        owner_email: test@company.com
