@@ -99,6 +99,25 @@ class TestInfrastructureProviders:
                 FLASH_MESSAGE_NOT_MATCHED)
 
     @pytest.mark.usefixtures('has_no_providers')
+    def test_providers_discovery_starts(
+            self, infra_providers_pg, provider_data):
+        '''Tests the start of a management system discovery
+        '''
+        prov_pg = infra_providers_pg
+        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
+        prov_discovery_pg = prov_pg.click_on_discover_providers()
+        Assert.true(prov_discovery_pg.is_the_current_page,
+                CURRENT_PAGE_NOT_MATCHED)
+        prov_pg = prov_discovery_pg.discover_infrastructure_providers(
+                provider_data['type'],
+                provider_data['discovery_range']['start'],
+                provider_data['discovery_range']['end'])
+        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
+        Assert.equal(prov_pg.flash.message,
+                'Infrastructure Providers: Discovery successfully initiated',
+                FLASH_MESSAGE_NOT_MATCHED)
+
+    @pytest.mark.usefixtures('has_no_providers')
     def test_provider_edit(self,
             infra_providers_pg,
             provider,
@@ -174,22 +193,3 @@ class TestInfrastructureProviders:
         Assert.equal(prov_add_pg.flash.message,
             'Cannot complete login due to an incorrect user name or password.',
             FLASH_MESSAGE_NOT_MATCHED)
-
-    @pytest.mark.usefixtures('has_no_providers')
-    def test_providers_discovery_starts(
-            self, infra_providers_pg, provider_data):
-        '''Tests the start of a management system discovery
-        '''
-        prov_pg = infra_providers_pg
-        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-        prov_discovery_pg = prov_pg.click_on_discover_providers()
-        Assert.true(prov_discovery_pg.is_the_current_page,
-                CURRENT_PAGE_NOT_MATCHED)
-        prov_pg = prov_discovery_pg.discover_infrastructure_providers(
-                provider_data['type'],
-                provider_data['discovery_range']['start'],
-                provider_data['discovery_range']['end'])
-        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-        Assert.equal(prov_pg.flash.message,
-                'Infrastructure Providers: Discovery successfully initiated',
-                FLASH_MESSAGE_NOT_MATCHED)
