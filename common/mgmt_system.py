@@ -1,20 +1,33 @@
+# coding: utf-8
 """Base module for Management Systems classes"""
-
-import time
 import re
-from abc import ABCMeta, abstractmethod
+import time
 
 import boto
-from pysphere import *
-from pysphere.resources.vi_exception import VIException
-from pysphere.resources import VimService_services as VI
-from pysphere.vi_task import VITask
+from abc import ABCMeta, abstractmethod
+from boto.ec2 import EC2Connection, RegionInfo
 from ovirtsdk.api import API
+from pysphere import VIServer
+from pysphere.resources import VimService_services as VI
+from pysphere.resources.vi_exception import VIException
+from pysphere.vi_task import VITask
 
 
 class MgmtSystemAPIBase(object):
-    """Base interface class for Management Systems"""
+    """Base interface class for Management Systems
+
+    Interface notes:
+    - Initializers of subclasses must support **kwargs in their
+      signtures
+    - Action methods (start/stop/etc) should block until the requested
+      action is complete
+
+    """
     __metaclass__ = ABCMeta
+
+    # Flag to indicate whether or not this MgmtSystem can suspend,
+    # default True
+    can_suspend = True
 
     @abstractmethod
     def start_vm(self, vm_name):
@@ -175,6 +188,7 @@ class MgmtSystemAPIBase(object):
         """
         raise NotImplementedError('clone_vm not implemented.')
 
+
 class VMWareSystem(MgmtSystemAPIBase):
     """Client to Vsphere API
 
@@ -187,22 +201,11 @@ class VMWareSystem(MgmtSystemAPIBase):
 
     """
 
-    def __init__(self, hostname='localhost', username='root', password='rootpwd'):
-        """Initialize VMWareSystem"""
-        # sanitize hostname
-        if hostname.startswith('https://'):
-            hostname.replace('https://', '')
-        elif hostname.startswith('http://'):
-            hostname.replace('http://', '')
-
-        if hostname.endswith('/api'):
-            hostname.replace('/api', '')
-
+    def __init__(self, hostname, username, password, **kwargs):
         self.api = VIServer()
         self.api.connect(hostname, username, password)
 
     def _get_vm(self, vm_name=None):
-        """VMWareSystem implementation in _get_vm"""
         if vm_name is None:
             raise Exception('Could not find a VM named %s.' % vm_name)
         else:
@@ -215,31 +218,29 @@ class VMWareSystem(MgmtSystemAPIBase):
     def _get_resource_pool(self, resource_pool_name=None):
         rps = self.api.get_resource_pools()
         for mor, path in rps.iteritems():
-            if re.match('.*%s' % resource_pool_name,path):
+            if re.match('.*%s' % resource_pool_name, path):
                 return mor
         # Just pick the first
         return rps.keys()[0]
 
-    def _find_ip(self, vm, ipv6=False):
+    def _find_ip(self, vm):
         maxwait = 600
         net_info = None
         waitcount = 0
         while net_info is None:
             if waitcount > maxwait:
                 break
-            net_info = vm.get_property('net',False)
+            net_info = vm.get_property('net', False)
             waitcount += 5
             time.sleep(5)
         if net_info:
+            ipv4_re = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
             for ip in net_info[0]['ip_addresses']:
-                if ipv6 and re.match(r'\d{1,4}\:.*',ip) and not re.match('fe83\:.*',ip):
-                    return ip
-                elif not ipv6 and re.match(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',ip) and ip != '127.0.0.1':
+                if re.match(ipv4_re, ip) and ip != '127.0.0.1':
                     return ip
         return None
 
     def start_vm(self, vm_name):
-        """VMWareSystem implementation of start_vm"""
         vm = self._get_vm(vm_name)
         if vm.is_powered_on():
             return True
@@ -251,7 +252,6 @@ class VMWareSystem(MgmtSystemAPIBase):
         return False
 
     def stop_vm(self, vm_name):
-        """VMWareSystem implementation of stop_vm"""
         vm = self._get_vm(vm_name)
         if vm.is_powered_off():
             return True
@@ -263,7 +263,6 @@ class VMWareSystem(MgmtSystemAPIBase):
         return False
 
     def delete_vm(self, vm_name):
-        """VMWareSystem implementation of delete_vm"""
         vm = self._get_vm(vm_name)
 
         if vm.is_powered_on():
@@ -285,25 +284,22 @@ class VMWareSystem(MgmtSystemAPIBase):
             return False
 
     def create_vm(self, vm_name):
-        """VMWareSystem implementation of create_vm"""
         raise NotImplementedError('This function has not yet been implemented.')
 
     def restart_vm(self, vm_name):
-        """VMWareSystem implementation of restart_vm"""
         if not self.stop_vm(vm_name):
             return False
         else:
             return self.start_vm(vm_name)
 
     def list_vm(self, **kwargs):
-        """VMWareSystem implementation of list_vm"""
         vm_list = self.api.get_registered_vms(**kwargs)
 
         # The vms come back in an unhelpful format, so run them through a regex
         # Example vm name: '[datastore] vmname/vmname.vmx'
         def vm_name_generator():
             for vm in vm_list:
-                match = re.match(r'\[.*\] (.*)/\1\..*',  vm)
+                match = re.match(r'\[.*\] (.*)/\1\..*', vm)
                 if match:
                     yield match.group(1)
 
@@ -311,36 +307,29 @@ class VMWareSystem(MgmtSystemAPIBase):
         return sorted(list(vm_name_generator()))
 
     def info(self):
-        """VMWareSystem implementation of info"""
         return '%s %s' % (self.api.get_server_type(), self.api.get_api_version())
 
     def disconnect(self):
-        """VMWareSystem implementation of disconnect"""
         self.api.disconnect()
 
     def vm_status(self, vm_name):
-        """VMWareSystem implementation of vm.get_status"""
         state = self._get_vm(vm_name).get_status()
         print "vm " + vm_name + " status is " + state
         return state
 
     def is_vm_running(self, vm_name):
-        """VMWareSystem implementation of is_vm_running"""
         state = self.vm_status(vm_name)
         return "POWERED ON" == state
 
     def is_vm_stopped(self, vm_name):
-        """VMWareSystem implementation of is_vm_stopped"""
         state = self.vm_status(vm_name)
         return "POWERED OFF" == state
 
     def is_vm_suspended(self, vm_name):
-        """VMWareSystem implementation of is_vm_suspended"""
         state = self.vm_status(vm_name)
         return "SUSPENDED" == state
 
     def suspend_vm(self, vm_name):
-        """VMWareSystem implementation of suspend_vm"""
         vm = self._get_vm(vm_name)
         if vm.is_powered_off():
             raise Exception('Could not suspend %s because it\'s not running.' % vm_name)
@@ -349,13 +338,14 @@ class VMWareSystem(MgmtSystemAPIBase):
             return self.is_vm_suspended(vm_name)
 
     def clone_vm(self, source_name, vm_name, resourcepool=None):
-        """VMWareSystem implementation of clone_vm"""
         vm = self._get_vm(source_name)
         if vm:
-            clone = vm.clone(vm_name, sync_run=True, resourcepool=self._get_resource_pool(resourcepool))
+            clone = vm.clone(vm_name, sync_run=True,
+                resourcepool=self._get_resource_pool(resourcepool))
             return self._find_ip(clone)
         else:
             raise Exception('Could not clone %s' % source_name)
+
 
 class RHEVMSystem(MgmtSystemAPIBase):
     """
@@ -371,7 +361,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
     - Because of this, it makes listing VMs based on **kwargs impossible
       since ovirtsdk relies on re class to find matches.
 
-    I.E. List out VM with this name (positive case)
+    E.G. List out VM with this name (positive case)
       Ideal: self.api.vms.list(name='test_vm')
       Underneath the hood:
         - ovirtsdk fetches list of all vms [ovirtsdk.infrastructure.brokers.VM
@@ -383,7 +373,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             attribute is string.
           - match() succeed in comparing the value to 'test_vm'
 
-    I.E. List out VM with that's powered on (negative case)
+    E.G. List out VM with that's powered on (negative case)
       Ideal: self.api.vms.list(status='up')
       Underneath the hood:
         - '^same step as above except^'
@@ -395,7 +385,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
      than how ovirtsdk handles RHEVM api responses.
 
     - Obj. are not updated after action calls.
-      - I.E.
+      - E.G.
         vm = api.vms.get(name='test_vm')
         vm.status.get_state() # returns 'down'
         vm.start()
@@ -406,18 +396,17 @@ class RHEVMSystem(MgmtSystemAPIBase):
         vm.status.get_state() # returns 'up'
     """
 
-    def __init__(self, hostname='localhost', username='root', password='rootpwd'):
-        """Initialize RHEVMSystem"""
-        # sanitize hostname
-        if not hostname.startswith('https://'):
-            hostname = 'https://%s' % hostname
-        if not hostname.endswith('/api'):
-            hostname = '%s/api' % hostname
+    def __init__(self, hostname, username, password, **kwargs):
+        # generate URL from hostname
 
-        self.api = API(url=hostname, username=username, password=password, insecure=True)
+        if 'port' in kwargs:
+            url = 'https://%s:%s/api' % (hostname, kwargs['port'])
+        else:
+            url = 'https://%s/api' % hostname
+
+        self.api = API(url=url, username=username, password=password, insecure=True)
 
     def _get_vm(self, vm_name=None):
-        """RHEVMSystem implementation in _get_vm"""
         if vm_name is None:
             raise Exception('Could not find a VM named %s.' % vm_name)
         else:
@@ -427,7 +416,6 @@ class RHEVMSystem(MgmtSystemAPIBase):
             return vm
 
     def start_vm(self, vm_name=None):
-        """RHEVMSystem implementation of start_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'up':
             return True
@@ -438,7 +426,6 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return False
 
     def stop_vm(self, vm_name):
-        """RHEVMSystem implementation of stop_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'down':
             return True
@@ -449,7 +436,6 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return False
 
     def delete_vm(self, vm_name):
-        """RHEVMSystem implementation of delete_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'up':
             self.stop_vm(vm_name)
@@ -460,18 +446,15 @@ class RHEVMSystem(MgmtSystemAPIBase):
             return False
 
     def create_vm(self, vm_name):
-        """RHEVMSystem implementation of create_vm"""
         raise NotImplementedError('This function has not yet been implemented.')
 
     def restart_vm(self, vm_name):
-        """RHEVMSystem implementation of restart_vm"""
         if not self.stop_vm(vm_name):
             return False
         else:
             return self.start_vm(vm_name)
 
     def list_vm(self, **kwargs):
-        """RHEVMSystem implementation of list_vm"""
         # list vm based on kwargs can be buggy
         # i.e. you can't return a list of powered on vm
         # but you can return a vm w/ a matched name
@@ -479,37 +462,30 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return [vm.name for vm in vm_list]
 
     def info(self):
-        """RHEVMSystem implementation of info"""
         # and we got nothing!
         pass
 
     def disconnect(self):
-        """RHEVMSystem implementation of disconnect"""
         self.api.disconnect()
 
     def vm_status(self, vm_name=None):
-        """RHEVMSystem implementation of vm_status"""
         state = self._get_vm(vm_name).get_status().get_state()
         print "vm " + vm_name + " status is " + state
         return state
 
     def is_vm_running(self, vm_name):
-        """RHEVMSystem implementation of is_vm_running"""
         state = self.vm_status(vm_name)
         return "up" == state
 
     def is_vm_stopped(self, vm_name):
-        """RHEVMSystem implementation of is_vm_stopped"""
         state = self.vm_status(vm_name)
         return "down" == state
 
     def is_vm_suspended(self, vm_name):
-        """RHEVMSystem implementation of is_vm_suspended"""
         state = self.vm_status(vm_name)
         return "suspended" == state
 
     def suspend_vm(self, vm_name):
-        """RHEVMSystem implementation of suspend_vm"""
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'down':
             raise Exception('Could not suspend %s because it\'s not running.' % vm_name)
@@ -518,8 +494,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             return ack.get_status().get_state() == 'complete'
 
     def clone_vm(self, source_name, vm_name):
-        """RHEVMSystem implementation of clone_vm"""
-        pass
+        raise NotImplementedError('This function has not yet been implemented.')
 
 
 class EC2System(MgmtSystemAPIBase):
@@ -546,8 +521,12 @@ class EC2System(MgmtSystemAPIBase):
         'deleted': ('terminated',),
     }
 
-    def __init__(self, access_key_id, secret_access_key, **kwargs):
-        self.api = boto.connect_ec2(access_key_id, secret_access_key, **kwargs)
+    can_suspend = False
+
+    def __init__(self, **kwargs):
+        access_key_id = kwargs.get('ec2_key_id') or kwargs.get('username')
+        secret_access_key = kwargs.get('ec2_secret') or kwargs.get('password')
+        self.api = EC2Connection(access_key_id, secret_access_key)
 
     def disconnect(self):
         """Disconnect from the EC2 API -- NOOP
@@ -573,7 +552,8 @@ class EC2System(MgmtSystemAPIBase):
         :rtype:  basestring
 
         See this page for possible return values:
-        http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-ItemType-InstanceStateType.html
+        http://docs.aws.amazon.com/AWSEC2/latest/APIReference/
+            ApiReference-ItemType-InstanceStateType.html
 
         """
         instance_id = self._get_instance_id_by_name(instance_id)
@@ -721,8 +701,7 @@ class EC2System(MgmtSystemAPIBase):
         raise Exception('Requested action is not supported by this system')
 
     def clone_vm(self, source_name, vm_name):
-        """EC2System implementation of clone_vm"""
-        pass
+        raise NotImplementedError('This function has not yet been implemented.')
 
     def _get_instance_id_by_name(self, instance_name):
         # Quick validation that the instance name isn't actually an ID
@@ -774,6 +753,49 @@ class EC2System(MgmtSystemAPIBase):
             time.sleep(3)
 
 
+class OpenstackEC2System(EC2System):
+    """Openstack management system
+
+    Uses Openstack's EC2-compatible API, but requires a little secret
+    sauce in init to get up and running. Assumes nova is running on the
+    configured openstack host, port 8773. This can be overridden with
+    these kwargs:
+
+      nova_hostname
+      nova_port
+
+    This backend has several limitations due to being based on EC2System:
+
+      - Instance names cannot be used, only instance ID strings,
+        e.g. i-01234567
+      - Openstack supports suspending instances, but there is no method
+        to do so exposed on the boto EC2 API.
+      - Openstack supports user authorization, so we need to store two
+        sets of credentials to work with openstack (user/pass, ec2 key/secret)
+
+    However, the power control methods work,
+    so this is officially Good Enough™
+    """
+    def __init__(self, **kwargs):
+        access_key_id = kwargs['ec2_key_id']
+        secret_access_key = kwargs['ec2_secret']
+        endpoint = kwargs.get('nova_hostname', kwargs['hostname'])
+        port = kwargs.get('nova_port', 8773)
+        service_path = '/services/Cloud'
+        region = RegionInfo(None, 'openstack', endpoint)
+        self.api = EC2Connection(access_key_id, secret_access_key,
+            region=region, port=port, path=service_path,
+            is_secure=False)
+
+    def _get_instance_id_by_name(self, instance_name):
+        # While Openstack does have instance names, they aren't implemented
+        # the same as in EC2, so the instance ID is the only way to go
+        if instance_name.startswith('i-') and len(instance_name) == 10:
+            # This is already an instance id, return it!
+            return instance_name
+        else:
+            raise Exception('Invalid instance ID: %s' % instance_name)
+
+
 class ActionTimedOutError(Exception):
     pass
-
