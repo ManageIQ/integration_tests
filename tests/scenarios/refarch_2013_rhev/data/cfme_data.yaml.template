@@ -11,8 +11,7 @@ redhat_updates:
         organization: qe
     http_proxy:
         url: 10.0.0.1
-        username: user
-        password: secret
+        credentials: proxy
     registration_method: rhsm
     current_version: 5.2.0.20
     appliances:

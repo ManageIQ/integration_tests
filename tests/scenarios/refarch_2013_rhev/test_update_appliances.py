@@ -12,8 +12,9 @@ class TestUpdateAppliances:
             updates_data = cfme_data.data['redhat_updates'][update_method]
             creds_data = cnf_configuration_pg.testsetup.credentials[
                     updates_data["credentials"]]
+            proxy_data = cfme_data.data["redhat_updates"]["http_proxy"]
             registered_pg = updates_pg.edit_registration_and_save(
-                    updates_data["url"], creds_data, update_method)
+                    updates_data["url"], creds_data, update_method, proxy_data)
             flash_message = "Customer Information successfully saved"
             Assert.equal(registered_pg.flash.message, flash_message,
                     registered_pg.flash.message)
