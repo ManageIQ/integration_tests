@@ -3,32 +3,33 @@ from selenium.webdriver.common.by import By
 
 class RedhatUpdates(Base):
     _edit_registration_button_locator = (By.CSS_SELECTOR,
-            "button#settings_rhn_edit")
+        "button#settings_rhn_edit")
     _register_with_locator = (By.CSS_SELECTOR, "select#register_to")
     _address_locator = (By.CSS_SELECTOR, "input#server_url")
     _login_locator = (By.CSS_SELECTOR, "input#customer_userid")
     _password_locator = (By.CSS_SELECTOR, "input#customer_password")
     _save_button_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
     _cancel_button_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
-
+    _proxy_checkbox_locator = (By.CSS_SELECTOR, "input#use_proxy")
+    _proxy_address_locator = (By.CSS_SELECTOR, "input#proxy_address")
     _all_appliances_locator = (By.CSS_SELECTOR, "div#form_div > table > tbody \
-            > tr:nth-of-type(2)")
+        > tr:nth-of-type(2)")
     _appliance_checkbox_locator = (By.CSS_SELECTOR, "input#listcheckbox")
     _apply_cfme_updates_button = (By.CSS_SELECTOR, "button#rhn_update_button_on_1")
 
     def select_service(self, service):
         if service == "rhsm":
             self.select_dropdown("Red Hat Subscription Management",
-                    *self._register_with_locator)
+                *self._register_with_locator)
         elif service == "sat5":
             self.select_dropdown("RHN Satellite v5",
-                    *self._register_with_locator)
+                *self._register_with_locator)
         elif service == "sat6":
             self.select_dropdown("RHN Satellite v6",
-                    *self._register_with_locator)
+                *self._register_with_locator)
         self._wait_for_results_refresh()
 
-    def edit_registration(self, url, credentials, service):
+    def edit_registration(self, url, credentials, service, proxy=False):
         #click on edit registration
         self.selenium.find_element(*self._edit_registration_button_locator).click()
         self._wait_for_results_refresh()
@@ -37,12 +38,18 @@ class RedhatUpdates(Base):
         #fill data
         self.fill_field_by_locator(url, *self._address_locator)
         self.fill_field_by_locator(credentials["username"],
-                *self._login_locator)
+            *self._login_locator)
         self.fill_field_by_locator(credentials["password"],
-                *self._password_locator)
+            *self._password_locator)
+        if proxy:
+            self._wait_for_results_refresh()
+            self.selenium.find_element(*self._proxy_checkbox_locator).click()
+            self._wait_for_results_refresh()
+            self.fill_field_by_locator(proxy["url"],
+                *self._proxy_address_locator)
 
-    def edit_registration_and_save(self, url, credentials, service):
-        self.edit_registration(url, credentials, service)
+    def edit_registration_and_save(self, url, credentials, service, proxy=False):
+        self.edit_registration(url, credentials, service, proxy)
         self._wait_for_visible_element(*self._save_button_locator)
         #click on save
         self.selenium.find_element(*self._save_button_locator).click()
@@ -60,8 +67,8 @@ class RedhatUpdates(Base):
     @property
     def appliance_list(self):
         return [RedhatUpdates.ApplianceItem(self.testsetup, appliance)
-                for appliance in self.selenium.find_elements(
-                        *self._all_appliances_locator)]
+            for appliance in self.selenium.find_elements(
+                *self._all_appliances_locator)]
 
     @property
     def is_registered(self):
@@ -128,7 +135,7 @@ class RedhatUpdates(Base):
         @property
         def updates_available(self):
             return self._root_element.find_element(*self._updates_available_locator).text \
-                    == "Yes"
+                == "Yes"
 
     class Registered(Base):
         pass
