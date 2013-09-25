@@ -26,6 +26,10 @@ redhat_updates:
       - EVM (2)
       - EVM (3)
       - EVM
+    certificates:
+      - /etc/pki/product/cert1.pem
+      - /etc/pki/consumer/cert2.pem
+      - /etc/pki/entitlement/1234567890-key.pem
 management_systems:
     rhevm32:
         name: RHEV 3.2
