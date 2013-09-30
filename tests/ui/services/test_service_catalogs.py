@@ -44,7 +44,6 @@ def create_catalog(
 
 @pytest.fixture()
 def create_catalog_item(
-        maximized,
         random_string, 
         provisioning_data,
         setup_infrastructure_providers,
@@ -70,10 +69,10 @@ def create_catalog_item(
             vm_name)
     envt_pg = req_pg.click_on_environment_tab()
     try:
-        envt_pg.fill_environment_tab(
+         new_pg = envt_pg.fill_environment_tab(
                 unicode(provisioning_data["host"]),
                 unicode(provisioning_data["datastore"]))
-        envt_pg.save_catalog_item()
+         new_pg.save_catalog_item()
     except:
         Assert.fail("Unable to create catalog item, " + 
                 "check for duplicate infra providers")    
@@ -83,15 +82,18 @@ def create_catalog_item(
 
 @pytest.fixture()
 def create_service_name_script(automate_explorer_pg):
-    ae_namespace_pg = automate_explorer_pg.click_on_class_access_node("Service Provision State Machine (ServiceProvision_Template)")
+    ae_namespace_pg = automate_explorer_pg.click_on_class_access_node(\
+        "Service Provision State Machine (ServiceProvision_Template)")
     ae_namespace_pg.select_instance_item("default")
     inst_pg = ae_namespace_pg.click_on_edit_this_instance()
-    inst_pg.fill_instance_field_row_info(1,"/Sample/Methods/servicename_sample")
+    inst_pg.fill_instance_field_row_info(1,\
+            "/Sample/Methods/servicename_sample")
     inst_pg.click_on_save_button()
 
 @pytest.fixture()
 def create_generic_catalog_item(random_string,
-        create_service_dialog, svc_catalogs_pg,
+        create_service_dialog, 
+        svc_catalogs_pg,
         create_catalog ):
     service_dialog_name = create_service_dialog
     catalog_name = create_catalog
@@ -99,21 +101,22 @@ def create_generic_catalog_item(random_string,
             add_new_catalog_item()
     new_cat_item_pg.choose_catalog_item_type('Generic')
     catalog_item_name = "auto_item_" + random_string
-    new_cat_item_pg.fill_basic_info(
+    entry_pg = new_cat_item_pg.fill_basic_info(
             catalog_item_name,
             "item_desc_" + random_string,
             catalog_name,
             service_dialog_name)
-    new_cat_item_pg.fill_provisioning_entry_point("Factory/StateMachines/ServiceProvision_Template/default")
-    new_cat_item_pg.save_catalog_item()
-    return catalog_item_name,catalog_name
+    save_pg = entry_pg.fill_provisioning_entry_point(\
+    "Service Provision State Machine (ServiceProvision_Template)","default")
+    save_pg.save_catalog_item()
+    return catalog_item_name, catalog_name
 
 @pytest.fixture()
 def create_catalog_bundle(
         random_string, 
         provisioning_data, 
-        svc_catalogs_pg, 
-        create_catalog_item):
+        create_catalog_item,
+        svc_catalogs_pg):
     '''Fixture to create Catalog item and bundle'''
     cat_list = create_catalog_item
     cat_name = cat_list[1]
@@ -132,9 +135,30 @@ def create_catalog_bundle(
             provisioning_data["provider_key"], vm_name]
     return item_names
 
+@pytest.fixture()
+def check_service_name(
+        random_string, 
+        create_service_name_script,
+        create_generic_catalog_item, 
+        svc_catalogs_pg):
+        '''test automate script to change service name'''
+        catalog_item_name,catalog_name = create_generic_catalog_item
+        table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
+                .select_catalog_in_service_tree(catalog_name)
+        service_name = "changed_name_"+random_string
+        order_pg = table_pg.select_catalog_item(catalog_item_name, service_name)
+        Assert.equal(order_pg.flash.message,
+            "Order Request was Submitted")
+        order_pg.approve_request(1)
+        order_pg.wait_for_request_status("Last 24 Hours",
+            "Finished", 12)
+        return service_name
+   
+
+        
+
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures(
-        "maximized",
         "server_roles",
         "setup_infrastructure_providers",
         "mgmt_sys_api_clients")
@@ -181,8 +205,9 @@ class TestServiceCatalogs:
             time.sleep(60)
             count += 60
             
+    
     def test_order_service_catalog_item(
-            self, 
+            self,
             mgmt_sys_api_clients,
             cfme_data,
             create_catalog_item,
@@ -196,16 +221,17 @@ class TestServiceCatalogs:
         Assert.true(svc_catalogs_pg.is_the_current_page)
         table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
                 .select_catalog_in_service_tree(cat_name)
-        order_pg = table_pg.select_catalog_item(cat_item_name)
-        Assert.true(order_pg.is_the_current_page,
-            "not returned to the correct page")
+        order_pg = table_pg.select_catalog_item(cat_item_name , "service_"+cat_item_name)
         Assert.equal(order_pg.flash.message, "Order Request was Submitted")
+        order_pg.approve_request(1)
+        order_pg.wait_for_request_status("Last 24 Hours",
+            "Finished", 12)
         # cleanup
-        self._check_vm_provision(mgmt_sys_api_clients, prov_key, 
+        self._check_vm_provision(mgmt_sys_api_clients, prov_key,
                 vm_name+"_0001")
-
+        
     def test_order_service_catalog_bundle(
-            self, 
+            self,
             mgmt_sys_api_clients,
             cfme_data,
             create_catalog_bundle,
@@ -219,18 +245,19 @@ class TestServiceCatalogs:
         Assert.true(svc_catalogs_pg.is_the_current_page)
         table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
             .select_catalog_in_service_tree(cat_name)
-        order_pg = table_pg.select_catalog_item(cat_bundle_name)
-        Assert.true(order_pg.is_the_current_page,
-            "not returned to the correct page")
+        order_pg = table_pg.select_catalog_item(cat_bundle_name, "service_"+cat_bundle_name)
         Assert.equal(order_pg.flash.message,"Order Request was Submitted")
+        order_pg.approve_request(1)
+        order_pg.wait_for_request_status("Last 24 Hours",
+            "Finished", 12)
         # cleanup
-        self._check_vm_provision(mgmt_sys_api_clients, prov_key, 
+        self._check_vm_provision(mgmt_sys_api_clients, prov_key,
                 vm_name+"_0001")
 
     def test_delete_catalog_deletes_service(
-            self, 
-            svc_catalogs_pg, 
-            create_catalog_item):
+            self,
+            create_catalog_item,
+            svc_catalogs_pg):
         '''Delete Catalog should delete service'''
         mylist = create_catalog_item
         cat_name = mylist[1]
@@ -242,8 +269,8 @@ class TestServiceCatalogs:
             is_catalog_present(cat_name),"service catalog not found")
 
     def test_delete_catalog_item_deletes_service(
-            self, 
-            create_catalog_item, 
+            self,
+            create_catalog_item,
             svc_catalogs_pg):
         '''Delete Catalog should delete service'''
         mylist = create_catalog_item
@@ -257,10 +284,10 @@ class TestServiceCatalogs:
         is_catalog_item_present(cat_item),"service catalog item not found")
 
     def test_service_circular_reference_not_allowed(
-            self, 
+            self,
             random_string,
-            svc_catalogs_pg, 
-            create_catalog_bundle):
+            create_catalog_bundle,
+            svc_catalogs_pg):
         '''service calling itself should not be allowed'''
         mylist = create_catalog_bundle
         cat_name = mylist[0]
@@ -287,19 +314,14 @@ class TestServiceCatalogs:
         Assert.equal(resource_pg.flash.message,
             "Error during 'Resource Add': Adding resource <%s> to Service <%s> will create a circular reference"
             % (sec_catalog_bundle ,cat_bundle_name))
-
-
-    def test_service_name_change_script(self,create_service_name_script,
-            create_generic_catalog_item, svc_catalogs_pg):
+    
+        
+    def test_service_name_change_script(
+            self,
+            check_service_name, 
+            svc_myservices_pg):
         '''test automate script to change service name'''
-        catalog_item_name,catalog_name = create_generic_catalog_item
-        table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
-                .select_catalog_in_service_tree(catalog_name)
-        order_pg = table_pg.select_catalog_item(catalog_item_name)
-        Assert.equal(order_pg.flash.message,
-            "Order Request was Submitted")
-        #svc_myservices_pg.select_service_in_tree("changed_service_name")
-        Assert.true(svc_myservices_pg.is_service_present("changed_service_name"),"service not found")
-        
-        
+        service_name = check_service_name
+        svc_myservices_pg.select_service_in_tree(service_name)
+        Assert.true(svc_myservices_pg.is_service_present(service_name),"service not found")
         
