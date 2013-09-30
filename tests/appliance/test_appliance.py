@@ -3,6 +3,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+import re
 from unittestzero import Assert
 
 pytestmark = [pytest.mark.nondestructive,
@@ -74,6 +75,29 @@ def test_cpu_total(ssh_client):
     stdout = ssh_client.run_command(
                     'lscpu | grep ^CPU\(s\): | awk \'{ print $2 }\'')[1]
     Assert.true(stdout >= 4)
+
+
+@pytest.mark.parametrize(("filename", "given_md5"), [
+    ("/etc/pki/product/69.pem", None),
+    ("/etc/pki/product/167.pem", None)
+    ])
+def test_certificates_present(ssh_client, filename, given_md5):
+    """ Test whether the required product certificates are present.
+    
+    This test is parametrized with the given file and its MD5 hash.
+    If the given MD5 hash is ``None``, it won't be checked.
+
+    From wiki:
+    `Ships with /etc/pki/product/<id>.pem where RHEL is "69" and CF is "167"`
+    """
+    file_exists = int(ssh_client.run_command("ls '%s'" % filename)[0]) == 0
+    assert file_exists, "File %s does not exist!" % filename
+    if given_md5:
+        md5_of_file = ssh_client.run_command("md5sum '%s'" % filename)[1].strip()
+        # Format `abcdef0123456789<whitespace>filename
+        md5_of_file = re.split(r"\s+", md5_of_file, 1)[0]
+        assert given_md5 == md5_of_file
+
 
 # TODO
 '''
