@@ -26,7 +26,8 @@ def create_service_dialog(
     new_dialog_pg = automate_customization_pg\
             .click_on_service_dialog_accordion().add_new_service_dialog()
     service_dialog_name = "auto_dialog_" + random_string
-    new_dialog_pg.create_service_dialog(service_dialog_name)
+    descr = "descr-" + random_string
+    new_dialog_pg.create_service_dialog(service_dialog_name, descr)
     return service_dialog_name
 
 @pytest.fixture()
@@ -72,12 +73,40 @@ def create_catalog_item(
         envt_pg.fill_environment_tab(
                 unicode(provisioning_data["host"]),
                 unicode(provisioning_data["datastore"]))
+        envt_pg.save_catalog_item()
     except:
         Assert.fail("Unable to create catalog item, " + 
                 "check for duplicate infra providers")    
     names = [service_dialog_name, catalog_name, catalog_item_name, 
             provisioning_data["provider_key"], vm_name]
     return names
+
+@pytest.fixture()
+def create_service_name_script(automate_explorer_pg):
+    ae_namespace_pg = automate_explorer_pg.click_on_class_access_node("Service Provision State Machine (ServiceProvision_Template)")
+    ae_namespace_pg.select_instance_item("default")
+    inst_pg = ae_namespace_pg.click_on_edit_this_instance()
+    inst_pg.fill_instance_field_row_info(1,"/Sample/Methods/servicename_sample")
+    inst_pg.click_on_save_button()
+
+@pytest.fixture()
+def create_generic_catalog_item(random_string,
+        create_service_dialog, svc_catalogs_pg,
+        create_catalog ):
+    service_dialog_name = create_service_dialog
+    catalog_name = create_catalog
+    new_cat_item_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
+            add_new_catalog_item()
+    new_cat_item_pg.choose_catalog_item_type('Generic')
+    catalog_item_name = "auto_item_" + random_string
+    new_cat_item_pg.fill_basic_info(
+            catalog_item_name,
+            "item_desc_" + random_string,
+            catalog_name,
+            service_dialog_name)
+    new_cat_item_pg.fill_provisioning_entry_point("Factory/StateMachines/ServiceProvision_Template/default")
+    new_cat_item_pg.save_catalog_item()
+    return catalog_item_name,catalog_name
 
 @pytest.fixture()
 def create_catalog_bundle(
@@ -108,7 +137,6 @@ def create_catalog_bundle(
         "maximized",
         "server_roles",
         "setup_infrastructure_providers",
-        "create_catalog_item",
         "mgmt_sys_api_clients")
 @pytest.mark.fixtureconf(server_roles=default_roles+('automate',))
 class TestServiceCatalogs:
@@ -152,7 +180,7 @@ class TestServiceCatalogs:
                     break
             time.sleep(60)
             count += 60
-
+            
     def test_order_service_catalog_item(
             self, 
             mgmt_sys_api_clients,
@@ -259,3 +287,19 @@ class TestServiceCatalogs:
         Assert.equal(resource_pg.flash.message,
             "Error during 'Resource Add': Adding resource <%s> to Service <%s> will create a circular reference"
             % (sec_catalog_bundle ,cat_bundle_name))
+
+
+    def test_service_name_change_script(self,create_service_name_script,
+            create_generic_catalog_item, svc_catalogs_pg):
+        '''test automate script to change service name'''
+        catalog_item_name,catalog_name = create_generic_catalog_item
+        table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
+                .select_catalog_in_service_tree(catalog_name)
+        order_pg = table_pg.select_catalog_item(catalog_item_name)
+        Assert.equal(order_pg.flash.message,
+            "Order Request was Submitted")
+        #svc_myservices_pg.select_service_in_tree("changed_service_name")
+        Assert.true(svc_myservices_pg.is_service_present("changed_service_name"),"service not found")
+        
+        
+        
