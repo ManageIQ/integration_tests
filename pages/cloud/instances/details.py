@@ -90,7 +90,8 @@ class Details(CommonComponents):
         from pages.cloud.instances.utilization import Utilization
         return Utilization(self.testsetup)
 
-    def wait_for_instance_state_change(self, desired_state, timeout_in_minutes):
+    def wait_for_instance_state_change(self, desired_state, timeout_in_minutes,
+            refresh=False):
         current_state = self.power_state
         print "Desired state: " + desired_state + \
             "    Current state: " + current_state
@@ -101,6 +102,8 @@ class Details(CommonComponents):
             print "Sleeping 60 seconds, iteration " + str(minute_count+1) + \
                 " of " + str(timeout_in_minutes) + ", desired state (" + \
                 desired_state+") != current state("+current_state+")"
+            if refresh:
+                self.click_on_refresh_relationships()
             time.sleep(60)
             minute_count += 1
             self.refresh()
@@ -145,3 +148,9 @@ class Details(CommonComponents):
         self._wait_for_results_refresh()
         from pages.cloud.instances.ownership import Ownership
         return Ownership(self.testsetup)
+
+    def click_on_refresh_relationships(self):
+        ActionChains(self.selenium).click(
+            self.center_buttons.configuration_button).click(
+            self.refresh_relationships).perform()
+        self._wait_for_results_refresh()

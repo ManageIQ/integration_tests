@@ -4,6 +4,7 @@
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from pages import cloud
 from pages.page import Page
 from pages.infrastructure import Infrastructure
 from pages.services import Services
@@ -14,12 +15,8 @@ from pages.configuration_subpages.tasks_tabs import Tasks
 from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
 from pages.virtual_intelligence import VirtualIntelligence
 from pages.optimize import Optimize
-from pages.infrastructure_subpages.providers import Providers
+from pages.infrastructure_subpages.providers import Providers as InfraProviders
 from pages.infrastructure_subpages.hosts import Hosts
-from pages.cloud.providers import CloudProviders
-#from pages.cloud.availability_zones import AvailabilityZones
-#from pages.cloud.flavors import Flavors
-from pages.cloud.instances import Instances
 
 class HeaderMenu(Page):
     """
@@ -111,13 +108,14 @@ class HeaderMenu(Page):
                 #"Workloads":
             },
             "Clouds": {
-                "Providers": CloudProviders,
-                #"Availability Zones": AvailabilityZones,
-                #"Flavors": Flavors,
-                "Instances": Instances,
+                "Providers": cloud.Providers,
+                "Availability Zones": cloud.AvailabilityZones,
+                "Flavors": cloud.Flavors,
+                "Security Groups": cloud.SecurityGroups,
+                "Instances": cloud.Instances,
             },
             "Infrastructure": {
-                "Providers" : Providers,
+                "Providers" : InfraProviders,
                 "Clusters": Infrastructure.Clusters,
                 "Hosts": Hosts,
                 "Virtual Machines": VirtualMachines,

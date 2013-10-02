@@ -41,14 +41,14 @@ class Discovery(Base):
     def click_on_start(self):
         '''Click on the start discovery button'''
         self.selenium.find_element(*self._start_button_locator).click()
-        from pages.cloud.providers import CloudProviders
-        return CloudProviders(self.testsetup)
+        from pages.cloud.providers import Providers
+        return Providers(self.testsetup)
 
     def click_on_cancel(self):
         '''Click on the cancel button'''
         self.selenium.find_element(*self._cancel_button_locator).click()
-        from pages.cloud.providers import CloudProviders
-        return CloudProviders(self.testsetup)
+        from pages.cloud.providers import Providers
+        return Providers(self.testsetup)
 
     def _fill_in_discovery_form(
             self,

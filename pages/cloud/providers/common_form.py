@@ -171,5 +171,5 @@ class AddFormCommon(Base):
 
         Returns Cloud Providers page'''
         self.cancel_button.click()
-        from pages.cloud.providers import CloudProviders
-        return CloudProviders(self.testsetup)
+        from pages.cloud.providers import Providers
+        return Providers(self.testsetup)

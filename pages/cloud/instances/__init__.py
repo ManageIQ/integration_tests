@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
-
-# pylint: disable=C0103
-# pylint: disable=R0904
-
 import time
 from pages.regions.quadicons import Quadicons
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.cloud.instances.common import CommonComponents
+
 
 class Instances(CommonComponents):
     """Cloud Instances page"""
@@ -144,14 +141,13 @@ class Instances(CommonComponents):
         """Start instance provisioning """
         provision_instance_button = self.get_element(
             *self._provision_instances_button_locator)
-        ActionChains(self.selenium).click(
-            self.center_buttons.lifecycle_button).click(
-                provision_instance_button).perform()
+        ActionChains(self.selenium).click(self.center_buttons.lifecycle_button)\
+            .click(provision_instance_button).perform()
         from pages.services_subpages.provision import ProvisionStart
         return ProvisionStart(self.testsetup)
 
-    def find_instance_page(self, instance_name = None, instance_type = None,
-                    mark_checkbox = False, load_details = False):
+    def find_instance_page(self, instance_name=None, instance_type=None,
+            mark_checkbox=False, load_details=False):
         """Page through any pages seaching for particular instance"""
         found = None
         while not found:
@@ -162,27 +158,27 @@ class Instances(CommonComponents):
                     found = quadicon
                     break
                 # no title but first type
-                elif instance_name == None and \
+                elif instance_name is None and \
                         quadicon.current_state == instance_type:
                     found = quadicon
                     break
                 # first title no type
-                elif quadicon.title == instance_name and instance_type == None:
+                elif quadicon.title == instance_name and instance_type is None:
                     found = quadicon
                     break
                 # if nothing found try turning the page
             if not found and not self.paginator.is_next_page_disabled:
                 self.paginator.click_next_page()
             elif not found and self.paginator.is_next_page_disabled:
-                raise Exception("instance("+str(instance_name)+") with type("+
-                            str(instance_type)+") could not be found")
+                errmsg = 'instance("%s") with type("%s") could not be found'
+                raise Exception(errmsg % (instance_name, instance_type))
         if found and mark_checkbox:
             found.mark_checkbox()
         if found and load_details:
             return found.click()
 
     def wait_for_state_change(self, i_quadicon_title,
-                desired_state, timeout_in_minutes):
+                desired_state, timeout_in_minutes, refresh=False):
         """Wait for instance to transition to particular state"""
         self.find_instance_page(i_quadicon_title, None, False)
         current_state = self.quadicon_region.get_quadicon_by_title(
@@ -196,15 +192,16 @@ class Instances(CommonComponents):
             print "Sleeping 60 seconds, iteration " + str(minute_count+1) + \
                 " of " + str(timeout_in_minutes) + ", desired state (" + \
                 desired_state+") != current state("+current_state+")"
+            if refresh:
+                self.refresh_relationships([i_quadicon_title])
             time.sleep(60)
             minute_count += 1
             self.refresh()
             self.find_instance_page(i_quadicon_title, None, False)
             current_state = self.quadicon_region.get_quadicon_by_title(
                 i_quadicon_title).current_state
-            if (minute_count==timeout_in_minutes) and \
-                    (current_state != desired_state):
-                raise Exception("timeout reached("+str(timeout_in_minutes)+
+            if minute_count == timeout_in_minutes and current_state != desired_state:
+                raise Exception("timeout reached(" + str(timeout_in_minutes) +
                     " minutes) before desired state (" +
-                    desired_state+") reached... current state("+
-                    current_state+")")
+                    desired_state + ") reached... current state(" +
+                    current_state + ")")

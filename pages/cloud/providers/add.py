@@ -128,5 +128,5 @@ class Add(AddFormCommon):
     def click_on_add(self):
         '''Click on the add button'''
         self.add_button.click()
-        from pages.cloud.providers import CloudProviders
-        return CloudProviders(self.testsetup)
+        from pages.cloud.providers import Providers
+        return Providers(self.testsetup)
