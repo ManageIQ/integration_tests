@@ -5,37 +5,25 @@ require 'appliance_console/internal_database_configuration'
 require 'appliance_console/external_database_configuration'
 
 config = ApplianceConsole::InternalDatabaseConfiguration.new({
-  :host     => "127.0.0.1",
-  :username => "root",
-  :database => "vmdb_production",
-  :password => "v1:{o3WJPVTn5+vX6FFWAd1Auw==}",
-  :region   => ${region},
+  :region => ${region},
+  :interactive => false,
 })
 
 # pick the first unpartitioned disk
 config.instance_variable_set(:@disk, LinuxAdmin::Disk.local.select {|d| d.partitions.empty?}.first)
 
 # create partition, pv, vg, lv, ext4, update fstab, mount disk
-begin
-  config.initialize_postgresql_disk
-rescue NoMethodError
-  puts "No unpartitioned disk available for internal DB"
-  exit 1
-end
-
 # initdb, relabel log directory for selinux, update configs,
-# start pg, create user, create db
-config.initialize_postgresql
-# update the rails configuration, verify, migrate the database
+# start pg, create user, create db update the rails configuration,
+# verify, set up the database with region. activate does it all!
 config.activate
+
 # enable/start related services
 config.post_activation
 
-# At this point, there is a vmdb_production in postgres, but no data
-# use rake evm:db:region task to populate the DB
-
 =begin
 # bash-fu to put an appliance into a testing state for this script
+# assumes sdb, update disk device as needed
 service evmserverd stop
 /etc/init.d/postgresql92-postgresql stop
 umount /opt/rh/postgresql92/root/var/lib/pgsql/data/
