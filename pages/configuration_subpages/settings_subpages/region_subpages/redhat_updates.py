@@ -10,12 +10,16 @@ class RedhatUpdates(Base):
     _password_locator = (By.CSS_SELECTOR, "input#customer_password")
     _save_button_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
     _cancel_button_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
+    _default_button_locator = (By.CSS_SELECTOR, "button#rhn_default_button")
+
     _proxy_checkbox_locator = (By.CSS_SELECTOR, "input#use_proxy")
     _proxy_address_locator = (By.CSS_SELECTOR, "input#proxy_address")
     _all_appliances_locator = (By.CSS_SELECTOR, "div#form_div > table > tbody \
-        > tr:nth-of-type(2)")
+            > tr")
     _appliance_checkbox_locator = (By.CSS_SELECTOR, "input#listcheckbox")
     _apply_cfme_updates_button = (By.CSS_SELECTOR, "button#rhn_update_button_on_1")
+    _register_button_locator = (By.CSS_SELECTOR, "button#rhn_register_button_on_1")
+    _refresh_button_locator = (By.CSS_SELECTOR, "button#rhn_refresh_button")
 
     def select_service(self, service):
         if service == "rhsm":
@@ -48,8 +52,12 @@ class RedhatUpdates(Base):
             self.fill_field_by_locator(proxy["url"],
                 *self._proxy_address_locator)
 
-    def edit_registration_and_save(self, url, credentials, service, proxy=False):
+    def edit_registration_and_save(self, url, credentials, service, proxy=False, default=False):
         self.edit_registration(url, credentials, service, proxy)
+        #workaround for save button to display
+        if default:
+            self.selenium.find_element(*self._default_button_locator).click()
+            self._wait_for_results_refresh()
         self._wait_for_visible_element(*self._save_button_locator)
         #click on save
         self.selenium.find_element(*self._save_button_locator).click()
@@ -70,9 +78,17 @@ class RedhatUpdates(Base):
             for appliance in self.selenium.find_elements(
                 *self._all_appliances_locator)]
 
-    @property
-    def is_registered(self):
-        if self.appliance_list:
+    def is_registered(self, appliances):
+        ok_flag = False
+        for appliance in appliances:
+            for appliance_from_list in self.appliance_list:
+                if appliance == appliance_from_list.name:
+                    if appliance_from_list.status == "Subscribed" \
+                        or appliance_from_list.status == "Unsubscribed":
+                        ok_flag = True
+                    else:
+                        ok_flag = False
+        if ok_flag:
             return True
         return False
 
@@ -90,6 +106,15 @@ class RedhatUpdates(Base):
                 return False
         return True
 
+    def register_appliances(self, appliances_to_register):
+        for appliance in self.appliance_list:
+            for appliance_to_register in appliances_to_register:
+                if appliance.name == appliance_to_register:
+                    appliance.checkbox.click()
+        self._wait_for_visible_element(*self._register_button_locator)
+        self.selenium.find_element(*self._register_button_locator).click()
+        self._wait_for_results_refresh()
+
     def apply_updates(self, appliances_to_update):
         for appliance in self.appliance_list:
             for appliance_to_update in appliances_to_update:
@@ -97,6 +122,10 @@ class RedhatUpdates(Base):
                     appliance.checkbox.click()
         self._wait_for_visible_element(*self._apply_cfme_updates_button)
         self.selenium.find_element(*self._apply_cfme_updates_button).click()
+        self._wait_for_results_refresh()
+
+    def refresh_list(self):
+        self.selenium.find_element(*self._refresh_button_locator).click()
         self._wait_for_results_refresh()
 
     class ApplianceItem(Base):
