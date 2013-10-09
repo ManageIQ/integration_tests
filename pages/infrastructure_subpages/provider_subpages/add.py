@@ -33,9 +33,9 @@ class ProvidersAdd(Base):
     _provider_cu_verify_locator = (By.ID, "metrics_verify")
     _server_zone_edit_field_locator = (By.ID, "server_zone")
     _default_credentials_button_locator = (
-            By.CSS_SELECTOR, "div#auth_tabs > ul > li > a#ui-id-1")
+            By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#default']")
     _metrics_credentials_button_locator = (
-            By.CSS_SELECTOR, "div#auth_tabs > ul > li > a#ui-id-2")
+            By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#metrics']")
     _provider_api_port_locator = (
             By.ID, "port")
 
