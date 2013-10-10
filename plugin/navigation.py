@@ -1,3 +1,4 @@
+"""Navigation fixtures for use in tests."""
 # -*- coding: utf8 -*-
 import pytest
 from unittestzero import Assert
@@ -13,8 +14,7 @@ due to submenu elements being rendered off the screen.
 
 @pytest.fixture
 def home_page_logged_in(mozwebqa):
-    '''Logs in to the application with default credentials and returns the
-    home page'''
+    """Log in to the appliance and return the home page."""
     maximized(mozwebqa)
     window_size = mozwebqa.selenium.get_window_size()
     Assert.greater_equal(window_size['width'], 1280, _width_errmsg)
