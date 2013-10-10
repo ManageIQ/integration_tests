@@ -1,11 +1,9 @@
-import types
-
 import pytest
 from pytest_mozwebqa import split_class_and_test_names
 from pytest_mozwebqa.selenium_client import Client
 
 from plugin import navigation
-from pages.page import Page
+
 
 def pytest_runtest_setup(item):
     # If we're using the selenium fixture, mark the test as
@@ -14,30 +12,58 @@ def pytest_runtest_setup(item):
     if 'selenium' in item.funcargnames and 'skip_selenium' not in item.keywords:
         item.keywords['skip_selenium'] = True
 
+
 @pytest.fixture
 def selenium(mozwebqa, request):
-    """A fixture giving the user more control over the mozwebqa selenium client"""
+    """A fixture giving the user more control over the mozwebqa selenium client
+
+    Used as a context manager, and takes a fixture (or fixture name) and optional
+    base_url as arguments, allowing navigation to any page on any appliance.
+
+    Example usage:
+
+        with selenium('cnf_about_pg') as pg:
+            pg.do_stuff()
+
+    To connect to another appliance, pass in a new base_url:
+
+        with selenium('cnf_about_pg', 'https://10.11.12.13') as pg:
+            pg.do_stuff()
+
+    """
     # Start to bootstrap the selenium client like mozwebqa does,
     # Doesn't currently support sauce labs, but could be made to do so if needed
     test_id = '.'.join(split_class_and_test_names(request.node.nodeid))
     mozwebqa.selenium_client = Client(test_id, request.session.config.option)
 
-    def cm_wrapper(url, page_or_fixture):
-        return SeleniumContextManager(mozwebqa, url, page_or_fixture)
+    def cm_wrapper(fixture, base_url=None):
+        return SeleniumContextManager(mozwebqa, fixture, base_url)
 
     return cm_wrapper
 
+
 class SeleniumContextManager(object):
-    def __init__(self, testsetup, url, page_or_fixture):
+    def __init__(self, testsetup, fixture, base_url=None):
         self.testsetup = testsetup
-        self.url = url
-        self.page_or_fixture = page_or_fixture
+
+        # If fixture is a string, get the real callable from navigation by name
+        if isinstance(fixture, basestring):
+            self.fixture = getattr(navigation, fixture)
+        # Otherwise, assume this is already a fixture
+        else:
+            self.fixture = fixture
+
+        # Override testsetup base_url for connecting to different appliances in
+        # a test run
+        if base_url:
+            self.testsetup.base_url = base_url
 
     def __enter__(self):
         # More mozwebqa bootstrapping, start the browser, expose some
         # client attrs on testsetup, navigate to the requested url,
         # return a Page instance with the current testsetup
         # This should mimic the behavior of mozwebqa as closely as possible
+
         self.testsetup.selenium_client.start()
         copy_attrs = (
             'selenium',
@@ -47,22 +73,10 @@ class SeleniumContextManager(object):
         for attr in copy_attrs:
             setattr(self.testsetup, attr, getattr(self.testsetup.selenium_client, attr))
 
-        self.testsetup.base_url = self.url
         self.testsetup.selenium.maximize_window()
-        self.testsetup.selenium.get(self.url)
-
-        # Is it a page or a fixture?
-        if type(self.page_or_fixture) == types.FunctionType:
-            # Function! It's a fixture and we should use it...
-            home_page_logged_in = navigation.home_page_logged_in(self.testsetup)
-            # If you passed in the home_page_logged_in fixture, this will be funny.
-            return self.page_or_fixture(home_page_logged_in)
-        else:
-            # Not a function! It's probably a Page class that we should set up
-            return self.page_or_fixture(self.testsetup)
-
+        home_page_logged_in = navigation.home_page_logged_in(self.testsetup)
+        # If you passed in the home_page_logged_in fixture, this will be funny.
+        return self.fixture(home_page_logged_in)
 
     def __exit__(self, *args, **kwargs):
         self.testsetup.selenium_client.stop()
-
-
