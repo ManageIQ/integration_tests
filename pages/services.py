@@ -61,6 +61,9 @@ class Services(Base):
         _submit_button = (By.CSS_SELECTOR,
             "span#buttons_on > a > img[alt='Submit']")
         _time_period_select_locator = (By.ID, "time_period")
+        _requests_link_locator = (
+            By.CSS_SELECTOR,
+            "div#breadcrumbs > a")
 
         @property
         def requests_list(self):
@@ -89,8 +92,12 @@ class Services(Base):
 
         def approve_request(self, item_number):
             '''Approve request'''
-            self.get_element(*self._check_box_approved).click()
-            self.get_element(*self._check_box_denied).click()
+            if not self.get_element(*self._check_box_approved).is_selected():
+                self.get_element(*self._check_box_approved).click()
+            if self.get_element(*self._check_box_approved).is_selected():
+                self.get_element(*self._check_box_denied).click()
+            if not self.get_element(*self._check_box_pending).is_selected():
+                self.get_element(*self._check_box_pending).click()
             self.get_element(*self._reload_button).click()
             self._wait_for_results_refresh()
 
@@ -100,15 +107,21 @@ class Services(Base):
                 self.requests_list.items[
                     item_number].approval_state\
                     .find_element_by_tag_name('img').click()
-                self.selenium.find_element(
-                    *self._approve_this_request_button).click()
-                self._wait_for_results_refresh()
-                self.selenium.find_element(
-                    *self._reason_text_field).send_keys("Test provisioning")
-                self._wait_for_results_refresh()
-                self._wait_for_visible_element(*self._submit_button)
-                self.selenium.find_element(*self._submit_button).click()
-                self._wait_for_results_refresh()
+
+                self._wait_for_visible_element(*self._requests_link_locator)
+                if self.is_element_visible(*self._approve_this_request_button):
+                    self.selenium.find_element(
+                        *self._approve_this_request_button).click()
+                    self._wait_for_results_refresh()
+                    self.selenium.find_element(
+                        *self._reason_text_field).send_keys("Test provisioning")
+                    self._wait_for_results_refresh()
+                    self._wait_for_visible_element(*self._submit_button)
+                    self.selenium.find_element(*self._submit_button).click()
+                    self._wait_for_results_refresh()
+                else:
+                    self.selenium.find_element(
+                        *self._requests_link_locator).click()
             return Services.Requests(self.testsetup)
 
         def wait_for_request_status(self, time_period_text,
@@ -232,7 +245,7 @@ class Services(Base):
     class Catalogs(Base):
         '''Service -- Catalogs'''
         _page_title = 'CloudForms Management Engine: Catalogs'
-           
+
         @property
         def accordion(self):
             '''accordion'''

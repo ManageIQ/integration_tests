@@ -16,6 +16,8 @@ class VirtualMachines(VmCommonComponents):
         "table.buttons_cont tr[title='Request to Provision VMs']")
     _clone_items_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Clone this item']")
+    _publish_items_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title='Publish selected VM to a Template']")
 
     @property
     def quadicon_region(self):
@@ -124,12 +126,21 @@ class VirtualMachines(VmCommonComponents):
 
     def click_on_clone_items(self, vm_name):
         self.find_vm_page(vm_name, None, True)
-        # self.quadicon_region.mark_icon_checkbox(vm_names)
         clone_items_button = self.get_element(
             *self._clone_items_button_locator)
         ActionChains(self.selenium).click(
             self.center_buttons.lifecycle_button).click(
                 clone_items_button).perform()
+        from pages.services_subpages.provision import Provision
+        return Provision(self.testsetup)
+
+    def click_on_publish_items(self, vm_name):
+        self.find_vm_page(vm_name, None, True)
+        publish_items_button = self.get_element(
+            *self._publish_items_button_locator)
+        ActionChains(self.selenium).click(
+            self.center_buttons.lifecycle_button).click(
+                publish_items_button).perform()
         from pages.services_subpages.provision import Provision
         return Provision(self.testsetup)
 
