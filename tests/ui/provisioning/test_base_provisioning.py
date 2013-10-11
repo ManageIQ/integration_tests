@@ -4,14 +4,7 @@ import pytest
 from unittestzero import Assert
 from fixtures.server_roles import default_roles, server_roles
 import db
-
-@pytest.mark.nondestructive
-@pytest.mark.fixtureconf(server_roles=default_roles+('automate',))
-@pytest.mark.usefixtures(
-    "maximized",
-    "setup_infrastructure_providers",
-    "setup_pxe_provision",
-    "mgmt_sys_api_clients")
+from time import sleep
 
 class TestBaseProvisioning:
     def complete_provision_pages_info(self,
@@ -123,19 +116,26 @@ class TestBaseProvisioning:
             soap_client,
             mgmt_sys_api_clients,
             vm_name):
-        '''Stops a VM and removes VM from provider'''
-        for name, guid in db_session.query(
-            db.Vm.name, db.Vm.guid).filter(
-            db.Vm.template==False):
+        '''Stops a VM and removes VM or Template from provider'''
+        for name, guid, power_state, template in db_session.query(
+            db.Vm.name, db.Vm.guid, db.Vm.power_state, db.Vm.template):
             if vm_name in name:
-                soap_client.service.EVMSmartStop(guid)
-                break
+                if power_state=='on':
+                    result = soap_client.service.EVMSmartStop(guid)
+                    Assert.equal(result.result, 'true')
+                    break
+                else:
+                    print "Template found or VM is off"
+                    if template==True:
+                        print "Template to be deleted from provider"
+                        for provider in mgmt_sys_api_clients.values():
+                           # provider.delete_vm(vm_name)
+                           soap_client.service.EVMDeleteVmByName(vm_name)
+                    break
         else:
-            raise Exception("Couldn't find VM")
+            raise Exception("Couldn't find VM or Template")
         for provider in mgmt_sys_api_clients.values():
-            if (vm_name + "/" +
-                    vm_name + ".vmx"
-                    ) in provider.list_vm() or \
+            if (vm_name + "/" + vm_name + ".vmx") in provider.list_vm() or \
                     vm_name in provider.list_vm():
                 provider.delete_vm(vm_name)
-        soap_client.service.EVMDeleteVmByName(vm_name)
+                soap_client.service.EVMDeleteVmByName(vm_name)

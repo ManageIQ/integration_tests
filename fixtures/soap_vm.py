@@ -15,12 +15,15 @@ def setup_soap_create_vm(
         vmware_linux_setup_data):
     '''Sets up first VM for clone/retirement tests'''
     # Check if VM already exists
-    for name, guid in db_session.query(db.Vm.name, db.Vm.guid).filter(
+    for name, guid, power_state in db_session.query(
+            db.Vm.name, db.Vm.guid, db.Vm.power_state).filter(
             db.Vm.template==False):
         if vmware_linux_setup_data['vm_name'] in name:
             # VM exists
             print "VM exits"
-            result = soap_client.service.EVMSmartStop(guid)
+            if power_state=='on':
+                result = soap_client.service.EVMSmartStop(guid)
+                Assert.equal(result.result, 'true')
             break
     else:
         # Find template guid
@@ -60,6 +63,7 @@ def setup_soap_create_vm(
 
         # Poll for VM to be provisioned
         start_time = time()
+        vm_guid = None
         while (time() - start_time < 300): # Give EVM 5 mins to change status
             result = soap_client.service.GetVmProvisionRequest(request_id)
             if result.approval_state == 'approved':
@@ -69,9 +73,8 @@ def setup_soap_create_vm(
                 Assert.equal(result.status, 'Ok')
 
                 if result.request_state == 'finished':
-                    vm_guid = None
                     while not vm_guid:
-                        sleep(5)
+                        sleep(10)
                         result = soap_client.service.GetVmProvisionRequest(
                                 request_id)
                         if result.vms[0]:
@@ -85,4 +88,3 @@ def setup_soap_create_vm(
         Assert.equal(result.guid, vm_guid)
         result = soap_client.service.EVMSmartStop(vm_guid)
         Assert.equal(result.result, 'true')
-

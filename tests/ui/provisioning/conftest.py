@@ -35,9 +35,17 @@ def vmware_linux_setup_data(request, cfme_data):
     param = request.param
     return cfme_data.data["clone_retire_setup"][param]
 
+@pytest.fixture(scope="module", # IGNORE:E1101
+               params=["vmware_publish_to_template"])
+def vmware_publish_to_template(request, cfme_data):
+    '''Returns publish to template data'''
+    param = request.param
+    return cfme_data.data["provisioning"][param]
+
 @pytest.fixture
 def enables_automation_engine(cnf_configuration_pg):
     '''Enables Automate Engine in Configure'''
     conf_pg = cnf_configuration_pg
     conf_pg.click_on_settings()
     return conf_pg.enable_automation_engine()
+
