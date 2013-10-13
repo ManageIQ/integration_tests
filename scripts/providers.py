@@ -27,6 +27,7 @@ sys.path.insert(0, cfme_tests_path)
 
 from utils.providers import provider_factory
 
+
 def main():
     parser = argparse.ArgumentParser(epilog=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -55,7 +56,11 @@ def main():
             raise Exception('Unknown return type for "%s"' % args.action)
     except Exception as e:
         exit = 1
-        sys.stderr.write('%s\n' % e.message)
+        exc_type = type(e).__name__
+        if e.message:
+            sys.stderr.write('%s: %s\n' % (exc_type, e.message))
+        else:
+            sys.stderr.write('%s\n' % exc_type)
 
     return exit
 
