@@ -12,7 +12,7 @@ from tests.ui.provisioning.test_base_provisioning import TestBaseProvisioning
         "setup_infrastructure_providers",
         "setup_pxe_provision",
         "mgmt_sys_api_clients")
-class TestTemplateProvisioning:
+class TestTemplateProvisioning(TestBaseProvisioning):
     def test_linux_template_cancel(
             self,
             provisioning_start_page,
