@@ -63,7 +63,10 @@ class LoginPage(Base):
         # TODO: Remove once bug is fixed
         time.sleep(1.25)
         continue_function()
-        self._wait_for_results_refresh()
+        try:
+            self._wait_for_results_refresh()
+        except:
+            self._wait_for_results_refresh()
         from pages.dashboard import DashboardPage
         return DashboardPage(self.testsetup)
 
