@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
-"""
-SSH in to a running appliance and set up an internal DB
+"""SSH in to a running appliance and set up an internal DB.
 
 An optional region can be specified (default 0), and the script
 will use the first available unpartitioned disk as the data volume
 for postgresql.
+
+Running this script against an already configured appliance is
+unsupported, hilarity may ensue.
 
 """
 
@@ -57,15 +59,6 @@ def main():
     client.run_command('rm %s' % remote_file)
     if status != 0:
         print 'Enabling DB failed with error:'
-        print out
-        sys.exit(1)
-
-    # set up the DB region, reboot
-    print 'Setting up DB with region %s' % args.region
-    status, out = client.run_rake_command(
-        'evm:db:region -- --region %s' % args.region)
-    if status != 0:
-        print 'DB polutation failed with error:'
         print out
         sys.exit(1)
     else:
