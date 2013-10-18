@@ -1,37 +1,48 @@
-cfme_tests
-==============
+CloudForms: Management Engine - Tests
+=====================================
 
-CloudForms: Management Engine Tests
+Setup
+-----
 
-Setup:
+1. Copy credentials.yaml, mozwebqa.cfg, pytest.ini from a working cfme_pages project.
+1. Create a virtualenv to run pytest from
+   - Execute one of the following commands:
+     - `pip install virtualenv`
+     - `easy_install virtualenv`
+     - `yum install python-virtualenv`
+   - Create a virtualenv: `virtualenv <name>`
+   - To activate the virtualenv later: `source <name>/bin/activate`
+1. Set the PYTHONPATH to include cfme_tests *and* cfme_pages. Without this, pages won't be
+   importable, and scripts won't work. Edit your virtualenv's `bin/activate` script from the
+   previous step. At the end of the file, export a PYTHONPATH variable with paths to the two
+   repositories by adding this line (altered to match your repository locations):
+   - `export PYTHONPATH='/path/to/cfme_tests:/path/to/cfme_pages'`
+1. Ensure the following devel packages are installed (for building python dependencies):
+   - gcc
+   - postgresql-devel
+   - libxml2-devel
+   - libxslt-devel
+   - `sudo yum install gcc postgresql-devel libxml2-devel libxslt-devel`
+1. Install python dependencies:
+   - `pip install -Ur /path/to/cfme_tests/requirements.txt`
 
-1. Copy credentials.yaml.template, mozwebqa.cfg.template, pytest.ini.template from cfme_pages project, and remove the .template extension.
-2. Edit to reflect your environment (these should NOT be checked in to source control)
-        *In credentials.yaml:
-                *username: Your username, used to log into cfme.
-                *password: Your password, used to log into cfme.
-        *In mozwebqa.cfg:
-                *baseurl: URL, where to find running version of cfme
-3. Create a virtualenv to run pytest from
-   * easy_install virtualenv (yum install python-virtualenv also works for those preferring rpm)
-   * virtualenv <name>
-   * source <name>/bin/activate
-4. sudo yum install gcc postgresql-devel libxml2-devel libxslt-devel
-5. pip install -Ur /path/to/cfme_tests/requirements.txt
-6. When tests are run in cfme_tests, the system will look for the cfme_pages repo in 4 locations. If they are not there, PYTHONPATH must be set.
-    1. $(cwd)/cfme_pages
-    2. $(cwd)/../cfme_pages
-    3. ${HOME}/workspace/cfme_pages
-    4. ${HOME}/cfme_pages
-7. py.test --driver=firefox --credentials=credentials.yaml --untrusted
-8. Some of the items in the previous step can be put into your environment, and into pytest.ini so you can then just run py.test. That exercise is left for the reader.
+1. Verify that the tests run.
+   - `py.test --driver=firefox --credentials=credentials.yaml --untrusted`
 
-To setup up for chrome:
+Some of the items in the final step can be put into your environment, and into pytest.ini
+so you can then run py.test without arguments. That exercise is left for the reader.
 
-1. Download from http://code.google.com/p/chromedriver/downloads/list. Use the latest available for your arch. 
-2. Unzip that file to somewhere on your path.
-3. Substitue --driver=firefox with --driver=chrome
+Using Chrome
+------------
 
-To use the Database fixture:
+1. Download from http://code.google.com/p/chromedriver/downloads/list.
+   Use the latest available for your architecture.
+1. Extract the `chromedriver` exectuable from that archive into your virtualenv's `bin`
+   directory (alongside `bin/activate`)
+1. Substitue the py.test `--driver=firefox` parameter with `--driver=chrome` 
 
-1. Add --cfmedburl=postgres://[username]:[password]@[appliance ip]:5432/vmdb_production to your command line.
+More Information
+----------------
+
+Head over to the [project wiki](https://github.com/RedHatQE/cfme_tests/wiki) for more
+information, including developer guidelines and some tips for working with selenium.
