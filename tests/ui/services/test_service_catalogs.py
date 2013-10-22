@@ -27,7 +27,8 @@ def create_service_dialog(
             .click_on_service_dialog_accordion().add_new_service_dialog()
     service_dialog_name = "auto_dialog_" + random_string
     descr = "descr-" + random_string
-    new_dialog_pg.create_service_dialog(service_dialog_name, descr)
+    new_dialog_pg.create_service_dialog\
+       (random_string, service_dialog_name, descr, "service_name")
     return service_dialog_name
 
 @pytest.fixture()
@@ -69,10 +70,10 @@ def create_catalog_item(
             vm_name)
     envt_pg = req_pg.click_on_environment_tab()
     try:
-         new_pg = envt_pg.fill_environment_tab(
-                unicode(provisioning_data["host"]),
-                unicode(provisioning_data["datastore"]))
-         new_pg.save_catalog_item()
+        new_pg = envt_pg.fill_environment_tab(
+               unicode(provisioning_data["host"]),
+               unicode(provisioning_data["datastore"]))
+        new_pg.save_catalog_item()
     except:
         Assert.fail("Unable to create catalog item, " + 
                 "check for duplicate infra providers")    
@@ -82,11 +83,12 @@ def create_catalog_item(
 
 @pytest.fixture()
 def create_service_name_script(automate_explorer_pg):
+    '''Fixture to specify service name change script'''
     ae_namespace_pg = automate_explorer_pg.click_on_class_access_node(\
         "Service Provision State Machine (ServiceProvision_Template)")
     ae_namespace_pg.select_instance_item("default")
     inst_pg = ae_namespace_pg.click_on_edit_this_instance()
-    inst_pg.fill_instance_field_row_info(1,\
+    inst_pg.fill_instance_field_row_info(1, \
             "/Sample/Methods/servicename_sample")
     inst_pg.click_on_save_button()
 
@@ -95,6 +97,7 @@ def create_generic_catalog_item(random_string,
         create_service_dialog, 
         svc_catalogs_pg,
         create_catalog ):
+    '''Fixture to create generic item'''
     service_dialog_name = create_service_dialog
     catalog_name = create_catalog
     new_cat_item_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
@@ -107,7 +110,7 @@ def create_generic_catalog_item(random_string,
             catalog_name,
             service_dialog_name)
     save_pg = entry_pg.fill_provisioning_entry_point(\
-    "Service Provision State Machine (ServiceProvision_Template)","default")
+    "Service Provision State Machine (ServiceProvision_Template)")
     save_pg.save_catalog_item()
     return catalog_item_name, catalog_name
 
@@ -141,18 +144,18 @@ def check_service_name(
         create_service_name_script,
         create_generic_catalog_item, 
         svc_catalogs_pg):
-        '''test automate script to change service name'''
-        catalog_item_name,catalog_name = create_generic_catalog_item
-        table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
-                .select_catalog_in_service_tree(catalog_name)
-        service_name = "changed_name_"+random_string
-        order_pg = table_pg.select_catalog_item(catalog_item_name, service_name)
-        Assert.equal(order_pg.flash.message,
-            "Order Request was Submitted")
-        order_pg.approve_request(1)
-        order_pg.wait_for_request_status("Last 24 Hours",
-            "Finished", 12)
-        return service_name
+    '''test automate script to change service name'''
+    catalog_item_name, catalog_name = create_generic_catalog_item
+    table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
+        .select_catalog_in_service_tree(catalog_name)
+    service_name = "changed_name_"+random_string
+    order_pg = table_pg.select_catalog_item(catalog_item_name, service_name)
+    Assert.equal(order_pg.flash.message,
+        "Order Request was Submitted")
+    order_pg.approve_request(1)
+    order_pg.wait_for_request_status("Last 24 Hours",
+        "Finished", 12)
+    return service_name
    
 
         
@@ -187,10 +190,8 @@ class TestServiceCatalogs:
             time.sleep(60)
             count += 60
         if count > 600:
-            # We are going to need to see how this goes, I have seen some requests 
-            #   take 20 minutes to approve.
-            #
-            # TODO: We probably should be watching the request status vs time counting
+            # TODO: We probably should be watching the request 
+            # status vs time counting
             Assert.fail("vm never provisioned after 10 minutes")
         Assert.true(mgmt_sys_api_clients[provider_key].is_vm_stopped(vm_name),
                 "vm never stopped")
@@ -200,8 +201,8 @@ class TestServiceCatalogs:
             vm_stopped = mgmt_sys_api_clients[provider_key]\
                     .is_vm_stopped(vm_name)
             if vm_stopped:
-                    mgmt_sys_api_clients[provider_key].delete_vm(vm_name)
-                    break
+                mgmt_sys_api_clients[provider_key].delete_vm(vm_name)
+                break
             time.sleep(60)
             count += 60
             
@@ -221,7 +222,8 @@ class TestServiceCatalogs:
         Assert.true(svc_catalogs_pg.is_the_current_page)
         table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
                 .select_catalog_in_service_tree(cat_name)
-        order_pg = table_pg.select_catalog_item(cat_item_name , "service_"+cat_item_name)
+        order_pg = table_pg.select_catalog_item(cat_item_name , 
+                    "service_"+cat_item_name)
         Assert.equal(order_pg.flash.message, "Order Request was Submitted")
         order_pg.approve_request(1)
         order_pg.wait_for_request_status("Last 24 Hours",
@@ -233,7 +235,6 @@ class TestServiceCatalogs:
     def test_order_service_catalog_bundle(
             self,
             mgmt_sys_api_clients,
-            cfme_data,
             create_catalog_bundle,
             svc_catalogs_pg):
         '''Order Catalog Bundle'''
@@ -245,7 +246,8 @@ class TestServiceCatalogs:
         Assert.true(svc_catalogs_pg.is_the_current_page)
         table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
             .select_catalog_in_service_tree(cat_name)
-        order_pg = table_pg.select_catalog_item(cat_bundle_name, "service_"+cat_bundle_name)
+        order_pg = table_pg.select_catalog_item(cat_bundle_name, 
+                    "service_"+cat_bundle_name)
         Assert.equal(order_pg.flash.message,"Order Request was Submitted")
         order_pg.approve_request(1)
         order_pg.wait_for_request_status("Last 24 Hours",
@@ -264,7 +266,7 @@ class TestServiceCatalogs:
         Assert.true(svc_catalogs_pg.is_the_current_page)
         delete_pg = svc_catalogs_pg.click_on_catalogs_accordion().\
             click_on_catalog(cat_name)
-        show_cat_pg = delete_pg.delete_catalog()
+        delete_pg.delete_catalog()
         Assert.false(svc_catalogs_pg.click_on_service_catalogs_accordion().\
             is_catalog_present(cat_name),"service catalog not found")
 
@@ -274,12 +276,12 @@ class TestServiceCatalogs:
             svc_catalogs_pg):
         '''Delete Catalog should delete service'''
         mylist = create_catalog_item
-        cat_name = mylist[1]
+        #cat_name = mylist[1]
         cat_item = mylist[2]
         Assert.true(svc_catalogs_pg.is_the_current_page)
         delete_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
                     click_on_catalog_item(cat_item)
-        show_cat_pg = delete_pg.delete_catalog_item()
+        delete_pg.delete_catalog_item()
         Assert.false(svc_catalogs_pg.click_on_service_catalogs_accordion().\
         is_catalog_item_present(cat_item),"service catalog item not found")
 
@@ -293,7 +295,7 @@ class TestServiceCatalogs:
         cat_name = mylist[0]
         cat_bundle_name = mylist[1]
         serv_dialog_name = mylist[2]
-        '''second catalog bundle'''
+        # second catalog bundle
         new_bundle_pg = svc_catalogs_pg.click_on_catalog_item_accordion()\
             .add_new_catalog_bundle()
         sec_catalog_bundle = "sec_auto_bundle" + random_string
@@ -301,11 +303,11 @@ class TestServiceCatalogs:
             "bundle_desc_" + random_string,
             cat_name, serv_dialog_name)
         res_pg = new_bundle_pg.click_on_resources_tab()
-        '''second catalog bundle calling first'''
+        # second catalog bundle calling first
         res_pg.select_catalog_item_and_add(cat_bundle_name)
         Assert.true(res_pg.flash.message.startswith(
             'Catalog Bundle "%s" was added' % sec_catalog_bundle))
-        '''Edit first catalog bundle to call second'''
+        # Edit first catalog bundle to call second
         edit_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
                     click_on_catalog_item(cat_bundle_name)
         reso_pg = edit_pg.edit_catalog_bundle()

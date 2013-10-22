@@ -16,10 +16,11 @@ class TestServiceDialog:
         dialog_name = "auto_dialog_" + random
         descr = "descr-" + random
         new_dialog_pg = page\
-                .click_on_service_dialog_accordion().add_new_service_dialog()
-        new_dialog_pg.create_service_dialog(dialog_name, descr)
+            .click_on_service_dialog_accordion().add_new_service_dialog()
+        new_dialog_pg.create_service_dialog(random, 
+            dialog_name, descr, "element_name")
         Assert.true(new_dialog_pg.flash.message.startswith(
-                'Dialog "%s" was added' % dialog_name))
+            'Dialog "%s" was added' % dialog_name))
         return page, dialog_name
     
     def test_create_and_edit_service_dialog(
@@ -27,7 +28,8 @@ class TestServiceDialog:
             automate_customization_pg,
             random_string):
         '''Create service dialog , select dialog and edit'''
-        dialog_page, name = self._create_dialog(automate_customization_pg, random_string)
+        dialog_page, name = self._create_dialog(\
+            automate_customization_pg, random_string)
         edit_pg = dialog_page.click_on_service_dialog_accordion().\
              click_on_service_dialog(name)
         edited_dialog = name+"_edit"
@@ -35,20 +37,19 @@ class TestServiceDialog:
         Assert.true(show_sd_pg.flash.message.startswith(
                 'Dialog "%s" was saved' % edited_dialog))
         
-        
     def test_create_and_delete_service_dialog(
             self,
             automate_customization_pg,
             random_string):
-         '''Create service dialog , select dialog and delete'''
-         dialog_page, name = self._create_dialog(automate_customization_pg, random_string)
-         dialog_del_pg = dialog_page.click_on_service_dialog_accordion().\
-             click_on_service_dialog(name)
-         del_pg = dialog_del_pg.delete_service_dialog()
-         Assert.equal(del_pg.flash.message,
-            'Dialog "%s": Delete successful' % name)
+        '''Create service dialog , select dialog and delete'''
+        dialog_page, name = self._create_dialog(\
+            automate_customization_pg, random_string)
+        dialog_del_pg = dialog_page.click_on_service_dialog_accordion().\
+            click_on_service_dialog(name)
+        del_pg = dialog_del_pg.delete_service_dialog()
+        Assert.equal(del_pg.flash.message,
+           'Dialog "%s": Delete successful' % name)
         
-         
     def test_create_blank_label(
             self,
             automate_customization_pg,
