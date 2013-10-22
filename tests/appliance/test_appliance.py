@@ -1,10 +1,12 @@
 ''' Tests around the appliance '''
 
 # -*- coding: utf-8 -*-
+import re
 
 import pytest
-import re
+
 from unittestzero import Assert
+import db
 
 pytestmark = [
     pytest.mark.nondestructive,
@@ -94,24 +96,28 @@ def test_cpu_total(ssh_client):
     ])
 def test_certificates_present(ssh_client, filename, given_md5):
     """ Test whether the required product certificates are present.
-    
+
     This test is parametrized with the given file and its MD5 hash.
     If the given MD5 hash is ``None``, it won't be checked.
 
     From wiki:
     `Ships with /etc/pki/product/<id>.pem where RHEL is "69" and CF is "167"`
     """
-    file_exists = int(ssh_client.run_command("ls '%s'" % filename)[0]) == 0
-    assert file_exists, "File %s does not exist!" % filename
+    file_exists = bool(ssh_client.run_command("ls '%s'" % filename)[0]) == 0
+    Assert.true(file_exists, "File %s does not exist!" % filename)
     if given_md5:
         md5_of_file = ssh_client.run_command("md5sum '%s'" % filename)[1].strip()
         # Format `abcdef0123456789<whitespace>filename
         md5_of_file = re.split(r"\s+", md5_of_file, 1)[0]
-        assert given_md5 == md5_of_file
+        Assert.equal(given_md5, md5_of_file)
 
 
-# TODO
-'''
-    checks around postgres listening externally, etc
-        need to wait for configurable internal db to drop first
-'''
+def test_db_connection(db_session):
+    """Test that the pgsql db is listening externally
+
+    This looks for a row in the miq_databases table, which should always exist
+    on an appliance with a working database and UI
+
+    """
+    databases = db_session.query(db.MiqDatabase).all()
+    Assert.greater(len(databases), 0)
