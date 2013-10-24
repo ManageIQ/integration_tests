@@ -137,9 +137,6 @@ server_roles:
         - smartproxy
         - smartstate
         - user_interface
-listener:
-    url: "http://localhost"
-    port: 8080
 group_roles:
     evmgroup-administrator:
         menus:
@@ -494,3 +491,8 @@ clone_retire_setup:
         owner_first_name: testFirst
         owner_last_name: testLast
         owner_email: test@company.com
+event_testing:
+    ip_echo:
+        host: "somehost"
+        port: 8080
+
