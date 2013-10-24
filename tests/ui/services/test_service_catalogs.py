@@ -7,7 +7,6 @@ Created on July 25th, 2013
 import pytest
 import time
 from unittestzero import Assert
-from fixtures.server_roles import default_roles
 
 @pytest.fixture(scope="module", # IGNORE:E1101
                 params=["linux_template_workflow"])
@@ -110,7 +109,7 @@ def create_catalog_bundle(
         "setup_infrastructure_providers",
         "create_catalog_item",
         "mgmt_sys_api_clients")
-@pytest.mark.fixtureconf(server_roles=default_roles+('automate',))
+@pytest.mark.fixtureconf(server_roles="+automate")
 class TestServiceCatalogs:
     '''Services test cases'''
     
