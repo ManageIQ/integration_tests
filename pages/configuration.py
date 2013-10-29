@@ -10,6 +10,7 @@ from pages.base import Base
 from pages.configuration_subpages.access_control import AccessControl
 from pages.configuration_subpages.settings import Settings
 from pages.configuration_subpages.tasks_tabs import Tasks
+from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
@@ -92,3 +93,52 @@ class Configuration(Base):
 
     class About(Base):
         _page_title = "CloudForms Management Engine: About"
+        _session_info = (
+            By.CSS_SELECTOR,
+            "dl.col2 > dd > fieldset > table.style1 > tbody")
+        _docs_info = (
+            By.XPATH,
+            '//dd[contains(.//p[@class="legend"],"Assistance")]')
+
+        def key_search(self, search):
+            for item in self.session_info_list.items:
+                if search in item.key:
+                    return item.value
+            return None
+
+        @property
+        def session_info_list(self):
+            return ListRegion(
+                self.testsetup,
+                self.get_element(*self._session_info),
+                    self.AboutItem)
+
+        @property
+        def version_number(self):
+            tupled_version = tuple(self.key_search('Version').split("."))
+            return tupled_version
+
+        @property
+        def docs_links(self):
+            docs_info = self.get_element(*self._docs_info)
+            page_links = docs_info.find_elements_by_tag_name('a')
+            links = []
+            for page_link in page_links:
+                page_url = page_link.get_attribute('href')
+                if page_url not in links:
+                    links.append(page_url)
+            return links
+
+        class AboutItem(ListItem):
+            _columns = ["Key", "Value"]
+            _rows = ["Server Name", "Version", "User Name",
+                        "User Role", "Browser", "Browser Version",
+                        "Browser OS"]
+
+            @property
+            def key(self):
+                return self._item_data[0].text
+
+            @property
+            def value(self):
+                return self._item_data[1].text
