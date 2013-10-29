@@ -1,3 +1,5 @@
+basic_info:
+    app_version: 5.2.0
 management_systems:
     vsphere5:
         name: vsphere 5
