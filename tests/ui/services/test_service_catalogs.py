@@ -71,6 +71,9 @@ def create_catalog_item(
     envt_pg = req_pg.click_on_environment_tab()
     try:
         new_pg = envt_pg.fill_environment_tab(
+               unicode(provisioning_data["datacenter"]),
+               unicode(provisioning_data["cluster"]),
+               unicode(provisioning_data["resource_pool"]),
                unicode(provisioning_data["host"]),
                unicode(provisioning_data["datastore"]))
         new_pg.save_catalog_item()
