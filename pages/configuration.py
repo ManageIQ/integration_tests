@@ -9,6 +9,7 @@ Created on Mar 5, 2013
 from pages.base import Base
 from pages.configuration_subpages.access_control import AccessControl
 from pages.configuration_subpages.settings import Settings
+from pages.configuration_subpages.diagnostics import Diagnostics
 from pages.configuration_subpages.tasks_tabs import Tasks
 from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.common.by import By
@@ -61,6 +62,11 @@ class Configuration(Base):
             self.accordion.accordion_by_name('Settings').click()
             self._wait_for_results_refresh()
             return Settings(self.testsetup)
+
+        def click_on_diagnostics(self):
+            self.accordion.accordion_by_name('Diagnostics').click()
+            self._wait_for_results_refresh()
+            return Diagnostics(self.testsetup)
 
         def enable_automation_engine(self):
             '''Enables Automation Engine'''
