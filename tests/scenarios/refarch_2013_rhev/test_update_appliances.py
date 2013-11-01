@@ -12,10 +12,19 @@ def test_edit_registration_rhn(cnf_configuration_pg, cfme_data):
     updates_pg = cnf_configuration_pg.click_on_redhat_updates()
     update_method = cfme_data.data['redhat_updates']['registration_method']
     updates_data = cfme_data.data['redhat_updates'][update_method]
-    creds_data = cnf_configuration_pg.testsetup.credentials[
+    creds_data = updates_pg.testsetup.credentials[
         updates_data["credentials"]]
-    registered_pg = updates_pg.edit_registration_and_save(
-        updates_data["url"], creds_data, update_method, default=True)
+
+    #passw = creds_data["password"]
+    #Assert.true(1==2, passw)
+
+    if "organization" in updates_data:
+        registered_pg = updates_pg.edit_registration_and_save(
+            updates_data["url"], creds_data, update_method,
+            organization=updates_data["organization"])
+    else:
+        registered_pg = updates_pg.edit_registration_and_save(
+            updates_data["url"], creds_data, update_method, default=True)
     flash_message = "Customer Information successfully saved"
     Assert.equal(registered_pg.flash.message, flash_message,
         registered_pg.flash.message)
@@ -24,13 +33,15 @@ def test_edit_registration_rhn(cnf_configuration_pg, cfme_data):
 def test_register_appliances(cnf_configuration_pg, cfme_data):
     updates_pg = cnf_configuration_pg.click_on_redhat_updates()
     appliances_to_update = cfme_data.data['redhat_updates']['appliances_to_update']
-    updates_pg.register_appliances(appliances_to_update)
+    #updates_pg.register_appliances(appliances_to_update)
+    updates_pg.register_appliances()
     flash_message = "Registration has been initiated for the selected Servers"
     Assert.equal(updates_pg.flash.message, flash_message, updates_pg.flash.message)
     waiting_period = SECONDS_TO_WAIT_FOR_REGISTRATION/5
     for count in range(0, waiting_period):
         time.sleep(5)
-        if updates_pg.is_registered(appliances_to_update):
+        #if updates_pg.is_registered(appliances_to_update):
+        if updates_pg.is_registered():
             break
         updates_pg.refresh_list()
     if count == (waiting_period - 1):
