@@ -68,7 +68,18 @@ class LoginPage(Base):
         except:
             self._wait_for_results_refresh()
         from pages.dashboard import DashboardPage
-        return DashboardPage(self.testsetup)
+        dashboard = DashboardPage(self.testsetup)
+        try:
+            dashboard.is_the_current_page
+        except AssertionError:
+            # We need to go to the dashboard
+            from re import sub
+            # Dirty hacking (>_<)
+            # But going throught the clicking seemed more dirty
+            new_url = sub(r"^(https?://[^/]+).*?$", "\\1/dashboard", self.selenium.current_url)
+            self.selenium.get(new_url)
+            dashboard = DashboardPage(self.testsetup)
+        return dashboard
 
     def __set_login_fields(self, user='default'):
         credentials = self.testsetup.credentials[user]
