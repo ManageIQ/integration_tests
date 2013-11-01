@@ -25,3 +25,11 @@ class ServerDiagnostics(Base):
         self.tabbutton_region.tabbutton_by_name('Workers').click()
         self._wait_for_results_refresh()
         return WorkerDiagnosticsTab(self.testsetup)
+
+    def click_on_collect_logs_tab(self):
+        from pages.configuration_subpages.diagnostics_subpages\
+            .server_diagnostics_subpages.collect_logs_tab\
+            import CollectLogsTab
+        self.tabbutton_region.tabbutton_by_name('Collect Logs').click()
+        self._wait_for_results_refresh()
+        return CollectLogsTab(self.testsetup)
