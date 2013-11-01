@@ -125,6 +125,10 @@ class Configuration(Base):
             return tupled_version
 
         @property
+        def server_name(self):
+            return self.key_search('Server Name')
+
+        @property
         def docs_links(self):
             docs_info = self.get_element(*self._docs_info)
             page_links = docs_info.find_elements_by_tag_name('a')

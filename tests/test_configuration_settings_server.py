@@ -5,8 +5,20 @@
 import pytest
 from unittestzero import Assert
 
+
 @pytest.mark.nondestructive
 class TestConfigurationSettingsServer:
+    def test_edit_server_name(self, cnf_configuration_pg):
+        Assert.true(cnf_configuration_pg.is_the_current_page)
+        server_pg = cnf_configuration_pg.click_on_settings()\
+            .click_on_current_server_tree_node().click_on_server_tab()
+        # create new name by appending to current
+        temp_server_name = server_pg.get_server_name() + "-CFME"
+        server_pg.set_server_name(temp_server_name)
+        Assert.equal(server_pg.get_server_name(),
+                     temp_server_name,
+                     "Temp server name should match retrieved name")
+
     def test_edit_server_settings(self, cnf_configuration_pg):
         Assert.true(cnf_configuration_pg.is_the_current_page)
         server_pg = cnf_configuration_pg.click_on_settings()\

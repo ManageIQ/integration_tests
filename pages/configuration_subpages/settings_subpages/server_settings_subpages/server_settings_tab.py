@@ -24,6 +24,7 @@ class ServerSettingsTab(Base):
     _password_locator = (By.CSS_SELECTOR, "input#smtp_password")
     _from_email_address_locator = (By.CSS_SELECTOR, "input#smtp_from")
     _test_email_address_locator = (By.CSS_SELECTOR, "input#smtp_test_to")
+    _server_name_locator = (By.CSS_SELECTOR, "input#server_name")
 
 
     @property
@@ -96,6 +97,14 @@ class ServerSettingsTab(Base):
         self.fill_field_by_locator(from_email, *self._from_email_address_locator)
         #email - test
         self.fill_field_by_locator(test_email, *self._test_email_address_locator)
+
+    def get_server_name(self):
+        server_name_input = self.selenium.find_element(
+            *self._server_name_locator)
+        return server_name_input.get_attribute('value')
+
+    def set_server_name(self, server_name):
+        self.fill_field_by_locator(server_name, *self._server_name_locator)
 
     class ServerRole:
         def __init__(self, element):
