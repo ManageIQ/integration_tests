@@ -116,8 +116,7 @@ class Configuration(Base):
         def session_info_list(self):
             return ListRegion(
                 self.testsetup,
-                self.get_element(*self._session_info),
-                    self.AboutItem)
+                self.get_element(*self._session_info), self.AboutItem)
 
         @property
         def version_number(self):
@@ -150,15 +149,14 @@ class Configuration(Base):
                     "icon_title": icon_title,
                     "icon_alt": icon_alt,
                     "text_url": text_url,
-                    "text_title": text_title,
-                    })
+                    "text_title": text_title})
             return links
 
         class AboutItem(ListItem):
             _columns = ["Key", "Value"]
             _rows = ["Server Name", "Version", "User Name",
-                        "User Role", "Browser", "Browser Version",
-                        "Browser OS"]
+                     "User Role", "Browser", "Browser Version",
+                     "Browser OS"]
 
             @property
             def key(self):
