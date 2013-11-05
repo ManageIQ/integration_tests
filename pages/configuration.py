@@ -133,10 +133,25 @@ class Configuration(Base):
             docs_info = self.get_element(*self._docs_info)
             page_links = docs_info.find_elements_by_tag_name('a')
             links = []
-            for page_link in page_links:
-                page_url = page_link.get_attribute('href')
-                if page_url not in links:
-                    links.append(page_url)
+            # assume we have an icon, followed by text link
+            # as not in a table and don't want to use sibling find
+            # this is quickest way for now
+            num_docs = len(page_links) / 2
+            for index in range(num_docs):
+                n_index = index * 2
+                icon_url = page_links[n_index].get_attribute('href')
+                icon_img = page_links[n_index].find_elements_by_tag_name('img')
+                icon_alt = icon_img[0].get_attribute('alt')
+                icon_title = page_links[n_index].get_attribute('title')
+                text_url = page_links[n_index + 1].get_attribute('href')
+                text_title = page_links[n_index + 1].text
+                links.append({
+                    "icon_url": icon_url,
+                    "icon_title": icon_title,
+                    "icon_alt": icon_alt,
+                    "text_url": text_url,
+                    "text_title": text_title,
+                    })
             return links
 
         class AboutItem(ListItem):
