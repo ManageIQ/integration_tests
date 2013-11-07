@@ -20,7 +20,6 @@ lib64
 
 # Installer logs
 pip-log.txt
-chromedriver.log
 
 # Unit test / coverage reports
 .coverage
@@ -41,7 +40,3 @@ pytest.ini
 .project
 .pydevproject
 .settings
-pytest.ini
-mozwebqa.cfg
-credentials.yaml
-vm.properties
