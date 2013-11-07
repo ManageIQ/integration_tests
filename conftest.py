@@ -11,9 +11,6 @@ import pytest
 # From cfme_tests
 import fixtures, markers
 
-# From cfme_pages
-import plugin
-
 def _pytest_plugins_generator(*extension_pkgs):
     # Finds all submodules in pytest extension packages and loads them
     for extension_pkg in extension_pkgs:
@@ -23,6 +20,6 @@ def _pytest_plugins_generator(*extension_pkgs):
             if not is_package:
                 yield modname
 
-pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers, plugin))
+pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers))
 
 collect_ignore = ["tests/scenarios"]

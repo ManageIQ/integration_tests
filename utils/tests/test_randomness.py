@@ -3,7 +3,7 @@ import random
 import pytest
 from unittestzero import Assert
 
-from common import randomness
+from utils import randomness
 
 pytestmark = [
     pytest.mark.nondestructive,

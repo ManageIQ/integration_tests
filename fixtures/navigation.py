@@ -3,7 +3,7 @@
 import pytest
 from unittestzero import Assert
 
-from plugin.maximized import maximized
+from maximized import maximized
 
 _width_errmsg = '''The minimum supported width of CFME is 1280 pixels
 

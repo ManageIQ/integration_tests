@@ -15,10 +15,10 @@ import argparse
 import os
 import sys
 
-from common.randomness import generate_random_string
-from common.ssh import SSHClient
 from utils import datafile
 from utils.credentials import load_credentials
+from utils.randomness import generate_random_string
+from utils.ssh import SSHClient
 
 
 def main():

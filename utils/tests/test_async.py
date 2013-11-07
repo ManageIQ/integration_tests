@@ -3,7 +3,7 @@ import string
 import pytest
 from unittestzero import Assert
 
-from common.async import ResultsPool
+from utils.async import ResultsPool
 
 def async_task(arg1, arg2):
     # Task to reverse argument. Asynchronously...

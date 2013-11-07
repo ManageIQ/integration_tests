@@ -1,7 +1,7 @@
 import pytest
 from unittestzero import Assert
 
-from common.randomness import generate_random_string
+from utils.randomness import generate_random_string
 
 pytestmark = [
     pytest.mark.nondestructive,

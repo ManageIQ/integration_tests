@@ -2,7 +2,7 @@
 import sys
 import argparse
 import logging
-from common.mgmt_system import VMWareSystem
+from utils.mgmt_system import VMWareSystem
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description='Process some integers.')

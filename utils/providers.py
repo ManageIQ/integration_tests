@@ -1,6 +1,6 @@
-from common import mgmt_system
 from cfme_data import load_cfme_data
 from credentials import load_credentials
+from utils import mgmt_system
 
 
 # infra and cloud provider type maps, useful for type checking

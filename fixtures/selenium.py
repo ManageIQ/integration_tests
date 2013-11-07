@@ -2,7 +2,7 @@ import pytest
 from pytest_mozwebqa import split_class_and_test_names
 from pytest_mozwebqa.selenium_client import Client
 
-from plugin import navigation
+import navigation
 
 
 def pytest_runtest_setup(item):

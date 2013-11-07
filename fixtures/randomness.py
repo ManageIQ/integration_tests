@@ -1,6 +1,6 @@
 import pytest
 
-from common import randomness
+from utils import randomness
 
 @pytest.fixture  # IGNORE:E1101
 def random_uuid_as_string():
