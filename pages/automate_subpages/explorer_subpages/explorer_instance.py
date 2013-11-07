@@ -84,8 +84,10 @@ class ExplorerInstance(Base):
                                      param_on_error=None,
                                      param_collect=None):
         param_items = self.param_list.items
+        if(self.param_row_one_value.get_attribute("value") == param_value):
+            param_value = param_value+" "
         self.fill_field_element_clears_text(param_value, \
-            param_items[row_number].value.find_element_by_id('cls_inst_value_' + str(row_number)))
+              param_items[row_number].value.find_element_by_id('cls_inst_value_' + str(row_number)))
         self._wait_for_results_refresh()
         return ExplorerInstance(self.testsetup)
 

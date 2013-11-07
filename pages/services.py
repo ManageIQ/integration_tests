@@ -35,6 +35,27 @@ class Services(Base):
     class MyServices(Base, PaginatorMixin):
 
         _page_title = 'CloudForms Management Engine: Services'
+        
+        @property
+        def accordion(self):
+            '''accordion'''
+            from pages.regions.accordion import Accordion
+            from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
+            return Accordion(self.testsetup, LegacyTreeAccordionItem)
+
+        def select_service_in_tree(self , service_name):
+            '''Select service'''
+            self.accordion.current_content.find_node_by_name(service_name).click()
+            self._wait_for_results_refresh()
+            return self
+        
+        def is_service_present(self, service_name):
+            '''Select service'''
+            if(self.accordion.current_content.find_node_by_name(service_name)):
+                self._wait_for_results_refresh()
+                return True
+            else:
+                return False
 
     class Requests(Base, PaginatorMixin):
         '''Requests page'''

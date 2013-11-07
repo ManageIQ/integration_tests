@@ -3,6 +3,7 @@
 @author: Shveta
 '''
 from pages.base import Base
+from pages.page import Page
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.services_subpages.provision import Provision
@@ -27,11 +28,14 @@ class CatalogItems(Base):
         By.CSS_SELECTOR, 
         "table.buttons_cont tr[title='Add a New Catalog Bundle']")
     _del_catalog_item_locator = (
-            By.CSS_SELECTOR, 
-            "table.buttons_cont tr[title='Remove this Item from the VMDB']")
+        By.CSS_SELECTOR, 
+        "table.buttons_cont tr[title='Remove this Item from the VMDB']")
     _edit_catalog_bundle_locator = (
-            By.CSS_SELECTOR, 
-            "table.buttons_cont tr[title='Edit this Item']")
+        By.CSS_SELECTOR, 
+        "table.buttons_cont tr[title='Edit this Item']")
+    _add_button_locator = (
+        By.CSS_SELECTOR,
+        "div#buttons_on > ul#form_buttons > li > img[alt='Add']")
     
     @property
     def accordion(self):
@@ -78,7 +82,8 @@ class CatalogItems(Base):
     def delete_catalog_item(self):
         '''Delete catalog'''
         ActionChains(self.selenium).click(
-            self.configuration_button).click(self.del_catalog_item_btn).perform()
+            self.configuration_button).\
+            click(self.del_catalog_item_btn).perform()
         self.handle_popup()
         self._wait_for_results_refresh()
         return CatalogItems(self.testsetup)
@@ -86,12 +91,14 @@ class CatalogItems(Base):
     @property
     def edit_catalog_bundle_btn(self):
         '''Delete catalog button'''
-        return self.selenium.find_element(*self._edit_catalog_bundle_locator)
+        return self.selenium.find_element\
+            (*self._edit_catalog_bundle_locator)
     
     def edit_catalog_bundle(self):
         '''Delete catalog'''
         ActionChains(self.selenium).click(
-            self.configuration_button).click(self.edit_catalog_bundle_btn).perform()
+            self.configuration_button).click\
+            (self.edit_catalog_bundle_btn).perform()
         self._wait_for_results_refresh()
         return CatalogItems.NewCatalogBundle(self.testsetup)
     
@@ -100,6 +107,13 @@ class CatalogItems(Base):
         self.accordion.current_content.find_node_by_name(_catalog_item).click()
         self._wait_for_results_refresh()
         return CatalogItems(self.testsetup)
+    
+    def save_catalog_item(self):
+        '''Save'''
+        self.selenium.find_element(*self._add_button_locator).click()
+        self._wait_for_results_refresh()
+        time.sleep(5)
+        return self
     
     class NewCatalogItem(Provision):
         '''New Catalog Item page'''
@@ -148,39 +162,65 @@ class CatalogItems(Base):
             self._wait_for_results_refresh()
             self.select_dropdown(dialog, *self._select_dialog)
             self._wait_for_results_refresh()
+            return CatalogItems.ProvisionEntryPoint(self.testsetup)
             
         def fill_catalog_tab(self, template_name, _vm_name):
             '''Provisioning form - catalog tab'''
-            catalog_item = None
+            #catalog_item = None
             for item in ProvisionCatalog(self).catalog_list.items:
                 if item.name == template_name:
                     item.click()
                     break
             self._wait_for_results_refresh()
             ProvisionCatalog(self).vm_name.send_keys(_vm_name)
-            return CatalogItems.NewCatalogItem(self.testsetup)
+            return CatalogItems(self.testsetup)
+        
+        
+    class ProvisionEntryPoint(Page):
+        '''Provision Entry  Point'''
+        _provisioning_entry_point = (
+            By.CSS_SELECTOR, "input[id='fqname']")
+        _apply_btn = (
+            By.CSS_SELECTOR, "ul#form_buttons > li > a > img[alt='Apply']")
+        _tag_tree_locator = (
+            By.CSS_SELECTOR, 'div#automate_tree_box > div')
+        
+        @property
+        def tag_tree(self):
+            '''Tree'''
+            from pages.regions.tree import LegacyTree
+            return LegacyTree(self.testsetup,
+                    self.selenium.find_element(*self._tag_tree_locator))
+
+        def fill_provisioning_entry_point(self, node1):
+            '''Select node in tree'''
+            self.selenium.find_element(*self._provisioning_entry_point).click()
+            time.sleep(5)
+            for handle in self.selenium.window_handles:
+                self.selenium.switch_to_window(handle)
+                self.tag_tree.find_node_by_name(node1).twisty.expand()
+                self.tag_tree.find_node_by_name(node1).children[3].click()
+                self._wait_for_results_refresh()
+                self.selenium.find_element(*self._apply_btn).click()
+                time.sleep(2)
+            self._wait_for_results_refresh()
+            return CatalogItems(self.testsetup)
              
     class Environmenttab(ProvisionEnvironment):
         '''Environment tab'''
-        _add_button_locator = (
-                By.CSS_SELECTOR,
-                "div#buttons_on > ul#form_buttons > li > img[alt='Add']")
             
-        def fill_environment_tab(self, host_name, datastore_name):
+        def fill_environment_tab(self, datacenter, cluster, resource_pool, host_name, datastore_name):
             '''Provisioning form - Environment tab'''
-            self.select_dropdown("Default", *self._datacenter_select_locator)
+            self.select_dropdown(datacenter, *self._datacenter_select_locator)
             self._wait_for_results_refresh()
-            self.select_dropdown("test_cluster", *self._cluster_select_locator)
+            self.select_dropdown(cluster, *self._cluster_select_locator)
             self._wait_for_results_refresh()
-            self.select_dropdown("Default for Cluster test_cluster",
+            self.select_dropdown(resource_pool,
                  *self._resource_pool_select_locator)
             self._wait_for_results_refresh()
             self.fill_fields(host_name, datastore_name)
             self._wait_for_results_refresh()
-            self.selenium.find_element(*self._add_button_locator).click()
-            self._wait_for_results_refresh()
-            time.sleep(5)
-            return CatalogItems.NewCatalogItem(self.testsetup)
+            return CatalogItems(self.testsetup)
              
     class NewCatalogBundle(Provision):
         '''CatalogBundle page'''
@@ -191,9 +231,9 @@ class CatalogItems(Base):
         _bundle_select_dialog = (By.CSS_SELECTOR, "select#dialog_id")
         _resource_locator = (By.CSS_SELECTOR, "select#resource_id")
         _add_button = (By.CSS_SELECTOR,
-                "div#buttons_on > ul#form_buttons > li > img[alt='Add']")
+            "div#buttons_on > ul#form_buttons > li > img[alt='Add']")
         _edit_button = (By.CSS_SELECTOR,
-                "div#buttons_on > ul#form_buttons > li > img[alt='Save Changes']")
+            "div#buttons_on > ul#form_buttons > li > img[alt='Save Changes']")
         
         @property
         def tabbutton_region(self):

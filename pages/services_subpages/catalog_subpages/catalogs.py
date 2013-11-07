@@ -12,20 +12,20 @@ class Catalogs(Base):
     '''Service -- Catalog page'''
     _page_title = 'CloudForms Management Engine: Catalogs'
     _configuration_button_locator = (
-            By.CSS_SELECTOR,
-             "div.dhx_toolbar_btn[title='Configuration']")
+        By.CSS_SELECTOR,
+        "div.dhx_toolbar_btn[title='Configuration']")
     _add_catalog_button_locator = (
-            By.CSS_SELECTOR, 
-            "table.buttons_cont tr[title='Add a New Catalog']")
+        By.CSS_SELECTOR, 
+        "table.buttons_cont tr[title='Add a New Catalog']")
     _edit_catalog_button_locator = (
-            By.CSS_SELECTOR, 
-            "table.buttons_cont tr[title='Edit this Item']")
+        By.CSS_SELECTOR, 
+        "table.buttons_cont tr[title='Edit this Item']")
     _del_catalog_button_locator = (
-            By.CSS_SELECTOR, 
-            "table.buttons_cont tr[title='Remove this Item from the VMDB']")
+        By.CSS_SELECTOR, 
+        "table.buttons_cont tr[title='Remove this Item from the VMDB']")
     _name_list_locator = (
-            By.CSS_SELECTOR,
-            "div#list_grid > div#xhdr > table > tbody > tr >td ")
+        By.CSS_SELECTOR,
+        "div#list_grid > div#xhdr > table > tbody > tr >td ")
     _name_field = (By.CSS_SELECTOR, "input[name='name']")
     _desc_field = (By.CSS_SELECTOR, "input[name='description']")
     _add_button = (By.CSS_SELECTOR, "img[title='Add']")
@@ -37,14 +37,6 @@ class Catalogs(Base):
         from pages.regions.accordion import Accordion
         from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
         return Accordion(self.testsetup, LegacyTreeAccordionItem)
-    
-    def random_string(self):
-        '''generate random string'''
-        rand_string = ""
-        letters = 'abcdefghijklmnopqrstuvwxyz'
-        for i in xrange(8):
-            rand_string += random.choice(letters)
-        return rand_string
          
     @property
     def configuration_button(self):
