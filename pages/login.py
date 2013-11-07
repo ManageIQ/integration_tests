@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import time
 from base import Base
-from page import Page
+
 
 class LoginPage(Base):
     # TODO: This obviously should change. File bug
@@ -21,7 +21,8 @@ class LoginPage(Base):
         '''Override the base implementation to make sure that we are actually on the login screen
         and not the actual dashboard
         '''
-        return Base.is_the_current_page and self.is_element_visible(*self._login_submit_button_locator)
+        return Base.is_the_current_page and \
+            self.is_element_visible(*self._login_submit_button_locator)
 
     @property
     def username(self):
@@ -67,22 +68,17 @@ class LoginPage(Base):
             self._wait_for_results_refresh()
         except:
             self._wait_for_results_refresh()
+
         from pages.dashboard import DashboardPage
         dashboard = DashboardPage(self.testsetup)
         try:
             dashboard.is_the_current_page
         except AssertionError:
-            # We need to go to the dashboard
-            from re import sub
-            # Dirty hacking (>_<)
-            # But going throught the clicking seemed more dirty
-            new_url = sub(r"^(https?://[^/]+).*?$", "\\1/dashboard", self.selenium.current_url)
-            self.selenium.get(new_url)
-            dashboard = DashboardPage(self.testsetup)
+            from fixtures.navigation import intel_dashboard_pg
+            dashboard = intel_dashboard_pg(dashboard)
         return dashboard
 
     def __set_login_fields(self, user='default'):
         credentials = self.testsetup.credentials[user]
         self.username.send_keys(credentials['username'])
         self.password.send_keys(credentials['password'])
-
