@@ -52,7 +52,7 @@ class ProvisionFormButtonMixin(object):
                 *self._template_cancel_button_locator)
 
     def click_on_cancel(self):
-        '''Click on cancel button. Return to 
+        '''Click on cancel button. Return to
            Infrastructure.VirtualMachines'''
         self.cancel_button.click()
         self._wait_for_results_refresh()
@@ -84,6 +84,8 @@ class ProvisionTabButtonItem(TabButtonItem):
             import ProvisionHardware
     from pages.services_subpages.provision_subpages.provision_network \
             import ProvisionNetwork
+    from pages.services_subpages.provision_subpages.provision_properties \
+            import ProvisionProperties
     from pages.services_subpages.provision_subpages.provision_customize \
             import ProvisionCustomize
     from pages.services_subpages.provision_subpages.provision_schedule \
@@ -96,6 +98,7 @@ class ProvisionTabButtonItem(TabButtonItem):
                 "Environment": ProvisionEnvironment,
                 "Hardware": ProvisionHardware,
                 "Network": ProvisionNetwork,
+                "Properties": ProvisionProperties,
                 "Customize": ProvisionCustomize,
                 "Schedule": ProvisionSchedule
             }

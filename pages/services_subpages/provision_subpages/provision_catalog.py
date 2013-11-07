@@ -118,11 +118,12 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
             vm_name_text,
             vm_description_text):
         '''Fill fields on Catalog page'''
-        self.provision_type.select_by_visible_text(provision_type_text)
-        self._wait_for_results_refresh()
-        if 'PXE' in provision_type_text:
-            self.pxe_server.select_by_visible_text(pxe_server_name)
+        if provision_type_text:
+            self.provision_type.select_by_visible_text(provision_type_text)
             self._wait_for_results_refresh()
+            if 'PXE' in provision_type_text:
+                self.pxe_server.select_by_visible_text(pxe_server_name)
+                self._wait_for_results_refresh()
         if server_image_name:
             self.select_server_image(server_image_name)
         self.number_of_vms.select_by_visible_text(number_of_vms_text)

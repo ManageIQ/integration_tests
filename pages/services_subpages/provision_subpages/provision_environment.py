@@ -36,11 +36,18 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             By.ID, "environment__ds_filter")
     _datastore_list_locator = (
             By.CSS_SELECTOR, "div#prov_ds_div > table > tbody")
+    _availability_zone_locator = (
+            By.ID, "environment__placement_availability_zone")
 
     @property
     def choose_automatically(self):
         '''VM Placement - Choose automatically'''
         return self.get_element(*self._place_automatically_checkbox_locator)
+
+    @property
+    def availability_zone_select(self):
+        '''Availability zone selector'''
+        return Select(self.get_element(*self._availability_zone_locator))
 
     @property
     def datacenter(self):
@@ -125,9 +132,13 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             self._wait_for_results_refresh()
             return self.DatastoreItem(selected_item)
 
-    def fill_fields(self, host_name, datastore_name):
-            self.click_on_host_item(host_name)
-            self.click_on_datastore_item(datastore_name)
+    def fill_fields(self, host_name, datastore_name, availability_zone_name):
+            if host_name != u'None':
+                self.click_on_host_item(host_name)
+            if datastore_name != u'None':
+                self.click_on_datastore_item(datastore_name)
+            if availability_zone_name is not None:
+                self.availability_zone_select.select_by_visible_text(availability_zone_name)
             self._wait_for_results_refresh()
             return ProvisionEnvironment(self.testsetup)
 
