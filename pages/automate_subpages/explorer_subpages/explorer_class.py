@@ -196,6 +196,18 @@ class ExplorerClass(Base):
         self._wait_for_results_refresh()
         return ExplorerClass(self.testsetup)
 
+    def is_instance_present(self, item_name):
+        """ Verify presence of an instance.
+
+        It checks whether specified instance is already added.
+        Used for event testing setup to not raise the errors.
+        """
+        instance_items = self.instance_list.items
+        for i in range(1, len(instance_items)):
+            if instance_items[i]._item_data[2].text == item_name:
+                return True
+        return False
+
     @property
     def instance_list(self):
         return ListRegion(
