@@ -35,7 +35,7 @@ Setup
 Some of the items in the final step can be put into your environment, and into pytest.ini
 so you can then run py.test without arguments. That exercise is left for the reader.
 
-Activitive the virtualenv
+Activating the virtualenv
 -------------------------
 
 The virtualenv is activated on creation. To reactivate the virtualenv in subsequent sessions,
