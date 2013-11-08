@@ -306,6 +306,15 @@ class VMWareSystem(MgmtSystemAPIBase):
         # Unroll the VM name generator, and sort it to be more user-friendly
         return sorted(list(vm_name_generator()))
 
+    def list_host(self):
+        return self.api.get_hosts()
+
+    def list_datastore(self):
+        return self.api.get_datastores()
+
+    def list_cluster(self):
+        return self.api.get_clusters()
+
     def info(self):
         return '%s %s' % (self.api.get_server_type(), self.api.get_api_version())
 
@@ -460,6 +469,18 @@ class RHEVMSystem(MgmtSystemAPIBase):
         # but you can return a vm w/ a matched name
         vm_list = self.api.vms.list(**kwargs)
         return [vm.name for vm in vm_list]
+
+    def list_host(self, **kwargs):
+        host_list = self.api.hosts.list(**kwargs)
+        return [host.name for host in host_list]
+
+    def list_datastore(self, **kwargs):
+        datastore_list = self.api.storagedomains.list(**kwargs)
+        return [ds.name for ds in datastore_list if ds.get_status() is None]
+
+    def list_cluster(self, **kwargs):
+        cluster_list = self.api.clusters.list(**kwargs)
+        return [cluster.name for cluster in cluster_list]
 
     def info(self):
         # and we got nothing!

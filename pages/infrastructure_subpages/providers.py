@@ -17,8 +17,10 @@ from pages.regions.quadicons import Quadicons
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+from utils.providers import infra_provider_type_map
+from utils.wait import wait_for
 import re
-import time
+
 
 # pylint: disable=C0103
 # pylint: disable=R0904
@@ -40,6 +42,22 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
     _add_new_provider_locator = (By.CSS_SELECTOR,
             "tr[title='Add a New Infrastructure Provider']\
                     >td.td_btn_txt>div.btn_sel_text")
+
+    def _get_provider_stats(self, provider):
+
+        provider_type = provider['credentials']
+        credentials = self.testsetup.credentials[provider_type]
+
+        provider_kwargs = provider.copy()
+        provider_kwargs.update(credentials)
+
+        client = infra_provider_type_map[provider['type']](**provider_kwargs)
+
+        stats = {'num_host': len(client.list_host()),
+                 'num_datastore': len(client.list_datastore()),
+                 'num_cluster': len(client.list_cluster()),
+                 'num_vm': len(client.list_vm())}
+        return stats
 
     @property
     def quadicon_region(self):
@@ -87,26 +105,46 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
         self._wait_for_results_refresh()
         return ProvidersDetail(self.testsetup)
 
-    def wait_for_provider_or_timeout(self,
-            provider_name,
-            timeout=120):
+    def is_quad_icon_available(self, provider_name):
+        try:
+            self.select_provider(provider_name)
+        except:
+            self.selenium.refresh()
+            return False
+        return True
+
+    # In one way makes sense to refresh the page just before the check
+    # because that gives it the maximum amount of time for background
+    # tasks to complete. On the other hand doing so, without passing
+    # extra parameters means that an extra refresh is had right at the
+    # start of the testing, which to me is undesirable
+    def do_stats_match(self, detail_pg, host_stats, vms=False):
+        core_stats = False
+        if int(detail_pg.host_count) == host_stats['num_host'] and \
+           int(detail_pg.datastore_count) == host_stats['num_datastore'] and \
+           int(detail_pg.cluster_count) == host_stats['num_cluster']:
+            core_stats = True
+
+        if core_stats and not vms:
+            return True
+        elif vms:
+            if core_stats and int(detail_pg.cluster_count) == host_stats['num_cluster']:
+                return True
+
+        self.selenium.refresh()
+        return False
+
+    def wait_for_provider_or_timeout(self, provider):
         '''Wait for a provider to become available or timeout trying'''
-        max_time = timeout
-        wait_time = 1
-        total_time = 0
-        mgmt_sys = None
-        while total_time <= max_time and mgmt_sys is not None:
-            try:
-                self.selenium.refresh()
-                mgmt_sys = self.quadicon_region.get_quadicon_by_title(
-                        provider_name)
-            except:
-                total_time += wait_time
-                time.sleep(wait_time)
-                wait_time *= 2
-                continue
-        if mgmt_sys is None and total_time > max_time:
-            raise Exception("Could not find management system in time")
+        host_stats = self._get_provider_stats(provider)
+
+        ec, tc = wait_for(self.is_quad_icon_available,
+                          [provider['name']])
+        detail_pg = self.quadicon_region.selected[0].click()
+        ec, tc = wait_for(self.do_stats_match,
+                          [detail_pg, host_stats],
+                          message="does_host_and_ds_count_match")
+        return
 
     def click_on_discover_providers(self):
         '''Click on discover provider button'''
@@ -149,7 +187,7 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
         @property
         def hypervisor_count(self):
             '''How many hypervisors does this provider have?'''
-            return self._root_element.find_element(
+            return self.get_element(
                     *self._quad_tl_locator).text
 
         # @property
@@ -162,7 +200,7 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
         @property
         def vendor(self):
             '''Which provider vendor?'''
-            image_src = self._root_element.find_element(
+            image_src = self.get_element(
                     *self._quad_bl_locator).find_element_by_tag_name(
                             "img").get_attribute("src")
             return re.search(r'.+/vendor-(.+)\.png', image_src).group(1)
@@ -170,7 +208,7 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
         @property
         def valid_credentials(self):
             '''Does the provider have valid credentials?'''
-            image_src = self._root_element.find_element(
+            image_src = self.get_element(
                     *self._quad_br_locator).find_element_by_tag_name(
                             "img").get_attribute("src")
             return 'checkmark' in image_src

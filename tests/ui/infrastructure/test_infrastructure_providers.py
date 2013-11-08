@@ -161,6 +161,7 @@ class TestInfrastructureProviders:
                 'Infrastructure Providers "%s" was saved' \
                  % provider_data['name'],
                 FLASH_MESSAGE_NOT_MATCHED)
+        prov_pg.wait_for_provider_or_timeout(provider_data)
 
     @pytest.mark.xfail(reason='https://bugzilla.redhat.com/show_bug.cgi?id=1003060')
     @pytest.mark.usefixtures('has_no_providers')
