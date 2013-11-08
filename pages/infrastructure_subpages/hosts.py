@@ -14,8 +14,7 @@ class Hosts(Base, PolicyMenu, TaskbarMixin):
 
     @property
     def quadicon_region(self):
-        return Quadicons(
-                self.testsetup, Hosts.HostQuadIconItem)
+        return Quadicons(self.testsetup, Hosts.HostQuadIconItem)
 
     @property
     def accordion_region(self):
@@ -25,8 +24,7 @@ class Hosts(Base, PolicyMenu, TaskbarMixin):
 
     def select_host(self, host_name):
         '''Mark host checkbox'''
-        self.quadicon_region.get_quadicon_by_title(
-                host_name).mark_checkbox()
+        self.quadicon_region.get_quadicon_by_title(host_name).mark_checkbox()
 
     def click_host(self, host_name):
         '''Click on host'''
@@ -63,8 +61,7 @@ class Hosts(Base, PolicyMenu, TaskbarMixin):
         while total_time <= max_time and host is None:
             try:
                 self.selenium.refresh()
-                host = self.quadicon_region.get_quadicon_by_title(
-                        host_name)
+                host = self.quadicon_region.get_quadicon_by_title(host_name)
             except:
                 total_time += wait_time
                 time.sleep(wait_time)
@@ -80,31 +77,27 @@ class Hosts(Base, PolicyMenu, TaskbarMixin):
     class HostQuadIconItem(QuadiconItem):
         @property
         def vm_count(self):
-            return self._root_element.find_element(
-                    *self._quad_tl_locator).text
+            return self._root_element.find_element(*self._quad_tl_locator).text
 
         @property
         def current_state(self):
-            image_src = self._root_element.find_element(
-                    *self._quad_tr_locator).find_element_by_tag_name(
-                            "img").get_attribute("src")
+            image_src = self._root_element.find_element(*self._quad_tr_locator) \
+                                          .find_element_by_tag_name("img").get_attribute("src")
             return re.search(r'.+/currentstate-(.+)\.png',
                     image_src).group(1)
 
         @property
         def vendor(self):
             '''Vendor name'''
-            image_src = self._root_element.find_element(
-                    *self._quad_bl_locator).find_element_by_tag_name(
-                            "img").get_attribute("src")
+            image_src = self._root_element.find_element(*self._quad_bl_locator) \
+                                          .find_element_by_tag_name("img").get_attribute("src")
             return re.search(r'.+/vendor-(.+)\.png', image_src).group(1)
 
         @property
         def valid_credentials(self):
             '''Status of credentials'''
-            image_src = self._root_element.find_element(
-                    *self._quad_br_locator).find_element_by_tag_name(
-                            "img").get_attribute("src")
+            image_src = self._root_element.find_element(*self._quad_br_locator) \
+                                          .find_element_by_tag_name("img").get_attribute("src")
             return 'checkmark' in image_src
 
         def click(self):
