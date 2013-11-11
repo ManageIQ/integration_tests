@@ -511,8 +511,18 @@ event_testing:
     ip_echo:
         host: "somehost"
         port: 8080
-log_depot:
-    ftp:
-        machine:
-            credentials: machine_ftp
-            hostname: machine.example.com
+log_db_depot:
+    machine:
+        credentials: machine_creds
+        smb:
+            hostname: smb.example.com/sharename
+            path_on_host: /path/on/host
+            use_for_log_collection: True
+            use_for_db_backups: False
+        nfs:
+            hostname: nfs.example.com/path/on/host
+            use_for_log_collection: False
+            use_for_db_backups: True
+        ftp:
+            hostname: ftp.example.com
+            use_for_log_collection: True

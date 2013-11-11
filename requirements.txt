@@ -15,6 +15,7 @@ py
 PyPDF2
 pysphere
 pytest
+python-dateutil
 python-novaclient
 PyYAML
 requests
