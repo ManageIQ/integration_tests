@@ -4,6 +4,9 @@ from pages.regions.taskbar.taskbar import TaskbarMixin
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 from pages.regions.tabbuttons import TabButtons
+from selenium.common.exceptions import TimeoutException
+from utils.wait import wait_for
+from selenium.webdriver.support.ui import Select
 
 
 class CollectLogsTab(Base, TaskbarMixin):
@@ -44,7 +47,7 @@ class CollectLogsTab(Base, TaskbarMixin):
     def tabbutton_region(self):
         return TabButtons(self.testsetup, locator_override=self._tabbutton_region)
 
-    def wait_for(self, fun, time=15):
+    def webdriver_wait(self, fun, time=15):
         """ Wrapper for WebDriverWait
 
         """
@@ -183,13 +186,13 @@ class CollectLogsTab(Base, TaskbarMixin):
 
         _uri_text_locator = (By.XPATH,
                              "//*[@id='form_filter_div']/fieldset/table/tbody/tr[2]/td[2]")
-        _type_selector_locator = (By.XPATH, "//*[@id='log_protocol']")
-        _uri_field_locator = (By.XPATH, "//*[@id='uri']")
-        _userid_field_locator = (By.XPATH, "//*[@id='log_userid']")
-        _password_field_locator = (By.XPATH, "//*[@id='log_password']")
-        _verify_password_field_locator = (By.XPATH, "//*[@id='log_verify']")
-        _validate_locator = (By.XPATH, "//*[@id='val']")
-        _save_locator = (By.XPATH, "//img[@title='Save Changes']")
+        _type_selector_locator = (By.CSS_SELECTOR, "select#log_protocol")
+        _uri_field_locator = (By.CSS_SELECTOR, "#uri")
+        _userid_field_locator = (By.CSS_SELECTOR, "#log_userid")
+        _password_field_locator = (By.CSS_SELECTOR, "#log_password")
+        _verify_password_field_locator = (By.CSS_SELECTOR, "#log_verify")
+        _validate_locator = (By.CSS_SELECTOR, "#val")
+        _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
 
         # The dropdown menu choices
         _types = {"nfs": "Network File System",
@@ -197,7 +200,7 @@ class CollectLogsTab(Base, TaskbarMixin):
                   "smb": "Samba",
                   None: "<No Depot>"}
 
-        def wait_for(self, fun, time=15):
+        def webdriver_wait(self, fun, time=15):
             """ Wrapper for WebDriverWait
 
             """
@@ -205,6 +208,7 @@ class CollectLogsTab(Base, TaskbarMixin):
 
         @property
         def type_selector(self):
+            self._wait_for_visible_element(*self._type_selector_locator, visible_timeout=5)
             return self.selenium.find_element(*self._type_selector_locator)
 
         @property
@@ -229,11 +233,19 @@ class CollectLogsTab(Base, TaskbarMixin):
 
         @property
         def validate_button(self):
-            return self.selenium.find_element(*self._validate_locator)
+            try:
+                self._wait_for_visible_element(*self._validate_locator, visible_timeout=10)
+                return self.selenium.find_element(*self._validate_locator)
+            except TimeoutException:
+                return None
 
         @property
         def save_button(self):
-            return self.selenium.find_element(*self._save_locator)
+            try:
+                self._wait_for_visible_element(*self._save_locator, visible_timeout=10)
+                return self.selenium.find_element(*self._save_locator)
+            except TimeoutException:
+                return None
 
         def validate_credentials(self):
             """ Credential validation.
@@ -243,7 +255,6 @@ class CollectLogsTab(Base, TaskbarMixin):
             """
             if not self.validate_button:
                 return True     # NFS does not have any credentials
-            self._wait_for_visible_element(*self._validate_locator)
             self.validate_button.click()
             self._wait_for_results_refresh()
             return "Log Depot Settings successfuly validated" in self.flash.message
@@ -254,9 +265,15 @@ class CollectLogsTab(Base, TaskbarMixin):
 
 
             """
-            t = self.type_selector.text.strip()
+            selected = self.type_selector.find_elements_by_css_selector("option[selected]")
+            # If <No Depot>, then no selected parameter in the option - therefore empty array
+            if not selected:
+                return None
+            assert len(selected) == 1,\
+                "I don't know how could this happen but there are more items selected"
+            text = selected[0].get_attribute("value")
             for abbr, full in self._types.iteritems():
-                if full == t:
+                if full == text:
                     return abbr
             raise Exception("Error when getting depot type!!!")
 
@@ -269,19 +286,17 @@ class CollectLogsTab(Base, TaskbarMixin):
             """
             assert value in self._types.keys(), "depot type must be one of %s." %\
                 ", ".join([str(t) for t in self._types])
-            look_for = self._types[value]
-            for option in self.type_selector.find_elements_by_tag_name("option"):
-                if option.text.strip() == look_for:
-                    option.click()
+            Select(self.type_selector).select_by_visible_text(self._types[value])
+
             # Wait for correct form to appear
             # URI text must appear if some depot type is selected
             if value:
-                self.wait_for(lambda x: self.uri_text)
-                # URI text must start with the look_for
-                self.wait_for(lambda x: self.uri_text.text.strip().startswith(value))
+                self.webdriver_wait(lambda driver: self.uri_text)
+                # URI text must start with the value
+                assert self.uri_text.text.strip().startswith(value)
             else:
                 # Wait for form to disappear (Validate button disappears)
-                self.wait_for(lambda x: not self.is_element_visible(*self._validate_locator))
+                wait_for(lambda: not self.is_element_visible(*self._validate_locator))
 
         def fill_credentials(self, depot_type, uri,
                              user=None,
@@ -294,7 +309,7 @@ class CollectLogsTab(Base, TaskbarMixin):
             assert depot_type and depot_type in self._types.keys()
             self.depot_type = depot_type
             self.fill_field_element(uri, self.uri_field)
-            if depot_type in ["smb", "ftp"]:
+            if depot_type in {"smb", "ftp"}:
                 assert user, "You must specify a username for smb or ftp"
                 assert password, "You must specify a password for smb or ftp"
                 self.fill_field_element(user, self.userid_field)
@@ -310,4 +325,4 @@ class CollectLogsTab(Base, TaskbarMixin):
             """
             self.save_button.click()
             self._wait_for_results_refresh()
-            return "Log Depot Settings were saved" in self.flash.message
+            return CollectLogsTab(self.testsetup)
