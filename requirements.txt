@@ -3,9 +3,9 @@
 
 PyYAML==3.10
 UnittestZero
-py==1.4.12
-pytest==2.3.4
-pytest-mozwebqa==1.0
+py
+pytest
+#pytest-mozwebqa==1.0
 requests==0.13.3
 selenium
 paramiko

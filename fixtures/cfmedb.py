@@ -36,7 +36,7 @@ def pytest_sessionstart(session):
     db.cfme_db_url = session.config.option.cfme_db_url
     if not db.cfme_db_url:
         # Let's try to figure it out
-        baseurl = session.config.option.base_url
+        baseurl = session.config.option.baseurl
         baseip = urlparse(baseurl).hostname
         db.cfme_db_url = "postgres://root:smartvm@%s:5432/vmdb_production" \
                 % baseip
