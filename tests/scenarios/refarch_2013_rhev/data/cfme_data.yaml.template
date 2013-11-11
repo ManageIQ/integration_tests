@@ -1,3 +1,35 @@
+redhat_updates:
+    rhsm:
+        url: 10.0.0.1
+        credentials: rhsm
+    sat5:
+        url: 10.0.0.2
+        credentials: sat5
+    sat6:
+        url: 10.0.0.3
+        credentials: sat6
+        organization: qe
+    http_proxy:
+        url: 10.0.0.1
+        credentials: proxy
+    registration_method: rhsm
+    current_version: 5.2.0.20
+    appliances:
+      - name: EVM (1)
+        version: 5.2.0.20
+      - name: EVM (2)
+        version: 5.2.0.12
+      - name: EVM (3)
+        version: 5.2.0.12
+    appliances_to_update:
+      - EVM (1)
+      - EVM (2)
+      - EVM (3)
+      - EVM
+    certificates:
+      - /etc/pki/product/cert1.pem
+      - /etc/pki/consumer/cert2.pem
+      - /etc/pki/entitlement/1234567890-key.pem
 management_systems:
     rhevm32:
         name: RHEV 3.2
