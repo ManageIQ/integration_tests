@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
+from pages.regions.tabbuttons import TabButtons
 
 
 class CollectLogsTab(Base, TaskbarMixin):
@@ -35,6 +36,13 @@ class CollectLogsTab(Base, TaskbarMixin):
                                     "//*[@id='selected_div']/fieldset/table/tbody/tr[4]/td[2]")
     _last_message_locator = (By.XPATH,
                              "//*[@id='selected_div']/fieldset/table/tbody/tr[5]/td[2]")
+
+    # Tabbuttons
+    _tabbutton_region = (By.CSS_SELECTOR, "div#ops_tabs > ul > li")
+
+    @property
+    def tabbutton_region(self):
+        return TabButtons(self.testsetup, locator_override=self._tabbutton_region)
 
     def wait_for(self, fun, time=15):
         """ Wrapper for WebDriverWait
@@ -133,6 +141,42 @@ class CollectLogsTab(Base, TaskbarMixin):
         self.edit_button.click()
         self._wait_for_results_refresh()
         return self.EditLogDepotTab(self.testsetup)
+
+    def refresh(self):
+        """ Refreshes the current view
+
+        Clicks on Worker tab and then back to the Collect Logs tab
+        because there is no refresh button :(.
+        """
+        self.tabbutton_region.tabbutton_by_name('Workers').click()
+        self._wait_for_results_refresh()
+        self.tabbutton_region.tabbutton_by_name('Collect Logs').click()
+        self._wait_for_results_refresh()
+
+    def wait_last_message(self, condition, timeout=120):
+        """ Function which will wait for a specific condition on Last Message
+
+        @param condition: Function (lambda) that evaluates. Its only parameter is the
+                          Last Message text. If it raises an exception or returns False
+                          then it's evaluated as False and it refreshes again until the
+                          timeout is reached.
+        @param timeout: Condition timeout
+        """
+        from datetime import datetime
+
+        def _check_wrapper(text):
+            try:
+                return condition(text)
+            except Exception:
+                return False
+
+        started = datetime.now()
+        while (datetime.now() - started).total_seconds() <= timeout:
+            if _check_wrapper(self.last_message):
+                return True
+            self.refresh()
+        # Condition not fulfilled
+        raise Exception("wait_last_message() failed")
 
     class EditLogDepotTab(Base):
         _page_title = 'CloudForms Management Engine: Configuration'
