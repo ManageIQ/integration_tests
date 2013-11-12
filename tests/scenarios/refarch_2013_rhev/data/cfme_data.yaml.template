@@ -1,3 +1,35 @@
+redhat_updates:
+    rhsm:
+        url: example.redhat.com
+        credentials: rhsm
+    sat5:
+        url: example.redhat.com
+        credentials: sat5
+        organization: org
+    sat6:
+        url: example.redhat.com
+        credentials: sat6
+    http_proxy:
+        url: 10.0.0.1
+        credentials: proxy
+    registration_method: rhsm #rhsm|sat5|sat6
+    current_version: 5.2.0.37
+    appliances:
+      - name: Name1
+        version: 5.2.0.37
+        url: 10.0.0.1
+      - name: Name2
+        version: 5.2.0.35
+        url: 10.0.0.2
+      - name: Name3
+        version: 5.2.0.35
+        url: 10.0.0.3
+    appliances_to_update:
+      - Name2
+      - Name3
+    certificates:
+      - /etc/pki/product/example.pem
+      - /etc/pki/consumer/example.pem
 management_systems:
     rhevm32:
         name: RHEV 3.2
