@@ -5,7 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 from contextlib import contextmanager
-
+import fixtures.configuration as conf
 # Some thread local storage that only gets set up
 # once, won't get blown away when reloading module
 # Thread locals are for testing in parallel - each
@@ -18,16 +18,18 @@ def browser():
     return thread_locals.selenium
 
 
+def baseurl():
+    return conf.get()['selenium']['baseurl']
+
+
 @contextmanager
 def selenium_session(cls, *args, **kwargs):
     sel = cls(*args, **kwargs)
     thread_locals.selenium = sel
     sel.maximize_window()
+    sel.get(baseurl())
     yield sel
     sel.quit()
-
-
-_config = None
 
 
 @pytest.yield_fixture
@@ -36,37 +38,11 @@ def selenium(*args, **kwargs):
         yield sel
 
 
-@pytest.fixture
-def config(request):
-    print("hello!", request)
-    global _config
-    if request is not None:
-        _config = request.config  # for easy access to pytest config
-
-
-options = [['--highlight', {"action": 'store_true',
-                            "dest": 'highlight',
-                            "default": False,
-                            "help": 'whether to turn on highlighting of elements'}],
-           ['--baseurl', {"dest": 'baseurl', "help": 'Base url to load in selenium browser'}],
-           ['--user', {"dest": 'user', 
-                       "action": "store",
-                       "metavar": "foo",
-                       "help": 'Username to log in as'}],
-           ['--password', {"dest": 'password', "help": 'Password to log in with'}]]
-
-
-def pytest_addoption(parser):
-    group = parser.getgroup('selenium', 'selenium')
-    for option in options:
-        group._addoption(option[0], **option[1])
-
-
 def highlight(element):
     """Highlights (blinks) a Webdriver element.
         In pure javascript, as suggested by https://github.com/alp82.
     """
-    sel().execute_script("""
+    browser().execute_script("""
             element = arguments[0];
             original_style = element.getAttribute('style');
             element.setAttribute('style', original_style + "; background: yellow;");
@@ -77,6 +53,7 @@ def highlight(element):
 
 
 def pytest_configure(config):
+    conf.init()
     from selenium.webdriver.remote.webelement import WebElement
 
     def _execute(self, command, params=None):
@@ -100,7 +77,7 @@ errfn(function(n) { return Ajax.activeRequestCount });
 # Some convenience methods to wrap webdriver
 class Locator(object):
     '''
-    Class to represent a locator, implements 'element'
+e    Class to represent a locator, implements 'element'
     which is a property that any object can implement
     '''
     def __init__(self, by, value):
@@ -139,7 +116,7 @@ def is_displayed(loc):
 
 
 def move_to_element(loc):
-    ActionChains(browser()).move_to_element(loc.element)
+    ActionChains(browser()).move_to_element(loc.element).perform()
 
 
 def text(loc):

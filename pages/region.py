@@ -16,20 +16,20 @@ class Region(object):
         self.identifying_loc = identifying_loc
         self.title = title
 
-    def is_current_page(self):
+    def is_displayed(self):
         Assert.true(self.identifying_loc is not None or
                     self.title is not None,
                     msg="Region doesn't have an identifying locator or title," +
                     "can't determine if it's current page.")
         if self.identifying_loc:
-            ident_match = browser.is_displayed(self.identifying_loc)
+            ident_match = browser.is_displayed(self.locators[self.identifying_loc])
         else:
             ident_match = True
             if self.title:
                 title_match = browser.title == self.title
             else:
-                True
-                return ident_match and title_match
+                title_match = True
+        return ident_match and title_match
 
 
 def get_context_current_page():
