@@ -17,6 +17,7 @@ default_roles = (
     'web_services',
 )
 
+
 @pytest.fixture
 def server_roles(fixtureconf, cfme_data, cnf_configuration_pg):
     """Set the server roles based on a list of roles attached to the test using this fixture
@@ -94,7 +95,11 @@ def server_roles(fixtureconf, cfme_data, cnf_configuration_pg):
 
     # Nav to the settings tab
     settings_pg = cnf_configuration_pg.click_on_settings()
-    server_settings_pg = settings_pg.click_on_current_server_tree_node()
+    # Workaround to rudely bypass a popup that sometimes appears for
+    # unknown reasons.
+    # See also: https://github.com/RedHatQE/cfme_tests/issues/168
+    from pages.configuration_subpages.settings_subpages.server_settings import ServerSettings
+    server_settings_pg = ServerSettings(settings_pg.testsetup)
     # sst is a configuration_subpages.settings_subpages.server_settings_subpages.
     #   server_settings_tab.ServerSettingsTab
     sst = server_settings_pg.click_on_server_tab()
@@ -105,10 +110,9 @@ def server_roles(fixtureconf, cfme_data, cnf_configuration_pg):
         sst.save()
         sst._wait_for_results_refresh()
     else:
-        logger.info('Server roles already match configured fixture roles, not changing server roles')
+        logger.info('Server roles match configured fixture roles, not changing server roles')
 
     # If this assert fails, check roles names for typos or other minor differences
     Assert.equal(sorted(sst.selected_server_role_names), sorted(roles_list))
 
     return sst.selected_server_role_names
-
