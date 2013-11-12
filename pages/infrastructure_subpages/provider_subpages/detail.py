@@ -56,6 +56,26 @@ class ProvidersDetail(Base):
         start, end = element_text.encode('utf-8').split('-')
         return {'start': int(start), 'end': int(end)}
 
+    @property
+    def cluster_count(self):
+        '''Count of clusters'''
+        return self.details.get_section('Relationships').get_item('Clusters').value
+
+    @property
+    def datastore_count(self):
+        '''Count of datastores'''
+        return self.details.get_section('Relationships').get_item('Datastores').value
+
+    @property
+    def host_count(self):
+        '''Count of hosts'''
+        return self.details.get_section('Relationships').get_item('Hosts').value
+
+    @property
+    def vm_count(self):
+        '''Count of VMs'''
+        return self.details.get_section('Relationships').get_item('VMs').value
+
     def all_vms(self):
         '''VMs list
 
