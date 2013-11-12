@@ -94,7 +94,11 @@ def server_roles(fixtureconf, cfme_data, cnf_configuration_pg):
 
     # Nav to the settings tab
     settings_pg = cnf_configuration_pg.click_on_settings()
-    server_settings_pg = settings_pg.click_on_current_server_tree_node()
+    # Workaround to rudely bypass a popup that sometimes appears for
+    # unknown reasons.
+    # See also: https://github.com/RedHatQE/cfme_tests/issues/168
+    from pages.configuration_subpages.settings_subpages.server_settings import ServerSettings
+    server_settings_pg = ServerSettings(settings_pg.testsetup)
     # sst is a configuration_subpages.settings_subpages.server_settings_subpages.
     #   server_settings_tab.ServerSettingsTab
     sst = server_settings_pg.click_on_server_tab()
