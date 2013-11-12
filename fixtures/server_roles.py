@@ -17,6 +17,7 @@ default_roles = (
     'web_services',
 )
 
+
 @pytest.fixture
 def server_roles(fixtureconf, cfme_data, cnf_configuration_pg):
     """Set the server roles based on a list of roles attached to the test using this fixture
@@ -109,10 +110,9 @@ def server_roles(fixtureconf, cfme_data, cnf_configuration_pg):
         sst.save()
         sst._wait_for_results_refresh()
     else:
-        logger.info('Server roles already match configured fixture roles, not changing server roles')
+        logger.info('Server roles match configured fixture roles, not changing server roles')
 
     # If this assert fails, check roles names for typos or other minor differences
     Assert.equal(sorted(sst.selected_server_role_names), sorted(roles_list))
 
     return sst.selected_server_role_names
-
