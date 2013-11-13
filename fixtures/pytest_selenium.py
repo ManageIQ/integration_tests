@@ -62,10 +62,9 @@ def pytest_configure(config):
 
     # Let's add highlight as a method to WebDriver so we can call it arbitrarily
     WebElement.highlight = highlight
+    WebElement._old_execute = WebElement._execute
+    WebElement._execute = _execute
 
-    if (config.option.highlight):
-        WebElement._old_execute = WebElement._execute
-        WebElement._execute = _execute
 
 ajax_wait_js = """
 var errfn = function(f,n) { try { return f(n) } catch(e) {return 0}};
