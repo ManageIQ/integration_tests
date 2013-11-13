@@ -44,4 +44,8 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         else:
             return out, time.time() - st_time
         t_delta = time.time() - st_time
-    raise Exception("Could not do %s in time" % message)
+    raise TimedOutError("Could not do %s in time" % message)
+
+
+class TimedOutError(Exception):
+    pass
