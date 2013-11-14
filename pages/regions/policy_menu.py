@@ -55,13 +55,25 @@ class PolicyMenu(Page):
             return self.reset_tag_edits
 
     class ManagePolicies(Base, PolicyMixin):
-        def save(self):
-            self.save_policy_assignment()
+        def save(self, visible_timeout=None):
+            """ Clicks on the Save button.
 
-        def cancel(self):
-            self.cancel_policy_assignment()
+            @keyword visible_timeout: Modify standard timeout for button's appearance.
+            """
+            self.save_policy_assignment(visible_timeout=visible_timeout)
 
-        def reset(self):
-            self.reset_policy_assignment()
+        def cancel(self, visible_timeout=None):
+            """ Clicks on the Cancel button.
+
+            @keyword visible_timeout: Modify standard timeout for button's appearance.
+            """
+            self.cancel_policy_assignment(visible_timeout=visible_timeout)
+
+        def reset(self, visible_timeout=None):
+            """ Clicks on the Reset button.
+
+            @keyword visible_timeout: Modify standard timeout for button's appearance.
+            """
+            self.reset_policy_assignment(visible_timeout=visible_timeout)
 
 
