@@ -4,6 +4,7 @@
 from pages.base import Base
 from selenium.webdriver.common.by import By
 
+
 class Retirement(Base):
     """Class to set retirement dates of vms"""
     _date_edit_field_locator = (By.CSS_SELECTOR, "input#miq_date_1")
@@ -62,4 +63,3 @@ class Retirement(Base):
             self.select_dropdown(retirement_warning,
                 *self._retirement_warning_edit_field_locator)
             self._wait_for_results_refresh()
-   

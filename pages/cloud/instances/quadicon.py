@@ -5,26 +5,30 @@
 import re
 from pages.regions.quadiconitem import QuadiconItem
 
+
 class InstanceQuadIcon(QuadiconItem):
     @property
     def os(self):
-        image_src = self._root_element.find_element(
-            *self._quad_tl_locator).find_element_by_tag_name(
-                "img").get_attribute("src")
+        image_src = self._root_element\
+            .find_element(*self._quad_tl_locator)\
+            .find_element_by_tag_name("img")\
+            .get_attribute("src")
         return re.search('.+/os-(.+)\.png', image_src).group(1)
 
     @property
     def current_state(self):
-        image_src = self._root_element.find_element(
-            *self._quad_tr_locator).find_element_by_tag_name(
-                "img").get_attribute("src")
+        image_src = self._root_element\
+            .find_element(*self._quad_tr_locator)\
+            .find_element_by_tag_name("img")\
+            .get_attribute("src")
         return re.search('.+/currentstate-(.+)\.png', image_src).group(1)
 
     @property
     def vendor(self):
-        image_src = self._root_element.find_element(
-            *self._quad_bl_locator).find_element_by_tag_name(
-                "img").get_attribute("src")
+        image_src = self._root_element\
+            .find_element(*self._quad_bl_locator)\
+            .find_element_by_tag_name("img")\
+            .get_attribute("src")
         return re.search('.+/vendor-(.+)\.png', image_src).group(1)
 
     @property

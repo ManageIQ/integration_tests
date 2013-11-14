@@ -105,8 +105,7 @@ class Add(AddFormCommon):
         elif "openstack" in provider["type"]:
             self.select_provider_type("OpenStack")
         self._fill_provider(provider)
-        self._wait_for_visible_element(
-                *self._provider_credentials_verify_button_locator)
+        self._wait_for_visible_element(*self._provider_credentials_verify_button_locator)
         self.click_on_credentials_verify()
         self._wait_for_results_refresh()
         return self
@@ -114,9 +113,7 @@ class Add(AddFormCommon):
     def select_provider_type(self, provider_type):
         '''Select a cloud provider type from the dropdown,
         and wait for the page to refresh'''
-        self.select_dropdown(
-                provider_type,
-                *self._provider_type_locator)
+        self.select_dropdown(provider_type, *self._provider_type_locator)
 
         if provider_type == 'Amazon EC2':
             self._wait_for_visible_element(*self._amazon_region_locator)

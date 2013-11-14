@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 from pages.cloud.instances.details import Details
 from pages.base import Base
 
+
 class Ownership(Base):
     """Set Ownership for template"""
     _page_title = 'CloudForms Management Engine: Virtual Machines'

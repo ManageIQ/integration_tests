@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 # pylint: disable=C0103
 # pylint: disable=R0904
 
+
 class Discovery(Base):
     '''Cloud Providers Discovery Page'''
     _page_title = 'CloudForms Management Engine: Cloud Providers'
@@ -57,12 +58,15 @@ class Discovery(Base):
             password_verify):
         ''' Fill in discovery form'''
 
-        self.selenium.find_element(
-                *self._username_locator).send_keys(username)
-        self.selenium.find_element(
-                *self._password_locator).send_keys(password)
-        self.selenium.find_element(
-                *self._password_verify_locator).send_keys(password_verify)
+        self.selenium\
+            .find_element(*self._username_locator)\
+            .send_keys(username)
+        self.selenium\
+            .find_element(*self._password_locator)\
+            .send_keys(password)
+        self.selenium\
+            .find_element(*self._password_verify_locator)\
+            .send_keys(password_verify)
 
     def discover_cloud_providers(
             self,
