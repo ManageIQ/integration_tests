@@ -108,9 +108,9 @@ class Customization(Base):
         self.add_label_to_dialog(servicedialogname, desc)
         self._wait_for_results_refresh()
         self.add_tab_to_dialog(
-            random_string + "_tab_label", random_string+"_tab_desc")
+            random_string + "_tab_label", random_string + "_tab_desc")
         self.add_box_to_dialog(
-            random_string + "_box_label", random_string+"_box_desc")
+            random_string + "_box_label", random_string + "_box_desc")
         time.sleep(3)
         self.add_element_to_dialog(
             random_string + "_ele_label",

@@ -4,6 +4,7 @@
 from selenium.webdriver.common.by import By
 from pages.base import Base
 
+
 class CfmeRelationship(Base):
     """Edit CFME server relationship page"""
     _page_title = 'CloudForms Management Engine: Instances'

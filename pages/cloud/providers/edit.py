@@ -4,6 +4,7 @@ from pages.cloud.providers.common_form import AddFormCommon
 
 # pylint: disable=R0904
 
+
 class Edit(AddFormCommon):
     '''Edit Cloud Provider page'''
     _page_title = 'CloudForms Management Engine: Cloud Providers'

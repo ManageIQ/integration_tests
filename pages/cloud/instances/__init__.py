@@ -189,9 +189,9 @@ class Instances(CommonComponents):
         while (minute_count < timeout_in_minutes):
             if (current_state == desired_state):
                 break
-            print "Sleeping 60 seconds, iteration " + str(minute_count+1) + \
+            print "Sleeping 60 seconds, iteration " + str(minute_count + 1) + \
                 " of " + str(timeout_in_minutes) + ", desired state (" + \
-                desired_state+") != current state("+current_state+")"
+                desired_state + ") != current state(" + current_state + ")"
             if refresh:
                 self.refresh_relationships([i_quadicon_title])
             time.sleep(60)
