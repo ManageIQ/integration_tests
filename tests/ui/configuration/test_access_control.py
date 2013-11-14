@@ -109,11 +109,11 @@ class TestAccessControl:
         select_group_pg = groups_pg.click_on_group(old_group_name)
         Assert.true(select_group_pg.group_name == old_group_name)
         edit_tags_pg = select_group_pg.click_on_edit_tags()
-        edit_tags_pg.select_category("Cost Center")
-        edit_tags_pg.select_value("Cost Center 001")
-        groups_pg = edit_tags_pg.save_tag_edits()
-        Assert.true(select_group_pg.flash.message.startswith(
-                'Tag edits were successfully saved'))
+        tag_cat, tag_value = edit_tags_pg.add_random_tag()
+        Assert.true(edit_tags_pg.is_tag_displayed(tag_cat, tag_value))
+        edit_tags_pg.save_tag_edits()
+        Assert.true(edit_tags_pg.flash.message.startswith(
+            'Tag edits were successfully saved'))
 
     def test_delete_group(self, ac_control_groups_pg):
         groups_pg = ac_control_groups_pg
@@ -190,11 +190,11 @@ class TestAccessControl:
         select_user_pg = users_pg.click_on_user(old_user_name)
         Assert.true(select_user_pg.user_name == old_user_name)
         edit_tags_pg = select_user_pg.click_on_edit_tags()
-        edit_tags_pg.select_category("Cost Center")
-        edit_tags_pg.select_value("Cost Center 001")
+        tag_cat, tag_value = edit_tags_pg.add_random_tag()
+        Assert.true(edit_tags_pg.is_tag_displayed(tag_cat, tag_value))
         edit_tags_pg.save_tag_edits()
-        Assert.true(select_user_pg.flash.message.startswith(
-                'Tag edits were successfully saved'))
+        Assert.true(edit_tags_pg.flash.message.startswith(
+            'Tag edits were successfully saved'))
 
     def test_delete_user(self, ac_control_users_pg):
         users_pg = ac_control_users_pg
