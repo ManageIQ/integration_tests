@@ -4,6 +4,7 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.remote.webelement import WebElement
 from contextlib import contextmanager
 import fixtures.configuration as conf
 # Some thread local storage that only gets set up
@@ -73,27 +74,21 @@ errfn(function(n) { return Ajax.activeRequestCount });
 """
 
 
-# Some convenience methods to wrap webdriver
-class Locator(object):
-    '''
-e    Class to represent a locator, implements 'element'
-    which is a property that any object can implement
-    '''
-    def __init__(self, by, value):
-        self.by = by
-        self.value = value
-        
-    @property
-    def element(self):
-        return browser().find_element(self.by, self.value)
+def elements(o):
+    '''Convert o to list of matching WebElements. Strings are considered xpath.'''
+    t = type(o)
+    if t == str:
+        return browser().find_elements_by_xpath(o)
+    elif t == WebElement:
+        return [o]
+    elif t == tuple:
+        return browser().find_elements(*o)
+    else:
+        raise TypeError("Don't know how to convert {} to WebElement.".format(o))
 
 
-def values_to_locators(dct):
-    '''
-    takes a dict of locators (mapping strings to tuples)
-    returns a dict with the values replaced by Locators
-    '''
-    return {key: Locator(*value) for (key, value) in dct.items()}
+def element(o):
+    return elements(o)[0]
 
 
 def wait_for_ajax():
@@ -103,31 +98,31 @@ def wait_for_ajax():
 
 
 def click(loc):
-    ActionChains(browser()).move_to_element(loc.element).click().perform()
+    ActionChains(browser()).move_to_element(element(loc)).click().perform()
     wait_for_ajax()
 
 
 def is_displayed(loc):
     try:
-        return loc.element.is_displayed()
+        return element(loc).is_displayed()
     except NoSuchElementException:
         return False
 
 
 def move_to_element(loc):
-    ActionChains(browser()).move_to_element(loc.element).perform()
+    ActionChains(browser()).move_to_element(element(loc)).perform()
 
 
 def text(loc):
-    return loc.element.text
+    return element(loc).text
 
 
 def get_attribute(loc, attr):
-    return loc.element.get_attribute(attr)
+    return element(loc).get_attribute(attr)
 
 
 def send_keys(loc, text):
-    loc.element.send_keys(text)
+    element(loc).send_keys(text)
     wait_for_ajax()
 
 

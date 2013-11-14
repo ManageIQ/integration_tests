@@ -11,9 +11,6 @@ from pages.configuration_subpages.access_control import AccessControl
 from pages.configuration_subpages.settings import Settings
 from pages.configuration_subpages.diagnostics import Diagnostics
 from pages.configuration_subpages.tasks_tabs import Tasks
-from pages.regions.list import ListRegion, ListItem
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 
 
 class Configuration(Base):
@@ -96,72 +93,3 @@ class Configuration(Base):
 
     class SmartProxies(Base):
         _page_title = "CloudForms Management Engine: SmartProxies"
-
-    class About(Base):
-        _page_title = "CloudForms Management Engine: About"
-        _session_info = (
-            By.CSS_SELECTOR,
-            "dl.col2 > dd > fieldset > table.style1 > tbody")
-        _docs_info = (
-            By.XPATH,
-            '//dd[contains(.//p[@class="legend"],"Assistance")]')
-
-        def key_search(self, search):
-            for item in self.session_info_list.items:
-                if search in item.key:
-                    return item.value
-            return None
-
-        @property
-        def session_info_list(self):
-            return ListRegion(
-                self.testsetup,
-                self.get_element(*self._session_info), self.AboutItem)
-
-        @property
-        def version_number(self):
-            tupled_version = tuple(self.key_search('Version').split("."))
-            return tupled_version
-
-        @property
-        def server_name(self):
-            return self.key_search('Server Name')
-
-        @property
-        def docs_links(self):
-            docs_info = self.get_element(*self._docs_info)
-            page_links = docs_info.find_elements_by_tag_name('a')
-            links = []
-            # assume we have an icon, followed by text link
-            # as not in a table and don't want to use sibling find
-            # this is quickest way for now
-            num_docs = len(page_links) / 2
-            for index in range(num_docs):
-                n_index = index * 2
-                icon_url = page_links[n_index].get_attribute('href')
-                icon_img = page_links[n_index].find_elements_by_tag_name('img')
-                icon_alt = icon_img[0].get_attribute('alt')
-                icon_title = page_links[n_index].get_attribute('title')
-                text_url = page_links[n_index + 1].get_attribute('href')
-                text_title = page_links[n_index + 1].text
-                links.append({
-                    "icon_url": icon_url,
-                    "icon_title": icon_title,
-                    "icon_alt": icon_alt,
-                    "text_url": text_url,
-                    "text_title": text_title})
-            return links
-
-        class AboutItem(ListItem):
-            _columns = ["Key", "Value"]
-            _rows = ["Server Name", "Version", "User Name",
-                     "User Role", "Browser", "Browser Version",
-                     "Browser OS"]
-
-            @property
-            def key(self):
-                return self._item_data[0].text
-
-            @property
-            def value(self):
-                return self._item_data[1].text

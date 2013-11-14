@@ -12,7 +12,7 @@ class Region(object):
         return self.locators[name]
 
     def __init__(self, locators={}, title=None, identifying_loc=None):
-        self.locators = values_to_locators(locators)
+        self.locators = locators
         self.identifying_loc = identifying_loc
         self.title = title
 
