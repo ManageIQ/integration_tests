@@ -13,7 +13,7 @@ CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 DETAIL_NOT_MATCHED_TEMPLATE = '%s did not match'
 
-@pytest.fixture(params=['vsphere5', 'rhevm32'])
+@pytest.fixture(params=['vsphere55', 'rhevm32'])
 def provider_data(request, cfme_data):
     '''Returns management system data from cfme_data'''
     param = request.param
