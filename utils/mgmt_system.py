@@ -5,12 +5,14 @@ import time
 
 import boto
 from abc import ABCMeta, abstractmethod
-from boto.ec2 import EC2Connection, RegionInfo
+from boto.ec2 import EC2Connection
 from ovirtsdk.api import API
 from pysphere import VIServer
 from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
 from pysphere.vi_task import VITask
+from novaclient.v1_1 import client as osclient
+from utils.wait import wait_for
 
 
 class MgmtSystemAPIBase(object):
@@ -760,6 +762,7 @@ class EC2System(MgmtSystemAPIBase):
         instances = self._get_instances_from_reservations(reservations)
         return instances
 
+    # Prime candidate for a wait_for
     def _block_until(self, instance_id, expected, timeout=90):
         """Blocks until the given instance is in one of the expected states
 
@@ -774,48 +777,141 @@ class EC2System(MgmtSystemAPIBase):
             time.sleep(3)
 
 
-class OpenstackEC2System(EC2System):
+class OpenstackSystem(MgmtSystemAPIBase):
     """Openstack management system
 
-    Uses Openstack's EC2-compatible API, but requires a little secret
-    sauce in init to get up and running. Assumes nova is running on the
-    configured openstack host, port 8773. This can be overridden with
-    these kwargs:
+    Uses novaclient.
 
-      nova_hostname
-      nova_port
-
-    This backend has several limitations due to being based on EC2System:
-
-      - Instance names cannot be used, only instance ID strings,
-        e.g. i-01234567
-      - Openstack supports suspending instances, but there is no method
-        to do so exposed on the boto EC2 API.
-      - Openstack supports user authorization, so we need to store two
-        sets of credentials to work with openstack (user/pass, ec2 key/secret)
-
-    However, the power control methods work,
-    so this is officially Good Enough™
     """
-    def __init__(self, **kwargs):
-        access_key_id = kwargs['ec2_key_id']
-        secret_access_key = kwargs['ec2_secret']
-        endpoint = kwargs.get('nova_hostname', kwargs['hostname'])
-        port = kwargs.get('nova_port', 8773)
-        service_path = '/services/Cloud'
-        region = RegionInfo(None, 'openstack', endpoint)
-        self.api = EC2Connection(access_key_id, secret_access_key,
-            region=region, port=port, path=service_path,
-            is_secure=False)
 
-    def _get_instance_id_by_name(self, instance_name):
-        # While Openstack does have instance names, they aren't implemented
-        # the same as in EC2, so the instance ID is the only way to go
-        if instance_name.startswith('i-') and len(instance_name) == 10:
-            # This is already an instance id, return it!
-            return instance_name
+    states = {
+        'running': ('ACTIVE',),
+        'stopped': ('SHUTOFF',),
+        'suspended': ('SUSPENDED',),
+    }
+
+    can_suspend = True
+
+    def __init__(self, **kwargs):
+        tenant = kwargs['tenant']
+        username = kwargs['username']
+        password = kwargs['password']
+        auth_url = kwargs['auth_url']
+        self.api = osclient.Client(username, password, tenant, auth_url, service_type="compute")
+
+    def start_vm(self, instance_name):
+        if self.is_vm_running(instance_name):
+            return True
+
+        instance = self._find_instance_by_name(instance_name)
+        instance.start()
+        wait_for(self.is_vm_running, [instance_name])
+        return True
+
+    def stop_vm(self, instance_name):
+        if self.is_vm_stopped(instance_name):
+            return True
+
+        instance = self._find_instance_by_name(instance_name)
+        instance.stop()
+        wait_for(self.is_vm_stopped, [instance_name])
+        return True
+
+    def create_vm(self, instance_name, image, flavour, *args, **kwargs):
+        """Creates a vm.
+
+        If assign_floating_ip kwarg is present, then create_vm() will
+        attempt to register a floating IP address from the pool specified
+        in the arg.
+        """
+        image = self.api.images.find(name=image)
+        flavour = self.api.flavors.find(name=flavour)
+        instance = self.api.servers.create(instance_name, image, flavour, *args, **kwargs)
+        wait_for(self.is_vm_running, [instance_name])
+
+        if 'assign_floating_ip' in kwargs:
+            ip = self.api.floating_ips.create(kwargs['assign_floating_ip'])
+            instance.add_floating_ip(ip)
+        return True
+
+    def delete_vm(self, instance_name):
+        instance = self._find_instance_by_name(instance_name)
+        return instance.delete()
+
+    def restart_vm(self, instance_name):
+        return self.stop_vm(instance_name) and self.start_vm(instance_name)
+
+    def list_vm(self, **kwargs):
+        instance_list = self._get_all_instances()
+        return [instance.name for instance in instance_list]
+
+    def info(self):
+        return '%s %s' % (self.api.client.service_type, self.api.client.version)
+
+    def disconnect(self):
+        pass
+
+    def vm_status(self, vm_name):
+        instance = self._find_instance_by_name(vm_name)
+        return instance.status
+
+    def is_vm_running(self, vm_name):
+        instance = self._find_instance_by_name(vm_name)
+        if instance.status == 'ACTIVE':
+            return True
         else:
-            raise Exception('Invalid instance ID: %s' % instance_name)
+            return False
+
+    def is_vm_stopped(self, vm_name):
+        instance = self._find_instance_by_name(vm_name)
+        if instance.status == 'SHUTOFF':
+            return True
+        else:
+            return False
+
+    def is_vm_suspended(self, vm_name):
+        instance = self._find_instance_by_name(vm_name)
+        if instance.status == 'SUSPENDED':
+            return True
+        else:
+            return False
+
+    def suspend_vm(self, instance_name):
+        if self.is_vm_suspended(instance_name):
+            return True
+
+        instance = self._find_instance_by_name(instance_name)
+        instance.suspend()
+        wait_for(self.is_vm_suspended, [instance_name])
+
+    def resume_vm(self, instance_name):
+        if self.is_vm_running(instance_name):
+            return True
+
+        instance = self._find_instance_by_name(instance_name)
+        instance.resume()
+        wait_for(self.is_vm_running, [instance_name])
+
+    def clone_vm(self, source_name, vm_name):
+        raise NotImplementedError('clone_vm not implemented.')
+
+    def _get_all_instances(self):
+        instances = self.api.servers.list(True, {'all_tenants': True})
+        return instances
+
+    def _find_instance_by_name(self, name):
+        """
+        OpenStack Nova Client does have a find method, but it doesn't
+        allow the find method to be used on other tenants. The list()
+        method is the only one that allows an all_tenants=True keyword
+        """
+
+        instances = self._get_all_instances()
+        for instance in instances:
+            if instance.name == name:
+                return instance
+        else:
+            raise Exception('Invalid instance ID: %s' % name)
 
 
 class ActionTimedOutError(Exception):

@@ -17,3 +17,4 @@ ovirt-engine-sdk-python
 sqlalchemy
 psycopg2
 PyPDF2
+python-novaclient
