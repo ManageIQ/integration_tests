@@ -2,9 +2,15 @@
 # pylint: disable=W0621
 import pytest
 from unittestzero import Assert
-from fixtures.server_roles import default_roles, server_roles
 import db
-from time import sleep
+
+@pytest.mark.nondestructive
+@pytest.mark.fixtureconf(server_roles="+automate")
+@pytest.mark.usefixtures(
+    "maximized",
+    "setup_infrastructure_providers",
+    "setup_pxe_provision",
+    "mgmt_sys_api_clients")
 
 class TestBaseProvisioning:
     def complete_provision_pages_info(self,

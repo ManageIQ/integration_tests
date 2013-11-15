@@ -2,11 +2,10 @@
 # pylint: disable=W0621
 import pytest
 from unittestzero import Assert
-from fixtures.server_roles import default_roles, server_roles
 from tests.ui.provisioning.test_base_provisioning import TestBaseProvisioning
 
 @pytest.mark.nondestructive
-@pytest.mark.fixtureconf(server_roles=default_roles+('automate',))
+@pytest.mark.fixtureconf(server_roles="+automate")
 @pytest.mark.usefixtures(
         "maximized",
         "setup_infrastructure_providers",
@@ -28,12 +27,13 @@ class TestTemplateProvisioning(TestBaseProvisioning):
     def test_linux_template_workflow(
             self,
             server_roles,
+            default_roles_list,
             provisioning_start_page,
             provisioning_data,
             mgmt_sys_api_clients,
             random_name):
         '''Test Basic Provisioning Workflow'''
-        assert len(server_roles) == len(default_roles) + 1
+        assert len(server_roles) == len(default_roles_list) + 1
         provisioning_start_page.click_on_template_item(
             provisioning_data["template"])
         provision_pg = provisioning_start_page.click_on_continue()

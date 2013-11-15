@@ -111,20 +111,15 @@ ldap_server:
     bind_passwd: password
 server_roles:
     default:
-        - automate
-        - ems_metrics_coordinator
-        - ems_metrics_collector
-        - ems_metrics_processor
         - database_operations
         - event
-        - notifier
         - ems_inventory
         - ems_operations
         - reporting
         - scheduler
-        - smartproxy
         - smartstate
         - user_interface
+        - web_services
 group_roles:
     evmgroup-administrator:
         menus:

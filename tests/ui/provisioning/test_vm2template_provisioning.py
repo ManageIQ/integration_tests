@@ -3,11 +3,10 @@
 import pytest
 import db
 from unittestzero import Assert
-from fixtures.server_roles import default_roles, server_roles
 from tests.ui.provisioning.test_base_provisioning import TestBaseProvisioning
 
 @pytest.mark.nondestructive
-@pytest.mark.fixtureconf(server_roles=default_roles+('automate',))
+@pytest.mark.fixtureconf(server_roles="+automate")
 @pytest.mark.usefixtures(
     "maximized",
     "setup_infrastructure_providers",
