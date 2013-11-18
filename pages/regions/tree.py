@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 '''
 Created on Mar 7, 2013
 
 @author: bcrochet
 '''
 
-# -*- coding: utf-8 -*-
 
 from pages.page import Page
 from selenium.webdriver.common.by import By
@@ -109,3 +109,123 @@ class LegacyTree(Tree):
         # the same type as self to support different tree types in subclasses
         return [type(self)(self.testsetup, element, self)
                 for element in child_elements]
+
+
+class NewTree(Page):
+    """ Modified tree structure for Control / Explorer and possibly others.
+
+    @author: Milan Falešník <mfalesni@redhat.com>
+    """
+    _caption_element_locator = "span"
+    _caption_element_text_locator = "span > a"
+    _caption_element_image_locator = "span > img"
+    _caption_element_expander_locator = "span > span"
+
+    _child_nodes_locator = "ul > li"
+
+    def __init__(self, setup, root_element, parent=None):
+        Page.__init__(self, setup, root_element)
+        self._parent = parent
+
+    @property
+    def root(self):
+        return self._root_element
+
+    @property
+    def children(self):
+        child_elements = self.root.find_elements_by_css_selector(self._child_nodes_locator)
+        return [type(self)(self.testsetup, element, self)
+                for element
+                in child_elements]
+
+    @property
+    def caption_root(self):
+        """ Element encapsulating the row with text, image and expander
+
+        """
+        return self.root.find_element_by_css_selector(self._caption_element_locator)
+
+    @property
+    def expander(self):
+        """ Element used to expand the child tree
+
+        """
+        return self.root.find_element_by_css_selector(self._caption_element_expander_locator)
+
+    @property
+    def link(self):
+        """ Element with link and text
+
+        """
+        return self.root.find_element_by_css_selector(self._caption_element_text_locator)
+
+    @property
+    def image(self):
+        """ Element with the image
+
+        """
+        return self.root.find_element_by_css_selector(self._caption_element_image_locator)
+
+    @property
+    def is_expanded(self):
+        """ Is it already expanded?
+
+        """
+        return "dynatree-expanded" in self.caption_root.get_attribute("class")
+
+    @property
+    def is_expandable(self):
+        """ Can it be expanded?
+
+        """
+        return "dynatree-expander" in self.expander.get_attribute("class")
+
+    @property
+    def name(self):
+        """ Displayed text
+
+        """
+        return self.link.text.encode('utf-8')
+
+    @property
+    def parent(self):
+        return self._parent
+
+    def is_displayed(self):
+        return self.root.is_displayed()
+
+    def click(self):
+        element = self.link.click()
+        self._wait_for_results_refresh()
+        return element
+
+    def expand(self):
+        """ Click on expander
+
+        """
+        element = self.expander.click()
+        self._wait_for_results_refresh()
+        return element
+
+    def find_node_by_regexp(self, regexp_str, img_src_contains=None):
+        # finds first node by name in the whole tree, breadth first
+        regexp = re.compile(regexp_str)
+        queue = [self]
+        while queue:
+            node = queue.pop(0)
+            if regexp.match(node.name):
+                if img_src_contains and img_src_contains not in node.image.get_attribute("src"):
+                    continue
+                return node
+            elif node.is_expandable:
+                if not node.is_expanded:
+                    node.expand()
+                queue.extend(node.children)
+
+    def find_node_by_name(self, name, img_src_contains=None):
+        return self.find_node_by_regexp(r"\A%s\Z" % re.escape(name),
+                img_src_contains=img_src_contains)
+
+    def find_node_by_substr(self, name, img_src_contains=None):
+        return self.find_node_by_regexp(re.escape(name),
+                img_src_contains=img_src_contains)

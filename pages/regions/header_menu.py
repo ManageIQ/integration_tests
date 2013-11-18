@@ -128,9 +128,9 @@ class HeaderMenu(Page):
             },
             "Control": {
                 "Explorer": Control.Explorer,
-                #"Simulation":
+                "Simulation": Control.Simulation,
                 "Import / Export": Control.ImportExport,
-                #"Log":
+                "Log": Control.Log
             },
             "Automate": {
                 "Explorer": Automate.Explorer,

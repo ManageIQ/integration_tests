@@ -144,6 +144,16 @@ def control_importexport_pg(home_page_logged_in):
 
 
 @pytest.fixture
+def control_simulation_pg(home_page_logged_in):
+    return _submenu(home_page_logged_in, 'Control', 'Simulation')
+
+
+@pytest.fixture
+def control_log_pg(home_page_logged_in):
+    return _submenu(home_page_logged_in, 'Control', 'Log')
+
+
+@pytest.fixture
 def optimize_utilization_pg(home_page_logged_in):
     return _submenu(home_page_logged_in, 'Optimize', 'Utilization')
 
