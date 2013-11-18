@@ -102,6 +102,28 @@ class MgmtSystemAPIBase(object):
         raise NotImplementedError('list_vm not implemented.')
 
     @abstractmethod
+    def list_template(self):
+        """Returns a list of templates/images.
+
+        :return: list of template/image names
+        :rtype: list
+
+        """
+        raise NotImplementedError('list_template not implemented.')
+
+    @abstractmethod
+    def list_flavor(self):
+        """Returns a list of flavors.
+
+        Only valid for OpenStack and Amazon
+
+        :return: list of flavor names
+        :rtype: list
+
+        """
+        raise NotImplementedError('list_flavor not implemented.')
+
+    @abstractmethod
     def info(self):
         """Returns basic information about the mgmt system.
 
@@ -317,6 +339,12 @@ class VMWareSystem(MgmtSystemAPIBase):
     def list_vm(self):
         return self._get_list_vms()
 
+    def list_template(self):
+        return self._get_list_vms(get_template=True)
+
+    def list_flavor(self):
+        raise NotImplementedError('This function is not supported on this platform.')
+
     def list_host(self):
         return self.api.get_hosts()
 
@@ -493,6 +521,16 @@ class RHEVMSystem(MgmtSystemAPIBase):
         cluster_list = self.api.clusters.list(**kwargs)
         return [cluster.name for cluster in cluster_list]
 
+    def list_template(self, **kwargs):
+        '''
+        CFME ignores the 'Blank' template, so we do too
+        '''
+        template_list = self.api.templates.list(**kwargs)
+        return [template.name for template in template_list if template.name != "Blank"]
+
+    def list_flavor(self):
+        raise NotImplementedError('This function is not supported on this platform.')
+
     def info(self):
         # and we got nothing!
         pass
@@ -574,6 +612,17 @@ class EC2System(MgmtSystemAPIBase):
     def list_vm(self):
         """Returns a list from instance IDs currently known to EC2"""
         return [instance.id for instance in self._get_all_instances()]
+
+    def list_template(self):
+        private_images = self.api.get_all_images(owners=['self'],
+                                                 filters={'image-type': 'machine'})
+        shared_images = self.api.get_all_images(executable_by=['self'],
+                                                filters={'image-type': 'machine'})
+        combined_images = list(set(private_images) | set(shared_images))
+        return combined_images
+
+    def list_flavor(self):
+        raise NotImplementedError('This function is not supported on this platform.')
 
     def vm_status(self, instance_id):
         """Returns the status of the requested instance
@@ -853,6 +902,14 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def list_vm(self, **kwargs):
         instance_list = self._get_all_instances()
         return [instance.name for instance in instance_list]
+
+    def list_template(self):
+        template_list = self.api.images.list()
+        return [template.name for template in template_list]
+
+    def list_flavor(self):
+        flavor_list = self.api.flavors.list()
+        return [flavor.name for flavor in flavor_list]
 
     def info(self):
         return '%s %s' % (self.api.client.service_type, self.api.client.version)
