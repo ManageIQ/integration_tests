@@ -152,6 +152,11 @@ def optimize_utilization_pg(home_page_logged_in):
 
 
 @pytest.fixture
+def intel_dashboard_pg(home_page_logged_in):
+    return _submenu(home_page_logged_in, 'Cloud Intelligence', 'Dashboard')
+
+
+@pytest.fixture
 def intel_chargeback_pg(home_page_logged_in):
     return _submenu(home_page_logged_in, 'Cloud Intelligence', 'Chargeback')
 
