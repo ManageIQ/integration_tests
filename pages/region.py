@@ -1,7 +1,7 @@
 from unittestzero import Assert
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from fixtures.pytest_selenium import browser, values_to_locators
+from fixtures.pytest_selenium import browser
 
 
 class Region(object):
