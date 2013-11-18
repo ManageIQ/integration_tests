@@ -7,7 +7,7 @@ import boto
 from abc import ABCMeta, abstractmethod
 from boto.ec2 import EC2Connection
 from ovirtsdk.api import API
-from pysphere import VIServer
+from pysphere import VIServer, MORTypes
 from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
 from pysphere.vi_task import VITask
@@ -242,6 +242,26 @@ class VMWareSystem(MgmtSystemAPIBase):
                     return ip
         return None
 
+    def _get_list_vms(self, get_template=False):
+        template_or_vm_list = []
+
+        props = self.api._retrieve_properties_traversal(property_names=['name', 'config.template'],
+                                                        from_node=None,
+                                                        obj_type=MORTypes.VirtualMachine)
+        for prop in props:
+            vm = None
+            template = None
+            for elem in prop.PropSet:
+                if elem.Name == "name":
+                    vm = elem.Val
+                elif elem.Name == "config.template":
+                    template = elem.Val
+            if vm is None or template is None:
+                continue
+            if template == bool(get_template):
+                template_or_vm_list.append(vm)
+        return template_or_vm_list
+
     def start_vm(self, vm_name):
         vm = self._get_vm(vm_name)
         if vm.is_powered_on():
@@ -294,19 +314,8 @@ class VMWareSystem(MgmtSystemAPIBase):
         else:
             return self.start_vm(vm_name)
 
-    def list_vm(self, **kwargs):
-        vm_list = self.api.get_registered_vms(**kwargs)
-
-        # The vms come back in an unhelpful format, so run them through a regex
-        # Example vm name: '[datastore] vmname/vmname.vmx'
-        def vm_name_generator():
-            for vm in vm_list:
-                match = re.match(r'\[.*\] (.*)/\1\..*', vm)
-                if match:
-                    yield match.group(1)
-
-        # Unroll the VM name generator, and sort it to be more user-friendly
-        return sorted(list(vm_name_generator()))
+    def list_vm(self):
+        return self._get_list_vms()
 
     def list_host(self):
         return self.api.get_hosts()
