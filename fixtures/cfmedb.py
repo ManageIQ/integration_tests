@@ -70,3 +70,13 @@ def db_session():
     Session = sessionmaker(bind=db.engine)
     return Session()
 
+@pytest.fixture
+def db_yamls(db_session):
+    '''Returns the yamls from the db configuration table as a dict'''
+
+    import db
+    import yaml
+    configs = db_session.query(db.Configuration.typ, db.Configuration.settings)
+    data = {name: yaml.load(settings) for name, settings in configs}
+
+    return data
