@@ -1,21 +1,21 @@
 # This pulls in all the libraries needed to run Selenium tests
 # on Mozilla WebQA projects
 
-PyYAML
-UnittestZero
+boto
+flake8
+ovirt-engine-sdk-python
+paramiko
+psycopg2
 py
+PyPDF2
+pysphere
 pytest
 pytest-mozwebqa
-requests
-selenium
-paramiko
-scp
-suds
-boto
-pysphere
-ovirt-engine-sdk-python
-sqlalchemy
-psycopg2
-PyPDF2
 python-novaclient
-flake8
+PyYAML
+requests
+scp
+selenium
+sqlalchemy
+suds
+UnittestZero
