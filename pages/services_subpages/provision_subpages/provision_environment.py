@@ -10,34 +10,34 @@ from pages.base import Base
 from pages.services_subpages.provision import ProvisionFormButtonMixin
 from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.select import Select
 from time import sleep
+
 
 class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
     '''Represents the Environment tab in the Provision VM wizard'''
     _place_automatically_checkbox_locator = (
-            By.ID, "environment__placement_auto")
+        By.ID, "environment__placement_auto")
     _datacenter_select_locator = (
-            By.ID, "environment__placement_dc_name")
+        By.ID, "environment__placement_dc_name")
     _cluster_select_locator = (
-            By.ID, "environment__placement_cluster_name")
+        By.ID, "environment__placement_cluster_name")
     _resource_pool_select_locator = (
-            By.ID, "environment__placement_rp_name")
+        By.ID, "environment__placement_rp_name")
     _folder_name_select_locator = (
-            By.ID, "environment__placement_folder_name")
+        By.ID, "environment__placement_folder_name")
     _host_filter_select_locator = (
-            By.ID, "environment__host_filter")
+        By.ID, "environment__host_filter")
     _host_name_list_locator = (
-            By.CSS_SELECTOR, "div#prov_host_div > table > tbody")
+        By.CSS_SELECTOR, "div#prov_host_div > table > tbody")
     _datastore_create_checkbox_locator = (
-            By.ID, "environment__new_datastore_create")
+        By.ID, "environment__new_datastore_create")
     _datastore_filter_select_locator = (
-            By.ID, "environment__ds_filter")
+        By.ID, "environment__ds_filter")
     _datastore_list_locator = (
-            By.CSS_SELECTOR, "div#prov_ds_div > table > tbody")
+        By.CSS_SELECTOR, "div#prov_ds_div > table > tbody")
     _availability_zone_locator = (
-            By.ID, "environment__placement_availability_zone")
+        By.ID, "environment__placement_availability_zone")
 
     @property
     def choose_automatically(self):
@@ -93,9 +93,9 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
     def host_list(self):
         '''Returns the host list region'''
         return ListRegion(
-                self.testsetup,
-                self.get_element(*self._host_name_list_locator),
-                self.HostItem)
+            self.testsetup,
+            self.get_element(*self._host_name_list_locator),
+            self.HostItem)
 
     @property
     def datastore_create(self):
@@ -111,15 +111,17 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
     def datastore_list(self):
         '''Returns the datastore list region'''
         return ListRegion(
-                self.testsetup,
-                self.get_element(*self._datastore_list_locator),
-                self.DatastoreItem)
+            self.testsetup,
+            self.get_element(*self._datastore_list_locator),
+            self.DatastoreItem)
 
     def click_on_host_item(self, item_name):
             '''Select host item from list by name'''
             host_items = self.host_list.items
             sleep(6)
-            selected_item = host_items[[item for item in range(len(host_items)) if host_items[item].name == item_name][0]]
+            selected_item = \
+                host_items[[item for item in range(len(host_items))
+                if host_items[item].name == item_name][0]]
             selected_item.click()
             self._wait_for_results_refresh()
             return self.HostItem(selected_item)
@@ -127,7 +129,9 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
     def click_on_datastore_item(self, item_name):
             '''Select datastore item by name'''
             datastore_items = self.datastore_list.items
-            selected_item = datastore_items[[item for item in range(len(datastore_items)) if datastore_items[item].name == item_name][0]]
+            selected_item = \
+                datastore_items[[item for item in range(len(datastore_items))
+                if datastore_items[item].name == item_name][0]]
             selected_item.click()
             self._wait_for_results_refresh()
             return self.DatastoreItem(selected_item)
@@ -181,4 +185,3 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
         @property
         def total_space(self):
             pass
-

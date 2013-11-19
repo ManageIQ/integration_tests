@@ -11,10 +11,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from pages.services_subpages.provision import ProvisionFormButtonMixin
 
+
 class ProvisionSchedule(Base, ProvisionFormButtonMixin):
     '''Provision wizard - Schedule tab'''
     _when_to_provision_radio_locator = (
-            By.CSS_SELECTOR, "input[name='schedule__schedule_type']")
+        By.CSS_SELECTOR, "input[name='schedule__schedule_type']")
     _power_on_checkbox_locator = (By.ID, "schedule__vm_auto_start")
     _retirement_select_locator = (By.ID, "schedule__retirement")
 
@@ -25,7 +26,7 @@ class ProvisionSchedule(Base, ProvisionFormButtonMixin):
         Returns a list of elements for the radio buttons
         '''
         return self.selenium.find_elements(
-                *self._when_to_provision_radio_locator)
+            *self._when_to_provision_radio_locator)
 
     @property
     def power_on_after_creation(self):
@@ -51,7 +52,7 @@ class ProvisionSchedule(Base, ProvisionFormButtonMixin):
         self._wait_for_results_refresh()
         if power_on_after_creation_check is not None:
             if power_on_after_creation_check and \
-                not self.power_on_after_creation.is_selected():
+                    not self.power_on_after_creation.is_selected():
                 self.power_on_after_creation.click()
                 self._wait_for_results_refresh()
         self.retirement.select_by_visible_text(retirement_selection)

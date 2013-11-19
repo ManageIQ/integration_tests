@@ -5,6 +5,7 @@ import db
 from unittestzero import Assert
 from tests.ui.provisioning.test_base_provisioning import TestBaseProvisioning
 
+
 @pytest.mark.nondestructive
 @pytest.mark.fixtureconf(server_roles="+automate")
 @pytest.mark.usefixtures(
@@ -16,6 +17,7 @@ from tests.ui.provisioning.test_base_provisioning import TestBaseProvisioning
     "setup_soap_create_vm",
     "db_session",
     "soap_client")
+
 
 class TestVm2TemplateProvisioning(TestBaseProvisioning):
     def test_vm_to_template(
@@ -33,11 +35,10 @@ class TestVm2TemplateProvisioning(TestBaseProvisioning):
         self.complete_provision_pages_info(vmware_publish_to_template,
             provision_pg, random_name)
         # Assert a template was created
-        vm_pg = self.assert_vm_state(vmware_publish_to_template,
+        self.assert_vm_state(vmware_publish_to_template,
             provision_pg, "template", random_name)
         self.teardown_remove_from_provider(db_session, soap_client,
-            mgmt_sys_api_clients, \
+            mgmt_sys_api_clients,
             '%s%s' % (vmware_publish_to_template["vm_name"], random_name))
         self.teardown_remove_from_provider(db_session, soap_client,
             mgmt_sys_api_clients, vmware_linux_setup_data["vm_name"])
-
