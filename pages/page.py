@@ -31,13 +31,20 @@ class Page(object):
         WebDriverWait(self.selenium, self.timeout).until(
                 lambda s: not self.is_element_visible(*self._updating_locator))
 
-    def _wait_for_visible_element(self, *locator):
-        # Used in forms where an element (submit button) is displayed after ajax
-        # validation is done, this validation request doesn't use the common
-        # notification loadmask so _wait_for_results_refresh can't be used.
-        # On pages that do not have ajax refresh this wait will have no effect.
-        WebDriverWait(self.selenium, self.timeout).until(
-                lambda s: self.is_element_visible(*locator))
+    def _wait_for_visible_element(self, by, location, visible_timeout=None):
+        """ Wait for an element to appear visible.
+
+        Used in forms where an element (submit button) is displayed after ajax
+        validation is done, this validation request doesn't use the common
+        notification loadmask so _wait_for_results_refresh can't be used.
+        On pages that do not have ajax refresh this wait will have no effect.
+
+        @param by: What method (By.XPATH, By.CSS_SELECTOR, ...)
+        @param location: Locator
+        @keyword visible_timeout: Override standard timeout.
+        """
+        WebDriverWait(self.selenium, visible_timeout or self.timeout)\
+            .until(lambda s: self.is_element_visible(by, location))
 
     @property
     def is_the_current_page(self):

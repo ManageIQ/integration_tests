@@ -29,10 +29,9 @@ def login(user, password, submit_method=_click_on_login):
     browser.send_keys(login_page.username_text, user)
     browser.send_keys(login_page.password_text, password)
     submit_method()
-    
+
 
 def login_admin(**kwargs):
     user = conf.get()['cfme']['admin_user']
     password = conf.get()['cfme']['admin_password']
     login(user, password, **kwargs)
-        

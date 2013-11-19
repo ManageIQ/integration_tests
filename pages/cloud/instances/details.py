@@ -7,6 +7,7 @@ from pages.cloud.instances.common import CommonComponents
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
+
 class Details(CommonComponents):
     _details_locator = (By.CSS_SELECTOR, "div#textual_div")
     _set_retirement_date_button_locator = (By.CSS_SELECTOR,

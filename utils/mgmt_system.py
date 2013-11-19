@@ -5,12 +5,14 @@ import time
 
 import boto
 from abc import ABCMeta, abstractmethod
-from boto.ec2 import EC2Connection, RegionInfo
+from boto.ec2 import EC2Connection
 from ovirtsdk.api import API
-from pysphere import VIServer
+from pysphere import VIServer, MORTypes
 from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
 from pysphere.vi_task import VITask
+from novaclient.v1_1 import client as osclient
+from utils.wait import wait_for
 
 
 class MgmtSystemAPIBase(object):
@@ -98,6 +100,28 @@ class MgmtSystemAPIBase(object):
 
         """
         raise NotImplementedError('list_vm not implemented.')
+
+    @abstractmethod
+    def list_template(self):
+        """Returns a list of templates/images.
+
+        :return: list of template/image names
+        :rtype: list
+
+        """
+        raise NotImplementedError('list_template not implemented.')
+
+    @abstractmethod
+    def list_flavor(self):
+        """Returns a list of flavors.
+
+        Only valid for OpenStack and Amazon
+
+        :return: list of flavor names
+        :rtype: list
+
+        """
+        raise NotImplementedError('list_flavor not implemented.')
 
     @abstractmethod
     def info(self):
@@ -240,6 +264,26 @@ class VMWareSystem(MgmtSystemAPIBase):
                     return ip
         return None
 
+    def _get_list_vms(self, get_template=False):
+        template_or_vm_list = []
+
+        props = self.api._retrieve_properties_traversal(property_names=['name', 'config.template'],
+                                                        from_node=None,
+                                                        obj_type=MORTypes.VirtualMachine)
+        for prop in props:
+            vm = None
+            template = None
+            for elem in prop.PropSet:
+                if elem.Name == "name":
+                    vm = elem.Val
+                elif elem.Name == "config.template":
+                    template = elem.Val
+            if vm is None or template is None:
+                continue
+            if template == bool(get_template):
+                template_or_vm_list.append(vm)
+        return template_or_vm_list
+
     def start_vm(self, vm_name):
         vm = self._get_vm(vm_name)
         if vm.is_powered_on():
@@ -292,19 +336,23 @@ class VMWareSystem(MgmtSystemAPIBase):
         else:
             return self.start_vm(vm_name)
 
-    def list_vm(self, **kwargs):
-        vm_list = self.api.get_registered_vms(**kwargs)
+    def list_vm(self):
+        return self._get_list_vms()
 
-        # The vms come back in an unhelpful format, so run them through a regex
-        # Example vm name: '[datastore] vmname/vmname.vmx'
-        def vm_name_generator():
-            for vm in vm_list:
-                match = re.match(r'\[.*\] (.*)/\1\..*', vm)
-                if match:
-                    yield match.group(1)
+    def list_template(self):
+        return self._get_list_vms(get_template=True)
 
-        # Unroll the VM name generator, and sort it to be more user-friendly
-        return sorted(list(vm_name_generator()))
+    def list_flavor(self):
+        raise NotImplementedError('This function is not supported on this platform.')
+
+    def list_host(self):
+        return self.api.get_hosts()
+
+    def list_datastore(self):
+        return self.api.get_datastores()
+
+    def list_cluster(self):
+        return self.api.get_clusters()
 
     def info(self):
         return '%s %s' % (self.api.get_server_type(), self.api.get_api_version())
@@ -461,6 +509,28 @@ class RHEVMSystem(MgmtSystemAPIBase):
         vm_list = self.api.vms.list(**kwargs)
         return [vm.name for vm in vm_list]
 
+    def list_host(self, **kwargs):
+        host_list = self.api.hosts.list(**kwargs)
+        return [host.name for host in host_list]
+
+    def list_datastore(self, **kwargs):
+        datastore_list = self.api.storagedomains.list(**kwargs)
+        return [ds.name for ds in datastore_list if ds.get_status() is None]
+
+    def list_cluster(self, **kwargs):
+        cluster_list = self.api.clusters.list(**kwargs)
+        return [cluster.name for cluster in cluster_list]
+
+    def list_template(self, **kwargs):
+        '''
+        CFME ignores the 'Blank' template, so we do too
+        '''
+        template_list = self.api.templates.list(**kwargs)
+        return [template.name for template in template_list if template.name != "Blank"]
+
+    def list_flavor(self):
+        raise NotImplementedError('This function is not supported on this platform.')
+
     def info(self):
         # and we got nothing!
         pass
@@ -542,6 +612,17 @@ class EC2System(MgmtSystemAPIBase):
     def list_vm(self):
         """Returns a list from instance IDs currently known to EC2"""
         return [instance.id for instance in self._get_all_instances()]
+
+    def list_template(self):
+        private_images = self.api.get_all_images(owners=['self'],
+                                                 filters={'image-type': 'machine'})
+        shared_images = self.api.get_all_images(executable_by=['self'],
+                                                filters={'image-type': 'machine'})
+        combined_images = list(set(private_images) | set(shared_images))
+        return combined_images
+
+    def list_flavor(self):
+        raise NotImplementedError('This function is not supported on this platform.')
 
     def vm_status(self, instance_id):
         """Returns the status of the requested instance
@@ -739,6 +820,7 @@ class EC2System(MgmtSystemAPIBase):
         instances = self._get_instances_from_reservations(reservations)
         return instances
 
+    # Prime candidate for a wait_for
     def _block_until(self, instance_id, expected, timeout=90):
         """Blocks until the given instance is in one of the expected states
 
@@ -753,48 +835,149 @@ class EC2System(MgmtSystemAPIBase):
             time.sleep(3)
 
 
-class OpenstackEC2System(EC2System):
+class OpenstackSystem(MgmtSystemAPIBase):
     """Openstack management system
 
-    Uses Openstack's EC2-compatible API, but requires a little secret
-    sauce in init to get up and running. Assumes nova is running on the
-    configured openstack host, port 8773. This can be overridden with
-    these kwargs:
+    Uses novaclient.
 
-      nova_hostname
-      nova_port
-
-    This backend has several limitations due to being based on EC2System:
-
-      - Instance names cannot be used, only instance ID strings,
-        e.g. i-01234567
-      - Openstack supports suspending instances, but there is no method
-        to do so exposed on the boto EC2 API.
-      - Openstack supports user authorization, so we need to store two
-        sets of credentials to work with openstack (user/pass, ec2 key/secret)
-
-    However, the power control methods work,
-    so this is officially Good Enough™
     """
-    def __init__(self, **kwargs):
-        access_key_id = kwargs['ec2_key_id']
-        secret_access_key = kwargs['ec2_secret']
-        endpoint = kwargs.get('nova_hostname', kwargs['hostname'])
-        port = kwargs.get('nova_port', 8773)
-        service_path = '/services/Cloud'
-        region = RegionInfo(None, 'openstack', endpoint)
-        self.api = EC2Connection(access_key_id, secret_access_key,
-            region=region, port=port, path=service_path,
-            is_secure=False)
 
-    def _get_instance_id_by_name(self, instance_name):
-        # While Openstack does have instance names, they aren't implemented
-        # the same as in EC2, so the instance ID is the only way to go
-        if instance_name.startswith('i-') and len(instance_name) == 10:
-            # This is already an instance id, return it!
-            return instance_name
+    states = {
+        'running': ('ACTIVE',),
+        'stopped': ('SHUTOFF',),
+        'suspended': ('SUSPENDED',),
+    }
+
+    can_suspend = True
+
+    def __init__(self, **kwargs):
+        tenant = kwargs['tenant']
+        username = kwargs['username']
+        password = kwargs['password']
+        auth_url = kwargs['auth_url']
+        self.api = osclient.Client(username, password, tenant, auth_url, service_type="compute")
+
+    def start_vm(self, instance_name):
+        if self.is_vm_running(instance_name):
+            return True
+
+        instance = self._find_instance_by_name(instance_name)
+        instance.start()
+        wait_for(self.is_vm_running, [instance_name])
+        return True
+
+    def stop_vm(self, instance_name):
+        if self.is_vm_stopped(instance_name):
+            return True
+
+        instance = self._find_instance_by_name(instance_name)
+        instance.stop()
+        wait_for(self.is_vm_stopped, [instance_name])
+        return True
+
+    def create_vm(self, instance_name, image, flavour, *args, **kwargs):
+        """Creates a vm.
+
+        If assign_floating_ip kwarg is present, then create_vm() will
+        attempt to register a floating IP address from the pool specified
+        in the arg.
+        """
+        image = self.api.images.find(name=image)
+        flavour = self.api.flavors.find(name=flavour)
+        instance = self.api.servers.create(instance_name, image, flavour, *args, **kwargs)
+        wait_for(self.is_vm_running, [instance_name])
+
+        if 'assign_floating_ip' in kwargs:
+            ip = self.api.floating_ips.create(kwargs['assign_floating_ip'])
+            instance.add_floating_ip(ip)
+        return True
+
+    def delete_vm(self, instance_name):
+        instance = self._find_instance_by_name(instance_name)
+        return instance.delete()
+
+    def restart_vm(self, instance_name):
+        return self.stop_vm(instance_name) and self.start_vm(instance_name)
+
+    def list_vm(self, **kwargs):
+        instance_list = self._get_all_instances()
+        return [instance.name for instance in instance_list]
+
+    def list_template(self):
+        template_list = self.api.images.list()
+        return [template.name for template in template_list]
+
+    def list_flavor(self):
+        flavor_list = self.api.flavors.list()
+        return [flavor.name for flavor in flavor_list]
+
+    def info(self):
+        return '%s %s' % (self.api.client.service_type, self.api.client.version)
+
+    def disconnect(self):
+        pass
+
+    def vm_status(self, vm_name):
+        instance = self._find_instance_by_name(vm_name)
+        return instance.status
+
+    def is_vm_running(self, vm_name):
+        instance = self._find_instance_by_name(vm_name)
+        if instance.status == 'ACTIVE':
+            return True
         else:
-            raise Exception('Invalid instance ID: %s' % instance_name)
+            return False
+
+    def is_vm_stopped(self, vm_name):
+        instance = self._find_instance_by_name(vm_name)
+        if instance.status == 'SHUTOFF':
+            return True
+        else:
+            return False
+
+    def is_vm_suspended(self, vm_name):
+        instance = self._find_instance_by_name(vm_name)
+        if instance.status == 'SUSPENDED':
+            return True
+        else:
+            return False
+
+    def suspend_vm(self, instance_name):
+        if self.is_vm_suspended(instance_name):
+            return True
+
+        instance = self._find_instance_by_name(instance_name)
+        instance.suspend()
+        wait_for(self.is_vm_suspended, [instance_name])
+
+    def resume_vm(self, instance_name):
+        if self.is_vm_running(instance_name):
+            return True
+
+        instance = self._find_instance_by_name(instance_name)
+        instance.resume()
+        wait_for(self.is_vm_running, [instance_name])
+
+    def clone_vm(self, source_name, vm_name):
+        raise NotImplementedError('clone_vm not implemented.')
+
+    def _get_all_instances(self):
+        instances = self.api.servers.list(True, {'all_tenants': True})
+        return instances
+
+    def _find_instance_by_name(self, name):
+        """
+        OpenStack Nova Client does have a find method, but it doesn't
+        allow the find method to be used on other tenants. The list()
+        method is the only one that allows an all_tenants=True keyword
+        """
+
+        instances = self._get_all_instances()
+        for instance in instances:
+            if instance.name == name:
+                return instance
+        else:
+            raise Exception('Invalid instance ID: %s' % name)
 
 
 class ActionTimedOutError(Exception):

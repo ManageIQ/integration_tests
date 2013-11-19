@@ -1,12 +1,12 @@
 # This pulls in all the libraries needed to run Selenium tests
 # on Mozilla WebQA projects
 
-PyYAML==3.10
+PyYAML
 UnittestZero
 py
 pytest
 #pytest-mozwebqa==1.0
-requests==0.13.3
+requests
 selenium
 paramiko
 scp
@@ -17,3 +17,4 @@ ovirt-engine-sdk-python
 sqlalchemy
 psycopg2
 PyPDF2
+python-novaclient

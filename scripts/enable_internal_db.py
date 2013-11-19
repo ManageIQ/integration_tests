@@ -62,8 +62,7 @@ def main():
         print out
         sys.exit(1)
     else:
-        print 'Rebooting appliance'
-        client.run_command('reboot')
+        print 'DB Enabled, evm watchdog should start the UI shortly.'
 
 
 if __name__ == '__main__':

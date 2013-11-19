@@ -11,7 +11,7 @@ infra_provider_type_map = {
 
 cloud_provider_type_map = {
     'ec2': mgmt_system.EC2System,
-    'openstack': mgmt_system.OpenstackEC2System,
+    'openstack': mgmt_system.OpenstackSystem,
 }
 
 # Combined type map, provider_factory doesn't discriminate

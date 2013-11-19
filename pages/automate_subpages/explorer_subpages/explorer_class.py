@@ -5,33 +5,31 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.list import ListRegion, ListItem
 from pages.regions.tabbuttonitem import TabButtonItem
-from selenium.webdriver.support.select import Select
-from time import sleep
 from pages.automate_subpages.explorer_subpages.explorer_instance import ExplorerInstance
 from pages.automate_subpages.explorer_subpages.explorer_method import ExplorerMethod
-from pages.automate_subpages.explorer_subpages.explorer_property import ExplorerProperty
 from pages.automate_subpages.explorer_subpages.explorer_schema import ExplorerSchema
+
 
 class ClassFormButtonMixin(object):
     '''Mixin for shared buttons on the Class elements'''
     _template_form_buttons_locator = (
-            By.CSS_SELECTOR,
-            "div#form_buttons_div > table > tbody > tr > td > div")
+        By.CSS_SELECTOR,
+        "div#form_buttons_div > table > tbody > tr > td > div")
     _template_save_button_locator = (
-            By.CSS_SELECTOR,
-            "li img[alt='Save']")
+        By.CSS_SELECTOR,
+        "li img[alt='Save']")
     _template_reset_button_locator = (
-            By.CSS_SELECTOR,
-            "li img[alt='Reset']")
+        By.CSS_SELECTOR,
+        "li img[alt='Reset']")
     _template_cancel_button_locator = (
-            By.CSS_SELECTOR,
-            "li img[alt='Cancel']")
+        By.CSS_SELECTOR,
+        "li img[alt='Cancel']")
 
     @property
     def _form_buttons(self):
         '''Represents the set of form buttons.'''
         button_divs = self.selenium.find_elements(
-                *self._template_form_buttons_locator)
+            *self._template_form_buttons_locator)
         for div in button_divs:
             if "block" in div.value_of_css_property('display'):
                 return div.find_element_by_css_selector("ul#form_buttons")
@@ -41,19 +39,19 @@ class ClassFormButtonMixin(object):
     def save_button(self):
         '''The save button. Will select the "visible" one'''
         return self._form_buttons.find_element(
-                *self._template_save_button_locator)
+            *self._template_save_button_locator)
 
     @property
     def reset_button(self):
         '''The reset button. Will select the "visible" one'''
         return self._form_buttons.find_element(
-                *self._template_reset_button_locator)
+            *self._template_reset_button_locator)
 
     @property
     def cancel_button(self):
         '''The cancel button. Will select the "visible" one'''
         return self._form_buttons.find_element(
-                *self._template_cancel_button_locator)
+            *self._template_cancel_button_locator)
 
 
 class ClassTabButtonItem(TabButtonItem):
@@ -64,11 +62,11 @@ class ClassTabButtonItem(TabButtonItem):
     from pages.automate_subpages.explorer_subpages.explorer_schema import ExplorerSchema
 
     _item_page = {
-                "Instances":  ExplorerInstance,
-                "Methods":    ExplorerMethod,
-                "Properties": ExplorerProperty,
-                "Schema":     ExplorerSchema
-            }
+        "Instances": ExplorerInstance,
+        "Methods": ExplorerMethod,
+        "Properties": ExplorerProperty,
+        "Schema": ExplorerSchema
+    }
 
 
 class ExplorerClass(Base):
@@ -87,17 +85,18 @@ class ExplorerClass(Base):
 
     # instances
     _add_instance_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Add a New Instance']")
-    _edit_this_instance_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Select a single Instance to edit']")
+    _edit_this_instance_button = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title='Select a single Instance to edit']")
 
     # properties
     _edit_this_class_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Edit this Class']")
-    _remove_this_class_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Remove this Class']")
+    _remove_this_class_button = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title='Remove this Class']")
 
     #_schema
     _edit_schema_button = (By.CSS_SELECTOR, "table.buttons_cont tr[title='Edit selected Schema']")
 
     _flash_message = (By.CSS_SELECTOR, "div#flash_text_div_class_instances > ul > li")
-
 
     @property
     def flash_message_class(self):
@@ -150,31 +149,46 @@ class ExplorerClass(Base):
 
     def click_on_add_new_instance(self):
         self._wait_for_results_refresh()
-        ActionChains(self.selenium).click(self.configuration_button).click(self.add_new_instance_button).perform()
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.add_new_instance_button)\
+            .perform()
         self._wait_for_results_refresh()
         return ExplorerInstance(self.testsetup)
 
     def click_on_edit_this_instance(self):
         self._wait_for_results_refresh()
-        ActionChains(self.selenium).click(self.configuration_button).click(self.edit_this_instance_button).perform()
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.edit_this_instance_button)\
+            .perform()
         self._wait_for_results_refresh()
         return ExplorerInstance(self.testsetup)
 
     def click_on_add_new_method(self):
         self._wait_for_results_refresh()
-        ActionChains(self.selenium).click(self.configuration_button).click(self.add_new_method_button).perform()
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.add_new_method_button)\
+            .perform()
         self._wait_for_results_refresh()
         return ExplorerMethod(self.testsetup)
 
     def click_on_edit_this_class(self):
         self._wait_for_results_refresh()
-        ActionChains(self.selenium).click(self.configuration_button).click(self.edit_this_class_button).perform()
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.edit_this_class_button)\
+            .perform()
         self._wait_for_results_refresh()
         return ExplorerClass(self.testsetup)
 
     def click_on_remove_this_class(self):
         self._wait_for_results_refresh()
-        ActionChains(self.selenium).click(self.configuration_button).click(self.remove_this_class_button).perform()
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.remove_this_class_button)\
+            .perform()
         self.handle_popup(cancel=False)
         self._wait_for_results_refresh()
         from pages.automate import Automate
@@ -182,7 +196,10 @@ class ExplorerClass(Base):
 
     def click_on_edit_schema(self):
         self._wait_for_results_refresh()
-        ActionChains(self.selenium).click(self.configuration_button).click(self.edit_schema_button).perform()
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.edit_schema_button)\
+            .perform()
         self._wait_for_results_refresh()
         return ExplorerSchema(self.testsetup)
 
@@ -213,7 +230,7 @@ class ExplorerClass(Base):
         return ListRegion(
             self.testsetup,
             self.get_element(*self._instance_list_locator),
-                 ExplorerClass.InstanceItem)
+            ExplorerClass.InstanceItem)
 
     class InstanceItem(ListItem):
         '''Represents an instance in the list'''
@@ -234,4 +251,3 @@ class ExplorerClass(Base):
         @property
         def description(self):
             pass
-

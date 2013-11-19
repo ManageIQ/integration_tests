@@ -15,7 +15,7 @@ class Customization(Base):
         "div.dhx_toolbar_btn[title='Configuration']")
     _add_dialog_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Add a new Dialog']")
-    _del_dialog_button_locator = (By.CSS_SELECTOR, 
+    _del_dialog_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Remove this Dialog from the VMDB']")
     _edit_dialog_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Edit this Dialog']")
@@ -41,14 +41,14 @@ class Customization(Base):
     _ele_desc = (By.CSS_SELECTOR, "input[id='field_description']")
     _choose_type = (By.CSS_SELECTOR, "select#field_typ")
     _default_value_text_box = (By.CSS_SELECTOR, "input#field_default_value")
-    
+
     @property
     def accordion(self):
         '''accordion'''
         from pages.regions.accordion import Accordion
         from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
         return Accordion(self.testsetup, LegacyTreeAccordionItem)
-     
+
     @property
     def configuration_button(self):
         '''Configuration button in service dialog page'''
@@ -58,25 +58,27 @@ class Customization(Base):
     def _add_dialog_button(self):
         '''Add a new service dialog button'''
         return self.selenium.find_element(*self._add_dialog_button_locator)
-        
+
     def add_new_service_dialog(self):
         '''Click on Configuration , add new service dialog'''
-        ActionChains(self.selenium).click(
-        self.configuration_button).click(self._add_dialog_button).perform()
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self._add_dialog_button)\
+            .perform()
         return Customization(self.testsetup)
-    
+
     def click_on_service_dialog(self, service_dialog):
         '''Click on catalog to edit or delete'''
-        self.accordion.current_content.\
-        find_node_by_name(service_dialog).click()
+        self.accordion.current_content\
+            .find_node_by_name(service_dialog).click()
         self._wait_for_results_refresh()
         return Customization(self.testsetup)
-    
+
     @property
     def del_dialog_button(self):
         '''Delete catalog button'''
         return self.selenium.find_element(*self._del_dialog_button_locator)
-    
+
     def delete_service_dialog(self):
         '''Delete catalog'''
         ActionChains(self.selenium).click(
@@ -84,12 +86,12 @@ class Customization(Base):
         self.handle_popup()
         self._wait_for_results_refresh()
         return Customization(self.testsetup)
-    
+
     @property
     def _edit_dialog_button(self):
         '''Add a new service dialog button'''
         return self.selenium.find_element(*self._edit_dialog_button_locator)
-        
+
     def edit_service_dialog(self, dialog_name):
         '''Click on Configuration , add new service dialog'''
         ActionChains(self.selenium).click(
@@ -100,30 +102,30 @@ class Customization(Base):
         self.selenium.find_element(*self._edit_save_button).click()
         self._wait_for_results_refresh()
         return Customization(self.testsetup)
-    
+
     def create_service_dialog(self, random_string, servicedialogname, desc, ele_name):
         '''fill service dialog form and sub forms'''
         self.add_label_to_dialog(servicedialogname, desc)
         self._wait_for_results_refresh()
         self.add_tab_to_dialog(
-            random_string+"_tab_label", random_string+"_tab_desc")
+            random_string + "_tab_label", random_string + "_tab_desc")
         self.add_box_to_dialog(
-            random_string+"_box_label", random_string+"_box_desc")
+            random_string + "_box_label", random_string + "_box_desc")
         time.sleep(3)
         self.add_element_to_dialog(
-            random_string+"_ele_label",
+            random_string + "_ele_label",
             ele_name,
             "_ele_desc")
         self.save_dialog()
         return Customization(self.testsetup)
-        
+
     def save_dialog(self):
         '''Save Service Dialog'''
         self._wait_for_visible_element(*self._add_button)
         self.selenium.find_element(*self._add_button).click()
         self._wait_for_results_refresh()
         return Customization(self.testsetup)
-            
+
     def add_label_to_dialog(self, servicedialogname, desc):
         '''Add label'''
         self.selenium.find_element(
@@ -133,7 +135,7 @@ class Customization(Base):
         self.selenium.find_element(*self._submit_button_checkbox).click()
         self.selenium.find_element(*self._cancel_button_checkbox).click()
         return Customization(self.testsetup)
-            
+
     def add_tab_to_dialog(self, tab_label, tab_desc):
         '''Fill Add tab form'''
         self.selenium.find_element(*self._plus_button).click()
@@ -144,7 +146,7 @@ class Customization(Base):
         self.selenium.find_element(*self._tab_label).send_keys(tab_label)
         self.selenium.find_element(*self._tab_desc).send_keys(tab_desc)
         return Customization(self.testsetup)
-         
+
     def add_box_to_dialog(self, box_label, box_desc):
         '''Fill add box form'''
         time.sleep(5)
@@ -156,7 +158,7 @@ class Customization(Base):
         self.selenium.find_element(*self._box_label).send_keys(box_label)
         self.selenium.find_element(*self._box_desc).send_keys(box_desc)
         return Customization(self.testsetup)
-         
+
     def add_element_to_dialog(self, ele_label, ele_name, ele_desc):
         '''Fill element form'''
         self.selenium.find_element(*self._plus_button).click()
@@ -170,4 +172,3 @@ class Customization(Base):
         #self.selenium.find_element(*self._default_value_text_box).\
            #  send_keys("service name")
         return Customization(self.testsetup)
-    

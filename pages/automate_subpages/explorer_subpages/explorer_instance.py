@@ -1,15 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from pages.base import Base
-from pages.page import Page
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.list import ListRegion, ListItem
-from pages.regions.tabbuttonitem import TabButtonItem
-from selenium.webdriver.support.select import Select
 from unittestzero import Assert
-from selenium.webdriver.common.keys import Keys
-from time import sleep
+
 
 class ExplorerInstance(Base):
 
@@ -17,11 +12,16 @@ class ExplorerInstance(Base):
     _display_name_instance_field = (By.ID, "cls_inst_display_name")
     _description_instance_field = (By.ID, "cls_inst_description")
     _param_list_locator = (By.CSS_SELECTOR, "fieldset > table[class='style3'] > tbody")
-    _param_row_zero_value = (By.CSS_SELECTOR, "fieldset > table > tbody > tr.row0 > td > input#cls_inst_value_0")
-    _param_row_zero_on_entry = (By.CSS_SELECTOR, "fieldset > table > tbody > tr.row0 > td > input#cls_inst_on_entry_0")
-    _param_row_one_value = (By.CSS_SELECTOR, "fieldset > table > tbody > tr.row1 > td > input#cls_inst_value_1")
-    _param_row_two_value = (By.CSS_SELECTOR, "fieldset > table > tbody > tr.row0 > td > input#cls_inst_value_2")
-    _param_row_three_value = (By.CSS_SELECTOR, "fieldset > table > tbody > tr.row1 > td > input#cls_inst_value_3")
+    _param_row_zero_value = (By.CSS_SELECTOR,
+        "fieldset > table > tbody > tr.row0 > td > input#cls_inst_value_0")
+    _param_row_zero_on_entry = (By.CSS_SELECTOR,
+        "fieldset > table > tbody > tr.row0 > td > input#cls_inst_on_entry_0")
+    _param_row_one_value = (By.CSS_SELECTOR,
+        "fieldset > table > tbody > tr.row1 > td > input#cls_inst_value_1")
+    _param_row_two_value = (By.CSS_SELECTOR,
+        "fieldset > table > tbody > tr.row0 > td > input#cls_inst_value_2")
+    _param_row_three_value = (By.CSS_SELECTOR,
+        "fieldset > table > tbody > tr.row1 > td > input#cls_inst_value_3")
     _add_system_button = (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Add']")
     _save_button = (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Save Changes']")
     _reset_button = (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Reset Changes']")
@@ -48,24 +48,23 @@ class ExplorerInstance(Base):
         return ListRegion(
             self.testsetup,
             self.get_element(*self._param_list_locator),
-                 ExplorerInstance.ParamItem)
+            ExplorerInstance.ParamItem)
 
     @property
     def param_row_zero_value(self):
-        return  self.selenium.find_element(*self._param_row_zero_value)
+        return self.selenium.find_element(*self._param_row_zero_value)
 
     @property
     def param_row_one_value(self):
-        return  self.selenium.find_element(*self._param_row_one_value)
+        return self.selenium.find_element(*self._param_row_one_value)
 
     @property
     def param_row_two_value(self):
-        return  self.selenium.find_element(*self._param_row_two_value)
+        return self.selenium.find_element(*self._param_row_two_value)
 
     @property
     def param_row_three_value(self):
-        return  self.selenium.find_element(*self._param_row_three_value)
-
+        return self.selenium.find_element(*self._param_row_three_value)
 
     def fill_instance_info(self, inst_name, inst_display_name, inst_description):
         self._wait_for_results_refresh()
@@ -85,8 +84,8 @@ class ExplorerInstance(Base):
                                      param_collect=None):
         param_items = self.param_list.items
         if(self.param_row_one_value.get_attribute("value") == param_value):
-            param_value = param_value+" "
-        self.fill_field_element_clears_text(param_value, \
+            param_value = param_value + " "
+        self.fill_field_element_clears_text(param_value,
               param_items[row_number].value.find_element_by_id('cls_inst_value_' + str(row_number)))
         self._wait_for_results_refresh()
         return ExplorerInstance(self.testsetup)
@@ -124,7 +123,6 @@ class ExplorerInstance(Base):
         self._wait_for_results_refresh()
         return ExplorerClass(self.testsetup)
 
-
     class ParamItem(ListItem):
         '''Represents a parameter in the list'''
         _columns = ["name", "value", "on_entry", "on_exit", "on_error", "collect"]
@@ -152,5 +150,3 @@ class ExplorerInstance(Base):
         @property
         def collect(self):
             return self._item_data[5].text
-
-

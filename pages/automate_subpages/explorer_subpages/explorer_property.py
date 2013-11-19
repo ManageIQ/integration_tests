@@ -2,9 +2,8 @@
 
 from pages.base import Base
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.list import ListRegion, ListItem
-from time import sleep
+
 
 class ExplorerProperty(Base):
 
@@ -15,15 +14,14 @@ class ExplorerProperty(Base):
         return ListRegion(
             self.testsetup,
             self.get_element(*self._properties_table_locator),
-                 ExplorerProperty.PropertiesItem)
-
+            ExplorerProperty.PropertiesItem)
 
     def retrieve_properties_values(self, selected_property):
         property_items = self.properties_list.items
-        selected_item= None
+        selected_item = None
         for i in range(0, len(property_items)):
-             if property_items[i]._item_data[0].text == selected_property:
-                 selected_item = property_items[i]
+            if property_items[i]._item_data[0].text == selected_property:
+                selected_item = property_items[i]
         return selected_item._item_data[1].text
 
     class PropertiesItem(ListItem):
@@ -37,6 +35,3 @@ class ExplorerProperty(Base):
         @property
         def prop_text(self):
             return self._item_data[1].text
-
-
-

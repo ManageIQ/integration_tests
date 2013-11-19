@@ -69,6 +69,18 @@ management_systems:
         # EC2 Power Control is currently broken
         #test_vm_power_control:
         #    - instance_id_or_name
+    openstack:
+        name: rhos-01
+        hostname: rhos-01
+        ipaddress: 10.0.0.4
+        port: 5000
+        auth_url: http://10.0.0.4:35357/v2.0/
+        tenant: demo
+        credentials: rhos
+        server_zone: default
+        type: openstack
+        test_vm_power_control:
+            - pwr-ctl-vm-1-dnd
 pxe:
     pxe_servers:
         rhel:
@@ -111,20 +123,15 @@ ldap_server:
     bind_passwd: password
 server_roles:
     default:
-        - automate
-        - ems_metrics_coordinator
-        - ems_metrics_collector
-        - ems_metrics_processor
         - database_operations
         - event
-        - notifier
         - ems_inventory
         - ems_operations
         - reporting
         - scheduler
-        - smartproxy
         - smartstate
         - user_interface
+        - web_services
 group_roles:
     evmgroup-administrator:
         menus:

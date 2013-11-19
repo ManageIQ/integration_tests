@@ -15,18 +15,39 @@ class PolicyMixin(Page):
     _cancel_changes_button = (By.CSS_SELECTOR, "a[title='Cancel']")
     _reset_changes_button = (By.CSS_SELECTOR, "a[title='Reset Changes']")
 
-    def save_policy_assignment(self):
-        self._wait_for_visible_element(*self._save_changes_button)
+    def save_policy_assignment(self, visible_timeout=None):
+        """ Clicks on the Save button.
+
+        It waits with the timeout until the buton has been enabled
+        and then it clicks it.
+
+        @keyword visible_timeout: Modify standard timeout for button's appearance.
+        """
+        self._wait_for_visible_element(*self._save_changes_button, visible_timeout=visible_timeout)
         self.selenium.find_element(*self._save_changes_button).click()
         self._wait_for_results_refresh()
 
-    def cancel_policy_assignment(self):
-        self._wait_for_visible_element(*self._cancel_changes_button)
+    def cancel_policy_assignment(self, visible_timeout=None):
+        """ Clicks on the Cancel button.
+
+        It waits with the timeout until the buton has been enabled
+        and then it clicks it.
+
+        @keyword visible_timeout: Modify standard timeout for button's appearance.
+        """
+        self._wait_for_visible_element(*self._cancel_changes_button, visible_timeout=visible_timeout)
         self.selenium.find_element(*self._cancel_changes_button).click()
         self._wait_for_results_refresh()
 
-    def reset_policy_assignment(self):
-        self._wait_for_visible_element(*self._reset_changes_button)
+    def reset_policy_assignment(self, visible_timeout=None):
+        """ Clicks on the Reset button.
+
+        It waits with the timeout until the buton has been enabled
+        and then it clicks it.
+
+        @keyword visible_timeout: Modify standard timeout for button's appearance.
+        """
+        self._wait_for_visible_element(*self._reset_changes_button, visible_timeout=visible_timeout)
         self.selenium.find_element(*self._reset_changes_button).click()
         self._wait_for_results_refresh()
 

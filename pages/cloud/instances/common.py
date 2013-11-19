@@ -5,6 +5,7 @@ from pages.base import Base
 from pages.regions.paginator import PaginatorMixin
 from selenium.common.exceptions import NoSuchElementException
 
+
 class CommonComponents(Base, PaginatorMixin):
     """Common components between main instance lists & instance details"""
 

@@ -4,6 +4,7 @@ from selenium.webdriver.common.by import By
 # pylint: disable=R0904
 # pylint: disable=C0103
 
+
 class AddFormCommon(Base):
     '''Cloud Providers - Add an Cloud Provider page'''
     _page_title = 'CloudForms Management Engine: Cloud Providers'
@@ -38,8 +39,7 @@ class AddFormCommon(Base):
         '''Verify button
 
         Returns a WebElement'''
-        return self.get_element(
-                *self._provider_credentials_verify_button_locator)
+        return self.get_element(*self._provider_credentials_verify_button_locator)
 
     @property
     def cancel_button(self):
@@ -86,8 +86,7 @@ class AddFormCommon(Base):
     @property
     def amqp_password(self):
         '''Password on amqp credentials tab'''
-        return self.get_element(
-                *self._provider_amqp_password_locator)
+        return self.get_element(*self._provider_amqp_password_locator)
 
     @property
     def amqp_verify(self):
@@ -153,9 +152,7 @@ class AddFormCommon(Base):
     def select_amazon_region(self, region='us-east-1'):
         '''Select a amazon region from the dropdown,
         and wait for the page to refresh'''
-        self.select_dropdown_by_value(
-                region,
-                *self._amazon_region_locator)
+        self.select_dropdown_by_value(region, *self._amazon_region_locator)
         from pages.cloud.providers.add import Add
         return Add(self.testsetup)
 
