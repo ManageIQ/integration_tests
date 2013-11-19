@@ -18,3 +18,4 @@ sqlalchemy
 psycopg2
 PyPDF2
 python-novaclient
+flake8
