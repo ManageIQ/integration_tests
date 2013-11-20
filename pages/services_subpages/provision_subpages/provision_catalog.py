@@ -13,21 +13,22 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from unittestzero import Assert
 
+
 class ProvisionCatalog(Base, ProvisionFormButtonMixin):
     '''Represents the Catalog tab in the Provision wizard'''
     _filter_select_locator = (By.ID, "service__vm_filter")
     _name_list_locator = (
-            By.CSS_SELECTOR, "div#prov_vm_div > table > tbody")
+        By.CSS_SELECTOR, "div#prov_vm_div > table > tbody")
     _provision_type_select_locator = (By.ID, "service__provision_type")
     _pxe_server_select_locator = (By.ID, "service__pxe_server_id")
     _linked_clone_checkbox_locator = (By.ID, "service__linked_clone")
     _pxe_image_list_locator = (
-            By.CSS_SELECTOR, "div#prov_pxe_img_div > table > tbody")
+        By.CSS_SELECTOR, "div#prov_pxe_img_div > table > tbody")
     _number_of_vms_select_locator = (By.ID, "service__number_of_vms")
     _vm_name_locator = (By.ID, "service__vm_name")
     _vm_description_locator = (By.ID, "service__vm_description")
     _vm_description_char_count_locator = (
-            By.CSS_SELECTOR, "span#description_count")
+        By.CSS_SELECTOR, "span#description_count")
 
     @property
     def catalog_filter(self):
@@ -44,14 +45,15 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
         Returns a list region
         '''
         return ListRegion(self.testsetup,
-                self.get_element(*self._name_list_locator),
-                self.CatalogItem)
+            self.get_element(*self._name_list_locator),
+            self.CatalogItem)
 
     @property
     def server_image_pxe_list(self):
+        '''Select - PXE Image'''
         return ListRegion(self.testsetup,
-                self.get_element(*self._pxe_image_list_locator),
-                self.CatalogItem)
+            self.get_element(*self._pxe_image_list_locator),
+            self.CatalogItem)
 
     @property
     def provision_type(self):
@@ -68,8 +70,6 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
         Returns a Select webelement
         '''
         return Select(self.get_element(*self._pxe_server_select_locator))
-
-
 
     @property
     def linked_clone(self):
@@ -180,7 +180,6 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
             '''Template snapshot count'''
             return self._item_data[7].text
 
-
     class ServerImageItem(ListItem):
         '''Represents a server image item from the list'''
         _columns = ["name", "description"]
@@ -192,4 +191,3 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
         @property
         def description(self):
             return self._item_data[1].text
-

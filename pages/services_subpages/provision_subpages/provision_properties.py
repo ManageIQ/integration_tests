@@ -11,28 +11,28 @@ from pages.services_subpages.provision import ProvisionFormButtonMixin
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 
+
 class ProvisionProperties(Base, ProvisionFormButtonMixin):
     '''Provision Wizard - Properies tab'''
     _instance_type_select_locator = (By.ID, "hardware__instance_type")
     _guest_access_select_locator = (By.ID, "hardware__guest_access_key_pair")
     _security_groups_locator = (By.ID, "hardware__security_groups")
     _security_groups_option_locator = (By.CSS_SELECTOR,
-            "select#hardware__security_groups > option[value='23000000000011']")
-    _cloud_watch_select_locator = (
-            By.ID, "hardware__monitoring")
+        "select#hardware__security_groups > option[value='23000000000011']")
+    _cloud_watch_select_locator = (By.ID, "hardware__monitoring")
     _public_ip_address_select_locator = (By.ID, "hardware__floating_ip_address")
 
     @property
     def instance_type_select(self):
         '''Type of instance to provision'''
         return Select(
-                self.get_element(*self._instance_type_select_locator))
+            self.get_element(*self._instance_type_select_locator))
 
     @property
     def guest_access_select(self):
         '''Key Pair'''
         return Select(
-                self.get_element(*self._guest_access_select_locator))
+            self.get_element(*self._guest_access_select_locator))
 
     @property
     def security_groups(self):
@@ -53,7 +53,7 @@ class ProvisionProperties(Base, ProvisionFormButtonMixin):
     def public_address_select(self):
         '''Floating Public IP - Openstack'''
         return Select(
-                self.get_element(*self. _public_ip_address_select_locator))
+            self.get_element(*self. _public_ip_address_select_locator))
 
     def fill_fields(
             self,
@@ -61,16 +61,14 @@ class ProvisionProperties(Base, ProvisionFormButtonMixin):
             key_pair,
             security_group,
             public_ip):
-        # self.instance_type_select.select_by_visible_text(instance_type)
+        '''Fills field entries in the Properties tab'''
         self.instance_type_select.select_by_index(instance_type)
         self._wait_for_results_refresh()
         self.guest_access_select.select_by_visible_text(key_pair)
         self._wait_for_results_refresh()
-        #self.security_groups.select_by_index(security_group)
         self.security_groups.click()
         self._wait_for_results_refresh()
         if public_ip is not None:
             self.public_address_select.select_by_visible_text(public_ip)
             self._wait_for_results_refresh()
         return ProvisionProperties(self.testsetup)
-
