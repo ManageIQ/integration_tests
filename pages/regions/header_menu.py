@@ -5,6 +5,7 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages import cloud
+from pages.dashboard import DashboardPage
 from pages.page import Page
 from pages.infrastructure import Infrastructure
 from pages.services import Services
@@ -94,7 +95,7 @@ class HeaderMenu(Page):
         # The second level is the sub page
         _item_page = {
             "Cloud Intelligence": {
-                #"Dashboard":
+                "Dashboard": DashboardPage,
                 "Reports": VirtualIntelligence.Reports,
                 #"Usage":
                 "Chargeback": VirtualIntelligence.Chargeback,

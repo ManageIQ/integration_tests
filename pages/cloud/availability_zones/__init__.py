@@ -2,5 +2,4 @@ from pages.base import Base
 
 
 class AvailabilityZones(Base):
-    # le stub
-    pass
+    _page_title = "CloudForms Management Engine: Availability Zones"
