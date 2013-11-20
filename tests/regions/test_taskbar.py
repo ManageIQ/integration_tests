@@ -7,6 +7,7 @@ Created on Feb 28, 2013
 import pytest
 from unittestzero import Assert
 
+
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized")
 class TestTaskbar:
@@ -23,4 +24,3 @@ class TestTaskbar:
         Assert.true(view_buttons.is_list_view, "Not list view")
         view_buttons.change_to_grid_view()
         Assert.true(view_buttons.is_grid_view, "Not grid view")
-

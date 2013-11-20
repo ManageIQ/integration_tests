@@ -6,7 +6,6 @@
 import pytest
 from unittestzero import Assert
 
-# pylint: disable=E1101
 
 @pytest.mark.nondestructive
 def test_tree(infra_vms_pg):
