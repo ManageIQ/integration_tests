@@ -3,13 +3,11 @@
 # -*- coding: utf-8 -*-
 from fixtures.pytest_selenium import move_to_element, click
 from pages.region import Region
-from itertools import dropwhile
-from functools import partial
-from copy import deepcopy
+
 
 def menu_item(text):
-    return ("//div[@class='navbar']//a[normalize-space(.)='{}' and "
-            "not(ancestor::*[contains(@style,'display: none')])]").format(text)
+    return "//div[@class='navbar']//a[normalize-space(.)='%s' and "
+    "not(ancestor::*[contains(@style,'display: none')])]" % text
 
 
 def make_menu_items(dct):
@@ -155,48 +153,4 @@ menu_tree = ["toplevel", lambda: None,
                 ["about", click_fn(configure_menu.about)]]]]]
 
 
-def tree_path(target, tree):
-    if tree[0] == target:
-        return []
-    elif len(tree) > 2:
-        for idx, child in enumerate(tree[2]):
-            found = tree_path(target, child)
-            if not (found is None):
-                return [idx] + found
-                return None
 
-
-def tree_find(tree, path=[]):
-    node = [[tree[0], tree[1]]]
-    if path:
-        return node + tree_find(tree[2][path[0]], path[1:])
-    else:
-        return node
-
-
-def tree_graft(tree, branches, target):
-    path = tree_path(target, tree)
-    new_tree = deepcopy(tree)
-    node = new_tree
-    for idx in path:
-        node = node[2][idx]
-        for branch in branches:
-            if len(node) > 2:
-                node[2].append(branch)
-            else:
-                node.append([branch])
-                return new_tree
-
-
-def navigate(tree, end, start=None):
-    steps = tree_find(tree, tree_path(end, tree))
-    if steps is None:
-        raise ValueError("Destination not found in navigation tree: {}".format(end))
-        if start:
-            steps = dropwhile(lambda s: s[0] != start, steps)
-            if len(steps) == 0:
-                raise ValueError("Starting location {} not found in navigation tree.".format(start))
-                for step in steps:
-                    step[1]()
-
-go_to = partial(navigate, menu_tree)

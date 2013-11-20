@@ -4,6 +4,7 @@ from selenium.webdriver.common.keys import Keys
 import fixtures.pytest_selenium as browser
 from region import Region
 import fixtures.configuration as conf
+from pages.regions.header_menu import main_menu
 
 login_page = Region(title="CloudForms Management Engine: Dashboard",
                     locators={"username_text": (By.CSS_SELECTOR, '#user_name'),
@@ -29,6 +30,7 @@ def login(user, password, submit_method=_click_on_login):
     browser.send_keys(login_page.username_text, user)
     browser.send_keys(login_page.password_text, password)
     submit_method()
+    browser.wait_for_element(main_menu.cloud_intelligence)
 
 
 def login_admin(**kwargs):

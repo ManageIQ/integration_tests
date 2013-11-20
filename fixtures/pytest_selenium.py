@@ -83,25 +83,23 @@ def elements(o):
     elif t == tuple:
         return browser().find_elements(*o)
     else:
-        raise TypeError("Don't know how to convert {} to WebElement.".format(o))
+        raise TypeError("Don't know how to convert %s to WebElement." % o)
 
 
 def element(o):
     matches = elements(o)
     if not matches:
-        raise ValueError("Element {} not found on page.".format(o))
+        raise NoSuchElementException("Element {} not found on page.".format(o))
     return elements(o)[0]
 
 
+def wait_until(f, msg="Webdriver wait timed out"):
+    WebDriverWait(browser(), 120.0).until(f, msg)
+
+
 def wait_for_ajax():
-    WebDriverWait(browser(), 120.0)\
-        .until(lambda s: s.execute_script(ajax_wait_js) == 0,
+    wait_until(lambda s: s.execute_script(ajax_wait_js) == 0,
                "Ajax wait timed out")
-
-
-def click(loc):
-    ActionChains(browser()).move_to_element(element(loc)).click().perform()
-    wait_for_ajax()
 
 
 def is_displayed(loc):
@@ -109,6 +107,15 @@ def is_displayed(loc):
         return element(loc).is_displayed()
     except NoSuchElementException:
         return False
+
+
+def wait_for_element(loc):
+    wait_until(lambda s: is_displayed(loc), "Element '%s' did not appear as expected." % loc)
+
+
+def click(loc):
+    ActionChains(browser()).move_to_element(element(loc)).click().perform()
+    wait_for_ajax()
 
 
 def move_to_element(loc):
