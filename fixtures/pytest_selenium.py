@@ -55,7 +55,6 @@ def highlight(element):
 
 def pytest_configure(config):
     conf.init()
-    from selenium.webdriver.remote.webelement import WebElement
 
     def _execute(self, command, params=None):
         highlight(self)
@@ -88,6 +87,9 @@ def elements(o):
 
 
 def element(o):
+    matches = elements(o)
+    if not matches:
+        raise ValueError("Element {} not found on page.".format(o))
     return elements(o)[0]
 
 
