@@ -11,6 +11,10 @@ from pages.services_subpages.provision_subpages.provision_environment \
       import ProvisionEnvironment
 from pages.services_subpages.provision_subpages.provision_catalog \
     import ProvisionCatalog
+from pages.services_subpages.provision_subpages.provision_customize \
+    import ProvisionCustomize
+from pages.services_subpages.provision_subpages.provision_schedule \
+    import ProvisionSchedule
 import time
 
 
@@ -33,9 +37,7 @@ class CatalogItems(Base):
     _edit_catalog_bundle_locator = (
         By.CSS_SELECTOR, 
         "table.buttons_cont tr[title='Edit this Item']")
-    _add_button_locator = (
-        By.CSS_SELECTOR,
-        "div#buttons_on > ul#form_buttons > li > img[alt='Add']")
+    
     
     @property
     def accordion(self):
@@ -108,12 +110,7 @@ class CatalogItems(Base):
         self._wait_for_results_refresh()
         return CatalogItems(self.testsetup)
     
-    def save_catalog_item(self):
-        '''Save'''
-        self.selenium.find_element(*self._add_button_locator).click()
-        self._wait_for_results_refresh()
-        time.sleep(5)
-        return self
+    
     
     class NewCatalogItem(Provision):
         '''New Catalog Item page'''
@@ -123,6 +120,8 @@ class CatalogItems(Base):
         _display_checkbox = (By.CSS_SELECTOR, "input[name='display']")
         _select_catalog = (By.CSS_SELECTOR, "select#catalog_id")
         _select_dialog = (By.CSS_SELECTOR, "select#dialog_id")
+        _add_button_locator = (By.CSS_SELECTOR,
+                    "div#buttons_on > ul#form_buttons > li > img[alt='Add']")
          
         @property
         def tabbutton_region(self):
@@ -144,7 +143,28 @@ class CatalogItems(Base):
                     'Environment').click()
             self._wait_for_results_refresh()
             return CatalogItems.Environmenttab(self.testsetup)
-         
+        
+        def click_on_hardware_tab(self):
+            '''Click on h/w tab'''
+            Provision(self).tabbutton_region.tabbutton_by_name(
+                    'Hardware').click()
+            self._wait_for_results_refresh()
+            return CatalogItems.NewCatalogItem(self.testsetup)
+        
+        def click_on_network_tab(self):
+            '''Click on network tab'''
+            Provision(self).tabbutton_region.tabbutton_by_name(
+                    'Network').click()
+            self._wait_for_results_refresh()
+            return CatalogItems.NewCatalogItem(self.testsetup)
+        
+        def click_on_customize_tab(self):
+            '''Click on customize tab'''
+            Provision(self).tabbutton_region.tabbutton_by_name(
+                    'Customize').click()
+            self._wait_for_results_refresh()
+            return CatalogItems.NewCatalogItem(self.testsetup)
+        
         def choose_catalog_item_type(self, catalog_item_type):
             '''Choose catalog item type'''
             self.select_dropdown(catalog_item_type, *self._catalog_item_type)
@@ -164,7 +184,7 @@ class CatalogItems(Base):
             self._wait_for_results_refresh()
             return CatalogItems.ProvisionEntryPoint(self.testsetup)
             
-        def fill_catalog_tab(self, template_name, _vm_name):
+        def fill_catalog_tab(self, template_name, provision_type, pxe_server, server_image, no_of_vm, vm_name):
             '''Provisioning form - catalog tab'''
             #catalog_item = None
             for item in ProvisionCatalog(self).catalog_list.items:
@@ -172,8 +192,22 @@ class CatalogItems(Base):
                     item.click()
                     break
             self._wait_for_results_refresh()
-            ProvisionCatalog(self).vm_name.send_keys(_vm_name)
+            vm_desc = None
+            ProvisionCatalog(self).fill_fields(provision_type, pxe_server, server_image, no_of_vm, vm_name, vm_desc)
             return CatalogItems(self.testsetup)
+        
+        def fill_customize_tab(self, root_password, mode, template_name):
+            '''Provisioning form - customize tab'''
+            ProvisionCustomize(self).fill_fields(root_password, mode, template_name)
+            return CatalogItems.NewCatalogItem(self.testsetup)
+        
+        def save_catalog_item(self):
+            '''Save'''
+            self.selenium.find_element(*self._add_button_locator).click()
+            print "in method"
+            self._wait_for_results_refresh()
+            time.sleep(5)
+            return self
         
         
     class ProvisionEntryPoint(Page):
@@ -204,23 +238,26 @@ class CatalogItems(Base):
                 self.selenium.find_element(*self._apply_btn).click()
                 time.sleep(2)
             self._wait_for_results_refresh()
-            return CatalogItems(self.testsetup)
+            return CatalogItems.NewCatalogItem(self.testsetup)
              
     class Environmenttab(ProvisionEnvironment):
         '''Environment tab'''
             
         def fill_environment_tab(self, datacenter, cluster, resource_pool, host_name, datastore_name):
             '''Provisioning form - Environment tab'''
-            self.select_dropdown(datacenter, *self._datacenter_select_locator)
+            if datacenter is not None:
+                self.select_dropdown(datacenter, *self._datacenter_select_locator)
+                self._wait_for_results_refresh()
+            if cluster is not None:
+                self.select_dropdown(cluster, *self._cluster_select_locator)
+                self._wait_for_results_refresh()
+            if resource_pool is not None:
+                self.select_dropdown(resource_pool,
+                   *self._resource_pool_select_locator)
+                self._wait_for_results_refresh()
+            self.fill_fields(host_name, datastore_name, None)
             self._wait_for_results_refresh()
-            self.select_dropdown(cluster, *self._cluster_select_locator)
-            self._wait_for_results_refresh()
-            self.select_dropdown(resource_pool,
-                 *self._resource_pool_select_locator)
-            self._wait_for_results_refresh()
-            self.fill_fields(host_name, datastore_name)
-            self._wait_for_results_refresh()
-            return CatalogItems(self.testsetup)
+            return CatalogItems.NewCatalogItem(self.testsetup)
              
     class NewCatalogBundle(Provision):
         '''CatalogBundle page'''

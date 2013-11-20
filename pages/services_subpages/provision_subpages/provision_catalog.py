@@ -126,15 +126,18 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
                 self._wait_for_results_refresh()
         if server_image_name:
             self.select_server_image(server_image_name)
-        self.number_of_vms.select_by_visible_text(number_of_vms_text)
+        if(number_of_vms_text > 0):
+            self.number_of_vms.select_by_visible_text(number_of_vms_text)
         self._wait_for_visible_element(*self._vm_name_locator)
         self.vm_name.send_keys(vm_name_text)
-        self.vm_description.send_keys(vm_description_text)
-        Assert.equal(self.vm_description_count.text,
+        if vm_description_text is not None:
+            self.vm_description.send_keys(vm_description_text)
+            Assert.equal(self.vm_description_count.text,
                 unicode(len(vm_description_text)),
                 "Description count does not match size of description text")
         return ProvisionCatalog(self.testsetup)
-
+    
+    
     class CatalogItem(ListItem):
         '''Represents a catalog item from the list'''
         _columns = ["name", "operating_system", "platform", "cpus", "memory",
