@@ -210,6 +210,19 @@ class PolicyView(Policies, TaskbarMixin):
         """
         return [p.text.strip() for p in self.list_profiles]
 
+    def set_assigned_events(self, policies):
+        """ Shortcut to set the assigned events from dictionary.
+
+        You must accept the returning value to make the object behave correctly.
+        Example:
+
+        policy = policy.set_assigned_events({"foo": True})
+
+        """
+        return self.edit_policy_event_assignments()\
+                   .mass_set(policies)\
+                   .save()
+
 
 class BasicEditPolicy(Policies, ExpressionEditorMixin):
     """ First editing type of the policy.
@@ -864,9 +877,18 @@ class PolicyEventAssignments(Policies):
         raise Exception("Event %s was not found!" % name)
 
     def set(self, name, check):
+        """ Set checkbox with appropriate value
+
+        """
         checkbox = self.search_by_name(name)
-        if not check and not checkbox.is_selected():
-            return
-        if check and checkbox.is_selected():
+        if (not check and not checkbox.is_selected()) or (check and checkbox.is_selected()):
             return
         checkbox.click()
+
+    def mass_set(self, dictionary):
+        """ To make life easier, you can pass a dictionary to set everything in one step
+
+        """
+        for key, value in dictionary.iteritems():
+            self.set(key, value)
+        return self
