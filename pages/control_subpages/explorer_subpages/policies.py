@@ -5,6 +5,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from pages.regions.expression_editor_mixin import ExpressionEditorMixin
 from pages.regions.refresh_mixin import RefreshMixin
+import re
 
 
 class Policies(Explorer):
@@ -1050,6 +1051,9 @@ class PolicyEventActionsEdit(Policies):
         "a[data-submit='members_chosen_false_div']"
         "[title='Set selected Actions to Asynchronous'] > img")
 
+    # Misc
+    _regexp_members = re.compile(r"^\((?P<type>[AS])\) (?P<name>.*?)$")
+
     # Main buttons
     @property
     def save_button(self):
@@ -1082,11 +1086,11 @@ class PolicyEventActionsEdit(Policies):
 
     # TRUE middle buttons
     @property
-    def true_move_left_button(self):
+    def true_move_right_button(self):
         return self.selenium.find_element(*self._choose_choice_true_locator)
 
     @property
-    def true_move_right_button(self):
+    def true_move_left_button(self):
         return self.selenium.find_element(*self._remove_choice_true_locator)
 
     @property
@@ -1112,11 +1116,11 @@ class PolicyEventActionsEdit(Policies):
 
     # FALSE middle buttons
     @property
-    def false_move_left_button(self):
+    def false_move_right_button(self):
         return self.selenium.find_element(*self._choose_choice_false_locator)
 
     @property
-    def false_move_right_button(self):
+    def false_move_left_button(self):
         return self.selenium.find_element(*self._remove_choice_false_locator)
 
     @property
@@ -1172,3 +1176,159 @@ class PolicyEventActionsEdit(Policies):
         self.reset_button.click()
         self._wait_for_results_refresh()
         return "All changes have been reset" in self.flash.message
+
+    def _get_available_actions(self, box):
+        """ DRY method for gathering the actions from available box
+
+        """
+        return [(e.text.strip(), e.get_attribute("value"))
+                for e
+                in box.find_elements_by_css_selector("option")]
+
+    @property
+    def available_true_actions(self):
+        return self._get_available_actions(self.true_available_actions_box)
+
+    @property
+    def available_false_actions(self):
+        return self._get_available_actions(self.false_available_actions_box)
+
+    def _get_selected_actions(self, box):
+        """ DRY method for gathering the actions
+
+        1) bool whether is the action synchronous
+        2) Its displayed name
+        3) Its value from <option ...> for better search.
+
+        @param box: Element to look in
+        @return: [(sync?, "name1", "value"), (sync?, "name2", "value"), ...] -> sync? = bool
+        """
+        def _tuplify(e):
+            d = self._regexp_members.match(e.text.strip()).groupdict()
+            return True if d["type"].upper() == "S" else False, d["name"], e.get_attribute("value")
+        return [_tuplify(e)
+                for e
+                in box.find_elements_by_css_selector("option")
+                if self._regexp_members.match(e.text.strip())]
+
+    @property
+    def selected_true_actions(self):
+        """ Get all TRUE selected actions and determine whether is it synchronous or not
+
+        @return: [(sync?, "name1", "value"), (sync?, "name2", "value"), ...] -> sync? = bool
+        """
+        return self._get_selected_actions(self.true_selected_actions_box)
+
+    @property
+    def selected_false_actions(self):
+        """ Get all FALSE selected actions and determine whether is it synchronous or not
+
+        @return: [(sync?, "name1", "value"), (sync?, "name2", "value"), ...] -> sync? = bool
+        """
+        return self._get_selected_actions(self.false_selected_actions_box)
+
+    def select_available_action_true(self, name):
+        """ Select an item in the top left box
+
+        """
+        self.select_dropdown(name, *self._choices_chosen_true_locator)
+
+    def select_available_action_false(self, name):
+        """ Select an item in the bottom eft box
+
+        """
+        self.select_dropdown(name, *self._choices_chosen_false_locator)
+
+    def select_selected_action_true(self, name):
+        """ If an action with name is found, then it is selected and informations are returned
+
+        """
+        for sync, action_name, value in self.selected_true_actions:
+            if action_name == name:
+                self.select_dropdown_by_value(value, *self._members_chosen_true_locator)
+                return sync, action_name, value
+        raise Exception("Action %s not found!" % name)
+
+    def select_selected_action_false(self, name):
+        """ If an action with name is found, then it is selected and informations are returned
+
+        """
+        for sync, action_name, value in self.selected_false_actions:
+            if action_name == name:
+                self.select_dropdown_by_value(value, *self._members_chosen_false_locator)
+                return sync, action_name, value
+        raise Exception("Action %s not found!" % name)
+
+    def is_action_enabled_true(self, name):
+        for sync, action_name, value in self.selected_true_actions:
+            if action_name == name:
+                return value
+        return False
+
+    def is_action_enabled_false(self, name):
+        for sync, action_name, value in self.selected_false_actions:
+            if action_name == name:
+                return value
+        return False
+
+    def enable_action_true(self, name):
+        value = self.is_action_enabled_true(name)
+        if value is not False and value is not None:
+            self.select_dropdown_by_value(value, *self._choices_chosen_true_locator)
+            self.true_move_right_button.click()
+            self._wait_for_results_refresh()
+        return self
+
+    def enable_action_false(self, name):
+        value = self.is_action_enabled_false(name)
+        if value is not False and value is not None:
+            self.select_dropdown_by_value(value, *self._choices_chosen_false_locator)
+            self.false_move_right_button.click()
+            self._wait_for_results_refresh()
+        return self
+
+    def move_action_up_true(self, name):
+        self.select_selected_action_true(name)
+        self.true_move_up_button.click()
+        self._wait_for_results_refresh()
+        return self
+
+    def move_action_up_false(self, name):
+        self.select_selected_action_false(name)
+        self.false_move_up_button.click()
+        self._wait_for_results_refresh()
+        return self
+
+    def move_action_down_true(self, name):
+        self.select_selected_action_true(name)
+        self.true_move_down_button.click()
+        self._wait_for_results_refresh()
+        return self
+
+    def move_action_down_false(self, name):
+        self.select_selected_action_false(name)
+        self.false_move_down_button.click()
+        self._wait_for_results_refresh()
+        return self
+
+    def set_action_sync_true(self, name, synchronous):
+        sync, name, value = self.select_selected_action_true(name)
+        if synchronous and not sync:
+            self.true_set_sync_button.click()
+            self._wait_for_results_refresh()
+            return self
+        if not synchronous and sync:
+            self.true_set_async_button.click()
+            self._wait_for_results_refresh()
+            return self
+
+    def set_action_sync_false(self, name, synchronous):
+        sync, name, value = self.select_selected_action_false(name)
+        if synchronous and not sync:
+            self.false_set_sync_button.click()
+            self._wait_for_results_refresh()
+            return self
+        if not synchronous and sync:
+            self.false_set_async_button.click()
+            self._wait_for_results_refresh()
+            return self
