@@ -16,7 +16,8 @@ from utils.cfme_data import load_cfme_data
 
 pytestmark = [pytest.mark.nondestructive,
               pytest.mark.usefixtures("setup_infrastructure_providers"),
-              pytest.mark.usefixtures("maximized") ]
+              pytest.mark.usefixtures("maximized")]
+
 
 def fetch_list(data):
     tests = []
@@ -26,8 +27,9 @@ def fetch_list(data):
                 prov_data["type"] == 'rhevm':
             if "test_vm_power_control" in prov_data:
                 for vm_name in prov_data["test_vm_power_control"]:
-                    tests.append( [ '', provider, vm_name ] )
+                    tests.append(['', provider, vm_name])
     return tests
+
 
 def pytest_generate_tests(metafunc):
     data = load_cfme_data(metafunc.config.option.cfme_data_filename)
@@ -35,10 +37,10 @@ def pytest_generate_tests(metafunc):
     tests = []
 
     if 'pwr_ctl_vms' in metafunc.fixturenames:
-        argnames = [ 'pwr_ctl_vms', 'provider', 'vm_name' ]
+        argnames = ['pwr_ctl_vms', 'provider', 'vm_name']
         metafunc.parametrize(argnames, fetch_list(data), scope="module")
     elif 'random_pwr_ctl_vm' in metafunc.fixturenames:
-        argnames = [ 'random_pwr_ctl_vm', 'provider', 'vm_name' ]
+        argnames = ['random_pwr_ctl_vm', 'provider', 'vm_name']
         all_tests = fetch_list(data)
         if all_tests:
             tests.append(random.choice(all_tests))
@@ -75,16 +77,17 @@ def wait_for_host_to_come_online(host, timeout_in_minutes):
     raise Exception("host came online in alloted time ("
             +str(timeout_in_minutes)+" minutes)")   """
 
+
 @pytest.mark.usefixtures("random_pwr_ctl_vm")
 class TestControlOnQuadicons():
 
     def test_power_off_cancel(
-                self,
-                load_providers_vm_list,
-                provider,
-                vm_name,
-                verify_vm_running,
-                mgmt_sys_api_clients):
+            self,
+            load_providers_vm_list,
+            provider,
+            vm_name,
+            verify_vm_running,
+            mgmt_sys_api_clients):
         """Test the cancelling of a power off operation from the vm quadicon
         list.  Verify vm stays running"""
         vm_pg = load_providers_vm_list
@@ -99,12 +102,12 @@ class TestControlOnQuadicons():
                 "vm not running")
 
     def test_power_off(
-                self,
-                load_providers_vm_list,
-                provider,
-                vm_name,
-                verify_vm_running,
-                mgmt_sys_api_clients):
+            self,
+            load_providers_vm_list,
+            provider,
+            vm_name,
+            verify_vm_running,
+            mgmt_sys_api_clients):
         """Test power off operation on a single quadicon.  Verify vm
         transitions to stopped."""
         vm_pg = load_providers_vm_list
@@ -118,12 +121,12 @@ class TestControlOnQuadicons():
                 "vm running")
 
     def test_power_on_cancel(
-                self,
-                load_providers_vm_list,
-                provider,
-                vm_name,
-                verify_vm_stopped,
-                mgmt_sys_api_clients):
+            self,
+            load_providers_vm_list,
+            provider,
+            vm_name,
+            verify_vm_stopped,
+            mgmt_sys_api_clients):
         """Test the cancelling of a power on operation from the vm quadicon
         list.  Verify vm stays off."""
         vm_pg = load_providers_vm_list
@@ -138,12 +141,12 @@ class TestControlOnQuadicons():
                 "vm running")
 
     def test_power_on(
-                self,
-                load_providers_vm_list,
-                provider,
-                vm_name,
-                verify_vm_stopped,
-                mgmt_sys_api_clients):
+            self,
+            load_providers_vm_list,
+            provider,
+            vm_name,
+            verify_vm_stopped,
+            mgmt_sys_api_clients):
         """Test power on operation for a single quadicon.  Verify vm
         transitions to running."""
         vm_pg = load_providers_vm_list
@@ -175,9 +178,9 @@ class TestVmDetailsPowerControlPerProvider:
         state_chg_time = vm_details.last_pwr_state_change
         vm_details.power_button.power_off()
         vm_details.wait_for_vm_state_change('off', 12)
-        Assert.equal(vm_details.power_state, 'off', "power state incorrect" )
+        Assert.equal(vm_details.power_state, 'off', "power state incorrect")
         Assert.equal(vm_details.last_boot_time, last_boot_time,
-                "last boot time not updated" )
+                "last boot time not updated")
         Assert.not_equal(vm_details.last_pwr_state_change, state_chg_time,
                 "last state chg time failed to update")
         Assert.true(mgmt_sys_api_clients[provider].is_vm_stopped(vm_name),
@@ -198,11 +201,11 @@ class TestVmDetailsPowerControlPerProvider:
         state_chg_time = vm_details.last_pwr_state_change
         vm_details.power_button.power_on()
         vm_details.wait_for_vm_state_change('on', 12)
-        Assert.equal(vm_details.power_state, 'on', "power state incorrect" )
+        Assert.equal(vm_details.power_state, 'on', "power state incorrect")
         self._wait_for_last_boot_timestamp_refresh(
-                vm_details,
-                last_boot_time,
-                timeout_in_minutes=5)
+            vm_details,
+            last_boot_time,
+            timeout_in_minutes=5)
         Assert.not_equal(vm_details.last_boot_time, last_boot_time,
                 "last boot time failed to update")
         Assert.not_equal(vm_details.last_pwr_state_change, state_chg_time,
@@ -228,7 +231,7 @@ class TestVmDetailsPowerControlPerProvider:
         vm_details.power_button.suspend()
         vm_details.wait_for_vm_state_change('suspended', 15)
         Assert.equal(vm_details.power_state, 'suspended',
-                "power state incorrect" )
+                "power state incorrect")
         Assert.equal(vm_details.last_boot_time, last_boot_time,
                 "last boot time updated")
         Assert.not_equal(vm_details.last_pwr_state_change, state_chg_time,
@@ -247,9 +250,9 @@ class TestVmDetailsPowerControlPerProvider:
         while (minute_count < timeout_in_minutes):
             if boot_time != vm_details.last_boot_time:
                 break
-            print "Sleeping 60 seconds, iteration " + str(minute_count+1)\
-                    + " of " + str(timeout_in_minutes) \
-                    + ", still no timestamp change"
+            print "Sleeping 60 seconds, iteration " + str(minute_count + 1)\
+                + " of " + str(timeout_in_minutes)\
+                + ", still no timestamp change"
             time.sleep(60)
             minute_count += 1
             vm_details.refresh()
@@ -271,11 +274,11 @@ class TestVmDetailsPowerControlPerProvider:
         state_chg_time = vm_details.last_pwr_state_change
         vm_details.power_button.power_on()
         vm_details.wait_for_vm_state_change('on', 15)
-        Assert.equal(vm_details.power_state, 'on', "power state incorrect" )
+        Assert.equal(vm_details.power_state, 'on', "power state incorrect")
         self._wait_for_last_boot_timestamp_refresh(
-                vm_details,
-                last_boot_time,
-                timeout_in_minutes=5)
+            vm_details,
+            last_boot_time,
+            timeout_in_minutes=5)
         Assert.not_equal(vm_details.last_boot_time, last_boot_time,
                 "last boot time updated")
         Assert.not_equal(vm_details.last_pwr_state_change, state_chg_time,
