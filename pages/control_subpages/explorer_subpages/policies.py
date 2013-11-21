@@ -888,3 +888,102 @@ class PolicyEventAssignments(Policies):
         for key, value in dictionary.iteritems():
             self.set(key, value)
         return self
+
+
+class PolicyEventView(Policies, TaskbarMixin, RefreshMixin):
+    _event_group_locator = (By.XPATH,
+        "//*[@id='event_info_div']/fieldset[1]/table/tbody/tr[1]/td[2]")
+    _policy_attached_locator = (By.XPATH,
+        "//*[@id='event_info_div']/fieldset[1]/table/tbody/tr[2]/td[2]")
+
+    _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
+    _configuration_edit_actions_locator = (By.CSS_SELECTOR,
+                                           "tr[title='Edit Actions for this Policy Event']")
+
+    _table_actions_alltrue = (By.XPATH, "//*[@id='event_info_div']/fieldset[2]/table")
+    _table_actions_anyfalse = (By.XPATH, "//*[@id='event_info_div']/fieldset[3]/table")
+
+    @property
+    def event_group(self):
+        return self.selenium.find_element(*self._event_group_locator).text.strip()
+
+    @property
+    def policy_attached(self):
+        return self.selenium.find_element(*self._policy_attached_locator).text.strip()
+
+    @property
+    def configuration_button(self):
+        return self.selenium.find_element(*self._configuration_button_locator)
+
+    @property
+    def configuration_edit_actions(self):
+        return self.selenium.find_element(*self._configuration_edit_actions_locator)
+
+    @property
+    def alltrue_actions_table(self):
+        return self.selenium.find_element(*self._table_actions_alltrue)
+
+    @property
+    def anyfalse_actions_table(self):
+        return self.selenium.find_element(*self._table_actions_anyfalse)
+
+    def go_to_attached_policy(self):
+        """ Reads name of the policy, then it searches for it in the accordion tree.
+
+        """
+        return self.select_policy(self.policy_attached)
+
+    def edit_actions(self):
+        """ Fire up the action edit page.
+
+        """
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.configuration_edit_actions)\
+            .perform()
+        self._wait_for_results_refresh()
+        return PolicyEventEdit(self.testsetup)
+
+    @property
+    def any_alltrue_action(self):
+        """ This looks whether the table containing alltrue conditions is present
+
+        """
+        return self.is_element_visible(*self._table_actions_alltrue)
+
+    @property
+    def any_anyfalse_action(self):
+        """ This looks whether the table containing anyfalse conditions is present
+
+        """
+        return self.is_element_visible(*self._table_actions_anyfalse)
+
+    @property
+    def alltrue_actions(self):
+        """ List all alltrue actions.
+
+        """
+        if not self.any_alltrue_action:
+            return []
+        return self.alltrue_actions_table.find_elements_by_css_selector("tbody > tr")
+
+    @property
+    def anyfalse_actions(self):
+        """ List all anyfalse actions.
+
+        """
+        if not self.any_anyfalse_action:
+            return []
+        return self.anyfalse_actions_table.find_elements_by_css_selector("tbody > tr")
+
+    def get_action_description(self, action_element):
+        """ Extracts table cells from the element row and names then in the dict()
+
+        """
+        return dict(zip(["img", "desc", "syn", "type"],
+                        action_element.find_elements_by_css_selector("td")
+                        ))
+
+
+class PolicyEventEdit(Policies):
+    pass
