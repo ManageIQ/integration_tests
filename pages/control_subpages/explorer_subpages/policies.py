@@ -4,6 +4,7 @@ from pages.control_subpages.explorer import Explorer
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from pages.regions.expression_editor_mixin import ExpressionEditorMixin
+from pages.regions.refresh_mixin import RefreshMixin
 
 
 class Policies(Explorer):
@@ -25,12 +26,26 @@ class Policies(Explorer):
         self._wait_for_results_refresh()
         return PolicyView(self.testsetup)
 
+    def select_condition(self, condition):
+        """ Selects FIRST condition by its name
 
-class PolicyView(Policies, TaskbarMixin):
+        @return: PolicyConditionView
+        """
+        node = self.accordion.current_content.find_node_by_name(condition,
+                                                                img_src_contains="miq_condition")
+        try:
+            node.click()
+        except AttributeError:
+            raise Exception("Condition '%s' not found!" % condition)
+        self._wait_for_results_refresh()
+        return PolicyConditionView(self.testsetup)
+
+
+class PolicyView(Policies, TaskbarMixin, RefreshMixin):
     """ This page represents the view on the policy with its details
 
+    @todo: Delete policy. I cannot delete a policy now so I will have to check it.
     """
-    _refresh_locator = (By.XPATH, "//*[@id='miq_alone']/img")
     _info_active_locator = (By.XPATH,
                             "//*[@id=\"policy_info_div\"]/fieldset[1]/table/tbody/tr[1]/td[2]")
     _info_created_locator = (By.XPATH,
@@ -52,10 +67,6 @@ class PolicyView(Policies, TaskbarMixin):
             "tr[title='Edit this Policy\\'s Condition assignments']")
     _configuration_edit_policy_event_locator = (By.CSS_SELECTOR,
             "tr[title='Edit this Policy\\'s Event assignments']")
-
-    @property
-    def refresh_button(self):
-        return self.selenium.find_element(*self._refresh_locator)
 
     @property
     def configuration_button(self):
@@ -122,11 +133,6 @@ class PolicyView(Policies, TaskbarMixin):
             .perform()
         self._wait_for_results_refresh()
         return PolicyEventAssignments(self.testsetup)
-
-    def refresh(self):
-        self.refresh_button.click()
-        self._wait_for_results_refresh()
-        return self
 
     @property
     def active(self):
@@ -572,8 +578,7 @@ class CopyConditionForPolicy(NewConditionForPolicy):
         return PolicyConditionView(self.testsetup)
 
 
-class PolicyConditionView(Policies):
-    _refresh_locator = (By.XPATH, "//*[@id='miq_alone']/img")
+class PolicyConditionView(Policies, RefreshMixin):
     _expression_locator = (By.XPATH, "//*[@id=\"condition_info_div\"]/fieldset[2]")
     _scope_locator = (By.XPATH, "//*[@id=\"condition_info_div\"]/fieldset[1]")
     _notes_textarea_locator = (By.CSS_SELECTOR, "textarea#notes")
@@ -585,10 +590,6 @@ class PolicyConditionView(Policies):
                                         "tr[title='Edit this Condition']")
     _configuration_copy_cond_locator = (By.CSS_SELECTOR,
                                         "tr[title*='Copy this Condition to a new Condition']")
-
-    @property
-    def refresh_button(self):
-        return self.selenium.find_element(*self._refresh_locator)
 
     @property
     def configuration_button(self):
@@ -675,11 +676,6 @@ class PolicyConditionView(Policies):
             .perform()
         self._wait_for_results_refresh()
         return CopyConditionForPolicy(self.testsetup)
-
-    def refresh(self):
-        self.refresh_button.click()
-        self._wait_for_results_refresh()
-        return self
 
 
 class PolicyConditionAssignments(Policies):
