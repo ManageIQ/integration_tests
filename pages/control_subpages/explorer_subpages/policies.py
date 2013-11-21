@@ -48,6 +48,8 @@ class PolicyView(Policies, TaskbarMixin):
                                          "tr[title='Edit Basic Info, Scope, and Notes']")
     _configuration_new_condition_locator = (By.CSS_SELECTOR,
             "tr[title='Create a new Condition assigned to this Policy']")
+    _configuration_edit_policy_assignment_locator = (By.CSS_SELECTOR,
+            "tr[title='Edit this Policy\\'s Condition assignments']")
 
     @property
     def refresh_button(self):
@@ -64,6 +66,10 @@ class PolicyView(Policies, TaskbarMixin):
     @property
     def configuration_new_condition_button(self):
         return self.selenium.find_element(*self._configuration_new_condition_locator)
+
+    @property
+    def configuration_edit_policy_assignment_button(self):
+        return self.selenium.find_element(*self._configuration_edit_policy_assignment_locator)
 
     def edit_basic(self):
         """ Fire up the basic editing page
@@ -86,6 +92,17 @@ class PolicyView(Policies, TaskbarMixin):
             .perform()
         self._wait_for_results_refresh()
         return NewConditionForPolicy(self.testsetup)
+
+    def edit_policy_condition_assignments(self):
+        """ Fire up the policy assignments editing page
+
+        """
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.configuration_edit_policy_assignment_button)\
+            .perform()
+        self._wait_for_results_refresh()
+        return PolicyConditionAssignments(self.testsetup)
 
     def refresh(self):
         self.refresh_button.click()
@@ -631,3 +648,138 @@ class PolicyConditionView(Policies):
         self.refresh_button.click()
         self._wait_for_results_refresh()
         return self
+
+
+class PolicyConditionAssignments(Policies):
+    """ This class models the Condition assignment editor
+
+    """
+    _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
+    _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
+    _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+
+    # Boxes
+    _available_locator = (By.CSS_SELECTOR, "span#choices_chosen_div > select#choices_chosen")
+    _used_locator = (By.CSS_SELECTOR, "span#members_chosen_div > select#members_chosen")
+
+    # Manipulation buttons
+    _use_condition_button = (By.CSS_SELECTOR,
+            "a[title='Move selected Conditions into this Policy'] > img")
+    _unuse_condition_button = (By.CSS_SELECTOR,
+            "a[title='Remove selected Conditions from this Policy'] > img")
+    _unuse_all_conditions_button = (By.CSS_SELECTOR,
+            "a[title='Remove all Conditions from this Policy'] > img")
+
+    @property
+    def save_button(self):
+        return self.selenium.find_element(*self._save_locator)
+
+    @property
+    def cancel_button(self):
+        return self.selenium.find_element(*self._cancel_locator)
+
+    @property
+    def reset_button(self):
+        return self.selenium.find_element(*self._reset_locator)
+
+    @property
+    def available_box(self):
+        return self.selenium.find_element(*self._available_locator)
+
+    @property
+    def used_box(self):
+        return self.selenium.find_element(*self._used_locator)
+
+    @property
+    def use_button(self):
+        return self.selenium.find_element(*self._use_condition_button)
+
+    @property
+    def unuse_button(self):
+        return self.selenium.find_element(*self._unuse_condition_button)
+
+    @property
+    def unuse_all_button(self):
+        return self.selenium.find_element(*self._unuse_all_condition_button)
+
+    @property
+    def available_choices(self):
+        """ Returns a list of all available conditions
+
+        """
+        return [e.text.strip() for e in self.available_box.find_elements_by_css_selector("option")]
+
+    @property
+    def used_choices(self):
+        """ Returns a list of all used conditions
+
+        """
+        return [e.text.strip() for e in self.used_box.find_elements_by_css_selector("option")]
+
+    @property
+    def is_always_true(self):
+        """ Returns a bool whether this conditional always evaluates as true
+
+        """
+        return len(self.used_choices) == 0
+
+    def select_from_available(self, name):
+        self.select_dropdown(name, *self._available_locator)
+
+    def select_from_used(self, name):
+        self.select_dropdown(name, *self._used_locator)
+
+    def use_selected_condition(self):
+        self.use_button.click()
+        self._wait_for_results_refresh()
+        return "No Conditions were selected to move right" not in self.flash.message
+
+    def unuse_selected_condition(self):
+        self.unuse_button.click()
+        self._wait_for_results_refresh()
+        return "No Conditions were selected to move left" not in self.flash.message
+
+    def unuse_all_conditions(self):
+        self.unuse_all_button.click()
+        self._wait_for_results_refresh()
+        return "No Conditions were selected to move left" not in self.flash.message
+
+    def use_condition(self, name):
+        self.select_from_available(name)
+        return self.use_selected_condition()
+
+    def unuse_condition(self, name):
+        self.select_from_used(name)
+        return self.unuse_selected_condition()
+
+    def save(self):
+        """ Save changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._save_locator, visible_timeout=10)
+        self.save_button.click()
+        self._wait_for_results_refresh()
+        return PolicyView(self.testsetup)
+
+    def cancel(self):
+        """ Cancel changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+        self.cancel_button.click()
+        self._wait_for_results_refresh()
+        return PolicyView(self.testsetup)
+
+    def reset(self):
+        """ Reset changes.
+
+        Stays on the page.
+        @return: True if the flash message shows correct message.
+        @rtype: bool
+        """
+        self._wait_for_visible_element(*self._reset_locator, visible_timeout=10)
+        self.reset_button.click()
+        self._wait_for_results_refresh()
+        return "All changes have been reset" in self.flash.message
