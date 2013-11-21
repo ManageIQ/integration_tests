@@ -990,4 +990,185 @@ class PolicyEventView(Policies, TaskbarMixin, RefreshMixin):
 
 
 class PolicyEventActionsEdit(Policies):
-    pass
+    _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
+    _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
+    _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+
+    _event_group_locator = (By.XPATH,
+        "//*[@id='event_info_div']/fieldset[1]/table/tbody/tr[1]/td[2]")
+    _policy_attached_locator = (By.XPATH,
+        "//*[@id='event_info_div']/fieldset[1]/table/tbody/tr[2]/td[2]")
+
+    # Boxes
+    _choices_chosen_true_locator = (By.CSS_SELECTOR, "select#choices_chosen_true")
+    _members_chosen_true_locator = (By.CSS_SELECTOR, "select#members_chosen_true")
+    _choices_chosen_false_locator = (By.CSS_SELECTOR, "select#choices_chosen_false")
+    _members_chosen_false_locator = (By.CSS_SELECTOR, "select#members_chosen_false")
+
+    # Buttons
+    # Top section
+    _choose_choice_true_locator = (By.CSS_SELECTOR,
+        "a[data-submit='choices_chosen_true_div']"
+        "[title='Move selected Actions into this Event'] > img")
+    _remove_choice_true_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_true_div']"
+        "[title='Remove selected Actions from this Event'] > img")
+    _remove_all_true_locator = (By.CSS_SELECTOR, "a[href*='true_allleft'] > img")
+
+    _move_member_up_true_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_true_div']"
+        "[title='Move selected Action up'] > img")
+    _move_member_down_true_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_true_div']"
+        "[title='Move selected Action down'] > img")
+    _set_member_sync_true_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_true_div']"
+        "[title='Set selected Actions to Synchronous'] > img")
+    _set_member_async_true_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_true_div']"
+        "[title='Set selected Actions to Asynchronous'] > img")
+
+    # Bottom section
+    _choose_choice_false_locator = (By.CSS_SELECTOR,
+        "a[data-submit='choices_chosen_false_div']"
+        "[title='Move selected Actions into this Event'] > img")
+    _remove_choice_false_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_false_div']"
+        "[title='Remove selected Actions from this Event'] > img")
+    _remove_all_false_locator = (By.CSS_SELECTOR, "a[href*='false_allleft'] > img")
+
+    _move_member_up_false_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_false_div']"
+        "[title='Move selected Action up'] > img")
+    _move_member_down_false_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_false_div']"
+        "[title='Move selected Action down'] > img")
+    _set_member_sync_false_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_false_div']"
+        "[title='Set selected Actions to Synchronous'] > img")
+    _set_member_async_false_locator = (By.CSS_SELECTOR,
+        "a[data-submit='members_chosen_false_div']"
+        "[title='Set selected Actions to Asynchronous'] > img")
+
+    # Main buttons
+    @property
+    def save_button(self):
+        return self.selenium.find_element(*self._save_locator)
+
+    @property
+    def cancel_button(self):
+        return self.selenium.find_element(*self._cancel_locator)
+
+    @property
+    def reset_button(self):
+        return self.selenium.find_element(*self._reset_locator)
+
+    # Boxes
+    @property
+    def true_available_actions_box(self):
+        return self.selenium.find_element(*self._choices_chosen_true_locator)
+
+    @property
+    def true_selected_actions_box(self):
+        return self.selenium.find_element(*self._members_chosen_true_locator)
+
+    @property
+    def false_available_actions_box(self):
+        return self.selenium.find_element(*self._choices_chosen_false_locator)
+
+    @property
+    def false_selected_actions_box(self):
+        return self.selenium.find_element(*self._members_chosen_false_locator)
+
+    # TRUE middle buttons
+    @property
+    def true_move_left_button(self):
+        return self.selenium.find_element(*self._choose_choice_true_locator)
+
+    @property
+    def true_move_right_button(self):
+        return self.selenium.find_element(*self._remove_choice_true_locator)
+
+    @property
+    def true_remove_all_button(self):
+        return self.selenium.find_element(*self._remove_all_true_locator)
+
+    # TRUE right buttons
+    @property
+    def true_move_up_button(self):
+        return self.selenium.find_element(*self._move_member_up_true_locator)
+
+    @property
+    def true_move_down_button(self):
+        return self.selenium.find_element(*self._move_member_down_true_locator)
+
+    @property
+    def true_set_sync_button(self):
+        return self.selenium.find_element(*self._set_member_sync_true_locator)
+
+    @property
+    def true_set_async_button(self):
+        return self.selenium.find_element(*self._set_member_async_true_locator)
+
+    # FALSE middle buttons
+    @property
+    def false_move_left_button(self):
+        return self.selenium.find_element(*self._choose_choice_false_locator)
+
+    @property
+    def false_move_right_button(self):
+        return self.selenium.find_element(*self._remove_choice_false_locator)
+
+    @property
+    def false_remove_all_button(self):
+        return self.selenium.find_element(*self._remove_all_false_locator)
+
+    # FALSE right buttons
+    @property
+    def false_move_up_button(self):
+        return self.selenium.find_element(*self._move_member_up_false_locator)
+
+    @property
+    def false_move_down_button(self):
+        return self.selenium.find_element(*self._move_member_down_false_locator)
+
+    @property
+    def false_set_sync_button(self):
+        return self.selenium.find_element(*self._set_member_sync_false_locator)
+
+    @property
+    def false_set_async_button(self):
+        return self.selenium.find_element(*self._set_member_async_false_locator)
+
+    # Main buttons actions
+    def save(self):
+        """ Save changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._save_locator, visible_timeout=10)
+        self.save_button.click()
+        self._wait_for_results_refresh()
+        return PolicyEventView(self.testsetup)
+
+    def cancel(self):
+        """ Cancel changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+        self.cancel_button.click()
+        self._wait_for_results_refresh()
+        return PolicyEventView(self.testsetup)
+
+    def reset(self):
+        """ Reset changes.
+
+        Stays on the page.
+        @return: True if the flash message shows correct message.
+        @rtype: bool
+        """
+        self._wait_for_visible_element(*self._reset_locator, visible_timeout=10)
+        self.reset_button.click()
+        self._wait_for_results_refresh()
+        return "All changes have been reset" in self.flash.message
