@@ -146,11 +146,15 @@ class ExpressionEditorMixin(Base):
 
         @param text: Text to look for
         """
+        # All expressions have id like exp_*
         locator = (By.XPATH, "//a[contains(@id, 'exp_') and contains(text(), '%s')]" % text)
         self._wait_for_visible_element(*locator, visible_timeout=10)
         expression = self.selenium.find_element(*locator)
         exp_id = expression.get_attribute("id")
         expression.click()
+        # Selected (highlighted) expressions have style with background-color:yellow
+        # However, sometimes there is a space between : and y and sometimes not
+        # Therefore this ugly thing
         self._wait_for_visible_element(By.CSS_SELECTOR,
                 "a[id='%s'][style*='yellow'][style*='background-color']" % (exp_id),
                 visible_timeout=10)
@@ -192,6 +196,7 @@ class ExpressionEditorMixin(Base):
         Requires to have any expression open.
         """
         assert self.is_selected_expression, "You must select an expression!"
+        # Sleeping to prevent some glitches like not saving the expression, etc.
         time.sleep(1)
         self.discard_expression_button.click()
         time.sleep(1)
@@ -204,6 +209,7 @@ class ExpressionEditorMixin(Base):
         Requires to have any expression open.
         """
         assert self.is_selected_expression, "You must select an expression!"
+        # Sleeping to prevent some glitches like not discarding the expression, etc.
         time.sleep(1)
         self.commit_expression_button.click()
         time.sleep(1)

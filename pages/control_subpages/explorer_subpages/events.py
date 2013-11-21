@@ -1,5 +1,6 @@
 from selenium.webdriver.common.by import By
 from pages.control_subpages.explorer import Explorer
+from pages.regions.refresh_mixin import RefreshMixin
 
 
 class Events(Explorer):
@@ -51,22 +52,13 @@ class Events(Explorer):
             print "'%s'," % event[1]
 
 
-class Event(Events):
+class Event(Events, RefreshMixin):
     """ This class represents a screen with details of the event
 
     """
-    _refresh_locator = (By.XPATH, "//*[@id='miq_alone']/img")
     _ev_grp_locator = (By.XPATH, "//*[@id=\"event_info_div\"]/fieldset[1]/table/tbody/tr/td[2]")
     _assigned_table_locator = (By.XPATH, "//*[@id=\"event_info_div\"]/fieldset[2]/table")
     _policy_rows_locator = (By.XPATH, "./tbody/tr/td[2]")
-
-    @property
-    def refresh_button(self):
-        """ Refresh button.
-
-        Used for refreshing the page.
-        """
-        return self.selenium.find_element(*self._refresh_locator)
 
     @property
     def event_group_text(self):
@@ -81,14 +73,6 @@ class Event(Events):
 
         """
         return self.event_group_text.text.strip()
-
-    def click_on_refresh(self):
-        """ Refreshes the page
-
-        Clicks on a refresh button and waits until refresh is finished.
-        """
-        self.refresh_button.click()
-        self._wait_for_results_refresh()
 
     @property
     def assigned_policies(self):

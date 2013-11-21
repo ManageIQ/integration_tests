@@ -368,8 +368,7 @@ class BasicEditPolicy(Policies, ExpressionEditorMixin):
         """ Sets the contents of the notes textarea
 
         """
-        self.notes_textarea.clear()
-        self.notes_textarea.send_keys(value)
+        self.fill_field_element(value, self.notes_textarea)
 
     @property
     def description(self):
@@ -383,8 +382,7 @@ class BasicEditPolicy(Policies, ExpressionEditorMixin):
         """ Sets description
 
         """
-        self.description_input.clear()
-        self.description_input.send_keys(value)
+        self.fill_field_element(value, self.description_input)
 
 
 class BaseConditionForPolicy(Policies, ExpressionEditorMixin):
@@ -504,7 +502,7 @@ class NewConditionForPolicy(BaseConditionForPolicy):
         return PolicyView(self.testsetup)
 
     def add(self):
-        """ Clicks on Add button and returns back to the PolicyView
+        """ Clicks on Add button and returns back to the PolicyConditionView
 
         @return: PolicyView
         """
