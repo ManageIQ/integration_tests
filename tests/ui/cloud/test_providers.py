@@ -3,18 +3,19 @@
 # pylint: disable=W0621
 
 import pytest
-import time
 from unittestzero import Assert
 
 CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 DETAIL_NOT_MATCHED_TEMPLATE = '%s did not match'
 
+
 @pytest.fixture(params=['ec2east', 'openstack'])
 def provider_data(request, cfme_data):
     '''Returns management system data from cfme_data'''
     param = request.param
     return cfme_data.data['management_systems'][param]
+
 
 @pytest.fixture
 def provider(request, cloud_providers_pg, provider_data):
@@ -27,7 +28,10 @@ def provider(request, cloud_providers_pg, provider_data):
 
     This fixture will modify the db directly in the near future'''
     prov_add_pg = cloud_providers_pg.click_on_add_new_provider()
-    prov_pg = prov_add_pg.add_provider(provider_data)
+
+    # Returns prov_pg object
+    prov_add_pg.add_provider(provider_data)
+
     # TODO: Finalizer doesn't actually work. The selenium session is
     #       killed prior to its running.
     # def fin():
@@ -41,6 +45,7 @@ def provider(request, cloud_providers_pg, provider_data):
     # request.addfinalizer(fin)
     return provider_data
 
+
 @pytest.fixture
 def has_no_providers(db_session):
     '''Clears all management systems from an applicance
@@ -52,7 +57,8 @@ def has_no_providers(db_session):
     db_session.query(db.ExtManagementSystem).delete()
     db_session.commit()
 
-@pytest.mark.usefixtures('maximized')  
+
+@pytest.mark.usefixtures('maximized')
 class TestInfrastructureProviders:
     @pytest.mark.nondestructive
     def test_that_checks_flash_with_empty_discovery_form(self,
@@ -113,8 +119,8 @@ class TestInfrastructureProviders:
         provider['edit_name'] = edit_name
         prov_detail_pg = prov_edit_pg.edit_provider(provider)
         Assert.equal(prov_detail_pg.flash.message,
-                'Cloud Provider "%s" was saved' \
-                % provider['edit_name'], FLASH_MESSAGE_NOT_MATCHED)
+                     'Cloud Provider "%s" was saved' % provider['edit_name'],
+                     FLASH_MESSAGE_NOT_MATCHED)
         Assert.equal(prov_detail_pg.name, provider['edit_name'],
                 DETAIL_NOT_MATCHED_TEMPLATE % 'Edited name')
         Assert.equal(prov_detail_pg.zone, provider['server_zone'],
@@ -129,9 +135,8 @@ class TestInfrastructureProviders:
         prov_add_pg = prov_pg.click_on_add_new_provider()
         prov_pg = prov_add_pg.add_provider(provider_data)
         Assert.equal(prov_pg.flash.message,
-                'Cloud Providers "%s" was saved' \
-                 % provider_data['name'],
-                FLASH_MESSAGE_NOT_MATCHED)
+                     'Cloud Providers "%s" was saved' % provider_data['name'],
+                     FLASH_MESSAGE_NOT_MATCHED)
 
     @pytest.mark.usefixtures('has_no_providers')
     def test_provider_add_with_bad_credentials(
@@ -142,7 +147,7 @@ class TestInfrastructureProviders:
         prov_add_pg = prov_pg.click_on_add_new_provider()
         provider_data['credentials'] = 'bad_credentials'
         prov_add_pg = prov_add_pg.add_provider_with_bad_credentials(
-                provider_data)
+            provider_data)
         Assert.equal(prov_add_pg.flash.message,
             'Login failed due to a bad username or password.',
             FLASH_MESSAGE_NOT_MATCHED)

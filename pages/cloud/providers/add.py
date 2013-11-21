@@ -11,8 +11,8 @@ class Add(AddFormCommon):
     _page_title = 'CloudForms Management Engine: Cloud Providers'
 
     _provider_add_button_locator = (
-            By.CSS_SELECTOR,
-            "img[alt='Add this Cloud Provider']")
+        By.CSS_SELECTOR,
+        "img[alt='Add this Cloud Provider']")
 
     @property
     def add_button(self):
