@@ -5,7 +5,7 @@ import time
 
 import boto
 from abc import ABCMeta, abstractmethod
-from boto.ec2 import EC2Connection
+from boto.ec2 import EC2Connection, get_region
 from ovirtsdk.api import API
 from pysphere import VIServer, MORTypes
 from pysphere.resources import VimService_services as VI
@@ -594,9 +594,11 @@ class EC2System(MgmtSystemAPIBase):
     can_suspend = False
 
     def __init__(self, **kwargs):
-        access_key_id = kwargs.get('ec2_key_id') or kwargs.get('username')
-        secret_access_key = kwargs.get('ec2_secret') or kwargs.get('password')
-        self.api = EC2Connection(access_key_id, secret_access_key)
+        username = kwargs.get('username')
+        password = kwargs.get('password')
+
+        region = get_region(kwargs.get('region'))
+        self.api = EC2Connection(username, password, region=region)
 
     def disconnect(self):
         """Disconnect from the EC2 API -- NOOP

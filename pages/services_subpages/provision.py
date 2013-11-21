@@ -8,20 +8,21 @@ from pages.regions.tabbuttonitem import TabButtonItem
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 
+
 class ProvisionFormButtonMixin(object):
     '''Mixin for shared buttons on the Provision wizard'''
     # BPC: This selector is used to just select the current set of buttons that
     # are visible. If tests are needed to determine *which* set of buttons is
     # visible, a different set of selectors and properties should be created
     _template_form_buttons_locator = (
-            By.CSS_SELECTOR,
-            "div#form_buttons_div > table > tbody > tr > td > div")
+        By.CSS_SELECTOR,
+        "div#form_buttons_div > table > tbody > tr > td > div")
     _template_continue_button_locator = (
-            By.CSS_SELECTOR,
-            "li img[alt='Submit']")
+        By.CSS_SELECTOR,
+        "li img[alt='Submit']")
     _template_cancel_button_locator = (
-            By.CSS_SELECTOR,
-            "li img[alt='Cancel']")
+        By.CSS_SELECTOR,
+        "li img[alt='Cancel']")
 
     # NOTE: Not sure if this is the best way to go about this. Should the test
     # itself worry about what set of buttons is enabled/disabled? I certainly
@@ -33,7 +34,7 @@ class ProvisionFormButtonMixin(object):
         '''Represents the set of form buttons.'''
         # TODO: Find a better way to do this. Preferably in the selector itself
         button_divs = self.selenium.find_elements(
-                *self._template_form_buttons_locator)
+            *self._template_form_buttons_locator)
         for div in button_divs:
             if "block" in div.value_of_css_property('display'):
                 return div.find_element_by_css_selector("ul#form_buttons")
@@ -43,13 +44,13 @@ class ProvisionFormButtonMixin(object):
     def continue_button(self):
         '''The continue button. Will select the "visible" one'''
         return self._form_buttons.find_element(
-                *self._template_continue_button_locator)
+            *self._template_continue_button_locator)
 
     @property
     def cancel_button(self):
         '''The cancel button. Will select the "visible" one'''
         return self._form_buttons.find_element(
-                *self._template_cancel_button_locator)
+            *self._template_cancel_button_locator)
 
     def click_on_cancel(self):
         '''Click on cancel button. Return to
@@ -68,44 +69,48 @@ class ProvisionFormButtonMixin(object):
         self.continue_button.click()
         self._wait_for_results_refresh()
         from pages.services import Services
-        return Services.Requests(self.testsetup)        
+        return Services.Requests(self.testsetup)
+
 
 class ProvisionTabButtonItem(TabButtonItem):
     '''Specialization of TabButtonItem'''
+
     from pages.services_subpages.provision_subpages.provision_request \
-            import ProvisionRequest
+        import ProvisionRequest
     from pages.services_subpages.provision_subpages.provision_catalog \
-            import ProvisionCatalog
+        import ProvisionCatalog
     from pages.services_subpages.provision_subpages.provision_purpose \
-            import ProvisionPurpose
+        import ProvisionPurpose
     from pages.services_subpages.provision_subpages.provision_environment \
-            import ProvisionEnvironment
+        import ProvisionEnvironment
     from pages.services_subpages.provision_subpages.provision_hardware \
-            import ProvisionHardware
+        import ProvisionHardware
     from pages.services_subpages.provision_subpages.provision_network \
-            import ProvisionNetwork
+        import ProvisionNetwork
     from pages.services_subpages.provision_subpages.provision_properties \
-            import ProvisionProperties
+        import ProvisionProperties
     from pages.services_subpages.provision_subpages.provision_customize \
-            import ProvisionCustomize
+        import ProvisionCustomize
     from pages.services_subpages.provision_subpages.provision_schedule \
-            import ProvisionSchedule
+        import ProvisionSchedule
 
     _item_page = {
-                "Request": ProvisionRequest,
-                "Purpose": ProvisionPurpose,
-                "Catalog": ProvisionCatalog,
-                "Environment": ProvisionEnvironment,
-                "Hardware": ProvisionHardware,
-                "Network": ProvisionNetwork,
-                "Properties": ProvisionProperties,
-                "Customize": ProvisionCustomize,
-                "Schedule": ProvisionSchedule
-            }
+        "Request": ProvisionRequest,
+        "Purpose": ProvisionPurpose,
+        "Catalog": ProvisionCatalog,
+        "Environment": ProvisionEnvironment,
+        "Hardware": ProvisionHardware,
+        "Network": ProvisionNetwork,
+        "Properties": ProvisionProperties,
+        "Customize": ProvisionCustomize,
+        "Schedule": ProvisionSchedule
+    }
+
 
 class ProvisionSelectionChain():
+
     _provision_vms_button_locator = (By.CSS_SELECTOR,
-            "table.buttons_cont tr[title='Request to Provision VMs']")
+        "table.buttons_cont tr[title='Request to Provision VMs']")
 
     @property
     def center_buttons(self):
@@ -114,20 +119,22 @@ class ProvisionSelectionChain():
 
     def click_on_lifecycle(self):
         provision_vms_button = self.get_element(
-                *self._provision_vms_button_locator)
+            *self._provision_vms_button_locator)
 
         ActionChains(self.selenium).click(
-                self.center_buttons.lifecycle_button).click(
-                        provision_vms_button).perform()
+            self.center_buttons.lifecycle_button).click(
+            provision_vms_button).perform()
         from pages.services_subpages.provision import ProvisionStart
         return ProvisionStart(self.testsetup)
 
+
 class ProvisionStart(Base, ProvisionFormButtonMixin):
+
     '''Page representing the start of the Provision VMs "wizard"'''
     _page_title = "CloudForms Management Engine: Virtual Machines"
     _template_list_locator = (
-            By.CSS_SELECTOR,
-            "div#pre_prov_div > fieldset > table > tbody")
+        By.CSS_SELECTOR,
+        "div#pre_prov_div > fieldset > table > tbody")
 
     def click_on_continue(self):
         '''Click on the continue button. Returns the next page in the provision
@@ -150,15 +157,16 @@ class ProvisionStart(Base, ProvisionFormButtonMixin):
     def template_list(self):
         '''Returns the template list region'''
         return ListRegion(
-                self.testsetup,
-                self.get_element(*self._template_list_locator),
-                self.TemplateItem)
+            self.testsetup,
+            self.get_element(*self._template_list_locator),
+            self.TemplateItem)
 
-    def click_on_template_item(self, item_name):
+    def click_on_template_item(self, item_name, item_provider):
         '''Select template item by name'''
         template_items = self.template_list.items
         selected_item = template_items[[item for item in range(len(
-                template_items)) if template_items[item].name == item_name][0]]
+            template_items)) if template_items[item].name == item_name and \
+            template_items[item].management_system == item_provider][0]]
         selected_item.click()
         self._wait_for_results_refresh()
         return self.TemplateItem(selected_item)
@@ -208,7 +216,9 @@ class ProvisionStart(Base, ProvisionFormButtonMixin):
             '''Template snapshot count'''
             return self._item_data[7].text
 
+
 class Provision(Base, ProvisionFormButtonMixin):
+
     '''Represents the final page in the Provision VM wizard'''
     _page_title = "CloudForms Management Engine: Virtual Machines"
     _tab_button_locator = (By.CSS_SELECTOR, "div#prov_tabs > ul > li")
@@ -222,7 +232,7 @@ class Provision(Base, ProvisionFormButtonMixin):
                 cls=ProvisionTabButtonItem)
 
     def click_on_cancel(self):
-        '''Click on cancel button. Return to 
+        '''Click on cancel button. Return to
            Infrastructure.VirtualMachines'''
         self.cancel_button.click()
         self._wait_for_results_refresh()
