@@ -1,14 +1,20 @@
 from pages.base import Base
 from selenium.webdriver.common.by import By
+from pages.regions.taskbar.taskbar import TaskbarMixin
+from selenium.webdriver.common.action_chains import ActionChains
 
-# pylint: disable=R0904
 
-
-class Detail(Base):
+class Detail(Base, TaskbarMixin):
     """The Cloud Providers Detail page"""
     _page_title = 'CloudForms Management Engine: Cloud Providers'
     _provider_detail_name_locator = (By.XPATH, '//*[@id="accordion"]/div[1]/div[1]/a')
     _details_locator = (By.CSS_SELECTOR, 'div#textual_div')
+    _edit_providers_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/edit.png']")
+    _remove_providers_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/remove.png']")
+    _refresh_relationships_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/refresh.png']")
 
     @property
     def details(self):
@@ -81,3 +87,25 @@ class Detail(Base):
         Returns cloud Flavors page
         """
         return self._all_the_things('Flavors')
+
+    def click_on_edit_providers(self):
+        '''Click on edit cloud providers button'''
+        ActionChains(self.selenium).click(self.configuration_button)\
+            .click(self.selenium.find_element(*self._edit_providers_locator)).perform()
+        from pages.cloud.providers.edit import Edit
+        return Edit(self.testsetup)
+
+    def click_on_remove_provider(self):
+        '''Click on remove cloud provider button'''
+        ActionChains(self.selenium).click(self.configuration_button)\
+            .click(self.selenium.find_element(*self._remove_providers_locator)).perform()
+        self.handle_popup()
+        from pages.cloud.providers import Providers
+        return Providers(self.testsetup)
+
+    def click_on_refresh_relationships(self):
+        '''Click on remove cloud provider button'''
+        ActionChains(self.selenium).click(self.configuration_button)\
+            .click(self.selenium.find_element(*self._refresh_relationships_locator)).perform()
+        self.handle_popup()
+        return Detail(self.testsetup)
