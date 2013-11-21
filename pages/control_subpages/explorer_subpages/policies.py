@@ -48,8 +48,10 @@ class PolicyView(Policies, TaskbarMixin):
                                          "tr[title='Edit Basic Info, Scope, and Notes']")
     _configuration_new_condition_locator = (By.CSS_SELECTOR,
             "tr[title='Create a new Condition assigned to this Policy']")
-    _configuration_edit_policy_assignment_locator = (By.CSS_SELECTOR,
+    _configuration_edit_policy_condition_assignment_locator = (By.CSS_SELECTOR,
             "tr[title='Edit this Policy\\'s Condition assignments']")
+    _configuration_edit_policy_event_locator = (By.CSS_SELECTOR,
+            "tr[title='Edit this Policy\\'s Event assignments']")
 
     @property
     def refresh_button(self):
@@ -68,8 +70,14 @@ class PolicyView(Policies, TaskbarMixin):
         return self.selenium.find_element(*self._configuration_new_condition_locator)
 
     @property
-    def configuration_edit_policy_assignment_button(self):
-        return self.selenium.find_element(*self._configuration_edit_policy_assignment_locator)
+    def configuration_edit_policy_condition_assignment_button(self):
+        return self.selenium\
+                   .find_element(*self._configuration_edit_policy_condition_assignment_locator)
+
+    @property
+    def configuration_edit_policy_event_assignment_button(self):
+        return self.selenium\
+                   .find_element(*self._configuration_edit_policy_event_assignment_locator)
 
     def edit_basic(self):
         """ Fire up the basic editing page
@@ -94,15 +102,26 @@ class PolicyView(Policies, TaskbarMixin):
         return NewConditionForPolicy(self.testsetup)
 
     def edit_policy_condition_assignments(self):
-        """ Fire up the policy assignments editing page
+        """ Fire up the policy condition assignments editing page
 
         """
         ActionChains(self.selenium)\
             .click(self.configuration_button)\
-            .click(self.configuration_edit_policy_assignment_button)\
+            .click(self.configuration_edit_policy_condition_assignment_button)\
             .perform()
         self._wait_for_results_refresh()
         return PolicyConditionAssignments(self.testsetup)
+
+    def edit_policy_event_assignments(self):
+        """ Fire up the policy event assignments editing page
+
+        """
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.configuration_edit_policy_event_assignment_button)\
+            .perform()
+        self._wait_for_results_refresh()
+        return PolicyEventAssignments(self.testsetup)
 
     def refresh(self):
         self.refresh_button.click()
@@ -783,3 +802,71 @@ class PolicyConditionAssignments(Policies):
         self.reset_button.click()
         self._wait_for_results_refresh()
         return "All changes have been reset" in self.flash.message
+
+
+class PolicyEventAssignments(Policies):
+    """ This class models the Event assignment editor
+
+    """
+    _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
+    _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
+    _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+
+    @property
+    def save_button(self):
+        return self.selenium.find_element(*self._save_locator)
+
+    @property
+    def cancel_button(self):
+        return self.selenium.find_element(*self._cancel_locator)
+
+    @property
+    def reset_button(self):
+        return self.selenium.find_element(*self._reset_locator)
+
+    def save(self):
+        """ Save changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._save_locator, visible_timeout=10)
+        self.save_button.click()
+        self._wait_for_results_refresh()
+        return PolicyView(self.testsetup)
+
+    def cancel(self):
+        """ Cancel changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+        self.cancel_button.click()
+        self._wait_for_results_refresh()
+        return PolicyView(self.testsetup)
+
+    def reset(self):
+        """ Reset changes.
+
+        Stays on the page.
+        @return: True if the flash message shows correct message.
+        @rtype: bool
+        """
+        self._wait_for_visible_element(*self._reset_locator, visible_timeout=10)
+        self.reset_button.click()
+        self._wait_for_results_refresh()
+        return "All changes have been reset" in self.flash.message
+
+    def search_by_name(self, name):
+        checkbox_divs = self.selenium.find_elements_by_css_selector("div:contains('%s')" % name)
+        for checkbox_div in checkbox_divs:
+            if checkbox_div.text.strip() == name:
+                return checkbox_div.find_element_by_css_selector("input[type='checkbox']")
+        raise Exception("Event %s was not found!" % name)
+
+    def set(self, name, check):
+        checkbox = self.search_by_name(name)
+        if not check and not checkbox.is_selected():
+            return
+        if check and checkbox.is_selected():
+            return
+        checkbox.click()
