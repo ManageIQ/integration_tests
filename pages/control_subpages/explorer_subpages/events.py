@@ -6,7 +6,7 @@ class Events(Explorer):
     _events_table = (By.CSS_SELECTOR, "div#event_list_div fieldset table tbody")
     _event_row_locator = (By.XPATH, "tr")
     _event_items_locator = (By.XPATH, "td")
-    
+
     def show_all_events(self):
         """ Show back the screen with all events in the table.
 
@@ -101,4 +101,15 @@ class Event(Events):
         else:
             table = self.selenium.find_element(*self._assigned_table_locator)
             policies = table.find_elements(*self._policy_rows_locator)
-            return [policy.text.strip() for policy in policies]
+            return policies
+
+    def go_to_policy(self, name):
+        """ Finds a policy in assigned policies and clicks on it.
+
+        """
+        for policy in self.assigned_policies:
+            if policy.text.strip() == name:
+                from pages.control.policies import PolicyView
+                policy.click()
+                return PolicyView(self.testsetup)
+        raise Exception("No such policy like %s!" % name)

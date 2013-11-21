@@ -12,33 +12,39 @@ class Policies(Explorer):
 
     """
 
+    def go(self, typename, name, continuation, imgfilt=None):
+        """ DRY function to find something in the tree, click it and direct
+        to the correct page.
+
+        @param typename: What we are looking for? (Policy, Condition, ...)
+                         Used for throwing exceptions
+        @param name: Name of the node
+        @param continuation: Class of the page to instantiate
+        @type continuation: subclass of Page
+        @param imgfilt: Param for img_src_contains=...
+        """
+        node = self.accordion.current_content.find_node_by_name(name,
+                                                                img_src_contains=imgfilt)
+        try:
+            node.click()
+        except AttributeError:
+            raise Exception("%s '%s' not found!" % (typename, name))
+        self._wait_for_results_refresh()
+        return continuation(self.testsetup)
+
     def select_policy(self, policy):
         """ Selects policy by its name
 
         @return: PolicyView
         """
-        node = self.accordion.current_content.find_node_by_name(policy,
-                                                                img_src_contains="miq_policy_vm")
-        try:
-            node.click()
-        except AttributeError:
-            raise Exception("Policy '%s' not found!" % policy)
-        self._wait_for_results_refresh()
-        return PolicyView(self.testsetup)
+        return self.go("Policy", policy, PolicyView, imgfilt="miq_policy_vm")
 
     def select_condition(self, condition):
         """ Selects FIRST condition by its name
 
         @return: PolicyConditionView
         """
-        node = self.accordion.current_content.find_node_by_name(condition,
-                                                                img_src_contains="miq_condition")
-        try:
-            node.click()
-        except AttributeError:
-            raise Exception("Condition '%s' not found!" % condition)
-        self._wait_for_results_refresh()
-        return PolicyConditionView(self.testsetup)
+        return self.go("Condition", condition, PolicyConditionView, imgfilt="miq_condition")
 
 
 class PolicyView(Policies, TaskbarMixin, RefreshMixin):
@@ -942,7 +948,7 @@ class PolicyEventView(Policies, TaskbarMixin, RefreshMixin):
             .click(self.configuration_edit_actions)\
             .perform()
         self._wait_for_results_refresh()
-        return PolicyEventEdit(self.testsetup)
+        return PolicyEventActionsEdit(self.testsetup)
 
     @property
     def any_alltrue_action(self):
@@ -985,5 +991,5 @@ class PolicyEventView(Policies, TaskbarMixin, RefreshMixin):
                         ))
 
 
-class PolicyEventEdit(Policies):
+class PolicyEventActionsEdit(Policies):
     pass
