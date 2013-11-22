@@ -21,14 +21,17 @@ def main():
         help='Destroy the destination VM', action='store_true')
     parser.add_argument('--log', dest='loglevel',
         help='Set the log level', default='WARNING')
+    parser.add_argument('--outfile', dest='outfile',
+        help='Write provisioning details to the named file', default='')
 
     args = parser.parse_args()
 
     # Set the logging level from the CLI
-    numeric_level = getattr(logging, args.loglevel.upper(), None)
-    if not isinstance(numeric_level, int):
+    try:
+        loglevel = getattr(logging, args.loglevel)
+        logging.basicConfig(level=loglevel)
+    except NameError:
         raise ValueError('Invalid log level: %s' % args.loglevel)
-    logging.basicConfig(level=numeric_level)
 
     logging.info('Connecting to %s', args.provider_name)
     provider = provider_factory(args.provider_name)
@@ -70,9 +73,10 @@ def main():
         ip = provider.get_ip_address(vm)
         logging.info("VM " + vm + " is running")
         logging.info('IP Address returned is %s', ip)
-        with open('vm.properties', 'w') as f:
-            f.write("appliance_ip_address=%s\n" % ip)
-            f.write("appliance_status=%s\n" % provider.vm_status(vm))
+        if args.outfile:
+            with open(args.outfile, 'w') as outfile:
+                outfile.write("appliance_ip_address=%s\n" % ip)
+                outfile.write("appliance_status=%s\n" % provider.vm_status(vm))
     return 0
 
 if __name__ == "__main__":

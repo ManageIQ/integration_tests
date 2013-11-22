@@ -31,7 +31,6 @@ credentials.yaml
 cfme_data.yaml
 results
 pytest.ini
-vm.properties
 
 # Translations
 *.mo
