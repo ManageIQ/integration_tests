@@ -53,9 +53,11 @@ class Details(Page):
             item_found = None
             for item in self.items:
                 if item_key == item.key:
-                    item.click()
-                    break
-        
+                    if item.value == "0":
+                        raise Exception("unable to click, value is 0 == not a link (in CFME)")
+                    else:
+                        item.click()
+                        break
         class DetailsItem(Page):
             _details_section_data_key_locator = (By.CSS_SELECTOR, "td.label")
             _details_section_data_value_locator = (By.CSS_SELECTOR, "td:not(.label)") 
