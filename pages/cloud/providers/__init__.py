@@ -22,6 +22,8 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
         "tr[title='Remove selected Cloud Providers from the VMDB']>td.td_btn_txt>div.btn_sel_text")
     _add_new_provider_locator = (By.CSS_SELECTOR,
         "tr[title='Add a New Cloud Provider']>td.td_btn_txt>div.btn_sel_text")
+    _refresh_relationships_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/refresh.png']")
 
     @property
     def quadicon_region(self):
@@ -43,6 +45,11 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
     def remove_button(self):
         '''The remove button'''
         return self.selenium.find_element(*self._remove_providers_locator)
+
+    @property
+    def refresh_relationships_button(self):
+        '''The refresh_relationships button'''
+        return self.selenium.find_element(*self._refresh_relationships_locator)
 
     @property
     def add_button(self):
@@ -121,3 +128,11 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
             .click(self.add_button).perform()
         from pages.cloud.providers.add import Add
         return Add(self.testsetup)
+
+    def click_on_refresh_relationships(self, provider_names):
+        '''Click on remove cloud provider button'''
+        self.quadicon_region.mark_icon_checkbox(provider_names)
+        ActionChains(self.selenium).click(self.configuration_button)\
+            .click(self.refresh_relationships_button).perform()
+        self.handle_popup()
+        return Providers(self.testsetup)
