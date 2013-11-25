@@ -3,6 +3,7 @@
 # pylint: disable=W0621
 
 import pytest
+from utils.providers import provider_factory
 from unittestzero import Assert
 
 CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
@@ -154,6 +155,20 @@ class TestInfrastructureProviders:
         Assert.equal(prov_add_pg.flash.message,
             'Login failed due to a bad username or password.',
             FLASH_MESSAGE_NOT_MATCHED)
+
+    @pytest.mark.usefixtures('setup_cloud_providers')
+    def test_validate_provider_details(self,
+                                       cloud_providers_pg,
+                                       provider_data):
+        prov_pg = cloud_providers_pg
+        prov_pg.select_provider(provider_data['name'])
+
+        client = provider_factory(provider_data['request'])
+        host_stats = client.stats()
+
+        detail_pg = prov_pg.quadicon_region.selected[0].click()
+        Assert.true(detail_pg.do_stats_match(host_stats),
+                    'Host stats should match with mgmt_system stats')
 
 """    @pytest.mark.usefixtures('has_no_providers')
     def test_providers_discovery_starts(
