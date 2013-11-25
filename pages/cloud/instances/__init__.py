@@ -59,15 +59,25 @@ class Instances(CommonComponents):
         self._mark_icon_and_call_method(instance_names,
                 self.power_button.power_on_and_cancel)
 
-    def power_off(self, instance_names):
-        """Mark icon and power off"""
+    def terminate(self, instance_names):
+        """Mark icon and terminate"""
         self._mark_icon_and_call_method(instance_names,
-                self.power_button.power_off)
+                self.power_button.terminate)
 
-    def power_off_and_cancel(self, instance_names):
-        """Mark icon and power off but cancel request"""
+    def terminate_and_cancel(self, instance_names):
+        """Mark icon and terminate but cancel request"""
         self._mark_icon_and_call_method(instance_names,
-                self.power_button.power_off_and_cancel)
+                self.power_button.terminate_and_cancel)
+
+    def stop(self, instance_names):
+        """Mark icon and terminate"""
+        self._mark_icon_and_call_method(instance_names,
+                self.power_button.stop)
+
+    def stop_and_cancel(self, instance_names):
+        """Mark icon and terminate but cancel request"""
+        self._mark_icon_and_call_method(instance_names,
+                self.power_button.stop_and_cancel)
 
     def reset(self, instance_names):
         """Mark icon and reset"""

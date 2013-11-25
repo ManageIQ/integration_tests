@@ -57,8 +57,8 @@ class CommonComponents(Base, PaginatorMixin):
     @property
     def power_button(self):
         """Power button"""
-        from pages.regions.taskbar.power import PowerButton
-        return PowerButton(self.testsetup)
+        from pages.regions.taskbar.power import CloudPowerButton
+        return CloudPowerButton(self.testsetup)
 
     @property
     def config_button(self):

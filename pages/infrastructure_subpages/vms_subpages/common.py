@@ -51,8 +51,8 @@ class VmCommonComponents(Base, PolicyMenu, PaginatorMixin):
 
     @property
     def power_button(self):
-        from pages.regions.taskbar.power import PowerButton
-        return PowerButton(self.testsetup)
+        from pages.regions.taskbar.power import CommonPowerButton
+        return CommonPowerButton(self.testsetup)
 
     @property
     def config_button(self):

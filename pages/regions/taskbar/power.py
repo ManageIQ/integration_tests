@@ -3,25 +3,32 @@
 from pages.regions.taskbar.button import Button
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
-from unittestzero import Assert
 
-class PowerButton(Button):
+
+class CommonPowerButton(Button):
 
     # Locators forced to use img src, different text dependent on All VMs vs specific VM details
-    _power_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn img[src='/images/toolbars/power_choice.png']")
-    _shutdown_option_locator = (By.CSS_SELECTOR, "table.buttons_cont img[src='/images/toolbars/guest_shutdown.png']")
-    _restart_option_locator = (By.CSS_SELECTOR, "table.buttons_cont img[src='/images/toolbars/guest_restart.png']")
-    _power_on_option_locator = (By.CSS_SELECTOR, "table.buttons_cont img[src='/images/toolbars/power_on.png']")
-    _power_off_option_locator = (By.CSS_SELECTOR, "table.buttons_cont img[src='/images/toolbars/power_off.png']")
-    _suspend_option_locator = (By.CSS_SELECTOR, "table.buttons_cont img[src='/images/toolbars/power_suspend.png']")
-    _reset_option_locator = (By.CSS_SELECTOR, "table.buttons_cont img[src='/images/toolbars/power_reset.png']")
-    
-    def __init__(self,setup):
-        Button.__init__(self,setup,*self._power_button_locator)
-    
+    _power_button_locator = (By.CSS_SELECTOR,
+        "div.dhx_toolbar_btn img[src='/images/toolbars/power_choice.png']")
+    _shutdown_option_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/guest_shutdown.png']")
+    _restart_option_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/guest_restart.png']")
+    _power_on_option_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/power_on.png']")
+    _power_off_option_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/power_off.png']")
+    _suspend_option_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/power_suspend.png']")
+    _reset_option_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/power_reset.png']")
+
+    def __init__(self, setup):
+        Button.__init__(self, setup, *self._power_button_locator)
+
     def _shutdown(self, click_cancel):
         item = self.selenium.find_element(*self._shutdown_option_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform() 
+        ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
 
     def shutdown(self):
@@ -32,7 +39,7 @@ class PowerButton(Button):
 
     def _restart(self, click_cancel):
         item = self.selenium.find_element(*self._restart_option_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform() 
+        ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
 
     def restart(self):
@@ -43,7 +50,7 @@ class PowerButton(Button):
 
     def _power_on(self, click_cancel):
         item = self.selenium.find_element(*self._power_on_option_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform() 
+        ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
 
     def power_on(self):
@@ -54,7 +61,7 @@ class PowerButton(Button):
 
     def _power_off(self, click_cancel):
         item = self.selenium.find_element(*self._power_off_option_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform() 
+        ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
 
     def power_off(self):
@@ -65,7 +72,7 @@ class PowerButton(Button):
 
     def _suspend(self, click_cancel):
         item = self.selenium.find_element(*self._suspend_option_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform() 
+        ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
 
     def suspend(self):
@@ -76,7 +83,7 @@ class PowerButton(Button):
 
     def _reset(self, click_cancel):
         item = self.selenium.find_element(*self._reset_option_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform() 
+        ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
 
     def reset(self):
@@ -84,3 +91,20 @@ class PowerButton(Button):
 
     def reset_and_cancel(self):
         self._reset(click_cancel=True)
+
+
+class CloudPowerButton(CommonPowerButton):
+
+    _terminate_option_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title='Terminate this Instance']")
+
+    def _terminate(self, click_cancel):
+        item = self.selenium.find_element(*self._terminate_option_locator)
+        ActionChains(self.selenium).click(self._root_element).click(item).perform()
+        self.handle_popup(click_cancel)
+
+    def terminate(self):
+        self._terminate(click_cancel=False)
+
+    def terminate_and_cancel(self):
+        self._terminate(click_cancel=True)
