@@ -194,10 +194,45 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
         for condition, scopes in self.list_conditions:
             if condition.text.strip() == condition_name.strip():
                 condition.click()
+                self._wait_for_results_refresh()
                 return PolicyConditionView(self.testsetup)
             present.append(condition.text.strip())
         raise Exception("Condition with description %s was not found (%s present)" %
             (condition_name, ", ".join(present))
+        )
+
+    @property
+    def list_events(self):
+        """ Return all events belonging to this policy
+
+        """
+        node = self.selenium.find_element(*self._events_table_locator)
+        if not node:
+            return []
+        conds = []
+        for row in node.find_elements_by_xpath("./tr"):
+            icon, event, actions = row.find_elements_by_xpath("./td")
+            conds.append((event, actions.find_elements_by_css_selector("tr")))
+        return conds
+
+    def go_to_event(self, event_name):
+        """ Search event and click on it
+
+        This cycles through all the table of events and searches for the sought one.
+        When found, it clicks on it and returns its view.
+
+        @return: PolicyEventView
+        @raise: Exception when not found
+        """
+        present = []
+        for event, actions in self.list_events:
+            if event.text.strip() == event_name.strip():
+                event.click()
+                self._wait_for_results_refresh()
+                return PolicyEventView(self.testsetup)
+            present.append(event.text.strip())
+        raise Exception("Event with name %s was not found (%s present)" %
+            (event_name, ", ".join(present))
         )
 
     @property
@@ -903,7 +938,7 @@ class PolicyEventView(Policies, TaskbarMixin, RefreshMixin):
 
     _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
     _configuration_edit_actions_locator = (By.CSS_SELECTOR,
-                                           "tr[title='Edit Actions for this Policy Event']")
+        "table.buttons_cont tr[title='Edit Actions for this Policy Event']")
 
     _table_actions_alltrue = (By.XPATH, "//*[@id='event_info_div']/fieldset[2]/table")
     _table_actions_anyfalse = (By.XPATH, "//*[@id='event_info_div']/fieldset[3]/table")
@@ -991,6 +1026,13 @@ class PolicyEventView(Policies, TaskbarMixin, RefreshMixin):
 
 
 class PolicyEventActionsEdit(Policies):
+    """ Assigning actions to policy events.
+
+    For all functions and properties defined here:
+    - if it contains "true" or "false" in the name, then it works with either top
+      or bottom box on the page
+
+    """
     _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
     _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
     _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
@@ -1187,10 +1229,16 @@ class PolicyEventActionsEdit(Policies):
 
     @property
     def available_true_actions(self):
+        """ Get list of all available actions in the top box
+
+        """
         return self._get_available_actions(self.true_available_actions_box)
 
     @property
     def available_false_actions(self):
+        """ Get list of all available actions in the bottom box
+
+        """
         return self._get_available_actions(self.false_available_actions_box)
 
     def _get_selected_actions(self, box):
@@ -1205,7 +1253,7 @@ class PolicyEventActionsEdit(Policies):
         """
         def _tuplify(e):
             d = self._regexp_members.match(e.text.strip()).groupdict()
-            return True if d["type"].upper() == "S" else False, d["name"], e.get_attribute("value")
+            return d["type"].upper() == "S", d["name"], e.get_attribute("value")
         return [_tuplify(e)
                 for e
                 in box.find_elements_by_css_selector("option")
@@ -1260,12 +1308,18 @@ class PolicyEventActionsEdit(Policies):
         raise Exception("Action %s not found!" % name)
 
     def is_action_enabled_true(self, name):
+        """ Look for the actions in top right box.
+            If not found, return None
+        """
         for sync, action_name, value in self.selected_true_actions:
             if action_name == name:
                 return value
-        return False
+        return None
 
     def is_action_enabled_false(self, name):
+        """ Look for the actions in bottom right box.
+            If not found, return None
+        """
         for sync, action_name, value in self.selected_false_actions:
             if action_name == name:
                 return value
@@ -1273,17 +1327,33 @@ class PolicyEventActionsEdit(Policies):
 
     def enable_action_true(self, name):
         value = self.is_action_enabled_true(name)
-        if value is not False and value is not None:
-            self.select_dropdown_by_value(value, *self._choices_chosen_true_locator)
+        if value is None:
+            self.select_available_action_true(name)
             self.true_move_right_button.click()
+            self._wait_for_results_refresh()
+        return self
+
+    def disable_action_true(self, name):
+        value = self.is_action_enabled_true(name)
+        if value:
+            self.select_dropdown_by_value(value, *self._members_chosen_true_locator)
+            self.true_move_left_button.click()
             self._wait_for_results_refresh()
         return self
 
     def enable_action_false(self, name):
         value = self.is_action_enabled_false(name)
-        if value is not False and value is not None:
-            self.select_dropdown_by_value(value, *self._choices_chosen_false_locator)
+        if value is None:
+            self.select_available_action_false(name)
             self.false_move_right_button.click()
+            self._wait_for_results_refresh()
+        return self
+
+    def disable_action_false(self, name):
+        value = self.is_action_enabled_false(name)
+        if value:
+            self.select_dropdown_by_value(value, *self._members_chosen_false_locator)
+            self.false_move_left_button.click()
             self._wait_for_results_refresh()
         return self
 
@@ -1332,3 +1402,29 @@ class PolicyEventActionsEdit(Policies):
             self.false_set_async_button.click()
             self._wait_for_results_refresh()
             return self
+
+    def unselect_all_actions_true(self):
+        for sync, name, value in self.selected_true_actions:
+            self.disable_action_true(name)
+        assert len(self.selected_true_actions) == 0
+
+    def unselect_all_actions_false(self):
+        for sync, name, value in self.selected_false_actions:
+            self.disable_action_false(name)
+        assert len(self.selected_false_actions) == 0
+
+    def clear_available_selection_true(self):
+        from selenium.webdriver.support.ui import Select
+        Select(self.true_available_actions_box).deselect_all()
+
+    def clear_selected_selection_true(self):
+        from selenium.webdriver.support.ui import Select
+        Select(self.true_selected_actions_box).deselect_all()
+
+    def clear_available_selection_false(self):
+        from selenium.webdriver.support.ui import Select
+        Select(self.false_available_actions_box).deselect_all()
+
+    def clear_selected_selection_false(self):
+        from selenium.webdriver.support.ui import Select
+        Select(self.false_selected_actions_box).deselect_all()
