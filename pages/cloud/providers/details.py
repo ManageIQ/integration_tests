@@ -44,6 +44,30 @@ class Detail(Base):
         return self.details.get_section('Authentication Status')\
             .get_item('Default Credentials').value
 
+    @property
+    def vm_count(self):
+        '''Count of VMs'''
+        return self.details.get_section('Relationships').get_item('Instances').value
+
+    @property
+    def template_count(self):
+        '''Count of VMs'''
+        return self.details.get_section('Relationships').get_item('Images').value
+
+    def do_stats_match(self, host_stats, detailed=False):
+        core_stats = False
+        if int(self.template_count) == host_stats['num_template']:
+            core_stats = True
+
+        if core_stats and not detailed:
+            return True
+        elif detailed:
+            if core_stats and int(self.vm_count) == host_stats['num_vm']:
+                return True
+
+        self.selenium.refresh()
+        return False
+
     def _all_the_things(self, relationship, pagename=None):
         if pagename is None:
             # Assume pagename == relationship link name

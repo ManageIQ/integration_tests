@@ -5,7 +5,8 @@ from pages.regions.quadicons import Quadicons
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-import time
+from utils.providers import provider_factory
+from utils.wait import wait_for
 
 
 class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
@@ -63,25 +64,28 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
         from pages.cloud.providers.details import Detail
         return Detail(self.testsetup)
 
-    def wait_for_provider_or_timeout(self,
-            provider_name,
-            timeout=120):
+    def is_quad_icon_available(self, provider_name):
+        try:
+            self.select_provider(provider_name)
+        except:
+            self.selenium.refresh()
+            return False
+        return True
+
+    def wait_for_provider_or_timeout(self, provider):
         '''Wait for a provider to become available or timeout trying'''
-        max_time = timeout
-        wait_time = 1
-        total_time = 0
-        mgmt_sys = None
-        while total_time <= max_time and mgmt_sys is not None:
-            try:
-                self.selenium.refresh()
-                mgmt_sys = self.quadicon_region.get_quadicon_by_title(provider_name)
-            except:
-                total_time += wait_time
-                time.sleep(wait_time)
-                wait_time *= 2
-                continue
-        if mgmt_sys is None and total_time > max_time:
-            raise Exception("Could not find management system in time")
+        ec, tc = wait_for(self.is_quad_icon_available,
+                          [provider['name']])
+        detail_pg = self.quadicon_region.selected[0].click()
+
+        client = provider_factory(provider['request'])
+        host_stats = client.stats('num_template')
+        client.disconnect()
+        ec, tc = wait_for(detail_pg.do_stats_match,
+                          [host_stats],
+                          message="do_stats_match",
+                          num_sec=300)
+        return
 
     def click_on_discover_providers(self):
         '''Click on discover cloud provider button'''

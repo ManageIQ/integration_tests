@@ -137,8 +137,9 @@ class TestInfrastructureProviders:
         prov_add_pg = prov_pg.click_on_add_new_provider()
         prov_pg = prov_add_pg.add_provider(provider_data)
         Assert.equal(prov_pg.flash.message,
-                     'Cloud Providers "%s" was saved' % provider_data['name'],
-                     FLASH_MESSAGE_NOT_MATCHED)
+                'Cloud Providers "%s" was saved' % provider_data['name'],
+                FLASH_MESSAGE_NOT_MATCHED)
+        prov_pg.wait_for_provider_or_timeout(provider_data)
 
     @pytest.mark.usefixtures('has_no_providers')
     def test_provider_add_with_bad_credentials(
