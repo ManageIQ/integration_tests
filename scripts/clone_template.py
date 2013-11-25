@@ -76,7 +76,6 @@ def main():
         if args.outfile:
             with open(args.outfile, 'w') as outfile:
                 outfile.write("appliance_ip_address=%s\n" % ip)
-                outfile.write("appliance_status=%s\n" % provider.vm_status(vm))
     return 0
 
 if __name__ == "__main__":
