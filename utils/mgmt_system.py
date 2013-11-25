@@ -248,6 +248,12 @@ class MgmtSystemAPIBase(object):
         """
         raise NotImplementedError('get_ip_address not implemented.')
 
+    def stats(self, *requested_stats):
+        '''Returns all available stats, if none are explicitly requested'''
+
+        requested_stats = requested_stats or self._stats_available
+        return {stat: self._stats_available[stat](self) for stat in requested_stats}
+
 
 class VMWareSystem(MgmtSystemAPIBase):
     """Client to Vsphere API
@@ -260,6 +266,14 @@ class VMWareSystem(MgmtSystemAPIBase):
       - Response often are not detailed enough.
 
     """
+
+    _stats_available = {
+        'num_vm': lambda self: len(self.list_vm()),
+        'num_host': lambda self: len(self.list_host()),
+        'num_cluster': lambda self: len(self.list_cluster()),
+        'num_template': lambda self: len(self.list_template()),
+        'num_datastore': lambda self: len(self.list_datastore()),
+    }
 
     def __init__(self, hostname, username, password, **kwargs):
         self.api = VIServer()
@@ -493,6 +507,14 @@ class RHEVMSystem(MgmtSystemAPIBase):
         vm.status.get_state() # returns 'up'
     """
 
+    _stats_available = {
+        'num_vm': lambda self: len(self.list_vm()),
+        'num_host': lambda self: len(self.list_host()),
+        'num_cluster': lambda self: len(self.list_cluster()),
+        'num_template': lambda self: len(self.list_template()),
+        'num_datastore': lambda self: len(self.list_datastore()),
+    }
+
     def __init__(self, hostname, username, password, **kwargs):
         # generate URL from hostname
 
@@ -685,6 +707,11 @@ class EC2System(MgmtSystemAPIBase):
     EC2 instances don't have to have unique names.
 
     """
+
+    _stats_available = {
+        'num_vm': lambda self: len(self.list_vm()),
+        'num_template': lambda self: len(self.list_template()),
+    }
 
     states = {
         'running': ('running',),
@@ -968,6 +995,11 @@ class OpenstackSystem(MgmtSystemAPIBase):
     Uses novaclient.
 
     """
+
+    _stats_available = {
+        'num_vm': lambda self: len(self.list_vm()),
+        'num_template': lambda self: len(self.list_template()),
+    }
 
     states = {
         'running': ('ACTIVE',),

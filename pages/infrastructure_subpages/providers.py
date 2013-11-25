@@ -17,7 +17,7 @@ from pages.regions.quadicons import Quadicons
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from utils.providers import infra_provider_type_map
+from utils.providers import provider_factory
 from utils.wait import wait_for
 import re
 
@@ -42,22 +42,6 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
     _add_new_provider_locator = (By.CSS_SELECTOR,
             "tr[title='Add a New Infrastructure Provider']\
                     >td.td_btn_txt>div.btn_sel_text")
-
-    def _get_provider_stats(self, provider):
-
-        provider_type = provider['credentials']
-        credentials = self.testsetup.credentials[provider_type]
-
-        provider_kwargs = provider.copy()
-        provider_kwargs.update(credentials)
-
-        client = infra_provider_type_map[provider['type']](**provider_kwargs)
-
-        stats = {'num_host': len(client.list_host()),
-                 'num_datastore': len(client.list_datastore()),
-                 'num_cluster': len(client.list_cluster()),
-                 'num_vm': len(client.list_vm())}
-        return stats
 
     @property
     def quadicon_region(self):
@@ -106,37 +90,21 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
             return False
         return True
 
-    # In one way makes sense to refresh the page just before the check
-    # because that gives it the maximum amount of time for background
-    # tasks to complete. On the other hand doing so, without passing
-    # extra parameters means that an extra refresh is had right at the
-    # start of the testing, which to me is undesirable
-    def do_stats_match(self, detail_pg, host_stats, vms=False):
-        core_stats = False
-        if int(detail_pg.host_count) == host_stats['num_host'] and \
-           int(detail_pg.datastore_count) == host_stats['num_datastore'] and \
-           int(detail_pg.cluster_count) == host_stats['num_cluster']:
-            core_stats = True
-
-        if core_stats and not vms:
-            return True
-        elif vms:
-            if core_stats and int(detail_pg.cluster_count) == host_stats['num_cluster']:
-                return True
-
-        self.selenium.refresh()
-        return False
-
     def wait_for_provider_or_timeout(self, provider):
         '''Wait for a provider to become available or timeout trying'''
-        host_stats = self._get_provider_stats(provider)
-
         ec, tc = wait_for(self.is_quad_icon_available,
                           [provider['name']])
         detail_pg = self.quadicon_region.selected[0].click()
-        ec, tc = wait_for(self.do_stats_match,
-                          [detail_pg, host_stats],
-                          message="does_host_and_ds_count_match")
+
+        client = provider_factory(provider['request'])
+        host_stats = client.stats('num_datastore',
+                                  'num_host',
+                                  'num_cluster')
+        client.disconnect()
+        ec, tc = wait_for(detail_pg.do_stats_match,
+                          [host_stats],
+                          message="do_stats_match",
+                          num_sec=300)
         return
 
     def click_on_discover_providers(self):
