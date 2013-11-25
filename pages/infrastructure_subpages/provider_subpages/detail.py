@@ -76,6 +76,22 @@ class ProvidersDetail(Base):
         '''Count of VMs'''
         return self.details.get_section('Relationships').get_item('VMs').value
 
+    def do_stats_match(self, host_stats, detailed=False):
+        core_stats = False
+        if int(self.host_count) == host_stats['num_host'] and \
+           int(self.datastore_count) == host_stats['num_datastore'] and \
+           int(self.cluster_count) == host_stats['num_cluster']:
+            core_stats = True
+
+        if core_stats and not detailed:
+            return True
+        elif detailed:
+            if core_stats and int(self.cluster_count) == host_stats['num_cluster']:
+                return True
+
+        self.selenium.refresh()
+        return False
+
     def all_vms(self):
         '''VMs list
 
