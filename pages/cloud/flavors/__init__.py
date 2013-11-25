@@ -2,5 +2,4 @@ from pages.base import Base
 
 
 class Flavors(Base):
-    # le stub
-    pass
+    _page_title = 'CloudForms Management Engine: Flavors'
