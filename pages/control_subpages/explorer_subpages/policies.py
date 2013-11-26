@@ -1357,6 +1357,7 @@ class PolicyEventActionsEdit(Policies):
             self._wait_for_results_refresh()
         return self
 
+    # Methods for moving the actions up and down
     def move_action_up_true(self, name):
         self.select_selected_action_true(name)
         self.true_move_up_button.click()
@@ -1382,6 +1383,10 @@ class PolicyEventActionsEdit(Policies):
         return self
 
     def set_action_sync_true(self, name, synchronous):
+        """ Set state of an action in TRUE section. Sync/Async
+
+        """
+        self.clear_selected_selection_true()
         sync, name, value = self.select_selected_action_true(name)
         if synchronous and not sync:
             self.true_set_sync_button.click()
@@ -1393,6 +1398,10 @@ class PolicyEventActionsEdit(Policies):
             return self
 
     def set_action_sync_false(self, name, synchronous):
+        """ Set state of an action in FALSE section. Sync/Async
+
+        """
+        self.clear_selected_selection_false()
         sync, name, value = self.select_selected_action_false(name)
         if synchronous and not sync:
             self.false_set_sync_button.click()
@@ -1413,18 +1422,31 @@ class PolicyEventActionsEdit(Policies):
             self.disable_action_false(name)
         assert len(self.selected_false_actions) == 0
 
+    # Methods for clearing selection
     def clear_available_selection_true(self):
+        """ Clear selection for top left box
+
+        """
         from selenium.webdriver.support.ui import Select
         Select(self.true_available_actions_box).deselect_all()
 
     def clear_selected_selection_true(self):
+        """ Clear selection for top right box
+
+        """
         from selenium.webdriver.support.ui import Select
         Select(self.true_selected_actions_box).deselect_all()
 
     def clear_available_selection_false(self):
+        """ Clear selection for bottom left box
+
+        """
         from selenium.webdriver.support.ui import Select
         Select(self.false_available_actions_box).deselect_all()
 
     def clear_selected_selection_false(self):
+        """ Clear selection for bottom right box
+
+        """
         from selenium.webdriver.support.ui import Select
         Select(self.false_selected_actions_box).deselect_all()
