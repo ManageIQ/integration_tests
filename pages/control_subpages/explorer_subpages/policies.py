@@ -13,7 +13,19 @@ class Policies(Explorer):
 
     """
 
-    def go(self, typename, name, continuation, imgfilt=None):
+    _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
+    _configuration_add_new_locator = (By.CSS_SELECTOR,
+                                      "tr[title*='Add a New']")
+
+    @property
+    def configuration_button(self):
+        return self.selenium.find_element(*self._configuration_button_locator)
+
+    @property
+    def configuration_add_new_button(self):
+        return self.selenium.find_element(*self._configuration_add_new_locator)
+
+    def go(self, typename, name, continuation):
         """ DRY function to find something in the tree, click it and direct
         to the correct page.
 
@@ -22,10 +34,8 @@ class Policies(Explorer):
         @param name: Name of the node
         @param continuation: Class of the page to instantiate
         @type continuation: subclass of Page
-        @param imgfilt: Param for img_src_contains=...
         """
-        node = self.accordion.current_content.find_node_by_name(name,
-                                                                img_src_contains=imgfilt)
+        node = self.accordion.current_content.get_node(name)
         try:
             node.click()
         except AttributeError:
@@ -33,19 +43,79 @@ class Policies(Explorer):
         self._wait_for_results_refresh()
         return continuation(self.testsetup)
 
-    def select_policy(self, policy):
+    def _new_policy(self, where):
+        """ DRY method that takes the location in the tree and goes there.
+
+        @return: NewPolicy
+        """
+        self.accordion.current_content.get_node(where).click()
+        self._wait_for_results_refresh()
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.configuration_add_new_button)\
+            .perform()
+        self._wait_for_results_refresh()
+        return NewPolicy(self.testsetup)
+
+    def select_host_control_policy(self, policy):
         """ Selects policy by its name
 
         @return: PolicyView
         """
-        return self.go("Policy", policy, PolicyView, imgfilt="miq_policy_vm")
+        path = "Control Policies/Host Control Policies::%s" % policy
+        return self.go("Policy", path, PolicyView)
 
-    def select_condition(self, condition):
-        """ Selects FIRST condition by its name
+    def add_new_host_control_policy(self):
+        """ Goes to the page with editor of new policy
 
-        @return: PolicyConditionView
+        @return: NewPolicy
         """
-        return self.go("Condition", condition, PolicyConditionView, imgfilt="miq_condition")
+        return self._new_policy("Control Policies::Host Control Policies")
+
+    def select_vm_control_policy(self, policy):
+        """ Selects policy by its name
+
+        @return: PolicyView
+        """
+        path = "Control Policies/Vm Control Policies::%s" % policy
+        return self.go("Policy", path, PolicyView)
+
+    def add_new_vm_control_policy(self):
+        """ Goes to the page with editor of new policy
+
+        @return: NewPolicy
+        """
+        return self._new_policy("Control Policies::Vm Control Policies")
+
+    def select_host_compliance_policy(self, policy):
+        """ Selects policy by its name
+
+        @return: PolicyView
+        """
+        path = "Control Policies/Host Compliance Policies::%s" % policy
+        return self.go("Policy", path, PolicyView)
+
+    def add_new_host_compliance_policy(self):
+        """ Goes to the page with editor of new policy
+
+        @return: NewPolicy
+        """
+        return self._new_policy("Compliance Policies::Host Compliance Policies")
+
+    def select_vm_compliance_policy(self, policy):
+        """ Selects policy by its name
+
+        @return: PolicyView
+        """
+        path = "Control Policies/Vm Compliance Policies::%s" % policy
+        return self.go("Policy", path, PolicyView)
+
+    def add_new_vm_compliance_policy(self):
+        """ Goes to the page with editor of new policy
+
+        @return: NewPolicy
+        """
+        return self._new_policy("Compliance Policies::Vm Compliance Policies")
 
 
 class PolicyView(Policies, TaskbarMixin, RefreshMixin):
@@ -272,7 +342,7 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
                    .save()
 
 
-class BasicEditPolicy(Policies, ExpressionEditorMixin):
+class EditPolicy(Policies, ExpressionEditorMixin):
     """ First editing type of the policy.
 
     Configuration / Edit Basic Info ....
@@ -311,10 +381,6 @@ class BasicEditPolicy(Policies, ExpressionEditorMixin):
     _active_checkbox_locator = (By.CSS_SELECTOR, "input#active")
     _notes_textarea_locator = (By.CSS_SELECTOR, "textarea#notes")
 
-    _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
-    _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
-    _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
-
     @property
     def description_input(self):
         return self.selenium.find_element(*self._description_input_locator)
@@ -326,50 +392,6 @@ class BasicEditPolicy(Policies, ExpressionEditorMixin):
     @property
     def notes_textarea(self):
         return self.selenium.find_element(*self._notes_textarea_locator)
-
-    @property
-    def save_button(self):
-        return self.selenium.find_element(*self._save_locator)
-
-    @property
-    def cancel_button(self):
-        return self.selenium.find_element(*self._cancel_locator)
-
-    @property
-    def reset_button(self):
-        return self.selenium.find_element(*self._reset_locator)
-
-    def save(self):
-        """ Save changes.
-
-        @return: PolicyView
-        """
-        self._wait_for_visible_element(*self._save_locator, visible_timeout=10)
-        self.save_button.click()
-        self._wait_for_results_refresh()
-        return PolicyView(self.testsetup)
-
-    def cancel(self):
-        """ Cancel changes.
-
-        @return: PolicyView
-        """
-        self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
-        self.cancel_button.click()
-        self._wait_for_results_refresh()
-        return PolicyView(self.testsetup)
-
-    def reset(self):
-        """ Reset changes.
-
-        Stays on the page.
-        @return: True if the flash message shows correct message.
-        @rtype: bool
-        """
-        self._wait_for_visible_element(*self._reset_locator, visible_timeout=10)
-        self.reset_button.click()
-        self._wait_for_results_refresh()
-        return "All changes have been reset" in self.flash.message
 
     @property
     def is_active(self):
@@ -419,6 +441,89 @@ class BasicEditPolicy(Policies, ExpressionEditorMixin):
 
         """
         self.fill_field_element(value, self.description_input)
+
+
+class BasicEditPolicy(EditPolicy):
+    _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
+    _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
+    _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+
+    @property
+    def save_button(self):
+        return self.selenium.find_element(*self._save_locator)
+
+    @property
+    def cancel_button(self):
+        return self.selenium.find_element(*self._cancel_locator)
+
+    @property
+    def reset_button(self):
+        return self.selenium.find_element(*self._reset_locator)
+
+    def save(self):
+        """ Save changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._save_locator, visible_timeout=10)
+        self.save_button.click()
+        self._wait_for_results_refresh()
+        return PolicyView(self.testsetup)
+
+    def cancel(self):
+        """ Cancel changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._cancel_locator, visible_timeout=5)
+        self.cancel_button.click()
+        self._wait_for_results_refresh()
+        return PolicyView(self.testsetup)
+
+    def reset(self):
+        """ Reset changes.
+
+        Stays on the page.
+        @return: True if the flash message shows correct message.
+        @rtype: bool
+        """
+        self._wait_for_visible_element(*self._reset_locator, visible_timeout=10)
+        self.reset_button.click()
+        self._wait_for_results_refresh()
+        return "All changes have been reset" in self.flash.message
+
+
+class NewPolicy(EditPolicy):
+    _add_locator = (By.CSS_SELECTOR, "img[title='Add']")
+    _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
+
+    @property
+    def add_button(self):
+        return self.selenium.find_element(*self._add_locator)
+
+    @property
+    def cancel_button(self):
+        return self.selenium.find_element(*self._cancel_locator)
+
+    def add(self):
+        """ Save changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._add_locator, visible_timeout=10)
+        self.add_button.click()
+        self._wait_for_results_refresh()
+        return PolicyView(self.testsetup)
+
+    def cancel(self):
+        """ Cancel changes.
+
+        @return: PolicyView
+        """
+        self._wait_for_visible_element(*self._cancel_locator, visible_timeout=5)
+        self.cancel_button.click()
+        self._wait_for_results_refresh()
+        return Policies(self.testsetup)
 
 
 class BaseConditionForPolicy(Policies, ExpressionEditorMixin):

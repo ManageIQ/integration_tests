@@ -229,3 +229,33 @@ class NewTree(Page):
     def find_node_by_substr(self, name, img_src_contains=None):
         return self.find_node_by_regexp(re.escape(name),
                 img_src_contains=img_src_contains)
+
+    def get_node(self, path):
+        # path = "Compliance Policies/Host Compliance Policies::asdf"
+        # Do not write the root element
+        path, node_name = path.rsplit("::", 1)
+        for node in self.get_nodes(path):
+            if node.name.strip() == node_name.strip():
+                return node
+
+    def get_nodes(self, path):
+        # path = "Compliance Policies/Host Compliance Policies"
+        # Do not write the root element
+        this = self
+        path = path.split("/")
+        while path:
+            field = path.pop(0)
+            assert this.is_expandable, "Element %s is not expandable!" % field.name
+            if not this.is_expanded:
+                this.expand()
+            found = False
+            for item in this.children:
+                if item.name.strip() == field.strip():
+                    print "tu su", item.name, field
+                    this = item
+                    found = True
+                    break
+            if not found:
+                raise Exception("Item %s not found!" % field)
+            
+        return this.children
