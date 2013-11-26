@@ -176,6 +176,10 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
 
     @property
     def can_be_deleted(self):
+        """ Some policies cannot be deleted, such as policies provided by the system
+
+        In that case, clicking in the Configuration menu would trigger an error.
+        """
         return self.is_element_present(*self._configuration_delete_policy_locator)
 
     def edit_basic(self):
