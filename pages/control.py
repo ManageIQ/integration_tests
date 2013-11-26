@@ -3,13 +3,16 @@
 from pages.base import Base
 from selenium.webdriver.common.by import By
 from pages.control_subpages.explorer import Explorer
+from pages.regions.refresh_mixin import RefreshMixin
+import re
 
 
 class Control(Base):
     @property
     def submenus(self):
-        return {"miq_policy": Explorer,
-                "miq_policy_export": Control.ImportExport
+        return {"miq_policy": Control.Explorer,
+                "miq_policy_export": Control.ImportExport,
+                "miq_policy_log": Control.Log
                 }
 
     Explorer = Explorer
@@ -17,8 +20,39 @@ class Control(Base):
     class Simulation(Base):
         pass  # Le stub
 
-    class Log(Base):
-        pass  # Le stub
+    class Log(Base, RefreshMixin):
+        _log_textarea_locator = (By.CSS_SELECTOR, "textarea#logview_data")
+
+        @property
+        def log(self):
+            return self.selenium.find_element(*self._log_textarea_locator).text.strip()
+
+        @property
+        def log_lines(self):
+            return self.log.split("\n")
+
+        def grep(self, regexp, whole=False):
+            """ Applies regular expression on the whole content of log.
+
+            @param whole: If True, re.match is used. Otherwise re.search
+            """
+            pattern = re.compile(regexp)
+            if whole:
+                return pattern.match(self.log)
+            else:
+                return pattern.search(self.log)
+
+        def grep_line(self, regexp, whole=False):
+            """ Applies a regular expression line by line
+
+            @param whole: If True, re.match is used. Otherwise re.search
+            """
+            pattern = re.compile(regexp)
+            match_func = pattern.match if whole else pattern.search
+            for line in self.log_lines:
+                match = match_func(line)
+                if match:
+                    yield match
 
     class ImportExport(Base):
         _page_title = 'CloudForms Management Engine: Control'
