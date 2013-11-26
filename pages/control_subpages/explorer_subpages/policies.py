@@ -123,7 +123,6 @@ class Policies(Explorer):
 class PolicyView(Policies, TaskbarMixin, RefreshMixin):
     """ This page represents the view on the policy with its details
 
-    @todo: Delete policy. I cannot delete a policy now so I will have to check it.
     """
     _info_active_locator = (By.XPATH,
                             "//*[@id=\"policy_info_div\"]/fieldset[1]/table/tbody/tr[1]/td[2]")
@@ -146,6 +145,8 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
             "tr[title='Edit this Policy\\'s Condition assignments']")
     _configuration_edit_policy_event_locator = (By.CSS_SELECTOR,
             "tr[title='Edit this Policy\\'s Event assignments']")
+    _configuration_delete_policy_locator = (By.CSS_SELECTOR,
+            "tr[title*='Delete']")
 
     @property
     def configuration_button(self):
@@ -154,6 +155,10 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
     @property
     def configuration_edit_basic_button(self):
         return self.selenium.find_element(*self._configuration_edit_basic_locator)
+
+    @property
+    def configuration_delete_policy_button(self):
+        return self.selenium.find_element(*self._configuration_delete_policy_locator)
 
     @property
     def configuration_new_condition_button(self):
@@ -169,6 +174,10 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
         return self.selenium\
                    .find_element(*self._configuration_edit_policy_event_assignment_locator)
 
+    @property
+    def can_be_deleted(self):
+        return self.is_element_present(*self._configuration_delete_policy_locator)
+
     def edit_basic(self):
         """ Fire up the basic editing page
 
@@ -179,6 +188,19 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
             .perform()
         self._wait_for_results_refresh()
         return BasicEditPolicy(self.testsetup)
+
+    def delete_policy(self, cancel=False):
+        """ Delete policy and go to Policies View
+
+        """
+        assert self.can_be_deleted, "Policy cannot be deleted!"
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.configuration_delete_policy_button)\
+            .perform()
+        self.handle_popup(cancel)
+        self._wait_for_results_refresh()
+        return Policies(self.testsetup)
 
     def new_condition(self):
         """ Fire up the new condition editing page
