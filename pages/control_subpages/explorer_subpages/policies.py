@@ -46,6 +46,8 @@ class Policies(Explorer):
     def _new_policy(self, where):
         """ DRY method that takes the location in the tree and goes there.
 
+        It then clicks on a Configuration/Add new (whatever continues) to open the page
+
         @return: NewPolicy
         """
         self.accordion.current_content.get_node(where).click()
@@ -343,7 +345,9 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
 
 
 class EditPolicy(Policies, ExpressionEditorMixin):
-    """ First editing type of the policy.
+    """ Editation of basic aspects of a policy
+
+    This class should be inherited as it does not contain any Save/add/... buttons
 
     Configuration / Edit Basic Info ....
 
@@ -444,6 +448,10 @@ class EditPolicy(Policies, ExpressionEditorMixin):
 
 
 class BasicEditPolicy(EditPolicy):
+    """ This is the edit page invoked when clicked on "Edit basic info..."
+
+    Inherits EditPolicy and adds Save/Cancel/Reset Buttons
+    """
     _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
     _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
     _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
@@ -494,6 +502,10 @@ class BasicEditPolicy(EditPolicy):
 
 
 class NewPolicy(EditPolicy):
+    """ This is the edit page invoked when creating a new policy
+
+    Inherits EditPolicy and adds Add/Cancel Buttons
+    """
     _add_locator = (By.CSS_SELECTOR, "img[title='Add']")
     _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
 
@@ -528,6 +540,8 @@ class NewPolicy(EditPolicy):
 
 class BaseConditionForPolicy(Policies, ExpressionEditorMixin):
     """ General editing class, used for inheriting
+
+    Enhances ExpressionEditorMixin with switching between scope or expression contexts.
 
     """
     _edit_this_expression_locator = (By.CSS_SELECTOR,
@@ -724,6 +738,9 @@ class CopyConditionForPolicy(NewConditionForPolicy):
 
 
 class PolicyConditionView(Policies, RefreshMixin):
+    """ Displays a summary screen of a condition assigned to this policy
+
+    """
     _expression_locator = (By.XPATH, "//*[@id=\"condition_info_div\"]/fieldset[2]")
     _scope_locator = (By.XPATH, "//*[@id=\"condition_info_div\"]/fieldset[1]")
     _notes_textarea_locator = (By.CSS_SELECTOR, "textarea#notes")
@@ -754,6 +771,10 @@ class PolicyConditionView(Policies, RefreshMixin):
 
     @property
     def expression(self):
+        """ Returns the expression displayed on the page
+
+        The design there is quite dumb so the text must be extracted this way
+        """
         return self.selenium.find_element(*self._expression_locator).text\
                                                                     .strip()\
                                                                     .split(":", 1)[-1]\
@@ -761,6 +782,10 @@ class PolicyConditionView(Policies, RefreshMixin):
 
     @property
     def scope(self):
+        """ Returns the scope displayed on the page
+
+        The design there is quite dumb so the text must be extracted this way
+        """
         return self.selenium.find_element(*self._scope_locator).text\
                                                                .strip()\
                                                                .split(":", 1)[-1]\
@@ -1020,6 +1045,7 @@ class PolicyEventAssignments(Policies):
     def set(self, name, check):
         """ Set checkbox with appropriate value
 
+        @param check: Wheter to check or uncheck the checkbox
         """
         checkbox = self.search_by_name(name)
         if (not check and not checkbox.is_selected()) or (check and checkbox.is_selected()):
@@ -1036,6 +1062,9 @@ class PolicyEventAssignments(Policies):
 
 
 class PolicyEventView(Policies, TaskbarMixin, RefreshMixin):
+    """ Page displaying a summary about the event which was assigned to a condition
+
+    """
     _event_group_locator = (By.XPATH,
         "//*[@id='event_info_div']/fieldset[1]/table/tbody/tr[1]/td[2]")
     _policy_attached_locator = (By.XPATH,
@@ -1200,6 +1229,10 @@ class PolicyEventActionsEdit(Policies):
 
     # Misc
     _regexp_members = re.compile(r"^\((?P<type>[AS])\) (?P<name>.*?)$")
+    """ Regexp used to extract data from selected members
+
+    The format is '(S|A) name'
+    """
 
     # Main buttons
     @property
@@ -1431,6 +1464,9 @@ class PolicyEventActionsEdit(Policies):
         return False
 
     def enable_action_true(self, name):
+        """ Select an action from TRUE available box and move it to the right
+
+        """
         value = self.is_action_enabled_true(name)
         if value is None:
             self.select_available_action_true(name)
@@ -1439,6 +1475,9 @@ class PolicyEventActionsEdit(Policies):
         return self
 
     def disable_action_true(self, name):
+        """ Select an action from TRUE selected box and move it to the left
+
+        """
         value = self.is_action_enabled_true(name)
         if value:
             self.select_dropdown_by_value(value, *self._members_chosen_true_locator)
@@ -1447,6 +1486,9 @@ class PolicyEventActionsEdit(Policies):
         return self
 
     def enable_action_false(self, name):
+        """ Select an action from FALSE available box and move it to the right
+
+        """
         value = self.is_action_enabled_false(name)
         if value is None:
             self.select_available_action_false(name)
@@ -1455,6 +1497,9 @@ class PolicyEventActionsEdit(Policies):
         return self
 
     def disable_action_false(self, name):
+        """ Select an action from FALSE selected box and move it to the left
+
+        """
         value = self.is_action_enabled_false(name)
         if value:
             self.select_dropdown_by_value(value, *self._members_chosen_false_locator)
