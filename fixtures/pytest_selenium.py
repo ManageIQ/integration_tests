@@ -5,6 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support.select import Select
 from contextlib import contextmanager
 import fixtures.configuration as conf
 # Some thread local storage that only gets set up
@@ -131,8 +132,31 @@ def get_attribute(loc, attr):
 
 
 def send_keys(loc, text):
-    element(loc).send_keys(text)
-    wait_for_ajax()
+    if text is not None:
+        ActionChains(browser()).move_to_element(element(loc)).send_keys(text).perform()
+        wait_for_ajax()
+
+
+def set_text(loc, text):
+    if text is not None:
+        ActionChains(browser()).move_to_element(element(loc)).clear().send_keys(text).perform()
+        wait_for_ajax()
+
+
+def select_by_text(loc, value):
+    if value is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        Select(el).select_by_visible_text(value)
+        wait_for_ajax()
+
+
+def select_by_value(loc, text):
+    if text is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        Select(el).select_by_value(text)
+        wait_for_ajax()
 
 
 def current_url():

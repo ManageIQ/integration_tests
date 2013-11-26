@@ -3,10 +3,10 @@
 import pytest
 from itertools import dropwhile
 from copy import deepcopy
-import pages.regions.header_menu as menu
+from fixtures.pytest_selenium import move_to_element, click
 
 
-nav_tree = menu.menu_tree
+nav_tree = ['toplevel', lambda: None]  # navigation tree with just a root node
 
 _width_errmsg = '''The minimum supported width of CFME is 1280 pixels
 
@@ -25,51 +25,88 @@ def home_page_logged_in(selenium):
     # Assert.true(home_pg.is_logged_in, 'Could not determine if logged in')
 
 
+def _has_children(node):
+    return (isinstance(node[1], (list, tuple)) and len(node[1]) > 1)
+
+
+def _children(node):
+    if _has_children(node):
+        return node[1][1]
+    else:
+        return {}
+
+
+def _get_child(node, name):
+    return [name, _children(node).get(name)]
+
+
+def _name(node):
+    return node[0]
+
+
+def _fn(node):
+    if _has_children(node):
+        return node[1][0]
+    else:
+        return node[1]
+
+
 def tree_path(target, tree):
-    if tree[0] == target:
+    if _name(tree) == target:
         return []
-    elif len(tree) > 2:
-        for idx, child in enumerate(tree[2]):
-            found = tree_path(target, child)
+    else:
+        for i in _children(tree).items():
+            found = tree_path(target, i)
             if not (found is None):
-                return [idx] + found
-                return None
+                return [_name(i)] + found
+        return None
 
 
 def tree_find(tree, path=[]):
-    node = [[tree[0], tree[1]]]
+    plain_node = [[_name(tree), _fn(tree)]]
     if path:
-        return node + tree_find(tree[2][path[0]], path[1:])
+        return plain_node + tree_find(_get_child(tree, path[0]), path[1:])
     else:
-        return node
+        return plain_node
 
 
-def tree_graft(tree, branches, target):
+def tree_graft(target, branches, tree=nav_tree):
     path = tree_path(target, tree)
     new_tree = deepcopy(tree)
     node = new_tree
     for idx in path:
-        node = node[2][idx]
-        for branch in branches:
-            if len(node) > 2:
-                node[2].append(branch)
-            else:
-                node.append([branch])
-                return new_tree
+        node = _children(node).get(idx)
+    if _has_children(node):
+        node[1] = dict(_children(node).items() + branches.items())
+    else:
+        node[1] = [node[1], branches]
+    return new_tree
 
 
 def navigate(tree, end, start=None):
     steps = tree_find(tree, tree_path(end, tree))
-    print(steps)
     if steps is None:
         raise ValueError("Destination not found in navigation tree: %s" % end)
     if start:
-        steps = dropwhile(lambda s: s[0] != start, steps)
+        steps = dropwhile(lambda s: _name(s) != start, steps)
         if len(steps) == 0:
             raise ValueError("Starting location %s not found in navigation tree." % start)
     for step in steps:
-        step[1]()
+        _fn(step)()
+
+
+def add_branch(target, branches):
+    global nav_tree
+    nav_tree = tree_graft(target, branches)
 
 
 def go_to(dest, start=None):
     navigate(nav_tree, dest, start)
+
+
+def move_to_fn(el):
+    return lambda: move_to_element(el)
+
+
+def click_fn(el):
+    return lambda: click(el)

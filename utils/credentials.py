@@ -17,3 +17,22 @@ def load_credentials(filename=None):
         msg = 'Usable to load credentials file at %s' % path
         raise Exception(msg)
 
+
+class Credential(object):
+    """
+    """
+    
+    def __init__(self, principal=None, secret=None, verify_secret=None):
+        """
+        
+        Arguments:
+        - `principal`:
+        - `secret`:
+        - `verify_secret`:
+        """
+        self.principal = principal
+        self.secret = secret
+        self.verify_secret = verify_secret
+        
+    
+
