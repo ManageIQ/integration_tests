@@ -117,7 +117,7 @@ class Details(CommonComponents):
                                 current_state+")")
 
     def edit_cfme_relationship_and_save(self, appliance_name):
-        """Service method to edit cfme relationship and save 
+        """Service method to edit cfme relationship and save
         from Instance details"""
         edit_pg = self.click_on_edit_cfme_relationship()
         edit_pg.select_server(appliance_name)
@@ -134,7 +134,7 @@ class Details(CommonComponents):
         return CfmeRelationship(self.testsetup)
 
     def set_ownership_and_save(self, ownership):
-        """Service method to set template ownership and save 
+        """Service method to set template ownership and save
         from Instance details"""
         edit_pg = self.click_on_set_ownership()
         edit_pg.select_user_ownership(ownership['user_owner'])
@@ -151,7 +151,6 @@ class Details(CommonComponents):
         return Ownership(self.testsetup)
 
     def click_on_refresh_relationships(self):
-        ActionChains(self.selenium).click(
-            self.center_buttons.configuration_button).click(
+        ActionChains(self.selenium).click(self.center_buttons.configuration_button).click(
             self.refresh_relationships).perform()
         self._wait_for_results_refresh()

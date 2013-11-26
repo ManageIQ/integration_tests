@@ -105,4 +105,3 @@ class Provider(object):
             browser.type_keys(page.verify_password_text, creds.verify_secret)
 
         browser.click(page.add_submit)
-        

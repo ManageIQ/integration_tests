@@ -6,6 +6,7 @@ from pages.regions.paginator import PaginatorMixin
 from selenium.common.exceptions import NoSuchElementException
 from pages.regions.policy_menu import PolicyMenu
 
+
 class VmCommonComponents(Base, PolicyMenu, PaginatorMixin):
 
     _page_title = 'CloudForms Management Engine: Virtual Machines'
@@ -32,12 +33,12 @@ class VmCommonComponents(Base, PolicyMenu, PaginatorMixin):
         return CenterButtons(self.testsetup)
 
     def refresh(self):
-        '''Refresh the page by clicking the refresh button that is 
+        '''Refresh the page by clicking the refresh button that is
             part of the history button region.
 
         Note:
             Contains try/except because of page differences depending on how the page
-            is loaded... mgmt_system all_vms click through (which does not have the 
+            is loaded... mgmt_system all_vms click through (which does not have the
             refresh button) versus services tab > VMs
 
             When the refresh button is not found, a browser refresh is performed.
@@ -50,11 +51,10 @@ class VmCommonComponents(Base, PolicyMenu, PaginatorMixin):
 
     @property
     def power_button(self):
-        from pages.regions.taskbar.power import PowerButton
-        return PowerButton(self.testsetup)
+        from pages.regions.taskbar.power import CommonPowerButton
+        return CommonPowerButton(self.testsetup)
 
     @property
     def config_button(self):
         from pages.regions.taskbar.vm_configuration import ConfigButton
         return ConfigButton(self.testsetup)
-

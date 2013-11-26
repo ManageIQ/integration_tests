@@ -2,11 +2,11 @@
 """Base module for Management Systems classes"""
 import re
 import time
-
 import boto
 from abc import ABCMeta, abstractmethod
 from boto.ec2 import EC2Connection, get_region
 from ovirtsdk.api import API
+from ovirtsdk.xml import params
 from pysphere import VIServer, MORTypes
 from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
@@ -212,6 +212,48 @@ class MgmtSystemAPIBase(object):
         """
         raise NotImplementedError('clone_vm not implemented.')
 
+    @abstractmethod
+    def does_vm_exist(self, name):
+        """Does VM exist?
+
+        :param vm_name: The name of the VM
+        :type  vm_name: str
+        :return: whether vm exists
+        :rtype: boolean
+
+        """
+        raise NotImplementedError('does_vm_exist not implemented.')
+
+    @abstractmethod
+    def deploy_template(self, template, *args, **kwargs):
+        """Deploy a VM from a template
+
+        :param template: The name of the template to deploy
+        :type  template_name: str
+        :return: name or id(ec2) of vm
+        :rtype: str
+
+        """
+        raise NotImplementedError('deploy_template not implemented.')
+
+    @abstractmethod
+    def get_ip_address(self, vm_name):
+        """get VM ip address
+
+        :param vm_name: The name of the VM
+        :type  vm_name: str
+        :return: vm ip address
+        :rtype: str
+
+        """
+        raise NotImplementedError('get_ip_address not implemented.')
+
+    def stats(self, *requested_stats):
+        '''Returns all available stats, if none are explicitly requested'''
+
+        requested_stats = requested_stats or self._stats_available
+        return {stat: self._stats_available[stat](self) for stat in requested_stats}
+
 
 class VMWareSystem(MgmtSystemAPIBase):
     """Client to Vsphere API
@@ -224,6 +266,14 @@ class VMWareSystem(MgmtSystemAPIBase):
       - Response often are not detailed enough.
 
     """
+
+    _stats_available = {
+        'num_vm': lambda self: len(self.list_vm()),
+        'num_host': lambda self: len(self.list_host()),
+        'num_cluster': lambda self: len(self.list_cluster()),
+        'num_template': lambda self: len(self.list_template()),
+        'num_datastore': lambda self: len(self.list_datastore()),
+    }
 
     def __init__(self, hostname, username, password, **kwargs):
         self.api = VIServer()
@@ -239,6 +289,13 @@ class VMWareSystem(MgmtSystemAPIBase):
             except VIException as ex:
                 raise Exception(ex)
 
+    def does_vm_exist(self, name):
+        try:
+            self._get_vm(name)
+            return True
+        except Exception:
+            return False
+
     def _get_resource_pool(self, resource_pool_name=None):
         rps = self.api.get_resource_pools()
         for mor, path in rps.iteritems():
@@ -247,7 +304,8 @@ class VMWareSystem(MgmtSystemAPIBase):
         # Just pick the first
         return rps.keys()[0]
 
-    def _find_ip(self, vm):
+    def get_ip_address(self, vm_name):
+        vm = self._get_vm(vm_name)
         maxwait = 600
         net_info = None
         waitcount = 0
@@ -385,14 +443,19 @@ class VMWareSystem(MgmtSystemAPIBase):
             vm.suspend()
             return self.is_vm_suspended(vm_name)
 
-    def clone_vm(self, source_name, vm_name, resourcepool=None):
-        vm = self._get_vm(source_name)
+    def clone_vm(self):
+        raise NotImplementedError('clone_vm not implemented.')
+
+    def deploy_template(self, template, *args, **kwargs):
+        if 'resourcepool' not in kwargs:
+            kwargs['resourcepool'] = None
+        vm = self._get_vm(template)
         if vm:
-            clone = vm.clone(vm_name, sync_run=True,
-                resourcepool=self._get_resource_pool(resourcepool))
-            return self._find_ip(clone)
+            vm.clone(kwargs['vm_name'], sync_run=True,
+                resourcepool=self._get_resource_pool(kwargs['resourcepool']))
+            return kwargs['vm_name']
         else:
-            raise Exception('Could not clone %s' % source_name)
+            raise Exception('Could not clone %s' % template)
 
 
 class RHEVMSystem(MgmtSystemAPIBase):
@@ -444,6 +507,14 @@ class RHEVMSystem(MgmtSystemAPIBase):
         vm.status.get_state() # returns 'up'
     """
 
+    _stats_available = {
+        'num_vm': lambda self: len(self.list_vm()),
+        'num_host': lambda self: len(self.list_host()),
+        'num_cluster': lambda self: len(self.list_cluster()),
+        'num_template': lambda self: len(self.list_template()),
+        'num_datastore': lambda self: len(self.list_datastore()),
+    }
+
     def __init__(self, hostname, username, password, **kwargs):
         # generate URL from hostname
 
@@ -462,6 +533,17 @@ class RHEVMSystem(MgmtSystemAPIBase):
             if vm is None:
                 raise Exception('Could not find a VM named %s.' % vm_name)
             return vm
+
+    def get_ip_address(self, vm_name):
+        vm = self._get_vm(vm_name)
+        return vm.get_guest_info().get_ips().get_ip()[0].get_address()
+
+    def does_vm_exist(self, name):
+        try:
+            self._get_vm(name)
+            return True
+        except Exception:
+            return False
 
     def start_vm(self, vm_name=None):
         vm = self._get_vm(vm_name)
@@ -488,13 +570,44 @@ class RHEVMSystem(MgmtSystemAPIBase):
         if vm.status.get_state() == 'up':
             self.stop_vm(vm_name)
         ack = vm.delete()
-        if ack.get_status().get_state() == '':
+        if ack == '':
             return True
         else:
             return False
 
     def create_vm(self, vm_name):
         raise NotImplementedError('This function has not yet been implemented.')
+    # Heres the code but don't have a need and no time to test it to get it right
+    #   including for inclusion later
+    #
+    # def create_vm(self, vm_name, *args, **kwargs):
+    #     MB = 1024 * 1024
+    #     try:
+    #         self.api.vms.add(
+    #             params.VM(
+    #                 name=vm_name,
+    #                 memory=kwargs['memory_in_mb'] * MB,
+    #                 cluster=self.api.clusters.get(kwargs['cluster_name']),
+    #                 template=self.api.templates.get('Blank')))
+    #         print 'VM created'
+    #         self.api.vms.get(vm_name).nics.add(params.NIC(name='eth0',
+    #             network=params.Network(name='ovirtmgmt'), interface='virtio'))
+    #         print 'NIC added to VM'
+    #         self.api.vms.get(vm_name).disks.add(params.Disk(
+    #             storage_domains=params.StorageDomains(
+    #                 storage_domain=[self.api.storagedomains.get(kwargs['storage_domain'])],
+    #                 size=512 * MB,
+    #                 status=None,
+    #                 interface='virtio',
+    #                 format='cow',
+    #                 sparse=True,
+    #                 bootable=True)))
+    #         print 'Disk added to VM'
+    #         print 'Waiting for VM to reach Down status'
+    #         while self.api.vms.get(vm_name).status.state != 'down':
+    #             time.sleep(1)
+    #     except Exception as e:
+    #         print 'Failed to create VM with disk and NIC\n%s' % str(e)
 
     def restart_vm(self, vm_name):
         if not self.stop_vm(vm_name):
@@ -540,7 +653,6 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
     def vm_status(self, vm_name=None):
         state = self._get_vm(vm_name).get_status().get_state()
-        print "vm " + vm_name + " status is " + state
         return state
 
     def is_vm_running(self, vm_name):
@@ -566,6 +678,18 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def clone_vm(self, source_name, vm_name):
         raise NotImplementedError('This function has not yet been implemented.')
 
+    def deploy_template(self, template, *args, **kwargs):
+        self.api.vms.add(params.VM(
+            name=kwargs['vm_name'],
+            cluster=self.api.clusters.get(kwargs['cluster_name']),
+            template=self.api.templates.get(template)))
+        while self.api.vms.get(kwargs['vm_name']).status.state != 'down':
+            time.sleep(5)
+        self.start_vm(kwargs['vm_name'])
+        while not self.is_vm_running(kwargs['vm_name']):
+            time.sleep(5)
+        return kwargs['vm_name']
+
 
 class EC2System(MgmtSystemAPIBase):
     """EC2 Management System, powered by boto
@@ -583,6 +707,11 @@ class EC2System(MgmtSystemAPIBase):
     EC2 instances don't have to have unique names.
 
     """
+
+    _stats_available = {
+        'num_vm': lambda self: len(self.list_vm()),
+        'num_template': lambda self: len(self.list_template()),
+    }
 
     states = {
         'running': ('running',),
@@ -646,29 +775,8 @@ class EC2System(MgmtSystemAPIBase):
             if instance.id == instance_id:
                 return instance.state
 
-    def create_vm(self, ami_id, *args, **kwargs):
-        """Instantiate the requested VM image
-
-        :param  ami_id: AMI ID to instantiate
-        :type   ami_id: basestring
-        :return: Instance ID of the created instance
-        :rtype:  basestring
-
-        Packed arguments are passed along to boto's run_instances method.
-
-        min_count and max_count will be forced to '1'; if you're trying to do
-        anything fancier than that, you might be in the wrong place
-
-        """
-        # Enforce create_vm only creating one VM
-        kwargs.update({
-            'min_count': 1,
-            'max_count': 1,
-        })
-        reservation = self.api.run_instances(ami_id, *args, **kwargs)
-        instances = self._get_instances_from_reservations([reservation])
-        # Should have only made one VM; return its ID for use in other methods
-        return instances[0].id
+    def create_vm(self):
+        raise NotImplementedError('create_vm not implemented.')
 
     def delete_vm(self, instance_id):
         """Deletes the an instance
@@ -786,6 +894,41 @@ class EC2System(MgmtSystemAPIBase):
     def clone_vm(self, source_name, vm_name):
         raise NotImplementedError('This function has not yet been implemented.')
 
+    def deploy_template(self, template, *args, **kwargs):
+        """Instantiate the requested template image
+
+        :param  ami_id: AMI ID to instantiate
+        :type   ami_id: basestring
+        :return: Instance ID of the created instance
+        :rtype:  basestring
+
+        Packed arguments are passed along to boto's run_instances method.
+
+        min_count and max_count will be forced to '1'; if you're trying to do
+        anything fancier than that, you might be in the wrong place
+
+        """
+        # Enforce create_vm only creating one VM
+        kwargs.update({
+            'min_count': 1,
+            'max_count': 1,
+        })
+        reservation = self.api.run_instances(template, *args, **kwargs)
+        instances = self._get_instances_from_reservations([reservation])
+        # Should have only made one VM; return its ID for use in other methods
+        while not self.is_vm_running(instances[0].id):
+            time.sleep(5)
+        return instances[0].id
+
+    def _get_instance_by_id(self, instance_id):
+        inst_list = self._get_all_instances()
+        for instance in inst_list:
+            if instance.id == instance_id:
+                return instance
+
+    def get_ip_address(self, id):
+        return str(self._get_instance_by_id(id).ip_address)
+
     def _get_instance_id_by_name(self, instance_name):
         # Quick validation that the instance name isn't actually an ID
         # If people start naming their instances in such a way to break this,
@@ -803,10 +946,19 @@ class EC2System(MgmtSystemAPIBase):
         if not instances:
             raise Exception('Instance with name "%s" not found.' % instance_name)
         elif len(instances) > 1:
-            raise Exception('Instance name "%s" is not unique' % instance_name)
+            raise MultipleInstancesError('Instance name "%s" is not unique' % instance_name)
         else:
             # We have an instance! return its ID
             return instances[0].id
+
+    def does_vm_exist(self, name):
+        try:
+            self._get_instance_id_by_name(name)
+            return True
+        except MultipleInstancesError:
+            return True
+        except Exception:
+            return True
 
     def _get_instances_from_reservations(self, reservations):
         """Takes a sequence of reservations and returns their instances"""
@@ -844,6 +996,11 @@ class OpenstackSystem(MgmtSystemAPIBase):
 
     """
 
+    _stats_available = {
+        'num_vm': lambda self: len(self.list_vm()),
+        'num_template': lambda self: len(self.list_template()),
+    }
+
     states = {
         'running': ('ACTIVE',),
         'stopped': ('SHUTOFF',),
@@ -877,26 +1034,13 @@ class OpenstackSystem(MgmtSystemAPIBase):
         wait_for(self.is_vm_stopped, [instance_name])
         return True
 
-    def create_vm(self, instance_name, image, flavour, *args, **kwargs):
-        """Creates a vm.
-
-        If assign_floating_ip kwarg is present, then create_vm() will
-        attempt to register a floating IP address from the pool specified
-        in the arg.
-        """
-        image = self.api.images.find(name=image)
-        flavour = self.api.flavors.find(name=flavour)
-        instance = self.api.servers.create(instance_name, image, flavour, *args, **kwargs)
-        wait_for(self.is_vm_running, [instance_name])
-
-        if 'assign_floating_ip' in kwargs:
-            ip = self.api.floating_ips.create(kwargs['assign_floating_ip'])
-            instance.add_floating_ip(ip)
-        return True
+    def create_vm(self):
+        raise NotImplementedError('create_vm not implemented.')
 
     def delete_vm(self, instance_name):
         instance = self._find_instance_by_name(instance_name)
-        return instance.delete()
+        instance.delete()
+        return self.does_vm_exist(instance_name)
 
     def restart_vm(self, instance_name):
         return self.stop_vm(instance_name) and self.start_vm(instance_name)
@@ -963,6 +1107,42 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def clone_vm(self, source_name, vm_name):
         raise NotImplementedError('clone_vm not implemented.')
 
+    def deploy_template(self, template, *args, **kwargs):
+        """ Deploys a vm from a template.
+
+        If assign_floating_ip kwarg is present, then create_vm() will
+        attempt to register a floating IP address from the pool specified
+        in the arg.
+        """
+
+        # defaults
+        if 'flavour_name' not in kwargs:
+            kwargs['flavour_name'] = 'm1.tiny'
+        if 'vm_name' not in kwargs:
+            kwargs['vm_name'] = 'new_instance_name'
+
+        image = self.api.images.find(name=template)
+        flavour = self.api.flavors.find(name=kwargs['flavour_name'])
+        instance = self.api.servers.create(kwargs['vm_name'], image, flavour, *args, **kwargs)
+        wait_for(self.is_vm_running, [kwargs['vm_name']])
+
+        if 'assign_floating_ip' in kwargs and kwargs['assign_floating_ip'] is not None:
+                ip = self.api.floating_ips.create(kwargs['assign_floating_ip'])
+                instance.add_floating_ip(ip)
+
+        return kwargs['vm_name']
+
+    def _get_instance_networks(self, name):
+        instance = self._find_instance_by_name(name)
+        return instance._info['addresses']
+
+    def get_ip_address(self, name):
+        networks = self._get_instance_networks(name)
+        for network in networks.keys():
+            for nic in networks[network]:
+                if nic['OS-EXT-IPS:type'] == 'floating':
+                    return str(nic['addr'])
+
     def _get_all_instances(self):
         instances = self.api.servers.list(True, {'all_tenants': True})
         return instances
@@ -981,6 +1161,21 @@ class OpenstackSystem(MgmtSystemAPIBase):
         else:
             raise Exception('Invalid instance ID: %s' % name)
 
+    def does_vm_exist(self, name):
+        try:
+            self._find_instance_by_name(name)
+            return True
+        except Exception:
+            return False
+
 
 class ActionTimedOutError(Exception):
     pass
+
+
+class MultipleInstancesError(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)

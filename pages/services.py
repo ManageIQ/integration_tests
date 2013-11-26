@@ -168,8 +168,14 @@ class Services(Base):
             minute_count = 0
             while (minute_count < timeout_in_minutes):
                 if self.requests_list.items[requests_index]\
-                    .status == request_status:
-                    break
+                        .status == request_status:
+                    if self.requests_list.items[requests_index]\
+                            .request_id == "Ok":
+                        break
+                    else:
+                        raise Exception("Status of request is " +
+                            self.requests_list.items[requests_index]\
+                            .request_id)
                 print "Waiting for provisioning status: " + request_status
                 sleep(60)
                 self.time_period.select_by_visible_text(time_period_text)
@@ -178,10 +184,10 @@ class Services(Base):
                 if (minute_count==timeout_in_minutes) and \
                    (self.requests_list.items[requests_index]\
                     .status != request_status):
-                    raise Exception("timeout reached("+str(timeout_in_minutes)+
+                    raise Exception("timeout reached(" + str(timeout_in_minutes) +
                        " minutes) before desired state (" +
-                       request_status +") reached... current state("+
-                       self.requests_list.items[requests_index].status +")")
+                       request_status + ") reached... current state(" +
+                       self.requests_list.items[requests_index].status + ")")
             return Services.Requests(self.testsetup)
 
     class RequestItem(ListItem):

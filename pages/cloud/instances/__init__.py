@@ -59,15 +59,25 @@ class Instances(CommonComponents):
         self._mark_icon_and_call_method(instance_names,
                 self.power_button.power_on_and_cancel)
 
-    def power_off(self, instance_names):
-        """Mark icon and power off"""
+    def terminate(self, instance_names):
+        """Mark icon and terminate"""
         self._mark_icon_and_call_method(instance_names,
-                self.power_button.power_off)
+                self.power_button.terminate)
 
-    def power_off_and_cancel(self, instance_names):
-        """Mark icon and power off but cancel request"""
+    def terminate_and_cancel(self, instance_names):
+        """Mark icon and terminate but cancel request"""
         self._mark_icon_and_call_method(instance_names,
-                self.power_button.power_off_and_cancel)
+                self.power_button.terminate_and_cancel)
+
+    def stop(self, instance_names):
+        """Mark icon and terminate"""
+        self._mark_icon_and_call_method(instance_names,
+                self.power_button.stop)
+
+    def stop_and_cancel(self, instance_names):
+        """Mark icon and terminate but cancel request"""
+        self._mark_icon_and_call_method(instance_names,
+                self.power_button.stop_and_cancel)
 
     def reset(self, instance_names):
         """Mark icon and reset"""
@@ -147,9 +157,10 @@ class Instances(CommonComponents):
         return ProvisionStart(self.testsetup)
 
     def find_instance_page(self, instance_name=None, instance_type=None,
-            mark_checkbox=False, load_details=False):
+            mark_checkbox=False, load_details=False, retry_count=0):
         """Page through any pages seaching for particular instance"""
         found = None
+        retries = 0
         while not found:
             for quadicon in self.quadicon_region.quadicons:
                 # find exact title/type match
@@ -170,8 +181,16 @@ class Instances(CommonComponents):
             if not found and not self.paginator.is_next_page_disabled:
                 self.paginator.click_next_page()
             elif not found and self.paginator.is_next_page_disabled:
-                errmsg = 'instance("%s") with type("%s") could not be found'
-                raise Exception(errmsg % (instance_name, instance_type))
+                if retries == retry_count:
+                    errmsg = 'instance("%s") with type("%s") could not be found'
+                    raise Exception(errmsg % (instance_name, instance_type))
+                else:
+                    time.sleep(60)
+                    if self.paginator.is_first_page_disabled:
+                        self.refresh()
+                    else:
+                        self.paginator.click_first_page()
+                    retries += 1
         if found and mark_checkbox:
             found.mark_checkbox()
         if found and load_details:

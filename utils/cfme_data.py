@@ -5,6 +5,7 @@ from py.path import local
 
 from utils.randomness import RandomizeValues
 
+
 def load_cfme_data(filename=None):
     """Loads the cfme_data YAML from the given filename
 

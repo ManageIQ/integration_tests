@@ -10,11 +10,11 @@ class AddFormCommon(Base):
     _page_title = 'CloudForms Management Engine: Cloud Providers'
 
     _provider_credentials_verify_button_locator = (
-            By.CSS_SELECTOR,
-            "div#default_validate_buttons_on > ul#form_buttons > li > a > img")
+        By.CSS_SELECTOR,
+        "div#default_validate_buttons_on > ul#form_buttons > li > a > img")
     _provider_credentials_verify_disabled_button_locator = (
-            By.CSS_SELECTOR,
-            "div#default_validate_buttons_off > ul#form_buttons > li > a > img")
+        By.CSS_SELECTOR,
+        "div#default_validate_buttons_off > ul#form_buttons > li > a > img")
     _provider_cancel_button_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
     _provider_name_locator = (By.ID, "name")
     _provider_hostname_locator = (By.ID, "hostname")
@@ -29,9 +29,9 @@ class AddFormCommon(Base):
     _provider_amqp_verify_locator = (By.ID, "amqp_verify")
     _server_zone_edit_field_locator = (By.ID, "server_zone")
     _default_credentials_button_locator = (
-            By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#default']")
+        By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#default']")
     _amqp_credentials_button_locator = (
-            By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#amqp']")
+        By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#amqp']")
     _provider_api_port_locator = (By.ID, "port")
 
     @property

@@ -6,7 +6,7 @@
 # pylint: disable=W0621
 
 import pytest
-import time
+from utils.providers import provider_factory
 from unittestzero import Assert
 
 CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
@@ -17,7 +17,9 @@ DETAIL_NOT_MATCHED_TEMPLATE = '%s did not match'
 def provider_data(request, cfme_data):
     '''Returns management system data from cfme_data'''
     param = request.param
-    return cfme_data.data['management_systems'][param]
+    prov_data = cfme_data.data['management_systems'][param]
+    prov_data['request'] = param
+    return prov_data
 
 @pytest.fixture
 def provider(request, infra_providers_pg, provider_data):
@@ -194,3 +196,18 @@ class TestInfrastructureProviders:
         Assert.equal(prov_add_pg.flash.message,
             'Cannot complete login due to an incorrect user name or password.',
             FLASH_MESSAGE_NOT_MATCHED)
+
+    @pytest.mark.usefixtures('setup_infrastructure_providers')
+    def test_validate_provider_details(self,
+                                       infra_providers_pg,
+                                       provider_data):
+        prov_pg = infra_providers_pg
+        prov_pg.select_provider(provider_data['name'])
+
+        client = provider_factory(provider_data['request'])
+        host_stats = client.stats()
+
+        detail_pg = prov_pg.quadicon_region.selected[0].click()
+        Assert.true(detail_pg.do_stats_match(host_stats),
+                    'Host stats should match with mgmt_system stats')
+

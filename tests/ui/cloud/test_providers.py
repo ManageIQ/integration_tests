@@ -3,6 +3,10 @@
 # pylint: disable=W0621
 
 import pytest
+<<<<<<< variant A
+>>>>>>> variant B
+from utils.providers import provider_factory
+======= end
 from unittestzero import Assert
 import pages.
 CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
@@ -14,7 +18,10 @@ DETAIL_NOT_MATCHED_TEMPLATE = '%s did not match'
 def provider_data(request, cfme_data):
     '''Returns management system data from cfme_data'''
     param = request.param
-    return cfme_data.data['management_systems'][param]
+    prov_data = cfme_data.data['management_systems'][param]
+    prov_data['request'] = param
+    return prov_data
+
 
 
 @pytest.fixture
@@ -28,7 +35,10 @@ def provider(request, cloud_providers_pg, provider_data):
 
     This fixture will modify the db directly in the near future'''
     prov_add_pg = cloud_providers_pg.click_on_add_new_provider()
-    prov_pg = prov_add_pg.add_provider(provider_data)
+
+    # Returns prov_pg object
+    prov_add_pg.add_provider(provider_data)
+
     # TODO: Finalizer doesn't actually work. The selenium session is
     #       killed prior to its running.
     # def fin():

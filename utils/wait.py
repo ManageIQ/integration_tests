@@ -19,13 +19,13 @@ import time
 
 def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     st_time = time.time()
-    wait_time = 1
     total_time = 0
     num_sec = kwargs.get('num_sec', 120)
     expo = kwargs.get('expo', False)
     message = kwargs.get('message', func.func_name)
     fail_condition = kwargs.get('fail_condition', False)
     handle_exception = kwargs.get('handle_exception', False)
+    delay = kwargs.get('delay', 1)
 
     t_delta = 0
     while t_delta <= num_sec:
@@ -37,10 +37,10 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             else:
                 raise
         if out == fail_condition:
-            time.sleep(wait_time)
-            total_time += wait_time
+            time.sleep(delay)
+            total_time += delay
             if expo:
-                wait_time *= 2
+                delay *= 2
         else:
             return out, time.time() - st_time
         t_delta = time.time() - st_time
