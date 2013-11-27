@@ -45,12 +45,6 @@ class Events(Explorer):
     def events_list(self):
         return [event[1] for event in self.events]
 
-    @property
-    def print_events_list(self):
-        # for generating default events list
-        for event in self.events:
-            print "'%s'," % event[1]
-
 
 class Event(Events, RefreshMixin):
     """ This class represents a screen with details of the event
