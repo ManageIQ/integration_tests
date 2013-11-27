@@ -687,7 +687,7 @@ class NewConditionForPolicy(BaseConditionForPolicy):
 
         @return: PolicyView
         """
-        self.cancel_button.click()
+        self.add_button.click()
         self._wait_for_results_refresh()
         assert "was added" in self.flash.message, self.flash.message
         return PolicyConditionView(self.testsetup)

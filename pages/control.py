@@ -21,6 +21,9 @@ class Control(Base):
         pass  # Le stub
 
     class Log(Base, RefreshMixin):
+        """ Log section of the Control tab
+
+        """
         _log_textarea_locator = (By.CSS_SELECTOR, "textarea#logview_data")
 
         @property
