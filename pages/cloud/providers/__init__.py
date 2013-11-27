@@ -2,6 +2,7 @@ from selenium.webdriver.common.by import By
 from pages.region import Region
 import fixtures.pytest_selenium as browser
 from fixtures.navigation import click_fn, tree_graft
+import fixtures.navigation as nav
 import pages.regions.header_menu  # so that menu is already loaded before grafting onto it
 
 page = Region(locators=

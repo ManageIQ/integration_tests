@@ -5,15 +5,14 @@ from itertools import dropwhile
 from copy import deepcopy
 from fixtures.pytest_selenium import move_to_element, click
 
-
-nav_tree = ['toplevel', lambda: None]  # navigation tree with just a root node
+if not 'nav_tree' in globals():
+    nav_tree = ['toplevel', lambda: None]  # navigation tree with just a root node
 
 _width_errmsg = '''The minimum supported width of CFME is 1280 pixels
 
 Some navigation fixtures will fail if the browser window is too small
 due to submenu elements being rendered off the screen.
 '''
-
 
 @pytest.fixture
 def home_page_logged_in(selenium):
@@ -24,6 +23,10 @@ def home_page_logged_in(selenium):
     login_admin()
     # Assert.true(home_pg.is_logged_in, 'Could not determine if logged in')
 
+
+# a navigation node is a tuple/list, first item a string name of the node,
+# 2nd item either a function to navigate with, or a tuple/list of a function
+# and a dict containing other nodes.
 
 def _has_children(node):
     return (isinstance(node[1], (list, tuple)) and len(node[1]) > 1)
@@ -62,22 +65,26 @@ def tree_path(target, tree):
         return None
 
 
-def tree_find(tree, path=[]):
-    plain_node = [[_name(tree), _fn(tree)]]
+def tree_find(tree, path=None):
+    if not path:
+        path = []
+    plain_node = [_fn(tree)]
     if path:
         return plain_node + tree_find(_get_child(tree, path[0]), path[1:])
     else:
         return plain_node
 
 
-def tree_graft(target, branches, tree=nav_tree):
+def tree_graft(target, branches, tree=None):
+    if not tree:
+        tree = nav_tree
     path = tree_path(target, tree)
     new_tree = deepcopy(tree)
     node = new_tree
     for idx in path:
         node = _children(node).get(idx)
     if _has_children(node):
-        node[1] = dict(_children(node).items() + branches.items())
+        node[1] = [node[1], dict(_children(node).items() + branches.items())]
     else:
         node[1] = [node[1], branches]
     return new_tree
@@ -92,7 +99,7 @@ def navigate(tree, end, start=None):
         if len(steps) == 0:
             raise ValueError("Starting location %s not found in navigation tree." % start)
     for step in steps:
-        _fn(step)()
+        step()
 
 
 def add_branch(target, branches):
