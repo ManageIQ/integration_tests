@@ -1,19 +1,26 @@
-from selenium.webdriver.common.by import By
+'''
+Created on May 31, 2013
 
+@author: bcrochet
+'''
 from pages.base import Base
-
+from selenium.webdriver.common.by import By
 
 class ProvidersAdd(Base):
     '''Infrastructure Providers - Add an Infrastructure Provider page'''
     _page_title = 'CloudForms Management Engine: Infrastructure Providers'
 
-    _provider_add_button_locator = (By.CSS_SELECTOR,
-        "img[alt='Add this Infrastructure Provider']")
-    _provider_credentials_verify_button_locator = (By.CSS_SELECTOR,
-        "div#default_validate_buttons_on > ul#form_buttons > li > a > img")
-    _provider_credentials_verify_disabled_button_locator = (By.CSS_SELECTOR,
-        "div#default_validate_buttons_off > ul#form_buttons > li > a > img")
-    _provider_cancel_button_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
+    _provider_add_button_locator = (
+            By.CSS_SELECTOR,
+            "img[alt='Add this Infrastructure Provider']")
+    _provider_credentials_verify_button_locator = (
+            By.CSS_SELECTOR,
+            "div#default_validate_buttons_on > ul#form_buttons > li > a > img")
+    _provider_credentials_verify_disabled_button_locator = (
+            By.CSS_SELECTOR,
+            "div#default_validate_buttons_off > ul#form_buttons > li > a > img")
+    _provider_cancel_button_locator = (
+            By.CSS_SELECTOR, "img[title='Cancel']")
     _provider_name_locator = (By.ID, "name")
     _provider_hostname_locator = (By.ID, "hostname")
     _provider_ipaddress_locator = (By.ID, "ipaddress")
@@ -25,11 +32,12 @@ class ProvidersAdd(Base):
     _provider_cu_password_locator = (By.ID, "metrics_password")
     _provider_cu_verify_locator = (By.ID, "metrics_verify")
     _server_zone_edit_field_locator = (By.ID, "server_zone")
-    _default_credentials_button_locator = (By.CSS_SELECTOR,
-        "div#auth_tabs > ul > li > a[href='#default']")
-    _metrics_credentials_button_locator = (By.CSS_SELECTOR,
-        "div#auth_tabs > ul > li > a[href='#metrics']")
-    _provider_api_port_locator = (By.ID, "port")
+    _default_credentials_button_locator = (
+            By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#default']")
+    _metrics_credentials_button_locator = (
+            By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#metrics']")
+    _provider_api_port_locator = (
+            By.ID, "port")
 
     @property
     def add_button(self):
@@ -43,14 +51,16 @@ class ProvidersAdd(Base):
         '''Verify button
 
         Returns a WebElement'''
-        return self.get_element(*self._provider_credentials_verify_button_locator)
+        return self.get_element(
+                *self._provider_credentials_verify_button_locator)
 
     @property
     def cancel_button(self):
         '''Cancel button
 
         Returns a WebElement'''
-        return self.get_element(*self._provider_cancel_button_locator)
+        return self.get_element(
+                *self._provider_cancel_button_locator)
 
     @property
     def name(self):
@@ -80,7 +90,8 @@ class ProvidersAdd(Base):
     @property
     def default_verify(self):
         '''Verify password on default credentials tab'''
-        return self.get_element(*self._provider_verify_password_locator)
+        return self.get_element(
+                *self._provider_verify_password_locator)
 
     @property
     def metrics_userid(self):
@@ -90,7 +101,8 @@ class ProvidersAdd(Base):
     @property
     def metrics_password(self):
         '''Password on C&U credentials tab'''
-        return self.get_element(*self._provider_cu_password_locator)
+        return self.get_element(
+                *self._provider_cu_password_locator)
 
     @property
     def metrics_verify(self):
@@ -173,7 +185,8 @@ class ProvidersAdd(Base):
 
     def add_rhevm_provider(self, provider):
         '''Fill and click on add for a RHEV system'''
-        self.select_provider_type("Red Hat Enterprise Virtualization Manager")
+        self.select_provider_type(
+                "Red Hat Enterprise Virtualization Manager")
         self._fill_provider(provider)
         return self.click_on_add()
 
@@ -193,9 +206,11 @@ class ProvidersAdd(Base):
         if "virtualcenter" in provider["type"]:
             self.select_provider_type("VMware vCenter")
         elif "rhevm" in provider["type"]:
-            self.select_provider_type("Red Hat Enterprise Virtualization Manager")
+            self.select_provider_type(
+                    "Red Hat Enterprise Virtualization Manager")
         self._fill_provider(provider)
-        self._wait_for_visible_element(*self._provider_credentials_verify_button_locator)
+        self._wait_for_visible_element(
+                *self._provider_credentials_verify_button_locator)
         self.click_on_credentials_verify()
         self._wait_for_results_refresh()
         return self
@@ -203,14 +218,17 @@ class ProvidersAdd(Base):
     def select_provider_type(self, provider_type):
         '''Select a infrastructure provider type from the dropdown,
         and wait for the page to refresh'''
-        self.select_dropdown(provider_type, *self._provider_type_locator)
+        self.select_dropdown(
+                provider_type,
+                *self._provider_type_locator)
         self._wait_for_results_refresh()
         return ProvidersAdd(self.testsetup)
 
     def click_on_add(self):
         '''Click on the add button'''
         self.add_button.click()
-        from pages.infrastructure_subpages.providers import Providers
+        from pages.infrastructure_subpages.providers \
+                import Providers
         return Providers(self.testsetup)
 
     def click_on_credentials_verify(self):
@@ -224,5 +242,7 @@ class ProvidersAdd(Base):
 
         Returns Providers page'''
         self.cancel_button.click()
-        from pages.infrastructure_subpages.providers import Providers
+        from pages.infrastructure_subpages.providers \
+                import Providers
         return Providers(self.testsetup)
+
