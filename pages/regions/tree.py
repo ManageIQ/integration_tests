@@ -233,10 +233,16 @@ class NewTree(Page):
     def get_node(self, path):
         # path = "Compliance Policies/Host Compliance Policies::asdf"
         # Do not write the root element
-        path, node_name = path.rsplit("::", 1)
-        for node in self.get_nodes(path):
-            if node.name.strip() == node_name.strip():
-                return node
+        try:
+            path, node_name = path.rsplit("::", 1)
+            for node in self.get_nodes(path):
+                if node.name.strip() == node_name.strip():
+                    return node
+        except ValueError:
+            # If there is no tree traversing, just from the root
+            for child in self.children:
+                if child.name.strip() == path.strip():
+                    return child
 
     def get_nodes(self, path):
         # path = "Compliance Policies/Host Compliance Policies"
@@ -251,7 +257,6 @@ class NewTree(Page):
             found = False
             for item in this.children:
                 if item.name.strip() == field.strip():
-                    print "tu su", item.name, field
                     this = item
                     found = True
                     break

@@ -23,8 +23,8 @@ class Conditions(Explorer):
 
     def _add_new(self):
         ActionChains(self.selenium)\
-            .click(self._configuration_button_locator)\
-            .click(self._configuration_add_cond_locator)\
+            .click(self.configuration_button)\
+            .click(self.configuration_add_cond_button)\
             .perform()
         self._wait_for_results_refresh()
         return NewCondition(self.testsetup)
