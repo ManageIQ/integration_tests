@@ -5,6 +5,7 @@ import time
 import pytest
 from unittestzero import Assert
 from utils.cfme_data import load_cfme_data
+from utils.providers import cloud_provider_type_map
 
 pytestmark = [pytest.mark.nondestructive,
               pytest.mark.usefixtures("setup_cloud_providers")]
@@ -14,7 +15,7 @@ def fetch_list(data):
     tests = []
     for provider in data["management_systems"]:
         prov_data = data['management_systems'][provider]
-        if prov_data["type"] == 'openstack' or prov_data["type"] == 'ec2':
+        if prov_data["type"] in cloud_provider_type_map:
 
             # technically cloud instances are stateless, opting to just provision a instance to
             #  test with

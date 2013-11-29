@@ -10,6 +10,7 @@ import time
 import pytest
 from unittestzero import Assert
 from utils.cfme_data import load_cfme_data
+from utils.providers import infra_provider_type_map
 
 # TODO: write snmp trap receiver fixture to verify host shutdown/reboots
 # TODO: write event receiver
@@ -23,8 +24,7 @@ def fetch_list(data):
     tests = []
     for provider in data["management_systems"]:
         prov_data = data['management_systems'][provider]
-        if prov_data["type"] == 'virtualcenter' or \
-                prov_data["type"] == 'rhevm':
+        if prov_data["type"] in infra_provider_type_map:
             if "test_vm_power_control" in prov_data:
                 for vm_name in prov_data["test_vm_power_control"]:
                     tests.append(['', provider, vm_name])
