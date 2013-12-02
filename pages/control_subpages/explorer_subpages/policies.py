@@ -556,6 +556,8 @@ class NewPolicy(EditPolicy):
         # Workaround
         result = PolicyView(self.testsetup)
         result.refresh()
+        import time
+        time.sleep(1)
         return result
 
     def cancel(self):
