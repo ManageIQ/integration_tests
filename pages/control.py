@@ -23,12 +23,20 @@ class Control(Base):
     class Log(Base, RefreshMixin):
         """ Log section of the Control tab
 
+        Cannot download the file. Respectively I know about the workaround but I don't know
+        whether it's appropriate.
+
         """
         _log_textarea_locator = (By.CSS_SELECTOR, "textarea#logview_data")
+        _log_download_locator = (By.CSS_SELECTOR, "div#miq_alone > img[src*='download.png']")
 
         @property
         def log(self):
             return self.selenium.find_element(*self._log_textarea_locator).text.strip()
+
+        @property
+        def download(self):
+            return self.selenium.find_element(*self._log_download_locator).text.strip()
 
         @property
         def log_lines(self):

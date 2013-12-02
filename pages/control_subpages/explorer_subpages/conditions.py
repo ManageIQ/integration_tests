@@ -2,6 +2,7 @@ from pages.control_subpages.explorer import Explorer
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.control_subpages.explorer_subpages.shared import ConditionEditor
+from pages.regions.refresh_mixin import RefreshMixin
 
 
 class Conditions(Explorer):
@@ -98,7 +99,7 @@ class Conditions(Explorer):
         return self._view_condition(name)
 
 
-class ConditionView(Conditions):
+class ConditionView(Conditions, RefreshMixin):
     """ General view on a condition's summary
 
     """
@@ -114,6 +115,12 @@ class ConditionView(Conditions):
                                         "tr[title='Edit this Condition']")
     _configuration_copy_cond_locator = (By.CSS_SELECTOR,
                                         "tr[title*='Copy this Condition to a new Condition']")
+
+    _notes_textarea_locator = (By.CSS_SELECTOR, "textarea#notes")
+
+    @property
+    def notes_textarea(self):
+        return self.selenium.find_element(*self._notes_textarea_locator)
 
     @property
     def configuration_button(self):
@@ -183,6 +190,13 @@ class ConditionView(Conditions):
             (policy_name, ", ".join(present))
         )
 
+    @property
+    def notes(self):
+        """ Returns contents of the notes textarea
+
+        """
+        return self.notes_textarea.text.strip()
+
     def delete(self, cancel=False):
         """ Remove this condition
 
@@ -204,7 +218,7 @@ class ConditionView(Conditions):
             .click(self.configuration_edit_cond_button)\
             .perform()
         self._wait_for_results_refresh()
-        #return EditConditionForPolicy(self.testsetup)
+        return EditCondition(self.testsetup)
 
     def copy(self):
         """ Copy this condition to a new one under same policy
@@ -313,6 +327,21 @@ class EditCondition(BaseConditionEdit):
         self.reset_button.click()
         self._wait_for_results_refresh()
         return "All changes have been reset" in self.flash.message
+
+
+class CopyCondition(NewCondition):
+    """ Copy condition screen is exactly the same but it returns to the Condition view
+    rather than the Policy view. Therefore this inheritance
+
+    """
+    def cancel(self):
+        """ Clicks on Cancel button and returns back to the ConditionView
+
+        @return: ConditionView
+        """
+        self.cancel_button.click()
+        self._wait_for_results_refresh()
+        return ConditionView(self.testsetup)
 
 """
 @todo: Maybe use the classes from policies.py and inherit them, because the difference is small.

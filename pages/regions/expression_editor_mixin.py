@@ -5,6 +5,14 @@ import time
 
 
 class ExpressionEditorMixin(Base):
+    """ Expression editor used in Control / Explorer tab.
+
+    It works for every occurence in Field and Count types, but other
+    types have small differences.
+
+    @todo: Figure out and fix the differences
+
+    """
     _edit_chosen_type_locator = (By.CSS_SELECTOR, "select#chosen_typ")
     _edit_chosen_field_locator = (By.CSS_SELECTOR, "select#chosen_field")
     _edit_chosen_count_locator = (By.CSS_SELECTOR, "select#chosen_count")
