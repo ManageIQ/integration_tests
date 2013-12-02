@@ -191,6 +191,9 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
             .click(self.configuration_button)\
             .click(self.configuration_edit_basic_button)\
             .perform()
+        # Workaround for strange behaviour
+        import time
+        time.sleep(2)
         self._wait_for_results_refresh()
         return BasicEditPolicy(self.testsetup)
 
