@@ -139,7 +139,7 @@ class PolicyView(Policies, TaskbarMixin, RefreshMixin):
 
     _configuration_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']")
     _configuration_edit_basic_locator = (By.CSS_SELECTOR,
-                                         "tr[title='Edit Basic Info, Scope, and Notes']")
+                                         "tr[title*='Edit Basic']")
     _configuration_new_condition_locator = (By.CSS_SELECTOR,
             "tr[title='Create a new Condition assigned to this Policy']")
     _configuration_edit_policy_condition_assignment_locator = (By.CSS_SELECTOR,
@@ -552,7 +552,11 @@ class NewPolicy(EditPolicy):
         self._wait_for_visible_element(*self._add_locator, visible_timeout=10)
         self.add_button.click()
         self._wait_for_results_refresh()
-        return PolicyView(self.testsetup)
+        #return PolicyView(self.testsetup)
+        # Workaround
+        result = PolicyView(self.testsetup)
+        result.refresh()
+        return result
 
     def cancel(self):
         """ Cancel changes.
@@ -1404,7 +1408,7 @@ class PolicyEventActionsEdit(Policies):
         for sync, action_name, value in self.selected_false_actions:
             if action_name == name:
                 return value
-        return False
+        return None
 
     def enable_action_true(self, name):
         """ Select an action from TRUE available box and move it to the right
