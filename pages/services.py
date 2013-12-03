@@ -1,30 +1,24 @@
 # -*- coding: utf-8 -*-
 
-import re
-import time
 import operator
 from time import sleep
 from pages.base import Base
-from pages.regions.quadicons import Quadicons
-from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.paginator import PaginatorMixin
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import NoSuchElementException
 from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.support.select import Select
 from pages.services_subpages.catalog_subpages.catalogs import Catalogs
 from pages.services_subpages.catalog_subpages.catalog_items import CatalogItems
-from pages.services_subpages.catalog_subpages.service_catalogs \
-    import ServiceCatalogs
+from pages.services_subpages.catalog_subpages.service_catalogs import ServiceCatalogs
+
 
 class Services(Base):
     '''Services page'''
     @property
     def submenus(self):
-        return {"services"       : Services.MyServices,
-                "catalogs"       : Services.Catalogs,
-                "miq_request_vm" : Service.Requests,
+        return {"services": Services.MyServices,
+                "catalogs": Services.Catalogs,
+                "miq_request_vm": Services.Requests,
                 }
 
     @property
@@ -35,7 +29,7 @@ class Services(Base):
     class MyServices(Base, PaginatorMixin):
 
         _page_title = 'CloudForms Management Engine: Services'
-        
+
         @property
         def accordion(self):
             '''accordion'''
@@ -43,12 +37,12 @@ class Services(Base):
             from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
             return Accordion(self.testsetup, LegacyTreeAccordionItem)
 
-        def select_service_in_tree(self , service_name):
+        def select_service_in_tree(self, service_name):
             '''Select service'''
             self.accordion.current_content.find_node_by_name(service_name).click()
             self._wait_for_results_refresh()
             return self
-        
+
         def is_service_present(self, service_name):
             '''Select service'''
             if(self.accordion.current_content.find_node_by_name(service_name)):
@@ -145,8 +139,7 @@ class Services(Base):
                         *self._requests_link_locator).click()
             return Services.Requests(self.testsetup)
 
-        def wait_for_request_status(self, time_period_text,
-            request_status, timeout_in_minutes):
+        def wait_for_request_status(self, time_period_text, request_status, timeout_in_minutes):
             '''Wait for request status'''
             if not self.get_element(*self._check_box_approved).is_selected():
                 self.get_element(*self._check_box_approved).click()
@@ -161,9 +154,8 @@ class Services(Base):
             data = {}
             requests_items = self.requests_list.items
             for i in range(1, len(requests_items)):
-                data.update({i:requests_items[i].request_id})
-            sorted_data = sorted(data.iteritems(), \
-                key=operator.itemgetter(1), reverse=True)
+                data.update({i: requests_items[i].request_id})
+            sorted_data = sorted(data.iteritems(), key=operator.itemgetter(1), reverse=True)
             requests_index = sorted_data[0][0]
             minute_count = 0
             while (minute_count < timeout_in_minutes):
@@ -174,16 +166,14 @@ class Services(Base):
                         break
                     else:
                         raise Exception("Status of request is " +
-                            self.requests_list.items[requests_index]\
-                            .request_id)
+                            self.requests_list.items[requests_index].request_id)
                 print "Waiting for provisioning status: " + request_status
                 sleep(60)
                 self.time_period.select_by_visible_text(time_period_text)
                 self.get_element(*self._reload_button).click()
                 self._wait_for_results_refresh()
-                if (minute_count==timeout_in_minutes) and \
-                   (self.requests_list.items[requests_index]\
-                    .status != request_status):
+                if (minute_count == timeout_in_minutes) and \
+                   (self.requests_list.items[requests_index].status != request_status):
                     raise Exception("timeout reached(" + str(timeout_in_minutes) +
                        " minutes) before desired state (" +
                        request_status + ") reached... current state(" +
@@ -268,7 +258,6 @@ class Services(Base):
             '''Region'''
             pass
 
-
     class Catalogs(Base):
         '''Service -- Catalogs'''
         _page_title = 'CloudForms Management Engine: Catalogs'
@@ -296,4 +285,3 @@ class Services(Base):
             self.accordion.accordion_by_name('Service Catalogs').click()
             self._wait_for_results_refresh()
             return ServiceCatalogs(self.testsetup)
-
