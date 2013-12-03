@@ -139,7 +139,10 @@ def send_keys(loc, text):
 
 def set_text(loc, text):
     if text is not None:
-        ActionChains(browser()).move_to_element(element(loc)).clear().send_keys(text).perform()
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        el.clear()
+        el.send_keys(text)
         wait_for_ajax()
 
 

@@ -14,6 +14,7 @@ Some navigation fixtures will fail if the browser window is too small
 due to submenu elements being rendered off the screen.
 '''
 
+
 @pytest.fixture
 def home_page_logged_in(selenium):
     """Log in to the appliance and return the home page."""
@@ -79,14 +80,28 @@ def tree_graft(target, branches, tree=None):
     if not tree:
         tree = nav_tree
     path = tree_path(target, tree)
+    if path is None:
+        raise LookupError("Unable to find target %s in nav tree." % target)
     new_tree = deepcopy(tree)
+    parent_node = None
     node = new_tree
     for idx in path:
-        node = _children(node).get(idx)
-    if _has_children(node):
-        node[1] = [node[1], dict(_children(node).items() + branches.items())]
+        parent_node = node
+        node = [idx, _children(node).get(idx)]
+        if node is None:
+            raise LookupError("Unable to find node %s in nav tree." % idx)
+    # print parent_node
+    if not parent_node:
+        if _has_children(node):
+            _children(node).update(branches)
+        else:
+            node[1] = [node[1], branches]
+    elif _has_children(node):
+        _children(_get_child(parent_node, _name(node))).update(branches)
     else:
-        node[1] = [node[1], branches]
+        parent_node[1][1][_name(node)] = [node[1], branches]
+    # print node
+    # print new_tree
     return new_tree
 
 
@@ -111,9 +126,15 @@ def go_to(dest, start=None):
     navigate(nav_tree, dest, start)
 
 
-def move_to_fn(el):
-    return lambda: move_to_element(el)
+def move_to_fn(*els):
+    def f():
+        for el in els:
+            move_to_element(el)
+    return f
 
 
-def click_fn(el):
-    return lambda: click(el)
+def click_fn(*els):
+    def f():
+        for el in els:
+            click(el)
+    return f

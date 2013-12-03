@@ -1,7 +1,6 @@
 from selenium.webdriver.common.by import By
 from pages.region import Region
 import fixtures.pytest_selenium as browser
-from fixtures.navigation import click_fn, tree_graft
 import fixtures.navigation as nav
 import pages.regions.header_menu  # so that menu is already loaded before grafting onto it
 
@@ -33,8 +32,8 @@ page = Region(locators=
               title='CloudForms Management Engine: Cloud Providers')
 
 
-tree_graft('clouds_providers',
-           [['clouds_providers_new', click_fn(page.configuration_button, page.add_button)]])
+nav.add_branch('clouds_providers',
+               {'clouds_providers_new': nav.click_fn(page.configuration_button, page.add_button)})
 
 
 class Provider(object):
@@ -87,22 +86,24 @@ class Provider(object):
 
     def create(self, cancel=False):
         nav.go_to('clouds_providers_new')
+        browser.set_text(page.name_text, self.name)
+
         if self.details:
             details = self.details
             browser.select_by_text(page.type_select, details.select_text)
             if type(details) == self.EC2Details:
                 browser.select_by_text(page.amazon_region_select, details.region)
             elif type(details) == self.OpenStackDetails:
-                browser.type_keys(page.hostname_text, details.hostname)
-                browser.type_keys(page.ipaddress_text, details.ip_address)
-                browser.type_keys(page.hostname_text, details.hostname)
+                browser.set_text(page.hostname_text, details.hostname)
+                browser.set_text(page.ipaddress_text, details.ip_address)
+                browser.set_text(page.hostname_text, details.hostname)
             else:
                 raise TypeError("Unknown type of provider details: %s" % type(details))
 
         if self.credentials:
             creds = self.credentials
-            browser.type_keys(page.userid_text, creds.principal)
-            browser.type_keys(page.password_text, creds.secret)
-            browser.type_keys(page.verify_password_text, creds.verify_secret)
+            browser.set_text(page.userid_text, creds.principal)
+            browser.set_text(page.password_text, creds.secret)
+            browser.set_text(page.verify_password_text, creds.verify_secret)
 
         browser.click(page.add_submit)
