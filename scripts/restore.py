@@ -4,121 +4,125 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
 # Description: CFME Migration
-# Author: Aziza Karol <akarol@redhat.com>
-# Copyright (C) 2013  Red Hat
-# see file 'COPYING' for use and warranty information
 #
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 import logging
-import os
-import commands
 import time
+import argparse
 import subprocess as sub
 
 
-LOG_FILENAME = 'output.log'
-BACKUP_FILE  = 'miq_dumpall_vmdb_production_20131104_154937_5.1_dump.gz'
-BACKUP_PATH = "/root/" + BACKUP_FILE
-SCRIPT = "cmfe_5.2_vmdb_backup_and_restore_scripts_20131031_153100.tgz"
-SCRIPT_PATH = "/root/" + SCRIPT
-FOUND = 0
 
+parser = argparse.ArgumentParser(epilog=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
+parser.add_argument('--backupfile', dest='backupfile',help='backup file to be restored')
+parser.add_argument('--script', help='script to restore the db')
+parser.add_argument('--upgrdscript', help='v4 upgrade fix script')
+parser.add_argument('--reboot',help = 'reboot the appliance',action="store_true")
+args = parser.parse_args()
+
+
+LOG_FILENAME = 'output.log'
 logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(levelname)s %(message)s',
                     filename=LOG_FILENAME,
                     filemode='w')
+logger = logging.getLogger('migration')
 
 
 #Execute command
 def run_command(cmd):
-        logging.info('Running: %s' % cmd);
-        output = sub.Popen(cmd,shell=True,stdout=sub.PIPE,stderr=sub.PIPE).communicate()[0]
-        return output
+        logger.info('Running: %s' % cmd);
+        process = sub.Popen(cmd,shell=True,stdout=sub.PIPE,stderr=sub.PIPE)
+        output, error = process.communicate()
+        if process.returncode != 0:
+                logger.debug(error)
+                raise Exception("%s: FAILED" % cmd);
+                logger.info("%s: output value" % output);
+        else:
+                logger.info('SUCCESS')
+	return output
 
 
-#copy backup file at location /opt/rh/postgresql92/root/var/lib/pgsql/
-if (int(run_command("cp  "+BACKUP_PATH+" /opt/rh/postgresql92/root/var/lib/pgsql/;echo $?")) == FOUND ):
-    logging.info('SUCCESS')
-else:
-    logging.info('FAILED')
 
-
-#copy backupfile name to a file
-os.system('touch  /var/www/miq/vmdb/log/miq_last_backup_file_name')
-f = open('/var/www/miq/vmdb/log/miq_last_backup_file_name', 'w')
-f.write('/opt/rh/postgresql92/root/var/lib/pgsql/' + BACKUP_FILE)
-f.close()
-
-
-#make backup and restore dir
-makedir  = 'mkdir -p /var/www/miq/vmdb/backup_and_restore'
-run_command(makedir)
 
 #copy scripts
-run_command("cp "+SCRIPT_PATH+" /var/www/miq/vmdb/backup_and_restore")
+cpyscript =  "cp "+args.script+" /var/www/miq/vmdb/"
+run_command(cpyscript)
 
 
 #changedir and untar scripts
-untar = "cd /var/www/miq/vmdb/backup_and_restore;tar xvf "+SCRIPT+"" 
+untar = "cd /var/www/miq/vmdb/;tar xvf "+args.script+"" 
 run_command(untar)
 
 #stop evm process
-evmstop = '/etc/init.d/evmserverd stop'
+evmstop = 'service evmserverd stop'
 run_command(evmstop)
 
 
+
 #check pg connections and execute restore script
-os.system('rm -rf pgcount')                 #remove any previously existing file
-find_pgcount = 'psql -d vmdb_production -U root -c "SELECT count(*) from pg_stat_activity" -L pgcount | gawk -f find_pgcount.awk  pgcount'
-count = run_command(find_pgcount)
-print count
+find_pgcount = 'psql -d vmdb_production -U root -c "SELECT count(*) from pg_stat_activity"' 
+psql_output = run_command(find_pgcount)
+count = psql_output.split("\n")[2].strip()
 if count > 2:
-    run_command("service postgresql92-postgresql stop")
-    run_command("service postgresql92-postgresql start")
+    run_command("service postgresql92-postgresql restart")
     time.sleep(60)
-    if (int(run_command("/var/www/miq/vmdb/backup_and_restore/miq_vmdb_background_restore > restore.log;echo $?")) == FOUND ):
-    	logging.info('SUCCESS')
-    else:
-    	logging.info('FAILED')
+    run_command("/var/www/miq/vmdb/backup_and_restore/miq_vmdb_background_restore "+args.backupfile+"  > restore.log")
+    logger.info('Restore completed successfully')
 else:
-    print "pgconnection less then two"
-    if (int(run_command("cd /var/www/miq/vmdb/backup_and_restore;./miq_vmdb_background_restore > restore.log;echo $?")) == FOUND ):
-   	 logging.info('SUCCESS')
-    else:
-    	logging.info('FAILED')
- 
+    run_command("cd /var/www/miq/vmdb/backup_and_restore/;./miq_vmdb_background_restore "+args.backupfile+" > restore.log")
+    logger.info('Restore completed successfully')
 
 
-#truncate table states
-truncate = 'psql -d vmdb_production -U root -c "truncate table states"'
-out = run_command(truncate)
+#if states relation exists then truncate table
+table_exists = 'psql -d vmdb_production -U root -c "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = \'states\')" '
+psql_output = run_command(table_exists)
+table_output = psql_output.split("\n")[2].strip()
+if "t" in table_output:
+	truncate = 'psql -d vmdb_production -U root -c "truncate table states"'
+	out = run_command(truncate)
+else:
+	logger.debug('Relation states does not exists')
 
 
 #changedir and  run rake
-if (int(run_command("cd /var/www/miq/vmdb;bin/rails r bin/rake db:migrate > rake.log;echo $?")) == FOUND ):
-    logging.info('SUCCESS')
-else:
-    logging.info('FAILED')
+run_command("cd /var/www/miq/vmdb;bin/rails r bin/rake db:migrate > rake.log")
+logger.info('rake completed successfully')
+
 
 
 #check db migrate status
-if (int(run_command("cd /var/www/miq/vmdb;rake db:migrate:status > migratestatus;echo $?")) == FOUND ):
-    logging.info('SUCCESS')
+run_command("cd /var/www/miq/vmdb;rake db:migrate:status > migratestatus")
+
+#find version and if v4 run upgrade fixes
+find_version = 'psql -d vmdb_production -U root -c "SELECT distinct (version) from miq_servers"'
+psql_output = run_command(find_version)
+version = psql_output.split("\n")[2].strip()
+if "4." in version:
+        cpyscript =  "cp "+args.upgrdscript+" /var/www/miq/vmdb/tools/"
+	run_command(cpyscript)
+	untar = "cd /var/www/miq/vmdb/tools/;tar xvf "+args.upgrdscript+""
+	run_command(untar)
+	run_command("cd /var/www/miq/vmdb;bin/rails r tools/v4_upgrade_fixes.rb > upgrade.log")
+	logger.info('Upgrade completed successfully')
 else:
-    logging.info('FAILED')
+	logger.info("%s: version value" % version);
+
 
 
 #check for REGION
-os.system('rm -rf region region_value')
-find_region = 'psql -d vmdb_production -U root -c "select region from users" -L region | gawk -f find_region.awk region > region_value'
-out = run_command(find_region)
-os.system('cp region_value /var/www/miq/vmdb/REGION')
-
+find_region = 'psql -d vmdb_production -U root -c "select region from users"' 
+psql_output = run_command(find_region)
+region_output = psql_output.split("\n")[2].strip()
+f = open('/var/www/miq/vmdb/REGION', 'w')
+f.write(region_output)
+f.close()
 
 #reboot
-logging.info('Rebooting the system')
-#os.system('reboot')
-
+if args.reboot:
+	logger.info('Rebooting the appliance')
+        run_command('reboot')
+else:
+        logger.info('A reboot is required')
 
