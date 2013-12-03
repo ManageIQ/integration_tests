@@ -1,8 +1,4 @@
 # -*- encoding: utf-8 -*-
-
-import random
-import pytest
-
 """ Unit tests for Control tab coverage (https://github.com/RedHatQE/cfme_tests/pull/206/)
 
 To fully test, I recommend running this unittest on a machine which already has some policies
@@ -10,6 +6,21 @@ imported. E.g. machine set up for event testing.
 
 @author: Milan Falešník <mfalesni@redhat.com>
 """
+
+import random
+import pytest
+from utils import randomness
+
+
+# To keep the names to be able to pair them together
+@pytest.fixture(scope="module")
+def condition_name():
+    return randomness.generate_random_string()
+
+
+@pytest.fixture(scope="module")
+def policy_name():
+    return randomness.generate_random_string()
 
 
 @pytest.mark.nondestructive
@@ -27,11 +38,9 @@ def test_click_the_accordion(control_explorer_pg):
     page = page.click_on_alerts_accordion()
 
 
-@pytest.mark.nondestructive
-def test_conditions_accordion(control_explorer_pg, random_string):
+def test_conditions_accordion(control_explorer_pg, condition_name):
     """ Check adding and editing conditions
 
-    Marked as nondestructive even that it creates new stuff, but it deletes it again.
     """
     conditions = control_explorer_pg.click_on_conditions_accordion()
     new = conditions.add_new_host_condition()
@@ -55,8 +64,8 @@ def test_conditions_accordion(control_explorer_pg, random_string):
     new.fill_expression_tag("Host.My Company Tags : Cost Center", "Cost Center 001")
     new.commit_expression()
 
-    new.description = random_string
-    new.notes = random_string
+    new.description = condition_name
+    new.notes = condition_name
     view = new.add()
 
     # Touch the basic elements
@@ -66,15 +75,12 @@ def test_conditions_accordion(control_explorer_pg, random_string):
     view.refresh()
     # Try some editing
     edit = view.edit()
-    edit.notes = random_string + random_string  # This must enable reset
+    edit.notes = condition_name + condition_name  # This must enable reset
     assert edit.reset(), "Could not reset the changes!"
-    edit.notes = random_string + random_string  # This must enable save
+    edit.notes = condition_name + condition_name  # This must enable save
     view = edit.save()
     assert "was saved" in view.flash.message, "Could not save the condition"
-    assert view.notes == random_string + random_string, "notes aren't equal"
-    # And delete it
-    conditions = view.delete()
-    assert "successful" in conditions.flash.message
+    assert view.notes == condition_name + condition_name, "notes aren't equal"
 
 
 @pytest.mark.nondestructive
@@ -86,7 +92,7 @@ def test_events_accordion(control_explorer_pg):
     events = control_explorer_pg.click_on_events_accordion()
     finished = False
     counter = 0
-    while not finished and counter < 10:
+    while not finished and counter < 5:
         random_event = random.choice(events.events)[1]
         event = events.get_event(random_event)
         # Touch the elements
@@ -109,11 +115,9 @@ def test_log_tab(control_log_pg):
     control_log_pg.log          # Try to take the text from the textarea
 
 
-@pytest.mark.nondestructive
-def test_policies_tab(control_explorer_pg, random_string):
+def test_policies_accordion(control_explorer_pg, policy_name):
     """ Check adding and editing policies
 
-    Marked as nondestructive even that it creates new stuff, but it deletes it again.
     """
     p = control_explorer_pg.click_on_policies_accordion()
     new = p.add_new_host_control_policy()
@@ -123,8 +127,8 @@ def test_policies_tab(control_explorer_pg, random_string):
     new.activate()
     assert new.is_active, "Policy is not set to be active"
     new.notes = "I Can Has Cheezburger?"
-    new.description = random_string
-    assert new.description == random_string, "Could not set the input#description"
+    new.description = policy_name
+    assert new.description == policy_name, "Could not set the input#description"
     # Some expression editing
     new.delete_all_expressions()
     new.select_first_expression()
@@ -151,4 +155,24 @@ def test_policies_tab(control_explorer_pg, random_string):
     edit.commit_expression()
     view = edit.save()
     assert "was saved" in view.flash.message, "Error when saving the policy"
-    p = view.delete_policy()
+
+
+@pytest.mark.requires_test("test_policies_accordion")
+@pytest.mark.requires_test("test_conditions_accordion")
+def test_assign_condition_to_policy(control_explorer_pg, policy_name, condition_name):
+    p = control_explorer_pg.click_on_policies_accordion()
+    policy = p.select_host_control_policy(policy_name)
+    conditions = policy.edit_policy_condition_assignments()
+    assert conditions.use_condition(condition_name), "Could not select and move the condition"
+    policy = conditions.save()
+    assert "was saved" in policy.flash.message
+
+
+def test_cleanup(control_explorer_pg, policy_name, condition_name):
+    p = control_explorer_pg.click_on_policies_accordion()
+    policy = p.select_host_control_policy(policy_name)
+    p = policy.delete_policy()
+    c = p.click_on_conditions_accordion()
+    condition = c.view_host_condition(condition_name)
+    c = condition.delete()
+    assert "Delete successful" in c.flash.message

@@ -6,6 +6,7 @@ from pages.regions.taskbar.taskbar import TaskbarMixin
 from pages.regions.expression_editor_mixin import ExpressionEditorMixin
 from pages.regions.taskbar.reload import ReloadMixin
 from pages.control_subpages.explorer_subpages.shared import ConditionEditor
+from selenium.common.exceptions import NoSuchElementException
 import re
 
 
@@ -884,17 +885,26 @@ class PolicyConditionAssignments(Policies):
     def use_selected_condition(self):
         self.use_button.click()
         self._wait_for_results_refresh()
-        return "No Conditions were selected to move right" not in self.flash.message
+        try:
+            return "No Conditions were selected to move right" not in self.flash.message
+        except NoSuchElementException:
+            return True
 
     def unuse_selected_condition(self):
         self.unuse_button.click()
         self._wait_for_results_refresh()
-        return "No Conditions were selected to move left" not in self.flash.message
+        try:
+            return "No Conditions were selected to move left" not in self.flash.message
+        except NoSuchElementException:
+            return True
 
     def unuse_all_conditions(self):
         self.unuse_all_button.click()
         self._wait_for_results_refresh()
-        return "No Conditions were selected to move left" not in self.flash.message
+        try:
+            return "No Conditions were selected to move left" not in self.flash.message
+        except NoSuchElementException:
+            return True
 
     def use_condition(self, name):
         self.select_from_available(name)
