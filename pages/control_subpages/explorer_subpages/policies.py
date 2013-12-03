@@ -555,12 +555,14 @@ class NewPolicy(EditPolicy):
         self._wait_for_visible_element(*self._add_locator, visible_timeout=10)
         self.add_button.click()
         self._wait_for_results_refresh()
-        #return PolicyView(self.testsetup)
-        # Workaround
         result = PolicyView(self.testsetup)
-        result.refresh()
-        import time
-        time.sleep(1)
+        if not result.is_element_present(*result._configuration_edit_basic_locator):
+            # Workaround for a glitch that occurs in not-the-last version
+            # DISCARDS FLASH MESSAGES!!
+            result.refresh()
+            import time
+            time.sleep(1)
+
         return result
 
     def cancel(self):
