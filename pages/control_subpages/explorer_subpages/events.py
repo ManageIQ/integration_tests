@@ -1,6 +1,6 @@
 from selenium.webdriver.common.by import By
 from pages.control_subpages.explorer import Explorer
-from pages.regions.refresh_mixin import RefreshMixin
+from pages.regions.taskbar.reload import ReloadMixin
 
 
 class Events(Explorer):
@@ -46,7 +46,7 @@ class Events(Explorer):
         return [event[1] for event in self.events]
 
 
-class Event(Events, RefreshMixin):
+class Event(Events, ReloadMixin):
     """ This class represents a screen with details of the event
 
     """

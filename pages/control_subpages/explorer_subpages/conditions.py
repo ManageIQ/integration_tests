@@ -2,7 +2,7 @@ from pages.control_subpages.explorer import Explorer
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.control_subpages.explorer_subpages.shared import ConditionEditor
-from pages.regions.refresh_mixin import RefreshMixin
+from pages.regions.taskbar.reload import ReloadMixin
 
 
 class Conditions(Explorer):
@@ -99,7 +99,7 @@ class Conditions(Explorer):
         return self._view_condition(name)
 
 
-class ConditionView(Conditions, RefreshMixin):
+class ConditionView(Conditions, ReloadMixin):
     """ General view on a condition's summary
 
     """

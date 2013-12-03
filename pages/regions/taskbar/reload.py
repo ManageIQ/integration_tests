@@ -2,7 +2,7 @@
 from pages.page import Page
 
 
-class RefreshMixin(Page):
+class ReloadMixin(Page):
     """ Very common button mixin
 
     """

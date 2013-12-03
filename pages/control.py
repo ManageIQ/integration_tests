@@ -3,7 +3,7 @@
 from pages.base import Base
 from selenium.webdriver.common.by import By
 from pages.control_subpages.explorer import Explorer
-from pages.regions.refresh_mixin import RefreshMixin
+from pages.regions.taskbar.reload import ReloadMixin
 import re
 
 
@@ -20,7 +20,7 @@ class Control(Base):
     class Simulation(Base):
         pass  # Le stub
 
-    class Log(Base, RefreshMixin):
+    class Log(Base, ReloadMixin):
         """ Log section of the Control tab
 
         Cannot download the file. Respectively I know about the workaround but I don't know

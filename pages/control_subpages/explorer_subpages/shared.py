@@ -5,10 +5,7 @@
 """
 
 from pages.regions.expression_editor_mixin import ExpressionEditorMixin
-from pages.regions.refresh_mixin import RefreshMixin
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
-from pages.regions.taskbar.taskbar import TaskbarMixin
 
 
 class ConditionEditor(ExpressionEditorMixin):

@@ -4,7 +4,7 @@ from pages.control_subpages.explorer import Explorer
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from pages.regions.expression_editor_mixin import ExpressionEditorMixin
-from pages.regions.refresh_mixin import RefreshMixin
+from pages.regions.taskbar.reload import ReloadMixin
 from pages.control_subpages.explorer_subpages.shared import ConditionEditor
 import re
 
@@ -121,7 +121,7 @@ class Policies(Explorer):
         return self._new_policy("Compliance Policies::Vm Compliance Policies")
 
 
-class PolicyView(Policies, TaskbarMixin, RefreshMixin):
+class PolicyView(Policies, TaskbarMixin, ReloadMixin):
     """ This page represents the view on the policy with its details
 
     """
@@ -689,7 +689,7 @@ class CopyConditionForPolicy(NewConditionForPolicy):
         return PolicyConditionView(self.testsetup)
 
 
-class PolicyConditionView(Policies, RefreshMixin):
+class PolicyConditionView(Policies, ReloadMixin):
     """ Displays a summary screen of a condition assigned to this policy
 
     """
@@ -1013,7 +1013,7 @@ class PolicyEventAssignments(Policies):
         return self
 
 
-class PolicyEventView(Policies, TaskbarMixin, RefreshMixin):
+class PolicyEventView(Policies, TaskbarMixin, ReloadMixin):
     """ Page displaying a summary about the event which was assigned to a condition
 
     """
