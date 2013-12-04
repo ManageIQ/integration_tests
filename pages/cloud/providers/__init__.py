@@ -98,7 +98,10 @@ class Provider(object):
                 self.credentials.fill(setter(page.userid_text),
                                       setter(page.password_text),
                                       setter(page.verify_password_text))
-        browser.click(page.add_submit)
+        if cancel:
+            browser.click(page.cancel_button)
+        else:
+            browser.click(page.add_submit)
 
 # How to use
 
