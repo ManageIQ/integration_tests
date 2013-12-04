@@ -38,6 +38,13 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
         By.CSS_SELECTOR, "div#prov_ds_div > table > tbody")
     _availability_zone_locator = (
         By.ID, "environment__placement_availability_zone")
+    _public_ip_address_select_locator = (
+        By.ID, "environment__floating_ip_address")
+    _security_groups_locator = (
+        By.ID, "environment__security_groups")
+    _security_groups_option_locator = (
+        By.CSS_SELECTOR,
+        "select#environment__security_groups > option[1]")
 
     @property
     def choose_automatically(self):
@@ -115,13 +122,29 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             self.get_element(*self._datastore_list_locator),
             self.DatastoreItem)
 
+    @property
+    def security_groups_option(self):
+        '''Security Groups Option for default'''
+        return self.get_element(*self._security_groups_option_locator)
+
+    @property
+    def security_groups(self):
+        '''Security Groups - EC2'''
+        return self.get_element(*self._security_groups_locator)
+
+    @property
+    def public_address_select(self):
+        '''Floating Public IP - Openstack'''
+        return Select(
+            self.get_element(*self. _public_ip_address_select_locator))
+
     def click_on_host_item(self, item_name):
             '''Select host item from list by name'''
             host_items = self.host_list.items
             sleep(6)
             selected_item = \
                 host_items[[item for item in range(len(host_items))
-                if host_items[item].name == item_name][0]]
+                           if host_items[item].name == item_name][0]]
             selected_item.click()
             self._wait_for_results_refresh()
             return self.HostItem(selected_item)
@@ -131,20 +154,37 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             datastore_items = self.datastore_list.items
             selected_item = \
                 datastore_items[[item for item in range(len(datastore_items))
-                if datastore_items[item].name == item_name][0]]
+                                if datastore_items[item].name == item_name][0]]
             selected_item.click()
             self._wait_for_results_refresh()
             return self.DatastoreItem(selected_item)
 
-    def fill_fields(self, host_name, datastore_name, availability_zone_name):
-            if host_name != u'None':
-                self.click_on_host_item(host_name)
-            if datastore_name != u'None':
-                self.click_on_datastore_item(datastore_name)
-            if availability_zone_name is not None:
-                self.availability_zone_select.select_by_visible_text(availability_zone_name)
+    def fill_fields_infra(self, host_name, datastore_name):
+        '''Infrastructure provisioning'''
+        if host_name != u'None':
+            self.click_on_host_item(host_name)
+        if datastore_name != u'None':
+            self.click_on_datastore_item(datastore_name)
+        self._wait_for_results_refresh()
+        return ProvisionEnvironment(self.testsetup)
+
+    def fill_fields_cloud(
+            self,
+            availability_zone_name,
+            security_group,
+            public_ip):
+        '''Clouds provisioning'''
+        if availability_zone_name is not None:
+            self.availability_zone_select.\
+                select_by_visible_text(availability_zone_name)
             self._wait_for_results_refresh()
-            return ProvisionEnvironment(self.testsetup)
+        if security_group is not None:
+            self.security_groups.click()
+            self._wait_for_results_refresh()
+        if public_ip is not None:
+            self.public_address_select.select_by_index(public_ip)
+            self._wait_for_results_refresh()
+        return ProvisionEnvironment(self.testsetup)
 
     class HostItem(ListItem):
         '''Represents a host in the list'''

@@ -3,6 +3,15 @@
 import pytest
 
 
+@pytest.fixture(
+    scope="module",  # IGNORE:E1101
+    params=["management_systems"])
+def providers_data(request, cfme_data):
+    '''Returns Management Systems data'''
+    param = request.param
+    return cfme_data.data[param]
+
+
 @pytest.fixture
 def provisioning_start_page(infra_vms_pg):
     '''Navigates to the page to start provisioning'''
@@ -16,19 +25,39 @@ def inst_provisioning_start_page(cloud_instances_pg):
     return cloud_instances_pg.click_on_provision_instances()
 
 
-@pytest.fixture(scope="module",  # IGNORE:E1101
-               params=["linux_template_workflow",
-               "rhevm_pxe_workflow"])
-def provisioning_data(request, cfme_data):
-    '''Returns all provisioning data'''
+@pytest.fixture(
+    scope="module",  # IGNORE:E1101
+    params=["linux_template_workflow",
+            "rhevm_pxe_workflow"])
+def infra_provisioning_data(request, cfme_data):
+    '''Returns all infrastructure provider provisioning data'''
     param = request.param
     return cfme_data.data["provisioning"][param]
 
 
-@pytest.fixture(scope="module",  # IGNORE:E1101
-               params=["ec2_image_workflow"])
+@pytest.fixture(
+    scope="module",  # IGNORE:E1101
+    params=["rhevm_pxe_workflow"])
+def pxe_provisioning_data(request, cfme_data):
+    '''Returns data for RHEVM PXE Provisioning'''
+    param = request.param
+    return cfme_data.data["provisioning"][param]
+
+
+@pytest.fixture(
+    scope="module",  # IGNORE:E1101
+    params=["ec2_image_workflow"])
 def ec2_provisioning_data(request, cfme_data):
     '''Returns all ec2 provisioning data'''
+    param = request.param
+    return cfme_data.data["provisioning"][param]
+
+
+@pytest.fixture(
+    scope="module",  # IGNORE:E1101
+    params=["openstack_image_workflow"])
+def openstack_provisioning_data(request, cfme_data):
+    '''Returns all openstack provisioning data'''
     param = request.param
     return cfme_data.data["provisioning"][param]
 
@@ -39,24 +68,27 @@ def random_name(random_string):
     return '_%s' % random_string
 
 
-@pytest.fixture(scope="module",  # IGNORE:E1101
-               params=["linux_template_workflow"])
+@pytest.fixture(
+    scope="module",  # IGNORE:E1101
+    params=["linux_template_workflow"])
 def provisioning_data_basic_only(request, cfme_data):
     '''Returns only one set of provisioning data'''
     param = request.param
     return cfme_data.data["provisioning"][param]
 
 
-@pytest.fixture(scope="module",  # IGNORE:E1101
-               params=["vmware_linux_workflow"])
+@pytest.fixture(
+    scope="module",  # IGNORE:E1101
+    params=["vmware_linux_workflow"])
 def vmware_linux_setup_data(request, cfme_data):
     ''' Returns data for first VM for clone/retire tests'''
     param = request.param
     return cfme_data.data["clone_retire_setup"][param]
 
 
-@pytest.fixture(scope="module",  # IGNORE:E1101
-               params=["vmware_publish_to_template"])
+@pytest.fixture(
+    scope="module",  # IGNORE:E1101
+    params=["vmware_publish_to_template"])
 def vmware_publish_to_template(request, cfme_data):
     '''Returns publish to template data'''
     param = request.param
