@@ -5,6 +5,7 @@ import db
 from unittestzero import Assert
 from time import time, sleep
 
+
 @pytest.fixture
 def setup_soap_create_vm(
         request,
@@ -17,25 +18,23 @@ def setup_soap_create_vm(
     # Check if VM already exists
     for name, guid, power_state in db_session.query(
             db.Vm.name, db.Vm.guid, db.Vm.power_state).filter(
-            db.Vm.template==False):
+            db.Vm.template is False):
         if vmware_linux_setup_data['vm_name'] in name:
             # VM exists
             print "VM exits"
-            if power_state=='on':
+            if power_state == 'on':
                 result = soap_client.service.EVMSmartStop(guid)
                 Assert.equal(result.result, 'true')
             break
     else:
         # Find template guid
         template_guid = None
-        for name, guid in db_session.query(db.Vm.name, db.Vm.guid).filter(
-                db.Vm.template==True):
+        for name, guid in db_session.query(db.Vm.name, db.Vm.guid).filter(db.Vm.template is True):
             if provisioning_data_basic_only['template'] in name:
                 template_guid = guid.strip()
                 break
         else:
-            raise Exception(
-                    "Couldn't find CFME template for provisioning smoke test")
+            raise Exception("Couldn't find CFME template for provisioning smoke test")
         Assert.not_none(template_guid)
 
         # Generate provision request
@@ -64,7 +63,7 @@ def setup_soap_create_vm(
         # Poll for VM to be provisioned
         start_time = time()
         vm_guid = None
-        while (time() - start_time < 300): # Give EVM 5 mins to change status
+        while (time() - start_time < 300):  # Give EVM 5 mins to change status
             result = soap_client.service.GetVmProvisionRequest(request_id)
             if result.approval_state == 'approved':
                 if result.status == 'Error':
@@ -75,8 +74,7 @@ def setup_soap_create_vm(
                 if result.request_state == 'finished':
                     while not vm_guid:
                         sleep(10)
-                        result = soap_client.service.GetVmProvisionRequest(
-                                request_id)
+                        result = soap_client.service.GetVmProvisionRequest(request_id)
                         if result.vms[0]:
                             vm_guid = result.vms[0].guid
                     break

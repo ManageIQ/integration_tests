@@ -4,6 +4,7 @@ import pytest
 
 from utils.ssh import SSHClient
 
+
 @pytest.fixture
 def ssh_client(mozwebqa):
     """SSH Client Fixture
