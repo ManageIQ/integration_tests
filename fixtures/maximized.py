@@ -6,6 +6,7 @@ Created on Mar 4, 2013
 
 import pytest
 
+
 @pytest.fixture
 def maximized(mozwebqa):
     mozwebqa.selenium.maximize_window()
