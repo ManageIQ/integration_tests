@@ -38,49 +38,26 @@ nav.add_branch('clouds_providers',
 
 
 class Provider(object):
-    """Models a provider class in cfme
-    """
+    '''Models a cloud provider in cfme'''
     
     def __init__(self, name=None, details=None, credentials=None, zone=None):
-        """
-        
-        Arguments:
-        - `name`:
-        - `prov_type`:
-        - `details`:
-        - `credentials`:
-        """
         self.name = name
         self.details = details
         self.credentials = credentials
         self.zone = zone
 
     class EC2Details(object):
-        """Models EC2 provider details
-        """
+        '''Models EC2 provider details '''
         select_text = 'Amazon EC2'
 
         def __init__(self, region=None):
-            """
-            
-            Arguments:
-            - `region`:
-            """
             self.region = region
 
     class OpenStackDetails(object):
-        """Models Openstack provider details
-        """
+        '''Models Openstack provider details '''
         select_text = 'OpenStack'
 
         def __init__(self, hostname=None, ip_address=None, api_port=None):
-            """
-            
-            Arguments:
-            - `hostname`:
-            - `ip_address`:
-            - `api_port`:
-            """
             self.hostname = hostname
             self.ip_address = ip_address
             self.api_port = api_port
