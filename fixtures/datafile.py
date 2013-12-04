@@ -1,12 +1,11 @@
 import os
-
 import pytest
-
 from utils.datafile import *
 
 # Collection for storing unique combinations of data file paths
 # and filenames for usage reporting after a completed test run
 seen_data_files = set()
+
 
 @pytest.fixture(scope="module")
 def datafile(request):
@@ -95,6 +94,7 @@ def pytest_sessionfinish(session, exitstatus):
                 len(unused_data_files), udf_log_file.basename
             )
         )
+
 
 class FixtureDataFile(object):
     def __init__(self, request):
