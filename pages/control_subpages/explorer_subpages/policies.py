@@ -1411,7 +1411,8 @@ class PolicyEventActionsEdit(Policies):
 
     def is_action_enabled_true(self, name):
         """ Look for the actions in top right box.
-            If not found, return None
+        
+        @return: If not found, return None. Otherwise it returns the value to be able to select it.
         """
         for sync, action_name, value in self.selected_true_actions:
             if action_name == name:
@@ -1420,7 +1421,8 @@ class PolicyEventActionsEdit(Policies):
 
     def is_action_enabled_false(self, name):
         """ Look for the actions in bottom right box.
-            If not found, return None
+        
+        @return: If not found, return None. Otherwise it returns the value to be able to select it.
         """
         for sync, action_name, value in self.selected_false_actions:
             if action_name == name:
