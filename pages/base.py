@@ -110,3 +110,6 @@ class Base(Page):
         @property
         def message(self):
             return self._root_element.find_element(*self._flash_message_locator).text
+
+        def click(self):
+            self._root_element.find_element(*self._flash_message_locator).click()
