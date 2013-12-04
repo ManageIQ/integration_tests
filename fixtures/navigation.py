@@ -1,9 +1,12 @@
 """Navigation fixtures for use in tests."""
 # -*- coding: utf8 -*-
 import pytest
-from unittestzero import Assert
+from itertools import dropwhile
+from copy import deepcopy
+from fixtures.pytest_selenium import move_to_element, click
 
-from maximized import maximized
+if not 'nav_tree' in globals():
+    nav_tree = ['toplevel', lambda: None]  # navigation tree with just a root node
 
 _width_errmsg = '''The minimum supported width of CFME is 1280 pixels
 
@@ -13,154 +16,125 @@ due to submenu elements being rendered off the screen.
 
 
 @pytest.fixture
-def home_page_logged_in(mozwebqa):
+def home_page_logged_in(selenium):
     """Log in to the appliance and return the home page."""
-    maximized(mozwebqa)
-    window_size = mozwebqa.selenium.get_window_size()
-    Assert.greater_equal(window_size['width'], 1280, _width_errmsg)
-    from pages.login import LoginPage
-    login_pg = LoginPage(mozwebqa)
-    login_pg.go_to_login_page()
-    home_pg = login_pg.login()
-    Assert.true(home_pg.is_logged_in, 'Could not determine if logged in')
-    return home_pg
+    # window_size = selenium.get_window_size()
+    # Assert.greater_equal(window_size['width'], 1280, _width_errmsg)
+    from pages.login import login_admin
+    login_admin()
+    # Assert.true(home_pg.is_logged_in, 'Could not determine if logged in')
 
 
-def _submenu(home_pg, main_menu, submenu):
-    return home_pg.header.site_navigation_menu(main_menu)\
-        .sub_navigation_menu(submenu).click()
+# a navigation node is a tuple/list, first item a string name of the node,
+# 2nd item either a function to navigate with, or a tuple/list of a function
+# and a dict containing other nodes.
+
+def _has_children(node):
+    return (isinstance(node[1], (list, tuple)) and len(node[1]) > 1)
 
 
-@pytest.fixture
-def cnf_configuration_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Configure', 'Configuration')
+def _children(node):
+    if _has_children(node):
+        return node[1][1]
+    else:
+        return {}
 
 
-@pytest.fixture
-def cnf_about_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Configure', 'About')
+def _get_child(node, name):
+    return [name, _children(node).get(name)]
 
 
-@pytest.fixture
-def cnf_mysettings_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Configure', 'My Settings')
+def _name(node):
+    return node[0]
 
 
-@pytest.fixture
-def cnf_tasks_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Configure', 'Tasks')
+def _fn(node):
+    if _has_children(node):
+        return node[1][0]
+    else:
+        return node[1]
 
 
-@pytest.fixture
-def cnf_smartproxies_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Configure', 'SmartProxies')
+def tree_path(target, tree):
+    if _name(tree) == target:
+        return []
+    else:
+        for i in _children(tree).items():
+            found = tree_path(target, i)
+            if not (found is None):
+                return [_name(i)] + found
+        return None
 
 
-@pytest.fixture
-def svc_myservices_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Services', 'My Services')
+def tree_find(tree, path=None):
+    if not path:
+        path = []
+    plain_node = [_fn(tree)]
+    if path:
+        return plain_node + tree_find(_get_child(tree, path[0]), path[1:])
+    else:
+        return plain_node
 
 
-@pytest.fixture
-def svc_catalogs_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Services', 'Catalogs')
+def tree_graft(target, branches, tree=None):
+    if not tree:
+        tree = nav_tree
+    path = tree_path(target, tree)
+    if path is None:
+        raise LookupError("Unable to find target %s in nav tree." % target)
+    new_tree = deepcopy(tree)
+    parent_node = None
+    node = new_tree
+    for idx in path:
+        parent_node = node
+        node = [idx, _children(node).get(idx)]
+        if node is None:
+            raise LookupError("Unable to find node %s in nav tree." % idx)
+    # print parent_node
+    if not parent_node:
+        if _has_children(node):
+            _children(node).update(branches)
+        else:
+            node[1] = [node[1], branches]
+    elif _has_children(node):
+        _children(_get_child(parent_node, _name(node))).update(branches)
+    else:
+        parent_node[1][1][_name(node)] = [node[1], branches]
+    # print node
+    # print new_tree
+    return new_tree
 
 
-@pytest.fixture
-def cloud_providers_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Clouds', 'Providers')
+def navigate(tree, end, start=None):
+    steps = tree_find(tree, tree_path(end, tree))
+    if steps is None:
+        raise ValueError("Destination not found in navigation tree: %s" % end)
+    if start:
+        steps = dropwhile(lambda s: _name(s) != start, steps)
+        if len(steps) == 0:
+            raise ValueError("Starting location %s not found in navigation tree." % start)
+    for step in steps:
+        step()
 
 
-@pytest.fixture
-def cloud_availabilityzones_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Clouds', 'Availability Zones')
+def add_branch(target, branches):
+    global nav_tree
+    nav_tree = tree_graft(target, branches)
 
 
-@pytest.fixture
-def cloud_flavors_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Clouds', 'Flavors')
+def go_to(dest, start=None):
+    navigate(nav_tree, dest, start)
 
 
-@pytest.fixture
-def cloud_securitygroups_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Clouds', 'Security Groups')
+def move_to_fn(*els):
+    def f():
+        for el in els:
+            move_to_element(el)
+    return f
 
 
-@pytest.fixture
-def cloud_instances_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Clouds', 'Instances')
-
-
-@pytest.fixture
-def infra_providers_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Infrastructure', 'Providers')
-
-
-@pytest.fixture
-def infra_clusters_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Infrastructure', 'Clusters')
-
-
-@pytest.fixture
-def infra_hosts_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Infrastructure', 'Hosts')
-
-
-@pytest.fixture
-def infra_datastores_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Infrastructure', 'Datastores')
-
-
-@pytest.fixture
-def infra_pxe_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Infrastructure', 'PXE')
-
-
-@pytest.fixture
-def infra_vms_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Infrastructure', 'Virtual Machines')
-
-
-@pytest.fixture
-def automate_explorer_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Automate', 'Explorer')
-
-
-@pytest.fixture
-def automate_importexport_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Automate', 'Import / Export')
-
-
-@pytest.fixture
-def automate_customization_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Automate', 'Customization')
-
-
-@pytest.fixture
-def control_explorer_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Control', 'Explorer')
-
-
-@pytest.fixture
-def control_importexport_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Control', 'Import / Export')
-
-
-@pytest.fixture
-def optimize_utilization_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Optimize', 'Utilization')
-
-
-@pytest.fixture
-def intel_dashboard_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Cloud Intelligence', 'Dashboard')
-
-
-@pytest.fixture
-def intel_chargeback_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Cloud Intelligence', 'Chargeback')
-
-
-@pytest.fixture
-def intel_reports_pg(home_page_logged_in):
-    return _submenu(home_page_logged_in, 'Cloud Intelligence', 'Reports')
+def click_fn(*els):
+    def f():
+        for el in els:
+            click(el)
+    return f

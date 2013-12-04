@@ -1,18 +1,14 @@
 #!/usr/bin/env python
 from selenium.webdriver.common.by import By
+import fixtures.pytest_selenium as browser
+from region import Region, handle_popup
 
-from base import Base
+_css_reset_button = 'div.dhx_toolbar_btn[title="Reset Dashboard Widgets to the defaults"] img'
 
-class DashboardPage(Base):
-    _page_title = "CloudForms Management Engine: Dashboard"
-    _reset_widgets_button_locator = (By.CSS_SELECTOR,
-        'div.dhx_toolbar_btn[title="Reset Dashboard Widgets to the defaults"] img')
+dashboard_page = Region(title="CloudForms Management Engine: Dashboard",
+                        locators={'reset_widgets_button': (By.CSS_SELECTOR, _css_reset_button)})
 
-    @property
-    def reset_widgets_button(self):
-        return self.selenium.find_element(*self._reset_widgets_button_locator)
 
-    def click_on_reset_widgets(self, cancel=False):
-        self.reset_widgets_button.click()
-        self.handle_popup(cancel)
-
+def reset_widgets(cancel=False):
+    browser().click(dashboard_page.reset_widgets_button)
+    handle_popup(cancel)

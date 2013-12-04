@@ -10,7 +10,7 @@ py
 PyPDF2
 pysphere
 pytest
-pytest-mozwebqa
+#pytest-mozwebqa
 python-novaclient
 PyYAML
 requests

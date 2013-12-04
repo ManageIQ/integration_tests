@@ -1,138 +1,111 @@
-from pages.base import Base
-from pages.regions.paginator import PaginatorMixin
-from pages.regions.policy_menu import PolicyMenu
-from pages.regions.quadicons import Quadicons
-from pages.regions.taskbar.taskbar import TaskbarMixin
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from utils.providers import provider_factory
-from utils.wait import wait_for
+from pages.region import Region
+import fixtures.pytest_selenium as browser
+import fixtures.navigation as nav
+import pages.regions.header_menu  # so that menu is already loaded before grafting onto it
+import utils.credentials as cred
+
+page = Region(locators=
+              {'configuration_button': (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']"),
+               'discover_button': (By.CSS_SELECTOR, "tr[title='Discover Cloud Providers']>td.td_btn_txt>div.btn_sel_text"),
+               'edit_button': (By.CSS_SELECTOR, "tr[title='Select a single Cloud Provider to edit']>td.td_btn_txt>div.btn_sel_text"),
+               'remove_button': (By.CSS_SELECTOR, "tr[title='Remove selected Cloud Providers from the VMDB']>td.td_btn_txt>div.btn_sel_text"),
+               'add_button': (By.CSS_SELECTOR, "tr[title='Add a New Cloud Provider']>td.td_btn_txt>div.btn_sel_text"),
+               'add_submit': (By.CSS_SELECTOR, "img[alt='Add this Cloud Provider']"),
+               'credentials_verify_button': (By.CSS_SELECTOR, "div#default_validate_buttons_on > ul#form_buttons > li > a > img"),
+               'credentials_verify_disabled_button': (By.CSS_SELECTOR, "div#default_validate_buttons_off > ul#form_buttons > li > a > img"),
+               'cancel_button': (By.CSS_SELECTOR, "img[title='Cancel']"),
+               'name_text': (By.ID, "name"),
+               'hostname_text': (By.ID, "hostname"),
+               'ipaddress_text': (By.ID, "ipaddress"),
+               'type_select': (By.ID, "server_emstype"),
+               'amazon_region_select': (By.ID, "hostname"),
+               'userid_text': (By.ID, "default_userid"),
+               'password_text': (By.ID, "default_password"),
+               'verify_password_text': (By.ID, "default_verify"),
+               'amqp_userid_text': (By.ID, "amqp_userid"),
+               'amqp_password_text': (By.ID, "amqp_password"),
+               'amqp_verify_text': (By.ID, "amqp_verify"),
+               'server_zone_text': (By.ID, "server_zone"),
+               'default_credentials_button': (By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#default']"),
+               'amqp_credentials_button': (By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#amqp']"),
+               'api_port': (By.ID, "port"),},
+              title='CloudForms Management Engine: Cloud Providers')
 
 
-class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
-    '''Main Cloud Providers page'''
-    _page_title = 'CloudForms Management Engine: Cloud Providers'
-    _configuration_button_locator = (By.CSS_SELECTOR,
-        "div.dhx_toolbar_btn[title='Configuration']")
-    _discover_providers_locator = (By.CSS_SELECTOR,
-        "tr[title='Discover Cloud Providers']>td.td_btn_txt>div.btn_sel_text")
-    _edit_providers_locator = (By.CSS_SELECTOR,
-        "tr[title='Select a single Cloud Provider to edit']>td.td_btn_txt>div.btn_sel_text")
-    _remove_providers_locator = (By.CSS_SELECTOR,
-        "tr[title='Remove selected Cloud Providers from the VMDB']>td.td_btn_txt>div.btn_sel_text")
-    _add_new_provider_locator = (By.CSS_SELECTOR,
-        "tr[title='Add a New Cloud Provider']>td.td_btn_txt>div.btn_sel_text")
-    _refresh_relationships_locator = (By.CSS_SELECTOR,
-        "table.buttons_cont img[src='/images/toolbars/refresh.png']")
+nav.add_branch('clouds_providers',
+               {'clouds_providers_new': nav.click_fn(page.configuration_button, page.add_button)})
 
-    @property
-    def quadicon_region(self):
-        '''The quadicon region'''
-        from pages.cloud.providers.quadicon import CloudProviderQuadIcon
-        return Quadicons(self.testsetup, CloudProviderQuadIcon)
 
-    @property
-    def discover_button(self):
-        '''The discover button'''
-        return self.selenium.find_element(*self._discover_providers_locator)
+class Provider(object):
+    '''Models a cloud provider in cfme'''
+    
+    def __init__(self, name=None, details=None, credentials=None, zone=None):
+        self.name = name
+        self.details = details
+        self.credentials = credentials
+        self.zone = zone
 
-    @property
-    def edit_button(self):
-        '''The edit button'''
-        return self.selenium.find_element(*self._edit_providers_locator)
+    class EC2Details(object):
+        '''Models EC2 provider details '''
+        select_text = 'Amazon EC2'
 
-    @property
-    def remove_button(self):
-        '''The remove button'''
-        return self.selenium.find_element(*self._remove_providers_locator)
+        def __init__(self, region=None):
+            self.region = region
 
-    @property
-    def refresh_relationships_button(self):
-        '''The refresh_relationships button'''
-        return self.selenium.find_element(*self._refresh_relationships_locator)
+    class OpenStackDetails(object):
+        '''Models Openstack provider details '''
+        select_text = 'OpenStack'
 
-    @property
-    def add_button(self):
-        '''The add button'''
-        return self.selenium.find_element(*self._add_new_provider_locator)
+        def __init__(self, hostname=None, ip_address=None, api_port=None):
+            self.hostname = hostname
+            self.ip_address = ip_address
+            self.api_port = api_port
 
-    def select_provider(self, provider_name):
-        '''Select a provider given a name'''
-        # Needs to be on the quadicon view first
-        self.taskbar_region.view_buttons.change_to_grid_view()
-        self.quadicon_region.get_quadicon_by_title(provider_name).mark_checkbox()
+    class Credential(cred.Credential):
+        '''If using amqp type credential, amqp = True'''
 
-    def load_provider_details(self, provider_name):
-        '''Get provider details page given a name'''
-        # Needs to be on the quadicon view first
-        self.taskbar_region.view_buttons.change_to_grid_view()
-        self.quadicon_region.get_quadicon_by_title(provider_name).click()
-        self._wait_for_results_refresh()
-        from pages.cloud.providers.details import Detail
-        return Detail(self.testsetup)
+        def __init__(self, **kwargs):
+            super(Provider.Credential, self).__init__(**kwargs)
+            self.amqp = kwargs.get('amqp')
 
-    def is_quad_icon_available(self, provider_name):
-        try:
-            self.select_provider(provider_name)
-        except:
-            self.selenium.refresh()
-            return False
-        return True
+    def create(self, cancel=False):
+        nav.go_to('clouds_providers_new')
+        browser.set_text(page.name_text, self.name)
 
-    def wait_for_provider_or_timeout(self, provider):
-        '''Wait for a provider to become available or timeout trying'''
-        ec, tc = wait_for(self.is_quad_icon_available,
-                          [provider['name']])
-        detail_pg = self.quadicon_region.selected[0].click()
+        if self.details:
+            details = self.details
+            browser.select_by_text(page.type_select, details.select_text)
+            if type(details) == self.EC2Details:
+                browser.select_by_text(page.amazon_region_select, details.region)
+            elif type(details) == self.OpenStackDetails:
+                browser.set_text(page.hostname_text, details.hostname)
+                browser.set_text(page.ipaddress_text, details.ip_address)
+                browser.set_text(page.hostname_text, details.hostname)
+            else:
+                raise TypeError("Unknown type of provider details: %s" % type(details))
 
-        client = provider_factory(provider['request'])
-        host_stats = client.stats('num_template')
-        client.disconnect()
-        ec, tc = wait_for(detail_pg.do_stats_match,
-                          [host_stats],
-                          message="do_stats_match",
-                          num_sec=300)
-        return
+        if self.credentials:
+            def setter(loc):
+                return lambda text: browser.set_text(loc, text)
 
-    def click_on_discover_providers(self):
-        '''Click on discover cloud provider button'''
-        ActionChains(self.selenium).click(self.configuration_button)\
-            .click(self.discover_button).perform()
-        from pages.cloud.providers.discovery import Discovery
-        return Discovery(self.testsetup)
+            if self.credentials.amqp:
+                browser.click(page.amqp_credentials_button)
+                self.credentials.fill(setter(page.amqp_userid_text),
+                                      setter(page.amqp_password_text),
+                                      setter(page.amqp_verify_text))
+            else:
+                self.credentials.fill(setter(page.userid_text),
+                                      setter(page.password_text),
+                                      setter(page.verify_password_text))
+        if cancel:
+            browser.click(page.cancel_button)
+        else:
+            browser.click(page.add_submit)
 
-    def click_on_edit_providers(self):
-        '''Click on edit cloud providers button'''
-        ActionChains(self.selenium).click(self.configuration_button)\
-            .click(self.edit_button).perform()
-        from pages.cloud.providers.edit import Edit
-        return Edit(self.testsetup)
+# How to use
 
-    def click_on_remove_provider(self):
-        '''Click on remove cloud provider button'''
-        ActionChains(self.selenium).click(self.configuration_button)\
-            .click(self.remove_button).perform()
-        self.handle_popup()
-        return Providers(self.testsetup)
-
-    def click_on_remove_provider_and_cancel(self):
-        '''Click on remove provider and cancel via popup'''
-        ActionChains(self.selenium).click(self.configuration_button)\
-            .click(self.remove_button).perform()
-        self.handle_popup(True)
-        return Providers(self.testsetup)
-
-    def click_on_add_new_provider(self):
-        '''Click on add new provider button'''
-        ActionChains(self.selenium).click(self.configuration_button)\
-            .click(self.add_button).perform()
-        from pages.cloud.providers.add import Add
-        return Add(self.testsetup)
-
-    def click_on_refresh_relationships(self, provider_names):
-        '''Click on remove cloud provider button'''
-        self.quadicon_region.mark_icon_checkbox(provider_names)
-        ActionChains(self.selenium).click(self.configuration_button)\
-            .click(self.refresh_relationships_button).perform()
-        self.handle_popup()
-        return Providers(self.testsetup)
+# myprov = Provider(name='foo',
+#                   details=Provider.EC2Details(region='US West (Oregon)'),
+#                   credentials=Provider.Credential(principal='admin', secret='foobar'))
+# myprov.create()

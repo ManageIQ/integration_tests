@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import pytest
-import time
 from unittestzero import Assert
-from pages.login import LoginPage
+from pages.login import login_page, login_admin
+from pages.dashboard import dashboard_page
+from fixtures.configuration import conf
+
 
 @pytest.mark.nondestructive  # IGNORE:E1101
-class TestLogin:
-    def test_login(self, mozwebqa):
-        login_pg = LoginPage(mozwebqa)
-        login_pg.go_to_login_page()
-        home_pg = login_pg.login()
-        Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
+@pytest.mark.usefixtures("selenium")
+def test_login():
+    login_admin()
+    Assert.true(dashboard_page.is_displayed(), "Could not determine if logged in")
