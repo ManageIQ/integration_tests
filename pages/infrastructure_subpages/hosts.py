@@ -3,6 +3,7 @@
 from pages.base import Base
 from pages.regions.policy_menu import PolicyMenu
 from pages.regions.taskbar.taskbar import TaskbarMixin
+from pages.regions.taskbar.power import CommonPowerButton
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
 from selenium.webdriver.common.action_chains import ActionChains
@@ -11,7 +12,7 @@ import re
 import time
 
 
-class Hosts(Base, PolicyMenu, TaskbarMixin):
+class Hosts(Base, PolicyMenu, TaskbarMixin, CommonPowerButton):
     _page_title = 'CloudForms Management Engine: Hosts'
     _configuration_button_locator = (By.CSS_SELECTOR,
             "div.dhx_toolbar_btn[title='Configuration']")
@@ -46,6 +47,21 @@ class Hosts(Base, PolicyMenu, TaskbarMixin):
             return True
         except Exception:
             return False
+
+    def reset_host(self, host_name):
+        self.select_host(host_name)
+        self.reset()
+        self._wait_for_results_refresh()
+
+    def power_on_host(self, host_name):
+        self.select_host(host_name)
+        self.power_on()
+        self._wait_for_results_refresh()
+
+    def power_off_host(self, host_name):
+        self.select_host(host_name)
+        self.power_off()
+        self._wait_for_results_refresh()
 
     def check_host_and_refresh(self, host_name):
         self.selenium.refresh()

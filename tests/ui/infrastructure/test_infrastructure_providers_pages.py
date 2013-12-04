@@ -8,6 +8,8 @@ Created on Jun 7, 2013
 import pytest
 from unittestzero import Assert
 from utils.wait import wait_for
+from utils.ipmi import IPMI
+
 
 @pytest.fixture(params=['esx'])
 def single_host_data(request, cfme_data):
@@ -50,6 +52,35 @@ def test_host_add(infra_hosts_pg, single_host_data):
     Assert.equal(infra_pg.flash.message,
                  "Host \"%s\" was added" % single_host_data['name'],
                  "Flash message should report host added successfully")
+
+
+def test_host_power_controls_reset(infra_hosts_pg, single_host_data):
+    credentials = infra_hosts_pg.testsetup.credentials[single_host_data['ipmi_credentials']]
+    ipmi_host = IPMI(hostname=single_host_data['ipmi_address'],
+                     username=credentials['username'],
+                     password=credentials['password'])
+    ipmi_host.power_off()
+    infra_hosts_pg.reset_host(single_host_data['name'])
+    Assert.equal(infra_hosts_pg.flash.message,
+                 "\"%s\": Reset successfully initiated" % single_host_data['name'],
+                 "Flash message should name host as being reset")
+    wait_for(ipmi_host.is_power_on,
+             handle_exception=True)
+
+
+def test_host_power_controls_on(infra_hosts_pg, single_host_data):
+    credentials = infra_hosts_pg.testsetup.credentials[single_host_data['ipmi_credentials']]
+    ipmi_host = IPMI(hostname=single_host_data['ipmi_address'],
+                     username=credentials['username'],
+                     password=credentials['password'])
+    ipmi_host.power_off()
+    infra_hosts_pg.flash.click()
+    infra_hosts_pg.power_on_host(single_host_data['name'])
+    Assert.equal(infra_hosts_pg.flash.message,
+                 "\"%s\": Power On successfully initiated" % single_host_data['name'],
+                 "Flash message should name host as being Powered On")
+    wait_for(ipmi_host.is_power_on,
+             handle_exception=True)
 
 
 def test_host_delete(infra_hosts_pg, single_host_data):
