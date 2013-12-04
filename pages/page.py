@@ -46,6 +46,10 @@ class Page(object):
         WebDriverWait(self.selenium, visible_timeout or self.timeout)\
             .until(lambda s: self.is_element_visible(by, location))
 
+    def _wait_for_invisible_element(self, by, location, visible_timeout=None):
+        WebDriverWait(self.selenium, visible_timeout or self.timeout)\
+            .until(lambda s: not self.is_element_visible(by, location))
+
     @property
     def is_the_current_page(self):
         if self._page_title:  # IGNORE:E1101

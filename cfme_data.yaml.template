@@ -81,6 +81,16 @@ management_systems:
         type: openstack
         test_vm_power_control:
             - pwr-ctl-vm-1-dnd
+management_hosts:
+    esx:
+        name: esx-01
+        hostname: esx-01
+        ipaddress: 10.0.0.5
+        ipmi_address: 10.0.1.5
+        mac_address: ff:ee:dd:cc:bb:aa
+        credentials: esx
+        ipmi_credentials: ipmi
+        user_assigned_os: VMware ESX
 pxe:
     pxe_servers:
         rhel:

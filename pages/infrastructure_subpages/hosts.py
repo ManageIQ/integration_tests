@@ -5,12 +5,22 @@ from pages.regions.policy_menu import PolicyMenu
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 import re
 import time
 
 
 class Hosts(Base, PolicyMenu, TaskbarMixin):
     _page_title = 'CloudForms Management Engine: Hosts'
+    _configuration_button_locator = (By.CSS_SELECTOR,
+            "div.dhx_toolbar_btn[title='Configuration']")
+    _add_new_host_locator = (By.CSS_SELECTOR,
+        "tr[title='Add a New Host']\
+        >td.td_btn_txt>div.btn_sel_text")
+    _remove_host_locator = (By.CSS_SELECTOR,
+        "tr[title='Remove Selected Hosts from the VMDB']\
+        >td.td_btn_txt>div.btn_sel_text")
 
     @property
     def quadicon_region(self):
@@ -21,6 +31,25 @@ class Hosts(Base, PolicyMenu, TaskbarMixin):
         from pages.regions.accordion import Accordion
         from pages.regions.treeaccordionitem import TreeAccordionItem
         return Accordion(self.testsetup, TreeAccordionItem)
+
+    @property
+    def add_button(self):
+        return self.selenium.find_element(*self._add_new_host_locator)
+
+    @property
+    def remove_button(self):
+        return self.selenium.find_element(*self._remove_host_locator)
+
+    def does_host_exist(self, host_name):
+        try:
+            self.quadicon_region.get_quadicon_by_title(host_name)
+            return True
+        except Exception:
+            return False
+
+    def check_host_and_refresh(self, host_name):
+        self.selenium.refresh()
+        return self.does_host_exist(host_name)
 
     def select_host(self, host_name):
         '''Mark host checkbox'''
@@ -33,6 +62,18 @@ class Hosts(Base, PolicyMenu, TaskbarMixin):
         self.quadicon_region.get_quadicon_by_title(host_name).click()
         self._wait_for_results_refresh()
         return Detail(self.testsetup)
+
+    def click_add_new_host(self):
+        from pages.infrastructure_subpages.hosts_subpages.add import Add
+        ActionChains(self.selenium).click(
+            self.configuration_button).click(self.add_button).perform()
+        return Add(self.testsetup)
+
+    def click_remove_host(self):
+        ActionChains(self.selenium).click(
+            self.configuration_button).click(self.remove_button).perform()
+        self.handle_popup()
+        return
 
     def edit_host_and_save(self, host):
         '''Service method to click on host, edit, fill with data and save
