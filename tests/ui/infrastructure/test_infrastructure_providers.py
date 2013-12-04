@@ -8,18 +8,27 @@
 import pytest
 from utils.providers import provider_factory
 from unittestzero import Assert
+from utils.cfme_data import load_cfme_data
+from utils.providers import infra_provider_type_map
 
 CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 DETAIL_NOT_MATCHED_TEMPLATE = '%s did not match'
 
-@pytest.fixture(params=['vsphere55', 'rhevm32'])
-def provider_data(request, cfme_data):
-    '''Returns management system data from cfme_data'''
-    param = request.param
-    prov_data = cfme_data.data['management_systems'][param]
-    prov_data['request'] = param
-    return prov_data
+
+def pytest_generate_tests(metafunc):
+    if 'infra_provider_data' in metafunc.fixturenames:
+        param_prov_data = []
+        data = load_cfme_data(metafunc.config.option.cfme_data_filename)
+        for provider in data['management_systems']:
+            prov_data = data['management_systems'][provider]
+            if prov_data['type'] in infra_provider_type_map:
+                prov_data['request'] = provider
+                param_prov_data.append(['', prov_data])
+
+        metafunc.parametrize(['infra_provider_data', 'provider_data'],
+                             param_prov_data, scope="module")
+
 
 @pytest.fixture
 def provider(request, infra_providers_pg, provider_data):
@@ -101,6 +110,7 @@ class TestInfrastructureProviders:
                 FLASH_MESSAGE_NOT_MATCHED)
 
     @pytest.mark.usefixtures('has_no_providers')
+    @pytest.mark.usefixtures('infra_provider_data')
     def test_providers_discovery_starts(
             self, infra_providers_pg, provider_data):
         '''Tests the start of a management system discovery
@@ -120,6 +130,7 @@ class TestInfrastructureProviders:
                 FLASH_MESSAGE_NOT_MATCHED)
 
     @pytest.mark.usefixtures('has_no_providers')
+    @pytest.mark.usefixtures('infra_provider_data')
     def test_provider_edit(self,
             infra_providers_pg,
             provider,
@@ -152,6 +163,7 @@ class TestInfrastructureProviders:
                     DETAIL_NOT_MATCHED_TEMPLATE % 'VNC port range')
 
     @pytest.mark.usefixtures('has_no_providers')
+    @pytest.mark.usefixtures('infra_provider_data')
     def test_provider_add(
             self, infra_providers_pg, provider_data, soap_client):
         '''Tests adding a new management system
@@ -166,6 +178,7 @@ class TestInfrastructureProviders:
         prov_pg.wait_for_provider_or_timeout(provider_data)
 
     @pytest.mark.xfail(reason='https://bugzilla.redhat.com/show_bug.cgi?id=1003060')
+    @pytest.mark.usefixtures('infra_provider_data')
     @pytest.mark.usefixtures('has_no_providers')
     def test_providers_add_but_set_type_last(
             self, infra_providers_pg, provider_data, soap_client):
@@ -184,6 +197,7 @@ class TestInfrastructureProviders:
                  % provider_data['name'], errmsg)
 
     @pytest.mark.usefixtures('has_no_providers')
+    @pytest.mark.usefixtures('infra_provider_data')
     def test_provider_add_with_bad_credentials(
             self, infra_providers_pg, provider_data):
         '''Tests adding a new management system with bad credentials
@@ -198,6 +212,7 @@ class TestInfrastructureProviders:
             FLASH_MESSAGE_NOT_MATCHED)
 
     @pytest.mark.usefixtures('setup_infrastructure_providers')
+    @pytest.mark.usefixtures('infra_provider_data')
     def test_validate_provider_details(self,
                                        infra_providers_pg,
                                        provider_data):
