@@ -254,13 +254,11 @@ class NewTree(Page):
             assert this.is_expandable, "Element %s is not expandable!" % field.name
             if not this.is_expanded:
                 this.expand()
-            found = False
             for item in this.children:
                 if item.name.strip() == field.strip():
                     this = item
-                    found = True
                     break
-            if not found:
+            else:
                 raise Exception("Item %s not found!" % field)
             
         return this.children

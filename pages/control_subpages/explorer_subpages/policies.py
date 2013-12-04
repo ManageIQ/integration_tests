@@ -276,9 +276,9 @@ class PolicyView(Policies, TaskbarMixin, ReloadMixin):
 
         """
         node = self.selenium.find_element(*self._conditions_table_locator)
-        if not node:
-            return []
         conds = []
+        if not node:
+            return conds
         for row in node.find_elements_by_css_selector("tr"):
             icon, description, scopes = row.find_elements_by_css_selector("td")
             conds.append((description, scopes))
@@ -310,9 +310,9 @@ class PolicyView(Policies, TaskbarMixin, ReloadMixin):
 
         """
         node = self.selenium.find_element(*self._events_table_locator)
-        if not node:
-            return []
         conds = []
+        if not node:
+            return conds
         for row in node.find_elements_by_xpath("./tr"):
             icon, event, actions = row.find_elements_by_xpath("./td")
             conds.append((event, actions.find_elements_by_css_selector("tr")))
@@ -346,9 +346,9 @@ class PolicyView(Policies, TaskbarMixin, ReloadMixin):
 
         """
         node = self.selenium.find_element(*self._profiles_belongs_locator)
-        if not node:
-            return []
         profs = []
+        if not node:
+            return profs
         for row in node.find_elements_by_css_selector("tr"):
             icon, description = row.find_elements_by_css_selector("td")
             profs.append(description)
@@ -1411,7 +1411,7 @@ class PolicyEventActionsEdit(Policies):
 
     def is_action_enabled_true(self, name):
         """ Look for the actions in top right box.
-        
+
         @return: If not found, return None. Otherwise it returns the value to be able to select it.
         """
         for sync, action_name, value in self.selected_true_actions:
@@ -1421,7 +1421,7 @@ class PolicyEventActionsEdit(Policies):
 
     def is_action_enabled_false(self, name):
         """ Look for the actions in bottom right box.
-        
+
         @return: If not found, return None. Otherwise it returns the value to be able to select it.
         """
         for sync, action_name, value in self.selected_false_actions:

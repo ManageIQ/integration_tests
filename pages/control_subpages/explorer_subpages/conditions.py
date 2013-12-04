@@ -161,9 +161,9 @@ class ConditionView(Conditions, ReloadMixin):
         """ Look for table with assigned policies and if present, return list of clickable elements
 
         """
-        if not self.is_element_visible(*self._assigned_policies_table_locator):
-            return []
         result = []
+        if not self.is_element_visible(*self._assigned_policies_table_locator):
+            return result
         for policy in self.assigned_policies_table.find_elements_by_css_selector("tbody > tr"):
             icon, description = policy.find_elements_by_css_selector("td")
             result.append(description)
