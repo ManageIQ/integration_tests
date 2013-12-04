@@ -3,6 +3,7 @@ from pages.region import Region
 import fixtures.pytest_selenium as browser
 import fixtures.navigation as nav
 import pages.regions.header_menu  # so that menu is already loaded before grafting onto it
+import utils.credentials as cred
 
 page = Region(locators=
               {'configuration_button': (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']"),
@@ -84,6 +85,13 @@ class Provider(object):
             self.ip_address = ip_address
             self.api_port = api_port
 
+    class Credential(cred.Credential):
+        '''If using amqp type credential, amqp = True'''
+
+        def __init__(self, **kwargs):
+            super(Provider.Credential, self).__init__(**kwargs)
+            self.amqp = kwargs.get('amqp')
+
     def create(self, cancel=False):
         nav.go_to('clouds_providers_new')
         browser.set_text(page.name_text, self.name)
@@ -101,9 +109,23 @@ class Provider(object):
                 raise TypeError("Unknown type of provider details: %s" % type(details))
 
         if self.credentials:
-            creds = self.credentials
-            browser.set_text(page.userid_text, creds.principal)
-            browser.set_text(page.password_text, creds.secret)
-            browser.set_text(page.verify_password_text, creds.verify_secret)
+            def setter(loc):
+                return lambda text: browser.set_text(loc, text)
 
+            if self.credentials.amqp:
+                browser.click(page.amqp_credentials_button)
+                self.credentials.fill(setter(page.amqp_userid_text),
+                                      setter(page.amqp_password_text),
+                                      setter(page.amqp_verify_text))
+            else:
+                self.credentials.fill(setter(page.userid_text),
+                                      setter(page.password_text),
+                                      setter(page.verify_password_text))
         browser.click(page.add_submit)
+
+# How to use
+
+# myprov = Provider(name='foo',
+#                   details=Provider.EC2Details(region='US West (Oregon)'),
+#                   credentials=Provider.Credential(principal='admin', secret='foobar'))
+# myprov.create()

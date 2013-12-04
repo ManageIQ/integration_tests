@@ -3,12 +3,9 @@
 # pylint: disable=W0621
 
 import pytest
-<<<<<<< variant A
->>>>>>> variant B
 from utils.providers import provider_factory
-======= end
 from unittestzero import Assert
-import pages.
+
 CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 DETAIL_NOT_MATCHED_TEMPLATE = '%s did not match'
