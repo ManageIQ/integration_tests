@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from pages.base import Base
 from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 import time
+from datetime import datetime
 
 
 class ExpressionEditorMixin(Base):
@@ -24,6 +26,13 @@ class ExpressionEditorMixin(Base):
     _edit_chosen_regkey_locator = (By.CSS_SELECTOR, "input#chosen_regkey")
     _edit_chosen_regval_locator = (By.CSS_SELECTOR, "input#chosen_regval")
     _edit_chosen_value_locator = (By.CSS_SELECTOR, "#chosen_value")
+    _edit_chosen_date_locator = (By.ID, "miq_date_1_0")
+    _edit_chosen_date_dropdown_locator = (By.ID, "chosen_from_1")
+    _edit_chosen_time_locator = (By.ID, "miq_time_1_0")
+    _button_set_specific_locator = (By.CSS_SELECTOR,
+        "a[title='Click to change to a specific Date/Time format'] > img")
+    _button_set_relative_locator = (By.CSS_SELECTOR,
+        "a[title='Click to change to a relative Date/Time format'] > img")
     _edit_textarea_chosen_value_locator = (By.CSS_SELECTOR, "textarea#chosen_value")
     _commit_expression_button = (By.CSS_SELECTOR,
         "ul#searchtoolbar > li > a > img[alt='Commit expression element changes']")
@@ -46,6 +55,14 @@ class ExpressionEditorMixin(Base):
         "span:not([style*='none']) > li > a[title='Wrap this expression element with a NOT']")
 
     _expression_link_locator = (By.CSS_SELECTOR, "a[id*='exp_']")
+
+    @property
+    def chosen_date(self):
+        return self.selenium.find_element(*self._edit_chosen_date_locator)
+
+    @property
+    def chosen_time(self):
+        return self.selenium.find_element(*self._edit_chosen_time_locator)
 
     @property
     def discard_expression_button(self):
@@ -356,3 +373,94 @@ class ExpressionEditorMixin(Base):
         # chosen_value
         self._wait_for_visible_element(*self._edit_chosen_value_locator)
         self.select_dropdown(chosen_value, *self._edit_chosen_value_locator)
+
+    def new_fill_expression_field(self,
+                                  chosen_field=None,
+                                  chosen_key=None,
+                                  value=None,
+                                  suffix=None):
+        """ Intelligent expression filling for FIELD type.
+
+        chosen_field and key are obvious. value can be either the value or date. If you insert
+        data for the date, string is considered as the "relative" type (dropdown), but tuple or
+        datetime.datetime will be considered as an absolute date and(or) time.
+
+        tuple(2013, 12, 10) -> 12/10/2012
+        tuple(2013, 12, 10, 14, 30) -> 12/10/2012, time 14:30
+
+        @param suffix: The dropdown with Bytes, kB, MB, ...
+
+        """
+        self._wait_for_visible_element(*self._edit_chosen_type_locator)
+        self.select_dropdown("Field", *self._edit_chosen_type_locator)
+        self._wait_for_results_refresh()
+
+        self.select_dropdown(chosen_field, *self._edit_chosen_field_locator)
+        self._wait_for_results_refresh()
+
+        if not self.is_element_visible(*self._edit_chosen_key_locator):
+            if chosen_key is not None:
+                print "[WARNING] You have set the chosen_key=\"%s\" but this cannot be set in " +\
+                    "chosen_field=\"%s\"!" % (chosen_key, chosen_field)
+        else:
+            if chosen_key is None:
+                raise Exception("chosen_key not specified for chosen_field=\"%s\"" % chosen_field)
+            else:
+                self.select_dropdown(chosen_key, *self._edit_chosen_key_locator)
+                self._wait_for_results_refresh()
+        # Is it date?
+        if self.is_element_visible(*self._edit_chosen_date_locator) or \
+                self.is_element_visible(*self._edit_chosen_date_dropdown_locator):
+            # Date
+            date_type = "absolute"
+            date = None
+            t = None
+            if isinstance(value, tuple) or isinstance(value, list):
+                assert len(value) == 3 or len(value) == 5,\
+                    "Tuple passed as the date must have 3 or 5 items"
+                date = "%02d/%02d/%02d" % (value[1], value[2], value[0])
+                if len(value) == 5:
+                    t = "%02d:%02d" % (value[3], value[4])
+            elif isinstance(value, datetime):
+                date = "%02d/%02d/%02d" % (value.month, value.day, value.year)
+                t = "%02d:%02d" % (value.hour, value.minute)
+            elif isinstance(value, str):
+                date = value[:]
+                date_type = "relative"
+            assert date is not None, "You must correctly specify value= for the date!"
+            if date_type == "absolute":
+                if self.is_element_visible(*self._button_set_specific_locator):
+                    self.selenium.find_element(*self._button_set_specific_locator).click()
+                    self._wait_for_results_refresh()
+                #self.fill_field_by_locator(date, *self._edit_chosen_date_locator)
+                #self.selenium.find_element(*self._edit_chosen_date_locator).set_attribute("value", date)
+                # workaround for entering the date easily
+                chosen_date = self.selenium.find_element(*self._edit_chosen_date_locator)
+                self.selenium.execute_script("arguments[0].value = '%s'" % date,
+                                             chosen_date)
+                #chosen_date.click()
+                
+
+                # Wait whether the time dropdown appears
+                # WILL HAVE TO BE FIXED< IGNORE FOR NOW
+                # if t is not None:
+                #     try:
+                #         self._wait_for_visible_element(*self._edit_chosen_time_locator,
+                #                                        visible_timeout=10)
+                #         self.select_dropdown(t, *self._edit_chosen_time_locator)
+                #     except TimeoutException:
+                #         raise Exception("Could not set the time!")
+            else:
+                if self.is_element_visible(*self._button_set_relative_locator):
+                    self.selenium.find_element(*self._button_set_relative_locator).click()
+                    self._wait_for_results_refresh()
+                self.select_dropdown(date, *self._edit_chosen_date_dropdown_locator)
+        else:
+            # General value
+            if chosen_key.upper() not in {"IS NULL", "IS NOT NULL", "IS EMPTY", "IS NOT EMPTY"}:
+                self._wait_for_visible_element(*self._edit_chosen_value_locator, visible_timeout=10)
+                self.fill_field_by_locator(value, *self._edit_chosen_value_locator)
+                if self.is_element_visible(By.ID, "chosen_suffix"):
+                    assert suffix is not None, "You must specify which suffix to select!"
+                    self.select_dropdown(suffix, By.ID, "chosen_suffix")
+        return self
