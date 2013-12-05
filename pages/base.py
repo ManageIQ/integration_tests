@@ -1,19 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from plugin.pytest_selenium import sel, config
-from pages.page import Page
+import fixtures.pytest_selenium as sel
+from pages.region import Region
 from selenium.webdriver.common.by import By
 
-base = Page(locators={'csrf_meta': (By.CSS_SELECTOR, "meta[name=csrf-token]")})
+base = Region(locators={'csrf_meta': (By.CSS_SELECTOR, "meta[name=csrf-token]")})
 
+flash = Region(locators={'message': (By.XPATH, "//div[@id='flash_text_div']")})
+flash.get_message = lambda: sel.text(flash.message)
 
 # def current_subpage():
-#     submenu_name = sel().find_element_by_tag_name("body").get_attribute("id")
+#     submenu_name = sel.find_element_by_tag_name("body").get_attribute("id")
 #     return self.submenus[submenu_name](self.testsetup)  # IGNORE:E1101
 
 
 def csrf_token():
-    return sel().get_attribute(base.csrf_meta, 'content')
+    return sel.get_attribute(base.csrf_meta, 'content')
 
 
 def set_csrf_token(value):
@@ -29,24 +31,24 @@ def set_csrf_token(value):
             }
         }
     ''' % value
-    sel().execute_script(script)
+    sel.execute_script(script)
 
 
 def go_to_login_page():
-    sel().get(config.base_url)
+    sel.get(sel.baseurl())
 
 
-header_region = Page(locators=
-                     {"logout_link": (By.CSS_SELECTOR, "a[title='Click to Logout']"),
-                      "user_indicator": (By.CSS_SELECTOR, "div#page_header_div li.dropdown"),
-                      "user_options_button": (By.CSS_SELECTOR, "div#page_header_div b.caret"),
-                      "user_options": (By.CSS_SELECTOR, "ul#user_options_div"),
-                      "site_navigation_menus": (By.CSS_SELECTOR, "div.navbar > ul > li")})
+header_region = Region(locators=
+                       {"logout_link": (By.CSS_SELECTOR, "a[title='Click to Logout']"),
+                        "user_indicator": (By.CSS_SELECTOR, "div#page_header_div li.dropdown"),
+                        "user_options_button": (By.CSS_SELECTOR, "div#page_header_div b.caret"),
+                        "user_options": (By.CSS_SELECTOR, "ul#user_options_div"),
+                        "site_navigation_menus": (By.CSS_SELECTOR, "div.navbar > ul > li")})
 
 
 def logout():
-    sel().move_to_element(header_region.user_options)
-    sel().click(header_region.logout_link)
+    sel.move_to_element(header_region.user_options)
+    sel.click(header_region.logout_link)
 
 
 # def site_navigation_menu(value):
@@ -61,4 +63,4 @@ def logout():
 # def site_navigation_menus(self):
 #     from pages.regions.header_menu import HeaderMenu
 #     return [HeaderMenu(self.testsetup, web_element) for web_element
-#             in sel().find_elements(*self._site_navigation_menus_locator)]
+#             in sel.find_elements(*self._site_navigation_menus_locator)]

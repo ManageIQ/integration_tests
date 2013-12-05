@@ -164,3 +164,7 @@ def select_by_value(loc, text):
 
 def current_url():
     return browser().current_url
+
+
+def get(url):
+    return browser().get(url)

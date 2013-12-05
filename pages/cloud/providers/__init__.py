@@ -29,7 +29,7 @@ page = Region(locators=
                'server_zone_text': (By.ID, "server_zone"),
                'default_credentials_button': (By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#default']"),
                'amqp_credentials_button': (By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#amqp']"),
-               'api_port': (By.ID, "port"),},
+               'api_port': (By.ID, "port")},
               title='CloudForms Management Engine: Cloud Providers')
 
 

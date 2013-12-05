@@ -3,8 +3,9 @@
 # pylint: disable=W0621
 
 import pytest
-from utils.providers import provider_factory
+from pages.base import flash
 from unittestzero import Assert
+from pages.cloud.providers import Provider
 
 CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
@@ -17,8 +18,8 @@ def provider_data(request, cfme_data):
     param = request.param
     prov_data = cfme_data.data['management_systems'][param]
     prov_data['request'] = param
+    
     return prov_data
-
 
 
 @pytest.fixture
@@ -93,14 +94,11 @@ def test_that_checks_flash_when_discovery_cancelled():
 
 def test_that_checks_flash_when_add_cancelled():
     '''Tests that the flash message is correct when add is cancelled'''
-    prov_pg = cloud_providers_pg
-    Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-    prov_add_pg = prov_pg.click_on_add_new_provider()
-    prov_pg = prov_add_pg.click_on_cancel()
-    Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-    Assert.equal(prov_pg.flash.message,
-            'Add of new Cloud Provider was cancelled by the user',
-            FLASH_MESSAGE_NOT_MATCHED)
+    prov = Provider()
+    prov.create(cancel=True)
+    Assert.equal(flash.get_message(),
+                 'Add of new Cloud Provider was cancelled by the user',
+                 FLASH_MESSAGE_NOT_MATCHED)
 
 
 @pytest.mark.usefixtures('has_no_providers')
