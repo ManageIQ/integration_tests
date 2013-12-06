@@ -12,10 +12,6 @@ class LoginPage(Base):
     _login_password_field_locator = (By.CSS_SELECTOR, '#user_password')
     _login_submit_button_locator = (By.ID, 'login')
 
-    # Demo locators
-    #_page_title = u"Mozilla \u2014 Home of the Mozilla Project \u2014 mozilla.org"
-    #_header_locator = (By.CSS_SELECTOR, 'h1')
-
     @property
     def is_the_current_page(self):
         '''Override the base implementation to make sure that we are actually on the login screen
@@ -47,20 +43,20 @@ class LoginPage(Base):
         driver = self.login_button.parent
         driver.execute_script("""miqResetSizeTimer();""")
 
-    def login(self, user='default'):
-        return self.login_with_mouse_click(user)
+    def login(self, *args, **kwargs):
+        return self.login_with_mouse_click(*args, **kwargs)
 
-    def login_with_enter_key(self, user='default'):
-        return self.__do_login(self._press_enter_on_login_button, user)
+    def login_with_enter_key(self, *args, **kwargs):
+        return self._do_login(self._press_enter_on_login_button, *args, **kwargs)
 
-    def login_with_mouse_click(self, user='default'):
-        return self.__do_login(self._click_on_login_button, user)
+    def login_with_mouse_click(self, *args, **kwargs):
+        return self._do_login(self._click_on_login_button, *args, **kwargs)
 
-    def login_and_send_window_size(self, user='default'):
-        return self.__do_login(self._click_on_login_and_send_window_size, user)
+    def login_and_send_window_size(self, *args, **kwargs):
+        return self._do_login(self._click_on_login_and_send_window_size, *args, **kwargs)
 
-    def __do_login(self, continue_function, user='default'):
-        self.__set_login_fields(user)
+    def _do_login(self, continue_function, user='default', force_dashboard=True):
+        self._set_login_fields(user)
         # TODO: Remove once bug is fixed
         time.sleep(1.25)
         continue_function()
@@ -70,15 +66,20 @@ class LoginPage(Base):
             self._wait_for_results_refresh()
 
         from pages.dashboard import DashboardPage
-        dashboard = DashboardPage(self.testsetup)
+        page = DashboardPage(self.testsetup)
         try:
-            dashboard.is_the_current_page
+            page.is_the_current_page
         except AssertionError:
-            from fixtures.navigation import intel_dashboard_pg
-            dashboard = intel_dashboard_pg(dashboard)
-        return dashboard
+            if force_dashboard:
+                from fixtures.navigation import intel_dashboard_pg
+                page = intel_dashboard_pg(page)
+            else:
+                # Not the dashboard page and not forcing dashboard page
+                # return a generic Base page
+                page = Base(self.testsetup)
+        return page
 
-    def __set_login_fields(self, user='default'):
+    def _set_login_fields(self, user='default'):
         credentials = self.testsetup.credentials[user]
         self.username.send_keys(credentials['username'])
         self.password.send_keys(credentials['password'])
