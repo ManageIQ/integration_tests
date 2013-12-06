@@ -2,7 +2,11 @@
 # on Mozilla WebQA projects
 
 boto
+bottle
+bottle-sqlite
 flake8
+Jinja2
+lxml
 ovirt-engine-sdk-python
 paramiko
 psycopg2
