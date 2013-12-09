@@ -1506,12 +1506,10 @@ class PolicyEventActionsEdit(Policies):
         sync, name, value = self.select_selected_action_true(name)
         if synchronous and not sync:
             self.true_set_sync_button.click()
-            self._wait_for_results_refresh()
-            return self
         if not synchronous and sync:
             self.true_set_async_button.click()
-            self._wait_for_results_refresh()
-            return self
+        self._wait_for_results_refresh()
+        return self
 
     def set_action_sync_false(self, name, synchronous):
         """ Set state of an action in FALSE section. Sync/Async
@@ -1521,12 +1519,10 @@ class PolicyEventActionsEdit(Policies):
         sync, name, value = self.select_selected_action_false(name)
         if synchronous and not sync:
             self.false_set_sync_button.click()
-            self._wait_for_results_refresh()
-            return self
         if not synchronous and sync:
             self.false_set_async_button.click()
-            self._wait_for_results_refresh()
-            return self
+        self._wait_for_results_refresh()
+        return self
 
     def unselect_all_actions_true(self):
         for sync, name, value in self.selected_true_actions:
