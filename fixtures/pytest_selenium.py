@@ -68,9 +68,19 @@ def pytest_configure(config):
 
 
 ajax_wait_js = """
-var errfn = function(f,n) { try { return f(n) } catch(e) {return 0}};
-return errfn(function(n) { return jQuery.active }) +
-errfn(function(n) { return Ajax.activeRequestCount });
+var errfn = function(f) { try { return f() } catch(e) {return 0}};
+return errfn(function() { return jQuery.active }) +
+errfn(function() { return Ajax.activeRequestCount } +
+errfn(function() {);
+"""
+ajax_wait_js = """
+var inflight = function() {
+    return Array.slice(arguments).reduce(function (n, f) {
+        try {return f() + n;} catch (e) { return n }}, 0)};
+return inflight(function() { return jQuery.active },
+                function() { return Ajax.activeRequestCount },
+                function() { return window.miqAjaxTimers },
+                function() { if (document.readyState == "complete") { return 0 } else { return 1}});
 """
 
 
@@ -98,9 +108,15 @@ def wait_until(f, msg="Webdriver wait timed out"):
     WebDriverWait(browser(), 120.0).until(f, msg)
 
 
+def _nothing_in_flight(s):
+    #sleep(0.5)
+    in_flt = s.execute_script(ajax_wait_js)
+    #print in_flt
+    return in_flt == 0
+
+
 def wait_for_ajax():
-    wait_until(lambda s: s.execute_script(ajax_wait_js) == 0,
-               "Ajax wait timed out")
+    wait_until(_nothing_in_flight, "Ajax wait timed out")
 
 
 def is_displayed(loc):
@@ -111,7 +127,7 @@ def is_displayed(loc):
 
 
 def wait_for_element(loc):
-    wait_until(lambda s: is_displayed(loc), "Element '%s' did not appear as expected." % loc)
+    wait_until(lambda s: is_displayed(loc), "Element '{}' did not appear as expected.".format(loc))
 
 
 def click(loc):
