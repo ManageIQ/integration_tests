@@ -105,6 +105,8 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
                           [host_stats],
                           message="do_stats_match",
                           num_sec=300)
+        self.header.site_navigation_menu('Infrastructure'). \
+            sub_navigation_menu('Providers').click()
         return
 
     def click_on_discover_providers(self):

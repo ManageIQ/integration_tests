@@ -10,6 +10,7 @@ from utils.providers import provider_factory
 from unittestzero import Assert
 from utils.cfme_data import load_cfme_data
 from utils.providers import infra_provider_type_map
+from utils.wait import wait_for
 
 CURRENT_PAGE_NOT_MATCHED = 'Current page not what was expected'
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
@@ -42,6 +43,7 @@ def provider(request, infra_providers_pg, provider_data):
     This fixture will modify the db directly in the near future'''
     prov_add_pg = infra_providers_pg.click_on_add_new_provider()
     prov_pg = prov_add_pg.add_provider(provider_data)
+    prov_pg.wait_for_provider_or_timeout(provider_data)
     # TODO: Finalizer doesn't actually work. The selenium session is
     #       killed prior to its running.
     # def fin():
@@ -128,6 +130,7 @@ class TestInfrastructureProviders:
         Assert.equal(prov_pg.flash.message,
                 'Infrastructure Providers: Discovery successfully initiated',
                 FLASH_MESSAGE_NOT_MATCHED)
+        wait_for(prov_pg.is_quad_icon_available, [provider_data['default_name']])
 
     @pytest.mark.usefixtures('has_no_providers')
     @pytest.mark.usefixtures('infra_provider_data')
