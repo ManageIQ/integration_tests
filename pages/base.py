@@ -6,8 +6,15 @@ from selenium.webdriver.common.by import By
 
 base = Region(locators={'csrf_meta': (By.CSS_SELECTOR, "meta[name=csrf-token]")})
 
-flash = Region(locators={'message': (By.XPATH, "//div[@id='flash_text_div']")})
-flash.get_message = lambda: sel.text(flash.message)
+
+class Flash(Region):
+    def get_message(self):
+        if sel.is_displayed(self.message):
+            return sel.text(self.message)
+        else:
+            return None
+
+flash = Flash(locators={'message': (By.XPATH, "//div[@id='flash_text_div' or @id='flash_div']")})
 
 # def current_subpage():
 #     submenu_name = sel.find_element_by_tag_name("body").get_attribute("id")

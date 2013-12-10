@@ -4,7 +4,6 @@ import fixtures.pytest_selenium as browser
 import fixtures.navigation as nav
 import pages.regions.header_menu  # so that menu is already loaded before grafting onto it
 import utils.credentials as cred
-
 page = Region(locators=
               {'configuration_button': (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']"),
                'discover_button': (By.CSS_SELECTOR, "tr[title='Discover Cloud Providers']>td.td_btn_txt>div.btn_sel_text"),
@@ -100,6 +99,7 @@ class Provider(object):
                                       setter(page.verify_password_text))
         if cancel:
             browser.click(page.cancel_button)
+            # browser.wait_for_element(page.configuration_button)
         else:
             browser.click(page.add_submit)
 

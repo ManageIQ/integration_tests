@@ -4,7 +4,7 @@ from selenium.webdriver.common.keys import Keys
 import fixtures.pytest_selenium as browser
 from region import Region
 import fixtures.configuration as conf
-from pages.regions.header_menu import main_menu
+from pages.base import flash
 
 login_page = Region(title="CloudForms Management Engine: Dashboard",
                     locators={"username_text": (By.CSS_SELECTOR, '#user_name'),
@@ -30,7 +30,10 @@ def login(user, password, submit_method=_click_on_login):
     browser.set_text(login_page.username_text, user)
     browser.set_text(login_page.password_text, password)
     submit_method()
-    browser.wait_for_element(main_menu.cloud_intelligence)
+    browser.wait_for_ajax()
+    login_error = flash.get_message()
+    if login_error:
+        raise RuntimeError("Login as %s:%s failed: '%s'" % (user, password, login_error))
 
 
 def login_admin(**kwargs):
