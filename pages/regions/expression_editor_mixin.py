@@ -165,6 +165,7 @@ class ExpressionEditorMixin(Base):
                 raise Exception("When editing opened, you cannot change to another expression")
         self.first_expression.click()
         self._wait_for_results_refresh()
+        return self
 
     def select_expression_by_text(self, text):
         """ Looks for the expression which contains specific text
@@ -183,6 +184,7 @@ class ExpressionEditorMixin(Base):
         self._wait_for_visible_element(By.CSS_SELECTOR,
                 "a[id='%s'][style*='yellow'][style*='background-color']" % (exp_id),
                 visible_timeout=10)
+        return self
 
     def delete_selected_expression(self):
         """ Delete selected expression.
@@ -205,8 +207,7 @@ class ExpressionEditorMixin(Base):
         """ Select first expression and the delete it.
 
         """
-        self.select_first_expression()
-        return self.delete_selected_expression()
+        return self.select_first_expression().delete_selected_expression()
 
     def delete_all_expressions(self):
         """ Iterates with deleting the first expression until ??? is present.
@@ -214,6 +215,7 @@ class ExpressionEditorMixin(Base):
         """
         while self.delete_first_expression():
             continue
+        return self
 
     def discard_expression(self):
         """ Discard changes made on an expression.
@@ -274,6 +276,7 @@ class ExpressionEditorMixin(Base):
             self.fill_field_element(chosen_value, e)
         else:
             raise Exception("Unknown tag name %s, locals dump (%s)" % (e.tag_name, locals()))
+        return self
 
     def fill_expression_count(self, chosen_count, chosen_key, chosen_value):
         """ Fill expression with the data. Count type
@@ -296,6 +299,7 @@ class ExpressionEditorMixin(Base):
         # chosen_value
         self._wait_for_visible_element(*self._edit_chosen_value_locator)
         self.fill_field_by_locator(chosen_value, *self._edit_chosen_value_locator)
+        return self
 
     def fill_expression_tag(self, chosen_tag, chosen_value):
         """ Fill expression with the data. Tag type
@@ -313,6 +317,7 @@ class ExpressionEditorMixin(Base):
         # chosen_value
         self._wait_for_visible_element(*self._edit_chosen_value_locator)
         self.select_dropdown(chosen_value, *self._edit_chosen_value_locator)
+        return self
 
     def fill_expression_find(self,
                              chosen_field,
@@ -348,6 +353,7 @@ class ExpressionEditorMixin(Base):
         # chosen_cfield
         self._wait_for_visible_element(*self._edit_chosen_cfield_locator)
         self.select_dropdown(chosen_cfield, *self._edit_chosen_cfield_locator)
+        return self
 
     def fill_expression_registry(self, chosen_regkey, chosen_regval, chosen_key, chosen_value):
         """ Fill expression with the data. Registry type
@@ -373,6 +379,7 @@ class ExpressionEditorMixin(Base):
         # chosen_value
         self._wait_for_visible_element(*self._edit_chosen_value_locator)
         self.select_dropdown(chosen_value, *self._edit_chosen_value_locator)
+        return self
 
     def new_fill_expression_field(self,
                                   chosen_field=None,
@@ -439,7 +446,6 @@ class ExpressionEditorMixin(Base):
                 self.selenium.execute_script("arguments[0].value = '%s'" % date,
                                              chosen_date)
                 #chosen_date.click()
-                
 
                 # Wait whether the time dropdown appears
                 # WILL HAVE TO BE FIXED< IGNORE FOR NOW

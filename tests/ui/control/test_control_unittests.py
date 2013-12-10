@@ -40,37 +40,37 @@ def test_click_the_accordion(control_explorer_pg):
 
 def test_expression_editor(control_explorer_pg, random_string):
     conditions = control_explorer_pg.click_on_conditions_accordion()
-    new = conditions.add_new_host_condition()
-    new.edit_expression()
-    new.delete_all_expressions()
-    new.select_first_expression()
-    new.new_fill_expression_field(chosen_field="Host.Datastores : Last Analysis Time",
-                                  value=(2013, 12, 10, 16, 15))
-    new.discard_expression()
-    new.new_fill_expression_field(chosen_field="Host.vSwitches : Date Created",
-                                  value=(2013, 12, 10))
-    new.discard_expression()
-    new.new_fill_expression_field(chosen_field="Host.vSwitches : Date Created",
-                                  value="2 Days Ago")
-    new.discard_expression()
-    new.new_fill_expression_field(chosen_field="Host.vSwitches : Ports",
-                                  value="1234 5678 9012 3456")
-    new.discard_expression()
-    new.new_fill_expression_field(chosen_field="Host : Authentication Status",
-                                  chosen_key="IS NULL")
-    new.discard_expression()
-    new.new_fill_expression_field(chosen_field="Host : Authentication Status",
+    page = conditions.add_new_host_condition()
+    page.edit_expression()\
+        .delete_all_expressions()\
+        .select_first_expression()\
+        .new_fill_expression_field(chosen_field="Host.Datastores : Last Analysis Time",
+                                  value=(2013, 12, 10, 16, 15))\
+        .discard_expression()\
+        .new_fill_expression_field(chosen_field="Host.vSwitches : Date Created",
+                                  value=(2013, 12, 10))\
+        .discard_expression()\
+        .new_fill_expression_field(chosen_field="Host.vSwitches : Date Created",
+                                  value="2 Days Ago")\
+        .discard_expression()\
+        .new_fill_expression_field(chosen_field="Host.vSwitches : Ports",
+                                  value="1234 5678 9012 3456")\
+        .discard_expression()\
+        .new_fill_expression_field(chosen_field="Host : Authentication Status",
+                                  chosen_key="IS NULL")\
+        .discard_expression()\
+        .new_fill_expression_field(chosen_field="Host : Authentication Status",
                                   chosen_key="REGULAR EXPRESSION MATCHES",
-                                  value="asdbcd")
-    new.discard_expression()
-    new.new_fill_expression_field(chosen_field="Host : Authentication Status",
+                                  value="asdbcd")\
+        .discard_expression()\
+        .new_fill_expression_field(chosen_field="Host : Authentication Status",
                                   chosen_key="RUBY",
-                                  value="puts \"hello\"")
-    new.discard_expression()
-    new.new_fill_expression_field(chosen_field="Host.VMs : Disk 5 Size",
+                                  value="puts \"hello\"")\
+        .discard_expression()\
+        .new_fill_expression_field(chosen_field="Host.VMs : Disk 5 Size",
                                   value="10",
-                                  suffix="GB")
-    new.discard_expression()
+                                  suffix="GB")\
+        .discard_expression()
 
 
 def test_conditions_accordion(control_explorer_pg, condition_name):
