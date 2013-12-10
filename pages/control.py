@@ -36,7 +36,7 @@ class Control(Base):
 
         @property
         def download(self):
-            return self.selenium.find_element(*self._log_download_locator).text.strip()
+            return self.selenium.find_element(*self._log_download_locator)
 
         @property
         def log_lines(self):

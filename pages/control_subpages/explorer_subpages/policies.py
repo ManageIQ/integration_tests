@@ -268,7 +268,7 @@ class PolicyView(Policies, TaskbarMixin, ReloadMixin):
     def scope(self):
         node = self.selenium.find_element(*self._scope_fieldset_locator)
         # It contains also the caption, so we need to cut it out
-        return node.text.strip().split(":", 1)[-1].lstrip()
+        return node.text.strip().split("\n", 1)[-1]
 
     @property
     def list_conditions(self):
@@ -732,7 +732,7 @@ class PolicyConditionView(Policies, ReloadMixin):
         """
         return self.selenium.find_element(*self._expression_locator).text\
                                                                     .strip()\
-                                                                    .split(":", 1)[-1]\
+                                                                    .split("\n", 1)[-1]\
                                                                     .lstrip()
 
     @property
@@ -743,7 +743,7 @@ class PolicyConditionView(Policies, ReloadMixin):
         """
         return self.selenium.find_element(*self._scope_locator).text\
                                                                .strip()\
-                                                               .split(":", 1)[-1]\
+                                                               .split("\n", 1)[-1]\
                                                                .lstrip()
 
     @property
