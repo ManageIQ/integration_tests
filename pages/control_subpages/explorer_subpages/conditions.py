@@ -58,7 +58,7 @@ class Conditions(Explorer):
         except AssertionError:
             return []
 
-    def _view_condition(self, name, where=None):
+    def _select_condition(self, name, where=None):
         """ DRY method to go to specific condition
 
         @param name: Name of the condition
@@ -80,23 +80,86 @@ class Conditions(Explorer):
         self._wait_for_results_refresh()
         return ConditionView(self.testsetup)
 
-    def view_host_condition(self, name):
+    def select_host_condition(self, name):
         """ Go to ConditionView with host condition
 
         """
-        return self._view_condition(name, "Host Conditions")
+        return self._select_condition(name, "Host Conditions")
 
-    def view_vm_condition(self, name):
+    def delete_host_condition(self, name, cancel=False):
+        """ Delete Host condition with specified name
+
+        @return: Conditions
+        """
+        return self.select_host_condition(name).delete(cancel)
+
+    def edit_host_condition(self, name):
+        """ Open the edit window of a Host condition with specified name
+
+        @return: EditCondition
+        """
+        return self.select_host_condition(name).edit()
+
+    def copy_host_condition(self, name):
+        """ Open the edit/copy window of a Host condition with specified name
+
+        @return: CopyCondition
+        """
+        return self.select_host_condition(name).copy()
+
+    def select_vm_condition(self, name):
         """ Go to ConditionView with vm condition
 
         """
-        return self._view_condition(name, "VM Conditions")
+        return self._select_condition(name, "VM Conditions")
 
-    def view_condition(self, name):
+    def delete_vm_condition(self, name, cancel=False):
+        """ Delete VM condition with specified name
+
+        @return: Conditions
+        """
+        return self.select_vm_condition(name).delete(cancel)
+
+    def edit_vm_condition(self, name):
+        """ Open the edit window of a VM condition with specified name
+
+        @return: EditCondition
+        """
+        return self.select_vm_condition(name).edit()
+
+    def copy_vm_condition(self, name):
+        """ Open the edit/copy window of a VM condition with specified name
+
+        @return: CopyCondition
+        """
+        return self.select_vm_condition(name).copy()
+
+    def select_condition(self, name):
         """ Go to ConditionView with any condition
 
         """
-        return self._view_condition(name)
+        return self._select_condition(name)
+
+    def delete_condition(self, name, cancel=False):
+        """ Delete any condition with specified name
+
+        @return: Conditions
+        """
+        return self.select_condition(name).delete(cancel)
+
+    def edit_condition(self, name):
+        """ Open the edit window of any condition with specified name
+
+        @return: EditCondition
+        """
+        return self.select_condition(name).edit()
+
+    def copy_condition(self, name):
+        """ Open the edit/copy window of any condition with specified name
+
+        @return: CopyCondition
+        """
+        return self.select_condition(name).copy()
 
 
 class ConditionView(Conditions, ReloadMixin):
@@ -229,7 +292,7 @@ class ConditionView(Conditions, ReloadMixin):
             .click(self.configuration_copy_cond_button)\
             .perform()
         self._wait_for_results_refresh()
-        #return CopyConditionForPolicy(self.testsetup)
+        return CopyCondition(self.testsetup)
 
 
 class BaseConditionEdit(Conditions, ConditionEditor):

@@ -38,14 +38,18 @@ def test_click_the_accordion(control_explorer_pg):
     page = page.click_on_alerts_accordion()
 
 
+@pytest.mark.nondestructive
 def test_expression_editor(control_explorer_pg, random_string):
+    """ This test is supposed to test every possible combination of the expression field.
+
+    """
     conditions = control_explorer_pg.click_on_conditions_accordion()
     page = conditions.add_new_host_condition()
     page.edit_expression()
     page.delete_all_expressions()
     page.select_first_expression()
     page.new_fill_expression_field(field="Host.Datastores : Last Analysis Time",
-                                  value=(2013, 12, 10, 16, 15))
+                                   value=(2013, 12, 10, 16, 15))
     page.discard_expression()
     page.new_fill_expression_field(field="Host.vSwitches : Date Created", value=(2013, 12, 10))
     page.discard_expression()
@@ -199,9 +203,7 @@ def test_assign_condition_to_policy(control_explorer_pg, policy_name, condition_
 
 def test_cleanup(control_explorer_pg, policy_name, condition_name):
     p = control_explorer_pg.click_on_policies_accordion()
-    policy = p.select_host_control_policy(policy_name)
-    p = policy.delete_policy()
+    p = p.delete_host_control_policy(policy_name)
     c = p.click_on_conditions_accordion()
-    condition = c.view_host_condition(condition_name)
-    c = condition.delete()
+    c = c.delete_host_condition(condition_name)
     assert "Delete successful" in c.flash.message

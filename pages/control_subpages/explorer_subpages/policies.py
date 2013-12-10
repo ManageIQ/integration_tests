@@ -69,6 +69,13 @@ class Policies(Explorer):
         path = "Control Policies/Host Control Policies::%s" % policy
         return self.go("Policy", path, PolicyView)
 
+    def delete_host_control_policy(self, policy, cancel=False):
+        """ Deletes host control policy according to its name
+
+        @return: Policies
+        """
+        return self.select_host_control_policy(policy).delete_policy(cancel)
+
     def add_new_host_control_policy(self):
         """ Goes to the page with editor of new policy
 
@@ -83,6 +90,13 @@ class Policies(Explorer):
         """
         path = "Control Policies/Vm Control Policies::%s" % policy
         return self.go("Policy", path, PolicyView)
+
+    def delete_vm_control_policy(self, policy, cancel=False):
+        """ Deletes vm control policy according to its name
+
+        @return: Policies
+        """
+        return self.select_vm_control_policy(policy).delete_policy(cancel)
 
     def add_new_vm_control_policy(self):
         """ Goes to the page with editor of new policy
@@ -99,6 +113,13 @@ class Policies(Explorer):
         path = "Control Policies/Host Compliance Policies::%s" % policy
         return self.go("Policy", path, PolicyView)
 
+    def delete_host_compliance_policy(self, policy, cancel=False):
+        """ Deletes host compliance policy according to its name
+
+        @return: Policies
+        """
+        return self.select_host_compliance_policy(policy).delete_policy(cancel)
+
     def add_new_host_compliance_policy(self):
         """ Goes to the page with editor of new policy
 
@@ -113,6 +134,13 @@ class Policies(Explorer):
         """
         path = "Control Policies/Vm Compliance Policies::%s" % policy
         return self.go("Policy", path, PolicyView)
+
+    def delete_vm_compliance_policy(self, policy, cancel=False):
+        """ Deletes vm compliance policy according to its name
+
+        @return: Policies
+        """
+        return self.select_vm_compliance_policy(policy).delete_policy(cancel)
 
     def add_new_vm_compliance_policy(self):
         """ Goes to the page with editor of new policy
@@ -246,8 +274,7 @@ class PolicyView(Policies, TaskbarMixin, ReloadMixin):
 
     @property
     def active(self):
-        text = self.selenium.find_element(*self._info_active_locator).text.strip().lower()
-        return text == "yes"
+        return self.selenium.find_element(*self._info_active_locator).text.strip().lower() == "yes"
 
     @property
     def created(self):
