@@ -27,8 +27,8 @@ def login(user, password, submit_method=_click_on_login):
     Optionally, submit_method can be press_enter_after_password
     to use the enter key to login, rather than clicking the button.
     '''
-    browser.send_keys(login_page.username_text, user)
-    browser.send_keys(login_page.password_text, password)
+    browser.set_text(login_page.username_text, user)
+    browser.set_text(login_page.password_text, password)
     submit_method()
     browser.wait_for_element(main_menu.cloud_intelligence)
 
