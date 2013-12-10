@@ -3,6 +3,8 @@ Created on May 13, 2013
 
 @author: bcrochet
 '''
+
+
 def pytest_addoption(parser):
     group = parser.getgroup('cfme', 'cfme')
     group._addoption('--highlight',
@@ -10,6 +12,7 @@ def pytest_addoption(parser):
                      dest='highlight',
                      default=False,
                      help='whether to turn on highlighting of elements')
+
 
 def highlight(element):
     """Highlights (blinks) a Webdriver element.
@@ -25,8 +28,10 @@ def highlight(element):
             }, 30);
             """, element)
 
+
 def pytest_configure(config):
     from selenium.webdriver.remote.webelement import WebElement
+
     def _execute(self, command, params=None):
         highlight(self)
         return self._old_execute(command, params)
@@ -37,4 +42,3 @@ def pytest_configure(config):
     if (config.option.highlight):
         WebElement._old_execute = WebElement._execute
         WebElement._execute = _execute
-

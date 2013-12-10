@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.fixture
 def baseurl(fixtureconf, mozwebqa):
     """Override mozwebqa's baseurl for an individual test

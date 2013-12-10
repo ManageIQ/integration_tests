@@ -15,6 +15,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import ConfigParser
 
+
 def pytest_addoption(parser):
     '''Create the options for py.test'''
     config = ConfigParser.ConfigParser(defaults={
@@ -24,11 +25,12 @@ def pytest_addoption(parser):
 
     group = parser.getgroup('cfme', 'cfme')
     group.addoption('--cfmedburl',
-                     action='store',
-                     dest='cfme_db_url',
-                     default=config.get('DEFAULT', 'cfmedburl'),
-                     metavar='url',
-                     help='url for CFME database to connect to')
+                    action='store',
+                    dest='cfme_db_url',
+                    default=config.get('DEFAULT', 'cfmedburl'),
+                    metavar='url',
+                    help='url for CFME database to connect to')
+
 
 def pytest_sessionstart(session):
     '''Setup run for tests'''
@@ -38,9 +40,9 @@ def pytest_sessionstart(session):
         # Let's try to figure it out
         baseurl = session.config.option.base_url
         baseip = urlparse(baseurl).hostname
-        db.cfme_db_url = "postgres://root:smartvm@%s:5432/vmdb_production" \
-                % baseip
+        db.cfme_db_url = "postgres://root:smartvm@%s:5432/vmdb_production" % baseip
     db.engine = create_engine(db.cfme_db_url)
+
 
 @pytest.fixture
 def db_session():
@@ -69,6 +71,7 @@ def db_session():
     import db
     Session = sessionmaker(bind=db.engine)
     return Session()
+
 
 @pytest.fixture
 def db_yamls(db_session):
