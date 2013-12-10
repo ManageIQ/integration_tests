@@ -203,6 +203,12 @@ class ExpressionEditorMixin(Base):
             return True
         return False
 
+    def delete_expression(self, text):
+        """ Shortcut for deleting expressions
+
+        """
+        return self.select_expression_by_text(text).delete_selected_expression()
+
     def delete_first_expression(self):
         """ Select first expression and the delete it.
 
@@ -386,7 +392,7 @@ class ExpressionEditorMixin(Base):
                                   chosen_key=None,
                                   value=None,
                                   suffix=None):
-        """ Intelligent expression filling for FIELD type.
+        """ More intelligent expression filling for FIELD type.
 
         field and key are obvious. value can be either the value or date. If you insert
         data for the date, string is considered as the "relative" type (dropdown), but tuple or
@@ -430,7 +436,7 @@ class ExpressionEditorMixin(Base):
                     t = "%02d:%02d" % (value[3], value[4])
             elif isinstance(value, datetime):
                 date = "%02d/%02d/%02d" % (value.month, value.day, value.year)
-                t = "%02d:%02d" % (value.hour, value.minute)
+                t = "%02d:%02d" % (value.hour, value.minute)    # will be used later
             elif isinstance(value, str):
                 date = value[:]
                 date_type = "relative"
@@ -439,12 +445,12 @@ class ExpressionEditorMixin(Base):
                 if self.is_element_visible(*self._button_set_specific_locator):
                     self.selenium.find_element(*self._button_set_specific_locator).click()
                     self._wait_for_results_refresh()
-                #self.fill_field_by_locator(date, *self._edit_chosen_date_locator)
-                #self.selenium.find_element(*self._edit_chosen_date_locator).set_attribute("value", date)
                 # workaround for entering the date easily
+                # otherwise it's needed to click into the calendar
                 chosen_date = self.selenium.find_element(*self._edit_chosen_date_locator)
                 self.selenium.execute_script("arguments[0].value = '%s'" % date,
                                              chosen_date)
+
                 #chosen_date.click()
 
                 # Wait whether the time dropdown appears
