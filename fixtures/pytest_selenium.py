@@ -76,10 +76,10 @@ errfn(function() {);
 ajax_wait_js = """
 var inflight = function() {
     return Array.slice(arguments).reduce(function (n, f) {
-        try {return f() + n;} catch (e) { return n }}, 0)};
-return inflight(function() { return jQuery.active },
-                function() { return Ajax.activeRequestCount },
-                function() { return window.miqAjaxTimers },
+        try {return (f() || 0) + n;} catch (e) { return n }}, 0)};
+return inflight(function() { return jQuery.active},
+                function() { return Ajax.activeRequestCount},
+                function() { return window.miqAjaxTimers},
                 function() { if (document.readyState == "complete") { return 0 } else { return 1}});
 """
 
