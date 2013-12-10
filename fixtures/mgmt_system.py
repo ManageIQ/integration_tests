@@ -101,7 +101,8 @@ def setup_infrastructure_providers(infra_providers_pg, cfme_data):
             prov_edit_pg = infra_providers_pg.click_on_edit_providers()
             prov_edit_pg.edit_provider(prov_data)
         prov_data['request'] = provider
-        infra_providers_pg.wait_for_provider_or_timeout(prov_data)
+        if prov_added:
+            infra_providers_pg.wait_for_provider_or_timeout(prov_data)
         infra_providers_pg.header.site_navigation_menu('Infrastructure').\
             sub_navigation_menu('Providers').click()
 
@@ -186,7 +187,8 @@ def setup_cloud_providers(cloud_providers_pg, cfme_data):
             prov_edit_pg = cloud_providers_pg.click_on_edit_providers()
             prov_edit_pg.edit_provider(prov_data)
         prov_data['request'] = provider
-        cloud_providers_pg.wait_for_provider_or_timeout(prov_data)
+        if prov_added:
+            cloud_providers_pg.wait_for_provider_or_timeout(prov_data)
         cloud_providers_pg.header.site_navigation_menu('Clouds').\
             sub_navigation_menu('Providers').click()
 
