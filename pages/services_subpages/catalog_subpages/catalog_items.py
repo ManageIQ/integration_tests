@@ -144,6 +144,13 @@ class CatalogItems(Base):
             self._wait_for_results_refresh()
             return CatalogItems.Environmenttab(self.testsetup)
         
+        def click_on_properties_tab(self):
+            '''Click on prop tab'''
+            Provision(self).tabbutton_region.tabbutton_by_name(
+                    'Properties').click()
+            self._wait_for_results_refresh()
+            return CatalogItems.NewCatalogItem(self.testsetup)
+        
         def click_on_hardware_tab(self):
             '''Click on h/w tab'''
             Provision(self).tabbutton_region.tabbutton_by_name(
@@ -162,6 +169,13 @@ class CatalogItems(Base):
             '''Click on customize tab'''
             Provision(self).tabbutton_region.tabbutton_by_name(
                     'Customize').click()
+            self._wait_for_results_refresh()
+            return CatalogItems.NewCatalogItem(self.testsetup)
+        
+        def click_on_schedule_tab(self):
+            '''Click on schedule tab'''
+            Provision(self).tabbutton_region.tabbutton_by_name(
+                    'Schedule').click()
             self._wait_for_results_refresh()
             return CatalogItems.NewCatalogItem(self.testsetup)
         

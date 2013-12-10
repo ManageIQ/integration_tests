@@ -156,6 +156,7 @@ provisioned vm/instance'''
         Assert.true(svc_catalogs_pg.is_the_current_page)
         table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
                 .select_catalog_in_service_tree(cat_name)
+        time.sleep(5)
         order_pg = table_pg.select_catalog_item(cat_item_name ,
                     "service_"+cat_item_name)
         Assert.equal(order_pg.flash.message, "Order Request was Submitted")
