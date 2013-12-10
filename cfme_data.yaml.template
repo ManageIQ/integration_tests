@@ -187,7 +187,7 @@ group_roles:
                 - Utilization
                 - Planning
                 - Bottlenecks
-            Configuration:
+            Configure:
                 - My Settings
                 - Tasks
                 - SmartProxies
@@ -217,7 +217,7 @@ group_roles:
                 - Explorer
                 - Simulation
                 - Log
-            Configuration:
+            Configure:
                 - My Settings
                 - Tasks
                 - About
@@ -248,7 +248,7 @@ group_roles:
                 - Utilization
                 - Planning
                 - Bottlenecks
-            Configuration:
+            Configure:
                 - My Settings
                 - Tasks
                 - About
@@ -259,7 +259,7 @@ group_roles:
             Services:
                 - Requests
                 - Workloads
-            Configuration:
+            Configure:
                 - My Settings
                 - About
     evmgroup-operator:
@@ -281,7 +281,7 @@ group_roles:
                 - Resource Pools
                 - Datastores
                 - Repositories
-            Configuration:
+            Configure:
                 - My Settings
                 - Tasks
                 - About
@@ -308,7 +308,7 @@ group_roles:
                 - Explorer
                 - Simulation
                 - Log
-            Configuration:
+            Configure:
                 - My Settings
                 - Tasks
                 - About
@@ -352,7 +352,7 @@ group_roles:
                 - Utilization
                 - Planning
                 - Bottlenecks
-            Configuration:
+            Configure:
                 - My Settings
                 - Tasks
                 - Configuration
@@ -381,7 +381,7 @@ group_roles:
                 - Explorer
                 - Simulation
                 - Log
-            Configuration:
+            Configure:
                 - My Settings
                 - Tasks
                 - About
@@ -404,7 +404,7 @@ group_roles:
                 - Resource Pools
                 - Datastores
                 - Repositories
-            Configuration:
+            Configure:
                 - My Settings
                 - Tasks
                 - About
@@ -413,7 +413,7 @@ group_roles:
             Services:
                 - Requests
                 - Workloads
-            Configuration:
+            Configure:
                 - My Settings
                 - About
     evmgroup-user_self_service:
@@ -421,7 +421,7 @@ group_roles:
             Services:
                 - Requests
                 - Workloads
-            Configuration:
+            Configure:
                 - My Settings
                 - About
     evmgroup-vm_user:
@@ -429,7 +429,7 @@ group_roles:
             Services:
                 - Requests
                 - Workloads
-            Configuration:
+            Configure:
                 - My Settings
                 - About
 provisioning:
