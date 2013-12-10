@@ -382,13 +382,13 @@ class ExpressionEditorMixin(Base):
         return self
 
     def new_fill_expression_field(self,
-                                  chosen_field=None,
+                                  field=None,
                                   chosen_key=None,
                                   value=None,
                                   suffix=None):
         """ Intelligent expression filling for FIELD type.
 
-        chosen_field and key are obvious. value can be either the value or date. If you insert
+        field and key are obvious. value can be either the value or date. If you insert
         data for the date, string is considered as the "relative" type (dropdown), but tuple or
         datetime.datetime will be considered as an absolute date and(or) time.
 
@@ -402,16 +402,16 @@ class ExpressionEditorMixin(Base):
         self.select_dropdown("Field", *self._edit_chosen_type_locator)
         self._wait_for_results_refresh()
 
-        self.select_dropdown(chosen_field, *self._edit_chosen_field_locator)
+        self.select_dropdown(field, *self._edit_chosen_field_locator)
         self._wait_for_results_refresh()
 
         if not self.is_element_visible(*self._edit_chosen_key_locator):
             if chosen_key is not None:
                 print "[WARNING] You have set the chosen_key=\"%s\" but this cannot be set in " +\
-                    "chosen_field=\"%s\"!" % (chosen_key, chosen_field)
+                    "field=\"%s\"!" % (chosen_key, field)
         else:
             if chosen_key is None:
-                raise Exception("chosen_key not specified for chosen_field=\"%s\"" % chosen_field)
+                raise Exception("chosen_key not specified for field=\"%s\"" % field)
             else:
                 self.select_dropdown(chosen_key, *self._edit_chosen_key_locator)
                 self._wait_for_results_refresh()
