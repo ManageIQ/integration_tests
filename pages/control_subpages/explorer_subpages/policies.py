@@ -441,6 +441,7 @@ class EditPolicy(Policies, ExpressionEditorMixin):
         """
         if not self.is_active:
             self.active_checkbox.click()
+        return self
 
     def deactivate(self):
         """ Deactivate this policy.
@@ -448,6 +449,7 @@ class EditPolicy(Policies, ExpressionEditorMixin):
         """
         if self.is_active:
             self.active_checkbox.click()
+        return self
 
     @property
     def notes(self):
@@ -878,9 +880,11 @@ class PolicyConditionAssignments(Policies):
 
     def select_from_available(self, name):
         self.select_dropdown(name, *self._available_locator)
+        return self
 
     def select_from_used(self, name):
         self.select_dropdown(name, *self._used_locator)
+        return self
 
     def use_selected_condition(self):
         self.use_button.click()
@@ -907,12 +911,10 @@ class PolicyConditionAssignments(Policies):
             return True
 
     def use_condition(self, name):
-        self.select_from_available(name)
-        return self.use_selected_condition()
+        return self.select_from_available(name).use_selected_condition()
 
     def unuse_condition(self, name):
-        self.select_from_used(name)
-        return self.unuse_selected_condition()
+        return self.select_from_used(name).unuse_selected_condition()
 
     def save(self):
         """ Save changes.
@@ -1013,8 +1015,9 @@ class PolicyEventAssignments(Policies):
         """
         checkbox = self.search_by_name(name)
         if (not check and not checkbox.is_selected()) or (check and checkbox.is_selected()):
-            return
+            return self
         checkbox.click()
+        return self
 
     def mass_set(self, dictionary):
         """ To make life easier, you can pass a dictionary to set everything in one step
@@ -1382,12 +1385,14 @@ class PolicyEventActionsEdit(Policies):
 
         """
         self.select_dropdown(name, *self._choices_chosen_true_locator)
+        return self
 
     def select_available_action_false(self, name):
         """ Select an item in the bottom eft box
 
         """
         self.select_dropdown(name, *self._choices_chosen_false_locator)
+        return self
 
     def select_selected_action_true(self, name):
         """ If an action with name is found, then it is selected and informations are returned
@@ -1528,11 +1533,13 @@ class PolicyEventActionsEdit(Policies):
         for sync, name, value in self.selected_true_actions:
             self.disable_action_true(name)
         assert len(self.selected_true_actions) == 0
+        return self
 
     def unselect_all_actions_false(self):
         for sync, name, value in self.selected_false_actions:
             self.disable_action_false(name)
         assert len(self.selected_false_actions) == 0
+        return self
 
     # Methods for clearing selection
     def clear_available_selection_true(self):
@@ -1541,6 +1548,7 @@ class PolicyEventActionsEdit(Policies):
         """
         from selenium.webdriver.support.ui import Select
         Select(self.true_available_actions_box).deselect_all()
+        return self
 
     def clear_selected_selection_true(self):
         """ Clear selection for top right box
@@ -1548,6 +1556,7 @@ class PolicyEventActionsEdit(Policies):
         """
         from selenium.webdriver.support.ui import Select
         Select(self.true_selected_actions_box).deselect_all()
+        return self
 
     def clear_available_selection_false(self):
         """ Clear selection for bottom left box
@@ -1555,6 +1564,7 @@ class PolicyEventActionsEdit(Policies):
         """
         from selenium.webdriver.support.ui import Select
         Select(self.false_available_actions_box).deselect_all()
+        return self
 
     def clear_selected_selection_false(self):
         """ Clear selection for bottom right box
@@ -1562,3 +1572,4 @@ class PolicyEventActionsEdit(Policies):
         """
         from selenium.webdriver.support.ui import Select
         Select(self.false_selected_actions_box).deselect_all()
+        return self

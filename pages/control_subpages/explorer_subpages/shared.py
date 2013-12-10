@@ -60,6 +60,7 @@ class ConditionEditor(ExpressionEditorMixin):
         if not self.is_editing_expression:
             self.edit_expression_button.click()
             self._wait_for_results_refresh()
+        return self
 
     def edit_scope(self):
         """ Switches the editing of the Scope on.
@@ -68,6 +69,7 @@ class ConditionEditor(ExpressionEditorMixin):
         if not self.is_editing_scope:
             self.edit_scope_button.click()
             self._wait_for_results_refresh()
+        return self
 
     @property
     def notes(self):
