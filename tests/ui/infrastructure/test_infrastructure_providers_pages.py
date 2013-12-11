@@ -52,6 +52,8 @@ def test_host_add(infra_hosts_pg, single_host_data):
     Assert.equal(infra_pg.flash.message,
                  "Host \"%s\" was added" % single_host_data['name'],
                  "Flash message should report host added successfully")
+    wait_for(lambda host: infra_hosts_pg.check_host_and_refresh(host),
+             [single_host_data['name']])
 
 
 def test_host_power_controls_reset(infra_hosts_pg, single_host_data):
