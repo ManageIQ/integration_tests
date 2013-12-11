@@ -37,6 +37,6 @@ def login(user, password, submit_method=_click_on_login):
 
 
 def login_admin(**kwargs):
-    user = conf.get()['cfme']['admin_user']
-    password = conf.get()['cfme']['admin_password']
+    user = conf.get_in('cfme', 'admin_user')
+    password = conf.get_in('cfme', 'admin_password')
     login(user, password, **kwargs)
