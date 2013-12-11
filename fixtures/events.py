@@ -91,7 +91,6 @@ class EventListener(object):
 
     def __init__(self, listener_port, settle_time, results_file="test_events.log"):
         self.cfme_data = load_cfme_data()
-        self.listener_host = "http://%s" % self.get_ip_address()
         self.listener_port = int(listener_port)
         listener_filename = local(__file__).new(basename='../scripts/listener.py').strpath
         self.listener_script = "%s %d" % (listener_filename, self.listener_port)
@@ -99,6 +98,9 @@ class EventListener(object):
         self.expectations = []
         logging.basicConfig(filename=results_file, level=logging.INFO)
         self.listener = None
+
+    def get_listener_host(self):
+        return "http://%s" % self.get_ip_address()
 
     def get_ip_address(self):
         """ This returns this machine's active IP address.
@@ -124,7 +126,7 @@ class EventListener(object):
         """ Query event listener
         """
         assert not self.finished, "Listener dead!"
-        listener_url = "%s:%d" % (self.listener_host, self.listener_port)
+        listener_url = "%s:%d" % (self.get_listener_host(), self.listener_port)
         logging.info("checking api: %s%s" % (listener_url, route))
         r = requests.get(listener_url + route)
         r.raise_for_status()
@@ -266,7 +268,7 @@ class EventListener(object):
         It is used in setup test cases located at:
         ``/tests/test_setup_event_testing.py``
         """
-        return type("Listener", (object,), {"host": self.listener_host, "port": self.listener_port})
+        return type("Listener", (object,), {"host": self.get_listener_host(), "port": self.listener_port})
 
     @property
     def finished(self):
