@@ -36,7 +36,7 @@ class HTMLReport(object):
 
 class EventExpectation(object):
     """ Expectation for an event.
-    
+
     This object embeds an expectation in order to be able to easily compare
     whether the two expectations are the same but just with different time.
     """
@@ -89,14 +89,14 @@ class EventListener(object):
 
     TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
 
-    def __init__(self, listener_port, settle_time, results_file="test_events.log"):
+    def __init__(self, listener_port, settle_time, log_file="test_events.log"):
         self.cfme_data = load_cfme_data()
         self.listener_port = int(listener_port)
         listener_filename = local(__file__).new(basename='../scripts/listener.py').strpath
         self.listener_script = "%s %d" % (listener_filename, self.listener_port)
         self.settle_time = int(settle_time)
         self.expectations = []
-        logging.basicConfig(filename=results_file, level=logging.INFO)
+        logging.basicConfig(filename=log_file, level=logging.INFO)
         self.listener = None
 
     def get_listener_host(self):
@@ -268,7 +268,14 @@ class EventListener(object):
         It is used in setup test cases located at:
         ``/tests/test_setup_event_testing.py``
         """
-        return type("Listener", (object,), {"host": self.get_listener_host(), "port": self.listener_port})
+        return type(
+            "Listener",
+            (object,),
+            {
+                "host": self.get_listener_host(),
+                "port": self.listener_port
+            }
+        )
 
     @property
     def finished(self):
@@ -350,8 +357,7 @@ def pytest_configure(config):
     If the testing is enabled, listener is started.
     """
     plugin = EventListener(config.getoption("event_testing_port"),
-                           config.getoption("event_testing_settletime"),
-                           config.getoption("event_testing_result"))
+                           config.getoption("event_testing_settletime"))
     registration = config.pluginmanager.register(plugin, "event_testing")
     assert registration
     if config.getoption("event_testing_enabled"):
