@@ -589,7 +589,7 @@ class NewPolicy(EditPolicy):
         if not result.is_element_present(*result._configuration_edit_basic_locator):
             # Workaround for a glitch that occurs in not-the-last version
             # DISCARDS FLASH MESSAGES!!
-            result.refresh()
+            result.reload()
             import time
             time.sleep(1)
 

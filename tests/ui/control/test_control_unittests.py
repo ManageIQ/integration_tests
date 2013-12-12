@@ -105,7 +105,7 @@ def test_conditions_accordion(control_explorer_pg, condition_name):
     view.scope
     view.expression
     view.notes
-    view.refresh()
+    view.reload()
     # Try some editing
     edit = view.edit()
     edit.notes = condition_name + condition_name  # This must enable reset
