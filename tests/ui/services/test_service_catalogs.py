@@ -13,7 +13,7 @@ from unittestzero import Assert
 def provisioning_data(request, cfme_data):
     '''get data from cfme_data.yml'''
     param = request.param
-    return cfme_data.data["provisioning"][param]
+    return cfme_data["provisioning"][param]
 
 
 @pytest.fixture()

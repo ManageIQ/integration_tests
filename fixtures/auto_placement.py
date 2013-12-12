@@ -9,7 +9,7 @@ from unittestzero import Assert
 def auto_placement_setup_data(request, cfme_data):
     '''Returns data for Provisioning Scope'''
     param = request.param
-    return cfme_data.data["provisioning"][param]
+    return cfme_data["provisioning"][param]
 
 
 @pytest.fixture

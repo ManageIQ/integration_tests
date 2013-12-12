@@ -5,7 +5,7 @@ from unittestzero import Assert
 @pytest.fixture  # IGNORE:E1101
 def configure_auth_mode(cnf_configuration_pg, cfme_data):
     '''Configure authentication mode'''
-    server_data = cfme_data.data['ldap_server']
+    server_data = cfme_data['ldap_server']
     auth_pg = cnf_configuration_pg.click_on_settings()\
         .click_on_current_server_tree_node()\
         .click_on_authentication_tab()

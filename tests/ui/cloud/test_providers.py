@@ -15,7 +15,7 @@ DETAIL_NOT_MATCHED_TEMPLATE = '%s did not match'
 def provider_data(request, cfme_data):
     '''Returns management system data from cfme_data'''
     param = request.param
-    prov_data = cfme_data.data['management_systems'][param]
+    prov_data = cfme_data['management_systems'][param]
     prov_data['request'] = param
     return prov_data
 

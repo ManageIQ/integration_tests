@@ -46,7 +46,7 @@ def setup_infrastructure_providers(infra_providers_pg, cfme_data):
 
     '''
     # Does provider exist
-    for provider, prov_data in cfme_data.data['management_systems'].iteritems():
+    for provider, prov_data in cfme_data['management_systems'].iteritems():
         if prov_data['type'] not in infra_provider_type_map:
             # short out if we don't care about this provider type
             continue
@@ -132,7 +132,7 @@ def setup_cloud_providers(cloud_providers_pg, cfme_data):
 
     '''
     # Does provider exist
-    for provider, prov_data in cfme_data.data['management_systems'].iteritems():
+    for provider, prov_data in cfme_data['management_systems'].iteritems():
         if prov_data['type'] not in cloud_provider_type_map:
             # short out if we don't care about this provider type
             continue
@@ -198,7 +198,7 @@ def setup_cloud_providers(cloud_providers_pg, cfme_data):
 def mgmt_sys_api_clients(mozwebqa, cfme_data):
     '''Returns a list of management system api clients'''
     clients = {}
-    for sys_name in cfme_data.data['management_systems']:
+    for sys_name in cfme_data['management_systems']:
         if sys_name in clients:
             # Overlapping sys_name entry in cfme_data.yaml
             logger.warning('Overriding existing entry for %s.' % sys_name)

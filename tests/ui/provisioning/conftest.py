@@ -22,7 +22,7 @@ def inst_provisioning_start_page(cloud_instances_pg):
 def provisioning_data(request, cfme_data):
     '''Returns all provisioning data'''
     param = request.param
-    return cfme_data.data["provisioning"][param]
+    return cfme_data["provisioning"][param]
 
 
 @pytest.fixture(scope="module",  # IGNORE:E1101
@@ -30,7 +30,7 @@ def provisioning_data(request, cfme_data):
 def ec2_provisioning_data(request, cfme_data):
     '''Returns all ec2 provisioning data'''
     param = request.param
-    return cfme_data.data["provisioning"][param]
+    return cfme_data["provisioning"][param]
 
 
 @pytest.fixture
@@ -44,7 +44,7 @@ def random_name(random_string):
 def provisioning_data_basic_only(request, cfme_data):
     '''Returns only one set of provisioning data'''
     param = request.param
-    return cfme_data.data["provisioning"][param]
+    return cfme_data["provisioning"][param]
 
 
 @pytest.fixture(scope="module",  # IGNORE:E1101
@@ -52,7 +52,7 @@ def provisioning_data_basic_only(request, cfme_data):
 def vmware_linux_setup_data(request, cfme_data):
     ''' Returns data for first VM for clone/retire tests'''
     param = request.param
-    return cfme_data.data["clone_retire_setup"][param]
+    return cfme_data["clone_retire_setup"][param]
 
 
 @pytest.fixture(scope="module",  # IGNORE:E1101
@@ -60,7 +60,7 @@ def vmware_linux_setup_data(request, cfme_data):
 def vmware_publish_to_template(request, cfme_data):
     '''Returns publish to template data'''
     param = request.param
-    return cfme_data.data["provisioning"][param]
+    return cfme_data["provisioning"][param]
 
 
 @pytest.fixture

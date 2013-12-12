@@ -13,7 +13,7 @@ from utils.ipmi import IPMI
 
 @pytest.fixture(params=['esx'])
 def single_host_data(request, cfme_data):
-    return cfme_data.data['management_hosts'][request.param]
+    return cfme_data['management_hosts'][request.param]
 
 
 @pytest.fixture(params=[('title', 'Add this Infrastructure Provider'),

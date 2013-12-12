@@ -29,7 +29,7 @@ def load_providers_vm_list(
         :rtype: Services.VirtualMachines
     '''
     provider_details = infra_providers_pg.load_provider_details(
-            cfme_data.data["management_systems"][provider]["name"])
+            cfme_data["management_systems"][provider]["name"])
     vm_pg = provider_details.all_vms()
     if vm_name is not None:
         vm_pg.find_vm_page(vm_name, None, False, False)
@@ -199,6 +199,6 @@ def load_providers_template_list(
         :rtype: Services.VirtualMachines
     '''
     provider_details = infra_providers_pg.load_provider_details(
-            cfme_data.data["management_systems"][provider]["name"])
+            cfme_data["management_systems"][provider]["name"])
     return provider_details.all_templates()
     

@@ -38,4 +38,3 @@ def load_cfme_data(filename=None):
     else:
         msg = 'Usable to load cfme_data file at %s' % path
         raise Exception(msg)
-

@@ -13,7 +13,7 @@ from unittestzero import Assert
 def basic_info(request, cfme_data):
     '''Returns basic data from cfme_data'''
     param = request.param
-    return cfme_data.data[param]
+    return cfme_data[param]
 
 
 @pytest.mark.nondestructive

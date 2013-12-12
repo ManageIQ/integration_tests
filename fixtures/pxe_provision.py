@@ -10,7 +10,7 @@ from datetime import datetime
                params=["rhevm_pxe_setup"])
 def provisioning_setup_data(request, cfme_data):
     param = request.param
-    return cfme_data.data["provisioning_setup"][param]
+    return cfme_data["provisioning_setup"][param]
 
 
 def setup_pxe_server(db_session, provisioning_setup_data):
