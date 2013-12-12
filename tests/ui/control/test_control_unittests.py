@@ -48,26 +48,26 @@ def test_expression_editor(control_explorer_pg, random_string):
     page.edit_expression()
     page.delete_all_expressions()
     page.select_first_expression()
-    page.new_fill_expression_field(field="Host.Datastores : Last Analysis Time",
-                                   value=(2013, 12, 10, 16, 15))
+    page.fill_expression_field(field="Host.Datastores : Last Analysis Time",
+                               value=(2013, 12, 10, 16, 15))
     page.discard_expression()
-    page.new_fill_expression_field(field="Host.vSwitches : Date Created", value=(2013, 12, 10))
+    page.fill_expression_field(field="Host.vSwitches : Date Created", value=(2013, 12, 10))
     page.discard_expression()
-    page.new_fill_expression_field(field="Host.vSwitches : Date Created", value="2 Days Ago")
+    page.fill_expression_field(field="Host.vSwitches : Date Created", value="2 Days Ago")
     page.discard_expression()
-    page.new_fill_expression_field(field="Host.vSwitches : Ports", value="1234 5678 9012 3456")
+    page.fill_expression_field(field="Host.vSwitches : Ports", value="1234 5678 9012 3456")
     page.discard_expression()
-    page.new_fill_expression_field(field="Host : Authentication Status", chosen_key="IS NULL")
+    page.fill_expression_field(field="Host : Authentication Status", chosen_key="IS NULL")
     page.discard_expression()
-    page.new_fill_expression_field(field="Host : Authentication Status",
-                                   chosen_key="REGULAR EXPRESSION MATCHES",
-                                   value="asdbcd")
+    page.fill_expression_field(field="Host : Authentication Status",
+                               chosen_key="REGULAR EXPRESSION MATCHES",
+                               value="asdbcd")
     page.discard_expression()
-    page.new_fill_expression_field(field="Host : Authentication Status",
-                                   chosen_key="RUBY",
-                                   value="puts \"hello\"")
+    page.fill_expression_field(field="Host : Authentication Status",
+                               chosen_key="RUBY",
+                               value="puts \"hello\"")
     page.discard_expression()
-    page.new_fill_expression_field(field="Host.VMs : Disk 5 Size", value="10", suffix="GB")
+    page.fill_expression_field(field="Host.VMs : Disk 5 Size", value="10", suffix="GB")
     page.discard_expression()
 
 
@@ -135,7 +135,7 @@ def test_events_accordion(control_explorer_pg):
             for policy in policies:
                 policy.text
             finished = True
-        event.refresh()
+        event.reload()
         counter += 1
 
 

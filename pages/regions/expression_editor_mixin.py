@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from pages.base import Base
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import TimeoutException
 import time
 from datetime import datetime
 
@@ -249,41 +248,6 @@ class ExpressionEditorMixin(Base):
         self._wait_for_results_refresh()
         return self
 
-    def fill_expression_field(self, chosen_field, chosen_key, chosen_value):
-        """ Fill expression with the data. Field type
-
-        Handles difference between the select and text inputs on chosen_value.
-        """
-        chosen_type = "Field"
-        # chosen_type
-        self._wait_for_visible_element(*self._edit_chosen_type_locator)
-        self.select_dropdown(chosen_type, *self._edit_chosen_type_locator)
-
-        # chosen_field
-        self._wait_for_visible_element(*self._edit_chosen_field_locator)
-        self.select_dropdown(chosen_field, *self._edit_chosen_field_locator)
-
-        # chosen_key
-        self._wait_for_visible_element(*self._edit_chosen_key_locator)
-        self.select_dropdown(chosen_key, *self._edit_chosen_key_locator)
-
-        if chosen_key.lower().strip() == "ruby":
-            self._wait_for_visible_element(*self._edit_textarea_chosen_value_locator,
-                                           visible_timeout=15)
-        else:
-            time.sleep(5)
-
-        # chosen_value
-        self._wait_for_visible_element(*self._edit_chosen_value_locator)
-        e = self.selenium.find_element(*self._edit_chosen_value_locator)
-        if e.tag_name == "select":
-            self.select_dropdown(chosen_value, *self._edit_chosen_value_locator)
-        elif e.tag_name in ["input", "textarea"]:
-            self.fill_field_element(chosen_value, e)
-        else:
-            raise Exception("Unknown tag name %s, locals dump (%s)" % (e.tag_name, locals()))
-        return self
-
     def fill_expression_count(self, chosen_count, chosen_key, chosen_value):
         """ Fill expression with the data. Count type
 
@@ -335,6 +299,7 @@ class ExpressionEditorMixin(Base):
 
         """
         chosen_type = "Find"
+        print "It is not recommended to use this function as it is not finished to work correctly."
         # chosen_type
         self._wait_for_visible_element(*self._edit_chosen_type_locator)
         self.select_dropdown(chosen_type, *self._edit_chosen_type_locator)
@@ -387,11 +352,11 @@ class ExpressionEditorMixin(Base):
         self.select_dropdown(chosen_value, *self._edit_chosen_value_locator)
         return self
 
-    def new_fill_expression_field(self,
-                                  field=None,
-                                  chosen_key=None,
-                                  value=None,
-                                  suffix=None):
+    def fill_expression_field(self,
+                              field=None,
+                              chosen_key=None,
+                              value=None,
+                              suffix=None):
         """ More intelligent expression filling for FIELD type.
 
         field and key are obvious. value can be either the value or date. If you insert
@@ -402,7 +367,7 @@ class ExpressionEditorMixin(Base):
         tuple(2013, 12, 10, 14, 30) -> 12/10/2012, time 14:30
 
         @param suffix: The dropdown with Bytes, kB, MB, ...
-
+        @todo: Fix time setting. It is ignored in current code.
         """
         self._wait_for_visible_element(*self._edit_chosen_type_locator)
         self.select_dropdown("Field", *self._edit_chosen_type_locator)
