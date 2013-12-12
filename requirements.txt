@@ -22,3 +22,4 @@ selenium
 sqlalchemy
 suds
 UnittestZero
+-e git+git@github.com:RedHatQE/ui_navigate.git#egg=ui_navigate
