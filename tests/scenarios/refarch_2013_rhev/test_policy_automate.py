@@ -17,7 +17,7 @@ FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 def test_import_policies(request, control_importexport_pg, cfme_data):
     '''Import policies
     '''
-    policy_file = cfme_data.data['policies']['import']
+    policy_file = cfme_data['policies']['import']
     policy_file = "%s/%s" % (request.session.fspath, policy_file)
 
     control_importexport_pg = control_importexport_pg.import_policies(
@@ -47,8 +47,8 @@ def test_policy_assignment(infra_providers_pg, provider):
 def test_import_namespace(request, cfme_data, ssh_client):
     ''''Import automate method namespace (rake method)
     '''
-    filename = cfme_data.data['automate']['import']['file']
-    automate_path = cfme_data.data['automate']['import']['path']
+    filename = cfme_data['automate']['import']['file']
+    automate_path = cfme_data['automate']['import']['path']
     automate_file = "%s/%s/%s" % \
         (request.session.fspath, automate_path, filename)
 
@@ -63,7 +63,7 @@ def test_import_namespace(request, cfme_data, ssh_client):
 def test_automate_instance_hook(cfme_data, automate_explorer_pg):
     '''Add automate instance that follows relationship to custom namespace
     '''
-    instance = cfme_data.data['automate']['instance']
+    instance = cfme_data['automate']['instance']
 
     class_pg = automate_explorer_pg.click_on_class_access_node(
         instance['parent_class'])

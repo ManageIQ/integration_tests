@@ -6,7 +6,7 @@ from unittestzero import Assert
                 params=["default"])
 def roles(request, cfme_data):
     param = request.param
-    return cfme_data.data['server_roles'][param]
+    return cfme_data['server_roles'][param]
 
 
 @pytest.mark.destructive

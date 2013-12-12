@@ -13,7 +13,7 @@ from unittestzero import Assert
 def infra_provider(request, cfme_data):
     '''Return the data for a particular provider'''
     param = request.param
-    return cfme_data.data["management_systems"][param]
+    return cfme_data["management_systems"][param]
 
 
 @pytest.mark.usefixtures("maximized", "setup_infrastructure_providers")

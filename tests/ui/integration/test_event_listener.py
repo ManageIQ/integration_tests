@@ -10,7 +10,7 @@ import time
                 params=["rhevm32"])
 def mgmt_sys(request, cfme_data):
     param = request.param
-    return cfme_data.data['management_systems'][param]
+    return cfme_data['management_systems'][param]
 
 
 @pytest.mark.usefixtures("maximized")  # IGNORE:E1101

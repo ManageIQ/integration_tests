@@ -36,7 +36,6 @@ def test_default_ldap_group_roles(mozwebqa, group_name, group_data):
     LDAP group roles
     """
 
-    #for ldap_group, menu_contents in cfme_data.data['group_roles'].iteritems():
     login_pg = LoginPage(mozwebqa)
     login_pg.go_to_login_page()
     if group_name not in login_pg.testsetup.credentials:

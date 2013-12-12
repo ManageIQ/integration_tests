@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 def server_roles_categories(cfme_data):
     """ Provides the ``server_roles`` section from cfme_data
     """
-    return cfme_data.data.get("server_roles", {})
+    return cfme_data.get("server_roles", {})
 
 
 @pytest.fixture
@@ -122,7 +122,7 @@ def server_roles(fixtureconf, cfme_data, default_roles_list, cnf_configuration_p
                     logger.info("FIXTURE[server_roles]: No change with role setting %s" %
                                 role_message)
     elif 'server_roles_cfmedata' in fixtureconf:
-        roles_list = cfme_data.data
+        roles_list = cfme_data
         # Drills down into cfme_data YAML by selector, expecting a list
         # of roles at the end. A KeyError here probably means the YAMe
         # selector is wrong

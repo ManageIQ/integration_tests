@@ -54,7 +54,7 @@ class TestInstanceDetailsPowerControlPerProvider:
         """Test terminate operation from a instance details page.
         Verify instance is archived."""
 
-        prov_data = cfme_data.data["management_systems"][provider]
+        prov_data = cfme_data["management_systems"][provider]
         if prov_data["type"] == 'openstack':
             mgmt_sys_api_clients[provider].deploy_template(image_name, flavour_name='m1.tiny',
                 vm_name=random_string)

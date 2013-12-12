@@ -9,27 +9,27 @@ from selenium.common.exceptions import NoSuchElementException
                 params=["rhel"])
 def pxe_server(request, cfme_data):
     param = request.param
-    return cfme_data.data["pxe"]["pxe_servers"][param]
+    return cfme_data["pxe"]["pxe_servers"][param]
 
 @pytest.fixture(scope="module")
 def pxe_image_names(cfme_data):
-    return cfme_data.data["pxe"]["images"]
+    return cfme_data["pxe"]["images"]
 
 @pytest.fixture(scope="module")
 def pxe_datastore_names(cfme_data):
-    return cfme_data.data["pxe"]["datastores"]
+    return cfme_data["pxe"]["datastores"]
 
 @pytest.fixture(scope="module",
                 params=["rhel"])
 def pxe_templates(request, cfme_data):
     param = request.param
-    return cfme_data.data["pxe"]["templates"][param]
+    return cfme_data["pxe"]["templates"][param]
 
 @pytest.fixture(scope="module",
                 params=["rhel"])
 def pxe_template_type(request, cfme_data):
     param = request.param
-    return cfme_data.data["pxe"]["templates"][param]["template_type"]
+    return cfme_data["pxe"]["templates"][param]["template_type"]
 
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message not matched'
 

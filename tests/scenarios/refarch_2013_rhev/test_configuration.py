@@ -18,7 +18,7 @@ FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 def test_configure_auth_mode(cnf_configuration_pg, cfme_data):
     '''Configure authentication mode
     '''
-    server_data = cfme_data.data['ldap_server']
+    server_data = cfme_data['ldap_server']
     auth_pg = cnf_configuration_pg.click_on_settings().\
         click_on_current_server_tree_node().click_on_authentication_tab()
     if auth_pg.current_auth_mode != server_data['mode']:
@@ -49,7 +49,7 @@ def test_add_new_group(cnf_configuration_pg, user_group):
 def test_add_new_zone(cnf_configuration_pg, zone, cfme_data):
     '''Add new zone
     '''
-    win_domain_data = cfme_data.data['ldap_server']
+    win_domain_data = cfme_data['ldap_server']
     smartproxy_ip = urlparse(cnf_configuration_pg.testsetup.base_url).netloc
 
     zone_pg = cnf_configuration_pg.click_on_settings().click_on_zones()\
