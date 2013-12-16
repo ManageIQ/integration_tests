@@ -1,4 +1,4 @@
-from fixtures.navigation import click_fn, move_to_fn
+from cfme.fixtures.pytest_selenium import click_fn, move_to_fn
 import ui_navigate as nav
 from cfme.web_ui import Region
 

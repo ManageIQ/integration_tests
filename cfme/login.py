@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-import fixtures.pytest_selenium as browser
+import cfme.fixtures.pytest_selenium as browser
 from cfme.web_ui import Region
-import fixtures.configuration as conf
+import cfme.fixtures.configuration as conf
 import cfme.web_ui.flash as flash
 
 login_page = Region(title="CloudForms Management Engine: Dashboard",

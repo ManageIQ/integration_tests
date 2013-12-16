@@ -1,6 +1,6 @@
 from cfme.web_ui import Region
 from selenium.webdriver.common.by import By
-import fixtures.pytest_selenium as sel
+import cfme.fixtures.pytest_selenium as sel
 
 # TODO - flash apparently can show more than one message, so
 # we should return a list

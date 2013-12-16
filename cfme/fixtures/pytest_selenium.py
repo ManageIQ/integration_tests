@@ -7,7 +7,8 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
 from contextlib import contextmanager
-import fixtures.configuration as conf
+import cfme.fixtures.configuration as conf
+
 # Some thread local storage that only gets set up
 # once, won't get blown away when reloading module
 # Thread locals are for testing in parallel - each
