@@ -91,6 +91,7 @@ class Hosts(Base, PolicyMenu, TaskbarMixin, CommonPowerButton):
         ActionChains(self.selenium).click(
             self.configuration_button).click(self.remove_button).perform()
         self.handle_popup()
+        self._wait_for_results_refresh()
         return
 
     def edit_host_and_save(self, host):
