@@ -3,6 +3,7 @@
 import pytest
 import db
 import os
+from os.path import basename
 from datetime import datetime
 
 
@@ -11,6 +12,11 @@ from datetime import datetime
 def provisioning_setup_data(request, cfme_data):
     param = request.param
     return cfme_data["provisioning_setup"][param]
+
+
+@pytest.fixture
+def host_provisioning_setup_data(cfme_data):
+    return cfme_data["provisioning_setup"]['host_provisioning_setup']['pxe_server']
 
 
 def setup_pxe_server(db_session, provisioning_setup_data):
@@ -54,7 +60,7 @@ def setup_pxe_menu(db_session, provisioning_setup_data, server_last_id):
     session = db_session
 
     os.system("%s %s" % ("wget", provisioning_setup_data['pxe_menu_file']))
-    f = open(provisioning_setup_data['menu_file_name'], 'r+')
+    f = open(basename(provisioning_setup_data['menu_file_name']), 'r+')
     new_pxe_menu = db.PxeMenu(
         file_name=provisioning_setup_data['menu_file_name'],
         created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
@@ -95,7 +101,8 @@ def setup_pxe_image(db_session, provisioning_setup_data, server_last_id, menu_la
     os.system("%s %s" % ("rm -rf", provisioning_setup_data['pxe_menu_file']))
 
 
-def setup_customization_template(db_session, provisioning_setup_data, row_val):
+def setup_customization_template(db_session, provisioning_setup_data, row_val,
+                                 ks_file_handle=None):
     session = db_session
 
     row_val = None
@@ -109,7 +116,10 @@ def setup_customization_template(db_session, provisioning_setup_data, row_val):
     if not provisioning_setup_data['ct_name'] in customization_template:
 
         '''Add a Customization Template'''
-        f_ks = open(provisioning_setup_data['ks_file'], 'r+')
+        if ks_file_handle is None:
+            f_ks = open(provisioning_setup_data['ks_file'], 'r+')
+        else:
+            f_ks = ks_file_handle
         new_customization_template = db.CustomizationTemplate(
             created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
             description=provisioning_setup_data['ct_description'],
@@ -135,4 +145,21 @@ def setup_pxe_provision(db_session, provisioning_setup_data):
     '''Edit System Image Type'''
     rhel_type = db_session.query(db.PxeImageType).get(row_val)
     rhel_type.provision_type = 'vm'
+    db_session.commit()
+
+
+@pytest.fixture
+def setup_host_provisioning_pxe(db_session, host_provisioning_setup_data, datafile):
+    row_val, server_last_id = setup_pxe_server(db_session, host_provisioning_setup_data)
+    if server_last_id is not False:
+        ks_file_handle = datafile(host_provisioning_setup_data['ks_file'])
+        menu_last_id = setup_pxe_menu(db_session, host_provisioning_setup_data, server_last_id)
+        setup_pxe_image(db_session, host_provisioning_setup_data, server_last_id, menu_last_id,
+                        row_val)
+        setup_customization_template(db_session, host_provisioning_setup_data, row_val,
+                                     ks_file_handle=ks_file_handle)
+
+    '''Edit System Image Type'''
+    rhel_type = db_session.query(db.PxeImageType).get(row_val)
+    rhel_type.provision_type = 'host'
     db_session.commit()
