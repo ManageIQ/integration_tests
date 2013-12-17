@@ -1,9 +1,10 @@
 from selenium.webdriver.common.by import By
-from pages.region import Region
+from cfme.web_ui import Region
 import cfme.fixtures.pytest_selenium as browser
-import fixtures.navigation as nav
-import pages.regions.header_menu  # so that menu is already loaded before grafting onto it
-import utils.credentials as cred
+import ui_navigate as nav
+import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
+import cfme
+
 page = Region(locators=
               {'configuration_button': (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']"),
                'discover_button': (By.CSS_SELECTOR, "tr[title='Discover Cloud Providers']>td.td_btn_txt>div.btn_sel_text"),
@@ -33,7 +34,7 @@ page = Region(locators=
 
 
 nav.add_branch('clouds_providers',
-               {'clouds_providers_new': nav.click_fn(page.configuration_button, page.add_button)})
+               {'clouds_providers_new': browser.click_fn(page.configuration_button, page.add_button)})
 
 
 class Provider(object):
@@ -61,7 +62,7 @@ class Provider(object):
             self.ip_address = ip_address
             self.api_port = api_port
 
-    class Credential(cred.Credential):
+    class Credential(cfme.Credential):
         '''If using amqp type credential, amqp = True'''
 
         def __init__(self, **kwargs):
