@@ -129,8 +129,6 @@ class TestAllCatalogs(TestBaseCatalogs):
         req_pg = new_cat_item_pg.click_on_request_info_tab()
         self.complete_sc_pages_info(provisioning_data,
             req_pg, random_name, vm_name)
-        #mylist = create_catalog_item
-        #cat_name = mylist[1]
         Assert.true(svc_catalogs_pg.is_the_current_page)
         delete_pg = svc_catalogs_pg.click_on_catalogs_accordion().\
             click_on_catalog(catalog_name)
@@ -161,9 +159,6 @@ class TestAllCatalogs(TestBaseCatalogs):
         req_pg = new_cat_item_pg.click_on_request_info_tab()
         self.complete_sc_pages_info(provisioning_data,
             req_pg, random_name, vm_name)
-        #mylist = create_catalog_item
-        #cat_name = mylist[1]
-        #cat_item = mylist[2]
         Assert.true(svc_catalogs_pg.is_the_current_page)
         delete_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
             click_on_catalog_item(cat_item_name)
