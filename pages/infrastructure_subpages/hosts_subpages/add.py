@@ -131,14 +131,12 @@ class Add(Base):
                 credentials = self.testsetup.credentials[value]
                 self.default_userid.clear()
                 self.default_userid.send_keys(credentials['username'])
+                self._wait_for_visible_element(*self._default_validate_button_locator)
                 self.default_password.clear()
                 self.default_password.send_keys(credentials['password'])
+                self._wait_for_invisible_element(*self._default_validate_button_locator)
                 self.default_verify.clear()
                 self.default_verify.send_keys(credentials['password'])
-
-                # Because of the way that the data is entered, the button flicks off
-                # before flicking on again, this captures that behavior
-                self._wait_for_invisible_element(*self._default_validate_button_locator)
                 self._wait_for_visible_element(*self._default_validate_button_locator)
                 self.default_validate.click()
                 self._wait_for_results_refresh()
@@ -150,14 +148,12 @@ class Add(Base):
                 credentials = self.testsetup.credentials[value]
                 self.ipmi_userid.clear()
                 self.ipmi_userid.send_keys(credentials['username'])
+                self._wait_for_visible_element(*self._ipmi_validate_button_locator)
                 self.ipmi_password.clear()
                 self.ipmi_password.send_keys(credentials['password'])
+                self._wait_for_invisible_element(*self._ipmi_validate_button_locator)
                 self.ipmi_verify.clear()
                 self.ipmi_verify.send_keys(credentials['password'])
-
-                # Because of the way that the data is entered, the button flicks off
-                # before flicking on again, this captures that behavior
-                self._wait_for_invisible_element(*self._ipmi_validate_button_locator)
                 self._wait_for_visible_element(*self._ipmi_validate_button_locator)
                 self.ipmi_validate.click()
                 self._wait_for_results_refresh()
