@@ -2,8 +2,8 @@
 # pylint: disable=W0621
 import pytest
 import db
-import os
-from os.path import basename
+import requests
+import StringIO
 from datetime import datetime
 
 
@@ -59,15 +59,15 @@ def setup_pxe_menu(db_session, provisioning_setup_data, server_last_id):
 
     session = db_session
 
-    os.system("%s %s" % ("wget", provisioning_setup_data['pxe_menu_file']))
-    f = open(basename(provisioning_setup_data['menu_file_name']), 'r+')
+    doc = requests.get(provisioning_setup_data['pxe_menu_file'], verify=False)
+    content = StringIO.StringIO(doc.content).read()
     new_pxe_menu = db.PxeMenu(
         file_name=provisioning_setup_data['menu_file_name'],
         created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
         pxe_server_id=server_last_id,
         type=provisioning_setup_data['menu_type'],
         updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
-        contents=f.read())
+        contents=content)
     session.add(new_pxe_menu)
     session.commit()
     menu_id = []
@@ -96,9 +96,6 @@ def setup_pxe_image(db_session, provisioning_setup_data, server_last_id, menu_la
         updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"))
     session.add(new_pxe_image)
     session.commit()
-
-    '''Cleanup'''
-    os.system("%s %s" % ("rm -rf", provisioning_setup_data['pxe_menu_file']))
 
 
 def setup_customization_template(db_session, provisioning_setup_data, row_val,
