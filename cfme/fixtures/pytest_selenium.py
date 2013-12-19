@@ -69,14 +69,8 @@ def pytest_configure(config):
 
 
 ajax_wait_js = """
-var errfn = function(f) { try { return f() } catch(e) {return 0}};
-return errfn(function() { return jQuery.active }) +
-errfn(function() { return Ajax.activeRequestCount } +
-errfn(function() {);
-"""
-ajax_wait_js = """
 var inflight = function() {
-    return Array.slice(arguments).reduce(function (n, f) {
+    return Array.prototype.slice.call(arguments,0).reduce(function (n, f) {
         try {return (f() || 0) + n;} catch (e) { return n }}, 0)};
 return inflight(function() { return jQuery.active},
                 function() { return Ajax.activeRequestCount},
