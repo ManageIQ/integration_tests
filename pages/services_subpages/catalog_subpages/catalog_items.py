@@ -159,7 +159,6 @@ class CatalogItems(Base):
             no_of_vm,
             vm_name):
             '''Provisioning form - catalog tab'''
-            #catalog_item = None
             for item in ProvisionCatalog(self).catalog_list.items:
                 if item.name == template_name:
                     item.click()
@@ -172,10 +171,9 @@ class CatalogItems(Base):
 
         def save_catalog_item(self):
             '''Save'''
+            self._wait_for_visible_element(*self._add_button_locator)
             self.selenium.find_element(*self._add_button_locator).click()
-            print "in method"
             self._wait_for_results_refresh()
-            time.sleep(5)
             return self
 
     class ProvisionEntryPoint(Page):
@@ -197,12 +195,12 @@ class CatalogItems(Base):
         def fill_provisioning_entry_point(self, node1):
             '''Select node in tree'''
             self.selenium.find_element(*self._provisioning_entry_point).click()
-            time.sleep(5)
             for handle in self.selenium.window_handles:
                 self.selenium.switch_to_window(handle)
                 self.tag_tree.find_node_by_name(node1).twisty.expand()
                 self.tag_tree.find_node_by_name(node1).children[3].click()
                 self._wait_for_results_refresh()
+                self._wait_for_visible_element(*self._apply_btn)
                 self.selenium.find_element(*self._apply_btn).click()
                 time.sleep(2)
             self._wait_for_results_refresh()

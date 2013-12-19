@@ -95,7 +95,7 @@ def create_generic_catalog_item(random_string,
 def provisioning_data(request, cfme_data):
     '''Returns all provisioning data'''
     param = request.param
-    return cfme_data.data["provisioning"][param]
+    return cfme_data["provisioning"][param]
 
 
 @pytest.fixture
