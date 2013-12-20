@@ -1,13 +1,9 @@
-'''
-Created on April 10, 2013
-
-@author dgao
-'''
-
 from suds.client import Client
 from suds.transport.https import HttpAuthenticated
 from suds.xsd.doctor import ImportDoctor, Import
-from unittestzero import Assert
+
+from utils import conf
+
 
 class MiqClient(Client):
     @staticmethod
@@ -26,12 +22,12 @@ class MiqClient(Client):
 
         return '|'.join(pair_list)
 
+
 def soap_client(testsetup):
     """ SoapClient to EVM defined in testsetup"""
-    username = testsetup.credentials['default']['username']
-    password = testsetup.credentials['default']['password']
-    evm_server_hostname = testsetup.base_url.strip('https://')
-    url = '%s/vmdbws/wsdl/' % testsetup.base_url
+    username = conf.credentials['default']['username']
+    password = conf.credentials['default']['password']
+    url = '%s/vmdbws/wsdl/' % conf.env['base_url']
 
     transport = HttpAuthenticated(username=username, password=password)
     imp = Import('http://schemas.xmlsoap.org/soap/encoding/')
@@ -40,4 +36,3 @@ def soap_client(testsetup):
     client = MiqClient(url, transport=transport, doctor=doc)
 
     return client
-

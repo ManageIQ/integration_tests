@@ -195,7 +195,7 @@ def setup_cloud_providers(cloud_providers_pg, cfme_data):
 
 
 @pytest.fixture(scope='module')  # IGNORE:E1101
-def mgmt_sys_api_clients(mozwebqa, cfme_data):
+def mgmt_sys_api_clients(cfme_data):
     '''Returns a list of management system api clients'''
     clients = {}
     for sys_name in cfme_data['management_systems']:

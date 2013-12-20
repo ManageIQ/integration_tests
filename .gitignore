@@ -26,17 +26,18 @@ pip-log.txt
 .tox
 nosetests.xml
 chromedriver.log
-mozwebqa.cfg
-credentials.yaml
-cfme_data.yaml
-results
+conf/*.yaml
 pytest.ini
 
 # Translations
 *.mo
 
-# Mr Developer
+# IDE settings
+.codeintel
 .mr.developer.cfg
 .project
 .pydevproject
 .settings
+
+# Ipython notebooks need to be explicitly added
+notebooks/*.ipynb

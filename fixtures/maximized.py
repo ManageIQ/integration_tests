@@ -8,6 +8,6 @@ import pytest
 
 
 @pytest.fixture
-def maximized(mozwebqa):
-    mozwebqa.selenium.maximize_window()
-    return True
+def maximized():
+    # Included for backward compatibility, will be going away
+    pass

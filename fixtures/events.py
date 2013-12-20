@@ -1,16 +1,15 @@
-# -*- coding: utf8 -*-
-# pylint: disable=E1101
-import pytest
-import subprocess
 import logging
-import time
 import requests
 import socket
-from py.path import local
-from jinja2 import Template
+import subprocess
+import time
 from datetime import datetime
 
-from utils.cfme_data import load_cfme_data
+import pytest
+from jinja2 import Template
+from py.path import local
+
+from utils.conf import cfme_data
 
 
 def get_current_time_GMT():
@@ -90,7 +89,6 @@ class EventListener(object):
     TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
 
     def __init__(self, listener_port, settle_time, log_file="test_events.log"):
-        self.cfme_data = load_cfme_data()
         self.listener_port = int(listener_port)
         listener_filename = local(__file__).new(basename='../scripts/listener.py').strpath
         self.listener_script = "%s %d" % (listener_filename, self.listener_port)
@@ -107,7 +105,7 @@ class EventListener(object):
 
         It uses Sean's service to query the address.
         """
-        data = self.cfme_data.get("event_testing")
+        data = cfme_data.get("event_testing")
         assert data, "No event_testing section in cfme_data yaml"
         ipecho = data.get("ip_echo")
         assert ipecho, "No event_testing/ip_echo in cfme_data yaml"

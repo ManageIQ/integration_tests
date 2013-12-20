@@ -2,9 +2,11 @@
 
 import random
 import time
+
 import pytest
 from unittestzero import Assert
-from utils.cfme_data import load_cfme_data
+
+from utils.conf import cfme_data
 from utils.providers import cloud_provider_type_map
 
 pytestmark = [pytest.mark.nondestructive,
@@ -25,16 +27,15 @@ def fetch_list(data):
 
 
 def pytest_generate_tests(metafunc):
-    data = load_cfme_data(metafunc.config.option.cfme_data_filename)
     argnames = []
     tests = []
 
     if 'get_image' in metafunc.fixturenames:
         argnames = ['get_image', 'provider', 'image_name']
-        metafunc.parametrize(argnames, fetch_list(data), scope="module")
+        metafunc.parametrize(argnames, fetch_list(cfme_data), scope="module")
     elif 'random_provider_image' in metafunc.fixturenames:
         argnames = ['random_provider_image', 'provider', 'image_name']
-        all_tests = fetch_list(data)
+        all_tests = fetch_list(cfme_data)
         if all_tests:
             tests.append(random.choice(all_tests))
         metafunc.parametrize(argnames, tests, scope="module")
