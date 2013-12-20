@@ -1,19 +1,11 @@
-# -*- coding: utf-8 -*-
-
-# pylint: disable=C0103
-# pylint: disable=W0613
-# pylint: disable=R0913
-# pylint: disable=E1101
-
 import random
 import time
+
 import pytest
 from unittestzero import Assert
-from utils.cfme_data import load_cfme_data
-from utils.providers import infra_provider_type_map
 
-# TODO: write snmp trap receiver fixture to verify host shutdown/reboots
-# TODO: write event receiver
+from utils.conf import cfme_data
+from utils.providers import infra_provider_type_map
 
 pytestmark = [pytest.mark.nondestructive,
               pytest.mark.usefixtures("setup_infrastructure_providers"),
@@ -32,16 +24,15 @@ def fetch_list(data):
 
 
 def pytest_generate_tests(metafunc):
-    data = load_cfme_data(metafunc.config.option.cfme_data_filename)
     argnames = []
     tests = []
 
     if 'pwr_ctl_vms' in metafunc.fixturenames:
         argnames = ['pwr_ctl_vms', 'provider', 'vm_name']
-        metafunc.parametrize(argnames, fetch_list(data), scope="module")
+        metafunc.parametrize(argnames, fetch_list(cfme_data), scope="module")
     elif 'random_pwr_ctl_vm' in metafunc.fixturenames:
         argnames = ['random_pwr_ctl_vm', 'provider', 'vm_name']
-        all_tests = fetch_list(data)
+        all_tests = fetch_list(cfme_data)
         if all_tests:
             tests.append(random.choice(all_tests))
         metafunc.parametrize(argnames, tests, scope="module")

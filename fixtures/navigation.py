@@ -3,8 +3,6 @@
 import pytest
 from unittestzero import Assert
 
-from maximized import maximized
-
 _width_errmsg = '''The minimum supported width of CFME is 1280 pixels
 
 Some navigation fixtures will fail if the browser window is too small
@@ -13,13 +11,12 @@ due to submenu elements being rendered off the screen.
 
 
 @pytest.fixture
-def home_page_logged_in(mozwebqa):
+def home_page_logged_in(duckwebqa):
     """Log in to the appliance and return the home page."""
-    maximized(mozwebqa)
-    window_size = mozwebqa.selenium.get_window_size()
+    window_size = duckwebqa.selenium.get_window_size()
     Assert.greater_equal(window_size['width'], 1280, _width_errmsg)
     from pages.login import LoginPage
-    login_pg = LoginPage(mozwebqa)
+    login_pg = LoginPage(duckwebqa)
     login_pg.go_to_login_page()
     home_pg = login_pg.login()
     Assert.true(home_pg.is_logged_in, 'Could not determine if logged in')

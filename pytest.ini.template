@@ -1,2 +1,2 @@
 [pytest]
-addopts = --driver=chrome --credentials=credentials.yaml --untrusted
+# addopts = ---your-options-here

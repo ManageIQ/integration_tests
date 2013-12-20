@@ -29,7 +29,7 @@ def test_workaround_for_RHEV(ssh_client):
 
 
 @pytest.mark.smoke
-def test_import_namespace(mozwebqa, ssh_client, listener_info):
+def test_import_namespace(ssh_client, listener_info):
     """ Namespace import
 
     This fixture imports the ``qe_event_handlers.xml`` file into the machine.

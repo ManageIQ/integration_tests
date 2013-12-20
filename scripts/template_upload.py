@@ -1,15 +1,17 @@
 #!/usr/bin/python
 
-import subprocess
-import re
-import sys
 import argparse
+import re
+import subprocess
+import sys
+
 from psphere.client import Client
-from psphere.managedobjects import VirtualMachine
 from psphere.errors import ObjectNotFoundError
-from utils.wait import wait_for
-from utils.cfme_data import load_cfme_data
+from psphere.managedobjects import VirtualMachine
+
+from utils.conf import yamls
 from utils.credentials import load_credentials
+from utils.wait import wait_for
 
 
 def parse_cmd_line():
@@ -157,11 +159,9 @@ def make_template(client, name):
 
 
 if __name__ == "__main__":
-
-    cfme_data = load_cfme_data()
     args = parse_cmd_line()
 
-    provider = cfme_data['management_systems'][args.provider]
+    provider = yamls.cfme_data['management_systems'][args.provider]
     creds = load_credentials()[provider['credentials']]
 
     hostname = provider['hostname']

@@ -2,11 +2,12 @@ from urlparse import urlparse
 
 import pytest
 
+from utils import conf
 from utils.ssh import SSHClient
 
 
 @pytest.fixture
-def ssh_client(mozwebqa):
+def ssh_client():
     """SSH Client Fixture
 
     By default, it will connect to the host named in the mozwebqa baseurl on use,
@@ -50,8 +51,8 @@ def ssh_client(mozwebqa):
 
     """
 
-    ssh_credentials = mozwebqa.credentials['ssh']
-    parsed_url = urlparse(mozwebqa.base_url)
+    ssh_credentials = conf.credentials['ssh']
+    parsed_url = urlparse(conf.env['base_url'])
     connect_kwargs = {
         'username': ssh_credentials['username'],
         'password': ssh_credentials['password'],

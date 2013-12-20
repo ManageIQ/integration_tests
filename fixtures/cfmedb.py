@@ -1,44 +1,19 @@
-'''
-
-
-Created on Jun 14, 2013
-
-@author: bcrochet
-
-'''
-# -*- coding: utf-8 -*-
-# pylint: disable=C0103
-# pylint: disable=E1101
-import pytest
 from urlparse import urlparse
+
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import ConfigParser
 
-
-def pytest_addoption(parser):
-    '''Create the options for py.test'''
-    config = ConfigParser.ConfigParser(defaults={
-        'cfmedburl': ''
-    })
-    config.read('cfme.cfg')
-
-    group = parser.getgroup('cfme', 'cfme')
-    group.addoption('--cfmedburl',
-                    action='store',
-                    dest='cfme_db_url',
-                    default=config.get('DEFAULT', 'cfmedburl'),
-                    metavar='url',
-                    help='url for CFME database to connect to')
+from utils import conf
 
 
 def pytest_sessionstart(session):
     '''Setup run for tests'''
     import db
-    db.cfme_db_url = session.config.option.cfme_db_url
+    db.cfme_db_url = conf.env.get('cfme_db_url')
     if not db.cfme_db_url:
         # Let's try to figure it out
-        baseurl = session.config.option.base_url
+        baseurl = conf.env['base_url']
         baseip = urlparse(baseurl).hostname
         db.cfme_db_url = "postgres://root:smartvm@%s:5432/vmdb_production" % baseip
     db.engine = create_engine(db.cfme_db_url)

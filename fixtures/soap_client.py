@@ -1,9 +1,8 @@
 import pytest
 
-from utils.soap import soap_client as _soap_client
+import utils.soap
 
 
 @pytest.fixture()  # IGNORE:E1101
-def soap_client(mozwebqa):
-    return _soap_client(mozwebqa)
-
+def soap_client():
+    return utils.soap.soap_client()
