@@ -6,7 +6,7 @@
 import argparse
 import sys
 import os
-from utils.credentials import load_credentials
+from utils.conf import credentials
 from utils.ssh import SSHClient
 
 
@@ -20,7 +20,6 @@ def main():
 
     args = parser.parse_args()
 
-    credentials = load_credentials()
     ssh_kwargs = {
         'username': credentials['ssh']['username'],
         'password': credentials['ssh']['password'],
@@ -41,7 +40,7 @@ def main():
 
     # extract
     print 'Extracting sdk (' + filename + ')'
-    status, out = client.run_command('unzip -o -d /var/www/miq/vmdb/lib/ %s' % filename)
+    status, out = client.run_command('unzip -o -f -d /var/www/miq/vmdb/lib/ %s' % filename)
     if status != 0:
         print out
         sys.exit(1)
