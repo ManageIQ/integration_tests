@@ -9,8 +9,7 @@ from psphere.client import Client
 from psphere.errors import ObjectNotFoundError
 from psphere.managedobjects import VirtualMachine
 
-from utils.conf import yamls
-from utils.credentials import load_credentials
+from utils.conf import conf
 from utils.wait import wait_for
 
 
@@ -161,8 +160,8 @@ def make_template(client, name):
 if __name__ == "__main__":
     args = parse_cmd_line()
 
-    provider = yamls.cfme_data['management_systems'][args.provider]
-    creds = load_credentials()[provider['credentials']]
+    provider = conf.cfme_data['management_systems'][args.provider]
+    creds = conf.credentials[provider['credentials']]
 
     hostname = provider['hostname']
     username = creds['username']
