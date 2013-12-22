@@ -202,7 +202,7 @@ class PolicyView(Policies, TaskbarMixin, ReloadMixin):
     @property
     def configuration_edit_policy_event_assignment_button(self):
         return self.selenium\
-                   .find_element(*self._configuration_edit_policy_event_assignment_locator)
+                   .find_element(*self._configuration_edit_policy_event_locator)
 
     @property
     def can_be_deleted(self):
@@ -983,6 +983,7 @@ class PolicyEventAssignments(Policies):
     _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
     _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
     _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+    _vm_retired_locator = (By.XPATH, "//div[contains(.,'VM Retired')]/input")
 
     @property
     def save_button(self):
@@ -995,6 +996,10 @@ class PolicyEventAssignments(Policies):
     @property
     def reset_button(self):
         return self.selenium.find_element(*self._reset_locator)
+
+    @property
+    def vm_retired_checkbox(self):
+        return self.selenium.find_element(*self._vm_retired_locator)
 
     def save(self):
         """ Save changes.
