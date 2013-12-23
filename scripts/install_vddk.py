@@ -5,7 +5,7 @@
 
 import argparse
 import sys
-from utils.credentials import load_credentials
+from utils.conf import credentials
 from utils.ssh import SSHClient
 
 
@@ -19,7 +19,6 @@ def main():
 
     args = parser.parse_args()
 
-    credentials = load_credentials()
     ssh_kwargs = {
         'username': credentials['ssh']['username'],
         'password': credentials['ssh']['password'],
