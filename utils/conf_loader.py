@@ -21,13 +21,13 @@ class ConfigNotFoundException(Exception):
 class Config(dict):
     """A dict subclass with knowledge of conf yamls and how to load them
 
-    Also supports descriptor access, e.g. yamls.configfile
-    (compared to the normal dict access, yamls['configfile'])
+    Also supports descriptor access, e.g. conf.configfile
+    (compared to the normal dict access, conf['configfile'])
     """
     # Stash the exception on the class for convenience, e.g.
     # try:
-    #     yamls[does_not_exist]
-    # except yamls.NotFoundException
+    #     conf[does_not_exist]
+    # except conf.NotFoundException
     #     ...
     NotFoundException = ConfigNotFoundException
 
