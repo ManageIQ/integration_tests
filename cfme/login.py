@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import cfme.fixtures.pytest_selenium as browser
 from cfme.web_ui import Region
-import cfme.fixtures.configuration as conf
+from utils import conf
 import cfme.web_ui.flash as flash
 
 page = Region(title="CloudForms Management Engine: Dashboard",
@@ -36,6 +36,6 @@ def login(user, password, submit_method=_click_on_login):
 
 
 def login_admin(**kwargs):
-    user = conf.get_in('cfme', 'admin_user')
-    password = conf.get_in('cfme', 'admin_password')
+    user = conf.credentials['default']['username']
+    password = conf.credentials['default']['password']
     login(user, password, **kwargs)

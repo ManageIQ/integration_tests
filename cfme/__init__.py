@@ -1,7 +1,7 @@
 class Credential(object):
     """
     """
-        
+
     def __init__(self, principal=None, secret=None, verify_secret=None):
         """
         Arguments:
