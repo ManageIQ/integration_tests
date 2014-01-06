@@ -91,18 +91,6 @@ class TestInfrastructureProviders:
                 'Amazon Cloud Providers Discovery was cancelled by the user',
                 FLASH_MESSAGE_NOT_MATCHED)
 
-    @pytest.mark.nondestructive
-    def test_that_checks_flash_when_add_cancelled(self, cloud_providers_pg):
-        '''Tests that the flash message is correct when add is cancelled'''
-        prov_pg = cloud_providers_pg
-        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-        prov_add_pg = prov_pg.click_on_add_new_provider()
-        prov_pg = prov_add_pg.click_on_cancel()
-        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-        Assert.equal(prov_pg.flash.message,
-                'Add of new Cloud Provider was cancelled by the user',
-                FLASH_MESSAGE_NOT_MATCHED)
-
     @pytest.mark.usefixtures('has_no_providers')
     def test_provider_edit(self,
             cloud_providers_pg,
