@@ -6,14 +6,25 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme
 
 page = Region(locators=
-              {'configuration_button': (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']"),
-               'discover_button': (By.CSS_SELECTOR, "tr[title='Discover Cloud Providers']>td.td_btn_txt>div.btn_sel_text"),
-               'edit_button': (By.CSS_SELECTOR, "tr[title='Select a single Cloud Provider to edit']>td.td_btn_txt>div.btn_sel_text"),
-               'remove_button': (By.CSS_SELECTOR, "tr[title='Remove selected Cloud Providers from the VMDB']>td.td_btn_txt>div.btn_sel_text"),
-               'add_button': (By.CSS_SELECTOR, "tr[title='Add a New Cloud Provider']>td.td_btn_txt>div.btn_sel_text"),
+              {'configuration_button': (By.CSS_SELECTOR,
+                                        "div.dhx_toolbar_btn[title='Configuration']"),
+               'discover_button': (By.CSS_SELECTOR,
+                                   "tr[title='Discover Cloud Providers']>td.td_btn_txt>"
+                                   "div.btn_sel_text"),
+               'edit_button': (By.CSS_SELECTOR,
+                               "tr[title='Select a single Cloud Provider to edit']>"
+                               "td.td_btn_txt>div.btn_sel_text"),
+               'remove_button': (By.CSS_SELECTOR,
+                                 "tr[title='Remove selected Cloud Providers from the VMDB']>"
+                                 "td.td_btn_txt>div.btn_sel_text"),
+               'add_button': (By.CSS_SELECTOR, "tr[title='Add a New Cloud Provider']>"
+                              "td.td_btn_txt>div.btn_sel_text"),
                'add_submit': (By.CSS_SELECTOR, "img[alt='Add this Cloud Provider']"),
-               'credentials_verify_button': (By.CSS_SELECTOR, "div#default_validate_buttons_on > ul#form_buttons > li > a > img"),
-               'credentials_verify_disabled_button': (By.CSS_SELECTOR, "div#default_validate_buttons_off > ul#form_buttons > li > a > img"),
+               'credentials_verify_button': (By.CSS_SELECTOR, "div#default_validate_buttons_on >"
+                                             " ul#form_buttons > li > a > img"),
+               'credentials_verify_disabled_button': (By.CSS_SELECTOR,
+                                                      "div#default_validate_buttons_off > "
+                                                      "ul#form_buttons > li > a > img"),
                'cancel_button': (By.CSS_SELECTOR, "img[title='Cancel']"),
                'name_text': (By.ID, "name"),
                'hostname_text': (By.ID, "hostname"),
@@ -27,14 +38,17 @@ page = Region(locators=
                'amqp_password_text': (By.ID, "amqp_password"),
                'amqp_verify_text': (By.ID, "amqp_verify"),
                'server_zone_text': (By.ID, "server_zone"),
-               'default_credentials_button': (By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#default']"),
-               'amqp_credentials_button': (By.CSS_SELECTOR, "div#auth_tabs > ul > li > a[href='#amqp']"),
+               'default_credentials_button': (By.CSS_SELECTOR,
+                                              "div#auth_tabs > ul > li > a[href='#default']"),
+               'amqp_credentials_button': (By.CSS_SELECTOR,
+                                           "div#auth_tabs > ul > li > a[href='#amqp']"),
                'api_port': (By.ID, "port")},
               title='CloudForms Management Engine: Cloud Providers')
 
 
 nav.add_branch('clouds_providers',
-               {'clouds_providers_new': browser.click_fn(page.configuration_button, page.add_button)})
+               {'clouds_providers_new': browser.click_fn(page.configuration_button,
+                                                         page.add_button)})
 
 
 class Provider(object):

@@ -64,32 +64,6 @@ def has_no_providers(db_session):
 
 pytestmark = [pytest.mark.usefixtures("home_page_logged_in"),
               pytest.mark.nondestructive]
-              
-
-def test_that_checks_flash_with_empty_discovery_form():
-    '''Tests that the flash message is correct when discovery form is
-    empty
-    '''
-    prov_pg = cloud_providers_pg
-    Assert.true(prov_pg.is_the_current_page)
-    prov_discover_pg = prov_pg.click_on_discover_providers()
-    prov_discover_pg.click_on_start()
-    Assert.equal(prov_discover_pg.flash.message,
-            'User ID is required',
-            FLASH_MESSAGE_NOT_MATCHED)
-
-
-def test_that_checks_flash_when_discovery_cancelled():
-    '''Tests that the flash message is correct when discovery is cancelled
-    '''
-    prov_pg = cloud_providers_pg
-    Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-    prov_discover_pg = prov_pg.click_on_discover_providers()
-    prov_pg = prov_discover_pg.click_on_cancel()
-    Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-    Assert.equal(prov_pg.flash.message,
-            'Amazon Cloud Providers Discovery was cancelled by the user',
-            FLASH_MESSAGE_NOT_MATCHED)
 
 
 def test_that_checks_flash_when_add_cancelled():
@@ -99,74 +73,3 @@ def test_that_checks_flash_when_add_cancelled():
     Assert.equal(flash.get_message(),
                  'Add of new Cloud Provider was cancelled by the user',
                  FLASH_MESSAGE_NOT_MATCHED)
-
-
-@pytest.mark.usefixtures('has_no_providers')
-def test_provider_edit(provider, random_uuid_as_string):
-    '''Tests that editing a management system shows the proper detail
-    after an edit
-    '''
-    prov_pg = cloud_providers_pg
-    edit_name = random_uuid_as_string
-    prov_pg.taskbar_region.view_buttons.change_to_grid_view()
-    Assert.true(prov_pg.taskbar_region.view_buttons.is_grid_view)
-    prov_pg.select_provider(provider['name'])
-    Assert.equal(len(prov_pg.quadicon_region.selected), 1,
-            'More than one quadicon was selected')
-    prov_edit_pg = prov_pg.click_on_edit_providers()
-    provider['edit_name'] = edit_name
-    prov_detail_pg = prov_edit_pg.edit_provider(provider)
-    Assert.equal(prov_detail_pg.flash.message,
-            'Cloud Provider "%s" was saved' \
-            % provider['edit_name'], FLASH_MESSAGE_NOT_MATCHED)
-    Assert.equal(prov_detail_pg.name, provider['edit_name'],
-            DETAIL_NOT_MATCHED_TEMPLATE % 'Edited name')
-    Assert.equal(prov_detail_pg.zone, provider['server_zone'],
-            DETAIL_NOT_MATCHED_TEMPLATE % 'Server zone')
-
-
-@pytest.mark.usefixtures('has_no_providers')
-def test_provider_add(provider_data, soap_client):
-    '''Tests adding a new management system
-    '''
-    prov_pg = cloud_providers_pg
-    prov_add_pg = prov_pg.click_on_add_new_provider()
-    prov_pg = prov_add_pg.add_provider(provider_data)
-    Assert.equal(prov_pg.flash.message,
-            'Cloud Providers "%s" was saved' \
-             % provider_data['name'],
-            FLASH_MESSAGE_NOT_MATCHED)
-
-
-@pytest.mark.usefixtures('has_no_providers')
-def test_provider_add_with_bad_credentials(provider_data):
-    '''Tests adding a new management system with bad credentials
-    '''
-    prov_pg = cloud_providers_pg
-    prov_add_pg = prov_pg.click_on_add_new_provider()
-    provider_data['credentials'] = 'bad_credentials'
-    prov_add_pg = prov_add_pg.add_provider_with_bad_credentials(
-            provider_data)
-    Assert.equal(prov_add_pg.flash.message,
-        'Login failed due to a bad username or password.',
-        FLASH_MESSAGE_NOT_MATCHED)
-
-"""    @pytest.mark.usefixtures('has_no_providers')
-    def test_providers_discovery_starts(
-             cloud_providers_pg, provider_data):
-        '''Tests the start of a management system discovery
-        '''
-        prov_pg = cloud_providers_pg
-        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-        prov_discovery_pg = prov_pg.click_on_discover_providers()
-        Assert.true(prov_discovery_pg.is_the_current_page,
-                CURRENT_PAGE_NOT_MATCHED)
-        prov_pg = prov_discovery_pg.discover_infrastructure_providers(
-                provider_data['type'],
-                provider_data['discovery_range']['start'],
-                provider_data['discovery_range']['end'])
-        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-        Assert.equal(prov_pg.flash.message,
-                'Infrastructure Providers: Discovery successfully initiated',
-                FLASH_MESSAGE_NOT_MATCHED)
-"""
