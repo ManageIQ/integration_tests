@@ -53,7 +53,7 @@ nav.add_branch('clouds_providers',
 
 class Provider(object):
     '''Models a cloud provider in cfme'''
-    
+
     def __init__(self, name=None, details=None, credentials=None, zone=None):
         self.name = name
         self.details = details

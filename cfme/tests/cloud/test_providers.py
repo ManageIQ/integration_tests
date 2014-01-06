@@ -62,8 +62,7 @@ def has_no_providers(db_session):
     db_session.query(db.ExtManagementSystem).delete()
     db_session.commit()
 
-pytestmark = [pytest.mark.usefixtures("home_page_logged_in"),
-              pytest.mark.nondestructive]
+pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
 def test_that_checks_flash_when_add_cancelled():

@@ -1,44 +1,16 @@
-import pytest
 import threading
-from selenium import webdriver
+import pytest
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
-from contextlib import contextmanager
 from utils import conf
-
-# Some thread local storage that only gets set up
-# once, won't get blown away when reloading module
-# Thread locals are for testing in parallel - each
-# thread will get a different selenium session
-if not 'thread_locals' in globals():
-    thread_locals = threading.local()
-
-
-def browser():
-    return thread_locals.selenium
+from utils.browser import browser
 
 
 def baseurl():
     return conf.env['base_url']
-
-
-@contextmanager
-def selenium_session(cls, *args, **kwargs):
-    sel = cls(*args, **kwargs)
-    thread_locals.selenium = sel
-    sel.maximize_window()
-    sel.get(baseurl())
-    yield sel
-    sel.quit()
-
-
-@pytest.yield_fixture
-def selenium(*args, **kwargs):
-    with selenium_session(webdriver.Firefox) as sel:
-        yield sel
 
 
 ajax_wait_js = """
@@ -51,6 +23,9 @@ return inflight(function() { return jQuery.active},
                 function() { if (document.readyState == "complete") { return 0 } else { return 1}});
 """
 
+
+# END CFME specific stuff, should eventually factor
+# out everything below into a lib
 
 def elements(o):
     '''Convert o to list of matching WebElements. Strings are considered xpath.'''
