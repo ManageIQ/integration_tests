@@ -27,8 +27,12 @@ Setup
    - `pip install -Ur /path/to/virtualenv/cfme_tests/requirements.txt`
 1. Copy template files in cfme_tests to the same file name without the .template extension
    - Example: `cp file.name.template file.name`
-   - Bash script example: `for file in *.template; do cp -n $file ${file/.template}; done`
-1. Edit the copied files as needed to reflect your environment.
+   - Bash script example: `for file in *.template; do cp -n $file ${file/.template}; 
+done`
+  - Edit these files as needed to reflect your environment.
+1. Do the same for the config yamls in the conf directory, using [Configuration YAMLs](https://github.com/RedHatQE/cfme_tests/wiki/Configuration-YAMLs#local-configuration-overrides)
+  - Example: `cd conf/; cp env.local.template env.local`
+  - Then edit `conf/env.local.yaml` to override `base_url`
 1. Verify that the tests run (in the cfme_tests dir in the virtualenv)
    - `py.test --driver=firefox --credentials=credentials.yaml --untrusted`
 
