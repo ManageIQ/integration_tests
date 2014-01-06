@@ -33,11 +33,15 @@ done`
 1. Do the same for the config yamls in the conf directory, using [Configuration YAMLs](https://github.com/RedHatQE/cfme_tests/wiki/Configuration-YAMLs#local-configuration-overrides)
   - Example: `cd conf/; cp env.local.template env.local`
   - Then edit `conf/env.local.yaml` to override `base_url`
-1. Verify that the tests run (in the cfme_tests dir in the virtualenv)
-   - `py.test --driver=firefox --credentials=credentials.yaml --untrusted`
+1. Set up a local selenium server that opens browser windows somewhere other than your desktop by running [Selenium over VNC](https://github.com/RedHatQE/cfme_tests/wiki/Selenium-over-vnc)
+1. Test! Run `py.test`. (This takes a long time, Ctrl-C will stop it)
 
-Some of the items in the final step can be put into your environment, and into pytest.ini
-so you can then run py.test without arguments. That exercise is left for the reader.
+`Note`
+> In the past, the pytest_mozwebqa package was used to help manage the web browser and selenium session.
+> We've recently done away with it, so you can safely `pip uninstall pytest_mozwebqa`.
+> pytest_mozwebqa provided many commandline options (for example: --driver, --baseurl, --credentials, --untrusted).
+> These will all need to be removed from the py.test invocation (or addopts line in pytest.ini) if mozwebqa
+> is uninstalled.
 
 Activating the virtualenv
 -------------------------
@@ -86,11 +90,7 @@ Background
 The testing framework being used is py.test:
 http://pytest.org/latest
 
-We are also using a plugin from the mozwebqa people to integrate py.test with Selenium:
-https://github.com/davehunt/pytest-mozwebqa
-
-Mozilla style guide, contains some useful guidelines for making good page objects:
-https://wiki.mozilla.org/QA/Execution/Web_Testing/Docs/Automation/StyleGuide
+Firefox is currently unsupported, but it will be working again soon.
 
 Using Chrome
 ------------
@@ -99,7 +99,6 @@ Using Chrome
    Use the latest available for your architecture.
 1. Extract the `chromedriver` exectuable from that archive into your virtualenv's `bin`
    directory (alongside `bin/activate`)
-1. Substitue the py.test `--driver=firefox` parameter with `--driver=chrome`
 
 More Information
 ----------------
