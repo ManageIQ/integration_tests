@@ -5,7 +5,7 @@ import cfme.dashboard as dashboard
 from utils import conf
 
 
-@pytest.mark.usefixtures("selenium")
+@pytest.mark.usefixtures("browser")
 def test_login():
     login_admin()
     Assert.true(dashboard.page.is_displayed(), "Could not determine if logged in")
