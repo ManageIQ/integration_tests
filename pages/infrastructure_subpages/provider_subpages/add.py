@@ -1,10 +1,9 @@
-'''
-Created on May 31, 2013
+from time import sleep
 
-@author: bcrochet
-'''
-from pages.base import Base
 from selenium.webdriver.common.by import By
+
+from pages.base import Base
+
 
 class ProvidersAdd(Base):
     '''Infrastructure Providers - Add an Infrastructure Provider page'''
@@ -146,10 +145,10 @@ class ProvidersAdd(Base):
         '''Fill a infrastructure provider given a dictionary'''
         for key, value in provider.iteritems():
             # Special cases
-            if "server_zone" in key:
+            if key == "server_zone":
                 if self.server_zone.tag_name == "select":
-                    self.select_dropdown(value)
-            elif "cu_credentials" in key:
+                    self.select_dropdown(value, *self._server_zone_edit_field_locator)
+            elif key == "cu_credentials":
                 self.click_on_metrics_credentials()
                 credentials = self.testsetup.credentials[value]
                 self.metrics_userid.clear()
@@ -159,7 +158,7 @@ class ProvidersAdd(Base):
                 self.metrics_verify.clear()
                 self.metrics_verify.send_keys(credentials['password'])
                 continue
-            elif "credentials" in key:
+            elif key == "credentials":
                 self.click_on_default_credentials()
                 credentials = self.testsetup.credentials[value]
                 self.default_userid.clear()
@@ -221,12 +220,15 @@ class ProvidersAdd(Base):
         self.select_dropdown(
                 provider_type,
                 *self._provider_type_locator)
-        self._wait_for_results_refresh()
+        self._wait_for_visible_element(*self._provider_ipaddress_locator)
         return ProvidersAdd(self.testsetup)
 
     def click_on_add(self):
         '''Click on the add button'''
+        # TODO: Remove this when ajax wait works on form fills
+        sleep(.7)
         self.add_button.click()
+        self._wait_for_results_refresh()
         from pages.infrastructure_subpages.providers \
                 import Providers
         return Providers(self.testsetup)
