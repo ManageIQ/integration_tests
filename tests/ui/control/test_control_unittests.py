@@ -42,6 +42,9 @@ def test_click_the_accordion(control_explorer_pg):
 def test_expression_editor(control_explorer_pg, random_string):
     """ This test is supposed to test every possible combination of the expression field.
 
+    To be further extended as the expression editor will know how to edit the more advanced fields.
+
+    Triggers BZ#1039971.
     """
     conditions = control_explorer_pg.click_on_conditions_accordion()
     page = conditions.add_new_host_condition()

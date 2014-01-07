@@ -19,7 +19,6 @@ class ConditionEditor(ExpressionEditorMixin):
     _edit_this_scope_locator = (By.CSS_SELECTOR, "#form_scope_div img[alt='Edit this Scope']")
 
     _description_input_locator = (By.CSS_SELECTOR, "input#description")
-    _notes_textarea_locator = (By.CSS_SELECTOR, "textarea#notes")
 
     @property
     def add_button(self):
@@ -32,10 +31,6 @@ class ConditionEditor(ExpressionEditorMixin):
     @property
     def description_input(self):
         return self.selenium.find_element(*self._description_input_locator)
-
-    @property
-    def notes_textarea(self):
-        return self.selenium.find_element(*self._notes_textarea_locator)
 
     @property
     def edit_expression_button(self):
@@ -70,21 +65,6 @@ class ConditionEditor(ExpressionEditorMixin):
             self.edit_scope_button.click()
             self._wait_for_results_refresh()
         return self
-
-    @property
-    def notes(self):
-        """ Returns contents of the notes textarea
-
-        """
-        return self.notes_textarea.text.strip()
-
-    @notes.setter
-    def notes(self, value):
-        """ Sets the contents of the notes textarea
-
-        """
-        self.notes_textarea.clear()
-        self.notes_textarea.send_keys(value)
 
     @property
     def description(self):

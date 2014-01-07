@@ -299,6 +299,29 @@ class BaseConditionEdit(Conditions, ConditionEditor):
     """ General editing class, used for inheriting
 
     """
+    # We must check that the notes textarea is editable - we are on the correct page
+    _notes_textarea_locator = (By.CSS_SELECTOR, "textarea#notes:not([readonly='true'])")
+
+    # Override the read-only notes
+    @property
+    def notes_textarea(self):
+        self._wait_for_visible_element(*self._notes_textarea_locator, visible_timeout=5)
+        return self.selenium.find_element(*self._notes_textarea_locator)
+
+    @property
+    def notes(self):
+        """ Returns contents of the notes textarea
+
+        """
+        return self.notes_textarea.text.strip()
+
+    @notes.setter
+    def notes(self, value):
+        """ Sets the contents of the notes textarea
+
+        """
+        self.notes_textarea.clear()
+        self.notes_textarea.send_keys(value)
 
 
 class NewCondition(BaseConditionEdit):
