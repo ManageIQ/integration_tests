@@ -60,6 +60,13 @@ class WebDriverWrapper(object):
         self._webdriver = webdriver
         self._base_url = base_url
 
+    def __dir__(self):
+        # Custom __dir__ handler to better impersonate a WebDriver
+        # (basically makes tab-completion work in the python shell)
+        my_dir = self.__dict__.keys() + type(self).__dict__.keys()
+        wrapped_dir = dir(self._webdriver)
+        return sorted(list(set(my_dir) | set(wrapped_dir)))
+
     def __getattr__(self, attr):
         # Try to pull the attr from this obj, and then go down to the
         # wrapped webdriver if that fails
