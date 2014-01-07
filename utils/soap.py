@@ -23,8 +23,8 @@ class MiqClient(Client):
         return '|'.join(pair_list)
 
 
-def soap_client(testsetup):
-    """ SoapClient to EVM defined in testsetup"""
+def soap_client():
+    """ SoapClient to EVM based on base_url"""
     username = conf.credentials['default']['username']
     password = conf.credentials['default']['password']
     url = '%s/vmdbws/wsdl/' % conf.env['base_url']
