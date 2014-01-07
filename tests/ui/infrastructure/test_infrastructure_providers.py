@@ -146,7 +146,7 @@ class TestInfrastructureProviders:
 
     @pytest.mark.usefixtures('has_no_providers')
     @pytest.mark.usefixtures('infra_provider_data')
-    def test_provider_add(self, infra_providers_pg, provider_data, soap_client):
+    def test_provider_add(self, infra_providers_pg, provider_data):
         prov_pg = infra_providers_pg
         prov_add_pg = prov_pg.click_on_add_new_provider()
         prov_pg = prov_add_pg.add_provider(provider_data)
@@ -158,7 +158,7 @@ class TestInfrastructureProviders:
     @pytest.mark.xfail(reason='https://bugzilla.redhat.com/show_bug.cgi?id=1003060')
     @pytest.mark.usefixtures('infra_provider_data')
     @pytest.mark.usefixtures('has_no_providers')
-    def test_providers_add_but_set_type_last(self, infra_providers_pg, provider_data, soap_client):
+    def test_providers_add_but_set_type_last(self, infra_providers_pg, provider_data):
         # Just let server_zone be default
         del(provider_data['server_zone'])
 
