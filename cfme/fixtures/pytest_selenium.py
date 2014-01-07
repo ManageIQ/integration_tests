@@ -14,7 +14,8 @@ def baseurl():
 ajax_wait_js = """
 var inflight = function() {
     return Array.prototype.slice.call(arguments,0).reduce(function (n, f) {
-        try {return (f() || 0) + n;} catch (e) { return n }}, 0)};
+        try {flt = f() || 0;
+             flt=(Math.abs(flt)+flt)/2; return flt + n;} catch (e) { return n }}, 0)};
 return inflight(function() { return jQuery.active},
                 function() { return Ajax.activeRequestCount},
                 function() { return window.miqAjaxTimers},
