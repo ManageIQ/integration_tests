@@ -13,6 +13,11 @@ flash_area = Region(locators=
                     {'message': (By.XPATH, "//div[@id='flash_text_div' or @id='flash_div']")})
 
 
+def dismiss_message():
+    if sel.is_displayed(flash_area.message):
+        sel.click(flash_area.message)
+
+
 def get_message():
     if sel.is_displayed(flash_area.message):
         return sel.text(flash_area.message)
