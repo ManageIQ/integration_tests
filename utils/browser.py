@@ -41,6 +41,12 @@ def start(_webdriver=None, base_url=None, **kwargs):
 
         browser = WebDriverWrapper(_webdriver(**browser_kwargs), base_url)
         browser.maximize_window()
+        # Xvfb has some issues with enlarging the horizontal dimension
+        dimensions = browser.get_window_size()
+        if dimensions["width"] < 1280:
+            browser.set_window_position(0, 0)
+            browser.set_window_size(1280, dimensions["height"])
+
         browser.get(base_url)
         thread_locals.browser = browser
 
