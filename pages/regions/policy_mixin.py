@@ -72,8 +72,9 @@ class PolicyMixin(Page):
     @property
     def profile_list(self):
         '''Returns the template list region'''
-        _root_item_locator = (By.CSS_SELECTOR,
-                "div#treebox > div > table > tbody")
+        _root_item_locator = (By.CSS_SELECTOR, "div#treebox > div > table > tbody")
+        # Prevent ajax glitching
+        self._wait_for_visible_element(*_root_item_locator, visible_timeout=10)
         return ListRegion(
                 self.testsetup,
                 self.get_element(*_root_item_locator),
