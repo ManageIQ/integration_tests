@@ -22,7 +22,7 @@ class Base(Page):
 
     @property
     def flash(self):
-        return Base.FlashRegion(self.testsetup)
+        return Base.FlashRegion(self)
 
     @property
     def is_logged_in(self):
@@ -102,14 +102,22 @@ class Base(Page):
     class FlashRegion(Page):
         _flash_div_locator = (By.CSS_SELECTOR, "div#flash_text_div")
         _flash_message_locator = (By.CSS_SELECTOR, "ul li")
-        
-        def __init__(self,setup):
-            self.testsetup = setup
-            self._root_element = self.testsetup.selenium.find_element(*self._flash_div_locator)
-        
+
+        def __init__(self, page):
+            self.page = page
+
+        @property
+        def div(self):
+            self.page._wait_for_visible_element(*self._flash_div_locator)
+            return self.page.get_element(*self._flash_div_locator)
+
+        @property
+        def message_item(self):
+            return self.div.find_element(*self._flash_message_locator)
+
         @property
         def message(self):
-            return self._root_element.find_element(*self._flash_message_locator).text
+            return self.message_item.text
 
         def click(self):
-            self._root_element.find_element(*self._flash_message_locator).click()
+            self.message_item.click()
