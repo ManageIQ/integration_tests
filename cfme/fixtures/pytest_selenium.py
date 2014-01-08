@@ -84,6 +84,10 @@ def text(loc):
     return element(loc).text
 
 
+def tag(loc):
+    return element(loc).tag_name
+
+
 def get_attribute(loc, attr):
     return element(loc).get_attribute(attr)
 
@@ -116,6 +120,24 @@ def select_by_value(loc, text):
         el = element(loc)
         ActionChains(browser()).move_to_element(el).perform()
         Select(el).select_by_value(text)
+        wait_for_ajax()
+
+
+def checkbox(loc, set_to=False):
+    '''Checks a given checkbox
+
+    Finds an element given by loc and checks it
+
+    Args:
+        loc: The locator of the element
+        value: The attr value to compare against
+
+    Returns: None
+    '''
+    el = element(loc)
+    ActionChains(browser()).move_to_element(el).perform()
+    if el.is_selected() is not set_to:
+        el.click()
         wait_for_ajax()
 
 
