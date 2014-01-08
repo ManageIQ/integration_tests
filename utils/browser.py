@@ -2,6 +2,7 @@ import threading
 from contextlib import contextmanager
 
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 
 from utils import conf
 
@@ -17,32 +18,38 @@ def browser():
 
 
 def start(_webdriver=None, base_url=None, **kwargs):
-    # Sanity check in the unlikely event of a nested session
-    if thread_locals.browser is None:
-        if _webdriver is None:
-            # If unset, look to the config for the webdriver type
-            # defaults to Firefox
-            _webdriver = conf.env['browser'].get('webdriver', 'Firefox')
+    # Try to clean up an existing browser session if starting a new one
+    if thread_locals.browser is not None:
+        try:
+            thread_locals.browser.quit()
+        except WebDriverException:
+            pass
+        finally:
+            thread_locals.browser = None
 
-        if isinstance(_webdriver, basestring):
-            # Try to convert _webdriver str into a webdriver by name
-            # e.g. 'Firefox', 'Chrome', RemoteJS', useful for interactive development
-            _webdriver = getattr(webdriver, _webdriver)
+    if _webdriver is None:
+        # If unset, look to the config for the webdriver type
+        # defaults to Firefox
+        _webdriver = conf.env['browser'].get('webdriver', 'Firefox')
 
-        # else: assume _webdriver is a WebDriver class already
+    if isinstance(_webdriver, basestring):
+        # Try to convert _webdriver str into a webdriver by name
+        # e.g. 'Firefox', 'Chrome', RemoteJS', useful for interactive development
+        _webdriver = getattr(webdriver, _webdriver)
+    # else: implicitly assume _webdriver is a WebDriver class already
 
-        if base_url is None:
-            base_url = conf.env['base_url']
+    if base_url is None:
+        base_url = conf.env['base_url']
 
-        # Pull in browser kwargs from browser yaml
-        browser_kwargs = conf.env['browser'].get('webdriver_options', {})
-        # Update it with passed-in options/overrides
-        browser_kwargs.update(kwargs)
+    # Pull in browser kwargs from browser yaml
+    browser_kwargs = conf.env['browser'].get('webdriver_options', {})
+    # Update it with passed-in options/overrides
+    browser_kwargs.update(kwargs)
 
-        browser = WebDriverWrapper(_webdriver(**browser_kwargs), base_url)
-        browser.maximize_window()
-        browser.get(base_url)
-        thread_locals.browser = browser
+    browser = WebDriverWrapper(_webdriver(**browser_kwargs), base_url)
+    browser.maximize_window()
+    browser.get(base_url)
+    thread_locals.browser = browser
 
     return thread_locals.browser
 
@@ -60,6 +67,13 @@ class WebDriverWrapper(object):
         self._webdriver = webdriver
         self._base_url = base_url
 
+    def __dir__(self):
+        # Custom __dir__ handler to better impersonate a WebDriver
+        # (basically makes tab-completion work in the python shell)
+        my_dir = self.__dict__.keys() + type(self).__dict__.keys()
+        wrapped_dir = dir(self._webdriver)
+        return sorted(list(set(my_dir) | set(wrapped_dir)))
+
     def __getattr__(self, attr):
         # Try to pull the attr from this obj, and then go down to the
         # wrapped webdriver if that fails
@@ -71,11 +85,6 @@ class WebDriverWrapper(object):
 
     def start(self):
         return start(type(self._webdriver), self._base_url)
-
-    def quit(self):
-        if thread_locals.browser is not None:
-            thread_locals.browser = None
-        self._webdriver.quit()
 
 
 class DuckwebQaTestSetup(object):
