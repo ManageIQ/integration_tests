@@ -171,8 +171,10 @@ class ProvidersAdd(Base):
                 credentials = self.testsetup.credentials[value]
                 self.default_userid.clear()
                 self.default_userid.send_keys(credentials['username'])
+                self._wait_for_visible_element(*self._provider_credentials_validate_button_locator)
                 self.default_password.clear()
                 self.default_password.send_keys(credentials['password'])
+                self._wait_for_invisible_element(*self._provider_credentials_validate_button_locator)
                 self.default_verify.clear()
                 self.default_verify.send_keys(credentials['password'])
                 continue

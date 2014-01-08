@@ -10,10 +10,14 @@ from jinja2 import Template
 from utils.conf import cfme_data
 from utils.log import create_logger
 from utils.path import data_path, scripts_path
+from utils.wait import wait_for, TimedOutError
 
 
 def get_current_time_GMT():
     """ Because SQLite loves GMT.
+
+    Returns:
+        datetime() with current GMT time
     """
     return datetime.strptime(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "%Y-%m-%d %H:%M:%S")
 
@@ -28,7 +32,7 @@ class HTMLReport(object):
         with open(tpl_filename, "r") as tpl, \
                 open(filename, "w") as f:
             template = Template(tpl.read())
-            f.write(template.render(events=self.events, num_events=len(self.events)))
+            f.write(template.render(events=self.events))
 
 
 class EventExpectation(object):
@@ -79,7 +83,7 @@ class EventExpectation(object):
             td = self.arrived - self.time
             return int(round(td.total_seconds()))
         else:
-            return "Did not come :("
+            return "Did not come"
 
 
 class EventListener(object):
@@ -93,6 +97,7 @@ class EventListener(object):
         self.settle_time = int(settle_time)
         self.expectations = []
         self.logger = create_logger('events')
+        self.processed_expectations = {}
         self.listener = None
 
     def get_listener_host(self):
@@ -130,6 +135,20 @@ class EventListener(object):
         self.logger.debug("Response: %s" % response)
         return response
 
+    def _delete_database(self):
+        """ Sends a DELETE /events request for listener.
+
+        Listener reacts to this kind of request by truncating contents of the events table.
+
+        Returns:
+            Boolean signalizing success.
+        """
+        assert not self.finished, "Listener dead!"
+        listener_url = "%s:%d" % (self.get_listener_host(), self.listener_port)
+        r = requests.delete(listener_url + "/events")
+        r.raise_for_status()
+        return r.json().get("result") == "success"
+
     def mgmt_sys_type(self, sys_type, obj_type):
         """ Map management system type from cfme_data.yaml to match event string
         """
@@ -139,21 +158,25 @@ class EventListener(object):
                    "virtualcenter": "EmsVmware"}
         vm_map = {"rhevm": "VmRedhat",
                   "virtualcenter": "VmVmware"}
-        if obj_type in "ems":
+        if obj_type in {"ems"}:
             return ems_map.get(sys_type)
-        elif obj_type in "vm":
+        elif obj_type in {"vm"}:
             return vm_map.get(sys_type)
 
     def check_db(self, sys_type, obj_type, obj, event, after=None, before=None):
         """ Utility to check listener database for event
 
-        :param after: Return only events that happened AFTER this time
-        :param before: Return only events that happened BEFORE this time
+        Args:
+            after:
+                Return only events that happened AFTER this time
+            before:
+                Return only events that happened BEFORE this time
 
-        Both can be combined. If None, then the filter won't be applied.
+        Note:
+            Both can be combined. If None, then the filter won't be applied.
         """
-        max_attempts = 2
-        sleep_interval = 5
+        max_attempts = 10
+        sleep_interval = 2
         req = "/events/%s/%s?event=%s" % (self.mgmt_sys_type(sys_type, obj_type), obj, event)
         # Timespan limits
         if after:
@@ -188,7 +211,9 @@ class EventListener(object):
         Simplified to check just against the time of registration
         and the begin of this check.
 
-        @todo: Wouldn't it be better with also a event list from the listener?
+        Returns:
+            Boolean whether all events have already been captured.
+
         """
         check_started = get_current_time_GMT()
         for expectation in self.expectations:
@@ -215,7 +240,7 @@ class EventListener(object):
             came = self.check_db(*params, after=preceeding_event, before=check_started)
             if came:
                 expectation.arrived = came
-        return self.expectations
+        return all([exp.arrived is not None for exp in self.expectations])
 
     @property
     def expectations_count(self):
@@ -232,29 +257,6 @@ class EventListener(object):
             print "Registering event", event
             self.logger.info("Event registration: %s" % str(locals()))    # Debug
             self.add_expectation(sys_type, obj_type, obj, event)
-
-    @pytest.fixture(scope="session")
-    def register_event(self):
-        """ Event registration fixture
-
-        This fixture is used to notify the testing system that some event
-        should have occured during execution of the test case using it.
-        It does not register anything by itself, but it is used as a
-        function like this::
-
-        >>> def test_something(foo, bar, register_event):
-        ...     register_event("systype", "objtype", "obj", "event")
-        ...     # or
-        ...     register_event("systype", "objtype", "obj", ["event1", "event2"])
-        ...     # do_some_stuff_that_triggers()
-
-        It also registers the time when the registration was done so we can filter
-        out the same events, but coming in other times (like vm on/off/on/off will
-        generate 3 unique events, but twice, distinguishable only by time).
-        It can also partially prevent scumbag 'Jimmy' ruining the test if he does
-        something in the hypervisor that the listener registers.
-        """
-        return self
 
     @pytest.fixture(scope="session")
     def listener_info(self):
@@ -282,6 +284,8 @@ class EventListener(object):
     def start(self):
         assert not self.listener, "Listener can't be running in order to start it!"
         self.logger.info("Starting listener %s" % self.listener_script)
+        print("In order to run the event testing, port %d must be enabled." % self.listener_port)
+        print("sudo firewall-cmd --add-port %d/tcp --permanent" % self.listener_port)
         self.listener = subprocess.Popen(self.listener_script,
                                          stderr=subprocess.PIPE,
                                          shell=True)
@@ -308,19 +312,13 @@ class EventListener(object):
         if config.getoption("event_testing_enabled"):
             # Collect results
             try:
-                print "Collecting event testing results ..."
-                assert not self.finished, "Listener died prematurely!"
-                print "Waiting %d seconds for any remaining events to come ..." % self.settle_time
-                time.sleep(self.settle_time)
-                print "Running check ..."
-                expectations_list = self.check_all_expectations()
                 # Generate result report
-                report = HTMLReport(expectations_list)
+                report = HTMLReport(self.processed_expectations)
                 report.generate(config.getoption("event_testing_result"))
             finally:
                 self.stop()
         else:
-            print "Event testing disabled, no collecting, no reports"
+            print("Event testing disabled, no collecting, no reports")
 
 
 def pytest_addoption(parser):
@@ -359,3 +357,55 @@ def pytest_configure(config):
     assert registration
     if config.getoption("event_testing_enabled"):
         plugin.start()
+
+
+@pytest.yield_fixture(scope="function")
+def register_event(request):
+    """ Event registration fixture
+
+    This fixture is used to notify the testing system that some event
+    should have occured during execution of the test case using it.
+    It does not register anything by itself, but it is used as a
+    function like this::
+
+    >>> def test_something(foo, bar, register_event):
+    ...     register_event("systype", "objtype", "obj", "event")
+    ...     # or
+    ...     register_event("systype", "objtype", "obj", ["event1", "event2"])
+    ...     # do_some_stuff_that_triggers()
+
+    It also registers the time when the registration was done so we can filter
+    out the same events, but coming in other times (like vm on/off/on/off will
+    generate 3 unique events, but twice, distinguishable only by time).
+    It can also partially prevent scumbag 'Jimmy' ruining the test if he does
+    something in the hypervisor that the listener registers.
+
+    After the test function finishes, it checks the listener whether it has caught the events.
+    If any of the events has not been caught, it raises a pytest.fail.
+    Before and after each test run using this fixture, database is cleared.
+
+    Args:
+        request:
+            py.test's fixture request
+    """
+    # We pull out the plugin directly.
+    self = request.config.pluginmanager.getplugin("event_testing")  # Workaround for bind
+    node_id = request.node.nodeid
+    self.loggerinfo("Clearing the database before testing ...")
+    self._delete_database()
+    self.expectations = []
+    yield self  # Run the test and provide the plugin as a fixture
+    self.logger.info("Checking the events ...")
+    try:
+        wait_for(self.check_all_expectations,
+                 delay=5,
+                 num_sec=75,
+                 handle_exception=True)
+    except TimedOutError:
+        pass
+    if node_id not in self.processed_expectations:
+        self.processed_expectations[node_id] = []
+    self.processed_expectations[node_id].extend(self.expectations)
+    self.logger.info("Clearing the database after testing ...")
+    self._delete_database()
+    self.expectations = []

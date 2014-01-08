@@ -30,6 +30,7 @@ class CommonPowerButton(Button):
         item = self.selenium.find_element(*self._shutdown_option_locator)
         ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
+        self._wait_for_results_refresh()
 
     def shutdown(self):
         self._shutdown(click_cancel=False)
@@ -41,6 +42,7 @@ class CommonPowerButton(Button):
         item = self.selenium.find_element(*self._restart_option_locator)
         ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
+        self._wait_for_results_refresh()
 
     def restart(self):
         self._restart(click_cancel=False)
@@ -52,6 +54,7 @@ class CommonPowerButton(Button):
         item = self.selenium.find_element(*self._power_on_option_locator)
         ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
+        self._wait_for_results_refresh()
 
     def power_on(self):
         self._power_on(click_cancel=False)
@@ -63,6 +66,7 @@ class CommonPowerButton(Button):
         item = self.selenium.find_element(*self._power_off_option_locator)
         ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
+        self._wait_for_results_refresh()
 
     def power_off(self):
         self._power_off(click_cancel=False)
@@ -74,6 +78,7 @@ class CommonPowerButton(Button):
         item = self.selenium.find_element(*self._suspend_option_locator)
         ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
+        self._wait_for_results_refresh()
 
     def suspend(self):
         self._suspend(click_cancel=False)
@@ -85,6 +90,7 @@ class CommonPowerButton(Button):
         item = self.selenium.find_element(*self._reset_option_locator)
         ActionChains(self.selenium).click(self._root_element).click(item).perform()
         self.handle_popup(click_cancel)
+        self._wait_for_results_refresh()
 
     def reset(self):
         self._reset(click_cancel=False)

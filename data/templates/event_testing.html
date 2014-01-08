@@ -9,8 +9,12 @@
 
     <body>
         <div class="container">
-            <h1>Total <strong>{{ num_events }}</strong> events</h1>
+            <h1>Event testing results</h1>
             <table class="zebra-striped">
+            {% for test_name, registered_events in events.iteritems() %}
+                <tr>
+                    <th colspan="7"><em>{{ test_name }}</em></th>
+                </tr>
                 <tr>
                     <th>Time registered</th>
                     <th>Succeeded?</th>
@@ -20,7 +24,7 @@
                     <th>Object</th>
                     <th>Event</th>
                 </tr>
-                {% for event in events %}
+                {% for event in registered_events %}
                 <tr>
                     <td>{{ event.time_friendly }}</td>
                     <td style="color: {{ event.colour }};">{{ event.success_friendly }}</td>
@@ -31,6 +35,7 @@
                     <td><i>{{ event.event }}</i></td>
                 </tr>
                 {% endfor %}
+            {% endfor %}
             </table>
             <p>
                 <i>If something breaks down, go kill <a href="mailto:mfalesni@redhat.com">mfalesni@redhat.com</a></i>

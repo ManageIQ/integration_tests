@@ -29,6 +29,8 @@ class Twisty(Page):
     def click(self):
         self._root_element.find_element(*self._twisty_locator).click()
         self._wait_for_results_refresh()
+        # Workaround
+        self._wait_for_invisible_element(By.CSS_SELECTOR, "div#notification", visible_timeout=5)
     
     def expand(self):
         did_expand = False
