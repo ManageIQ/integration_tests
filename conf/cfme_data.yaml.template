@@ -22,6 +22,8 @@ management_systems:
         hosts:
             - name: myhost
               credentials: myhost
+              type: esxi
+              test_fleece: True
         datastores:
             - iscsi
         tags:
@@ -48,6 +50,8 @@ management_systems:
         hosts:
             - name: myhost
               credentials: myhost
+              type: rhel
+              test_fleece: False
         datastores:
             - iscsi
         tags:

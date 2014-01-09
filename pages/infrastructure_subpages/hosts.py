@@ -8,8 +8,8 @@ from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+from utils.wait import wait_for
 import re
-import time
 
 
 class Hosts(Base, PolicyMenu, TaskbarMixin, CommonPowerButton):
@@ -64,8 +64,10 @@ class Hosts(Base, PolicyMenu, TaskbarMixin, CommonPowerButton):
         self._wait_for_results_refresh()
 
     def check_host_and_refresh(self, host_name):
+        if self.does_host_exist(host_name):
+            return True
         self.selenium.refresh()
-        return self.does_host_exist(host_name)
+        return False
 
     def select_host(self, host_name):
         '''Mark host checkbox'''
@@ -111,20 +113,12 @@ class Hosts(Base, PolicyMenu, TaskbarMixin, CommonPowerButton):
 
     def wait_for_host_or_timeout(self, host_name, timeout=120):
         '''Wait for a host to become available or timeout trying'''
-        max_time = timeout
-        wait_time = 1
-        total_time = 0
-        host = None
-        while total_time <= max_time and host is None:
-            try:
-                self.selenium.refresh()
-                host = self.quadicon_region.get_quadicon_by_title(host_name)
-            except:
-                total_time += wait_time
-                time.sleep(wait_time)
-                wait_time *= 2
-        if total_time > max_time:
-            raise Exception("Could not find host in time")
+        wait_for(
+            self.check_host_and_refresh,
+            func_args=[host_name],
+            num_sec=timeout,
+            delay=2,
+            expo=True)
 
     @property
     def taskbar(self):

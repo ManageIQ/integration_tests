@@ -98,24 +98,25 @@ class TasksButtons(Button):
         return result
 
     def _delete(self, option_locator, click_cancel):
-        item = self.selenium.find_element(option_locator)
+        item = self.selenium.find_element(*option_locator)
         ActionChains(self.selenium).click(self.delete_button).click(item).perform()
         self.handle_popup(click_cancel)
+        self._wait_for_results_refresh()
 
     def delete_selected(self):
-        self._delete(*self._delete_option_locator, click_cancel=False)
+        self._delete(self._delete_option_locator, click_cancel=False)
 
     def delete_selected_and_cancel(self):
-        self._delete(*self._delete_option_locator, click_cancel=True)
+        self._delete(self._delete_option_locator, click_cancel=True)
 
     def delete_older(self):
-        self._delete(*self._delete_older_option_locator, click_cancel=False)
+        self._delete(self._delete_older_option_locator, click_cancel=False)
 
     def delete_older_and_cancel(self):
-        self._delete(*self._delete_older_option_locator, click_cancel=True)
+        self._delete(self._delete_older_option_locator, click_cancel=True)
 
     def delete_all(self):
-        self._delete(*self._delete_all_option_locator, click_cancel=False)
+        self._delete(self._delete_all_option_locator, click_cancel=False)
 
     def delete_all_and_cancel(self):
-        self._delete(*self._delete_all_option_locator, click_cancel=True)
+        self._delete(self._delete_all_option_locator, click_cancel=True)
