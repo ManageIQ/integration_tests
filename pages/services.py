@@ -9,17 +9,18 @@ from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.support.select import Select
 from pages.services_subpages.catalog_subpages.catalogs import Catalogs
 from pages.services_subpages.catalog_subpages.catalog_items import CatalogItems
-from pages.services_subpages.catalog_subpages.service_catalogs import ServiceCatalogs
+from pages.services_subpages.catalog_subpages.service_catalogs \
+    import ServiceCatalogs
 
 
 class Services(Base):
     '''Services page'''
     @property
     def submenus(self):
-        return {"services": Services.MyServices,
-                "catalogs": Services.Catalogs,
-                "miq_request_vm": Services.Requests,
-                }
+        return {
+            "services": Services.MyServices,
+            "catalogs": Services.Catalogs,
+            "miq_request_vm": Services.Requests, }
 
     @property
     def is_the_current_page(self):
@@ -39,7 +40,8 @@ class Services(Base):
 
         def select_service_in_tree(self, service_name):
             '''Select service'''
-            self.accordion.current_content.find_node_by_name(service_name).click()
+            self.accordion.current_content.\
+                find_node_by_name(service_name).click()
             self._wait_for_results_refresh()
             return self
 
@@ -73,7 +75,8 @@ class Services(Base):
             "div#center_tb > div.float_left \
             > div[title='Approve this Request']")
         _reason_text_field = (By.ID, "reason")
-        _submit_button = (By.CSS_SELECTOR,
+        _submit_button = (
+            By.CSS_SELECTOR,
             "span#buttons_on > a > img[alt='Submit']")
         _time_period_select_locator = (By.ID, "time_period")
         _requests_link_locator = (
@@ -118,9 +121,9 @@ class Services(Base):
 
             if len(self.requests_list.items) > 0 and \
                     self.requests_list.items[item_number]\
-                    .approval_state is not None:
+                    .view_this_item is not None:
                 self.requests_list.items[
-                    item_number].approval_state\
+                    item_number].view_this_item\
                     .find_element_by_tag_name('img').click()
 
                 self._wait_for_visible_element(*self._requests_link_locator)
@@ -129,7 +132,7 @@ class Services(Base):
                         *self._approve_this_request_button).click()
                     self._wait_for_results_refresh()
                     self.selenium.find_element(
-                        *self._reason_text_field).send_keys("Test provisioning")
+                        *self._reason_text_field).send_keys("Test provision")
                     self._wait_for_results_refresh()
                     self._wait_for_visible_element(*self._submit_button)
                     self.selenium.find_element(*self._submit_button).click()
@@ -139,7 +142,10 @@ class Services(Base):
                         *self._requests_link_locator).click()
             return Services.Requests(self.testsetup)
 
-        def wait_for_request_status(self, time_period_text, request_status, timeout_in_minutes):
+        def wait_for_request_status(
+                self,
+                time_period_text,
+                request_status, timeout_in_minutes):
             '''Wait for request status'''
             if not self.get_element(*self._check_box_approved).is_selected():
                 self.get_element(*self._check_box_approved).click()
@@ -155,34 +161,41 @@ class Services(Base):
             requests_items = self.requests_list.items
             for i in range(1, len(requests_items)):
                 data.update({i: requests_items[i].request_id})
-            sorted_data = sorted(data.iteritems(), key=operator.itemgetter(1), reverse=True)
+                sorted_data = sorted(
+                    data.iteritems(),
+                    key=operator.itemgetter(1),
+                    reverse=True)
             requests_index = sorted_data[0][0]
             minute_count = 0
             while (minute_count < timeout_in_minutes):
                 if self.requests_list.items[requests_index]\
-                        .status == request_status:
+                        .approval_state == request_status:
                     if self.requests_list.items[requests_index]\
-                            .request_id == "Ok":
+                            .status == "Ok":
                         break
                     else:
-                        raise Exception("Status of request is " +
-                            self.requests_list.items[requests_index].request_id)
+                        raise Exception(
+                            "Status of request is " +
+                            self.requests_list.items[requests_index]
+                            .approval_state)
                 print "Waiting for provisioning status: " + request_status
                 sleep(60)
                 self.time_period.select_by_visible_text(time_period_text)
                 self.get_element(*self._reload_button).click()
                 self._wait_for_results_refresh()
                 if (minute_count == timeout_in_minutes) and \
-                   (self.requests_list.items[requests_index].status != request_status):
-                    raise Exception("timeout reached(" + str(timeout_in_minutes) +
-                       " minutes) before desired state (" +
-                       request_status + ") reached... current state(" +
-                       self.requests_list.items[requests_index].status + ")")
+                   (self.requests_list.items[requests_index]
+                        .status != request_status):
+                    raise Exception(
+                        "timeout reached(" + str(timeout_in_minutes) +
+                        " minutes) before desired state (" +
+                        request_status + ") reached... current state(" +
+                        self.requests_list.items[requests_index].status + ")")
             return Services.Requests(self.testsetup)
 
     class RequestItem(ListItem):
         '''Represents a request in the list'''
-        _columns = ["view_this_item", "approval_state", "status",
+        _columns = ["view_this_item", "status", "approval_state",
                     "request_id", "requester",
                     "request _type", "completed", "description", "approved_on",
                     "created_on", "last_update", "reason",
@@ -191,11 +204,6 @@ class Services(Base):
         @property
         def view_this_item(self):
             '''View Item'''
-            return self._item_data[0].text
-
-        @property
-        def approval_state(self):
-            '''Approval State'''
             return self._item_data[1]
 
         @property
@@ -204,9 +212,14 @@ class Services(Base):
             return self._item_data[2].text
 
         @property
+        def approval_state(self):
+            '''Approval State'''
+            return self._item_data[3].text
+
+        @property
         def request_id(self):
             '''request Id'''
-            return self._item_data[3].text
+            return self._item_data[4].text
 
         @property
         def requester(self):
