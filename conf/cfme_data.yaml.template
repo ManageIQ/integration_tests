@@ -507,4 +507,8 @@ event_testing:
     ip_echo:
         host: "somehost"
         port: 8080
-
+log_depot:
+    ftp:
+        machine:
+            credentials: machine_ftp
+            hostname: machine.example.com
