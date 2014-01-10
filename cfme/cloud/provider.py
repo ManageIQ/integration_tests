@@ -4,6 +4,8 @@ import cfme.fixtures.pytest_selenium as browser
 import ui_navigate as nav
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme
+from functools import partial
+
 
 page = Region(locators=
               {'configuration_button': (By.CSS_SELECTOR,
@@ -46,9 +48,24 @@ page = Region(locators=
               title='CloudForms Management Engine: Cloud Providers')
 
 
+discover_page = Region(locators=
+                       {'start_button': (By.CSS_SELECTOR, "input[name='start']"),
+                        'cancel_button': (By.CSS_SELECTOR, "input[name='cancel']"),
+                        'username': (By.ID, 'userid'),
+                        'password': (By.ID, 'password'),
+                        'password_verify': (By.ID, 'verify'),
+                        'form_title': (By.CSS_SELECTOR, "div.dhtmlxInfoBarLabel-2")},
+                       title='CloudForms Management Engine: Cloud Providers')
+
 nav.add_branch('clouds_providers',
                {'clouds_providers_new': browser.click_fn(page.configuration_button,
-                                                         page.add_button)})
+                                                         page.add_button),
+                'clouds_providers_discover': browser.click_fn(page.configuration_button,
+                                                              page.discover_button)})
+
+# setter(loc) = a function that when called with text
+# sets textfied at loc to text.
+setter = partial(partial, browser.set_text)
 
 
 class Provider(object):
@@ -100,9 +117,6 @@ class Provider(object):
                 raise TypeError("Unknown type of provider details: %s" % type(details))
 
         if self.credentials:
-            def setter(loc):
-                return lambda text: browser.set_text(loc, text)
-
             if self.credentials.amqp:
                 browser.click(page.amqp_credentials_button)
                 self.credentials.fill(setter(page.amqp_userid_text),
@@ -118,9 +132,24 @@ class Provider(object):
         else:
             browser.click(page.add_submit)
 
+
+def discover(credential, cancel=False):
+    nav.go_to('clouds_providers_discover')
+    if credential:
+        credential.fill(setter(discover_page.username),
+                        setter(discover_page.password),
+                        setter(discover_page.password_verify))
+    if cancel:
+        browser.click(discover_page.cancel_button)
+    else:
+        browser.click(discover_page.start_button)
+
+
+
 # How to use
 
 # myprov = Provider(name='foo',
 #                   details=Provider.EC2Details(region='US West (Oregon)'),
 #                   credentials=Provider.Credential(principal='admin', secret='foobar'))
 # myprov.create()
+
