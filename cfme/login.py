@@ -30,9 +30,7 @@ def login(user, password, submit_method=_click_on_login):
     browser.set_text(page.username_text, user)
     browser.set_text(page.password_text, password)
     submit_method()
-    login_error = flash.get_message()
-    if login_error:
-        raise RuntimeError("Login as %s:%s failed: '%s'" % (user, password, login_error))
+    flash.assert_no_errors()
 
 
 def login_admin(**kwargs):
