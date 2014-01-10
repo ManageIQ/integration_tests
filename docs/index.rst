@@ -12,7 +12,6 @@ Contents:
    :maxdepth: 2
 
    dev_guide
-   cfme.web_ui
    cfme
    fixtures
    web_ui
