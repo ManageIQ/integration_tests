@@ -30,7 +30,20 @@ class VirtualMachines(VmCommonComponents):
 
     def _mark_icon_and_call_method(self, vm_names, op_func):
         self.quadicon_region.mark_icon_checkbox(vm_names)
-        op_func()
+        return op_func()
+
+    def manage_policies(self, vm_names):
+        return self._mark_icon_and_call_method(vm_names, self.click_on_manage_policies)
+
+    def add_policy_profile(self, vm_names, profiles):
+        if not (isinstance(profiles, list)
+                or isinstance(profiles, tuple)
+                or isinstance(profiles, set)):
+            profiles = [profiles]
+        manage = self.manage_policies(vm_names)
+        for profile in profiles:
+            manage.select_profile_item(profile)
+        manage.save()
 
     def shutdown(self, vm_names):
         self._mark_icon_and_call_method(vm_names, self.power_button.shutdown)
