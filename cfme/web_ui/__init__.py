@@ -1,3 +1,23 @@
+"""
+cfme.web_ui
+-----------
+
+The :py:mod:`cfme.web_ui` module provides a number of objects to help with
+managing certain elements in the CFME UI. Specifically there two categories of
+objects, organizational and elemental.
+
+* **Organizational**
+
+  * :py:class:`Region`
+  * :py:mod:`cfme.web_ui.menu`
+
+* **Elemental**
+
+  * :py:class:`Form`
+  * :py:class:`Table`
+  * :py:class:`Radio`
+
+"""
 import re
 from unittestzero import Assert
 from selenium.webdriver.support.ui import WebDriverWait
@@ -9,9 +29,15 @@ import selenium
 
 
 class Region(object):
-    '''
+    """
     Base class for all UI regions/pages
-    '''
+
+    Args:
+        locators: A dict of locator objects for the given region
+        title: A string containing the title of the page
+        identifying_loc: Not sure
+    Return: A :py:class:`Region`
+    """
     def __getattr__(self, name):
         return self.locators[name]
 
@@ -21,6 +47,11 @@ class Region(object):
         self.title = title
 
     def is_displayed(self):
+        """
+        Checks to see if the region is currently displayed
+
+        Returns: A boolean describing if the region is currently displayed
+        """
         Assert.true(self.identifying_loc is not None or
                     self.title is not None,
                     msg="Region doesn't have an identifying locator or title," +
@@ -37,12 +68,23 @@ class Region(object):
 
 
 def get_context_current_page():
+    """
+    Returns the current page name
+
+    Returns: A string containing the current page name
+    """
     url = browser().current_url()
     stripped = url.lstrip('https://')
     return stripped[stripped.find('/'):stripped.rfind('?')]
 
 
 def handle_popup(cancel=False):
+    """
+    Handles a popup
+
+    Args:
+        cancel: If ``True``, clicks OK, if ``False``, clicks Cancel
+    """
     wait = WebDriverWait(browser(), 30.0)
     # throws timeout exception if not found
     wait.until(EC.alert_is_present())
@@ -53,7 +95,7 @@ def handle_popup(cancel=False):
 
 
 class Table(object):
-    '''
+    """
     Helper class for Table/List objects
 
     Turns CFME custom Table/Lists into iterable objects using a generator.
@@ -69,15 +111,13 @@ class Table(object):
             and the data are contained inside the same table element.
 
     Attributes:
-        header_indexes:
-            A dict of header names related to their index as a column.
-        items:
-            A generator yielding a Row object which is addressable using the header
-            names or index.
+        header_indexes: A dict of header names related to their index as a column.
+        items: A generator yielding a :py:class:`Table.Row` object which is
+            addressable using the header names or index.
 
-    Returns: A Table object.
+    Returns: A :py:class:`Table` object.
 
-    '''
+    """
     def __init__(self, header_data=None, row_data=None):
         self.header_data = header_data
         self.row_data = row_data
@@ -86,28 +126,28 @@ class Table(object):
 
     @staticmethod
     def _convert_header(header):
-        '''
+        """
         Convers header cell text into something usable as an identifier.
 
         Static method which replaces spaces in headers with underscores and strips out
         all other characters to give an identifier.
 
         Args:
-            header: A string to be converted.
+            header: A header name to be converted.
 
         Returns: A string holding the converted header.
-        '''
+        """
         return re.sub('[^0-9a-zA-Z ]+', '', header).replace(' ', '_').lower()
 
     def _update_cache(self):
-        '''
+        """
         Updates the internal cache of headers
 
         This allows columns to be moved and the Table updated. The variable _hc stores
         the header cache element and the list of headers are stored in _headers. The
         attribute header_indexes is then created, before finally creating the items
         attribute.
-        '''
+        """
         self._hc = sel.element(self.header_data[0] + '//tr[%i]' % (self.header_data[1] + 1))
         self._headers = self._hc.find_elements_by_xpath('td | th')
         self.header_indexes = {
@@ -115,14 +155,14 @@ class Table(object):
             for cell in self._headers}
 
     def _items_generator(self):
-        '''
+        """
         A generator method holding the Row objects
 
         This generator yields Row objects starting at the first data row.
 
         Yields:
-            Row object corresponding to the next row in the Table.
-        '''
+            :py:class:`Table.Row` object corresponding to the next row in the table.
+        """
         self._update_cache()
         index = self.row_data[1] + 1
         data = sel.element(self.row_data[0] + '//tr[%i]' % (index))
@@ -137,7 +177,7 @@ class Table(object):
                 data = []
 
     def click_item(self, header, data):
-        '''
+        """
         Clicks on an item defined in the row.
 
         Uses the header identifier and a data to determine which item to click on.
@@ -148,8 +188,8 @@ class Table(object):
                 to click.
 
         Raises:
-            NotAllItemsClicked: If some items were unable to be found.
-        '''
+            cfme.exceptions.NotAllItemsClicked: If some items were unable to be found.
+        """
         clicked = []
         if isinstance(data, str):
             data = [data]
@@ -171,7 +211,7 @@ class Table(object):
                 % ", ".join(list(missed_items)))
 
     class Row():
-        '''
+        """
         An object representing a row in a Table.
 
         The Row object returns a dymanically addressable attribute space so that
@@ -179,29 +219,30 @@ class Table(object):
 
         Notes:
             Attributes are dynamically generated
-        Returns: Row object
-        '''
+
+        Returns: A :py:class:`Table.Row` object.
+        """
         def __init__(self, header_indexes, data, loc):
             self.header_indexes = header_indexes
             self.data = data
             self.loc = loc
 
         def __getattr__(self, name):
-            '''
+            """
             Returns Row element by header name
-            '''
+            """
             return self.data.find_elements_by_xpath('td[%s]' % self.header_indexes[name])[0]
 
         def __getitem__(self, index):
-            '''
+            """
             Returns Row element by header index
-            '''
+            """
             index += 1
             return self.data.find_elements_by_xpath('td[%i]' % index)[0]
 
 
 class Form(object):
-    '''A helper class for interacting with Form elements on pages.
+    """A helper class for interacting with Form elements on pages.
 
     The Form class takes a set of locators and binds them together to create a
     unified Form object. This Form object has a defined field order so that the
@@ -210,15 +251,16 @@ class Form(object):
     from yamls.
 
     Args:
-        region: All locators must be present within the same Region context. The region
-            argument is required to define the scope for the retrieval of locators.
+        region: Expects a :py:class:`Region`. All locators must be present within the same Region
+            context. The region argument is required to define the scope for the retrieval
+            of locators.
         field_order: A dict of field names. If this is left empty then no elements
             will be completed. The argument not only defines the order of the elements
             but also which elements comprise part of the form.
 
     Returns:
-        A Form object.
-    '''
+        A :py:class:`Form` object.
+    """
 
     field_order = None
     tag_types = {'select': sel.select_by_text,
@@ -233,7 +275,9 @@ class Form(object):
         self.region = region
 
     def fill_fields(self, values, action=None):
-        '''Fills in field elements on forms
+        """Fills in field elements on forms
+
+        Fills in field elements on forms
 
         Takes a set of values in dict or supertuple format and locates form elements,
         in the correct order, and fills them in.
@@ -243,15 +287,15 @@ class Form(object):
             and Table objects/elements.
 
         Args:
-            values: a dict or supertuple formatted set of data where each key is the name
-                of the form locator from the page model. Some objects/elements, such as
-                Table objects, support providing multiple values to be clicked on in a single
-                call
+            values: a dict or supertuple formatted set of data where
+                each key is the name of the form locator from the page model. Some
+                objects/elements, such as :py:class:`Table` objects, support providing
+                multiple values to be clicked on in a single call.
             action: a locator which will be clicked when the form filling is complete
 
         Raises:
-            UnidentifiableTagType: If the element/object is unknown.
-        '''
+            cfme.exceptions.UnidentifiableTagType: If the element/object is unknown.
+        """
         if isinstance(values, dict):
             values = list((key, values[key]) for key in self.field_order if key in values)
         elif isinstance(values, list):
@@ -288,28 +332,29 @@ class Form(object):
 
 
 class Radio():
-    ''' A helper object for Radio button groups
+    """ A helper object for Radio button groups
 
     Radio allows the usage of HTML radio elements without resorting to previous
     practice of iterating over elements to find the value. The name of the radio
     group is passed and then when choices are required, the locator is built.
 
     Args:
-        name: A string giving the @name attribute of the radio group
+        name: The HTML elements ``name`` attribute that identifies a group of radio
+            buttons.
 
-    Returns: A Radio object.
-    '''
+    Returns: A :py:class:`Radio` object.
+    """
     def __init__(self, name):
         self.name = name
 
     def choice(self, val):
-        ''' Returns the locator for a choice
+        """ Returns the locator for a choice
 
         Args:
-            val: A string representing the "value" attribute of the specific radio
+            val: A string representing the ``value`` attribute of the specific radio
                 element.
 
         Returns: A string containing the XPATH of the specific radio element.
 
-        '''
+        """
         return "//input[@name='%s' and @value='%s']" % (self.name, val)

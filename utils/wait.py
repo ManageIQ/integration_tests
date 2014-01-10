@@ -1,8 +1,12 @@
+"""
+utils.wait
+----------
+"""
 import time
 
 
 def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
-    '''Waits for a certain amount of time for an action to complete
+    """Waits for a certain amount of time for an action to complete
 
     Designed to wait for a certain length of time,
     either linearly in 1 second steps, or exponentially, up to a maximum.
@@ -36,7 +40,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     Raises:
         TimedOutError: If num_sec is exceeded after an unsuccessful func() invocation.
 
-    '''
+    """
     st_time = time.time()
     total_time = 0
     num_sec = kwargs.get('num_sec', 120)

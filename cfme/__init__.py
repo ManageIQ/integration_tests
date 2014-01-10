@@ -1,14 +1,20 @@
+"""
+cfme
+----
+"""
+
+
 class Credential(object):
     """
+    A class to fill in credentials
+
+    Args:
+        principal: Something
+        secret: Something
+        verify_secret: Something
     """
 
     def __init__(self, principal=None, secret=None, verify_secret=None):
-        """
-        Arguments:
-        - `principal`:
-        - `secret`:
-        - `verify_secret`:
-        """
         self.principal = principal
         self.secret = secret
         self.verify_secret = verify_secret
