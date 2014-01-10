@@ -94,6 +94,7 @@ class Taggable(Page):
 
     @property
     def root(self):
+        self._wait_for_visible_element(*self._tag_table, visible_timeout=10)
         return self.selenium.find_element(*self._tag_table).find_elements(*self._tag_row_locator)
 
     @property
