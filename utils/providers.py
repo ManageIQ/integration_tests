@@ -1,5 +1,5 @@
 from utils import conf, mgmt_system
-
+from functools import partial
 
 # infra and cloud provider type maps, useful for type checking
 infra_provider_type_map = {
@@ -33,3 +33,23 @@ def provider_factory(provider_name, providers=None, credentials=None):
     provider_kwargs.update(credentials)
     provider_instance = provider_type_map[provider['type']](**provider_kwargs)
     return provider_instance
+
+
+def list_providers(allowed_types):
+    """ Returns list of providers of selected type from configuration.
+
+    @param allowed_types: Passed by partial(), see top of this file.
+    @type allowed_types: dict, list, set, tuple
+    """
+    providers = []
+    for provider, data in conf.cfme_data["management_systems"].iteritems():
+        provider_type = data.get("type", None)
+        assert provider_type is not None, "Provider %s has no type specified!" % provider
+        if provider_type in allowed_types:
+            providers.append(provider)
+    return providers
+
+
+list_infra_providers = partial(list_providers, infra_provider_type_map.keys())
+list_cloud_providers = partial(list_providers, cloud_provider_type_map.keys())
+list_all_providers = partial(list_providers, provider_type_map.keys())
