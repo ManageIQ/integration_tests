@@ -4,6 +4,7 @@ import cfme.fixtures.pytest_selenium as browser
 import ui_navigate as nav
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme
+from functools import partial
 
 page = Region(locators=
               {'configuration_button': (By.CSS_SELECTOR,
@@ -45,14 +46,43 @@ page = Region(locators=
                'api_port': (By.ID, "port")},
               title='CloudForms Management Engine: Cloud Providers')
 
+discover_page = Region(locators=
+                       {'start_button': (By.CSS_SELECTOR, "input[name='start']"),
+                        'cancel_button': (By.CSS_SELECTOR, "input[name='cancel']"),
+                        'username': (By.ID, 'userid'),
+                        'password': (By.ID, 'password'),
+                        'password_verify': (By.ID, 'verify'),
+                        'form_title': (By.CSS_SELECTOR, "div.dhtmlxInfoBarLabel-2")},
+                       title='CloudForms Management Engine: Cloud Providers')
 
 nav.add_branch('clouds_providers',
                {'clouds_providers_new': browser.click_fn(page.configuration_button,
-                                                         page.add_button)})
+                                                         page.add_button),
+                'clouds_providers_discover': browser.click_fn(page.configuration_button,
+                                                              page.discover_button)})
+
+# setter(loc) = a function that when called with text
+# sets textfied at loc to text.
+setter = partial(partial, browser.set_text)
 
 
 class Provider(object):
-    '''Models a cloud provider in cfme'''
+    '''
+    Models a cloud provider in cfme
+
+    Args:
+        name: Name of the provider
+        details: a details record (see EC2Details, OpenStackDetails inner class)
+        credentials (Credential): see Credential inner class
+
+    Usage:
+
+        myprov = Provider(name='foo',
+                          details=Provider.EC2Details(region='US West (Oregon)'),
+                          credentials=Provider.Credential(principal='admin', secret='foobar'))
+        myprov.create()
+
+    '''
 
     def __init__(self, name=None, details=None, credentials=None, zone=None):
         self.name = name
@@ -77,13 +107,24 @@ class Provider(object):
             self.api_port = api_port
 
     class Credential(cfme.Credential):
-        '''If using amqp type credential, amqp = True'''
+        '''Provider credentials
+
+           Args:
+             **kwargs: If using amqp type credential, amqp = True'''
 
         def __init__(self, **kwargs):
             super(Provider.Credential, self).__init__(**kwargs)
             self.amqp = kwargs.get('amqp')
 
     def create(self, cancel=False):
+        '''
+        Creates a provider in the UI
+
+        Args:
+           cancel (boolean): Whether to cancel out of the creation.  The cancel is done
+              after all the information present in the Provider has been filled in the UI.
+        '''
+
         nav.go_to('clouds_providers_new')
         browser.set_text(page.name_text, self.name)
 
@@ -100,9 +141,6 @@ class Provider(object):
                 raise TypeError("Unknown type of provider details: %s" % type(details))
 
         if self.credentials:
-            def setter(loc):
-                return lambda text: browser.set_text(loc, text)
-
             if self.credentials.amqp:
                 browser.click(page.amqp_credentials_button)
                 self.credentials.fill(setter(page.amqp_userid_text),
@@ -118,9 +156,22 @@ class Provider(object):
         else:
             browser.click(page.add_submit)
 
-# How to use
 
-# myprov = Provider(name='foo',
-#                   details=Provider.EC2Details(region='US West (Oregon)'),
-#                   credentials=Provider.Credential(principal='admin', secret='foobar'))
-# myprov.create()
+def discover(credential, cancel=False):
+    '''
+    Discover cloud providers.
+
+    Args:
+      credential (cfme.Credential):  Amazon discovery credentials.
+      cancel (boolean):  Whether to cancel out of the discover UI.
+    '''
+
+    nav.go_to('clouds_providers_discover')
+    if credential:
+        credential.fill(setter(discover_page.username),
+                        setter(discover_page.password),
+                        setter(discover_page.password_verify))
+    if cancel:
+        browser.click(discover_page.cancel_button)
+    else:
+        browser.click(discover_page.start_button)
