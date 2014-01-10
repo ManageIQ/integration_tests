@@ -1,14 +1,32 @@
+"""
+cfme.web_ui.menu
+----------------
+"""
 from cfme.fixtures.pytest_selenium import click_fn, move_to_fn
 import ui_navigate as nav
 from cfme.web_ui import Region
 
 
 def item(text):
+    """
+    Returns a text locator where the link is related to the provided text.
+
+    Args:
+        text: The link text as a string.
+    Return: The locator as an XPATH string
+    """
     return ("//div[@class='navbar']//a[normalize-space(.)='%s' and "
             "not(ancestor::*[contains(@style,'display: none')])]" % text)
 
 
 def make_items(dct):
+    """
+    Converts a dictionary of visible text to locators
+
+    Args:
+        dct: A dictionary of name and visible text
+    Return: Converted dictionary
+    """
     return {k: item(v) for k, v in dct.items()}
 
 
