@@ -15,7 +15,9 @@ Contents:
    cfme
    fixtures
    web_ui
+   cloud
    utils
+   
 
 Indices and tables
 ==================
