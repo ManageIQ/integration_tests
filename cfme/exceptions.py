@@ -18,4 +18,8 @@ class NotAllItemsClicked(Exception):
     """
     Raised if not all the items could be clicked during :py:meth:`cfme.web_ui.Table.click_item`.
     """
-    pass
+    def __init__(self, failed_clicks):
+        self.failed_clicks = failed_clicks
+
+    def __str__(self):
+        return "Not all the required data elements were clicked [%s]" % ",".join(self.failed_clicks)
