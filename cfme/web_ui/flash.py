@@ -40,4 +40,4 @@ def assert_no_errors():
 
 def assert_message_match(m):
     if not any([fm.message == m for fm in get_messages()]):
-        raise Exception("No matching flash message for '%'" % m)
+        raise Exception("No matching flash message for '%s'" % m)

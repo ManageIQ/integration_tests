@@ -4,21 +4,18 @@
 
 import pytest
 import cfme.web_ui.flash as flash
-from cfme.cloud.provider import Provider
+from cfme.cloud.provider as provider
 
 
 @pytest.fixture(params=['ec2east', 'openstack'])
-def provider_data(request, cfme_data):
+def (request, cfme_data):
     '''Returns management system data from cfme_data'''
     param = request.param
-    prov_data = cfme_data.data['management_systems'][param]
-    prov_data['request'] = param
-
-    return prov_data
+    return provider.get_from_config(request.param)
 
 
 @pytest.fixture
-def provider(request, cloud_providers_pg, provider_data):
+def my_provider(request, cloud_providers_pg, provider_data):
     '''Create a management system
 
     Creates a management system based on the data from cfme_data.
@@ -59,6 +56,29 @@ def has_no_providers(db_session):
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
+
+def test_that_checks_flash_with_empty_discovery_form():
+    '''Tests that the flash message is correct when discovery form is
+    empty
+    '''
+    discover(None)
+    flash.assert_message_match('User ID is required')
+
+
+def test_that_checks_flash_when_discovery_cancelled():
+    '''Tests that the flash message is correct when discovery is cancelled
+    '''
+    discover(None, cancel=True)
+    flash.assert_message_match('Amazon Cloud Providers Discovery was cancelled by the user')
+
+
+@pytest.mark.usefixtures('has_no_providers')
+def test_provider_edit(myprovider):
+    '''Tests that editing a management system shows the proper detail
+    after an edit
+    '''
+    myprovider.create()
+    # TODO finish this
 
 def test_that_checks_flash_when_add_cancelled():
     '''Tests that the flash message is correct when add is cancelled'''

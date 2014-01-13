@@ -5,6 +5,7 @@ import ui_navigate as nav
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme
 from functools import partial
+import utils.conf as conf
 
 page = Region(locators=
               {'configuration_button': (By.CSS_SELECTOR,
@@ -132,7 +133,7 @@ class Provider(object):
             details = self.details
             browser.select_by_text(page.type_select, details.select_text)
             if type(details) == self.EC2Details:
-                browser.select_by_text(page.amazon_region_select, details.region)
+                browser.select_by_value(page.amazon_region_select, details.region)
             elif type(details) == self.OpenStackDetails:
                 browser.set_text(page.hostname_text, details.hostname)
                 browser.set_text(page.ipaddress_text, details.ip_address)
@@ -155,6 +156,33 @@ class Provider(object):
             # browser.wait_for_element(page.configuration_button)
         else:
             browser.click(page.add_submit)
+
+
+def get_from_config(provider_config_name):
+    '''
+    Creates a Provider object given a yaml entry in cfme_data.
+
+    Usage:
+    get_from_config('ec2east')
+
+    Returns:
+    A Provider object that has methods that operate on CFME
+    '''
+
+    prov_config = conf.cfme_data['management_systems'][provider_config_name]
+    creds = conf.credentials[prov_config['credentials']]
+    credentials = Provider.Credential(principal=creds['username'],
+                                      secret=creds['password'])
+    if prov_config['region']:
+        details = Provider.EC2Details(region=prov_config['region'])
+    else:
+        details = Provider.OpenStackDetails(hostname=prov_config['hostname'],
+                                            ip_address=prov_config['ipaddress'],
+                                            api_port=prov_config['port'])
+    return Provider(name=prov_config['name'],
+                    details=details,
+                    credentials=credentials,
+                    zone=prov_config['server_zone'])
 
 
 def discover(credential, cancel=False):
