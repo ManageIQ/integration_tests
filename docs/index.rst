@@ -17,7 +17,7 @@ Contents:
    web_ui
    cloud
    utils
-   
+   documenting
 
 Indices and tables
 ==================
