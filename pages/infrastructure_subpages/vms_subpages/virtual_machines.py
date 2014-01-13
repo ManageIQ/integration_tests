@@ -12,16 +12,18 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 class VirtualMachines(VmCommonComponents):
 
-    _provision_vms_button_locator = (By.CSS_SELECTOR, 
+    _provision_vms_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Request to Provision VMs']")
     _clone_items_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Clone this item']")
     _publish_items_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Publish selected VM to a Template']")
+    _retire_items_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title='Retire the selected items']")
 
     @property
     def quadicon_region(self):
-        return Quadicons(self.testsetup, 
+        return Quadicons(self.testsetup,
             VirtualMachines.VirtualMachineQuadIconItem)
 
     @property
@@ -37,66 +39,66 @@ class VirtualMachines(VmCommonComponents):
         self._mark_icon_and_call_method(vm_names, self.power_button.shutdown )
 
     def shutdown_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.power_button.shutdown_and_cancel )
 
     def restart(self, vm_names):
         self._mark_icon_and_call_method(vm_names, self.power_button.restart )
 
     def restart_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.power_button.restart_and_cancel )
 
     def power_on(self, vm_names):
         self._mark_icon_and_call_method(vm_names, self.power_button.power_on )
 
     def power_on_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.power_button.power_on_and_cancel )
 
     def power_off(self, vm_names):
         self._mark_icon_and_call_method(vm_names, self.power_button.power_off )
 
     def power_off_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.power_button.power_off_and_cancel )
 
     def reset(self, vm_names):
         self._mark_icon_and_call_method(vm_names, self.power_button.reset )
 
     def reset_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.power_button.reset_and_cancel )
 
     def suspend(self, vm_names):
         self._mark_icon_and_call_method(vm_names, self.power_button.suspend )
 
     def suspend_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.power_button.suspend_and_cancel )
 
     def smart_state_scan(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.config_button.perform_smart_state_analysis )
 
     def smart_state_scan_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.config_button.perform_smart_state_analysis_and_cancel )
 
     def refresh_relationships(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.config_button.refresh_relationships )
 
     def refresh_relationships_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.config_button.refresh_relationships_and_cancel )
 
     def extract_running_processes(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.config_button.extract_running_processes )
 
     def extract_running_processes_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.config_button.extract_running_processes_and_cancel )
 
         #def edit_vm(self,vm_name,click_cancel):
@@ -108,11 +110,11 @@ class VirtualMachines(VmCommonComponents):
         #    return Services.SetOwnership(self.testsetup, vm_names)
 
     def remove_from_vmdb(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.config_button.remove_from_vmdb )
 
     def remove_from_vmdb_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
+        self._mark_icon_and_call_method(vm_names,
             self.config_button.remove_from_vmdb_and_cancel )
 
     def click_on_provision_vms(self):
@@ -144,7 +146,25 @@ class VirtualMachines(VmCommonComponents):
         from pages.services_subpages.provision import Provision
         return Provision(self.testsetup)
 
-    def find_vm_page(self, vm_name = None, vm_type = None, 
+    def click_on_retire_items(self, vm_name):
+        self.find_vm_page(vm_name, None, True)
+        retire_items_button = self.get_element(
+            *self._retire_items_button_locator)
+        ActionChains(self.selenium).click(
+            self.center_buttons.lifecycle_button).click(
+            retire_items_button).perform()
+        self.handle_popup(cancel=False)
+        return VirtualMachines(self.testsetup)
+
+    def add_policy_profile(self, vm_name, policy_profile):
+        self.find_vm_page(vm_name, None, True)
+        manage_policies_pg = self.click_on_manage_policies()
+        manage_policies_pg.select_profile_item(policy_profile)
+        manage_policies_pg.save()
+        self._wait_for_results_refresh()
+        return VirtualMachines(self.testsetup)
+
+    def find_vm_page(self, vm_name = None, vm_type = None,
                     mark_checkbox = False, load_details = False):
         found = None
         while not found:

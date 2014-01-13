@@ -18,7 +18,7 @@ def setup_soap_create_vm(
     # Check if VM already exists
     for name, guid, power_state in db_session.query(
             db.Vm.name, db.Vm.guid, db.Vm.power_state).filter(
-            db.Vm.template is False):
+            db.Vm.template == False):
         if vmware_linux_setup_data['vm_name'] in name:
             # VM exists
             print "VM exits"
@@ -29,7 +29,7 @@ def setup_soap_create_vm(
     else:
         # Find template guid
         template_guid = None
-        for name, guid in db_session.query(db.Vm.name, db.Vm.guid).filter(db.Vm.template is True):
+        for name, guid in db_session.query(db.Vm.name, db.Vm.guid).filter(db.Vm.template == True):
             if provisioning_data_basic_only['template'] in name:
                 template_guid = guid.strip()
                 break

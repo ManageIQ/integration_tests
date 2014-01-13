@@ -11,7 +11,9 @@ class PolicyMixin(Page):
     '''This is included in the PolicyMenu mixin so you get this 
        functionality any time PolicyMenu is included in your class
     '''
-    _save_changes_button = (By.CSS_SELECTOR, "a[title='Save Changes']")
+    _save_changes_button = (
+        By.CSS_SELECTOR,
+        'div#buttons_on ul#form_buttons li img.button[title="Save Changes"]')
     _cancel_changes_button = (By.CSS_SELECTOR, "a[title='Cancel']")
     _reset_changes_button = (By.CSS_SELECTOR, "a[title='Reset Changes']")
 
