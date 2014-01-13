@@ -211,8 +211,6 @@ class Table(object):
 
     Attributes:
         header_indexes: A dict of header names related to their index as a column.
-        items: A generator yielding a :py:class:`Table.Row` object which is
-            addressable using the header names or index.
 
     Returns: A :py:class:`Table` object.
 
@@ -275,7 +273,46 @@ class Table(object):
             except:
                 data = []
 
-    def click_item(self, header, data):
+    def items(self):
+        """
+        Returns a generator object yielding the items in the Table
+
+        Return: A generator of the items in the Table.
+        """
+        return self._items_generator()
+
+    def click_items(self, data):
+        """
+        Submits multiple elements to be clicked on
+
+        Args:
+            data: A dicts of header names and values direct from yamls, as an example
+                ``{'name': ['wing', 'nut']}, {'age': ['12']}`` would click on the items
+                who had ``wing`` and ``nut`` in the name column and ``12`` in the age
+                column. The yaml example for this would be as follows::
+
+                    list_items:
+                        name:
+                            - wing
+                            - nut
+                        age:
+                            - 12
+
+        Raises:
+            NotAllItemsClicked: If some items were unable to be found.
+        """
+        failed_clicks = []
+        for header, values in data.items():
+            if isinstance(values, basestring):
+                values = [values]
+            for value in values:
+                res = self.click_item(header, value)
+                if not res:
+                    failed_clicks.append("%s:%s" % (header, value))
+        if failed_clicks:
+            raise exceptions.NotAllItemsClicked(failed_clicks)
+
+    def click_item(self, header, value):
         """
         Clicks on an item defined in the row.
 
@@ -286,28 +323,20 @@ class Table(object):
             data: The value to be compared when trying to identify the correct row
                 to click.
 
-        Raises:
-            cfme.exceptions.NotAllItemsClicked: If some items were unable to be found.
+        Return: ``True`` if item was found, else ``False``.
         """
-        clicked = []
-        if isinstance(data, str):
-            data = [data]
         list_gen = self._items_generator()
-        for value in data:
-            for item in list_gen:
-                if isinstance(header, str):
-                    cell_value = getattr(item, header).text
-                elif isinstance(header, int):
-                    cell_value = item[header].text
-                if cell_value == value:
-                    sel.click(item.data)
-                    clicked.append(item)
-                    break
-        if len(data) != len(clicked):
-            missed_items = set(data) - set(clicked)
-            raise exceptions.NotAllItemsClicked(
-                "Not all the required data elements were clicked [%s]"
-                % ", ".join(list(missed_items)))
+
+        for item in list_gen:
+            if isinstance(header, basestring):
+                cell_value = getattr(item, header).text
+            elif isinstance(header, int):
+                cell_value = item[header].text
+            if cell_value == value:
+                sel.click(item.data)
+                return True
+        else:
+            return False
 
     class Row():
         """
@@ -404,7 +433,7 @@ class Form(object):
             loc = self.region.__getattr__(field)
             if isinstance(loc, Table):
                 loc._update_cache()
-                loc.click_item(*value)
+                loc.click_items(value)
                 continue
             if isinstance(loc, Radio):
                 sel.click(loc.choice(value))
