@@ -11,7 +11,11 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   getting_started
    dev_guide
+   editors
+   lint
+   vnc_selenium
    cfme
    fixtures
    web_ui
