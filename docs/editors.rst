@@ -120,7 +120,7 @@ enter our exceptions:
 Flake8 lint will pop up every time you save a file, and does an excellent job of keeping you
 linted while you code.
 
-Tailing Spaces
+Trailing Spaces
 ^^^^^^^^^^^^^^
 
 Using Package Control, install the "Trailing Spaces" plugin. This highlights trailing spaces
