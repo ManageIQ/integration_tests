@@ -3,7 +3,6 @@
 # pylint: disable=R0904
 
 import re
-import time
 from pages.regions.quadicons import Quadicons
 from pages.regions.quadiconitem import QuadiconItem
 from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
@@ -13,8 +12,7 @@ from utils.wait import wait_for
 
 
 class VirtualMachines(VmCommonComponents):
-
-    _provision_vms_button_locator = (By.CSS_SELECTOR, 
+    _provision_vms_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Request to Provision VMs']")
     _clone_items_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Clone this item']")
@@ -23,8 +21,7 @@ class VirtualMachines(VmCommonComponents):
 
     @property
     def quadicon_region(self):
-        return Quadicons(self.testsetup, 
-            VirtualMachines.VirtualMachineQuadIconItem)
+        return Quadicons(self.testsetup, VirtualMachines.VirtualMachineQuadIconItem)
 
     @property
     def search(self):
@@ -36,70 +33,61 @@ class VirtualMachines(VmCommonComponents):
         op_func()
 
     def shutdown(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, self.power_button.shutdown )
+        self._mark_icon_and_call_method(vm_names, self.power_button.shutdown)
 
     def shutdown_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.power_button.shutdown_and_cancel )
+        self._mark_icon_and_call_method(vm_names, self.power_button.shutdown_and_cancel)
 
     def restart(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, self.power_button.restart )
+        self._mark_icon_and_call_method(vm_names, self.power_button.restart)
 
     def restart_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.power_button.restart_and_cancel )
+        self._mark_icon_and_call_method(vm_names, self.power_button.restart_and_cancel)
 
     def power_on(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, self.power_button.power_on )
+        self._mark_icon_and_call_method(vm_names, self.power_button.power_on)
 
     def power_on_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.power_button.power_on_and_cancel )
+        self._mark_icon_and_call_method(vm_names, self.power_button.power_on_and_cancel)
 
     def power_off(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, self.power_button.power_off )
+        self._mark_icon_and_call_method(vm_names, self.power_button.power_off)
 
     def power_off_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.power_button.power_off_and_cancel )
+        self._mark_icon_and_call_method(vm_names, self.power_button.power_off_and_cancel)
 
     def reset(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, self.power_button.reset )
+        self._mark_icon_and_call_method(vm_names, self.power_button.reset)
 
     def reset_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.power_button.reset_and_cancel )
+        self._mark_icon_and_call_method(vm_names, self.power_button.reset_and_cancel)
 
     def suspend(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, self.power_button.suspend )
+        self._mark_icon_and_call_method(vm_names, self.power_button.suspend)
 
     def suspend_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.power_button.suspend_and_cancel )
+        self._mark_icon_and_call_method(vm_names, self.power_button.suspend_and_cancel)
 
     def smart_state_scan(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.config_button.perform_smart_state_analysis )
+        self._mark_icon_and_call_method(vm_names, self.config_button.perform_smart_state_analysis)
 
     def smart_state_scan_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.config_button.perform_smart_state_analysis_and_cancel )
+        self._mark_icon_and_call_method(vm_names,
+            self.config_button.perform_smart_state_analysis_and_cancel)
 
     def refresh_relationships(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.config_button.refresh_relationships )
+        self._mark_icon_and_call_method(vm_names, self.config_button.refresh_relationships)
 
     def refresh_relationships_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.config_button.refresh_relationships_and_cancel )
+        self._mark_icon_and_call_method(vm_names,
+            self.config_button.refresh_relationships_and_cancel)
 
     def extract_running_processes(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.config_button.extract_running_processes )
+        self._mark_icon_and_call_method(vm_names, self.config_button.extract_running_processes)
 
     def extract_running_processes_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.config_button.extract_running_processes_and_cancel )
+        self._mark_icon_and_call_method(vm_names,
+            self.config_button.extract_running_processes_and_cancel)
 
         #def edit_vm(self,vm_name,click_cancel):
         #    self.quadicon_region.mark_icon_checkbox([vm_name])
@@ -110,44 +98,41 @@ class VirtualMachines(VmCommonComponents):
         #    return Services.SetOwnership(self.testsetup, vm_names)
 
     def remove_from_vmdb(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.config_button.remove_from_vmdb )
+        self._mark_icon_and_call_method(vm_names, self.config_button.remove_from_vmdb)
 
     def remove_from_vmdb_and_cancel(self, vm_names):
-        self._mark_icon_and_call_method(vm_names, 
-            self.config_button.remove_from_vmdb_and_cancel )
+        self._mark_icon_and_call_method(vm_names, self.config_button.remove_from_vmdb_and_cancel)
 
     def click_on_provision_vms(self):
-        provision_vms_button = self.get_element(
-            *self._provision_vms_button_locator)
-        ActionChains(self.selenium).click(
-            self.center_buttons.lifecycle_button).click(
-                provision_vms_button).perform()
+        provision_vms_button = self.get_element(*self._provision_vms_button_locator)
+        ActionChains(self.selenium)\
+            .click(self.center_buttons.lifecycle_button)\
+            .click(provision_vms_button)\
+            .perform()
         from pages.services_subpages.provision import ProvisionStart
         return ProvisionStart(self.testsetup)
 
     def click_on_clone_items(self, vm_name):
         self.find_vm_page(vm_name, None, True)
-        clone_items_button = self.get_element(
-            *self._clone_items_button_locator)
-        ActionChains(self.selenium).click(
-            self.center_buttons.lifecycle_button).click(
-                clone_items_button).perform()
+        clone_items_button = self.get_element(*self._clone_items_button_locator)
+        ActionChains(self.selenium)\
+            .click(self.center_buttons.lifecycle_button)\
+            .click(clone_items_button)\
+            .perform()
         from pages.services_subpages.provision import Provision
         return Provision(self.testsetup)
 
     def click_on_publish_items(self, vm_name):
         self.find_vm_page(vm_name, None, True)
-        publish_items_button = self.get_element(
-            *self._publish_items_button_locator)
-        ActionChains(self.selenium).click(
-            self.center_buttons.lifecycle_button).click(
-                publish_items_button).perform()
+        publish_items_button = self.get_element(*self._publish_items_button_locator)
+        ActionChains(self.selenium)\
+            .click(self.center_buttons.lifecycle_button)\
+            .click(publish_items_button)\
+            .perform()
         from pages.services_subpages.provision import Provision
         return Provision(self.testsetup)
 
-    def find_vm_page(self, vm_name = None, vm_type = None, 
-                    mark_checkbox = False, load_details = False):
+    def find_vm_page(self, vm_name=None, vm_type=None, mark_checkbox=False, load_details=False):
         found = None
         while not found:
             for quadicon in self.quadicon_region.quadicons:
@@ -157,20 +142,21 @@ class VirtualMachines(VmCommonComponents):
                     found = quadicon
                     break
                 # no title but first type
-                elif vm_name == None and \
+                elif vm_name is None and \
                         quadicon.current_state == vm_type:
                     found = quadicon
                     break
                 # first title no type
-                elif quadicon.title == vm_name and vm_type == None:
+                elif quadicon.title == vm_name and vm_type is None:
                     found = quadicon
                     break
                 # if nothing found try turning the page
             if not found and not self.paginator.is_next_page_disabled:
                 self.paginator.click_next_page()
             elif not found and self.paginator.is_next_page_disabled:
-                raise Exception("vm("+str(vm_name)+") with type("+
-                            str(vm_type)+") could not be found")
+                raise Exception(
+                    "vm(" + str(vm_name) + ") with type(" + str(vm_type) + ") could not be found"
+                )
         if found and mark_checkbox:
             found.mark_checkbox()
         if found and load_details:
@@ -200,43 +186,43 @@ class VirtualMachines(VmCommonComponents):
             current_state = self.quadicon_region\
                 .get_quadicon_by_title(vm_quadicon_title)\
                 .current_state
-            if current_state == desired_state:
-                return True
-            else:
-                return False
+            return current_state == desired_state
 
         return wait_for(_check, num_sec=timeout_in_minutes * 60)
 
     class VirtualMachineQuadIconItem(QuadiconItem):
         @property
         def os(self):
-            image_src = self._root_element.find_element(
-                *self._quad_tl_locator).find_element_by_tag_name(
-                    "img").get_attribute("src")
+            image_src = self._root_element\
+                .find_element(*self._quad_tl_locator)\
+                .find_element_by_tag_name("img")\
+                .get_attribute("src")
             return re.search('.+/os-(.+)\.png', image_src).group(1)
 
         @property
         def current_state(self):
-            image_src = self._root_element.find_element(
-                *self._quad_tr_locator).find_element_by_tag_name(
-                    "img").get_attribute("src")
+            image_src = self._root_element\
+                .find_element(*self._quad_tr_locator)\
+                .find_element_by_tag_name("img")\
+                .get_attribute("src")
             return re.search('.+/currentstate-(.+)\.png', image_src).group(1)
 
         @property
         def vendor(self):
-            image_src = self._root_element.find_element(
-                *self._quad_bl_locator).find_element_by_tag_name(
-                    "img").get_attribute("src")
+            image_src = self._root_element\
+                .find_element(*self._quad_bl_locator)\
+                .find_element_by_tag_name("img")\
+                .get_attribute("src")
             return re.search('.+/vendor-(.+)\.png', image_src).group(1)
 
         @property
         def snapshots(self):
-            return self._root_element.find_element(*self._quad_br_locator).text
+            return self._root_element\
+                .find_element(*self._quad_br_locator)\
+                .text
 
         def click(self):
             self._root_element.click()
             self._wait_for_results_refresh()
-            from pages.infrastructure_subpages.vms_subpages.details \
-                import VirtualMachineDetails
+            from pages.infrastructure_subpages.vms_subpages.details import VirtualMachineDetails
             return VirtualMachineDetails(self.testsetup)
-
