@@ -15,7 +15,6 @@ from pages.regions.policy_menu import PolicyMenu
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
 from pages.regions.taskbar.taskbar import TaskbarMixin
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from utils.providers import provider_factory
 from utils.wait import wait_for
@@ -51,22 +50,22 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
     @property
     def discover_button(self):
         '''The discover button'''
-        return self.selenium.find_element(*self._discover_providers_locator)
+        return self.get_element(*self._discover_providers_locator)
 
     @property
     def edit_button(self):
         '''The edit button'''
-        return self.selenium.find_element(*self._edit_providers_locator)
+        return self.get_element(*self._edit_providers_locator)
 
     @property
     def remove_button(self):
         '''The remove button'''
-        return self.selenium.find_element(*self._remove_providers_locator)
+        return self.get_element(*self._remove_providers_locator)
 
     @property
     def add_button(self):
         '''The add button'''
-        return self.selenium.find_element(*self._add_new_provider_locator)
+        return self.get_element(*self._add_new_provider_locator)
 
     def select_provider(self, provider_name):
         '''Select a provider given a name'''
@@ -111,39 +110,34 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
 
     def click_on_discover_providers(self):
         '''Click on discover provider button'''
-        ActionChains(self.selenium).click(
-            self.configuration_button).click(
-            self.discover_button).perform()
+        self.configuration_button.click()
+        self.discover_button.click()
         return ProvidersDiscovery(self.testsetup)
 
     def click_on_edit_providers(self):
         '''Click on edit providers button'''
-        ActionChains(self.selenium).click(
-            self.configuration_button).click(
-            self.edit_button).perform()
+        self.configuration_button.click()
+        self.edit_button.click()
         return ProvidersEdit(self.testsetup)
 
     def click_on_remove_provider(self):
         '''Click on remove provider button'''
-        ActionChains(self.selenium).click(
-            self.configuration_button).click(
-            self.remove_button).perform()
+        self.configuration_button.click()
+        self.remove_button.click()
         self.handle_popup()
         return Providers(self.testsetup)
 
     def click_on_remove_provider_and_cancel(self):
         '''Click on remove provider and cancel via popup'''
-        ActionChains(self.selenium).click(
-            self.configuration_button).click(
-            self.remove_button).perform()
+        self.configuration_button.click()
+        self.remove_button.click()
         self.handle_popup(True)
         return Providers(self.testsetup)
 
     def click_on_add_new_provider(self):
         '''Click on add new provider button'''
-        ActionChains(self.selenium).click(
-            self.configuration_button).click(
-            self.add_button).perform()
+        self.configuration_button.click()
+        self.add_button.click()
         return ProvidersAdd(self.testsetup)
 
     class ProvidersQuadIconItem(QuadiconItem):
@@ -168,11 +162,15 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
             return re.search(r'.+/vendor-(.+)\.png', image_src).group(1)
 
         @property
-        def valid_credentials(self):
-            '''Does the provider have valid credentials?'''
+        def credentials_img(self):
             image_src = self.get_element(*self._quad_br_locator). \
                 find_element_by_tag_name("img").get_attribute("src")
-            return 'checkmark' in image_src
+            return re.search(r'.+/(.+)\.png', image_src).group(1)
+
+        @property
+        def valid_credentials(self):
+            '''Does the provider have valid credentials?'''
+            return self.credentials_img == 'checkmark'
 
         def click(self):
             '''Click on the provider quadicon'''

@@ -1,20 +1,23 @@
-# pylint: disable=E1101
+    # pylint: disable=E1101
 import logging
 import time
+
 import pytest
 from unittestzero import Assert
 
+from utils.conf import cfme_data
 from utils.providers import (
     infra_provider_type_map,
     cloud_provider_type_map,
-    provider_factory
+    provider_factory,
+    setup_infrastructure_provider
 )
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def setup_infrastructure_providers(infra_providers_pg, cfme_data):
+def setup_infrastructure_providers(infra_providers_pg):
     '''Adds all infrastructure providers listed in cfme_data.yaml
 
     This includes both rhev and virtualcenter provider types
@@ -46,65 +49,17 @@ def setup_infrastructure_providers(infra_providers_pg, cfme_data):
 
     '''
     # Does provider exist
+    providers_to_add = []
     for provider, prov_data in cfme_data['management_systems'].iteritems():
         if prov_data['type'] not in infra_provider_type_map:
             # short out if we don't care about this provider type
             continue
 
-        prov_added = False
-        infra_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
-        Assert.true(infra_providers_pg.taskbar_region.view_buttons.is_grid_view)
-        if not (infra_providers_pg.quadicon_region.quadicons and
-                infra_providers_pg.quadicon_region.does_quadicon_exist(prov_data['name'])):
-            # add it
-            add_pg = infra_providers_pg.click_on_add_new_provider()
-            add_pg.add_provider(prov_data)
-            Assert.equal(infra_providers_pg.flash.message,
-                'Infrastructure Providers "%s" was saved' % prov_data['name'],
-                'Flash message did not match')
-            prov_added = True
+        if not infra_providers_pg.quadicon_region.does_quadicon_exist(prov_data['name']):
+            providers_to_add.append([provider, prov_data])
 
-            # wait for the quadicon to show up
-            sleep_time = 0
-            infra_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
-            Assert.true(infra_providers_pg.taskbar_region.view_buttons.is_grid_view)
-            while not infra_providers_pg.quadicon_region.does_quadicon_exist(
-                    prov_data['name']):
-                if sleep_time > 300:
-                    raise Exception('timeout reached for provider icon to show up')
-                infra_providers_pg.selenium.refresh()
-                time.sleep(10)
-                sleep_time += 10
-
-        # Are the credentials valid?
-        infra_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
-        Assert.true(infra_providers_pg.taskbar_region.view_buttons.is_grid_view)
-        prov_quadicon = infra_providers_pg.quadicon_region.get_quadicon_by_title(
-            prov_data['name'])
-        valid_creds = prov_quadicon.valid_credentials
-        if prov_added and not valid_creds:
-            sleep_time = 0
-            while not valid_creds:
-                if sleep_time > 300:
-                    raise Exception('timeout reached for valid provider credentials')
-                infra_providers_pg.selenium.refresh()
-                prov_quadicon = infra_providers_pg.quadicon_region.get_quadicon_by_title(
-                    prov_data['name'])
-                valid_creds = prov_quadicon.valid_credentials
-                time.sleep(10)
-                sleep_time += 10
-        elif not prov_quadicon.valid_credentials:
-            # update them
-            infra_providers_pg.select_provider(prov_data['name'])
-            Assert.equal(len(infra_providers_pg.quadicon_region.selected), 1,
-                'More than one quadicon was selected')
-            prov_edit_pg = infra_providers_pg.click_on_edit_providers()
-            prov_edit_pg.edit_provider(prov_data)
-        prov_data['request'] = provider
-        if prov_added:
-            infra_providers_pg.wait_for_provider_or_timeout(prov_data)
-        infra_providers_pg.header.site_navigation_menu('Infrastructure').\
-            sub_navigation_menu('Providers').click()
+    for prov_args in providers_to_add:
+        setup_infrastructure_provider(*prov_args)
 
 
 # there is a partially implemented db fixture at

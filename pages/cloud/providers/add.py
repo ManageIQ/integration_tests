@@ -77,13 +77,13 @@ class Add(AddFormCommon):
         '''Fill and click on add for a EC2 Cloud Provider'''
         self.select_provider_type("Amazon EC2")
         self.select_amazon_region(region)
-        self._fill_provider(provider)
+        self.fill_provider(provider)
         return self.click_on_add()
 
     def add_openstack_provider(self, provider):
         '''Fill and click on add for a RHOS Cloud Provider'''
         self.select_provider_type("OpenStack")
-        self._fill_provider(provider)
+        self.fill_provider(provider)
         return self.click_on_add()
 
     def add_provider(self, provider):
@@ -104,8 +104,8 @@ class Add(AddFormCommon):
             self.select_amazon_region()
         elif "openstack" in provider["type"]:
             self.select_provider_type("OpenStack")
-        self._fill_provider(provider)
-        self._wait_for_visible_element(*self._provider_credentials_verify_button_locator)
+        self.fill_provider(provider)
+        self._wait_for_visible_element(*self._provider_credentials_validate_button_locator)
         self.click_on_credentials_verify()
         self._wait_for_results_refresh()
         return self

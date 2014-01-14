@@ -23,3 +23,7 @@ class NotAllItemsClicked(Exception):
 
     def __str__(self):
         return "Not all the required data elements were clicked [%s]" % ",".join(self.failed_clicks)
+
+
+class AddProviderError(Exception):
+    pass

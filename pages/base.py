@@ -100,6 +100,7 @@ class Base(Page):
             return [HeaderMenu(self.testsetup, web_element) for web_element in self.selenium.find_elements(*self._site_navigation_menus_locator)]
 
     class FlashRegion(Page):
+        # This whole class has no idea that there can be multiple flash messages :(
         _flash_div_locator = (By.CSS_SELECTOR, "div#flash_text_div")
         _flash_message_locator = (By.CSS_SELECTOR, "ul li")
 
@@ -118,6 +119,10 @@ class Base(Page):
         @property
         def message(self):
             return self.message_item.text
+
+        @property
+        def is_error(self):
+            return 'error' in self.message_item.get_attribute('class')
 
         def click(self):
             self.message_item.click()

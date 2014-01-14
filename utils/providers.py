@@ -11,8 +11,12 @@ based on the request
    :py:mod:`utils.mgmt_system` object as a dict
 :var provider_type_map: Combined dict of ``infra_provider_type_map`` and ``cloud_provider_type_map``
 """
-from utils import conf, mgmt_system
 from functools import partial
+
+from fixtures import navigation
+from utils import conf, mgmt_system
+from utils.browser import browser
+from utils.wait import wait_for
 
 # infra and cloud provider type maps, useful for type checking
 infra_provider_type_map = {
@@ -73,6 +77,53 @@ def list_providers(allowed_types):
         if provider_type in allowed_types:
             providers.append(provider)
     return providers
+
+
+def setup_provider(provider_name):
+    provider_data = conf.cfme_data['management_systems'][provider_name]
+    if provider_data['type'] in infra_provider_type_map:
+        setup_infrastructure_provider(provider_name, provider_data)
+    elif provider_data['type'] in cloud_provider_type_map:
+        setup_cloud_provider(provider_name, provider_data)
+    #else: wat?
+
+
+def setup_infrastructure_provider(provider_name, provider_data):
+    infra_providers_pg = navigation.infra_providers_pg(None)
+
+    # Bail out if the provider already exists
+    if infra_providers_pg.quadicon_region.does_quadicon_exist(provider_data['name']):
+        return
+
+    add_pg = infra_providers_pg.click_on_add_new_provider()
+    add_pg.fill_provider(provider_data)
+    if not add_pg.validate():
+        # Bad credentials? Don't go any farther...
+        failmsg = 'Invalid credentials for provider "%s", testing cannot continue' % provider_name
+        raise Exception(failmsg)
+
+    add_pg.click_on_add()
+    expected_flash_message = 'Infrastructure Providers "%s" was saved' % provider_data['name']
+    if infra_providers_pg.flash.message != expected_flash_message:
+        # Doesn't exit to allow for debugging.
+        failmsg = 'Provider "%s" was not saved for unknown reasons.' % provider_name
+        raise Exception(failmsg)
+
+    # wait for the quadicon to show up
+    infra_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
+
+    def provider_quadicon_exists():
+        browser().refresh()
+        return infra_providers_pg.quadicon_region.does_quadicon_exist(provider_data['name'])
+    wait_for(provider_quadicon_exists)
+
+    # Poke the provider until the numbers are right
+    provider_data['request'] = provider_name
+    infra_providers_pg.wait_for_provider_or_timeout(provider_data)
+
+
+def setup_cloud_provider(provider_name, provider_data):
+    raise NotImplementedError('sooooooooon...')
 
 
 list_infra_providers = partial(list_providers, infra_provider_type_map.keys())

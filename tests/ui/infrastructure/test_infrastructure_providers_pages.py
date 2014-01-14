@@ -13,6 +13,7 @@ from utils.ipmi import IPMI
 
 @pytest.fixture(params=['esx'])
 def single_host_data(request, cfme_data):
+    pytest.skip('Test disabled until a proper host is provisioned.')
     return cfme_data['management_hosts'][request.param]
 
 
@@ -44,7 +45,7 @@ class TestManagementSystemsPages:
                     "Could not verify %s" % expected_value)
 
 
-def test_host_add(infra_hosts_pg, single_host_data):
+def test_host_add(single_host_data, infra_hosts_pg):
     add_pg = infra_hosts_pg.click_add_new_host()
     add_pg.ipmi_button.click()
     add_pg.add_host(single_host_data)
@@ -56,7 +57,7 @@ def test_host_add(infra_hosts_pg, single_host_data):
              [single_host_data['name']])
 
 
-def test_host_power_controls_reset(infra_hosts_pg, single_host_data):
+def test_host_power_controls_reset(single_host_data, infra_hosts_pg):
     credentials = infra_hosts_pg.testsetup.credentials[single_host_data['ipmi_credentials']]
     ipmi_host = IPMI(hostname=single_host_data['ipmi_address'],
                      username=credentials['username'],
@@ -70,7 +71,7 @@ def test_host_power_controls_reset(infra_hosts_pg, single_host_data):
              handle_exception=True)
 
 
-def test_host_power_controls_on(infra_hosts_pg, single_host_data):
+def test_host_power_controls_on(single_host_data, infra_hosts_pg):
     credentials = infra_hosts_pg.testsetup.credentials[single_host_data['ipmi_credentials']]
     ipmi_host = IPMI(hostname=single_host_data['ipmi_address'],
                      username=credentials['username'],
@@ -85,7 +86,7 @@ def test_host_power_controls_on(infra_hosts_pg, single_host_data):
              handle_exception=True)
 
 
-def test_host_delete(infra_hosts_pg, single_host_data):
+def test_host_delete(single_host_data, infra_hosts_pg):
     infra_hosts_pg.select_host(single_host_data['name'])
     infra_hosts_pg.click_remove_host()
     Assert.equal(infra_hosts_pg.flash.message,
