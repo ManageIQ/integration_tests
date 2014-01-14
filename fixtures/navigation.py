@@ -3,9 +3,10 @@
 from functools import partial
 
 import pytest
+from selenium.common.exceptions import NoAlertPresentException, WebDriverException
 from unittestzero import Assert
 
-from utils.browser import start, testsetup
+from utils.browser import browser, start, testsetup
 
 _width_errmsg = '''The minimum supported width of CFME is 1280 pixels
 
@@ -17,179 +18,188 @@ due to submenu elements being rendered off the screen.
 @pytest.fixture
 def home_page_logged_in(testsetup=testsetup):
     """Log in to the appliance and return the home page."""
-    start()
+    # Check for an existing open browser, start one if needed
+    try:
+        browser().current_window_handle
+    except (AttributeError, WebDriverException):
+        start()
 
     from pages.login import LoginPage
-    login_pg = LoginPage(testsetup)
-    login_pg.go_to_login_page()
-    home_pg = login_pg.login()
-    Assert.true(login_pg.is_logged_in, 'Could not determine if logged in')
-    return home_pg
+    pg = LoginPage(testsetup)
+    if not pg.is_logged_in:
+        pg.go_to_login_page()
+        pg = pg.login()
+        Assert.true(pg.is_logged_in, 'Could not determine if logged in')
+    return pg
 
 
 def navigate(page, first_level, second_level):
-    first_level = page.header.site_navigation_menu(first_level)
-    second_level = first_level.sub_navigation_menu(second_level)
-    return second_level.click()
+    first = page.header.site_navigation_menu(first_level)
+    second = first.sub_navigation_menu(second_level)
+    destination = second.click()
+
+    # Attempt to close any alerts that happen on the navigation click,
+    # then retry the navigation
+    try:
+        alert = browser().switch_to_alert()
+        alert.accept()
+        destination = navigate(page, first_level, second_level)
+    except NoAlertPresentException:
+        pass
+
+    return destination
 
 
-class NavigationFixture(object):
-    def __new__(cls, page_obj, first_level, second_level):
-        # Adds a _navigate method to a Page, as well as makes fixtures
-        # themselves callable using the same method.
-        # This is evil, but transitional.
-        navigator = partial(navigate, page_obj, first_level, second_level)
-        page = navigator()
-        type(page)._navigate = navigator
-
-        def __call__(self):
-            self._navigate()
-        type(page).__call__ = __call__
-        return page
-
-
-# In all following fixtures, the "page" argument is not required
-# It is included for backward-compatibility only
-@pytest.fixture
-def cnf_configuration_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Configure', 'Configuration')
-
-
-@pytest.fixture
-def cnf_about_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Configure', 'About')
+def navigator(page_obj, first_level, second_level):
+    # Adds a _navigate method to a Page, as well as makes fixtures
+    # themselves callable using the same method.
+    # This is evil, but transitional.
+    navigator = partial(navigate, page_obj, first_level, second_level)
+    page = navigator()
+    type(page).__call__ = navigator
+    return page
 
 
 @pytest.fixture
-def cnf_mysettings_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Configure', 'My Settings')
+def cnf_configuration_pg():
+    return navigator(home_page_logged_in(), 'Configure', 'Configuration')
 
 
 @pytest.fixture
-def cnf_tasks_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Configure', 'Tasks')
+def cnf_about_pg():
+    return navigator(home_page_logged_in(), 'Configure', 'About')
 
 
 @pytest.fixture
-def cnf_smartproxies_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Configure', 'SmartProxies')
+def cnf_mysettings_pg():
+    return navigator(home_page_logged_in(), 'Configure', 'My Settings')
 
 
 @pytest.fixture
-def svc_myservices_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Services', 'My Services')
+def cnf_tasks_pg():
+    return navigator(home_page_logged_in(), 'Configure', 'Tasks')
 
 
 @pytest.fixture
-def svc_catalogs_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Services', 'Catalogs')
+def cnf_smartproxies_pg():
+    return navigator(home_page_logged_in(), 'Configure', 'SmartProxies')
 
 
 @pytest.fixture
-def cloud_providers_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Clouds', 'Providers')
+def svc_myservices_pg():
+    return navigator(home_page_logged_in(), 'Services', 'My Services')
 
 
 @pytest.fixture
-def cloud_availabilityzones_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Clouds', 'Availability Zones')
+def svc_catalogs_pg():
+    return navigator(home_page_logged_in(), 'Services', 'Catalogs')
 
 
 @pytest.fixture
-def cloud_flavors_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Clouds', 'Flavors')
+def cloud_providers_pg():
+    return navigator(home_page_logged_in(), 'Clouds', 'Providers')
 
 
 @pytest.fixture
-def cloud_securitygroups_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Clouds', 'Security Groups')
+def cloud_availabilityzones_pg():
+    return navigator(home_page_logged_in(), 'Clouds', 'Availability Zones')
 
 
 @pytest.fixture
-def cloud_instances_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Clouds', 'Instances')
+def cloud_flavors_pg():
+    return navigator(home_page_logged_in(), 'Clouds', 'Flavors')
 
 
 @pytest.fixture
-def infra_providers_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Infrastructure', 'Providers')
+def cloud_securitygroups_pg():
+    return navigator(home_page_logged_in(), 'Clouds', 'Security Groups')
 
 
 @pytest.fixture
-def infra_clusters_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Infrastructure', 'Clusters')
+def cloud_instances_pg():
+    return navigator(home_page_logged_in(), 'Clouds', 'Instances')
 
 
 @pytest.fixture
-def infra_hosts_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Infrastructure', 'Hosts')
+def infra_providers_pg():
+    return navigator(home_page_logged_in(), 'Infrastructure', 'Providers')
 
 
 @pytest.fixture
-def infra_datastores_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Infrastructure', 'Datastores')
+def infra_clusters_pg():
+    return navigator(home_page_logged_in(), 'Infrastructure', 'Clusters')
 
 
 @pytest.fixture
-def infra_pxe_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Infrastructure', 'PXE')
+def infra_hosts_pg():
+    return navigator(home_page_logged_in(), 'Infrastructure', 'Hosts')
 
 
 @pytest.fixture
-def infra_vms_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Infrastructure', 'Virtual Machines')
+def infra_datastores_pg():
+    return navigator(home_page_logged_in(), 'Infrastructure', 'Datastores')
 
 
 @pytest.fixture
-def automate_explorer_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Automate', 'Explorer')
+def infra_pxe_pg():
+    return navigator(home_page_logged_in(), 'Infrastructure', 'PXE')
 
 
 @pytest.fixture
-def automate_importexport_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Automate', 'Import / Export')
+def infra_vms_pg():
+    return navigator(home_page_logged_in(), 'Infrastructure', 'Virtual Machines')
 
 
 @pytest.fixture
-def automate_customization_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Automate', 'Customization')
+def automate_explorer_pg():
+    return navigator(home_page_logged_in(), 'Automate', 'Explorer')
 
 
 @pytest.fixture
-def control_explorer_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Control', 'Explorer')
+def automate_importexport_pg():
+    return navigator(home_page_logged_in(), 'Automate', 'Import / Export')
 
 
 @pytest.fixture
-def control_importexport_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Control', 'Import / Export')
+def automate_customization_pg():
+    return navigator(home_page_logged_in(), 'Automate', 'Customization')
 
 
 @pytest.fixture
-def control_simulation_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Control', 'Simulation')
+def control_explorer_pg():
+    return navigator(home_page_logged_in(), 'Control', 'Explorer')
 
 
 @pytest.fixture
-def control_log_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Control', 'Log')
+def control_importexport_pg():
+    return navigator(home_page_logged_in(), 'Control', 'Import / Export')
 
 
 @pytest.fixture
-def optimize_utilization_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Optimize', 'Utilization')
+def control_simulation_pg():
+    return navigator(home_page_logged_in(), 'Control', 'Simulation')
 
 
 @pytest.fixture
-def intel_dashboard_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Cloud Intelligence', 'Dashboard')
+def control_log_pg():
+    return navigator(home_page_logged_in(), 'Control', 'Log')
 
 
 @pytest.fixture
-def intel_chargeback_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Cloud Intelligence', 'Chargeback')
+def optimize_utilization_pg():
+    return navigator(home_page_logged_in(), 'Optimize', 'Utilization')
 
 
 @pytest.fixture
-def intel_reports_pg(page=None):
-    return NavigationFixture(home_page_logged_in(), 'Cloud Intelligence', 'Reports')
+def intel_dashboard_pg():
+    return navigator(home_page_logged_in(), 'Cloud Intelligence', 'Dashboard')
+
+
+@pytest.fixture
+def intel_chargeback_pg():
+    return navigator(home_page_logged_in(), 'Cloud Intelligence', 'Chargeback')
+
+
+@pytest.fixture
+def intel_reports_pg():
+    return navigator(home_page_logged_in(), 'Cloud Intelligence', 'Reports')
