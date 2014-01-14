@@ -62,7 +62,9 @@ def elements(o):
     elif t == tuple:
         return browser().find_elements(*o)
     else:
-        raise TypeError("Don't know how to convert %s to WebElement." % o)
+        return elements(o.locate())  # if object implements locate(), try to get elements
+        # from that locator.  If it doesn't implement locate(), we're in trouble so
+        # let the error bubble up.
 
 
 def element(o):
@@ -79,7 +81,7 @@ def element(o):
     """
     matches = elements(o)
     if not matches:
-        raise NoSuchElementException("Element {} not found on page.".format(o))
+        raise NoSuchElementException("Element {} not found on page.".format(str(o)))
     return elements(o)[0]
 
 

@@ -3,9 +3,11 @@ from cfme.web_ui import Region
 import cfme.fixtures.pytest_selenium as browser
 import ui_navigate as nav
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
+from cfme.web_ui import Quadicon
 import cfme
 from functools import partial
 import utils.conf as conf
+from copy import copy
 
 page = Region(locators=
               {'configuration_button': (By.CSS_SELECTOR,
@@ -47,6 +49,7 @@ page = Region(locators=
                'api_port': (By.ID, "port")},
               title='CloudForms Management Engine: Cloud Providers')
 
+
 discover_page = Region(locators=
                        {'start_button': (By.CSS_SELECTOR, "input[name='start']"),
                         'cancel_button': (By.CSS_SELECTOR, "input[name='cancel']"),
@@ -60,10 +63,11 @@ nav.add_branch('clouds_providers',
                {'clouds_providers_new': browser.click_fn(page.configuration_button,
                                                          page.add_button),
                 'clouds_providers_discover': browser.click_fn(page.configuration_button,
-                                                              page.discover_button)})
+                                                              page.discover_button),
+                'clouds_provider': lambda ctx: browser.click(Quadicon(ctx['provider'].name))})
 
 # setter(loc) = a function that when called with text
-# sets textfied at loc to text.
+# sets textfield at loc to text.
 setter = partial(partial, browser.set_text)
 
 
@@ -156,6 +160,13 @@ class Provider(object):
             # browser.wait_for_element(page.configuration_button)
         else:
             browser.click(page.add_submit)
+
+    def update(self, f):
+        pass
+        # need to figure out a way to leave object unchanged if update
+        # fails, or maybe just don't use mutable objects at all to
+        # represent the Provider's state in CFME?  (in other words,
+        # we could just return a new "immutable" object each time?
 
 
 def get_from_config(provider_config_name):

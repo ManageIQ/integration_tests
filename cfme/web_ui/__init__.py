@@ -581,7 +581,6 @@ class Tree(object):
 
     On invocation, the class first determines which type of Tree object it is dealing
     with and then sets the internal variables to match elements of the specific tree class.
-
     There are currently 4 attributes needed in the tree classes.
 
     * expandable: the element to check if the tree is expanded/collapsed.
@@ -815,3 +814,17 @@ class InfoBlock(object):
             raise exceptions.ElementOrBlockNotFound(
                 "Either the element of the block could not be found")
         return el
+
+
+class Quadicon(object):
+    def __init__(self, name):
+        self.name = name
+
+    def checkbox(self):
+        return "//input[@type='checkbox' and ../../..//a[@title='%s']]" % self.name
+
+    def locate(self):
+        return "//div[@id='quadicon' and ../../..//a[@title='%s']]" % self.name
+
+    def __str__(self):
+        return self.locate()
