@@ -1,6 +1,0 @@
-selenium:
-  baseurl: http://10.8.59.174
-
-cfme:
-  admin_user: admin
-  admin_password: smartvm
