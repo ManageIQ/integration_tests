@@ -9,6 +9,8 @@ from pages.regions.quadiconitem import QuadiconItem
 from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from utils.wait import wait_for
+
 
 class VirtualMachines(VmCommonComponents):
 
@@ -174,33 +176,36 @@ class VirtualMachines(VmCommonComponents):
         if found and load_details:
             return found.click()
 
-    def wait_for_vm_state_change(self, vm_quadicon_title, 
-                desired_state, timeout_in_minutes):
-        self.find_vm_page(vm_quadicon_title, None, False)
-        current_state = self.quadicon_region.get_quadicon_by_title(
-            vm_quadicon_title).current_state
-        print "Desired state: " + desired_state + \
-            "    Current state: " + current_state
-        minute_count = 0
-        while (minute_count < timeout_in_minutes):
-            if (current_state == desired_state):
-                break
-            print "Sleeping 60 seconds, iteration " + str(minute_count+1) + \
-                " of " + str(timeout_in_minutes) + ", desired state (" + \
-                desired_state+") != current state("+current_state+")"
-            time.sleep(60)
-            minute_count += 1
+    def wait_for_vm_state_change(self, vm_quadicon_title, desired_state, timeout_in_minutes):
+        """ Wait for VM to come to desired state.
+
+        This function waits just the needed amount of time thanks to wait_for.
+
+        Args:
+            vm_quadicon_title:
+                Displayed name of the VM
+            desired_state:
+                'on' or 'off'
+            timeout_in_minutes:
+                Specify amount of time to wait until TimedOutError is raised in minutes.
+
+        Raises:
+            TimedOutError:
+                When VM does not come up to desired state in specified period of time.
+
+        """
+        def _check():
             self.refresh()
             self.find_vm_page(vm_quadicon_title, None, False)
-            current_state = self.quadicon_region.get_quadicon_by_title(
-                vm_quadicon_title).current_state
-            if (minute_count==timeout_in_minutes) and \
-                    (current_state != desired_state):
-                raise Exception("timeout reached("+str(timeout_in_minutes)+ 
-                    " minutes) before desired state (" +
-                    desired_state+") reached... current state("+
-                    current_state+")")
+            current_state = self.quadicon_region\
+                .get_quadicon_by_title(vm_quadicon_title)\
+                .current_state
+            if current_state == desired_state:
+                return True
+            else:
+                return False
 
+        return wait_for(_check, num_sec=timeout_in_minutes * 60)
 
     class VirtualMachineQuadIconItem(QuadiconItem):
         @property
