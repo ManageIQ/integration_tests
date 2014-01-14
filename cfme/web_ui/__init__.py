@@ -281,6 +281,31 @@ class Table(object):
         """
         return self._items_generator()
 
+    def find_item(self, header, value):
+        """
+        Finds an item in the Table by iterating through each visible item,
+        this work used to be done by the :py:meth::`click_item` method but
+        has not been abstracted out to be called separately.
+
+        Args:
+            header: A string or int, describing which column to inspect.
+            data: The value to be compared when trying to identify the correct row
+                to click.
+
+        Return: WebElement of the element if item was found, else ``None``.
+        """
+        list_gen = self._items_generator()
+
+        for item in list_gen:
+            if isinstance(header, basestring):
+                cell_value = getattr(item, header).text
+            elif isinstance(header, int):
+                cell_value = item[header].text
+            if cell_value == value:
+                return item
+        else:
+            return None
+
     def click_items(self, data):
         """
         Submits multiple elements to be clicked on
@@ -323,22 +348,16 @@ class Table(object):
             data: The value to be compared when trying to identify the correct row
                 to click.
 
-        Return: ``True`` if item was found, else ``False``.
+        Return: ``True`` if item was found and clicked, else ``False``.
         """
-        list_gen = self._items_generator()
-
-        for item in list_gen:
-            if isinstance(header, basestring):
-                cell_value = getattr(item, header).text
-            elif isinstance(header, int):
-                cell_value = item[header].text
-            if cell_value == value:
-                sel.click(item.data)
-                return True
+        item = self.find_item(header, value)
+        if item:
+            sel.click(getattr(item, header))
+            return True
         else:
             return False
 
-    class Row():
+    class Row(object):
         """
         An object representing a row in a Table.
 
@@ -367,6 +386,9 @@ class Table(object):
             """
             index += 1
             return self.data.find_elements_by_xpath('td[%i]' % index)[0]
+
+        def __str__(self):
+            return ",".join([el.text for el in self.data.find_elements_by_xpath('td')])
 
 
 class Form(object):
