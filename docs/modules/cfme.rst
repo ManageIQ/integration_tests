@@ -1,11 +1,6 @@
 cfme
 ====
 
-Core module containing.
-
-* :py:mod:`cfme.fixtures`
-* :py:mod:`cfme.login`
-
 .. automodule:: cfme
    :members:
 .. automodule:: cfme.dashboard
@@ -14,3 +9,12 @@ Core module containing.
    :members:
 .. automodule:: cfme.login
    :members:
+
+cfme submodules
+---------------
+
+.. toctree::
+   :glob:
+
+   cfme/*
+

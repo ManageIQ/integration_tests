@@ -121,7 +121,7 @@ Flake8 lint will pop up every time you save a file, and does an excellent job of
 linted while you code.
 
 Trailing Spaces
-^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 
 Using Package Control, install the "Trailing Spaces" plugin. This highlights trailing spaces
 so you can clean them up before flake8 sees them.
