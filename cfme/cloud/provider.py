@@ -21,7 +21,7 @@ page = Region(locators=
                'add_button': (By.CSS_SELECTOR, "tr[title='Add a New Cloud Provider']>"
                               "td.td_btn_txt>div.btn_sel_text"),
                'add_submit': (By.CSS_SELECTOR, "img[alt='Add this Cloud Provider']"),
-               'credentials_verify_button': (By.CSS_SELECTOR, "div#default_validate_buttons_on >"
+               'credentials_validate_button': (By.CSS_SELECTOR, "div#default_validate_buttons_on >"
                                              " ul#form_buttons > li > a > img"),
                'credentials_verify_disabled_button': (By.CSS_SELECTOR,
                                                       "div#default_validate_buttons_off > "

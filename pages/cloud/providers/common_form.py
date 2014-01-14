@@ -9,7 +9,7 @@ class AddFormCommon(Base):
     '''Cloud Providers - Add an Cloud Provider page'''
     _page_title = 'CloudForms Management Engine: Cloud Providers'
 
-    _provider_credentials_verify_button_locator = (
+    _provider_credentials_validate_button_locator = (
         By.CSS_SELECTOR,
         "div#default_validate_buttons_on > ul#form_buttons > li > a > img")
     _provider_credentials_verify_disabled_button_locator = (
@@ -35,11 +35,11 @@ class AddFormCommon(Base):
     _provider_api_port_locator = (By.ID, "port")
 
     @property
-    def verify_button(self):
+    def validate_button(self):
         '''Verify button
 
         Returns a WebElement'''
-        return self.get_element(*self._provider_credentials_verify_button_locator)
+        return self.get_element(*self._provider_credentials_validate_button_locator)
 
     @property
     def cancel_button(self):
@@ -111,7 +111,7 @@ class AddFormCommon(Base):
         '''Click on the Openstack AMQP credentials tab'''
         self.get_element(*self._amqp_credentials_button_locator).click()
 
-    def _fill_provider(self, provider):
+    def fill_provider(self, provider):
         '''Fill a cloud provider given a dictionary'''
         for key, value in provider.iteritems():
             # Special cases
@@ -158,7 +158,7 @@ class AddFormCommon(Base):
 
     def click_on_credentials_verify(self):
         '''Click on the verify credentials button and wait for page refresh'''
-        self.verify_button.click()
+        self.validate_button.click()
         self._wait_for_results_refresh()
         from pages.cloud.providers.add import Add
         return Add(self.testsetup)

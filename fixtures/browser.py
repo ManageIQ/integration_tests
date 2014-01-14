@@ -27,3 +27,10 @@ def duckwebqa(browser_funcscope):
 def duckwebqa_loggedin(browser):
     # On login to rule them all!
     yield home_page_logged_in(utils.browser.testsetup)
+
+
+def pytest_unconfigure(config):
+    try:
+        utils.browser.browser().quit()
+    except:
+        pass

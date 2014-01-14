@@ -287,6 +287,10 @@ def get(url):
     return browser().get(url)
 
 
+def refresh():
+    browser().refresh()
+
+
 def move_to_fn(*els):
     """
     Returns a function which successively moves through a series of elements.
