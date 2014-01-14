@@ -253,21 +253,30 @@ def select_by_value(loc, text):
 
 
 def checkbox(loc, set_to=False):
-    """Checks a given checkbox
+    """
+    Checks or unchecks a given checkbox
 
     Finds an element given by loc and checks it
 
     Args:
         loc: The locator of the element
-        value: The value the checkbox should represent as a bool.
+        value: The value the checkbox should represent as a bool (or None to do nothing)
 
     Returns: None
     """
-    el = element(loc)
-    ActionChains(browser()).move_to_element(el).perform()
-    if el.is_selected() is not set_to:
-        el.click()
-        wait_for_ajax()
+    if set_to is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        if el.is_selected() is not set_to:
+            click(el)
+
+
+def check(loc):
+    checkbox(loc, True)
+
+
+def uncheck(loc):
+    checkbox(loc, False)
 
 
 def current_url():
