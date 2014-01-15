@@ -2,11 +2,10 @@
 from pages.page import Page
 from pages.base import Base
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support.select import Select
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.taggable import Taggable
 from pages.regions.policy_mixin import PolicyMixin
+
 
 class PolicyMenu(Page):
     '''Add this mixin to your page in 3 easy steps:
@@ -17,9 +16,11 @@ class PolicyMenu(Page):
     # github issue filed to add IDs for consistent access
     # https://github.com/ManageIQ/cfme/issues/352
     _policy_button_locator = (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Policy']")
-    _manage_policies_locator = (By.CSS_SELECTOR, "table.buttons_cont tr[title^='Manage Policies for']")
+    _manage_policies_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title^='Manage Policies for']")
     # dajo - 130826 - opting for img locator, found inconsitent text capitialization on some menus
-    _edit_tags_locator = (By.CSS_SELECTOR, "table.buttons_cont td img[src='/images/toolbars/tag.png']")
+    _edit_tags_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont td img[src='/images/toolbars/tag.png']")
 
     @property
     def policy_button(self):
@@ -34,11 +35,13 @@ class PolicyMenu(Page):
         return self.selenium.find_element(*self._edit_tags_locator)
 
     def click_on_manage_policies(self):
-        ActionChains(self.selenium).click(self.policy_button).click(self.manage_policies_button).perform()
+        ActionChains(self.selenium).click(self.policy_button).click(
+            self.manage_policies_button).perform()
         return PolicyMenu.ManagePolicies(self.testsetup)
 
     def click_on_edit_tags(self):
         ActionChains(self.selenium).click(self.policy_button).click(self.edit_tags_button).perform()
+        self._wait_for_visible_element(*Taggable._tag_category_selector)
         return PolicyMenu.EditTags(self.testsetup)
 
     class EditTags(Base, Taggable):
@@ -75,5 +78,3 @@ class PolicyMenu(Page):
             @keyword visible_timeout: Modify standard timeout for button's appearance.
             """
             self.reset_policy_assignment(visible_timeout=visible_timeout)
-
-
