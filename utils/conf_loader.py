@@ -1,17 +1,19 @@
 import os
-from collections import OrderedDict
 
 import py.path
 import yaml
 from yaml.loader import Loader
 
 
-class OrderedYamlLoader(Loader):
+class YamlConfigLoader(Loader):
+    # Override the root yaml node to be a RecursiveUpdateDict
     def construct_yaml_map(self, node):
-        data = OrderedDict()
+        data = RecursiveUpdateDict()
         yield data
         value = self.construct_mapping(node)
         data.update(value)
+# Do the same for child nodes of the yaml mapping type
+YamlConfigLoader.add_constructor('tag:yaml.org,2002:map', YamlConfigLoader.construct_yaml_map)
 
 
 class ConfigNotFoundException(Exception):
@@ -39,11 +41,7 @@ class Config(dict):
         try:
             return super(Config, self).__getattribute__(attr)
         except AttributeError:
-            value = self[attr]
-            if isinstance(value, dict) and not isinstance(value, self.__class__):
-                return self.__class__(value)
-            else:
-                return value
+            return self[attr]
 
     def __getitem__(self, key):
         # Attempt a normal dict lookup to pull a cached conf
@@ -51,13 +49,13 @@ class Config(dict):
             return super(Config, self).__getitem__(key)
         except KeyError:
              # Cache miss, load the requested yaml
-            yaml_dict = self.__class__(load_yaml(key))
+            yaml_dict = load_yaml(key)
 
             # Graft in local yaml updates if they're available
             try:
                 local_yaml = '%s.local' % key
                 local_yaml_dict = load_yaml(local_yaml)
-                yaml_dict.update_only_new(local_yaml_dict)
+                yaml_dict.update(local_yaml_dict)
             except ConfigNotFoundException:
                 pass
 
@@ -65,7 +63,9 @@ class Config(dict):
             self[key] = yaml_dict
             return self[key]
 
-    def update_only_new(self, new_data):
+
+class RecursiveUpdateDict(dict):
+    def update(self, new_data):
         """ More intelligent dictionary update.
 
         This method changes just data that have been changed. How does it work?
@@ -93,30 +93,12 @@ class Config(dict):
 
         Args:
             new_data: Update data.
-
-        Returns:
-            self
         """
         for key, value in new_data.iteritems():
-            if key not in self:
-                self[key] = value
-            elif not isinstance(value, dict):
-                self[key] = value
+            if isinstance(value, type(self)) and key in self:
+                type(self).update(self[key], value)
             else:
-                # It must be instance of dict or Config so we make sure it's Config
-                new = self.__class__(value)
-                # If the key present is not a Config, we must convert it to be able to _only_new()
-                try:
-                    if not isinstance(self[key], self.__class__):
-                        self[key] = self.__class__(self[key])
-                except TypeError:
-                    # The old value is not a dictionary (conversion failed)
-                    # So we will overwrite it because we update only dicts
-                    self[key] = new
-                else:
-                    # The new value is a dictionary, so recursively update it
-                    self[key].update_only_new(new)
-        return self
+                self[key] = new_data[key]
 
 
 def load_yaml(filename=None):
@@ -127,7 +109,7 @@ def load_yaml(filename=None):
 
     if path.check():
         with path.open() as config_fh:
-            return yaml.load(config_fh, Loader=OrderedYamlLoader)
+            return yaml.load(config_fh, Loader=YamlConfigLoader)
     else:
         msg = 'Unable to load configuration file at %s' % path
         raise ConfigNotFoundException(msg)

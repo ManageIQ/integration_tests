@@ -3,13 +3,19 @@ import os
 import pytest
 
 from utils import conf
+from utils.conf_loader import Config, RecursiveUpdateDict
 
 test_yaml_contents = '''
 test_key: test_value
+nested_test_root:
+    nested_test_key_1: nested_test_value_1
+    nested_test_key_2: nested_test_value_2
 '''
 
 local_test_yaml_contents = '''
 test_key: test_overridden_value
+nested_test_root:
+    nested_test_key_1: overridden_nested_test_value
 '''
 
 
@@ -46,6 +52,9 @@ def create_test_yaml(request, contents, filename, local=False):
 def test_conf_yamls_dict(test_yaml):
     # Dict lookup method works
     assert conf[test_yaml]['test_key'] == 'test_value'
+    assert isinstance(conf, Config)
+    assert isinstance(conf[test_yaml], RecursiveUpdateDict)
+    assert isinstance(conf[test_yaml]['nested_test_root'], RecursiveUpdateDict)
 
 
 def test_conf_yamls_attr(test_yaml):
@@ -55,9 +64,14 @@ def test_conf_yamls_attr(test_yaml):
 
 def test_conf_yamls_override(request, test_yaml):
     # Make a .local.yaml file with the same root name as test_yaml,
-    # Check that the local override works.
     with create_test_yaml(request, local_test_yaml_contents, test_yaml, local=True):
+        # Check that the simple local override works.
         assert conf[test_yaml]['test_key'] == 'test_overridden_value'
+
+        # Check that the local override of specific nested keys works.
+        nested_root = conf[test_yaml]['nested_test_root']
+        assert nested_root['nested_test_key_1'] == 'overridden_nested_test_value'
+        assert nested_root['nested_test_key_2'] == 'nested_test_value_2'
 
 
 def test_conf_yamls_import(test_yaml):
