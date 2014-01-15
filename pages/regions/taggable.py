@@ -53,12 +53,12 @@ class Taggable(Page):
     @property
     def categories_dropdown(self):
         ''' New tag category dropdown '''
-        return Select(self.selenium.find_element(*self._tag_category_selector))
+        return Select(self.get_element(*self._tag_category_selector))
 
     @property
     def category_values_dropdown(self):
         ''' Values dropdown for adding a tag '''
-        return Select(self.selenium.find_element(*self._tag_value_selector))
+        return Select(self.get_element(*self._tag_value_selector))
 
     @property
     def available_categories(self):
@@ -95,7 +95,7 @@ class Taggable(Page):
     @property
     def root(self):
         self._wait_for_visible_element(*self._tag_table, visible_timeout=10)
-        return self.selenium.find_element(*self._tag_table).find_elements(*self._tag_row_locator)
+        return self.get_element(*self._tag_table).find_elements(*self._tag_row_locator)
 
     @property
     def current_tags(self):
@@ -115,15 +115,15 @@ class Taggable(Page):
 
     def save_tag_edits(self):
         self._wait_for_visible_element(*self._save_edits_button)
-        self.selenium.find_element(*self._save_edits_button).click()
+        self.get_element(*self._save_edits_button).click()
         return self._wait_for_results_refresh()
 
     def cancel_tag_edits(self):
         self._wait_for_visible_element(*self._cancel_edits_button)
-        self.selenium.find_element(*self._cancel_edits_button).click()
+        self.get_element(*self._cancel_edits_button).click()
         return self._wait_for_results_refresh()
 
     def reset_tag_edits(self):
         self._wait_for_visible_element(*self._reset_edits_button)
-        self.selenium.find_element(*self._reset_edits_button).click()
+        self.get_element(*self._reset_edits_button).click()
         return self._wait_for_results_refresh()
