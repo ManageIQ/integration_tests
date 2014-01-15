@@ -134,9 +134,9 @@ class Page(object):
         return field_element
 
     def select_dropdown(self, value, *element):
-        select = Select(self.selenium.find_element(*element))
+        select = Select(self.get_element(*element))
         select.select_by_visible_text(value)
 
     def select_dropdown_by_value(self, value, *element):
-        select = Select(self.selenium.find_element(*element))
+        select = Select(self.get_element(*element))
         select.select_by_value(value)
