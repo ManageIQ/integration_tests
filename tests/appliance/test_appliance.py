@@ -15,9 +15,18 @@ pytestmark = [
 
 
 @pytest.mark.parametrize(('package'), [
+    'cfme',
+    'cfme-appliance',
+    'cfme-lib',
     'nfs-utils',
     'nfs-utils-lib',
-    'mingw32-cfme-host'
+    'mingw32-cfme-host',
+    'ipmitool',
+    'prince',
+    'netapp-manageability-sdk',
+    'rhn-client-tools',
+    'rhn-check',
+    'rhnlib',
 ])
 def test_rpms_present(ssh_client, package):
     ''' Verifies nfs-util rpms are in place needed for pxe & nfs operations'''
@@ -53,6 +62,7 @@ def test_evm_running(ssh_client):
 
 @pytest.mark.parametrize(('service'), [
     'evmserverd',
+    'evminit',
     'sshd',
     'iptables',
     'postgresql92-postgresql',
