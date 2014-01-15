@@ -481,7 +481,7 @@ class Form(object):
             sel.click(self.region.__getattr__(action))
 
 
-class Radio():
+class Radio(object):
     """ A helper object for Radio button groups
 
     Radio allows the usage of HTML radio elements without resorting to previous
