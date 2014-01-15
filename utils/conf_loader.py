@@ -39,7 +39,11 @@ class Config(dict):
         try:
             return super(Config, self).__getattribute__(attr)
         except AttributeError:
-            return self[attr]
+            value = self[attr]
+            if isinstance(value, dict) and not isinstance(value, self.__class__):
+                return self.__class__(value)
+            else:
+                return value
 
     def __getitem__(self, key):
         # Attempt a normal dict lookup to pull a cached conf
