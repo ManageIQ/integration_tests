@@ -39,6 +39,7 @@ class PolicyMenu(Page):
 
     def click_on_edit_tags(self):
         ActionChains(self.selenium).click(self.policy_button).click(self.edit_tags_button).perform()
+        self._wait_for_visible_element(*Taggable._tag_category_selector)
         return PolicyMenu.EditTags(self.testsetup)
 
     class EditTags(Base, Taggable):
