@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 from pages.page import Page
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.select import Select
 from unittestzero import Assert
 from random import choice
+
 
 class Taggable(Page):
     '''Add this mixin to your page in 3 easy steps:
         * import: from pages.regions.taggable import Taggable
         * add to class: class MyClass(Base, Taggable):
         * call directly from test or page
-    
+
     '''
     #Navigation
     _tag_category_selector = (By.ID, "tag_cat")
@@ -70,26 +70,26 @@ class Taggable(Page):
         self.select_category(category)
         values = []
         for option in self.category_values_dropdown.options:
-            if "<Select" not in option.text: 
+            if "<Select" not in option.text:
                 values.append(option.text)
         return values
 
     def add_random_tag(self):
-        ''' Add a random tag 
+        ''' Add a random tag
 
         Returns the category and value text as strings '''
 
         still_searching = True
         while still_searching:
-            # For some reason, several options in the dropdown have a "  " that 
+            # For some reason, several options in the dropdown have a "  " that
             #    is not seen in the current tags table
             cat_text = choice(self.available_categories).replace("  ", " ")
             value_text = choice(self.category_values(cat_text))
-            # multiple runs may assign all the values 
+            # multiple runs may assign all the values
             #    which would result in a error, pick again if we hit that
             if "<All values are assigned>" not in value_text:
                 still_searching = False
-        self.assign_tags( { cat_text: value_text } )
+        self.assign_tags({cat_text: value_text})
         return cat_text, value_text
 
     @property
@@ -100,7 +100,9 @@ class Taggable(Page):
     @property
     def current_tags(self):
         elements = [element.find_elements(*self._tag_items_locator) for element in self.root]
-        tags = {category.text: (value.text, delete_element) for delete_element, category, value in elements}
+        tags = dict()
+        for delete_element, category, value in elements:
+            tags[category.text] = (value.text, delete_element)
         return tags
 
     def is_tag_displayed(self, category, value):
