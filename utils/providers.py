@@ -89,7 +89,7 @@ def setup_provider(provider_name):
 
 
 def setup_infrastructure_provider(provider_name, provider_data):
-    infra_providers_pg = navigation.infra_providers_pg(None)
+    infra_providers_pg = navigation.infra_providers_pg()
 
     # Bail out if the provider already exists
     if infra_providers_pg.quadicon_region.does_quadicon_exist(provider_data['name']):

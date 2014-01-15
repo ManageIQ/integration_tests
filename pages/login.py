@@ -72,7 +72,7 @@ class LoginPage(Base):
         except AssertionError:
             if force_dashboard:
                 from fixtures.navigation import intel_dashboard_pg
-                page = intel_dashboard_pg(page)
+                page = intel_dashboard_pg()
             else:
                 # Not the dashboard page and not forcing dashboard page
                 # return a generic Base page
