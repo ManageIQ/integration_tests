@@ -16,15 +16,18 @@ def pytest_generate_tests(metafunc):
 
 
 def validate_menus(home_pg, group_roles, ldap_group):
+    missing_items = []
     for menu in group_roles["menus"]:
         Assert.equal(home_pg.header.site_navigation_menu(menu).name, menu)
         for item in home_pg.header.site_navigation_menu(menu).items:
-            Assert.contains(item.name, group_roles["menus"][menu],
-                            "LDAP group %s doesn't contain %s in roles" % (ldap_group, item.name))
+            if item.name not in group_roles["menus"][menu]:
+                missing_items.append(item.name)
+    # There should be no missing items...
+    assert not missing_items
 
 
 @pytest.mark.usefixtures("maximized",
-                         "configure_auth_mode",
+                         "configure_ldap_auth_mode",
                          "ldap_groups_data")
 def test_default_ldap_group_roles(browser, group_name, group_data):
     """Basic default LDAP group role RBAC test
@@ -41,16 +44,4 @@ def test_default_ldap_group_roles(browser, group_name, group_data):
     home_pg = login_pg.login(user=group_name, force_dashboard=False)
     Assert.true(home_pg.is_logged_in, "Could not determine if logged in")
     validate_menus(home_pg, group_data, group_name)
-
-
-def test_auth_set_to_database(cnf_configuration_pg):
-    """Sets auth mode to internal
-
-    This test tests setting the auth_mode back to database, it also serves as cleanup
-    to the above test, test_default_ldap_group_roles()
-    """
-
-    auth_pg = cnf_configuration_pg.click_on_settings()\
-                                  .click_on_current_server_tree_node().click_on_authentication_tab()
-    auth_pg.select_dropdown_by_value('database', *auth_pg._auth_mode_selector)
-    auth_pg = auth_pg.save()
+    home_pg.header.logout()
