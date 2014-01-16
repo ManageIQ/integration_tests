@@ -53,7 +53,11 @@ class AuthenticationSettingsTab(Base):
 
     @property
     def current_auth_mode(self):
-        return self.selenium.find_element(*self._auth_mode_selector).get_attribute("value")
+        return self.get_element(*self._auth_mode_selector).get_attribute("value")
+
+    @current_auth_mode.setter
+    def current_auth_mode(self, auth_mode_id):
+        self.select_dropdown_by_value(auth_mode_id, *self._auth_mode_selector)
 
     def validate(self):
         if (self.current_auth_mode in ("ldap", "ldaps")):
