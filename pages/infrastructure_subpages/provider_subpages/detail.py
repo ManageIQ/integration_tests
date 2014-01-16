@@ -5,6 +5,7 @@ Created on May 31, 2013
 '''
 from pages.base import Base
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
 
 
 class ProvidersDetail(Base):
@@ -12,6 +13,29 @@ class ProvidersDetail(Base):
     _page_title = 'CloudForms Management Engine: Infrastructure Providers'
     _provider_detail_name_locator = (By.XPATH, '//*[@id="accordion"]/div[1]/div[1]/a')
     _details_locator = (By.CSS_SELECTOR, 'div#textual_div')
+    _configuration_button_locator = (By.CSS_SELECTOR,
+        "div.dhx_toolbar_btn[title='Configuration']")
+    _refresh_relationships_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/refresh.png']")
+
+    @property
+    def refresh_relationships_button(self):
+        '''The refresh_relationships button'''
+        return self.selenium.find_element(*self._refresh_relationships_locator)
+
+    @property
+    def configuration_button(self):
+        '''The Configuration button'''
+        return self.selenium.find_element(*self._configuration_button_locator)
+
+    def click_on_refresh_relationships(self, cancel=False):
+        ActionChains(self.selenium)\
+            .click(self.configuration_button)\
+            .click(self.refresh_relationships_button)\
+            .perform()
+        self.handle_popup(cancel)
+        self._wait_for_results_refresh()
+        return "Refresh Infrastructure Providers initiated" in self.flash.message
 
     @property
     def details(self):
