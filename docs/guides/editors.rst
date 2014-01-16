@@ -54,10 +54,10 @@ using hereafter to bring in sublime extensions. Follow the installation instruct
 `here <https://sublime.wbond.net/installation#st2>`_. Be sure to follow the instructions for
 Sublime Text 2, not Sublime Text 3.
 
-**Note**: When installing packages, it is sometimes necessary to restart sublime for the
-installed packages to initialize. For simplicity, it is probably easiest to restart sublime
-after installing any package. Restarting sublime after changing configuration files should
-not be necessary.
+.. note:: When installing packages, it is sometimes necessary to restart sublime for the
+   installed packages to initialize. For simplicity, it is probably easiest to restart sublime
+   after installing any package. Restarting sublime after changing configuration files should
+   not be necessary.
 
 SublimeCodeIntel
 ^^^^^^^^^^^^^^^^

@@ -74,26 +74,45 @@ Contributing
 
 Submit a pull request from a fork to contribute.
 
-With regard to design, if a component can be shared between different pages (trees, accordions, etc.), then it should be turned into a region. This is a standalone bit of code that models just a small portion of a page. From there, these regions can be composited into a page object. Page objects themselves should expose properties that represent items on the page, and also any "services" that the page has. So, rather than write a test with 'Fill in username, fill in password click submit', you would create a 'login' method on the page that takes the username and password as an argument. This will shield the tests from changing implementation of that login method. If you want pass something different, create a new method, like 'login_with_enter_key', so as to allow other variations of the service.
+With regard to design, if a component can be shared between different pages (trees, accordions,
+etc.), then it should be turned into a region. This is a standalone bit of code that models just
+a small portion of a page. From there, these regions can be composited into a page object. Page
+objects themselves should expose properties that represent items on the page, and also any
+"services" that the page has. So, rather than write a test with 'Fill in username, fill in
+password click submit', you would create a 'login' method on the page that takes the username
+and password as an argument. This will shield the tests from changing implementation of that
+login method. If you want pass something different, create a new method, like
+``login_with_enter_key``, so as to allow other variations of the service.
 
-If an action results in navigation to a new page, and that page will always be known, the action should return the page that results.
+If an action results in navigation to a new page, and that page will always be known, the
+action should return the page that results.
 
-The elements and methods exposed on a page will result from tests written against that page. If there is a specific test that you are working on, write the test first, modeling the page as you go (if needed) to provide the necessary functionality. Developers are not expected or encourage to model pages without a test that uses the modeling.
+The elements and methods exposed on a page will result from tests written against that page.
+If there is a specific test that you are working on, write the test first, modeling the page
+as you go (if needed) to provide the necessary functionality. Developers are not expected or
+encourage to model pages without a test that uses the modeling.
 
-The Mozilla style guide below has great examples and guidance on writing tests against page models, as well as the page models themselves.
+The Mozilla style guide below has great examples and guidance on writing tests against page
+models, as well as the page models themselves.
 
-All contributions will be checked for compliance with the Developer Guidelines. Users are expected to lint their code before submitting a pull request. Pull requests are an excellent collaborative review medium; feel free to open up pull requests before code is "ready" to get feedback and suggestions from other developers.
+All contributions will be checked for compliance with the Developer Guidelines. Users are
+expected to lint their code before submitting a pull request. Pull requests are an excellent
+collaborative review medium; feel free to open up pull requests before code is "ready" to get
+feedback and suggestions from other developers.
 Background
 
-The testing framework being used is py.test: http://pytest.org/latest
+The testing framework being used is `py.test <http://pytest.org/latest>`_
 
 Firefox is currently unsupported, but it will be working again soon.
 Using Chrome
 
-    Download from http://code.google.com/p/chromedriver/downloads/list. Use the latest available for your architecture.
-    Extract the chromedriver exectuable from that archive into your virtualenv's bin directory (alongside bin/activate)
+* Download `chromedriver <http://code.google.com/p/chromedriver/downloads/list>`_. Use the
+  latest available for your architecture.
+* Extract the chromedriver exectuable from that archive into your virtualenv's bin directory
+  (alongside bin/activate)
 
 More Information
 ----------------
 
-Head over to the project wiki for more information, including developer guidelines and some tips for working with selenium.
+Head over to the project wiki for more information, including developer guidelines and some
+tips for working with selenium.
