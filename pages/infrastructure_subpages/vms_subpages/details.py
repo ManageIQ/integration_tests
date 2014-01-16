@@ -5,6 +5,7 @@ from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.base import Base
+from utils.wait import wait_for
 
 class VirtualMachineDetails(VmCommonComponents):
     _details_locator = (By.CSS_SELECTOR, "div#textual_div")
@@ -91,26 +92,12 @@ class VirtualMachineDetails(VmCommonComponents):
         return VirtualMachineUtil(self.testsetup)
 
     def wait_for_vm_state_change(self, desired_state, timeout_in_minutes):
-        current_state = self.power_state
-        print "Desired state: " + desired_state + \
-            "    Current state: " + current_state
-        minute_count = 0
-        while (minute_count < timeout_in_minutes):
-            if (current_state == desired_state):
-                break
-            print "Sleeping 60 seconds, iteration " + str(minute_count+1) + \
-                " of " + str(timeout_in_minutes) + ", desired state (" + \
-                desired_state+") != current state("+current_state+")"
-            time.sleep(60)
-            minute_count += 1
+
+        def _check():
             self.refresh()
-            current_state = self.power_state
-            if (minute_count==timeout_in_minutes) and \
-                (current_state != desired_state):
-                raise Exception("timeout reached("+str(timeout_in_minutes)+
-                                " minutes) before desired state (" +
-                                desired_state+") reached... current state("+
-                                current_state+")")
+            return self.power_state == desired_state
+
+        return wait_for(_check, num_sec=timeout_in_minutes * 60, delay=10)
 
     def edit_cfme_relationship_and_save(self, appliance_name):
         '''Service method to edit cfme relationship and save from VM details'''

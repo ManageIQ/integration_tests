@@ -4,6 +4,7 @@ from pages.regions.quadicons import Quadicons
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.cloud.instances.common import CommonComponents
+from utils.wait import wait_for
 
 
 class Instances(CommonComponents):
@@ -199,28 +200,14 @@ class Instances(CommonComponents):
     def wait_for_state_change(self, i_quadicon_title,
                 desired_state, timeout_in_minutes, refresh=False):
         """Wait for instance to transition to particular state"""
-        self.find_instance_page(i_quadicon_title, None, False)
-        current_state = self.quadicon_region.get_quadicon_by_title(
-            i_quadicon_title).current_state
-        print "Desired state: " + desired_state + \
-            "    Current state: " + current_state
-        minute_count = 0
-        while (minute_count < timeout_in_minutes):
-            if (current_state == desired_state):
-                break
-            print "Sleeping 60 seconds, iteration " + str(minute_count + 1) + \
-                " of " + str(timeout_in_minutes) + ", desired state (" + \
-                desired_state + ") != current state(" + current_state + ")"
-            if refresh:
-                self.refresh_relationships([i_quadicon_title])
-            time.sleep(60)
-            minute_count += 1
+
+        def _check():
             self.refresh()
             self.find_instance_page(i_quadicon_title, None, False)
-            current_state = self.quadicon_region.get_quadicon_by_title(
-                i_quadicon_title).current_state
-            if minute_count == timeout_in_minutes and current_state != desired_state:
-                raise Exception("timeout reached(" + str(timeout_in_minutes) +
-                    " minutes) before desired state (" +
-                    desired_state + ") reached... current state(" +
-                    current_state + ")")
+            if refresh:
+                self.refresh_relationships([i_quadicon_title])
+                self.find_instance_page(i_quadicon_title, None, False)
+            curr_state = self.quadicon_region.get_quadicon_by_title(i_quadicon_title).current_state
+            return curr_state == desired_state
+
+        return wait_for(_check, num_sec=timeout_in_minutes * 60)

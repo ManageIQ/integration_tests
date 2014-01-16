@@ -17,8 +17,9 @@ from pages.regions.quadicons import Quadicons
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from selenium.webdriver.common.by import By
 from utils.providers import provider_factory
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
 import re
+from functools import partial
 
 
 # pylint: disable=C0103
@@ -100,10 +101,17 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
                                   'num_host',
                                   'num_cluster')
         client.disconnect()
-        ec, tc = wait_for(detail_pg.do_stats_match,
-                          [host_stats],
-                          message="do_stats_match",
-                          num_sec=300)
+        wait = partial(wait_for,
+                       detail_pg.do_stats_match,
+                       [host_stats],
+                       message="do_stats_match",
+                       num_sec=180)
+        try:
+            ec, tc = wait()
+        except TimedOutError:
+            # Help him
+            assert detail_pg.click_on_refresh_relationships(), "Could not refresh relationships!"
+            ec, tc = wait()
         self.header.site_navigation_menu('Infrastructure'). \
             sub_navigation_menu('Providers').click()
         return
