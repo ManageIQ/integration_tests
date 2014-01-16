@@ -42,3 +42,25 @@ class TreeTypeUnknown(Exception):
     Raised if the tree type is known whilst detection in :py:class:`cfme.web_ui.Tree`
     """
     pass
+
+
+class BlockTypeUnknown(Exception):
+    """
+    Raised if the block type requested to :py:class:`cfme.web_ui.InfoBlock`
+    """
+    pass
+
+
+class ElementOrBlockNotFound(Exception):
+    """
+    Raised if an Element or a Block is not found whilst locating in
+    :py:meth:`cfme.web_ui.InfoBlock`.
+    """
+    def __init__(self, el, name):
+        if el:
+            self.err_string = "The key [%s] was not found in the block" % name
+        else:
+            self.err_string = "The block [%s] was not found" % name
+
+    def __str__(self):
+        return self.err_string
