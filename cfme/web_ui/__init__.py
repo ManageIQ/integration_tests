@@ -674,3 +674,104 @@ class Tree(object):
         leaf = self.expose_path(path, root=root)
         sel.click(leaf.find_element_by_xpath(self.leaf))
         return leaf
+
+
+class InfoBlock(object):
+    """ A helper class for information blocks on pages
+
+    This class is able to work with both ``detail`` type information blocks and
+    ``form`` style information blocks. It is invoked with a single argument describing
+    the type of blocks to be addressed and adjusts the html elements accordingly.
+
+    The class nests itself one level and treats title/block the same as key/value. It
+    caches each item it traverses as searching is impossible due to the inclusion of
+    special characters in the key name. There for a search is done and a comparison to
+    a ``convert_header`` version of the key. If a match is found, the object is returned.
+    If not, it is cached.
+
+    Args:
+        itype: The type of information blocks to address, either ``detail`` or ``form``.
+        el: Used when InfoBlock nests itself to obtain the key/value pair.
+    Returns: Either a string if the elment contains just text, or the element.
+    Raises:
+        exceptions.BlockTypeUnknown: If the Block type requested by itype is unknown.
+
+    """
+    def __init__(self, itype, el=None):
+        self.itype = itype
+        self._cache = {}
+        self._offset = el
+        if itype == "detail":
+            self._box_locator = '//div[@class="modbox"]'
+            self._pair_locator = './/tr'
+            self._key_locator = './/td[1]' if self._offset else './/h2'
+            self._value_locator = './/td[2]'
+        elif itype == "form":
+            self._box_locator = '//fieldset'
+            self._pair_locator = 'table/tbody/tr'
+            self._key_locator = 'td[1]' if self._offset else './/p'
+            self._value_locator = 'td[2]'
+        else:
+            raise exceptions.BlockTypeUnknown("The block type requested is unknown")
+
+    def __getattr__(self, name):
+        """ Gets the element at the current level.
+
+        This function first searches the cache of the current level to see if the key
+        has been requested before. In the case of a Block, it will search for the header
+        name, in the case of a key/value pair it will search the key.
+
+        If the cache is not found it will then search for all possible elements and traverse
+        them doing a comparision in :py:meth:`find_n_cache` and cacheing.
+
+        Args:
+            name: The key/header name.
+        Returns: Either the block or value.
+        """
+
+        if name in self._cache:
+            return self._cache[name]
+
+        if self._offset:
+            els = self._offset.find_elements_by_xpath(self._pair_locator)
+        else:
+            els = sel.elements(self._box_locator)
+        el = self._find_n_cache(els, name)
+        return el
+
+    @staticmethod
+    def _convert_header(header):
+        """ Converts a value into a python friendly version.
+
+        Args:
+            header: The name to convert.
+        Returns: The converted name.
+        """
+        return re.sub('[^0-9a-zA-Z ]+', '', header).replace(' ', '_').lower()
+
+    def _find_n_cache(self, els, name):
+        """ Finds and then caches the header/block or key/value.
+
+        Args:
+            els: The elements to itterate.
+            name: The header/key to locate.
+        Returns: The element or string depending on what the key holds
+        """
+        for el in els:
+            key = el.find_element_by_xpath(self._key_locator).text
+            key_name = self._convert_header(key)
+            if self._offset:
+                el_or_block = el.find_element_by_xpath(self._value_locator)
+                try:
+                    el_or_block = el_or_block.find_element_by_xpath('*')
+                except sel_exceptions.NoSuchElementException:
+                    pass
+            else:
+                el_or_block = InfoBlock(self.itype, el)
+            if key_name == name:
+                self._cache[key_name] = el_or_block
+                return el_or_block
+            else:
+                self._cache[key_name] = el_or_block
+        else:
+            raise exceptions.ElementOrBlockNotFound(self._offset, name)
