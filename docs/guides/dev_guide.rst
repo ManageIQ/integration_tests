@@ -18,7 +18,7 @@ Contributing
   requests are easier to review, and thus will be merged in more quickly.
 * After submitting a request, be ready to work closely with a reviewer to get it
   tested and integrated into the overall test suite.
-* Follow the [[Code Style|Developer-Guidelines#code-style]] guidelines to make your pull request as easy to review
+* Follow the `Code Style`_ guidelines to make your pull request as easy to review
   as possible.
 * If your request requires the use of private information that can't be
   represented in the data file templates (probably cfme_data.yaml), please
@@ -33,7 +33,7 @@ Contributing
   to this document and update the copied code according to the current
   guidelines.
 * Please keep large lint changes separate from new features, though this point
-  should become less relevant over time
+  should become less relevant over time.
 * All pull requests should be squashed down to logical blocks of distinctive
   functionality that work by themselves and do not result in brokenness of master
 
@@ -45,7 +45,7 @@ Contributing
 Reviewers
 ^^^^^^^^^
 
-Reviewers will be looking to make sure that the [[Contributing|Developer-Guidelines#contributing]] guidelines are
+Reviewers will be looking to make sure that the `Contributing`_ guidelines are
 being met. Some of the things that go into the review process:
 
 * Assign the PR to the reviewer
@@ -56,7 +56,8 @@ being met. Some of the things that go into the review process:
 If tests fail, reviewers *WILL*:
 
 * ...give you a complete traceback of the error.
-* ...give you useful information about the appliance against which tests were run, such as the appliance version.
+* ...give you useful information about the appliance against which tests were run,
+  such as the appliance version.
 * ...give you insight into any related data files used.
 
 If tests fail, reviewers *WILL NOT*:
@@ -71,11 +72,11 @@ may, permissions allowing, merge the commit him/herself.
 Code Style
 ^^^^^^^^^^
 
-We adhere to Python's
-[PEP 8 style guide](http://www.python.org/dev/peps/pep-0008/), occasionally
-allowing exceptions for the sake of readability. This is covered in the
-"[Foolish Consistency](http://www.python.org/dev/peps/pep-0008/#a-foolish-consistency-is-the-hobgoblin-of-little-minds)" section of PEP 8. Information on using linting tools to help with this can be found
-on the [[linty freshness]] page.
+We adhere to Python's `PEP 8 style guide <http://www.python.org/dev/peps/pep-0008/>`_
+, occasionally allowing exceptions for the sake of readability. This is covered in the
+`Foolish Consistency <http://www.python.org/dev/peps/pep-0008/#a-foolish-consistency-is-
+the-hobgoblin-of-little-minds>`_ section of PEP 8. Information on using linting tools to
+help with this can be found on the :doc:`lint` page.
 
 We also do a few things that aren't explicitly called out in PEP 8:
 
@@ -134,7 +135,8 @@ We also do a few things that aren't explicitly called out in PEP 8:
   explain not just what code is doing, but why it's doing what it is, and what
   it's intended to achieve.
 
-  We have decided to use the following docstring format and use the "[Cartouche](https://github.com/rob-smallshire/cartouche)"
+  We have decided to use the following docstring format and use the `Cartouche
+  <https://github.com/rob-smallshire/cartouche>`_
   Sphinx plugin to generate nice docs. Details on the format can be found above,
   but an example is described below::
 
@@ -167,8 +169,8 @@ We also do a few things that aren't explicitly called out in PEP 8:
 
 Other useful code style guidelines:
 
-* [PEP 20 - The Zen of Python](http://www.python.org/dev/peps/pep-0020)
-* [PEP 257 - Docstring Conventions](http://www.python.org/dev/peps/pep-0257)
+* `PEP 20 - The Zen of Python <http://www.python.org/dev/peps/pep-0020>`_
+* `PEP 257 - Docstring Conventions <http://www.python.org/dev/peps/pep-0257>`_
 
 cfme_tests
 ----------
@@ -177,7 +179,14 @@ Layout
 ^^^^^^
 
 `cfme_tests/`
-* `pages/` Top-level pages container. The structure of this directory should mimic the layout of the CFME UI as much as possible.
+
+* `cfme/` The new selenium interface framework currently (**In Heavy Development**).
+
+  * `web_ui/` The new web framework being developed (**In Heavy Development**)
+  * `fixtures/` The new fixtures (**In Heavy Development**)
+
+* `pages/` Top-level pages container. The structure of this directory should mimic
+  the layout of the CFME UI as much as possible.
 
 * `tests/` Top-level tests container
 
@@ -192,8 +201,8 @@ Layout
   structure under `tests/`, with data files for tests in the same relative
   location as the test itself.
 
-    * For example, data files for `tests/ui/test_ui_widgets.py` could go into
-      `data/ui/test_ui_widgets/`.
+  * For example, data files for `tests/ui/test_ui_widgets.py` could go into
+    `data/ui/test_ui_widgets/`.
 
 * `fixtures/` py.test fixtures that can be used by any test. Modules in
   this directory will be auto loaded.
@@ -215,9 +224,9 @@ General Notes
   There is a ``utils.wait.wait_for`` utility that can be used to wait for
   arbitrary conditions. In most cases there is some DOM visible change on the page
   which can be waited for.
-* Avoid using time.sleep for waiting for changes to happen outside of the UI.
+* Avoid using ``time.sleep`` for waiting for changes to happen outside of the UI.
   Consider using tools like mgmt_system to probe the external systems for
-  conditions for example.
+  conditions for example and tie it in with a ``wait_for`` as discussed above.
 * If you feel icky about something you've written but don't know how to make
   it better, ask someone. It's better to have it fixed before submitting it as
   a pull request ;)
@@ -239,16 +248,17 @@ pages should be modeled as a part of writing tests. Code in
 `cfme_pages` must never depend on code in `cfme_tests`.
 
 When writing pages, a few points should be noted:
-  * Follow the standard naming convention for locators
 
-    * Name of element, followed by type from the type list
+* Follow the standard naming convention for locators
 
-  * Type list: button, select, text, textbox, radio, option
-  * Ensure that your element is presented in an expected way. As an example,
-    presenting a div containing and unordered list in one place and simply
-    the unordered list in another, causes an unpredictable inconsistency as
-    to how to handle the locator.
-  * Try to avoid using localized text as part of a locator where possible
+  * Name of element, followed by type from the type list
+
+* Type list: button, select, text, textbox, radio, option
+* Ensure that your element is presented in an expected way. As an example,
+  presenting a div containing and unordered list in one place and simply
+  the unordered list in another, causes an unpredictable inconsistency as
+  to how to handle the locator.
+* Try to avoid using localized text as part of a locator where possible
 
 
 Writing Tests
@@ -256,49 +266,51 @@ Writing Tests
 
 Tests in `cfme_tests` have the following properties:
 
-  * They pass on a freshly deployed appliance with no configuration beyond the
-    defaults (i.e. tests do their own setup and teardown).
-  * They never directly access a page's 'testsetup' attribute, or call
-    selenium methods. Instead, methods defined on the page objects will carry
-    out the required behavior.
-  * Where possible, they strive to be idempotent to facilitate repeated testing
-    and debugging of failing tests. (Repeatable is Reportable)
-  * Where possible, they try to clean up behind themselves. This not only helps
-    with idempotency, but testing all of the
-    [CRUD](http://en.wikipedia.org/wiki/CRUD) interactions helps to make a
-    thorough test.
-  * Tests should be thoroughly distrustful of the appliance, and measure an
-    action's success in as many ways as possible. A practical example:
+* They pass on a freshly deployed appliance with no configuration beyond the
+  defaults (i.e. tests do their own setup and teardown).
+* They never directly access a page's ``testsetup`` attribute, or call
+  selenium methods. Instead, methods defined on the page objects will carry
+  out the required behavior.
+* Where possible, they strive to be idempotent to facilitate repeated testing
+  and debugging of failing tests. (Repeatable is Reportable)
+* Where possible, they try to clean up behind themselves. This not only helps
+  with idempotency, but testing all of the
+  `CRUD <http://en.wikipedia.org/wiki/CRUD>`_ interactions helps to make a
+  thorough test.
+* Tests should be thoroughly distrustful of the appliance, and measure an
+  action's success in as many ways as possible. A practical example:
 
-    * Do not trust flash messages, as they sometimes tell lies (or at least
-      appear to). If you can go beyond a flash message to verify a test
-      action, do so.
+  * Do not trust flash messages, as they sometimes tell lies (or at least
+    appear to). If you can go beyond a flash message to verify a test
+    action, do so.
 
-Some points when writing tests
-  * When naming a test, do not use a common part of multiple test names as a test
-    name itself. In the example below, trying to run a single test called
-    test_provider_add, not only runs that test, but also test_provider_add_new
-    and test_provider_add_delete, as pytest uses string matching for test names.
-    test_provider_add should have a suffix making it unique. In this way a tester
-    can choose the run just the single test on its own, or the group of tests, whose
-    names all begin the same way.
+Some points when writing tests:
 
-    * test_provider_add - Adds a provider
-    * test_provider_add_new - Adds a new provider type
-    * test_provider_add_delete - Adds a provider and then deletes it
+* When naming a test, do not use a common part of multiple test names as a test
+  name itself. In the example below, trying to run a single test called
+  ``test_provider_add``, not only runs that test, but also ``test_provider_add_new``
+  and ``test_provider_add_delete``, as pytest uses string matching for test names.
+  ``test_provider_add`` should have a suffix making it unique. In this way a tester
+  can choose the run just the single test on its own, or the group of tests, whose
+  names all begin the same way.
 
-  * Where a clean-up is required, it should be carried out in a Finalizer. In this
-    way we prevent leaving an appliance dirty if the test fails as the clean up will
-    happen regardless.
-  * Keep all properties, fixtures and functions together
+  * test_provider_add - Adds a provider (**Bad naming**)
+  * test_provider_add_new - Adds a new provider type
+  * test_provider_add_delete - Adds a provider and then deletes it
+
+* Where a clean-up is required, it should be carried out in a Finalizer. In this
+  way we prevent leaving an appliance dirty if the test fails as the clean up will
+  happen regardless.
+* Keep all properties, fixtures and functions together
 
 Fixtures
 ^^^^^^^^
 
 Fixtures are not only responsible for setting up tests, but also cleaning up
 after a test run, whether that test run succeeded or failed.
-[addfinalizer](http://pytest.org/latest/funcargs.html#_pytest.python.FuncargRequest.addfinalizer)
-is very powerful. finalizer functions are called even if tests fail.
+`addfinalizer <http://pytest.org/latest/funcargs.html#_
+pytest.python.FuncargRequest.addfinalizer>`_ is very powerful. finalizer functions
+are called even if tests fail.
 
 When writing fixtures, consider how useful they might be for the overall
 project, and place them accordingly. Putting fixtures into a test module
