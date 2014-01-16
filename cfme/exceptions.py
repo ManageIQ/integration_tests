@@ -27,3 +27,18 @@ class NotAllItemsClicked(Exception):
 
 class AddProviderError(Exception):
     pass
+
+
+class CandidateNotFound(Exception):
+    """
+    Raised if there is no candidate found whilst trying to traverse a tree in
+    :py:meth:`cfme.web_ui.Tree.click_path`
+    """
+    pass
+
+
+class TreeTypeUnknown(Exception):
+    """
+    Raised if the tree type is known whilst detection in :py:class:`cfme.web_ui.Tree`
+    """
+    pass

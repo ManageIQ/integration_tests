@@ -16,6 +16,7 @@ objects, organizational and elemental.
   * :py:class:`Form`
   * :py:class:`Table`
   * :py:class:`Radio`
+  * :py:class:`Tree`
 
 Example usage of Regions
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -115,6 +116,20 @@ A specific radio element can then be returned by running the following::
 
 The :py:class:`Radio` object can be reused over and over with repeated calls to
 the :py:func:`Radio.choice` method.
+
+Example usage of Tree
+^^^^^^^^^^^^^^^^^^^^^
+A Tree object is set up by using a locator which contains the node elements. This element
+will usually be a ``<ul>`` in the case of a Dynatree, or a ``<table>`` in the case of a
+Legacy tree. The Tree is instantiated, like so::
+
+  tree = web_ui.Tree((By.XPATH, '//table//tr[@title="Datastore"]/../..'))
+
+The path can then be navigated to return the last object in the path list, like so::
+
+  tree.click_path(['Automation', 'VM Lifecycle Management (VMLifecycle)', 'VM Migrate (Migrate)'])
+
+Each path element will be expanded along the way, but will not be clicked.
 """
 
 import re
@@ -124,6 +139,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from cfme.fixtures.pytest_selenium import browser
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
+from selenium.common import exceptions as sel_exceptions
 import selenium
 
 
@@ -508,3 +524,153 @@ class Radio(object):
 
         """
         return "//input[@name='%s' and @value='%s']" % (self.name, val)
+
+
+class Tree(object):
+    """ A helper class directed at CFME Tree elements
+
+    The Tree class aims to deal with all kinds of CFME trees, at time of writing there
+    are two distinct types. One which uses ``<table>`` elements and another which uses
+    ``<ul>`` elements.
+
+    On invocation, the class first determines which type of Tree object it is dealing
+    with and then sets the internal variables to match elements of the specific tree class.
+
+    There are currently 4 attributes needed in the tree classes.
+
+    * expandable: the element to check if the tree is expanded/collapsed.
+    * is_expanded_condition: a tuple containing the element attribute and value to
+      identify that an element **is** expanded.
+    * node_search: an XPATH which describes a node, needing expansion with format specifier for
+      matching.
+    * click_expand: the element to click on to expand the tree at that level.
+
+    .. note:: For legacy trees, the first element is often ignore as it is not a proper tree element
+       ie. in Automate->Explorer the Datastore element doesn't really exist, so we omit it from
+       the click map.
+
+       Legacy trees rely on a complex ``<table><tbody><tr><td>`` setup. We class a ``<tbody>``
+       as a node.
+
+    .. note:: Dynatrees, rely on a ``<ul><li>`` setup. We class a ``<li>`` as a node.
+
+    Args:
+        locator: This is a locator object pointing to either the outer ``<table>`` or
+            ``<ul>`` element which contains the rest of the table.
+        no_root_icon: Some trees do not have an icon for the first root element and as such
+            do not need it to be expanded as this is done gratis. A bool is expected.
+
+    Returns: A :py:class:`Tree` object.
+    """
+
+    def __init__(self, locator):
+        self.root_el = sel.element(locator)
+        if sel.tag(self.root_el) == 'ul':
+            # Dynatree
+            self.expandable = 'span'
+            self.is_expanded_condition = ('class', 'dynatree-expanded')
+            self.node_search = "//li/span/a[contains(., '%s')]/../.."
+            self.click_expand = "span/span"
+            self.leaf = "span/a"
+        elif sel.tag(self.root_el) == 'table':
+            # Legacy Tree
+            self.expandable = 'tr/td[1]/img'
+            self.is_expanded_condition = ('src', 'open.png')
+            self.node_search = "//tbody/tr/td/table/tbody/tr/td[4]/span[contains(., '%s')]/../../.."
+            self.click_expand = "tr/td[1]/img"
+            self.leaf = "tr/td/span"
+        else:
+            raise exceptions.TreeTypeUnknown(
+                'The locator described does not point to a known tree type')
+
+    def is_expanded(self, el):
+        """ Checks to see if an element is expanded
+
+        Args:
+            el: The element to check.
+
+        Returns: ``True`` if the element is expanded, ``False`` if not.
+        """
+        meta = el.find_element_by_xpath(self.expandable)
+        if self.is_expanded_condition[1] in sel.get_attribute(
+                meta, self.is_expanded_condition[0]):
+            return True
+        else:
+            return False
+
+    def expand(self, el):
+        """ Expands a tree node
+
+        Checks if a tree node needs expanding and then expands it.
+
+        Args:
+            el: The element to expand.
+        """
+        if not self.is_expanded(el):
+            sel.click(el.find_element_by_xpath(self.click_expand))
+
+    def expose_path(self, path, root=None):
+        """ Clicks through a series of elements in a path.
+
+        Clicks through a tree, by expanding the levels in a single straight path and
+        returns the final element without clicking it.
+
+        .. note: This is a recursive function.
+
+        The function determines if it is starting at the root element, or if it is in the
+        middle of a path, this is required because the first entrace into a tree needs to be
+        treated different. Plus we need to set the root element because one will not be supplied.
+
+        The next step is to check if the current element is expanded and if not, to
+        expand it.
+
+        Finally we search for the next element in the list and then recursively
+        call the :py:meth:`click_path` function again, this time with the reduced path, and
+        substituting the matching element as the new root element.
+
+        Args:
+            path: The path as a List of strings denoting the course to take.
+            root: The root path to begin at. This is usually not set manually
+                and is required for the recursion.
+
+        Returns: The element at the end of the tree.
+
+        Raises:
+            cfme.exceptions.CandidateNotFound: A candidate in the tree could not be found to
+                continue down the path.
+            cfme.exceptions.TreeTypeUnknown: A locator was passed to the constructor which
+                does not correspond to a known tree type.
+
+        """
+        root_el = root if root else self.root_el
+
+        if root:
+            self.expand(root_el)
+
+        needle = path.pop(0)
+        xpath = self.node_search % needle
+
+        try:
+            new_leaf = root_el.find_element_by_xpath(xpath)
+        except sel_exceptions.NoSuchElementException:
+            raise exceptions.CandidateNotFound("%s: could not be found in the tree." % needle)
+
+        if path:
+            return self.expose_path(path, new_leaf)
+        else:
+            return new_leaf
+
+    def click_path(self, path, root=None):
+        """ Exposes a path and then clicks it.
+
+        Args:
+            path: The path as a List of strings denoting the course to take.
+            root: The root path to begin at. This is usually not set manually
+                and is required for the recursion during :py:meth:expose_path:.
+
+        Returns: The leaf web element.
+
+        """
+        leaf = self.expose_path(path, root=root)
+        sel.click(leaf.find_element_by_xpath(self.leaf))
+        return leaf
