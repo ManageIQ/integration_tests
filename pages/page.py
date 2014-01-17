@@ -15,6 +15,7 @@ class Page(object):
     Base class for all Pages
     '''
     _updating_locator = (By.CSS_SELECTOR, "div#notification > div:first-child")
+    _datetime_locator = (By.CSS_SELECTOR, "div#time")
 
     def __init__(self, testsetup, root=None):
         '''
@@ -140,3 +141,6 @@ class Page(object):
     def select_dropdown_by_value(self, value, *element):
         select = Select(self.get_element(*element))
         select.select_by_value(value)
+
+    def get_appliance_datetime(self):
+        return self.get_element(*self._datetime_locator).text
