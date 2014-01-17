@@ -130,6 +130,19 @@ The path can then be navigated to return the last object in the path list, like 
   tree.click_path(['Automation', 'VM Lifecycle Management (VMLifecycle)', 'VM Migrate (Migrate)'])
 
 Each path element will be expanded along the way, but will not be clicked.
+
+Example usage of InfoBlock
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+An InfoBlock only needs to know the **type** of InfoBlocks you are trying to address. You can
+then return either text, the first element inside the value or all elements::
+
+  block = web_ui.InfoBlock("form")
+
+  block.text('Basic Information', 'Hostname')
+  block.element('Basic Information', 'Company Name')
+  block.elements('NTP Servers', 'Servers')
+
+These will return a string, a webelement and a List of webelements respectively.
 """
 
 import re
@@ -683,95 +696,86 @@ class InfoBlock(object):
     ``form`` style information blocks. It is invoked with a single argument describing
     the type of blocks to be addressed and adjusts the html elements accordingly.
 
-    The class nests itself one level and treats title/block the same as key/value. It
-    caches each item it traverses as searching is impossible due to the inclusion of
-    special characters in the key name. There for a search is done and a comparison to
-    a ``convert_header`` version of the key. If a match is found, the object is returned.
-    If not, it is cached.
-
     Args:
         itype: The type of information blocks to address, either ``detail`` or ``form``.
-        el: Used when InfoBlock nests itself to obtain the key/value pair.
-    Returns: Either a string if the elment contains just text, or the element.
+    Returns: Either a string if the element contains just text, or the element.
     Raises:
         exceptions.BlockTypeUnknown: If the Block type requested by itype is unknown.
+        exceptions.ElementOrBlockNotFound: If the Block or Key requested is not found.
+        exceptions.NoElementsInsideValue: If the Key contains no elements.
 
     """
-    def __init__(self, itype, el=None):
-        self.itype = itype
-        self._cache = {}
-        self._offset = el
+    def __init__(self, itype):
         if itype == "detail":
-            self._box_locator = '//div[@class="modbox"]'
-            self._pair_locator = './/tr'
-            self._key_locator = './/td[1]' if self._offset else './/h2'
-            self._value_locator = './/td[2]'
+            self._box_locator = '//div[@class="modbox"]/h2[@class="modtitle"][contains(., "%s")]/..'
+            self._pair_locator = 'table/tbody/tr/td[1][@class="label"][contains(., "%s")]/..'
+            self._value_locator = 'td[2]'
         elif itype == "form":
-            self._box_locator = '//fieldset'
-            self._pair_locator = 'table/tbody/tr'
-            self._key_locator = 'td[1]' if self._offset else './/p'
+            self._box_locator = '//fieldset/p[@class="legend"][contains(., "%s")]/..'
+            self._pair_locator = 'table/tbody/tr/td[1][@class="key"][contains(., "%s")]/..'
             self._value_locator = 'td[2]'
         else:
             raise exceptions.BlockTypeUnknown("The block type requested is unknown")
 
-    def __getattr__(self, name):
-        """ Gets the element at the current level.
-
-        This function first searches the cache of the current level to see if the key
-        has been requested before. In the case of a Block, it will search for the header
-        name, in the case of a key/value pair it will search the key.
-
-        If the cache is not found it will then search for all possible elements and traverse
-        them doing a comparision in :py:meth:`find_n_cache` and cacheing.
+    def get_el_or_els(self, ident, all_els=False):
+        """ Returns either a single element or a list of elements from a Value.
 
         Args:
-            name: The key/header name.
-        Returns: Either the block or value.
+            ident: A List of identifiers.
+            all_els: A Boolean describing if the function should return a single element
+                or a list of elements.
+        Returns: Either a single element or a List of elements.
         """
-
-        if name in self._cache:
-            return self._cache[name]
-
-        if self._offset:
-            els = self._offset.find_elements_by_xpath(self._pair_locator)
+        try:
+            els = self.container(ident).find_elements_by_xpath("*")
+        except sel_exceptions.NoSuchElementException:
+            raise exceptions.NoElementsInsideValue("No Elements are found inside the value")
+        if els == []:
+            return None
+        if all_els:
+            return els
         else:
-            els = sel.elements(self._box_locator)
-        el = self._find_n_cache(els, name)
+            return els[0]
+
+    def elements(self, *ident):
+        """ A Convenience wrapper for :py:meth:get_el_or_els
+
+        Args:
+            *indent: Identifiers in the form of strings.
+        Returns: Either a single element or a List of elements.
+        """
+        return self.get_el_or_els(ident, all_els=True)
+
+    def element(self, *ident):
+        """ A Convenience wrapper for :py:meth:get_el_or_els
+
+        Args:
+            *indent: Identifiers in the form of strings.
+        Returns: Either a single element or a List of elements.
+        """
+        return self.get_el_or_els(ident, all_els=False)
+
+    def text(self, *ident):
+        """ Returns the textual component of a Value
+
+        Args:
+            *indent: Identifiers in the form of strings.
+        Returns: A string of the elements in the Value.
+        """
+        return self.container(ident).text
+
+    def container(self, ident):
+        """ Searches for a key/value pair inside a header/block arrangement.
+
+        Args:
+            indent: Identifiers in the form of a list of strings.
+        Returns: The Value as a WebElement
+        """
+        xpath_core = "%s/%s/%s" % (self._box_locator, self._pair_locator, self._value_locator)
+        xpath = xpath_core % (ident[0], ident[1])
+        try:
+            el = sel.element(xpath)
+        except sel_exceptions.NoSuchElementException:
+            raise exceptions.ElementOrBlockNotFound(
+                "Either the element of the block could not be found")
         return el
-
-    @staticmethod
-    def _convert_header(header):
-        """ Converts a value into a python friendly version.
-
-        Args:
-            header: The name to convert.
-        Returns: The converted name.
-        """
-        return re.sub('[^0-9a-zA-Z ]+', '', header).replace(' ', '_').lower()
-
-    def _find_n_cache(self, els, name):
-        """ Finds and then caches the header/block or key/value.
-
-        Args:
-            els: The elements to itterate.
-            name: The header/key to locate.
-        Returns: The element or string depending on what the key holds
-        """
-        for el in els:
-            key = el.find_element_by_xpath(self._key_locator).text
-            key_name = self._convert_header(key)
-            if self._offset:
-                el_or_block = el.find_element_by_xpath(self._value_locator)
-                try:
-                    el_or_block = el_or_block.find_element_by_xpath('*')
-                except sel_exceptions.NoSuchElementException:
-                    pass
-            else:
-                el_or_block = InfoBlock(self.itype, el)
-            if key_name == name:
-                self._cache[key_name] = el_or_block
-                return el_or_block
-            else:
-                self._cache[key_name] = el_or_block
-        else:
-            raise exceptions.ElementOrBlockNotFound(self._offset, name)
