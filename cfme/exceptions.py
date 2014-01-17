@@ -56,11 +56,12 @@ class ElementOrBlockNotFound(Exception):
     Raised if an Element or a Block is not found whilst locating in
     :py:meth:`cfme.web_ui.InfoBlock`.
     """
-    def __init__(self, el, name):
-        if el:
-            self.err_string = "The key [%s] was not found in the block" % name
-        else:
-            self.err_string = "The block [%s] was not found" % name
+    pass
 
-    def __str__(self):
-        return self.err_string
+
+class NoElementsInsideValue(Exception):
+    """
+    Raised if the value part of key/value contains no elements during
+    :py:meth:`cfme.web_ui.InfoBlock.get_el_or_els`
+    """
+    pass
