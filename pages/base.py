@@ -58,7 +58,7 @@ class Base(Page):
         self.selenium.get(self.base_url)
 
     class HeaderRegion(Page):
-        # LoggedIn        
+        # LoggedIn
         _logout_link_locator = (By.CSS_SELECTOR, "a[title='Click to Logout']")
         _user_indicator_locator = (By.CSS_SELECTOR, "div#page_header_div li.dropdown")
         _user_options_button_locator = (By.CSS_SELECTOR, "div#page_header_div b.caret")
@@ -74,6 +74,14 @@ class Base(Page):
         @property
         def is_logged_in(self):
             return self.is_element_visible(*self._user_indicator_locator)
+
+        @property
+        def username(self):
+            if self.is_logged_in:
+                user_indicator = self.get_element(*self._user_indicator_locator)
+                return user_indicator.text.split('|')[0].strip()
+            else:
+                return None
 
         def logout(self):
             options_button = self.selenium.find_element(*self._user_options_button_locator)
