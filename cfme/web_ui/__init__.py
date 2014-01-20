@@ -14,29 +14,10 @@ objects, organizational and elemental.
 * **Elemental**
 
   * :py:class:`Form`
+  * :py:class:`InfoBlock`
   * :py:class:`Table`
-  * :py:class:`Radio`
   * :py:class:`Tree`
-
-Example usage of Regions
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Below is an example of how to define a region.::
-
-  page = Region(locators=
-                {'configuration_button': (By.CSS_SELECTOR,
-                     "div.dhx_toolbar_btn[title='Configuration']"),
-                 'discover_button': (By.CSS_SELECTOR,
-                     "tr[title='Discover Cloud Providers']>td.td_btn_txt>"
-                     "div.btn_sel_text")},
-              title='CloudForms Management Engine: Cloud Providers')
-
-The elements can then accessed like so.::
-
-  page.configuration_button
-
-Which will return the locator tuple for that particular element.
-
+  * :py:class:`Radio`
 
 Example usage of Form
 ^^^^^^^^^^^^^^^^^^^^^
@@ -56,6 +37,20 @@ Forms can then be filled in like so.::
                   'notes_tarea': 'Lots of notes',
                   'manager_text': 'No Manager'}
   request_form.fill_fields(request_info)
+
+
+Example usage of InfoBlock
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+An InfoBlock only needs to know the **type** of InfoBlocks you are trying to address. You can
+then return either text, the first element inside the value or all elements::
+
+  block = web_ui.InfoBlock("form")
+
+  block.text('Basic Information', 'Hostname')
+  block.element('Basic Information', 'Company Name')
+  block.elements('NTP Servers', 'Servers')
+
+These will return a string, a webelement and a List of webelements respectively.
 
 
 Example usage of Table
@@ -103,20 +98,6 @@ We can also perform the same, by using the index of the row, like so::
   table.click_item(1, 'Tiger')
 
 
-Example usage of Radio
-^^^^^^^^^^^^^^^^^^^^^^
-A Radio object is defined by its group name and is simply used like so::
-
-  radio = Radio("schedule__schedule_type")
-
-A specific radio element can then be returned by running the following::
-
-  el = radio.choice('immediately')
-  click(el)
-
-The :py:class:`Radio` object can be reused over and over with repeated calls to
-the :py:func:`Radio.choice` method.
-
 Example usage of Tree
 ^^^^^^^^^^^^^^^^^^^^^
 A Tree object is set up by using a locator which contains the node elements. This element
@@ -131,18 +112,41 @@ The path can then be navigated to return the last object in the path list, like 
 
 Each path element will be expanded along the way, but will not be clicked.
 
-Example usage of InfoBlock
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-An InfoBlock only needs to know the **type** of InfoBlocks you are trying to address. You can
-then return either text, the first element inside the value or all elements::
 
-  block = web_ui.InfoBlock("form")
+Example usage of Radio
+^^^^^^^^^^^^^^^^^^^^^^
+A Radio object is defined by its group name and is simply used like so::
 
-  block.text('Basic Information', 'Hostname')
-  block.element('Basic Information', 'Company Name')
-  block.elements('NTP Servers', 'Servers')
+  radio = Radio("schedule__schedule_type")
 
-These will return a string, a webelement and a List of webelements respectively.
+A specific radio element can then be returned by running the following::
+
+  el = radio.choice('immediately')
+  click(el)
+
+The :py:class:`Radio` object can be reused over and over with repeated calls to
+the :py:func:`Radio.choice` method.
+
+
+Example usage of Regions
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Below is an example of how to define a region.::
+
+  page = Region(locators=
+                {'configuration_button': (By.CSS_SELECTOR,
+                     "div.dhx_toolbar_btn[title='Configuration']"),
+                 'discover_button': (By.CSS_SELECTOR,
+                     "tr[title='Discover Cloud Providers']>td.td_btn_txt>"
+                     "div.btn_sel_text")},
+              title='CloudForms Management Engine: Cloud Providers')
+
+The elements can then accessed like so.::
+
+  page.configuration_button
+
+Which will return the locator tuple for that particular element.
+
 """
 
 import re
