@@ -3,13 +3,10 @@
 from functools import partial
 
 import pytest
-from selenium.common.exceptions import (
-    NoAlertPresentException,
-    WebDriverException
-)
+from selenium.common.exceptions import NoAlertPresentException
 
 from pages.login import LoginPage
-from utils.browser import browser, start, testsetup
+from utils.browser import browser, ensure_browser_open, testsetup
 
 _width_errmsg = '''The minimum supported width of CFME is 1280 pixels
 
@@ -32,17 +29,10 @@ def _squash_alert():
 
 
 def navigate(first_level, second_level):
-    page = LoginPage(testsetup)
-    # Attempt to locate the 'spinny'. Serves two purposes:
-    # - checks to see that there is a usable browser running and starts one if not
-    # - if the browser is running but the 'spinny' is up, clear it
-    try:
-        if page.is_element_visible(*page._updating_locator):
-            browser().execute_script('miqSparkleOff();')
-    except (AttributeError, WebDriverException):
-        # AttributeError happens if browser() is None
-        # WebDriverException happens if browser() is not None, but not usable
-        start()
+    # Make sure a browser is running
+    ensure_browser_open()
+    # Clear any potential permaspinnies before moving on
+    browser().execute_script('miqSparkleOff();')
 
     # Ensure browser is logged in as admin, reinitialize page to pick up any browser changes
     page = LoginPage(testsetup)
