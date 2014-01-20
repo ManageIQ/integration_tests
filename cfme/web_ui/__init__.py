@@ -16,8 +16,29 @@ objects, organizational and elemental.
   * :py:class:`Form`
   * :py:class:`InfoBlock`
   * :py:class:`Table`
+  * :py:mod:`cfme.web_ui.toolbar`
   * :py:class:`Tree`
   * :py:class:`Radio`
+
+Example usage of Regions
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Below is an example of how to define a region.::
+
+  page = Region(locators=
+                {'configuration_button': (By.CSS_SELECTOR,
+                     "div.dhx_toolbar_btn[title='Configuration']"),
+                 'discover_button': (By.CSS_SELECTOR,
+                     "tr[title='Discover Cloud Providers']>td.td_btn_txt>"
+                     "div.btn_sel_text")},
+              title='CloudForms Management Engine: Cloud Providers')
+
+The elements can then accessed like so.::
+
+  page.configuration_button
+
+Which will return the locator tuple for that particular element.
+
 
 Example usage of Form
 ^^^^^^^^^^^^^^^^^^^^^
@@ -96,6 +117,14 @@ name and the value that we are searching for::
 We can also perform the same, by using the index of the row, like so::
 
   table.click_item(1, 'Tiger')
+
+
+Example usage of toolbar
+^^^^^^^^^^^^^^^^^^^^^^^^
+The main CFME toolbar is accessed by using the Root and Sub titles of the buttons, simply::
+
+  tb = web_ui.toolbar
+  tb.select('Configuration', 'Add a New Host')
 
 
 Example usage of Tree
