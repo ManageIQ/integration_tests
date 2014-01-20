@@ -10,7 +10,7 @@ import utils.conf as conf
 
 page = Region(locators=
               {'configuration_btn': (By.CSS_SELECTOR,
-                                        "div.dhx_toolbar_btn[title='Configuration']"),
+                                     "div.dhx_toolbar_btn[title='Configuration']"),
                'discover_button': (By.CSS_SELECTOR,
                                    "tr[title='Discover Cloud Providers']>td.td_btn_txt>"
                                    "div.btn_sel_text"),
@@ -204,7 +204,7 @@ def get_from_config(provider_config_name):
     creds = conf.credentials[prov_config['credentials']]
     credentials = Provider.Credential(principal=creds['username'],
                                       secret=creds['password'])
-    if prov_config['region']:
+    if prov_config.get('type') == 'ec2':
         details = Provider.EC2Details(region=prov_config['region'])
     else:
         details = Provider.OpenStackDetails(hostname=prov_config['hostname'],
