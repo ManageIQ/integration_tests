@@ -17,6 +17,15 @@ def browser():
     return thread_locals.browser
 
 
+def ensure_browser_open():
+    try:
+        browser().current_url
+    except (AttributeError, WebDriverException):
+        # AttributeError: browser() was None, didn't have current_url attr
+        # WebDriverError: current_url couldn't be retrieved, browser was closed
+        start()
+
+
 def start(_webdriver=None, base_url=None, **kwargs):
     # Try to clean up an existing browser session if starting a new one
     if thread_locals.browser is not None:

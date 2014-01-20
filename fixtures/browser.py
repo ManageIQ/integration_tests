@@ -1,32 +1,12 @@
 import pytest
 
-import utils
 import utils.browser
-from fixtures.navigation import home_page_logged_in
 
 
-@pytest.yield_fixture(scope='module')
-def browser():
-    with utils.browser.browser_session() as session:
-        yield session
-
-
-@pytest.yield_fixture(scope='function')
-def browser_funcscope():
-    with utils.browser.browser_session() as session:
-        yield session
-
-
-@pytest.yield_fixture(scope='function')
-def duckwebqa(browser_funcscope):
-    # duckwebqa quacks like a mozwebqa duck
-    yield utils.browser.testsetup
-
-
-@pytest.yield_fixture(scope='module')
-def duckwebqa_loggedin(browser):
-    # On login to rule them all!
-    yield home_page_logged_in(utils.browser.testsetup)
+def pytest_runtest_setup(item):
+    if 'browser' not in item.fixturenames:
+        return
+    utils.browser.ensure_browser_open()
 
 
 def pytest_unconfigure(config):
@@ -34,3 +14,8 @@ def pytest_unconfigure(config):
         utils.browser.browser().quit()
     except:
         pass
+
+
+@pytest.fixture(scope='session')
+def browser():
+    return utils.browser.browser

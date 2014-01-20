@@ -18,7 +18,9 @@ import cfme.web_ui.flash as flash
 page = Region(title="CloudForms Management Engine: Dashboard",
               locators={"username_text": (By.CSS_SELECTOR, '#user_name'),
                         "password_text": (By.CSS_SELECTOR, '#user_password'),
-                        "submit_button": (By.ID, 'login')},
+                        "submit_button": (By.ID, 'login'),
+                        "logout": (By.CSS_SELECTOR, 'a[href="/dashboard/logout"]'),
+                        "user_dropdown": (By.CSS_SELECTOR, "div#page_header_div li.dropdown")},
               identifying_loc="username_text")
 
 
@@ -27,6 +29,11 @@ def _click_on_login():
     Convenience internal function to click the login locator submit button.
     """
     browser.click(page.submit_button)
+
+
+def _is_logged_in():
+        if browser.is_displayed(page.user_dropdown):
+            return True
 
 
 def press_enter_after_password():
@@ -50,10 +57,13 @@ def login(user, password, submit_method=_click_on_login):
     Raises:
         RuntimeError: If the login fails, ie. if a flash message appears
     """
-    browser.set_text(page.username_text, user)
-    browser.set_text(page.password_text, password)
-    submit_method()
-    flash.assert_no_errors()
+    # TODO: Should probably do the username check here, but there are pretty usernames to deal with
+    # e.g. 'admin' shows up in the UI as 'Administrator'
+    if not _is_logged_in():
+        browser.set_text(page.username_text, user)
+        browser.set_text(page.password_text, password)
+        submit_method()
+        flash.assert_no_errors()
 
 
 def login_admin(**kwargs):
@@ -63,7 +73,23 @@ def login_admin(**kwargs):
     Args:
         kwargs: A dict of keyword arguments to supply to the :py:meth:`login` method.
     """
+    if current_username() != 'Administrator':
+        logout()
 
     user = conf.credentials['default']['username']
     password = conf.credentials['default']['password']
     login(user, password, **kwargs)
+
+
+def logout():
+    if _is_logged_in():
+        if not browser.is_displayed(page.logout):
+            browser.click(page.user_dropdown)
+        browser.click(page.logout)
+
+
+def current_username():
+    if _is_logged_in():
+        return browser.text(page.user_dropdown).split('|')[0].strip()
+    else:
+        return None
