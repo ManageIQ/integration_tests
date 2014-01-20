@@ -11,8 +11,8 @@ class Message(object):
         self.message = message
         self.level = level
 
-    def __str__(self):
-        return "Flash % message '%'" % self.level, self.message
+    def __repr__(self):
+        return "[Flash %s message '%s']" % (self.level, self.message)
 
 
 def message(el):
@@ -22,6 +22,7 @@ def message(el):
 
 def get_messages():
     '''Return a list of flash messages'''
+    sel.wait_for_ajax()
     return map(message, sel.elements(area.message))
 
 
