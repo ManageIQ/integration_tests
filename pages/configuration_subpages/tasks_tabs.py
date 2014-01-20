@@ -5,10 +5,12 @@ from selenium.webdriver.common.by import By
 from pages.regions.tabbuttonitem import TabButtonItem
 from pages.regions.paginator import PaginatorMixin
 from pages.regions.list import ListRegion, ListItem
+import re
+
 
 class Tasks(Base):
 
-    class GeneralTab(Base, PaginatorMixin): 
+    class GeneralTab(Base, PaginatorMixin):
 
         _page_title = None
         _tab_button_active_locator = (By.CSS_SELECTOR, 'li.active')
@@ -40,9 +42,9 @@ class Tasks(Base):
             ''' Returns the task tabs button region '''
             from pages.regions.tabbuttons import TabButtons
             return TabButtons(
-                    self.testsetup,
-                    active_override=self._tab_button_active_locator,
-                    cls=TaskTabButtonItem)
+                self.testsetup,
+                active_override=self._tab_button_active_locator,
+                cls=TaskTabButtonItem)
 
         def load_my_vm_analysis_tasks_tab(self):
             ''' Click the My VM Analysis Tasks tab '''
@@ -73,7 +75,7 @@ class Tasks(Base):
         @property
         def task_list(self):
             '''Returns the task list region'''
-            _tasks_list_locator = ( By.CSS_SELECTOR, 'div#records_div > table > tbody')
+            _tasks_list_locator = (By.CSS_SELECTOR, 'div#records_div > table > tbody')
             return ListRegion(
                 self.testsetup,
                 self.get_element(*_tasks_list_locator),
@@ -102,7 +104,7 @@ class Tasks(Base):
         def is_task_item_present(self, user, task_name, started_date, started_hour, started_minute):
             '''determine if task item is present'''
             task_items = self.task_list.items
-            ts_string = started_date + ' ' +  str(started_hour) + ':' + str(started_minute)
+            ts_string = started_date + ' ' + str(started_hour) + ':' + str(started_minute)
             for item in task_items:
                 if ts_string in item.started and user == item.user and task_name == item.task_name:
                     return True
@@ -139,13 +141,12 @@ class Tasks(Base):
             return MyCheckbox(self.selenium.find_element(*self._status_warn_checkbox))
 
         def filter_for_time_period(self, time_period):
-             ''' Method to set time period filter '''
-             self.select_dropdown(time_period, *self._time_period_locator)
+            ''' Method to set time period filter '''
+            self.select_dropdown(time_period, *self._time_period_locator)
 
         def filter_for_task_state(self, task_state):
-             ''' Method to set task state filter '''
-             self.select_dropdown(task_state, *self._state_choice_locator)
-
+            ''' Method to set task state filter '''
+            self.select_dropdown(task_state, *self._state_choice_locator)
 
         @property
         def apply_button(self):
@@ -164,15 +165,18 @@ class Tasks(Base):
 
         @property
         def is_apply_button_disabled(self):
-            return 'dimmed' in self.selenium.find_element(*self.apply_button).get_attribute('class')
+            return 'dimmed' in self.selenium.find_element(
+                *self.apply_button).get_attribute('class')
 
         @property
         def is_reset_button_disabled(self):
-            return 'dimmed' in self.selenium.find_element(*self.reset_button).get_attribute('class')
+            return 'dimmed' in self.selenium.find_element(
+                *self.reset_button).get_attribute('class')
 
         @property
         def is_default_button_disabled(self):
-            return 'dimmed' in self.selenium.find_element(*self.default_button).get_attribute('class')
+            return 'dimmed' in self.selenium.find_element(
+                *self.default_button).get_attribute('class')
 
         def apply_filter(self):
             self.apply_button.click()
@@ -182,13 +186,12 @@ class Tasks(Base):
 
         def default_filter(self):
             self.default_button.click()
-        
 
-                
         class TaskItem(ListItem):
-            
+
             '''Represents an item in the profile list'''
-            _columns = ['checkbox', 'status', 'updated', 'started', 'state', 'message', 'task name', 'user']
+            _columns = [
+                'checkbox', 'status', 'updated', 'started', 'state', 'message', 'task name', 'user']
 
             @property
             def checkbox(self):
@@ -199,7 +202,7 @@ class Tasks(Base):
             @property
             def status(self):
                 '''status icon translation for task record'''
-                image_src =  self._item_data[1].find_element_by_tag_name('img').get_attribute('src')
+                image_src = self._item_data[1].find_element_by_tag_name('img').get_attribute('src')
                 stripped = re.search('.+/(.+)\.png', image_src).group(1)
                 return stripped
 
@@ -234,21 +237,21 @@ class Tasks(Base):
                 return self._item_data[7].text.encode('utf-8')
 
             @property
-            def to_string(tself):
+            def to_string(self):
                 '''string representation of task record'''
-                return self.updated, self.started, self.state, self.message, self.task_name, self.user
+                return self.updated, self.started, self.state, self.message,\
+                    self.task_name, self.user
 
             # TODO: fairly certain if its a vm task, you can click on it and go to vm details
             #def click(self):
-            #    ''' click vm task record ''' 
+            #    ''' click vm task record '''
             #    pass
-
 
     class MyVmAnalysisTasks(GeneralTab):
         _page_title = 'CloudForms Management Engine: My Tasks'
 
         def filter_for_zone(self, zone_name):
-             self.select_dropdown(zone_name, *self._zone_select_locator)
+            self.select_dropdown(zone_name, *self._zone_select_locator)
 
     class MyOtherUiTasks(GeneralTab):
         _page_title = 'CloudForms Management Engine: My Ui Tasks'
@@ -257,20 +260,21 @@ class Tasks(Base):
         _page_title = 'CloudForms Management Engine: All Tasks'
 
         def filter_for_username(self, username):
-             self.select_dropdown(username, *self._username_select_locator)
+            self.select_dropdown(username, *self._username_select_locator)
 
         def filter_for_zone(self, zone_name):
-             self.select_dropdown(zone_name, *self._zone_select_locator)
+            self.select_dropdown(zone_name, *self._zone_select_locator)
 
     class AllOtherTasks(GeneralTab):
         _page_title = 'CloudForms Management Engine: All UI Tasks'
 
         def filter_for_username(self, username):
-             self.select_dropdown(username, *self._username_select_locator)
+            self.select_dropdown(username, *self._username_select_locator)
+
 
 class MyCheckbox():
 
-    def __init__(self,root_element):
+    def __init__(self, root_element):
         self._root_element = root_element
 
     def is_selected(self):
@@ -286,15 +290,15 @@ class MyCheckbox():
             return True
         self._root_element.click()
 
+
 class TaskTabButtonItem(TabButtonItem):
     '''Specialization of TabButtonItem'''
     #import pytest
     #pytest.set_trace()
 
     _item_page = {
-            'My VM Analysis Tasks': Tasks.MyVmAnalysisTasks,
-            'My Other UI Tasks': Tasks.MyOtherUiTasks,
-            'All VM Analysis Tasks': Tasks.AllVmAnalysisTasks,
-            'All Other Tasks': Tasks.AllOtherTasks
+        'My VM Analysis Tasks': Tasks.MyVmAnalysisTasks,
+        'My Other UI Tasks': Tasks.MyOtherUiTasks,
+        'All VM Analysis Tasks': Tasks.AllVmAnalysisTasks,
+        'All Other Tasks': Tasks.AllOtherTasks
     }
-
