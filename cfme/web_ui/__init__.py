@@ -626,7 +626,7 @@ class Tree(object):
         if not self.is_expanded(el):
             sel.click(el.find_element_by_xpath(self.click_expand))
 
-    def expose_path(self, path, root=None):
+    def expose_path(self, *path, **kwargs):
         """ Clicks through a series of elements in a path.
 
         Clicks through a tree, by expanding the levels in a single straight path and
@@ -646,7 +646,7 @@ class Tree(object):
         substituting the matching element as the new root element.
 
         Args:
-            path: The path as a List of strings denoting the course to take.
+            *path: The path as multiple positional string arguments denoting the course to take.
             root: The root path to begin at. This is usually not set manually
                 and is required for the recursion.
 
@@ -659,7 +659,9 @@ class Tree(object):
                 does not correspond to a known tree type.
 
         """
+        root = kwargs.get('root', None)
         root_el = root if root else self.root_el
+        path = list(path)
 
         if root:
             self.expand(root_el)
@@ -673,22 +675,23 @@ class Tree(object):
             raise exceptions.CandidateNotFound("%s: could not be found in the tree." % needle)
 
         if path:
-            return self.expose_path(path, new_leaf)
+            return self.expose_path(*path, root=new_leaf)
         else:
             return new_leaf
 
-    def click_path(self, path, root=None):
+    def click_path(self, *path, **kwargs):
         """ Exposes a path and then clicks it.
 
         Args:
-            path: The path as a List of strings denoting the course to take.
+            *path: The path as multiple positional string arguments denoting the course to take.
             root: The root path to begin at. This is usually not set manually
                 and is required for the recursion during :py:meth:expose_path:.
 
         Returns: The leaf web element.
 
         """
-        leaf = self.expose_path(path, root=root)
+        root = kwargs.get('root', None)
+        leaf = self.expose_path(*path, root=root)
         sel.click(leaf.find_element_by_xpath(self.leaf))
         return leaf
 
