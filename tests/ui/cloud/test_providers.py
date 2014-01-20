@@ -92,32 +92,6 @@ class TestInfrastructureProviders:
                 FLASH_MESSAGE_NOT_MATCHED)
 
     @pytest.mark.usefixtures('has_no_providers')
-    def test_provider_edit(self,
-            cloud_providers_pg,
-            provider,
-            random_uuid_as_string):
-        '''Tests that editing a management system shows the proper detail
-        after an edit
-        '''
-        prov_pg = cloud_providers_pg
-        edit_name = random_uuid_as_string
-        prov_pg.taskbar_region.view_buttons.change_to_grid_view()
-        Assert.true(prov_pg.taskbar_region.view_buttons.is_grid_view)
-        prov_pg.select_provider(provider['name'])
-        Assert.equal(len(prov_pg.quadicon_region.selected), 1,
-                'More than one quadicon was selected')
-        prov_edit_pg = prov_pg.click_on_edit_providers()
-        provider['edit_name'] = edit_name
-        prov_detail_pg = prov_edit_pg.edit_provider(provider)
-        Assert.equal(prov_detail_pg.flash.message,
-                     'Cloud Provider "%s" was saved' % provider['edit_name'],
-                     FLASH_MESSAGE_NOT_MATCHED)
-        Assert.equal(prov_detail_pg.name, provider['edit_name'],
-                DETAIL_NOT_MATCHED_TEMPLATE % 'Edited name')
-        Assert.equal(prov_detail_pg.zone, provider['server_zone'],
-                DETAIL_NOT_MATCHED_TEMPLATE % 'Server zone')
-
-    @pytest.mark.usefixtures('has_no_providers')
     def test_provider_add(
             self, cloud_providers_pg, provider_data, soap_client):
         '''Tests adding a new management system

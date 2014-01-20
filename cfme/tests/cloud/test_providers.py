@@ -4,7 +4,8 @@
 
 import pytest
 import cfme.web_ui.flash as flash
-from cfme.cloud.provider import provider
+from cfme.cloud import provider
+import uuid
 
 
 @pytest.fixture(params=['ec2east', 'openstack'])
@@ -43,12 +44,14 @@ def test_that_checks_flash_when_discovery_cancelled():
 
 
 @pytest.mark.usefixtures('has_no_providers')
-def test_provider_edit(myprovider):
+def test_provider_editz(provider_data):
     '''Tests that editing a management system shows the proper detail
     after an edit
     '''
-    myprovider.create()
-    # TODO finish this
+    provider_data.create()
+    newname = str(uuid.uuid4())  # random uuid
+    provider_data.update(name=newname)
+    flash.assert_message_match('Cloud Provider "%s" was saved' % newname)
 
 
 def test_that_checks_flash_when_add_cancelled():
