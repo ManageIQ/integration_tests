@@ -5,3 +5,5 @@ cfme.web_ui and submodules
    :members:
 .. automodule:: cfme.web_ui.menu
    :members:
+.. automodule:: cfme.web_ui.toolbar
+   :members:
