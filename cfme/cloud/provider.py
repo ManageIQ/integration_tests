@@ -1,23 +1,24 @@
-from selenium.webdriver.common.by import By
-from cfme.web_ui import Region
-import cfme.fixtures.pytest_selenium as browser
-import ui_navigate as nav
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Quadicon
-import cfme
 from functools import partial
+from selenium.webdriver.common.by import By
+import ui_navigate as nav
+import cfme
+import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
+from cfme.web_ui import Region, Quadicon
+import cfme.web_ui.flash as flash
+import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
-from copy import copy
 
 page = Region(locators=
-              {'configuration_button': (By.CSS_SELECTOR,
+              {'configuration_btn': (By.CSS_SELECTOR,
                                         "div.dhx_toolbar_btn[title='Configuration']"),
                'discover_button': (By.CSS_SELECTOR,
                                    "tr[title='Discover Cloud Providers']>td.td_btn_txt>"
                                    "div.btn_sel_text"),
-               'edit_button': (By.CSS_SELECTOR,
-                               "tr[title='Select a single Cloud Provider to edit']>"
-                               "td.td_btn_txt>div.btn_sel_text"),
+               # 'edit_button': (By.CSS_SELECTOR,
+               #                 "tr[title='Select a single Cloud Provider to edit']>"
+               #                 "td.td_btn_txt>div.btn_sel_text"),
+               'edit_button': "//tr[@title='Edit this Cloud Provider' and @class='tr_btn']",
+
                'remove_button': (By.CSS_SELECTOR,
                                  "tr[title='Remove selected Cloud Providers from the VMDB']>"
                                  "td.td_btn_txt>div.btn_sel_text"),
@@ -30,6 +31,7 @@ page = Region(locators=
                                                       "div#default_validate_buttons_off > "
                                                       "ul#form_buttons > li > a > img"),
                'cancel_button': (By.CSS_SELECTOR, "img[title='Cancel']"),
+               'save_button': "//img[@title='Save Changes']",
                'name_text': (By.ID, "name"),
                'hostname_text': (By.ID, "hostname"),
                'ipaddress_text': (By.ID, "ipaddress"),
@@ -60,11 +62,13 @@ discover_page = Region(locators=
                        title='CloudForms Management Engine: Cloud Providers')
 
 nav.add_branch('clouds_providers',
-               {'clouds_providers_new': browser.click_fn(page.configuration_button,
-                                                         page.add_button),
-                'clouds_providers_discover': browser.click_fn(page.configuration_button,
-                                                              page.discover_button),
-                'clouds_provider': lambda ctx: browser.click(Quadicon(ctx['provider'].name))})
+               {'cloud_provider_new': browser.click_fn(page.configuration_btn,
+                                                       page.add_button),
+                'cloud_provider_discover': browser.click_fn(page.configuration_btn,
+                                                            page.discover_button),
+                'cloud_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name)),
+                                   {'cloud_provider_edit': browser.click_fn(page.configuration_btn,
+                                                                            page.edit_button)}]})
 
 # setter(loc) = a function that when called with text
 # sets textfield at loc to text.
@@ -89,11 +93,10 @@ class Provider(object):
 
     '''
 
-    def __init__(self, name=None, details=None, credentials=None, zone=None):
+    def __init__(self, name=None, details=None, credentials=None):
         self.name = name
         self.details = details
         self.credentials = credentials
-        self.zone = zone
 
     class EC2Details(object):
         '''Models EC2 provider details '''
@@ -121,20 +124,8 @@ class Provider(object):
             super(Provider.Credential, self).__init__(**kwargs)
             self.amqp = kwargs.get('amqp')
 
-    def create(self, cancel=False):
-        '''
-        Creates a provider in the UI
-
-        Args:
-           cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-              after all the information present in the Provider has been filled in the UI.
-        '''
-
-        nav.go_to('clouds_providers_new')
-        browser.set_text(page.name_text, self.name)
-
-        if self.details:
-            details = self.details
+    def _fill_details(self, details, credentials, cancel, submit_button):
+        if details:
             browser.select_by_text(page.type_select, details.select_text)
             if type(details) == self.EC2Details:
                 browser.select_by_value(page.amazon_region_select, details.region)
@@ -144,29 +135,57 @@ class Provider(object):
                 browser.set_text(page.hostname_text, details.hostname)
             else:
                 raise TypeError("Unknown type of provider details: %s" % type(details))
-
-        if self.credentials:
-            if self.credentials.amqp:
+        if credentials:
+            if credentials.amqp:
                 browser.click(page.amqp_credentials_button)
-                self.credentials.fill(setter(page.amqp_userid_text),
-                                      setter(page.amqp_password_text),
-                                      setter(page.amqp_verify_text))
+                credentials.fill(setter(page.amqp_userid_text),
+                                 setter(page.amqp_password_text),
+                                 setter(page.amqp_verify_text))
             else:
-                self.credentials.fill(setter(page.userid_text),
-                                      setter(page.password_text),
-                                      setter(page.verify_password_text))
+                credentials.fill(setter(page.userid_text),
+                                 setter(page.password_text),
+                                 setter(page.verify_password_text))
         if cancel:
             browser.click(page.cancel_button)
-            # browser.wait_for_element(page.configuration_button)
+            # browser.wait_for_element(page.configuration_btn)
         else:
-            browser.click(page.add_submit)
+            browser.click(submit_button)
+            flash.assert_no_errors()
 
-    def update(self, f):
-        pass
-        # need to figure out a way to leave object unchanged if update
-        # fails, or maybe just don't use mutable objects at all to
-        # represent the Provider's state in CFME?  (in other words,
-        # we could just return a new "immutable" object each time?
+    def create(self, cancel=False):
+        '''
+        Creates a provider in the UI
+
+        Args:
+           cancel (boolean): Whether to cancel out of the creation.  The cancel is done
+              after all the information present in the Provider has been filled in the UI.
+        '''
+
+        nav.go_to('cloud_provider_new')
+        browser.set_text(page.name_text, self.name)
+        self._fill_details(self.details, self.credentials, cancel, page.add_submit)
+
+    def update(self, name=None, details=None, credentials=None, cancel=False):
+        '''
+        Updates a provider in the UI.  All args are optional.
+
+        Args:
+           name: New name to rename the provider
+           details (OpenStackDetails or EC2Details): a details object containing details
+        on the provider, cannot change the provider type so be sure to use the same
+        details type as the original creation of the provider.
+           credentials (Provider.Credential): A credential object if you want to update the
+        username or password
+           cancel (boolean): whether to cancel out of the update.
+        '''
+
+        nav.go_to('cloud_provider_edit', context={'provider': self})
+        browser.set_text(page.name_text, name)
+
+        # workaround - without this the save button doesn't enable
+        browser.browser().execute_script('miqButtons("show")')
+
+        self._fill_details(details, credentials, cancel, page.save_button)
 
 
 def get_from_config(provider_config_name):
@@ -205,7 +224,7 @@ def discover(credential, cancel=False):
       cancel (boolean):  Whether to cancel out of the discover UI.
     '''
 
-    nav.go_to('clouds_providers_discover')
+    nav.go_to('cloud_provider_discover')
     if credential:
         credential.fill(setter(discover_page.username),
                         setter(discover_page.password),
