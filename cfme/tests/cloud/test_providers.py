@@ -44,7 +44,7 @@ def test_that_checks_flash_when_discovery_cancelled():
 
 
 @pytest.mark.usefixtures('has_no_providers')
-def test_provider_editz(provider_data):
+def test_provider_edit(provider_data):
     '''Tests that editing a management system shows the proper detail
     after an edit
     '''
