@@ -3,7 +3,7 @@
 from functools import partial
 
 import pytest
-from selenium.common.exceptions import NoAlertPresentException
+from selenium.common.exceptions import NoAlertPresentException, WebDriverException
 
 from pages.login import LoginPage
 from utils.browser import browser, ensure_browser_open, testsetup
@@ -32,7 +32,11 @@ def navigate(first_level, second_level):
     # Make sure a browser is running
     ensure_browser_open()
     # Clear any potential permaspinnies before moving on
-    browser().execute_script('miqSparkleOff();')
+    try:
+        browser().execute_script('miqSparkleOff();')
+    except WebDriverException:
+        # miqSparkleOff undefined, these are not the droids you're looking for. Move along...
+        pass
 
     # Ensure browser is logged in as admin, reinitialize page to pick up any browser changes
     page = LoginPage(testsetup)
