@@ -3,7 +3,7 @@ import os
 import pytest
 
 from utils import conf
-from utils.conf_loader import Config, RecursiveUpdateDict
+from utils._conf import Config, RecursiveUpdateDict
 
 test_yaml_contents = '''
 test_key: test_value

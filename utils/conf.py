@@ -1,5 +1,5 @@
 import sys
 
-from utils.conf_loader import Config
+from utils._conf import Config
 
 sys.modules[__name__] = Config()
