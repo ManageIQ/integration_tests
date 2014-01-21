@@ -581,7 +581,6 @@ class Tree(object):
 
     On invocation, the class first determines which type of Tree object it is dealing
     with and then sets the internal variables to match elements of the specific tree class.
-
     There are currently 4 attributes needed in the tree classes.
 
     * expandable: the element to check if the tree is expanded/collapsed.
