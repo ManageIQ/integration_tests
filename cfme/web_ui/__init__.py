@@ -137,7 +137,7 @@ Legacy tree. The Tree is instantiated, like so::
 
 The path can then be navigated to return the last object in the path list, like so::
 
-  tree.click_path(['Automation', 'VM Lifecycle Management (VMLifecycle)', 'VM Migrate (Migrate)'])
+  tree.click_path('Automation', 'VM Lifecycle Management (VMLifecycle)', 'VM Migrate (Migrate)')
 
 Each path element will be expanded along the way, but will not be clicked.
 
