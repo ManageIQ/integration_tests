@@ -1,8 +1,7 @@
-import os
-
-import py.path
 import yaml
 from yaml.loader import Loader
+
+from utils.path import conf_path
 
 
 class YamlConfigLoader(Loader):
@@ -104,8 +103,7 @@ class RecursiveUpdateDict(dict):
 def load_yaml(filename=None):
     # Find the requested yaml in the config dir, relative to this file's location
     # (aiming for cfme_tests/config)
-    this_file = os.path.abspath(__file__)
-    path = py.path.local(this_file).new(basename='../conf/%s.yaml' % filename)
+    path = conf_path.join('%s.yaml' % filename)
 
     if path.check():
         with path.open() as config_fh:

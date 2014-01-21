@@ -1,6 +1,7 @@
 import os
 import pytest
-from utils.datafile import *
+from utils.datafile import data_path_for_filename, load_data_file
+from utils.path import data_path
 
 # Collection for storing unique combinations of data file paths
 # and filenames for usage reporting after a completed test run
@@ -70,9 +71,8 @@ def pytest_sessionfinish(session, exitstatus):
         return
 
     # Output an unused data files log after a test run
-    data_path = os.path.join(str(session.fspath), 'data/')
     data_files = set()
-    for dirpath, dirnames, filenames in os.walk(data_path):
+    for dirpath, dirnames, filenames in os.walk(str(data_path)):
         for filename in filenames:
             filepath = os.path.join(dirpath, filename)
             data_files.add(filepath)
@@ -81,7 +81,7 @@ def pytest_sessionfinish(session, exitstatus):
     if unused_data_files:
         # Write the log of unused data files out, minus the data dir prefix
         udf_log = ''.join(
-            (line[len(data_path):] + '\n' for line in unused_data_files)
+            (line[len(str(data_path)):] + '\n' for line in unused_data_files)
         )
         udf_log_file.write(udf_log + '\n')
 
