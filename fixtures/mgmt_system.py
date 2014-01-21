@@ -23,9 +23,9 @@ def setup_infrastructure_providers(infra_providers_pg):
     This includes both rhev and virtualcenter provider types
 
     vsphere5:
-        name: vsphere5
-        default_name: vsphere5
-        credentials: cloudqe_vsphere5
+        name: vsphere55
+        default_name: vsphere55
+        credentials: cloudqe_vsphere55
         hostname: hostname.redhat.com
         ipaddress: 1.1.1.2
         host_vnc_port:
@@ -38,7 +38,7 @@ def setup_infrastructure_providers(infra_providers_pg):
             end: 1.1.1.3
     rhevm32:
         name: RHEV 3.2
-        credentials: cloudqe_rhev32
+        credentials: cloudqe_rhev32_71
         hostname: hostname.redhat.com
         ipaddress: 1.1.1.2
         server_zone: default

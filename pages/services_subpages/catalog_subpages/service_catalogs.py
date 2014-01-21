@@ -67,9 +67,10 @@ class ServiceCatalogs(Base):
             if item.name == catalog_item_name:
                 item.click()
         self.click_order()
-        #time.sleep(5)
+        time.sleep(5)
         self._wait_for_results_refresh()
         self.service_name_field().clear()
+        time.sleep(5)
         self.service_name_field().send_keys(service_name)
         self.click_submit()
         from pages.services import Services
