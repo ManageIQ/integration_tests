@@ -62,7 +62,7 @@ def has_no_providers(db_session):
 
 
 @pytest.mark.usefixtures('maximized')
-class TestInfrastructureProviders:
+class TestCloudProviders:
     @pytest.mark.nondestructive
     def test_that_checks_flash_with_empty_discovery_form(self,
             cloud_providers_pg):
