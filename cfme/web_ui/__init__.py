@@ -815,3 +815,25 @@ class InfoBlock(object):
             raise exceptions.ElementOrBlockNotFound(
                 "Either the element of the block could not be found")
         return el
+
+
+class Quadicon(object):
+    ''' Represents a single quadruple icon in the CFME UI.
+
+    Args:
+       name:  The label of the icon
+    '''
+
+    def __init__(self, name):
+        self.name = name
+
+    def checkbox(self):
+        '''Returns:  a locator for the internal checkbox for the quadicon'''
+        return "//input[@type='checkbox' and ../../..//a[@title='%s']]" % self.name
+
+    def locate(self):
+        '''Returns:  a locator for the quadicon itself'''
+        return "//div[@id='quadicon' and ../../..//a[@title='%s']]" % self.name
+
+    def __str__(self):
+        return self.locate()
