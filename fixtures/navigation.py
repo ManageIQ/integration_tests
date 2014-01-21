@@ -7,6 +7,7 @@ from selenium.common.exceptions import NoAlertPresentException, WebDriverExcepti
 
 from pages.login import LoginPage
 from utils.browser import browser, ensure_browser_open, testsetup
+from utils.log import logger
 
 _width_errmsg = '''The minimum supported width of CFME is 1280 pixels
 
@@ -61,6 +62,7 @@ def navigator(first_level, second_level):
     # Adds a _navigate method to a Page, as well as makes fixtures
     # themselves callable using the same method.
     # This is evil, but transitional.
+    logger.debug('Navigating to %s/%s' % (first_level, second_level))
     navigator = partial(navigate, first_level, second_level)
     page = navigator()
     type(page).__call__ = navigator
