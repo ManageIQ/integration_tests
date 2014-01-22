@@ -108,6 +108,13 @@ if __name__ == '__main__':
         db.commit()
         return dict(result='success')
 
+    @route('/events', method='DELETE')
+    def clear_database(db):
+        response.content_type = 'application/json'
+        db.execute("DELETE FROM event_log")
+        db.commit()
+        return dict(result="success")
+
     port = 65432
     if len(sys.argv) == 2:
         port = int(sys.argv[-1])

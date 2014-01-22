@@ -48,6 +48,7 @@ class VmCommonComponents(Base, PolicyMenu, PaginatorMixin):
             self._wait_for_results_refresh()
         except NoSuchElementException:
             self.selenium.refresh()
+            self._wait_for_results_refresh()
 
     @property
     def power_button(self):

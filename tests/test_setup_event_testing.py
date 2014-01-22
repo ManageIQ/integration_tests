@@ -3,10 +3,11 @@ import re
 from lxml import etree
 from py.path import local
 from selenium.common.exceptions import TimeoutException
+import utils.providers as providers
 
 
 @pytest.fixture(scope="module",  # IGNORE:E1101
-                params=["rhevm32"])
+                params=providers.list_infra_providers())
 def mgmt_sys(request, cfme_data):
     param = request.param
     return cfme_data['management_systems'][param]
@@ -116,6 +117,8 @@ def test_import_policies(request, maximized, home_page_logged_in):
     import_pg = home_pg.header.site_navigation_menu("Control")\
         .sub_navigation_menu("Import / Export")\
         .click()
+    if import_pg.has_profile_available("Automate event policies"):
+        pytest.skip(msg="Already imported!")
     import_pg = import_pg.import_policies(policy_path.strpath)
     assert import_pg.flash.message == "Press commit to Import"
     import_pg = import_pg.click_on_commit()

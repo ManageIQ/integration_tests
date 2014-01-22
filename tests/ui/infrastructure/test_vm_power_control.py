@@ -6,6 +6,7 @@ from unittestzero import Assert
 
 from utils.conf import cfme_data
 from utils.providers import infra_provider_type_map
+from utils.wait import wait_for, TimedOutError
 
 pytestmark = [pytest.mark.nondestructive,
               pytest.mark.usefixtures("setup_infrastructure_providers"),
@@ -36,6 +37,16 @@ def pytest_generate_tests(metafunc):
         if all_tests:
             tests.append(random.choice(all_tests))
         metafunc.parametrize(argnames, tests, scope="module")
+
+
+def get_sys_type(provider):
+    # This is just to test the stuff, should be refactored then
+    if provider.lstrip().startswith("vsphere"):
+        return "virtualcenter"
+    elif provider.lstrip().startswith("rhev"):
+        return "rhevm"
+    else:
+        raise Exception("I don't know provider's %s sys_type!" % provider)
 
 """  These are in place for the reboot/reset/shutdown tests
 
@@ -79,8 +90,10 @@ class TestControlOnQuadicons():
             vm_name,
             verify_vm_running,
             mgmt_sys_api_clients):
-        """Test the cancelling of a power off operation from the vm quadicon
-        list.  Verify vm stays running"""
+        """ Test the cancelling of a power off operation from the vm quadicon list.
+
+        Verify vm stays running
+        """
         vm_pg = load_providers_vm_list
         vm_pg.wait_for_vm_state_change(vm_name, 'on', 12)
         vm_pg.power_off_and_cancel([vm_name])
@@ -98,11 +111,15 @@ class TestControlOnQuadicons():
             provider,
             vm_name,
             verify_vm_running,
-            mgmt_sys_api_clients):
-        """Test power off operation on a single quadicon.  Verify vm
-        transitions to stopped."""
+            mgmt_sys_api_clients,
+            register_event):
+        """ Test power off operation on a single quadicon.
+
+        Verify vm transitions to stopped.
+        """
         vm_pg = load_providers_vm_list
         vm_pg.wait_for_vm_state_change(vm_name, 'on', 12)
+        register_event(get_sys_type(provider), "vm", vm_name, ["power_off_req", "vm_power_off"])
         vm_pg.power_off([vm_name])
         Assert.true(vm_pg.flash.message.startswith("Stop initiated"))
         vm_pg.wait_for_vm_state_change(vm_name, 'off', 12)
@@ -118,8 +135,10 @@ class TestControlOnQuadicons():
             vm_name,
             verify_vm_stopped,
             mgmt_sys_api_clients):
-        """Test the cancelling of a power on operation from the vm quadicon
-        list.  Verify vm stays off."""
+        """ Test the cancelling of a power on operation from the vm quadicon list.
+
+        Verify vm stays off.
+        """
         vm_pg = load_providers_vm_list
         vm_pg.wait_for_vm_state_change(vm_name, 'off', 12)
         vm_pg.power_on_and_cancel([vm_name])
@@ -137,11 +156,15 @@ class TestControlOnQuadicons():
             provider,
             vm_name,
             verify_vm_stopped,
-            mgmt_sys_api_clients):
-        """Test power on operation for a single quadicon.  Verify vm
-        transitions to running."""
+            mgmt_sys_api_clients,
+            register_event):
+        """ Test power on operation for a single quadicon.
+
+        Verify vm transitions to running.
+        """
         vm_pg = load_providers_vm_list
         vm_pg.wait_for_vm_state_change(vm_name, 'off', 12)
+        register_event(get_sys_type(provider), "vm", vm_name, ["vm_power_on_req", "vm_power_on"])
         vm_pg.power_on([vm_name])
         Assert.true(vm_pg.flash.message.startswith("Start initiated"))
         vm_pg.wait_for_vm_state_change(vm_name, 'on', 12)
@@ -160,13 +183,15 @@ class TestVmDetailsPowerControlPerProvider:
             provider,
             vm_name,
             verify_vm_running,
-            mgmt_sys_api_clients):
+            mgmt_sys_api_clients,
+            register_event):
         """Test power off operation from a vm details page. Verify vm
         transitions to stopped."""
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('on', 12)
         last_boot_time = vm_details.last_boot_time
         state_chg_time = vm_details.last_pwr_state_change
+        register_event(get_sys_type(provider), "vm", vm_name, ["vm_power_off_req", "vm_power_off"])
         vm_details.power_button.power_off()
         vm_details.wait_for_vm_state_change('off', 12)
         Assert.equal(vm_details.power_state, 'off', "power state incorrect")
@@ -183,13 +208,15 @@ class TestVmDetailsPowerControlPerProvider:
             provider,
             vm_name,
             verify_vm_stopped,
-            mgmt_sys_api_clients):
+            mgmt_sys_api_clients,
+            register_event):
         """Test power on operation from a vm details page.  Verify vm
         transitions to running."""
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('off', 12)
         last_boot_time = vm_details.last_boot_time
         state_chg_time = vm_details.last_pwr_state_change
+        register_event(get_sys_type(provider), "vm", vm_name, ["vm_power_on_req", "vm_power_on"])
         vm_details.power_button.power_on()
         vm_details.wait_for_vm_state_change('on', 12)
         Assert.equal(vm_details.power_state, 'on', "power state incorrect")
@@ -237,16 +264,15 @@ class TestVmDetailsPowerControlPerProvider:
             timeout_in_minutes):
         """Timestamp update doesn't happen with state change so need a longer
         wait when expecting a last boot timestamp change"""
-        minute_count = 0
-        while (minute_count < timeout_in_minutes):
-            if boot_time != vm_details.last_boot_time:
-                break
-            print "Sleeping 60 seconds, iteration " + str(minute_count + 1)\
-                + " of " + str(timeout_in_minutes)\
-                + ", still no timestamp change"
-            time.sleep(60)
-            minute_count += 1
+
+        def _check():
             vm_details.refresh()
+            return boot_time != vm_details.last_boot_time
+
+        try:
+            return wait_for(_check, num_sec=timeout_in_minutes * 60)
+        except TimedOutError:
+            return False
 
     def test_start_from_suspend(
             self,
