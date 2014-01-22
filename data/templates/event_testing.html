@@ -1,49 +1,40 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
-        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">
-        <title>Event testing results</title>
-    </head>
+{% extends 'base.html' %}
+{% set title = 'Event testing results' %}
 
-    <body>
-        <div class="container">
-            <h1>Event testing results</h1>
-            <table class="zebra-striped">
-            {% for test_name, registered_events in events.iteritems() %}
-                <tr>
-                    <th colspan="7"><em>{{ test_name }}</em></th>
-                </tr>
-                <tr>
-                    <th>Time registered</th>
-                    <th>Succeeded?</th>
-                    <th>Delay [s]</th>
-                    <th>System type</th>
-                    <th>Object type</th>
-                    <th>Object</th>
-                    <th>Event</th>
-                </tr>
-                {% for event in registered_events %}
-                <tr>
-                    <td>{{ event.time_friendly }}</td>
-                    <td style="color: {{ event.colour }};">{{ event.success_friendly }}</td>
-                    <td style="color: {{ event.colour }};">{{ event.time_difference }}</td>
-                    <td>{{ event.sys_type }}</td>
-                    <td>{{ event.obj_type }}</td>
-                    <td>{{ event.obj }}</td>
-                    <td><i>{{ event.event }}</i></td>
-                </tr>
-                {% endfor %}
-            {% endfor %}
-            </table>
-            <p>
-                <i>If something breaks down, go kill <a href="mailto:mfalesni@redhat.com">mfalesni@redhat.com</a></i>
-            </p>
-        </div>
+{% block title %}{{title}}{% endblock %}
 
-    <!-- Le javascript -->
-    <script src="http://code.jquery.com/jquery.js"></script>
-    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-    </body>
-</html>
+{% block content %}
+<div class="container">
+    <h1>{{title}}</h1>
+    <table class="zebra-striped">
+    {% for test_name, registered_events in events.iteritems() %}
+        <tr>
+            <th colspan="7"><em>{{ test_name }}</em></th>
+        </tr>
+        <tr>
+            <th>Time registered</th>
+            <th>Succeeded?</th>
+            <th>Delay [s]</th>
+            <th>System type</th>
+            <th>Object type</th>
+            <th>Object</th>
+            <th>Event</th>
+        </tr>
+        {% for event in registered_events %}
+        <tr>
+            <td>{{ event.time_friendly }}</td>
+            <td style="color: {{ event.colour }};">{{ event.success_friendly }}</td>
+            <td style="color: {{ event.colour }};">{{ event.time_difference }}</td>
+            <td>{{ event.sys_type }}</td>
+            <td>{{ event.obj_type }}</td>
+            <td>{{ event.obj }}</td>
+            <td><i>{{ event.event }}</i></td>
+        </tr>
+        {% endfor %}
+    {% endfor %}
+    </table>
+    <p>
+        <i>If something breaks down, go kill <a href="mailto:mfalesni@redhat.com">mfalesni@redhat.com</a></i>
+    </p>
+</div>
+{% endblock %}

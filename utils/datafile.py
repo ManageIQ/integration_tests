@@ -2,6 +2,11 @@ import os
 from string import Template
 from tempfile import NamedTemporaryFile
 
+from jinja2 import Environment, FileSystemLoader
+
+from utils.path import template_path
+
+
 def load_data_file(filename, replacements=None):
     """Opens the given filename, returning a file object
 
@@ -27,6 +32,7 @@ def load_data_file(filename, replacements=None):
         outfile.seek(0)
         return outfile
 
+
 def data_path_for_filename(filename, base_path, testmod_path=None):
     if testmod_path:
         # remove the base path from testmod path
@@ -50,3 +56,8 @@ def data_path_for_filename(filename, base_path, testmod_path=None):
         new_path = os.path.join(base_path, 'data', filename)
 
     return new_path
+
+
+template_env = Environment(
+    loader=FileSystemLoader(template_path.strpath)
+)
