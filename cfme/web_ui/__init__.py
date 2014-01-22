@@ -13,6 +13,7 @@ objects, organizational and elemental.
 
 * **Elemental**
 
+  * :py:mod:`cfme.web_ui.accordion`
   * :py:class:`Form`
   * :py:class:`InfoBlock`
   * :py:class:`Table`
@@ -20,24 +21,17 @@ objects, organizational and elemental.
   * :py:class:`Tree`
   * :py:class:`Radio`
 
-Example usage of Regions
-^^^^^^^^^^^^^^^^^^^^^^^^
 
-Below is an example of how to define a region.::
+Example usage of Accordion
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  page = Region(locators=
-                {'configuration_button': (By.CSS_SELECTOR,
-                     "div.dhx_toolbar_btn[title='Configuration']"),
-                 'discover_button': (By.CSS_SELECTOR,
-                     "tr[title='Discover Cloud Providers']>td.td_btn_txt>"
-                     "div.btn_sel_text")},
-              title='CloudForms Management Engine: Cloud Providers')
+Using Accordions is simply a case of either selecting it to return the element,
+or using the built in click method. As shown below::
 
-The elements can then accessed like so.::
+  acc = web_ui.accordion
 
-  page.configuration_button
-
-Which will return the locator tuple for that particular element.
+  acc.click('Diagnostics')
+  acc.is_active('Diagnostics')
 
 
 Example usage of Form
