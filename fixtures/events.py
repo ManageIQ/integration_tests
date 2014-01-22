@@ -391,7 +391,7 @@ def register_event(request):
     # We pull out the plugin directly.
     self = request.config.pluginmanager.getplugin("event_testing")  # Workaround for bind
     node_id = request.node.nodeid
-    self.loggerinfo("Clearing the database before testing ...")
+    self.logger.info("Clearing the database before testing ...")
     self._delete_database()
     self.expectations = []
     yield self  # Run the test and provide the plugin as a fixture
