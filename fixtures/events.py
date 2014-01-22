@@ -1,4 +1,3 @@
-import logging
 import requests
 import socket
 import subprocess
@@ -7,9 +6,10 @@ from datetime import datetime
 
 import pytest
 from jinja2 import Template
-from py.path import local
 
 from utils.conf import cfme_data
+from utils.log import create_logger
+from utils.path import data_path, scripts_path
 
 
 def get_current_time_GMT():
@@ -23,9 +23,7 @@ class HTMLReport(object):
         self.events = events
 
     def generate(self, filename):
-        tpl_filename = local(__file__)\
-            .new(basename='../data/templates/event_testing.html')\
-            .strpath
+        tpl_filename = data_path.join('templates', 'event_testing.html').strpath
 
         with open(tpl_filename, "r") as tpl, \
                 open(filename, "w") as f:
@@ -88,13 +86,13 @@ class EventListener(object):
 
     TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
 
-    def __init__(self, listener_port, settle_time, log_file="test_events.log"):
+    def __init__(self, listener_port, settle_time):
         self.listener_port = int(listener_port)
-        listener_filename = local(__file__).new(basename='../scripts/listener.py').strpath
+        listener_filename = scripts_path.join('listener.py').strpath
         self.listener_script = "%s %d" % (listener_filename, self.listener_port)
         self.settle_time = int(settle_time)
         self.expectations = []
-        logging.basicConfig(filename=log_file, level=logging.INFO)
+        self.logger = create_logger('events')
         self.listener = None
 
     def get_listener_host(self):
@@ -125,11 +123,11 @@ class EventListener(object):
         """
         assert not self.finished, "Listener dead!"
         listener_url = "%s:%d" % (self.get_listener_host(), self.listener_port)
-        logging.info("checking api: %s%s" % (listener_url, route))
+        self.logger.info("checking api: %s%s" % (listener_url, route))
         r = requests.get(listener_url + route)
         r.raise_for_status()
         response = r.json()
-        logging.debug("Response: %s" % response)
+        self.logger.debug("Response: %s" % response)
         return response
 
     def mgmt_sys_type(self, sys_type, obj_type):
@@ -169,16 +167,16 @@ class EventListener(object):
                 assert len(data) > 0
             except AssertionError as e:
                 if attempt < max_attempts:
-                    logging.debug("Waiting for DB (%s/%s): %s" % (attempt, max_attempts, e))
+                    self.logger.debug("Waiting for DB (%s/%s): %s" % (attempt, max_attempts, e))
                     time.sleep(sleep_interval)
                     pass
                 # Enough sleeping, something went wrong
                 else:
-                    logging.exception("Check DB failed. Max attempts: '%s'." % (max_attempts))
+                    self.logger.exception("Check DB failed. Max attempts: '%s'." % (max_attempts))
                     return False
             else:
                 # No exceptions raised
-                logging.info("DB row found for '%s'" % req)
+                self.logger.info("DB row found for '%s'" % req)
                 return datetime.strptime(data[0]["event_time"], "%Y-%m-%d %H:%M:%S")
         return False
 
@@ -232,7 +230,7 @@ class EventListener(object):
             events = [events]
         for event in events:
             print "Registering event", event
-            logging.info("Event registration: \n%s" % str(locals()))    # Debug
+            self.logger.info("Event registration: %s" % str(locals()))    # Debug
             self.add_expectation(sys_type, obj_type, obj, event)
 
     @pytest.fixture(scope="session")
@@ -283,22 +281,23 @@ class EventListener(object):
 
     def start(self):
         assert not self.listener, "Listener can't be running in order to start it!"
-        logging.info("Starting listener...\n%s" % self.listener_script)
+        self.logger.info("Starting listener %s" % self.listener_script)
         self.listener = subprocess.Popen(self.listener_script,
                                          stderr=subprocess.PIPE,
                                          shell=True)
-        logging.info("(%s)\n" % self.listener.pid)
+        self.logger.info("Listener pid %d" % self.listener.pid)
         time.sleep(3)
         assert not self.finished, "Listener has died. Something must be blocking selected port"
-        logging.info("Listener alive")
+        self.logger.info("Listener alive")
 
     def stop(self):
         assert self.listener, "Listener must be running in order to stop it!"
-        logging.info("\nKilling listener (%s)..." % (self.listener.pid))
+        self.logger.info("Killing listener %d" % (self.listener.pid))
         self.listener.kill()
         (stdout, stderr) = self.listener.communicate()
         self.listener = None
-        logging.info("%s\n%s" % (stdout, stderr))
+        self.logger.info("listener stdout: %s" % stdout)
+        self.logger.info("listener stderr: %s" % stderr)
 
     def pytest_unconfigure(self, config):
         """ Collect and clean up the testing.

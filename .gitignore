@@ -18,8 +18,9 @@ develop-eggs
 lib
 lib64
 
-# Installer logs
+# logs
 pip-log.txt
+log/*.log
 
 # Unit test / coverage reports
 .coverage
@@ -41,3 +42,4 @@ pytest.ini
 
 # Ipython notebooks need to be explicitly added
 notebooks/*.ipynb
+notebooks/.ipynb_checkpoints

@@ -1,7 +1,7 @@
 import os
 import pytest
 from utils.datafile import data_path_for_filename, load_data_file
-from utils.path import data_path
+from utils.path import data_path, log_path
 
 # Collection for storing unique combinations of data file paths
 # and filenames for usage reporting after a completed test run
@@ -60,7 +60,7 @@ def pytest_addoption(parser):
 
 
 def pytest_sessionfinish(session, exitstatus):
-    udf_log_file = session.fspath.join('unused_data_files.log')
+    udf_log_file = log_path.join('unused_data_files.log')
 
     if udf_log_file.check():
         # Clean up old udf log if it exists
