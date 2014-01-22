@@ -20,7 +20,7 @@ lib64
 
 # logs
 pip-log.txt
-log/*.log
+log/*
 
 # Unit test / coverage reports
 .coverage

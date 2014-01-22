@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Failed Browser Test Screenshots</title>
+        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+    </head>
+    <body>
+        <header class="navbar navbar-static-top" role="banner">
+            <div class="container">
+                <div class="navbar-header">
+                    <span class="navbar-brand">Failed Browser Test Screenshots</span>
+                </div>
+                <div class="navbar-right">
+                    <span class="label label-warning navbar-text">{{total_failed}} Failed</span>
+                    <span class="label label-danger navbar-text">{{total_errored}} Error</span>
+                </div>
+            </div>
+        </header>
+        <div class="container" id="content">
+        {% for test in tests %}
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-md-10">
+                            <strong>{{test.name}}</strong>
+                        </div>
+                        <div class="col-md-2">
+                            {% if test.is_error %}
+                            <span class="label label-danger pull-right">Error</span>
+                            {% else %}
+                            <span class="label label-warning pull-right">Failed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <p>{{test.file}}</p>
+                    <pre class="well">{{test.short_tb}}</pre>
+                    {% if test.is_error %}
+                    <p class="text-muted">Error occured during test {{test.fail_stage}}</p>
+                    {% endif %}
+                    <div>
+                      <a href="data:image/png;base64,{{test.screenshot}}" class="btn btn-primary" role="button">Screenshot</a>
+                      <a href="data:text/plain;base64,{{test.full_tb}}" class="btn btn-success" role="button">Full Traceback</a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+        <script src="http://code.jquery.com/jquery.js"></script>
+        <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+    </body>
+</html>
