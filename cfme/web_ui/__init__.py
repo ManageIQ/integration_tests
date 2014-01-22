@@ -142,6 +142,16 @@ The path can then be navigated to return the last object in the path list, like 
 Each path element will be expanded along the way, but will not be clicked.
 
 
+Example usage of Quadicon
+^^^^^^^^^^^^^^^^^^^^^^^^^
+A Quadicon is used by defining the name of the icon and the type. After that, it can be used
+to obtain the locator of the Quadicon, or query its quadrants, via attributes like so::
+
+  qi = web_ui.Quadicon('hostname.local', 'host')
+  qi.creds
+  click(qi)
+
+
 Example usage of Radio
 ^^^^^^^^^^^^^^^^^^^^^^
 A Radio object is defined by its group name and is simply used like so::
@@ -179,6 +189,7 @@ Which will return the locator tuple for that particular element.
 """
 
 import re
+import os.path
 from unittestzero import Assert
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -818,22 +829,127 @@ class InfoBlock(object):
 
 
 class Quadicon(object):
-    ''' Represents a single quadruple icon in the CFME UI.
+    """ Represents a single quadruple icon in the CFME UI.
+
+    A Quadicon contains multiple quadrants. These are accessed via attributes.
+    The qtype is currently one of the following and determines which attribute names
+    are present. They are mapped internally and can be reassigned easily if the UI changes.
+
+    * **host** - *from the infra/host page* - has quads:
+
+      * a. **no_vm** - Number of VMs
+      * b. **state** - The current state of the host
+      * c. **vendor** - The vendor of the host
+      * d. **creds** - If the creds are valid
+
+    * **infra_prov** - *from the infra/providers page* - has quads:
+
+      * a. **no_host** - Number of hosts
+      * b. *Blank*
+      * c. **vendor** - The vendor of the provider
+      * d. **creds** - If the creds are valid
+
+    * **vm** - *from the infra/virtual_machines page* - has quads:
+
+      * a. **os** - The OS of the vm
+      * b. **state** - The current state of the vm
+      * c. **vendor** - The vendor of the vm's host
+      * d. **no_snapshot** - The number of snapshots
+      * g. **policy** - The state of the policy
+
+    * **cloud_prov** - *from the cloud/providers page* - has quads:
+
+      * a. **no_instance** - Number of instances
+      * b. **no_image** - Number of machine images
+      * c. **vendor** - The vendor of the provider
+      * d. **creds** - If the creds are valid
+
+    * **instance** - *from the cloud/instances page* - has quads:
+
+      * a. **os** - The OS of the instance
+      * b. **state** - The current state of the instance
+      * c. **vendor** - The vendor of the instance's host
+      * d. **no_snapshot** - The number of snapshots
+      * g. **policy** - The state of the policy
 
     Args:
-       name:  The label of the icon
-    '''
+       name: The label of the icon.
+       qtype: The type of the quad icon.
+    Returns: A :py:class:`Quadicon` object.
+    """
 
-    def __init__(self, name):
-        self.name = name
+    _quads = {"host":
+              {"no_vm": ("a", 'txt'),
+               "state": ("b", 'img'),
+               "vendor": ("c", 'img'),
+               "creds": ("d", 'img')},
+              "infra_prov":
+              {"no_host": ("a", 'txt'),
+               "vendor": ("c", 'img'),
+               "creds": ("d", 'img')},
+              "vm":
+              {"os": ("a", 'img'),
+               "state": ("b", 'img'),
+               "vendor": ("c", 'img'),
+               "no_snapshot": ("d", 'txt'),
+               "policy": ("g", 'img')},
+              "cloud_prov":
+              {"no_vm": ("a", 'txt'),
+               "no_image": ("b", 'txt'),
+               "vendor": ("b", 'img'),
+               "creds": ("d", 'img')},
+              "instance":
+              {"os": ("a", 'img'),
+               "state": ("b", 'img'),
+               "vendor": ("c", 'img'),
+               "no_snapshot": ("d", 'txt'),
+               "policy": ("g", 'img')}}
+
+    def __init__(self, name, qtype):
+        self._name = name
+        self._qtype = qtype
+        self._quad_data = self._quads[self._qtype]
 
     def checkbox(self):
-        '''Returns:  a locator for the internal checkbox for the quadicon'''
-        return "//input[@type='checkbox' and ../../..//a[@title='%s']]" % self.name
+        """ Returns:  a locator for the internal checkbox for the quadicon"""
+        return "//input[@type='checkbox' and ../../..//a[@title='%s']]" % self._name
 
     def locate(self):
-        '''Returns:  a locator for the quadicon itself'''
-        return "//div[@id='quadicon' and ../../..//a[@title='%s']]" % self.name
+        """ Returns:  a locator for the quadicon itself"""
+        return "//div[@id='quadicon' and ../../..//a[@title='%s']]" % self._name
+
+    def _locate_quadrant(self, corner):
+        """ Returns: a locator for the specific quadrant"""
+        return "//div[contains(@class, '%s72') and ../../../..//a[@title='%s']]" \
+            % (corner, self._name)
+
+    def __getattr__(self, name):
+        """ Queries the quadrants by name
+
+        Args:
+            name: The name of the quadrant identifier, as defined above.
+        Returns: A string containing a representation of what is in the quadrant.
+        """
+        if name in self._quad_data:
+            corner, rtype = self._quad_data[name]
+            locator = self._locate_quadrant(corner)
+            #.. We have to have a try/except here as some quadrants
+            #.. do not exist if they have no data, e.g. current_state in a host
+            #.. with no credentials.
+            try:
+                el = sel.element(locator)
+            except sel_exceptions.NoSuchElementException:
+                return None
+            if rtype == 'txt':
+                return el.text
+            if rtype == 'img':
+                img_el = el.find_element_by_xpath('.//img')
+                img_name = sel.get_attribute(img_el, 'src')
+                path, filename = os.path.split(img_name)
+                root, ext = os.path.splitext(filename)
+                return root
+        else:
+            return object.__getattribute__(self, name)
 
     def __str__(self):
         return self.locate()
