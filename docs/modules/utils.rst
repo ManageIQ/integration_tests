@@ -7,6 +7,8 @@ utils
    :members:
 .. automodule:: utils.path
    :members:
+.. automodule:: utils.ipmi
+   :members:
 .. automodule:: utils.providers
    :members:
 .. automodule:: utils.wait
