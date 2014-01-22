@@ -112,11 +112,11 @@ The HTML code for the table looks something like this::
 We can now click on an element in the list like so, by providing the column
 name and the value that we are searching for::
 
-  table.click_item('name', 'Mike')
+  table.click_cell('name', 'Mike')
 
 We can also perform the same, by using the index of the row, like so::
 
-  table.click_item(1, 'Tiger')
+  table.click_cell(1, 'Tiger')
 
 
 Example usage of toolbar
@@ -313,7 +313,7 @@ class Table(object):
             self._convert_header(cell.text): self._headers.index(cell) + 1
             for cell in self._headers}
 
-    def _items_generator(self):
+    def _rows_generator(self):
         """
         A generator method holding the Row objects
 
@@ -335,18 +335,18 @@ class Table(object):
             except:
                 data = []
 
-    def items(self):
+    def rows(self):
         """
-        Returns a generator object yielding the items in the Table
+        Returns a generator object yielding the rows in the Table
 
-        Return: A generator of the items in the Table.
+        Return: A generator of the rows in the Table.
         """
-        return self._items_generator()
+        return self._rows_generator()
 
-    def find_item(self, header, value):
+    def find_cell(self, header, value):
         """
         Finds an item in the Table by iterating through each visible item,
-        this work used to be done by the :py:meth::`click_item` method but
+        this work used to be done by the :py:meth::`click_cell` method but
         has not been abstracted out to be called separately.
 
         Args:
@@ -356,7 +356,7 @@ class Table(object):
 
         Return: WebElement of the element if item was found, else ``None``.
         """
-        list_gen = self._items_generator()
+        list_gen = self._rows_generator()
 
         for item in list_gen:
             if isinstance(header, basestring):
@@ -368,13 +368,13 @@ class Table(object):
         else:
             return None
 
-    def click_items(self, data):
+    def click_cells(self, data):
         """
-        Submits multiple elements to be clicked on
+        Submits multiple cells to be clicked on
 
         Args:
             data: A dicts of header names and values direct from yamls, as an example
-                ``{'name': ['wing', 'nut']}, {'age': ['12']}`` would click on the items
+                ``{'name': ['wing', 'nut']}, {'age': ['12']}`` would click on the cells
                 who had ``wing`` and ``nut`` in the name column and ``12`` in the age
                 column. The yaml example for this would be as follows::
 
@@ -386,33 +386,33 @@ class Table(object):
                             - 12
 
         Raises:
-            NotAllItemsClicked: If some items were unable to be found.
+            NotAllItemsClicked: If some cells were unable to be found.
         """
         failed_clicks = []
         for header, values in data.items():
             if isinstance(values, basestring):
                 values = [values]
             for value in values:
-                res = self.click_item(header, value)
+                res = self.click_cell(header, value)
                 if not res:
                     failed_clicks.append("%s:%s" % (header, value))
         if failed_clicks:
             raise exceptions.NotAllItemsClicked(failed_clicks)
 
-    def click_item(self, header, value):
+    def click_cell(self, header, value):
         """
-        Clicks on an item defined in the row.
+        Clicks on a cell defined in the row.
 
-        Uses the header identifier and a data to determine which item to click on.
+        Uses the header identifier and a data to determine which cell to click on.
 
         Args:
             header: A string or int, describing which column to inspect.
             data: The value to be compared when trying to identify the correct row
-                to click.
+                to click the cell in.
 
         Return: ``True`` if item was found and clicked, else ``False``.
         """
-        item = self.find_item(header, value)
+        item = self.find_cell(header, value)
         if item:
             sel.click(getattr(item, header))
             return True
@@ -517,7 +517,7 @@ class Form(object):
             loc = self.region.__getattr__(field)
             if isinstance(loc, Table):
                 loc._update_cache()
-                loc.click_items(value)
+                loc.click_cells(value)
                 continue
             if isinstance(loc, Radio):
                 sel.click(loc.choice(value))
