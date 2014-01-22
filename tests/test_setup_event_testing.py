@@ -37,6 +37,10 @@ def test_import_namespace(ssh_client, listener_info):
     It also modifies the listener host and port in the xml.
     """
     qe_automate_namespace_xml = "qe_event_handler.xml"
+    qe_automate_namespace_script = "qe_event_handler.rb"
+    local_automate_script = local(__file__)\
+        .new(basename="../data/%s" % qe_automate_namespace_script)\
+        .strpath
     local_automate_file = local(__file__)\
         .new(basename="../data/%s" % qe_automate_namespace_xml)\
         .strpath
@@ -55,6 +59,12 @@ def test_import_namespace(ssh_client, listener_info):
         set_text("//MiqAeSchema/MiqAeField[@name='url']",
                  re.sub(r"^http://([^/]+)/?$", "\\1", listener_info.host))
         set_text("//MiqAeSchema/MiqAeField[@name='port']", str(listener_info.port))
+
+        # Put the custom script from an external file
+        with open(local_automate_script, "r") as script:
+            set_text("//MiqAeMethod[@name='relay_events']",
+                     etree.CDATA(script.read()))
+
         et = etree.ElementTree(root)
         et.write(output_xml)
 
