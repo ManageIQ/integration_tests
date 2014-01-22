@@ -50,26 +50,37 @@ def pg_collect_logs(pg_this_server_diagnostics):
 def pytest_generate_tests(metafunc):
     """ Parametrizes the logdepot tests according to cfme_data YAML file.
 
-    YAML structure is as follows:
+    YAML structure (shared with db backup tests) is as follows:
 
-    log_depot:
-        ftp:            # Protocol
-            machine1:   # Machine ID
-                credentials: cred_for_machine1_ftp
-                hostname: somehost
-            machine2:
-                credentials: cred_for_machine2_ftp
-                hostname: some_other_host
-        smb:
-            machine1:
-                credentials: cred_for_machine1_smb
-                hostname: somehost/someshare
-            machine2:
-                credentials: cred_for_machine2_smb
-                hostname: some_other_host/other_share
-        nfs:
-            machine2:
-                hostname: somehost:/some/folder
+    log_db_depot:
+        machine1:
+            credentials: machine1_creds
+            smb:
+                hostname: smb.example.com/sharename
+                path_on_host: /path/on/host
+                use_for_log_collection: True
+                use_for_db_backups: False
+            nfs:
+                hostname: nfs.example.com/path/on/host
+                use_for_log_collection: False
+                use_for_db_backups: True
+            ftp:
+                hostname: ftp.example.com
+                use_for_log_collection: True
+        machine2:
+            credentials: machine2_creds
+            smb:
+                hostname: smb.example2.com/sharename
+                path_on_host: /path/on/host
+                use_for_log_collection: True
+                use_for_db_backups: False
+            nfs:
+                hostname: nfs.example2.com/path/on/host
+                use_for_log_collection: False
+                use_for_db_backups: True
+            ftp:
+                hostname: ftp.example2.com
+                use_for_log_collection: True
 
     Each Machine ID must have ftp configured to check uploaded files.
     If ftp is not present for the machine, it will fail with an Exception.
@@ -89,7 +100,7 @@ def pytest_generate_tests(metafunc):
 
     @todo: Think about using SSH for file check? Or FTP is enough?
     """
-    data = conf.cfme_data.get("log_depot", {})
+    data = conf.cfme_data.get("log_db_depot", {})
 
     # Fixtures used for parametrisation
     fixtures = [
@@ -117,25 +128,35 @@ def pytest_generate_tests(metafunc):
         return
 
     parametrized = []
-    for depot_type, depot_type_content in data.iteritems():
-        assert depot_type in methods, "%s is illegal depot type" % depot_type
-        for machine_id, machine_content in depot_type_content.iteritems():
-            assert "hostname" in machine_content,\
-                "cfme_data.yaml/log_depot/%s/%s does not contain hostname!" %\
-                (depot_type, machine_id)
+    for machine_id, machine_content in data.iteritems():
+        credentials = machine_content.get("credentials", None)
+        if credentials:
+            try:
+                credentials = conf.credentials[credentials]
+            except KeyError:
+                raise Exception(
+                    "No credentials with id '%s' found in credentials file!" % credentials)
+        else:
+            raise Exception("No credentials found in cfme_data for machine %s!" % machine_id)
+        for depot_type, depot_type_content in machine_content.iteritems():
+            if depot_type == 'credentials':
+                continue
+            assert depot_type in methods, "%s is illegal depot type" % depot_type
+            assert "hostname" in depot_type_content,\
+                "cfme_data.yaml/log_db_depot/%s/%s does not contain hostname!" %\
+                (machine_id, depot_type)
 
-            hostname = machine_content["hostname"]
-            credentials = machine_content.get("credentials", None)
-            if depot_type != "nfs" and not credentials:
-                raise Exception("Only NFS can have no credentials!")
-            if credentials:
-                try:
-                    credentials = conf.credentials[credentials]
-                except KeyError:
-                    raise Exception("No credentials present for machine %s" % machine_id)
+            hostname = depot_type_content["hostname"]
             if depot_type == "ftp" and machine_id not in machines_ftp:
                 machines_ftp[machine_id] = credentials
                 machines_ftp[machine_id]["hostname"] = hostname
+
+            assert "use_for_log_collection" in depot_type_content,\
+                "cfme_data.yaml/log_db_depot/%s/%s does not contain use_for_log_collection key!" %\
+                (machine_id, depot_type)
+            use_for_log_collection = depot_type_content["use_for_log_collection"]
+            if not use_for_log_collection:
+                continue
             parametrized.append((depot_type, hostname, credentials, machine_id))
     new_parametrized = []
     # We have to inject also the ftp connection into the fixtures
