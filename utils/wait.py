@@ -3,6 +3,7 @@ utils.wait
 ----------
 """
 import time
+from utils.log import logger
 
 
 def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
@@ -65,7 +66,9 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             if expo:
                 delay *= 2
         else:
-            return out, time.time() - st_time
+            duration = time.time() - st_time
+            logger.info('Took %s to do %s' % (duration, message))
+            return out, duration
         t_delta = time.time() - st_time
     raise TimedOutError("Could not do %s in time" % message)
 
