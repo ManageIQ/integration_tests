@@ -119,7 +119,7 @@ class TestControlOnQuadicons():
         """
         vm_pg = load_providers_vm_list
         vm_pg.wait_for_vm_state_change(vm_name, 'on', 12)
-        register_event(get_sys_type(provider), "vm", vm_name, ["power_off_req", "vm_power_off"])
+        register_event(get_sys_type(provider), "vm", vm_name, ["vm_power_off_req", "vm_power_off"])
         vm_pg.power_off([vm_name])
         Assert.true(vm_pg.flash.message.startswith("Stop initiated"))
         vm_pg.wait_for_vm_state_change(vm_name, 'off', 12)
@@ -239,13 +239,15 @@ class TestVmDetailsPowerControlPerProvider:
             provider,
             vm_name,
             verify_vm_running,
-            mgmt_sys_api_clients):
+            mgmt_sys_api_clients,
+            register_event):
         """ Test suspend operation from a vm details page.  Verify vm
         transitions to suspended. """
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('on', 10)
         last_boot_time = vm_details.last_boot_time
         state_chg_time = vm_details.last_pwr_state_change
+        register_event(get_sys_type(provider), "vm", vm_name, ["vm_suspend_req", "vm_suspend"])
         vm_details.power_button.suspend()
         vm_details.wait_for_vm_state_change('suspended', 15)
         Assert.equal(vm_details.power_state, 'suspended',
@@ -280,7 +282,8 @@ class TestVmDetailsPowerControlPerProvider:
             provider,
             vm_name,
             verify_vm_suspended,
-            mgmt_sys_api_clients):
+            mgmt_sys_api_clients,
+            register_event):
         """Test power_on operation on a suspended vm.
 
         Verify vm transitions to running."""
@@ -289,6 +292,7 @@ class TestVmDetailsPowerControlPerProvider:
         vm_details.wait_for_vm_state_change('suspended', 10)
         last_boot_time = vm_details.last_boot_time
         state_chg_time = vm_details.last_pwr_state_change
+        register_event(get_sys_type(provider), "vm", vm_name, ["vm_power_on_req", "vm_power_on"])
         vm_details.power_button.power_on()
         vm_details.wait_for_vm_state_change('on', 15)
         Assert.equal(vm_details.power_state, 'on', "power state incorrect")
