@@ -212,7 +212,7 @@ class Region(object):
     def __getattr__(self, name):
         return self.locators[name]
 
-    def __init__(self, locators={}, title=None, identifying_loc=None):
+    def __init__(self, locators=None, title=None, identifying_loc=None):
         self.locators = locators
         self.identifying_loc = identifying_loc
         self.title = title
