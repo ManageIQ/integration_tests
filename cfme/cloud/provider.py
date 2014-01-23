@@ -3,73 +3,70 @@ from selenium.webdriver.common.by import By
 import ui_navigate as nav
 import cfme
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Quadicon
+from cfme.web_ui import Region, Quadicon, Form
 import cfme.web_ui.flash as flash
 import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
 from utils.update import Updateable
-
-page = Region(locators=
-              {'configuration_btn': (By.CSS_SELECTOR,
-                                     "div.dhx_toolbar_btn[title='Configuration']"),
-               'discover_button': (By.CSS_SELECTOR,
-                                   "tr[title='Discover Cloud Providers']>td.td_btn_txt>"
-                                   "div.btn_sel_text"),
-               # 'edit_button': (By.CSS_SELECTOR,
-               #                 "tr[title='Select a single Cloud Provider to edit']>"
-               #                 "td.td_btn_txt>div.btn_sel_text"),
-               'edit_button': "//tr[@title='Edit this Cloud Provider' and @class='tr_btn']",
-
-               'remove_button': (By.CSS_SELECTOR,
-                                 "tr[title='Remove selected Cloud Providers from the VMDB']>"
-                                 "td.td_btn_txt>div.btn_sel_text"),
-               'add_button': (By.CSS_SELECTOR, "tr[title='Add a New Cloud Provider']>"
-                              "td.td_btn_txt>div.btn_sel_text"),
-               'add_submit': (By.CSS_SELECTOR, "img[alt='Add this Cloud Provider']"),
-               'credentials_validate_button': (By.CSS_SELECTOR, "div#default_validate_buttons_on >"
-                                             " ul#form_buttons > li > a > img"),
-               'credentials_verify_disabled_button': (By.CSS_SELECTOR,
-                                                      "div#default_validate_buttons_off > "
-                                                      "ul#form_buttons > li > a > img"),
-               'cancel_button': (By.CSS_SELECTOR, "img[title='Cancel']"),
-               'save_button': "//img[@title='Save Changes']",
-               'name_text': (By.ID, "name"),
-               'hostname_text': (By.ID, "hostname"),
-               'ipaddress_text': (By.ID, "ipaddress"),
-               'type_select': (By.ID, "server_emstype"),
-               'amazon_region_select': (By.ID, "hostname"),
-               'userid_text': (By.ID, "default_userid"),
-               'password_text': (By.ID, "default_password"),
-               'verify_password_text': (By.ID, "default_verify"),
-               'amqp_userid_text': (By.ID, "amqp_userid"),
-               'amqp_password_text': (By.ID, "amqp_password"),
-               'amqp_verify_text': (By.ID, "amqp_verify"),
-               'server_zone_text': (By.ID, "server_zone"),
-               'default_credentials_button': (By.CSS_SELECTOR,
-                                              "div#auth_tabs > ul > li > a[href='#default']"),
-               'amqp_credentials_button': (By.CSS_SELECTOR,
-                                           "div#auth_tabs > ul > li > a[href='#amqp']"),
-               'api_port': (By.ID, "port")},
-              title='CloudForms Management Engine: Cloud Providers')
+import cfme.web_ui.toolbar as tb
 
 
-discover_page = Region(locators=
-                       {'start_button': (By.CSS_SELECTOR, "input[name='start']"),
-                        'cancel_button': (By.CSS_SELECTOR, "input[name='cancel']"),
-                        'username': (By.ID, 'userid'),
-                        'password': (By.ID, 'password'),
-                        'password_verify': (By.ID, 'verify'),
-                        'form_title': (By.CSS_SELECTOR, "div.dhtmlxInfoBarLabel-2")},
-                       title='CloudForms Management Engine: Cloud Providers')
+page = Region(
+    locators={
+        'add_submit': "//img[@alt='Add this Cloud Provider']",
+        'creds_validate_btn': "//div[@id='default_validate_buttons_on']"
+                              "/ul[@id='form_buttons']/li/a/img",
+        'creds_verify_disabled_btn': "//div[@id='default_validate_buttons_off']"
+                                     "/ul[@id='form_buttons']/li/a/img",
+        'cancel_button': "//img[@title='Cancel']",
+        'save_button': "//img[@title='Save Changes']",
+    },
+    title='CloudForms Management Engine: Cloud Providers')
 
+discover_page = Region(
+    locators={
+        'start_button': "//input[@name='start']",
+        'cancel_button': "//input[@name='cancel']",
+        'username': "//*[@id='userid']",
+        'password': "//*[@id='password']",
+        'password_verify': "//*[@id='verify']",
+        'form_title': (By.CSS_SELECTOR, "div.dhtmlxInfoBarLabel-2"),
+    },
+    title='CloudForms Management Engine: Cloud Providers')
+
+form = Form(
+    fields=[
+        ('type_select', "//*[@id='server_emstype']"),
+        ('name_text', "//*[@id='name']"),
+        ('hostname_text', "//*[@id='hostname']"),
+        ('ipaddress_text', "//*[@id='ipaddress']"),
+        ('amazon_region_select', "//*[@id='hostname']"),
+        ('api_port', "//*[@id='port']"),
+    ])
+
+def_form = Form(
+    fields=[
+        ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
+        ('principal', "//*[@id='default_userid']"),
+        ('secret', "//*[@id='default_password']"),
+        ('verify_secret', "//*[@id='default_verify']"),
+    ])
+
+ampq_form = Form(
+    fields=[
+        ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
+        ('principal', "//*[@id='amqp_userid']"),
+        ('secret', "//*[@id='amqp_password']"),
+        ('verify_secret', "//*[@id='amqp_verify']")
+    ])
+
+cfg_btn = partial(tb.select, 'Configuration')
 nav.add_branch('clouds_providers',
-               {'cloud_provider_new': browser.click_fn(page.configuration_btn,
-                                                       page.add_button),
-                'cloud_provider_discover': browser.click_fn(page.configuration_btn,
-                                                            page.discover_button),
+               {'cloud_provider_new': lambda: cfg_btn('Add a New Cloud Provider'),
+                'cloud_provider_discover': lambda: cfg_btn('Discover Cloud Providers'),
                 'cloud_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name)),
-                                   {'cloud_provider_edit': browser.click_fn(page.configuration_btn,
-                                                                            page.edit_button)}]})
+                                   {'cloud_provider_edit':
+                                    lambda: cfg_btn('Edit Selected Cloud Provider')}]})
 
 # setter(loc) = a function that when called with text
 # sets textfield at loc to text.
@@ -102,19 +99,19 @@ class Provider(Updateable):
 
     class EC2Details(Updateable):
         '''Models EC2 provider details '''
-        select_text = 'Amazon EC2'
 
         def __init__(self, region=None):
-            self.region = region
+            self.details = {'amazon_region_select': region,
+                            'type_select': 'Amazon EC2'}
 
     class OpenStackDetails(Updateable):
         '''Models Openstack provider details '''
-        select_text = 'OpenStack'
 
         def __init__(self, hostname=None, ip_address=None, api_port=None):
-            self.hostname = hostname
-            self.ip_address = ip_address
-            self.api_port = api_port
+            self.details = {'hostname_text': hostname,
+                            'ipaddress_text': ip_address,
+                            'api_port': api_port,
+                            'type_select': 'OpenStack'}
 
     class Credential(cfme.Credential, Updateable):
         '''Provider credentials
@@ -127,26 +124,13 @@ class Provider(Updateable):
             self.amqp = kwargs.get('amqp')
 
     def _fill_details(self, details, credentials, cancel, submit_button):
-        if details:
-            browser.select_by_text(page.type_select, details.select_text)
-            if type(details) == self.EC2Details:
-                browser.select_by_value(page.amazon_region_select, details.region)
-            elif type(details) == self.OpenStackDetails:
-                browser.set_text(page.hostname_text, details.hostname)
-                browser.set_text(page.ipaddress_text, details.ip_address)
-                browser.set_text(page.hostname_text, details.hostname)
-            else:
-                raise TypeError("Unknown type of provider details: %s" % type(details))
-        if credentials:
-            if credentials.amqp:
-                browser.click(page.amqp_credentials_button)
-                credentials.fill(setter(page.amqp_userid_text),
-                                 setter(page.amqp_password_text),
-                                 setter(page.amqp_verify_text))
-            else:
-                credentials.fill(setter(page.userid_text),
-                                 setter(page.password_text),
-                                 setter(page.verify_password_text))
+        details.details.update({'name_text': self.name})
+        form.fill_fields(details.details)
+        if credentials.amqp:
+            ampq_form.fill_fields(credentials.details)
+        else:
+            def_form.fill_fields(credentials.details)
+
         if cancel:
             browser.click(page.cancel_button)
             # browser.wait_for_element(page.configuration_btn)
@@ -164,7 +148,6 @@ class Provider(Updateable):
         '''
 
         nav.go_to('cloud_provider_new')
-        browser.set_text(page.name_text, self.name)
         self._fill_details(self.details, self.credentials, cancel, page.add_submit)
 
     def update(self, updates, cancel=False):
@@ -204,7 +187,8 @@ def get_from_config(provider_config_name):
     prov_config = conf.cfme_data['management_systems'][provider_config_name]
     creds = conf.credentials[prov_config['credentials']]
     credentials = Provider.Credential(principal=creds['username'],
-                                      secret=creds['password'])
+                                      secret=creds['password'],
+                                      verify_secret=creds['password'])
     if prov_config.get('type') == 'ec2':
         details = Provider.EC2Details(region=prov_config['region'])
     else:
