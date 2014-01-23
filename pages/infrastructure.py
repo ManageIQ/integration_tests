@@ -4,6 +4,8 @@ from pages.base import Base
 from pages.infrastructure_subpages.providers import Providers
 from pages.infrastructure_subpages.hosts import Hosts
 from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
+from pages.infrastructure_subpages.vms_subpages.timelines import Timelines
+
 from pages.regions.policy_menu import PolicyMenu
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
@@ -59,6 +61,25 @@ class Infrastructure(Base):
         _cluster_detail_name_locator = (By.XPATH,
                 '//*[@id="accordion"]/div[1]/div[1]/a')
         _details_locator = (By.CSS_SELECTOR, "div#textual_div")
+        _timelines_button_locator = (By.CSS_SELECTOR,
+            "table.buttons_cont tr[title=" +
+                "'Show Timelines for this Cluster']")
+        _inactive_timelines_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
+            "'No Timeline data has been collected for this Cluster']")
+
+        @property
+        def timelines_button(self):
+            return self.selenium.find_element(*self._timelines_button_locator)
+
+        @property
+        def inactive_timelines_button(self):
+            return self.selenium.find_element(*self._inactive_timelines_button_locator)
+
+        @property
+        def center_buttons(self):
+            from pages.regions.taskbar.center import CenterButtons
+            return CenterButtons(self.testsetup)
 
         @property
         def details(self):
@@ -86,6 +107,11 @@ class Infrastructure(Base):
             return self.details.get_section("Relationships").get_item(
                 "Hosts").value
 
+        def click_on_timelines(self):
+            self.center_buttons.monitoring_button.click()
+            self.timelines_button.click()
+            self._wait_for_results_refresh()
+            return Timelines(self.testsetup)
 
     class Datastores(Base, PolicyMenu):
         _page_title = 'CloudForms Management Engine: Datastores'
@@ -428,4 +454,3 @@ class Infrastructure(Base):
     class PXECancelled(Base):
 
         pass
-

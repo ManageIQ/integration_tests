@@ -12,6 +12,7 @@ ON_REGEX = re.compile(r'up|POWERED\ ON|running')
 DOWN_REGEX = re.compile(r'down|POWERED\ OFF|stopped')
 SUSPEND_REGEX = re.compile(r'SUSPENDED|suspended')
 
+
 @pytest.fixture()
 def load_providers_vm_list(
         cfme_data,
@@ -30,11 +31,12 @@ def load_providers_vm_list(
         :rtype: Services.VirtualMachines
     '''
     provider_details = infra_providers_pg.load_provider_details(
-            cfme_data["management_systems"][provider]["name"])
+        cfme_data["management_systems"][provider]["name"])
     vm_pg = provider_details.all_vms()
     if vm_name is not None:
         vm_pg.find_vm_page(vm_name, None, False, False)
     return vm_pg
+
 
 @pytest.fixture()
 def load_vm_details(load_providers_vm_list, provider, vm_name):
@@ -49,6 +51,7 @@ def load_vm_details(load_providers_vm_list, provider, vm_name):
         :rtype: Services.VirtualMachinesDetails
     '''
     return load_providers_vm_list.find_vm_page(vm_name, None, False, True)
+
 
 @pytest.fixture
 def verify_vm_running(mgmt_sys_api_clients, provider, vm_name):
@@ -75,6 +78,7 @@ def verify_vm_running(mgmt_sys_api_clients, provider, vm_name):
         time.sleep(15)
         count += 1
     raise Exception("timeout reached, vm not running")
+
 
 @pytest.fixture
 def verify_vm_stopped(mgmt_sys_api_clients, provider, vm_name):
@@ -133,6 +137,7 @@ def verify_vm_suspended(mgmt_sys_api_clients, provider, vm_name):
         count += 1
     raise Exception("timeout reached, vm not running")
 
+
 @pytest.fixture()
 def load_providers_cluster_list(
         cfme_data,
@@ -183,8 +188,9 @@ def load_providers_host_list(
         :rtype: Infrastructure.Hosts
     '''
     provider_details = infra_providers_pg.load_provider_details(
-            provider["name"])
+        cfme_data["management_systems"][provider]["name"])
     return provider_details.all_hosts()
+
 
 @pytest.fixture()
 def load_providers_template_list(
