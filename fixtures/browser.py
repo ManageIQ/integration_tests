@@ -2,12 +2,11 @@ import atexit
 
 import pytest
 from py.error import ENOENT
-from jinja2 import Template
 
 import utils.browser
-from utils.path import data_path, log_path
+from utils.datafile import template_env
+from utils.path import log_path
 from fixtures import navigation
-#from utils.path import log_path
 
 nav_fixture_names = filter(lambda x: x.endswith('_pg'), dir(navigation))
 browser_fixtures = set(['browser'] + nav_fixture_names)
@@ -49,7 +48,7 @@ def pytest_exception_interact(node, call, report):
 
 
 def pytest_sessionfinish(session, exitstatus):
-    failed_tests_template = data_path.join('templates', 'failed_browser_tests.html').read()
+    failed_tests_template = template_env.get_template('failed_browser_tests.html')
     outfile = log_path.join('failed_browser_tests.html')
 
     # Clean out any old reports
@@ -60,7 +59,7 @@ def pytest_sessionfinish(session, exitstatus):
 
     # Generate a new one if needed
     if failed_test_tracking['tests']:
-        failed_tests_report = Template(failed_tests_template).render(**failed_test_tracking)
+        failed_tests_report = failed_tests_template.render(**failed_test_tracking)
         outfile.write(failed_tests_report)
 
 

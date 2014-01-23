@@ -31,3 +31,6 @@ log_path = project_path.join('log')
 
 #: interactive scripts, ``cfme_tests/scripts/``
 scripts_path = project_path.join('scripts')
+
+#: jinja2 templates, use with ``jinja2.FileSystemLoader``
+template_path = data_path.join('templates')

@@ -5,11 +5,11 @@ import time
 from datetime import datetime
 
 import pytest
-from jinja2 import Template
 
 from utils.conf import cfme_data
+from utils.datafile import template_env
 from utils.log import create_logger
-from utils.path import data_path, scripts_path
+from utils.path import scripts_path
 from utils.wait import wait_for, TimedOutError
 
 
@@ -27,12 +27,9 @@ class HTMLReport(object):
         self.events = events
 
     def generate(self, filename):
-        tpl_filename = data_path.join('templates', 'event_testing.html').strpath
-
-        with open(tpl_filename, "r") as tpl, \
-                open(filename, "w") as f:
-            template = Template(tpl.read())
-            f.write(template.render(events=self.events))
+        template = template_env.get_template('event_testing.html')
+        with open(filename, "w") as outfile:
+            outfile.write(template.render(events=self.events))
 
 
 class EventExpectation(object):
