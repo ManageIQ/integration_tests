@@ -9,16 +9,17 @@ from utils.wait import wait_for
 
 class VirtualMachineDetails(VmCommonComponents):
     _details_locator = (By.CSS_SELECTOR, "div#textual_div")
-    _set_retirement_date_button_locator = (By.CSS_SELECTOR, 
+    _set_retirement_date_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Set Retirement Dates for this VM']")
-    _immediately_retire_vm_button_locator = (By.CSS_SELECTOR, 
+    _immediately_retire_vm_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Immediately Retire this VM']")
-    _utilization_button_locator = (By.CSS_SELECTOR, 
-        "table.buttons_cont tr[title="+
+    _utilization_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
             "'Show Capacity & Utilization data for this VM']")
     _edit_mgmt_relationship_locator = (By.CSS_SELECTOR,
         "table.buttons_cont img[src='/images/toolbars/vm_evm_relationship.png']")
-    _set_ownership_locator = (By.CSS_SELECTOR, "table.buttons_cont img[src='/images/toolbars/ownership.png']")
+    _set_ownership_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/ownership.png']")
 
     @property
     def set_retirement_date_button(self):
