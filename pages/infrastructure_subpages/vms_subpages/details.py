@@ -2,23 +2,34 @@
 
 import time
 from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
+from pages.infrastructure_subpages.vms_subpages.utilization import VirtualMachineUtil
+from pages.infrastructure_subpages.vms_subpages.timelines import Timelines
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 from pages.base import Base
 from utils.wait import wait_for
 
+
 class VirtualMachineDetails(VmCommonComponents):
     _details_locator = (By.CSS_SELECTOR, "div#textual_div")
-    _set_retirement_date_button_locator = (By.CSS_SELECTOR, 
+    _set_retirement_date_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Set Retirement Dates for this VM']")
-    _immediately_retire_vm_button_locator = (By.CSS_SELECTOR, 
+    _immediately_retire_vm_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Immediately Retire this VM']")
-    _utilization_button_locator = (By.CSS_SELECTOR, 
-        "table.buttons_cont tr[title="+
+    _utilization_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
             "'Show Capacity & Utilization data for this VM']")
+    _timelines_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
+            "'Show Timelines for this VM']")
+    _inactive_timelines_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
+            "'No Timeline data has been collected for this VM']")
     _edit_mgmt_relationship_locator = (By.CSS_SELECTOR,
         "table.buttons_cont img[src='/images/toolbars/vm_evm_relationship.png']")
-    _set_ownership_locator = (By.CSS_SELECTOR, "table.buttons_cont img[src='/images/toolbars/ownership.png']")
+    _set_ownership_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont img[src='/images/toolbars/ownership.png']")
+    _host_button_locator = (By.CSS_SELECTOR,
+        "table.style2 tr[title= " + " 'Show this VM's Host]")
 
     @property
     def set_retirement_date_button(self):
@@ -33,6 +44,14 @@ class VirtualMachineDetails(VmCommonComponents):
     @property
     def utilization_button(self):
         return self.selenium.find_element(*self._utilization_button_locator)
+
+    @property
+    def timelines_button(self):
+        return self.selenium.find_element(*self._timelines_button_locator)
+
+    @property
+    def inactive_timelines_button(self):
+        return self.selenium.find_element(*self._inactive_timelines_button_locator)
 
     @property
     def server_relationship_button(self):
@@ -63,19 +82,62 @@ class VirtualMachineDetails(VmCommonComponents):
         root_element = self.selenium.find_element(*self._details_locator)
         return Details(self.testsetup, root_element)
 
+    @property
+    def name(self):
+        '''name'''
+        return self.details.get_section("Properties").get_item(
+            "Name").value
+
+    @property
+    def host_name(self):
+        '''Hostname'''
+        return self.details.get_section("Relationships").get_item(
+            "Host").value
+
+    @property
+    def provider_name(self):
+        '''Privider name'''
+        return self.details.get_section("Relationships").get_item(
+            "Infrastructure Provider").value
+
+    @property
+    def cluster_name(self):
+        '''Cluster name'''
+        return self.details.get_section("Relationships").get_item(
+            "Cluster").value
+
+    def click_on_host_relationship_button(self):
+        self.details.get_section('Relationships').click_item('Host')
+        self._wait_for_results_refresh()
+        from pages.infrastructure_subpages.hosts_subpages.detail \
+            import Detail as HostDetail
+        return HostDetail(self.testsetup)
+
+    def click_on_provider_relationship_button(self):
+        self.details.get_section('Relationships').click_item('Infrastructure Provider')
+        self._wait_for_results_refresh()
+        from pages.infrastructure_subpages.provider_subpages.detail \
+            import ProvidersDetail
+        return ProvidersDetail(self.testsetup)
+
+    def click_on_cluster_relationship_button(self):
+        self.details.get_section('Relationships').click_item('Cluster')
+        self._wait_for_results_refresh()
+        from pages.infrastructure \
+            import Infrastructure
+        return Infrastructure.ClustersDetail(self.testsetup)
+
     def click_on_set_retirement_date(self):
-        ActionChains(self.selenium).click(
-            self.center_buttons.lifecycle_button).click(
-                self.set_retirement_date_button).perform()
+        self.center_buttons.lifecycle_button.click()
+        self.set_retirement_date_button.click()
         self._wait_for_results_refresh()
         from pages.infrastructure_subpages.vms_subpages.retirement \
             import SetRetirementDate
         return SetRetirementDate(self.testsetup)
 
     def click_on_immediately_retire_vm(self, cancel=False):
-        ActionChains(self.selenium).click(
-            self.center_buttons.lifecycle_button).click(
-                self.immediately_retire_vm_button).perform()
+        self.center_buttons.lifecycle_button.click()
+        self.immediately_retire_vm_button.click()
         self.handle_popup(cancel)
         self._wait_for_results_refresh()
         from pages.infrastructure_subpages.vms_subpages.virtual_machines \
@@ -83,13 +145,16 @@ class VirtualMachineDetails(VmCommonComponents):
         return VirtualMachines(self.testsetup)
 
     def click_on_utilization(self):
-        ActionChains(self.selenium).click(
-            self.center_buttons.monitoring_button).click(
-                self.utilization_button).perform()
+        self.center_buttons.monitoring_button.click()
+        self.utilization_button.click()
         self._wait_for_results_refresh()
-        from pages.infrastructure_subpages.vms_subpages.utilization \
-            import VirtualMachineUtil
         return VirtualMachineUtil(self.testsetup)
+
+    def click_on_timelines(self):
+        self.center_buttons.monitoring_button.click()
+        self.timelines_button.click()
+        self._wait_for_results_refresh()
+        return Timelines(self.testsetup)
 
     def wait_for_vm_state_change(self, desired_state, timeout_in_minutes):
 
@@ -107,8 +172,8 @@ class VirtualMachineDetails(VmCommonComponents):
 
     def click_on_edit_cfme_relationship(self):
         '''Click on edit cfme relationship from center Configuration button'''
-        ActionChains(self.selenium).click(
-            self.center_buttons.configuration_button).click(self.server_relationship_button).perform()
+        self.center_buttons.configuration_button.click()
+        self.server_relationship_button.click()
         self._wait_for_results_refresh()
         return VirtualMachineDetails.EditCfmeRelationship(self.testsetup)
 
@@ -121,8 +186,8 @@ class VirtualMachineDetails(VmCommonComponents):
 
     def click_on_set_ownership(self):
         '''Click on set ownership from center Configuration button'''
-        ActionChains(self.selenium).click(
-            self.center_buttons.configuration_button).click(self.set_ownership_button).perform()
+        self.center_buttons.configuration_button.click()
+        self.set_ownership_button.click()
         self._wait_for_results_refresh()
         return VirtualMachineDetails.SetOwnership(self.testsetup)
 
