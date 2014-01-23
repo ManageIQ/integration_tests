@@ -39,19 +39,24 @@ Example usage of Form
 
 Below is an example of how to define a form.::
 
-  request_form = web_ui.Form(HostProvision.page,
-      ['requester_tab_button', 'email_text', 'first_name_text',
-      'last_name_text', 'notes_tarea', 'manager_text'])
+  provider_form = Form(
+      fields=[
+          ('type_select', "//*[@id='server_emstype']"),
+          ('name_text', "//*[@id='name']"),
+          ('hostname_text', "//*[@id='hostname']"),
+          ('ipaddress_text', "//*[@id='ipaddress']"),
+          ('amazon_region_select', "//*[@id='hostname']"),
+          ('api_port', "//*[@id='port']"),
+      ])
 
 Forms can then be filled in like so.::
 
-  request_info = {'requester_tab_button': Click,
-                  'email_text': 'test@example.com',
-                  'first_name_text': 'John',
-                  'last_name_text': 'Doe',
-                  'notes_tarea': 'Lots of notes',
-                  'manager_text': 'No Manager'}
-  request_form.fill_fields(request_info)
+  provider_info = {'type_select': "OpenStack",
+                   'name_text': "RHOS-01",
+                   'hostname_text': "RHOS-01",
+                   'ipaddress_text': "10.0.0.0",
+                   'api_port': "5000",}
+  provider_form.fill_fields(request_info)
 
 
 Example usage of InfoBlock
@@ -207,7 +212,7 @@ class Region(object):
     def __getattr__(self, name):
         return self.locators[name]
 
-    def __init__(self, locators={}, title=None, identifying_loc=None):
+    def __init__(self, locators=None, title=None, identifying_loc=None):
         self.locators = locators
         self.identifying_loc = identifying_loc
         self.title = title
@@ -458,28 +463,25 @@ class Table(object):
             return ",".join([el.text for el in self.data.find_elements_by_xpath('td')])
 
 
-class Form(object):
+class Form(Region):
     """A helper class for interacting with Form elements on pages.
 
     The Form class takes a set of locators and binds them together to create a
     unified Form object. This Form object has a defined field order so that the
     user does not have to worry about which order the information is provided.
     This enables the data to be provided as a dict meaning it can be passed directly
-    from yamls.
+    from yamls. It inherits the base Region class, meaning that locators can still be
+    referenced in the same way a Region's locators can.
 
     Args:
-        region: Expects a :py:class:`Region`. All locators must be present within the same Region
-            context. The region argument is required to define the scope for the retrieval
-            of locators.
-        field_order: A dict of field names. If this is left empty then no elements
-            will be completed. The argument not only defines the order of the elements
-            but also which elements comprise part of the form.
+        fields: A list of field name/locator tuples. The argument not only defines
+            the order of the elements but also which elements comprise part of the form.
+        identifying_loc: A locator which should be present if the form is visible.
 
     Returns:
         A :py:class:`Form` object.
     """
 
-    field_order = None
     tag_types = {'select': sel.select_by_text,
                  'text': sel.set_text,
                  'checkbox': sel.checkbox,
@@ -487,9 +489,10 @@ class Form(object):
                  'textarea': sel.set_text,
                  'password': sel.set_text}
 
-    def __init__(self, region=None, field_order=None):
-        self.field_order = field_order
-        self.region = region
+    def __init__(self, fields=None, identifying_loc=None):
+        self.locators = dict((key, value) for key, value in fields)
+        self.fields = fields
+        self.identifying_loc = identifying_loc
 
     def fill_fields(self, values, action=None):
         """Fills in field elements on forms
@@ -514,12 +517,14 @@ class Form(object):
             cfme.exceptions.UnidentifiableTagType: If the element/object is unknown.
         """
         if isinstance(values, dict):
-            values = list((key, values[key]) for key in self.field_order if key in values)
+            values = list((key[0], values[key[0]]) for key in self.fields if key[0] in values)
         elif isinstance(values, list):
-            values = list(val for key in self.field_order for val in values if val[0] == key)
+            values = list(val for key in self.fields for val in values if val[0] == key[0])
+
+        print values
 
         for field, value in values:
-            loc = self.region.__getattr__(field)
+            loc = self.locators[field]
             if isinstance(loc, Table):
                 loc._update_cache()
                 loc.click_cells(value)
