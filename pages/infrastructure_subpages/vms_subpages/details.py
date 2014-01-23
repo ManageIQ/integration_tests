@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
+from pages.infrastructure_subpages.vms_subpages.utilization import VirtualMachineUtil
+from pages.infrastructure_subpages.vms_subpages.timelines import Timelines
 from selenium.webdriver.common.by import By
 from pages.base import Base
 from utils.wait import wait_for
 import re
+
 
 
 class VirtualMachineDetails(VmCommonComponents):
@@ -16,10 +19,18 @@ class VirtualMachineDetails(VmCommonComponents):
     _utilization_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title=" +
             "'Show Capacity & Utilization data for this VM']")
+    _timelines_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
+            "'Show Timelines for this VM']")
+    _inactive_timelines_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
+            "'No Timeline data has been collected for this VM']")
     _edit_mgmt_relationship_locator = (By.CSS_SELECTOR,
         "table.buttons_cont img[src='/images/toolbars/vm_evm_relationship.png']")
     _set_ownership_locator = (By.CSS_SELECTOR,
         "table.buttons_cont img[src='/images/toolbars/ownership.png']")
+    _host_button_locator = (By.CSS_SELECTOR,
+        "table.style2 tr[title= " + " 'Show this VM's Host]")
 
     @property
     def set_retirement_date_button(self):
@@ -32,6 +43,14 @@ class VirtualMachineDetails(VmCommonComponents):
     @property
     def utilization_button(self):
         return self.get_element(*self._utilization_button_locator)
+
+    @property
+    def timelines_button(self):
+        return self.selenium.find_element(*self._timelines_button_locator)
+
+    @property
+    def inactive_timelines_button(self):
+        return self.selenium.find_element(*self._inactive_timelines_button_locator)
 
     @property
     def server_relationship_button(self):
@@ -74,6 +93,51 @@ class VirtualMachineDetails(VmCommonComponents):
         else:
             return False
 
+    @property
+    def name(self):
+        '''name'''
+        return self.details.get_section("Properties").get_item(
+            "Name").value
+
+    @property
+    def host_name(self):
+        '''Hostname'''
+        return self.details.get_section("Relationships").get_item(
+            "Host").value
+
+    @property
+    def provider_name(self):
+        '''Privider name'''
+        return self.details.get_section("Relationships").get_item(
+            "Infrastructure Provider").value
+
+    @property
+    def cluster_name(self):
+        '''Cluster name'''
+        return self.details.get_section("Relationships").get_item(
+            "Cluster").value
+
+    def click_on_host_relationship_button(self):
+        self.details.get_section('Relationships').click_item('Host')
+        self._wait_for_results_refresh()
+        from pages.infrastructure_subpages.hosts_subpages.detail \
+            import Detail as HostDetail
+        return HostDetail(self.testsetup)
+
+    def click_on_provider_relationship_button(self):
+        self.details.get_section('Relationships').click_item('Infrastructure Provider')
+        self._wait_for_results_refresh()
+        from pages.infrastructure_subpages.provider_subpages.detail \
+            import ProvidersDetail
+        return ProvidersDetail(self.testsetup)
+
+    def click_on_cluster_relationship_button(self):
+        self.details.get_section('Relationships').click_item('Cluster')
+        self._wait_for_results_refresh()
+        from pages.infrastructure \
+            import Infrastructure
+        return Infrastructure.ClustersDetail(self.testsetup)
+
     def click_on_set_retirement_date(self):
         self.center_buttons.lifecycle_button.click()
         self.set_retirement_date_button.click()
@@ -96,6 +160,12 @@ class VirtualMachineDetails(VmCommonComponents):
         self.utilization_button.click()
         self._wait_for_results_refresh()
         return VirtualMachineUtil(self.testsetup)
+
+    def click_on_timelines(self):
+        self.center_buttons.monitoring_button.click()
+        self.timelines_button.click()
+        self._wait_for_results_refresh()
+        return Timelines(self.testsetup)
 
     def wait_for_vm_state_change(self, desired_state, timeout_in_minutes):
 

@@ -5,6 +5,8 @@ Created on May 31, 2013
 '''
 from pages.base import Base
 from selenium.webdriver.common.by import By
+from pages.infrastructure_subpages.vms_subpages.timelines import Timelines
+from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
 
 
 class ProvidersDetail(Base):
@@ -16,6 +18,11 @@ class ProvidersDetail(Base):
         "div.dhx_toolbar_btn[title='Configuration']")
     _refresh_relationships_locator = (By.CSS_SELECTOR,
         "table.buttons_cont img[src='/images/toolbars/refresh.png']")
+    _timelines_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
+            "'Show Timelines for this Infrastructure Provider']")
+    _monitoring_button_locator = (
+        By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Monitoring'] > div")
 
     @property
     def refresh_relationships_button(self):
@@ -23,9 +30,17 @@ class ProvidersDetail(Base):
         return self.selenium.find_element(*self._refresh_relationships_locator)
 
     @property
+    def monitoring_button(self):
+        return self.selenium.find_element(*self._monitoring_button_locator)
+
+    @property
     def configuration_button(self):
         '''The Configuration button'''
         return self.selenium.find_element(*self._configuration_button_locator)
+
+    @property
+    def timelines_button(self):
+        return self.selenium.find_element(*self._timelines_button_locator)
 
     def click_on_refresh_relationships(self, cancel=False):
         self.configuration_button.click()
@@ -120,7 +135,6 @@ class ProvidersDetail(Base):
         '''
         self.details.get_section('Relationships').click_item('VMs')
         self._wait_for_results_refresh()
-        from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
         return VirtualMachines(self.testsetup)
 
     def all_clusters(self):
@@ -160,5 +174,10 @@ class ProvidersDetail(Base):
         '''
         self.details.get_section('Relationships').click_item('Templates')
         self._wait_for_results_refresh()
-        from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
         return VirtualMachines(self.testsetup)
+
+    def click_on_timelines(self):
+        self.monitoring_button.click()
+        self.timelines_button.click()
+        self._wait_for_results_refresh()
+        return Timelines(self.testsetup)

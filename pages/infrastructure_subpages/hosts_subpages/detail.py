@@ -7,7 +7,7 @@ from pages.regions.accordion import Accordion
 from pages.infrastructure import Infrastructure
 from pages.regions.policy_menu import PolicyMenu
 from pages.regions.taskbar.taskbar import TaskbarMixin
-from selenium.webdriver.common.action_chains import ActionChains
+from pages.infrastructure_subpages.vms_subpages.timelines import Timelines
 from selenium.webdriver.common.by import By
 
 
@@ -22,6 +22,14 @@ class Detail(Base, PolicyMenu, TaskbarMixin):
     _smartstate_analysis_locator = (By.CSS_SELECTOR,
             "tr[title='Perform SmartState Analysis on this Host']"
             ">td.td_btn_txt>div.btn_sel_text")
+    _timelines_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
+            "'Show Timelines for this Host']")
+    _inactive_timelines_button_locator = (By.CSS_SELECTOR,
+        "table.buttons_cont tr[title=" +
+            "'No Timeline data has been collected for this Host']")
+    _monitoring_button_locator = (
+        By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Monitoring'] > div")
 
     @property
     def edit_button(self):
@@ -56,6 +64,18 @@ class Detail(Base, PolicyMenu, TaskbarMixin):
         from pages.regions.details import Details
         root_element = self.selenium.find_element(*self._details_locator)
         return Details(self.testsetup, root_element)
+
+    @property
+    def timelines_button(self):
+        return self.selenium.find_element(*self._timelines_button_locator)
+
+    @property
+    def inactive_timelines_button(self):
+        return self.selenium.find_element(*self._inactive_timelines_button_locator)
+
+    @property
+    def monitoring_button(self):
+        return self.selenium.find_element(*self._monitoring_button_locator)
 
     @property
     def name(self):
@@ -98,6 +118,12 @@ class Detail(Base, PolicyMenu, TaskbarMixin):
         '''Number of VMs host is hosting'''
         return self.details.get_section("Relationships").get_item(
             "VMs").value
+
+    def click_on_timelines(self):
+        self.monitoring_button.click()
+        self.timelines_button.click()
+        self._wait_for_results_refresh()
+        return Timelines(self.testsetup)
 
     @property
     def accordion_region(self):
