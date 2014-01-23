@@ -393,21 +393,26 @@ def register_event(request):
     # We pull out the plugin directly.
     self = request.config.pluginmanager.getplugin("event_testing")  # Workaround for bind
     node_id = request.node.nodeid
-    self.logger.info("Clearing the database before testing ...")
-    self._delete_database()
-    self.expectations = []
+
+    if self.listener is not None:
+        self.logger.info("Clearing the database before testing ...")
+        self._delete_database()
+        self.expectations = []
+
     yield self  # Run the test and provide the plugin as a fixture
-    self.logger.info("Checking the events ...")
-    try:
-        wait_for(self.check_all_expectations,
-                 delay=5,
-                 num_sec=75,
-                 handle_exception=True)
-    except TimedOutError:
-        pass
-    if node_id not in self.processed_expectations:
-        self.processed_expectations[node_id] = []
-    self.processed_expectations[node_id].extend(self.expectations)
-    self.logger.info("Clearing the database after testing ...")
-    self._delete_database()
-    self.expectations = []
+
+    if self.listener is not None:
+        self.logger.info("Checking the events ...")
+        try:
+            wait_for(self.check_all_expectations,
+                     delay=5,
+                     num_sec=75,
+                     handle_exception=True)
+        except TimedOutError:
+            pass
+        if node_id not in self.processed_expectations:
+            self.processed_expectations[node_id] = []
+        self.processed_expectations[node_id].extend(self.expectations)
+        self.logger.info("Clearing the database after testing ...")
+        self._delete_database()
+        self.expectations = []
