@@ -71,7 +71,7 @@ def is_host_analysis_finished_with_refresh(conf_tasks_pg, host_name):
     return False
 
 
-def test_run_host_analysis(infra_hosts_pg, provider, host_name, host_type):
+def test_run_host_analysis(infra_hosts_pg, provider, host_name, host_type, register_event):
     '''Run host SmartState analysis
     '''
     infra_hosts_pg.wait_for_host_or_timeout(host_name)
@@ -80,6 +80,7 @@ def test_run_host_analysis(infra_hosts_pg, provider, host_name, host_type):
         host_detail_pg = infra_hosts_pg.click_host(host_name)
     else:
         host_detail_pg = add_host_credentials(infra_hosts_pg, host_name)
+    register_event(None, "host", host_name, ["host_analysis_request", "host_analysis_complete"])
     # Initiate analysis
     host_detail_pg.click_on_smartstate_analysis_and_confirm()
     assert '"%s": Analysis successfully initiated' % host_name\

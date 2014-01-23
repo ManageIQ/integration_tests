@@ -148,6 +148,7 @@ class EventListener(object):
 
     def mgmt_sys_type(self, sys_type, obj_type):
         """ Map management system type from cfme_data.yaml to match event string
+            and also add possibility of host based test.
         """
         # TODO: obj_type ('ems' or 'vm') is the same for all tests in class
         #       there must be a better way than to pass this around
@@ -159,6 +160,8 @@ class EventListener(object):
             return ems_map.get(sys_type)
         elif obj_type in {"vm"}:
             return vm_map.get(sys_type)
+        elif obj_type in {"host"}:
+            return obj_type
 
     def check_db(self, sys_type, obj_type, obj, event, after=None, before=None):
         """ Utility to check listener database for event
@@ -370,6 +373,8 @@ def register_event(request):
     ...     # or
     ...     register_event("systype", "objtype", "obj", ["event1", "event2"])
     ...     # do_some_stuff_that_triggers()
+
+    For host_events, use `None` for sys_type.
 
     It also registers the time when the registration was done so we can filter
     out the same events, but coming in other times (like vm on/off/on/off will
