@@ -3,7 +3,6 @@
 import time
 from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 from pages.base import Base
 from utils.wait import wait_for
 
@@ -65,18 +64,16 @@ class VirtualMachineDetails(VmCommonComponents):
         return Details(self.testsetup, root_element)
 
     def click_on_set_retirement_date(self):
-        ActionChains(self.selenium).click(
-            self.center_buttons.lifecycle_button).click(
-                self.set_retirement_date_button).perform()
+        self.center_buttons.lifecycle_button.click()
+        self.set_retirement_date_button.click()
         self._wait_for_results_refresh()
         from pages.infrastructure_subpages.vms_subpages.retirement \
             import SetRetirementDate
         return SetRetirementDate(self.testsetup)
 
     def click_on_immediately_retire_vm(self, cancel=False):
-        ActionChains(self.selenium).click(
-            self.center_buttons.lifecycle_button).click(
-                self.immediately_retire_vm_button).perform()
+        self.center_buttons.lifecycle_button.click()
+        self.immediately_retire_vm_button.click()
         self.handle_popup(cancel)
         self._wait_for_results_refresh()
         from pages.infrastructure_subpages.vms_subpages.virtual_machines \
@@ -84,12 +81,9 @@ class VirtualMachineDetails(VmCommonComponents):
         return VirtualMachines(self.testsetup)
 
     def click_on_utilization(self):
-        ActionChains(self.selenium).click(
-            self.center_buttons.monitoring_button).click(
-                self.utilization_button).perform()
+        self.center_buttons.monitoring_button.click()
+        self.utilization_button.click()
         self._wait_for_results_refresh()
-        from pages.infrastructure_subpages.vms_subpages.utilization \
-            import VirtualMachineUtil
         return VirtualMachineUtil(self.testsetup)
 
     def wait_for_vm_state_change(self, desired_state, timeout_in_minutes):
@@ -108,8 +102,8 @@ class VirtualMachineDetails(VmCommonComponents):
 
     def click_on_edit_cfme_relationship(self):
         '''Click on edit cfme relationship from center Configuration button'''
-        ActionChains(self.selenium).click(
-            self.center_buttons.configuration_button).click(self.server_relationship_button).perform()
+        self.center_buttons.configuration_button.click()
+        self.server_relationship_button.click()
         self._wait_for_results_refresh()
         return VirtualMachineDetails.EditCfmeRelationship(self.testsetup)
 
@@ -122,8 +116,8 @@ class VirtualMachineDetails(VmCommonComponents):
 
     def click_on_set_ownership(self):
         '''Click on set ownership from center Configuration button'''
-        ActionChains(self.selenium).click(
-            self.center_buttons.configuration_button).click(self.set_ownership_button).perform()
+        self.center_buttons.configuration_button.click()
+        self.set_ownership_button.click()
         self._wait_for_results_refresh()
         return VirtualMachineDetails.SetOwnership(self.testsetup)
 

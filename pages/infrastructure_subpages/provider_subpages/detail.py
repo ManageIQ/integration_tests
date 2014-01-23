@@ -5,7 +5,6 @@ Created on May 31, 2013
 '''
 from pages.base import Base
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 
 
 class ProvidersDetail(Base):
@@ -29,10 +28,8 @@ class ProvidersDetail(Base):
         return self.selenium.find_element(*self._configuration_button_locator)
 
     def click_on_refresh_relationships(self, cancel=False):
-        ActionChains(self.selenium)\
-            .click(self.configuration_button)\
-            .click(self.refresh_relationships_button)\
-            .perform()
+        self.configuration_button.click()
+        self.refresh_relationships_button.click()
         self.handle_popup(cancel)
         self._wait_for_results_refresh()
         return "Refresh Infrastructure Providers initiated" in self.flash.message

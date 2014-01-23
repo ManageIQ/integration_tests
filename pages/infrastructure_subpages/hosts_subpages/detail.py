@@ -30,10 +30,8 @@ class Detail(Base, PolicyMenu, TaskbarMixin):
 
     def click_on_edit_host(self):
         '''Click on edit host button'''
-        ActionChains(self.selenium)\
-            .click(self.configuration_button)\
-            .click(self.edit_button)\
-            .perform()
+        self.configuration_button.click()
+        self.edit_button.click()
         return Edit(self.testsetup)
 
     @property
@@ -43,10 +41,8 @@ class Detail(Base, PolicyMenu, TaskbarMixin):
 
     def click_on_smartstate_analysis_and_confirm(self):
         '''Click on SmartState analysis button and confirm popup'''
-        ActionChains(self.selenium)\
-            .click(self.configuration_button)\
-            .click(self.smartstate_analysis_button)\
-            .perform()
+        self.configuration_button.click()
+        self.smartstate_analysis_button.click()
         self.handle_popup()
         return Detail(self.testsetup)
 
