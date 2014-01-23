@@ -872,32 +872,39 @@ class Quadicon(object):
     Returns: A :py:class:`Quadicon` object.
     """
 
-    _quads = {"host":
-              {"no_vm": ("a", 'txt'),
-               "state": ("b", 'img'),
-               "vendor": ("c", 'img'),
-               "creds": ("d", 'img')},
-              "infra_prov":
-              {"no_host": ("a", 'txt'),
-               "vendor": ("c", 'img'),
-               "creds": ("d", 'img')},
-              "vm":
-              {"os": ("a", 'img'),
-               "state": ("b", 'img'),
-               "vendor": ("c", 'img'),
-               "no_snapshot": ("d", 'txt'),
-               "policy": ("g", 'img')},
-              "cloud_prov":
-              {"no_vm": ("a", 'txt'),
-               "no_image": ("b", 'txt'),
-               "vendor": ("b", 'img'),
-               "creds": ("d", 'img')},
-              "instance":
-              {"os": ("a", 'img'),
-               "state": ("b", 'img'),
-               "vendor": ("c", 'img'),
-               "no_snapshot": ("d", 'txt'),
-               "policy": ("g", 'img')}}
+    _quads = {
+        "host": {
+            "no_vm": ("a", 'txt'),
+            "state": ("b", 'img'),
+            "vendor": ("c", 'img'),
+            "creds": ("d", 'img'),
+        },
+        "infra_prov": {
+            "no_host": ("a", 'txt'),
+            "vendor": ("c", 'img'),
+            "creds": ("d", 'img'),
+        },
+        "vm": {
+            "os": ("a", 'img'),
+            "state": ("b", 'img'),
+            "vendor": ("c", 'img'),
+            "no_snapshot": ("d", 'txt'),
+            "policy": ("g", 'img'),
+        },
+        "cloud_prov": {
+            "no_vm": ("a", 'txt'),
+            "no_image": ("b", 'txt'),
+            "vendor": ("b", 'img'),
+            "creds": ("d", 'img'),
+        },
+        "instance": {
+            "os": ("a", 'img'),
+            "state": ("b", 'img'),
+            "vendor": ("c", 'img'),
+            "no_snapshot": ("d", 'txt'),
+            "policy": ("g", 'img'),
+        },
+    }
 
     def __init__(self, name, qtype):
         self._name = name
