@@ -19,7 +19,8 @@ def load_providers_vm_list(
         provider,
         vm_name=None):
     '''
-        Load the vm list of a specific provider.  Will also find the page for a specific vm if name is passed
+        Load the vm list of a specific provider.Will also find the page for a specific vm if name
+         is passed
 
         :param provider: name of the provider... key from cfme_data["management_systems"]
         :type  provider: str
@@ -38,11 +39,11 @@ def load_providers_vm_list(
 @pytest.fixture()
 def load_vm_details(load_providers_vm_list, provider, vm_name):
     '''
-        Load the vm details of a specific vm  
+        Load the vm details of a specific vm
 
         :param provider: name of the provider... key from cfme_data["management_systems"]
         :type  provider: str
-        :param vm_name: name of the vm 
+        :param vm_name: name of the vm
         :type  vm_name: str
         :return: page for vm details
         :rtype: Services.VirtualMachinesDetails
@@ -52,12 +53,12 @@ def load_vm_details(load_providers_vm_list, provider, vm_name):
 @pytest.fixture
 def verify_vm_running(mgmt_sys_api_clients, provider, vm_name):
     '''
-        Verifies the vm is in the running state for the test.  Uses calls to the actual provider api.  
+        Verifies the vm is in the running state for the test.Uses calls to the actual provider api.
           It will start the vm if necessary.
 
         :param provider: name of the provider... key from cfme_data["management_systems"]
         :type  provider: str
-        :param vm_name: name of the vm 
+        :param vm_name: name of the vm
         :type  vm_name: str
         :return: None
         :rtype: None
@@ -70,7 +71,7 @@ def verify_vm_running(mgmt_sys_api_clients, provider, vm_name):
         elif DOWN_REGEX.match(state) or SUSPEND_REGEX.match(state):
             mgmt_sys_api_clients[provider].start_vm(vm_name)
         print "Sleeping 15secs...(current state: " + \
-                state + ", needed state: running)"
+            state + ", needed state: running)"
         time.sleep(15)
         count += 1
     raise Exception("timeout reached, vm not running")
@@ -78,15 +79,15 @@ def verify_vm_running(mgmt_sys_api_clients, provider, vm_name):
 @pytest.fixture
 def verify_vm_stopped(mgmt_sys_api_clients, provider, vm_name):
     '''
-        Verifies the vm is in the stopped state for the test.  Uses calls to the actual provider api.  
+        Verifies the vm is in the stopped state for the test.Uses calls to the actual provider api.
           It will stop the vm if necessary.
 
         :param provider: name of the provider... key from cfme_data["management_systems"]
         :type  provider: str
-        :param vm_name: name of the vm 
+        :param vm_name: name of the vm
         :type  vm_name: str
         :return: None
-        :rtype: None 
+        :rtype: None
     '''
     count = 0
     while count < 10:
@@ -98,20 +99,21 @@ def verify_vm_stopped(mgmt_sys_api_clients, provider, vm_name):
         elif SUSPEND_REGEX.match(state):
             mgmt_sys_api_clients[provider].start_vm(vm_name)
         print "Sleeping 15secs...(current state: " + \
-                state + ", needed state: stopped)"
+            state + ", needed state: stopped)"
         time.sleep(15)
         count += 1
     raise Exception("timeout reached, vm not running")
 
+
 @pytest.fixture
 def verify_vm_suspended(mgmt_sys_api_clients, provider, vm_name):
     '''
-        Verifies the vm is in the suspended state for the test.  Uses calls to the actual provider api.  
-          It will start and suspend the vm if necessary.
+        Verifies the vm is in the suspended state for the test.Uses calls to the actual provider
+        api.It will start and suspend the vm if necessary.
 
         :param provider: name of the provider... key from cfme_data["management_systems"]
         :type  provider: str
-        :param vm_name: name of the vm 
+        :param vm_name: name of the vm
         :type  vm_name: str
         :return: None
         :rtype: None
@@ -126,7 +128,7 @@ def verify_vm_suspended(mgmt_sys_api_clients, provider, vm_name):
         elif ON_REGEX.match(state):
             mgmt_sys_api_clients[provider].start_vm(vm_name)
         print "Sleeping 15secs...(current state: " + \
-                state + ", needed state: suspended)"
+            state + ", needed state: suspended)"
         time.sleep(15)
         count += 1
     raise Exception("timeout reached, vm not running")
@@ -137,7 +139,7 @@ def load_providers_cluster_list(
         infra_providers_pg,
         provider):
     '''
-        Load the cluster list of a specific provider.  
+        Load the cluster list of a specific provider.
 
         :param provider: name of the provider... key from cfme_data["management_systems"]
         :type  provider: str
@@ -145,8 +147,9 @@ def load_providers_cluster_list(
         :rtype: Infrastructure.Clusters
     '''
     provider_details = infra_providers_pg.load_provider_details(
-            provider["name"])
+        provider["name"])
     return provider_details.all_clusters()
+
 
 @pytest.fixture()
 def load_providers_datastore_list(
@@ -154,7 +157,7 @@ def load_providers_datastore_list(
         infra_providers_pg,
         provider):
     '''
-        Load the cluster list of a specific provider.  
+        Load the cluster list of a specific provider.
 
         :param provider: name of the provider... key from cfme_data["management_systems"]
         :type  provider: str
@@ -162,8 +165,9 @@ def load_providers_datastore_list(
         :rtype: Infrastructure.Datastores
     '''
     provider_details = infra_providers_pg.load_provider_details(
-            provider["name"])
+        provider["name"])
     return provider_details.all_datastores()
+
 
 @pytest.fixture()
 def load_providers_host_list(
@@ -171,7 +175,7 @@ def load_providers_host_list(
         infra_providers_pg,
         provider):
     '''
-        Load the host list of a specific provider.  
+        Load the host list of a specific provider.
 
         :param provider: name of the provider... key from cfme_data["management_systems"]
         :type  provider: str
@@ -189,7 +193,8 @@ def load_providers_template_list(
         provider,
         vm_name=None):
     '''
-        Load the template list of a specific provider.  Will also find the page for a specific vm if name is passed
+        Load the template list of a specific provider.
+        Will also find the page for a specific vm if name is passed
 
         :param provider: name of the provider... key from cfme_data["management_systems"]
         :type  provider: str
@@ -199,6 +204,5 @@ def load_providers_template_list(
         :rtype: Services.VirtualMachines
     '''
     provider_details = infra_providers_pg.load_provider_details(
-            cfme_data["management_systems"][provider]["name"])
+        cfme_data["management_systems"][provider]["name"])
     return provider_details.all_templates()
-    
