@@ -21,7 +21,7 @@
         <div class="panel-heading">
             <div class="row">
                 <div class="col-md-10">
-                    <strong>{{test.name}}</strong>
+                    <a id="{{test.name|e}}" href="#{{test.name|e}}"><strong>{{test.name}}</strong></a>
                 </div>
                 <div class="col-md-2">
                     {% if test.is_error %}
