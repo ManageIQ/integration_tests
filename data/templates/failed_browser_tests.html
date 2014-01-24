@@ -39,8 +39,12 @@
             <p class="text-muted">Error occured during test {{test.fail_stage}}</p>
             {% endif %}
             <div>
-              <a href="data:image/png;base64,{{test.screenshot}}" class="btn btn-primary" role="button">Screenshot</a>
-              <a href="data:text/plain;base64,{{test.full_tb}}" class="btn btn-success" role="button">Full Traceback</a>
+                {% if test.screenshot %}
+                <a href="data:image/png;base64,{{test.screenshot}}" class="btn btn-primary" role="button">Screenshot</a>
+                {% else %} {# screenshot_error must be defined if screenshot is None #}
+                <p class="alert alert-danger">Unable to capture screenshot due to {{test.screenshot_error}}</p>
+                {% endif %}
+                <a href="data:text/plain;base64,{{test.full_tb}}" class="btn btn-success" role="button">Full Traceback</a>
             </div>
         </div>
     </div>
