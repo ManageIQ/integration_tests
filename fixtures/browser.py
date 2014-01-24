@@ -46,7 +46,7 @@ def pytest_exception_interact(node, call, report):
         except (AttributeError, WebDriverException):
             # See comments utils.browser.ensure_browser_open for why these two exceptions
             template_data['screenshot'] = None
-            template_data['screenshot_error'] = 'browser closed'
+            template_data['screenshot_error'] = 'browser error'
         except Exception as ex:
             # If this fails for any other reason,
             # leave out the screenshot but record the reason
