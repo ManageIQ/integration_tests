@@ -70,10 +70,9 @@ Members
 import logging
 from logging.handlers import RotatingFileHandler
 
-from py.path import local
 
 from utils.conf import env
-from utils.path import project_path, log_path
+from utils.path import get_rel_path, log_path
 
 
 # Pull in config values/set defaults
@@ -92,8 +91,7 @@ class RelpathFilter(logging.Filter):
 
     """
     def filter(self, record):
-        record_path = local(record.pathname)
-        record.relpath = str(record_path.relto(project_path))
+        record.relpath = get_rel_path(record.pathname)
         return True
 
 
