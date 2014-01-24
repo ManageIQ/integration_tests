@@ -30,8 +30,8 @@ def main():
     client.get_file('/tmp/installed_rpms.txt', 'installed_rpms.txt')
 
     # compress logs dir
-    status, out = client.run_command('cd /var/www/miq/vmdb; tar zcvf /tmp/all_logs.tgz log')
-    client.get_file('/tmp/all_logs.tgz', 'all_logs.tgz')
+    status, out = client.run_command('cd /var/www/miq/vmdb; tar zcvf /tmp/appliance_logs.tgz log')
+    client.get_file('/tmp/appliance_logs.tgz', 'appliance_logs.tgz')
 
 
 if __name__ == '__main__':
