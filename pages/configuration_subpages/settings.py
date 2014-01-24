@@ -3,11 +3,14 @@
 '''
 from pages.base import Base
 from pages.configuration_subpages.settings_subpages.server_settings\
-        import ServerSettings
+    import ServerSettings
 from pages.configuration_subpages.settings_subpages.region_settings\
-        import RegionSettings
+    import RegionSettings
 from pages.configuration_subpages.settings_subpages.zone_settings\
-        import ZoneSettings
+    import ZoneSettings
+from pages.configuration_subpages.settings_subpages.schedule_settings\
+    import ScheduleSettings
+
 
 class Settings(Base):
     _page_title = 'CloudForms Management Engine: Configuration'
@@ -21,19 +24,25 @@ class Settings(Base):
     # select a server in left accordion tree panel
     def click_on_current_server_tree_node(self):
         self.accordion.current_content.find_node_by_regexp(
-                r'\AServer:.*current').click()
+            r'\AServer:.*current').click()
         self._wait_for_results_refresh()
         return ServerSettings(self.testsetup)
 
     # select a server in left accordion tree panel
     def click_on_first_region(self):
         self.accordion.current_content.find_node_by_regexp(
-                r'\ARegion:').click()
+            r'\ARegion:').click()
         self._wait_for_results_refresh()
         return RegionSettings(self.testsetup)
 
     def click_on_zones(self):
         self.accordion.current_content.find_node_by_regexp(
-                r'\AZones').click()
+            r'\AZones').click()
         self._wait_for_results_refresh()
         return ZoneSettings(self.testsetup)
+
+    def click_on_schedules(self):
+        self.accordion.current_content.find_node_by_regexp(
+            r'\ASchedules').click()
+        self._wait_for_results_refresh()
+        return ScheduleSettings(self.testsetup)
