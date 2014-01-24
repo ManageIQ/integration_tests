@@ -25,7 +25,7 @@ def pytest_runtest_setup(item):
 
 
 def pytest_exception_interact(node, call, report):
-    if set(node.fixturenames) & browser_fixtures:
+    if set(getattr(node, 'fixturenames', [])) & browser_fixtures:
         short_tb = '%s\n%s' % (call.excinfo.type.__name__, call.excinfo.value)
         # base64 encoded to go into a data uri, same for screenshots
         full_tb = str(report.longrepr).encode('base64').strip()
