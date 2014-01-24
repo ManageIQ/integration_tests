@@ -14,7 +14,7 @@ class Page(object):
     '''
     Base class for all Pages
     '''
-    _updating_locator = (By.CSS_SELECTOR, "div#notification > div:first-child")
+    _updating_locator = (By.CSS_SELECTOR, "div#notification")
     _datetime_locator = (By.CSS_SELECTOR, "div#time")
 
     def __init__(self, testsetup, root=None):
@@ -30,8 +30,10 @@ class Page(object):
 
     def _wait_for_results_refresh(self):
         # On pages that do not have ajax refresh this wait will have no effect.
-        WebDriverWait(self.selenium, self.timeout).until(
-            lambda s: not self.is_element_visible(*self._updating_locator))
+        WebDriverWait(self.selenium, self.timeout)\
+            .until(
+                lambda s: not self.is_element_visible(*self._updating_locator)
+            )
 
     def _wait_for_visible_element(self, by, location, visible_timeout=None):
         """ Wait for an element to appear visible.

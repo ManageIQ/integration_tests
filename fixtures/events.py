@@ -148,6 +148,7 @@ class EventListener(object):
 
     def mgmt_sys_type(self, sys_type, obj_type):
         """ Map management system type from cfme_data.yaml to match event string
+            and also add possibility of host based test.
         """
         # TODO: obj_type ('ems' or 'vm') is the same for all tests in class
         #       there must be a better way than to pass this around
@@ -159,6 +160,8 @@ class EventListener(object):
             return ems_map.get(sys_type)
         elif obj_type in {"vm"}:
             return vm_map.get(sys_type)
+        elif obj_type in {"host"}:
+            return obj_type
 
     def check_db(self, sys_type, obj_type, obj, event, after=None, before=None):
         """ Utility to check listener database for event
@@ -371,6 +374,8 @@ def register_event(request):
     ...     register_event("systype", "objtype", "obj", ["event1", "event2"])
     ...     # do_some_stuff_that_triggers()
 
+    For host_events, use `None` for sys_type.
+
     It also registers the time when the registration was done so we can filter
     out the same events, but coming in other times (like vm on/off/on/off will
     generate 3 unique events, but twice, distinguishable only by time).
@@ -388,21 +393,26 @@ def register_event(request):
     # We pull out the plugin directly.
     self = request.config.pluginmanager.getplugin("event_testing")  # Workaround for bind
     node_id = request.node.nodeid
-    self.logger.info("Clearing the database before testing ...")
-    self._delete_database()
-    self.expectations = []
+
+    if self.listener is not None:
+        self.logger.info("Clearing the database before testing ...")
+        self._delete_database()
+        self.expectations = []
+
     yield self  # Run the test and provide the plugin as a fixture
-    self.logger.info("Checking the events ...")
-    try:
-        wait_for(self.check_all_expectations,
-                 delay=5,
-                 num_sec=75,
-                 handle_exception=True)
-    except TimedOutError:
-        pass
-    if node_id not in self.processed_expectations:
-        self.processed_expectations[node_id] = []
-    self.processed_expectations[node_id].extend(self.expectations)
-    self.logger.info("Clearing the database after testing ...")
-    self._delete_database()
-    self.expectations = []
+
+    if self.listener is not None:
+        self.logger.info("Checking the events ...")
+        try:
+            wait_for(self.check_all_expectations,
+                     delay=5,
+                     num_sec=75,
+                     handle_exception=True)
+        except TimedOutError:
+            pass
+        if node_id not in self.processed_expectations:
+            self.processed_expectations[node_id] = []
+        self.processed_expectations[node_id].extend(self.expectations)
+        self.logger.info("Clearing the database after testing ...")
+        self._delete_database()
+        self.expectations = []
