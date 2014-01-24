@@ -115,14 +115,14 @@ but they're pretty straightforward.
 Configuring the selenium client
 -------------------------------
 
-In your existing test environment, you presumably have a pytest.ini file, with a
-``--driver`` argument in its addopts option. This informs the ``py.test mozwebqa``
-plugin to start a selenium server and use it. We need to change this to use the remote
+In your existing test environment, have a ``env.yaml`` file, with a
+``webdriver`` key in the ``browser`` root key. This should be set to ``Remote``, which is the
+default from the ``env.yaml.template`` it informs the test suite to use the remote
 selenium server now running inside your VNC server.
 
-To do this, you need to replace the ``--driver`` argument with ``--browsername`` and
-specify the target platform. For Fedora, the platform would be ``LINUX``, but selenium
-recognizes any of the following (possibly more).
+We also need to set the **Remote** options, by setting the ``desired_capabilities`` key
+to have the ``platform`` and ``browsername`` For Fedora, the platform would be ``LINUX``,
+but selenium recognizes any of the following (possibly more).
 
 * WINDOWS
 * XP
@@ -131,13 +131,18 @@ recognizes any of the following (possibly more).
 * LINUX
 * UNIX
 
-For example, in your pytest.ini file, you need to change this::
+An example of the yaml is below:
 
-  > addopts = **--driver=chrome** --credentials=credentials.yaml --untrusted
 
-to this::
+.. code-block:: yaml
 
-  > addopts = **--browsername=chrome --platform=LINUX** --credentials=credentials.yaml --untrusted
+   base_url: https://10.11.12.13
+   browser:
+       webdriver: Remote
+       webdriver_options:
+           desired_capabilities:
+               platform: LINUX
+               browserName: 'chrome'
 
 Security
 --------

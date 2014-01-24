@@ -10,10 +10,10 @@ editor helps you be the most productive, but the preponderance of Sublime users 
 make it the most useful target for our development environment setup documentation.
 
 Getting Started
----------------
+^^^^^^^^^^^^^^^
 
 Get sublime
-^^^^^^^^^^^
+"""""""""""
 
 To begin, sublime must be installed. It is distributed via a tarball from the
 `sublime download page <http://www.sublimetext.com/2>`_. This tarball can be extracted anywhere.
@@ -21,7 +21,7 @@ A likely place is in your home folder. Once extracted, run the ``sublime_text`` 
 new directory to start the editor.
 
 Configure sublime for Python
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""
 
 By default, sublime will attempt to autodetect indentation. When this autodetection fails,
 it will fall back to using 4-space tab stops, but using tabs instead of spaces. To easily
@@ -47,7 +47,7 @@ lines from getting too long. Additional integer values can be added to the ``rul
 might be useful to also have a rule at 80 columns as a "soft limit", for example.
 
 Package Control
-^^^^^^^^^^^^^^^
+"""""""""""""""
 
 Once sublime is up and running, we'll need to install some package management, which we'll be
 using hereafter to bring in sublime extensions. Follow the installation instructions
@@ -60,7 +60,7 @@ Sublime Text 2, not Sublime Text 3.
    not be necessary.
 
 SublimeCodeIntel
-^^^^^^^^^^^^^^^^
+""""""""""""""""
 
 Install the SublimeCodeIntel package. Select ``Preferences > Package Control`` from the program
 menu, then choose "Install Package". Enter "SublimeCodeIntel". Once installed, SublimeCodeIntel
@@ -103,7 +103,7 @@ directory as the virtualenv's ``bin`` and ``lib`` directory, The paths for ``pyt
 ``pythonExtraPaths`` could start with ``../bin`` and ``../lib``, respectively.
 
 Flake8 Lint
-^^^^^^^^^^^
+"""""""""""
 
 Using Package Control, install the "Python Flake8 Lint" package. To apply our specific style
 exceptions to this package, edit the configuration. Via the menu, choose ``Preferences >
@@ -121,13 +121,13 @@ Flake8 lint will pop up every time you save a file, and does an excellent job of
 linted while you code.
 
 Trailing Spaces
-^^^^^^^^^^^^^^^
+"""""""""""""""
 
 Using Package Control, install the "Trailing Spaces" plugin. This highlights trailing spaces
 so you can clean them up before flake8 sees them.
 
 Sublime 3?
-----------
+^^^^^^^^^^
 
 Sublime Text 3 is currently in beta, and (like all other editors/IDEs) not currently supported
 by this project.

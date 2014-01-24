@@ -175,6 +175,24 @@ Other useful code style guidelines:
 cfme_tests
 ----------
 
+With regard to design, if a component can be shared between different pages (trees, accordions,
+etc.), then it should be turned into a region. This is a standalone bit of code that models just
+a small portion of a page. From there, these regions can be composited into a page object. Page
+objects themselves should expose properties that represent items on the page, and also any
+"services" that the page has. So, rather than write a test with 'Fill in username, fill in
+password click submit', you would create a 'login' method on the page that takes the username
+and password as an argument. This will shield the tests from changing implementation of that
+login method. If you want pass something different, create a new method, like
+``login_with_enter_key``, so as to allow other variations of the service.
+
+If an action results in navigation to a new page, and that page will always be known, the
+action should return the page that results.
+
+The elements and methods exposed on a page will result from tests written against that page.
+If there is a specific test that you are working on, write the test first, modeling the page
+as you go (if needed) to provide the necessary functionality. Developers are not expected or
+encourage to model pages without a test that uses the modeling.
+
 Layout
 ^^^^^^
 
