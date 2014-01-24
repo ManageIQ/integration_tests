@@ -1,28 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#
-# Description: CFME Migration
-#
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
 import logging
 import time
-import argparse
+from optparse import OptionParser
 import subprocess as sub
 
+parser = OptionParser()
+parser.add_option('--backupfile', help='backup file to be restored')
+parser.add_option('--scripts', help='scripts tarball to restore the db')
+parser.add_option('--fixscripts', help='v4 upgrade fix script tarball')
+parser.add_option('--outputdir', help='directory to dump output files to')
+parser.add_option('--evmstart', help='start evm afterwards', action="store_true")
+(options, args) = parser.parse_args()
 
-
-parser = argparse.ArgumentParser(epilog=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
-parser.add_argument('--backupfile', dest='backupfile',help='backup file to be restored')
-parser.add_argument('--script', help='script to restore the db')
-parser.add_argument('--upgrdscript', help='v4 upgrade fix script')
-parser.add_argument('--reboot',help = 'reboot the appliance',action="store_true")
-args = parser.parse_args()
-
-
+# Setup logger
 LOG_FILENAME = 'output.log'
 logging.basicConfig(level=logging.DEBUG,
                     filename=LOG_FILENAME,
@@ -32,97 +24,82 @@ logger = logging.getLogger('migration')
 
 #Execute command
 def run_command(cmd):
-        logger.info('Running: %s' % cmd);
-        process = sub.Popen(cmd,shell=True,stdout=sub.PIPE,stderr=sub.PIPE)
-        output, error = process.communicate()
-        if process.returncode != 0:
-                logger.debug(error)
-                raise Exception("%s: FAILED" % cmd);
-                logger.info("%s: output value" % output);
-        else:
-                logger.info('SUCCESS')
-	return output
-
-
-
+    logger.info('Running: %s' % cmd)
+    process = sub.Popen(cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
+    output, error = process.communicate()
+    logger.info("\nSTDOUT:\n%s" % output)
+    if process.returncode != 0:
+        logger.debug(error)
+        raise Exception("%s: FAILED" % cmd)
+    else:
+        logger.info('SUCCESS')
+    return output
 
 #copy scripts
-cpyscript =  "cp "+args.script+" /var/www/miq/vmdb/"
-run_command(cpyscript)
-
+run_command("cp " + options.scripts + " /var/www/miq/vmdb/")
 
 #changedir and untar scripts
-untar = "cd /var/www/miq/vmdb/;tar xvf "+args.script+"" 
-run_command(untar)
+run_command("cd /var/www/miq/vmdb/;tar xvf " + options.scripts)
 
 #stop evm process
-evmstop = 'service evmserverd stop'
-run_command(evmstop)
-
-
+run_command('service evmserverd stop')
 
 #check pg connections and execute restore script
-find_pgcount = 'psql -d vmdb_production -U root -c "SELECT count(*) from pg_stat_activity"' 
-psql_output = run_command(find_pgcount)
+psql_output = run_command('psql -d vmdb_production -U root -c ' +
+    '"SELECT count(*) from pg_stat_activity"')
 count = psql_output.split("\n")[2].strip()
 if count > 2:
     run_command("service postgresql92-postgresql restart")
     time.sleep(60)
-    run_command("/var/www/miq/vmdb/backup_and_restore/miq_vmdb_background_restore "+args.backupfile+"  > restore.log")
-    logger.info('Restore completed successfully')
-else:
-    run_command("cd /var/www/miq/vmdb/backup_and_restore/;./miq_vmdb_background_restore "+args.backupfile+" > restore.log")
-    logger.info('Restore completed successfully')
-
+run_command("cd /var/www/miq/vmdb/backup_and_restore/;./miq_vmdb_background_restore " +
+    options.backupfile + " > /tmp/restore.log")
+logger.info('Restore completed successfully')
+run_command('cat /tmp/restore.log')
 
 #if states relation exists then truncate table
-table_exists = 'psql -d vmdb_production -U root -c "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = \'states\')" '
-psql_output = run_command(table_exists)
+psql_output = run_command('psql -d vmdb_production -U root -c ' +
+    '"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = \'states\')" ')
 table_output = psql_output.split("\n")[2].strip()
 if "t" in table_output:
-	truncate = 'psql -d vmdb_production -U root -c "truncate table states"'
-	out = run_command(truncate)
+    out = run_command('psql -d vmdb_production -U root -c "truncate table states"')
 else:
-	logger.debug('Relation states does not exists')
-
+    logger.debug('Relation states does not exists')
 
 #changedir and  run rake
-run_command("cd /var/www/miq/vmdb;bin/rails r bin/rake db:migrate > rake.log")
+run_command("cd /var/www/miq/vmdb;bin/rails r bin/rake db:migrate > /tmp/rake.log")
 logger.info('rake completed successfully')
-
-
+run_command('cat /tmp/rake.log')
 
 #check db migrate status
-run_command("cd /var/www/miq/vmdb;rake db:migrate:status > migratestatus")
+run_command("cd /var/www/miq/vmdb;rake db:migrate:status > /tmp/migratestatus.out")
+run_command('cat /tmp/migratestatus.out')
 
 #find version and if v4 run upgrade fixes
-find_version = 'psql -d vmdb_production -U root -c "SELECT distinct (version) from miq_servers"'
-psql_output = run_command(find_version)
+psql_output = run_command('psql -d vmdb_production -U root -c ' +
+    '"SELECT distinct (version) from miq_servers"')
 version = psql_output.split("\n")[2].strip()
 if "4." in version:
-        cpyscript =  "cp "+args.upgrdscript+" /var/www/miq/vmdb/tools/"
-	run_command(cpyscript)
-	untar = "cd /var/www/miq/vmdb/tools/;tar xvf "+args.upgrdscript+""
-	run_command(untar)
-	run_command("cd /var/www/miq/vmdb;bin/rails r tools/v4_upgrade_fixes.rb > upgrade.log")
-	logger.info('Upgrade completed successfully')
+    run_command("cp " + options.fixscripts + " /var/www/miq/vmdb/tools/")
+    run_command("cd /var/www/miq/vmdb/tools/;tar xvf " + options.fixscripts)
+    run_command("cd /var/www/miq/vmdb;bin/rails r tools/v4_upgrade_fixes.rb > /tmp/upgrade.log")
+    logger.info('Upgrade completed successfully')
+    run_command('cat /tmp/upgrade.log')
 else:
-	logger.info("%s: version value" % version);
-
-
+    logger.info("%s: version value" % version)
 
 #check for REGION
-find_region = 'psql -d vmdb_production -U root -c "select region from users"' 
-psql_output = run_command(find_region)
+psql_output = run_command('psql -d vmdb_production -U root -c "select region from users"')
 region_output = psql_output.split("\n")[2].strip()
+logger.info("%s: region value" % region_output)
 f = open('/var/www/miq/vmdb/REGION', 'w')
 f.write(region_output)
 f.close()
 
-#reboot
-if args.reboot:
-	logger.info('Rebooting the appliance')
-        run_command('reboot')
-else:
-        logger.info('A reboot is required')
+# reset user passwords
+psql_output = run_command('psql -d vmdb_production -U root -c "update users set password_digest ' +
+    '= \'\$2a\$10\$cyjSQmNq6zf9LuyWIfzSF\.95Hxuxv3KqDQMGFiRxIxacWD0uFIQEi\'"')
 
+# start evm now?
+if options.evmstart:
+    logger.info('Starting evm server')
+    run_command('service evmserverd start')
