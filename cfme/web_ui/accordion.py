@@ -1,6 +1,6 @@
 """
 cfme.web_ui.accordion
--------------------
+---------------------
 
 A set of functions for dealing with the accordions.
 

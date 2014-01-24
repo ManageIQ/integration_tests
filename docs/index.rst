@@ -6,6 +6,7 @@ Contents:
 .. toctree::
    :titlesonly:
 
+   getting_started
    guides
    modules
 
