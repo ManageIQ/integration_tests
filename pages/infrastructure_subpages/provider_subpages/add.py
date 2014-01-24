@@ -157,6 +157,18 @@ class ProvidersAdd(Base):
                 if self.server_zone.tag_name == "select":
                     self.select_dropdown(value, *self._server_zone_edit_field_locator)
             elif key == "cu_credentials":
+                continue
+            elif key == "credentials":
+                continue
+            else:
+                # Only try to send keys if there is actually a property
+                if hasattr(self, key):
+                    attr = getattr(self, key)
+                    attr.clear()
+                    attr.send_keys(value)
+        # Add creds last
+        for key, value in provider.iteritems():
+            if key == "cu_credentials":
                 self.click_on_metrics_credentials()
                 credentials = self.testsetup.credentials[value]
                 self.metrics_userid.clear()
@@ -178,12 +190,6 @@ class ProvidersAdd(Base):
                 self.default_verify.clear()
                 self.default_verify.send_keys(credentials['password'])
                 continue
-            else:
-                # Only try to send keys if there is actually a property
-                if hasattr(self, key):
-                    attr = getattr(self, key)
-                    attr.clear()
-                    attr.send_keys(value)
         self._wait_for_results_refresh()
 
     def validate(self):
