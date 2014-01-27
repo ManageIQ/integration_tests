@@ -252,32 +252,8 @@ General Notes
 Writing Pages
 ^^^^^^^^^^^^^
 
-Pages are read-only python modeling of the CFME UI, used by tests
-
-Pages to model the CFME UI in Python, allowing the
-functional tests of the UI to be ignorant of the underlying
-page structure. As such, UI elements (pages, regions, forms, etc.) modeled in
-`cfme_pages` must provide helper methods and properties to expose a usable
-interface to `cfme_tests`. This is explained in more detail in the section on
-"Writing Tests".
-
-As mentioned in the [README](https://github.com/RedHatQE/cfme_tests/blob/master/README.md),
-pages should be modeled as a part of writing tests. Code in
-`cfme_pages` must never depend on code in `cfme_tests`.
-
-When writing pages, a few points should be noted:
-
-* Follow the standard naming convention for locators
-
-  * Name of element, followed by type from the type list
-
-* Type list: button, select, text, textbox, radio, option
-* Ensure that your element is presented in an expected way. As an example,
-  presenting a div containing and unordered list in one place and simply
-  the unordered list in another, causes an unpredictable inconsistency as
-  to how to handle the locator.
-* Try to avoid using localized text as part of a locator where possible
-
+Information on developing page models, as well as a full example can be found in the
+:doc:`page_development` section.
 
 Writing Tests
 ^^^^^^^^^^^^^
