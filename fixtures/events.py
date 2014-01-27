@@ -330,7 +330,7 @@ def pytest_addoption(parser):
     parser.addoption('--event-testing-result',
                      action='store',
                      dest='event_testing_result',
-                     default="events.html",
+                     default="log/events.html",
                      help='Filename of result report. (default: %default)')
     parser.addoption('--event-testing-port',
                      action='store',
