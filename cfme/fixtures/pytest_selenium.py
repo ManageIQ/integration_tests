@@ -42,7 +42,7 @@ return inflight(function() { return jQuery.active},
 # END CFME specific stuff, should eventually factor
 # out everything below into a lib
 
-def elements(o):
+def elements(o, root=None):
     """
     Convert o to list of matching WebElements. Strings are considered xpath.
 
@@ -54,20 +54,21 @@ def elements(o):
     Raises:
         TypeError: When the input is not of a known type
     """
+    parent = root or browser()
     t = type(o)
     if t == str:
-        return browser().find_elements_by_xpath(o)
+        return parent.find_elements_by_xpath(o)
     elif t == WebElement:
         return [o]
     elif t == tuple:
-        return browser().find_elements(*o)
+        return parent.find_elements(*o)
     else:
         return elements(o.locate())  # if object implements locate(), try to get elements
         # from that locator.  If it doesn't implement locate(), we're in trouble so
         # let the error bubble up.
 
 
-def element(o):
+def element(o, root=None):
     """
     Convert o to a single matching WebElement.
 
@@ -79,10 +80,10 @@ def element(o):
     Raises:
         NoSuchElementException: When element is not found on page
     """
-    matches = elements(o)
+    matches = elements(o, root=root)
     if not matches:
         raise NoSuchElementException("Element {} not found on page.".format(str(o)))
-    return elements(o)[0]
+    return matches[0]
 
 
 def wait_until(f, msg="Webdriver wait timed out"):
