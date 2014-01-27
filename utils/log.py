@@ -6,7 +6,8 @@ This module creates the cfme logger, for use throughout the project. This logger
 messages explicitly sent to it, not logs emitted by other components (such as selenium). To capture
 those, consider using the pytest-capturelog plugin.
 
-Usage:
+Example Usage
+^^^^^^^^^^^^^
 
     from utils.log import logger
 
