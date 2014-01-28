@@ -70,6 +70,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             logger.info('Took %f to do %s' % (duration, message))
             return out, duration
         t_delta = time.time() - st_time
+    logger.error('Could not complete %s in time, took %f' % (message, t_delta))
     raise TimedOutError("Could not do %s in time" % message)
 
 
