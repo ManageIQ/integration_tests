@@ -16,7 +16,7 @@ class UnidentifiableTagType(Exception):
 
 class NotAllItemsClicked(Exception):
     """
-    Raised if not all the items could be clicked during :py:meth:`cfme.web_ui.Table.click_item`.
+    Raised if not all the items could be clicked during :py:meth:`cfme.web_ui.Table.click_cell`.
     """
     def __init__(self, failed_clicks):
         self.failed_clicks = failed_clicks
