@@ -91,11 +91,12 @@ class Provider(Updateable):
 
     '''
 
-    def __init__(self, name=None, details=None, credentials=None, zone=None):
+    def __init__(self, name=None, details=None, credentials=None, zone=None, key=None):
         self.name = name
         self.details = details
         self.credentials = credentials
         self.zone = zone
+        self.key = key
 
     class EC2Details(Updateable):
         '''Models EC2 provider details '''
@@ -198,7 +199,8 @@ def get_from_config(provider_config_name):
     return Provider(name=prov_config['name'],
                     details=details,
                     credentials=credentials,
-                    zone=prov_config['server_zone'])
+                    zone=prov_config['server_zone'],
+                    key=provider_config_name)
 
 
 def discover(credential, cancel=False):
