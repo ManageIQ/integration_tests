@@ -45,7 +45,6 @@ needs to be told to generate documentation from the new code. We use sphinx's au
 to do this, and it looks like this::
 
     .. automodule:: packagename.modulename
-          :members:
 
 The paramater passed to the ``automodule`` should be the importable name of the module to be
 documented, ``cfme.login`` for example.
