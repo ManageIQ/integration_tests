@@ -16,59 +16,45 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
 from utils import conf
 from utils.browser import browser
+from singledispatch import singledispatch
+import time
 
 VALUE = 'val'
 TEXT = 'txt'
 
 
-def baseurl():
+@singledispatch
+def elements(o):
     """
-    Returns the baseurl.
-
-    Returns: The baseurl.
-    """
-    return conf.env['base_url']
-
-
-ajax_wait_js = """
-var inflight = function() {
-    return Array.prototype.slice.call(arguments,0).reduce(function (n, f) {
-        try {flt = f() || 0;
-             flt=(Math.abs(flt)+flt)/2; return flt + n;} catch (e) { return n }}, 0)};
-return inflight(function() { return jQuery.active},
-                function() { return Ajax.activeRequestCount},
-                function() { return window.miqAjaxTimers},
-                function() { if (document.readyState == "complete") { return 0 } else { return 1}});
-"""
-
-
-# END CFME specific stuff, should eventually factor
-# out everything below into a lib
-
-def elements(o, root=None):
-    """
-    Convert o to list of matching WebElements. Strings are considered xpath.
+    Convert object o to list of matching WebElements. Can be extended by registering the type of o
+    to this function.
 
     Args:
-        o: An object to be converted to a matching web element, expected string, WebElement, tuple.
+        o: An object to be converted to a matching web element, eg str, WebElement, tuple.
 
     Returns: A list of WebElement objects
-
-    Raises:
-        TypeError: When the input is not of a known type
     """
-    parent = root or browser()
-    t = type(o)
-    if t == str:
-        return parent.find_elements_by_xpath(o)
-    elif t == WebElement:
-        return [o]
-    elif t == tuple:
-        return parent.find_elements(*o)
-    else:
-        return elements(o.locate())  # if object implements locate(), try to get elements
-        # from that locator.  If it doesn't implement locate(), we're in trouble so
-        # let the error bubble up.
+    return elements(o.locate())  # if object implements locate(), try to get elements
+    # from that locator.  If it doesn't implement locate(), we're in trouble so
+    # let the error bubble up.
+
+
+@elements.register(str)
+def _s(s):
+    '''Assume string is an xpath locator'''
+    return browser().find_elements_by_xpath(s)
+
+
+@elements.register(WebElement)
+def _w(webelement):
+    '''Return a 1-item list of webelements'''
+    return [webelement]
+
+
+@elements.register(tuple)
+def _t(t):
+    '''Assume tuple is a 2-item tuple like (By.ID, 'myid')'''
+    return browser().find_elements(*t)
 
 
 def element(o, root=None):
@@ -97,9 +83,7 @@ def wait_until(f, msg="Webdriver wait timed out"):
 
 
 def _nothing_in_flight(s):
-    #sleep(0.5)
     in_flt = s.execute_script(ajax_wait_js)
-    #print in_flt
     return in_flt == 0
 
 
@@ -210,6 +194,7 @@ def send_keys(loc, text):
         wait_for_ajax()
 
 
+@singledispatch
 def set_text(loc, text):
     """
     Clears the element and then sends the supplied keys.
@@ -354,3 +339,59 @@ def click_fn(*els):
         for el in els:
             click(el)
     return f
+
+# Begin CFME specific stuff, should eventually factor
+# out everything above into a lib
+
+
+def baseurl():
+    """
+    Returns the baseurl.
+
+    Returns: The baseurl.
+    """
+    return conf.env['base_url']
+
+
+ajax_wait_js = """
+var inflight = function() {
+    return Array.prototype.slice.call(arguments,0).reduce(function (n, f) {
+        try {flt = f() || 0;
+             flt=(Math.abs(flt)+flt)/2; return flt + n;} catch (e) { return n }}, 0)};
+return inflight(function() { return jQuery.active},
+                function() { return Ajax.activeRequestCount},
+                function() { return window.miqAjaxTimers},
+                function() { if (document.readyState == "complete") { return 0 } else { return 1}});
+"""
+
+
+class ObservedText(object):
+    '''A class to represent an observed textbox in CFME.
+    That means that as we type into this textbox, the js periodically
+    checks if it's not been typed in in the last x seconds.  If not,
+    an ajax call is made (presumably to validate the input).
+    '''
+
+    def __init__(self, locator):
+        self.locator = locator
+
+
+@set_text.register(ObservedText)
+def _st(ot, text):
+    '''When setting text on an ObservedText, wait after typing
+    until the timer expires and fires the ajax event.
+    '''
+    if text is not None:
+        el = element(ot)
+        ActionChains(browser()).move_to_element(el).perform()
+        el.clear()
+        el.send_keys(text)
+        time.sleep(0.8)
+        wait_for_ajax()
+
+
+@elements.register(ObservedText)
+def _e_(ot):
+    '''The elements of an ObservedText is just the elements of
+    its locator.'''
+    return elements(ot.locator)
