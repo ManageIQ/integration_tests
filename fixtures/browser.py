@@ -20,7 +20,7 @@ failed_test_tracking = {
 
 
 def pytest_runtest_setup(item):
-    if set(item.fixturenames) & browser_fixtures:
+    if set(getattr(item, 'fixturenames', [])) & browser_fixtures:
         utils.browser.ensure_browser_open()
 
 
