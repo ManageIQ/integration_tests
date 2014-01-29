@@ -223,33 +223,33 @@ def set_text(loc, text):
         wait_for_ajax()
 
 
-def select_by_text(loc, value):
+def select_by_text(loc, text):
     """
     Works on a select element and selects an option by the visible text.
 
     Args:
         loc: A locator, expects eithera  string, WebElement, tuple.
-        value: The select element option's visible text.
+        text: The select element option's visible text.
     """
-    if value is not None:
+    if text is not None:
         el = element(loc)
         ActionChains(browser()).move_to_element(el).perform()
-        Select(el).select_by_visible_text(value)
+        Select(el).select_by_visible_text(text)
         wait_for_ajax()
 
 
-def select_by_value(loc, text):
+def select_by_value(loc, value):
     """
     Works on a select element and selects an option by the value attribute.
 
     Args:
         loc: A locator, expects eithera  string, WebElement, tuple.
-        text: The select element's option value.
+        value: The select element's option value.
     """
-    if text is not None:
+    if value is not None:
         el = element(loc)
         ActionChains(browser()).move_to_element(el).perform()
-        Select(el).select_by_value(text)
+        Select(el).select_by_value(value)
         wait_for_ajax()
 
 
