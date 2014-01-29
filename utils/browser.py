@@ -20,7 +20,7 @@ def browser():
 def ensure_browser_open():
     try:
         browser().current_url
-    except (AttributeError, WebDriverException):
+    except:
         # AttributeError: browser() was None, didn't have current_url attr
         # WebDriverError: current_url couldn't be retrieved, browser was closed
         start()
@@ -31,7 +31,7 @@ def start(_webdriver=None, base_url=None, **kwargs):
     if thread_locals.browser is not None:
         try:
             thread_locals.browser.quit()
-        except WebDriverException:
+        except:
             pass
         finally:
             thread_locals.browser = None
