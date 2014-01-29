@@ -103,3 +103,7 @@ class UnidentifiableTagType(CFMEException):
     :py:meth:`cfme.web_ui.Form.fill_fields`.
     """
     pass
+
+
+class ScheduleNotFound(CFMEException):
+    pass
