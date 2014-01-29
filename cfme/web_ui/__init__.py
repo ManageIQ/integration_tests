@@ -197,6 +197,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
 from selenium.common import exceptions as sel_exceptions
 import selenium
+from singledispatch import singledispatch
 
 
 class Region(object):
@@ -463,8 +464,80 @@ class Table(object):
             return ",".join([el.text for el in sel.elements('td', root=self.data)])
 
 
+@singledispatch
+def fill(arg, content):
+    '''
+    Fills in a UI component with the given content.
+
+    Usage:
+    fill(textbox, "text to fill")
+    fill(myform, [ ... data to fill ...])
+    fill(radio, "choice to select")
+
+    Default implementation just throws an error.
+    '''
+    raise NotImplementedError('Unable to fill {} into this type: {}'.format(content, arg))
+
+
+@fill.register(str)
+def _s(loc, value):
+    '''
+    How to 'fill' a string.  Assumes string is a locator for a UI input element,
+    eg textbox, radio button, select list, etc.
+    value is the value to input into that element.
+
+    Usage:
+    fill("//input[@type='text' and @id='username']", 'admin')
+
+    Raises:
+    cfme.exceptions.UnidentifiableTagType: If the element/object is unknown.
+
+    '''
+    tag_types = {'select': sel.select_by_text,
+                 'text': sel.set_text,
+                 'checkbox': sel.checkbox,
+                 'a': sel.click,
+                 'img': sel.click,
+                 'image': sel.click,
+                 'textarea': sel.set_text,
+                 'password': sel.set_text}
+
+    tag = sel.tag(loc)
+    ttype = sel.get_attribute(loc, 'type')
+
+    if ttype in tag_types:
+        operation = ttype
+    elif tag in tag_types:
+        operation = tag
+    else:
+        raise exceptions.UnidentifiableTagType(
+            "Tag '%s' with type '%s' is not a known form element to Form" %
+            (tag, ttype))
+    op = tag_types[operation]
+    if op == sel.click:
+        op(loc)
+    else:
+        op(loc, value)
+
+
+@fill.register(Table)
+def _t(table, cells):
+    ''' How to fill a table with a value (by selecting the value as cells in the table)
+    See Table.click_cells
+    '''
+    table._update_cache()
+    table.click_cells(cells)
+
+
+@fill.register(sel.ObservedText)
+def _ot(ot, value):
+    '''Filled just like a text box.'''
+    sel.set_text(ot, value)
+
+
 class Form(Region):
-    """A helper class for interacting with Form elements on pages.
+    """
+    A class for interacting with Form elements on pages.
 
     The Form class takes a set of locators and binds them together to create a
     unified Form object. This Form object has a defined field order so that the
@@ -482,79 +555,48 @@ class Form(Region):
         A :py:class:`Form` object.
     """
 
-    tag_types = {'select': sel.select_by_text,
-                 'text': sel.set_text,
-                 'checkbox': sel.checkbox,
-                 'a': sel.click,
-                 'textarea': sel.set_text,
-                 'password': sel.set_text}
-
     def __init__(self, fields=None, identifying_loc=None):
         self.locators = dict((key, value) for key, value in fields)
         self.fields = fields
         self.identifying_loc = identifying_loc
 
-    def fill_fields(self, values, action=None):
-        """Fills in field elements on forms
 
-        Fills in field elements on forms
+@fill.register(Form)
+def _f(form, values, action=None):
+    """
+    Fills in field elements on forms
 
-        Takes a set of values in dict or supertuple format and locates form elements,
-        in the correct order, and fills them in.
+    Takes a set of values in dict or supertuple format and locates form elements,
+    in the correct order, and fills them in.
 
-        Note:
-            Currently supports, text, textarea, select, checkbox, radio, password, a
-            and Table objects/elements.
+    Note:
+        Currently supports, text, textarea, select, checkbox, radio, password, a
+        and Table objects/elements.
 
-        Args:
-            values: a dict or supertuple formatted set of data where
-                each key is the name of the form locator from the page model. Some
-                objects/elements, such as :py:class:`Table` objects, support providing
-                multiple values to be clicked on in a single call.
-            action: a locator which will be clicked when the form filling is complete
+    Args:
+        values: a dict or supertuple formatted set of data where
+            each key is the name of the form locator from the page model. Some
+            objects/elements, such as :py:class:`Table` objects, support providing
+            multiple values to be clicked on in a single call.
+        action: a locator which will be clicked when the form filling is complete
 
-        Raises:
-            cfme.exceptions.UnidentifiableTagType: If the element/object is unknown.
-        """
-        if isinstance(values, dict):
-            values = list((key[0], values[key[0]]) for key in self.fields if key[0] in values)
-        elif isinstance(values, list):
-            values = list(val for key in self.fields for val in values if val[0] == key[0])
+    """
+    if isinstance(values, dict):
+        values = list((key[0], values[key[0]]) for key in form.fields if key[0] in values)
+    elif isinstance(values, list):
+        values = list(val for key in form.fields for val in values if val[0] == key[0])
 
-        print values
+    for field, value in values:
+        if value is not None:
+            loc = form.locators[field]
+            fill(loc, value)  # re-dispatch to fill for each item
 
-        for field, value in values:
-            loc = self.locators[field]
-            if isinstance(loc, Table):
-                loc._update_cache()
-                loc.click_cells(value)
-                continue
-            if isinstance(loc, Radio):
-                sel.click(loc.choice(value))
-                continue
-            tag = sel.tag(loc)
-            ttype = sel.get_attribute(loc, 'type')
-
-            if ttype in self.tag_types:
-                operation = ttype
-            elif tag in self.tag_types:
-                operation = tag
-            else:
-                raise exceptions.UnidentifiableTagType(
-                    "Tag '%s' with type '%s' is not a known form element to Form" %
-                    (tag, ttype))
-
-            if tag == 'a':
-                self.tag_types[operation](loc)
-            else:
-                self.tag_types[operation](loc, value)
-
-        if action:
-            sel.click(self.region.__getattr__(action))
+    if action:
+        sel.click(form.region.__getattr__(action))
 
 
 class Radio(object):
-    """ A helper object for Radio button groups
+    """ A class for Radio button groups
 
     Radio allows the usage of HTML radio elements without resorting to previous
     practice of iterating over elements to find the value. The name of the radio
@@ -582,8 +624,14 @@ class Radio(object):
         return "//input[@name='%s' and @value='%s']" % (self.name, val)
 
 
+@fill.register(Radio)
+def _r(radio, value):
+    '''How to fill a radio button group (by selecting the given value)'''
+    sel.click(radio.choice(value))
+
+
 class Tree(object):
-    """ A helper class directed at CFME Tree elements
+    """ A class directed at CFME Tree elements
 
     The Tree class aims to deal with all kinds of CFME trees, at time of writing there
     are two distinct types. One which uses ``<table>`` elements and another which uses
