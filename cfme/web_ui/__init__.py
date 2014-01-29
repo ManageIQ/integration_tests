@@ -318,7 +318,7 @@ class Table(object):
         attribute.
         """
         self._hc = sel.element(self.header_data[0] + '//tr[%i]' % (self.header_data[1] + 1))
-        self._headers = self._hc.find_elements_by_xpath('td | th')
+        self._headers = sel.elements('td | th', root=self._hc)
         self.header_indexes = {
             self._convert_header(cell.text): self._headers.index(cell) + 1
             for cell in self._headers}
@@ -450,17 +450,17 @@ class Table(object):
             """
             Returns Row element by header name
             """
-            return self.data.find_elements_by_xpath('td[%s]' % self.header_indexes[name])[0]
+            return sel.elements('td[%s]' % self.header_indexes[name], root=self.data)[0]
 
         def __getitem__(self, index):
             """
             Returns Row element by header index
             """
             index += 1
-            return self.data.find_elements_by_xpath('td[%i]' % index)[0]
+            return sel.elements('td[%i]' % index, root=self.data)[0]
 
         def __str__(self):
-            return ",".join([el.text for el in self.data.find_elements_by_xpath('td')])
+            return ",".join([el.text for el in sel.elements('td', root=self.data)])
 
 
 class Form(Region):
@@ -650,7 +650,7 @@ class Tree(object):
 
         Returns: ``True`` if the element is expanded, ``False`` if not.
         """
-        meta = el.find_element_by_xpath(self.expandable)
+        meta = sel.element(self.expandable, root=el)
         if self.is_expanded_condition[1] in sel.get_attribute(
                 meta, self.is_expanded_condition[0]):
             return True
@@ -666,7 +666,7 @@ class Tree(object):
             el: The element to expand.
         """
         if not self._is_expanded(el):
-            sel.click(el.find_element_by_xpath(self.click_expand))
+            sel.click(sel.element(self.click_expand, root=el))
 
     def expose_path(self, *path, **kwargs):
         """ Clicks through a series of elements in a path.
@@ -715,7 +715,7 @@ class Tree(object):
         xpath = self.node_search % needle
 
         try:
-            new_leaf = root_el.find_element_by_xpath(xpath)
+            new_leaf = sel.element(xpath, root=root_el)
         except sel_exceptions.NoSuchElementException:
             raise exceptions.CandidateNotFound("%s: could not be found in the tree." % needle)
 
@@ -737,7 +737,7 @@ class Tree(object):
         """
         root = kwargs.get('root', None)
         leaf = self.expose_path(*path, root=root)
-        sel.click(leaf.find_element_by_xpath(self.leaf))
+        sel.click(sel.element(self.leaf, root=leaf))
         return leaf
 
 
@@ -779,7 +779,7 @@ class InfoBlock(object):
         Returns: Either a single element or a List of elements.
         """
         try:
-            els = self.container(ident).find_elements_by_xpath("*")
+            els = sel.elements("*", root=self.container(ident))
         except sel_exceptions.NoSuchElementException:
             raise exceptions.NoElementsInsideValue("No Elements are found inside the value")
         if els == []:
@@ -955,7 +955,7 @@ class Quadicon(object):
             if rtype == 'txt':
                 return el.text
             if rtype == 'img':
-                img_el = el.find_element_by_xpath('.//img')
+                img_el = sel.element('.//img', root=el)
                 img_name = sel.get_attribute(img_el, 'src')
                 path, filename = os.path.split(img_name)
                 root, ext = os.path.splitext(filename)

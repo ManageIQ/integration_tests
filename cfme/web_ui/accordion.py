@@ -47,7 +47,7 @@ def is_active(name):
 
     xpath = locate(name)
     root = sel.element(xpath)
-    el = root.find_element_by_xpath('./%s/%s' % (DHX_LABEL, DHX_ARROW))
+    el = sel.element('./%s/%s' % (DHX_LABEL, DHX_ARROW), root)
     class_att = sel.get_attribute(el, 'class').split(" ")
     if "item_opened" in class_att:
         return True
