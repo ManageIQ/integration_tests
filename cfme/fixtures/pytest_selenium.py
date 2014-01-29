@@ -17,6 +17,9 @@ from selenium.webdriver.support.select import Select
 from utils import conf
 from utils.browser import browser
 
+VALUE = 'val'
+TEXT = 'txt'
+
 
 def baseurl():
     """
@@ -221,6 +224,28 @@ def set_text(loc, text):
         el.clear()
         el.send_keys(text)
         wait_for_ajax()
+
+
+def select(loc, o):
+    """
+    Takes a locator and an object and selects using the correct method.
+
+    If o is a string, then it is assumed the user wishes to select by visible text.
+    If o is a tuple, then the first argument defines the type. Either ``TEXT`` or ``VALUE``.
+    A choice of select method is then determined.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        o: An object, can be either a string or a tuple.
+    """
+    if isinstance(o, basestring):
+        select_by_text(loc, o)
+    else:
+        vtype, value = o
+        if vtype == TEXT:
+            select_by_text(loc, value)
+        if vtype == VALUE:
+            select_by_value(loc, value)
 
 
 def select_by_text(loc, text):
