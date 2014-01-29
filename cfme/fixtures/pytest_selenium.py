@@ -24,7 +24,7 @@ TEXT = 'txt'
 
 
 @singledispatch
-def elements(o):
+def elements(o, root=None):
     """
     Convert object o to list of matching WebElements. Can be extended by registering the type of o
     to this function.
@@ -34,15 +34,16 @@ def elements(o):
 
     Returns: A list of WebElement objects
     """
-    return elements(o.locate())  # if object implements locate(), try to get elements
+    return elements(o.locate(), root=root)  # if object implements locate(), try to get elements
     # from that locator.  If it doesn't implement locate(), we're in trouble so
     # let the error bubble up.
 
 
 @elements.register(str)
-def _s(s):
+def _s(s, root=None):
     '''Assume string is an xpath locator'''
-    return browser().find_elements_by_xpath(s)
+    parent = root or browser()
+    return parent.find_elements_by_xpath(s)
 
 
 @elements.register(WebElement)
@@ -52,12 +53,13 @@ def _w(webelement):
 
 
 @elements.register(tuple)
-def _t(t):
+def _t(t, root=None):
     '''Assume tuple is a 2-item tuple like (By.ID, 'myid')'''
-    return browser().find_elements(*t)
+    parent = root or browser()
+    return parent.find_elements(*t)
 
 
-def element(o, root=None):
+def element(o, **kwargs):
     """
     Convert o to a single matching WebElement.
 
@@ -69,7 +71,7 @@ def element(o, root=None):
     Raises:
         NoSuchElementException: When element is not found on page
     """
-    matches = elements(o, root=root)
+    matches = elements(o, **kwargs)
     if not matches:
         raise NoSuchElementException("Element {} not found on page.".format(str(o)))
     return matches[0]

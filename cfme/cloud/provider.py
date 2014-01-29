@@ -149,8 +149,9 @@ class Provider(Updateable):
 
 
 class EC2Provider(Provider):
-    def __init__(self, name=None, credentials=None, zone=None, region=None):
-        super(EC2Provider, self).__init__(name=name, credentials=credentials, zone=zone)
+    def __init__(self, name=None, credentials=None, zone=None, key=None, region=None):
+        super(EC2Provider, self).__init__(name=name, credentials=credentials,
+                                          zone=zone, key=key)
         self.region = region
 
     def _form_mapping(self, create=None, **kwargs):
@@ -160,9 +161,10 @@ class EC2Provider(Provider):
 
 
 class OpenStackProvider(Provider):
-    def __init__(self, name=None, credentials=None, zone=None, hostname=None,
+    def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None):
-        super(OpenStackProvider, self).__init__(name=name, credentials=credentials, zone=zone)
+        super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
+                                                zone=zone, key=key)
         self.hostname = hostname
         self.ip_address = ip_address
         self.api_port = api_port
@@ -260,16 +262,19 @@ def get_from_config(provider_config_name):
     credentials = Provider.Credential(principal=creds['username'],
                                       secret=creds['password'])
     if prov_config.get('type') == 'ec2':
-        details = Provider.EC2Details(region=prov_config['region'])
+        return EC2Provider(name=prov_config['name'],
+                           region=prov_config['region'],
+                           credentials=credentials,
+                           zone=prov_config['server_zone'],
+                           key=provider_config_name)
     else:
-        details = Provider.OpenStackDetails(hostname=prov_config['hostname'],
-                                            ip_address=prov_config['ipaddress'],
-                                            api_port=prov_config['port'])
-    return Provider(name=prov_config['name'],
-                    details=details,
-                    credentials=credentials,
-                    zone=prov_config['server_zone'],
-                    key=provider_config_name)
+        return OpenStackProvider(name=prov_config['name'],
+                                 hostname=prov_config['hostname'],
+                                 ip_address=prov_config['ipaddress'],
+                                 api_port=prov_config['port'],
+                                 credentials=credentials,
+                                 zone=prov_config['server_zone'],
+                                 key=provider_config_name)
 
 
 def discover(credential, cancel=False):
