@@ -3,13 +3,15 @@ from selenium.webdriver.common.by import By
 import ui_navigate as nav
 import cfme
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Quadicon, Form
+from cfme.web_ui import Region, Quadicon, Form, InfoBlock
 import cfme.web_ui.flash as flash
 import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
 from utils.update import Updateable
 import cfme.web_ui.toolbar as tb
-
+from utils.wait import wait_for
+from utils.providers import provider_factory
+from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
 
 page = Region(
     locators={
@@ -61,12 +63,12 @@ ampq_form = Form(
     ])
 
 cfg_btn = partial(tb.select, 'Configuration')
-nav.add_branch('clouds_providers',
-               {'cloud_provider_new': lambda: cfg_btn('Add a New Cloud Provider'),
-                'cloud_provider_discover': lambda: cfg_btn('Discover Cloud Providers'),
-                'cloud_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name)),
-                                   {'cloud_provider_edit':
-                                    lambda: cfg_btn('Edit Selected Cloud Provider')}]})
+nav.add_branch('clouds_providers', {
+    'cloud_provider_new': lambda: cfg_btn('Add a New Cloud Provider'),
+    'cloud_provider_discover': lambda: cfg_btn('Discover Cloud Providers'),
+    'cloud_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name, "cloud_prov")), {
+        'cloud_provider_edit': lambda: cfg_btn('Edit Selected Cloud Provider')}]
+})
 
 # setter(loc) = a function that when called with text
 # sets textfield at loc to text.
@@ -91,11 +93,12 @@ class Provider(Updateable):
 
     '''
 
-    def __init__(self, name=None, details=None, credentials=None, zone=None):
+    def __init__(self, name=None, details=None, credentials=None, zone=None, key=None):
         self.name = name
         self.details = details
         self.credentials = credentials
         self.zone = zone
+        self.key = key
 
     class EC2Details(Updateable):
         '''Models EC2 provider details '''
@@ -172,6 +175,58 @@ class Provider(Updateable):
                            updates.get('credentials'),
                            cancel, page.save_button)
 
+    def validate(self):
+        if not self._on_detail_page():
+            nav.go_to('cloud_provider', context={'provider': self})
+
+        stats_to_match = ['num_template', 'num_vm']
+
+        client = self.get_mgmt_system()
+        host_stats = client.stats(*stats_to_match)
+        client.disconnect()
+
+        ec, tc = wait_for(self._do_stats_match,
+                          [host_stats, stats_to_match],
+                          message="do_stats_match",
+                          num_sec=300)
+
+    def get_mgmt_system(self):
+        if not self.key:
+            raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
+        else:
+            return provider_factory(self.key)
+
+    def get_detail(self, *ident):
+        if not self._on_detail_page():
+            nav.go_to('cloud_provider', context={'provider': self})
+        ib = InfoBlock("detail")
+        return ib.text(*ident)
+
+    def _do_stats_match(self, host_stats, stats_to_match=None):
+        for stat in stats_to_match:
+            try:
+                if host_stats[stat] != getattr(self, stat):
+                    browser.refresh()
+                    return False
+            except KeyError:
+                raise HostStatsNotContains("Host stats information does not contain '%s'" % stat)
+            except AttributeError:
+                raise ProviderHasNoProperty("Provider does not know how to get '%s'" % stat)
+        else:
+            return True
+
+    def _on_detail_page(self):
+        return browser.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
+                                    % self.name)
+
+    @property
+    def num_template(self):
+        return int(self.get_detail("Relationships", "Images"))
+
+    @property
+    def num_vm(self):
+        return int(self.get_detail("Relationships", "Instances"))
+
 
 def get_from_config(provider_config_name):
     '''
@@ -198,7 +253,8 @@ def get_from_config(provider_config_name):
     return Provider(name=prov_config['name'],
                     details=details,
                     credentials=credentials,
-                    zone=prov_config['server_zone'])
+                    zone=prov_config['server_zone'],
+                    key=provider_config_name)
 
 
 def discover(credential, cancel=False):
