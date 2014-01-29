@@ -1,9 +1,8 @@
 from functools import partial
-from selenium.webdriver.common.by import By
 import ui_navigate as nav
 import cfme
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Quadicon, Form, InfoBlock
+from cfme.web_ui import Region, Quadicon, Form, fill, InfoBlock
 import cfme.web_ui.flash as flash
 import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
@@ -25,21 +24,19 @@ page = Region(
     },
     title='CloudForms Management Engine: Cloud Providers')
 
-discover_page = Region(
-    locators={
-        'start_button': "//input[@name='start']",
-        'cancel_button': "//input[@name='cancel']",
-        'username': "//*[@id='userid']",
-        'password': "//*[@id='password']",
-        'password_verify': "//*[@id='verify']",
-        'form_title': (By.CSS_SELECTOR, "div.dhtmlxInfoBarLabel-2"),
-    },
-    title='CloudForms Management Engine: Cloud Providers')
+discover_form = Form(
+    fields=[
+        ('username', "//*[@id='userid']"),
+        ('password', "//*[@id='password']"),
+        ('password_verify', "//*[@id='verify']"),
+        ('start_button', "//input[@name='start']"),
+        ('cancel_button', "//input[@name='cancel']"),
+    ])
 
-form = Form(
+properties_form = Form(
     fields=[
         ('type_select', "//*[@id='server_emstype']"),
-        ('name_text', "//*[@id='name']"),
+        ('name_text', browser.ObservedText("//*[@id='name']")),
         ('hostname_text', "//*[@id='hostname']"),
         ('ipaddress_text', "//*[@id='ipaddress']"),
         ('amazon_region_select', "//*[@id='hostname']"),
@@ -49,35 +46,35 @@ form = Form(
 def_form = Form(
     fields=[
         ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('principal', "//*[@id='default_userid']"),
-        ('secret', "//*[@id='default_password']"),
-        ('verify_secret', "//*[@id='default_verify']"),
+        ('principal', browser.ObservedText("//*[@id='default_userid']")),
+        ('secret', browser.ObservedText("//*[@id='default_password']")),
+        ('verify_secret', browser.ObservedText("//*[@id='default_verify']")),
+        ('validate_btn', page.creds_validate_btn)
     ])
 
-ampq_form = Form(
+amqp_form = Form(
     fields=[
         ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
-        ('principal', "//*[@id='amqp_userid']"),
-        ('secret', "//*[@id='amqp_password']"),
-        ('verify_secret', "//*[@id='amqp_verify']")
+        ('principal', browser.ObservedText("//*[@id='amqp_userid']")),
+        ('secret', browser.ObservedText("//*[@id='amqp_password']")),
+        ('verify_secret', browser.ObservedText("//*[@id='amqp_verify']")),
+        ('validate_btn', page.creds_validate_btn)
     ])
 
 cfg_btn = partial(tb.select, 'Configuration')
-nav.add_branch('clouds_providers', {
-    'cloud_provider_new': lambda: cfg_btn('Add a New Cloud Provider'),
-    'cloud_provider_discover': lambda: cfg_btn('Discover Cloud Providers'),
-    'cloud_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name, "cloud_prov")), {
-        'cloud_provider_edit': lambda: cfg_btn('Edit Selected Cloud Provider')}]
-})
 
-# setter(loc) = a function that when called with text
-# sets textfield at loc to text.
-setter = partial(partial, browser.set_text)
+nav.add_branch('clouds_providers',
+               {'cloud_provider_new': lambda: cfg_btn('Add a New Cloud Provider'),
+                'cloud_provider_discover': lambda: cfg_btn('Discover Cloud Providers'),
+                'cloud_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name,
+                                                                      'cloud_prov')),
+                                   {'cloud_provider_edit':
+                                    lambda: cfg_btn('Edit this Cloud Provider')}]})
 
 
 class Provider(Updateable):
     '''
-    Models a cloud provider in cfme
+    Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
 
     Args:
         name: Name of the provider
@@ -86,35 +83,18 @@ class Provider(Updateable):
 
     Usage:
 
-        myprov = Provider(name='foo',
-                          details=Provider.EC2Details(region='US West (Oregon)'),
-                          credentials=Provider.Credential(principal='admin', secret='foobar'))
+        myprov = EC2Provider(name='foo',
+                             region='US West (Oregon)',
+                             credentials=Provider.Credential(principal='admin', secret='foobar'))
         myprov.create()
 
     '''
 
-    def __init__(self, name=None, details=None, credentials=None, zone=None, key=None):
+    def __init__(self, name=None, credentials=None, zone=None, key=None):
         self.name = name
-        self.details = details
         self.credentials = credentials
         self.zone = zone
         self.key = key
-
-    class EC2Details(Updateable):
-        '''Models EC2 provider details '''
-
-        def __init__(self, region=None):
-            self.details = {'amazon_region_select': region,
-                            'type_select': 'Amazon EC2'}
-
-    class OpenStackDetails(Updateable):
-        '''Models Openstack provider details '''
-
-        def __init__(self, hostname=None, ip_address=None, api_port=None):
-            self.details = {'hostname_text': hostname,
-                            'ipaddress_text': ip_address,
-                            'api_port': api_port,
-                            'type_select': 'OpenStack'}
 
     class Credential(cfme.Credential, Updateable):
         '''Provider credentials
@@ -126,14 +106,7 @@ class Provider(Updateable):
             super(Provider.Credential, self).__init__(**kwargs)
             self.amqp = kwargs.get('amqp')
 
-    def _fill_details(self, details, credentials, cancel, submit_button):
-        details.details.update({'name_text': self.name})
-        form.fill_fields(details.details)
-        if credentials.amqp:
-            ampq_form.fill_fields(credentials.details)
-        else:
-            def_form.fill_fields(credentials.details)
-
+    def _submit(self, cancel, submit_button):
         if cancel:
             browser.click(page.cancel_button)
             # browser.wait_for_element(page.configuration_btn)
@@ -141,19 +114,23 @@ class Provider(Updateable):
             browser.click(submit_button)
             flash.assert_no_errors()
 
-    def create(self, cancel=False):
+    def create(self, cancel=False, validate_credentials=False):
         '''
         Creates a provider in the UI
 
         Args:
            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-              after all the information present in the Provider has been filled in the UI.
+        after all the information present in the Provider has been filled in the UI.
+           validate_credentials (boolean): Whether to validate credentials - if True and the
+        credentials are invalid, an error will be raised.
         '''
 
         nav.go_to('cloud_provider_new')
-        self._fill_details(self.details, self.credentials, cancel, page.add_submit)
+        fill(properties_form, self._form_mapping(True, **self.__dict__))
+        fill(self.credentials, validate=validate_credentials)
+        self._submit(cancel, page.add_submit)
 
-    def update(self, updates, cancel=False):
+    def update(self, updates, cancel=False, validate_credentials=False):
         '''
         Updates a provider in the UI.  Better to use utils.update.update context
         manager than call this directly.
@@ -161,19 +138,58 @@ class Provider(Updateable):
         Args:
            updates (dict): fields that are changing
            cancel (boolean): whether to cancel out of the update.
-        '''
         print(updates)
+        '''
 
         nav.go_to('cloud_provider_edit', context={'provider': self})
+        print updates
+        fill(properties_form, self._form_mapping(**updates))
+        fill(self.credentials, validate=validate_credentials)
+        self._submit(cancel, page.save_button)
 
-        browser.set_text(page.name_text, updates.get('name'))
 
-        # workaround - without this the save button doesn't enable
-        browser.browser().execute_script('miqButtons("show")')
+class EC2Provider(Provider):
+    def __init__(self, name=None, credentials=None, zone=None, region=None):
+        super(EC2Provider, self).__init__(name=name, credentials=credentials, zone=zone)
+        self.region = region
 
-        self._fill_details(updates.get('details'),
-                           updates.get('credentials'),
-                           cancel, page.save_button)
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs['name'],
+                'type_select': create and 'Amazon EC2',
+                'amazon_region_select': kwargs['region']}
+
+
+class OpenStackProvider(Provider):
+    def __init__(self, name=None, credentials=None, zone=None, hostname=None,
+                 ip_address=None, api_port=None):
+        super(OpenStackProvider, self).__init__(name=name, credentials=credentials, zone=zone)
+        self.hostname = hostname
+        self.ip_address = ip_address
+        self.api_port = api_port
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs['name'],
+                'type_select': create and 'OpenStack',
+                'hostname_text': kwargs['hostname'],
+                'api_port': kwargs['api_port'],
+                'ipaddress_text': kwargs['ip_address']}
+
+
+@fill.register(Provider.Credential)
+def _c(cred, validate=None):
+    '''How to fill in a credential (either amqp or default).  Validates the
+    credential if that option is passed in.
+    '''
+    mapping = {'principal': cred.principal,
+               'secret': cred.secret,
+               'verify_secret': cred.verify_secret,
+               'validate_btn': validate}
+    if cred.amqp:
+        fill(amqp_form, mapping)
+    else:
+        fill(def_form, mapping)
+    if validate:
+        flash.assert_no_errors()
 
     def validate(self):
         if not self._on_detail_page():
@@ -242,8 +258,7 @@ def get_from_config(provider_config_name):
     prov_config = conf.cfme_data['management_systems'][provider_config_name]
     creds = conf.credentials[prov_config['credentials']]
     credentials = Provider.Credential(principal=creds['username'],
-                                      secret=creds['password'],
-                                      verify_secret=creds['password'])
+                                      secret=creds['password'])
     if prov_config.get('type') == 'ec2':
         details = Provider.EC2Details(region=prov_config['region'])
     else:
@@ -265,13 +280,14 @@ def discover(credential, cancel=False):
       credential (cfme.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
     '''
-
     nav.go_to('cloud_provider_discover')
-    if credential:
-        credential.fill(setter(discover_page.username),
-                        setter(discover_page.password),
-                        setter(discover_page.password_verify))
-    if cancel:
-        browser.click(discover_page.cancel_button)
+    if cancel:  # normalize so that the form filler only clicks either start or cancel
+        cancel = True
     else:
-        browser.click(discover_page.start_button)
+        cancel = None
+
+    fill(discover_form, {'username': credential.principal,
+                         'password': credential.secret,
+                         'password_verify': credential.verify_secret,
+                         'start_button': not cancel,
+                         'cancel_button': cancel})
