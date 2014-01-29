@@ -589,38 +589,41 @@ class Tree(object):
     are two distinct types. One which uses ``<table>`` elements and another which uses
     ``<ul>`` elements.
 
-    On invocation, the class first determines which type of Tree object it is dealing
-    with and then sets the internal variables to match elements of the specific tree class.
-
-    There are currently 4 attributes needed in the tree classes.
-
-    * expandable: the element to check if the tree is expanded/collapsed.
-    * is_expanded_condition: a tuple containing the element attribute and value to
-      identify that an element **is** expanded.
-    * node_search: an XPATH which describes a node, needing expansion with format specifier for
-      matching.
-    * click_expand: the element to click on to expand the tree at that level.
-
-    .. note:: For legacy trees, the first element is often ignore as it is not a proper tree element
-       ie. in Automate->Explorer the Datastore element doesn't really exist, so we omit it from
-       the click map.
-
-       Legacy trees rely on a complex ``<table><tbody><tr><td>`` setup. We class a ``<tbody>``
-       as a node.
-
-    .. note:: Dynatrees, rely on a ``<ul><li>`` setup. We class a ``<li>`` as a node.
-
     Args:
         locator: This is a locator object pointing to either the outer ``<table>`` or
             ``<ul>`` element which contains the rest of the table.
-        no_root_icon: Some trees do not have an icon for the first root element and as such
-            do not need it to be expanded as this is done gratis. A bool is expected.
 
     Returns: A :py:class:`Tree` object.
     """
 
     def __init__(self, locator):
-        self.root_el = sel.element(locator)
+        self.locator = locator
+
+    def _detect(self):
+        """ Detects which type of tree is being used
+
+        On invocation, first determines which type of Tree object it is dealing
+        with and then sets the internal variables to match elements of the specific tree class.
+
+        There are currently 4 attributes needed in the tree classes.
+
+        * expandable: the element to check if the tree is expanded/collapsed.
+        * is_expanded_condition: a tuple containing the element attribute and value to
+          identify that an element **is** expanded.
+        * node_search: an XPATH which describes a node, needing expansion with format specifier for
+          matching.
+        * click_expand: the element to click on to expand the tree at that level.
+
+        .. note:: For legacy trees, the first element is often ignore as it is not a proper tree
+           element ie. in Automate->Explorer the Datastore element doesn't really exist, so we
+           omit it from the click map.
+
+           Legacy trees rely on a complex ``<table><tbody><tr><td>`` setup. We class a ``<tbody>``
+           as a node.
+
+        .. note:: Dynatrees, rely on a ``<ul><li>`` setup. We class a ``<li>`` as a node.
+        """
+        self.root_el = sel.element(self.locator)
         if sel.tag(self.root_el) == 'ul':
             # Dynatree
             self.expandable = 'span'
@@ -639,7 +642,7 @@ class Tree(object):
             raise exceptions.TreeTypeUnknown(
                 'The locator described does not point to a known tree type')
 
-    def is_expanded(self, el):
+    def _is_expanded(self, el):
         """ Checks to see if an element is expanded
 
         Args:
@@ -654,7 +657,7 @@ class Tree(object):
         else:
             return False
 
-    def expand(self, el):
+    def _expand(self, el):
         """ Expands a tree node
 
         Checks if a tree node needs expanding and then expands it.
@@ -662,7 +665,7 @@ class Tree(object):
         Args:
             el: The element to expand.
         """
-        if not self.is_expanded(el):
+        if not self._is_expanded(el):
             sel.click(el.find_element_by_xpath(self.click_expand))
 
     def expose_path(self, *path, **kwargs):
@@ -696,14 +699,17 @@ class Tree(object):
                 continue down the path.
             cfme.exceptions.TreeTypeUnknown: A locator was passed to the constructor which
                 does not correspond to a known tree type.
-
         """
+
+        if not hasattr(self, 'root_el'):
+            self._detect()
+
         root = kwargs.get('root', None)
         root_el = root if root else self.root_el
         path = list(path)
 
         if root:
-            self.expand(root_el)
+            self._expand(root_el)
 
         needle = path.pop(0)
         xpath = self.node_search % needle
