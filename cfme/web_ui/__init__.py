@@ -701,8 +701,9 @@ class Tree(object):
                 does not correspond to a known tree type.
         """
 
-        if not hasattr(self, 'root_el'):
-            self._detect()
+        #The detect here is required every time to avoid a StaleElementException if the
+        #Tree goes off screen and returns.
+        self._detect()
 
         root = kwargs.get('root', None)
         root_el = root if root else self.root_el
