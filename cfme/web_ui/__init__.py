@@ -39,7 +39,7 @@ Example usage of Form
 
 Below is an example of how to define a form.::
 
-  provider_form = Form(
+  provider_form = web_ui.Form(
       fields=[
           ('type_select', "//*[@id='server_emstype']"),
           ('name_text', "//*[@id='name']"),
@@ -56,7 +56,7 @@ Forms can then be filled in like so.::
                    'hostname_text': "RHOS-01",
                    'ipaddress_text': "10.0.0.0",
                    'api_port': "5000",}
-  provider_form.fill_fields(request_info)
+  web_ui.fill(provider_form, request_info)
 
 
 Example usage of InfoBlock
@@ -466,33 +466,32 @@ class Table(object):
 
 @singledispatch
 def fill(arg, content):
-    '''
+    """
     Fills in a UI component with the given content.
 
     Usage:
-    fill(textbox, "text to fill")
-    fill(myform, [ ... data to fill ...])
-    fill(radio, "choice to select")
+        fill(textbox, "text to fill")
+        fill(myform, [ ... data to fill ...])
+        fill(radio, "choice to select")
 
     Default implementation just throws an error.
-    '''
+    """
     raise NotImplementedError('Unable to fill {} into this type: {}'.format(content, arg))
 
 
 @fill.register(str)
-def _s(loc, value):
-    '''
+def _sd_fill_string(loc, value):
+    """
     How to 'fill' a string.  Assumes string is a locator for a UI input element,
     eg textbox, radio button, select list, etc.
     value is the value to input into that element.
 
     Usage:
-    fill("//input[@type='text' and @id='username']", 'admin')
+        fill("//input[@type='text' and @id='username']", 'admin')
 
     Raises:
-    cfme.exceptions.UnidentifiableTagType: If the element/object is unknown.
-
-    '''
+        cfme.exceptions.UnidentifiableTagType: If the element/object is unknown.
+    """
     tag_types = {'select': sel.select,
                  'text': sel.set_text,
                  'checkbox': sel.checkbox,
@@ -521,17 +520,17 @@ def _s(loc, value):
 
 
 @fill.register(Table)
-def _t(table, cells):
-    ''' How to fill a table with a value (by selecting the value as cells in the table)
+def _sd_fill_table(table, cells):
+    """ How to fill a table with a value (by selecting the value as cells in the table)
     See Table.click_cells
-    '''
+    """
     table._update_cache()
     table.click_cells(cells)
 
 
 @fill.register(sel.ObservedText)
-def _ot(ot, value):
-    '''Filled just like a text box.'''
+def _sd_fill_otext(ot, value):
+    """Filled just like a text box."""
     sel.set_text(ot, value)
 
 
@@ -562,7 +561,7 @@ class Form(Region):
 
 
 @fill.register(Form)
-def _f(form, values, action=None):
+def _sd_fill_form(form, values, action=None):
     """
     Fills in field elements on forms
 
@@ -625,8 +624,8 @@ class Radio(object):
 
 
 @fill.register(Radio)
-def _r(radio, value):
-    '''How to fill a radio button group (by selecting the given value)'''
+def _sd_fill_radio(radio, value):
+    """How to fill a radio button group (by selecting the given value)"""
     sel.click(radio.choice(value))
 
 

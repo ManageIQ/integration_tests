@@ -21,8 +21,8 @@ PyYAML
 requests
 scp
 selenium
+singledispatch
 sqlalchemy
 suds
 UnittestZero
 ui-navigate
-singledispatch
