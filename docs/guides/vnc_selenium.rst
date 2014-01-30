@@ -1,3 +1,5 @@
+.. _vnc_selenium:
+
 Selenium over VNC
 =================
 

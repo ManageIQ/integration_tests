@@ -77,10 +77,6 @@ The testing framework being used is `py.test <http://pytest.org/latest>`_
 Browser Support
 ---------------
 
-Firefox is currently unsupported, but it will be working again soon.
-Using Chrome
+We support any browser that selenium supports, but tend to run Firefox or Chrome.
 
-* Download `chromedriver <http://code.google.com/p/chromedriver/downloads/list>`_. Use the
-  latest available for your architecture.
-* Extract the chromedriver exectuable from that archive into your virtualenv's bin directory
-  (alongside bin/activate)
+For detailed instructions on setting up different browsers, see :ref:`browser_configuration`.
