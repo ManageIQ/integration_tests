@@ -1,10 +1,25 @@
+"""
+utils.browser
+-------------
+
+Contains core functionality for starting, restarting, and stopping a selenium browser.
+
+Members
+^^^^^^^
+"""
+import atexit
+import json
 import threading
 from contextlib import contextmanager
+from shutil import rmtree
+from string import Template
+from tempfile import mkdtemp
 
 from selenium import webdriver
-from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 from utils import conf
+from utils.path import data_path
 
 # Conditional guards against getting a new thread_locals when this module is reloaded.
 if not 'thread_locals' in globals():
@@ -13,49 +28,84 @@ if not 'thread_locals' in globals():
     thread_locals.browser = None
 
 
+#: After starting a firefox browser, this will be set to the temporary
+#: directory where files are downloaded.
+firefox_profile_tmpdir = None
+
+
 def browser():
+    """callable that will always return the current browser instance
+
+    If ``None``, no browser is running.
+
+    Returns:
+
+        The current browser instance.
+
+    """
     return thread_locals.browser
 
 
 def ensure_browser_open():
+    """Ensures that there is a browser instance currently open
+
+    Will reuse an existing browser or start a new one as-needed
+
+    Returns:
+
+        The current browser instance.
+
+    """
     try:
         browser().current_url
     except:
-        # AttributeError: browser() was None, didn't have current_url attr
-        # WebDriverError: current_url couldn't be retrieved, browser was closed
+        # If we couldn't poke the browser for any reason, start a new one
         start()
 
+    return browser()
 
-def start(_webdriver=None, base_url=None, **kwargs):
+
+def start(webdriver_name=None, base_url=None, **kwargs):
+    """Starts a new web browser
+
+    If a previous browser was open, it will be closed before starting the new browser
+
+    Args:
+        webdriver_name: The name of the selenium Webdriver to use. Default: 'Firefox'
+        base_url: Optional, will use ``utils.conf.env['base_url']`` by default
+        **kwargs: Any additional keyword arguments will be passed to the webdriver constructor
+
+    """
     # Try to clean up an existing browser session if starting a new one
     if thread_locals.browser is not None:
-        try:
-            thread_locals.browser.quit()
-        except:
-            pass
-        finally:
-            thread_locals.browser = None
+        quit()
 
-    if _webdriver is None:
+    browser_conf = conf.env.get('browser', {})
+
+    if webdriver_name is None:
         # If unset, look to the config for the webdriver type
         # defaults to Firefox
-        _webdriver = conf.env['browser'].get('webdriver', 'Firefox')
-
-    if isinstance(_webdriver, basestring):
-        # Try to convert _webdriver str into a webdriver by name
-        # e.g. 'Firefox', 'Chrome', RemoteJS', useful for interactive development
-        _webdriver = getattr(webdriver, _webdriver)
-    # else: implicitly assume _webdriver is a WebDriver class already
+        webdriver_name = browser_conf.get('webdriver', 'Firefox')
+        webdriver_class = getattr(webdriver, webdriver_name)
 
     if base_url is None:
         base_url = conf.env['base_url']
 
     # Pull in browser kwargs from browser yaml
-    browser_kwargs = conf.env['browser'].get('webdriver_options', {})
+    browser_kwargs = browser_conf.get('webdriver_options', {})
+
+    # Handle firefox profile for Firefox or Remote webdriver
+    if webdriver_name == 'Firefox':
+        browser_kwargs['firefox_profile'] = _load_firefox_profile()
+
+    if webdriver_name == 'Remote' and \
+            browser_kwargs['desired_capabilities']['browserName'] == 'firefox':
+        browser_kwargs['browser_profile'] = _load_firefox_profile()
+
     # Update it with passed-in options/overrides
     browser_kwargs.update(kwargs)
 
-    browser = WebDriverWrapper(_webdriver(**browser_kwargs), base_url)
+    browser = webdriver_class(**browser_kwargs)
     browser.maximize_window()
     browser.get(base_url)
     thread_locals.browser = browser
@@ -63,37 +113,58 @@ def start(_webdriver=None, base_url=None, **kwargs):
     return thread_locals.browser
 
 
+def quit():
+    """Close the current browser
+
+    Will silently fail if the current browser can't be closed for any reason.
+
+    .. note::
+        If a browser can't be closed, it's usually because it has already been closed elsewhere.
+
+    """
+    try:
+        browser().quit()
+    except:
+        # Due to the multitude of exceptions can be thrown when attempting to kill the browser,
+        # Diaper Pattern!
+        pass
+    finally:
+        thread_locals.browser = None
+
+
 @contextmanager
 def browser_session(*args, **kwargs):
+    """A context manager that can be used to start and stop a browser.
+
+    Usage:
+
+        with browser_session as browser:
+            # do stuff with browser here
+        # Browser will be closed here
+
+    """
     browser = start(*args, **kwargs)
     yield browser
-    browser.quit()
+    quit()
 
 
-class WebDriverWrapper(object):
-    """Wrapper class to add custom behavior to webdrivers"""
-    def __init__(self, webdriver, base_url=None):
-        self._webdriver = webdriver
-        self._base_url = base_url
+def _load_firefox_profile():
+    # create a firefox profile using the template in data/firefox_profile.js.template
+    global firefox_profile_tmpdir
+    if firefox_profile_tmpdir is None:
+        firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
+        # Clean up tempdir at exit
+        atexit.register(rmtree, firefox_profile_tmpdir)
 
-    def __dir__(self):
-        # Custom __dir__ handler to better impersonate a WebDriver
-        # (basically makes tab-completion work in the python shell)
-        my_dir = self.__dict__.keys() + type(self).__dict__.keys()
-        wrapped_dir = dir(self._webdriver)
-        return sorted(list(set(my_dir) | set(wrapped_dir)))
+    template = data_path.join('firefox_profile.js.template').read()
+    profile_json = Template(template).substitute(profile_dir=firefox_profile_tmpdir)
+    profile_dict = json.loads(profile_json)
 
-    def __getattr__(self, attr):
-        # Try to pull the attr from this obj, and then go down to the
-        # wrapped webdriver if that fails
-        try:
-            return object.__getattribute__(self, attr)
-        except AttributeError:
-            _webdriver = object.__getattribute__(self, '_webdriver')
-            return _webdriver.__getattribute__(attr)
-
-    def start(self):
-        return start(type(self._webdriver), self._base_url)
+    profile = FirefoxProfile(firefox_profile_tmpdir)
+    for pref in profile_dict.iteritems():
+        profile.set_preference(*pref)
+    profile.update_preferences()
+    return profile
 
 
 class DuckwebQaTestSetup(object):
@@ -101,6 +172,9 @@ class DuckwebQaTestSetup(object):
 
     Pretends to be a mozwebqa TestSetup so we can uninstall mozwebqa whithout
     breaking old tests that aren't yet converted.
+
+    .. note::
+        This should never be used, and places where it's currently used should stop it.
 
     """
     def __init__(self):
@@ -136,3 +210,4 @@ class DuckwebQaClient(object):
 
 # Convenience name, duckwebqa is stateless, so we can just make one here
 testsetup = DuckwebQaTestSetup()
+atexit.register(quit)

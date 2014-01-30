@@ -2,6 +2,7 @@ utils
 =====
 
 .. automodule:: utils
+.. automodule:: utils.browser
 .. automodule:: utils.log
 .. automodule:: utils.path
 .. automodule:: utils.ipmi

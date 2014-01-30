@@ -1,5 +1,3 @@
-import atexit
-
 import pytest
 from py.error import ENOENT
 from selenium.common.exceptions import WebDriverException
@@ -83,11 +81,3 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.fixture(scope='session')
 def browser():
     return utils.browser.browser
-
-
-def close_browser_no_matter_what():
-    try:
-        utils.browser.browser().quit()
-    except:
-        pass
-atexit.register(close_browser_no_matter_what)
