@@ -25,3 +25,4 @@ sqlalchemy
 suds
 UnittestZero
 ui-navigate
+singledispatch
