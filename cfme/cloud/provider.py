@@ -176,23 +176,6 @@ class OpenStackProvider(Provider):
                 'api_port': kwargs['api_port'],
                 'ipaddress_text': kwargs['ip_address']}
 
-
-@fill.register(Provider.Credential)
-def _c(cred, validate=None):
-    '''How to fill in a credential (either amqp or default).  Validates the
-    credential if that option is passed in.
-    '''
-    mapping = {'principal': cred.principal,
-               'secret': cred.secret,
-               'verify_secret': cred.verify_secret,
-               'validate_btn': validate}
-    if cred.amqp:
-        fill(amqp_form, mapping)
-    else:
-        fill(def_form, mapping)
-    if validate:
-        flash.assert_no_errors()
-
     def validate(self):
         if not self._on_detail_page():
             nav.go_to('cloud_provider', context={'provider': self})
@@ -244,6 +227,23 @@ def _c(cred, validate=None):
     @property
     def num_vm(self):
         return int(self.get_detail("Relationships", "Instances"))
+
+
+@fill.register(Provider.Credential)
+def _c(cred, validate=None):
+    '''How to fill in a credential (either amqp or default).  Validates the
+    credential if that option is passed in.
+    '''
+    mapping = {'principal': cred.principal,
+               'secret': cred.secret,
+               'verify_secret': cred.verify_secret,
+               'validate_btn': validate}
+    if cred.amqp:
+        fill(amqp_form, mapping)
+    else:
+        fill(def_form, mapping)
+    if validate:
+        flash.assert_no_errors()
 
 
 def get_from_config(provider_config_name):
