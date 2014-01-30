@@ -8,8 +8,8 @@ A set of functions for dealing with the accordions.
 """
 import cfme.fixtures.pytest_selenium as sel
 
-DHX_ITEM = 'div[contains(@class, "dhx_acc_item")]'
-DHX_LABEL = 'div[contains(@class, "dhx_acc_item_label")]'
+DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
+DHX_LABEL = '*[contains(@class, "dhx_acc_item_label") or contains(@data-remote, "true")]'
 DHX_ARROW = 'div[contains(@class, "dhx_acc_item_arrow")]'
 
 
@@ -40,6 +40,8 @@ def click(name):
 def is_active(name):
     """ Checks if an accordion is currently open
 
+    Note: Only works on traditional accordions.
+
     Args:
         name: The name of the accordion.
     Returns: ``True`` if the button is depressed, ``False`` if not.
@@ -47,7 +49,7 @@ def is_active(name):
 
     xpath = locate(name)
     root = sel.element(xpath)
-    el = sel.element('./%s/%s' % (DHX_LABEL, DHX_ARROW), root)
+    el = sel.element('./%s/%s' % (DHX_LABEL, DHX_ARROW), root=root)
     class_att = sel.get_attribute(el, 'class').split(" ")
     if "item_opened" in class_att:
         return True
