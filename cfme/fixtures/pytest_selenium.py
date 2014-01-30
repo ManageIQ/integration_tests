@@ -41,20 +41,20 @@ def elements(o, root=None):
 
 @elements.register(str)
 def _s(s, root=None):
-    '''Assume string is an xpath locator'''
+    """Assume string is an xpath locator"""
     parent = root or browser()
     return parent.find_elements_by_xpath(s)
 
 
 @elements.register(WebElement)
 def _w(webelement):
-    '''Return a 1-item list of webelements'''
+    """Return a 1-item list of webelements"""
     return [webelement]
 
 
 @elements.register(tuple)
 def _t(t, root=None):
-    '''Assume tuple is a 2-item tuple like (By.ID, 'myid')'''
+    """Assume tuple is a 2-item tuple like (By.ID, 'myid')"""
     parent = root or browser()
     return parent.find_elements(*t)
 
@@ -368,21 +368,21 @@ return inflight(function() { return jQuery.active},
 
 
 class ObservedText(object):
-    '''A class to represent an observed textbox in CFME.
+    """A class to represent an observed textbox in CFME.
     That means that as we type into this textbox, the js periodically
     checks if it's not been typed in in the last x seconds.  If not,
     an ajax call is made (presumably to validate the input).
-    '''
+    """
 
     def __init__(self, locator):
         self.locator = locator
 
 
 @set_text.register(ObservedText)
-def _st(ot, text):
-    '''When setting text on an ObservedText, wait after typing
+def _sd_set_text_string(ot, text):
+    """When setting text on an ObservedText, wait after typing
     until the timer expires and fires the ajax event.
-    '''
+    """
     if text is not None:
         el = element(ot)
         ActionChains(browser()).move_to_element(el).perform()
@@ -393,7 +393,7 @@ def _st(ot, text):
 
 
 @elements.register(ObservedText)
-def _e_(ot):
-    '''The elements of an ObservedText is just the elements of
-    its locator.'''
+def _sd_elements_otext(ot):
+    """The elements of an ObservedText is just the elements of
+    its locator."""
     return elements(ot.locator)

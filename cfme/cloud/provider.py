@@ -73,7 +73,7 @@ nav.add_branch('clouds_providers',
 
 
 class Provider(Updateable):
-    '''
+    """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
 
     Args:
@@ -88,7 +88,7 @@ class Provider(Updateable):
                              credentials=Provider.Credential(principal='admin', secret='foobar'))
         myprov.create()
 
-    '''
+    """
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
         self.name = name
@@ -97,10 +97,10 @@ class Provider(Updateable):
         self.key = key
 
     class Credential(cfme.Credential, Updateable):
-        '''Provider credentials
+        """Provider credentials
 
            Args:
-             **kwargs: If using amqp type credential, amqp = True'''
+             **kwargs: If using amqp type credential, amqp = True"""
 
         def __init__(self, **kwargs):
             super(Provider.Credential, self).__init__(**kwargs)
@@ -115,31 +115,29 @@ class Provider(Updateable):
             flash.assert_no_errors()
 
     def create(self, cancel=False, validate_credentials=False):
-        '''
+        """
         Creates a provider in the UI
 
         Args:
            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-        after all the information present in the Provider has been filled in the UI.
+               after all the information present in the Provider has been filled in the UI.
            validate_credentials (boolean): Whether to validate credentials - if True and the
-        credentials are invalid, an error will be raised.
-        '''
-
+               credentials are invalid, an error will be raised.
+        """
         nav.go_to('cloud_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(self.credentials, validate=validate_credentials)
         self._submit(cancel, page.add_submit)
 
     def update(self, updates, cancel=False, validate_credentials=False):
-        '''
+        """
         Updates a provider in the UI.  Better to use utils.update.update context
         manager than call this directly.
 
         Args:
            updates (dict): fields that are changing
            cancel (boolean): whether to cancel out of the update.
-        print(updates)
-        '''
+        """
 
         nav.go_to('cloud_provider_edit', context={'provider': self})
         print updates
@@ -230,10 +228,10 @@ class OpenStackProvider(Provider):
 
 
 @fill.register(Provider.Credential)
-def _c(cred, validate=None):
-    '''How to fill in a credential (either amqp or default).  Validates the
+def _sd_fill_credential(cred, validate=None):
+    """How to fill in a credential (either amqp or default).  Validates the
     credential if that option is passed in.
-    '''
+    """
     mapping = {'principal': cred.principal,
                'secret': cred.secret,
                'verify_secret': cred.verify_secret,
@@ -247,15 +245,14 @@ def _c(cred, validate=None):
 
 
 def get_from_config(provider_config_name):
-    '''
+    """
     Creates a Provider object given a yaml entry in cfme_data.
 
     Usage:
-    get_from_config('ec2east')
+        get_from_config('ec2east')
 
-    Returns:
-    A Provider object that has methods that operate on CFME
-    '''
+    Returns: A Provider object that has methods that operate on CFME
+    """
 
     prov_config = conf.cfme_data['management_systems'][provider_config_name]
     creds = conf.credentials[prov_config['credentials']]
@@ -278,13 +275,13 @@ def get_from_config(provider_config_name):
 
 
 def discover(credential, cancel=False):
-    '''
+    """
     Discover cloud providers.
 
     Args:
       credential (cfme.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
-    '''
+    """
     nav.go_to('cloud_provider_discover')
     if cancel:  # normalize so that the form filler only clicks either start or cancel
         cancel = True
