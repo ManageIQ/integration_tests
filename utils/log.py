@@ -96,6 +96,7 @@ Members
 """
 import logging
 from logging.handlers import RotatingFileHandler
+from time import time
 
 from utils import conf
 from utils.path import get_rel_path, log_path
@@ -143,6 +144,55 @@ class _RelpathFilter(logging.Filter):
         return True
 
 
+class Perflog(object):
+    """Performance logger, useful for timing arbitrary events by name
+
+    Logged events will be written to ``log/perf.log`` by default, unless
+    a different log file name is passed to the Perflog initializer.
+
+    Usage:
+
+        from utils.log import perflog
+        perflog.start('event_name')
+        # do stuff
+        seconds_taken = perflog.stop('event_name')
+        # seconds_taken is also written to perf.log for later analysis
+
+    """
+    tracking_events = {}
+
+    def __init__(self, perflog_name='perf'):
+        self.logger = create_logger(perflog_name)
+
+    def start(self, event_name):
+        """Start tracking the named event
+
+        Will reset the start time if the event is already being tracked
+
+        """
+        if event_name in self.tracking_events:
+            self.logger.warning('"%s" event already started, resetting start time', event_name)
+        else:
+            self.logger.debug('"%s" event tracking started', event_name)
+        self.tracking_events[event_name] = time()
+
+    def stop(self, event_name):
+        """Stop tracking the named event
+
+        Returns:
+            A float value of the time passed since ``start`` was last called, in seconds,
+            *or* ``None`` if ``start`` was never called.
+
+        """
+        if event_name in self.tracking_events:
+            seconds_taken = time() - self.tracking_events.pop(event_name)
+            self.logger.info('"%s" event took %f seconds', event_name, seconds_taken)
+            return seconds_taken
+        else:
+            self.logger.error('"%s" not being tracked, call .start first', event_name)
+            return None
+
+
 def create_logger(logger_name):
     """Creates and returns the named logger
 
@@ -186,3 +236,4 @@ def create_logger(logger_name):
     return logger
 
 logger = create_logger('cfme')
+perflog = Perflog()
