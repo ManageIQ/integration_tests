@@ -500,7 +500,8 @@ def _s(loc, value):
                  'img': sel.click,
                  'image': sel.click,
                  'textarea': sel.set_text,
-                 'password': sel.set_text}
+                 'password': sel.set_text,
+                 'file': sel.send_keys}
 
     tag = sel.tag(loc)
     ttype = sel.get_attribute(loc, 'type')
