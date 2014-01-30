@@ -84,7 +84,7 @@ class Provider(Updateable):
     Usage:
 
         myprov = EC2Provider(name='foo',
-                             region='US West (Oregon)',
+                             region='us-west-1',
                              credentials=Provider.Credential(principal='admin', secret='foobar'))
         myprov.create()
 
@@ -155,9 +155,9 @@ class EC2Provider(Provider):
         self.region = region
 
     def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs['name'],
+        return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Amazon EC2',
-                'amazon_region_select': kwargs['region']}
+                'amazon_region_select': (browser.VALUE, kwargs.get('region'))}
 
 
 class OpenStackProvider(Provider):
@@ -170,11 +170,11 @@ class OpenStackProvider(Provider):
         self.api_port = api_port
 
     def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs['name'],
+        return {'name_text': kwargs.get('name'),
                 'type_select': create and 'OpenStack',
-                'hostname_text': kwargs['hostname'],
-                'api_port': kwargs['api_port'],
-                'ipaddress_text': kwargs['ip_address']}
+                'hostname_text': kwargs.get('hostname'),
+                'api_port': kwargs.get('api_port'),
+                'ipaddress_text': kwargs.get('ip_address')}
 
     def validate(self):
         if not self._on_detail_page():
