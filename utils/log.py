@@ -9,6 +9,8 @@ those, consider using the pytest-capturelog plugin.
 Example Usage
 ^^^^^^^^^^^^^
 
+.. code-block:: python
+
     from utils.log import logger
 
     logger.debug('debug log message')
@@ -17,7 +19,7 @@ Example Usage
     logger.error('error log message')
     logger.critical('critical log message')
 
-The above will result in the following output in ``cfme_tests/logs/cfme.log``:
+The above will result in the following output in ``cfme_tests/logs/cfme.log``::
 
     1970-01-01 00:00:00,000 [D] debug log message (filename.py:3)
     1970-01-01 00:00:00,000 [I] info log message (filename.py:4)
@@ -26,7 +28,7 @@ The above will result in the following output in ``cfme_tests/logs/cfme.log``:
     1970-01-01 00:00:00,000 [C] fatal log message (filename.py:7)
 
 Additionally, if ``log_error_to_console`` is True (see below), the following will be
-written to stderr:
+written to stderr::
 
     [E] error (filename.py:6)
     [C] fatal (filename.py:7)
@@ -48,7 +50,31 @@ Configuration
         # Set to 0 to keep no backups
         max_logfile_backups: 0
         # If True, messages of level ERROR and CRITICAL are also written to stderr
-        log_errors_to_console: False
+        errors_to_console: False
+        # Default file format
+        file_format: "%(asctime)-15s [%(levelname).1s] %(message)s (%(relpath)s:%(lineno)d)"
+        # Default format to console if errors_to_console is True
+        stream_format: "[%(levelname)s] %(message)s (%(relpath)s:%(lineno)d)"
+
+Additionally, individual logger configurations can be overridden by defining nested configuration
+values using the logger name as the configuration key.
+
+.. code-block:: yaml
+
+    # in env.yaml
+    logging:
+        cfme:
+            # set the cfme log level to debug
+            level: DEBUG
+        perflog:
+            # make the perflog a little more "to the point"
+            file_format: "%(message)s"
+
+.. warning::
+
+    Creating a logger with the same name as one of the default configuration keys,
+    e.g. ``create_logger('level')`` will cause a rift in space-time (or a ValueError).
+    Do not attempt.
 
 Message Format
 ^^^^^^^^^^^^^^
@@ -71,20 +97,41 @@ Members
 import logging
 from logging.handlers import RotatingFileHandler
 
-
-from utils.conf import env
+from utils import conf
 from utils.path import get_rel_path, log_path
 
+# set logging defaults
+_default_conf = {
+    'level': 'INFO',
+    'max_file_size': 0,
+    'max_file_backups': 0,
+    'errors_to_console': False,
+    'file_format': '%(asctime)-15s [%(levelname).1s] %(message)s (%(relpath)s:%(lineno)d)',
+    'stream_format': '[%(levelname)s] %(message)s (%(relpath)s:%(lineno)d)'
+}
 
-# Pull in config values/set defaults
-logging_conf = env.get('logging', {})
-log_level = logging_conf.get('level', 'INFO')
-max_logfile_size = logging_conf.get('max_file_size', 0)
-max_logfile_backups = logging_conf.get('max_file_backups', 0)
-log_errors_to_console = logging_conf.get('errors_to_console', False)
+
+def _load_conf(logger_name=None):
+    # Reload logging conf from env, then update the logging_conf
+    try:
+        del(conf['env'])
+    except KeyError:
+        # env not loaded yet
+        pass
+
+    logging_conf = _default_conf.copy()
+
+    yaml_conf = conf.env.get('logging', {})
+    # Update the defaults with values from env yaml
+    logging_conf.update(yaml_conf)
+    # Additionally, look in the logging conf for file-specific loggers
+    if logger_name in logging_conf:
+        logging_conf.update(logging_conf[logger_name])
+
+    return logging_conf
 
 
-class RelpathFilter(logging.Filter):
+class _RelpathFilter(logging.Filter):
     """Adds the relpath attr to records
 
     Not actually a filter, this was the least ridiculous way to add custom dynamic
@@ -99,33 +146,42 @@ class RelpathFilter(logging.Filter):
 def create_logger(logger_name):
     """Creates and returns the named logger
 
-    Used to create the cfme logger, this can be used to create other loggers, if desired.
+    If the logger already exists, it will be destroyed and recreated
+    with the current config in env.yaml
 
     """
+    # If the logger already exists, destroy it
+    if logger_name in logging.root.manager.loggerDict:
+        del(logging.root.manager.loggerDict[logger_name])
+
+    # Grab the logging conf
+    conf = _load_conf(logger_name)
+
     log_path.ensure(dir=True)
     log_file = str(log_path.join('%s.log' % logger_name))
 
-    relpath_filter = RelpathFilter()
+    relpath_filter = _RelpathFilter()
 
     # log_file is dynamic, so we can't used logging.config.dictConfig here without creating
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
     # entire logging config into env.yaml
-    file_format = '%(asctime)-15s [%(levelname).1s] %(message)s (%(relpath)s:%(lineno)d)'
-    file_formatter = logging.Formatter(file_format)
-    file_handler = RotatingFileHandler(log_file, maxBytes=max_logfile_size, encoding='utf8')
-    file_handler.setFormatter(file_formatter)
 
-    stream_format = '[%(levelname)s] %(message)s (%(relpath)s:%(lineno)d)'
-    stream_formatter = logging.Formatter(stream_format)
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.ERROR)
-    stream_handler.setFormatter(stream_formatter)
+    file_formatter = logging.Formatter(conf['file_format'])
+    file_handler = RotatingFileHandler(log_file, maxBytes=conf['max_file_size'],
+        backupCount=conf['max_file_backups'], encoding='utf8')
+    file_handler.setFormatter(file_formatter)
 
     logger = logging.getLogger(logger_name)
     logger.addHandler(file_handler)
-    logger.setLevel(log_level)
-    if log_errors_to_console:
+    logger.setLevel(conf['level'])
+    if conf['errors_to_console']:
+        stream_formatter = logging.Formatter(conf['stream_format'])
+        stream_handler = logging.StreamHandler()
+        stream_handler.setLevel(logging.ERROR)
+        stream_handler.setFormatter(stream_formatter)
+
         logger.addHandler(stream_handler)
+
     logger.addFilter(relpath_filter)
     return logger
 
