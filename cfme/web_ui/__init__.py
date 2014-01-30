@@ -493,7 +493,7 @@ def _s(loc, value):
     cfme.exceptions.UnidentifiableTagType: If the element/object is unknown.
 
     '''
-    tag_types = {'select': sel.select_by_text,
+    tag_types = {'select': sel.select,
                  'text': sel.set_text,
                  'checkbox': sel.checkbox,
                  'a': sel.click,
