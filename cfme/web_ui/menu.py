@@ -81,7 +81,7 @@ control = Region(locators=
                  make_items(
                      {"explorer": "Explorer",
                       "simulation": "Simulation",
-                      "import_export": "Import / export",
+                      "import_export": "Import / Export",
                       "log": "Log"}))
 
 automate = Region(locators=

@@ -192,7 +192,8 @@ def send_keys(loc, text):
         text: The text to inject into the element.
     """
     if text is not None:
-        ActionChains(browser()).move_to_element(element(loc)).send_keys(text).perform()
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).send_keys_to_element(el, text).perform()
         wait_for_ajax()
 
 
