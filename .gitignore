@@ -40,6 +40,9 @@ pytest.ini
 .pydevproject
 .settings
 
+# rendered documentation
+docs/_build
+
 # Ipython notebooks need to be explicitly added
 notebooks/*.ipynb
 notebooks/.ipynb_checkpoints
