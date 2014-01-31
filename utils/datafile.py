@@ -1,3 +1,10 @@
+"""
+utils.datafile
+==============
+
+A few datafile functions.
+
+"""
 import os
 from string import Template
 from tempfile import NamedTemporaryFile
@@ -10,13 +17,12 @@ from utils.path import template_path
 def load_data_file(filename, replacements=None):
     """Opens the given filename, returning a file object
 
-    If a base_path string is passed, filename will be loaded from there
-    If a replacements mapping is passed, the loaded file is assumed to
-        be a template[1]. In this case the replacements mapping will be
-        used in that template's subsitute method.
-
-    [1]: http://docs.python.org/2/library/string.html#template-strings
-
+    Args:
+        filename: If a base_path string is passed, filename will be loaded from there
+        replacements: If a replacements mapping is passed, the loaded file is assumed to
+            be a `template <http://docs.python.org/2/library/string.html#template-strings>`_.
+            In this case the replacements mapping will be used in that template's subsitute method.
+    Returns: A file object.
     """
     if replacements is None:
         return open(filename)
@@ -34,6 +40,7 @@ def load_data_file(filename, replacements=None):
 
 
 def data_path_for_filename(filename, base_path, testmod_path=None):
+    """ Returns the data path for a given file name"""
     if testmod_path:
         # remove the base path from testmod path
         test_path_fragment = testmod_path[len(base_path):]
