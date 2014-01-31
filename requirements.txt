@@ -6,6 +6,7 @@ boto
 bottle
 bottle-sqlite
 flake8
+ipython
 Jinja2
 lxml
 ovirt-engine-sdk-python
@@ -18,11 +19,13 @@ pytest
 python-dateutil
 python-novaclient
 PyYAML
+pyzmq
 requests
 scp
 selenium
 singledispatch
 sqlalchemy
 suds
+tornado
 UnittestZero
 ui-navigate
