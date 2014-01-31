@@ -1,10 +1,6 @@
-"""
-cfme.web_ui
------------
+"""Provides a number of objects to help with managing certain elements in the CFME UI.
 
-The :py:mod:`cfme.web_ui` module provides a number of objects to help with
-managing certain elements in the CFME UI. Specifically there two categories of
-objects, organizational and elemental.
+ Specifically there are two categories of objects, organizational and elemental.
 
 * **Organizational**
 

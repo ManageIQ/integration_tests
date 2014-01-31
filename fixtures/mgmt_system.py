@@ -18,36 +18,10 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture
 def setup_infrastructure_providers(infra_providers_pg):
-    '''Adds all infrastructure providers listed in cfme_data.yaml
+    """Adds all infrastructure providers listed in cfme_data.yaml
 
-    This includes both rhev and virtualcenter provider types
-
-    vsphere5:
-        name: vsphere5
-        default_name: vsphere5
-        credentials: cloudqe_vsphere5
-        hostname: hostname.redhat.com
-        ipaddress: 1.1.1.2
-        host_vnc_port:
-            start: 5900
-            end: 5980
-        server_zone: default
-        type: virtualcenter
-        discovery_range:
-            start: 1.1.1.1
-            end: 1.1.1.3
-    rhevm32:
-        name: RHEV 3.2
-        credentials: cloudqe_rhev32
-        hostname: hostname.redhat.com
-        ipaddress: 1.1.1.2
-        server_zone: default
-        type: rhevm
-        discovery_range:
-            start: 1.1.1.1
-            end: 1.1.1.3
-
-    '''
+    This includes ``rhev`` and ``virtualcenter`` provider types
+    """
     # Does provider exist
     providers_to_add = []
     for provider, prov_data in cfme_data['management_systems'].iteritems():
@@ -66,26 +40,10 @@ def setup_infrastructure_providers(infra_providers_pg):
 #       https://github.com/dajohnso/cfme_tests/tree/add_cloud_provider_db_fixture
 @pytest.fixture
 def setup_cloud_providers(cloud_providers_pg, cfme_data):
-    '''Adds all cloud providers listed in cfme_data.yaml
+    """Adds all cloud providers listed in cfme_data.yaml
 
-    This include both ec2 and openstack providers types
-
-    openstack:
-        name: provider_name
-        hostname: hostname.redhat.com
-        ipaddress: 1.1.1.1
-        port: 5000
-        credentials: cloudqe_openstack
-        server_zone: default
-        type: openstack
-    ec2east:
-        name: ec2-east
-        region: us-east-1
-        credentials: cloudqe_amazon
-        server_zone: default
-        type: ec2
-
-    '''
+    This includes ``ec2`` and ``openstack`` providers types
+    """
     # Does provider exist
     for provider, prov_data in cfme_data['management_systems'].iteritems():
         if prov_data['type'] not in cloud_provider_type_map:
@@ -151,7 +109,7 @@ def setup_cloud_providers(cloud_providers_pg, cfme_data):
 
 @pytest.fixture(scope='module')  # IGNORE:E1101
 def mgmt_sys_api_clients(cfme_data):
-    '''Returns a list of management system api clients'''
+    """Returns a list of management system api clients"""
     clients = {}
     for sys_name in cfme_data['management_systems']:
         if sys_name in clients:

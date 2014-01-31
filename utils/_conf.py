@@ -22,9 +22,7 @@ class ConfigNotFoundException(Exception):
 class Config(dict):
     # This becomes the docstring for utils.conf
     # Supressing or selectively rewriting the dict method docstrings would be handy
-    """
-    utils.conf
-    ----------
+    """Configuration YAML loader and cache
 
     All YAML files stored in the ``conf/`` directory of the project are automatically parsed
     and loaded on request by this module. The parsed files are exposed as importable attributes
@@ -46,7 +44,7 @@ class Config(dict):
 
         # Or just import cfme_data directly
         from utils.conf import cfme_data
-        provider = .cfme_data['management_systems']['provider_name']
+        provider = cfme_data['management_systems']['provider_name']
 
 
     Local Configuration Overrides
@@ -82,11 +80,18 @@ class Config(dict):
         # conf/env.local.yaml
         base_url: https://10.9.8.7/
 
+    .. note::
+
+        This module contains dynamic attributes. As a result, its functionality can be found in
+        the source as ``utils._conf.Config``
+
     Inherited methods
     ^^^^^^^^^^^^^^^^^
 
     Being a ``dict`` subclass, the following dictionary methods can also be used to manipulate
-    ``utils.conf`` at runtime.
+    ``utils.conf`` at runtime. :py:func:`clear` is particularly useful as a means to trigger
+    a reload of config files.
+
     """
     # Stash the exception on the class for convenience, e.g.
     # try:

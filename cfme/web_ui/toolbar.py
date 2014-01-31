@@ -1,11 +1,4 @@
-"""
-cfme.web_ui.toolbar
--------------------
-
-A set of functions for dealing with the toolbar buttons
-
-
-"""
+"""A set of functions for dealing with the toolbar buttons """
 import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
 

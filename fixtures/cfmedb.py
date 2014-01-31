@@ -8,7 +8,7 @@ from utils import conf
 
 
 def pytest_sessionstart(session):
-    '''Setup run for tests'''
+    """Setup run for tests"""
     import db
     db.cfme_db_url = conf.env.get('cfme_db_url')
     if not db.cfme_db_url:
@@ -21,28 +21,26 @@ def pytest_sessionstart(session):
 
 @pytest.fixture
 def db_session():
-    '''Creates a database session based on the db url passed on the CLI
+    """Creates a database session based on the db url passed on the CLI
 
-    Usage example:
-
-    This is a SQLalchemy (http://www.sqlalchemy.org/) session. You can make
+    This is an SQLalchemy (http://www.sqlalchemy.org/) session. You can make
     queries and create new rows in the database with this session.
 
     The available classes are dynamically generated from the database. Consult
     db/__init__.py for a list of available class -> table mappings.
 
-    An example test:
+    Usage:
 
-    @pytest.mark.nondestructive
-    def test_that_tries_for_db(db_session):
-        import db
-        session = db_session
-        for instance in session.query(db.ExtManagementSystem).order_by(
-            db.ExtManagementSystem.id):
-        print instance.name, instance.hostname
+        # This example gets vm names and hostnames from the ext_management_systems table.
+        @pytest.mark.nondestructive
+        def test_that_tries_for_db(db_session):
+            import db
+            session = db_session
+            for instance in session.query(db.ExtManagementSystem).order_by(
+                db.ExtManagementSystem.id):
+            assert instance.name, instance.hostname
 
-    This 'test' prints the management systems from the database.
-    '''
+    """
     import db
     Session = sessionmaker(bind=db.engine)
     return Session()
@@ -50,7 +48,7 @@ def db_session():
 
 @pytest.fixture
 def db_yamls(db_session):
-    '''Returns the yamls from the db configuration table as a dict'''
+    """Returns the yamls from the db configuration table as a dict"""
 
     import db
     import yaml

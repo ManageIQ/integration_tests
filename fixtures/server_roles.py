@@ -24,7 +24,7 @@ def default_roles_list(server_roles_categories):
 def server_roles(fixtureconf, cfme_data, default_roles_list, cnf_configuration_pg):
     """Set the server roles based on a list of roles attached to the test using this fixture
 
-    Usage examples:
+    Usage:
 
         If you want to specify certain roles that have to be set,
         you can use this type of decoration:

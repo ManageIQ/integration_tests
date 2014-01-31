@@ -10,46 +10,52 @@ seen_data_files = set()
 
 @pytest.fixture(scope="module")
 def datafile(request):
-    """datafile fixture, with templating support
+    """datafile(filename, replacements)
+    datafile fixture, with templating support
 
-    Usage
-    =====
+    Args:
 
-    Given a filename, it will attempt to open the given file from the
-    test's corresponding data dir. For example, this:
+        filename: filename to load from the data dir
+        replacements: template replacements
 
-        datafile('testfile') # in tests/subdir/test_module_name.py
+    Returns: Path to the loaded datafile
 
-    Would return a file object representing this file:
+    Usage:
 
-        /path/to/cfme_tests/data/subdir/test_module_name/testfile
+        Given a filename, it will attempt to open the given file from the
+        test's corresponding data dir. For example, this:
 
-    Given a filename with a leading slash, it will attempt to load the file
-    relative to the root of the data dir. For example, this:
+            datafile('testfile') # in tests/subdir/test_module_name.py
 
-        datafile('/common/testfile') # in tests/subdir/test_module_name.py
+        Would return a file object representing this file:
 
-    Would return a file object representing this file:
+            /path/to/cfme_tests/data/subdir/test_module_name/testfile
 
-        /path/to/cfme_tests/data/common/testfile
+        Given a filename with a leading slash, it will attempt to load the file
+        relative to the root of the data dir. For example, this:
 
-    Note that the test module name is not used with the leading slash.
+            datafile('/common/testfile') # in tests/subdir/test_module_name.py
 
-    Templates
-    =========
+        Would return a file object representing this file:
+
+            /path/to/cfme_tests/data/common/testfile
+
+        Note that the test module name is not used with the leading slash.
+
+    .. rubric:: Templates:
 
     This fixture can also handle template replacements. If the datafile
-    being loaded is a python template[1], the dictionary of replacements
+    being loaded is a python template, the dictionary of replacements
     can be passed as the 'replacements' keyword argument. In this case,
-    the returned data file will be a NamedTemporaryFile[2] prepopulated
+    the returned data file will be a NamedTemporaryFile prepopulated
     with the interpolated result from combining the template with
     the replacements mapping.
 
-    [1]: http://docs.python.org/2/library/string.html#template-strings
-    [2]: http://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile
+    * http://docs.python.org/2/library/string.html#template-strings
+    * http://docs.python.org/2/library/tempfile.html#tempfile.NamedTemporaryFile
 
     """
-    return FixtureDataFile(request)
+    return _FixtureDataFile(request)
 
 
 def pytest_addoption(parser):
@@ -96,7 +102,7 @@ def pytest_sessionfinish(session, exitstatus):
         )
 
 
-class FixtureDataFile(object):
+class _FixtureDataFile(object):
     def __init__(self, request):
         self.base_path = str(request.session.fspath)
         self.testmod_path = str(request.fspath)

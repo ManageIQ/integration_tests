@@ -1,10 +1,7 @@
-#!/usr/bin/env python
-"""
-cfme.login
-----------
+"""Provides functions to login as any user
 
-The :py:mod:`cfme.login` module provides functions to login as any user, but also provides a
-convenience function for logging in as admin using the credentials in the cfme yamls.
+Also provides a convenience function for logging in as admin using
+the credentials in the cfme yamls.
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the login page
 """

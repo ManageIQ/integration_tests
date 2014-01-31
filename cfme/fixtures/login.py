@@ -1,9 +1,3 @@
-"""
-cfme.fixtures.login
--------------------
-
-The :py:mod:`cfme.fixtures.login` module provides a generator for logging in as admin
-"""
 import pytest
 from utils.browser import ensure_browser_open
 from cfme.login import login_admin

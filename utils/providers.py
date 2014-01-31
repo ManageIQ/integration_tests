@@ -1,8 +1,4 @@
-"""
-utils.provider
---------------
-
-Provides a simple function to return a provider instance of :py:mod:`utils.mgmt_system`
+"""Function to return a provider instance of :py:mod:`utils.mgmt_system`
 based on the request
 
 :var infra_provider_type_map: Provides mapping of infra provider type names a
@@ -18,18 +14,19 @@ from utils import conf, mgmt_system
 from utils.browser import browser
 from utils.wait import wait_for
 
-# infra and cloud provider type maps, useful for type checking
+#: infra provider type maps, useful for type checking
 infra_provider_type_map = {
     'virtualcenter': mgmt_system.VMWareSystem,
     'rhevm': mgmt_system.RHEVMSystem,
 }
 
+#: cloud provider type maps, useful for type checking
 cloud_provider_type_map = {
     'ec2': mgmt_system.EC2System,
     'openstack': mgmt_system.OpenstackSystem,
 }
 
-# Combined type map, provider_factory doesn't discriminate
+#: Combined type map, used by :py:func:`provider_factory` to create provider instances
 provider_type_map = dict(
     infra_provider_type_map.items() + cloud_provider_type_map.items()
 )

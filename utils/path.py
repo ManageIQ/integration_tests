@@ -1,8 +1,4 @@
-"""
-utils.path
-----------
-
-Project path helpers
+"""Project path helpers
 
 Contains `py.path.local`_ objects for accessing common project locations.
 

@@ -1,9 +1,7 @@
 # coding: utf-8
-"""
-utils.mgmt_system
-=================
+"""Backend management system classes
 
-Base module for Management Systems classes
+Used to communicate with providers without using CFME facilities
 """
 import re
 import time

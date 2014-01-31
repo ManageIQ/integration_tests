@@ -1,8 +1,3 @@
-"""
-utils.ipmi
-----------
-"""
-
 import subprocess
 from utils.wait import wait_for
 

@@ -1,10 +1,4 @@
-"""
-utils.datafile
-==============
-
-A few datafile functions.
-
-"""
+"""datafile functions, to help reliably datafiles from the data directory."""
 import os
 from string import Template
 from tempfile import NamedTemporaryFile
