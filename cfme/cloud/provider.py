@@ -286,9 +286,10 @@ def discover(credential, cancel=False):
         cancel = True
     else:
         cancel = None
-
-    fill(discover_form, {'username': credential.principal,
-                         'password': credential.secret,
-                         'password_verify': credential.verify_secret,
-                         'start_button': not cancel,
-                         'cancel_button': cancel})
+    form_data = {'start_button': not cancel,
+                 'cancel_button': cancel}
+    if credential:
+        form_data.update({'username': credential.principal,
+                          'password': credential.secret,
+                          'password_verify': credential.verify_secret})
+    fill(discover_form, form_data)
