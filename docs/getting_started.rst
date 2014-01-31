@@ -28,7 +28,8 @@ Setup
   * ``postgresql-devel``
   * ``libxml2-devel``
   * ``libxslt-devel``
-  * yum users: ``sudo yum install gcc postgresql-devel libxml2-devel libxslt-devel``
+  * ``zeromq3-devel``
+  * yum users: ``sudo yum install gcc postgresql-devel libxml2-devel libxslt-devel zeromq3-devel``
 
 * Install python dependencies:
 
