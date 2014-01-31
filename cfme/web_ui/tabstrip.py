@@ -29,7 +29,7 @@ def get_all_tabs():
 
     Returns: :py:class:`list` of :py:class:`str` Displayed names.
     """
-    return [opt.text.strip().encode("utf-8") for opt in sel.elements("./ul/li/a", _root())]
+    return [opt.text.strip().encode("utf-8") for opt in sel.elements("./ul/li/a", root=_root())]
 
 
 def get_selected_tab():
@@ -37,7 +37,7 @@ def get_selected_tab():
 
     Returns: :py:class:`str` Displayed name
     """
-    return sel.element("./ul/li[@aria-selected='true']/a", _root())\
+    return sel.element("./ul/li[@aria-selected='true']/a", root=_root())\
         .text\
         .strip()\
         .encode("utf-8")
@@ -53,7 +53,7 @@ def is_tab_element_selected(element):
         element: WebElement with the link (a)
     Returns: :py:class:`bool`
     """
-    return "true" in sel.element("..", element).get_attribute("aria-selected").lower()
+    return "true" in sel.element("..", root=element).get_attribute("aria-selected").lower()
 
 
 def is_tab_selected(ident_string):
@@ -72,7 +72,7 @@ def get_clickable_tab(ident_string):
     Args:
         ident_string: The text diplayed on the tab.
     """
-    return sel.element("./ul/li/a[.='%s']" % ident_string, _root())
+    return sel.element("./ul/li/a[.='%s']" % ident_string, root=_root())
 
 
 def select_tab(ident_string):
