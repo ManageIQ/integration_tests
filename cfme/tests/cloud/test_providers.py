@@ -59,7 +59,7 @@ def test_provider_edit(provider_data):
     with update(provider_data) as provider_data:
         provider_data.name = str(uuid.uuid4())  # random uuid
 
-    flash.assert_message_match('Cloud Provider "%s" was saved' % provider_data.name)
+    flash.assert_message_match('Cloud Providers "%s" was saved' % provider_data.name)
 
 
 def test_that_checks_flash_when_add_cancelled():
