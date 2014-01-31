@@ -1,16 +1,12 @@
-# This pulls in all the libraries needed to run Selenium tests
-# on Mozilla WebQA projects
-
 cartouche
 boto
 bottle
 bottle-sqlite
 flake8
+ipython
 Jinja2
-lxml
 ovirt-engine-sdk-python
 paramiko
-psycopg2
 py
 PyPDF2
 pysphere
@@ -24,5 +20,19 @@ selenium
 singledispatch
 sqlalchemy
 suds
+tornado
 UnittestZero
 ui-navigate
+
+###
+# Libraries with compiled components, and their related devel packages
+###
+
+# lxml super SGML parser, needs libxml2-devel and libxslt-devel
+lxml
+
+# Postgres client bindings, needs postgresql-devel
+psycopg2
+
+# zeromq bindings, for ipython, needs zeromq3-devel
+pyzmq
