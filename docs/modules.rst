@@ -4,4 +4,7 @@ Modules
 .. toctree::
     :glob:
 
-    modules/*
+    modules/cfme/cfme
+    modules/fixtures/fixtures
+    modules/utils/utils
+

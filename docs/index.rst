@@ -5,6 +5,7 @@ Contents:
 
 .. toctree::
    :titlesonly:
+   :maxdepth: 2
 
    getting_started
    guides

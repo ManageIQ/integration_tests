@@ -26,6 +26,9 @@ conf_path = project_path.join('conf')
 #: datafile storage, ``cfme_tests/data/``
 data_path = project_path.join('data')
 
+#: doc root, where these file came from! ``cfme_tests/docs/``
+docs_path = project_path.join('docs')
+
 #: log storage, ``cfme_tests/log/``
 log_path = project_path.join('log')
 
