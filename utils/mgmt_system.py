@@ -1,5 +1,10 @@
 # coding: utf-8
-"""Base module for Management Systems classes"""
+"""
+utils.mgmt_system
+=================
+
+Base module for Management Systems classes
+"""
 import re
 import time
 import boto
@@ -19,9 +24,10 @@ class MgmtSystemAPIBase(object):
     """Base interface class for Management Systems
 
     Interface notes:
-    - Initializers of subclasses must support **kwargs in their
+
+    * Initializers of subclasses must support \*\*kwargs in their
       signtures
-    - Action methods (start/stop/etc) should block until the requested
+    * Action methods (start/stop/etc) should block until the requested
       action is complete
 
     """
@@ -35,11 +41,9 @@ class MgmtSystemAPIBase(object):
     def start_vm(self, vm_name):
         """Starts a vm.
 
-        :param vm_name: name of the vm to be started
-        :type  vm_name: str
-        :return: whether vm action has been initiated properly
-        :rtype: boolean
-
+        Args:
+            vm_name: name of the vm to be started
+        Returns: whether vm action has been initiated properly
         """
         raise NotImplementedError('start_vm not implemented.')
 
@@ -47,11 +51,9 @@ class MgmtSystemAPIBase(object):
     def stop_vm(self, vm_name):
         """Stops a vm.
 
-        :param vm_name: name of the vm to be stopped
-        :type  vm_name: str
-        :return: whether vm action has been initiated properly
-        :rtype: boolean
-
+        Args:
+            vm_name: name of the vm to be stopped
+        Returns: whether vm action has been initiated properly
         """
         raise NotImplementedError('stop_vm not implemented.')
 
@@ -59,11 +61,9 @@ class MgmtSystemAPIBase(object):
     def create_vm(self, vm_name):
         """Creates a vm.
 
-        :param vm_name: name of the vm to be created
-        :type  vm_name: str
-        :return: whether vm action has been initiated properly
-        :rtype: boolean
-
+        Args:
+            vm_name: name of the vm to be created
+        Returns: whether vm action has been initiated properly
         """
         raise NotImplementedError('create_vm not implemented.')
 
@@ -71,11 +71,9 @@ class MgmtSystemAPIBase(object):
     def delete_vm(self, vm_name):
         """Deletes a vm.
 
-        :param vm_name: name of the vm to be deleted
-        :type  vm_name: str
-        :return: whether vm action has been initiated properly
-        :rtype: boolean
-
+        Args:
+            vm_name: name of the vm to be deleted
+        Returns: whether vm action has been initiated properly
         """
         raise NotImplementedError('delete_vm not implemented.')
 
@@ -83,11 +81,9 @@ class MgmtSystemAPIBase(object):
     def restart_vm(self, vm_name):
         """Restart a vm.
 
-        :param vm_name: name of the vm to be restarted
-        :type  vm_name: str
-        :return: whether vm stop/start have been initiated properly
-        :rtype: boolean
-
+        Args:
+            vm_name: name of the vm to be restarted
+        Returns: whether vm stop/start have been initiated properly
         """
         raise NotImplementedError('restart_vm not implemented.')
 
@@ -95,9 +91,7 @@ class MgmtSystemAPIBase(object):
     def list_vm(self, **kwargs):
         """Returns a list of vm names.
 
-        :return: list of vm names
-        :rtype: list
-
+        Returns: list of vm names
         """
         raise NotImplementedError('list_vm not implemented.')
 
@@ -105,9 +99,7 @@ class MgmtSystemAPIBase(object):
     def list_template(self):
         """Returns a list of templates/images.
 
-        :return: list of template/image names
-        :rtype: list
-
+        Returns: list of template/image names
         """
         raise NotImplementedError('list_template not implemented.')
 
@@ -117,9 +109,7 @@ class MgmtSystemAPIBase(object):
 
         Only valid for OpenStack and Amazon
 
-        :return: list of flavor names
-        :rtype: list
-
+        Returns: list of flavor names
         """
         raise NotImplementedError('list_flavor not implemented.')
 
@@ -127,26 +117,22 @@ class MgmtSystemAPIBase(object):
     def info(self):
         """Returns basic information about the mgmt system.
 
-        :return: string representation of name/version of mgmt system.
-        :rtype: str
-
+        Returns: string representation of name/version of mgmt system.
         """
         raise NotImplementedError('info not implemented.')
 
     @abstractmethod
     def disconnect(self):
-        """Disconnect the API from mgmt system"""
+        """Disconnects the API from mgmt system"""
         raise NotImplementedError('disconnect not implemented.')
 
     @abstractmethod
     def vm_status(self, vm_name):
         """Status of VM.
 
-        :param vm_name: name of the vm to get status
-        :type  vm_name: str
-        :return: state of the vm
-        :rtype: string
-
+        Args:
+            vm_name: name of the vm to get status
+        Returns: state of the vm
         """
         raise NotImplementedError('vm_status not implemented.')
 
@@ -154,11 +140,9 @@ class MgmtSystemAPIBase(object):
     def is_vm_running(self, vm_name):
         """Is the vm running?
 
-        :param vm_name: name of the vm
-        :type  vm_name: str
-        :return: whether the vm is running or not
-        :rtype: boolean
-
+        Args:
+            vm_name: name of the vm
+        Returns: whether the vm is running or not
         """
         raise NotImplementedError('is_vm_running not implemented.')
 
@@ -166,11 +150,9 @@ class MgmtSystemAPIBase(object):
     def is_vm_stopped(self, vm_name):
         """Is the vm stopped?
 
-        :param vm_name: name of the vm
-        :type  vm_name: str
-        :return: whether the vm is stopped or not
-        :rtype: boolean
-
+        Args:
+            vm_name: name of the vm
+        Returns: whether the vm is stopped or not
         """
         raise NotImplementedError('is_vm_stopped not implemented.')
 
@@ -178,11 +160,9 @@ class MgmtSystemAPIBase(object):
     def is_vm_suspended(self, vm_name):
         """Is the vm suspended?
 
-        :param vm_name: name of the vm
-        :type  vm_name: str
-        :return: whether the vm is suspended or not
-        :rtype: boolean
-
+        Args:
+            vm_name: name of the vm
+        Returns: whether the vm is suspended or not
         """
         raise NotImplementedError('is_vm_suspended not implemented.')
 
@@ -190,11 +170,9 @@ class MgmtSystemAPIBase(object):
     def suspend_vm(self, vm_name):
         """Suspend a vm.
 
-        :param vm_name: name of the vm to be suspended
-        :type  vm_name: str
-        :return: whether vm suspend has been initiated properly
-        :rtype: boolean
-
+        Args:
+            vm_name: name of the vm to be suspended
+        Returns: whether vm suspend has been initiated properly
         """
         raise NotImplementedError('restart_vm not implemented.')
 
@@ -202,13 +180,10 @@ class MgmtSystemAPIBase(object):
     def clone_vm(self, source_name, vm_name):
         """Clone a VM.
 
-        :param source_name: The source VM to clone from
-        :type  source_name: str
-        :param vm_name: The name of the new VM
-        :type  vm_name: str
-        :return: IP address of the clone
-        :rtype: str
-
+        Args:
+            source_name: The source VM to clone from
+            vm_name: The name of the new VM
+        Returns: IP address of the clone
         """
         raise NotImplementedError('clone_vm not implemented.')
 
@@ -216,11 +191,9 @@ class MgmtSystemAPIBase(object):
     def does_vm_exist(self, name):
         """Does VM exist?
 
-        :param vm_name: The name of the VM
-        :type  vm_name: str
-        :return: whether vm exists
-        :rtype: boolean
-
+        Args:
+            vm_name: The name of the VM
+        Returns: whether vm exists
         """
         raise NotImplementedError('does_vm_exist not implemented.')
 
@@ -228,11 +201,9 @@ class MgmtSystemAPIBase(object):
     def deploy_template(self, template, *args, **kwargs):
         """Deploy a VM from a template
 
-        :param template: The name of the template to deploy
-        :type  template_name: str
-        :return: name or id(ec2) of vm
-        :rtype: str
-
+        Args:
+            template: The name of the template to deploy
+        Returns: name or id(ec2) of vm
         """
         raise NotImplementedError('deploy_template not implemented.')
 
@@ -240,17 +211,20 @@ class MgmtSystemAPIBase(object):
     def get_ip_address(self, vm_name):
         """get VM ip address
 
-        :param vm_name: The name of the VM
-        :type  vm_name: str
-        :return: vm ip address
-        :rtype: str
-
+        Args:
+            vm_name: The name of the VM
+        Returns: vm ip address
         """
         raise NotImplementedError('get_ip_address not implemented.')
 
     def stats(self, *requested_stats):
-        '''Returns all available stats, if none are explicitly requested'''
+        """Returns all available stats, if none are explicitly requested
 
+        Args:
+            *requested_stats: A list giving the name of the stats to return. Stats are defined
+                in the _stats_available attibute of the specific class.
+        Returns: A dict of stats.
+        """
         requested_stats = requested_stats or self._stats_available
         return {stat: self._stats_available[stat](self) for stat in requested_stats}
 
@@ -265,6 +239,12 @@ class VMWareSystem(MgmtSystemAPIBase):
     Detriments of pysphere:
       - Response often are not detailed enough.
 
+    Args:
+        hostname: The hostname of the system.
+        username: The username to connect with.
+        password: The password to connect with.
+
+    Returns: A :py:class:`VMWareSystem` object.
     """
 
     _stats_available = {
@@ -280,6 +260,13 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.api.connect(hostname, username, password)
 
     def _get_vm(self, vm_name=None):
+        """ Returns a vm from the VI object.
+
+        Args:
+            vm_name: The name of the VM.
+
+        Returns: a pysphere object.
+        """
         if vm_name is None:
             raise Exception('Could not find a VM named %s.' % vm_name)
         else:
@@ -290,6 +277,12 @@ class VMWareSystem(MgmtSystemAPIBase):
                 raise Exception(ex)
 
     def does_vm_exist(self, name):
+        """ Checks if a vm exists or not.
+
+        Args:
+            name: The name of the requested vm.
+        Returns: A boolean, ``True`` if the vm exists, ``False`` if not.
+        """
         try:
             self._get_vm(name)
             return True
@@ -297,6 +290,12 @@ class VMWareSystem(MgmtSystemAPIBase):
             return False
 
     def _get_resource_pool(self, resource_pool_name=None):
+        """ Returns a resource pool MOR for a specified name.
+
+        Args:
+            resource_pool_name: The name of the resource pool.
+        Returns: The MOR of the resource pool.
+        """
         rps = self.api.get_resource_pools()
         for mor, path in rps.iteritems():
             if re.match('.*%s' % resource_pool_name, path):
@@ -305,6 +304,12 @@ class VMWareSystem(MgmtSystemAPIBase):
         return rps.keys()[0]
 
     def get_ip_address(self, vm_name):
+        """ Returns an IP address for the selected VM.
+
+        Args:
+            vm_name: The name of the vm to obtain the IP for.
+        Returns: A string containing the first found IP that isn't the loopback device.
+        """
         vm = self._get_vm(vm_name)
         maxwait = 600
         net_info = None
@@ -323,6 +328,14 @@ class VMWareSystem(MgmtSystemAPIBase):
         return None
 
     def _get_list_vms(self, get_template=False):
+        """ Obtains a list of all VMs on the system.
+
+        Optional flag to obtain template names too.
+
+        Args:
+            get_template: A boolean describing if it should return template names also.
+        Returns: A list of VMs.
+        """
         template_or_vm_list = []
 
         props = self.api._retrieve_properties_traversal(property_names=['name', 'config.template'],
@@ -465,46 +478,61 @@ class RHEVMSystem(MgmtSystemAPIBase):
     This class piggy backs off ovirtsdk.
 
     Benefits of ovirtsdk:
-    - Don't need intimite knowledge w/ RHEVM api itself.
+
+    * Don't need intimite knowledge w/ RHEVM api itself.
+
     Detriments of ovirtsdk:
-    - Response to most quaries are returned as an object rather than a string.
+
+    * Response to most quaries are returned as an object rather than a string.
       This makes it harder to do simple stuff like getting the status of a vm.
-    - Because of this, it makes listing VMs based on **kwargs impossible
+    * Because of this, it makes listing VMs based on \*\*kwargs impossible
       since ovirtsdk relies on re class to find matches.
 
-    E.G. List out VM with this name (positive case)
-      Ideal: self.api.vms.list(name='test_vm')
-      Underneath the hood:
-        - ovirtsdk fetches list of all vms [ovirtsdk.infrastructure.brokers.VM
-          object, ...]
-        - ovirtsdk then tries to filter the result using re.
-          - tries to look for 'name' attr in ovirtsdk.infrastructure.brokers.VM
-            object
-          - found name attribute, in this case, the type of the value of the
-            attribute is string.
-          - match() succeed in comparing the value to 'test_vm'
+      * | For example: List out VM with this name (positive case)
+        | Ideal: self.api.vms.list(name='test_vm')
+        | Underneath the hood:
 
-    E.G. List out VM with that's powered on (negative case)
-      Ideal: self.api.vms.list(status='up')
-      Underneath the hood:
-        - '^same step as above except^'
-            - found status attribute, in this case, the type of the value of
-              the attribute is ovirtsdk.xml.params.Status
-            - match() failed because class is compared to string 'up'
+        * ovirtsdk fetches list of all vms [ovirtsdk.infrastructure.brokers.VM
+          object, ...]
+        * ovirtsdk then tries to filter the result using re.
+
+          * tries to look for 'name' attr in ovirtsdk.infrastructure.brokers.VM
+            object
+          * found name attribute, in this case, the type of the value of the
+            attribute is string.
+          * match() succeed in comparing the value to 'test_vm'
+
+      * | For example: List out VM with that's powered on (negative case)
+        | Ideal: self.api.vms.list(status='up')
+        | Underneath the hood:
+
+        * **same step as above except**
+
+          * found status attribute, in this case, the type of the value of
+            the attribute is ovirtsdk.xml.params.Status
+          * match() failed because class is compared to string 'up'
 
      This problem should be attributed to how RHEVM api was designed rather
      than how ovirtsdk handles RHEVM api responses.
 
-    - Obj. are not updated after action calls.
-      - E.G.
-        vm = api.vms.get(name='test_vm')
-        vm.status.get_state() # returns 'down'
-        vm.start()
-        # wait a few mins
-        vm.status.get_state() # returns 'down'; wtf?
+    * Obj. are not updated after action calls.
 
-        vm = api.vms.get(name='test_vm')
-        vm.status.get_state() # returns 'up'
+      * For example::
+          vm = api.vms.get(name='test_vm')
+          vm.status.get_state() # returns 'down'
+          vm.start()
+          # wait a few mins
+          vm.status.get_state() # returns 'down'; wtf?
+
+          vm = api.vms.get(name='test_vm')
+          vm.status.get_state() # returns 'up'
+
+    Args:
+        hostname: The hostname of the system.
+        username: The username to connect with.
+        password: The password to connect with.
+
+    Returns: A :py:class:`RHEVMSystem` object.
     """
 
     _stats_available = {
@@ -526,6 +554,13 @@ class RHEVMSystem(MgmtSystemAPIBase):
         self.api = API(url=url, username=username, password=password, insecure=True)
 
     def _get_vm(self, vm_name=None):
+        """ Returns a vm from the RHEVM object.
+
+        Args:
+            vm_name: The name of the VM.
+
+        Returns: an ovirtsdk vm object.
+        """
         if vm_name is None:
             raise Exception('Could not find a VM named %s.' % vm_name)
         else:
@@ -635,9 +670,9 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return [cluster.name for cluster in cluster_list]
 
     def list_template(self, **kwargs):
-        '''
-        CFME ignores the 'Blank' template, so we do too
-        '''
+        """
+        Note: CFME ignores the 'Blank' template, so we do too
+        """
         template_list = self.api.templates.list(**kwargs)
         return [template.name for template in template_list if template.name != "Blank"]
 
@@ -706,6 +741,9 @@ class EC2System(MgmtSystemAPIBase):
     For the purposes of the EC2 system, a VM's instance ID is its name because
     EC2 instances don't have to have unique names.
 
+    Args:
+        *kwargs: Arguments to connect, usually, username, password, region.
+    Returns: A :py:class:`EC2System` object.
     """
 
     _stats_available = {
@@ -758,14 +796,12 @@ class EC2System(MgmtSystemAPIBase):
     def vm_status(self, instance_id):
         """Returns the status of the requested instance
 
-        :param  instance_id: ID of the instance to inspect
-        :type   instance_id: basestring
-        :return: Instance status.
-        :rtype:  basestring
+        Args:
+            instance_id: ID of the instance to inspect
+        Returns: Instance status.
 
-        See this page for possible return values:
-        http://docs.aws.amazon.com/AWSEC2/latest/APIReference/
-            ApiReference-ItemType-InstanceStateType.html
+        See this `page <http://docs.aws.amazon.com/AWSEC2/latest/APIReference/
+        ApiReference-ItemType-InstanceStateType.html>`_ for possible return values.
 
         """
         instance_id = self._get_instance_id_by_name(instance_id)
@@ -781,11 +817,9 @@ class EC2System(MgmtSystemAPIBase):
     def delete_vm(self, instance_id):
         """Deletes the an instance
 
-        :param  instance_id: ID of the instance to act on
-        :type   instance_id: basestring
-        :return: Whether or not the backend reports the action completed
-        :rtype:  bool
-
+        Args:
+            instance_id: ID of the instance to act on
+        Returns: Whether or not the backend reports the action completed
         """
         instance_id = self._get_instance_id_by_name(instance_id)
         try:
@@ -798,11 +832,9 @@ class EC2System(MgmtSystemAPIBase):
     def start_vm(self, instance_id):
         """Start an instance
 
-        :param  instance_id: ID of the instance to act on
-        :type   instance_id: basestring
-        :return: Whether or not the backend reports the action completed
-        :rtype:  bool
-
+        Args:
+            instance_id: ID of the instance to act on
+        Returns: Whether or not the backend reports the action completed
         """
         instance_id = self._get_instance_id_by_name(instance_id)
         try:
@@ -815,11 +847,9 @@ class EC2System(MgmtSystemAPIBase):
     def stop_vm(self, instance_id):
         """Stop an instance
 
-        :param  instance_id: ID of the instance to act on
-        :type   instance_id: basestring
-        :return: Whether or not the backend reports the action completed
-        :rtype:  bool
-
+        Args:
+            instance_id: ID of the instance to act on
+        Returns: Whether or not the backend reports the action completed
         """
         instance_id = self._get_instance_id_by_name(instance_id)
         try:
@@ -832,62 +862,55 @@ class EC2System(MgmtSystemAPIBase):
     def restart_vm(self, instance_id):
         """Restart an instance
 
-        :param  instance_id: ID of the instance to act on
-        :type   instance_id: basestring
-        :return: Whether or not the backend reports the action completed
-        :rtype:  bool
+        Args:
+            instance_id: ID of the instance to act on
+        Returns: Whether or not the backend reports the action completed
 
         The action is taken in two separate calls to EC2. A 'False' return can
         indicate a failure of either the stop action or the start action.
+
+        Note: There is a reboot_instances call available on the API, but it provides
+            less insight than blocking on stop_vm and start_vm. Furthermore,
+            there is no "rebooting" state, so there are potential monitoring
+            issues that are avoided by completing these steps atomically
         """
-        # There is a reboot_instances call available on the API, but it provides
-        # less insight than blocking on stop_vm and start_vm. Furthermore,
-        # there is no "rebooting" state, so there are potential monitoring
-        # issues that are avoided by completing these steps atomically
         return self.stop_vm(instance_id) and self.start_vm(instance_id)
 
     def is_vm_running(self, instance_id):
         """Is the VM running?
 
-        :param  instance_id: ID of the instance to inspect
-        :type   instance_id: basestring
-        :return: Whether or not the requested instance is running
-        :rtype: bool
-
+        Args:
+            instance_id: ID of the instance to inspect
+        Returns: Whether or not the requested instance is running
         """
         return self.vm_status(instance_id) in self.states['running']
 
     def is_vm_stopped(self, instance_id):
         """Is the VM stopped?
 
-        :param  instance_id: ID of the instance to inspect
-        :type   instance_id: basestring
-        :return: Whether or not the requested instance is stopped
-        :rtype: bool
-
+        Args:
+            instance_id: ID of the instance to inspect
+        Returns: Whether or not the requested instance is stopped
         """
         return self.vm_status(instance_id) in self.states['stopped']
 
     def suspend_vm(self, instance_id):
         """Suspend a VM: Unsupported by EC2
 
-        :param  instance_id: ID of the instance to act on
-        :type   instance_id: basestring
-        :raises: Exception
-
-        The action is taken in two separate calls to EC2. A 'False' return can
-        indicate a failure of either the stop action or the start action.
-
+        Args:
+            instance_id: ID of the instance to act on
+        Raises:
+            Exception: The action is not supported on the system
         """
         raise Exception('Requested action is not supported by this system')
 
     def is_vm_suspended(self, instance_id):
         """Is the VM suspended? We'll never know because EC2 don't support this.
 
-        :param  instance_id: ID of the instance to inspect
-        :type   instance_id: basestring
-        :raises: Exception
-
+        Args:
+            instance_id: ID of the instance to inspect
+        Raises:
+            Exception: The action is not supported on the system
         """
         raise Exception('Requested action is not supported by this system')
 
@@ -897,15 +920,14 @@ class EC2System(MgmtSystemAPIBase):
     def deploy_template(self, template, *args, **kwargs):
         """Instantiate the requested template image
 
-        :param  ami_id: AMI ID to instantiate
-        :type   ami_id: basestring
-        :return: Instance ID of the created instance
-        :rtype:  basestring
+        Args:
+            ami_id: AMI ID to instantiate
+        Returns: Instance ID of the created instance
 
         Packed arguments are passed along to boto's run_instances method.
 
-        min_count and max_count will be forced to '1'; if you're trying to do
-        anything fancier than that, you might be in the wrong place
+        Note: min_count and max_count will be forced to '1'; if you're trying to do
+            anything fancier than that, you might be in the wrong place
 
         """
         # Enforce create_vm only creating one VM
@@ -980,7 +1002,6 @@ class EC2System(MgmtSystemAPIBase):
 
         Takes an optional timeout value; set this to None to disable the timeout
         (probably a bad idea). The timeout has a sane default.
-
         """
         start = time.time()
         while self.vm_status(instance_id) not in expected:
@@ -993,6 +1014,12 @@ class OpenstackSystem(MgmtSystemAPIBase):
     """Openstack management system
 
     Uses novaclient.
+
+    Args:
+        tenant: The tenant to log in with.
+        username: The username to connect with.
+        password: The password to connect with.
+        auth_url: The authentication url.
 
     """
 
@@ -1110,7 +1137,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def deploy_template(self, template, *args, **kwargs):
         """ Deploys a vm from a template.
 
-        If assign_floating_ip kwarg is present, then create_vm() will
+        If assign_floating_ip kwarg is present, then :py:meth:`OpenstackSystem.create_vm` will
         attempt to register a floating IP address from the pool specified
         in the arg.
         """
@@ -1153,7 +1180,6 @@ class OpenstackSystem(MgmtSystemAPIBase):
         allow the find method to be used on other tenants. The list()
         method is the only one that allows an all_tenants=True keyword
         """
-
         instances = self._get_all_instances()
         for instance in instances:
             if instance.name == name:
