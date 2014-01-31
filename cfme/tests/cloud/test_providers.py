@@ -47,7 +47,7 @@ def test_that_checks_flash_when_discovery_cancelled():
 @pytest.mark.usefixtures('has_no_providers')
 def test_provider_add(provider_data):
     provider_data.create()
-    flash.assert_message_match('Cloud Provider "%s" was saved' % provider_data.name)
+    flash.assert_message_match('Cloud Providers "%s" was saved' % provider_data.name)
 
 
 @pytest.mark.usefixtures('has_no_providers')
@@ -59,11 +59,11 @@ def test_provider_edit(provider_data):
     with update(provider_data) as provider_data:
         provider_data.name = str(uuid.uuid4())  # random uuid
 
-    flash.assert_message_match('Cloud Providers "%s" was saved' % provider_data.name)
+    flash.assert_message_match('Cloud Provider "%s" was saved' % provider_data.name)
 
 
 def test_that_checks_flash_when_add_cancelled():
     """Tests that the flash message is correct when add is cancelled"""
-    prov = provider.Provider()
+    prov = provider.EC2Provider()
     prov.create(cancel=True)
     flash.assert_message_match('Add of new Cloud Provider was cancelled by the user')

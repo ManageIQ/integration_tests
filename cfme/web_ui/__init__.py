@@ -198,6 +198,7 @@ from cfme import exceptions
 from selenium.common import exceptions as sel_exceptions
 import selenium
 from singledispatch import singledispatch
+import types
 
 
 class Region(object):
@@ -533,6 +534,12 @@ def _sd_fill_table(table, cells):
 def _sd_fill_otext(ot, value):
     """Filled just like a text box."""
     sel.set_text(ot, value)
+
+
+@fill.register(types.NoneType)
+def _sd_fill_none(*args, **kwargs):
+    """ Ignore a NoneType """
+    pass
 
 
 class Form(Region):

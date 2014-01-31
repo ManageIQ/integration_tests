@@ -140,7 +140,6 @@ class Provider(Updateable):
         """
 
         nav.go_to('cloud_provider_edit', context={'provider': self})
-        print updates
         fill(properties_form, self._form_mapping(**updates))
         fill(self.credentials, validate=validate_credentials)
         self._submit(cancel, page.save_button)
