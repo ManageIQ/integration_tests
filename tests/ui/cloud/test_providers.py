@@ -63,60 +63,6 @@ def has_no_providers(db_session):
 
 @pytest.mark.usefixtures('maximized')
 class TestCloudProviders:
-    @pytest.mark.nondestructive
-    def test_that_checks_flash_with_empty_discovery_form(self,
-            cloud_providers_pg):
-        '''Tests that the flash message is correct when discovery form is
-        empty
-        '''
-        prov_pg = cloud_providers_pg
-        Assert.true(prov_pg.is_the_current_page)
-        prov_discover_pg = prov_pg.click_on_discover_providers()
-        prov_discover_pg.click_on_start()
-        Assert.equal(prov_discover_pg.flash.message,
-                'User ID is required',
-                FLASH_MESSAGE_NOT_MATCHED)
-
-    @pytest.mark.nondestructive
-    def test_that_checks_flash_when_discovery_cancelled(self,
-            cloud_providers_pg):
-        '''Tests that the flash message is correct when discovery is cancelled
-        '''
-        prov_pg = cloud_providers_pg
-        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-        prov_discover_pg = prov_pg.click_on_discover_providers()
-        prov_pg = prov_discover_pg.click_on_cancel()
-        Assert.true(prov_pg.is_the_current_page, CURRENT_PAGE_NOT_MATCHED)
-        Assert.equal(prov_pg.flash.message,
-                'Amazon Cloud Providers Discovery was cancelled by the user',
-                FLASH_MESSAGE_NOT_MATCHED)
-
-    @pytest.mark.usefixtures('has_no_providers')
-    def test_provider_add(
-            self, cloud_providers_pg, provider_data, soap_client):
-        '''Tests adding a new management system
-        '''
-        prov_pg = cloud_providers_pg
-        prov_add_pg = prov_pg.click_on_add_new_provider()
-        prov_pg = prov_add_pg.add_provider(provider_data)
-        Assert.equal(prov_pg.flash.message,
-                'Cloud Providers "%s" was saved' % provider_data['name'],
-                FLASH_MESSAGE_NOT_MATCHED)
-        prov_pg.wait_for_provider_or_timeout(provider_data)
-
-    @pytest.mark.usefixtures('has_no_providers')
-    def test_provider_add_with_bad_credentials(
-            self, cloud_providers_pg, provider_data):
-        '''Tests adding a new management system with bad credentials
-        '''
-        prov_pg = cloud_providers_pg
-        prov_add_pg = prov_pg.click_on_add_new_provider()
-        provider_data['credentials'] = 'bad_credentials'
-        prov_add_pg = prov_add_pg.add_provider_with_bad_credentials(
-            provider_data)
-        Assert.equal(prov_add_pg.flash.message,
-            'Login failed due to a bad username or password.',
-            FLASH_MESSAGE_NOT_MATCHED)
 
     @pytest.mark.usefixtures('setup_cloud_providers')
     def test_validate_provider_details(self,
