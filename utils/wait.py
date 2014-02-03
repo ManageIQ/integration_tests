@@ -34,6 +34,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             clobber the exception and treat it as a fail_condition.
         delay: An integer describing the number of seconds to delay before trying func()
             again.
+        fail_func: A function to be run after every unsuccessful attempt to run func()
 
     Returns:
         A tuple containing the output from func() and a float detailing the total wait time.
@@ -50,6 +51,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     fail_condition = kwargs.get('fail_condition', False)
     handle_exception = kwargs.get('handle_exception', False)
     delay = kwargs.get('delay', 1)
+    fail_func = kwargs.get('fail_func', None)
 
     t_delta = 0
     while t_delta <= num_sec:
@@ -61,6 +63,8 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             else:
                 raise
         if out == fail_condition:
+            if fail_func:
+                fail_func()
             time.sleep(delay)
             total_time += delay
             if expo:
