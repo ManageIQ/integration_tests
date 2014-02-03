@@ -99,7 +99,7 @@ def is_displayed(loc):
     Checks if a particular locator is displayed
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects either a  string, WebElement, tuple.
 
     Returns: ``True`` if element is displayed, ``False`` if not
 
@@ -117,7 +117,7 @@ def wait_for_element(loc):
     Wrapper around wait_until, specific to an element.
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects either a string, WebElement, tuple.
     """
     wait_until(lambda s: is_displayed(loc), "Element '{}' did not appear as expected.".format(loc))
 
@@ -127,7 +127,7 @@ def click(loc):
     Clicks on an element.
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects either a string, WebElement, tuple.
     """
     ActionChains(browser()).move_to_element(element(loc)).click().perform()
     wait_for_ajax()
@@ -138,7 +138,7 @@ def move_to_element(loc):
     Moves to an element.
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects either a string, WebElement, tuple.
     """
     ActionChains(browser()).move_to_element(element(loc)).perform()
 
@@ -160,7 +160,7 @@ def tag(loc):
     Returns the tag name of an element
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects either a string, WebElement, tuple.
 
     Returns: A string containing the tag element's name.
     """
@@ -172,7 +172,7 @@ def get_attribute(loc, attr):
     Returns the value of the HTML attribute of the given locator.
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects eithera string, WebElement, tuple.
         attr: An attribute name.
 
     Returns: Text describing the attribute of the element.
@@ -185,7 +185,7 @@ def send_keys(loc, text):
     Sends the supplied keys to an element.
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects either a string, WebElement, tuple.
         text: The text to inject into the element.
     """
     if text is not None:
@@ -200,7 +200,7 @@ def set_text(loc, text):
     Clears the element and then sends the supplied keys.
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects either a string, WebElement, tuple.
         text: The text to inject into the element.
     """
     if text is not None:
@@ -238,7 +238,7 @@ def select_by_text(loc, text):
     Works on a select element and selects an option by the visible text.
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects either a string, WebElement, tuple.
         text: The select element option's visible text.
     """
     if text is not None:
@@ -253,7 +253,7 @@ def select_by_value(loc, value):
     Works on a select element and selects an option by the value attribute.
 
     Args:
-        loc: A locator, expects eithera  string, WebElement, tuple.
+        loc: A locator, expects either a string, WebElement, tuple.
         value: The select element's option value.
     """
     if value is not None:
@@ -283,10 +283,22 @@ def checkbox(loc, set_to=False):
 
 
 def check(loc):
+    """
+    Convenience function to check a checkbox
+
+    Args:
+        loc: The locator of the element
+    """
     checkbox(loc, True)
 
 
 def uncheck(loc):
+    """
+    Convenience function to uncheck a checkbox
+
+    Args:
+        loc: The locator of the element
+    """
     checkbox(loc, False)
 
 
@@ -310,6 +322,9 @@ def get(url):
 
 
 def refresh():
+    """
+    Refreshes the current browser window.
+    """
     browser().refresh()
 
 

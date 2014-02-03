@@ -35,7 +35,7 @@ def _is_logged_in():
 
 def press_enter_after_password():
     """
-    Convenience function to send an carriange return at the end of the password field.
+    Convenience function to send a carriange return at the end of the password field.
     """
     browser.send_keys(page.password_text, Keys.RETURN)
 
@@ -79,6 +79,9 @@ def login_admin(**kwargs):
 
 
 def logout():
+    """
+    Logs out of CFME.
+    """
     if _is_logged_in():
         if not browser.is_displayed(page.logout):
             browser.click(page.user_dropdown)
@@ -86,6 +89,10 @@ def logout():
 
 
 def current_username():
+    """ Returns the current username.
+
+    Returns: the current username.
+    """
     if _is_logged_in():
         return browser.text(page.user_dropdown).split('|')[0].strip()
     else:
