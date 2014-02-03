@@ -1,10 +1,14 @@
-"""
-cfme.web_ui.accordion
----------------------
+"""A set of functions for dealing with accordions in the UI.
 
-A set of functions for dealing with the accordions.
+Usage:
 
+    Using Accordions is simply a case of either selecting it to return the element,
+    or using the built in click method. As shown below::
 
+      acc = web_ui.accordion
+
+      acc.click('Diagnostics')
+      acc.is_active('Diagnostics')
 """
 import cfme.fixtures.pytest_selenium as sel
 

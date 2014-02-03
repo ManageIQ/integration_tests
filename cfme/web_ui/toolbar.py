@@ -1,9 +1,11 @@
-"""
-cfme.web_ui.toolbar
--------------------
+"""A set of functions for dealing with the toolbar buttons
 
-A set of functions for dealing with the toolbar buttons
+The main CFME toolbar is accessed by using the Root and Sub titles of the buttons.
 
+Usage:
+
+    tb = web_ui.toolbar
+    tb.select('Configuration', 'Add a New Host')
 
 """
 import cfme.fixtures.pytest_selenium as sel

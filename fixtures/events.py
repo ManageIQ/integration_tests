@@ -37,6 +37,8 @@ class EventExpectation(object):
 
     This object embeds an expectation in order to be able to easily compare
     whether the two expectations are the same but just with different time.
+
+    This is the actual object returned by the :py:func:`register_event` fixture.
     """
 
     TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -361,18 +363,28 @@ def pytest_configure(config):
 
 @pytest.yield_fixture(scope="function")
 def register_event(request):
-    """ Event registration fixture
+    """register_event(sys_type, obj_type, obj, event)
+    Event registration fixture
 
     This fixture is used to notify the testing system that some event
     should have occured during execution of the test case using it.
-    It does not register anything by itself, but it is used as a
-    function like this::
+    It does not register anything by itself.
 
-    >>> def test_something(foo, bar, register_event):
-    ...     register_event("systype", "objtype", "obj", "event")
-    ...     # or
-    ...     register_event("systype", "objtype", "obj", ["event1", "event2"])
-    ...     # do_some_stuff_that_triggers()
+    Args:
+        sys_type: Management system type to expect
+        obj_type: Management system related object type to expect
+        obj: Expected identifier for related object
+        event: Event name or list of event names to expect
+
+    Returns: :py:class:`EventExpectation`
+
+    Usage:
+
+        def test_something(foo, bar, register_event):
+            register_event("systype", "objtype", "obj", "event")
+            # or
+            register_event("systype", "objtype", "obj", ["event1", "event2"])
+            # do_some_stuff_that_triggers()
 
     For host_events, use `None` for sys_type.
 
@@ -386,9 +398,6 @@ def register_event(request):
     If any of the events has not been caught, it raises a pytest.fail.
     Before and after each test run using this fixture, database is cleared.
 
-    Args:
-        request:
-            py.test's fixture request
     """
     # We pull out the plugin directly.
     self = request.config.pluginmanager.getplugin("event_testing")  # Workaround for bind

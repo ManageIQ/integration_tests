@@ -1,12 +1,4 @@
-"""
-utils.browser
--------------
-
-Contains core functionality for starting, restarting, and stopping a selenium browser.
-
-Members
-^^^^^^^
-"""
+"""Core functionality for starting, restarting, and stopping a selenium browser."""
 import atexit
 import json
 import threading

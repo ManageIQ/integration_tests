@@ -1,7 +1,3 @@
-"""
-utils.wait
-----------
-"""
 import time
 from utils.log import logger
 

@@ -1,6 +1,4 @@
-"""
-utils.log
----------
+"""Logging framework
 
 This module creates the cfme logger, for use throughout the project. This logger only captures log
 messages explicitly sent to it, not logs emitted by other components (such as selenium). To capture

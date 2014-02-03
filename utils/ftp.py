@@ -29,15 +29,12 @@ class FTPDirectory(object):
     def __init__(self, client, name, items, parent_dir=None, time=None):
         """ Constructor
 
-        @param client: ftplib.FTP instance
-        @type client: ftplib.FTP
-        @param name: Name of this directory
-        @param items: Content of this directory
-        @type items: list
-        @param parent_dir: Pointer to a parent directory to maintain hierarchy. None if root
-        @type parent_dir: FTPDirectory
-        @param time: Time of this object
-        @type time: tuple
+        Args:
+            client: ftplib.FTP instance
+            name: Name of this directory
+            items: Content of this directory
+            parent_dir: Pointer to a parent directory to maintain hierarchy. None if root
+            time: Time of this object
         """
         self.client = client
         self.parent_dir = parent_dir
@@ -57,7 +54,9 @@ class FTPDirectory(object):
 
     @property
     def path(self):
-        """ Returns whole path for this directory
+        """
+        Returns:
+            whole path for this directory
 
         """
         if self.parent_dir:
@@ -76,10 +75,10 @@ class FTPDirectory(object):
         . - does nothing
         .. - climbs one level up in hierarchy, if present, otherwise does the same as preceeding.
 
-        @param path: Path to change
-        @type path: list
-        @rtype: FTPDirectory
-        """
+        Args:
+            path: Path to change
+
+            """
         if path == ".":
             return self
         elif path == "..":
@@ -113,14 +112,13 @@ class FTPDirectory(object):
         You can specify either plain string or regexp. String search does classic ``in``,
         regexp matching is done by exact matching (by.match).
 
-        @param by: Search string or regexp
-        @type by: str or _sre.SRE_Pattern
-        @param files: Whether look for files
-        @type files: bool
-        @param directories: Whether look for directories
-        @type directories: bool
-        @return: List of all objects found in FS
-        @rtype: list
+        Args:
+            by: Search string or regexp
+            files: Whether look for files
+            directories: Whether look for directories
+        Returns:
+            List of all objects found in FS
+
         """
 
         def _scan(what, in_what):
@@ -152,11 +150,10 @@ class FTPFile(object):
     def __init__(self, client, name, parent_dir, time):
         """ Constructor
 
-        @param client: ftplib.FTP instance
-        @type client: ftplib.FTP
-        @param name: File name (without path)
-        @param parent_dir: Directory in which this file is
-        @type parent_dir: FTPDirectory
+        Args:
+            client: ftplib.FTP instance
+            name: File name (without path)
+            parent_dir: Directory in which this file is
         """
         self.client = client
         self.parent_dir = parent_dir
@@ -165,7 +162,9 @@ class FTPFile(object):
 
     @property
     def path(self):
-        """ Returns whole path for this file
+        """
+        Returns:
+            whole path for this file
 
         """
         if self.parent_dir:
@@ -175,7 +174,9 @@ class FTPFile(object):
 
     @property
     def local_time(self):
-        """ Returns time modified to match local computer's time zone
+        """
+        Returns:
+            time modified to match local computer's time zone
 
         """
         return self.client.dt + self.time
@@ -191,11 +192,12 @@ class FTPFile(object):
         FTP's retrbinary() function with provided callable and then cd's back where it started
         to keep it consistent.
 
-        @param callback: Any callable that accepts one parameter as the data
-        @type callback: callable
+        Args:
+            callback: Any callable that accepts one parameter as the data
 
-        @raise AssertionError: When any of the CWD or CDUP commands fail.
-        @raise ftplib.error_perm: When retrbinary call of ftplib fails
+        Raises:
+            AssertionError: When any of the CWD or CDUP commands fail.
+            ftplib.error_perm: When retrbinary call of ftplib fails
         """
         dirs, f = self.path.rsplit("/", 1)
         dirs = dirs.lstrip("/").split("/")
@@ -213,8 +215,8 @@ class FTPFile(object):
         Wrapper around self.retr function. It downloads the file from remote filesystem
         into local filesystem. Name is either preserved original, or can be changed.
 
-        @param target: Target file name (None to preserver the original)
-        @type target: str
+        Args:
+            target: Target file name (None to preserver the original)
         """
         if target is None:
             target = self.name
@@ -229,30 +231,30 @@ class FTPClient(object):
     It wraps some methods and allows to easily delete whole directory or walk
     through the directory tree.
 
-    Usage is as follows:
+    Usage:
 
-    >>> from utils.ftp import FTPClient
-    >>> ftp = FTPClient("host", "user", "password")
-    >>> only_files_with_EVM_in_name = ftp.filesystem.search("EVM", directories=False)
-    >>> only_files_by_regexp = ftp.filesystem.search(re.compile("regexp"), directories=False)
-    >>> some_directory = ftp.filesystem.cd("a/b/c") # cd's to this directory
-    >>> root = some_directory.cd("/")
+        >>> from utils.ftp import FTPClient
+        >>> ftp = FTPClient("host", "user", "password")
+        >>> only_files_with_EVM_in_name = ftp.filesystem.search("EVM", directories=False)
+        >>> only_files_by_regexp = ftp.filesystem.search(re.compile("regexp"), directories=False)
+        >>> some_directory = ftp.filesystem.cd("a/b/c") # cd's to this directory
+        >>> root = some_directory.cd("/")
 
     Always going through filesystem property is a bit slow as it parses the structure on each use.
     If you are sure that the structure will remain intact between uses, you can do as follows
-    to save the time:
+    to save the time::
 
-    >>> fs = ftp.filesystem
+        >>> fs = ftp.filesystem
 
-    Let's download some files
+    Let's download some files::
 
-    >>> for f in ftp.filesystem.search("IMPORTANT_FILE", directories=False):
-    ...     f.download()    # To pickup its original name
-    ...     f.download("custom_name")
+        >>> for f in ftp.filesystem.search("IMPORTANT_FILE", directories=False):
+        ...     f.download()    # To pickup its original name
+        ...     f.download("custom_name")
 
-    We finished the testing, so we don't need the content of the directory:
+    We finished the testing, so we don't need the content of the directory::
 
-    >>> ftp.recursively_delete()
+        >>> ftp.recursively_delete()
 
     And it's gone.
 
@@ -265,9 +267,10 @@ class FTPClient(object):
     def __init__(self, host, login, password):
         """ Constructor
 
-        @param host: FTP server host
-        @param login: FTP login
-        @param password: FTP password
+        Args:
+            host: FTP server host
+            login: FTP login
+            password: FTP password
         """
         self.host = host
         self.login = login
@@ -307,10 +310,11 @@ class FTPClient(object):
     def ls(self):
         """ Lists the content of a directory.
 
-        Return format is [(is_dir?, "name", remote_time), ...]
 
-        @return: List of all items in current directory
-        @rtype: list of tuples
+        Returns:
+            List of all items in current directory
+            Return format is [(is_dir?, "name", remote_time), ...]
+
         """
         result = []
 
@@ -333,9 +337,11 @@ class FTPClient(object):
     def pwd(self):
         """ Get current directory
 
-        @return: Current directory
-        @rtype: str
-        @raise AssertionError: PWD command fails
+        Returns:
+            Current directory
+
+        Raises:
+            AssertionError: PWD command fails
         """
         result = self.ftp.sendcmd("PWD")
         assert "is the current directory" in result, "PWD command failed"
@@ -351,11 +357,12 @@ class FTPClient(object):
     def mkd(self, d):
         """ Create a directory
 
-        @param d: Directory name
-        @type d: str
+        Args:
+            d: Directory name
 
-        @return: Success of the action
-        @rtype: bool
+        Returns:
+            Success of the action
+
         """
         try:
             return self.ftp.sendcmd("MKD %s" % d).startswith("250")
@@ -365,11 +372,12 @@ class FTPClient(object):
     def rmd(self, d):
         """ Remove a directory
 
-        @param d: Directory name
-        @type d: str
+        Args:
+            d: Directory name
 
-        @return: Success of the action
-        @rtype: bool
+        Returns:
+            Success of the action
+
         """
         try:
             return self.ftp.sendcmd("RMD %s" % d).startswith("250")
@@ -379,11 +387,12 @@ class FTPClient(object):
     def dele(self, f):
         """ Remove a file
 
-        @param f: File name
-        @type f: str
+        Args:
+            f: File name
 
-        @return: Success of the action
-        @rtype: bool
+        Returns:
+            Success of the action
+
         """
         try:
             return self.ftp.sendcmd("DELE %s" % f).startswith("250")
@@ -393,11 +402,12 @@ class FTPClient(object):
     def cwd(self, d):
         """ Enter a directory
 
-        @param d: Directory name
-        @type d: str
+        Args:
+            d: Directory name
 
-        @return: Success of the action
-        @rtype: bool
+        Returns:
+            Success of the action
+
         """
         try:
             return self.ftp.sendcmd("CWD %s" % d).startswith("250")
@@ -418,10 +428,9 @@ class FTPClient(object):
         You need to specify the callback function, which accepts one parameter
         (data), to be processed.
 
-        @param f: Requested file name
-        @type f: str
-        @param callback: Callable with one parameter accepting the data
-        @type callback: callable
+        Args:
+            f: Requested file name
+            callback: Callable with one parameter accepting the data
         """
         return self.ftp.retrbinary("RETR %s" % f, callback)
 
@@ -430,10 +439,9 @@ class FTPClient(object):
 
         You need to specify the file object.
 
-        @param f: Requested file name
-        @type f: str
-        @param file_obj: File object to be stored
-        @type file_obj: file, StringIO
+        Args:
+            f: Requested file name
+            file_obj: File object to be stored
         """
         return self.ftp.storbinary("STOR %s" % f, file_obj)
 
@@ -442,10 +450,12 @@ class FTPClient(object):
 
         WARNING: Destructive!
 
-        @param d: Directory to enter (None for not entering - root directory)
-        @param d: str or None
+        Args:
+            d: Directory to enter (None for not entering - root directory)
+            d: str or None
 
-        @raise AssertionError: When some of the FTP commands fail.
+        Raises:
+            AssertionError: When some of the FTP commands fail.
         """
         # Enter the directory
         if d:
@@ -469,15 +479,19 @@ class FTPClient(object):
         Base structure is a list. List contains directory content and the type decides whether
         it's a directory or a file:
         - tuple: it's a file, therefore it represents file's name and time
-        - dict: it's a directory. Then the dict structure is as follows:
+        - dict: it's a directory. Then the dict structure is as follows::
+
             dir: directory name
             content: list of directory content (recurse)
 
-        @param d: Directory to enter(None for no entering - root directory)
-        @type d: str or None
+        Args:
+            d: Directory to enter(None for no entering - root directory)
 
-        @return: Directory structure in lists nad dicts.
-        @raise AssertionError: When some of the FTP commands fail.
+        Returns:
+            Directory structure in lists nad dicts.
+
+        Raises:
+            AssertionError: When some of the FTP commands fail.
         """
         # Enter the directory
         items = []
@@ -499,8 +513,9 @@ class FTPClient(object):
     def filesystem(self):
         """ Returns the object structure of the filesystem
 
-        @return: Root directory
-        @rtype: FTPDirectory
+        Returns:
+            Root directory
+
         """
         return FTPDirectory(self, "/", self.tree())
 

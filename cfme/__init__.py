@@ -1,9 +1,3 @@
-"""
-cfme
-----
-"""
-
-
 class Credential(object):
     """
     A class to fill in credentials

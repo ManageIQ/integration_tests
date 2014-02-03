@@ -1,11 +1,4 @@
-"""
-cfme.web_ui.page_controls
--------------------------
-
-A set of functions for dealing with the page controls.
-
-
-"""
+"""A set of functions for dealing with the paginator controls."""
 import cfme.fixtures.pytest_selenium as sel
 import re
 

@@ -1,9 +1,4 @@
-"""
-cfme.exceptions
----------------
-
-The :py:mod:`cfme.exceptions` module provides custom exceptions for the ``cfme`` module.
-"""
+"""Provides custom exceptions for the ``cfme`` module. """
 
 
 class AddProviderError(Exception):

@@ -1,10 +1,6 @@
-"""
-cfme.web_ui
------------
+"""Provides a number of objects to help with managing certain elements in the CFME UI.
 
-The :py:mod:`cfme.web_ui` module provides a number of objects to help with
-managing certain elements in the CFME UI. Specifically there two categories of
-objects, organizational and elemental.
+ Specifically there are two categories of objects, organizational and elemental.
 
 * **Organizational**
 
@@ -13,177 +9,14 @@ objects, organizational and elemental.
 
 * **Elemental**
 
-  * :py:mod:`cfme.web_ui.accordion`
   * :py:class:`Form`
   * :py:class:`InfoBlock`
-  * :py:class:`Table`
-  * :py:mod:`cfme.web_ui.toolbar`
-  * :py:class:`Tree`
+  * :py:class:`Quadicon`
   * :py:class:`Radio`
-
-
-Example usage of Accordion
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Using Accordions is simply a case of either selecting it to return the element,
-or using the built in click method. As shown below::
-
-  acc = web_ui.accordion
-
-  acc.click('Diagnostics')
-  acc.is_active('Diagnostics')
-
-
-Example usage of Form
-^^^^^^^^^^^^^^^^^^^^^
-
-Below is an example of how to define a form.::
-
-  provider_form = web_ui.Form(
-      fields=[
-          ('type_select', "//*[@id='server_emstype']"),
-          ('name_text', "//*[@id='name']"),
-          ('hostname_text', "//*[@id='hostname']"),
-          ('ipaddress_text', "//*[@id='ipaddress']"),
-          ('amazon_region_select', "//*[@id='hostname']"),
-          ('api_port', "//*[@id='port']"),
-      ])
-
-Forms can then be filled in like so.::
-
-  provider_info = {'type_select': "OpenStack",
-                   'name_text': "RHOS-01",
-                   'hostname_text': "RHOS-01",
-                   'ipaddress_text': "10.0.0.0",
-                   'api_port': "5000",}
-  web_ui.fill(provider_form, request_info)
-
-
-Example usage of InfoBlock
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-An InfoBlock only needs to know the **type** of InfoBlocks you are trying to address. You can
-then return either text, the first element inside the value or all elements::
-
-  block = web_ui.InfoBlock("form")
-
-  block.text('Basic Information', 'Hostname')
-  block.element('Basic Information', 'Company Name')
-  block.elements('NTP Servers', 'Servers')
-
-These will return a string, a webelement and a List of webelements respectively.
-
-
-Example usage of Table
-^^^^^^^^^^^^^^^^^^^^^^
-A table is defined by the containers of the header and data areas, and offsets to them.
-This allows a table to include one or more padding rows above the header row. Notice in
-the example below, there is no padding row, as our offset values are set to 0.::
-
-  table = Table(header_data=('//div[@id="prov_pxe_img_div"]//thead', 0),
-                row_data=('//div[@id="prov_pxe_img_div"]//tbody', 0))
-
-The HTML code for the table looks something like this::
-
-  <div id="prov_pxe_img_div">
-      <table>
-          <thead>
-              <tr>
-                  <th>Name</th>
-                  <th>Animal</th>
-                  <th>Size</th>
-              </tr>
-          </thead>
-          <tbody>
-              <tr>
-                  <td>John</td>
-                  <td>Monkey</td>
-                  <td>Small</td>
-              </tr>
-              <tr>
-                  <td>Mike</td>
-                  <td>Tiger</td>
-                  <td>Large</td>
-              </tr>
-          </tbody>
-      </table>
-  </div>
-
-We can now click on an element in the list like so, by providing the column
-name and the value that we are searching for::
-
-  table.click_cell('name', 'Mike')
-
-We can also perform the same, by using the index of the row, like so::
-
-  table.click_cell(1, 'Tiger')
-
-
-Example usage of toolbar
-^^^^^^^^^^^^^^^^^^^^^^^^
-The main CFME toolbar is accessed by using the Root and Sub titles of the buttons, simply::
-
-  tb = web_ui.toolbar
-  tb.select('Configuration', 'Add a New Host')
-
-
-Example usage of Tree
-^^^^^^^^^^^^^^^^^^^^^
-A Tree object is set up by using a locator which contains the node elements. This element
-will usually be a ``<ul>`` in the case of a Dynatree, or a ``<table>`` in the case of a
-Legacy tree. The Tree is instantiated, like so::
-
-  tree = web_ui.Tree((By.XPATH, '//table//tr[@title="Datastore"]/../..'))
-
-The path can then be navigated to return the last object in the path list, like so::
-
-  tree.click_path('Automation', 'VM Lifecycle Management (VMLifecycle)', 'VM Migrate (Migrate)')
-
-Each path element will be expanded along the way, but will not be clicked.
-
-
-Example usage of Quadicon
-^^^^^^^^^^^^^^^^^^^^^^^^^
-A Quadicon is used by defining the name of the icon and the type. After that, it can be used
-to obtain the locator of the Quadicon, or query its quadrants, via attributes like so::
-
-  qi = web_ui.Quadicon('hostname.local', 'host')
-  qi.creds
-  click(qi)
-
-
-Example usage of Radio
-^^^^^^^^^^^^^^^^^^^^^^
-A Radio object is defined by its group name and is simply used like so::
-
-  radio = Radio("schedule__schedule_type")
-
-A specific radio element can then be returned by running the following::
-
-  el = radio.choice('immediately')
-  click(el)
-
-The :py:class:`Radio` object can be reused over and over with repeated calls to
-the :py:func:`Radio.choice` method.
-
-
-Example usage of Regions
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Below is an example of how to define a region.::
-
-  page = Region(locators=
-                {'configuration_button': (By.CSS_SELECTOR,
-                     "div.dhx_toolbar_btn[title='Configuration']"),
-                 'discover_button': (By.CSS_SELECTOR,
-                     "tr[title='Discover Cloud Providers']>td.td_btn_txt>"
-                     "div.btn_sel_text")},
-              title='CloudForms Management Engine: Cloud Providers')
-
-The elements can then accessed like so.::
-
-  page.configuration_button
-
-Which will return the locator tuple for that particular element.
+  * :py:class:`Table`
+  * :py:class:`Tree`
+  * :py:mod:`cfme.web_ui.accordion`
+  * :py:mod:`cfme.web_ui.toolbar`
 
 """
 
@@ -209,7 +42,24 @@ class Region(object):
         locators: A dict of locator objects for the given region
         title: A string containing the title of the page
         identifying_loc: Not sure
-    Return: A :py:class:`Region`
+
+    Usage:
+
+        page = Region(locators={
+            'configuration_button': (By.CSS_SELECTOR, "div.dhx_toolbar_btn[title='Configuration']"),
+            'discover_button': (By.CSS_SELECTOR,
+                "tr[title='Discover Cloud Providers']>td.td_btn_txt>" "div.btn_sel_text")
+            },
+            title='CloudForms Management Engine: Cloud Providers'
+        )
+
+    The elements can then accessed like so::
+
+        page.configuration_button
+
+    Locator attributes will return the locator tuple for that particular element,
+    and can be passed on to other functions, such as :py:func:`element` and :py:func:`click`.
+
     """
     def __getattr__(self, name):
         return self.locators[name]
@@ -288,6 +138,52 @@ class Table(object):
 
     Returns: A :py:class:`Table` object.
 
+    Usage:
+
+        table = Table(header_data=('//div[@id="prov_pxe_img_div"]//thead', 0),
+            row_data=('//div[@id="prov_pxe_img_div"]//tbody', 0))
+
+    The HTML code for the table looks something like this::
+
+        <div id="prov_pxe_img_div">
+          <table>
+              <thead>
+                  <tr>
+                      <th>Name</th>
+                      <th>Animal</th>
+                      <th>Size</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr>
+                      <td>John</td>
+                      <td>Monkey</td>
+                      <td>Small</td>
+                  </tr>
+                  <tr>
+                      <td>Mike</td>
+                      <td>Tiger</td>
+                      <td>Large</td>
+                  </tr>
+              </tbody>
+          </table>
+        </div>
+
+    We can now click on an element in the list like so, by providing the column
+    name and the value that we are searching for::
+
+        table.click_cell('name', 'Mike')
+
+    We can also perform the same, by using the index of the row, like so::
+
+        table.click_cell(1, 'Tiger')
+
+    .. note::
+
+        A table is defined by the containers of the header and data areas, and offsets to them.
+        This allows a table to include one or more padding rows above the header row. In
+        the example above, there is no padding row, as our offset values are set to 0.
+
     """
     def __init__(self, header_data=None, row_data=None):
         self.header_data = header_data
@@ -297,8 +193,7 @@ class Table(object):
 
     @staticmethod
     def _convert_header(header):
-        """
-        Convers header cell text into something usable as an identifier.
+        """Convers header cell text into something usable as an identifier.
 
         Static method which replaces spaces in headers with underscores and strips out
         all other characters to give an identifier.
@@ -311,8 +206,7 @@ class Table(object):
         return re.sub('[^0-9a-zA-Z ]+', '', header).replace(' ', '_').lower()
 
     def _update_cache(self):
-        """
-        Updates the internal cache of headers
+        """Updates the internal cache of headers
 
         This allows columns to be moved and the Table updated. The variable _hc stores
         the header cache element and the list of headers are stored in _headers. The
@@ -326,8 +220,7 @@ class Table(object):
             for cell in self._headers}
 
     def _rows_generator(self):
-        """
-        A generator method holding the Row objects
+        """A generator method holding the Row objects
 
         This generator yields Row objects starting at the first data row.
 
@@ -348,8 +241,7 @@ class Table(object):
                 data = []
 
     def rows(self):
-        """
-        Returns a generator object yielding the rows in the Table
+        """Returns a generator object yielding the rows in the Table
 
         Return: A generator of the rows in the Table.
         """
@@ -381,8 +273,7 @@ class Table(object):
             return None
 
     def click_cells(self, data):
-        """
-        Submits multiple cells to be clicked on
+        """Submits multiple cells to be clicked on
 
         Args:
             data: A dicts of header names and values direct from yamls, as an example
@@ -412,8 +303,7 @@ class Table(object):
             raise exceptions.NotAllItemsClicked(failed_clicks)
 
     def click_cell(self, header, value):
-        """
-        Clicks on a cell defined in the row.
+        """Clicks on a cell defined in the row.
 
         Uses the header identifier and a data to determine which cell to click on.
 
@@ -432,8 +322,7 @@ class Table(object):
             return False
 
     class Row(object):
-        """
-        An object representing a row in a Table.
+        """An object representing a row in a Table.
 
         The Row object returns a dymanically addressable attribute space so that
         the tables headers are automatically generated.
@@ -560,6 +449,30 @@ class Form(Region):
 
     Returns:
         A :py:class:`Form` object.
+
+    Usage:
+
+      provider_form = web_ui.Form(
+          fields=[
+              ('type_select', "//*[@id='server_emstype']"),
+              ('name_text', "//*[@id='name']"),
+              ('hostname_text', "//*[@id='hostname']"),
+              ('ipaddress_text', "//*[@id='ipaddress']"),
+              ('amazon_region_select', "//*[@id='hostname']"),
+              ('api_port', "//*[@id='port']"),
+          ])
+
+    Forms can then be filled in like so.::
+
+        provider_info = {
+            'type_select': "OpenStack",
+           'name_text': "RHOS-01",
+           'hostname_text': "RHOS-01",
+           'ipaddress_text': "10.0.0.0",
+           'api_port': "5000",
+        }
+        web_ui.fill(provider_form, request_info)
+
     """
 
     def __init__(self, fields=None, identifying_loc=None):
@@ -613,7 +526,17 @@ class Radio(object):
         name: The HTML elements ``name`` attribute that identifies a group of radio
             buttons.
 
-    Returns: A :py:class:`Radio` object.
+    Usage:
+
+        radio = Radio("schedule__schedule_type")
+
+    A specific radio element can then be returned by running the following::
+
+        el = radio.choice('immediately')
+        click(el)
+
+    The :py:class:`Radio` object can be reused over and over with repeated calls to
+    the :py:func:`Radio.choice` method.
     """
     def __init__(self, name):
         self.name = name
@@ -649,6 +572,22 @@ class Tree(object):
             ``<ul>`` element which contains the rest of the table.
 
     Returns: A :py:class:`Tree` object.
+
+    A Tree object is set up by using a locator which contains the node elements. This element
+    will usually be a ``<ul>`` in the case of a Dynatree, or a ``<table>`` in the case of a
+    Legacy tree.
+
+    Usage:
+
+         tree = web_ui.Tree((By.XPATH, '//table//tr[@title="Datastore"]/../..'))
+
+    The path can then be navigated to return the last object in the path list, like so::
+
+        tree.click_path('Automation', 'VM Lifecycle Management (VMLifecycle)',
+            'VM Migrate (Migrate)')
+
+    Each path element will be expanded along the way, but will not be clicked.
+
     """
 
     def __init__(self, locator):
@@ -806,11 +745,26 @@ class InfoBlock(object):
 
     Args:
         itype: The type of information blocks to address, either ``detail`` or ``form``.
+
     Returns: Either a string if the element contains just text, or the element.
+
     Raises:
         exceptions.BlockTypeUnknown: If the Block type requested by itype is unknown.
         exceptions.ElementOrBlockNotFound: If the Block or Key requested is not found.
         exceptions.NoElementsInsideValue: If the Key contains no elements.
+
+    An InfoBlock only needs to know the **type** of InfoBlocks you are trying to address.
+    You can then return either text, the first element inside the value or all elements.
+
+    Usage:
+
+        block = web_ui.InfoBlock("form")
+
+        block.text('Basic Information', 'Hostname')
+        block.element('Basic Information', 'Company Name')
+        block.elements('NTP Servers', 'Servers')
+
+    These will return a string, a webelement and a List of webelements respectively.
 
     """
     def __init__(self, itype):
@@ -890,11 +844,30 @@ class InfoBlock(object):
 
 
 class Quadicon(object):
-    """ Represents a single quadruple icon in the CFME UI.
+    """
+    Quadicon
+    """"""""
+
+    Represents a single quadruple icon in the CFME UI.
 
     A Quadicon contains multiple quadrants. These are accessed via attributes.
     The qtype is currently one of the following and determines which attribute names
     are present. They are mapped internally and can be reassigned easily if the UI changes.
+
+    A Quadicon is used by defining the name of the icon and the type. After that, it can be used
+    to obtain the locator of the Quadicon, or query its quadrants, via attributes.
+
+    Args:
+       name: The label of the icon.
+       qtype: The type of the quad icon.
+
+    Usage:
+
+        qi = web_ui.Quadicon('hostname.local', 'host')
+        qi.creds
+        click(qi)
+
+    .. rubric:: Known Quadicon Types and Attributes
 
     * **host** - *from the infra/host page* - has quads:
 
@@ -933,9 +906,6 @@ class Quadicon(object):
       * d. **no_snapshot** - The number of snapshots
       * g. **policy** - The state of the policy
 
-    Args:
-       name: The label of the icon.
-       qtype: The type of the quad icon.
     Returns: A :py:class:`Quadicon` object.
     """
 

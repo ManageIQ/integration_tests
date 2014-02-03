@@ -1,8 +1,4 @@
-"""
-cfme.dashboard
---------------
-
-The :py:mod:`cfme.dashboard` module provides functions to the dashboard landing page.
+"""Provides functions to manipulate the dashboard landing page.
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the dashboard page
 """

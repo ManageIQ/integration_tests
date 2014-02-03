@@ -15,7 +15,7 @@ def ssh_client():
     for this, which will open up a selenium browser by default. If this is undesired,
     remember to use the skip_selenium mark.
 
-    Examples:
+    Usage:
 
         @pytest.mark.skip_selenium
         def test_ssh(ssh_client):
@@ -32,7 +32,7 @@ def ssh_client():
             exit_status, output = ssh_client.run_rake_command('evm:stop')
 
     Additionally, the ssh_client fixture can be used to create other ssh clients,
-    if you need to connect to multiple hosts in a test run.
+    if you need to connect to multiple hosts in a test run::
 
         def test_multiple_ssh(ssh_client):
             # Normal behavior still works

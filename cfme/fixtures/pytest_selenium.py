@@ -1,9 +1,6 @@
-"""
-cfme.fixtures.pytest_selenium
------------------------------
+"""Provides a number of useful functions for integrating with selenium.
 
-The :py:mod:`cfme.fixtures.pytest_selenium` module provides a number of useful functions
-for integrating with selenium. The aim is that no direct calls to selenium be made at all.
+The aim is that no direct calls to selenium be made at all.
 One reason for this it to ensure that all function calls to selenium wait for the ajax
 response which is needed in CFME.
 
