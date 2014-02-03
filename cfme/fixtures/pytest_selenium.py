@@ -36,7 +36,7 @@ def elements(o, root=None):
     # let the error bubble up.
 
 
-@elements.register(str)
+@elements.register(basestring)
 def _s(s, root=None):
     """Assume string is an xpath locator"""
     parent = root or browser()
