@@ -42,6 +42,7 @@ pytest.ini
 
 # rendered documentation
 docs/_build
+docs/modules
 
 # Ipython notebooks need to be explicitly added
 notebooks/*.ipynb
