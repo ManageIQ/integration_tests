@@ -1,3 +1,7 @@
+"""Provides functions for the flash area.
+
+:var area: A :py:class:`cfme.web_ui.Region` object representing the flash region.
+"""
 from cfme.web_ui import Region
 from selenium.webdriver.common.by import By
 import cfme.fixtures.pytest_selenium as sel
@@ -7,6 +11,12 @@ area = Region(locators=
 
 
 class Message(object):
+    """ A simple class to represent a flash error in CFME.
+
+    Args:
+        message: The message string.
+        level: The level of the message.
+    """
     def __init__(self, message=None, level=None):
         self.message = message
         self.level = level
@@ -16,6 +26,12 @@ class Message(object):
 
 
 def message(el):
+    """ Turns an element into a :py:class:`Message` object.
+
+    Args:
+        el: The element containing the flass message.
+    Returns: A :py:class:`Message` object.
+    """
     return Message(message=sel.text(el),
                    level=sel.get_attribute(el, 'class'))
 
@@ -27,10 +43,16 @@ def get_messages():
 
 
 def is_error(message):
+    """ Checks a given message to see if is an Error.
+
+    Args:
+        message: The message object.
+    """
     return message.level == 'error'
 
 
 def assert_no_errors():
+    """ Asserts that there are no current Error messages."""
     all_messages = get_messages()
     errors = filter(is_error, all_messages)
     if errors:
@@ -40,5 +62,6 @@ def assert_no_errors():
 
 
 def assert_message_match(m):
+    """ Asserts that a message matches a specific string."""
     if not any([fm.message == m for fm in get_messages()]):
         raise Exception("No matching flash message for '%s'" % m)

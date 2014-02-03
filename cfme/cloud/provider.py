@@ -1,3 +1,14 @@
+""" A model of a Cloud Provider in CFME
+
+
+:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
+           Providers pages.
+:var discover_form: A :py:class:`cfme.web_ui.Form` object describing the discover form.
+:var properties_form: A :py:class:`cfme.web_ui.Form` object describing the main add form.
+:var default_form: A :py:class:`cfme.web_ui.Form` object describing the default credentials form.
+:var amqp_form: A :py:class:`cfme.web_ui.Form` object describing the AMQP credentials form.
+"""
+
 from functools import partial
 import ui_navigate as nav
 import cfme
@@ -77,9 +88,10 @@ class Provider(Updateable):
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
 
     Args:
-        name: Name of the provider
-        details: a details record (see EC2Details, OpenStackDetails inner class)
-        credentials (Credential): see Credential inner class
+        name: Name of the provider.
+        details: a details record (see EC2Details, OpenStackDetails inner class).
+        credentials (Credential): see Credential inner class.
+        key: The CFME key of the provider in the yaml.
 
     Usage:
 
@@ -135,7 +147,7 @@ class Provider(Updateable):
         manager than call this directly.
 
         Args:
-           updates (dict): fields that are changing
+           updates (dict): fields that are changing.
            cancel (boolean): whether to cancel out of the update.
         """
 
@@ -174,6 +186,13 @@ class OpenStackProvider(Provider):
                 'ipaddress_text': kwargs.get('ip_address')}
 
     def validate(self):
+        """ Validates that the detail page matches the Providers information.
+
+        This method logs into the provider using the mgmt_system interface and collects
+        a set of statistics to be matched against the UI. The details page is then refreshed
+        continuously until the matching of all items is complete. A error will be raised
+        if the match is not complete within a certain defined time period.
+        """
         if not self._on_detail_page():
             nav.go_to('cloud_provider', context={'provider': self})
 
@@ -189,18 +208,43 @@ class OpenStackProvider(Provider):
                           num_sec=300)
 
     def get_mgmt_system(self):
+        """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
+        """
         if not self.key:
             raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
         else:
             return provider_factory(self.key)
 
     def get_detail(self, *ident):
+        """ Gets details from the details infoblock
+
+        The function first ensures that we are on the detail page for the specific provider.
+
+        Args:
+            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+        Returns: A string representing the contents of the InfoBlock's value.
+        """
         if not self._on_detail_page():
             nav.go_to('cloud_provider', context={'provider': self})
         ib = InfoBlock("detail")
         return ib.text(*ident)
 
     def _do_stats_match(self, host_stats, stats_to_match=None):
+        """ A private function to match a set of statistics, with a Provider.
+
+        This function checks if the list of stats match, if not, the page is refreshed.
+
+        Note: Provider mgmt_system uses the same key names as this Provider class to avoid
+            having to map keyname/attributes e.g. ``num_template``, ``num_vm``.
+
+        Args:
+            host_stats: A dict of host statistics as obtained from the mgmt_system.
+            stats_to_match: A list of key/attribute names to match.
+
+        Raises:
+            KeyError: If the host stats does not contain the specified key.
+            ProviderHasNoProperty: If the provider does not have the property defined.
+        """
         for stat in stats_to_match:
             try:
                 if host_stats[stat] != getattr(self, stat):
@@ -214,15 +258,18 @@ class OpenStackProvider(Provider):
             return True
 
     def _on_detail_page(self):
+        """ Returns ``True`` if on the providers detail page, ``False`` if not."""
         return browser.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
                                     % self.name)
 
     @property
     def num_template(self):
+        """ Returns the providers number of templates, as shown on the Details page."""
         return int(self.get_detail("Relationships", "Images"))
 
     @property
     def num_vm(self):
+        """ Returns the providers number of instances, as shown on the Details page."""
         return int(self.get_detail("Relationships", "Instances"))
 
 
