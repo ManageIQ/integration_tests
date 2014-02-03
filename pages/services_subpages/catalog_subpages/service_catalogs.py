@@ -47,12 +47,12 @@ class ServiceCatalogs(Base):
     def click_order(self):
         '''Click Order Button'''
         self._wait_for_results_refresh()
-        self.selenium.find_element(*self._order_button).click()
+        self.get_element(*self._order_button).click()
         self._wait_for_results_refresh()
         
     def click_submit(self):
         '''Click Submit'''
-        self.selenium.find_element(*self._submit_button).click()
+        self.get_element(*self._submit_button).click()
         self._wait_for_results_refresh()
         
     def service_name_field(self):
@@ -68,9 +68,11 @@ class ServiceCatalogs(Base):
                 item.click()
         self.click_order()
         #time.sleep(5)
-        self._wait_for_results_refresh()
+        self._wait_for_visible_element(*self._dialog_service_name_field)
+        #self._wait_for_results_refresh()
         self.service_name_field().clear()
         self.service_name_field().send_keys(service_name)
         self.click_submit()
+        time.sleep(5)
         from pages.services import Services
         return Services.Requests(self.testsetup)    
