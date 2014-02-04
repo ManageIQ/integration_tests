@@ -263,6 +263,58 @@ def select_by_value(loc, value):
         wait_for_ajax()
 
 
+def deselect(loc, o):
+    """
+    Takes a locator and an object and deselects using the correct method.
+
+    If o is a string, then it is assumed the user wishes to select by visible text.
+    If o is a tuple, then the first argument defines the type. Either ``TEXT`` or ``VALUE``.
+    A choice of select method is then determined.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        o: An object, can be either a string or a tuple.
+    """
+    if isinstance(o, basestring):
+        deselect_by_text(loc, o)
+    else:
+        vtype, value = o
+        if vtype == TEXT:
+            deselect_by_text(loc, value)
+        if vtype == VALUE:
+            deselect_by_value(loc, value)
+
+
+def deselect_by_text(loc, text):
+    """
+    Works on a select element and deselects an option by the visible text.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        text: The select element option's visible text.
+    """
+    if text is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        Select(el).deselect_by_visible_text(text)
+        wait_for_ajax()
+
+
+def deselect_by_value(loc, value):
+    """
+    Works on a select element and deselects an option by the value attribute.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        value: The select element's option value.
+    """
+    if value is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        Select(el).deselect_by_value(value)
+        wait_for_ajax()
+
+
 def checkbox(loc, set_to=False):
     """
     Checks or unchecks a given checkbox
