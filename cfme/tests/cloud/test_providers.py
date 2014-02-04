@@ -7,6 +7,7 @@ import cfme.web_ui.flash as flash
 from cfme.cloud import provider
 from utils.update import update
 import uuid
+import utils.error as error
 
 
 @pytest.fixture(params=['ec2east', 'openstack'])
@@ -46,6 +47,13 @@ def test_provider_add(provider_data):
     """ Tests that a provider can be added """
     provider_data.create()
     flash.assert_message_match('Cloud Providers "%s" was saved' % provider_data.name)
+
+
+@pytest.mark.usefixtures('has_no_providers')
+def test_provider_add_with_bad_credentials(provider_data):
+    provider_data.credentials = provider.get_credentials_from_config('bad_credentials')
+    with error.expected('Login failed due to a bad username or password.'):
+        provider_data.create(validate_credentials=True)
 
 
 @pytest.mark.usefixtures('has_no_providers')

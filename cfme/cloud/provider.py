@@ -304,6 +304,12 @@ def _sd_fill_credential(cred, validate=None):
         flash.assert_no_errors()
 
 
+def get_credentials_from_config(credential_config_name):
+    creds = conf.credentials[credential_config_name]
+    return Provider.Credential(principal=creds['username'],
+                               secret=creds['password'])
+
+
 def get_from_config(provider_config_name):
     """
     Creates a Provider object given a yaml entry in cfme_data.
@@ -315,9 +321,7 @@ def get_from_config(provider_config_name):
     """
 
     prov_config = conf.cfme_data['management_systems'][provider_config_name]
-    creds = conf.credentials[prov_config['credentials']]
-    credentials = Provider.Credential(principal=creds['username'],
-                                      secret=creds['password'])
+    credentials = get_credentials_from_config(prov_config['credentials'])
     if prov_config.get('type') == 'ec2':
         return EC2Provider(name=prov_config['name'],
                            region=prov_config['region'],
