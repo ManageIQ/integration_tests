@@ -13,7 +13,7 @@ from functools import partial
 import ui_navigate as nav
 import cfme
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Quadicon, Form, fill, InfoBlock
+from cfme.web_ui import Region, Quadicon, Form, fill
 import cfme.web_ui.flash as flash
 import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
@@ -23,18 +23,33 @@ from utils.wait import wait_for
 from utils.providers import provider_factory
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
 
-page = Region(
+
+# Common locators
+page_specific_locators = Region(
     locators={
-        'add_submit': "//img[@alt='Add this Cloud Provider']",
+        'cancel_button': "//img[@title='Cancel']",
         'creds_validate_btn': "//div[@id='default_validate_buttons_on']"
                               "/ul[@id='form_buttons']/li/a/img",
         'creds_verify_disabled_btn': "//div[@id='default_validate_buttons_off']"
                                      "/ul[@id='form_buttons']/li/a/img",
-        'cancel_button': "//img[@title='Cancel']",
-        'save_button': "//img[@title='Save Changes']",
+    }
+)
+
+# Page specific locators
+add_page = Region(
+    locators={
+        'add_submit': "//img[@alt='Add this Cloud Provider']",
     },
     title='CloudForms Management Engine: Cloud Providers')
 
+edit_page = Region(
+    locators={
+        'save_button': "//img[@title='Save Changes']",
+    })
+
+details_page = Region(infoblock_type='detail')
+
+# Forms
 discover_form = Form(
     fields=[
         ('username', "//*[@id='userid']"),
@@ -60,7 +75,7 @@ def_form = Form(
         ('principal', browser.ObservedText("//*[@id='default_userid']")),
         ('secret', browser.ObservedText("//*[@id='default_password']")),
         ('verify_secret', browser.ObservedText("//*[@id='default_verify']")),
-        ('validate_btn', page.creds_validate_btn)
+        ('validate_btn', page_specific_locators.creds_validate_btn)
     ])
 
 amqp_form = Form(
@@ -69,7 +84,7 @@ amqp_form = Form(
         ('principal', browser.ObservedText("//*[@id='amqp_userid']")),
         ('secret', browser.ObservedText("//*[@id='amqp_password']")),
         ('verify_secret', browser.ObservedText("//*[@id='amqp_verify']")),
-        ('validate_btn', page.creds_validate_btn)
+        ('validate_btn', page_specific_locators.creds_validate_btn)
     ])
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -120,7 +135,7 @@ class Provider(Updateable):
 
     def _submit(self, cancel, submit_button):
         if cancel:
-            browser.click(page.cancel_button)
+            browser.click(page_specific_locators.cancel_button)
             # browser.wait_for_element(page.configuration_btn)
         else:
             browser.click(submit_button)
@@ -139,7 +154,7 @@ class Provider(Updateable):
         nav.go_to('cloud_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(self.credentials, validate=validate_credentials)
-        self._submit(cancel, page.add_submit)
+        self._submit(cancel, add_page.add_submit)
 
     def update(self, updates, cancel=False, validate_credentials=False):
         """
@@ -154,36 +169,7 @@ class Provider(Updateable):
         nav.go_to('cloud_provider_edit', context={'provider': self})
         fill(properties_form, self._form_mapping(**updates))
         fill(self.credentials, validate=validate_credentials)
-        self._submit(cancel, page.save_button)
-
-
-class EC2Provider(Provider):
-    def __init__(self, name=None, credentials=None, zone=None, key=None, region=None):
-        super(EC2Provider, self).__init__(name=name, credentials=credentials,
-                                          zone=zone, key=key)
-        self.region = region
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'Amazon EC2',
-                'amazon_region_select': (browser.VALUE, kwargs.get('region'))}
-
-
-class OpenStackProvider(Provider):
-    def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None):
-        super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
-                                                zone=zone, key=key)
-        self.hostname = hostname
-        self.ip_address = ip_address
-        self.api_port = api_port
-
-    def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'OpenStack',
-                'hostname_text': kwargs.get('hostname'),
-                'api_port': kwargs.get('api_port'),
-                'ipaddress_text': kwargs.get('ip_address')}
+        self._submit(cancel, edit_page.save_button)
 
     def validate(self):
         """ Validates that the detail page matches the Providers information.
@@ -226,8 +212,7 @@ class OpenStackProvider(Provider):
         """
         if not self._on_detail_page():
             nav.go_to('cloud_provider', context={'provider': self})
-        ib = InfoBlock("detail")
-        return ib.text(*ident)
+        return details_page.infoblock.text(*ident)
 
     def _do_stats_match(self, host_stats, stats_to_match=None):
         """ A private function to match a set of statistics, with a Provider.
@@ -271,6 +256,35 @@ class OpenStackProvider(Provider):
     def num_vm(self):
         """ Returns the providers number of instances, as shown on the Details page."""
         return int(self.get_detail("Relationships", "Instances"))
+
+
+class EC2Provider(Provider):
+    def __init__(self, name=None, credentials=None, zone=None, key=None, region=None):
+        super(EC2Provider, self).__init__(name=name, credentials=credentials,
+                                          zone=zone, key=key)
+        self.region = region
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name'),
+                'type_select': create and 'Amazon EC2',
+                'amazon_region_select': (browser.VALUE, kwargs.get('region'))}
+
+
+class OpenStackProvider(Provider):
+    def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
+                 ip_address=None, api_port=None):
+        super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
+                                                zone=zone, key=key)
+        self.hostname = hostname
+        self.ip_address = ip_address
+        self.api_port = api_port
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name'),
+                'type_select': create and 'OpenStack',
+                'hostname_text': kwargs.get('hostname'),
+                'api_port': kwargs.get('api_port'),
+                'ipaddress_text': kwargs.get('ip_address')}
 
 
 @fill.register(Provider.Credential)

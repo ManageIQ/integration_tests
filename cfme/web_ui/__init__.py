@@ -64,10 +64,12 @@ class Region(object):
     def __getattr__(self, name):
         return self.locators[name]
 
-    def __init__(self, locators=None, title=None, identifying_loc=None):
+    def __init__(self, locators=None, title=None, identifying_loc=None, infoblock_type=None):
         self.locators = locators
         self.identifying_loc = identifying_loc
         self.title = title
+        if infoblock_type:
+            self.infoblock = InfoBlock(infoblock_type)
 
     def is_displayed(self):
         """
