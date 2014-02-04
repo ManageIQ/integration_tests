@@ -17,7 +17,7 @@ def _page_nums():
     return sel.element(_locator + _page_cell).text
 
 
-def checkall():
+def check_all():
     """ Returns the Check All locator."""
     return sel.element(_locator + _check_all)
 
