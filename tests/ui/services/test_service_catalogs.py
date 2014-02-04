@@ -8,6 +8,7 @@ import pytest
 from unittestzero import Assert
 from tests.ui.services.test_base_catalogs import TestBaseCatalogs
 
+FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 
 @pytest.mark.nondestructive
 @pytest.mark.fixtureconf(server_roles='+automate')
@@ -46,10 +47,10 @@ class TestAllCatalogs(TestBaseCatalogs):
             .select_catalog_in_service_tree(catalog_name)
         order_pg = table_pg.select_catalog_item(cat_item_name,
                     "service_" + cat_item_name)
-        Assert.equal(order_pg.flash.message, "Order Request was Submitted")
+        Assert.equal(order_pg.flash.message, "Order Request was Submitted", FLASH_MESSAGE_NOT_MATCHED)
         order_pg.approve_request(1)
         order_pg.wait_for_request_status("Last 24 Hours",
-            "Finished", 12)
+            "Finished", 5)
         self.assert_vm_state(provisioning_data, svc_catalogs_pg,
             "on", (vm_name + "_0001"))
         self.teardown_remove_from_provider(db_session, soap_client,

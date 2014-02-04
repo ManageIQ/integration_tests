@@ -73,6 +73,6 @@ class ServiceCatalogs(Base):
         self.service_name_field().clear()
         self.service_name_field().send_keys(service_name)
         self.click_submit()
-        time.sleep(5)
+        self._wait_for_results_refresh()
         from pages.services import Services
         return Services.Requests(self.testsetup)    
