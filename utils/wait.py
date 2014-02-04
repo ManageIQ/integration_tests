@@ -31,6 +31,8 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         delay: An integer describing the number of seconds to delay before trying func()
             again.
         fail_func: A function to be run after every unsuccessful attempt to run func()
+        prefail: Run fail_func() before the check starts. Useful for things that need the refresh
+            before the check starts.
 
     Returns:
         A tuple containing the output from func() and a float detailing the total wait time.
@@ -48,6 +50,8 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     handle_exception = kwargs.get('handle_exception', False)
     delay = kwargs.get('delay', 1)
     fail_func = kwargs.get('fail_func', None)
+    if kwargs.get('prefail', False) and fail_func:
+        fail_func()
 
     t_delta = 0
     while t_delta <= num_sec:
