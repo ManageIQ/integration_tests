@@ -93,6 +93,17 @@ basic_information = Form(
     ]
 )
 
+db_configuration = Form(
+    fields=[
+        ('type', "//select[@id='production_dbtype']"),
+        ('hostname', "//input[@id='production_host']"),
+        ('database', "//input[@id='production_database']"),
+        ('username', "//input[@id='production_username']"),
+        ('password', "//input[@id='production_password']"),
+        ('password_verify', "//input[@id='production_verify']"),
+    ]
+)
+
 
 def make_button(button_title):
     return "//div[@id='buttons_on']/ul[@id='form_buttons']/li/img[@title='%s']" % button_title
@@ -513,4 +524,32 @@ def set_ntp_servers(*servers):
     for i in range(len(servers)):
         fields["ntp_server_%d" % (i + 1)] = servers[i]
     fill(ntp_servers, fields)
+    browser.click(crud_buttons.save_button)
+
+
+def set_database_internal():
+    nav.go_to("cfg_settings_currentserver_database")
+    fill(db_configuration, dict(type="Internal Database on this CFME Appliance"))
+    browser.click(crud_buttons.save_button)
+
+
+def set_database_external_appliance(hostname):
+    nav.go_to("cfg_settings_currentserver_database")
+    fill(db_configuration, dict(
+        type="External Database on another CFME Appliance",
+        hostname=hostname
+    ))
+    browser.click(crud_buttons.save_button)
+
+
+def set_database_external_postgres(hostname, database, username, password):
+    nav.go_to("cfg_settings_currentserver_database")
+    fill(db_configuration, dict(
+        type="External Postgres Database",
+        hostname=hostname,
+        database=database,
+        username=username,
+        password=password,
+        password_verify=password
+    ))
     browser.click(crud_buttons.save_button)
