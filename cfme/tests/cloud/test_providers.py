@@ -47,6 +47,7 @@ def test_provider_add(provider_data):
     """ Tests that a provider can be added """
     provider_data.create()
     flash.assert_message_match('Cloud Providers "%s" was saved' % provider_data.name)
+    provider_data.validate()
 
 
 @pytest.mark.usefixtures('has_no_providers')
