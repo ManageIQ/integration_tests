@@ -13,7 +13,8 @@ Usage:
 import cfme.fixtures.pytest_selenium as sel
 
 
-_locator = "//div[contains(@class, 'ui-tabs')]"  # Entry point
+_entry_div = "//div[contains(@class, 'ui-tabs')]"  # Entry point
+_entry_ul = "//ul[@id='tab' and @class='tab']"
 
 
 def _root():
@@ -21,7 +22,7 @@ def _root():
 
     Returns: WebElement
     """
-    return sel.element(_locator)
+    return sel.first_from(_entry_div, _entry_ul)
 
 
 def get_all_tabs():
@@ -29,7 +30,7 @@ def get_all_tabs():
 
     Returns: :py:class:`list` of :py:class:`str` Displayed names.
     """
-    return [opt.text.strip().encode("utf-8") for opt in sel.elements("./ul/li/a", root=_root())]
+    return [opt.text.strip().encode("utf-8") for opt in sel.elements(".//li/a", root=_root())]
 
 
 def get_selected_tab():
@@ -37,7 +38,7 @@ def get_selected_tab():
 
     Returns: :py:class:`str` Displayed name
     """
-    return sel.element("./ul/li[@aria-selected='true']/a", root=_root())\
+    return sel.element(".//li[@aria-selected='true' or @class='active']/a", root=_root())\
         .text\
         .strip()\
         .encode("utf-8")
@@ -53,7 +54,11 @@ def is_tab_element_selected(element):
         element: WebElement with the link (a)
     Returns: :py:class:`bool`
     """
-    return "true" in sel.element("..", root=element).get_attribute("aria-selected").lower()
+    aria = sel.element("..", root=element).get_attribute("aria-selected")
+    if aria is not None:
+        return "true" in aria.lower()
+    else:
+        return sel.element("..", root=element).get_attribute("class").lower() == "active"
 
 
 def is_tab_selected(ident_string):
@@ -72,7 +77,7 @@ def get_clickable_tab(ident_string):
     Args:
         ident_string: The text diplayed on the tab.
     """
-    return sel.element("./ul/li/a[.='%s']" % ident_string, root=_root())
+    return sel.element(".//li/a[contains(text(), '%s')]" % ident_string, root=_root())
 
 
 def select_tab(ident_string):

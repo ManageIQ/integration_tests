@@ -407,6 +407,29 @@ def click_fn(*els):
             click(el)
     return f
 
+
+def first_from(*locs, **kwargs):
+    """ Goes through locators and first valid element received is returned.
+
+    Useful for things that could be located different way
+
+    Args:
+        *locs: Locators to pass through
+        **kwargs: Keyword arguments to pass to element()
+    Raises:
+        NoSuchElementException: When none of the locator could find the element.
+    Returns: :py:class:`WebElement`
+    """
+    assert len(locs) > 0, "You must provide at least one locator to look for!"
+    for locator in locs:
+        try:
+            return element(locator, **kwargs)
+        except NoSuchElementException:
+            pass
+    # To make nice error
+    msg = locs[0] if len(locs) == 1 else ("%s or %s" % (", ".join(locs[:-1]), locs[-1]))
+    raise NoSuchElementException("Could not find element with possible locators %s." % msg)
+
 # Begin CFME specific stuff, should eventually factor
 # out everything above into a lib
 
