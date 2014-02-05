@@ -340,7 +340,8 @@ def get_from_config(provider_config_name):
 
 def discover(credential, cancel=False):
     """
-    Discover cloud providers.
+    Discover cloud providers. Note: only starts discovery, doesn't
+    wait for it to finish.
 
     Args:
       credential (cfme.Credential):  Amazon discovery credentials.

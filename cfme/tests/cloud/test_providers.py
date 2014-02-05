@@ -43,10 +43,19 @@ def test_that_checks_flash_when_discovery_cancelled():
 
 
 @pytest.mark.usefixtures('has_no_providers')
+def test_providers_discovery():
+    amazon_creds = provider.get_credentials_from_config('cloudqe_amazon')
+    provider.discover(amazon_creds)
+    flash.assert_message_match('Amazon Cloud Providers: Discovery successfully initiated')
+    # TODO - wait for it to finish (no reliable way to do that currently)
+
+
+@pytest.mark.usefixtures('has_no_providers')
 def test_provider_add(provider_data):
     """ Tests that a provider can be added """
     provider_data.create()
     flash.assert_message_match('Cloud Providers "%s" was saved' % provider_data.name)
+    provider_data.validate()
 
 
 @pytest.mark.usefixtures('has_no_providers')
