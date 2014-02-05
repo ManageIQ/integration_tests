@@ -4,7 +4,7 @@
 import ui_navigate as nav
 import cfme
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Form, InfoBlock, Tree
+from cfme.web_ui import Region, Form, InfoBlock, Tree, Table
 import cfme.web_ui.flash as flash
 import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
@@ -113,6 +113,7 @@ crud_buttons = Region(
         'save_button': make_button("Save Changes"),
         'reset_button': make_button("Reset Changes"),
         'cancel_button': make_button("Cancel"),
+        'add_button': make_button("Add"),
     },
     identifying_loc="//div[@id='buttons_on']/ul[@id='form_buttons']",
 )
@@ -516,9 +517,21 @@ class Schedule(object):
         ("action", "//select[@id='action_typ']"),
         ("filter_type", "//select[@id='filter_typ']"),
         ("filter_value", "//select[@id='filter_value']"),
-
+        ("timer_type", "//select[@id='timer_typ']"),
+        ("timer_hours", "//select[@id='timer_hours']"),
+        ("timer_days", "//select[@id='timer_days']"),
+        ("timer_weeks", "//select[@id='timer_weekss']"),    # Not a typo!
+        ("timer_months", "//select[@id='timer_months']"),
         ("time_zone", "//select[@id='time_zone']"),
+        ("start_date", "//input[@id='miq_date_1']"),
+        ("start_hour", "//select[@id='start_hour']"),
+        ("start_min", "//select[@id='start_min']"),
     ])
+
+    table = Table(
+        header_data=("//div[@id='records_div']/table[@class='style3'/thead", 0),
+        row_data=("//div[@id='records_div']/table[@class='style3'/tbody", 0)
+    )
 
     def __init__(self,
                  name,
@@ -527,8 +540,12 @@ class Schedule(object):
                  action="VM Analysis",
                  filter_type="All VMs",
                  filter_value=None,
-                 run=None,
-                 time_zone="UTC"):
+                 run_type=None,
+                 run_every=None,
+                 time_zone="UTC",
+                 start_date=None,
+                 start_hour=None,
+                 start_min=None):
         self.details = dict(
             name=name,
             description=description,
@@ -536,10 +553,49 @@ class Schedule(object):
             action=action,
             filter_type=filter_type,
             filter_value=filter_value,
-            time_zone=("val", time_zone)
-
+            time_zone=("val", time_zone),
+            start_date=start_date,
+            start_hour=start_hour,
+            start_min=start_min,
         )
-        self.run = run or self.ONCE
+        if run_type is self.ONCE:
+            self.details["timer_type"] = self.ONCE
+        elif run_type is self.HOURLY:
+            self.details["timer_type"] = self.HOURLY
+            self.details["timer_hours"] = run_every
+        elif run_type is self.DAILY:
+            self.details["timer_type"] = self.DAILY
+            self.details["timer_days"] = run_every
+        elif run_type is self.WEEKLY:
+            self.details["timer_type"] = self.WEEKLY
+            self.details["timer_weeks"] = run_every
+        elif run_type is self.MONTHLY:
+            self.details["timer_type"] = self.MONTHLY
+            self.details["timer_months"] = run_every
+
+    def create_new(self, cancel=False):
+        nav.go_to("cfg_settings_schedules")
+        tb.select("Configuration", "Add a new Schedule")
+        fill(self.form, self.details)
+        if not cancel:
+            browser.click(crud_buttons.add_button)
+        else:
+            browser.click(crud_buttons.cancel_button)
+
+    def delete(self):
+        self.delete_by_name(self.details["name"])
+
+    @classmethod
+    def delete_by_name(self, name):
+        nav.go_to("cfg_settings_schedules")
+        self.table.click_cell("name", name)
+        tb.select("Configuration", "Delete this Schedule from the Database")
+
+    @classmethod
+    def new(self, *args, **kwargs):
+        o = self(*args, **kwargs)
+        o.create_new()
+        return o
 
 
 def set_server_roles(**roles):
