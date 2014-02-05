@@ -581,6 +581,16 @@ class Tree(object):
 
     Each path element will be expanded along the way, but will not be clicked.
 
+    Note:
+      For legacy trees, the first element is often ignore as it is not a proper tree
+      element ie. in Automate->Explorer the Datastore element doesn't really exist, so we
+      omit it from the click map.
+
+      Legacy trees rely on a complex ``<table><tbody><tr><td>`` setup. We class a ``<tbody>``
+      as a node.
+
+    Note: Dynatrees, rely on a ``<ul><li>`` setup. We class a ``<li>`` as a node.
+
     """
 
     def __init__(self, locator):
@@ -600,15 +610,6 @@ class Tree(object):
         * node_search: an XPATH which describes a node, needing expansion with format specifier for
           matching.
         * click_expand: the element to click on to expand the tree at that level.
-
-        .. note:: For legacy trees, the first element is often ignore as it is not a proper tree
-           element ie. in Automate->Explorer the Datastore element doesn't really exist, so we
-           omit it from the click map.
-
-           Legacy trees rely on a complex ``<table><tbody><tr><td>`` setup. We class a ``<tbody>``
-           as a node.
-
-        .. note:: Dynatrees, rely on a ``<ul><li>`` setup. We class a ``<li>`` as a node.
         """
         self.root_el = sel.element(self.locator)
         if sel.tag(self.root_el) == 'ul':
