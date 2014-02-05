@@ -19,19 +19,18 @@
   * :py:mod:`cfme.web_ui.toolbar`
 
 """
-
+import os
 import re
-import os.path
+import types
+
+import selenium
+from selenium.common import exceptions as sel_exceptions
+from singledispatch import singledispatch
 from unittestzero import Assert
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from cfme.fixtures.pytest_selenium import browser
+
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
-from selenium.common import exceptions as sel_exceptions
-import selenium
-from singledispatch import singledispatch
-import types
+from cfme.fixtures.pytest_selenium import browser
 
 
 class Region(object):

@@ -10,15 +10,22 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 
 :var ajax_wait_js: A Javascript function for ajax wait checking
 """
-from selenium.common.exceptions import NoSuchElementException
+import time
+
+import ui_navigate
+from selenium.common.exceptions import NoSuchElementException, UnexpectedAlertPresentException
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
-from utils import conf
-from utils.browser import browser
 from singledispatch import singledispatch
-import time
+
+import pytest
+from cfme import exceptions
+from utils import conf
+from utils.browser import browser, ensure_browser_open
+from utils.log import logger
 
 VALUE = 'val'
 TEXT = 'txt'
