@@ -9,6 +9,9 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 import time
 
+import cfme.fixtures.pytest_selenium as sel
+from utils.browser import browser
+
 
 class Page(object):
     '''
@@ -22,11 +25,17 @@ class Page(object):
         Constructor
         '''
         self.testsetup = testsetup
-        self.base_url = testsetup.base_url
-        self.selenium = testsetup.selenium
         self.timeout = testsetup.timeout
         if root is not None:
             self._root_element = root
+
+    @property
+    def base_url(self):
+        return sel.base_url()
+
+    @property
+    def selenium(self):
+        return browser()
 
     def _wait_for_results_refresh(self):
         # On pages that do not have ajax refresh this wait will have no effect.

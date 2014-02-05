@@ -1,13 +1,15 @@
 """Navigation fixtures for use in tests."""
 # -*- coding: utf8 -*-
 from functools import partial
+import warnings
 
 import pytest
-from selenium.common.exceptions import NoAlertPresentException, WebDriverException
 
-from pages.login import LoginPage
-from utils.browser import browser, ensure_browser_open, testsetup
+from cfme.fixtures.pytest_selenium import force_navigate
+from pages.base import Base
+from utils.browser import testsetup
 from utils.log import logger
+
 
 _width_errmsg = '''The minimum supported width of CFME is 1280 pixels
 
@@ -15,200 +17,180 @@ Some navigation fixtures will fail if the browser window is too small
 due to submenu elements being rendered off the screen.
 '''
 
+_warn_msg = '''fixtures.navigation will be deprecated in the future. \
+Please use the pytest.sel.go_to test decorator.'''
+
 
 @pytest.fixture
 def home_page_logged_in(testsetup=testsetup):
     return intel_dashboard_pg()
 
 
-def _squash_alert():
+def navigate(page_name, first_level, second_level):
+    """Navigate function that represents the old navigation fixtures.
+
+    Args:
+        page_name:
+        first_level:
+        second_level:
+
+    """
+    warnings.warn(_warn_msg, FutureWarning)
+    from pages.regions.header_menu import HeaderMenu
     try:
-        alert = browser().switch_to_alert()
-        alert.accept()
-    except NoAlertPresentException:
-        pass
+        page_class = HeaderMenu.HeaderMenuItem._item_page[first_level][second_level]
+    except KeyError:
+        logger.info("Couldn't find page class when navigating to '%s', using Base" % page_name)
+        page_class = Base
 
+    # Make the return of navigate be a callable that does the same work
+    # so that fixtures can be called again to navigate.
+    page_class.__call__ = partial(navigate, page_name, first_level, second_level)
 
-def navigate(first_level, second_level):
-    # Make sure a browser is running
-    ensure_browser_open()
-    # Clear any potential permaspinnies before moving on
-    try:
-        browser().execute_script('miqSparkleOff();')
-    except WebDriverException:
-        # miqSparkleOff undefined, these are not the droids you're looking for. Move along...
-        pass
-
-    # Ensure browser is logged in as admin, reinitialize page to pick up any browser changes
-    page = LoginPage(testsetup)
-    if not page.is_logged_in or page.header.username != 'Administrator':
-        page.go_to_login_page()
-        # Close any alerts that happen when switching to the login page
-        _squash_alert()
-        page = page.login()
-        assert page.is_logged_in
-
-    # Do the navigation
-    first = page.header.site_navigation_menu(first_level)
-    second = first.sub_navigation_menu(second_level)
-    destination = second.click()
-    # Close any alerts that happen on the navigation click
-    _squash_alert()
-
-    return destination
-
-
-def navigator(first_level, second_level):
-    # Adds a _navigate method to a Page, as well as makes fixtures
-    # themselves callable using the same method.
-    # This is evil, but transitional.
-    logger.debug('Navigating to %s/%s' % (first_level, second_level))
-    navigator = partial(navigate, first_level, second_level)
-    page = navigator()
-    type(page).__call__ = navigator
-    return page
+    force_navigate(page_name)
+    return page_class(testsetup)
 
 
 @pytest.fixture
 def cnf_configuration_pg():
-    return navigator('Configure', 'Configuration')
+    return navigate('configuration', 'Configure', 'Configuration')
 
 
 @pytest.fixture
 def cnf_about_pg():
-    return navigator('Configure', 'About')
+    return navigate('about', 'Configure', 'About')
 
 
 @pytest.fixture
 def cnf_mysettings_pg():
-    return navigator('Configure', 'My Settings')
+    return navigate('my_settings', 'Configure', 'My Settings')
 
 
 @pytest.fixture
 def cnf_tasks_pg():
-    return navigator('Configure', 'Tasks')
+    return navigate('tasks', 'Configure', 'Tasks')
 
 
 @pytest.fixture
 def cnf_smartproxies_pg():
-    return navigator('Configure', 'SmartProxies')
+    return navigate('smartproxies', 'Configure', 'SmartProxies')
 
 
 @pytest.fixture
 def svc_myservices_pg():
-    return navigator('Services', 'My Services')
+    return navigate('my_services', 'Services', 'My Services')
 
 
 @pytest.fixture
 def svc_catalogs_pg():
-    return navigator('Services', 'Catalogs')
+    return navigate('services_catalogs', 'Services', 'Catalogs')
 
 
 @pytest.fixture
 def cloud_providers_pg():
-    return navigator('Clouds', 'Providers')
+    return navigate('clouds_providers', 'Clouds', 'Providers')
 
 
 @pytest.fixture
 def cloud_availabilityzones_pg():
-    return navigator('Clouds', 'Availability Zones')
+    return navigate('clouds_availability_zones', 'Clouds', 'Availability Zones')
 
 
 @pytest.fixture
 def cloud_flavors_pg():
-    return navigator('Clouds', 'Flavors')
+    return navigate('clouds_flavors', 'Clouds', 'Flavors')
 
 
 @pytest.fixture
 def cloud_securitygroups_pg():
-    return navigator('Clouds', 'Security Groups')
+    return navigate('clouds_security_groups', 'Clouds', 'Security Groups')
 
 
 @pytest.fixture
 def cloud_instances_pg():
-    return navigator('Clouds', 'Instances')
+    return navigate('clouds_instances', 'Clouds', 'Instances')
 
 
 @pytest.fixture
 def infra_providers_pg():
-    return navigator('Infrastructure', 'Providers')
+    return navigate('infrastructure_providers', 'Infrastructure', 'Providers')
 
 
 @pytest.fixture
 def infra_clusters_pg():
-    return navigator('Infrastructure', 'Clusters')
+    return navigate('infrastructure_clusters', 'Infrastructure', 'Clusters')
 
 
 @pytest.fixture
 def infra_hosts_pg():
-    return navigator('Infrastructure', 'Hosts')
+    return navigate('infrastructure_hosts', 'Infrastructure', 'Hosts')
 
 
 @pytest.fixture
 def infra_datastores_pg():
-    return navigator('Infrastructure', 'Datastores')
+    return navigate('infrastructure_datastores', 'Infrastructure', 'Datastores')
 
 
 @pytest.fixture
 def infra_pxe_pg():
-    return navigator('Infrastructure', 'PXE')
+    return navigate('infrastructure_pxe', 'Infrastructure', 'PXE')
 
 
 @pytest.fixture
 def infra_vms_pg():
-    return navigator('Infrastructure', 'Virtual Machines')
+    return navigate('infrastructure_virtual_machines', 'Infrastructure', 'Virtual Machines')
 
 
 @pytest.fixture
 def automate_explorer_pg():
-    return navigator('Automate', 'Explorer')
+    return navigate('automate_explorer', 'Automate', 'Explorer')
 
 
 @pytest.fixture
 def automate_importexport_pg():
-    return navigator('Automate', 'Import / Export')
+    return navigate('automate_import_export', 'Automate', 'Import / Export')
 
 
 @pytest.fixture
 def automate_customization_pg():
-    return navigator('Automate', 'Customization')
+    return navigate('automate_customization', 'Automate', 'Customization')
 
 
 @pytest.fixture
 def control_explorer_pg():
-    return navigator('Control', 'Explorer')
+    return navigate('control_explorer', 'Control', 'Explorer')
 
 
 @pytest.fixture
 def control_importexport_pg():
-    return navigator('Control', 'Import / Export')
+    return navigate('control_import_export', 'Control', 'Import / Export')
 
 
 @pytest.fixture
 def control_simulation_pg():
-    return navigator('Control', 'Simulation')
+    return navigate('control_simulation', 'Control', 'Simulation')
 
 
 @pytest.fixture
 def control_log_pg():
-    return navigator('Control', 'Log')
+    return navigate('control_log', 'Control', 'Log')
 
 
 @pytest.fixture
 def optimize_utilization_pg():
-    return navigator('Optimize', 'Utilization')
+    return navigate('utilization', 'Optimize', 'Utilization')
 
 
 @pytest.fixture
 def intel_dashboard_pg():
-    return navigator('Cloud Intelligence', 'Dashboard')
+    return navigate('dashboard', 'Cloud Intelligence', 'Dashboard')
 
 
 @pytest.fixture
 def intel_chargeback_pg():
-    return navigator('Cloud Intelligence', 'Chargeback')
+    return navigate('chargeback', 'Cloud Intelligence', 'Chargeback')
 
 
 @pytest.fixture
 def intel_reports_pg():
-    return navigator('Cloud Intelligence', 'Reports')
+    return navigate('reports', 'Cloud Intelligence', 'Reports')
