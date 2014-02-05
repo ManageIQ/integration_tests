@@ -1,18 +1,27 @@
 """Provides custom exceptions for the ``cfme`` module. """
 
 
-class AddProviderError(Exception):
+class CFMEException(Exception):
+    """Base class for exceptions in the CFME tree
+
+    Used to easily catch errors of our own making, versus errors from external libraries.
+
+    """
     pass
 
 
-class BlockTypeUnknown(Exception):
+class AddProviderError(CFMEException):
+    pass
+
+
+class BlockTypeUnknown(CFMEException):
     """
     Raised if the block type requested to :py:class:`cfme.web_ui.InfoBlock`.
     """
     pass
 
 
-class CandidateNotFound(Exception):
+class CandidateNotFound(CFMEException):
     """
     Raised if there is no candidate found whilst trying to traverse a tree in
     :py:meth:`cfme.web_ui.Tree.click_path`.
@@ -20,7 +29,7 @@ class CandidateNotFound(Exception):
     pass
 
 
-class ElementOrBlockNotFound(Exception):
+class ElementOrBlockNotFound(CFMEException):
     """
     Raised if an Element or a Block is not found whilst locating in
     :py:meth:`cfme.web_ui.InfoBlock`.
@@ -28,7 +37,7 @@ class ElementOrBlockNotFound(Exception):
     pass
 
 
-class HostStatsNotContains(Exception):
+class HostStatsNotContains(CFMEException):
     """
     Raised if the hosts information does not contain the specified key whilst running
     :py:meth:`cfme.cloud.provider.Provider.do_stats_match`.
@@ -36,15 +45,17 @@ class HostStatsNotContains(Exception):
     pass
 
 
-class ProviderHasNoProperty(Exception):
-    """
-    Raised if the provider does not have the property requested whilst running
-    :py:meth:`cfme.cloud.provider.Provider.do_stats_match`.
-    """
+class NavigationError(CFMEException):
+    """Raised when the pytest.sel.go_to function is unable to navigate to the requested page."""
+    def __init__(self, page_name):
+        self.page_name = page_name
+
+    def __str__(self):
+        return 'Unable to navigate to page "%s"' % self.page_name
     pass
 
 
-class NoElementsInsideValue(Exception):
+class NoElementsInsideValue(CFMEException):
     """
     Raised if the value part of key/value contains no elements during
     :py:meth:`cfme.web_ui.InfoBlock.get_el_or_els`.
@@ -52,7 +63,7 @@ class NoElementsInsideValue(Exception):
     pass
 
 
-class NotAllItemsClicked(Exception):
+class NotAllItemsClicked(CFMEException):
     """
     Raised if not all the items could be clicked during :py:meth:`cfme.web_ui.Table.click_cell`.
     """
@@ -63,7 +74,7 @@ class NotAllItemsClicked(Exception):
         return "Not all the required data elements were clicked [%s]" % ",".join(self.failed_clicks)
 
 
-class ProviderHasNoKey(Exception):
+class ProviderHasNoKey(CFMEException):
     """
     Raised if the :py:meth:`cfme.cloud.provider.Provider.get_mgmt_system` method is called
     but the Provider instance has no key.
@@ -71,14 +82,22 @@ class ProviderHasNoKey(Exception):
     pass
 
 
-class TreeTypeUnknown(Exception):
+class ProviderHasNoProperty(CFMEException):
+    """
+    Raised if the provider does not have the property requested whilst running
+    :py:meth:`cfme.cloud.provider.Provider.do_stats_match`.
+    """
+    pass
+
+
+class TreeTypeUnknown(CFMEException):
     """
     Raised if the tree type is known whilst detection in :py:class:`cfme.web_ui.Tree`
     """
     pass
 
 
-class UnidentifiableTagType(Exception):
+class UnidentifiableTagType(CFMEException):
     """
     Raised if a tag type is not identifiable when processing a form in
     :py:meth:`cfme.web_ui.Form.fill_fields`.

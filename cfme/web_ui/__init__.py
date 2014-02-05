@@ -19,19 +19,18 @@
   * :py:mod:`cfme.web_ui.toolbar`
 
 """
-
+import os
 import re
-import os.path
+import types
+
+import selenium
+from selenium.common import exceptions as sel_exceptions
+from singledispatch import singledispatch
 from unittestzero import Assert
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from cfme.fixtures.pytest_selenium import browser
+
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
-from selenium.common import exceptions as sel_exceptions
-import selenium
-from singledispatch import singledispatch
-import types
+from cfme.fixtures.pytest_selenium import browser
 
 
 class Region(object):
@@ -101,22 +100,6 @@ def get_context_current_page():
     url = browser().current_url()
     stripped = url.lstrip('https://')
     return stripped[stripped.find('/'):stripped.rfind('?')]
-
-
-def handle_popup(cancel=False):
-    """
-    Handles a popup
-
-    Args:
-        cancel: If ``True``, clicks OK, if ``False``, clicks Cancel
-    """
-    wait = WebDriverWait(browser(), 30.0)
-    # throws timeout exception if not found
-    wait.until(EC.alert_is_present())
-    popup = browser().switch_to_alert()
-    answer = 'cancel' if cancel else 'ok'
-    print popup.text + " ...clicking " + answer
-    popup.dismiss() if cancel else popup.accept()
 
 
 class Table(object):

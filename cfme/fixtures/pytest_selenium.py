@@ -4,20 +4,36 @@ The aim is that no direct calls to selenium be made at all.
 One reason for this it to ensure that all function calls to selenium wait for the ajax
 response which is needed in CFME.
 
+Members of this module are available in the the pytest.sel namespace, e.g.::
+
+    pytest.sel.click(locator)
+
 :var ajax_wait_js: A Javascript function for ajax wait checking
 """
-from selenium.common.exceptions import NoSuchElementException
+import time
+
+import ui_navigate
+from selenium.common.exceptions import NoSuchElementException, UnexpectedAlertPresentException
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
-from utils import conf
-from utils.browser import browser
 from singledispatch import singledispatch
-import time
+
+import pytest
+from cfme import exceptions
+from utils import conf
+from utils.browser import browser, ensure_browser_open
+from utils.log import logger
 
 VALUE = 'val'
 TEXT = 'txt'
+
+
+def pytest_namespace():
+    # Return the contents of this file as the 'sel' namespace in pytest.
+    return {'sel': globals()}
 
 
 @singledispatch
@@ -120,6 +136,46 @@ def wait_for_element(loc):
         loc: A locator, expects either a string, WebElement, tuple.
     """
     wait_until(lambda s: is_displayed(loc), "Element '{}' did not appear as expected.".format(loc))
+
+
+def handle_alert(cancel=False, wait=30.0, squash=False):
+    """Handles an alert popup.
+
+    Args:
+        cancel: Whether or not to cancel the alert.
+            Accepts the Alert (False) by default.
+        wait: Time to wait for an alert to appear.
+            Default 30 seconds, can be set to 0 to disable waiting.
+        squash: Whether or not to squash errors during alert handling.
+            Default False
+
+    Returns:
+        True if the alert was handled, False if exceptions were squashed.
+
+    No exceptions will be raised if ``squash`` is True.
+
+    Raises:
+        utils.wait.TimedOutError: If the alert popup does not appear
+        selenium.common.exceptions.NoAlertPresentException: If no alert is present when accepting
+            or dismissing the alert.
+
+    """
+
+    # throws timeout exception if not found
+    try:
+        if wait:
+            wait = WebDriverWait(browser(), 30.0)
+            wait.until(expected_conditions.alert_is_present())
+        popup = browser().switch_to_alert()
+        answer = 'cancel' if cancel else 'ok'
+        logger.info('Handling popup "%s", clicking %s' % (popup.text, answer))
+        popup.dismiss() if cancel else popup.accept()
+        return True
+    except:
+        if squash:
+            return False
+        else:
+            raise
 
 
 def click(loc):
@@ -485,3 +541,93 @@ def _sd_elements_otext(ot):
     """The elements of an ObservedText is just the elements of
     its locator."""
     return elements(ot.locator)
+
+
+def go_to(page_name):
+    """go_to task mark, used to ensure tests start on the named page, logged in as Administrator.
+
+    Args:
+        page_name: Name a page from the current :py:data:`ui_navigate.nav_tree` tree to navigate to.
+
+    Usage:
+        @pytest.sel.go_to('page_name')
+        def test_something_on_page_name():
+            # ...
+
+    """
+    def go_to_wrapper(test_callable):
+        # Optional, but cool. Marks a test with the page_name, so you can
+        # py.test -k page_name
+        test_callable = getattr(pytest.mark, page_name)(test_callable)
+        # Use fixtureconf to mark the test with destination page_name
+        test_callable = pytest.mark.fixtureconf(page_name=page_name)(test_callable)
+        # Use the 'go_to' fixture, which looks for the page_name fixtureconf
+        test_callable = pytest.mark.usefixtures('go_to_fixture')(test_callable)
+        return test_callable
+    return go_to_wrapper
+
+
+@pytest.fixture
+def go_to_fixture(fixtureconf, browser):
+    """"Private" implementation of go_to in fixture form.
+
+    Used by the :py:func:`go_to` decorator, this is the actual fixture that does
+    the work set up by the go_to decorator. py.test fixtures themselves can't have
+    underscores in their name, so we can't imply privacy with that convention.
+
+    Don't use this fixture directly, use the go_to decorator instead.
+
+    """
+    page_name = fixtureconf['page_name']
+    force_navigate(page_name)
+
+
+def force_navigate(page_name, tries=0):
+    """force_navigate(page_name)
+
+    Given a page name, attempt to navigate to that page no matter what breaks.
+
+    Args:
+        page_name: Name a page from the current :py:data:`ui_navigate.nav_tree` tree to navigate to.
+
+    """
+    # circular import prevention: cfme.login uses functions in this module
+    from cfme import login
+    # Import the top-level nav menus for convenience
+    from cfme.web_ui import menu  # NOQA
+
+    if tries < 3:
+        tries += 1
+    else:
+        # Need at least three tries:
+        # 1: login_admin handles an alert or closes the browser due any error
+        # 2: If login_admin handles an alert, go_to can still encounter an unexpected error
+        # 3: Everything should work. If not, NavigationError.
+        raise exceptions.NavigationError(page_name)
+
+    # browser fixture should do this, but it's needed for subsequent calls
+    ensure_browser_open()
+    # Clear any running "spinnies"
+    try:
+        browser().execute_script('miqSparkleOff();')
+    except:
+        # miqSparkleOff undefined, so it's definitely off.
+        pass
+
+    try:
+        # What we'd like to happen...
+        login.login_admin()
+        logger.info('Navigating to %s' % page_name)
+        ui_navigate.go_to(page_name)
+    except ValueError:
+        # ui_navigate.go_to can't handle this page, raise
+        raise
+    except UnexpectedAlertPresentException:
+        # There was an alert, accept it and try again
+        handle_alert(wait=0)
+        force_navigate(page_name, tries)
+    except:
+        # Anything else happened, nuke the browser and try again.
+        browser().quit()
+        logger.error('Browser failure during navigation, trying again.')
+        force_navigate(page_name, tries)

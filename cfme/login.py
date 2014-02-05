@@ -5,12 +5,16 @@ the credentials in the cfme yamls.
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the login page
 """
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+
 import cfme.fixtures.pytest_selenium as browser
+import cfme.web_ui.flash as flash
 from cfme.web_ui import Region
 from utils import conf
-import cfme.web_ui.flash as flash
+from utils.log import logger
+
 
 page = Region(title="CloudForms Management Engine: Dashboard",
               locators={"username_text": (By.CSS_SELECTOR, '#user_name'),
@@ -57,6 +61,7 @@ def login(user, password, submit_method=_click_on_login):
     # TODO: Should probably do the username check here, but there are pretty usernames to deal with
     # e.g. 'admin' shows up in the UI as 'Administrator'
     if not _is_logged_in():
+        logger.debug('Logging in as user %s' % user)
         browser.set_text(page.username_text, user)
         browser.set_text(page.password_text, password)
         submit_method()
