@@ -198,6 +198,7 @@ def send_keys(loc, text):
 def set_text(loc, text):
     """
     Clears the element and then sends the supplied keys.
+    If it's a date set element, then it uses a different approach to set the field's content.
 
     Args:
         loc: A locator, expects either a string, WebElement, tuple.
@@ -205,10 +206,41 @@ def set_text(loc, text):
     """
     if text is not None:
         el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        el.clear()
-        el.send_keys(text)
+        if (el.get_attribute("readonly") == "true"
+                and ("date" in el.get_attribute("id")
+                    or "data-miq_observe_date" in all_attributes(el))
+                and "/" in text):
+            # Date is always read-only, clicking on it invokes a calendar
+            # So a direct set is necessary, because send_keys won't work.
+            browser().execute_script("arguments[0].value = '%s'" % text, el)
+        else:
+            ActionChains(browser()).move_to_element(el).perform()
+            el.clear()
+            el.send_keys(text)
         wait_for_ajax()
+
+
+def all_attributes(element):
+    """ Returns dict with all HTML attributes for specified element.
+
+    Args:
+        element: :py:class:`WebElement` to check.
+    Returns: :py:class:`dict` with all HTML attributes.
+    """
+    script = """
+        el = arguments[0];
+        var nodes=[], values=[];
+        for (var attr, i=0, attrs=el.attributes, l=attrs.length; i<l; i++)
+        {
+            attr = attrs.item(i)
+            nodes.push(attr.nodeName);
+            values.push(attr.nodeValue);
+        }
+
+        return [nodes, values];
+    """
+    pairs = zip(*browser().execute_script(script, element))
+    return {k.encode("utf-8").strip(): v.encode("utf-8").strip() for k, v in pairs}
 
 
 def select(loc, o):
@@ -478,6 +510,25 @@ def _sd_set_text_string(ot, text):
         el.send_keys(text)
         time.sleep(0.8)
         wait_for_ajax()
+
+
+@set_text.register(tuple)
+def _sd_set_text_date(loc, date_tuple):
+    """ Take a tuple and convert it to the mm/dd/yyy format to enter the date as a string.
+
+    Then redispatch as set_text for string.
+
+    Args:
+        loc: Locator
+        date_tuple: :py:class:`tuple` as (Y, M, D)
+
+    """
+    assert len(date_tuple) == 3, "Date tuple must be in format (Y, M, D)!"
+    y, m, d = [int(x) for x in date_tuple]
+    assert 1 <= d <= 31, "Day must be 1-31"
+    assert 1 <= m <= 12, "Month must be 1-12"
+    assert 1970 <= y <= 2100, "Year must be 1970-2100"
+    set_text("%02d/%02d/%d" % (m, d, y))
 
 
 @elements.register(ObservedText)
