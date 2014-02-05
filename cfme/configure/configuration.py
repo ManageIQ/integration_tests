@@ -10,7 +10,7 @@ import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
 from utils.update import Updateable
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill
+from cfme.web_ui import fill, handle_popup
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.accordion as accordion
 from utils.wait import wait_for
@@ -503,6 +503,12 @@ class LDAPSAuthSetting(LDAPAuthSetting):
 
 
 class Schedule(object):
+    """ Configure/Configuration/Region/Schedules functionality
+
+    Create, update, delete functionality.
+
+    Todo: When tables are extended, add the rest.
+    """
     WEEKLY = intern("Weekly")
     ONCE = intern("Once")
     HOURLY = intern("Hourly")
@@ -582,17 +588,18 @@ class Schedule(object):
         else:
             browser.click(crud_buttons.cancel_button)
 
-    def delete(self):
-        self.delete_by_name(self.details["name"])
+    def delete(self, cancel=False):
+        self.delete_by_name(self.details["name"], cancel)
 
     @classmethod
-    def delete_by_name(self, name):
+    def delete_by_name(self, name, cancel=False):
         nav.go_to("cfg_settings_schedules")
         self.table.click_cell("name", name)
         tb.select("Configuration", "Delete this Schedule from the Database")
+        handle_popup(cancel)
 
     @classmethod
-    def new(self, *args, **kwargs):
+    def create(self, *args, **kwargs):
         o = self(*args, **kwargs)
         o.create_new()
         return o
