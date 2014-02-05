@@ -190,6 +190,14 @@ class Table(object):
         """
         return re.sub('[^0-9a-zA-Z ]+', '', header).replace(' ', '_').lower()
 
+    @property
+    def is_displayed(self):
+        """ Whether the table is displayed or not.
+
+        Returns: True if visible, otherwise False
+        """
+        return sel.is_displayed(self.header_data)
+
     def _update_cache(self):
         """Updates the internal cache of headers
 
