@@ -15,6 +15,7 @@ import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.accordion as accordion
 from utils.wait import wait_for
 from time import sleep
+from cfme.exceptions import ScheduleNotFound, NotAllItemsClicked
 
 
 def make_tree_locator(acc_name, root_name):
@@ -594,7 +595,13 @@ class Schedule(object):
     @classmethod
     def delete_by_name(self, name, cancel=False):
         nav.go_to("cfg_settings_schedules")
-        self.table.click_cell("name", name)
+        try:
+            assert self.table.is_displayed
+            self.table.click_cell("name", name)
+        except (AssertionError, NotAllItemsClicked):
+            raise ScheduleNotFound(
+                "Schedule '%s' could not be found for deletion!" % name
+            )
         tb.select("Configuration", "Delete this Schedule from the Database")
         handle_alert(cancel)
 
