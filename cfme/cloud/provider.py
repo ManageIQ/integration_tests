@@ -151,7 +151,7 @@ class Provider(Updateable):
            validate_credentials (boolean): Whether to validate credentials - if True and the
                credentials are invalid, an error will be raised.
         """
-        nav.go_to('cloud_provider_new')
+        browser.force_navigate('cloud_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(self.credentials, validate=validate_credentials)
         self._submit(cancel, add_page.add_submit)
@@ -346,7 +346,7 @@ def discover(credential, cancel=False):
       credential (cfme.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
-    nav.go_to('cloud_provider_discover')
+    browser.force_navigate('cloud_provider_discover')
     if cancel:  # normalize so that the form filler only clicks either start or cancel
         cancel = True
     else:
