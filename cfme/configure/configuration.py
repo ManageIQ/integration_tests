@@ -501,6 +501,47 @@ class LDAPSAuthSetting(LDAPAuthSetting):
     AUTH_MODE = "LDAPS"
 
 
+class Schedule(object):
+    WEEKLY = intern("Weekly")
+    ONCE = intern("Once")
+    HOURLY = intern("Hourly")
+    DAILY = intern("Daily")
+    MONTHLY = intern("Monthly")
+
+    form = Form(fields=[
+        ("name", "//input[@id='name']"),
+        ("description", "//input[@id='description']"),
+        ("active", "//input[@id='enabled']"),
+        ("name", "//input[@id='name']"),
+        ("action", "//select[@id='action_typ']"),
+        ("filter_type", "//select[@id='filter_typ']"),
+        ("filter_value", "//select[@id='filter_value']"),
+
+        ("time_zone", "//select[@id='time_zone']"),
+    ])
+
+    def __init__(self,
+                 name,
+                 description,
+                 active=True,
+                 action="VM Analysis",
+                 filter_type="All VMs",
+                 filter_value=None,
+                 run=None,
+                 time_zone="UTC"):
+        self.details = dict(
+            name=name,
+            description=description,
+            active=active,
+            action=action,
+            filter_type=filter_type,
+            filter_value=filter_value,
+            time_zone=("val", time_zone)
+
+        )
+        self.run = run or self.ONCE
+
+
 def set_server_roles(**roles):
     """ Set server roles on Configure / Configuration pages.
 
