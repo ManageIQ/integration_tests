@@ -10,7 +10,7 @@ import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
 from utils.update import Updateable
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill, handle_popup
+from cfme.web_ui import fill, handle_alert
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.accordion as accordion
 from utils.wait import wait_for
@@ -596,7 +596,7 @@ class Schedule(object):
         nav.go_to("cfg_settings_schedules")
         self.table.click_cell("name", name)
         tb.select("Configuration", "Delete this Schedule from the Database")
-        handle_popup(cancel)
+        handle_alert(cancel)
 
     @classmethod
     def create(self, *args, **kwargs):
