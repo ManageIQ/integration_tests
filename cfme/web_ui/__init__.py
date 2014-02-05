@@ -102,22 +102,6 @@ def get_context_current_page():
     return stripped[stripped.find('/'):stripped.rfind('?')]
 
 
-def handle_popup(cancel=False):
-    """
-    Handles a popup
-
-    Args:
-        cancel: If ``True``, clicks OK, if ``False``, clicks Cancel
-    """
-    wait = WebDriverWait(browser(), 30.0)
-    # throws timeout exception if not found
-    wait.until(EC.alert_is_present())
-    popup = browser().switch_to_alert()
-    answer = 'cancel' if cancel else 'ok'
-    print popup.text + " ...clicking " + answer
-    popup.dismiss() if cancel else popup.accept()
-
-
 class Table(object):
     """
     Helper class for Table/List objects

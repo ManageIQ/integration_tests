@@ -138,6 +138,46 @@ def wait_for_element(loc):
     wait_until(lambda s: is_displayed(loc), "Element '{}' did not appear as expected.".format(loc))
 
 
+def handle_alert(cancel=False, wait=30.0, squash=False):
+    """Handles an alert popup.
+
+    Args:
+        cancel: Whether or not to cancel the alert.
+            Accepts the Alert (False) by default.
+        wait: Time to wait for an alert to appear.
+            Default 30 seconds, can be set to 0 to disable waiting.
+        squash: Whether or not to squash errors during alert handling.
+            Default False
+
+    Returns:
+        True if the alert was handled, False if exceptions were squashed.
+
+    No exceptions will be raised if ``squash`` is True.
+
+    Raises:
+        utils.wait.TimedOutError: If the alert popup does not appear
+        selenium.common.exceptions.NoAlertPresentException: If no alert is present when accepting
+            or dismissing the alert.
+
+    """
+
+    # throws timeout exception if not found
+    try:
+        if wait:
+            wait = WebDriverWait(browser(), 30.0)
+            wait.until(expected_conditions.alert_is_present())
+        popup = browser().switch_to_alert()
+        answer = 'cancel' if cancel else 'ok'
+        logger.info('Handling popup "%s", clicking %s' % (popup.text, answer))
+        popup.dismiss() if cancel else popup.accept()
+        return True
+    except:
+        if squash:
+            return False
+        else:
+            raise
+
+
 def click(loc):
     """
     Clicks on an element.

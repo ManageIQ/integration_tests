@@ -5,7 +5,7 @@
 
 from selenium.webdriver.common.by import By
 import cfme.fixtures.pytest_selenium as browser
-from cfme.web_ui import Region, handle_popup
+from cfme.web_ui import Region
 
 _css_reset_button = 'div.dhx_toolbar_btn[title="Reset Dashboard Widgets to the defaults"] img'
 
@@ -21,4 +21,4 @@ def reset_widgets(cancel=False):
         cancel: Set whether to accept the popup confirmation box. Defaults to ``False``.
     """
     browser().click(page.reset_widgets_button)
-    handle_popup(cancel)
+    browser.handle_alert(cancel)
