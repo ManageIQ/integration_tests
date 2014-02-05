@@ -618,6 +618,7 @@ class Tree(object):
             self.node_search = "//li/span/a[contains(., '%s')]/../.."
             self.click_expand = "span/span"
             self.leaf = "span/a"
+            self.node_select_support = False
         elif sel.tag(self.root_el) == 'table':
             # Legacy Tree
             self.expandable = 'tr/td[1]/img'
@@ -625,6 +626,9 @@ class Tree(object):
             self.node_search = "//tbody/tr/td/table/tbody/tr/td[4]/span[contains(., '%s')]/../../.."
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
+            self.node_select_support = True
+            self.node_select = "//td[2]/img"
+            self.node_images = {'select': 'iconCheckAll', 'deselect': 'iconUncheckAll'}
         else:
             raise exceptions.TreeTypeUnknown(
                 'The locator described does not point to a known tree type')
@@ -727,6 +731,51 @@ class Tree(object):
         leaf = self.expose_path(*path, root=root)
         sel.click(sel.element(self.leaf, root=leaf))
         return leaf
+
+    def _select_or_deselect_node(self, *path, **kwargs):
+        """ Selects or deselects a node.
+
+        Args:
+            *path: The path as multiple positional string arguments denoting the course to take.
+            select: If ``True``, the node is selected, ``False`` the node is deselected.
+            root: The root path to begin at. This is usually not set manually
+                and is required for the recursion during :py:meth:expose_path:.
+        """
+        select = kwargs.get('select', False)
+        if self.node_select_support:
+            root = kwargs.get('root', None)
+            leaf = self.expose_path(*path, root=root)
+            leaf_chkbox = sel.element(self.node_select, root=leaf)
+            if self.node_images['select'] in sel.get_attribute(leaf_chkbox, 'src'):
+                node_open = True
+            else:
+                node_open = False
+            if select is not node_open:
+                sel.click(leaf_chkbox)
+        else:
+            raise Exception('This Tree type does not support select yet.')
+
+    def select_node(self, *path, **kwargs):
+        """ Convenience function to select a node
+
+        Args:
+            *path: The path as multiple positional string arguments denoting the course to take.
+            root: The root path to begin at. This is usually not set manually
+                and is required for the recursion during :py:meth:expose_path:.
+        """
+        kwargs.update({'select': True})
+        self._select_or_deselect_node(*path, **kwargs)
+
+    def deselect_node(self, *path, **kwargs):
+        """ Convenience function to deselect a node
+
+        Args:
+            *path: The path as multiple positional string arguments denoting the course to take.
+            root: The root path to begin at. This is usually not set manually
+                and is required for the recursion during :py:meth:expose_path:.
+        """
+        kwargs.update({'select': False})
+        self._select_or_deselect_node(*path, **kwargs)
 
 
 class InfoBlock(object):
