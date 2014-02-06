@@ -19,6 +19,7 @@ class Control(Base):
     Explorer = Explorer
 
     class Simulation(Base):
+        _page_title = "CloudForms Management Engine: Policy Simulation"
         pass  # Le stub
 
     class Log(Base, ReloadMixin):
@@ -28,6 +29,7 @@ class Control(Base):
         whether it's appropriate.
 
         """
+        _page_title = "CloudForms Management Engine: Control"
         _log_textarea_locator = (By.CSS_SELECTOR, "textarea#logview_data")
         _log_download_locator = (By.CSS_SELECTOR, "div#miq_alone > img[src*='download.png']")
 
