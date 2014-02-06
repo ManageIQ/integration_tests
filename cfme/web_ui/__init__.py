@@ -26,11 +26,12 @@ import types
 import selenium
 from selenium.common import exceptions as sel_exceptions
 from singledispatch import singledispatch
-from unittestzero import Assert
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import browser
+
+from utils.log import logger
 
 
 class Region(object):
@@ -76,10 +77,10 @@ class Region(object):
 
         Returns: A boolean describing if the region is currently displayed
         """
-        Assert.true(self.identifying_loc is not None or
-                    self.title is not None,
-                    msg="Region doesn't have an identifying locator or title," +
-                    "can't determine if it's current page.")
+        msg = "Region doesn't have an identifying locator or title, " +\
+            "can't determine if current page."
+        assert self.identifying_loc is not None or self.title is not None, msg
+
         if self.identifying_loc:
             ident_match = browser().is_displayed(self.locators[self.identifying_loc])
         else:
@@ -396,6 +397,7 @@ def _sd_fill_string(loc, value):
         raise exceptions.UnidentifiableTagType(
             "Tag '%s' with type '%s' is not a known form element to Form" %
             (tag, ttype))
+    logger.debug('  Filling in [%s], with value "%s"' % (operation, value))
     op = tag_types[operation]
     if op == sel.click:
         op(loc)
@@ -409,12 +411,14 @@ def _sd_fill_table(table, cells):
     See Table.click_cells
     """
     table._update_cache()
+    logger.debug('  Clicking Table cell')
     table.click_cells(cells)
 
 
 @fill.register(sel.ObservedText)
 def _sd_fill_otext(ot, value):
     """Filled just like a text box."""
+    logger.debug('  Filling in [ObservedText], with value "%s"' % value)
     sel.set_text(ot, value)
 
 
@@ -468,10 +472,11 @@ class Form(Region):
 
     """
 
-    def __init__(self, fields=None, identifying_loc=None):
+    def __init__(self, fields=None, identifying_loc=None, name=None):
         self.locators = dict((key, value) for key, value in fields)
         self.fields = fields
         self.identifying_loc = identifying_loc
+        self.name = name
 
 
 @fill.register(Form)
@@ -494,6 +499,7 @@ def _sd_fill_form(form, values, action=None):
         action: a locator which will be clicked when the form filling is complete
 
     """
+    logger.info('Beginning to fill in form "%s"' % form.name)
     if isinstance(values, dict):
         values = list((key[0], values[key[0]]) for key in form.fields if key[0] in values)
     elif isinstance(values, list):
@@ -502,10 +508,12 @@ def _sd_fill_form(form, values, action=None):
     for field, value in values:
         if value is not None:
             loc = form.locators[field]
+            logger.debug(' Dispatching fill for "%s", with value "%s"' % (field, value))
             fill(loc, value)  # re-dispatch to fill for each item
 
     if action:
         sel.click(form.region.__getattr__(action))
+    logger.info('Finished filling in form "%s"' % form.name)
 
 
 class Radio(object):
