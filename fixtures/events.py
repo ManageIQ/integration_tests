@@ -169,10 +169,8 @@ class EventListener(object):
         """ Utility to check listener database for event
 
         Args:
-            after:
-                Return only events that happened AFTER this time
-            before:
-                Return only events that happened BEFORE this time
+            after: Return only events that happened AFTER this time
+            before: Return only events that happened BEFORE this time
 
         Note:
             Both can be combined. If None, then the filter won't be applied.

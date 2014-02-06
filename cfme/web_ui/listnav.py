@@ -1,7 +1,9 @@
 """
-Usage::
+Usage:
+
     locate('IPMI Enabled')
     click('IPMI Enabled')
+
 """
 import cfme.fixtures.pytest_selenium as sel
 
