@@ -620,8 +620,9 @@ def force_navigate(page_name, _tries=0):
         login.login_admin()
         logger.info('Navigating to %s' % page_name)
         ui_navigate.go_to(page_name)
-    except ValueError:
-        # ui_navigate.go_to can't handle this page, raise
+    except (KeyboardInterrupt, ValueError):
+        # KeyboardInterrupt: Don't block this while navigating
+        # ValueError: ui_navigate.go_to can't handle this page, give up
         raise
     except UnexpectedAlertPresentException:
         # There was an alert, accept it and try again
