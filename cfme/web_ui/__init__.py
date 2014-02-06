@@ -73,7 +73,10 @@ class Region(object):
 
     """
     def __getattr__(self, name):
-        return self.locators[name]
+        try:
+            return self.locators[name]
+        except KeyError:
+            return object.__getattribute__(self, name)
 
     def __init__(self, locators=None, title=None, identifying_loc=None, infoblock_type=None):
         self.locators = locators
@@ -516,8 +519,11 @@ class Table(object):
             return ", ".join(["'%s'" % el.text for el in self.columns])
 
         def __eq__(self, other):
-            # Selenium elements support equality checks, so we can, too.
-            return self.row_element == other.row_element
+            if isinstance(other, type(self)):
+                # Selenium elements support equality checks, so we can, too.
+                return self.row_element == other.row_element
+            else:
+                return id(self) == id(other)
 
         def locate(self):
             # table.create_row_from_element(row_instance) might actually work...
@@ -777,6 +783,9 @@ class Form(Region):
         self.locators = dict((key, value) for key, value in fields)
         self.fields = fields
         self.identifying_loc = identifying_loc
+
+    def fill(self, fill_data):
+        fill(self, fill_data)
 
 
 @fill.method((Form, list))

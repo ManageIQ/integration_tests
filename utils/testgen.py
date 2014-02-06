@@ -33,7 +33,7 @@ from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.cloud.provider import get_from_config as get_cloud_provider
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.providers import cloud_provider_type_map, infra_provider_type_map
+from utils.providers import cloud_provider_type_map, infra_provider_type_map, provider_factory
 
 
 def parametrize(gen_func, *args, **kwargs):
@@ -120,6 +120,9 @@ def provider_by_type(metafunc, provider_types, *fields):
         ``provider_crud``
             the provider's CRUD object, either a :py:class:`cfme.cloud.provider.Provider`
             or a :py:class:`cfme.infrastructure.provider.Provider`
+
+        ``provider_mgmt``
+            the provider's backend manager, from :py:class:`utils.mgmt_system`
 
     Returns:
         An tuple of ``(argnames, argvalues, idlist)`` for use in a pytest_generate_tests hook, or
