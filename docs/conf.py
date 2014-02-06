@@ -113,7 +113,7 @@ html_theme = 'default'
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
-#html_title = None
+html_title = "%s documentation" % project
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
@@ -222,7 +222,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'cfme_tests', u'cfme_tests Documentation',
+    ('guides/dev_guide', 'cfme_tests', u'cfme_tests Documentation',
      [u'RedHat QE'], 1)
 ]
 

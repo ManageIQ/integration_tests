@@ -17,7 +17,7 @@ should exist in them. Refering to the image below, a page model should contain t
 
 Anything else should be added as part of a web_ui component, a fixture or a utility.
 
-.. image:: framework.png
+.. image:: /_static/framework.png
 
 Pages are read-only python modeling of the CFME UI, allowing the functional tests of the UI to
 be ignorant of the underlying page structure. As such, UI elements (pages, regions, forms, etc.)

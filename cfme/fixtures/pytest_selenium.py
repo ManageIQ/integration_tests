@@ -582,7 +582,7 @@ def go_to_fixture(fixtureconf, browser):
     force_navigate(page_name)
 
 
-def force_navigate(page_name, tries=0):
+def force_navigate(page_name, _tries=0):
     """force_navigate(page_name)
 
     Given a page name, attempt to navigate to that page no matter what breaks.
@@ -591,22 +591,23 @@ def force_navigate(page_name, tries=0):
         page_name: Name a page from the current :py:data:`ui_navigate.nav_tree` tree to navigate to.
 
     """
-    # circular import prevention: cfme.login uses functions in this module
-    from cfme import login
-    # Import the top-level nav menus for convenience
-    from cfme.web_ui import menu  # NOQA
-
-    if tries < 3:
-        tries += 1
-    else:
+    if _tries >= 3:
         # Need at least three tries:
         # 1: login_admin handles an alert or closes the browser due any error
         # 2: If login_admin handles an alert, go_to can still encounter an unexpected error
         # 3: Everything should work. If not, NavigationError.
         raise exceptions.NavigationError(page_name)
 
+    _tries += 1
+
+    # circular import prevention: cfme.login uses functions in this module
+    from cfme import login
+    # Import the top-level nav menus for convenience
+    from cfme.web_ui import menu  # NOQA
+
     # browser fixture should do this, but it's needed for subsequent calls
     ensure_browser_open()
+
     # Clear any running "spinnies"
     try:
         browser().execute_script('miqSparkleOff();')
@@ -625,9 +626,9 @@ def force_navigate(page_name, tries=0):
     except UnexpectedAlertPresentException:
         # There was an alert, accept it and try again
         handle_alert(wait=0)
-        force_navigate(page_name, tries)
+        force_navigate(page_name, _tries)
     except:
         # Anything else happened, nuke the browser and try again.
         browser().quit()
         logger.error('Browser failure during navigation, trying again.')
-        force_navigate(page_name, tries)
+        force_navigate(page_name, _tries)
