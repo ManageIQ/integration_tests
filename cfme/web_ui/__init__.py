@@ -468,10 +468,11 @@ class Form(Region):
 
     """
 
-    def __init__(self, fields=None, identifying_loc=None):
+    def __init__(self, fields=None, identifying_loc=None, name=None):
         self.locators = dict((key, value) for key, value in fields)
         self.fields = fields
         self.identifying_loc = identifying_loc
+        self.name = name
 
 
 @fill.register(Form)
