@@ -26,7 +26,6 @@ import types
 import selenium
 from selenium.common import exceptions as sel_exceptions
 from singledispatch import singledispatch
-from unittestzero import Assert
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
@@ -76,10 +75,10 @@ class Region(object):
 
         Returns: A boolean describing if the region is currently displayed
         """
-        Assert.true(self.identifying_loc is not None or
-                    self.title is not None,
-                    msg="Region doesn't have an identifying locator or title," +
-                    "can't determine if it's current page.")
+        msg = "Region doesn't have an identifying locator or title, " +\
+            "can't determine if current page."
+        assert self.identifying_loc is not None or self.title is not None, msg
+
         if self.identifying_loc:
             ident_match = browser().is_displayed(self.locators[self.identifying_loc])
         else:
