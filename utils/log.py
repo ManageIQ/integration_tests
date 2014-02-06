@@ -93,6 +93,7 @@ Members
 
 """
 import logging
+import warnings
 from logging.handlers import RotatingFileHandler
 from time import time
 
@@ -233,5 +234,19 @@ def create_logger(logger_name):
     logger.addFilter(relpath_filter)
     return logger
 
+
+def _showwarning(message, category, filename, lineno, file=None, line=None):
+    relpath = get_rel_path(filename)
+    if relpath:
+        _from = relpath
+    else:
+        _from = filename
+
+    message = "%s from %s:%d: %s" % (category.__name__, _from, lineno, message)
+    logger.warning(message)
+
 logger = create_logger('cfme')
+# Capture warnings to the cfme logger using the warnings.showwarning hook
+warnings.showwarning = _showwarning
+warnings.simplefilter('default')
 perflog = Perflog()
