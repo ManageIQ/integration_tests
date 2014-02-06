@@ -51,6 +51,7 @@ details_page = Region(infoblock_type='detail')
 
 # Forms
 discover_form = Form(
+    name="Discover Form",
     fields=[
         ('username', "//*[@id='userid']"),
         ('password', "//*[@id='password']"),
@@ -60,6 +61,7 @@ discover_form = Form(
     ])
 
 properties_form = Form(
+    name="Properties Form",
     fields=[
         ('type_select', "//*[@id='server_emstype']"),
         ('name_text', browser.ObservedText("//*[@id='name']")),
@@ -70,6 +72,7 @@ properties_form = Form(
     ])
 
 def_form = Form(
+    name="Default Credentials",
     fields=[
         ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
         ('principal', browser.ObservedText("//*[@id='default_userid']")),
@@ -79,6 +82,7 @@ def_form = Form(
     ])
 
 amqp_form = Form(
+    name="AMQP Credentials",
     fields=[
         ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
         ('principal', browser.ObservedText("//*[@id='amqp_userid']")),
