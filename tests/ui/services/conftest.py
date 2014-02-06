@@ -11,7 +11,7 @@ def provisioning_start_page(infra_vms_pg):
 
 
 @pytest.fixture()
-def create_service_dialog(automate_customization_pg,
+def service_dialog(automate_customization_pg,
     random_string, provisioning_data):
     '''Fixture to create Catalog item and bundle'''
     new_dialog_pg = automate_customization_pg\
@@ -23,7 +23,7 @@ def create_service_dialog(automate_customization_pg,
 
 
 @pytest.fixture()
-def create_catalog(
+def catalog(
         svc_catalogs_pg,
         random_string,
         provisioning_data):
@@ -67,12 +67,12 @@ def create_service_name_script(automate_explorer_pg):
 
 @pytest.fixture()
 def create_generic_catalog_item(random_string,
-        create_service_dialog,
+        service_dialog,
         svc_catalogs_pg,
-        create_catalog):
+        catalog):
     '''Fixture to create generic item'''
-    service_dialog_name = create_service_dialog
-    catalog_name = create_catalog
+    service_dialog_name = service_dialog
+    catalog_name = catalog
     new_cat_item_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
         add_new_catalog_item()
     new_cat_item_pg.choose_catalog_item_type('Generic')

@@ -38,43 +38,25 @@ class CatalogItems(Base):
         from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
         return Accordion(self.testsetup, LegacyTreeAccordionItem)
 
-    @property
-    def configuration_button(self):
-        '''Configuration btn'''
-        return self.selenium.find_element(*self._configuration_button_locator)
-
-    @property
-    def add_catalogitem_button(self):
-        '''Add catalog item'''
-        return self.selenium.find_element(*self._add_catalogitem_button_locator)
-
     def add_new_catalog_item(self):
         '''click on Configuration and then Add new catalog item btn'''
         #ActionChains(self.selenium).click(
            # self.configuration_button).click(
            # self.add_catalogitem_button).perform()
+        self.click_on_catalog_item("All Catalog Items")
         self.get_element(*self._configuration_button_locator).click()
         self.get_element(*self._add_catalogitem_button_locator).click()
         return CatalogItems.NewCatalogItem(self.testsetup)
-
-    @property
-    def add_catalogbundle_button(self):
-        '''Add catalog bundle btn'''
-        return self.get_element(
-            *self._add_catalogbundle_button_locator)
 
     def add_new_catalog_bundle(self):
         '''Click on Configuration and then add new bundle btn'''
         #ActionChains(self.selenium).click(
          #   self.configuration_button).click(self.add_catalogbundle_button).perform()
+        #self.click_on_catalog_item("All Catalog Items")
+        #self._wait_for_results_refresh()
         self.get_element(*self._configuration_button_locator).click()
         self.get_element(*self._add_catalogbundle_button_locator).click()
         return CatalogItems.NewCatalogBundle(self.testsetup)
-
-    @property
-    def del_catalog_item_btn(self):
-        '''Delete catalog button'''
-        return self.get_element(*self._del_catalog_item_locator)
 
     def delete_catalog_item(self):
         '''Delete catalog'''
@@ -87,10 +69,6 @@ class CatalogItems(Base):
         self._wait_for_results_refresh()
         return CatalogItems(self.testsetup)
 
-    @property
-    def edit_catalog_bundle_btn(self):
-        '''Delete catalog button'''
-        return self.selenium.find_element(*self._edit_catalog_bundle_locator)
 
     def edit_catalog_bundle(self):
         '''Delete catalog'''
@@ -150,9 +128,10 @@ class CatalogItems(Base):
             '''Fill basic info form'''
             self.get_element(*self._display_checkbox).click()
             time.sleep(2)
-            #self._wait_for_results_refresh()
             self.get_element(*self._name_field).send_keys(name)
+            time.sleep(2)
             self.get_element(*self._desc_field).send_keys(desc)
+            self._wait_for_results_refresh()
             self.select_dropdown(catalog, *self._select_catalog)
             self._wait_for_results_refresh()
             self.select_dropdown(dialog, *self._select_dialog)

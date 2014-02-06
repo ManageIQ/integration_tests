@@ -40,6 +40,7 @@ class Catalogs(Base):
          
     def add_new_catalog(self):
         '''Click Configuration and then add catalog btn'''
+        self.click_on_catalog("All Catalogs")
         self.get_element(*self._configuration_button_locator).click()
         self.get_element(*self._add_catalog_button_locator).click()
         return Catalogs(self.testsetup)

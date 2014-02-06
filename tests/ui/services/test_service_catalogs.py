@@ -13,6 +13,8 @@ FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 @pytest.mark.nondestructive
 @pytest.mark.fixtureconf(server_roles='+automate')
 @pytest.mark.usefixtures(
+    "setup_cloud_providers",
+    "setup_infrastructure_providers",
     "mgmt_sys_api_clients",
     "db_session",
     "soap_client")
@@ -21,15 +23,15 @@ class TestAllCatalogs(TestBaseCatalogs):
             self,
             mgmt_sys_api_clients,
             provisioning_data,
-            create_service_dialog,
-            create_catalog,
+            service_dialog,
+            catalog,
             svc_catalogs_pg,
             random_name,
             db_session,
             soap_client):
         '''Test Basic Provisioning Workflow'''
-        service_dialog_name = create_service_dialog
-        catalog_name = create_catalog
+        service_dialog_name = service_dialog
+        catalog_name = catalog
         new_cat_item_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
             add_new_catalog_item()
         new_cat_item_pg.choose_catalog_item_type(provisioning_data["catalog_item_type"])
@@ -50,7 +52,7 @@ class TestAllCatalogs(TestBaseCatalogs):
         Assert.equal(order_pg.flash.message, "Order Request was Submitted", FLASH_MESSAGE_NOT_MATCHED)
         order_pg.approve_request(1)
         order_pg.wait_for_request_status("Last 24 Hours",
-            "Finished", 5)
+            "Finished", 12)
         self.assert_vm_state(provisioning_data, svc_catalogs_pg,
             "on", (vm_name + "_0001"))
         self.teardown_remove_from_provider(db_session, soap_client,
@@ -62,14 +64,14 @@ class TestAllCatalogs(TestBaseCatalogs):
             mgmt_sys_api_clients,
             provisioning_data,
             random_name,
-            create_service_dialog,
-            create_catalog,
+            service_dialog,
+            catalog,
             db_session,
             soap_client,
             svc_catalogs_pg):
         '''Order Catalog Bundle'''
-        service_dialog_name = create_service_dialog
-        catalog_name = create_catalog
+        service_dialog_name = service_dialog
+        catalog_name = catalog
         new_cat_item_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
             add_new_catalog_item()
         new_cat_item_pg.choose_catalog_item_type(provisioning_data["catalog_item_type"])
@@ -108,12 +110,12 @@ class TestAllCatalogs(TestBaseCatalogs):
             self,
             provisioning_data,
             random_name,
-            create_service_dialog,
-            create_catalog,
+            service_dialog,
+            catalog,
             svc_catalogs_pg):
         '''Delete Catalog should delete service'''
-        service_dialog_name = create_service_dialog
-        catalog_name = create_catalog
+        service_dialog_name = service_dialog
+        catalog_name = catalog
         new_cat_item_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
             add_new_catalog_item()
         new_cat_item_pg.choose_catalog_item_type(provisioning_data["catalog_item_type"])
@@ -138,12 +140,12 @@ class TestAllCatalogs(TestBaseCatalogs):
             self,
             provisioning_data,
             random_name,
-            create_service_dialog,
-            create_catalog,
+            service_dialog,
+            catalog,
             svc_catalogs_pg):
         '''Delete Catalog should delete service'''
-        service_dialog_name = create_service_dialog
-        catalog_name = create_catalog
+        service_dialog_name = service_dialog
+        catalog_name = catalog
         new_cat_item_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
             add_new_catalog_item()
         new_cat_item_pg.choose_catalog_item_type(provisioning_data["catalog_item_type"])
@@ -168,12 +170,12 @@ class TestAllCatalogs(TestBaseCatalogs):
             self,
             random_name,
             provisioning_data,
-            create_service_dialog,
-            create_catalog,
+            service_dialog,
+            catalog,
             svc_catalogs_pg):
         '''service calling itself should not be allowed'''
-        service_dialog_name = create_service_dialog
-        catalog_name = create_catalog
+        service_dialog_name = service_dialog
+        catalog_name = catalog
         new_cat_item_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
             add_new_catalog_item()
         new_cat_item_pg.choose_catalog_item_type(provisioning_data["catalog_item_type"])

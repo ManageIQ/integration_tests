@@ -49,16 +49,6 @@ class Customization(Base):
         from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
         return Accordion(self.testsetup, LegacyTreeAccordionItem)
 
-    @property
-    def configuration_button(self):
-        '''Configuration button in service dialog page'''
-        return self.selenium.find_element(*self._configuration_button_locator)
-
-    @property
-    def _add_dialog_button(self):
-        '''Add a new service dialog button'''
-        return self.selenium.find_element(*self._add_dialog_button_locator)
-
     def add_new_service_dialog(self):
         '''Click on Configuration , add new service dialog'''
         #ActionChains(self.selenium)\
@@ -78,10 +68,6 @@ class Customization(Base):
         self._wait_for_results_refresh()
         return Customization(self.testsetup)
 
-    @property
-    def del_dialog_button(self):
-        '''Delete dialog button'''
-        return self.get_element(*self._del_dialog_button_locator)
 
     def delete_service_dialog(self):
         '''Delete dialog'''
@@ -92,11 +78,6 @@ class Customization(Base):
         self.handle_popup()
         self._wait_for_results_refresh()
         return Customization(self.testsetup)
-
-    @property
-    def _edit_dialog_button(self):
-        '''Add a new service dialog button'''
-        return self.selenium.find_element(*self._edit_dialog_button_locator)
 
     def edit_service_dialog(self, dialog_name):
         '''Click on Configuration , edit service dialog'''
