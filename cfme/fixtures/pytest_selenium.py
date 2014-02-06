@@ -490,11 +490,11 @@ def first_from(*locs, **kwargs):
 # out everything above into a lib
 
 
-def baseurl():
+def base_url():
     """
-    Returns the baseurl.
+    Returns the base url.
 
-    Returns: The baseurl.
+    Returns: `base_url` from env config yaml
     """
     return conf.env['base_url']
 
