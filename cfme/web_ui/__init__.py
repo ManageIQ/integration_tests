@@ -458,7 +458,7 @@ class Form(Region):
     Forms can then be filled in like so.::
 
         provider_info = {
-            'type_select': "OpenStack",
+           'type_select': "OpenStack",
            'name_text': "RHOS-01",
            'hostname_text': "RHOS-01",
            'ipaddress_text': "10.0.0.0",
@@ -466,6 +466,22 @@ class Form(Region):
         }
         web_ui.fill(provider_form, request_info)
 
+    For Form objects, the :py:func:`cfme.web_ui.fill` function can also accept
+    a list of super tuples instead of a dict. This has the advantage of being able to
+    do things like multiple selects in a multiselect without running multiple calls
+    to the ``fill`` function, e.g.::
+
+        child_vm_info = [
+            ('child_vm', 'machine1'),
+            ('child_vm', 'machine2'),
+        ]
+
+    This would then be able to make two selections, whereas a dict would not be able
+    to do that due to the reuse of the child_vm key.
+
+    Note:
+        Using supertuples in a list, although ordered due to the properties of a List,
+        will not overide the field order defined in the Form.
     """
 
     def __init__(self, fields=None, identifying_loc=None):
