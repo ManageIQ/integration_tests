@@ -10,7 +10,7 @@ import uuid
 import utils.error as error
 
 
-@pytest.fixture(params=['ec2east', 'openstack'])
+@pytest.fixture(params=['ec2east', 'rhos3'])
 def provider_data(request, cfme_data):
     """ Returns management system data from cfme_data"""
     return provider.get_from_config(request.param)
