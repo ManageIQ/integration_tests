@@ -397,7 +397,8 @@ def _sd_fill_string(loc, value):
             (tag, ttype))
     op = tag_types[operation]
     if op == sel.click:
-        op(loc)
+        if value is True:
+            op(loc)
     else:
         op(loc, value)
 
