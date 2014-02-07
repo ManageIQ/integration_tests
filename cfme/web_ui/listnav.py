@@ -25,7 +25,7 @@ def is_internal(title):
     Returns: ``True`` if the element is an internal link, ``False`` if not.
     """
     loc = sel.element(locate(title))
-    href = sel.get_attribute(loc, 'href').replace(sel.baseurl(), '')
+    href = sel.get_attribute(loc, 'href').replace(sel.base_url(), '')
     img = sel.element('//div[@class="panecontent"]//a[@href="%s"]/img' % href)
     if 'internal' in sel.get_attribute(img, 'src'):
         return True
