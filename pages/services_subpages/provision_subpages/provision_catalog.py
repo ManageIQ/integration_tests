@@ -140,7 +140,7 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
     class CatalogItem(ListItem):
         '''Represents a catalog item from the list'''
         _columns = ["name", "operating_system", "platform", "cpus", "memory",
-                "disk_size", "management_system", "snapshots"]
+                "disk_size", "provider", "snapshots"]
 
         @property
         def name(self):
@@ -173,7 +173,7 @@ class ProvisionCatalog(Base, ProvisionFormButtonMixin):
             return self._item_data[5].text
 
         @property
-        def management_system(self):
+        def provider(self):
             '''Template management system'''
             return self._item_data[6].text
 

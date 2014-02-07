@@ -15,18 +15,21 @@ class TestBaseCatalogs:
             provisioning_data["provision_type"],
             provisioning_data["pxe_server"],
             provisioning_data["server_image"],
+            provisioning_data["provider_key"],
             0, vm_name)
         environment_pg = tab_buttons.tabbutton_by_name("Environment").click()
         environment_pg.fill_fields(
             unicode(provisioning_data["host"]),
             unicode(provisioning_data["datastore"]),
-            provisioning_data["availability_zone"])
+            provisioning_data["availability_zone"],
+            provisioning_data["vpc"],
+            provisioning_data["cloud-subnet"],
+            provisioning_data["security_group"])
         if provisioning_data["availability_zone"] is not None:
             properties_pg = tab_buttons.tabbutton_by_name("Properties").click()
             properties_pg.fill_fields(
                 provisioning_data["instance_type"],
                 provisioning_data["key_pair"],
-                provisioning_data["security_group"],
                 provisioning_data["public_ip_address"])
         else:
             hardware_pg = tab_buttons.tabbutton_by_name("Hardware").click()

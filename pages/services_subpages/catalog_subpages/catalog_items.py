@@ -143,11 +143,12 @@ class CatalogItems(Base):
             provision_type,
             pxe_server,
             server_image,
+            provider,
             no_of_vm,
             vm_name):
             '''Provisioning form - catalog tab'''
             for item in ProvisionCatalog(self).catalog_list.items:
-                if item.name == template_name:
+                if item.name == template_name and item.provider == provider:
                     item.click()
                     break
             self._wait_for_results_refresh()

@@ -18,7 +18,7 @@ class ProvisionProperties(Base, ProvisionFormButtonMixin):
     _guest_access_select_locator = (By.ID, "hardware__guest_access_key_pair")
     _security_groups_locator = (By.ID, "hardware__security_groups")
     _security_groups_option_locator = (By.CSS_SELECTOR,
-        "select#hardware__security_groups > option[value='23000000000011']")
+        "select#environment__security_groups > option[value='39']")
     _cloud_watch_select_locator = (By.ID, "hardware__monitoring")
     _public_ip_address_select_locator = (By.ID, "hardware__floating_ip_address")
 
@@ -45,11 +45,6 @@ class ProvisionProperties(Base, ProvisionFormButtonMixin):
         return self.get_element(*self._security_groups_option_locator)
 
     @property
-    def cloud_watch_selector(self):
-        '''Cloud Watch monitoring'''
-        return Select(self.get_element(*self._cloud_watch_select_locator))
-
-    @property
     def public_address_select(self):
         '''Floating Public IP - Openstack'''
         return Select(
@@ -59,14 +54,11 @@ class ProvisionProperties(Base, ProvisionFormButtonMixin):
             self,
             instance_type,
             key_pair,
-            security_group,
             public_ip):
         '''Fills field entries in the Properties tab'''
         self.instance_type_select.select_by_index(instance_type)
         self._wait_for_results_refresh()
         self.guest_access_select.select_by_visible_text(key_pair)
-        self._wait_for_results_refresh()
-        self.security_groups.click()
         self._wait_for_results_refresh()
         if public_ip is not None:
             self.public_address_select.select_by_visible_text(public_ip)

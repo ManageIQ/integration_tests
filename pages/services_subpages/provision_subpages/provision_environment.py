@@ -12,6 +12,7 @@ from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from time import sleep
+import time
 
 
 class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
@@ -38,6 +39,13 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
         By.CSS_SELECTOR, "div#prov_ds_div > table > tbody")
     _availability_zone_locator = (
         By.ID, "environment__placement_availability_zone")
+    _vpc_locator = (
+        By.ID, "environment__cloud_network")
+    _cloud_subnet_locator = (
+        By.ID, "environment__cloud_subnet")
+    _security_groups_option_locator = (By.CSS_SELECTOR,
+        "select#environment__security_groups > option[value='39']")
+    _security_groups_locator = (By.ID, "environment__security_groups")
 
     @property
     def choose_automatically(self):
@@ -48,6 +56,16 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
     def availability_zone_select(self):
         '''Availability zone selector'''
         return Select(self.get_element(*self._availability_zone_locator))
+
+    @property
+    def vpc_select(self):
+        '''VPC selector'''
+        return Select(self.get_element(*self._vpc_locator))
+
+    @property
+    def cloud_subnet_select(self):
+        '''Cloud Subnet selector'''
+        return Select(self.get_element(*self._cloud_subnet_locator))
 
     @property
     def datacenter(self):
@@ -96,6 +114,15 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             self.testsetup,
             self.get_element(*self._host_name_list_locator),
             self.HostItem)
+    @property
+    def security_groups(self):
+        '''Security Groups - EC2'''
+        return self.get_element(*self._security_groups_locator)
+
+    @property
+    def security_groups_option(self):
+        '''Security Groups Option for default'''
+        return self.get_element(*self._security_groups_option_locator)
 
     @property
     def datastore_create(self):
@@ -136,14 +163,16 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             self._wait_for_results_refresh()
             return self.DatastoreItem(selected_item)
 
-    def fill_fields(self, host_name, datastore_name, availability_zone_name):
+    def fill_fields(self, host_name, datastore_name, availability_zone_name, vpc, cloud_subnet, security_group):
             if host_name != u'None':
                 self.click_on_host_item(host_name)
             if datastore_name != u'None':
                 self.click_on_datastore_item(datastore_name)
             if availability_zone_name is not None:
                 self.availability_zone_select.select_by_visible_text(availability_zone_name)
-            self._wait_for_results_refresh()
+            if security_group is not None:
+                self.security_groups_option.click()
+            #self._wait_for_results_refresh()
             return ProvisionEnvironment(self.testsetup)
 
     class HostItem(ListItem):
