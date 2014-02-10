@@ -1,0 +1,19 @@
+$$:.push("${miq_lib}")
+require 'appliance_console/database_configuration'
+require 'appliance_console/external_database_configuration'
+require 'appliance_console/service_group'
+
+config = ApplianceConsole::ExternalDatabaseConfiguration.new({
+  :host => '${host}',
+  :database => '${database}',
+  :region => ${region},
+  :username => '${username}',
+  :password => '${password}',
+  :interactive => false,
+})
+
+# call create_or_join_region (depends on region value)
+config.activate
+
+# enable/start related services
+config.post_activation
