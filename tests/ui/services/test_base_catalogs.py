@@ -2,7 +2,7 @@
 # pylint: disable=W0621
 from unittestzero import Assert
 import db
-
+from utils.conf import cfme_data
 
 class TestBaseCatalogs:
 
@@ -15,7 +15,7 @@ class TestBaseCatalogs:
             provisioning_data["provision_type"],
             provisioning_data["pxe_server"],
             provisioning_data["server_image"],
-            provisioning_data["provider_key"],
+            cfme_data["management_systems"][provisioning_data["provider_key"]]["name"],
             0, vm_name)
         environment_pg = tab_buttons.tabbutton_by_name("Environment").click()
         environment_pg.fill_fields(

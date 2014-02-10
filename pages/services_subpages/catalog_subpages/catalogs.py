@@ -74,7 +74,7 @@ class Catalogs(Base):
         self.get_element(*self._name_field).send_keys(name)
         self.get_element(*self._desc_field).send_keys(descr)
         self._wait_for_visible_element(*self._add_button)
-        #time.sleep(2)
+        time.sleep(2)
         self.get_element(*self._add_button).click()
         self._wait_for_results_refresh()
         return Catalogs(self.testsetup)
