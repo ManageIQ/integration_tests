@@ -127,9 +127,9 @@ class CatalogItems(Base):
         def fill_basic_info(self, name, desc, catalog, dialog):
             '''Fill basic info form'''
             self.get_element(*self._display_checkbox).click()
-            time.sleep(2)
+            #time.sleep(2)
             self.get_element(*self._name_field).send_keys(name)
-            time.sleep(2)
+            #time.sleep(2)
             self.get_element(*self._desc_field).send_keys(desc)
             self._wait_for_results_refresh()
             self.select_dropdown(catalog, *self._select_catalog)
