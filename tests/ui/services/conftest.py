@@ -89,7 +89,8 @@ def create_generic_catalog_item(random_string,
 
 
 @pytest.fixture(scope="module",  # IGNORE:E1101
-               params=[
+               params=["linux_template_workflow",
+               "rhevm_pxe_workflow",
                "ec2_image_workflow"])
 def provisioning_data(request, cfme_data):
     '''Returns all provisioning data'''

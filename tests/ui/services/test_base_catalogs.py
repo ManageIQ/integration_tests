@@ -22,8 +22,6 @@ class TestBaseCatalogs:
             unicode(provisioning_data["host"]),
             unicode(provisioning_data["datastore"]),
             provisioning_data["availability_zone"],
-            provisioning_data["vpc"],
-            provisioning_data["cloud-subnet"],
             provisioning_data["security_group"])
         if provisioning_data["availability_zone"] is not None:
             properties_pg = tab_buttons.tabbutton_by_name("Properties").click()

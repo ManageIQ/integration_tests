@@ -15,6 +15,7 @@ FLASH_MESSAGE_NOT_MATCHED = 'Flash message did not match expected value'
 @pytest.mark.usefixtures(
     "setup_cloud_providers",
     "setup_infrastructure_providers",
+    "setup_pxe_provision",
     "mgmt_sys_api_clients",
     "db_session",
     "soap_client")

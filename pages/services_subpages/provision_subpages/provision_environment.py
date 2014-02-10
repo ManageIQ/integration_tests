@@ -163,7 +163,7 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             self._wait_for_results_refresh()
             return self.DatastoreItem(selected_item)
 
-    def fill_fields(self, host_name, datastore_name, availability_zone_name, vpc, cloud_subnet, security_group):
+    def fill_fields(self, host_name, datastore_name, availability_zone_name, security_group):
             if host_name != u'None':
                 self.click_on_host_item(host_name)
             if datastore_name != u'None':
@@ -171,8 +171,7 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             if availability_zone_name is not None:
                 self.availability_zone_select.select_by_visible_text(availability_zone_name)
             if security_group is not None:
-                self.security_groups_option.click()
-            #self._wait_for_results_refresh()
+                self.get_element(*self._security_groups_option_locator).click()
             return ProvisionEnvironment(self.testsetup)
 
     class HostItem(ListItem):
