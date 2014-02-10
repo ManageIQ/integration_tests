@@ -397,7 +397,8 @@ def _sd_fill_string(loc, value):
             (tag, ttype))
     op = tag_types[operation]
     if op == sel.click:
-        op(loc)
+        if value is True:
+            op(loc)
     else:
         op(loc, value)
 
@@ -828,11 +829,11 @@ class InfoBlock(object):
     def __init__(self, itype):
         if itype == "detail":
             self._box_locator = '//div[@class="modbox"]/h2[@class="modtitle"][contains(., "%s")]/..'
-            self._pair_locator = 'table/tbody/tr/td[1][@class="label"][contains(., "%s")]/..'
+            self._pair_locator = 'table/tbody/tr/td[1][@class="label"][.="%s"]/..'
             self._value_locator = 'td[2]'
         elif itype == "form":
             self._box_locator = '//fieldset/p[@class="legend"][contains(., "%s")]/..'
-            self._pair_locator = 'table/tbody/tr/td[1][@class="key"][contains(., "%s")]/..'
+            self._pair_locator = 'table/tbody/tr/td[1][@class="key"][.="%s"]/..'
             self._value_locator = 'td[2]'
         else:
             raise exceptions.BlockTypeUnknown("The block type requested is unknown")
