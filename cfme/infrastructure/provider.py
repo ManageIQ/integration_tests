@@ -10,18 +10,21 @@
 """
 
 from functools import partial
+from time import sleep
+
 import ui_navigate as nav
+
 import cfme
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Quadicon, Form, fill
-import cfme.web_ui.flash as flash
 import cfme.fixtures.pytest_selenium as browser
-import utils.conf as conf
-from utils.update import Updateable
+import cfme.web_ui.flash as flash
+import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
-from utils.wait import wait_for
-from utils.providers import provider_factory
+import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
+from cfme.web_ui import Region, Quadicon, Form, fill
+from utils.providers import provider_factory, list_infra_providers
+from utils.update import Updateable
+from utils.wait import wait_for
 
 
 # Common locators
@@ -144,6 +147,7 @@ class Provider(Updateable):
             # browser.wait_for_element(page.configuration_btn)
         else:
             browser.click(submit_button)
+            sleep(3)
             flash.assert_no_errors()
 
     def create(self, cancel=False, validate_credentials=False):
@@ -416,3 +420,13 @@ def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None
         form_data.update({'to_3': end_octet})
 
     fill(discover_form, form_data)
+
+
+def setup_provider(provider_name):
+    provider = get_from_config(provider_name)
+    provider.create(validate_credentials=True)
+
+
+def setup_providers():
+    for provider_name in list_infra_providers():
+        setup_provider(provider_name)
