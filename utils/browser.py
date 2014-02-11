@@ -8,6 +8,7 @@ from string import Template
 from tempfile import mkdtemp
 
 from selenium import webdriver
+from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 from utils import conf
@@ -50,8 +51,14 @@ def ensure_browser_open():
     """
     try:
         browser().current_url
+    except UnexpectedAlertPresentException:
+        # Try to handle an open alert, restart the browser if possible
+        try:
+            browser().switch_to_alert().dismiss()
+        except:
+            start()
     except:
-        # If we couldn't poke the browser for any reason, start a new one
+        # If we couldn't poke the browser for any other reason, start a new one
         start()
 
     return browser()

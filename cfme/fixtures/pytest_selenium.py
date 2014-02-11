@@ -11,6 +11,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 :var ajax_wait_js: A Javascript function for ajax wait checking
 """
 import time
+from traceback import format_exc
 
 import ui_navigate
 from selenium.common.exceptions import NoSuchElementException, UnexpectedAlertPresentException
@@ -600,6 +601,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     _tries += 1
 
+    logger.debug('force_navigate to %s, try %d' % (page_name, _tries))
     # circular import prevention: cfme.login uses functions in this module
     from cfme import login
     # Import the top-level nav menus for convenience
@@ -628,8 +630,9 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # There was an alert, accept it and try again
         handle_alert(wait=0)
         force_navigate(page_name, _tries, *args, **kwargs)
-    except:
+    except Exception as ex:
         # Anything else happened, nuke the browser and try again.
+        logger.info('Caught %s during navigation, trying again.' % type(ex).__name__)
+        logger.debug(format_exc())
         browser().quit()
-        logger.error('Browser failure during navigation, trying again.')
         force_navigate(page_name, _tries, *args, **kwargs)
