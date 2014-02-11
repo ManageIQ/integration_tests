@@ -46,10 +46,11 @@ class ProvisionSchedule(Base, ProvisionFormButtonMixin):
             when_to_provision_selection,
             power_on_after_creation_check,
             retirement_selection):
-        self.when_to_provision[0].click()
-        self._wait_for_results_refresh()
-        self.when_to_provision[when_to_provision_selection].click()
-        self._wait_for_results_refresh()
+        if when_to_provision_selection is not None:
+            self.when_to_provision[0].click()
+            self._wait_for_results_refresh()
+            self.when_to_provision[when_to_provision_selection].click()
+            self._wait_for_results_refresh()
         if power_on_after_creation_check is not None:
             if power_on_after_creation_check and \
                     not self.power_on_after_creation.is_selected():

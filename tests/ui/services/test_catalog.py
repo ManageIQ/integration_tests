@@ -31,7 +31,7 @@ class TestCatalogs:
         '''Create and delete catalog'''
         cat_page, name, descr = self._create_cat(svc_catalogs_pg, random_string)
         self._delete_cat(cat_page, name, descr);
-        
+
     def test_edit_catalog(self, svc_catalogs_pg, random_string):
         '''Edit catalog'''
         #create

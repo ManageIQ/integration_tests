@@ -4,8 +4,7 @@
 '''
 from pages.base import Base
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
-import random
+import time
 
 
 class Catalogs(Base):
@@ -15,13 +14,13 @@ class Catalogs(Base):
         By.CSS_SELECTOR,
         "div.dhx_toolbar_btn[title='Configuration']")
     _add_catalog_button_locator = (
-        By.CSS_SELECTOR, 
+        By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Add a New Catalog']")
     _edit_catalog_button_locator = (
-        By.CSS_SELECTOR, 
+        By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Edit this Item']")
     _del_catalog_button_locator = (
-        By.CSS_SELECTOR, 
+        By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Remove this Item from the VMDB']")
     _name_list_locator = (
         By.CSS_SELECTOR,
@@ -30,69 +29,51 @@ class Catalogs(Base):
     _desc_field = (By.CSS_SELECTOR, "input[name='description']")
     _add_button = (By.CSS_SELECTOR, "img[title='Add']")
     _save_button = (By.CSS_SELECTOR, "img[title='Save Changes']")
-     
+
     @property
     def accordion(self):
         '''accordion'''
         from pages.regions.accordion import Accordion
         from pages.regions.treeaccordionitem import LegacyTreeAccordionItem
         return Accordion(self.testsetup, LegacyTreeAccordionItem)
-         
-    @property
-    def configuration_button(self):
-        '''Configuration button'''
-        return self.selenium.find_element(*self._configuration_button_locator)
 
-    @property
-    def add_catalog_button(self):
-        '''Add catalog button'''
-        return self.selenium.find_element(*self._add_catalog_button_locator)
-     
-    @property
-    def edit_catalog_button(self):
-        '''Edit catalog button'''
-        return self.selenium.find_element(*self._edit_catalog_button_locator)
-        
-    @property
-    def del_catalog_button(self):
-        '''Delete catalog button'''
-        return self.selenium.find_element(*self._del_catalog_button_locator)
-        
     def add_new_catalog(self):
         '''Click Configuration and then add catalog btn'''
-        ActionChains(self.selenium).click(
-            self.configuration_button).click(self.add_catalog_button).perform()
+        self.click_on_catalog("All Catalogs")
+        self.get_element(*self._configuration_button_locator).click()
+        self.get_element(*self._add_catalog_button_locator).click()
         return Catalogs(self.testsetup)
-    
+
     def edit_catalog(self, catalog_name):
         '''Go to edit catalog page'''
-        ActionChains(self.selenium).click(
-            self.configuration_button).click(self.edit_catalog_button).perform()
-        self.selenium.find_element(*self._name_field).send_keys(catalog_name)
+        self.get_element(*self._configuration_button_locator).click()
+        self.get_element(*self._edit_catalog_button_locator).click()
+        self.get_element(*self._name_field).send_keys(catalog_name)
         self._wait_for_visible_element(*self._save_button)
-        self.selenium.find_element(*self._save_button).click()
+        self.get_element(*self._save_button).click()
         self._wait_for_results_refresh()
         return Catalogs(self.testsetup)
-    
+
     def delete_catalog(self):
         '''Delete catalog'''
-        ActionChains(self.selenium).click(
-            self.configuration_button).click(self.del_catalog_button).perform()
+        self.get_element(*self._configuration_button_locator).click()
+        self.get_element(*self._del_catalog_button_locator).click()
         self.handle_popup()
         self._wait_for_results_refresh()
         return Catalogs(self.testsetup)
-    
+
     def click_on_catalog(self, catalog_name):
         '''Click on catalog to edit or delete'''
         self.accordion.current_content.find_node_by_name(catalog_name).click()
         self._wait_for_results_refresh()
         return Catalogs(self.testsetup)
-         
+
     def fill_basic_info_tab(self, name, descr):
-        '''Fill catalog create form'''
-        self.selenium.find_element(*self._name_field).send_keys(name)
-        self.selenium.find_element(*self._desc_field).send_keys(descr)
+        ''''Fill catalog create form'''
+        self.get_element(*self._name_field).send_keys(name)
+        self.get_element(*self._desc_field).send_keys(descr)
         self._wait_for_visible_element(*self._add_button)
-        self.selenium.find_element(*self._add_button).click()
+        time.sleep(5)
+        self.get_element(*self._add_button).click()
         self._wait_for_results_refresh()
         return Catalogs(self.testsetup)

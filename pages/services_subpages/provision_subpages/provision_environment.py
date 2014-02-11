@@ -38,6 +38,9 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
         By.CSS_SELECTOR, "div#prov_ds_div > table > tbody")
     _availability_zone_locator = (
         By.ID, "environment__placement_availability_zone")
+    _security_groups_option_locator = (By.CSS_SELECTOR,
+        "select#environment__security_groups > option[value='39']")
+    _security_groups_locator = (By.ID, "environment__security_groups")
 
     @property
     def choose_automatically(self):
@@ -98,6 +101,16 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             self.HostItem)
 
     @property
+    def security_groups(self):
+        '''Security Groups - EC2'''
+        return self.get_element(*self._security_groups_locator)
+
+    @property
+    def security_groups_option(self):
+        '''Security Groups Option for default'''
+        return self.get_element(*self._security_groups_option_locator)
+
+    @property
     def datastore_create(self):
         '''Datastore - Create'''
         return self.get_element(*self._datastore_create_checkbox_locator)
@@ -136,13 +149,25 @@ class ProvisionEnvironment(Base, ProvisionFormButtonMixin):
             self._wait_for_results_refresh()
             return self.DatastoreItem(selected_item)
 
-    def fill_fields(self, host_name, datastore_name, availability_zone_name):
+    def fill_fields(self, datacenter, cluster, resource_pool, host_name, datastore_name, availability_zone_name, security_group):
+            if datacenter is not None:
+                self.select_dropdown(datacenter, *self._datacenter_select_locator)
+                self._wait_for_results_refresh()
+            if cluster is not None:
+                self.select_dropdown(cluster, *self._cluster_select_locator)
+                self._wait_for_results_refresh()
+            if resource_pool is not None:
+                self.select_dropdown(resource_pool,
+                 *self._resource_pool_select_locator)
+                self._wait_for_results_refresh()
             if host_name != u'None':
                 self.click_on_host_item(host_name)
             if datastore_name != u'None':
                 self.click_on_datastore_item(datastore_name)
             if availability_zone_name is not None:
                 self.availability_zone_select.select_by_visible_text(availability_zone_name)
+            if security_group is not None:
+                self.get_element(*self._security_groups_option_locator).click()
             self._wait_for_results_refresh()
             return ProvisionEnvironment(self.testsetup)
 
