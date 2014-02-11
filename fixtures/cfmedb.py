@@ -10,12 +10,18 @@ from utils import conf
 def pytest_sessionstart(session):
     """Setup run for tests"""
     import db
-    db.cfme_db_url = conf.env.get('cfme_db_url')
-    if not db.cfme_db_url:
-        # Let's try to figure it out
-        baseurl = conf.env['base_url']
-        baseip = urlparse(baseurl).hostname
-        db.cfme_db_url = "postgres://root:smartvm@%s:5432/vmdb_production" % baseip
+    try:
+        db.cfme_db_url = conf.env['cfme_db_url']
+    except KeyError:
+        # figure it out
+        credentials = conf.credentials['database']
+        base_url = conf.env['base_url']
+        subs = {
+            'host': urlparse(base_url).hostname
+        }
+        subs.update(credentials)
+        template = "postgres://{username}:{password}@{host}:5432/vmdb_production"
+        db.cfme_db_url = template.format(**subs)
     db.engine = create_engine(db.cfme_db_url)
 
 
