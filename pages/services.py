@@ -113,9 +113,11 @@ class Services(Base):
 
             if len(self.requests_list.items) > 0 and \
                     self.requests_list.items[item_number]\
-                    .approval_state is not None:
+                    .view_this_item is not None:
+                request_number = self.requests_list.items[
+                    item_number].request_id
                 self.requests_list.items[
-                    item_number].approval_state\
+                    item_number].view_this_item\
                     .find_element_by_tag_name('img').click()
 
                 self._wait_for_visible_element(*self._requests_link_locator)
@@ -132,9 +134,9 @@ class Services(Base):
                 else:
                     self.selenium.find_element(
                         *self._requests_link_locator).click()
-            return Services.Requests(self.testsetup)
+            return request_number
 
-        def wait_for_request_status(self, time_period_text, request_status, timeout_in_minutes):
+        def wait_for_request_status(self, time_period_text, request_status, timeout_in_minutes, request_number):
             '''Wait for request status'''
             if not self.get_element(*self._check_box_approved).is_selected():
                 self.get_element(*self._check_box_approved).click()
@@ -155,12 +157,14 @@ class Services(Base):
             minute_count = 0
             while (minute_count < timeout_in_minutes):
                 if self.requests_list.items[requests_index]\
-                        .status == request_status:
+                        .request_id == request_number:
                     if self.requests_list.items[requests_index]\
-                            .request_id == "Ok":
-                        break
-                    else:
-                        raise Exception("Status of request is " +
+                        .request_state == request_status:
+                        if self.requests_list.items[requests_index]\
+                            .status == "Ok":
+                            break
+                        else:
+                            raise Exception("Status of request is " +
                             self.requests_list.items[requests_index].request_id)
                 print "Waiting for provisioning status: " + request_status
                 sleep(60)
@@ -168,29 +172,24 @@ class Services(Base):
                 self.get_element(*self._reload_button).click()
                 self._wait_for_results_refresh()
                 if (minute_count == timeout_in_minutes) and \
-                   (self.requests_list.items[requests_index].status != request_status):
+                   (self.requests_list.items[requests_index].request_state != request_status):
                     raise Exception("timeout reached(" + str(timeout_in_minutes) +
                        " minutes) before desired state (" +
                        request_status + ") reached... current state(" +
-                       self.requests_list.items[requests_index].status + ")")
+                       self.requests_list.items[requests_index].request_state + ")")
             return Services.Requests(self.testsetup)
 
     class RequestItem(ListItem):
         '''Represents a request in the list'''
-        _columns = ["view_this_item", "approval_state", "status",
-                    "request_id", "requester",
-                    "request _type", "completed", "description", "approved_on",
-                    "created_on", "last_update", "reason",
-                    "last_message", "region"]
+        _columns = ["view_this_item", "status", "request_state",
+                    "request_id", "requester", "request _type",
+                    "completed", "description", "approval_state",
+                    "approved_on", "created_on", "last_update",
+                    "reason", "last_message", "region"]
 
         @property
         def view_this_item(self):
             '''View Item'''
-            return self._item_data[0].text
-
-        @property
-        def approval_state(self):
-            '''Approval State'''
             return self._item_data[1]
 
         @property
@@ -199,9 +198,14 @@ class Services(Base):
             return self._item_data[2].text
 
         @property
+        def request_state(self):
+            '''Request State'''
+            return self._item_data[3].text
+
+        @property
         def request_id(self):
             '''request Id'''
-            return self._item_data[3].text
+            return self._item_data[4].text
 
         @property
         def requester(self):
@@ -222,6 +226,11 @@ class Services(Base):
         def description(self):
             '''Desc'''
             pass
+
+        @property
+        def approval_state(self):
+            '''Approval State'''
+            return self._item_data[8].text
 
         @property
         def approved_on(self):

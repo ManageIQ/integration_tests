@@ -59,14 +59,11 @@ class ProvisionProperties(Base, ProvisionFormButtonMixin):
             self,
             instance_type,
             key_pair,
-            security_group,
             public_ip):
         '''Fills field entries in the Properties tab'''
         self.instance_type_select.select_by_index(instance_type)
         self._wait_for_results_refresh()
         self.guest_access_select.select_by_visible_text(key_pair)
-        self._wait_for_results_refresh()
-        self.security_groups.click()
         self._wait_for_results_refresh()
         if public_ip is not None:
             self.public_address_select.select_by_visible_text(public_ip)
