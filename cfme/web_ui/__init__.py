@@ -79,17 +79,14 @@ class Region(object):
         """
         msg = "Region doesn't have an identifying locator or title, " +\
             "can't determine if current page."
-        assert self.identifying_loc is not None or self.title is not None, msg
+        assert self.identifying_loc or self.title, msg
 
-        if self.identifying_loc:
-            ident_match = browser().is_displayed(self.locators[self.identifying_loc])
-        else:
-            ident_match = True
-            if self.title:
-                title_match = browser().title == self.title
-            else:
-                title_match = True
-        return ident_match and title_match
+        # Automatically match ident/title if no identifying_loc/title
+        ident_match = (not self.identifying_loc or
+            sel.is_displayed(self.locators[self.identifying_loc]))
+        title_match = (not self.title or
+            browser().title == self.title)
+        return title_match and ident_match
 
 
 def get_context_current_page():
