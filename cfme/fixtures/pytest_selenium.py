@@ -582,7 +582,7 @@ def go_to_fixture(fixtureconf, browser):
     force_navigate(page_name)
 
 
-def force_navigate(page_name, _tries=0):
+def force_navigate(page_name, _tries=0, *args, **kwargs):
     """force_navigate(page_name)
 
     Given a page name, attempt to navigate to that page no matter what breaks.
@@ -619,7 +619,7 @@ def force_navigate(page_name, _tries=0):
         # What we'd like to happen...
         login.login_admin()
         logger.info('Navigating to %s' % page_name)
-        ui_navigate.go_to(page_name)
+        ui_navigate.go_to(page_name, *args, **kwargs)
     except (KeyboardInterrupt, ValueError):
         # KeyboardInterrupt: Don't block this while navigating
         # ValueError: ui_navigate.go_to can't handle this page, give up
@@ -627,9 +627,9 @@ def force_navigate(page_name, _tries=0):
     except UnexpectedAlertPresentException:
         # There was an alert, accept it and try again
         handle_alert(wait=0)
-        force_navigate(page_name, _tries)
+        force_navigate(page_name, _tries, *args, **kwargs)
     except:
         # Anything else happened, nuke the browser and try again.
         browser().quit()
         logger.error('Browser failure during navigation, trying again.')
-        force_navigate(page_name, _tries)
+        force_navigate(page_name, _tries, *args, **kwargs)
