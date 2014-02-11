@@ -14,8 +14,14 @@
   * :py:class:`Quadicon`
   * :py:class:`Radio`
   * :py:class:`Table`
+  * :py:class:`TabStripForm`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
+  * :py:mod:`cfme.web_ui.flash`
+  * :py:mod:`cfme.web_ui.listnav`
+  * :py:mod:`cfme.web_ui.menu`
+  * :py:mod:`cfme.web_ui.paginator`
+  * :py:mod:`cfme.web_ui.tabstrip`
   * :py:mod:`cfme.web_ui.toolbar`
 
 """
@@ -30,6 +36,7 @@ from singledispatch import singledispatch
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import browser
+from cfme.web_ui import tabstrip
 
 from utils.log import logger
 
@@ -442,9 +449,6 @@ class Form(Region):
             the order of the elements but also which elements comprise part of the form.
         identifying_loc: A locator which should be present if the form is visible.
 
-    Returns:
-        A :py:class:`Form` object.
-
     Usage:
 
       provider_form = web_ui.Form(
@@ -489,6 +493,78 @@ class Form(Region):
     def __init__(self, fields=None, identifying_loc=None):
         self.locators = dict((key, value) for key, value in fields)
         self.fields = fields
+        self.identifying_loc = identifying_loc
+
+
+class _TabStripField(object):
+    """A form field type for use in TabStripForms"""
+    def __init__(self, ident_string, arg):
+        self.ident_string = ident_string
+        self.arg = arg
+
+
+@fill.register(_TabStripField)
+def _tabstrip_fill(tabstrip_field, value):
+    tabstrip.select_tab(tabstrip_field.ident_string)
+    fill(tabstrip_field.arg, value)
+
+
+class TabStripForm(Form):
+    """
+    A class for interacting with tabstrip-contained Form elements on pages.
+
+    This behaves exactly like a :py:class:`Form`, but is able to deal with form
+    elements being broken up into tabs, accessible via a tab strip.
+
+    Args:
+        tab_fields: A dict with tab names as keys, and each key's value being a list of
+            field name/locator tuples. The ordering of fields within a tab is guaranteed
+            (as it is with the normal Form) but the ordering of tabs is not guaranteed by default.
+            If such ordering is needed, tab_fields can be a ``collections.OrderedDict``.
+        identifying_loc: A locator which should be present if the form is visible.
+
+    Usage:
+
+        provisioning_form = web_ui.TabStripForm(
+            tab_fields={
+                'Request': [
+                    ('email', '//input[@name="requester__owner_email"]'),
+                    ('first_name', '//input[@id="requester__owner_first_name"]'),
+                    ('last_name', '//input[@id="requester__owner_last_name"]'),
+                    ('notes', '//textarea[@id="requester__request_notes"]'),
+                ],
+                'Catalog': [
+                    ('instance_name', '//input[@name="service__vm_name"]'),
+                    ('instance_description', '//textarea[@id="service__vm_description"]'),
+                ]
+            }
+        )
+
+    Each tab's fields will be exposed by their name on the resulting instance just like fields
+    on a Form. Don't use duplicate field names in the ``tab_fields`` dict.
+
+    Forms can then be filled in like so::
+
+        request_info = {
+            'email': 'your@email.com',
+            'first_name': 'First',
+            'last_name': 'Last',
+            'notes': 'Notes about this request',
+            'instance_name': 'An instance name',
+            'instance_description': 'This is my instance!',
+        }
+        web_ui.fill(provisioning_form, request_info)
+
+    """
+
+    def __init__(self, tab_fields=None, identifying_loc=None):
+        self.locators = dict()
+        self.fields = list()
+        for tab_ident, fields in tab_fields.iteritems():
+            for key, value in fields:
+                field = _TabStripField(tab_ident, value)
+                self.locators[key] = field
+                self.fields.append((key, field))
         self.identifying_loc = identifying_loc
 
 
