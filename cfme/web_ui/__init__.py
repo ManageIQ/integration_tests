@@ -517,6 +517,7 @@ class TabStripForm(Form):
     elements being broken up into tabs, accessible via a tab strip.
 
     Args:
+        fields: A list of field name/locator tuples (same as Form implementation)
         tab_fields: A dict with tab names as keys, and each key's value being a list of
             field name/locator tuples. The ordering of fields within a tab is guaranteed
             (as it is with the normal Form) but the ordering of tabs is not guaranteed by default.
@@ -557,15 +558,12 @@ class TabStripForm(Form):
 
     """
 
-    def __init__(self, tab_fields=None, identifying_loc=None):
-        self.locators = dict()
-        self.fields = list()
-        for tab_ident, fields in tab_fields.iteritems():
-            for key, value in fields:
-                field = _TabStripField(tab_ident, value)
-                self.locators[key] = field
-                self.fields.append((key, field))
-        self.identifying_loc = identifying_loc
+    def __init__(self, fields=None, tab_fields=None, identifying_loc=None):
+        fields = fields or list()
+        for tab_ident, field in tab_fields.iteritems():
+            for field_name, field_locator in field:
+                fields.append((field_name, _TabStripField(tab_ident, field_locator)))
+        super(TabStripForm, self).__init__(fields, identifying_loc)
 
 
 @fill.register(Form)
