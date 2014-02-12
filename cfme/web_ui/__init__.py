@@ -28,6 +28,7 @@
 import os
 import re
 import types
+from datetime import date
 
 import selenium
 from selenium.common import exceptions as sel_exceptions
@@ -425,6 +426,43 @@ def _sd_fill_otext(ot, value):
     """Filled just like a text box."""
     logger.debug('  Filling in [ObservedText], with value "%s"' % value)
     sel.set_text(ot, value)
+
+
+class Calendar(object):
+    """A CFME calendar form field
+
+    Calendar fields are readonly, and managed by the dxhtmlCalendar widget. A Calendar field
+    will accept any object that can be coerced into a string, but the value may not match the format
+    expected by dhtmlxCalendar or CFME. For best results, either a ``datetime.date`` or
+    ``datetime.datetime`` object should be used to create a valid date field.
+
+    Args:
+        name: "name" property of the readonly calendar field.
+
+    Usage:
+
+        calendar = web_ui.Calendar("miq_date_1")
+        web_ui.fill(calendar, date(2000, 1, 1))
+        web_ui.fill(calendar, '1/1/2001')
+
+    """
+    def __init__(self, name):
+        self.name = name
+
+    def locate(self):
+        return '//input[@name="%s"]' % self.name
+
+
+@fill.register(Calendar)
+def _sd_fill_date(calendar, value):
+    input = sel.element(calendar)
+    if isinstance(value, date):
+        date_str = '%s/%s/%s' % (value.month, value.day, value.year)
+    else:
+        date_str = str(value)
+
+    # need to write to a readonly field: resort to evil
+    browser().execute_script("arguments[0].value = '%s'" % date_str, input)
 
 
 @fill.register(types.NoneType)
