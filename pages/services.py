@@ -89,11 +89,6 @@ class Services(Base):
                 Services.RequestItem)
 
         @property
-        def flash(self):
-            '''Flash Message Region'''
-            return Base.FlashRegion(self.testsetup)
-
-        @property
         def flash_message(self):
             '''Flash Message'''
             return self.flash.message
