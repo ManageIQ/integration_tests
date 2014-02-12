@@ -167,6 +167,20 @@ We also do a few things that aren't explicitly called out in PEP 8:
     from os import environ
     from random import choice
 
+General Notes
+"""""""""""""
+
+* Avoid using ``time.sleep`` as much as possible to workaround quirks in the UI.
+  There is a ``utils.wait.wait_for`` utility that can be used to wait for
+  arbitrary conditions. In most cases there is some DOM visible change on the page
+  which can be waited for.
+* Avoid using ``time.sleep`` for waiting for changes to happen outside of the UI.
+  Consider using tools like mgmt_system to probe the external systems for
+  conditions for example and tie it in with a ``wait_for`` as discussed above.
+* If you feel icky about something you've written but don't know how to make
+  it better, ask someone. It's better to have it fixed before submitting it as
+  a pull request ;)
+
 Other useful code style guidelines:
 
 * `PEP 20 - The Zen of Python <http://www.python.org/dev/peps/pep-0020>`_
@@ -234,20 +248,6 @@ Layout
   well as convenience mappings for model to table names.
 * `scripts/` Useful scripts for QE developers that aren't used during
   a test run
-
-General Notes
-^^^^^^^^^^^^^
-
-* Avoid using ``time.sleep`` as much as possible to workaround quirks in the UI.
-  There is a ``utils.wait.wait_for`` utility that can be used to wait for
-  arbitrary conditions. In most cases there is some DOM visible change on the page
-  which can be waited for.
-* Avoid using ``time.sleep`` for waiting for changes to happen outside of the UI.
-  Consider using tools like mgmt_system to probe the external systems for
-  conditions for example and tie it in with a ``wait_for`` as discussed above.
-* If you feel icky about something you've written but don't know how to make
-  it better, ask someone. It's better to have it fixed before submitting it as
-  a pull request ;)
 
 Writing Pages
 ^^^^^^^^^^^^^
