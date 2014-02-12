@@ -723,8 +723,9 @@ class Tree(object):
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
             self.node_select_support = True
-            self.node_select = "//td[2]/img"
-            self.node_images = {'select': 'iconCheckAll', 'deselect': 'iconUncheckAll'}
+            self.node_select = "tr/td[2]/img"
+            self.node_images = {'select': ['iconCheckAll', 'radio_on'],
+                                'deselect': ['iconUncheckAll', 'radio_off']}
         else:
             raise exceptions.TreeTypeUnknown(
                 'The locator described does not point to a known tree type')
@@ -837,15 +838,17 @@ class Tree(object):
             root: The root path to begin at. This is usually not set manually
                 and is required for the recursion during :py:meth:expose_path:.
         """
+        self._detect()
         select = kwargs.get('select', False)
         if self.node_select_support:
             root = kwargs.get('root', None)
             leaf = self.expose_path(*path, root=root)
             leaf_chkbox = sel.element(self.node_select, root=leaf)
-            if self.node_images['select'] in sel.get_attribute(leaf_chkbox, 'src'):
-                node_open = True
-            else:
-                node_open = False
+            for img_type in self.node_images['select']:
+                if img_type in sel.get_attribute(leaf_chkbox, 'src'):
+                    node_open = True
+                else:
+                    node_open = False
             if select is not node_open:
                 sel.click(leaf_chkbox)
         else:
