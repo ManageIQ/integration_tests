@@ -10,7 +10,6 @@
 """
 
 from functools import partial
-from time import sleep
 
 import ui_navigate as nav
 
@@ -147,7 +146,6 @@ class Provider(Updateable):
             # browser.wait_for_element(page.configuration_btn)
         else:
             browser.click(submit_button)
-            sleep(3)
             flash.assert_no_errors()
 
     def create(self, cancel=False, validate_credentials=False):
