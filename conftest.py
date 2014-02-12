@@ -7,6 +7,7 @@ Top-level conftest.py does a couple of things:
 from pkgutil import iter_modules
 
 import pytest
+from utils.log import logger
 import cfme.fixtures
 
 # From cfme_tests
@@ -23,3 +24,8 @@ def _pytest_plugins_generator(*extension_pkgs):
 
 pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers, cfme.fixtures))
 collect_ignore = ["tests/scenarios"]
+
+
+def pytest_runtest_setup(item):
+    dir, filename, test = item.listnames()
+    logger.info('Starting test [%s] in file [%s]' % (test, filename))
