@@ -14,7 +14,6 @@ def pytest_runtest_setup(item):
     cfme_logger.info("=" * 125)
     cfme_logger.info('py.test starting %s' % _format_nodeid(item.nodeid),
         extra={'source_file': item.fspath, 'source_lineno': None})
-    cfme_logger.info("=" * 125)
 
 
 @pytest.mark.trylast
