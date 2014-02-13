@@ -97,6 +97,23 @@ management_hosts:
         credentials: esx
         ipmi_credentials: ipmi
         user_assigned_os: VMware ESX
+appliance_provisioning:
+    provider: provider_name
+    versions:
+      1.2.3: template_name_123
+      1.3.3: template_name_133
+    single_appliance:
+      name: name_single
+      version: 1.2.3
+    appliance_set:
+      primary_appliance:
+        name: name_primary
+        version: 1.3.3
+      secondary_appliances:
+        - name: name_secondary_1
+          version: 1.2.3
+        - name: name_secondary_2
+          version: 1.3.3
 pxe:
     pxe_servers:
         rhel:
