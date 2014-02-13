@@ -32,6 +32,9 @@ VALUE = 'val'
 TEXT = 'txt'
 
 
+sleep = time.sleep
+
+
 def pytest_namespace():
     # Return the contents of this file as the 'sel' namespace in pytest.
     return {'sel': globals()}
@@ -533,7 +536,7 @@ def _sd_set_text_string(ot, text):
         ActionChains(browser()).move_to_element(el).perform()
         el.clear()
         el.send_keys(text)
-        time.sleep(0.8)
+        sleep(0.8)
         wait_for_ajax()
 
 

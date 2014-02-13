@@ -96,13 +96,14 @@ candu_form = Form(
 cfg_btn = partial(tb.select, 'Configuration')
 
 nav.add_branch('infrastructure_providers',
-               {'infrastructure_provider_new': lambda: cfg_btn('Add a New Infrastructure Provider'),
-                'infrastructure_provider_discover': lambda: cfg_btn(
+               {'infrastructure_provider_new': lambda _: cfg_btn(
+                   'Add a New Infrastructure Provider'),
+                'infrastructure_provider_discover': lambda _: cfg_btn(
                     'Discover Infrastructure Providers'),
                 'infrastructure_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name,
                                                                       'infra_prov')),
                                    {'infrastructure_provider_edit':
-                                    lambda: cfg_btn('Edit this Infrastructure Provider')}]})
+                                    lambda _: cfg_btn('Edit this Infrastructure Provider')}]})
 
 
 class Provider(Updateable):
