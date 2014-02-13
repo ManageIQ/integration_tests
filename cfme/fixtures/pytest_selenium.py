@@ -448,7 +448,7 @@ def move_to_fn(*els):
         els: An iterable of elements:
     Returns: The move function
     """
-    def f():
+    def f(_):
         for el in els:
             move_to_element(el)
     return f
@@ -462,7 +462,7 @@ def click_fn(*els):
        els: An iterable of elements:
     Returns: The click function
     """
-    def f():
+    def f(_):
         for el in els:
             click(el)
     return f
