@@ -627,8 +627,13 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # ValueError: ui_navigate.go_to can't handle this page, give up
         raise
     except UnexpectedAlertPresentException:
-        # There was an alert, accept it and try again
-        handle_alert(wait=0)
+        if _tries == 1:
+            # There was an alert, accept it and try again
+            handle_alert(wait=0)
+        else:
+            # There was still an alert when we tried again, shoot the browser in the head
+            logger.debug("Unxpected alert on try %d, recycling browser" % _tries)
+            browser().quit()
         force_navigate(page_name, _tries, *args, **kwargs)
     except Exception as ex:
         # Anything else happened, nuke the browser and try again.
