@@ -72,8 +72,13 @@ def test_provider_add_with_bad_credentials(provider_data):
 def test_provider_edit(provider_data):
     """ Tests that editing a management system shows the proper detail after an edit."""
     provider_data.create()
+    old_name = provider_data.name
     with update(provider_data) as provider_data:
         provider_data.name = str(uuid.uuid4())  # random uuid
+    flash.assert_message_match('Infrastructure Provider "%s" was saved' % provider_data.name)
+
+    with update(provider_data) as provider_data:
+        provider_data.name = old_name  # old name
     flash.assert_message_match('Infrastructure Provider "%s" was saved' % provider_data.name)
 
 
