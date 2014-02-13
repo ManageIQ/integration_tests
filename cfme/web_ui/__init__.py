@@ -25,10 +25,12 @@
   * :py:mod:`cfme.web_ui.toolbar`
 
 """
+import json
 import os
 import re
 import types
 from datetime import date
+from time import sleep
 
 import selenium
 from selenium.common import exceptions as sel_exceptions
@@ -106,6 +108,53 @@ def get_context_current_page():
     url = browser().current_url()
     stripped = url.lstrip('https://')
     return stripped[stripped.find('/'):stripped.rfind('?')]
+
+
+def detect_observed_field(loc):
+    """Detect observed fields; sleep if needed
+
+    Used after filling most form fields, this function will inspect the filled field for
+    one of the known CFME observed field attribues, and if found, sleep long enough for the observed
+    field's AJAX request to go out, and then block until no AJAX requests are in flight.
+
+    Observed fields occasionally declare their own wait interval before firing their AJAX request.
+    If found, that interval will be used instead of the default.
+
+    """
+    element = sel.element(loc)
+    # Default wait period, based on the default UI wait (700ms)
+    # plus a little padding to let the AJAX fire before we wait_for_ajax
+    default_wait = .8
+    # Known observed field attributes
+    observed_field_markers = (
+        'data-miq_observe',
+        'data-miq_observe_date',
+        'data-miq_observe_checkbox',
+    )
+    for attr in observed_field_markers:
+        try:
+            observed_field_attr = element.get_attribute(attr)
+            break
+        except sel_exceptions.NoSuchAttributeException:
+            pass
+    else:
+        # Failed to detect an observed text field, short out
+        return
+
+    try:
+        attr_dict = json.loads(observed_field_attr)
+        interval = float(attr_dict.get('interval', default_wait))
+        # Pad the detected interval, as with default_wait
+        interval += .1
+    except (TypeError, ValueError):
+        # ValueError and TypeError happens if the attribute value couldn't be decoded as JSON
+        # ValueError also happens if interval couldn't be coerced to float
+        # In either case, we've detected an observed text field and should wait
+        interval = default_wait
+
+    logger.debug('  Observed field detected, pausing %.1f seconds' % interval)
+    sleep(interval)
+    sel.wait_for_ajax()
 
 
 class Table(object):
@@ -409,6 +458,7 @@ def _sd_fill_string(loc, value):
             op(loc)
     else:
         op(loc, value)
+        detect_observed_field(loc)
 
 
 @fill.register(Table)
@@ -463,6 +513,7 @@ def _sd_fill_date(calendar, value):
 
     # need to write to a readonly field: resort to evil
     browser().execute_script("arguments[0].value = '%s'" % date_str, input)
+    detect_observed_field(input)
 
 
 @fill.register(types.NoneType)
