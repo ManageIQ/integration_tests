@@ -90,6 +90,13 @@ class ProviderHasNoProperty(CFMEException):
     pass
 
 
+class ScheduleNotFound(CFMEException):
+    """
+    Raised if a schedule was not found in
+    :py:meth:`cfme.configure.configuration.Schedule.delete_by_name`
+    """
+
+
 class TreeTypeUnknown(CFMEException):
     """
     Raised if the tree type is known whilst detection in :py:class:`cfme.web_ui.Tree`
@@ -102,8 +109,4 @@ class UnidentifiableTagType(CFMEException):
     Raised if a tag type is not identifiable when processing a form in
     :py:meth:`cfme.web_ui.Form.fill_fields`.
     """
-    pass
-
-
-class ScheduleNotFound(CFMEException):
     pass
