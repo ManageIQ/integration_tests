@@ -61,6 +61,10 @@ def login(user, password, submit_method=_click_on_login):
     # TODO: Should probably do the username check here, but there are pretty usernames to deal with
     # e.g. 'admin' shows up in the UI as 'Administrator'
     if not _is_logged_in():
+        # workaround for strange bug where we are logged out
+        # as soon as we click something on the dashboard
+        browser.sleep(1.0)
+
         logger.debug('Logging in as user %s' % user)
         browser.set_text(page.username_text, user)
         browser.set_text(page.password_text, password)

@@ -92,12 +92,12 @@ amqp_form = Form(
 cfg_btn = partial(tb.select, 'Configuration')
 
 nav.add_branch('clouds_providers',
-               {'cloud_provider_new': lambda: cfg_btn('Add a New Cloud Provider'),
-                'cloud_provider_discover': lambda: cfg_btn('Discover Cloud Providers'),
+               {'cloud_provider_new': lambda _: cfg_btn('Add a New Cloud Provider'),
+                'cloud_provider_discover': lambda _: cfg_btn('Discover Cloud Providers'),
                 'cloud_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name,
                                                                       'cloud_prov')),
                                    {'cloud_provider_edit':
-                                    lambda: cfg_btn('Edit this Cloud Provider')}]})
+                                    lambda _: cfg_btn('Edit this Cloud Provider')}]})
 
 
 class Provider(Updateable):
