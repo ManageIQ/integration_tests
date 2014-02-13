@@ -68,7 +68,7 @@ discover_form = Form(
 properties_form = Form(
     fields=[
         ('type_select', "//*[@id='server_emstype']"),
-        ('name_text', browser.ObservedText("//*[@id='name']")),
+        ('name_text', "//*[@id='name']"),
         ('hostname_text', "//*[@id='hostname']"),
         ('ipaddress_text', "//*[@id='ipaddress']"),
         ('amazon_region_select', "//*[@id='hostname']"),
@@ -78,18 +78,18 @@ properties_form = Form(
 def_form = Form(
     fields=[
         ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('principal', browser.ObservedText("//*[@id='default_userid']")),
-        ('secret', browser.ObservedText("//*[@id='default_password']")),
-        ('verify_secret', browser.ObservedText("//*[@id='default_verify']")),
+        ('principal', "//*[@id='default_userid']"),
+        ('secret', "//*[@id='default_password']"),
+        ('verify_secret', "//*[@id='default_verify']"),
         ('validate_btn', page_specific_locators.creds_validate_btn)
     ])
 
 candu_form = Form(
     fields=[
         ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#metrics']"),
-        ('principal', browser.ObservedText("//*[@id='metrics_userid']")),
-        ('secret', browser.ObservedText("//*[@id='metrics_password']")),
-        ('verify_secret', browser.ObservedText("//*[@id='metrics_verify']")),
+        ('principal', "//*[@id='metrics_userid']"),
+        ('secret', "//*[@id='metrics_password']"),
+        ('verify_secret', "//*[@id='metrics_verify']"),
         ('validate_btn', page_specific_locators.creds_validate_btn)
     ])
 
