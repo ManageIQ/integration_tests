@@ -1,6 +1,7 @@
 import pytest
 
 from utils.log import logger as cfme_logger
+from utils.log import format_marker
 
 
 # Expose the cfme logger as a fixture for convenience
@@ -11,7 +12,7 @@ def logger():
 
 @pytest.mark.tryfirst
 def pytest_runtest_setup(item):
-    cfme_logger.info("=" * 125)
+    cfme_logger.info(format_marker(_format_nodeid(item.nodeid), mark="-"))
     cfme_logger.info('py.test starting %s' % _format_nodeid(item.nodeid),
         extra={'source_file': item.fspath, 'source_lineno': None})
 

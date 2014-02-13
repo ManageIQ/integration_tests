@@ -296,6 +296,33 @@ def _showwarning(message, category, filename, lineno, file=None, line=None):
     message = "%s from %s:%d: %s" % (category.__name__, _from, lineno, message)
     logger.warning(message)
 
+MARKER_LEN = 80
+
+
+def format_marker(mstring, mark="-"):
+    """ Creates a marker in log files using a string and leader mark.
+
+    This function uses the constant ``MARKER_LEN`` to determine the length of the marker,
+    and then sandwiches the message string between multiple ``leader_mark``s.
+
+    Args:
+        mstring: The message string to be placed in the marker.
+        leader_mark: The marker character to use for leading and trailing.
+
+    Returns: The formatted marker string.
+
+    Note: If the message string is too long to fit one character of leader/trailer and
+        a space, then the message is returned as is.
+    """
+    leader_req = MARKER_LEN - len(mstring)
+    if leader_req < 4:
+        return mstring
+    leader = mark * ((leader_req / 2) - 1)
+    marker = '%s %s %s' % (leader, mstring, leader)
+    if (MARKER_LEN - len(mstring)) % 2:
+        marker += mark
+    return marker
+
 logger = create_logger('cfme')
 # Capture warnings to the cfme logger using the warnings.showwarning hook
 warnings.showwarning = _showwarning
