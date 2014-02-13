@@ -5,7 +5,6 @@
 from cfme.web_ui import Region
 from selenium.webdriver.common.by import By
 import cfme.fixtures.pytest_selenium as sel
-import itertools
 
 area = Region(locators=
               {'message': (By.XPATH, "//div[@id='flash_text_div' or @id='flash_div']//li")})
@@ -48,7 +47,7 @@ def dismiss():
     sel.click(area.message)
 
 
-def get_all_message():
+def get_all_messages():
     """Returns a list of all flash messages, (including ones hidden behind
     the currently showing one, if any).  All flash messages will be
     dismissed."""
