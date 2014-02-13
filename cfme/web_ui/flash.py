@@ -42,6 +42,22 @@ def get_messages():
     return map(message, sel.elements(area.message))
 
 
+def dismiss():
+    """Dismiss the current flash message"""
+    sel.click(area.message)
+
+
+def get_all_messages():
+    """Returns a list of all flash messages, (including ones hidden behind
+    the currently showing one, if any).  All flash messages will be
+    dismissed."""
+    all_messages = []
+    while sel.is_displayed(area.message):
+        all_messages = all_messages + get_messages()
+        dismiss()
+    return all_messages
+
+
 def is_error(message):
     """ Checks a given message to see if is an Error.
 
