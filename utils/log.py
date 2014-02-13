@@ -319,7 +319,7 @@ def format_marker(mstring, mark="-"):
         mstring = ' {} '.format(mstring)
         # Format centered, surrounded the leader_mark
         format_spec = '{{:{leader_mark}^{marker_len}}}'\
-            .format(leader_mark='-', marker_len=MARKER_LEN)
+            .format(leader_mark=mark, marker_len=MARKER_LEN)
         mstring = format_spec.format(mstring)
     return mstring
 
