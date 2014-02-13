@@ -10,7 +10,7 @@ import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
 from utils.update import Updateable
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill, handle_alert
+from cfme.web_ui import fill
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.accordion as accordion
 from utils.wait import wait_for
@@ -123,133 +123,133 @@ crud_buttons = Region(
 nav.add_branch("configuration",
     dict(
         configuration_settings=[
-            lambda: accordion.click("Settings"),
+            lambda _: accordion.click("Settings"),
             {
                 "cfg_settings_region":
-                lambda: settings_tree.click_path("Region: Region"),
+                lambda _: settings_tree.click_path("Region: Region"),
 
                 "cfg_settings_defaultzone":
-                lambda: settings_tree.click_path("Region: Region", "Zones", "Default Zone"),
+                lambda _: settings_tree.click_path("Region: Region", "Zones", "Default Zone"),
 
                 "cfg_settings_schedules":
-                lambda: settings_tree.click_path("Region: Region", "Schedules"),
+                lambda _: settings_tree.click_path("Region: Region", "Schedules"),
 
                 "cfg_settings_currentserver":
                 [
-                    lambda: settings_tree.click_path("Region: Region",
+                    lambda _: settings_tree.click_path("Region: Region",
                                                      "Zones",
                                                      "Default Zone",
                                                      "(current)"),
                     {
                         "cfg_settings_currentserver_server":
-                        lambda: tabs.select_tab("Server"),
+                        lambda _: tabs.select_tab("Server"),
 
                         "cfg_settings_currentserver_auth":
-                        lambda: tabs.select_tab("Authentication"),
+                        lambda _: tabs.select_tab("Authentication"),
 
                         "cfg_settings_currentserver_workers":
-                        lambda: tabs.select_tab("Workers"),
+                        lambda _: tabs.select_tab("Workers"),
 
                         "cfg_settings_currentserver_database":
-                        lambda: tabs.select_tab("Database"),
+                        lambda _: tabs.select_tab("Database"),
 
                         "cfg_settings_currentserver_logos":
-                        lambda: tabs.select_tab("Custom Logos"),
+                        lambda _: tabs.select_tab("Custom Logos"),
 
                         "cfg_settings_currentserver_maintenance":
-                        lambda: tabs.select_tab("Maintenance"),
+                        lambda _: tabs.select_tab("Maintenance"),
 
                         "cfg_settings_currentserver_smartproxy":
-                        lambda: tabs.select_tab("SmartProxy"),
+                        lambda _: tabs.select_tab("SmartProxy"),
 
                         "cfg_settings_currentserver_advanced":
-                        lambda: tabs.select_tab("Advanced")
+                        lambda _: tabs.select_tab("Advanced")
                     }
                 ]
             }
         ],
         configuration_diagnostics=[
-            lambda: accordion.click("Diagnostics"),
+            lambda _: accordion.click("Diagnostics"),
             {
                 "cfg_diagnostics_currentserver":
                 [
-                    lambda: diagnostics_tree.click_path("CFME Region", "Default Zone", "Server:"),
+                    lambda _: diagnostics_tree.click_path("CFME Region", "Default Zone", "Server:"),
                     {
                         "cfg_diagnostics_server_summary":
-                        lambda: tabs.select_tab("Summary"),
+                        lambda _: tabs.select_tab("Summary"),
 
                         "cfg_diagnostics_server_workers":
-                        lambda: tabs.select_tab("Workers"),
+                        lambda _: tabs.select_tab("Workers"),
 
                         "cfg_diagnostics_server_collect":
-                        lambda: tabs.select_tab("Collect Logs"),
+                        lambda _: tabs.select_tab("Collect Logs"),
 
                         "cfg_diagnostics_server_cfmelog":
-                        lambda: tabs.select_tab("CFME Log"),
+                        lambda _: tabs.select_tab("CFME Log"),
 
                         "cfg_diagnostics_server_auditlog":
-                        lambda: tabs.select_tab("Audit Log"),
+                        lambda _: tabs.select_tab("Audit Log"),
 
                         "cfg_diagnostics_server_productionlog":
-                        lambda: tabs.select_tab("Production Log"),
+                        lambda _: tabs.select_tab("Production Log"),
 
                         "cfg_diagnostics_server_utilization":
-                        lambda: tabs.select_tab("Utilization"),
+                        lambda _: tabs.select_tab("Utilization"),
 
                         "cfg_diagnostics_server_timelines":
-                        lambda: tabs.select_tab("Timelines"),
+                        lambda _: tabs.select_tab("Timelines"),
                     }
                 ],
                 "cfg_diagnostics_defaultzone":
                 [
-                    lambda: diagnostics_tree.click_path("CFME Region", "Default Zone"),
+                    lambda _: diagnostics_tree.click_path("CFME Region", "Default Zone"),
                     {
                         "cfg_diagnostics_zone_roles_by_servers":
-                        lambda: tabs.select_tab("Roles by Servers"),
+                        lambda _: tabs.select_tab("Roles by Servers"),
 
                         "cfg_diagnostics_zone_servers_by_roles":
-                        lambda: tabs.select_tab("Servers by Roles"),
+                        lambda _: tabs.select_tab("Servers by Roles"),
 
                         "cfg_diagnostics_zone_servers":
-                        lambda: tabs.select_tab("Servers"),
+                        lambda _: tabs.select_tab("Servers"),
 
                         "cfg_diagnostics_zone_collect":
-                        lambda: tabs.select_tab("Collect Logs"),
+                        lambda _: tabs.select_tab("Collect Logs"),
 
                         "cfg_diagnostics_zone_gap_collect":
-                        lambda: tabs.select_tab("C & U Gap Collection"),
+                        lambda _: tabs.select_tab("C & U Gap Collection"),
                     }
                 ],
                 "cfg_diagnostics_region":
                 [
-                    lambda: diagnostics_tree.click_path("CFME Region"),
+                    lambda _: diagnostics_tree.click_path("CFME Region"),
                     {
                         "cfg_diagnostics_region_zones":
-                        lambda: tabs.select_tab("Zones"),
+                        lambda _: tabs.select_tab("Zones"),
 
                         "cfg_diagnostics_region_roles_by_servers":
-                        lambda: tabs.select_tab("Roles by Servers"),
+                        lambda _: tabs.select_tab("Roles by Servers"),
 
                         "cfg_diagnostics_region_servers_by_roles":
-                        lambda: tabs.select_tab("Servers by Roles"),
+                        lambda _: tabs.select_tab("Servers by Roles"),
 
                         "cfg_diagnostics_region_servers":
-                        lambda: tabs.select_tab("Servers"),
+                        lambda _: tabs.select_tab("Servers"),
 
                         "cfg_diagnostics_region_replication":
-                        lambda: tabs.select_tab("Replication"),
+                        lambda _: tabs.select_tab("Replication"),
 
                         "cfg_diagnostics_region_database":
-                        lambda: tabs.select_tab("Database"),
+                        lambda _: tabs.select_tab("Database"),
 
                         "cfg_diagnostics_region_orphaned":
-                        lambda: tabs.select_tab("Orphaned Data"),
+                        lambda _: tabs.select_tab("Orphaned Data"),
                     }
                 ]
             }
         ],
-        configuration_access_control=lambda: accordion.click("Access Control"),
-        configuration_database=lambda: accordion.click("Database"),
+        configuration_access_control=lambda _: accordion.click("Access Control"),
+        configuration_database=lambda _: accordion.click("Database"),
     )
 )
 
@@ -355,8 +355,7 @@ class BasicInformation(Updateable):
 
     def update(self):
         nav.go_to("cfg_settings_currentserver_server")
-        fill(basic_information, self.details)
-        browser.click(crud_buttons.save_button)
+        fill(basic_information, self.details, action=crud_buttons.save_button)
 
 
 class SMTPSettings(Updateable):
@@ -376,8 +375,7 @@ class SMTPSettings(Updateable):
 
     def update(self):
         nav.go_to("cfg_settings_currentserver_server")
-        fill(smtp_settings, self.details)
-        browser.click(crud_buttons.save_button)
+        fill(smtp_settings, self.details, action=crud_buttons.save_button)
 
 
 class DatabaseAuthSetting(object):
@@ -396,12 +394,12 @@ class DatabaseAuthSetting(object):
 
     def update(self, session_timeout=(1, 0)):
         self._navigate()
-        fill(self.form, dict(
+        data = dict(
             timeout_h=session_timeout[0],
             timeout_m=session_timeout[1],
             auth_mode="Database"
-        ))
-        browser.click(crud_buttons.save_button)
+        )
+        fill(self.form, data, action=crud_buttons.save_button)
 
 
 class AmazonAuthSetting(object):
@@ -435,8 +433,7 @@ class AmazonAuthSetting(object):
             timeout_m=session_timeout[1],
             auth_mode="Amazon"
         ))
-        fill(self.form, self.details)
-        browser.click(crud_buttons.save_button)
+        fill(self.form, self.details, action=crud_buttons.save_button)
 
 
 class LDAPAuthSetting(object):
@@ -481,8 +478,8 @@ class LDAPAuthSetting(object):
         del self.details["self"]
         del self.details["hosts"]
         assert len(hosts) <= 3, "You can specify only 3 LDAP hosts"
-        for i in range(len(hosts)):
-            self.details["ldaphost_%d" % (i + 1)] = hosts[i]
+        for enum, host in enumerate(hosts):
+            self.details["ldaphost_%d" % (enum + 1)] = host
 
     def _navigate(self):
         nav.go_to("cfg_settings_currentserver_auth")
@@ -510,11 +507,10 @@ class Schedule(object):
 
     Todo: When tables are extended, add the rest.
     """
-    WEEKLY = intern("Weekly")
-    ONCE = intern("Once")
-    HOURLY = intern("Hourly")
-    DAILY = intern("Daily")
-    MONTHLY = intern("Monthly")
+    tab = {"Hourly": "timer_hours",
+           "Daily": "timer_days",
+           "Weekly": "timer_weeks",
+           "Monthly": "timer_months"}
 
     form = Form(fields=[
         ("name", "//input[@id='name']"),
@@ -565,20 +561,12 @@ class Schedule(object):
             start_hour=start_hour,
             start_min=start_min,
         )
-        if run_type is self.ONCE:
-            self.details["timer_type"] = self.ONCE
-        elif run_type is self.HOURLY:
-            self.details["timer_type"] = self.HOURLY
-            self.details["timer_hours"] = run_every
-        elif run_type is self.DAILY:
-            self.details["timer_type"] = self.DAILY
-            self.details["timer_days"] = run_every
-        elif run_type is self.WEEKLY:
-            self.details["timer_type"] = self.WEEKLY
-            self.details["timer_weeks"] = run_every
-        elif run_type is self.MONTHLY:
-            self.details["timer_type"] = self.MONTHLY
-            self.details["timer_months"] = run_every
+
+        if run_type == "Once":
+            self.details["timer_type"] = "Once"
+        else:
+            self.details["timer_type"] = run_type
+            self.details[self.tab[run_type]] = run_every
 
     def create_new(self, cancel=False):
         nav.go_to("cfg_settings_schedules")
@@ -603,7 +591,7 @@ class Schedule(object):
                 "Schedule '%s' could not be found for deletion!" % name
             )
         tb.select("Configuration", "Delete this Schedule from the Database")
-        handle_alert(cancel)
+        browser.handle_alert(cancel)
 
     @classmethod
     def create(self, *args, **kwargs):
@@ -632,10 +620,9 @@ def set_ntp_servers(*servers):
     nav.go_to("cfg_settings_currentserver_server")
     assert len(servers) <= 3, "There is place only for 3 servers!"
     fields = {}
-    for i in range(len(servers)):
-        fields["ntp_server_%d" % (i + 1)] = servers[i]
-    fill(ntp_servers, fields)
-    browser.click(crud_buttons.save_button)
+    for enum, server in enumerate(servers):
+        fields["ntp_server_%d" % (enum + 1)] = server
+    fill(ntp_servers, fields, action=crud_buttons.save_button)
 
 
 def set_database_internal():
