@@ -12,19 +12,17 @@ def logger():
 
 @pytest.mark.tryfirst
 def pytest_runtest_setup(item):
-    cfme_logger.info(format_marker(_format_nodeid(item.nodeid), mark="-"))
-    cfme_logger.info('py.test starting %s' % _format_nodeid(item.nodeid),
-        extra={'source_file': item.fspath, 'source_lineno': None})
+    path, lineno, domaininfo = item.location
+    cfme_logger.info(format_marker(_format_nodeid(item.nodeid), mark="-"),
+        extra={'source_file': path, 'source_lineno': lineno})
 
 
 @pytest.mark.trylast
 def pytest_runtest_logreport(report):
     if report.when == 'teardown':
-        # items don't have line numbers, so leave it out here to be consistent with
-        # the pytest_runtest_setup hook
         path, lineno, domaininfo = report.location
-        cfme_logger.info('py.test finished %s' % _format_nodeid(report.nodeid),
-            extra={'source_file': path, 'source_lineno': None})
+        cfme_logger.info('finished %s' % _format_nodeid(report.nodeid),
+            extra={'source_file': path, 'source_lineno': lineno})
 
 
 def _format_nodeid(nodeid):
