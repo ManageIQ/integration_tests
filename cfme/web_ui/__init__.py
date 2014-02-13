@@ -637,7 +637,8 @@ def _sd_fill_form(form, values, action=None):
             fill(loc, value)  # re-dispatch to fill for each item
 
     if action:
-        sel.click(form.region.__getattr__(action))
+        logger.debug(' Invoking end of form action')
+        sel.click(sel.element(action))
     logger.debug('Finished filling in form')
 
 
