@@ -314,14 +314,14 @@ def format_marker(mstring, mark="-"):
     Note: If the message string is too long to fit one character of leader/trailer and
         a space, then the message is returned as is.
     """
-    leader_req = MARKER_LEN - len(mstring)
-    if leader_req < 4:
-        return mstring
-    leader = mark * ((leader_req / 2) - 1)
-    marker = '%s %s %s' % (leader, mstring, leader)
-    if (MARKER_LEN - len(mstring)) % 2:
-        marker += mark
-    return marker
+    if len(mstring) <= MARKER_LEN - 2:
+        # Pad with spaces
+        mstring = ' {} '.format(mstring)
+        # Format centered, surrounded the leader_mark
+        format_spec = '{{:{leader_mark}^{marker_len}}}'\
+            .format(leader_mark='-', marker_len=MARKER_LEN)
+        mstring = format_spec.format(mstring)
+    return mstring
 
 logger = create_logger('cfme')
 # Capture warnings to the cfme logger using the warnings.showwarning hook
