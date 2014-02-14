@@ -63,6 +63,7 @@ class Details(Page):
         class DetailsItem(Page):
             _details_section_data_key_locator = (By.CSS_SELECTOR, "td.label")
             _details_section_data_value_locator = (By.CSS_SELECTOR, "td:not(.label)")
+            _details_section_data_image_locator = (By.CSS_SELECTOR, "td img")
 
             def __init__(self, testsetup, element):
                 Page.__init__(self, testsetup)
@@ -76,6 +77,20 @@ class Details(Page):
             def value(self):
                 return self._root_element.find_element(
                     *self._details_section_data_value_locator).text
+
+            @property
+            def has_icon_image(self):
+                try:
+                    self._root_element.find_element(*self._details_section_data_image_locator)
+                    return True
+                except:
+                    return False
+
+            @property
+            def icon_href(self):
+                if self.has_icon_image:
+                    return self._root_element.find_element(
+                        *self._details_section_data_image_locator).get_attribute("src")
 
             #@property
             #def has_click_through(self):
