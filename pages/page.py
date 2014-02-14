@@ -106,6 +106,7 @@ class Page(object):
 
     def get_element(self, *element):
         self._wait_for_visible_element(*element)
+        time.sleep(2)
         return self.selenium.find_element(*element)
 
     def handle_popup(self, cancel=False):
