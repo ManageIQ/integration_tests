@@ -303,7 +303,7 @@ def format_marker(mstring, mark="-"):
     """ Creates a marker in log files using a string and leader mark.
 
     This function uses the constant ``MARKER_LEN`` to determine the length of the marker,
-    and then sandwiches the message string between multiple ``leader_mark``s.
+    and then centers the message string between padding made up of ``leader_mark`` characters.
 
     Args:
         mstring: The message string to be placed in the marker.
