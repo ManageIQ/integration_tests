@@ -131,12 +131,16 @@ Members
 
 """
 import logging
+import sys
 import warnings
 from logging.handlers import RotatingFileHandler
 from time import time
+from traceback import extract_tb
 
 from utils import conf
 from utils.path import get_rel_path, log_path
+
+MARKER_LEN = 80
 
 # set logging defaults
 _default_conf = {
@@ -296,8 +300,6 @@ def _showwarning(message, category, filename, lineno, file=None, line=None):
     message = "%s from %s:%d: %s" % (category.__name__, _from, lineno, message)
     logger.warning(message)
 
-MARKER_LEN = 80
-
 
 def format_marker(mstring, mark="-"):
     """ Creates a marker in log files using a string and leader mark.
@@ -323,8 +325,23 @@ def format_marker(mstring, mark="-"):
         mstring = format_spec.format(mstring)
     return mstring
 
+
+def _custom_excepthook(type, value, traceback):
+    file, lineno, function, text = extract_tb(traceback)[-1]
+    logger.error('Unhandled %s: %s' % (type.__name__, value),
+        extra={'source_file': file, 'source_lineno': lineno})
+    _original_excepthook(type, value, traceback)
+
+if '_original_excepthook' not in globals():
+    # Guard the original excepthook against reloads so we don't hook twice
+    _original_excepthook = sys.excepthook
+
 logger = create_logger('cfme')
+perflog = Perflog()
+
 # Capture warnings to the cfme logger using the warnings.showwarning hook
 warnings.showwarning = _showwarning
 warnings.simplefilter('default')
-perflog = Perflog()
+
+# Register a custom excepthook to log unhandled exceptions
+sys.excepthook = _custom_excepthook
