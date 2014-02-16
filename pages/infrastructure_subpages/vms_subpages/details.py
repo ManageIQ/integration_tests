@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import time
 from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
 from selenium.webdriver.common.by import By
 from pages.base import Base
 from utils.wait import wait_for
+import re
+
 
 class VirtualMachineDetails(VmCommonComponents):
     _details_locator = (By.CSS_SELECTOR, "div#textual_div")
@@ -22,25 +23,23 @@ class VirtualMachineDetails(VmCommonComponents):
 
     @property
     def set_retirement_date_button(self):
-        return self.selenium.find_element(
-            *self._set_retirement_date_button_locator)
+        return self.get_element(*self._set_retirement_date_button_locator)
 
     @property
     def immediately_retire_vm_button(self):
-        return self.selenium.find_element(
-            *self._immediately_retire_vm_button_locator)
+        return self.get_element(*self._immediately_retire_vm_button_locator)
 
     @property
     def utilization_button(self):
-        return self.selenium.find_element(*self._utilization_button_locator)
+        return self.get_element(*self._utilization_button_locator)
 
     @property
     def server_relationship_button(self):
-        return self.selenium.find_element(*self._edit_mgmt_relationship_locator)
+        return self.get_element(*self._edit_mgmt_relationship_locator)
 
     @property
     def set_ownership_button(self):
-        return self.selenium.find_element(*self._set_ownership_locator)
+        return self.get_element(*self._set_ownership_locator)
 
     @property
     def power_state(self):
@@ -62,6 +61,18 @@ class VirtualMachineDetails(VmCommonComponents):
         from pages.regions.details import Details
         root_element = self.selenium.find_element(*self._details_locator)
         return Details(self.testsetup, root_element)
+
+    def on_vm_details(self, vm_name):
+        _vm_page_label = (By.XPATH,
+            "//div[@class='dhtmlxInfoBarLabel' and contains(. , 'VM and Instance') ]")
+
+        if self.is_element_present(*_vm_page_label):
+            text = str(self.get_element(*_vm_page_label).text)
+            pattern = r'("[A-Za-z0-9_\./\\-]*")'
+            m = re.search(pattern, text)
+            return vm_name == m.group().replace('"', '')
+        else:
+            return False
 
     def click_on_set_retirement_date(self):
         self.center_buttons.lifecycle_button.click()
