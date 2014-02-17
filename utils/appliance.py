@@ -63,26 +63,25 @@ class Appliance(object):
             raise Exception('Failed to patch ajax wait code {} on {}'
                             .format(self.address))
 
-    def ssh_client(self, username=None, password=None):
+    def ssh_client(self, **connect_kwargs):
         """Creates ssh client connected to this appliance
 
-        Note: The credentials default to those found under ``ssh`` key in ``credentials.yaml``.
-
         Args:
-            username: Username to use for the SSH connection
-            password: Password to use for the SSH connection
+            **connect_kwargs: Keyword arguments accepted by the SSH client, including
+            ``username``, ``password``, and ``hostname``.
+
 
         Returns: A configured :py:class:`utils.ssh.SSHClient` instance.
 
         Usage:
+
             with appliance.ssh_client() as ssh:
                 status, output = ssh.run_command('...')
+
+        Note:
+
+            The credentials default to those found under ``ssh`` key in ``credentials.yaml``.
         """
-        connect_kwargs = {
-            'username': username or conf.credentials['ssh']['username'],
-            'password': password or conf.credentials['ssh']['password'],
-            'hostname': self.address,
-        }
         return SSHClient(**connect_kwargs)
 
     def browser_session(self):
@@ -122,9 +121,6 @@ class Appliance(object):
 
     def rename(self, new_name):
         """Changes appliance name using web UI
-
-        This. Is. Wrong.
-        It shouldn't be here.
 
         Args:
             new_name: Name to set

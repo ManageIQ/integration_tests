@@ -1,5 +1,9 @@
+from urlparse import urlparse
+
 import paramiko
 from scp import SCPClient
+
+from utils import conf
 
 
 class SSHClient(paramiko.SSHClient):
@@ -13,13 +17,25 @@ class SSHClient(paramiko.SSHClient):
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         # Set up some sane defaults
+        default_connect_kwargs = dict()
         if 'timeout' not in connect_kwargs:
-            connect_kwargs['timeout'] = 10
+            default_connect_kwargs['timeout'] = 10
         if 'allow_agent' not in connect_kwargs:
-            connect_kwargs['allow_agent'] = False
+            default_connect_kwargs['allow_agent'] = False
         if 'look_for_keys' not in connect_kwargs:
-            connect_kwargs['look_for_keys'] = False
-        self._connect_kwargs = connect_kwargs
+            default_connect_kwargs['look_for_keys'] = False
+
+        # Load credentials and destination from confs
+        parsed_url = urlparse(conf.env['base_url'])
+        default_connect_kwargs = {
+            'username': conf.credentials['ssh']['username'],
+            'password': conf.credentials['ssh']['password'],
+            'hostname': parsed_url.hostname,
+        }
+
+        # Overlay defaults with any passed-in kwargs and store
+        default_connect_kwargs.update(connect_kwargs)
+        self._connect_kwargs = default_connect_kwargs
 
     def __call__(self, **connect_kwargs):
         # Update a copy of this instance's connect kwargs with passed in kwargs,
