@@ -457,6 +457,7 @@ def fill(arg, content):
 
 
 @fill.register(str)
+@fill.register(tuple)
 def _sd_fill_string(loc, value):
     """
     How to 'fill' a string.  Assumes string is a locator for a UI input element,
