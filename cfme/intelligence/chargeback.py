@@ -1,16 +1,17 @@
 from selenium.webdriver.common.by import By
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.menu # to load menu nav
-from functools import partial
-import ui_navigate as nav
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
+import cfme.fixtures.pytest_selenium as sel
+import ui_navigate as nav
 from utils.update import Updateable
 from functools import partial
 
 rate_tree = web_ui.Tree("//div[@id='cb_rates_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")
-tb_select_new_chargeback = partial(tb_select, "Add a new Chargeback Rate")
+tb_select_new_chargeback = nav.fn(partial(tb_select, "Add a new Chargeback Rate"))
+tb_select_edit_chargeback = nav.fn(partial(tb_select, "Edit this Chargeback Rate"))
 
 
 class RateFormItem(object):
@@ -19,25 +20,27 @@ class RateFormItem(object):
         self.unit_select_loc = unit_select_loc
 
 
+def _mkitem(index):
+    return RateFormItem((By.CSS_SELECTOR, "input#rate_" + str(index)),
+                        (By.CSS_SELECTOR, "select#per_time_" + str(index)))
+
 rate_form = web_ui.Form(
     fields=[
         ('description_text', (By.CSS_SELECTOR, "input#description")),
-        ('alloc_cpu', RateFormItem((By.CSS_SELECTOR, "input#rate_0"),
-                                   (By.CSS_SELECTOR, "select#per_time_0"))),
-        ('used_cpu', RateFormItem((By.CSS_SELECTOR, "input#rate_1"),
-                                  (By.CSS_SELECTOR, "select#per_time_1"))),
-        ('disk_io', RateFormItem((By.CSS_SELECTOR, "input#rate_2"),
-                                 (By.CSS_SELECTOR, "select#per_time_2"))),
-        ('fixed_1', RateFormItem((By.CSS_SELECTOR, "input#rate_3"),
-                                 (By.CSS_SELECTOR, "select#per_time_3"))),
-        ('fixed_2', RateFormItem((By.CSS_SELECTOR, "input#rate_4"),
-                                 (By.CSS_SELECTOR, "select#per_time_4"))),
-        ('alloc_mem', RateFormItem((By.CSS_SELECTOR, "input#rate_5"),
-                                   (By.CSS_SELECTOR, "select#per_time_5"))),
-        ('used_mem', RateFormItem((By.CSS_SELECTOR, "input#rate_6"),
-                                  (By.CSS_SELECTOR, "select#per_time_6"))),
-        ('net_io', RateFormItem((By.CSS_SELECTOR, "input#rate_7"),
-                                (By.CSS_SELECTOR, "select#per_time_7"))),
+        # Compute form items
+        ('alloc_cpu', _mkitem(0)),
+        ('used_cpu', _mkitem(1)),
+        ('disk_io', _mkitem(2)),
+        ('fixed_1', _mkitem(3)),
+        ('fixed_2', _mkitem(4)),
+        ('alloc_mem', _mkitem(5)),
+        ('used_mem', _mkitem(6)),
+        ('net_io', _mkitem(7)),
+        # Storage form items
+        ('fixed_storage_1', _mkitem(0)),
+        ('fixed_storage_2', _mkitem(1)),
+        ('alloc_storage', _mkitem(2)),
+        ('used_storage', _mkitem(3)),
         ('add_button', (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Add']")),
         ('save_button', (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Save Changes']")),
         ('reset_button', (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Reset Changes']")),
@@ -47,18 +50,20 @@ rate_form = web_ui.Form(
 
 nav.add_branch('chargeback',
                {'chargeback_rates':
-                [partial(accordion.click, "Rates"),
+                [nav.fn(partial(accordion.click, "Rates")),
                  {'chargeback_rates_compute':
                   [lambda d: rate_tree.click_path('Rates', 'Compute'),
                    {'chargeback_rates_compute_new': tb_select_new_chargeback}],
                   'chargeback_rates_compute_named':
-                  lambda d: rate_tree.click_path('Rates', 'Compute', d['chargeback'].description),
+                  [lambda d: rate_tree.click_path('Rates', 'Compute', d['chargeback'].description),
+                   {'chargeback_rates_compute_edit': tb_select_edit_chargeback}],
                   'chargeback_rates_storage':
                   [lambda d: rate_tree.click_path(['Rates', 'Storage']),
                    {'chargeback_rates_storage_new': tb_select_new_chargeback}],
                   'chargeback_rates_storage_named':
-                  lambda d: rate_tree.click_path('Rates', 'Storage', d['chargeback'].description)}],
-                'chargeback_assignments': partial(accordion.click, "Assignments")})
+                  [lambda d: rate_tree.click_path('Rates', 'Storage', d['chargeback'].description),
+                   {'chargeback_rates_compute_edit': tb_select_edit_chargeback}]}],
+                'chargeback_assignments': nav.fn(partial(accordion.click, "Assignments"))})
 
 
 HOURLY = 'hourly'
@@ -71,10 +76,10 @@ MONTHLY = 'monthly'
 def _sd_fill_rateform(rf, value):
     '''value should be a tuple like (5, HOURLY)'''
     web_ui.fill(rf.rate_loc, value[0])
-    web_ui.fill(rf.unit_select_loc, value[1])
+    web_ui.fill(rf.unit_select_loc, (sel.VALUE, value[1]))
 
 
-class ComputeRateDetail(Updateable):
+class ComputeRate(Updateable):
     def __init__(self, description=None,
                  cpu_alloc=None,
                  cpu_used=None,
@@ -95,16 +100,36 @@ class ComputeRateDetail(Updateable):
         self.memory_used = memory_used
         self.network_io = network_io
 
-    def create(self, cancel=False):
+    def create(self):
         nav.go_to('chargeback_rates_compute_new')
         web_ui.fill(rate_form,
                     {'description_text': self.description,
                      'alloc_cpu': self.cpu_alloc,
                      'used_cpu': self.cpu_used,
-                     })
+                     'disk_io': self.disk_io,
+                     'fixed_1': self.fixed_cost_1,
+                     'fixed_2': self.fixed_cost_2,
+                     'alloc_mem': self.memory_allocated,
+                     'used_mem': self.memory_used,
+                     'net_io': self.network_io},
+                    action=rate_form.add_button)
+
+    def update(self, updates):
+        nav.go_to('chargeback_rates_compute_edit', context={'chargeback': self})
+        web_ui.fill(rate_form,
+                    {'description_text': updates.get('description'),
+                     'alloc_cpu': updates.get('cpu_alloc'),
+                     'used_cpu': updates.get('cpu_used'),
+                     'disk_io': updates.get('disk_io'),
+                     'fixed_1': updates.get('fixed_cost_1'),
+                     'fixed_2': updates.get('fixed_cost_2'),
+                     'alloc_mem': updates.get('memory_allocated'),
+                     'used_mem': updates.get('memory_used'),
+                     'net_io': updates.get('network_io')},
+                    action=rate_form.save_button)
 
 
-class StorageRateDetail(Updateable):
+class StorageRate(Updateable):
     def __init__(self, description=None,
                  fixed_cost_1=None,
                  fixed_cost_2=None,
@@ -114,3 +139,23 @@ class StorageRateDetail(Updateable):
         self.fixed_cost_2 = fixed_cost_2
         self.allocated_storage = allocated_storage
         self.used_storage = used_storage
+
+    def create(self):
+        nav.go_to('chargeback_rates_storage_new')
+        web_ui.fill(rate_form,
+                    {'description_text': self.description,
+                     'fixed_storage_1': self.fixed_cost_1,
+                     'fixed_storage_2': self.fixed_cost_2,
+                     'alloc_storage': self.allocated_storage,
+                     'used_storage': self.used_storage},
+                    action=rate_form.add_button)
+
+    def update(self, updates):
+        nav.go_to('chargeback_rates_storage_edit', context={'chargeback': self})
+        web_ui.fill(rate_form,
+                    {'description_text': updates.get('description'),
+                     'fixed_storage_1': updates.get('fixed_cost_1'),
+                     'fixed_storage_2': updates.get('fixed_cost_2'),
+                     'alloc_storage': updates.get('allocated_storage'),
+                     'used_storage': updates.get('used_storage')},
+                    action=rate_form.save_button)
