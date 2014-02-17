@@ -1,28 +1,6 @@
-from urlparse import urlparse
-
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
-from utils import conf
-
-
-def pytest_sessionstart(session):
-    """Setup run for tests"""
-    import db
-    try:
-        db.cfme_db_url = conf.env['cfme_db_url']
-    except KeyError:
-        # figure it out
-        credentials = conf.credentials['database']
-        base_url = conf.env['base_url']
-        subs = {
-            'host': urlparse(base_url).hostname
-        }
-        subs.update(credentials)
-        template = "postgres://{username}:{password}@{host}:5432/vmdb_production"
-        db.cfme_db_url = template.format(**subs)
-    db.engine = create_engine(db.cfme_db_url)
+from utils.cfmedb import db_session_maker
 
 
 @pytest.fixture
@@ -47,17 +25,16 @@ def db_session():
             assert instance.name, instance.hostname
 
     """
-    import db
-    Session = sessionmaker(bind=db.engine)
-    return Session()
+    return db_session_maker()
 
 
 @pytest.fixture
-def db_yamls(db_session):
+def db_yamls(db_session=None):
     """Returns the yamls from the db configuration table as a dict"""
 
     import db
     import yaml
+    db_session = db_session or db_session_maker()
     configs = db_session.query(db.Configuration.typ, db.Configuration.settings)
     data = {name: yaml.load(settings) for name, settings in configs}
 

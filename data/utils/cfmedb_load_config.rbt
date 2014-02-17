@@ -1,0 +1,2 @@
+new_conf = YAML::load(File.open('$config_file'))
+Configuration.create_or_update(MiqServer.my_server, new_conf, '$config_name')
