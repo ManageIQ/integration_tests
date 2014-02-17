@@ -1,14 +1,13 @@
-from functools import partial
-from selenium.webdriver.common.by import By
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
 import ui_navigate as nav
 import cfme
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Quadicon, Form
+from cfme.web_ui import Region, Form
 import cfme.web_ui.flash as flash
 import cfme.fixtures.pytest_selenium as browser
 import utils.conf as conf
-from utils.update import Updateable
-import cfme.web_ui.toolbar as tb
 from cfme.web_ui import fill
 
 
@@ -37,13 +36,13 @@ def import_file(filename, cancel=False):
 
     Args:
         filename: Full path to file to import.
-        cancel: Whther to click Cancel instead of commit.
+        cancel: Whether to click Cancel instead of commit.
     """
     nav.go_to("control_import_export")
-    fill(import_form, {"file_select": filename})
-    browser.click(import_form.upload_button)
+    fill(
+        import_form,
+        {"file_select": filename},
+        action=import_form.upload_button
+    )
     flash.assert_no_errors()
-    if cancel:
-        return browser.click(upload_buttons.cancel_button)
-    else:
-        return browser.click(upload_buttons.commit_button)
+    return browser.click(upload_buttons.cancel_button if cancel else upload_buttons.commit_button)

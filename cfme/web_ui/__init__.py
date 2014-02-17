@@ -326,7 +326,10 @@ class Table(object):
 
         """
         row = self.find_row(header, value)
-        return row[header]
+        if row is None:
+            return None
+        else:
+            return row[header]
 
     def click_cells(self, cell_map):
         """Submits multiple cells to be clicked on
