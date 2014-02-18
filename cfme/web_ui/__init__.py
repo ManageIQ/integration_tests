@@ -176,8 +176,6 @@ class Table(object):
     Attributes:
         header_indexes: A dict of header names related to their index as a column.
 
-    Returns: A :py:class:`Table` object.
-
     Usage:
 
         table = Table(header_data=('//div[@id="prov_pxe_img_div"]//thead', 0),
@@ -295,6 +293,23 @@ class Table(object):
         """
         return self._rows_generator()
 
+    def find_row(self, header, value):
+        """
+        Finds a row in the Table by iterating through each visible item.
+
+        Args:
+            header: A string or int, describing which column to inspect.
+            value: The value to be compared when trying to identify the correct row
+                to return.
+
+        Returns:
+            :py:class:`Table.Row` containing the requested cell, else ``None``.
+
+        """
+        for row in self.rows():
+            if row[header].text == value:
+                return row
+
     def find_cell(self, header, value):
         """
         Finds an item in the Table by iterating through each visible item,
@@ -303,31 +318,24 @@ class Table(object):
 
         Args:
             header: A string or int, describing which column to inspect.
-            data: The value to be compared when trying to identify the correct row
-                to click.
+            value: The value to be compared when trying to identify the correct cell
+                to return.
 
-        Return: WebElement of the element if item was found, else ``None``.
+        Returns:
+            WebElement of the cell if the cell is found, else ``None``.
+
         """
-        list_gen = self._rows_generator()
+        row = self.find_row(header, value)
+        return row[header]
 
-        for item in list_gen:
-            if isinstance(header, basestring):
-                cell_value = getattr(item, header).text
-            elif isinstance(header, int):
-                cell_value = item[header].text
-            if cell_value == value:
-                return item
-        else:
-            return None
-
-    def click_cells(self, data):
+    def click_cells(self, cell_map):
         """Submits multiple cells to be clicked on
 
         Args:
-            data: A dicts of header names and values direct from yamls, as an example
-                ``{'name': ['wing', 'nut']}, {'age': ['12']}`` would click on the cells
-                who had ``wing`` and ``nut`` in the name column and ``12`` in the age
-                column. The yaml example for this would be as follows::
+            cell_map: A mapping of header names and values, representing cells to click.
+                As an example, ``{'name': ['wing', 'nut']}, {'age': ['12']}`` would click on
+                the cells which had ``wing`` and ``nut`` in the name column and ``12`` in
+                the age column. The yaml example for this would be as follows::
 
                     list_items:
                         name:
@@ -338,9 +346,10 @@ class Table(object):
 
         Raises:
             NotAllItemsClicked: If some cells were unable to be found.
+
         """
         failed_clicks = []
-        for header, values in data.items():
+        for header, values in cell_map.items():
             if isinstance(values, basestring):
                 values = [values]
             for value in values:
@@ -357,14 +366,15 @@ class Table(object):
 
         Args:
             header: A string or int, describing which column to inspect.
-            data: The value to be compared when trying to identify the correct row
+            value: The value to be compared when trying to identify the correct row
                 to click the cell in.
 
         Return: ``True`` if item was found and clicked, else ``False``.
+
         """
-        item = self.find_cell(header, value)
-        if item:
-            sel.click(getattr(item, header))
+        cell = self.find_cell(header, value)
+        if cell:
+            sel.click(cell)
             return True
         else:
             return False
@@ -376,9 +386,9 @@ class Table(object):
         the tables headers are automatically generated.
 
         Notes:
-            Attributes are dynamically generated
+            Attributes are dynamically generated. The index/key accessor is more flexible
+            than the attr accessor, as it can operate on int indices and header names.
 
-        Returns: A :py:class:`Table.Row` object.
         """
         def __init__(self, header_indexes, data, loc):
             self.header_indexes = header_indexes
@@ -393,10 +403,14 @@ class Table(object):
 
         def __getitem__(self, index):
             """
-            Returns Row element by header index
+            Returns Row element by header index or name
             """
-            index += 1
-            return sel.elements('td[%i]' % index, root=self.data)[0]
+            try:
+                index += 1
+                return sel.elements('td[%i]' % index, root=self.data)[0]
+            except TypeError:
+                # Index isn't an int, assume it's a string
+                return getattr(self, index)
 
         def __str__(self):
             return ",".join([el.text for el in sel.elements('td', root=self.data)])
