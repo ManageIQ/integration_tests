@@ -402,6 +402,31 @@ class Table(object):
             return ",".join([el.text for el in sel.elements('td', root=self.data)])
 
 
+def table_from_table_xpath(xpath, header_offset=0, row_offset=0):
+    """Given XPath to a 'table' element, try to return the corresponding Table object
+
+    Many (but not all) tables in the CFME UI contain thead and tbody elements for use in
+    :py:class:`Table`'s constructor with offsets of 0 for both. In that case, this convenience
+    function exists to do some of the work for you in creating a Table object.
+
+    Args:
+
+        xpath: XPath string locator to table element -- No other locator type will work (sorry)
+        header_offset: Header row padding offset. Default: 0
+        row_offset: Data row padding offset. Default: 0
+
+    See :py:class:`Table` for more information on row offsets.
+
+    Usage:
+
+        table = table_from_table_element('//path/to/table')
+
+    """
+    header_data = (xpath + '/thead', header_offset)
+    row_data = (xpath + '/tbody', row_offset)
+    return Table(header_data=header_data, row_data=row_data)
+
+
 @singledispatch
 def fill(arg, content):
     """
