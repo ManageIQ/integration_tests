@@ -17,6 +17,12 @@ failed_test_tracking = {
 }
 
 
+def pytest_namespace():
+    # Return the contents of this file as the 'sel' namespace in pytest.
+    from cfme.fixtures import pytest_selenium
+    return {'sel': pytest_selenium}
+
+
 def pytest_runtest_setup(item):
     if set(getattr(item, 'fixturenames', [])) & browser_fixtures:
         utils.browser.ensure_browser_open()

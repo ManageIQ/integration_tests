@@ -10,7 +10,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 
 :var ajax_wait_js: A Javascript function for ajax wait checking
 """
-import time
+from time import sleep
 from traceback import format_exc
 
 import ui_navigate
@@ -30,14 +30,6 @@ from utils.log import logger
 
 VALUE = 'val'
 TEXT = 'txt'
-
-
-sleep = time.sleep
-
-
-def pytest_namespace():
-    # Return the contents of this file as the 'sel' namespace in pytest.
-    return {'sel': globals()}
 
 
 @singledispatch
