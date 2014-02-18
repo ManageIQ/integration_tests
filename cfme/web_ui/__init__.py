@@ -791,8 +791,22 @@ class Tree(object):
 
     Each path element will be expanded along the way, but will not be clicked.
 
+    When used in a :py:class:`Form`, a list of path tuples is expected in the form fill data.
+    The paths will be passed individually to :py:meth:`Tree.select_node`::
+
+        form = Form(fields=[
+            ('tree_field', List(locator)),
+        ])
+
+        form_fill_data = {
+            'tree_field': [
+                ('Tree Node', 'Value'),
+                ('Tree Node', 'Branch Node', 'Value'),
+            ]
+        ]
+
     Note:
-      For legacy trees, the first element is often ignore as it is not a proper tree
+      For legacy trees, the first element is often ignored as it is not a proper tree
       element ie. in Automate->Explorer the Datastore element doesn't really exist, so we
       omit it from the click map.
 
@@ -902,6 +916,7 @@ class Tree(object):
                 continue down the path.
             cfme.exceptions.TreeTypeUnknown: A locator was passed to the constructor which
                 does not correspond to a known tree type.
+
         """
 
         #The detect here is required every time to avoid a StaleElementException if the
@@ -990,6 +1005,13 @@ class Tree(object):
         """
         kwargs.update({'select': False})
         self._select_or_deselect_node(*path, **kwargs)
+
+
+@fill.register(Tree)
+def _sd_fill_tree(tree, values):
+    # Assume a list of paths, select_node on each path
+    for path in values:
+        tree.select_node(*path)
 
 
 class InfoBlock(object):
