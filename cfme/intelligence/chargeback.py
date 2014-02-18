@@ -3,6 +3,7 @@ import cfme.web_ui.accordion as accordion
 import cfme.web_ui.menu # to load menu nav
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
+import cfme.web_ui.flash as flash
 import cfme.fixtures.pytest_selenium as sel
 import ui_navigate as nav
 from utils.update import Updateable
@@ -58,11 +59,11 @@ nav.add_branch('chargeback',
                   [lambda d: rate_tree.click_path('Rates', 'Compute', d['chargeback'].description),
                    {'chargeback_rates_compute_edit': tb_select_edit_chargeback}],
                   'chargeback_rates_storage':
-                  [lambda d: rate_tree.click_path(['Rates', 'Storage']),
+                  [lambda d: rate_tree.click_path('Rates', 'Storage'),
                    {'chargeback_rates_storage_new': tb_select_new_chargeback}],
                   'chargeback_rates_storage_named':
                   [lambda d: rate_tree.click_path('Rates', 'Storage', d['chargeback'].description),
-                   {'chargeback_rates_compute_edit': tb_select_edit_chargeback}]}],
+                   {'chargeback_rates_storage_edit': tb_select_edit_chargeback}]}],
                 'chargeback_assignments': nav.fn(partial(accordion.click, "Assignments"))})
 
 
@@ -113,6 +114,7 @@ class ComputeRate(Updateable):
                      'used_mem': self.memory_used,
                      'net_io': self.network_io},
                     action=rate_form.add_button)
+        flash.assert_no_errors()
 
     def update(self, updates):
         nav.go_to('chargeback_rates_compute_edit', context={'chargeback': self})
@@ -127,7 +129,14 @@ class ComputeRate(Updateable):
                      'used_mem': updates.get('memory_used'),
                      'net_io': updates.get('network_io')},
                     action=rate_form.save_button)
+        flash.assert_no_errors()
 
+    def delete(self):
+        nav.go_to('chargeback_rates_compute_named', context={'chargeback': self})
+        tb_select('Remove from the VMDB')
+        sel.handle_alert()
+        flash.assert_no_errors()
+        
 
 class StorageRate(Updateable):
     def __init__(self, description=None,
@@ -135,6 +144,7 @@ class StorageRate(Updateable):
                  fixed_cost_2=None,
                  allocated_storage=None,
                  used_storage=None):
+        self.description = description
         self.fixed_cost_1 = fixed_cost_1
         self.fixed_cost_2 = fixed_cost_2
         self.allocated_storage = allocated_storage
@@ -159,3 +169,9 @@ class StorageRate(Updateable):
                      'alloc_storage': updates.get('allocated_storage'),
                      'used_storage': updates.get('used_storage')},
                     action=rate_form.save_button)
+
+    def delete(self):
+        nav.go_to('chargeback_rates_storage_named', context={'chargeback': self})
+        tb_select('Remove from the VMDB')
+        sel.handle_alert()
+        flash.assert_no_errors()
