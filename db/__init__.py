@@ -18,20 +18,23 @@ import sys
 from sqlalchemy import MetaData
 from sqlalchemy.ext.declarative import declarative_base
 
+
 class Db(object):
     '''
     The actual implementation of the 'module'
     '''
     def __init__(self):
-        self.metadata = MetaData()
+        self.cfme_db_url = None
         self.engine = None
+        self.sessionmaker = None
         self.Base = declarative_base()
+        self.metadata = MetaData()
 
     def __getattr__(self, name):
         # Lookup actual table name in dict
         if name in self.table_lookup.keys():
             table_name = self.table_lookup[name]
-            self.metadata.reflect(bind=self.engine,only=[table_name])
+            self.metadata.reflect(bind=self.engine, only=[table_name])
             table = self.metadata.tables[table_name]
             # Now, create the class to represent this thing
             cls = type(name, (self.Base,),
