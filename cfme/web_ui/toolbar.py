@@ -48,21 +48,32 @@ def select_n_move(el):
     sel.move_to_element((By.XPATH, '//div[@class="brand"]'))
 
 
-def select(root, sub=None):
+def select(root, sub=None, invokes_alert=False):
     """ Clicks on a button by calling the :py:meth:`click_n_move` method.
 
     Args:
         root: The root button's name as a string.
         sub: The sub button's name as a string. (optional)
+        invokes_alert: If ``True``, then the behaviour is little bit different. After the last
+            click, no ajax wait and no move away is done to be able to operate the alert that
+            appears after click afterwards. Defaults to ``False``.
     Returns: ``True`` if the button was enabled at time of clicking, ``False`` if not.
     """
     if not is_greyed(root):
-        select_n_move(root_loc(root))
+        if sub is None and invokes_alert:
+            # We arrived into a place where alert will pop up so no moving and no ajax
+            sel.click(root_loc(root), wait_ajax=False)
+        else:
+            select_n_move(root_loc(root))
     else:
         return False
     if sub:
         if not is_greyed(root, sub):
-            select_n_move(sub_loc(sub))
+            if invokes_alert:
+                # We arrived into a place where alert will pop up so no moving and no ajax
+                sel.click(sub_loc(sub), wait_ajax=False)
+            else:
+                select_n_move(sub_loc(sub))
         else:
             return False
     return True
