@@ -15,6 +15,7 @@ from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
 from pysphere.vi_task import VITask
 from novaclient.v1_1 import client as osclient
+from utils.log import logger
 from utils.wait import wait_for
 
 
@@ -254,8 +255,22 @@ class VMWareSystem(MgmtSystemAPIBase):
     }
 
     def __init__(self, hostname, username, password, **kwargs):
+        self.hostname = hostname
+        self.username = username
+        self.password = password
         self.api = VIServer()
-        self.api.connect(hostname, username, password)
+        self._connect()
+
+    def _connect(self):
+        self.api.connect(self.hostname, self.username, self.password)
+
+    def _keep_alive(func):
+        def inner(self, *args, **kwargs):
+            if not self.api.keep_session_alive():
+                logger.debug('The connection timed out, reconnecting...')
+                self._connect()
+            return func(self, *args, **kwargs)
+        return inner
 
     def _get_vm(self, vm_name=None):
         """ Returns a vm from the VI object.
@@ -414,6 +429,7 @@ class VMWareSystem(MgmtSystemAPIBase):
     def list_flavor(self):
         raise NotImplementedError('This function is not supported on this platform.')
 
+    @_keep_alive
     def list_host(self):
         return self.api.get_hosts()
 
