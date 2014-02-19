@@ -15,6 +15,7 @@ from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
 from pysphere.vi_task import VITask
 from novaclient.v1_1 import client as osclient
+from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 
 
@@ -244,6 +245,7 @@ class VMWareSystem(MgmtSystemAPIBase):
 
     Returns: A :py:class:`VMWareSystem` object.
     """
+    _api = None
 
     _stats_available = {
         'num_vm': lambda self: len(self.list_vm()),
@@ -254,8 +256,30 @@ class VMWareSystem(MgmtSystemAPIBase):
     }
 
     def __init__(self, hostname, username, password, **kwargs):
+        self.hostname = hostname
+        self.username = username
+        self.password = password
         self.api = VIServer()
-        self.api.connect(hostname, username, password)
+        self._connect()
+
+    @property
+    def api(self):
+        # wrap calls to the API with a keepalive check, reconnect if needed
+        if not self._api.keep_session_alive():
+            logger.debug('The connection to %s "%s" timed out' %
+                (type(self).__name__, self.hostname))
+            self._connect()
+        return self._api
+
+    @api.setter
+    def api(self, api):
+        # Allow for changing the api object via public setter
+        self._api = api
+
+    def _connect(self):
+        # Since self.api calls _connect, connect via self._api to prevent implosion
+        logger.debug('Connecting to %s "%s"' % (type(self).__name__, self.hostname))
+        self._api.connect(self.hostname, self.username, self.password)
 
     def _get_vm(self, vm_name=None):
         """ Returns a vm from the VI object.
