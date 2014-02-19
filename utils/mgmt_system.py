@@ -15,7 +15,7 @@ from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
 from pysphere.vi_task import VITask
 from novaclient.v1_1 import client as osclient
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
 
 
 class MgmtSystemAPIBase(object):
@@ -302,22 +302,20 @@ class VMWareSystem(MgmtSystemAPIBase):
         return rps.keys()[0]
 
     def get_ip_address(self, vm_name):
-        """ Returns an IP address for the selected VM.
+        """ Returns the first IP address for the selected VM.
 
         Args:
             vm_name: The name of the vm to obtain the IP for.
         Returns: A string containing the first found IP that isn't the loopback device.
         """
         vm = self._get_vm(vm_name)
-        maxwait = 600
-        net_info = None
-        waitcount = 0
-        while net_info is None:
-            if waitcount > maxwait:
-                break
-            net_info = vm.get_property('net', False)
-            waitcount += 5
-            time.sleep(5)
+        try:
+            net_info, tc = wait_for(vm.get_property, ['net', False],
+                                    fail_condition=None, delay=5, num_sec=600,
+                                    message="get_ip_address from vsphere")
+        except TimedOutError:
+            net_info = None
+
         if net_info:
             ipv4_re = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
             for ip in net_info[0]['ip_addresses']:
