@@ -1,7 +1,7 @@
-from fixtures import navigation as nav
 from utils import conf
 from utils import path as utils_path
 from utils.browser import browser_session
+from utils.cfmedb import get_yaml_config, set_yaml_config
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
@@ -120,24 +120,14 @@ class Appliance(object):
                             .format(self.address, db_address))
 
     def rename(self, new_name):
-        """Changes appliance name using web UI
+        """Changes appliance name
 
         Args:
             new_name: Name to set
         """
-        with self.browser_session():
-            server_settings_pg = nav.cnf_configuration_pg()\
-                                    .click_on_settings()\
-                                    .click_on_current_server_tree_node()\
-                                    .click_on_server_tab()
-            old_name = server_settings_pg.get_server_name()
-            if old_name != new_name:
-                server_settings_pg.set_server_name(new_name)
-                server_settings_pg.save()
-                assert server_settings_pg.flash.message\
-                    .startswith('Configuration settings saved for CFME Server'),\
-                    'Failed to rename appliance {} to {}'.format(old_name, new_name)
-                self.name = new_name
+        vmdb_config = get_yaml_config('vmdb')
+        vmdb_config['server']['name'] = new_name
+        set_yaml_config('vmdb', vmdb_config)
 
     def restart_evm_service(self):
         """Restarts the ``evmserverd`` service on this appliance
