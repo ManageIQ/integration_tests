@@ -133,7 +133,7 @@ class ComputeRate(Updateable):
 
     def delete(self):
         nav.go_to('chargeback_rates_compute_named', context={'chargeback': self})
-        tb_select('Remove from the VMDB')
+        tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
         
@@ -172,6 +172,6 @@ class StorageRate(Updateable):
 
     def delete(self):
         nav.go_to('chargeback_rates_storage_named', context={'chargeback': self})
-        tb_select('Remove from the VMDB')
+        tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
