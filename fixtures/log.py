@@ -70,6 +70,9 @@ def _test_status(test_name):
     # Test failure in setup or teardown is an error, which pytest doesn't report internally
     if 'failed' in (test_phase.get('setup', 'failed'), test_phase.get('teardown', 'failed')):
         return 'error'
+    # A test can also be skipped
+    elif 'skipped' in test_phase.get('setup', 'skipped'):
+        return 'skipped'
     # Otherwise, report the call phase outcome (passed, skipped, or failed)
     else:
         return test_phase['call']
