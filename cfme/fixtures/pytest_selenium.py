@@ -174,15 +174,18 @@ def handle_alert(cancel=False, wait=30.0, squash=False):
             raise
 
 
-def click(loc):
+def click(loc, wait_ajax=True):
     """
     Clicks on an element.
 
     Args:
         loc: A locator, expects either a string, WebElement, tuple.
+        wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
+            handy to not do that. (some toolbar clicks)
     """
     ActionChains(browser()).move_to_element(element(loc)).click().perform()
-    wait_for_ajax()
+    if wait_ajax:
+        wait_for_ajax()
 
 
 def move_to_element(loc):
