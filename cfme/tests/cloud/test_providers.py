@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=E1101
 # pylint: disable=W0621
+import uuid
 
 import pytest
+
 import cfme.web_ui.flash as flash
-from cfme.cloud import provider
-from utils.update import update
-import uuid
 import utils.error as error
+from cfme.cloud import provider
+from utils import testgen
+from utils.update import update
 
-
-@pytest.fixture(params=['ec2east', 'rhos3'])
-def provider_data(request, cfme_data):
-    """ Returns management system data from cfme_data"""
-    return provider.get_from_config(request.param)
+pytest_generate_tests = testgen.parametrize(testgen.cloud_providers, scope="module")
 
 
 @pytest.fixture
@@ -51,32 +49,32 @@ def test_providers_discovery():
 
 
 @pytest.mark.usefixtures('has_no_providers')
-def test_provider_add(provider_data):
+def test_provider_add(provider_crud):
     """ Tests that a provider can be added """
-    provider_data.create()
-    flash.assert_message_match('Cloud Providers "%s" was saved' % provider_data.name)
-    provider_data.validate()
+    provider_crud.create()
+    flash.assert_message_match('Cloud Providers "%s" was saved' % provider_crud.name)
+    provider_crud.validate()
 
 
 @pytest.mark.usefixtures('has_no_providers')
-def test_provider_add_with_bad_credentials(provider_data):
-    provider_data.credentials = provider.get_credentials_from_config('bad_credentials')
+def test_provider_add_with_bad_credentials(provider_crud):
+    provider_crud.credentials = provider.get_credentials_from_config('bad_credentials')
     with error.expected('Login failed due to a bad username or password.'):
-        provider_data.create(validate_credentials=True)
+        provider_crud.create(validate_credentials=True)
 
 
 @pytest.mark.usefixtures('has_no_providers')
-def test_provider_edit(provider_data):
+def test_provider_edit(provider_crud):
     """ Tests that editing a management system shows the proper detail after an edit."""
-    provider_data.create()
-    old_name = provider_data.name
-    with update(provider_data) as provider_data:
-        provider_data.name = str(uuid.uuid4())  # random uuid
-    flash.assert_message_match('Cloud Provider "%s" was saved' % provider_data.name)
+    provider_crud.create()
+    old_name = provider_crud.name
+    with update(provider_crud) as provider_crud:
+        provider_crud.name = str(uuid.uuid4())  # random uuid
+    flash.assert_message_match('Cloud Provider "%s" was saved' % provider_crud.name)
 
-    with update(provider_data) as provider_data:
-        provider_data.name = old_name  # old name
-    flash.assert_message_match('Cloud Provider "%s" was saved' % provider_data.name)
+    with update(provider_crud) as provider_crud:
+        provider_crud.name = old_name  # old name
+    flash.assert_message_match('Cloud Provider "%s" was saved' % provider_crud.name)
 
 
 def test_that_checks_flash_when_add_cancelled():
