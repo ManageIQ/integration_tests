@@ -245,6 +245,7 @@ class VMWareSystem(MgmtSystemAPIBase):
 
     Returns: A :py:class:`VMWareSystem` object.
     """
+    _api = None
 
     _stats_available = {
         'num_vm': lambda self: len(self.list_vm()),
@@ -261,16 +262,24 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.api = VIServer()
         self._connect()
 
-    def _connect(self):
-        self.api.connect(self.hostname, self.username, self.password)
+    @property
+    def api(self):
+        # wrap calls to the API with a keepalive check, reconnect if needed
+        if not self._api.keep_session_alive():
+            logger.debug('The connection to %s "%s" timed out' %
+                (type(self).__name__, self.hostname))
+            self._connect()
+        return self._api
 
-    def _keep_alive(func):
-        def inner(self, *args, **kwargs):
-            if not self.api.keep_session_alive():
-                logger.debug('The connection timed out, reconnecting...')
-                self._connect()
-            return func(self, *args, **kwargs)
-        return inner
+    @api.setter
+    def api(self, api):
+        # Allow for changing the api object via public setter
+        self._api = api
+
+    def _connect(self):
+        # Since self.api calls _connect, connect via self._api to prevent implosion
+        logger.debug('Connecting to %s "%s"' % (type(self).__name__, self.hostname))
+        self._api.connect(self.hostname, self.username, self.password)
 
     def _get_vm(self, vm_name=None):
         """ Returns a vm from the VI object.
@@ -427,7 +436,6 @@ class VMWareSystem(MgmtSystemAPIBase):
     def list_flavor(self):
         raise NotImplementedError('This function is not supported on this platform.')
 
-    @_keep_alive
     def list_host(self):
         return self.api.get_hosts()
 
