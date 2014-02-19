@@ -22,24 +22,25 @@ class Appliance(object):
     _default_name = 'EVM'
     _internal_db = 'INTERNAL'
 
-    def __init__(self, provider, vm_name, version):
+    def __init__(self, provider_name, vm_name):
         """Initializes a deployed appliance VM
 
         Fixes the appliance time using NTP sync and patches the ajax wait code.
         """
         self.name = Appliance._default_name
-        self.version = version
         self.db_address = None
 
-        self.address = provider.get_ip_address(vm_name)
-        self._provider = provider
+        self._provider = provider_factory(provider_name)
         self._vm_name = vm_name
+        self._address = None
 
-        # We want to do this before we enable the DB/start the evmserver
-        self._fix_ntp_clock()
-        self._patch_ajax_wait()
+    @property
+    def address(self):
+        if self._address is None:
+            self._address = self._provider.get_ip_address(self._vm_name)
+        return self._address
 
-    def _fix_ntp_clock(self):
+    def fix_ntp_clock(self):
         """Fixes appliance time using NTP sync
         """
         with self.ssh_client() as ssh:
@@ -48,7 +49,7 @@ class Appliance(object):
                 raise Exception('Failed to sync time (NTP) on {}\nError: {}'
                                 .format(self.address, msg))
 
-    def _patch_ajax_wait(self, undo=False):
+    def patch_ajax_wait(self, undo=False):
         """Patches ajax wait code
 
         Args:
@@ -60,7 +61,7 @@ class Appliance(object):
             args.append('-R')
         status = subprocess.call(args)
         if status != 0:
-            raise Exception('Failed to patch ajax wait code {} on {}'
+            raise Exception('Failed to patch ajax wait code on {}'
                             .format(self.address))
 
     def ssh_client(self, **connect_kwargs):
