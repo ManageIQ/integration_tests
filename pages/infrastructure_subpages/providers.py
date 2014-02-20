@@ -68,6 +68,12 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
         '''The add button'''
         return self.get_element(*self._add_new_provider_locator)
 
+    @property
+    def refresh_relationships(self):
+        _refresh_relationships_locator = (By.CSS_SELECTOR,
+            "table.buttons_cont img[src='/images/toolbars/refresh.png']")
+        return self.get_element(*_refresh_relationships_locator)
+
     def select_provider(self, provider_name):
         '''Select a provider given a name'''
         # Needs to be on the quadicon view first
@@ -147,6 +153,13 @@ class Providers(Base, PaginatorMixin, PolicyMenu, TaskbarMixin):
         self.configuration_button.click()
         self.add_button.click()
         return ProvidersAdd(self.testsetup)
+
+    def click_on_refresh_relationships(self, provider_names):
+        for name in provider_names:
+            self.select_provider(name)
+        self.configuration_button.click()
+        self.refresh_relationships.click()
+        self.handle_popup()
 
     class ProvidersQuadIconItem(QuadiconItem):
         '''Represents a provider quadicon'''

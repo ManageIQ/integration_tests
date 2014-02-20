@@ -9,6 +9,8 @@ from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from utils.wait import wait_for
+from utils.log import logger
+import time
 
 
 class VirtualMachines(VmCommonComponents):
@@ -132,34 +134,50 @@ class VirtualMachines(VmCommonComponents):
         from pages.services_subpages.provision import Provision
         return Provision(self.testsetup)
 
-    def find_vm_page(self, vm_name=None, vm_type=None, mark_checkbox=False, load_details=False):
+    def find_vm_page(self, vm_name=None, vm_type=None, mark_checkbox=False,
+            load_details=False, retries=0):
+        logger.info("Trying to find VM quadicon (" + str(vm_name) + ") and/or vm_type: " + str(vm_type))
         found = None
+        retry_attempts = 0
         while not found:
             for quadicon in self.quadicon_region.quadicons:
                 # find exact title/type match
                 if quadicon.title == vm_name and \
                         quadicon.current_state == vm_type:
                     found = quadicon
+                    logger.debug("Found VM quadicon (" + quadicon.title + ") with type: " + vm_type)
                     break
                 # no title but first type
                 elif vm_name is None and \
                         quadicon.current_state == vm_type:
                     found = quadicon
+                    logger.debug("Found any VM quadicon with type: " + vm_type)
                     break
                 # first title no type
                 elif quadicon.title == vm_name and vm_type is None:
                     found = quadicon
+                    logger.debug("Found VM quadicon (" + quadicon.title + ") with any type (" +
+                        quadicon.current_state + ")")
                     break
                 # if nothing found try turning the page
             if not found and not self.paginator.is_next_page_disabled:
+                logger.debug("Matching VM not found, clicking next")
                 self.paginator.click_next_page()
-            elif not found and self.paginator.is_next_page_disabled:
+            elif not found and self.paginator.is_next_page_disabled and retry_attempts == retries:
                 raise Exception(
                     "vm(" + str(vm_name) + ") with type(" + str(vm_type) + ") could not be found"
                 )
+            elif not found:
+                logger.debug("Matching VM not found, moving to first page (retry: " +
+                    str(retry_attempts) + " of " + str(retries) + ")")
+                retry_attempts += 1
+                time.sleep(30)
+                self.paginator.click_first_page()
         if found and mark_checkbox:
+            logger.debug("Matching VM found, marking checkbox")
             found.mark_checkbox()
         if found and load_details:
+            logger.debug("Matching VM found, clicking on it to load details page")
             return found.click()
 
     def wait_for_vm_state_change(self, vm_quadicon_title, desired_state, timeout_in_minutes):

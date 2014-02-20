@@ -84,8 +84,8 @@ class Tasks(Base):
         @property
         def do_records_exist(self):
             ''' Do any records exist on the tab '''
-            style = self.selenium.find_element(*self._no_records_div_locator).get_attribute('style')
-            return 'display:none' not in style
+            return self.selenium.find_element(
+                *self._no_records_div_locator).text != 'No Records Found'
 
         @property
         def total_task_count(self):

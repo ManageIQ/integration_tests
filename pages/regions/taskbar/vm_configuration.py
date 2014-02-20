@@ -46,37 +46,42 @@ class ConfigButton(Button):
         Button.__init__(self, setup, *self._config_button_locator)
 
     #def does_item_exist(self, key, raise_exception = False):
-    #def is_item_enabled(self, key, raise_exception = False):
+    def _is_item_enabled(self, item):
+        self._root_element.click()
+        return self.is_element_visible(*item)
+
+    def _click_item(self, item, click_cancel=False):
+        self._root_element.click()
+        self.get_element(*item).click()
+        self.handle_popup(click_cancel)
+
+    def is_refresh_relationships_enabled(self):
+        return self._is_item_enabled(self._refresh_relationships_locator)
 
     def refresh_relationships(self):
-        item = self.selenium.find_element(*self._refresh_relationships_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform()
-        self.handle_popup(False)
+        self._click_item(self._refresh_relationships_locator)
+        self._wait_for_results_refresh()
 
     def refresh_relationships_and_cancel(self):
-        item = self.selenium.find_element(*self._refresh_relationships_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform()
-        self.handle_popup(True)
+        self._click_item(self._refresh_relationships_locator, click_cancel=True)
+
+    def is_smart_state_analysis_enabled(self):
+        return self._is_item_enabled(self._smart_state_locator)
 
     def perform_smart_state_analysis(self):
-        item = self.selenium.find_element(*self._smart_state_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform()
-        self.handle_popup(False)
+        self._click_item(self._smart_state_locator)
 
     def perform_smart_state_analysis_and_cancel(self):
-        item = self.selenium.find_element(*self._smart_state_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform()
-        self.handle_popup(True)
+        self._click_item(self._smart_state_locator, click_cancel=True)
+
+    def is_extract_running_processes_enabled(self):
+        return self._is_item_enabled(self._running_processes_locator)
 
     def extract_running_processes(self):
-        item = self.selenium.find_element(*self._running_processes_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform()
-        self.handle_popup(False)
+        self._click_item(self._running_processes_locator)
 
     def extract_running_processes_and_cancel(self):
-        item = self.selenium.find_element(*self._running_processes_locator)
-        ActionChains(self.selenium).click(self._root_element).click(item).perform()
-        self.handle_popup(True)
+        self._click_item(self._running_processes_locator, click_cancel=True)
 
     #def edit_this_vm(self):
     #    item = self.selenium.find_element(*self._edit_vm_locator)

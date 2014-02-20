@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import time
 from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
 from selenium.webdriver.common.by import By
 from pages.base import Base
 from utils.wait import wait_for
+import re
+
 
 class VirtualMachineDetails(VmCommonComponents):
     _details_locator = (By.CSS_SELECTOR, "div#textual_div")
@@ -22,25 +23,23 @@ class VirtualMachineDetails(VmCommonComponents):
 
     @property
     def set_retirement_date_button(self):
-        return self.selenium.find_element(
-            *self._set_retirement_date_button_locator)
+        return self.get_element(*self._set_retirement_date_button_locator)
 
     @property
     def immediately_retire_vm_button(self):
-        return self.selenium.find_element(
-            *self._immediately_retire_vm_button_locator)
+        return self.get_element(*self._immediately_retire_vm_button_locator)
 
     @property
     def utilization_button(self):
-        return self.selenium.find_element(*self._utilization_button_locator)
+        return self.get_element(*self._utilization_button_locator)
 
     @property
     def server_relationship_button(self):
-        return self.selenium.find_element(*self._edit_mgmt_relationship_locator)
+        return self.get_element(*self._edit_mgmt_relationship_locator)
 
     @property
     def set_ownership_button(self):
-        return self.selenium.find_element(*self._set_ownership_locator)
+        return self.get_element(*self._set_ownership_locator)
 
     @property
     def power_state(self):
@@ -62,6 +61,18 @@ class VirtualMachineDetails(VmCommonComponents):
         from pages.regions.details import Details
         root_element = self.selenium.find_element(*self._details_locator)
         return Details(self.testsetup, root_element)
+
+    def on_vm_details(self, vm_name):
+        _vm_page_label = (By.XPATH,
+            "//div[@class='dhtmlxInfoBarLabel' and contains(. , 'VM and Instance') ]")
+
+        if self.is_element_present(*_vm_page_label):
+            text = str(self.get_element(*_vm_page_label).text)
+            pattern = r'("[A-Za-z0-9_\./\\-]*")'
+            m = re.search(pattern, text)
+            return vm_name == m.group().replace('"', '')
+        else:
+            return False
 
     def click_on_set_retirement_date(self):
         self.center_buttons.lifecycle_button.click()
@@ -94,11 +105,15 @@ class VirtualMachineDetails(VmCommonComponents):
 
         return wait_for(_check, num_sec=timeout_in_minutes * 60, delay=10)
 
-    def edit_cfme_relationship_and_save(self, appliance_name):
+    def edit_cfme_relationship_and_save(self, appliance_name='EVM (1)'):
         '''Service method to edit cfme relationship and save from VM details'''
         edit_pg = self.click_on_edit_cfme_relationship()
-        edit_pg.select_server(appliance_name)
-        return edit_pg.click_on_save()
+
+        if not edit_pg.server_selected == appliance_name:
+            edit_pg.select_server(appliance_name)
+            return edit_pg.click_on_save()
+        else:
+            return edit_pg.click_on_cancel()
 
     def click_on_edit_cfme_relationship(self):
         '''Click on edit cfme relationship from center Configuration button'''
@@ -126,12 +141,19 @@ class VirtualMachineDetails(VmCommonComponents):
         _page_title = 'CloudForms Management Engine: Virtual Machines'
         _select_server_pulldown = (By.ID, "server_id")
         _save_button_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
-        _cancel_button_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
         _reset_button_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+        # These buttons are a little screwy, basically there is two sets of button
+        #   if changes are made, the first set is used, if not, the second (buttons_off).
+        #   So this cancel locator shouldn't work if a change is made and then cancel
+        _cancel_button_locator = (By.XPATH, "//div[@id='buttons_off']//img[@title='Cancel']")
 
         def select_server(self, server_name):
             '''Select cfme server from dropdown menu'''
             self.select_dropdown(server_name, *self._select_server_pulldown)
+
+        @property
+        def server_selected(self):
+            return self.select_first_option_selected(*self._select_server_pulldown)
 
         @property
         def save_button(self):

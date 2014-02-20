@@ -3,6 +3,7 @@ import sys
 import argparse
 import logging
 from utils.providers import provider_factory
+import time
 
 
 def main():
@@ -70,7 +71,18 @@ def main():
         if not provider.is_vm_running(vm):
             logging.error("VM is not running")
             return 10
-        ip = provider.get_ip_address(vm)
+        ip_found = False
+        timeout_count = 0
+        while not ip_found:
+            try:
+                ip = provider.get_ip_address(vm)
+                ip_found = True
+            except AttributeError as e:
+                if timeout_count < 20:
+                    time.sleep(15)
+                    timeout_count += 1
+                else:
+                    raise e
         logging.info("VM " + vm + " is running")
         logging.info('IP Address returned is %s', ip)
         if args.outfile:
