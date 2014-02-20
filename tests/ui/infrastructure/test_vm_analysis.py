@@ -100,7 +100,7 @@ def provision_appliance(provider):
 
     prov_data = cfme_data['management_systems'][provider]
     if prov_data['type'] == 'rhevm':
-        base_cmd += "--rhev_cluster " + prov_data['default_cluster']
+        provision_cmd += "--rhev_cluster " + prov_data['default_cluster']
 
     # do actual provision
     logger.info('Starting appliance provision on ' + provider + '...')
@@ -129,11 +129,18 @@ def provision_appliance(provider):
     if prov_data['type'] == 'virtualcenter':
         install_vddk(ip_addr)
     elif prov_data['type'] == 'rhevm':
-        pass
-        # add direct_lun
+        add_rhev_direct_lun_disk(provider, appliance_vm_name, ip_addr)
 
     # return ip address
     return ip_addr
+
+
+def add_rhev_direct_lun_disk(provider, vm_name, ip_addr):
+    logger.info('Adding RHEV direct_lun hook...')
+    run_command("./scripts/connect_directlun.py --provider " + provider + " --vm_name " + vm_name)
+    logger.info('Waiting for WUI to come online...')
+    wait_for(is_web_ui_running, func_args=[ip_addr], delay=30, num_sec=600)
+    logger.info('WUI back online')
 
 
 def install_vddk(ip_addr):
@@ -205,6 +212,7 @@ def delete_tasks_first():
 def get_appliance(provider):
     '''Fixture to provision appliance to the provider being tested if necessary'''
     global appliance_list
+    global appliance_vm_name
     if provider not in appliance_list:
         if ('appliances_provider' not in cfme_data['basic_info'].keys() or
                 provider != cfme_data['basic_info']['appliances_provider']):
@@ -225,6 +233,8 @@ def get_appliance(provider):
                 if int(client.run_command("ldconfig -p | grep vix | wc -l")[1]) < 1:
                     install_vddk(appliance_list[provider])
                 client.close()
+            elif prov_data['type'] == 'rhevm':
+                add_rhev_direct_lun_disk(provider, appliance_vm_name)
     return appliance_list[provider]
 
 
@@ -252,6 +262,12 @@ def browser_setup(get_appliance, provider, vm_name, fs_type, mgmt_sys_api_client
                     more_same_provider_tests = True
                     break
             if not more_same_provider_tests:
+                # if rhev,  remove direct_lun disk before delete
+                if cfme_data['management_systems'][provider]['type'] == 'rhevm':
+                    logger.info('Removing RHEV direct_lun hook...')
+                    run_command("./scripts/connect_directlun.py --remove --provider " +
+                        provider + " --vm_name " + appliance_vm_name)
+                # delete appliance
                 logger.info("Delete provisioned appliance: " + appliance_list[provider])
                 destroy_cmd = ('./scripts/clone_template.py --provider ' + provider + ' '
                     '--destroy --vm_name ' + appliance_vm_name + ' ')
@@ -261,6 +277,7 @@ def browser_setup(get_appliance, provider, vm_name, fs_type, mgmt_sys_api_client
 @pytest.fixture
 def configure_appliance(browser_setup, provider, vm_name):
     ''' Configure the appliance for smart state analysis '''
+    global appliance_vm_name
 
     # ensure smart proxy role enabled
     logger.info('Enabling smart proxy role...')
@@ -276,8 +293,8 @@ def configure_appliance(browser_setup, provider, vm_name):
 
     prov_data = cfme_data['management_systems'][provider]
     if prov_data['type'] == 'rhevm':
-        pass
-        # configure cfme relationship
+        vm_details = nav_to_vm_details(provider, appliance_vm_name)
+        vm_details.edit_cfme_relationship_and_save()
 
     #wait for vm smart state to enable
     logger.info('Waiting smartstate option to enable...')
@@ -327,6 +344,7 @@ class TestVmAnalysis():
                 for task in tasks:
                     if task.user == "Scan from Vm %s" % vm_name\
                             and task.message == 'Finished':
+                        assert task.status == 'checkmark'
                         return True
             tasks_pg.task_buttons.reload()
             return False
@@ -360,14 +378,15 @@ class TestVmAnalysis():
 
         # check users/group counts
         assert vm_details.details.get_section('Security').get_item('Users').value != '0',\
-            'No users found in host detail'
+            'No users found in VM detail'
 
         assert vm_details.details.get_section('Security').get_item('Groups').value != '0',\
-            'No groups found in host detail'
+            'No groups found in VM detail'
 
         # check advanced settings
-        assert vm_details.details.get_section('Properties').get_item(
-            'Advanced Settings').value != "0"
+        if cfme_data['management_systems'][provider]['type'] == 'virtualcenter':
+            assert vm_details.details.get_section('Properties').get_item(
+                'Advanced Settings').value != "0"
 
         # assert last analyze time
         assert vm_details.details.get_section('Lifecycle').get_item(
@@ -376,10 +395,6 @@ class TestVmAnalysis():
         # drift history
         assert vm_details.details.get_section('Relationships').get_item(
             'Drift History').value == "1"
-
-        # analysis history
-        assert vm_details.details.get_section('Relationships').get_item(
-            'Analysis History').value == "1"
 
         # analysis history
         assert vm_details.details.get_section('Relationships').get_item(
