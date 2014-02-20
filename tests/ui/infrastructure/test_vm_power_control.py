@@ -1,16 +1,14 @@
 import random
 import time
-
 import pytest
 from unittestzero import Assert
-
 from utils.conf import cfme_data
 from utils.providers import infra_provider_type_map
 from utils.wait import wait_for, TimedOutError
+from utils.log import logger
 
 pytestmark = [pytest.mark.nondestructive,
-              pytest.mark.usefixtures("setup_infrastructure_providers"),
-              pytest.mark.usefixtures("maximized")]
+              pytest.mark.usefixtures("setup_infrastructure_providers")]
 
 
 def fetch_list(data):
@@ -118,6 +116,7 @@ class TestControlOnQuadicons():
         Verify vm transitions to stopped.
         """
         vm_pg = load_providers_vm_list
+
         vm_pg.wait_for_vm_state_change(vm_name, 'on', 12)
         register_event(get_sys_type(provider), "vm", vm_name, ["vm_power_off_req", "vm_power_off"])
         vm_pg.power_off([vm_name])
@@ -189,14 +188,11 @@ class TestVmDetailsPowerControlPerProvider:
         transitions to stopped."""
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('on', 12)
-        last_boot_time = vm_details.last_boot_time
         state_chg_time = vm_details.last_pwr_state_change
         register_event(get_sys_type(provider), "vm", vm_name, ["vm_power_off_req", "vm_power_off"])
         vm_details.power_button.power_off()
         vm_details.wait_for_vm_state_change('off', 12)
         Assert.equal(vm_details.power_state, 'off', "power state incorrect")
-        Assert.equal(vm_details.last_boot_time, last_boot_time,
-                "last boot time not updated")
         Assert.not_equal(vm_details.last_pwr_state_change, state_chg_time,
                 "last state chg time failed to update")
         Assert.true(mgmt_sys_api_clients[provider].is_vm_stopped(vm_name),
@@ -245,15 +241,17 @@ class TestVmDetailsPowerControlPerProvider:
         transitions to suspended. """
         vm_details = load_vm_details
         vm_details.wait_for_vm_state_change('on', 10)
-        last_boot_time = vm_details.last_boot_time
         state_chg_time = vm_details.last_pwr_state_change
         register_event(get_sys_type(provider), "vm", vm_name, ["vm_suspend_req", "vm_suspend"])
         vm_details.power_button.suspend()
-        vm_details.wait_for_vm_state_change('suspended', 15)
+        try:
+            vm_details.wait_for_vm_state_change('suspended', 10)
+        except TimedOutError:
+            logger.warning('working around bz977489 by clicking the refresh button')
+            vm_details.config_button.refresh_relationships()
+            vm_details.wait_for_vm_state_change('suspended', 5)
         Assert.equal(vm_details.power_state, 'suspended',
                 "power state incorrect")
-        Assert.equal(vm_details.last_boot_time, last_boot_time,
-                "last boot time updated")
         Assert.not_equal(vm_details.last_pwr_state_change, state_chg_time,
                 "last state chg time failed to update")
         Assert.true(mgmt_sys_api_clients[provider].is_vm_suspended(vm_name),
@@ -289,6 +287,7 @@ class TestVmDetailsPowerControlPerProvider:
         Verify vm transitions to running."""
 
         vm_details = load_vm_details
+        vm_details.config_button.refresh_relationships()
         vm_details.wait_for_vm_state_change('suspended', 10)
         last_boot_time = vm_details.last_boot_time
         state_chg_time = vm_details.last_pwr_state_change
