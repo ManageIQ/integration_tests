@@ -11,12 +11,11 @@ import subprocess
 
 
 class Appliance(object):
-    """Appliance represents a provisioned cfme appliance vm
+    """Appliance represents an already provisioned cfme appliance vm
 
     Args:
-        provider: A provider class based on :py:class:`utils.mgmt_system.MgmtSystemAPIBase`
+        provider_name: Name of the provider this appliance is running under
         vm_name: Name of the VM this appliance is running as
-        version: Version of the appliance
     """
 
     _default_name = 'EVM'
@@ -24,8 +23,6 @@ class Appliance(object):
 
     def __init__(self, provider_name, vm_name):
         """Initializes a deployed appliance VM
-
-        Fixes the appliance time using NTP sync and patches the ajax wait code.
         """
         self.name = Appliance._default_name
         self.db_address = None
@@ -65,11 +62,11 @@ class Appliance(object):
                             .format(self.address))
 
     def ssh_client(self, **connect_kwargs):
-        """Creates ssh client connected to this appliance
+        """Creates ssh client (connected to this appliance by default)
 
         Args:
             **connect_kwargs: Keyword arguments accepted by the SSH client, including
-            ``username``, ``password``, and ``hostname``.
+                              ``username``, ``password``, and ``hostname``.
 
 
         Returns: A configured :py:class:`utils.ssh.SSHClient` instance.
@@ -83,6 +80,8 @@ class Appliance(object):
 
             The credentials default to those found under ``ssh`` key in ``credentials.yaml``.
         """
+        connect_kwargs['hostname'] = connect_kwargs.get('hostname', self.address)
+
         return SSHClient(**connect_kwargs)
 
     def browser_session(self):
@@ -148,7 +147,7 @@ class Appliance(object):
         wait_for(func=lambda: self.is_web_ui_running,
                  message='appliance.is_web_ui_running',
                  delay=10,
-                 timeout=timeout)
+                 num_sec=timeout)
 
     def destroy(self):
         """Destroys the VM this appliance is running as
@@ -208,9 +207,7 @@ class ApplianceSet(object):
 
 
 def provision_appliance(version, vm_name_prefix='cfme'):
-    """Provisions appliance of a specific version
-
-    This only provides a cloned cfme VM - it does not enable the DB nor set the name.
+    """Provisions fresh, unconfigured appliance of a specific version
 
     Note:
         Version must be mapped to template name under ``appliance_provisioning > versions``
@@ -224,6 +221,7 @@ def provision_appliance(version, vm_name_prefix='cfme'):
 
     Usage:
         my_appliance = provision_appliance('5.2.1.8', 'my_tests')
+        my_appliance.fix_ntp_clock()
         my_appliance.enable_internal_db()
         my_appliance.wait_for_web_ui()
         ...
@@ -240,8 +238,10 @@ def provision_appliance(version, vm_name_prefix='cfme'):
     provider = provider_factory(provider_name)
     vm_name = _generate_vm_name()
 
-    template_name = templates_by_version.get(version, None)
-    assert template_name, 'No template found matching version {}'.format(version)
+    try:
+        template_name = templates_by_version[version]
+    except KeyError:
+        raise Exception('No template found matching version {}'.format(version))
 
     deploy_args = {}
     deploy_args['vm_name'] = vm_name
@@ -250,12 +250,11 @@ def provision_appliance(version, vm_name_prefix='cfme'):
         deploy_args['cluster_name'] = prov_data['default_cluster']
 
     provider.deploy_template(template_name, **deploy_args)
-    assert provider.is_vm_running(vm_name), "Could not provision '{}' appliance ".format(vm_name)
 
-    return Appliance(provider, vm_name, version)
+    return Appliance(provider_name, vm_name)
 
 
-def provision_appliance_set(appliance_set_data):
+def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
     """Provisions appliance set according to appliance_set_data dict
 
     This provides complete working appliance set - with DBs enabled and names set.
@@ -264,6 +263,7 @@ def provision_appliance_set(appliance_set_data):
     will be connected to the database on primary.
 
     Args:
+        vm_name_prefix: name prefix to use when deploying the appliance vms
         appliance_set_data: dict that corresponds to the following yaml structure:
 
     .. code-block:: yaml
@@ -285,13 +285,17 @@ def provision_appliance_set(appliance_set_data):
 
     appliance_set = ApplianceSet()
 
-    appliance_set.primary = provision_appliance(primary_data['version'])
+    appliance_set.primary = provision_appliance(primary_data['version'], vm_name_prefix)
+    appliance_set.primary.fix_ntp_clock()
+    appliance_set.primary.patch_ajax_wait()
     appliance_set.primary.enable_internal_db()
     appliance_set.primary.wait_for_web_ui()
     appliance_set.primary.rename(primary_data['name'])
 
     for appliance_data in secondary_data:
-        appliance = provision_appliance(appliance_data['version'])
+        appliance = provision_appliance(appliance_data['version'], vm_name_prefix)
+        appliance_set.primary.fix_ntp_clock()
+        appliance_set.primary.patch_ajax_wait()
         appliance.enable_external_db(appliance_set.primary.address)
         appliance.wait_for_web_ui()
         appliance.rename(appliance_data['name'])
