@@ -142,9 +142,11 @@ def browser_session(*args, **kwargs):
         # Browser will be closed here
 
     """
+    conf.env['base_url'] = kwargs['base_url']
     browser = start(*args, **kwargs)
     yield browser
     quit()
+    conf.clear()
 
 
 def _load_firefox_profile():
