@@ -1,5 +1,6 @@
 import time
 from utils.log import logger
+from functools import partial
 
 
 def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
@@ -43,7 +44,13 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     total_time = 0
     num_sec = kwargs.get('num_sec', 120)
     expo = kwargs.get('expo', False)
-    message = kwargs.get('message', func.func_name)
+    message = kwargs.get('message', None)
+    if not message:
+        if isinstance(func, partial):
+            params = ", ".join([str(arg) for arg in func.args])
+            message = "partial function %s(%s)" % (func.func.func_name, params)
+        else:
+            message = "function %s()" % func.func_name
     fail_condition = kwargs.get('fail_condition', False)
     handle_exception = kwargs.get('handle_exception', False)
     delay = kwargs.get('delay', 1)
