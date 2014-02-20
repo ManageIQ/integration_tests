@@ -153,5 +153,9 @@ class Page(object):
         select = Select(self.get_element(*element))
         select.select_by_value(value)
 
+    def select_first_option_selected(self, *element):
+        select = Select(self.get_element(*element))
+        return select.first_selected_option.text
+
     def get_appliance_datetime(self):
         return self.get_element(*self._datetime_locator).text

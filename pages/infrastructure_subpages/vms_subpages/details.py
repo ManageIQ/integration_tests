@@ -105,11 +105,15 @@ class VirtualMachineDetails(VmCommonComponents):
 
         return wait_for(_check, num_sec=timeout_in_minutes * 60, delay=10)
 
-    def edit_cfme_relationship_and_save(self, appliance_name):
+    def edit_cfme_relationship_and_save(self, appliance_name='EVM (1)'):
         '''Service method to edit cfme relationship and save from VM details'''
         edit_pg = self.click_on_edit_cfme_relationship()
-        edit_pg.select_server(appliance_name)
-        return edit_pg.click_on_save()
+
+        if not edit_pg.server_selected == appliance_name:
+            edit_pg.select_server(appliance_name)
+            return edit_pg.click_on_save()
+        else:
+            return edit_pg.click_on_cancel()
 
     def click_on_edit_cfme_relationship(self):
         '''Click on edit cfme relationship from center Configuration button'''
@@ -137,12 +141,19 @@ class VirtualMachineDetails(VmCommonComponents):
         _page_title = 'CloudForms Management Engine: Virtual Machines'
         _select_server_pulldown = (By.ID, "server_id")
         _save_button_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
-        _cancel_button_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
         _reset_button_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+        # These buttons are a little screwy, basically there is two sets of button
+        #   if changes are made, the first set is used, if not, the second (buttons_off).
+        #   So this cancel locator shouldn't work if a change is made and then cancel
+        _cancel_button_locator = (By.XPATH, "//div[@id='buttons_off']//img[@title='Cancel']")
 
         def select_server(self, server_name):
             '''Select cfme server from dropdown menu'''
             self.select_dropdown(server_name, *self._select_server_pulldown)
+
+        @property
+        def server_selected(self):
+            return self.select_first_option_selected(*self._select_server_pulldown)
 
         @property
         def save_button(self):
