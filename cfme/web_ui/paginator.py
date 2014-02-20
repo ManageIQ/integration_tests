@@ -78,7 +78,7 @@ def rec_end():
     if offset:
         return offset.groups()[0]
     else:
-        return '1'
+        return rec_total()
 
 
 def rec_total():
