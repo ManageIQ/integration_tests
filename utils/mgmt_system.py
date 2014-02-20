@@ -10,7 +10,7 @@ from abc import ABCMeta, abstractmethod
 from boto.ec2 import EC2Connection, get_region
 from ovirtsdk.api import API
 from ovirtsdk.xml import params
-from pysphere import VIServer, MORTypes
+from pysphere import VIServer, MORTypes, VITask, VIMor
 from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
 from pysphere.vi_task import VITask
@@ -215,6 +215,17 @@ class MgmtSystemAPIBase(object):
         Returns: vm ip address
         """
         raise NotImplementedError('get_ip_address not implemented.')
+
+    @abstractmethod
+    def remove_host_from_cluster(self, hostname):
+        """remove a host from it's cluster
+
+        :param hostname: The hostname of the system
+        :type  hostname: str
+        :return: True if successful, False if failed
+        :rtype: boolean
+
+        """
 
     def stats(self, *requested_stats):
         """Returns all available stats, if none are explicitly requested
@@ -490,6 +501,29 @@ class VMWareSystem(MgmtSystemAPIBase):
         else:
             raise Exception('Could not clone %s' % template)
 
+    def remove_host_from_cluster(self, hostname):
+        req = VI.DisconnectHost_TaskRequestMsg()
+        mor = (key for key, value in self.api.get_hosts().items() if value == hostname).next()
+        sys = VIMor(mor, 'HostSystem')
+        _this = req.new__this(sys)
+        _this.set_attribute_type(sys.get_attribute_type())
+        req.set_element__this(_this)
+        task_mor = self.api._proxy.DisconnectHost_Task(req)._returnval
+        t = VITask(task_mor, self.api)
+        wait_for(lambda: 'success' in t.get_state())
+        self._destroy_host(hostname)
+
+    def _destroy_host(self, hostname):
+        req = VI.Destroy_TaskRequestMsg()
+        mor = (key for key, value in self.api.get_hosts().items() if value == hostname).next()
+        sys = VIMor(mor, 'HostSystem')
+        _this = req.new__this(sys)
+        _this.set_attribute_type(sys.get_attribute_type())
+        req.set_element__this(_this)
+        task_mor = self.api._proxy.Destroy_Task(req)._returnval
+        t = VITask(task_mor, self.api)
+        wait_for(lambda: 'success' in t.get_state())
+
 
 class RHEVMSystem(MgmtSystemAPIBase):
     """
@@ -744,6 +778,9 @@ class RHEVMSystem(MgmtSystemAPIBase):
         while not self.is_vm_running(kwargs['vm_name']):
             time.sleep(5)
         return kwargs['vm_name']
+
+    def remove_host_from_cluster(self, hostname):
+        raise NotImplementedError('remove_host_from_cluster not implemented')
 
 
 class EC2System(MgmtSystemAPIBase):
@@ -1029,6 +1066,9 @@ class EC2System(MgmtSystemAPIBase):
                 raise ActionTimedOutError
             time.sleep(3)
 
+    def remove_host_from_cluster(self, hostname):
+        raise NotImplementedError('remove_host_from_cluster not implemented')
+
 
 class OpenstackSystem(MgmtSystemAPIBase):
     """Openstack management system
@@ -1213,6 +1253,9 @@ class OpenstackSystem(MgmtSystemAPIBase):
             return True
         except Exception:
             return False
+
+    def remove_host_from_cluster(self, hostname):
+        raise NotImplementedError('remove_host_from_cluster not implemented')
 
 
 class ActionTimedOutError(Exception):

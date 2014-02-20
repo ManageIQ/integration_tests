@@ -499,6 +499,67 @@ provisioning_setup:
         ct_name: RHEL 6 Server PXE
         ct_system: True
         ct_type: CustomizationTemplateKickstart
+    host_provisioning_setup:
+        host:
+            name: do-not-use
+            hostname: do-not-use
+            ipaddress: 10.0.0.7
+            ipmi_address: 10.x.x.x
+            mac_address: aa:bb:cc:dd:ee:ff
+            ipmi_credentials: ipmi
+            user_assigned_os: VMware ESX
+        pxe_server:
+            pxe_image_type_name: ESX
+            pxe_server_name: pxe
+            access_url: http://server.com/tftpboot/
+            pxe_directory: pxelinux.cfg
+            uri_prefix: nfs
+            customization_directory: pxelinux.cfg
+            uri: 10.0.0.8/var/lib/tftpboot
+            visibility: ---\n...
+            windows_image_directory:
+            pxe_menu_file: http://server.com/tftpboot/pxelinux.cfg/default
+            menu_file_name: pxelinux.cfg/default
+            menu_type: PxeMenuPxelinux
+            default_for_windows: None
+            image_description: VMware-ESXi-5.5
+            initrd:
+            kernel: VMware-ESXi-5.5/mboot.c32
+            kernel_options: -c VMware-ESXi-5.5/boot.cfg
+            image_name: VMware-ESXi-5.5
+            image_path: pxelinux.cfg/default
+            image_type: PxeImagePxelinux
+            ks_file: vmware_esx_55.cfg
+            ct_description: ESX5.5
+            ct_name: ESX5.5
+            ct_system: True
+            ct_type: CustomizationTemplateKickstart
+        provision_request:
+            provider: vsphere5
+            request:
+                email: test@test.com
+                first_name: test
+                last_name: test
+                note: test
+                manager: a name
+            catalog:
+                prov_host: do-not-use
+                pxe_server: pxe
+                image: VMware-ESXi-5.5
+            environment:
+                datacenter: default
+                cluster: iscsi
+                datastores:
+                    - iscsi
+            customize:
+                hostname:
+                ip_addr:
+                subnet_mask: 255.255.255.0
+                gateway: 10.0.0.254
+                pw: test
+                dns: 10.0.0.253
+            schedule:
+                schedule: immediately
 clone_retire_setup:
     vmware_linux_workflow:
         vm_name: firstVM

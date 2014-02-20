@@ -18,6 +18,7 @@ from pages.virtual_intelligence import VirtualIntelligence
 from pages.optimize import Optimize
 from pages.infrastructure_subpages.providers import Providers as InfraProviders
 from pages.infrastructure_subpages.hosts import Hosts
+from pages.infrastructure_subpages.host_provision import HostProvisionRequests
 
 class HeaderMenu(Page):
     """
@@ -124,7 +125,7 @@ class HeaderMenu(Page):
                 "Datastores": Infrastructure.Datastores,
                 #"Repositories":
                 "PXE": Infrastructure.PXE,
-                #"Requests"
+                "Requests": HostProvisionRequests,
             },
             "Control": {
                 "Explorer": Control.Explorer,

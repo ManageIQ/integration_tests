@@ -6,6 +6,7 @@ from pages.regions.taskbar.taskbar import TaskbarMixin
 from pages.regions.taskbar.power import CommonPowerButton
 from pages.regions.quadiconitem import QuadiconItem
 from pages.regions.quadicons import Quadicons
+from pages.infrastructure_subpages.host_provision import HostProvision
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from utils.wait import wait_for
@@ -22,6 +23,8 @@ class Hosts(Base, PolicyMenu, TaskbarMixin, CommonPowerButton):
     _remove_host_locator = (By.CSS_SELECTOR,
         "tr[title='Remove Selected Hosts from the VMDB']\
         >td.td_btn_txt>div.btn_sel_text")
+    _provision_host_locator = (By.CSS_SELECTOR,
+        "tr.tr_btn[title='Request to Provision Hosts']")
 
     @property
     def quadicon_region(self):
@@ -32,6 +35,10 @@ class Hosts(Base, PolicyMenu, TaskbarMixin, CommonPowerButton):
         from pages.regions.accordion import Accordion
         from pages.regions.treeaccordionitem import TreeAccordionItem
         return Accordion(self.testsetup, TreeAccordionItem)
+
+    @property
+    def provision_button(self):
+        return self.selenium.find_element(*self._provision_host_locator)
 
     @property
     def add_button(self):
@@ -91,7 +98,14 @@ class Hosts(Base, PolicyMenu, TaskbarMixin, CommonPowerButton):
         ActionChains(self.selenium).click(
             self.configuration_button).click(self.remove_button).perform()
         self.handle_popup()
+        self._wait_for_results_refresh()
         return
+
+    def click_provision_host(self):
+        ActionChains(self.selenium).click(
+            self.lifecycle_button).click(self.provision_button).perform()
+        self._wait_for_results_refresh()
+        return HostProvision(self.testsetup)
 
     def edit_host_and_save(self, host):
         '''Service method to click on host, edit, fill with data and save

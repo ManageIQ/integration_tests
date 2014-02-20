@@ -47,4 +47,6 @@ class TaskbarMixin(Page):
     def policy_button(self):
         return self.taskbar_region.center_buttons.policy_button
 
-
+    @property
+    def lifecycle_button(self):
+        return self.taskbar_region.center_buttons.lifecycle_button

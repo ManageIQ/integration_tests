@@ -4,6 +4,7 @@ from pages.base import Base
 from pages.page import Page
 from pages.infrastructure_subpages.hosts_subpages.edit import Edit
 from pages.regions.accordion import Accordion
+from pages.infrastructure import Infrastructure
 from pages.regions.policy_menu import PolicyMenu
 from pages.regions.taskbar.taskbar import TaskbarMixin
 from selenium.webdriver.common.action_chains import ActionChains
@@ -33,6 +34,10 @@ class Detail(Base, PolicyMenu, TaskbarMixin):
         self.configuration_button.click()
         self.edit_button.click()
         return Edit(self.testsetup)
+
+    def click_on_datastores(self):
+        self.details.get_section("Relationships").get_item("Datastores").click()
+        return Infrastructure.Datastores(self.testsetup)
 
     @property
     def smartstate_analysis_button(self):
