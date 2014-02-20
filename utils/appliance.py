@@ -105,7 +105,7 @@ class Appliance(object):
         if status != 0:
             raise Exception('Appliance {} failed to enable internal DB'.format(self.address))
 
-    def enable_external_db(self, db_address):
+    def enable_external_db(self, db_address, region=0):
         """Enables external database
 
         Args:
@@ -113,7 +113,7 @@ class Appliance(object):
         """
         self.db_address = db_address
         script = utils_path.scripts_path.join('enable_external_db.py')
-        args = [str(script), self.address, db_address]
+        args = [str(script), self.address, db_address, '--region', region]
         status = subprocess.call(args)
         if status != 0:
             raise Exception('Appliance {} failed to enable external DB running on {}'
