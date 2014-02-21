@@ -1,8 +1,5 @@
-from urlparse import urlparse
-
 import pytest
 
-from utils import conf
 from utils.ssh import SSHClient
 
 
@@ -50,12 +47,4 @@ def ssh_client():
 
 
     """
-
-    ssh_credentials = conf.credentials['ssh']
-    parsed_url = urlparse(conf.env['base_url'])
-    connect_kwargs = {
-        'username': ssh_credentials['username'],
-        'password': ssh_credentials['password'],
-        'hostname': parsed_url.hostname,
-    }
-    return SSHClient(**connect_kwargs)
+    return SSHClient()

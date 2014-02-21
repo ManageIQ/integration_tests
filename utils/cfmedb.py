@@ -1,6 +1,8 @@
+from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
 from urlparse import urlparse
 
+import db
 import yaml
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -8,14 +10,59 @@ from sqlalchemy.orm import sessionmaker
 from utils import conf
 from utils.datafile import load_data_file
 from utils.path import data_path
-from fixtures.ssh_client import ssh_client
+from utils.ssh import SSHClient
+
+
+def build_cfme_db_url(base_url=None, credentials=None):
+    """Builds cfme db url from base url and credentials (both optional)
+
+    Args:
+        base_url: base url to be used (default ``conf.env['base_url']``)
+        credentials: credentials to be used (default ``conf.credentials['database']``)
+
+    """
+    credentials = credentials or conf.credentials['database']
+    base_url = base_url or conf.env['base_url']
+    subs = {
+        'host': urlparse(base_url).hostname
+    }
+    subs.update(credentials)
+    template = "postgres://{username}:{password}@{host}:5432/vmdb_production"
+    return template.format(**subs)
+
+
+@contextmanager
+def db_session(cfme_db_url=None):
+    """A db session context manager to be used for custom, separate db session
+
+    Args:
+        cfme_db_url: cfme_db_url used for the session (default ``None``)
+
+    Usage:
+        cfme_db_url = cfmedb.build_cfme_db_url('1.2.3.4')
+        with cfmedb.db_session(cfme_db_url) as db:
+            # do stuff with seperate db session
+        # Db session will be reset to the original state here
+
+    Note:
+
+        If cfme_db_url is set to ``None``, :py:func:``db_session_maker`` will
+        take over and choose/build appropriate cfme_db_url to use.
+
+    """
+    original_cfme_db_url = db.cfme_db_url
+    db.cfme_db_url = cfme_db_url
+
+    yield db_session_maker(recreate=True)
+
+    db.cfme_db_url = original_cfme_db_url
+    db_session_maker(recreate=True)
 
 
 def db_session_maker(recreate=False):
     """Create an SQLalchemy database session
 
     Args:
-
         recreate: If ``True``, force recreation of a new session (default ``False``)
 
     Note:
@@ -26,21 +73,13 @@ def db_session_maker(recreate=False):
         ``recreate`` argument to ``True``.
 
     """
-    import db
     if db.sessionmaker is None or recreate:
         if db.cfme_db_url is None:
             try:
                 db.cfme_db_url = conf.env['cfme_db_url']
             except KeyError:
                 # figure it out
-                credentials = conf.credentials['database']
-                base_url = conf.env['base_url']
-                subs = {
-                    'host': urlparse(base_url).hostname
-                }
-                subs.update(credentials)
-                template = "postgres://{username}:{password}@{host}:5432/vmdb_production"
-                db.cfme_db_url = template.format(**subs)
+                db.cfme_db_url = build_cfme_db_url()
         # Cache the engine and sessionmaker on the db "module"
         db.engine = create_engine(db.cfme_db_url)
         db.sessionmaker = sessionmaker(bind=db.engine)
@@ -62,7 +101,6 @@ def db_yamls(db_session=None):
         vmdb_config = configs['vmdb']
 
     """
-    import db
     db_session = db_session or db_session_maker()
     configs = db_session.query(db.Configuration.typ, db.Configuration.settings)
     data = {name: yaml.load(settings) for name, settings in configs}
@@ -82,8 +120,17 @@ def get_yaml_config(config_name, db_session=None):
     return db_yamls(db_session)[config_name]
 
 
-def set_yaml_config(config_name, data_dict):
-    """Given a yaml name and dictionary, set the configuration yaml on the server
+def set_yaml_config(config_name, data_dict, hostname=None):
+    """Given a yaml name, dictionary and hostname, set the configuration yaml on the server
+
+    Args:
+        config_name: Name of the yaml configuration file
+        data_dict: Dictionary with data to set/change
+        hostname: Hostname/address of the server that we want to set up (default ``None``)
+
+    Note:
+        If hostname is set to ``None``, the default server set up for this session will be
+        used. See :py:class:``utils.ssh.SSHClient`` for details of the default setup.
 
     Warning:
 
@@ -97,12 +144,17 @@ def set_yaml_config(config_name, data_dict):
         # Update the appliance name, for example
         vmbd_yaml = get_yaml_config('vmdb')
         vmdb_yaml['server']['name'] = 'EVM IS AWESOME'
-        set_yaml_config('vmdb', vmdb_yaml)
+        set_yaml_config('vmdb', vmdb_yaml, '1.2.3.4')
 
     """
     # CFME does a lot of things when loading a configfile, so
     # let their native conf loader handle the job
-    _ssh_client = ssh_client()
+    # If hostname is defined, connect to the specified server
+    if hostname is not None:
+        _ssh_client = SSHClient(hostname=hostname)
+    # Else, connect to the default one set up for this session
+    else:
+        _ssh_client = SSHClient()
     # Build & send new config
     temp_yaml = NamedTemporaryFile()
     dest_yaml = '/tmp/conf.yaml'
