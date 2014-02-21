@@ -80,8 +80,7 @@ test_list = []              # keeps track of the tests ran to delete appliance w
 
 def run_command(cmd):
     '''Helper function to execute commands'''
-    process = sub.Popen("source ../bin/activate; " + cmd,
-        shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
+    process = sub.Popen(cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
     output, error = process.communicate()
     if process.returncode != 0:
         raise Exception("%s: FAILED, stdout: %s stderr: %s" % (cmd, output, error))
