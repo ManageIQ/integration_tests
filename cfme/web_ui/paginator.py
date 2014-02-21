@@ -85,3 +85,27 @@ def rec_total():
     """ Returns the total number of records."""
     offset = re.search('(\d+)\)', _page_nums())
     return offset.groups()[0]
+
+
+def reset():
+    """Reset the paginator to the first page or do nothing if no pages"""
+    if 'dimmed' not in first().get_attribute('class'):
+        sel.click(first())
+
+
+def pages():
+    """A generator to facilitate looping over pages
+
+    Usage:
+
+        for page in pages:
+            # Do seleniumy things here, like finding and clicking elements
+
+    """
+    # Reset the paginator, then yield the first page
+    reset()
+    yield
+    # Yield where there are more pages
+    while 'dimmed' not in next().get_attribute('class'):
+        yield
+        sel.click(next())
