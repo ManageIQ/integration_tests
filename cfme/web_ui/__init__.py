@@ -389,8 +389,7 @@ class Table(object):
         Returns: A :py:class:`Table.Row` for ``row_element``
 
         """
-        self._update_cache()
-        return Table.Row(self.header_indexes, row_element, self.row_data[0])
+        return Table.Row(row_element, self)
 
     def click_cells(self, cell_map):
         """Submits multiple cells to be clicked on
@@ -449,21 +448,25 @@ class Table(object):
         The Row object returns a dymanically addressable attribute space so that
         the tables headers are automatically generated.
 
+        Args:
+            row_element: A table row ``WebElement``
+            parent_table: :py:class:`Table` containing ``row_element``
+
         Notes:
             Attributes are dynamically generated. The index/key accessor is more flexible
             than the attr accessor, as it can operate on int indices and header names.
 
         """
-        def __init__(self, header_indexes, row_element, loc):
-            self.header_indexes = header_indexes
+        def __init__(self, row_element, parent_table):
+            self.table = parent_table
+            self.table._update_cache()
             self.row_element = row_element
-            self.loc = loc
 
         def __getattr__(self, name):
             """
             Returns Row element by header name
             """
-            return sel.elements('td[%s]' % self.header_indexes[name], root=self.row_element)[0]
+            return sel.element('td[%s]' % self.table.header_indexes[name], root=self.row_element)
 
         def __getitem__(self, index):
             """
