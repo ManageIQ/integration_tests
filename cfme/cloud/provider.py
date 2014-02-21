@@ -21,7 +21,7 @@ import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
 from cfme.web_ui import Region, Quadicon, Form, fill
-from utils.providers import provider_factory, list_cloud_providers
+from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
 
@@ -361,13 +361,3 @@ def discover(credential, cancel=False):
                           'password': credential.secret,
                           'password_verify': credential.verify_secret})
     fill(discover_form, form_data)
-
-
-def setup_provider(provider_name):
-    provider = get_from_config(provider_name)
-    provider.create(validate_credentials=True)
-
-
-def setup_providers():
-    for provider_name in list_cloud_providers():
-        setup_provider(provider_name)

@@ -21,7 +21,7 @@ import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
 from cfme.web_ui import Region, Quadicon, Form, fill
-from utils.providers import provider_factory, list_infra_providers
+from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
 
@@ -419,13 +419,3 @@ def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None
         form_data.update({'to_3': end_octet})
 
     fill(discover_form, form_data)
-
-
-def setup_provider(provider_name):
-    provider = get_from_config(provider_name)
-    provider.create(validate_credentials=True)
-
-
-def setup_providers():
-    for provider_name in list_infra_providers():
-        setup_provider(provider_name)
