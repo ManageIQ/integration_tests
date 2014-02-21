@@ -1,27 +1,28 @@
     # pylint: disable=E1101
 import logging
-import time
 
 import pytest
-from unittestzero import Assert
 
+from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import paginator, Quadicon
 from utils.conf import cfme_data
 from utils.providers import (
     infra_provider_type_map,
     cloud_provider_type_map,
-    provider_factory,
-    setup_infrastructure_provider
+    provider_factory
 )
+from utils import providers
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.fixture
-def setup_infrastructure_providers(infra_providers_pg):
+def setup_infrastructure_providers():
     """Adds all infrastructure providers listed in cfme_data.yaml
 
     This includes ``rhev`` and ``virtualcenter`` provider types
     """
+    sel.force_navigate('infrastructure_providers')
     # Does provider exist
     providers_to_add = []
     for provider, prov_data in cfme_data['management_systems'].iteritems():
@@ -29,82 +30,41 @@ def setup_infrastructure_providers(infra_providers_pg):
             # short out if we don't care about this provider type
             continue
 
-        if not infra_providers_pg.quadicon_region.does_quadicon_exist(prov_data['name']):
-            providers_to_add.append([provider, prov_data])
+        quad = Quadicon(prov_data['name'], 'infra_prov')
+        for page in paginator.pages():
+            if sel.is_displayed(quad):
+                break
+        else:
+            providers_to_add.append(provider)
 
-    for prov_args in providers_to_add:
-        setup_infrastructure_provider(*prov_args)
+    for provider in providers_to_add:
+        providers.setup_infrastructure_provider(provider, validate=True)
 
 
-# there is a partially implemented db fixture at
-#       https://github.com/dajohnso/cfme_tests/tree/add_cloud_provider_db_fixture
 @pytest.fixture
-def setup_cloud_providers(cloud_providers_pg, cfme_data):
+def setup_cloud_providers():
     """Adds all cloud providers listed in cfme_data.yaml
 
     This includes ``ec2`` and ``openstack`` providers types
     """
     # Does provider exist
+    sel.force_navigate('clouds_providers')
+    # Does provider exist
+    providers_to_add = []
     for provider, prov_data in cfme_data['management_systems'].iteritems():
         if prov_data['type'] not in cloud_provider_type_map:
             # short out if we don't care about this provider type
             continue
 
-        prov_added = False
-        cloud_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
-        Assert.true(cloud_providers_pg.taskbar_region.view_buttons.is_grid_view)
-        if not (cloud_providers_pg.quadicon_region.quadicons and
-                cloud_providers_pg.quadicon_region.does_quadicon_exist(prov_data['name'])):
-            # add it
-            add_pg = cloud_providers_pg.click_on_add_new_provider()
-            add_pg.add_provider(prov_data)
+        quad = Quadicon(prov_data['name'], 'cloud_prov')
+        for page in paginator.pages():
+            if sel.is_displayed(quad):
+                break
+        else:
+            providers_to_add.append(provider)
 
-            Assert.equal(cloud_providers_pg.flash.message,
-                'Cloud Providers "%s" was saved' % prov_data['name'],
-                'Flash message did not match')
-            prov_added = True
-
-            # wait for the quadicon to show up
-            sleep_time = 0
-            cloud_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
-            Assert.true(cloud_providers_pg.taskbar_region.view_buttons.is_grid_view)
-            while not cloud_providers_pg.quadicon_region.does_quadicon_exist(
-                    prov_data['name']):
-                if sleep_time > 300:
-                    raise Exception('timeout reached for provider icon to show up')
-                cloud_providers_pg.selenium.refresh()
-                sleep_time += 10
-                time.sleep(10)
-
-        # Are the credentials valid?
-        cloud_providers_pg.taskbar_region.view_buttons.change_to_grid_view()
-        Assert.true(cloud_providers_pg.taskbar_region.view_buttons.is_grid_view)
-        prov_quadicon = cloud_providers_pg.quadicon_region.get_quadicon_by_title(
-            prov_data['name'])
-        valid_creds = prov_quadicon.valid_credentials
-        if prov_added and not valid_creds:
-            sleep_time = 0
-            while not valid_creds:
-                if sleep_time > 300:
-                    raise Exception('timeout reached for valid provider credentials')
-                cloud_providers_pg.selenium.refresh()
-                prov_quadicon = cloud_providers_pg.quadicon_region.get_quadicon_by_title(
-                    prov_data['name'])
-                valid_creds = prov_quadicon.valid_credentials
-                sleep_time += 10
-                time.sleep(10)
-        elif not prov_quadicon.valid_credentials:
-            # update them
-            cloud_providers_pg.select_provider(prov_data['name'])
-            Assert.equal(len(cloud_providers_pg.quadicon_region.selected), 1,
-                'More than one quadicon was selected')
-            prov_edit_pg = cloud_providers_pg.click_on_edit_providers()
-            prov_edit_pg.edit_provider(prov_data)
-        prov_data['request'] = provider
-        if prov_added:
-            cloud_providers_pg.wait_for_provider_or_timeout(prov_data)
-        cloud_providers_pg.header.site_navigation_menu('Clouds').\
-            sub_navigation_menu('Providers').click()
+    for provider in providers_to_add:
+        providers.setup_cloud_provider(provider, validate=True)
 
 
 @pytest.fixture(scope='module')  # IGNORE:E1101
