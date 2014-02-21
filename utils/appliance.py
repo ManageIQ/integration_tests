@@ -1,7 +1,7 @@
 from utils import conf
 from utils import path as utils_path
 from utils.browser import browser_session
-from utils.cfmedb import get_yaml_config, set_yaml_config
+from utils.cfmedb import build_cfme_db_url, db_session, get_yaml_config, set_yaml_config
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
@@ -95,6 +95,18 @@ class Appliance(object):
         """
         return browser_session(base_url='https://' + self.address)
 
+    def db_session(self):
+        """Creates db session connected to this appliance
+
+        Returns: Db session connected to this appliance.
+
+        Usage:
+            with appliance.db_session() as db:
+                db.do_stuff(TM)
+        """
+        cfme_db_url = build_cfme_db_url(base_url='https://' + self.address)
+        return db_session(cfme_db_url)
+
     def enable_internal_db(self):
         """Enables internal database
         """
@@ -124,10 +136,15 @@ class Appliance(object):
 
         Args:
             new_name: Name to set
+
+        Note:
+            Database must be up and running and evm service must be (re)started afterwards
+            for the name change to take effect.
         """
-        vmdb_config = get_yaml_config('vmdb')
-        vmdb_config['server']['name'] = new_name
-        set_yaml_config('vmdb', vmdb_config)
+        with self.db_session():
+            vmdb_config = get_yaml_config('vmdb')
+            vmdb_config['server']['name'] = new_name
+            set_yaml_config('vmdb', vmdb_config, self.address)
 
     def restart_evm_service(self):
         """Restarts the ``evmserverd`` service on this appliance
@@ -289,16 +306,18 @@ def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
     appliance_set.primary.fix_ntp_clock()
     appliance_set.primary.patch_ajax_wait()
     appliance_set.primary.enable_internal_db()
-    appliance_set.primary.wait_for_web_ui()
     appliance_set.primary.rename(primary_data['name'])
+    appliance_set.primary.restart_evm_service()
+    appliance_set.primary.wait_for_web_ui()
 
     for appliance_data in secondary_data:
         appliance = provision_appliance(appliance_data['version'], vm_name_prefix)
         appliance_set.primary.fix_ntp_clock()
         appliance_set.primary.patch_ajax_wait()
         appliance.enable_external_db(appliance_set.primary.address)
-        appliance.wait_for_web_ui()
         appliance.rename(appliance_data['name'])
+        appliance.restart_evm_service()
+        appliance.wait_for_web_ui()
         appliance_set.secondary.append(appliance)
 
     return appliance_set
