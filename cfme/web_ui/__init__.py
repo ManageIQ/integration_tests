@@ -491,7 +491,11 @@ def _sd_fill_string(loc, value):
         raise exceptions.UnidentifiableTagType(
             "Tag '%s' with type '%s' is not a known form element to Form" %
             (tag, ttype))
-    logger.debug('  Filling in [%s], with value "%s"' % (operation, value))
+    if operation == 'password':
+        log_value = '*' * len(value)
+    else:
+        log_value = value
+    logger.debug('  Filling in [%s], with value "%s"' % (operation, log_value))
     op = tag_types[operation]
     if op == sel.click:
         if value is True:
