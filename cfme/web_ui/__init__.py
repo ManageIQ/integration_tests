@@ -32,7 +32,6 @@ import types
 from datetime import date
 from time import sleep
 
-import selenium
 from selenium.common import exceptions as sel_exceptions
 from singledispatch import singledispatch
 
@@ -273,18 +272,15 @@ class Table(object):
         Yields:
             :py:class:`Table.Row` object corresponding to the next row in the table.
         """
-        self._update_cache()
-        index = self.row_data[1] + 1
-        data = sel.element(self.row_data[0] + '//tr[%i]' % (index))
-        yield self.Row(self.header_indexes, data, self.row_data[0])
-        while isinstance(data, selenium.webdriver.remote.webelement.WebElement):
-            index += 1
+        index = self.row_data[1]
+        while True:
             try:
-                data = sel.element(self.row_data[0] + '//tr[%i]' % (index))
-                item = self.Row(self.header_indexes, data, self.row_data[0])
-                yield item
-            except:
-                data = []
+                index += 1
+                row_element = sel.element(self.row_data[0] + '//tr[%i]' % (index))
+                row = self.create_row_from_element(row_element)
+                yield row
+            except sel_exceptions.NoSuchElementException:
+                break
 
     def rows(self):
         """Returns a generator object yielding the rows in the Table
@@ -306,9 +302,7 @@ class Table(object):
             :py:class:`Table.Row` containing the requested cell, else ``None``.
 
         """
-        for row in self.rows():
-            if row[header].text == value:
-                return row
+        return self.find_row_by_cells({header: value})
 
     def find_cell(self, header, value):
         """
@@ -319,17 +313,84 @@ class Table(object):
         Args:
             header: A string or int, describing which column to inspect.
             value: The value to be compared when trying to identify the correct cell
-                to return.
+                to click.
 
-        Returns:
-            WebElement of the cell if the cell is found, else ``None``.
+        Returns: WebElement of the element if item was found, else ``None``.
 
         """
-        row = self.find_row(header, value)
-        if row is None:
+        matching_cell_rows = self.find_rows_by_cells({header: value})
+        try:
+            return getattr(matching_cell_rows[0], header)
+        except IndexError:
             return None
-        else:
-            return row[header]
+
+    def find_rows_by_cells(self, cells):
+        """A fast row finder, based on cell content.
+
+        Args:
+            cells: A dict of ``header: value`` pairs or a sequence of
+                nested ``(header, value)`` pairs.
+
+        Returns: A list of containing :py:class:`Table.Row` objects whose contents
+            match all of the header: value pairs in ``cells``
+
+        """
+        # accept dicts or supertuples
+        cells = dict(cells)
+        cell_text_loc = '//td[contains(text(), "%s")]/..'
+        matching_rows_list = list()
+        for value in cells.values():
+            # Get all td elements that contain the value text
+            matching_rows_list.append(sel.elements(cell_text_loc % value))
+
+        # Now, find the common row elements that matched all the input cells
+        # (though not yet matching values to headers)
+        # Why not use set intersection here? Good question!
+        # https://code.google.com/p/selenium/issues/detail?id=7011
+        rows_elements = reduce(lambda l1, l2: [item for item in l1 if item in l2],
+            matching_rows_list)
+
+        # Convert them to rows
+        # This is slow, which is why we do it after reducing the row element pile,
+        # and not when building matching_rows_list, but it makes comparing header
+        # names and expected values easy
+        rows = [self.create_row_from_element(element) for element in rows_elements]
+
+        # Only include rows where the expected values are in the right columns
+        matching_rows = list()
+        matching_row_filter = lambda heading, value: getattr(row, heading).text == value
+        for row in rows:
+            if all(matching_row_filter(*cell) for cell in cells.items()):
+                matching_rows.append(row)
+
+        return matching_rows
+
+    def find_row_by_cells(self, cells):
+        """Find the first row containing cells
+
+        Args:
+            cells: See :py:meth:`Table.find_rows_by_cells`
+
+        Returns: The first matching row found, or None if no matching row was found
+
+        """
+        try:
+            rows = self.find_rows_by_cells(cells)
+            return rows[0]
+        except IndexError:
+            return None
+
+    def create_row_from_element(self, row_element):
+        """Given a row element in this table, create a :py:class:`Table.Row`
+
+        Args:
+            row_element: A table row (``<tr>``) WebElement representing a row in this table.
+
+        Returns: A :py:class:`Table.Row` for ``row_element``
+
+        """
+        self._update_cache()
+        return Table.Row(self.header_indexes, row_element, self.row_data[0])
 
     def click_cells(self, cell_map):
         """Submits multiple cells to be clicked on
@@ -365,14 +426,14 @@ class Table(object):
     def click_cell(self, header, value):
         """Clicks on a cell defined in the row.
 
-        Uses the header identifier and a data to determine which cell to click on.
+        Uses the header identifier and a value to determine which cell to click on.
 
         Args:
             header: A string or int, describing which column to inspect.
-            value: The value to be compared when trying to identify the correct row
+            value: The value to be compared when trying to identify the correct cell
                 to click the cell in.
 
-        Return: ``True`` if item was found and clicked, else ``False``.
+        Returns: ``True`` if item was found and clicked, else ``False``.
 
         """
         cell = self.find_cell(header, value)
@@ -393,16 +454,16 @@ class Table(object):
             than the attr accessor, as it can operate on int indices and header names.
 
         """
-        def __init__(self, header_indexes, data, loc):
+        def __init__(self, header_indexes, row_element, loc):
             self.header_indexes = header_indexes
-            self.data = data
+            self.row_element = row_element
             self.loc = loc
 
         def __getattr__(self, name):
             """
             Returns Row element by header name
             """
-            return sel.elements('td[%s]' % self.header_indexes[name], root=self.data)[0]
+            return sel.elements('td[%s]' % self.header_indexes[name], root=self.row_element)[0]
 
         def __getitem__(self, index):
             """
@@ -410,13 +471,21 @@ class Table(object):
             """
             try:
                 index += 1
-                return sel.elements('td[%i]' % index, root=self.data)[0]
+                return sel.elements('td[%i]' % index, root=self.row_element)[0]
             except TypeError:
                 # Index isn't an int, assume it's a string
                 return getattr(self, index)
 
         def __str__(self):
-            return ",".join([el.text for el in sel.elements('td', root=self.data)])
+            return ",".join([el.text for el in sel.elements('td', root=self.row_element)])
+
+        def __eq__(self, other):
+            # Selenium elements support equality checks, so we can, too.
+            return self.row_element == other.row_element
+
+        def element(self):
+            # table.create_row_from_element(row_instance) might actually work...
+            return self.row_element
 
 
 def table_from_table_xpath(xpath, header_offset=0, row_offset=0):
