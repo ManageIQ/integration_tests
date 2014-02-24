@@ -121,7 +121,12 @@ def detect_observed_field(loc):
     If found, that interval will be used instead of the default.
 
     """
-    element = sel.element(loc)
+    try:
+        element = sel.element(loc)
+    except sel_exceptions.NoSuchElementException:
+        logger.info('  Element disappeared in meantime, so no detect_observed_field()!')
+        sel.wait_for_ajax()
+        return
     # Default wait period, based on the default UI wait (700ms)
     # plus a little padding to let the AJAX fire before we wait_for_ajax
     default_wait = .8
@@ -362,7 +367,10 @@ class Table(object):
         """
         matching_cell_rows = self.find_rows_by_cells({header: value})
         try:
-            return getattr(matching_cell_rows[0], header)
+            if isinstance(header, basestring):
+                return getattr(matching_cell_rows[0], header)
+            else:
+                return matching_cell_rows[0][header]
         except IndexError:
             return None
 
