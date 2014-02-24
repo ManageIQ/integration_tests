@@ -1,3 +1,5 @@
+from os import devnull as os_devnull
+from utils import async
 from utils import conf
 from utils import path as utils_path
 from utils.browser import browser_session
@@ -8,6 +10,10 @@ from utils.ssh import SSHClient
 from utils.wait import wait_for
 import requests
 import subprocess
+
+
+class ApplianceException(Exception):
+    pass
 
 
 class Appliance(object):
@@ -27,9 +33,17 @@ class Appliance(object):
         self.name = Appliance._default_name
         self.db_address = None
 
-        self._provider = provider_factory(provider_name)
+        self._provider_name = provider_name
         self._vm_name = vm_name
         self._address = None
+
+    @property
+    def _provider(self):
+        """
+        Note:
+            Cannot be cached because provider object is unpickable.
+        """
+        return provider_factory(self._provider_name)
 
     @property
     def address(self):
@@ -37,14 +51,46 @@ class Appliance(object):
             self._address = self._provider.get_ip_address(self._vm_name)
         return self._address
 
+    def configure(self,
+                  db_address=None,
+                  name_to_set=None,
+                  fix_ntp_clock=True,
+                  patch_ajax_wait=True):
+        """Configures appliance - database setup, rename, ntp sync, ajax wait patch
+
+        Utility method to make things easier.
+
+        Args:
+            db_address: Address of external database if set, internal database if ``None``
+                        (default ``None``)
+            name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
+            fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
+            patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
+
+        """
+        if fix_ntp_clock is True:
+            self.fix_ntp_clock()
+        if patch_ajax_wait is True:
+            self.patch_ajax_wait()
+        if db_address is None:
+            self.enable_internal_db()
+        else:
+            self.enable_external_db(db_address)
+        self.wait_for_web_ui()
+
+        if name_to_set is not None and name_to_set != self.name:
+            self.rename(name_to_set)
+            self.restart_evm_service()
+            self.wait_for_web_ui()
+
     def fix_ntp_clock(self):
         """Fixes appliance time using NTP sync
         """
         with self.ssh_client() as ssh:
             status, msg = ssh.run_command('ntpd -gq')
             if status != 0:
-                raise Exception('Failed to sync time (NTP) on {}\nError: {}'
-                                .format(self.address, msg))
+                raise ApplianceException('Failed to sync time (NTP) on {}\nError: {}'
+                                         .format(self.address, msg))
 
     def patch_ajax_wait(self, undo=False):
         """Patches ajax wait code
@@ -56,10 +102,8 @@ class Appliance(object):
         args = [str(script), self.address]
         if undo:
             args.append('-R')
-        status = subprocess.call(args)
-        if status != 0:
-            raise Exception('Failed to patch ajax wait code on {}'
-                            .format(self.address))
+        with open(os_devnull, 'w') as f_devnull:
+            subprocess.call(args, stdout=f_devnull)
 
     def ssh_client(self, **connect_kwargs):
         """Creates ssh client (connected to this appliance by default)
@@ -96,15 +140,16 @@ class Appliance(object):
         return browser_session(base_url='https://' + self.address)
 
     def db_session(self):
-        """Creates db session connected to this appliance
+        """Creates db session connected to db this appliance is connected to
 
-        Returns: Db session connected to this appliance.
+        Returns: Creates db session connected to db this appliance is connected to.
 
         Usage:
             with appliance.db_session() as db:
                 db.do_stuff(TM)
         """
-        cfme_db_url = build_cfme_db_url(base_url='https://' + self.address)
+        address_to_use = self.address if self.is_db_internal else self.db_address
+        cfme_db_url = build_cfme_db_url(base_url='https://' + address_to_use)
         return db_session(cfme_db_url)
 
     def enable_internal_db(self):
@@ -113,23 +158,27 @@ class Appliance(object):
         self.db_address = Appliance._internal_db
         script = utils_path.scripts_path.join('enable_internal_db.py')
         args = [str(script), self.address]
-        status = subprocess.call(args)
+        with open(os_devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
         if status != 0:
-            raise Exception('Appliance {} failed to enable internal DB'.format(self.address))
+            raise ApplianceException('Appliance {} failed to enable internal DB'
+                                     .format(self.address))
 
     def enable_external_db(self, db_address, region=0):
         """Enables external database
 
         Args:
             db_address: Address of the external database
+            region: Number of region to join
         """
         self.db_address = db_address
         script = utils_path.scripts_path.join('enable_external_db.py')
-        args = [str(script), self.address, db_address, '--region', region]
-        status = subprocess.call(args)
+        args = [str(script), self.address, db_address, '--region', str(region)]
+        with open(os_devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
         if status != 0:
-            raise Exception('Appliance {} failed to enable external DB running on {}'
-                            .format(self.address, db_address))
+            raise ApplianceException('Appliance {} failed to enable external DB running on {}'
+                                     .format(self.address, db_address))
 
     def rename(self, new_name):
         """Changes appliance name
@@ -145,6 +194,7 @@ class Appliance(object):
             vmdb_config = get_yaml_config('vmdb')
             vmdb_config['server']['name'] = new_name
             set_yaml_config('vmdb', vmdb_config, self.address)
+        self.name = new_name
 
     def restart_evm_service(self):
         """Restarts the ``evmserverd`` service on this appliance
@@ -152,18 +202,21 @@ class Appliance(object):
         with self.ssh_client() as ssh:
             status, msg = ssh.run_command('service evmserverd restart')
             if status != 0:
-                raise Exception('Failed to restart evmserverd service on {}\nError: {}'
-                                .format(self.address, msg))
+                raise ApplianceException('Failed to restart evmserverd service on {}\nError: {}'
+                                         .format(self.address, msg))
 
-    def wait_for_web_ui(self, timeout=600):
-        """Waits for the web UI to start
+    def wait_for_web_ui(self, timeout=600, running=True):
+        """Waits for the web UI to be running / to not be running
 
         Args:
-            timeout: Number of seconds to wait until timeout
+            timeout: Number of seconds to wait until timeout (default ``600``)
+            running: Specifies if we wait for web UI to start or stop (default ``True``)
+                     ``True`` == start, ``False`` == stop
         """
         wait_for(func=lambda: self.is_web_ui_running,
                  message='appliance.is_web_ui_running',
                  delay=10,
+                 fail_condition=not running,
                  num_sec=timeout)
 
     def destroy(self):
@@ -190,7 +243,7 @@ class Appliance(object):
     @property
     def is_web_ui_running(self):
         try:
-            resp = requests.get("https://" + self.address, verify=False, timeout=5)
+            resp = requests.get("https://" + self.address, verify=False, timeout=20)
         except (requests.Timeout, requests.ConnectionError):
             return False
 
@@ -202,9 +255,9 @@ class Appliance(object):
 class ApplianceSet(object):
     """Convenience class to ease access to appliances in appliance_set
     """
-    def __init__(self):
-        self.primary = None
-        self.secondary = []
+    def __init__(self, primary_appliance=None, secondary_appliances=None):
+        self.primary = primary_appliance
+        self.secondary = secondary_appliances or list()
 
     @property
     def all_appliances(self):
@@ -241,7 +294,10 @@ def provision_appliance(version, vm_name_prefix='cfme'):
         my_appliance.fix_ntp_clock()
         my_appliance.enable_internal_db()
         my_appliance.wait_for_web_ui()
-        ...
+        or
+        my_appliance = provision_appliance('5.2.1.8', 'my_tests')
+        my_appliance.configure(patch_ajax_wait=False)
+        (identical outcome)
     """
 
     def _generate_vm_name():
@@ -258,7 +314,7 @@ def provision_appliance(version, vm_name_prefix='cfme'):
     try:
         template_name = templates_by_version[version]
     except KeyError:
-        raise Exception('No template found matching version {}'.format(version))
+        raise ApplianceException('No template found matching version {}'.format(version))
 
     deploy_args = {}
     deploy_args['vm_name'] = vm_name
@@ -272,7 +328,7 @@ def provision_appliance(version, vm_name_prefix='cfme'):
 
 
 def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
-    """Provisions appliance set according to appliance_set_data dict
+    """Provisions configured appliance set according to appliance_set_data dict
 
     This provides complete working appliance set - with DBs enabled and names set.
 
@@ -294,30 +350,53 @@ def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
             - name: name_secondary_2
               version: 1.3.3
 
+    Warning:
+        Secondary appliances must be of the same or lower version than the primary one.
+        Otherwise, there is a risk that the secondary of higher version will try to
+        migrate the primary's database (and fail at it).
+
     Returns: Configured appliance set; instance of :py:class:`ApplianceSet`
     """
 
     primary_data = appliance_set_data['primary_appliance']
-    secondary_data = appliance_set_data['secondary_appliances']
+    secondary_data = appliance_set_data.get('secondary_appliances') or []
+    all_appliances_data = [primary_data] + secondary_data
 
-    appliance_set = ApplianceSet()
+    # --- Provisioning stage
+    # Provisioning runs asynchronously, out of order; results are returned in order (crucial)
+    prov_args = []
+    for appliance_data in all_appliances_data:
+        prov_args.append((appliance_data['version'], vm_name_prefix))
 
-    appliance_set.primary = provision_appliance(primary_data['version'], vm_name_prefix)
-    appliance_set.primary.fix_ntp_clock()
-    appliance_set.primary.patch_ajax_wait()
-    appliance_set.primary.enable_internal_db()
-    appliance_set.primary.rename(primary_data['name'])
-    appliance_set.primary.restart_evm_service()
-    appliance_set.primary.wait_for_web_ui()
+    try:
+        # This can raise very cryptic exceptions
+        with async.ResultsPool() as res_pool:
+            res_pool.map_async(_provision_appliance_wrapped, prov_args)
+    except:
+        raise ApplianceException(
+            'Failed to provision appliance set - error in provisioning stage\n'
+            'Check cfme_data yaml for errors in template names and provider setup')
 
-    for appliance_data in secondary_data:
-        appliance = provision_appliance(appliance_data['version'], vm_name_prefix)
-        appliance_set.primary.fix_ntp_clock()
-        appliance_set.primary.patch_ajax_wait()
-        appliance.enable_external_db(appliance_set.primary.address)
-        appliance.rename(appliance_data['name'])
-        appliance.restart_evm_service()
-        appliance.wait_for_web_ui()
-        appliance_set.secondary.append(appliance)
+    provisioned_appliances = res_pool.results[0].get()
+    # ---
+
+    # --- Configuration stage
+    appliance_set = ApplianceSet(provisioned_appliances[0], provisioned_appliances[1:])
+    appliance_set.primary.configure(name_to_set=primary_data['name'])
+    for i, appliance in enumerate(appliance_set.secondary):
+        appliance.configure(db_address=appliance_set.primary.address,
+                            name_to_set=secondary_data[i]['name'])
+    # ---
 
     return appliance_set
+
+
+def _provision_appliance_wrapped(args):
+    """A wrapper to use for async provisioning
+
+    Needed, because map_async only accepts a single iterable.
+
+    Note:
+        Must be defined in top level.
+    """
+    return provision_appliance(*args)
