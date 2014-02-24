@@ -191,15 +191,6 @@ def nav_to_vm_details(provider, vm_name):
         return provider_details.all_vms().find_vm_page(vm_name, None, False, True, 6)
 
 
-def is_vm_smartstate_enabled(provider, vm_name):
-    '''Waits for the smart state option to enable before proceeding to the tests'''
-    vm_pg = nav_to_vm_details(provider, vm_name)
-    while not vm_pg.config_button.is_smart_state_analysis_enabled():
-        time.sleep(5)
-        vm_pg.refresh()
-    return True
-
-
 @pytest.fixture
 def delete_tasks_first():
     '''Delete any existing tasks within the UI before running tests'''
@@ -296,8 +287,10 @@ def configure_appliance(browser_setup, provider, vm_name):
         vm_details.edit_cfme_relationship_and_save()
 
     #wait for vm smart state to enable
-    logger.info('Waiting smartstate option to enable...')
-    wait_for(is_vm_smartstate_enabled, func_args=[provider, vm_name], delay=30, num_sec=450)
+    logger.info('Waiting for smartstate option to enable...')
+    vm_details = nav_to_vm_details(provider, vm_name)
+    wait_for(vm_details.config_button.is_smart_state_analysis_enabled, func_args=[vm_details],
+        delay=30, num_sec=450, fail_func=pytest.sel.refresh)
 
     return browser_setup
 
