@@ -9,7 +9,8 @@ based on the request
 """
 from functools import partial
 
-from utils import conf, mgmt_system
+from utils import conf, mgmt_system, ssh
+from utils.log import logger
 
 #: infra provider type maps, useful for type checking
 infra_provider_type_map = {
@@ -154,6 +155,31 @@ def setup_infrastructure_providers(validate=True):
     for provider_name in list_infra_providers():
         setup_infrastructure_provider(provider_name, validate)
 
+
+def clear_providers():
+    """Rudely clear all providers on an appliance
+
+    Uses the appliance ruby console in an attempt to cleanly delete not just
+    the providers but all related objects
+
+    Connects to the appliance in ``env.yaml``.
+    """
+    logger.info('Destroying all appliance providers and VMs')
+    client = ssh.SSHClient()
+    exit, out = client.run_rails_command(_clear_providers_rb)
+    if exit == 0:
+        return True
+    else:
+        logger.error('clear_providers failed with ruby error')
+        logger.error(out)
+        return False
+
+# Single quotes are needed for the shell on the remote side
+# For reference: http://apidock.com/rails/ActiveRecord/Base/destroy_all/class
+_clear_providers_rb = """'
+ExtManagementSystem.destroy_all()
+VmOrTemplate.destroy_all()'
+"""
 
 list_infra_providers = partial(list_providers, infra_provider_type_map.keys())
 list_cloud_providers = partial(list_providers, cloud_provider_type_map.keys())

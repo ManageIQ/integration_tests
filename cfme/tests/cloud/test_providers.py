@@ -12,19 +12,6 @@ from utils import testgen
 from utils.update import update
 
 pytest_generate_tests = testgen.parametrize(testgen.cloud_providers, scope="module")
-
-
-@pytest.fixture
-def has_no_providers(db_session):
-    """ Clears all management systems from an applicance
-
-    This is a destructive fixture. It will clear all managements systems from
-    the current appliance.
-    """
-    import db
-    db_session.query(db.ExtManagementSystem).delete()
-    db_session.commit()
-
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 

@@ -7,8 +7,9 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator, Quadicon
 from utils.conf import cfme_data
 from utils.providers import (
-    infra_provider_type_map,
+    clear_providers,
     cloud_provider_type_map,
+    infra_provider_type_map,
     provider_factory
 )
 from utils import providers
@@ -77,3 +78,13 @@ def mgmt_sys_api_clients(cfme_data):
             logger.warning('Overriding existing entry for %s.' % sys_name)
         clients[sys_name] = provider_factory(sys_name)
     return clients
+
+
+@pytest.fixture
+def has_no_providers():
+    """ Clears all management systems from an applicance
+
+    This is a destructive fixture. It will clear all managements systems from
+    the current appliance.
+    """
+    clear_providers()
