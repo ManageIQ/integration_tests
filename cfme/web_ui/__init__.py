@@ -32,7 +32,6 @@ import types
 from datetime import date
 from time import sleep
 
-import selenium
 from selenium.common import exceptions as sel_exceptions
 from singledispatch import singledispatch
 
@@ -164,22 +163,21 @@ class Table(object):
     Turns CFME custom Table/Lists into iterable objects using a generator.
 
     Args:
-        header_data: A tuple, containing an XPATH string locator and an offset value.
-            These point to the container of the header row. The offset is used in case
-            there is a padding row above the header, or in the case that the header
-            and the data are contained inside the same table element.
-        row_data: A tuple, containing an XPATH string locator and an offset value.
-            These point to the container of the data rows. The offset is used in case
-            there is a padding row above the data rows, or in the case that the header
-            and the data are contained inside the same table element.
+        table_locator: locator pointing to a table element with child thead and tbody elements
+            representing that table's header and body row containers
+        header_offset: In the case of a padding table row above the header, the row offset
+            can be used to skip rows in ``<thead>`` to locate the correct header row. This offset
+            is 1-indexed, not 0-indexed, so an offset of 1 is the first child row element
+        body_offset: In the case of a padding table row above the body rows, the row offset
+            can be used to skip rows in ``<ttbody>`` to locate the correct header row. This offset
+            is 1-indexed, not 0-indexed, so an offset of 1 is the first child row element
 
     Attributes:
-        header_indexes: A dict of header names related to their index as a column.
+        header_indexes: A dict of header names related to their int index as a column.
 
     Usage:
 
-        table = Table(header_data=('//div[@id="prov_pxe_img_div"]//thead', 0),
-            row_data=('//div[@id="prov_pxe_img_div"]//tbody', 0))
+        table = Table('//div[@id="prov_pxe_img_div"]//table')
 
     The HTML code for the table looks something like this::
 
@@ -212,22 +210,78 @@ class Table(object):
 
         table.click_cell('name', 'Mike')
 
-    We can also perform the same, by using the index of the row, like so::
+    We can also perform the same, by using the index of the column, like so::
 
         table.click_cell(1, 'Tiger')
 
-    .. note::
+    Additionally, the rows of a table can be iterated over, and that row's columns can be accessed
+    by name or index (left to right, 0-index)::
+
+        for row in table.rows()
+            # Get the first cell in the row
+            row[0]
+            # Get the row's contents for the column with header 'Row Name'
+            # All of these will work, though the first is preferred
+            row.row_name, row['row_name'], row['Row Name']
+
+    When doing bulk opererations, such as selecting rows in a table based on their content,
+    the ``*_by_cells`` methods are able to find matching row much more quickly than iterating,
+    as the work can be done with fewer selenium calls.
+
+        * :py:meth:`find_rows_by_cells`
+        * :py:meth:`find_row_by_cells`
+        * :py:meth:`click_rows_by_cells`
+        * :py:meth:`click_row_by_cells`
+
+    Note:
 
         A table is defined by the containers of the header and data areas, and offsets to them.
         This allows a table to include one or more padding rows above the header row. In
         the example above, there is no padding row, as our offset values are set to 0.
 
     """
-    def __init__(self, header_data=None, row_data=None):
-        self.header_data = header_data
-        self.row_data = row_data
-        self._hc = []
-        self.init = 0
+    def __init__(self, table_locator, header_offset=0, body_offset=0):
+        self._headers = None
+        self._header_indexes = None
+        self._loc = table_locator
+        self.header_offset = int(header_offset)
+        self.body_offset = int(body_offset)
+
+    @property
+    def header_row(self):
+        """Property representing the ``<tr>`` element that contains header cells"""
+        # thead/tr containing header data
+        # xpath is 1-indexed, so we need to add 1 to the offset to get the correct row
+        return sel.element('thead/tr[%d]' % (self.header_offset + 1), root=sel.element(self))
+
+    @property
+    def body(self):
+        """Property representing the ``<tbody>`` element that contains body rows"""
+        # tbody containing body rows
+        return sel.element('tbody', root=sel.element(self))
+
+    @property
+    def headers(self):
+        """List of ``<td>`` or ``<th>`` elements in :py:attr:`header_row`
+
+         """
+        if self._headers is None:
+            self._update_cache()
+        return self._headers
+
+    @property
+    def header_indexes(self):
+        """Dictionary of header name: column index for this table's rows
+
+        Derived from :py:attr:`headers`
+
+        """
+        if self._header_indexes is None:
+            self._update_cache()
+        return self._header_indexes
+
+    def locate(self):
+        return self._loc
 
     @staticmethod
     def _convert_header(header):
@@ -241,7 +295,7 @@ class Table(object):
 
         Returns: A string holding the converted header.
         """
-        return re.sub('[^0-9a-zA-Z ]+', '', header).replace(' ', '_').lower()
+        return re.sub('[^0-9a-zA-Z_]+', '', header.replace(' ', '_')).lower()
 
     @property
     def is_displayed(self):
@@ -249,23 +303,21 @@ class Table(object):
 
         Returns: True if visible, otherwise False
         """
-        return sel.is_displayed(self.header_data)
+        return sel.is_displayed(self.header_row)
 
     def _update_cache(self):
         """Updates the internal cache of headers
 
-        This allows columns to be moved and the Table updated. The variable _hc stores
+        This allows columns to be moved and the Table updated. The :py:attr:`headers` stores
         the header cache element and the list of headers are stored in _headers. The
         attribute header_indexes is then created, before finally creating the items
         attribute.
         """
-        self._hc = sel.element(self.header_data[0] + '//tr[%i]' % (self.header_data[1] + 1))
-        self._headers = sel.elements('td | th', root=self._hc)
-        self.header_indexes = {
-            self._convert_header(cell.text): self._headers.index(cell) + 1
-            for cell in self._headers}
+        self._headers = sel.elements('td | th', root=self.header_row)
+        self._header_indexes = {
+            self._convert_header(cell.text): self.headers.index(cell) for cell in self.headers}
 
-    def _rows_generator(self):
+    def rows(self):
         """A generator method holding the Row objects
 
         This generator yields Row objects starting at the first data row.
@@ -273,25 +325,10 @@ class Table(object):
         Yields:
             :py:class:`Table.Row` object corresponding to the next row in the table.
         """
-        self._update_cache()
-        index = self.row_data[1] + 1
-        data = sel.element(self.row_data[0] + '//tr[%i]' % (index))
-        yield self.Row(self.header_indexes, data, self.row_data[0])
-        while isinstance(data, selenium.webdriver.remote.webelement.WebElement):
-            index += 1
-            try:
-                data = sel.element(self.row_data[0] + '//tr[%i]' % (index))
-                item = self.Row(self.header_indexes, data, self.row_data[0])
-                yield item
-            except:
-                data = []
-
-    def rows(self):
-        """Returns a generator object yielding the rows in the Table
-
-        Return: A generator of the rows in the Table.
-        """
-        return self._rows_generator()
+        index = self.body_offset
+        row_elements = sel.elements('tr', root=self.body)
+        for row_element in row_elements[index:]:
+            yield self.create_row_from_element(row_element)
 
     def find_row(self, header, value):
         """
@@ -306,9 +343,7 @@ class Table(object):
             :py:class:`Table.Row` containing the requested cell, else ``None``.
 
         """
-        for row in self.rows():
-            if row[header].text == value:
-                return row
+        return self.find_row_by_cells({header: value})
 
     def find_cell(self, header, value):
         """
@@ -319,17 +354,116 @@ class Table(object):
         Args:
             header: A string or int, describing which column to inspect.
             value: The value to be compared when trying to identify the correct cell
-                to return.
+                to click.
 
-        Returns:
-            WebElement of the cell if the cell is found, else ``None``.
+        Returns: WebElement of the element if item was found, else ``None``.
 
         """
-        row = self.find_row(header, value)
-        if row is None:
+        matching_cell_rows = self.find_rows_by_cells({header: value})
+        try:
+            return getattr(matching_cell_rows[0], header)
+        except IndexError:
             return None
+
+    def find_rows_by_cells(self, cells):
+        """A fast row finder, based on cell content.
+
+        Args:
+            cells: A dict of ``header: value`` pairs or a sequence of
+                nested ``(header, value)`` pairs.
+
+        Returns: A list of containing :py:class:`Table.Row` objects whose contents
+            match all of the header: value pairs in ``cells``
+
+        """
+        # accept dicts or supertuples
+        cells = dict(cells)
+        cell_text_loc = '//td[contains(text(), "%s")]/..'
+        matching_rows_list = list()
+        for value in cells.values():
+            # Get all td elements that contain the value text
+            matching_rows_list.append(sel.elements(cell_text_loc % value))
+
+        # Now, find the common row elements that matched all the input cells
+        # (though not yet matching values to headers)
+        # Why not use set intersection here? Good question!
+        # https://code.google.com/p/selenium/issues/detail?id=7011
+        rows_elements = reduce(lambda l1, l2: [item for item in l1 if item in l2],
+            matching_rows_list)
+
+        # Convert them to rows
+        # This is slow, which is why we do it after reducing the row element pile,
+        # and not when building matching_rows_list, but it makes comparing header
+        # names and expected values easy
+        rows = [self.create_row_from_element(element) for element in rows_elements]
+
+        # Only include rows where the expected values are in the right columns
+        matching_rows = list()
+        matching_row_filter = lambda heading, value: row[heading].text == value
+        for row in rows:
+            if all(matching_row_filter(*cell) for cell in cells.items()):
+                matching_rows.append(row)
+
+        return matching_rows
+
+    def find_row_by_cells(self, cells):
+        """Find the first row containing cells
+
+        Args:
+            cells: See :py:meth:`Table.find_rows_by_cells`
+
+        Returns: The first matching row found, or None if no matching row was found
+
+        """
+        try:
+            rows = self.find_rows_by_cells(cells)
+            return rows[0]
+        except IndexError:
+            return None
+
+    def click_rows_by_cells(self, cells, click_column=None):
+        """Click the cell at ``click_column`` in the rows matched by ``cells``
+
+        Args:
+            cells: See :py:meth:`Table.find_rows_by_cells`
+            click_column: Which column in the row to click, defaults to None,
+                which will attempt to click the row element
+
+        Note:
+            The value of click_column can be a string or an int, and will be passed directly to
+            the item accessor (``__getitem__``) for :py:class:`Table.Row`
+
+        """
+        rows = self.find_rows_by_cells(cells)
+        if click_column is None:
+            map(sel.click, rows)
         else:
-            return row[header]
+            map(sel.click, [row[click_column] for row in rows])
+
+    def click_row_by_cells(self, cells, click_column=None):
+        """Click the cell at ``click_column`` in the first row matched by ``cells``
+
+        Args:
+            cells: See :py:meth:`Table.find_rows_by_cells`
+            click_column: See :py:meth:`Table.click_rows_by_cells`
+
+        """
+        row = self.find_row_by_cells(cells)
+        if click_column is None:
+            sel.click(row)
+        else:
+            sel.click(row[click_column])
+
+    def create_row_from_element(self, row_element):
+        """Given a row element in this table, create a :py:class:`Table.Row`
+
+        Args:
+            row_element: A table row (``<tr>``) WebElement representing a row in this table.
+
+        Returns: A :py:class:`Table.Row` for ``row_element``
+
+        """
+        return Table.Row(row_element, self)
 
     def click_cells(self, cell_map):
         """Submits multiple cells to be clicked on
@@ -365,14 +499,14 @@ class Table(object):
     def click_cell(self, header, value):
         """Clicks on a cell defined in the row.
 
-        Uses the header identifier and a data to determine which cell to click on.
+        Uses the header identifier and a value to determine which cell to click on.
 
         Args:
             header: A string or int, describing which column to inspect.
-            value: The value to be compared when trying to identify the correct row
+            value: The value to be compared when trying to identify the correct cell
                 to click the cell in.
 
-        Return: ``True`` if item was found and clicked, else ``False``.
+        Returns: ``True`` if item was found and clicked, else ``False``.
 
         """
         cell = self.find_cell(header, value)
@@ -388,60 +522,133 @@ class Table(object):
         The Row object returns a dymanically addressable attribute space so that
         the tables headers are automatically generated.
 
+        Args:
+            row_element: A table row ``WebElement``
+            parent_table: :py:class:`Table` containing ``row_element``
+
         Notes:
             Attributes are dynamically generated. The index/key accessor is more flexible
             than the attr accessor, as it can operate on int indices and header names.
 
         """
-        def __init__(self, header_indexes, data, loc):
-            self.header_indexes = header_indexes
-            self.data = data
-            self.loc = loc
+        def __init__(self, row_element, parent_table):
+            self.table = parent_table
+            self.row_element = row_element
+
+        @property
+        def columns(self):
+            """A list of WebElements corresponding to the ``<td>`` elements in this row"""
+            return sel.elements('td', root=self.row_element)
 
         def __getattr__(self, name):
             """
             Returns Row element by header name
             """
-            return sel.elements('td[%s]' % self.header_indexes[name], root=self.data)[0]
+            return self.columns[self.table.header_indexes[name]]
 
         def __getitem__(self, index):
             """
             Returns Row element by header index or name
             """
             try:
-                index += 1
-                return sel.elements('td[%i]' % index, root=self.data)[0]
+                return self.columns[index]
             except TypeError:
                 # Index isn't an int, assume it's a string
-                return getattr(self, index)
+                return getattr(self, self.table._convert_header(index))
+            # Let IndexError raise
 
         def __str__(self):
-            return ",".join([el.text for el in sel.elements('td', root=self.data)])
+            return ", ".join(["'%s'" % el.text for el in self.columns])
+
+        def __eq__(self, other):
+            # Selenium elements support equality checks, so we can, too.
+            return self.row_element == other.row_element
+
+        def locate(self):
+            # table.create_row_from_element(row_instance) might actually work...
+            return self.row_element
 
 
-def table_from_table_xpath(xpath, header_offset=0, row_offset=0):
-    """Given XPath to a 'table' element, try to return the corresponding Table object
-
-    Many (but not all) tables in the CFME UI contain thead and tbody elements for use in
-    :py:class:`Table`'s constructor with offsets of 0 for both. In that case, this convenience
-    function exists to do some of the work for you in creating a Table object.
+class SplitTable(Table):
+    """:py:class:`Table` that supports the header and body rows being in separate tables
 
     Args:
-
-        xpath: XPath string locator to table element -- No other locator type will work (sorry)
-        header_offset: Header row padding offset. Default: 0
-        row_offset: Data row padding offset. Default: 0
-
-    See :py:class:`Table` for more information on row offsets.
+        header_data: A tuple, containing an element locator and an offset value.
+            These point to the container of the header row. The offset is used in case
+            there is a padding row above the header, or in the case that the header
+            and the body are contained inside the same table element.
+        body_data: A tuple, containing an element locator and an offset value.
+            These point to the container of the body rows. The offset is used in case
+            there is a padding row above the body rows, or in the case that the header
+            and the body are contained inside the same table element.
 
     Usage:
 
-        table = table_from_table_element('//path/to/table')
+        table = SplitTable(header_data=('//div[@id="header_table"]//table/tbody', 0),
+            body_data=('//div[@id="body_table"]//table/tbody', 1))
+
+    The HTML code for a split table looks something like this::
+
+        <div id="prov_pxe_img_div">
+          <table id="header_table">
+              <tbody>
+                  <tr>
+                      <td>Name</td>
+                      <td>Animal</td>
+                      <td>Size</td>
+                  </tr>
+              </tbody>
+          </table>
+          <table id="body_table">
+              <tbody>
+                  <tr>
+                      <td>Useless</td>
+                      <td>Padding</td>
+                      <td>Row</td>
+                  </tr>
+                  <tr>
+                      <td>John</td>
+                      <td>Monkey</td>
+                      <td>Small</td>
+                  </tr>
+                  <tr>
+                      <td>Mike</td>
+                      <td>Tiger</td>
+                      <td>Large</td>
+                  </tr>
+              </tbody>
+          </table>
+        </div>
+
+    Note the use of the offset to skip the "Useless Padding Row" in ``body_data``. Most split
+    tables require an offset for both the heading and body rows.
 
     """
-    header_data = (xpath + '/thead', header_offset)
-    row_data = (xpath + '/tbody', row_offset)
-    return Table(header_data=header_data, row_data=row_data)
+    def __init__(self, header_data, body_data):
+        self._headers = None
+        self._header_indexes = None
+
+        self._header_loc, header_offset = header_data
+        self._body_loc, body_offset = body_data
+        self.header_offset = int(header_offset)
+        self.body_offset = int(body_offset)
+
+    @property
+    def header_row(self):
+        """Property representing the ``<tr>`` element that contains header cells"""
+        # thead/tr containing header data
+        # xpath is 1-indexed, so we need to add 1 to the offset to get the correct row
+        return sel.element('tr[%d]' % (self.header_offset + 1), root=sel.element(self._header_loc))
+
+    @property
+    def body(self):
+        """Property representing the element that contains body rows"""
+        # tbody containing body rows
+        return sel.element(self._body_loc)
+
+    def locate(self):
+        # Use the header locator as the overall table locator
+        return self._header_loc
 
 
 @singledispatch

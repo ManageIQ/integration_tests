@@ -56,8 +56,9 @@ def _s(s, root=None):
 
 
 @elements.register(WebElement)
-def _w(webelement):
+def _w(webelement, **kwargs):
     """Return a 1-item list of webelements"""
+    # accept **kwargs to deal with root if it's passed by singledispatch
     return [webelement]
 
 
