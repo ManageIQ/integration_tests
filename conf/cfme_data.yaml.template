@@ -155,21 +155,34 @@ ldap_server:
     bind_dn: administrator@ad.example.com
     bind_passwd: password
 server_roles:
-    default:
-        - automate
-        - ems_metrics_coordinator
-        - ems_metrics_collector
-        - ems_metrics_processor
-        - database_operations
-        - event
-        - notifier
-        - ems_inventory
+    all:    # Do not change, unless there is a change in the UI!
         - ems_operations
+        - ems_metrics_collector
+        - ems_metrics_coordinator
         - reporting
+        - ems_metrics_processor
         - scheduler
         - smartproxy
+        - database_operations
         - smartstate
+        - event
         - user_interface
+        - web_services
+        - ems_inventory
+        - notifier
+        - automate
+        - rhn_mirror
+        - database_synchronization
+    sets:   # A role not specified in the set is considered to be false (except user_interface)
+        default:
+            - database_operations
+            - event
+            - ems_inventory
+            - ems_operations
+            - reporting
+            - scheduler
+            - smartstate
+            - web_services
 group_roles:
     evmgroup-administrator:
         menus:
