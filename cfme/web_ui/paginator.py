@@ -105,7 +105,7 @@ def pages():
     # Reset the paginator, then yield the first page
     reset()
     yield
-    # Yield where there are more pages
+    # Yield while there are more pages
     while 'dimmed' not in next().get_attribute('class'):
-        yield
         sel.click(next())
+        yield
