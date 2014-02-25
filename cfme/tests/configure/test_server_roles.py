@@ -5,25 +5,41 @@ import pytest
 from cfme.configure import configuration
 from cfme.web_ui import flash
 from utils import conf
+from functools import partial
 
 
-@pytest.fixture(scope="module", params=["default"])
-def roles(request):
-    param = request.param
-    return conf.cfme_data['server_roles'][param]
+@pytest.fixture(scope="session")
+def all_possible_roles():
+    return conf.cfme_data["server_roles"]["all"]
+
+
+@pytest.fixture(scope="module", params=["default", "default_candu"])
+def roles(request, all_possible_roles):
+    result = {}
+    for role in all_possible_roles:
+        result[role] = role in conf.cfme_data["server_roles"]["sets"][request.param]
+    # Hard-coded protection
+    result["user_interface"] = True
+    return result
 
 
 @pytest.sel.go_to('dashboard')
-def test_edit_server_roles(roles):
-    roles = {name: True for name in roles}
+def test_server_roles_changing(request, roles):
+    """ Test that sets and verifies the server roles in configuration.
+
+    If there is no forced interrupt, it cleans after, so the roles are intact after the testing.
+    Todo:
+        - Use for parametrization on more roles set?
+        - Change the yaml role list to dict.
+    """
+    request.addfinalizer(partial(configuration.set_server_roles,
+                                 **configuration.get_server_roles()))   # For reverting back
+    # Set roles
     configuration.set_server_roles(**roles)
     flash.assert_no_errors()
-
-
-@pytest.mark.usefixtures("maximized")
-def test_verify_server_roles(roles):
+    # Get roles and check
     for role, is_enabled in configuration.get_server_roles().iteritems():
         if is_enabled:
-            assert role in roles, "Role '%s' is selected but should not be" % role
+            assert roles[role], "Role '%s' is selected but should not be" % role
         else:
-            assert role not in roles, "Role '%s' is not selected but should be" % role
+            assert not roles[role], "Role '%s' is not selected but should be" % role
