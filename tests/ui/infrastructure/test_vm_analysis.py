@@ -289,8 +289,8 @@ def configure_appliance(browser_setup, provider, vm_name):
     #wait for vm smart state to enable
     logger.info('Waiting for smartstate option to enable...')
     vm_details = nav_to_vm_details(provider, vm_name)
-    wait_for(vm_details.config_button.is_smart_state_analysis_enabled, func_args=[vm_details],
-        delay=30, num_sec=450, fail_func=pytest.sel.refresh)
+    wait_for(vm_details.config_button.is_smart_state_analysis_enabled, delay=30,
+        num_sec=450, fail_func=pytest.sel.refresh)
 
     return browser_setup
 
