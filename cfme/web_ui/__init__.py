@@ -728,7 +728,7 @@ def _sd_fill_form(form, values, action=None):
     for field, value in values:
         if value is not None:
             loc = form.locators[field]
-            logger.debug(' Dispatching fill for "%s", with value "%s"' % (field, value))
+            logger.debug(' Dispatching fill for "%s"' % field)
             fill(loc, value)  # re-dispatch to fill for each item
 
     if action:
