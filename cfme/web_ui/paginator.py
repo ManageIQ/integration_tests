@@ -50,20 +50,20 @@ def results_per_page(num):
     """ Changes the number of results on a page.
 
     Args:
-        num: A string, or a tuple of (type, value).
+        num: Number of results per page
     """
     select = sel.element(_locator + _num_results)
-    sel.select(select, num)
+    sel.select(select, (sel.TEXT, str(num)))
 
 
 def sort_by(sort):
     """ Changes the sort by field.
 
     Args:
-        num: A string, or a tuple of (type, value).
+        sort: Value to sort by (visible text in select box)
     """
     select = sel.element(_locator + _sort_by)
-    sel.select(select, sort)
+    sel.select(select, (sel.TEXT, sort))
 
 
 def rec_offset():
