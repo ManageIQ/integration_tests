@@ -1,50 +1,19 @@
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+
 """ Tests used to check the operation of log collecting.
 
-@author: Milan Falešník <mfalesni@redhat.com>
-@since: 2013-11-15
+Author: Milan Falešník <mfalesni@redhat.com>
+Since: 2013-02-20
 """
 
 import pytest
 import re
-from datetime import datetime
-from functools import partial
+from utils.timeutil import parsetime
 from utils import conf
 from utils.ftp import FTPClient
-from time import strftime, gmtime, sleep
-
-
-def get_current_time_GMT():
-    """ Because FTP loves GMT.
-
-    Does not return seconds as FTP also does not expose seconds.
-    This would make trouble when comparing the times.
-    """
-    return datetime.strptime(strftime("%Y-%m-%d %H:%M", gmtime()), "%Y-%m-%d %H:%M")
-
-
-@pytest.fixture
-def pg_diagnostics(cnf_configuration_pg):
-    """ Page Configure / Configuration / Diagnostics
-
-    """
-    return cnf_configuration_pg.click_on_diagnostics()
-
-
-@pytest.fixture
-def pg_this_server_diagnostics(pg_diagnostics):
-    """ Page Configure / Configuration / Diagnostics / Current server
-
-    """
-    return pg_diagnostics.click_on_current_server_tree_node()
-
-
-@pytest.fixture
-def pg_collect_logs(pg_this_server_diagnostics):
-    """ Page Configure / Configuration / Diagnostics / Current server / Collect Logs
-
-    """
-    return pg_this_server_diagnostics.click_on_collect_logs_tab()
+from cfme.configure import configuration as configure
+import cfme.web_ui.flash as flash
 
 
 def pytest_generate_tests(metafunc):
@@ -183,7 +152,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="function")
-def depot_configured(request, depot_type, depot_machine, depot_credentials, pg_collect_logs):
+def depot_configured(request, depot_type, depot_machine, depot_credentials):
     """ Configure selected depot provider
 
     This fixture used the trick that the fixtures are cached for given function.
@@ -192,39 +161,30 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials, pg_c
 
     It also provides a finalizer to disable the depot after test run.
     """
-    edit_pg = pg_collect_logs.edit()
     if depot_type not in ["nfs"]:
-        assert edit_pg.fill_credentials(depot_type,
-                                        depot_machine,
-                                        user=depot_credentials["username"],
-                                        password=depot_credentials["password"])
+        credentials = configure.ServerLogDepot.Credentials(
+            depot_type,
+            depot_machine,
+            username=depot_credentials["username"],
+            password=depot_credentials["password"]
+        )
     else:
-        assert edit_pg.fill_credentials(depot_type,
-                                        depot_machine)
-    collect = edit_pg.save_settings()
-    assert "Log Depot Settings were saved" in collect.flash.message
-
-    request.addfinalizer(partial(unconfigure, pg_collect_logs))
-
-
-def unconfigure(pg_collect_logs):
-    edit_pg = pg_collect_logs.edit()
-    if edit_pg.depot_type is not None:
-        edit_pg.depot_type = None
-        edit_pg.save_settings()
-
-
-def test_unconfigure_depot(pg_collect_logs):
-    unconfigure(pg_collect_logs)
+        credentials = configure.ServerLogDepot.Credentials(
+            depot_type,
+            depot_machine
+        )
+    credentials.update()
+    flash.assert_no_errors()
+    request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
 
 
 @pytest.mark.nondestructive
+@pytest.sel.go_to('dashboard')
 def test_collect_log_depot(depot_type,
                            depot_machine,
                            depot_credentials,
                            depot_ftp,
-                           depot_configured,
-                           pg_collect_logs):
+                           depot_configured):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
@@ -234,14 +194,7 @@ def test_collect_log_depot(depot_type,
         ftp.recursively_delete()
 
     # Start the collection
-    started = get_current_time_GMT()
-    pg_collect_logs.collect_all_logs()
-    sleep(45)   # To make the eventual already written text disappear
-                # This is because previous last message is left and if the message was
-                # 'were successfully collected', then it would be a false success.
-    pg_collect_logs.refresh()
-    pg_collect_logs.wait_last_message(lambda text: "were successfully collected" in text)
-
+    configure.ServerLogDepot.collect_all()
     # Check it on FTP
     with depot_ftp() as ftp:
         # Files must have been created after start
@@ -250,7 +203,7 @@ def test_collect_log_depot(depot_type,
 
         # And must be older than the start time.
         for file in zip_files:
-            assert file.time >= started, "%s is older." % file.name
+            assert file.local_time < parsetime.now(), "%s is older." % file.name
 
         # No file contains 'unknown_unknown' sequence
         # BZ: 1018578
@@ -274,8 +227,9 @@ def test_collect_log_depot(depot_type,
         data = regexp.match(file.name)
         assert data, "Wrong file matching"
         data = {key: int(value) for key, value in data.groupdict().iteritems()}
-        date_from = datetime(data["y1"], data["m1"], data["d1"], data["h1"], data["M1"], data["S1"])
-        date_to = datetime(data["y2"], data["m2"], data["d2"], data["h2"], data["M2"], data["S2"])
+        date_from = parsetime(
+            data["y1"], data["m1"], data["d1"], data["h1"], data["M1"], data["S1"])
+        date_to = parsetime(data["y2"], data["m2"], data["d2"], data["h2"], data["M2"], data["S2"])
         datetimes.append((date_from, date_to))
 
     # Check for the gaps
