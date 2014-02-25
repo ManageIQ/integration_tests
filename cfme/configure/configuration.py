@@ -1,22 +1,15 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-
-import ui_navigate as nav
-import cfme
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Form, Tree, Table
-import cfme.web_ui.flash as flash
-import cfme.fixtures.pytest_selenium as browser
-import utils.conf as conf
-from utils.update import Updateable
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill
-import cfme.web_ui.tabstrip as tabs
-import cfme.web_ui.accordion as accordion
-from utils.wait import wait_for, TimedOutError
-from utils.timeutil import parsetime
-from cfme.exceptions import ScheduleNotFound, NotAllItemsClicked
 from functools import partial
+
+import cfme.fixtures.pytest_selenium as browser
+import cfme.web_ui.tabstrip as tabs
+import cfme.web_ui.toolbar as tb
+from cfme.exceptions import ScheduleNotFound, NotAllItemsClicked
+from cfme.web_ui import Form, Region, Table, Tree, accordion, fill, flash
+from cfme.web_ui.menu import nav
+from utils.timeutil import parsetime
+from utils.update import Updateable
+from utils.wait import wait_for, TimedOutError
 
 
 def make_tree_locator(acc_name, root_name):

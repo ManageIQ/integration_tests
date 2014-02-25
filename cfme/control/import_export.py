@@ -1,14 +1,7 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-
-import ui_navigate as nav
-import cfme
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Form
-import cfme.web_ui.flash as flash
 import cfme.fixtures.pytest_selenium as browser
-import utils.conf as conf
-from cfme.web_ui import fill
+from cfme.web_ui import Form, Region, fill, flash
+from cfme.web_ui.menu import nav
 
 
 import_form = Form(

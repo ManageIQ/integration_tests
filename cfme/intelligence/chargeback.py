@@ -1,15 +1,15 @@
-from selenium.webdriver.common.by import By
-import cfme.web_ui.accordion as accordion
-import cfme.web_ui.menu # to load menu nav
-import cfme.web_ui as web_ui
-import cfme.web_ui.toolbar as tb
-import cfme.web_ui.flash as flash
-import cfme.fixtures.pytest_selenium as sel
-import ui_navigate as nav
-from utils.update import Updateable
 from functools import partial
 
-rate_tree = web_ui.Tree("//div[@id='cb_rates_treebox']/ul")
+from selenium.webdriver.common.by import By
+
+import cfme.web_ui.accordion as accordion
+import cfme.web_ui.toolbar as tb
+import cfme.fixtures.pytest_selenium as sel
+from cfme.web_ui import Form, Tree, fill, flash
+from cfme.web_ui.menu import nav
+from utils.update import Updateable
+
+rate_tree = Tree("//div[@id='cb_rates_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")
 tb_select_new_chargeback = nav.fn(partial(tb_select, "Add a new Chargeback Rate"))
 tb_select_edit_chargeback = nav.fn(partial(tb_select, "Edit this Chargeback Rate"))
@@ -25,7 +25,7 @@ def _mkitem(index):
     return RateFormItem((By.CSS_SELECTOR, "input#rate_" + str(index)),
                         (By.CSS_SELECTOR, "select#per_time_" + str(index)))
 
-rate_form = web_ui.Form(
+rate_form = Form(
     fields=[
         ('description_text', (By.CSS_SELECTOR, "input#description")),
         # Compute form items
@@ -73,11 +73,11 @@ WEEKLY = 'weekly'
 MONTHLY = 'monthly'
 
 
-@web_ui.fill.register(RateFormItem)
+@fill.register(RateFormItem)
 def _sd_fill_rateform(rf, value):
     '''value should be a tuple like (5, HOURLY)'''
-    web_ui.fill(rf.rate_loc, value[0])
-    web_ui.fill(rf.unit_select_loc, (sel.VALUE, value[1]))
+    fill(rf.rate_loc, value[0])
+    fill(rf.unit_select_loc, (sel.VALUE, value[1]))
 
 
 class ComputeRate(Updateable):
@@ -103,32 +103,32 @@ class ComputeRate(Updateable):
 
     def create(self):
         nav.go_to('chargeback_rates_compute_new')
-        web_ui.fill(rate_form,
-                    {'description_text': self.description,
-                     'alloc_cpu': self.cpu_alloc,
-                     'used_cpu': self.cpu_used,
-                     'disk_io': self.disk_io,
-                     'fixed_1': self.fixed_cost_1,
-                     'fixed_2': self.fixed_cost_2,
-                     'alloc_mem': self.memory_allocated,
-                     'used_mem': self.memory_used,
-                     'net_io': self.network_io},
-                    action=rate_form.add_button)
+        fill(rate_form,
+            {'description_text': self.description,
+             'alloc_cpu': self.cpu_alloc,
+             'used_cpu': self.cpu_used,
+             'disk_io': self.disk_io,
+             'fixed_1': self.fixed_cost_1,
+             'fixed_2': self.fixed_cost_2,
+             'alloc_mem': self.memory_allocated,
+             'used_mem': self.memory_used,
+             'net_io': self.network_io},
+            action=rate_form.add_button)
         flash.assert_no_errors()
 
     def update(self, updates):
         nav.go_to('chargeback_rates_compute_edit', context={'chargeback': self})
-        web_ui.fill(rate_form,
-                    {'description_text': updates.get('description'),
-                     'alloc_cpu': updates.get('cpu_alloc'),
-                     'used_cpu': updates.get('cpu_used'),
-                     'disk_io': updates.get('disk_io'),
-                     'fixed_1': updates.get('fixed_cost_1'),
-                     'fixed_2': updates.get('fixed_cost_2'),
-                     'alloc_mem': updates.get('memory_allocated'),
-                     'used_mem': updates.get('memory_used'),
-                     'net_io': updates.get('network_io')},
-                    action=rate_form.save_button)
+        fill(rate_form,
+            {'description_text': updates.get('description'),
+             'alloc_cpu': updates.get('cpu_alloc'),
+             'used_cpu': updates.get('cpu_used'),
+             'disk_io': updates.get('disk_io'),
+             'fixed_1': updates.get('fixed_cost_1'),
+             'fixed_2': updates.get('fixed_cost_2'),
+             'alloc_mem': updates.get('memory_allocated'),
+             'used_mem': updates.get('memory_used'),
+             'net_io': updates.get('network_io')},
+            action=rate_form.save_button)
         flash.assert_no_errors()
 
     def delete(self):
@@ -136,7 +136,7 @@ class ComputeRate(Updateable):
         tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
-        
+
 
 class StorageRate(Updateable):
     def __init__(self, description=None,
@@ -152,23 +152,23 @@ class StorageRate(Updateable):
 
     def create(self):
         nav.go_to('chargeback_rates_storage_new')
-        web_ui.fill(rate_form,
-                    {'description_text': self.description,
-                     'fixed_storage_1': self.fixed_cost_1,
-                     'fixed_storage_2': self.fixed_cost_2,
-                     'alloc_storage': self.allocated_storage,
-                     'used_storage': self.used_storage},
-                    action=rate_form.add_button)
+        fill(rate_form,
+            {'description_text': self.description,
+             'fixed_storage_1': self.fixed_cost_1,
+             'fixed_storage_2': self.fixed_cost_2,
+             'alloc_storage': self.allocated_storage,
+             'used_storage': self.used_storage},
+            action=rate_form.add_button)
 
     def update(self, updates):
         nav.go_to('chargeback_rates_storage_edit', context={'chargeback': self})
-        web_ui.fill(rate_form,
-                    {'description_text': updates.get('description'),
-                     'fixed_storage_1': updates.get('fixed_cost_1'),
-                     'fixed_storage_2': updates.get('fixed_cost_2'),
-                     'alloc_storage': updates.get('allocated_storage'),
-                     'used_storage': updates.get('used_storage')},
-                    action=rate_form.save_button)
+        fill(rate_form,
+            {'description_text': updates.get('description'),
+             'fixed_storage_1': updates.get('fixed_cost_1'),
+             'fixed_storage_2': updates.get('fixed_cost_2'),
+             'alloc_storage': updates.get('allocated_storage'),
+             'used_storage': updates.get('used_storage')},
+            action=rate_form.save_button)
 
     def delete(self):
         nav.go_to('chargeback_rates_storage_named', context={'chargeback': self})

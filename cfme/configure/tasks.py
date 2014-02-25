@@ -6,19 +6,12 @@
 Todo: Finish the rest of the things.
 """
 
-import ui_navigate as nav
-import cfme
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.web_ui import Region, Form, Table
-import cfme.web_ui.flash as flash
-import cfme.web_ui.paginator as paginator
 import cfme.fixtures.pytest_selenium as browser
-import utils.conf as conf
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill
 import cfme.web_ui.tabstrip as tabs
-from utils.wait import wait_for, TimedOutError
+from cfme.web_ui import Form, Region, Table, fill, paginator
+from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
+from utils.wait import wait_for, TimedOutError
 
 
 nav.add_branch("tasks",
