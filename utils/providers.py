@@ -1,32 +1,57 @@
-"""Function to return a provider instance of :py:mod:`utils.mgmt_system`
-based on the request
+"""Helper functions related to the creation and destruction of providers
 
-:var infra_provider_type_map: Provides mapping of infra provider type names a
-   :py:mod:`utils.mgmt_system` object as a dict
-:var cloud_provider_type_map: Provides mapping of cloud provider type names a
-   :py:mod:`utils.mgmt_system` object as a dict
-:var provider_type_map: Combined dict of ``infra_provider_type_map`` and ``cloud_provider_type_map``
+To quickly add all providers::
+
+    setup_providers(validate=False)
+
 """
 from functools import partial
 
-from utils import conf, mgmt_system
+from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import Quadicon, paginator
+from utils import conf, mgmt_system, ssh
+from utils.log import logger
 
-#: infra provider type maps, useful for type checking
+#: mapping of infra provider type names to :py:mod:`utils.mgmt_system` classes
 infra_provider_type_map = {
     'virtualcenter': mgmt_system.VMWareSystem,
     'rhevm': mgmt_system.RHEVMSystem,
 }
 
-#: cloud provider type maps, useful for type checking
+#: mapping of cloud provider type names to :py:mod:`utils.mgmt_system` classes
 cloud_provider_type_map = {
     'ec2': mgmt_system.EC2System,
     'openstack': mgmt_system.OpenstackSystem,
 }
 
-#: Combined type map, used by :py:func:`provider_factory` to create provider instances
+#: mapping of all provider type names to :py:mod:`utils.mgmt_system` classes
 provider_type_map = dict(
     infra_provider_type_map.items() + cloud_provider_type_map.items()
 )
+
+
+def list_providers(allowed_types):
+    """ Returns list of providers of selected type from configuration.
+
+    @param allowed_types: Passed by partial(), see top of this file.
+    @type allowed_types: dict, list, set, tuple
+    """
+    providers = []
+    for provider, data in conf.cfme_data["management_systems"].iteritems():
+        provider_type = data.get("type", None)
+        assert provider_type is not None, "Provider %s has no type specified!" % provider
+        if provider_type in allowed_types:
+            providers.append(provider)
+    return providers
+
+#: function that returns a list of infra provider keys in cfme_data
+list_infra_providers = partial(list_providers, infra_provider_type_map.keys())
+
+#: function that returns a list of cloud provider keys in cfme_data
+list_cloud_providers = partial(list_providers, cloud_provider_type_map.keys())
+
+#: function that returns a list of all provider keys in cfme_data
+list_all_providers = partial(list_providers, provider_type_map.keys())
 
 
 def provider_factory(provider_name, providers=None, credentials=None):
@@ -59,22 +84,7 @@ def provider_factory(provider_name, providers=None, credentials=None):
     return provider_instance
 
 
-def list_providers(allowed_types):
-    """ Returns list of providers of selected type from configuration.
-
-    @param allowed_types: Passed by partial(), see top of this file.
-    @type allowed_types: dict, list, set, tuple
-    """
-    providers = []
-    for provider, data in conf.cfme_data["management_systems"].iteritems():
-        provider_type = data.get("type", None)
-        assert provider_type is not None, "Provider %s has no type specified!" % provider
-        if provider_type in allowed_types:
-            providers.append(provider)
-    return providers
-
-
-def setup_provider(provider_name, validate=True):
+def setup_provider(provider_name, validate=True, check_existing=True):
     """Add the named provider to CFME
 
     Args:
@@ -82,79 +92,152 @@ def setup_provider(provider_name, validate=True):
         validate: Whether or not to block until the provider stats in CFME
             match the stats gleaned from the backend management system
             (default: ``True``)
+        check_existing: Check if this provider already exists, skip if it does
 
     """
     provider_data = conf.cfme_data['management_systems'][provider_name]
     if provider_data['type'] in infra_provider_type_map:
-        setup_infrastructure_provider(provider_name, validate)
+        setup_infrastructure_provider(provider_name, validate, check_existing)
     elif provider_data['type'] in cloud_provider_type_map:
-        setup_cloud_provider(provider_name, validate)
+        setup_cloud_provider(provider_name, validate, check_existing)
     #else: wat?
 
 
-def setup_cloud_provider(provider_name, validate=True):
+def setup_cloud_provider(provider_name, validate=True, check_existing=True):
     """Add the named cloud provider to CFME
 
     Args:
         provider_name: Provider name from cfme_data
         validate: see description in :py:func:`setup_provider`
+        check_existing: see description in :py:func:`setup_provider`
 
     """
     from cfme.cloud.provider import get_from_config
     provider = get_from_config(provider_name)
+    if check_existing and provider.exists:
+        return
+
+    logger.info('Setting up provider: %s' % provider.key)
     provider.create(validate_credentials=True)
     if validate:
         provider.validate()
 
 
-def setup_infrastructure_provider(provider_name, validate=True):
+def setup_infrastructure_provider(provider_name, validate=True, check_existing=True):
     """Add the named infrastructure provider to CFME
 
     Args:
         provider_name: Provider name from cfme_data
         validate: see description in :py:func:`setup_provider`
+        check_existing: see description in :py:func:`setup_provider`
 
     """
     from cfme.infrastructure.provider import get_from_config
     provider = get_from_config(provider_name)
+    if check_existing and provider.exists:
+        return
+
+    logger.info('Setting up provider: %s' % provider.key)
     provider.create(validate_credentials=True)
     if validate:
         provider.validate()
 
 
-def setup_providers(validate=True):
+def setup_providers(validate=True, check_existing=True):
     """Run :py:func:`setup_provider` for every provider (cloud and infra)
 
     Args:
         validate: see description in :py:func:`setup_provider`
+        check_existing: see description in :py:func:`setup_provider`
 
     """
-    for provider_name in list_all_providers():
-        setup_provider(provider_name, validate)
+    setup_cloud_providers(validate, check_existing)
+    setup_infrastructure_providers(validate, check_existing)
 
 
-def setup_cloud_providers(validate=True):
+def setup_cloud_providers(validate=True, check_existing=True):
     """Run :py:func:`setup_cloud_provider` for every cloud provider
 
     Args:
         validate: see description in :py:func:`setup_provider`
+        check_existing: see description in :py:func:`setup_provider`
 
     """
-    for provider_name in list_cloud_providers():
-        setup_cloud_provider(provider_name, validate)
+    # Check for existing providers all at once, to prevent reloading
+    # the providers page for every provider in cfme_data
+    if check_existing:
+        providers_to_add = []
+        sel.force_navigate('clouds_providers')
+        for provider_key in list_cloud_providers():
+            provider_name = conf.cfme_data['management_systems'][provider_key]['name']
+            quad = Quadicon(provider_name, 'cloud_prov')
+            for page in paginator.pages():
+                if sel.is_displayed(quad):
+                    logger.debug('Provider "%s" exists, skipping' % provider_key)
+                    break
+            else:
+                providers_to_add.append(provider_key)
+    else:
+        providers_to_add = list_cloud_providers()
+
+    if providers_to_add:
+        logger.info('Providers to be added: %s' % ', '.join(providers_to_add))
+
+    for provider_name in providers_to_add:
+        setup_cloud_provider(provider_name, validate, check_existing=False)
 
 
-def setup_infrastructure_providers(validate=True):
+def setup_infrastructure_providers(validate=True, check_existing=True):
     """Run :py:func:`setup_infrastructure_provider` for every infrastructure provider
 
     Args:
         validate: see description in :py:func:`setup_provider`
+        check_existing: see description in :py:func:`setup_provider`
 
     """
-    for provider_name in list_infra_providers():
-        setup_infrastructure_provider(provider_name, validate)
+    if check_existing:
+        providers_to_add = []
+        sel.force_navigate('infrastructure_providers')
+        for provider_key in list_infra_providers():
+            provider_name = conf.cfme_data['management_systems'][provider_key]['name']
+            quad = Quadicon(provider_name, 'infra_prov')
+            for page in paginator.pages():
+                if sel.is_displayed(quad):
+                    logger.debug('Provider "%s" exists, skipping' % provider_key)
+                    break
+            else:
+                providers_to_add.append(provider_key)
+    else:
+        providers_to_add = list_infra_providers()
+
+    if providers_to_add:
+        logger.info('Providers to be added: %s' % ', '.join(providers_to_add))
+
+    for provider_name in providers_to_add:
+        setup_infrastructure_provider(provider_name, validate, check_existing=False)
 
 
-list_infra_providers = partial(list_providers, infra_provider_type_map.keys())
-list_cloud_providers = partial(list_providers, cloud_provider_type_map.keys())
-list_all_providers = partial(list_providers, provider_type_map.keys())
+def clear_providers():
+    """Rudely clear all providers on an appliance
+
+    Uses the appliance ruby console in an attempt to cleanly delete not just
+    the providers but all related objects
+
+    Connects to the appliance in ``env.yaml``.
+    """
+    logger.info('Destroying all appliance providers and VMs')
+    client = ssh.SSHClient()
+    exit, out = client.run_rails_command(_clear_providers_rb)
+    if exit == 0:
+        return True
+    else:
+        logger.error('clear_providers failed with ruby error')
+        logger.error(out)
+        return False
+
+# Single quotes are needed for the shell on the remote side
+# For reference: http://apidock.com/rails/ActiveRecord/Base/destroy_all/class
+_clear_providers_rb = """'
+ExtManagementSystem.destroy_all()
+VmOrTemplate.destroy_all()'
+"""

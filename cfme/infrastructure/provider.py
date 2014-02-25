@@ -20,7 +20,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
-from cfme.web_ui import Region, Quadicon, Form, fill
+from cfme.web_ui import Region, Quadicon, Form, fill, paginator
 from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -279,6 +279,15 @@ class Provider(Updateable):
     def num_cluster(self):
         """ Returns the providers number of templates, as shown on the Details page."""
         return int(self.get_detail("Relationships", "Clusters"))
+
+    @property
+    def exists(self):
+        browser.force_navigate('infrastructure_providers')
+        for page in paginator.pages():
+            if browser.is_displayed(Quadicon(self.name, 'infra_prov')):
+                return True
+        else:
+            return False
 
 
 class VMwareProvider(Provider):

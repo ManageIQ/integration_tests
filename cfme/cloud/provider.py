@@ -20,7 +20,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
-from cfme.web_ui import Region, Quadicon, Form, fill
+from cfme.web_ui import Region, Quadicon, Form, fill, paginator
 from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -258,6 +258,15 @@ class Provider(Updateable):
     def num_vm(self):
         """ Returns the providers number of instances, as shown on the Details page."""
         return int(self.get_detail("Relationships", "Instances"))
+
+    @property
+    def exists(self):
+        browser.force_navigate('clouds_providers')
+        for page in paginator.pages():
+            if browser.is_displayed(Quadicon(self.name, 'cloud_prov')):
+                return True
+        else:
+            return False
 
 
 class EC2Provider(Provider):
