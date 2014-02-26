@@ -12,15 +12,19 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 """
 from time import sleep
 from traceback import format_exc
+import json
 
 import ui_navigate
-from selenium.common.exceptions import NoSuchElementException, UnexpectedAlertPresentException
+from selenium.common.exceptions import (NoSuchElementException,
+                                        UnexpectedAlertPresentException,
+                                        NoSuchAttributeException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select
-from singledispatch import singledispatch
+
+from multimethods import singledispatch, multidispatch
 
 import pytest
 from cfme import exceptions
@@ -48,21 +52,21 @@ def elements(o, root=None):
     # let the error bubble up.
 
 
-@elements.register(basestring)
+@elements.method(basestring)
 def _s(s, root=None):
     """Assume string is an xpath locator"""
     parent = root or browser()
     return parent.find_elements_by_xpath(s)
 
 
-@elements.register(WebElement)
+@elements.method(WebElement)
 def _w(webelement, **kwargs):
     """Return a 1-item list of webelements"""
     # accept **kwargs to deal with root if it's passed by singledispatch
     return [webelement]
 
 
-@elements.register(tuple)
+@elements.method(tuple)
 def _t(t, root=None):
     """Assume tuple is a 2-item tuple like (By.ID, 'myid')"""
     parent = root or browser()
@@ -250,127 +254,6 @@ def send_keys(loc, text):
         wait_for_ajax()
 
 
-@singledispatch
-def set_text(loc, text):
-    """
-    Clears the element and then sends the supplied keys.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        text: The text to inject into the element.
-    """
-    if text is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        el.clear()
-        el.send_keys(text)
-        wait_for_ajax()
-
-
-def select(loc, o):
-    """
-    Takes a locator and an object and selects using the correct method.
-
-    If o is a string, then it is assumed the user wishes to select by visible text.
-    If o is a tuple, then the first argument defines the type. Either ``TEXT`` or ``VALUE``.
-    A choice of select method is then determined.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        o: An object, can be either a string or a tuple.
-    """
-    if isinstance(o, basestring):
-        select_by_text(loc, o)
-    else:
-        vtype, value = o
-        if vtype == TEXT:
-            select_by_text(loc, value)
-        if vtype == VALUE:
-            select_by_value(loc, value)
-
-
-def select_by_text(loc, text):
-    """
-    Works on a select element and selects an option by the visible text.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        text: The select element option's visible text.
-    """
-    if text is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        Select(el).select_by_visible_text(text)
-        wait_for_ajax()
-
-
-def select_by_value(loc, value):
-    """
-    Works on a select element and selects an option by the value attribute.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        value: The select element's option value.
-    """
-    if value is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        Select(el).select_by_value(value)
-        wait_for_ajax()
-
-
-def deselect(loc, o):
-    """
-    Takes a locator and an object and deselects using the correct method.
-
-    If o is a string, then it is assumed the user wishes to select by visible text.
-    If o is a tuple, then the first argument defines the type. Either ``TEXT`` or ``VALUE``.
-    A choice of select method is then determined.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        o: An object, can be either a string or a tuple.
-    """
-    if isinstance(o, basestring):
-        deselect_by_text(loc, o)
-    else:
-        vtype, value = o
-        if vtype == TEXT:
-            deselect_by_text(loc, value)
-        if vtype == VALUE:
-            deselect_by_value(loc, value)
-
-
-def deselect_by_text(loc, text):
-    """
-    Works on a select element and deselects an option by the visible text.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        text: The select element option's visible text.
-    """
-    if text is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        Select(el).deselect_by_visible_text(text)
-        wait_for_ajax()
-
-
-def deselect_by_value(loc, value):
-    """
-    Works on a select element and deselects an option by the value attribute.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        value: The select element's option value.
-    """
-    if value is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        Select(el).deselect_by_value(value)
-        wait_for_ajax()
-
-
 def checkbox(loc, set_to=False):
     """
     Checks or unchecks a given checkbox
@@ -511,38 +394,6 @@ return inflight(function() { return jQuery.active},
 """
 
 
-class ObservedText(object):
-    """A class to represent an observed textbox in CFME.
-    That means that as we type into this textbox, the js periodically
-    checks if it's not been typed in in the last x seconds.  If not,
-    an ajax call is made (presumably to validate the input).
-    """
-
-    def __init__(self, locator):
-        self.locator = locator
-
-
-@set_text.register(ObservedText)
-def _sd_set_text_string(ot, text):
-    """When setting text on an ObservedText, wait after typing
-    until the timer expires and fires the ajax event.
-    """
-    if text is not None:
-        el = element(ot)
-        ActionChains(browser()).move_to_element(el).perform()
-        el.clear()
-        el.send_keys(text)
-        sleep(0.8)
-        wait_for_ajax()
-
-
-@elements.register(ObservedText)
-def _sd_elements_otext(ot):
-    """The elements of an ObservedText is just the elements of
-    its locator."""
-    return elements(ot.locator)
-
-
 def go_to(page_name):
     """go_to task mark, used to ensure tests start on the named page, logged in as Administrator.
 
@@ -640,3 +491,182 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         logger.debug(format_exc())
         browser().quit()
         force_navigate(page_name, _tries, *args, **kwargs)
+
+
+def detect_observed_field(loc):
+    """Detect observed fields; sleep if needed
+
+    Used after filling most form fields, this function will inspect the filled field for
+    one of the known CFME observed field attribues, and if found, sleep long enough for the observed
+    field's AJAX request to go out, and then block until no AJAX requests are in flight.
+
+    Observed fields occasionally declare their own wait interval before firing their AJAX request.
+    If found, that interval will be used instead of the default.
+
+    """
+    el = element(loc)
+    # Default wait period, based on the default UI wait (700ms)
+    # plus a little padding to let the AJAX fire before we wait_for_ajax
+    default_wait = .8
+    # Known observed field attributes
+    observed_field_markers = (
+        'data-miq_observe',
+        'data-miq_observe_date',
+        'data-miq_observe_checkbox',
+    )
+    for attr in observed_field_markers:
+        try:
+            observed_field_attr = el.get_attribute(attr)
+            break
+        except NoSuchAttributeException:
+            pass
+    else:
+        # Failed to detect an observed text field, short out
+        return
+
+    try:
+        attr_dict = json.loads(observed_field_attr)
+        interval = float(attr_dict.get('interval', default_wait))
+        # Pad the detected interval, as with default_wait
+        interval += .1
+    except (TypeError, ValueError):
+        # ValueError and TypeError happens if the attribute value couldn't be decoded as JSON
+        # ValueError also happens if interval couldn't be coerced to float
+        # In either case, we've detected an observed text field and should wait
+        interval = default_wait
+
+    logger.debug('  Observed field detected, pausing %.1f seconds' % interval)
+    sleep(interval)
+    wait_for_ajax()
+
+
+@singledispatch
+def set_text(loc, text):
+    """
+    Clears the element and then sends the supplied keys.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        text: The text to inject into the element.
+    """
+    if text is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        el.clear()
+        el.send_keys(text)
+
+
+@multidispatch
+def select(loc, o):
+    raise NotImplementedError('Unable to select {} in this type: {}'.format(o, loc))
+
+
+@select.method((object, tuple))
+def _select_tuple(loc, o):
+    """
+    Takes a locator and an object and selects using the correct method.
+
+    If o is a string, then it is assumed the user wishes to select by visible text.
+    If o is a tuple, then the first argument defines the type. Either ``TEXT`` or ``VALUE``.
+    A choice of select method is then determined.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        o: An object, can be either a string or a tuple.
+    """
+    vtype, value = o
+    if vtype == TEXT:
+        select_by_text(loc, value)
+    if vtype == VALUE:
+        select_by_value(loc, value)
+
+
+@select.method((object, str))
+def _select_str(loc, s):
+    select_by_text(loc, s)
+
+
+def select_by_text(loc, text):
+    """
+    Works on a select element and selects an option by the visible text.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        text: The select element option's visible text.
+    """
+    if text is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        Select(el).select_by_visible_text(text)
+        detect_observed_field(loc)
+        wait_for_ajax()
+
+
+def select_by_value(loc, value):
+    """
+    Works on a select element and selects an option by the value attribute.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        value: The select element's option value.
+    """
+    if value is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        Select(el).select_by_value(value)
+        detect_observed_field(loc)
+        wait_for_ajax()
+
+
+def deselect(loc, o):
+    """
+    Takes a locator and an object and deselects using the correct method.
+
+    If o is a string, then it is assumed the user wishes to select by visible text.
+    If o is a tuple, then the first argument defines the type. Either ``TEXT`` or ``VALUE``.
+    A choice of select method is then determined.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        o: An object, can be either a string or a tuple.
+    """
+    if isinstance(o, basestring):
+        deselect_by_text(loc, o)
+    else:
+        vtype, value = o
+        if vtype == TEXT:
+            deselect_by_text(loc, value)
+        if vtype == VALUE:
+            deselect_by_value(loc, value)
+
+
+def deselect_by_text(loc, text):
+    """
+    Works on a select element and deselects an option by the visible text.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        text: The select element option's visible text.
+    """
+    if text is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        Select(el).deselect_by_visible_text(text)
+        detect_observed_field(loc)
+        wait_for_ajax()
+
+
+def deselect_by_value(loc, value):
+    """
+    Works on a select element and deselects an option by the value attribute.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        value: The select element's option value.
+    """
+    if value is not None:
+        el = element(loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        Select(el).deselect_by_value(value)
+        detect_observed_field(loc)
+        wait_for_ajax()
