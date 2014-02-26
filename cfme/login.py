@@ -6,34 +6,41 @@ the credentials in the cfme yamls.
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the login page
 """
 
-from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
-import cfme.fixtures.pytest_selenium as browser
+import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
-from cfme.web_ui import Region
+from cfme.web_ui import Region, Form, fill
 from utils import conf
 from utils.log import logger
 
 
 page = Region(title="CloudForms Management Engine: Dashboard",
-              locators={"username_text": (By.CSS_SELECTOR, '#user_name'),
-                        "password_text": (By.CSS_SELECTOR, '#user_password'),
-                        "submit_button": (By.ID, 'login'),
-                        "logout": (By.CSS_SELECTOR, 'a[href="/dashboard/logout"]'),
-                        "user_dropdown": (By.CSS_SELECTOR, "div#page_header_div li.dropdown")},
-              identifying_loc="username_text")
+    locators={
+        'username': '//input[@id="user_name"]',
+        'password': '//input[@id="user_password"]',
+        'submit_button': '//a[@id="login"]',
+        # Login page has an abnormal flash div
+        'flash': '//div[@id="flash_div"]',
+        'user_dropdown': '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
+        'logout': '//a[contains(@href, "/logout")]',
+    },
+    identifying_loc='username')
+
+_form_fields = ('username', 'password', 'submit_button')
+form = Form(fields=[loc for loc in page.locators.items() if loc[0] in _form_fields],
+    identifying_loc='username')
 
 
 def _click_on_login():
     """
     Convenience internal function to click the login locator submit button.
     """
-    browser.click(page.submit_button)
+    sel.click(page.submit_button)
 
 
-def _is_logged_in():
-        if browser.is_displayed(page.user_dropdown):
+def logged_in():
+        if sel.is_displayed(page.user_dropdown):
             return True
 
 
@@ -41,10 +48,10 @@ def press_enter_after_password():
     """
     Convenience function to send a carriange return at the end of the password field.
     """
-    browser.send_keys(page.password_text, Keys.RETURN)
+    sel.send_keys(page.password, Keys.RETURN)
 
 
-def login(user, password, submit_method=_click_on_login):
+def login(username, password, submit_method=_click_on_login):
     """
     Login to CFME with the given username and password.
     Optionally, submit_method can be press_enter_after_password
@@ -60,14 +67,13 @@ def login(user, password, submit_method=_click_on_login):
     """
     # TODO: Should probably do the username check here, but there are pretty usernames to deal with
     # e.g. 'admin' shows up in the UI as 'Administrator'
-    if not _is_logged_in():
+    if not logged_in():
         # workaround for strange bug where we are logged out
         # as soon as we click something on the dashboard
-        browser.sleep(1.0)
+        sel.sleep(1.0)
 
-        logger.debug('Logging in as user %s' % user)
-        browser.set_text(page.username_text, user)
-        browser.set_text(page.password_text, password)
+        logger.debug('Logging in as user %s' % username)
+        fill(form, {'username': username, 'password': password})
         submit_method()
         flash.assert_no_errors()
 
@@ -82,19 +88,19 @@ def login_admin(**kwargs):
     if current_username() != 'Administrator':
         logout()
 
-    user = conf.credentials['default']['username']
+    username = conf.credentials['default']['username']
     password = conf.credentials['default']['password']
-    login(user, password, **kwargs)
+    login(username, password, **kwargs)
 
 
 def logout():
     """
     Logs out of CFME.
     """
-    if _is_logged_in():
-        if not browser.is_displayed(page.logout):
-            browser.click(page.user_dropdown)
-        browser.click(page.logout)
+    if logged_in():
+        if not sel.is_displayed(page.logout):
+            sel.click(page.user_dropdown)
+        sel.click(page.logout)
 
 
 def current_username():
@@ -102,7 +108,7 @@ def current_username():
 
     Returns: the current username.
     """
-    if _is_logged_in():
-        return browser.text(page.user_dropdown).split('|')[0].strip()
+    if logged_in():
+        return sel.text(page.user_dropdown).split('|')[0].strip()
     else:
         return None
