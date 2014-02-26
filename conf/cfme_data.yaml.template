@@ -174,6 +174,10 @@ server_roles:
         - rhn_mirror
         - database_synchronization
     sets:   # A role not specified in the set is considered to be false (except user_interface)
+            # There is a dict generated between `all` and specific set
+            # What is in `all` but not in the particular set, is False
+            # What is in `all` and also in the particular set, is True
+            # It is not a dictionary due to compatibility with the old code.
         default:
             - database_operations
             - event
