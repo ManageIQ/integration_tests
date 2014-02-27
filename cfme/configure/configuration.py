@@ -768,10 +768,7 @@ class Schedule(object):
         ("start_min", "//select[@id='start_min']"),
     ])
 
-    table = Table(
-        header_data=("//div[@id='records_div']/table[@class='style3']/thead", 0),
-        row_data=("//div[@id='records_div']/table[@class='style3']/tbody", 0)
-    )
+    table = Table("//div[@id='records_div']/table[@class='style3']")
 
     def __init__(self,
                  name,
@@ -1047,10 +1044,7 @@ def restart_workers(name, wait_time_min=1):
     Returns: bool whether the restart succeeded.
     """
 
-    table = Table(
-        header_data=("//div[@id='records_div']/table[@class='style3']/thead", 0),
-        row_data=("//div[@id='records_div']/table[@class='style3']/tbody", 0)
-    )
+    table = Table("//div[@id='records_div']/table[@class='style3']/thead")
     nav.go_to("cfg_diagnostics_server_workers")
 
     def get_all_pids(worker_name):
