@@ -75,21 +75,16 @@ properties_form = Form(
         ('api_port', "//*[@id='port']"),
     ])
 
-def_form = Form(
+credential_form = Form(
     fields=[
-        ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('principal', "//*[@id='default_userid']"),
-        ('secret', "//*[@id='default_password']"),
-        ('verify_secret', "//*[@id='default_verify']"),
-        ('validate_btn', page_specific_locators.creds_validate_btn)
-    ])
-
-candu_form = Form(
-    fields=[
-        ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#metrics']"),
-        ('principal', "//*[@id='metrics_userid']"),
-        ('secret', "//*[@id='metrics_password']"),
-        ('verify_secret', "//*[@id='metrics_verify']"),
+        ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
+        ('default_principal', "//*[@id='default_userid']"),
+        ('default_secret', "//*[@id='default_password']"),
+        ('default_verify_secret', "//*[@id='default_verify']"),
+        ('candu_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
+        ('candu_principal', "//*[@id='default_userid']"),
+        ('candu_secret', "//*[@id='default_password']"),
+        ('candu_verify_secret', "//*[@id='default_verify']"),
         ('validate_btn', page_specific_locators.creds_validate_btn)
     ])
 
@@ -161,7 +156,7 @@ class Provider(Updateable):
         """
         browser.force_navigate('infrastructure_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
-        fill(self.credentials, validate=validate_credentials)
+        fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, add_page.add_submit)
 
     def update(self, updates, cancel=False, validate_credentials=False):
@@ -176,7 +171,7 @@ class Provider(Updateable):
 
         nav.go_to('infrastructure_provider_edit', context={'provider': self})
         fill(properties_form, self._form_mapping(**updates))
-        fill(self.credentials, validate=validate_credentials)
+        fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, edit_page.save_button)
 
     def validate(self):
@@ -328,19 +323,22 @@ class RHEVMProvider(Provider):
                 'ipaddress_text': kwargs.get('ip_address')}
 
 
-@fill.register(Provider.Credential)
-def _sd_fill_credential(cred, validate=None):
-    """How to fill in a credential (either amqp or default).  Validates the
+@fill.method((Form, Provider.Credential))
+def _fill_credential(form, cred, validate=None):
+    """How to fill in a credential (either candu or default).  Validates the
     credential if that option is passed in.
     """
-    mapping = {'principal': cred.principal,
-               'secret': cred.secret,
-               'verify_secret': cred.verify_secret,
-               'validate_btn': validate}
     if cred.candu:
-        fill(candu_form, mapping)
+        fill(credential_form, {'candu_button': True,
+                               'candu_principal': cred.principal,
+                               'candu_secret': cred.secret,
+                               'candu_verify_secret': cred.verify_secret,
+                               'validate_btn': validate})
     else:
-        fill(def_form, mapping)
+        fill(credential_form, {'default_principal': cred.principal,
+                               'default_secret': cred.secret,
+                               'default_verify_secret': cred.verify_secret,
+                               'validate_btn': validate})
     if validate:
         flash.assert_no_errors()
 

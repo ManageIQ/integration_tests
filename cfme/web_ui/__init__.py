@@ -636,12 +636,12 @@ def fill_click(el, val):
     return (click_if, val)
 
 
-@fill_tag.method(('file'))
+@fill_tag.method((Anything, 'file'))
 def fill_file(fd, val):
     return (sel.send_keys, val)
 
 
-@fill_tag.method(('checkbox'))
+@fill_tag.method((Anything, 'checkbox'))
 def fill_checkbox(cb, val):
     return (sel.checkbox, bool(val))
 
@@ -710,6 +710,7 @@ def _sd_fill_date(calendar, value):
     browser().execute_script("arguments[0].value = '%s'" % date_str, input)
 
 
+@fill.method((object, types.NoneType))
 @fill.method((types.NoneType, object))
 def _sd_fill_none(*args, **kwargs):
     """ Ignore a NoneType """
@@ -787,7 +788,7 @@ class _TabStripField(object):
 
 
 @fill.method((_TabStripField, object))
-def _tabstrip_fill(tabstrip_field, value):
+def _fill_tabstrip(tabstrip_field, value):
     tabstrip.select_tab(tabstrip_field.ident_string)
     fill(tabstrip_field.arg, value)
 
@@ -850,7 +851,7 @@ class TabStripForm(Form):
 
 
 @fill.method((Form, list))
-def _sd_fill_form(form, values, action=None):
+def _fill_form_list(form, values, action=None):
     """
     Fills in field elements on forms
 
@@ -930,7 +931,7 @@ class Radio(object):
 
 
 @fill.method((Radio, object))
-def _sd_fill_radio(radio, value):
+def _fill_radio(radio, value):
     """How to fill a radio button group (by selecting the given value)"""
     sel.click(radio.choice(value))
 
@@ -1180,7 +1181,7 @@ class Tree(object):
 
 
 @fill.method((Tree, object))
-def _sd_fill_tree(tree, values):
+def _fill_tree(tree, values):
     # Assume a list of paths, select_node on each path
     for path in values:
         tree.select_node(*path)
