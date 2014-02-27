@@ -1044,7 +1044,7 @@ def restart_workers(name, wait_time_min=1):
     Returns: bool whether the restart succeeded.
     """
 
-    table = Table("//div[@id='records_div']/table[@class='style3']/thead")
+    table = Table("//div[@id='records_div']/table[@class='style3']")
     nav.go_to("cfg_diagnostics_server_workers")
 
     def get_all_pids(worker_name):
