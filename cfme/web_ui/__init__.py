@@ -25,15 +25,14 @@
   * :py:mod:`cfme.web_ui.toolbar`
 
 """
-import json
+
 import os
 import re
 import types
 from datetime import date
-from time import sleep
 
 from selenium.common import exceptions as sel_exceptions
-from singledispatch import singledispatch
+from multimethods import multimethod, multidispatch, Anything
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
@@ -107,53 +106,6 @@ def get_context_current_page():
     url = browser().current_url()
     stripped = url.lstrip('https://')
     return stripped[stripped.find('/'):stripped.rfind('?')]
-
-
-def detect_observed_field(loc):
-    """Detect observed fields; sleep if needed
-
-    Used after filling most form fields, this function will inspect the filled field for
-    one of the known CFME observed field attribues, and if found, sleep long enough for the observed
-    field's AJAX request to go out, and then block until no AJAX requests are in flight.
-
-    Observed fields occasionally declare their own wait interval before firing their AJAX request.
-    If found, that interval will be used instead of the default.
-
-    """
-    element = sel.element(loc)
-    # Default wait period, based on the default UI wait (700ms)
-    # plus a little padding to let the AJAX fire before we wait_for_ajax
-    default_wait = .8
-    # Known observed field attributes
-    observed_field_markers = (
-        'data-miq_observe',
-        'data-miq_observe_date',
-        'data-miq_observe_checkbox',
-    )
-    for attr in observed_field_markers:
-        try:
-            observed_field_attr = element.get_attribute(attr)
-            break
-        except sel_exceptions.NoSuchAttributeException:
-            pass
-    else:
-        # Failed to detect an observed text field, short out
-        return
-
-    try:
-        attr_dict = json.loads(observed_field_attr)
-        interval = float(attr_dict.get('interval', default_wait))
-        # Pad the detected interval, as with default_wait
-        interval += .1
-    except (TypeError, ValueError):
-        # ValueError and TypeError happens if the attribute value couldn't be decoded as JSON
-        # ValueError also happens if interval couldn't be coerced to float
-        # In either case, we've detected an observed text field and should wait
-        interval = default_wait
-
-    logger.debug('  Observed field detected, pausing %.1f seconds' % interval)
-    sleep(interval)
-    sel.wait_for_ajax()
 
 
 class Table(object):
@@ -651,8 +603,51 @@ class SplitTable(Table):
         return self._header_loc
 
 
-@singledispatch
-def fill(arg, content):
+@multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))
+def fill_tag(loc, value):
+    ''' Return a tuple of function to do the filling, and a value to log.'''
+    raise NotImplementedError("Don't know how to fill {} into this type: {}".format(value, loc))
+
+
+@fill_tag.method(('select', Anything))
+def fill_select(slist, val):
+    return (sel.select, val)
+
+
+@fill_tag.method((Anything, 'text'))
+@fill_tag.method((Anything, 'textarea'))
+def fill_text(textbox, val):
+    return (sel.set_text, val)
+
+
+@fill_tag.method((Anything, 'password'))
+def fill_password(pwbox, password):
+    return (sel.set_text, "********")
+
+
+@fill_tag.method(('a', Anything))
+@fill_tag.method(('img', Anything))
+@fill_tag.method((Anything, 'image'))
+def fill_click(el, val):
+    '''Click only when given a truthy value'''
+    def click_if(e, v):
+        if v:
+            sel.click(e)
+    return (click_if, val)
+
+
+@fill_tag.method((Anything, 'file'))
+def fill_file(fd, val):
+    return (sel.send_keys, val)
+
+
+@fill_tag.method((Anything, 'checkbox'))
+def fill_checkbox(cb, val):
+    return (sel.checkbox, bool(val))
+
+
+@multidispatch
+def fill(loc, content):
     """
     Fills in a UI component with the given content.
 
@@ -663,59 +658,12 @@ def fill(arg, content):
 
     Default implementation just throws an error.
     """
-    raise NotImplementedError('Unable to fill {} into this type: {}'.format(content, arg))
+    action, logval = fill_tag(loc, content)
+    logger.debug('  Filling in [%s], with value "%s"' % (loc, logval))
+    action(loc, content)
 
 
-@fill.register(str)
-@fill.register(tuple)
-def _sd_fill_string(loc, value):
-    """
-    How to 'fill' a string.  Assumes string is a locator for a UI input element,
-    eg textbox, radio button, select list, etc.
-    value is the value to input into that element.
-
-    Usage:
-        fill("//input[@type='text' and @id='username']", 'admin')
-
-    Raises:
-        cfme.exceptions.UnidentifiableTagType: If the element/object is unknown.
-    """
-    tag_types = {'select': sel.select,
-                 'text': sel.set_text,
-                 'checkbox': sel.checkbox,
-                 'a': sel.click,
-                 'img': sel.click,
-                 'image': sel.click,
-                 'textarea': sel.set_text,
-                 'password': sel.set_text,
-                 'file': sel.send_keys}
-
-    tag = sel.tag(loc)
-    ttype = sel.get_attribute(loc, 'type')
-
-    if ttype in tag_types:
-        operation = ttype
-    elif tag in tag_types:
-        operation = tag
-    else:
-        raise exceptions.UnidentifiableTagType(
-            "Tag '%s' with type '%s' is not a known form element to Form" %
-            (tag, ttype))
-    if operation == 'password':
-        log_value = '*' * len(value)
-    else:
-        log_value = value
-    logger.debug('  Filling in [%s], with value "%s"' % (operation, log_value))
-    op = tag_types[operation]
-    if op == sel.click:
-        if value is True:
-            op(loc)
-    else:
-        op(loc, value)
-        detect_observed_field(loc)
-
-
-@fill.register(Table)
+@fill.method((Table, object))
 def _sd_fill_table(table, cells):
     """ How to fill a table with a value (by selecting the value as cells in the table)
     See Table.click_cells
@@ -723,13 +671,6 @@ def _sd_fill_table(table, cells):
     table._update_cache()
     logger.debug('  Clicking Table cell')
     table.click_cells(cells)
-
-
-@fill.register(sel.ObservedText)
-def _sd_fill_otext(ot, value):
-    """Filled just like a text box."""
-    logger.debug('  Filling in [ObservedText], with value "%s"' % value)
-    sel.set_text(ot, value)
 
 
 class Calendar(object):
@@ -757,7 +698,7 @@ class Calendar(object):
         return '//input[@name="%s"]' % self.name
 
 
-@fill.register(Calendar)
+@fill.method((Calendar, object))
 def _sd_fill_date(calendar, value):
     input = sel.element(calendar)
     if isinstance(value, date):
@@ -767,10 +708,10 @@ def _sd_fill_date(calendar, value):
 
     # need to write to a readonly field: resort to evil
     browser().execute_script("arguments[0].value = '%s'" % date_str, input)
-    detect_observed_field(input)
 
 
-@fill.register(types.NoneType)
+@fill.method((object, types.NoneType))
+@fill.method((types.NoneType, object))
 def _sd_fill_none(*args, **kwargs):
     """ Ignore a NoneType """
     pass
@@ -846,8 +787,8 @@ class _TabStripField(object):
         self.arg = arg
 
 
-@fill.register(_TabStripField)
-def _tabstrip_fill(tabstrip_field, value):
+@fill.method((_TabStripField, object))
+def _fill_tabstrip(tabstrip_field, value):
     tabstrip.select_tab(tabstrip_field.ident_string)
     fill(tabstrip_field.arg, value)
 
@@ -909,8 +850,8 @@ class TabStripForm(Form):
         super(TabStripForm, self).__init__(fields, identifying_loc)
 
 
-@fill.register(Form)
-def _sd_fill_form(form, values, action=None):
+@fill.method((Form, list))
+def _fill_form_list(form, values, action=None):
     """
     Fills in field elements on forms
 
@@ -930,10 +871,7 @@ def _sd_fill_form(form, values, action=None):
 
     """
     logger.info('Beginning to fill in form...')
-    if isinstance(values, dict):
-        values = list((key[0], values[key[0]]) for key in form.fields if key[0] in values)
-    elif isinstance(values, list):
-        values = list(val for key in form.fields for val in values if val[0] == key[0])
+    values = list(val for key in form.fields for val in values if val[0] == key[0])
 
     for field, value in values:
         if value is not None:
@@ -945,6 +883,12 @@ def _sd_fill_form(form, values, action=None):
         logger.debug(' Invoking end of form action')
         sel.click(sel.element(action))
     logger.debug('Finished filling in form')
+
+
+@fill.method((Form, dict))
+def _fill_form_dict(form, values, action=None):
+    '''Fill in a dict by converting it to a list'''
+    fill(form, values.items(), action=action)
 
 
 class Radio(object):
@@ -986,8 +930,8 @@ class Radio(object):
         return "//input[@name='%s' and @value='%s']" % (self.name, val)
 
 
-@fill.register(Radio)
-def _sd_fill_radio(radio, value):
+@fill.method((Radio, object))
+def _fill_radio(radio, value):
     """How to fill a radio button group (by selecting the given value)"""
     sel.click(radio.choice(value))
 
@@ -1236,8 +1180,8 @@ class Tree(object):
         self._select_or_deselect_node(*path, **kwargs)
 
 
-@fill.register(Tree)
-def _sd_fill_tree(tree, values):
+@fill.method((Tree, object))
+def _fill_tree(tree, values):
     # Assume a list of paths, select_node on each path
     for path in values:
         tree.select_node(*path)
