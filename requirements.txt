@@ -17,7 +17,7 @@ PyYAML
 requests
 scp
 selenium
-singledispatch
+multimethods.py
 sqlalchemy
 suds
 tornado

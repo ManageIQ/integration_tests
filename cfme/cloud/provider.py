@@ -72,21 +72,16 @@ properties_form = Form(
         ('api_port', "//*[@id='port']"),
     ])
 
-def_form = Form(
+credential_form = Form(
     fields=[
-        ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('principal', "//*[@id='default_userid']"),
-        ('secret', "//*[@id='default_password']"),
-        ('verify_secret', "//*[@id='default_verify']"),
-        ('validate_btn', page_specific_locators.creds_validate_btn)
-    ])
-
-amqp_form = Form(
-    fields=[
-        ('button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
-        ('principal', "//*[@id='amqp_userid']"),
-        ('secret', "//*[@id='amqp_password']"),
-        ('verify_secret', "//*[@id='amqp_verify']"),
+        ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
+        ('default_principal', "//*[@id='default_userid']"),
+        ('default_secret', "//*[@id='default_password']"),
+        ('default_verify_secret', "//*[@id='default_verify']"),
+        ('amqp_button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
+        ('amqp_principal', "//*[@id='amqp_userid']"),
+        ('amqp_secret', "//*[@id='amqp_password']"),
+        ('amqp_verify_secret', "//*[@id='amqp_verify']"),
         ('validate_btn', page_specific_locators.creds_validate_btn)
     ])
 
@@ -156,7 +151,7 @@ class Provider(Updateable):
         """
         browser.force_navigate('cloud_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
-        fill(self.credentials, validate=validate_credentials)
+        fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, add_page.add_submit)
 
     def update(self, updates, cancel=False, validate_credentials=False):
@@ -171,7 +166,7 @@ class Provider(Updateable):
 
         nav.go_to('cloud_provider_edit', context={'provider': self})
         fill(properties_form, self._form_mapping(**updates))
-        fill(self.credentials, validate=validate_credentials)
+        fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, edit_page.save_button)
 
     def validate(self):
@@ -306,19 +301,22 @@ class OpenStackProvider(Provider):
                 'ipaddress_text': kwargs.get('ip_address')}
 
 
-@fill.register(Provider.Credential)
-def _sd_fill_credential(cred, validate=None):
+@fill.method((Form, Provider.Credential))
+def _fill_credential(form, cred, validate=None):
     """How to fill in a credential (either amqp or default).  Validates the
     credential if that option is passed in.
     """
-    mapping = {'principal': cred.principal,
-               'secret': cred.secret,
-               'verify_secret': cred.verify_secret,
-               'validate_btn': validate}
     if cred.amqp:
-        fill(amqp_form, mapping)
+        fill(credential_form, {'amqp_button': True,
+                               'amqp_principal': cred.principal,
+                               'amqp_secret': cred.secret,
+                               'amqp_verify_secret': cred.verify_secret,
+                               'validate_btn': validate})
     else:
-        fill(def_form, mapping)
+        fill(credential_form, {'default_principal': cred.principal,
+                               'default_secret': cred.secret,
+                               'default_verify_secret': cred.verify_secret,
+                               'validate_btn': validate})
     if validate:
         flash.assert_no_errors()
 
