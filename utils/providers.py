@@ -8,9 +8,10 @@ To quickly add all providers::
 from functools import partial
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Quadicon, paginator
-from utils import conf, mgmt_system, ssh
+from cfme.web_ui import Quadicon, paginator, toolbar
+from utils import conf, mgmt_system
 from utils.log import logger
+from utils.wait import wait_for
 
 #: mapping of infra provider type names to :py:mod:`utils.mgmt_system` classes
 infra_provider_type_map = {
@@ -220,24 +221,29 @@ def setup_infrastructure_providers(validate=True, check_existing=True):
 def clear_providers():
     """Rudely clear all providers on an appliance
 
-    Uses the appliance ruby console in an attempt to cleanly delete not just
-    the providers but all related objects
-
-    Connects to the appliance in ``env.yaml``.
+    Uses the UI in an attempt to cleanly delete the providers
     """
-    logger.info('Destroying all appliance providers and VMs')
-    client = ssh.SSHClient()
-    exit, out = client.run_rails_command(_clear_providers_rb)
-    if exit == 0:
-        return True
-    else:
-        logger.error('clear_providers failed with ruby error')
-        logger.error(out)
-        return False
+    logger.info('Destroying all appliance providers')
+    sel.force_navigate('clouds_providers')
+    if paginator.rec_total():
+        paginator.results_per_page('100')
+        sel.click(paginator.check_all())
+        toolbar.select('Configuration', 'Remove Cloud Providers from the VMDB',
+                       invokes_alert=True)
+        sel.handle_alert()
 
-# Single quotes are needed for the shell on the remote side
-# For reference: http://apidock.com/rails/ActiveRecord/Base/destroy_all/class
-_clear_providers_rb = """'
-ExtManagementSystem.destroy_all()
-VmOrTemplate.destroy_all()'
-"""
+    sel.force_navigate('infrastructure_providers')
+    if paginator.rec_total():
+        paginator.results_per_page('100')
+        sel.click(paginator.check_all())
+        toolbar.select('Configuration', 'Remove Infrastructure Providers from the VMDB',
+                       invokes_alert=True)
+        sel.handle_alert()
+
+    sel.force_navigate('clouds_providers')
+    wait_for(lambda: not paginator.rec_total(), message="Delete all cloud providers",
+             num_sec=180, fail_func=sel.refresh)
+
+    sel.force_navigate('infrastructure_providers')
+    wait_for(lambda: not paginator.rec_total(), message="Delete all infrastructure providers",
+             num_sec=180, fail_func=sel.refresh)
