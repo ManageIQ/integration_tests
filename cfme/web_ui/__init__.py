@@ -13,6 +13,7 @@
   * :py:class:`InfoBlock`
   * :py:class:`Quadicon`
   * :py:class:`Radio`
+  * :py:class:`SplitTable`
   * :py:class:`Table`
   * :py:class:`TabStripForm`
   * :py:class:`Tree`
