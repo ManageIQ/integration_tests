@@ -45,8 +45,7 @@ filter_form = Form(
     ]
 )
 
-tasks_table = Table(header_data=('//div[@id="records_div"]/table[@class="style3"]/thead', 0),
-                    row_data=('//div[@id="records_div"]/table[@class="style3"]/tbody', 0))
+tasks_table = Table('//div[@id="records_div"]/table[@class="style3"]')
 
 
 def _filter(
