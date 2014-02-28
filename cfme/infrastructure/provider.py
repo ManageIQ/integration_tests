@@ -21,6 +21,7 @@ import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
 from cfme.web_ui import Region, Quadicon, Form, fill, paginator
+from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -190,16 +191,17 @@ class Provider(Updateable):
         if not self._on_detail_page():
             nav.go_to('infrastructure_provider', context={'provider': self})
 
+        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
+        browser.handle_alert()
+
         stats_to_match = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
-
         client = self.get_mgmt_system()
-        host_stats = client.stats(*stats_to_match)
-        client.disconnect()
-
         ec, tc = wait_for(self._do_stats_match,
-                          [host_stats, stats_to_match],
+                          [client, stats_to_match],
                           message="do_stats_match",
-                          num_sec=300)
+                          num_sec=300,
+                          delay=10)
+        client.disconnect()
 
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
@@ -222,7 +224,7 @@ class Provider(Updateable):
             nav.go_to('infrastructure_provider', context={'provider': self})
         return details_page.infoblock.text(*ident)
 
-    def _do_stats_match(self, host_stats, stats_to_match=None):
+    def _do_stats_match(self, client, stats_to_match=None):
         """ A private function to match a set of statistics, with a Provider.
 
         This function checks if the list of stats match, if not, the page is refreshed.
@@ -231,16 +233,22 @@ class Provider(Updateable):
             having to map keyname/attributes e.g. ``num_template``, ``num_vm``.
 
         Args:
-            host_stats: A dict of host statistics as obtained from the mgmt_system.
+            client: A provider mgmt_system instance.
             stats_to_match: A list of key/attribute names to match.
 
         Raises:
             KeyError: If the host stats does not contain the specified key.
             ProviderHasNoProperty: If the provider does not have the property defined.
         """
+        logger.info('Beginning stat match (collecting stats)...')
+        host_stats = client.stats(*stats_to_match)
+
         for stat in stats_to_match:
             try:
-                if host_stats[stat] != getattr(self, stat):
+                cfme_stat = getattr(self, stat)
+                logger.debug(' Stat [%s], Host(%s), CFME(%s)' % (stat, host_stats[stat], cfme_stat))
+                if host_stats[stat] != cfme_stat:
+                    logger.debug(' Not matched yet, breaking early')
                     browser.refresh()
                     return False
             except KeyError:
