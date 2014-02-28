@@ -85,7 +85,7 @@ def _get_tasks(location, **filter_kwargs):
         **filter_kwargs: See :py:meth:`_filter`
     Returns: List of dicts.
     """
-    nav.go_to(location)
+    browser.force_navigate(location)
     if any([filter_kwargs[key] is not None for key in filter_kwargs.keys()]):
         _filter(**filter_kwargs)
     tasks = []
