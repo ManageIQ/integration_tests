@@ -57,7 +57,7 @@ class TestInstanceDetailsPowerControlPerProvider:
 
         prov_data = cfme_data["management_systems"][provider]
         if prov_data["type"] == 'openstack':
-            mgmt_sys_api_clients[provider].deploy_template(image_name, flavour_name='m1.tiny',
+            mgmt_sys_api_clients[provider].deploy_template(image_name, flavour_name='m1.small',
                 vm_name=random_string)
         else:
             random_string = mgmt_sys_api_clients[provider].deploy_template(
