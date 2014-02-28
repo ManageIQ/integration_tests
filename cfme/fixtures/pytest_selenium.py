@@ -25,15 +25,11 @@ from singledispatch import singledispatch
 import pytest
 from cfme import exceptions
 from utils import conf
-from utils.browser import ensure_browser_open
+from utils.browser import browser, ensure_browser_open
 from utils.log import logger
 
 VALUE = 'val'
 TEXT = 'txt'
-
-
-def browser():
-    return ensure_browser_open()
 
 
 @singledispatch
