@@ -84,7 +84,10 @@ def rec_end():
 def rec_total():
     """ Returns the total number of records."""
     offset = re.search('(\d+)\)', _page_nums())
-    return offset.groups()[0]
+    if offset:
+        return offset.groups()[0]
+    else:
+        return None
 
 
 def reset():

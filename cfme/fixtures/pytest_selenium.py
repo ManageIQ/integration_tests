@@ -167,6 +167,7 @@ def handle_alert(cancel=False, wait=30.0, squash=False):
         answer = 'cancel' if cancel else 'ok'
         logger.info('Handling popup "%s", clicking %s' % (popup.text, answer))
         popup.dismiss() if cancel else popup.accept()
+        wait_for_ajax()
         return True
     except:
         if squash:
