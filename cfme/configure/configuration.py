@@ -452,7 +452,7 @@ class SMTPSettings(Updateable):
         port: SMTP Server port
         domain: E-mail domain
         start_tls: Whether use StartTLS
-        ssl_verify=None: SSL Verification
+        ssl_verify: SSL Verification
         auth: Authentication type
         username: User name
         password: User password
@@ -723,7 +723,8 @@ class Schedule(object):
         run_every: If `run_type` is not Once, then you can specify how often it should be run.
         time_zone: Time zone selection.
         start_date: Specify start date (mm/dd/yyyy or datetime.datetime()).
-        start_hour, start_min: Starting time.
+        start_hour: Starting hour
+        start_min: Starting minute.
 
     Usage:
 
