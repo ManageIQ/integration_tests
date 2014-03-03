@@ -21,7 +21,7 @@ with error.expected('foo'):
 
 from contextlib import contextmanager
 import re
-from singledispatch import singledispatch
+from multimethods import singledispatch
 from collections import Callable
 
 
@@ -31,7 +31,7 @@ def match(o, e):
     raise NotImplemented("Don't know how to match {} to an error".format(o))
 
 
-@match.register(Callable)
+@match.method(Callable)
 def _callable(f, e):
     '''Pass the exception to the callable, if the callable returns truthy,
     then it's a match.'''
@@ -44,7 +44,7 @@ def regex(expr, e):
     return p.search(str(e.message))
 
 
-@match.register(str)
+@match.method(str)
 def _str(s, e):
     '''Treat string as a regex and match it against the Exception's
     message.'''

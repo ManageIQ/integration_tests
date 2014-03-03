@@ -73,9 +73,9 @@ WEEKLY = 'weekly'
 MONTHLY = 'monthly'
 
 
-@fill.register(RateFormItem)
-def _sd_fill_rateform(rf, value):
-    '''value should be a tuple like (5, HOURLY)'''
+@fill.method((RateFormItem, tuple))
+def _fill_rateform(rf, value):
+    '''value should be like (5, HOURLY)'''
     fill(rf.rate_loc, value[0])
     fill(rf.unit_select_loc, (sel.VALUE, value[1]))
 
