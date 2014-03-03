@@ -957,3 +957,8 @@ class Alert(Updateable):
                                 "or a 2-tuple with (dropdown value, dict of values to set)")
         fill(self.form, fill_details)
         form_func()     # Fill the expression if present
+
+
+class Action(Updateable):
+    def __init__(self):
+        pass
