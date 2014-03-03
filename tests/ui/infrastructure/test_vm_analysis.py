@@ -311,7 +311,7 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize(argnames, tests, scope="module")
 
 
-@pytest.mark.usefixtures("analyze_vms", "configure_appliance", "delete_tasks_first")
+@pytest.mark.usefixtures("browser", "analyze_vms", "configure_appliance", "delete_tasks_first")
 class TestVmAnalysis():
 
     def verify_no_data(self, provider, vm_name):
