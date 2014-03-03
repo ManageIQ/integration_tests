@@ -47,11 +47,13 @@ class ConfigButton(Button):
 
     #def does_item_exist(self, key, raise_exception = False):
     def _is_item_enabled(self, item):
-        self._root_element.click()
-        return self.is_element_visible(*item)
+        self.get_element(*self._config_button_locator).click()
+        result = self.is_element_visible(*item)
+        self.get_element(*self._config_button_locator).click()
+        return result
 
     def _click_item(self, item, click_cancel=False):
-        self._root_element.click()
+        self.get_element(*self._config_button_locator).click()
         self.get_element(*item).click()
         self.handle_popup(click_cancel)
 
