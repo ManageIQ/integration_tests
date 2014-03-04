@@ -9,6 +9,7 @@
 
 * **Elemental**
 
+  * :py:class:`DHTMLSelect`
   * :py:class:`Form`
   * :py:class:`InfoBlock`
   * :py:class:`Quadicon`
@@ -18,6 +19,7 @@
   * :py:class:`TabStripForm`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
+  * :py:mod:`cfme.web_ui.dhtml_select`
   * :py:mod:`cfme.web_ui.flash`
   * :py:mod:`cfme.web_ui.listnav`
   * :py:mod:`cfme.web_ui.menu`
@@ -1499,3 +1501,52 @@ class Quadicon(object):
 
     def __str__(self):
         return self.locate()
+
+
+class DHTMLSelect():
+
+    def __init__(self, loc):
+        self.loc = loc
+        self.name = self._get_select_name()
+
+    def _get_select_name(self):
+        """ Get's the name reference of the element from its hidden attribute.
+        """
+
+        root_el = sel.element(self.loc)
+        el = sel.element("div/input[2]", root=root_el)
+        name = sel.get_attribute(el, 'name')
+        return name
+
+    def select_by_visible_text(self, text):
+        """ Special method for dhtmlx selects using in the Automate -> Explorer pane
+
+        Args:
+            loc: A locator, expects either a string, WebElement, tuple.
+            text: The select element option's visible text.
+        """
+        if text is not None:
+            value = browser().execute_script('return %s.getOptionByLabel("%s").value'
+                                             % (self.name, text))
+            self.select_by_value(value)
+
+    def select_by_value(self, value):
+        """ Special method for dhtmlx selects using in the Automate -> Explorer pane
+
+        Args:
+            loc: A locator, expects either a string, WebElement, tuple.
+            value: The select element's option value.
+        """
+        if value is not None:
+            index = browser().execute_script('return %s.getIndexByValue("%s")' % (self.name, value))
+            self.select_by_index(index)
+
+    def select_by_index(self, index):
+        """ Special method for dhtmlx selects using in the Automate -> Explorer pane
+
+        Args:
+            loc: A locator, expects either a string, WebElement, tuple.
+            index: The select element's option by index.
+        """
+        if index is not None:
+            browser().execute_script('%s.selectOption(%s)' % (self.name, index))
