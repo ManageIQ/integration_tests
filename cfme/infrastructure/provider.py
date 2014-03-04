@@ -14,7 +14,7 @@ from functools import partial
 import ui_navigate as nav
 
 import cfme
-import cfme.fixtures.pytest_selenium as browser
+import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
@@ -96,7 +96,7 @@ nav.add_branch('infrastructure_providers',
                    'Add a New Infrastructure Provider'),
                 'infrastructure_provider_discover': lambda _: cfg_btn(
                     'Discover Infrastructure Providers'),
-                'infrastructure_provider': [lambda ctx: browser.click(Quadicon(ctx['provider'].name,
+                'infrastructure_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
                                                                       'infra_prov')),
                                    {'infrastructure_provider_edit':
                                     lambda _: cfg_btn('Edit this Infrastructure Provider')}]})
@@ -139,10 +139,10 @@ class Provider(Updateable):
 
     def _submit(self, cancel, submit_button):
         if cancel:
-            browser.click(page_specific_locators.cancel_button)
-            # browser.wait_for_element(page.configuration_btn)
+            sel.click(page_specific_locators.cancel_button)
+            # sel.wait_for_element(page.configuration_btn)
         else:
-            browser.click(submit_button)
+            sel.click(submit_button)
             flash.assert_no_errors()
 
     def create(self, cancel=False, validate_credentials=False):
@@ -155,7 +155,7 @@ class Provider(Updateable):
            validate_credentials (boolean): Whether to validate credentials - if True and the
                credentials are invalid, an error will be raised.
         """
-        browser.force_navigate('infrastructure_provider_new')
+        sel.force_navigate('infrastructure_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, add_page.add_submit)
@@ -196,12 +196,12 @@ class Provider(Updateable):
 
         # Otherwise refresh relationships and hand off to wait_for
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
-        browser.handle_alert()
+        sel.handle_alert()
 
         ec, tc = wait_for(self._do_stats_match,
                           [client, stats_to_match],
                           message="do_stats_match",
-                          fail_func=browser.refresh,
+                          fail_func=sel.refresh,
                           num_sec=300,
                           delay=10)
         client.disconnect()
@@ -261,8 +261,8 @@ class Provider(Updateable):
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
-        return browser.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
-                                    % self.name)
+        return sel.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
+                                % self.name)
 
     @property
     def num_template(self):
@@ -291,9 +291,9 @@ class Provider(Updateable):
 
     @property
     def exists(self):
-        browser.force_navigate('infrastructure_providers')
+        sel.force_navigate('infrastructure_providers')
         for page in paginator.pages():
-            if browser.is_displayed(Quadicon(self.name, 'infra_prov')):
+            if sel.is_displayed(Quadicon(self.name, 'infra_prov')):
                 return True
         else:
             return False
@@ -419,7 +419,7 @@ def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None
         vmware: Whether to scan for VMware providers
         cancel:  Whether to cancel out of the discover UI.
     """
-    browser.force_navigate('infrastructure_provider_discover')
+    sel.force_navigate('infrastructure_provider_discover')
     if cancel:  # normalize so that the form filler only clicks either start or cancel
         cancel = True
     else:
