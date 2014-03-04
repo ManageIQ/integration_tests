@@ -23,6 +23,7 @@ import pytest
 # these are exposed as globals and individually documented
 _marks_to_make = [
     'uses_db',
+    'uses_event_listener',
     'uses_providers',
     'uses_pxe',
     'uses_soap',

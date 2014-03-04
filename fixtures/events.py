@@ -369,7 +369,7 @@ def pytest_configure(config):
 
 
 @pytest.yield_fixture(scope="function")
-def register_event(request):
+def register_event(uses_event_listener, request):
     """register_event(sys_type, obj_type, obj, event)
     Event registration fixture
 
