@@ -6,11 +6,12 @@ To quickly add all providers::
 
 """
 from functools import partial
+from operator import methodcaller
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, paginator, toolbar
 from utils import conf, mgmt_system
-from utils.log import logger
+from utils.log import logger, perflog
 from utils.wait import wait_for
 
 #: mapping of infra provider type names to :py:mod:`utils.mgmt_system` classes
@@ -85,63 +86,40 @@ def provider_factory(provider_name, providers=None, credentials=None):
     return provider_instance
 
 
-def setup_provider(provider_name, validate=True, check_existing=True):
+def setup_provider(provider_key, validate=True, check_existing=True):
     """Add the named provider to CFME
 
     Args:
-        provider_name: Provider name from cfme_data
+        provider_key: Provider key name from cfme_data
         validate: Whether or not to block until the provider stats in CFME
             match the stats gleaned from the backend management system
             (default: ``True``)
         check_existing: Check if this provider already exists, skip if it does
 
-    """
-    provider_data = conf.cfme_data['management_systems'][provider_name]
-    if provider_data['type'] in infra_provider_type_map:
-        setup_infrastructure_provider(provider_name, validate, check_existing)
-    elif provider_data['type'] in cloud_provider_type_map:
-        setup_cloud_provider(provider_name, validate, check_existing)
-    #else: wat?
-
-
-def setup_cloud_provider(provider_name, validate=True, check_existing=True):
-    """Add the named cloud provider to CFME
-
-    Args:
-        provider_name: Provider name from cfme_data
-        validate: see description in :py:func:`setup_provider`
-        check_existing: see description in :py:func:`setup_provider`
+    Returns:
+        An instance of :py:class:`cfme.cloud.provider.Provider` or
+        `cfme.infrastructure.provider.Provider`for the named provider, as appropriate.
 
     """
-    from cfme.cloud.provider import get_from_config
-    provider = get_from_config(provider_name)
+    if provider_key in list_cloud_providers():
+        from cfme.cloud.provider import get_from_config
+        #provider = setup_infrastructure_provider(provider_key, validate, check_existing)
+    elif provider_key in list_infra_providers():
+        from cfme.infrastructure.provider import get_from_config
+    else:
+        raise UnknownProvider(provider_key)
+
+    provider = get_from_config(provider_key)
     if check_existing and provider.exists:
         return
 
     logger.info('Setting up provider: %s' % provider.key)
     provider.create(validate_credentials=True)
+
     if validate:
         provider.validate()
 
-
-def setup_infrastructure_provider(provider_name, validate=True, check_existing=True):
-    """Add the named infrastructure provider to CFME
-
-    Args:
-        provider_name: Provider name from cfme_data
-        validate: see description in :py:func:`setup_provider`
-        check_existing: see description in :py:func:`setup_provider`
-
-    """
-    from cfme.infrastructure.provider import get_from_config
-    provider = get_from_config(provider_name)
-    if check_existing and provider.exists:
-        return
-
-    logger.info('Setting up provider: %s' % provider.key)
-    provider.create(validate_credentials=True)
-    if validate:
-        provider.validate()
+    return provider
 
 
 def setup_providers(validate=True, check_existing=True):
@@ -151,9 +129,77 @@ def setup_providers(validate=True, check_existing=True):
         validate: see description in :py:func:`setup_provider`
         check_existing: see description in :py:func:`setup_provider`
 
+    Returns:
+        A list of provider object for the created providers, cloud and infrastructure.
+
     """
-    setup_cloud_providers(validate, check_existing)
-    setup_infrastructure_providers(validate, check_existing)
+    perflog.start('utils.providers.setup_providers')
+    # Do cloud and infra separately to keep the browser navs down
+    added_providers = []
+    added_providers.extend(setup_cloud_providers(validate, check_existing))
+    added_providers.extend(setup_infrastructure_providers(validate, check_existing))
+    perflog.stop('utils.providers.setup_providers')
+    return added_providers
+
+
+def _setup_providers(cloud_or_infra, validate, check_existing):
+    """Helper to set up all cloud or infra providers, and then validate them
+
+    Args:
+        cloud_or_infra: Like the name says: 'cloud' or 'infra' (a string)
+        validate: see description in :py:func:`setup_provider`
+        check_existing: see description in :py:func:`setup_provider`
+
+    Returns:
+        A list of provider objects that have been created.
+
+    """
+    # Pivot behavior on cloud_or_infra
+    options_map = {
+        'cloud': {
+            'navigate': 'clouds_providers',
+            'quad': 'cloud_prov',
+            'list': list_cloud_providers
+        },
+        'infra': {
+            'navigate': 'infrastructure_providers',
+            'quad': 'infra_prov',
+            'list': list_infra_providers
+        }
+    }
+    # Check for existing providers all at once, to prevent reloading
+    # the providers page for every provider in cfme_data
+    if check_existing:
+        sel.force_navigate(options_map[cloud_or_infra]['navigate'])
+        add_providers = []
+        for provider_key in options_map[cloud_or_infra]['list']():
+            provider_name = conf.cfme_data['management_systems'][provider_key]['name']
+            quad = Quadicon(provider_name, options_map[cloud_or_infra]['quad'])
+            for page in paginator.pages():
+                if sel.is_displayed(quad):
+                    logger.debug('Provider "%s" exists, skipping' % provider_key)
+                    break
+            else:
+                add_providers.append(provider_key)
+    else:
+        # Add all cloud or infra providers unconditionally
+        add_providers = options_map[cloud_or_infra]['list']()
+
+    if add_providers:
+        logger.info('Providers to be added: %s' % ', '.join(add_providers))
+
+    # Save the provider objects for validation and return
+    added_providers = []
+
+    for provider_name in add_providers:
+        # Don't validate in this step; add all providers, then go back and validate in order
+        provider = setup_provider(provider_name, validate=False, check_existing=False)
+        added_providers.append(provider)
+
+    if validate:
+        map(methodcaller('validate'), added_providers)
+
+    return added_providers
 
 
 def setup_cloud_providers(validate=True, check_existing=True):
@@ -163,29 +209,11 @@ def setup_cloud_providers(validate=True, check_existing=True):
         validate: see description in :py:func:`setup_provider`
         check_existing: see description in :py:func:`setup_provider`
 
+    Returns:
+        An list of :py:class:`cfme.cloud.provider.Provider` instances.
+
     """
-    # Check for existing providers all at once, to prevent reloading
-    # the providers page for every provider in cfme_data
-    if check_existing:
-        providers_to_add = []
-        sel.force_navigate('clouds_providers')
-        for provider_key in list_cloud_providers():
-            provider_name = conf.cfme_data['management_systems'][provider_key]['name']
-            quad = Quadicon(provider_name, 'cloud_prov')
-            for page in paginator.pages():
-                if sel.is_displayed(quad):
-                    logger.debug('Provider "%s" exists, skipping' % provider_key)
-                    break
-            else:
-                providers_to_add.append(provider_key)
-    else:
-        providers_to_add = list_cloud_providers()
-
-    if providers_to_add:
-        logger.info('Providers to be added: %s' % ', '.join(providers_to_add))
-
-    for provider_name in providers_to_add:
-        setup_cloud_provider(provider_name, validate, check_existing=False)
+    return _setup_providers('cloud', validate, check_existing)
 
 
 def setup_infrastructure_providers(validate=True, check_existing=True):
@@ -195,27 +223,12 @@ def setup_infrastructure_providers(validate=True, check_existing=True):
         validate: see description in :py:func:`setup_provider`
         check_existing: see description in :py:func:`setup_provider`
 
+
+    Returns:
+        An list of :py:class:`cfme.infrastructure.provider.Provider` instances.
+
     """
-    if check_existing:
-        providers_to_add = []
-        sel.force_navigate('infrastructure_providers')
-        for provider_key in list_infra_providers():
-            provider_name = conf.cfme_data['management_systems'][provider_key]['name']
-            quad = Quadicon(provider_name, 'infra_prov')
-            for page in paginator.pages():
-                if sel.is_displayed(quad):
-                    logger.debug('Provider "%s" exists, skipping' % provider_key)
-                    break
-            else:
-                providers_to_add.append(provider_key)
-    else:
-        providers_to_add = list_infra_providers()
-
-    if providers_to_add:
-        logger.info('Providers to be added: %s' % ', '.join(providers_to_add))
-
-    for provider_name in providers_to_add:
-        setup_infrastructure_provider(provider_name, validate, check_existing=False)
+    return _setup_providers('infra', validate, check_existing)
 
 
 def clear_providers():
@@ -223,7 +236,9 @@ def clear_providers():
 
     Uses the UI in an attempt to cleanly delete the providers
     """
+    # Executes the deletes first, then validates in a second pass
     logger.info('Destroying all appliance providers')
+    perflog.start('utils.providers.clear_providers')
     sel.force_navigate('clouds_providers')
     if paginator.rec_total():
         paginator.results_per_page('100')
@@ -247,3 +262,13 @@ def clear_providers():
     sel.force_navigate('infrastructure_providers')
     wait_for(lambda: not paginator.rec_total(), message="Delete all infrastructure providers",
              num_sec=180, fail_func=sel.refresh)
+    perflog.stop('utils.providers.clear_providers')
+
+
+class UnknownProvider(Exception):
+    def __init__(self, provider_key, *args, **kwargs):
+        super(UnknownProvider, self).__init__(provider_key, *args, **kwargs)
+        self.provider_key = provider_key
+
+    def __str__(self):
+        return ('Unknown provider: "%s"' % self.provider_key)
