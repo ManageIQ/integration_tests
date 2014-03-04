@@ -4,7 +4,7 @@ from utils.cfmedb import db_session_maker
 
 
 @pytest.fixture
-def db_session():
+def db_session(uses_db):
     """Creates a database session based on the db url passed on the CLI
 
     This is an SQLalchemy (http://www.sqlalchemy.org/) session. You can make
