@@ -3,6 +3,7 @@ import signal
 import socket
 import subprocess
 import time
+from collections import defaultdict
 from datetime import datetime
 
 import pytest
@@ -12,6 +13,8 @@ from utils.datafile import template_env
 from utils.log import create_logger
 from utils.path import scripts_path
 from utils.wait import wait_for, TimedOutError
+
+logger = create_logger('events')
 
 
 def get_current_time_GMT():
@@ -90,14 +93,15 @@ class EventListener(object):
 
     TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
 
-    def __init__(self, listener_port, settle_time):
+    def __init__(self, listener_port, settle_time, verbose=False):
         self.listener_port = int(listener_port)
         listener_filename = scripts_path.join('listener.py').strpath
         self.listener_script = "%s %d" % (listener_filename, self.listener_port)
+        if not verbose:
+            self.listener_script += ' --quiet'
         self.settle_time = int(settle_time)
         self.expectations = []
-        self.logger = create_logger('events')
-        self.processed_expectations = {}
+        self.processed_expectations = defaultdict(list)
         self.listener = None
 
     def get_listener_host(self):
@@ -128,11 +132,11 @@ class EventListener(object):
         """
         assert not self.finished, "Listener dead!"
         listener_url = "%s:%d" % (self.get_listener_host(), self.listener_port)
-        self.logger.info("checking api: %s%s" % (listener_url, route))
+        logger.info("checking api: %s%s" % (listener_url, route))
         r = requests.get(listener_url + route)
         r.raise_for_status()
         response = r.json()
-        self.logger.debug("Response: %s" % response)
+        logger.debug("Response: %s" % response)
         return response
 
     def _delete_database(self):
@@ -191,16 +195,16 @@ class EventListener(object):
                 assert len(data) > 0
             except AssertionError as e:
                 if attempt < max_attempts:
-                    self.logger.debug("Waiting for DB (%s/%s): %s" % (attempt, max_attempts, e))
+                    logger.debug("Waiting for DB (%s/%s): %s" % (attempt, max_attempts, e))
                     time.sleep(sleep_interval)
                     pass
                 # Enough sleeping, something went wrong
                 else:
-                    self.logger.exception("Check DB failed. Max attempts: '%s'." % (max_attempts))
+                    logger.exception("Check DB failed. Max attempts: '%s'." % (max_attempts))
                     return False
             else:
                 # No exceptions raised
-                self.logger.info("DB row found for '%s'" % req)
+                logger.info("DB row found for '%s'" % req)
                 return datetime.strptime(data[0]["event_time"], "%Y-%m-%d %H:%M:%S")
         return False
 
@@ -255,8 +259,7 @@ class EventListener(object):
         if not isinstance(events, list):
             events = [events]
         for event in events:
-            print "Registering event", event
-            self.logger.info("Event registration: %s" % str(locals()))    # Debug
+            logger.info("Event registration: %s" % str(locals()))
             self.add_expectation(sys_type, obj_type, obj, event)
 
     @pytest.fixture(scope="session")
@@ -284,19 +287,20 @@ class EventListener(object):
 
     def start(self):
         assert not self.listener, "Listener can't be running in order to start it!"
-        self.logger.info("Starting listener %s" % self.listener_script)
-        print("In order to run the event testing, port %d must be enabled." % self.listener_port)
-        print("sudo firewall-cmd --add-port %d/tcp --permanent" % self.listener_port)
+        logger.info("Starting listener %s" % self.listener_script)
+        logger.info("In order to run the event testing, port %d must be enabled." %
+            self.listener_port)
+        logger.info("sudo firewall-cmd --add-port %d/tcp --permanent" % self.listener_port)
         self.listener = subprocess.Popen(self.listener_script,
                                          shell=True)
-        self.logger.info("Listener pid %d" % self.listener.pid)
+        logger.info("Listener pid %d" % self.listener.pid)
         time.sleep(3)
         assert not self.finished, "Listener has died. Something must be blocking selected port"
-        self.logger.info("Listener alive")
+        logger.info("Listener alive")
 
     def stop(self):
         assert self.listener, "Listener must be running in order to stop it!"
-        self.logger.info("Killing listener %d" % (self.listener.pid))
+        logger.info("Killing listener %d" % (self.listener.pid))
         self.listener.send_signal(signal.SIGINT)
         self.listener.wait()
         self.listener = None
@@ -313,10 +317,11 @@ class EventListener(object):
                 # Generate result report
                 report = HTMLReport(self.processed_expectations)
                 report.generate(config.getoption("event_testing_result"))
+                # Report to the terminal
+                termreporter = config.pluginmanager.getplugin('terminalreporter')
+                termreporter.write_sep('-', 'Stopping event listener')
             finally:
                 self.stop()
-        else:
-            print("Event testing disabled, no collecting, no reports")
 
 
 def pytest_addoption(parser):
@@ -341,6 +346,11 @@ def pytest_addoption(parser):
                      default=60,
                      help='Time to wait after all testing has been finished' +
                      'for remaining events to come. (default: %default)')
+    parser.addoption('--event-testing-verbose-listener',
+                     action='store_true',
+                     dest='event_testing_verbose_listener',
+                     default=False,
+                     help='Enabled access logging from the event listener')
 
 
 def pytest_configure(config):
@@ -350,7 +360,8 @@ def pytest_configure(config):
     If the testing is enabled, listener is started.
     """
     plugin = EventListener(config.getoption("event_testing_port"),
-                           config.getoption("event_testing_settletime"))
+                           config.getoption("event_testing_settletime"),
+                           config.getoption("event_testing_verbose_listener"))
     registration = config.pluginmanager.register(plugin, "event_testing")
     assert registration
     if config.getoption("event_testing_enabled"):
@@ -400,14 +411,14 @@ def register_event(request):
     node_id = request.node.nodeid
 
     if self.listener is not None:
-        self.logger.info("Clearing the database before testing ...")
+        logger.info("Clearing the database before testing ...")
         self._delete_database()
         self.expectations = []
 
     yield self  # Run the test and provide the plugin as a fixture
 
     if self.listener is not None:
-        self.logger.info("Checking the events ...")
+        logger.info("Checking the events ...")
         try:
             wait_for(self.check_all_expectations,
                      delay=5,
@@ -415,9 +426,8 @@ def register_event(request):
                      handle_exception=True)
         except TimedOutError:
             pass
-        if node_id not in self.processed_expectations:
-            self.processed_expectations[node_id] = []
+
         self.processed_expectations[node_id].extend(self.expectations)
-        self.logger.info("Clearing the database after testing ...")
+        logger.info("Clearing the database after testing ...")
         self._delete_database()
         self.expectations = []
