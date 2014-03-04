@@ -131,7 +131,7 @@ def setup_customization_template(db_session, provisioning_setup_data, row_val,
 
 
 @pytest.fixture
-def setup_pxe_provision(db_session, provisioning_setup_data):
+def setup_pxe_provision(uses_pxe, db_session, provisioning_setup_data):
     '''Sets up Infrastructure PXE for provisioning'''
     row_val, server_last_id = setup_pxe_server(db_session, provisioning_setup_data)
     if server_last_id is not False:
@@ -146,7 +146,7 @@ def setup_pxe_provision(db_session, provisioning_setup_data):
 
 
 @pytest.fixture
-def setup_host_provisioning_pxe(db_session, host_provisioning_setup_data, datafile):
+def setup_host_provisioning_pxe(uses_pxe, db_session, host_provisioning_setup_data, datafile):
     row_val, server_last_id = setup_pxe_server(db_session, host_provisioning_setup_data)
     if server_last_id is not False:
         ks_file_handle = datafile(host_provisioning_setup_data['ks_file'])

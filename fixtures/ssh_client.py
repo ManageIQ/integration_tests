@@ -4,7 +4,7 @@ from utils.ssh import SSHClient
 
 
 @pytest.fixture
-def ssh_client():
+def ssh_client(uses_ssh):
     """SSH Client Fixture
 
     By default, it will connect to the host named in the mozwebqa baseurl on use,
