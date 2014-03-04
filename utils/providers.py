@@ -136,9 +136,17 @@ def setup_providers(validate=True, check_existing=True):
     perflog.start('utils.providers.setup_providers')
     # Do cloud and infra separately to keep the browser navs down
     added_providers = []
-    added_providers.extend(setup_cloud_providers(validate, check_existing))
-    added_providers.extend(setup_infrastructure_providers(validate, check_existing))
+
+    # Defer validation
+    setup_kwargs = {'validate': False, 'check_existing': check_existing}
+    added_providers.extend(setup_cloud_providers(**setup_kwargs))
+    added_providers.extend(setup_infrastructure_providers(**setup_kwargs))
+
+    if validate:
+        map(methodcaller('validate'), added_providers)
+
     perflog.stop('utils.providers.setup_providers')
+
     return added_providers
 
 
