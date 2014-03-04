@@ -973,8 +973,6 @@ class Action(Updateable):
 
     Todo:
         * Evaluate Alerts
-        * SNMP Trap
-        * Tag
 
     Args:
         description: Action name
@@ -982,6 +980,7 @@ class Action(Updateable):
         action_values: :py:class:`dict` with values to give to the sub-form (in Actions.forms).
             See the dictionary for further details. If you fill the `Tag` section, you have to pass
             the tuple or list with parameters for :py:meth:`Tree.click_path` for Tag selection.
+            For `Evaluate Alerts`, you have to pass an iterable with list of alerts to select.
 
     """
     buttons = Region(
@@ -1172,12 +1171,19 @@ class Action(Updateable):
 
     @property
     def _default_values(self):
+        """ This property provides a default value depending on action_type
+
+        """
         if self.action_type == "Tag":
             return tuple()
         else:
             return dict()
 
     def _fill(self, action):
+        """ This method handles filling of the form. Handles differences between some types
+        of forms.
+
+        """
         fill(self.form, dict(description=self.description, action_type=self.action_type))
         if self.forms[self.action_type] is not None:
             return fill(self.forms[self.action_type], self.action_values, action)
@@ -1189,11 +1195,21 @@ class Action(Updateable):
             raise NotImplementedError("Other types not implmeneted yet!")
 
     def create(self, cancel=False):
+        """ Create this Action in UI
+
+        Args:
+            cancel: Whether to cancel the creation (default False)
+        """
         browser.force_navigate("control_explorer_action_new")
         action = self.buttons.cancel if cancel else self.buttons.add
         return self._fill(action)
 
     def update(self, action_type=None, action_values=None, cancel=False):
+        """ Update this Action in UI
+
+        Args:
+            cancel: Whether to cancel the update (default False)
+        """
         browser.force_navigate("control_explorer_action_edit",
                                context={"action_name": self.description})
         action = self.buttons.cancel if cancel else self.buttons.save
@@ -1212,6 +1228,11 @@ class Action(Updateable):
         return self._fill(action)
 
     def delete(self, cancel=False):
+        """ Delete this Action in UI
+
+        Args:
+            cancel: Whether to cancel the deletion (default False)
+        """
         browser.force_navigate("control_explorer_action",
                                context={"action_name": self.description})
         tb.select("Configuration", "Delete this Action", invokes_alert=True)
