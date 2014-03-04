@@ -301,7 +301,16 @@ nav.add_branch(
             lambda _: accordion.click("Actions") or visible_tree.click_path("All Actions"),
             {
                 "control_explorer_action":
-                lambda ctx: actions_table.click_cell("description", ctx["action_name"]),
+                [
+                    lambda ctx: actions_table.click_cell("description", ctx["action_name"]),
+                    {
+                        "control_explorer_action_edit":
+                        lambda _: tb.select("Configuration", "Edit this Action")
+                    }
+                ],
+
+                "control_explorer_action_new":
+                lambda _: tb.select("Configuration", "Add a new Action"),
             },
         ],
 
@@ -960,5 +969,250 @@ class Alert(Updateable):
 
 
 class Action(Updateable):
-    def __init__(self):
-        pass
+    """ This class represents one Action.
+
+    Todo:
+        * Evaluate Alerts
+        * SNMP Trap
+        * Tag
+
+    Args:
+        description: Action name
+        action_type: Type of the action, value from the dropdown select
+        action_values: :py:class:`dict` with values to give to the sub-form (in Actions.forms).
+            See the dictionary for further details. If you fill the `Tag` section, you have to pass
+            the tuple or list with parameters for :py:meth:`Tree.click_path` for Tag selection.
+
+    """
+    buttons = Region(
+        locators=dict(
+            add="//div[@id='buttons_on']//img[@alt='Add']",
+            cancel="//div[@id='buttons_on']//img[@alt='Cancel']",
+            save="//div[@id='buttons_on']//img[@alt='Save Changes']",
+            reset="//div[@id='buttons_on']//img[@alt='Reset Changes']",
+        )
+    )
+
+    form = Form(
+        fields=[
+            ("description", "//input[@id='description']"),
+            ("action_type", "//select[@id='miq_action_type']"),
+            # Evaluate Alerts (TODO)
+        ]
+    )
+
+    forms = {
+        "Assign Profile to Analysis Tasks":
+        Form(
+            fields=[
+                ("analysis_profile", "//select[@id='analysis_profile']"),
+            ]
+        ),
+
+        "Create a Snapshot":
+        Form(
+            fields=[
+                ("snapshot_name", "//input[@id='snapshot_name']"),
+            ]
+        ),
+
+        "Delete Snapshots by Age":
+        Form(
+            fields=[
+                ("snapshot_age", "//select[@id='snapshot_age']"),
+            ]
+        ),
+
+        "Inherit Parent Tags":
+        Form(
+            fields=[
+                ("parent_type", "//select[@id='parent_type']"),
+                ("approve_max_cpu", "//input[@id='cat_prov_max_cpu']"),
+                ("approve_max_vm", "//input[@id='cat_prov_max_vm']"),
+                ("approve_max_memory", "//input[@id='cat_prov_max_memory']"),
+                ("approve_max_retirement_days", "//input[@id='cat_prov_max_retirement_days']"),
+                ("cost_center", "//input[@id='cat_cc']"),
+                ("department", "//input[@id='cat_department']"),
+                ("environment", "//input[@id='cat_environment']"),
+                ("evm_operations", "//input[@id='cat_operations']"),
+                ("exclusions", "//input[@id='cat_exclusions']"),
+                ("location", "//input[@id='cat_location']"),
+                ("network_location", "//input[@id='cat_network_location']"),
+                ("owner", "//input[@id='cat_owner']"),
+                ("provisioning_scope", "//input[@id='cat_prov_scope']"),
+                ("quota_max_memory", "//input[@id='cat_quota_max_memory']"),
+                ("quota_max_storage", "//input[@id='cat_quota_max_storage']"),
+                ("quota_max_cpu", "//input[@id='cat_quota_max_cpu']"),
+                ("service_level", "//input[@id='cat_service_level']"),
+                ("workload", "//input[@id='cat_function']"),
+            ]
+        ),
+
+        "Invoke a Custom Automation":
+        Form(
+            fields=[
+                ("message", "//input[@id='object_message']"),
+                ("request", "//input[@id='object_request']"),
+                ("attribute_1", "//input[@id='attribute_1']"),
+                ("value_1", "//input[@id='value_1']"),
+                ("attribute_2", "//input[@id='attribute_2']"),
+                ("value_2", "//input[@id='value_2']"),
+                ("attribute_3", "//input[@id='attribute_3']"),
+                ("value_3", "//input[@id='value_3']"),
+                ("attribute_4", "//input[@id='attribute_4']"),
+                ("value_4", "//input[@id='value_4']"),
+                ("attribute_5", "//input[@id='attribute_5']"),
+                ("value_5", "//input[@id='value_5']"),
+            ]
+        ),
+
+        "Reconfigure CPUs":
+        Form(
+            fields=[
+                ("num_cpus", "//select[@id='cpu_value']"),
+            ]
+        ),
+
+        "Reconfigure Memory":
+        Form(
+            fields=[
+                ("memory_size", "//select[@id='memory_value']"),
+            ]
+        ),
+
+        "Remove Tags":
+        Form(
+            fields=[
+                ("approve_max_cpu", "//input[@id='cat_prov_max_cpu']"),
+                ("approve_max_vm", "//input[@id='cat_prov_max_vm']"),
+                ("approve_max_memory", "//input[@id='cat_prov_max_memory']"),
+                ("approve_max_retirement_days", "//input[@id='cat_prov_max_retirement_days']"),
+                ("cost_center", "//input[@id='cat_cc']"),
+                ("department", "//input[@id='cat_department']"),
+                ("environment", "//input[@id='cat_environment']"),
+                ("evm_operations", "//input[@id='cat_operations']"),
+                ("exclusions", "//input[@id='cat_exclusions']"),
+                ("location", "//input[@id='cat_location']"),
+                ("network_location", "//input[@id='cat_network_location']"),
+                ("owner", "//input[@id='cat_owner']"),
+                ("provisioning_scope", "//input[@id='cat_prov_scope']"),
+                ("quota_max_memory", "//input[@id='cat_quota_max_memory']"),
+                ("quota_max_storage", "//input[@id='cat_quota_max_storage']"),
+                ("quota_max_cpu", "//input[@id='cat_quota_max_cpu']"),
+                ("service_level", "//input[@id='cat_service_level']"),
+                ("workload", "//input[@id='cat_function']"),
+            ]
+        ),
+
+        "Send an E-mail":
+        Form(
+            fields=[
+                ("from", "//input[@id='from']"),
+                ("to", "//input[@id='to']"),
+            ]
+        ),
+
+        "Set a Custom Attribute in vCenter":
+        Form(
+            fields=[
+                ("attribute", "//input[@id='attribute']"),
+                ("value", "//input[@id='value']"),
+            ]
+        ),
+
+        "Send an SNMP Trap":
+        Form(
+            fields=[
+                ("host", "//input[@id='host']"),
+                ("version", "//select[@id='snmp_version']"),
+                ("number", "//input[@id='trap_id']"),
+                ("oid_1", "//input[@id='oid__1']"),
+                ("oid_2", "//input[@id='oid__2']"),
+                ("oid_3", "//input[@id='oid__3']"),
+                ("oid_4", "//input[@id='oid__4']"),
+                ("oid_5", "//input[@id='oid__5']"),
+                ("oid_6", "//input[@id='oid__6']"),
+                ("oid_7", "//input[@id='oid__7']"),
+                ("oid_8", "//input[@id='oid__8']"),
+                ("oid_9", "//input[@id='oid__9']"),
+                ("oid_10", "//input[@id='oid__10']"),
+                ("type_1", "//input[@id='var_type__1']"),
+                ("type_2", "//input[@id='var_type__2']"),
+                ("type_3", "//input[@id='var_type__3']"),
+                ("type_4", "//input[@id='var_type__4']"),
+                ("type_5", "//input[@id='var_type__5']"),
+                ("type_6", "//input[@id='var_type__6']"),
+                ("type_7", "//input[@id='var_type__7']"),
+                ("type_8", "//input[@id='var_type__8']"),
+                ("type_9", "//input[@id='var_type__9']"),
+                ("type_10", "//input[@id='var_type__10']"),
+                ("value_1", "//input[@id='value__1']"),
+                ("value_2", "//input[@id='value__2']"),
+                ("value_3", "//input[@id='value__3']"),
+                ("value_4", "//input[@id='value__4']"),
+                ("value_5", "//input[@id='value__5']"),
+                ("value_6", "//input[@id='value__6']"),
+                ("value_7", "//input[@id='value__7']"),
+                ("value_8", "//input[@id='value__8']"),
+                ("value_9", "//input[@id='value__9']"),
+                ("value_10", "//input[@id='value__10']"),
+            ]
+        ),
+
+        "Tag": None,
+    }
+
+    tag_tree = Tree("//div[@id='action_tags_treebox']/div/table")
+
+    def __init__(self, description, action_type, action_values=None):
+        assert action_type in self.forms.keys(), "Unrecognized Action Type (%s)" % action_type
+        self.description = description
+        self.action_type = action_type
+        self.action_values = action_values or self._default_values
+
+    @property
+    def _default_values(self):
+        if self.action_type == "Tag":
+            return tuple()
+        else:
+            return dict()
+
+    def _fill(self, action):
+        fill(self.form, dict(description=self.description, action_type=self.action_type))
+        if self.forms[self.action_type] is not None:
+            return fill(self.forms[self.action_type], self.action_values, action)
+        elif self.action_type == "Tag":
+            # Must be tuple or list
+            self.tag_tree.click_path(*self.action_values)
+            return browser.click(action)
+        else:
+            raise NotImplementedError("Other types not implmeneted yet!")
+
+    def create(self, cancel=False):
+        browser.force_navigate("control_explorer_action_new")
+        action = self.buttons.cancel if cancel else self.buttons.add
+        return self._fill(action)
+
+    def update(self, action_type=None, action_values=None, cancel=False):
+        browser.force_navigate("control_explorer_action_edit",
+                               context={"action_name": self.description})
+        action = self.buttons.cancel if cancel else self.buttons.save
+        if action_type and action_type != self.action_type:
+            logger.debug("Changing action_type for Action %s" % self.description)
+            assert action_type in self.forms.keys(), "Unrecognized Action Type (%s)" % action_type
+            self.action_type = action_type
+            self.action_values = self._default_values
+        if action_values:
+            if isinstance(self.action_values, dict):
+                self.action_values.update(action_values)
+            else:
+                # tuple or list for Tag selector
+                self.action_values = action_values
+
+        return self._fill(action)
+
+    def delete(self, cancel=False):
+        browser.force_navigate("control_explorer_action",
+                               context={"action_name": self.description})
+        tb.select("Configuration", "Delete this Action", invokes_alert=True)
+        browser.handle_alert(cancel)
