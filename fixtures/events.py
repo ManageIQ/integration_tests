@@ -1,4 +1,5 @@
 import requests
+import signal
 import socket
 import subprocess
 import time
@@ -287,7 +288,6 @@ class EventListener(object):
         print("In order to run the event testing, port %d must be enabled." % self.listener_port)
         print("sudo firewall-cmd --add-port %d/tcp --permanent" % self.listener_port)
         self.listener = subprocess.Popen(self.listener_script,
-                                         stderr=subprocess.PIPE,
                                          shell=True)
         self.logger.info("Listener pid %d" % self.listener.pid)
         time.sleep(3)
@@ -297,11 +297,9 @@ class EventListener(object):
     def stop(self):
         assert self.listener, "Listener must be running in order to stop it!"
         self.logger.info("Killing listener %d" % (self.listener.pid))
-        self.listener.kill()
-        (stdout, stderr) = self.listener.communicate()
+        self.listener.send_signal(signal.SIGINT)
+        self.listener.wait()
         self.listener = None
-        self.logger.info("listener stdout: %s" % stdout)
-        self.logger.info("listener stderr: %s" % stderr)
 
     def pytest_unconfigure(self, config):
         """ Collect and clean up the testing.

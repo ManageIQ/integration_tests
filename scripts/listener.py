@@ -118,4 +118,4 @@ if __name__ == '__main__':
     port = 65432
     if len(sys.argv) == 2:
         port = int(sys.argv[-1])
-    run(host='0.0.0.0', port=port, debug=True)
+    run(host='0.0.0.0', port=port)
