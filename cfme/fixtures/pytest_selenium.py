@@ -505,7 +505,12 @@ def detect_observed_field(loc):
     If found, that interval will be used instead of the default.
 
     """
-    el = element(loc)
+    if is_displayed(loc):
+        el = element(loc)
+    else:
+        # Element not visible, sort out
+        return
+
     # Default wait period, based on the default UI wait (700ms)
     # plus a little padding to let the AJAX fire before we wait_for_ajax
     default_wait = .8
