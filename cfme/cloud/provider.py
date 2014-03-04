@@ -180,14 +180,22 @@ class Provider(Updateable):
         if not self._on_detail_page():
             nav.go_to('cloud_provider', context={'provider': self})
 
+        stats_to_match = ['num_template', 'num_vm']
+        client = self.get_mgmt_system()
+
+        # Bail out here if the stats match.
+        if self._do_stats_match(client, stats_to_match):
+            client.disconnect()
+            return
+
+        # Otherwise refresh relationships and hand off to wait_for
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
         browser.handle_alert()
 
-        stats_to_match = ['num_template', 'num_vm']
-        client = self.get_mgmt_system()
         ec, tc = wait_for(self._do_stats_match,
                           [client, stats_to_match],
                           message="do_stats_match",
+                          fail_func=browser.refresh,
                           num_sec=300,
                           delay=10)
         client.disconnect()
@@ -229,16 +237,14 @@ class Provider(Updateable):
             KeyError: If the host stats does not contain the specified key.
             ProviderHasNoProperty: If the provider does not have the property defined.
         """
-        logger.info('Beginning stat match (collecting stats)...')
         host_stats = client.stats(*stats_to_match)
 
         for stat in stats_to_match:
             try:
                 cfme_stat = getattr(self, stat)
-                logger.debug(' Stat [%s], Host(%s), CFME(%s)' % (stat, host_stats[stat], cfme_stat))
+                logger.info(' Matching stat [%s], Host(%s), CFME(%s)' %
+                    (stat, host_stats[stat], cfme_stat))
                 if host_stats[stat] != cfme_stat:
-                    logger.debug(' Not matched yet, breaking early')
-                    browser.refresh()
                     return False
             except KeyError:
                 raise HostStatsNotContains("Host stats information does not contain '%s'" % stat)
