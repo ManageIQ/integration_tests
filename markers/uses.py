@@ -45,19 +45,19 @@ for mark in _marks_to_make:
     _markfunc = lambda: None
     # Put on a nice docstring...
     _markfunc.__doc__ = markdoc % mark
-    globals()[mark] = pytest.fixture(_markfunc)
+    globals()[mark] = pytest.fixture(scope="session")(_markfunc)
 
 
 ###
 # Add fixtures with dependencies here
 ###
-@pytest.fixture
+@pytest.fixture(scope="session")
 def uses_cloud_providers(uses_providers):
     """Fixture which marks a test with the ``uses_cloud_providers`` and ``uses_providers`` marks"""
     pass
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def uses_infra_providers(uses_providers):
     """Fixture which marks a test with the ``uses_infra_providers`` and ``uses_providers`` marks"""
     pass
