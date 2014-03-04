@@ -662,6 +662,7 @@ def fill(loc, content):
     action, logval = fill_tag(loc, content)
     logger.debug('  Filling in [%s], with value "%s"' % (loc, logval))
     action(loc, content)
+    sel.detect_observed_field(loc)
 
 
 @fill.method((Table, object))

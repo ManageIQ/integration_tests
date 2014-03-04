@@ -599,7 +599,6 @@ def select_by_text(loc, text):
         el = element(loc)
         ActionChains(browser()).move_to_element(el).perform()
         Select(el).select_by_visible_text(text)
-        detect_observed_field(loc)
         wait_for_ajax()
 
 
@@ -615,7 +614,6 @@ def select_by_value(loc, value):
         el = element(loc)
         ActionChains(browser()).move_to_element(el).perform()
         Select(el).select_by_value(value)
-        detect_observed_field(loc)
         wait_for_ajax()
 
 
@@ -653,7 +651,6 @@ def deselect_by_text(loc, text):
         el = element(loc)
         ActionChains(browser()).move_to_element(el).perform()
         Select(el).deselect_by_visible_text(text)
-        detect_observed_field(loc)
         wait_for_ajax()
 
 
@@ -669,5 +666,4 @@ def deselect_by_value(loc, value):
         el = element(loc)
         ActionChains(browser()).move_to_element(el).perform()
         Select(el).deselect_by_value(value)
-        detect_observed_field(loc)
         wait_for_ajax()
