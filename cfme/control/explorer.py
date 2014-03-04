@@ -7,6 +7,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 
 from cfme.web_ui import fill
 from cfme.web_ui import Region, Form, Tree, Table
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from utils.log import logger
 from utils.text import normalize_text
@@ -25,6 +26,10 @@ events_table = Table(
     table_locator="//div[@id='event_list_div']/fieldset/table[@class='style3']"
 )
 EVENT_NAME_CELL = 1
+
+events_policies_table = Table(
+    table_locator="//div[@id='event_info_div']/fieldset/table[@class='style3']"
+)
 
 condition_folders_table = Table(
     table_locator="//div[@id='condition_folders_div']/fieldset/table[@class='style3']"
@@ -1237,3 +1242,17 @@ class Action(Updateable):
                                context={"action_name": self.description})
         tb.select("Configuration", "Delete this Action", invokes_alert=True)
         browser.handle_alert(cancel)
+
+
+def event_policies(event):
+    """ Return all policies, where specified event is assigned.
+
+    Args:
+        event: Event to examine.
+    Returns: :py:class:`set` of the policies where this event is assigned.
+    """
+    browser.force_navigate("control_explorer_event", context={"event_name": event})
+    try:
+        return {policy[1].text.encode("utf-8").strip() for policy in events_policies_table.rows()}
+    except NoSuchElementException:
+        return set([])
