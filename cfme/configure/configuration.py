@@ -4,7 +4,7 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as browser
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound, NotAllItemsClicked
+from cfme.exceptions import ScheduleNotFound
 from cfme.web_ui import Form, Region, Table, Tree, accordion, fill, flash
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
@@ -84,10 +84,12 @@ crud_buttons = Region(
     identifying_loc="//div[@id='buttons_on']/ul[@id='form_buttons']",
 )
 
+records_table = Table("//div[@id='records_div']/table[@class='style3']")
 
 nav.add_branch("configuration",
-    dict(
-        configuration_settings=[
+    {
+        "configuration_settings":
+        [
             lambda _: accordion.click("Settings"),
             {
                 "cfg_settings_region":
@@ -97,14 +99,26 @@ nav.add_branch("configuration",
                 lambda _: settings_tree.click_path("Region: Region", "Zones", "Default Zone"),
 
                 "cfg_settings_schedules":
-                lambda _: settings_tree.click_path("Region: Region", "Schedules"),
+                [
+                    lambda _: settings_tree.click_path("Region: Region", "Schedules"),
+                    {
+                        "cfg_settings_schedule":
+                        [
+                            lambda ctx: records_table.click_cell("name", ctx["schedule_name"]),
+                            {
+                                "cfg_settings_schedule_edit":
+                                lambda _: tb.select("Configuration", "Edit this Schedule")
+                            }
+                        ]
+                    }
+                ],
 
                 "cfg_settings_currentserver":
                 [
                     lambda _: settings_tree.click_path("Region: Region",
-                                                     "Zones",
-                                                     "Default Zone",
-                                                     "(current)"),
+                                                       "Zones",
+                                                       "Default Zone",
+                                                       "(current)"),
                     {
                         "cfg_settings_currentserver_server":
                         lambda _: tabs.select_tab("Server"),
@@ -130,10 +144,11 @@ nav.add_branch("configuration",
                         "cfg_settings_currentserver_advanced":
                         lambda _: tabs.select_tab("Advanced")
                     }
-                ]
+                ],
             }
         ],
-        configuration_diagnostics=[
+        "configuration_diagnostics":
+        [
             lambda _: accordion.click("Diagnostics"),
             {
                 "cfg_diagnostics_currentserver":
@@ -147,7 +162,13 @@ nav.add_branch("configuration",
                         lambda _: tabs.select_tab("Workers"),
 
                         "cfg_diagnostics_server_collect":
-                        lambda _: tabs.select_tab("Collect Logs"),
+                        [
+                            lambda _: tabs.select_tab("Collect Logs"),
+                            {
+                                "cfg_diagnostics_server_collect_settings":
+                                lambda _: tb.select("Edit")
+                            }
+                        ],
 
                         "cfg_diagnostics_server_cfmelog":
                         lambda _: tabs.select_tab("CFME Log"),
@@ -210,12 +231,13 @@ nav.add_branch("configuration",
                         "cfg_diagnostics_region_orphaned":
                         lambda _: tabs.select_tab("Orphaned Data"),
                     }
-                ]
-            }
+                ],
+            },
         ],
-        configuration_access_control=lambda _: accordion.click("Access Control"),
-        configuration_database=lambda _: accordion.click("Database"),
-    )
+
+        "configuration_access_control": lambda _: accordion.click("Access Control"),
+        "configuration_database": lambda _: accordion.click("Database"),
+    }
 )
 
 
@@ -293,8 +315,7 @@ class ServerLogDepot(object):
             Args:
                 cancel: If set to True, the Cancel button is clicked instead of saving.
             """
-            nav.go_to("cfg_diagnostics_server_collect")
-            tb.select("Edit")
+            browser.force_navigate("cfg_diagnostics_server_collect_settings")
             details = {
                 "type": self.p_types[self.p_type],
                 "uri": self.uri
@@ -321,8 +342,7 @@ class ServerLogDepot(object):
             Args:
                 cancel: If set to True, the Cancel button is clicked instead of saving.
             """
-            nav.go_to("cfg_diagnostics_server_collect")
-            tb.select("Edit")
+            browser.force_navigate("cfg_diagnostics_server_collect_settings")
 
             if cancel:
                 action = crud_buttons.cancel_button
@@ -358,7 +378,7 @@ class ServerLogDepot(object):
             selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
             wait_minutes: How many minutes should we wait for the collection process to finish?
         """
-        nav.go_to("cfg_diagnostics_server_collect")
+        browser.force_navigate("cfg_diagnostics_server_collect")
         last_collection = self.get_last_collection()
         # Initiate the collection
         tb.select("Collect", selection)
@@ -440,7 +460,7 @@ class BasicInformation(Updateable):
         """ Navigate to a correct page, change details and save.
 
         """
-        nav.go_to("cfg_settings_currentserver_server")
+        browser.force_navigate("cfg_settings_currentserver_server")
         fill(self.basic_information, self.details, action=crud_buttons.save_button)
 
 
@@ -514,7 +534,7 @@ class SMTPSettings(Updateable):
         )
 
     def update(self):
-        nav.go_to("cfg_settings_currentserver_server")
+        browser.force_navigate("cfg_settings_currentserver_server")
         fill(self.smtp_settings, self.details, action=crud_buttons.save_button)
 
 
@@ -546,7 +566,7 @@ class DatabaseAuthSetting(object):
         )
 
     def update(self):
-        nav.go_to("cfg_settings_currentserver_auth")
+        browser.force_navigate("cfg_settings_currentserver_auth")
         fill(self.form, self.details, action=crud_buttons.save_button)
 
 
@@ -587,7 +607,7 @@ class AmazonAuthSetting(object):
         )
 
     def update(self):
-        nav.go_to("cfg_settings_currentserver_auth")
+        browser.force_navigate("cfg_settings_currentserver_auth")
         fill(self.form, self.details, action=crud_buttons.save_button)
 
 
@@ -671,7 +691,7 @@ class LDAPAuthSetting(object):
             self.details["ldaphost_%d" % (enum + 1)] = host
 
     def update(self):
-        nav.go_to("cfg_settings_currentserver_auth")
+        browser.force_navigate("cfg_settings_currentserver_auth")
         fill(self.form, self.details, action=crud_buttons.save_button)
 
 
@@ -769,8 +789,6 @@ class Schedule(object):
         ("start_min", "//select[@id='start_min']"),
     ])
 
-    table = Table("//div[@id='records_div']/table[@class='style3']")
-
     def __init__(self,
                  name,
                  description,
@@ -778,7 +796,7 @@ class Schedule(object):
                  action=None,
                  filter_type=None,
                  filter_value=None,
-                 run_type=None,
+                 run_type="Once",
                  run_every=None,
                  time_zone=None,
                  start_date=None,
@@ -809,7 +827,7 @@ class Schedule(object):
         Args:
             cancel: Whether to click on the cancel button to interrupt the creation.
         """
-        nav.go_to("cfg_settings_schedules")
+        browser.force_navigate("cfg_settings_schedules")
         tb.select("Configuration", "Add a new Schedule")
 
         if cancel:
@@ -828,9 +846,8 @@ class Schedule(object):
         Args:
             cancel: Whether to click on the cancel button to interrupt the editation.
         """
-        self.open_schedule_details(self.details["name"])
-        tb.select("Configuration", "Edit this Schedule")
-
+        browser.force_navigate("cfg_settings_schedule_edit",
+                               context={"schedule_name": self.details["name"]})
         if cancel:
             action = crud_buttons.cancel_button
         else:
@@ -868,22 +885,6 @@ class Schedule(object):
     # CLASS METHODS
     #
     @classmethod
-    def open_schedule_details(self, name):
-        """ Navigates to the schedules list and opens the schedule details page.
-
-        Args:
-            name: Schedule's name.
-        """
-        nav.go_to("cfg_settings_schedules")
-        try:
-            assert self.table.is_displayed
-            self.table.click_cell("name", name)
-        except (AssertionError, NotAllItemsClicked):
-            raise ScheduleNotFound(
-                "Schedule '%s' could not be found!" % name
-            )
-
-    @classmethod
     def delete_by_name(self, name, cancel=False):
         """ Finds a particular schedule by its name and then deletes it.
 
@@ -891,8 +892,8 @@ class Schedule(object):
             name: Name of the schedule.
             cancel: Whether to click on the cancel button in the pop-up.
         """
-        self.open_schedule_details(name, cancel)
-        tb.select("Configuration", "Delete this Schedule from the Database")
+        browser.force_navigate("cfg_settings_schedule", context={"schedule_name": name})
+        tb.select("Configuration", "Delete this Schedule from the Database", invokes_alert=True)
         browser.handle_alert(cancel)
 
     @classmethod
@@ -907,7 +908,7 @@ class Schedule(object):
             *names: Arguments with all schedules' names.
         """
         def select_by_name(self, name):
-            for row in self.table.rows():
+            for row in records_table.rows():
                 if row.name.strip() == name:
                     checkbox = row[0].find_element_by_xpath("//input[@type='checkbox']")
                     if not checkbox.is_selected():
@@ -918,7 +919,7 @@ class Schedule(object):
                     "Schedule '%s' could not be found for selection!" % name
                 )
 
-        nav.go_to("cfg_settings_schedules")
+        browser.force_navigate("cfg_settings_schedules")
         for name in names:
             select_by_name(name)
 
@@ -949,7 +950,7 @@ def set_server_roles(**roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
-    nav.go_to("cfg_settings_currentserver_server")
+    browser.force_navigate("cfg_settings_currentserver_server")
     fill(server_roles, roles, action=crud_buttons.save_button)
 
 
@@ -959,7 +960,7 @@ def get_server_roles():
     Returns: :py:class:`dict` with the roles in the same format as :py:func:`set_server_roles`
         accepts as kwargs.
     """
-    nav.go_to("cfg_settings_currentserver_server")
+    browser.force_navigate("cfg_settings_currentserver_server")
     return {name: browser.element(locator).is_selected() for (name, locator) in server_roles.fields}
 
 
@@ -969,7 +970,7 @@ def set_ntp_servers(*servers):
     Args:
         *servers: Maximum of 3 hostnames.
     """
-    nav.go_to("cfg_settings_currentserver_server")
+    browser.force_navigate("cfg_settings_currentserver_server")
     assert len(servers) <= 3, "There is place only for 3 servers!"
     fields = {}
     for enum, server in enumerate(servers):
@@ -988,7 +989,7 @@ def set_database_internal():
     """ Set the database as the internal one.
 
     """
-    nav.go_to("cfg_settings_currentserver_database")
+    browser.force_navigate("cfg_settings_currentserver_database")
     fill(
         db_configuration,
         dict(type="Internal Database on this CFME Appliance"),
@@ -1002,7 +1003,7 @@ def set_database_external_appliance(hostname):
     Args:
         hostname: Host name of the another appliance
     """
-    nav.go_to("cfg_settings_currentserver_database")
+    browser.force_navigate("cfg_settings_currentserver_database")
     fill(
         db_configuration,
         dict(
@@ -1022,7 +1023,7 @@ def set_database_external_postgres(hostname, database, username, password):
         username: User name
         password: User password
     """
-    nav.go_to("cfg_settings_currentserver_database")
+    browser.force_navigate("cfg_settings_currentserver_database")
     fill(
         db_configuration,
         dict(
@@ -1046,7 +1047,7 @@ def restart_workers(name, wait_time_min=1):
     """
 
     table = Table("//div[@id='records_div']/table[@class='style3']")
-    nav.go_to("cfg_diagnostics_server_workers")
+    browser.force_navigate("cfg_diagnostics_server_workers")
 
     def get_all_pids(worker_name):
         return {row.pid.text for row in table.rows() if worker_name in row.name.text}
