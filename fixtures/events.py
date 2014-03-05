@@ -96,7 +96,7 @@ class EventListener(object):
     def __init__(self, listener_port, settle_time, verbose=False):
         self.listener_port = int(listener_port)
         listener_filename = scripts_path.join('listener.py').strpath
-        self.listener_script = "%s %d" % (listener_filename, self.listener_port)
+        self.listener_script = "%s 0.0.0.0 %d" % (listener_filename, self.listener_port)
         if not verbose:
             self.listener_script += ' --quiet'
         self.settle_time = int(settle_time)
