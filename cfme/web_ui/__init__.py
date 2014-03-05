@@ -1300,9 +1300,6 @@ class InfoBlock(object):
 
 class Quadicon(object):
     """
-    Quadicon
-    """"""""
-
     Represents a single quadruple icon in the CFME UI.
 
     A Quadicon contains multiple quadrants. These are accessed via attributes.
