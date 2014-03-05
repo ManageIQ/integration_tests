@@ -32,7 +32,7 @@ def test_providers_discovery():
     amazon_creds = provider.get_credentials_from_config('cloudqe_amazon')
     provider.discover(amazon_creds)
     flash.assert_message_match('Amazon Cloud Providers: Discovery successfully initiated')
-    # TODO - wait for it to finish (no reliable way to do that currently)
+    provider.wait_for_a_provider()
 
 
 @pytest.mark.usefixtures('has_no_providers')

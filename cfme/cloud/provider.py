@@ -382,3 +382,10 @@ def discover(credential, cancel=False):
                           'password': credential.secret,
                           'password_verify': credential.verify_secret})
     fill(discover_form, form_data)
+
+
+def wait_for_a_provider():
+    sel.force_navigate('clouds_providers')
+    logger.info('Waiting for a provider to appear...')
+    wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
+             num_sec=180, fail_func=sel.refresh)

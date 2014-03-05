@@ -31,7 +31,7 @@ def test_that_checks_flash_when_discovery_cancelled():
 def test_providers_discovery(provider_crud):
     provider.discover_from_provider(provider_crud)
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
-    # TODO - wait for it to finish (no reliable way to do that currently)
+    provider.wait_for_a_provider()
 
 
 @pytest.mark.usefixtures('has_no_providers')

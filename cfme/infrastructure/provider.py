@@ -440,3 +440,10 @@ def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None
         form_data.update({'to_3': end_octet})
 
     fill(discover_form, form_data)
+
+
+def wait_for_a_provider():
+    sel.force_navigate('infrastructure_providers')
+    logger.info('Waiting for a provider to appear...')
+    wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
+             num_sec=180, fail_func=sel.refresh)
