@@ -169,7 +169,7 @@ class Provider(Updateable):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        nav.go_to('infrastructure_provider_edit', context={'provider': self})
+        sel.force_navigate('infrastructure_provider_edit', context={'provider': self})
         fill(properties_form, self._form_mapping(**updates))
         fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, edit_page.save_button)
@@ -183,7 +183,7 @@ class Provider(Updateable):
         if the match is not complete within a certain defined time period.
         """
         if not self._on_detail_page():
-            nav.go_to('infrastructure_provider', context={'provider': self})
+            sel.force_navigate('infrastructure_provider', context={'provider': self})
 
         stats_to_match = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
         client = self.get_mgmt_system()
@@ -223,7 +223,7 @@ class Provider(Updateable):
         Returns: A string representing the contents of the InfoBlock's value.
         """
         if not self._on_detail_page():
-            nav.go_to('infrastructure_provider', context={'provider': self})
+            sel.force_navigate('infrastructure_provider', context={'provider': self})
         return details_page.infoblock.text(*ident)
 
     def _do_stats_match(self, client, stats_to_match=None):
