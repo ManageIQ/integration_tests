@@ -52,3 +52,23 @@ def has_no_providers():
     the current appliance.
     """
     clear_providers()
+
+
+@pytest.fixture
+def has_no_cloud_providers():
+    """ Clears all cloud providers from an appliance
+
+    This is a destructive fixture. It will clear all cloud managements systems from
+    the current appliance.
+    """
+    providers.clear_cloud_providers()
+
+
+@pytest.fixture
+def has_no_infra_providers():
+    """ Clears all infrastructure providers from an appliance
+
+    This is a destructive fixture. It will clear all infrastructure managements systems from
+    the current appliance.
+    """
+    providers.clear_infra_providers()

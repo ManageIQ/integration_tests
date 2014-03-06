@@ -239,6 +239,48 @@ def setup_infrastructure_providers(validate=True, check_existing=True):
     return _setup_providers('infra', validate, check_existing)
 
 
+def clear_cloud_providers(validate=True):
+    sel.force_navigate('clouds_providers')
+    logger.debug('Checking for existing cloud providers...')
+    if paginator.rec_total():
+        logger.info(' Providers exist, so removing all cloud providers')
+        paginator.results_per_page('100')
+        sel.click(paginator.check_all())
+        toolbar.select('Configuration', 'Remove Cloud Providers from the VMDB',
+                       invokes_alert=True)
+        sel.handle_alert()
+        if validate:
+            wait_for_no_cloud_providers()
+
+
+def clear_infra_providers(validate=True):
+    sel.force_navigate('infrastructure_providers')
+    logger.debug('Checking for existing infrastructure providers...')
+    if paginator.rec_total():
+        logger.info(' Providers exist, so removing all infra providers')
+        paginator.results_per_page('100')
+        sel.click(paginator.check_all())
+        toolbar.select('Configuration', 'Remove Infrastructure Providers from the VMDB',
+                       invokes_alert=True)
+        sel.handle_alert()
+        if validate:
+            wait_for_no_infra_providers()
+
+
+def wait_for_no_cloud_providers():
+    sel.force_navigate('clouds_providers')
+    logger.debug('Waiting for all cloud providers to disappear...')
+    wait_for(lambda: not paginator.rec_total(), message="Delete all cloud providers",
+             num_sec=180, fail_func=sel.refresh)
+
+
+def wait_for_no_infra_providers():
+    sel.force_navigate('infrastructure_providers')
+    logger.debug('Waiting for all infra providers to disappear...')
+    wait_for(lambda: not paginator.rec_total(), message="Delete all infrastructure providers",
+             num_sec=180, fail_func=sel.refresh)
+
+
 def clear_providers():
     """Rudely clear all providers on an appliance
 
@@ -247,29 +289,10 @@ def clear_providers():
     # Executes the deletes first, then validates in a second pass
     logger.info('Destroying all appliance providers')
     perflog.start('utils.providers.clear_providers')
-    sel.force_navigate('clouds_providers')
-    if paginator.rec_total():
-        paginator.results_per_page('100')
-        sel.click(paginator.check_all())
-        toolbar.select('Configuration', 'Remove Cloud Providers from the VMDB',
-                       invokes_alert=True)
-        sel.handle_alert()
-
-    sel.force_navigate('infrastructure_providers')
-    if paginator.rec_total():
-        paginator.results_per_page('100')
-        sel.click(paginator.check_all())
-        toolbar.select('Configuration', 'Remove Infrastructure Providers from the VMDB',
-                       invokes_alert=True)
-        sel.handle_alert()
-
-    sel.force_navigate('clouds_providers')
-    wait_for(lambda: not paginator.rec_total(), message="Delete all cloud providers",
-             num_sec=180, fail_func=sel.refresh)
-
-    sel.force_navigate('infrastructure_providers')
-    wait_for(lambda: not paginator.rec_total(), message="Delete all infrastructure providers",
-             num_sec=180, fail_func=sel.refresh)
+    clear_cloud_providers(validate=False)
+    clear_infra_providers(validate=False)
+    wait_for_no_cloud_providers()
+    wait_for_no_cloud_providers()
     perflog.stop('utils.providers.clear_providers')
 
 
