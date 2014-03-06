@@ -14,12 +14,12 @@
   * :py:class:`InfoBlock`
   * :py:class:`Quadicon`
   * :py:class:`Radio`
+  * :py:class:`Select`
   * :py:class:`SplitTable`
   * :py:class:`Table`
   * :py:class:`TabStripForm`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
-  * :py:mod:`cfme.web_ui.dhtml_select`
   * :py:mod:`cfme.web_ui.flash`
   * :py:mod:`cfme.web_ui.listnav`
   * :py:mod:`cfme.web_ui.menu`
@@ -34,7 +34,9 @@ import re
 import types
 from datetime import date
 
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common import exceptions as sel_exceptions
+from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import multimethod, multidispatch, Anything
 
 import cfme.fixtures.pytest_selenium as sel
@@ -610,11 +612,6 @@ class SplitTable(Table):
 def fill_tag(loc, value):
     ''' Return a tuple of function to do the filling, and a value to log.'''
     raise NotImplementedError("Don't know how to fill {} into this type: {}".format(value, loc))
-
-
-@fill_tag.method(('select', Anything))
-def fill_select(slist, val):
-    return (sel.select, val)
 
 
 @fill_tag.method((Anything, 'text'))
@@ -1445,11 +1442,56 @@ class Quadicon(object):
         return self.locate()
 
 
-class DHTMLSelect():
+class Select(SeleniumSelect, object):
+    """ A poor man's Proxy class for the real selenium Select() object.
 
-    def __init__(self, loc):
+    We differ in one important point, that we can instantiate the object
+    without it being present on the page. The object is located at the beginning
+    of each function call.
+
+    Args:
+        loc: A locator.
+
+    Returns: A :py:class:`cfme.web_ui.Select` object.
+    """
+
+    def __init__(self, loc, multi=False):
         self.loc = loc
-        self.name = self._get_select_name()
+        self.is_multiple = multi
+
+    @property
+    def _el(self):
+        el = sel.element(self.loc)
+        ActionChains(browser()).move_to_element(el).perform()
+        return el
+
+    def observer_wait(self):
+        sel.detect_observed_field(self.loc)
+
+
+@fill.method((Select, object))
+def fill_select(slist, val):
+    stype = type(slist)
+    logger.debug('  Filling in %s with value %s' % (stype, val))
+    sel.select(slist, val)
+    slist.observer_wait()
+
+
+class DHTMLSelect(Select):
+    """
+    A special Select object for CFME's icon enhanced DHTMLx Select elements.
+
+    Args:
+        loc: A locator.
+
+    Returns: A :py:class:`cfme.web_ui.DHTMLSelect` object.
+    """
+
+    @staticmethod
+    def _log(meth, val=None):
+        if val:
+            val_string = " with value %s" % val
+        logger.debug('Filling in DHTMLSelect using (%s)%s' % (meth, val_string))
 
     def _get_select_name(self):
         """ Get's the name reference of the element from its hidden attribute.
@@ -1460,35 +1502,71 @@ class DHTMLSelect():
         name = sel.get_attribute(el, 'name')
         return name
 
-    def select_by_visible_text(self, text):
-        """ Special method for dhtmlx selects using in the Automate -> Explorer pane
+    @property
+    def all_selected_options(self):
+        """ Returns all selected options.
 
-        Args:
-            loc: A locator, expects either a string, WebElement, tuple.
-            text: The select element option's visible text.
+        Note: Since the DHTML select can only have one option selected at a time, we
+            simple return the first element (the only element).
+        Returns: A Web element.
         """
-        if text is not None:
-            value = browser().execute_script('return %s.getOptionByLabel("%s").value'
-                                             % (self.name, text))
-            self.select_by_value(value)
+        return [self.first_selected_option]
 
-    def select_by_value(self, value):
-        """ Special method for dhtmlx selects using in the Automate -> Explorer pane
+    @property
+    def first_selected_option(self):
+        """ Returns the first selected option in the DHTML select
 
-        Args:
-            loc: A locator, expects either a string, WebElement, tuple.
-            value: The select element's option value.
+        Note: In a DHTML select, there is only one option selectable at a time.
+
+        Returns: A webelement.
         """
-        if value is not None:
-            index = browser().execute_script('return %s.getIndexByValue("%s")' % (self.name, value))
-            self.select_by_index(index)
+        name = self._get_select_name()
+        return browser().execute_script(
+            'return %s.getOptionByIndex(%s.getSelectedIndex()).content' % (name, name))
 
-    def select_by_index(self, index):
-        """ Special method for dhtmlx selects using in the Automate -> Explorer pane
+    @property
+    def options(self):
+        """ Returns a list of options of the select as webelements.
+
+        Returns: A list of Webelements.
+        """
+        name = self._get_select_name()
+        return browser().execute_script('return %s.DOMlist.children' % name)
+
+    def select_by_index(self, index, _cascade=None):
+        """ Selects an option by index.
 
         Args:
-            loc: A locator, expects either a string, WebElement, tuple.
             index: The select element's option by index.
         """
+        name = self._get_select_name()
         if index is not None:
-            browser().execute_script('%s.selectOption(%s)' % (self.name, index))
+            if not _cascade:
+                self._log('index', index)
+            browser().execute_script('%s.selectOption(%s)' % (name, index))
+
+    def select_by_visible_text(self, text):
+        """ Selects an option by visible text.
+
+        Args:
+            text: The select element option's visible text.
+        """
+        name = self._get_select_name()
+        if text is not None:
+            self._log('visible_text', text)
+            value = browser().execute_script('return %s.getOptionByLabel("%s").value'
+                                             % (name, text))
+            self.select_by_value(value, _cascade=True)
+
+    def select_by_value(self, value, _cascade=None):
+        """ Selects an option by value.
+
+        Args:
+            value: The select element's option value.
+        """
+        name = self._get_select_name()
+        if value is not None:
+            if not _cascade:
+                self._log('value', value)
+            index = browser().execute_script('return %s.getIndexByValue("%s")' % (name, value))
+            self.select_by_index(index, _cascade=True)

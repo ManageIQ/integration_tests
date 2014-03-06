@@ -5,7 +5,7 @@ import cfme.fixtures.pytest_selenium as browser
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound
-from cfme.web_ui import Form, Region, Table, Tree, accordion, fill, flash
+from cfme.web_ui import Form, Region, Select, Table, Tree, accordion, fill, flash
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
 from utils.update import Updateable
@@ -58,7 +58,7 @@ ntp_servers = Form(
 
 db_configuration = Form(
     fields=[
-        ('type', "//select[@id='production_dbtype']"),
+        ('type', Select("//select[@id='production_dbtype']")),
         ('hostname', "//input[@id='production_host']"),
         ('database', "//input[@id='production_database']"),
         ('username', "//input[@id='production_username']"),
@@ -287,7 +287,7 @@ class ServerLogDepot(object):
 
         server_collect_logs = Form(
             fields=[
-                ("type", "//select[@id='log_protocol']"),
+                ("type", Select("//select[@id='log_protocol']")),
                 ("uri", "//input[@id='uri']"),
                 ("user", "//input[@id='log_userid']"),
                 ("password", "//input[@id='log_password']"),
@@ -500,8 +500,8 @@ class SMTPSettings(Updateable):
             ('port', "//input[@id='smtp_port']"),
             ('domain', "//input[@id='smtp_domain']"),
             ('start_tls', "//input[@id='smtp_enable_starttls_auto']"),
-            ('ssl_verify', "//select[@id='smtp_openssl_verify_mode']"),
-            ('auth', "//select[@id='smtp_authentication']"),
+            ('ssl_verify', Select("//select[@id='smtp_openssl_verify_mode']")),
+            ('auth', Select("//select[@id='smtp_authentication']")),
             ('username', "//input[@id='smtp_user_name']"),
             ('password', "//input[@id='smtp_password']"),
             ('from_email', "//input[@id='smtp_from']"),
@@ -553,9 +553,9 @@ class DatabaseAuthSetting(object):
     """
 
     form = Form(fields=[
-        ("timeout_h", "//select[@id='session_timeout_hours']"),
-        ("timeout_m", "//select[@id='session_timeout_mins']"),
-        ("auth_mode", "//select[@id='authentication_mode']")
+        ("timeout_h", Select("//select[@id='session_timeout_hours']")),
+        ("timeout_m", Select("//select[@id='session_timeout_mins']")),
+        ("auth_mode", Select("//select[@id='authentication_mode']"))
     ])
 
     def __init__(self, timeout_h=None, timeout_m=None):
@@ -588,9 +588,9 @@ class AmazonAuthSetting(object):
     """
 
     form = Form(fields=[
-        ("timeout_h", "//select[@id='session_timeout_hours']"),
-        ("timeout_m", "//select[@id='session_timeout_mins']"),
-        ("auth_mode", "//select[@id='authentication_mode']"),
+        ("timeout_h", Select("//select[@id='session_timeout_hours']")),
+        ("timeout_m", Select("//select[@id='session_timeout_mins']")),
+        ("auth_mode", Select("//select[@id='authentication_mode']")),
         ("access_key", "//input[@id='authentication_amazon_key']"),
         ("secret_key", "//input[@id='authentication_amazon_secret']"),
         ("get_groups", "//input[@id='amazon_role']"),
@@ -639,14 +639,14 @@ class LDAPAuthSetting(object):
 
     """
     form = Form(fields=[
-        ("timeout_h", "//select[@id='session_timeout_hours']"),
-        ("timeout_m", "//select[@id='session_timeout_mins']"),
-        ("auth_mode", "//select[@id='authentication_mode']"),
+        ("timeout_h", Select("//select[@id='session_timeout_hours']")),
+        ("timeout_m", Select("//select[@id='session_timeout_mins']")),
+        ("auth_mode", Select("//select[@id='authentication_mode']")),
         ("ldaphost_1", "//input[@id='authentication_ldaphost_1']"),
         ("ldaphost_2", "//input[@id='authentication_ldaphost_2']"),
         ("ldaphost_3", "//input[@id='authentication_ldaphost_3']"),
         ("ldapport", "//input[@id='authentication_ldapport']"),
-        ("user_type", "//select[@id='authentication_user_type']"),
+        ("user_type", Select("//select[@id='authentication_user_type']")),
         ("user_suffix", "//input[@id='authentication_user_suffix']"),
         ("get_groups", "//input[@id='ldap_role']"),
         ("get_direct_groups", "//input[@id='get_direct_groups']"),
@@ -775,18 +775,18 @@ class Schedule(object):
         ("description", "//input[@id='description']"),
         ("active", "//input[@id='enabled']"),
         ("name", "//input[@id='name']"),
-        ("action", "//select[@id='action_typ']"),
-        ("filter_type", "//select[@id='filter_typ']"),
-        ("filter_value", "//select[@id='filter_value']"),
-        ("timer_type", "//select[@id='timer_typ']"),
-        ("timer_hours", "//select[@id='timer_hours']"),
-        ("timer_days", "//select[@id='timer_days']"),
-        ("timer_weeks", "//select[@id='timer_weekss']"),    # Not a typo!
-        ("timer_months", "//select[@id='timer_months']"),
-        ("time_zone", "//select[@id='time_zone']"),
+        ("action", Select("//select[@id='action_typ']")),
+        ("filter_type", Select("//select[@id='filter_typ']")),
+        ("filter_value", Select("//select[@id='filter_value']")),
+        ("timer_type", Select("//select[@id='timer_typ']")),
+        ("timer_hours", Select("//select[@id='timer_hours']")),
+        ("timer_days", Select("//select[@id='timer_days']")),
+        ("timer_weeks", Select("//select[@id='timer_weekss']")),    # Not a typo!
+        ("timer_months", Select("//select[@id='timer_months']")),
+        ("time_zone", Select("//select[@id='time_zone']")),
         ("start_date", "//input[@id='miq_date_1']"),
-        ("start_hour", "//select[@id='start_hour']"),
-        ("start_min", "//select[@id='start_min']"),
+        ("start_hour", Select("//select[@id='start_hour']")),
+        ("start_min", Select("//select[@id='start_min']")),
     ])
 
     def __init__(self,

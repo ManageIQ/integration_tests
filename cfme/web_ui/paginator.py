@@ -1,4 +1,5 @@
 """A set of functions for dealing with the paginator controls."""
+from cfme.web_ui import Select
 import cfme.fixtures.pytest_selenium as sel
 import re
 
@@ -53,7 +54,7 @@ def results_per_page(num):
         num: Number of results per page
     """
     select = sel.element(_locator + _num_results)
-    sel.select(select, (sel.TEXT, str(num)))
+    sel.select(Select(select), (sel.TEXT, str(num)))
 
 
 def sort_by(sort):
@@ -63,7 +64,7 @@ def sort_by(sort):
         sort: Value to sort by (visible text in select box)
     """
     select = sel.element(_locator + _sort_by)
-    sel.select(select, (sel.TEXT, sort))
+    sel.select(Select(select), (sel.TEXT, sort))
 
 
 def rec_offset():

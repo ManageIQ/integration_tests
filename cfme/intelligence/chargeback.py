@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Form, Tree, fill, flash
+from cfme.web_ui import Form, Select, Tree, fill, flash
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
 
@@ -23,7 +23,7 @@ class RateFormItem(object):
 
 def _mkitem(index):
     return RateFormItem((By.CSS_SELECTOR, "input#rate_" + str(index)),
-                        (By.CSS_SELECTOR, "select#per_time_" + str(index)))
+                        Select((By.CSS_SELECTOR, "select#per_time_" + str(index))))
 
 rate_form = Form(
     fields=[
@@ -102,7 +102,7 @@ class ComputeRate(Updateable):
         self.network_io = network_io
 
     def create(self):
-        nav.go_to('chargeback_rates_compute_new')
+        sel.force_navigate('chargeback_rates_compute_new')
         fill(rate_form,
             {'description_text': self.description,
              'alloc_cpu': self.cpu_alloc,

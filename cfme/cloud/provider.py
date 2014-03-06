@@ -20,7 +20,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
-from cfme.web_ui import Region, Quadicon, Form, fill, paginator
+from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
@@ -64,11 +64,11 @@ discover_form = Form(
 
 properties_form = Form(
     fields=[
-        ('type_select', "//*[@id='server_emstype']"),
+        ('type_select', Select("//*[@id='server_emstype']")),
         ('name_text', "//*[@id='name']"),
         ('hostname_text', "//*[@id='hostname']"),
         ('ipaddress_text', "//*[@id='ipaddress']"),
-        ('amazon_region_select', "//*[@id='hostname']"),
+        ('amazon_region_select', Select("//*[@id='hostname']")),
         ('api_port', "//*[@id='port']"),
     ])
 
