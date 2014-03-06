@@ -27,7 +27,7 @@ def test_that_checks_flash_when_discovery_cancelled():
     flash.assert_message_match('Amazon Cloud Providers Discovery was cancelled by the user')
 
 
-@pytest.mark.usefixtures('has_no_providers')
+@pytest.mark.usefixtures('has_no_cloud_providers')
 def test_providers_discovery():
     amazon_creds = provider.get_credentials_from_config('cloudqe_amazon')
     provider.discover(amazon_creds)
@@ -35,7 +35,7 @@ def test_providers_discovery():
     provider.wait_for_a_provider()
 
 
-@pytest.mark.usefixtures('has_no_providers')
+@pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_add(provider_crud):
     """ Tests that a provider can be added """
     provider_crud.create()
@@ -43,14 +43,14 @@ def test_provider_add(provider_crud):
     provider_crud.validate()
 
 
-@pytest.mark.usefixtures('has_no_providers')
+@pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_add_with_bad_credentials(provider_crud):
     provider_crud.credentials = provider.get_credentials_from_config('bad_credentials')
     with error.expected('Login failed due to a bad username or password.'):
         provider_crud.create(validate_credentials=True)
 
 
-@pytest.mark.usefixtures('has_no_providers')
+@pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_edit(provider_crud):
     """ Tests that editing a management system shows the proper detail after an edit."""
     provider_crud.create()

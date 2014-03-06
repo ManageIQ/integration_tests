@@ -27,14 +27,14 @@ def test_that_checks_flash_when_discovery_cancelled():
     flash.assert_message_match('Infrastructure Providers Discovery was cancelled by the user')
 
 
-@pytest.mark.usefixtures('has_no_providers')
+@pytest.mark.usefixtures('has_no_infra_providers')
 def test_providers_discovery(provider_crud):
     provider.discover_from_provider(provider_crud)
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
     provider.wait_for_a_provider()
 
 
-@pytest.mark.usefixtures('has_no_providers')
+@pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_add(provider_crud):
     """ Tests that a provider can be added """
     provider_crud.create()
@@ -42,7 +42,7 @@ def test_provider_add(provider_crud):
     provider_crud.validate()
 
 
-@pytest.mark.usefixtures('has_no_providers')
+@pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_add_with_bad_credentials(provider_crud):
     provider_crud.credentials = provider.get_credentials_from_config('bad_credentials')
     if isinstance(provider_crud, provider.VMwareProvider):
@@ -53,7 +53,7 @@ def test_provider_add_with_bad_credentials(provider_crud):
             provider_crud.create(validate_credentials=True)
 
 
-@pytest.mark.usefixtures('has_no_providers')
+@pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_edit(provider_crud):
     """ Tests that editing a management system shows the proper detail after an edit."""
     provider_crud.create()
