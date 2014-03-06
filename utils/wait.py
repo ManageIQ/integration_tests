@@ -66,12 +66,12 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             else:
                 raise
         if out == fail_condition:
-            if fail_func:
-                fail_func()
             time.sleep(delay)
             total_time += delay
             if expo:
                 delay *= 2
+            if fail_func:
+                fail_func()
         else:
             duration = time.time() - st_time
             logger.info('Took %f to do %s' % (duration, message))
