@@ -1,18 +1,13 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-""" SOAP wrapper for CFME.
+"""SOAP wrapper for CFME.
 
 Enables to operate Infrastructure objects. It has better VM provisioning code. OOP encapsulated.
-
-Todo:
-    * hook with mgmt_system.py to be able to do another operations with VMs that aren't possible
-        through CFME SOAP
-    * some caching to speed-up? Don't know how reliable that would be.
-
 """
 from suds import WebFault
-import re
 
+from utils import lazycache
+from utils.conf import cfme_data
 from utils.db import cfmedb
 from utils.log import logger
 from utils.soap import soap_client
@@ -23,12 +18,26 @@ if "client" not in globals():
     client = soap_client()  # Ugly, but easiest to use :/
 
 
+def is_datastore_banned(datastore_name):
+    """Checks whether the datastore is in the list of datastores not allowed to use
+
+    Args:
+        datastore_name: Name of the datastore
+    Returns: :py:class:`bool`
+    """
+    banned_datastores = cfme_data.get("datastores_not_for_provision", [])
+    for banned_datastore in banned_datastores:
+        if banned_datastore in datastore_name:
+            return True
+    else:
+        return False
+
+
 class MiqInfraObject(object):
-    """ Base class for all infrastructure objects.
+    """Base class for all infrastructure objects.
 
     Args:
         id: GUID or ID of the object, it depends on what does the particular SOAP function wants.
-
     """
     GETTER_FUNC = None
     TAG_PREFIX = None
@@ -44,7 +53,7 @@ class MiqInfraObject(object):
 
     @property
     def object(self):
-        """ Accesses SOAP object
+        """Accesses SOAP object
 
         Accesses network.
 
@@ -53,7 +62,7 @@ class MiqInfraObject(object):
         """
         return getattr(client.service, self.GETTER_FUNC)(self.id)
 
-    @property
+    @lazycache
     def name(self):
         return str(self.object.name)
 
@@ -67,8 +76,7 @@ class MiqInfraObject(object):
 
     @property
     def ws_attributes(self):
-        """ Processes object.ws_attributes into builtin types
-        """
+        """Processes object.ws_attributes into builtin types"""
         result = {}
         for attribute in self.object.ws_attributes:
             if attribute.value is None:
@@ -85,8 +93,7 @@ class MiqInfraObject(object):
 
     @property
     def tags(self):
-        """ Return tags as an array of :py:class:`MiqTag` objects.
-        """
+        """Return tags as an array of :py:class:`MiqTag` objects."""
         fname = "%sGetTags" % self.TAG_PREFIX
         return [
             MiqTag(tag.category, tag.category_display_name, tag.tag_name, tag.tag_display_name,
@@ -96,7 +103,7 @@ class MiqInfraObject(object):
         ]
 
     def add_tag(self, tag):
-        """ Add tag to the object
+        """Add tag to the object
 
         Args:
             tag: Tuple with tag specification.
@@ -113,8 +120,7 @@ class MiqInfraObject(object):
         return "%s(%s)" % (self.__class__.__name__, repr(self.id))
 
     def __getattribute__(self, name):
-        """ Delegates unknown calls to the received object
-        """
+        """Delegates unknown calls to the received object"""
         try:
             return super(MiqInfraObject, self).__getattribute__(name)
         except AttributeError as e:
@@ -126,19 +132,19 @@ class MiqInfraObject(object):
 
 # Here comes rails (but in a good way)
 class HasManyHosts(MiqInfraObject):
-    @property
+    @lazycache
     def hosts(self):
         return [MiqHost(host.guid) for host in self.object.hosts]
 
 
 class HasManyEMSs(MiqInfraObject):
-    @property
+    @lazycache
     def emss(self):
         return [MiqEms(ems.guid) for ems in self.object.ext_management_systems]
 
 
 class HasManyDatastores(MiqInfraObject):
-    @property
+    @lazycache
     def datastores(self):
         return [MiqDatastore(store.id) for store in self.object.datastores]
 
@@ -150,19 +156,19 @@ class HasManyVMs(MiqInfraObject):
 
 
 class HasManyResourcePools(MiqInfraObject):
-    @property
+    @lazycache
     def resource_pools(self):
         return [MiqResourcePool(rpool.id) for rpool in self.object.resource_pools]
 
 
 class BelongsToProvider(MiqInfraObject):
-    @property
+    @lazycache
     def provider(self):
         return MiqEms(self.object.ext_management_system.guid)
 
 
 class BelongsToCluster(BelongsToProvider):
-    @property
+    @lazycache
     def cluster(self):
         return MiqCluster(self.object.parent_cluster.id)
 
@@ -171,19 +177,19 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
     GETTER_FUNC = "FindEmsByGuid"
     TAG_PREFIX = "Ems"
 
-    @property
+    @lazycache
     def port(self):
         return self.object.port
 
-    @property
+    @lazycache
     def host_name(self):
         return self.object.hostname
 
-    @property
+    @lazycache
     def ip_address(self):
         return self.object.ipaddress
 
-    @property
+    @lazycache
     def clusters(self):
         return [MiqCluster(cluster.id) for cluster in self.object.clusters]
 
@@ -199,10 +205,9 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
     def all(cls):
         return [cls(ems.guid) for ems in client.service.GetEmsList()]
 
-    @property
+    @lazycache
     def direct_connection(self):
-        """ Returns an API from mgmt_system.py targeted at this provider
-        """
+        """Returns an API from mgmt_system.py targeted at this provider"""
         # Find the credentials entry
         name = str(self.host_name)
         from utils.conf import cfme_data, credentials
@@ -237,7 +242,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
     GETTER_FUNC = "FindVmByGuid"
     TAG_PREFIX = "Vm"
 
-    @property
+    @lazycache
     def vendor(self):
         return self.object.vendor
 
@@ -264,29 +269,42 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
     def power_on(self):
         return client.service.EVMSmartStart(self.id).result == "true"
 
+    def wait_powered_on(self, wait_time=120):
+        return wait_for(
+            lambda: self.is_powered_on, num_sec=wait_time, message="wait for power on", delay=5
+        )
+
     def power_off(self):
         return client.service.EVMSmartStop(self.id).result == "true"
+
+    def wait_powered_off(self, wait_time=120):
+        return wait_for(
+            lambda: self.is_powered_off, num_sec=wait_time, message="wait for power off", delay=5
+        )
 
     def suspend(self):
         return client.service.EVMSmartSuspend(self.id).result == "true"
 
+    def wait_suspended(self, wait_time=160):
+        return wait_for(
+            lambda: self.is_suspended, num_sec=wait_time, message="wait for suspend", delay=5
+        )
+
     def delete(self):
-        """ Delete the VM. Possible hook to mgmt_system.py, 'cause the delete is not always done
-        properly.
-        """
+        """Delete the VM from VMDB. To completely delete, use direct_connection."""
         name = str(self.name)
         if self.is_powered_on:
             if not self.power_off():
                 raise Exception("Could not power off vm %s" % name)
-            wait_for(lambda: self.is_powered_off, num_sec=60, delay=4, message="wait for power off")
+            self.wait_powered_off()
         if not client.service.EVMDeleteVmByName(self.name):
             raise Exception("Could not delete vm %s" % name)
         wait_for(lambda: not self.exists, num_sec=60, delay=4, message="wait for VM removed")
 
     @classmethod
-    def provision_from_template(cls, template_name, vm_name, cpus=1, memory=1024, vlan=None,
-            first_name="Shadowman", last_name="RedHat", email="shadowm@n.redhat.com"):
-        """ Provision VM from template.
+    def provision_from_template(cls, template_name, vm_name, wait_min=None, cpus=1, memory=1024,
+            vlan=None, first_name="Shadowman", last_name="RedHat", email="shadowm@n.redhat.com"):
+        """Provision VM from template.
 
         Works independently on the management system, tags appropriate VMDB objects to provision
         without problems.
@@ -294,6 +312,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
         Args:
             template_name: Name of the template to use.
             vm_name: VM Name.
+            wait_min: How many minutes of wait for the provisioning to finish.
             cpus: How many CPUs should the VM have.
             memory: How much memory (in MB) should the VM have.
             vlan: Where to connect the VM. Obligatory for RHEV
@@ -329,14 +348,15 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
                 host.add_tag(("prov_scope", "all"))
         # Tag all provider's datastores
         for datastore in template.provider.datastores:
-            if re.search(r"do.not", datastore.name.lower()) is not None:
-                continue  # just for now to prevent do-not-use-datastore
-                          # There is also another one that does not work but that shall be param'd
+            ds_name = datastore.name
+            if is_datastore_banned(ds_name):
+                logger.info("Skipping datastore %s" % ds_name)
+                continue
             for tag in datastore.tags:
                 if tag.category == "prov_scope" and tag.tag_name == "all":
                     break
             else:
-                logger.info("Tagging datastore %s" % datastore.name)
+                logger.info("Tagging datastore %s" % ds_name)
                 datastore.add_tag(("prov_scope", "all"))
         # Create request
         template_fields = client.pipeoptions(dict(guid=template_guid))
@@ -365,8 +385,8 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
         logger.info("Waiting for VM provisioning request approval")
         wait_for(
             lambda: client.service.GetVmProvisionRequest(req_id).approval_state == "approved",
-            num_sec=60,
-            delay=2,
+            num_sec=180,
+            delay=5,
             message="VM provision approval"
         )
 
@@ -377,7 +397,10 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
             return request.status.lower().strip() == "ok" and len(request.vms) > 0
 
         logger.info("Waiting for VM provisioning to be done")
-        wait_for(check_whether_provisioning_finished, num_sec=300, delay=5, message="provisioning")
+        wait_for(
+            check_whether_provisioning_finished,
+            num_sec=(wait_min * 60 if wait_min else 300), delay=5, message="provisioning"
+        )
         vm_guid = client.service.GetVmProvisionRequest(req_id).vms[0].guid
         new_vm = MiqVM(client.service.FindVmByGuid(vm_guid).guid)
         # some basic sanity checks though they should always pass
@@ -410,7 +433,7 @@ class MiqCluster(
     GETTER_FUNC = "FindClusterById"
     TAG_PREFIX = "Cluster"
 
-    @property
+    @lazycache
     def default_resource_pool(self):
         return MiqResourcePool(self.object.default_resource_pool.id)
 
@@ -423,7 +446,7 @@ class MiqResourcePool(HasManyHosts, HasManyEMSs):
     GETTER_FUNC = "FindResourcePoolById"
     TAG_PREFIX = "ResourcePool"
 
-    @property
+    @lazycache
     def store_type(self):
         return str(self.object.store_type)
 
