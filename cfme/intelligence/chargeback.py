@@ -102,7 +102,7 @@ class ComputeRate(Updateable):
         self.network_io = network_io
 
     def create(self):
-        nav.go_to('chargeback_rates_compute_new')
+        sel.force_navigate('chargeback_rates_compute_new')
         fill(rate_form,
             {'description_text': self.description,
              'alloc_cpu': self.cpu_alloc,
@@ -117,7 +117,7 @@ class ComputeRate(Updateable):
         flash.assert_no_errors()
 
     def update(self, updates):
-        nav.go_to('chargeback_rates_compute_edit', context={'chargeback': self})
+        sel.force_navigate('chargeback_rates_compute_edit', context={'chargeback': self})
         fill(rate_form,
             {'description_text': updates.get('description'),
              'alloc_cpu': updates.get('cpu_alloc'),
@@ -132,7 +132,7 @@ class ComputeRate(Updateable):
         flash.assert_no_errors()
 
     def delete(self):
-        nav.go_to('chargeback_rates_compute_named', context={'chargeback': self})
+        sel.force_navigate('chargeback_rates_compute_named', context={'chargeback': self})
         tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
@@ -151,7 +151,7 @@ class StorageRate(Updateable):
         self.used_storage = used_storage
 
     def create(self):
-        nav.go_to('chargeback_rates_storage_new')
+        sel.force_navigate('chargeback_rates_storage_new')
         fill(rate_form,
             {'description_text': self.description,
              'fixed_storage_1': self.fixed_cost_1,
@@ -161,7 +161,7 @@ class StorageRate(Updateable):
             action=rate_form.add_button)
 
     def update(self, updates):
-        nav.go_to('chargeback_rates_storage_edit', context={'chargeback': self})
+        sel.force_navigate('chargeback_rates_storage_edit', context={'chargeback': self})
         fill(rate_form,
             {'description_text': updates.get('description'),
              'fixed_storage_1': updates.get('fixed_cost_1'),
@@ -171,7 +171,7 @@ class StorageRate(Updateable):
             action=rate_form.save_button)
 
     def delete(self):
-        nav.go_to('chargeback_rates_storage_named', context={'chargeback': self})
+        sel.force_navigate('chargeback_rates_storage_named', context={'chargeback': self})
         tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
