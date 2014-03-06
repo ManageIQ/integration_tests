@@ -271,14 +271,14 @@ def wait_for_no_cloud_providers():
     sel.force_navigate('clouds_providers')
     logger.debug('Waiting for all cloud providers to disappear...')
     wait_for(lambda: not paginator.rec_total(), message="Delete all cloud providers",
-             num_sec=180, fail_func=sel.refresh)
+             num_sec=300, fail_func=sel.refresh)
 
 
 def wait_for_no_infra_providers():
     sel.force_navigate('infrastructure_providers')
     logger.debug('Waiting for all infra providers to disappear...')
     wait_for(lambda: not paginator.rec_total(), message="Delete all infrastructure providers",
-             num_sec=180, fail_func=sel.refresh)
+             num_sec=300, fail_func=sel.refresh)
 
 
 def clear_providers():

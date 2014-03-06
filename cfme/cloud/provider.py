@@ -196,7 +196,7 @@ class Provider(Updateable):
                           [client, stats_to_match],
                           message="do_stats_match",
                           fail_func=sel.refresh,
-                          num_sec=300,
+                          num_sec=600,
                           delay=10)
         client.disconnect()
 
