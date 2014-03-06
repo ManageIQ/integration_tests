@@ -6,7 +6,7 @@
 :var edit_form: A :py:class:`cfme.web_ui.Form` object describing the instance edit form.
 """
 
-from cfme.web_ui import Region, Form, Tree
+from cfme.web_ui import Region, Form, Tree, Select
 
 
 # Common locators
@@ -46,8 +46,8 @@ edit_form = Form(
         ('custom_ident', "//*[@id='custom_1']"),
         ('description_tarea', "//textarea[@id='description']"),
         ('parent_sel', "//*[@id='chosen_parent']"),
-        ('child_sel', "//select[@id='kids_chosen']"),
-        ('vm_sel', "//select[@id='choices_chosen']"),
+        ('child_sel', Select("//select[@id='kids_chosen']", multi=True)),
+        ('vm_sel', Select("//select[@id='choices_chosen']", multi=True)),
         ('add_btn', "//img[@alt='Move selected VMs to left']"),
         ('remove_btn', "//img[@alt='Move selected VMs to right']"),
         ('remove_all_btn', "//img[@alt='Move all VMs to right']"),

@@ -22,7 +22,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support.select import Select
 
 from multimethods import singledispatch, multidispatch
 
@@ -568,7 +567,7 @@ def select(loc, o):
 
 
 @select.method((object, tuple))
-def _select_tuple(loc, o):
+def _select_tuple(select_element, o):
     """
     Takes a locator and an object and selects using the correct method.
 
@@ -582,17 +581,17 @@ def _select_tuple(loc, o):
     """
     vtype, value = o
     if vtype == TEXT:
-        select_by_text(loc, value)
+        select_by_text(select_element, value)
     if vtype == VALUE:
-        select_by_value(loc, value)
+        select_by_value(select_element, value)
 
 
 @select.method((object, str))
-def _select_str(loc, s):
-    select_by_text(loc, s)
+def _select_str(select_element, s):
+    select_by_text(select_element, s)
 
 
-def select_by_text(loc, text):
+def select_by_text(select_element, text):
     """
     Works on a select element and selects an option by the visible text.
 
@@ -601,13 +600,11 @@ def select_by_text(loc, text):
         text: The select element option's visible text.
     """
     if text is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        Select(el).select_by_visible_text(text)
+        select_element.select_by_visible_text(text)
         wait_for_ajax()
 
 
-def select_by_value(loc, value):
+def select_by_value(select_element, value):
     """
     Works on a select element and selects an option by the value attribute.
 
@@ -616,9 +613,7 @@ def select_by_value(loc, value):
         value: The select element's option value.
     """
     if value is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        Select(el).select_by_value(value)
+        select_element.select_by_value(value)
         wait_for_ajax()
 
 
@@ -644,7 +639,7 @@ def deselect(loc, o):
             deselect_by_value(loc, value)
 
 
-def deselect_by_text(loc, text):
+def deselect_by_text(select_element, text):
     """
     Works on a select element and deselects an option by the visible text.
 
@@ -653,13 +648,11 @@ def deselect_by_text(loc, text):
         text: The select element option's visible text.
     """
     if text is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        Select(el).deselect_by_visible_text(text)
+        select_element.deselect_by_visible_text(text)
         wait_for_ajax()
 
 
-def deselect_by_value(loc, value):
+def deselect_by_value(select_element, value):
     """
     Works on a select element and deselects an option by the value attribute.
 
@@ -668,7 +661,5 @@ def deselect_by_value(loc, value):
         value: The select element's option value.
     """
     if value is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        Select(el).deselect_by_value(value)
+        select_element.deselect_by_value(value)
         wait_for_ajax()

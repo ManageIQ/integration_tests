@@ -8,7 +8,7 @@ Todo: Finish the rest of the things.
 
 import cfme.fixtures.pytest_selenium as browser
 import cfme.web_ui.tabstrip as tabs
-from cfme.web_ui import Form, Region, Table, fill, paginator
+from cfme.web_ui import Form, Region, Select, Table, fill, paginator
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
@@ -33,15 +33,15 @@ buttons = Region(
 
 filter_form = Form(
     fields=[
-        ("zone", "//select[@id='chosen_zone']"),
-        ("user", "//select[@id='user_choice']"),
-        ("time_period", "//select[@id='time_period']"),
+        ("zone", Select("//select[@id='chosen_zone']")),
+        ("user", Select("//select[@id='user_choice']")),
+        ("time_period", Select("//select[@id='time_period']")),
         ("task_status_queued", "//input[@id='queued']"),
         ("task_status_running", "//input[@id='running']"),
         ("task_status_ok", "//input[@id='ok']"),
         ("task_status_error", "//input[@id='error']"),
         ("task_status_warn", "//input[@id='warn']"),
-        ("task_state", "//select[@id='state_choice']"),
+        ("task_state", Select("//select[@id='state_choice']")),
     ]
 )
 
