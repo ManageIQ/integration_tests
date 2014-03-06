@@ -791,6 +791,7 @@ class _TabStripField(object):
 @fill.method((_TabStripField, object))
 def _fill_tabstrip(tabstrip_field, value):
     tabstrip.select_tab(tabstrip_field.ident_string)
+    logger.debug(' Navigating to tabstrip %s' % value)
     fill(tabstrip_field.arg, value)
 
 
@@ -930,11 +931,16 @@ class Radio(object):
         """
         return "//input[@name='%s' and @value='%s']" % (self.name, val)
 
+    def observer_wait(self, val):
+        sel.detect_observed_field(self.choice(val))
+
 
 @fill.method((Radio, object))
 def _fill_radio(radio, value):
     """How to fill a radio button group (by selecting the given value)"""
+    logger.debug(' Filling in Radio (%s) with value "%s"' % (radio.name, value))
     sel.click(radio.choice(value))
+    radio.observer_wait(value)
 
 
 class Tree(object):
@@ -1185,6 +1191,7 @@ class Tree(object):
 def _fill_tree(tree, values):
     # Assume a list of paths, select_node on each path
     for path in values:
+        logger.debug(' Navigating the tree: %s' % " -> ".join(path))
         tree.select_node(*path)
 
 
