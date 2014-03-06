@@ -27,21 +27,21 @@ def _mkitem(index):
 
 rate_form = Form(
     fields=[
-        ('description_text', (By.CSS_SELECTOR, "input#description")),
+        ('description', (By.CSS_SELECTOR, "input#description")),
         # Compute form items
-        ('alloc_cpu', _mkitem(0)),
-        ('used_cpu', _mkitem(1)),
+        ('cpu_alloc', _mkitem(0)),
+        ('cpu_used', _mkitem(1)),
         ('disk_io', _mkitem(2)),
-        ('fixed_1', _mkitem(3)),
-        ('fixed_2', _mkitem(4)),
-        ('alloc_mem', _mkitem(5)),
-        ('used_mem', _mkitem(6)),
+        ('compute_fixed_1', _mkitem(3)),
+        ('compute_fixed_2', _mkitem(4)),
+        ('mem_alloc', _mkitem(5)),
+        ('mem_used', _mkitem(6)),
         ('net_io', _mkitem(7)),
         # Storage form items
-        ('fixed_storage_1', _mkitem(0)),
-        ('fixed_storage_2', _mkitem(1)),
-        ('alloc_storage', _mkitem(2)),
-        ('used_storage', _mkitem(3)),
+        ('storage_fixed_1', _mkitem(0)),
+        ('storage_fixed_2', _mkitem(1)),
+        ('storage_alloc', _mkitem(2)),
+        ('storage_used', _mkitem(3)),
         ('add_button', (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Add']")),
         ('save_button', (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Save Changes']")),
         ('reset_button', (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Reset Changes']")),
@@ -85,54 +85,54 @@ class ComputeRate(Updateable):
                  cpu_alloc=None,
                  cpu_used=None,
                  disk_io=None,
-                 fixed_cost_1=None,
-                 fixed_cost_2=None,
-                 memory_allocated=None,
-                 memory_used=None,
-                 network_io=None
+                 compute_fixed_1=None,
+                 compute_fixed_2=None,
+                 mem_alloc=None,
+                 mem_used=None,
+                 net_io=None
                  ):
         self.description = description
         self.cpu_alloc = cpu_alloc
         self.cpu_used = cpu_used
         self.disk_io = disk_io
-        self.fixed_cost_1 = fixed_cost_1
-        self.fixed_cost_2 = fixed_cost_2
-        self.memory_allocated = memory_allocated
-        self.memory_used = memory_used
-        self.network_io = network_io
+        self.compute_fixed_1 = compute_fixed_1
+        self.compute_fixed_2 = compute_fixed_2
+        self.mem_alloc = mem_alloc
+        self.mem_used = mem_used
+        self.net_io = net_io
 
     def create(self):
-        nav.go_to('chargeback_rates_compute_new')
+        sel.force_navigate('chargeback_rates_compute_new')
         fill(rate_form,
-            {'description_text': self.description,
-             'alloc_cpu': self.cpu_alloc,
-             'used_cpu': self.cpu_used,
+            {'description': self.description,
+             'cpu_alloc': self.cpu_alloc,
+             'cpu_used': self.cpu_used,
              'disk_io': self.disk_io,
-             'fixed_1': self.fixed_cost_1,
-             'fixed_2': self.fixed_cost_2,
-             'alloc_mem': self.memory_allocated,
-             'used_mem': self.memory_used,
-             'net_io': self.network_io},
+             'compute_fixed_1': self.compute_fixed_1,
+             'compute_fixed_2': self.compute_fixed_2,
+             'mem_alloc': self.mem_alloc,
+             'mem_used': self.mem_used,
+             'net_io': self.net_io},
             action=rate_form.add_button)
         flash.assert_no_errors()
 
     def update(self, updates):
-        nav.go_to('chargeback_rates_compute_edit', context={'chargeback': self})
+        sel.force_navigate('chargeback_rates_compute_edit', context={'chargeback': self})
         fill(rate_form,
-            {'description_text': updates.get('description'),
-             'alloc_cpu': updates.get('cpu_alloc'),
-             'used_cpu': updates.get('cpu_used'),
+            {'description': updates.get('description'),
+             'cpu_alloc': updates.get('cpu_alloc'),
+             'cpu_used': updates.get('cpu_used'),
              'disk_io': updates.get('disk_io'),
-             'fixed_1': updates.get('fixed_cost_1'),
-             'fixed_2': updates.get('fixed_cost_2'),
-             'alloc_mem': updates.get('memory_allocated'),
-             'used_mem': updates.get('memory_used'),
+             'compute_fixed_1': updates.get('compute_fixed_1'),
+             'compute_fixed_2': updates.get('compute_fixed_2'),
+             'mem_alloc': updates.get('memory_allocated'),
+             'mem_used': updates.get('memory_used'),
              'net_io': updates.get('network_io')},
             action=rate_form.save_button)
         flash.assert_no_errors()
 
     def delete(self):
-        nav.go_to('chargeback_rates_compute_named', context={'chargeback': self})
+        sel.force_navigate('chargeback_rates_compute_named', context={'chargeback': self})
         tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
@@ -140,38 +140,38 @@ class ComputeRate(Updateable):
 
 class StorageRate(Updateable):
     def __init__(self, description=None,
-                 fixed_cost_1=None,
-                 fixed_cost_2=None,
-                 allocated_storage=None,
-                 used_storage=None):
+                 storage_fixed_1=None,
+                 storage_fixed_2=None,
+                 storage_alloc=None,
+                 storage_used=None):
         self.description = description
-        self.fixed_cost_1 = fixed_cost_1
-        self.fixed_cost_2 = fixed_cost_2
-        self.allocated_storage = allocated_storage
-        self.used_storage = used_storage
+        self.storage_fixed_1 = storage_fixed_1
+        self.storage_fixed_2 = storage_fixed_2
+        self.storage_alloc = storage_alloc
+        self.storage_used = storage_used
 
     def create(self):
-        nav.go_to('chargeback_rates_storage_new')
+        sel.force_navigate('chargeback_rates_storage_new')
         fill(rate_form,
-            {'description_text': self.description,
-             'fixed_storage_1': self.fixed_cost_1,
-             'fixed_storage_2': self.fixed_cost_2,
-             'alloc_storage': self.allocated_storage,
-             'used_storage': self.used_storage},
+            {'description': self.description,
+             'storage_fixed_1': self.storage_fixed_1,
+             'storage_fixed_2': self.storage_fixed_2,
+             'storage_alloc': self.storage_alloc,
+             'storage_used': self.storage_used},
             action=rate_form.add_button)
 
     def update(self, updates):
-        nav.go_to('chargeback_rates_storage_edit', context={'chargeback': self})
+        sel.force_navigate('chargeback_rates_storage_edit', context={'chargeback': self})
         fill(rate_form,
-            {'description_text': updates.get('description'),
-             'fixed_storage_1': updates.get('fixed_cost_1'),
-             'fixed_storage_2': updates.get('fixed_cost_2'),
-             'alloc_storage': updates.get('allocated_storage'),
-             'used_storage': updates.get('used_storage')},
+            {'description': updates.get('description'),
+             'storage_fixed_1': updates.get('storage_fixed_1'),
+             'storage_fixed_2': updates.get('storage_fixed_2'),
+             'storage_alloc': updates.get('storage_alloc'),
+             'storage_used': updates.get('storage_used')},
             action=rate_form.save_button)
 
     def delete(self):
-        nav.go_to('chargeback_rates_storage_named', context={'chargeback': self})
+        sel.force_navigate('chargeback_rates_storage_named', context={'chargeback': self})
         tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
