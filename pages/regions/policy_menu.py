@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from pages.page import Page
 from pages.base import Base
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from pages.regions.taggable import Taggable
@@ -58,6 +59,16 @@ class PolicyMenu(Page):
             return self.reset_tag_edits
 
     class ManagePolicies(Base, PolicyMixin):
+        checkbox = "//table/tbody/tr/td/span[@class='standartTreeRow']" \
+            "[contains(text(), '%s')]/../../td[@width='16px']/img"
+
+        def policy_selected(self, policy_name):
+            try:
+                e = self.selenium.find_element_by_xpath(self.checkbox % policy_name)
+                return "Uncheck" not in e.get_attribute("src")
+            except (NoSuchElementException, TypeError):
+                return False
+
         def save(self, visible_timeout=None):
             """ Clicks on the Save button.
 
