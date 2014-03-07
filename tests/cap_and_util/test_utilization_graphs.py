@@ -14,7 +14,12 @@ from selenium.webdriver.common.keys import Keys
 def vm_info(db_session):
     import db
     session = db_session
-    vm_info = session.query(db.Vm).filter_by(power_state = 'on').first()
+    vm_info = session.query(db.Vm)\
+                     .join(db.ExtManagementSystem, db.Vm.ems_id == db.ExtManagementSystem.id)\
+                     .filter(db.Vm.power_state == 'on')\
+                     .filter((db.ExtManagementSystem.type == "EmsVmware")
+                             | (db.ExtManagementSystem.type == "EmsRedhat"))\
+                     .order_by(db.Vm.name).first()
     resource_id = vm_info.id
     name = vm_info.name
     vm_info = collections.namedtuple('vm_info', ['id', 'name'])

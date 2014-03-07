@@ -20,6 +20,8 @@ class VirtualMachines(VmCommonComponents):
         "table.buttons_cont tr[title='Clone this item']")
     _publish_items_button_locator = (By.CSS_SELECTOR,
         "table.buttons_cont tr[title='Publish selected VM to a Template']")
+    _all_vms_button_locator = (By.CSS_SELECTOR,
+        "a[title='All VMs & Templates that I can see']")
 
     @property
     def quadicon_region(self):
@@ -29,6 +31,10 @@ class VirtualMachines(VmCommonComponents):
     def search(self):
         from pages.regions.search import Search
         return Search(self.testsetup)
+
+    def return_to_all_vms(self):
+        button = self.selenium.find_element(*self._all_vms_button_locator)
+        button.click()
 
     def _mark_icon_and_call_method(self, vm_names, op_func):
         self.quadicon_region.mark_icon_checkbox(vm_names)
@@ -137,6 +143,8 @@ class VirtualMachines(VmCommonComponents):
     def find_vm_page(self, vm_name=None, vm_type=None, mark_checkbox=False,
             load_details=False, retries=0):
         logger.info("Trying to find VM quadicon (" + str(vm_name) + ") and/or vm_type: " + str(vm_type))
+        self.return_to_all_vms()
+        self._wait_for_results_refresh()
         found = None
         retry_attempts = 0
         while not found:
