@@ -5,25 +5,30 @@ import time
 from unittestzero import Assert
 from selenium.common.exceptions import NoSuchElementException
 
-@pytest.fixture(scope="module", # IGNORE:E1101
+
+@pytest.fixture(scope="module",  # IGNORE:E1101
                 params=["rhel"])
 def pxe_server(request, cfme_data):
     param = request.param
     return cfme_data["pxe"]["pxe_servers"][param]
 
+
 @pytest.fixture(scope="module")
 def pxe_image_names(cfme_data):
     return cfme_data["pxe"]["images"]
 
+
 @pytest.fixture(scope="module")
 def pxe_datastore_names(cfme_data):
     return cfme_data["pxe"]["datastores"]
+
 
 @pytest.fixture(scope="module",
                 params=["rhel"])
 def pxe_templates(request, cfme_data):
     param = request.param
     return cfme_data["pxe"]["templates"][param]
+
 
 @pytest.fixture(scope="module",
                 params=["rhel"])
@@ -33,7 +38,8 @@ def pxe_template_type(request, cfme_data):
 
 FLASH_MESSAGE_NOT_MATCHED = 'Flash message not matched'
 
-@pytest.mark.nondestructive # IGNORE:E1101
+
+@pytest.mark.nondestructive  # IGNORE:E1101
 @pytest.mark.usefixtures("maximized", "setup_infrastructure_providers")
 class TestPxeSetup:
     def test_add_pxe_server(self, infra_pxe_pg, pxe_server):
@@ -52,17 +58,15 @@ class TestPxeSetup:
                 FLASH_MESSAGE_NOT_MATCHED)
 
     def test_refresh_pxe_server(
-                self,
-                infra_pxe_pg,
-                pxe_server,
-                pxe_image_names):
+            self,
+            infra_pxe_pg,
+            pxe_server,
+            pxe_image_names):
         Assert.true(infra_pxe_pg.is_the_current_page)
         infra_pxe_pg.accordion_region.accordion_by_name("PXE Servers").click()
-        children_count = len(
-                infra_pxe_pg.accordion_region.current_content.children)
+        children_count = len(infra_pxe_pg.accordion_region.current_content.children)
         Assert.true(children_count > 0, "There is no PXE server")
-        infra_pxe_pg.accordion_region.current_content.find_node_by_name(
-                pxe_server['name']).click()
+        infra_pxe_pg.accordion_region.current_content.find_node_by_name(pxe_server['name']).click()
         #This needs to be here. We must wait for page to refresh
         time.sleep(2)
         infra_pxe_pg.center_buttons.configuration_button.click()
@@ -79,7 +83,7 @@ class TestPxeSetup:
             try:
                 #To refresh the page
                 infra_pxe_pg.accordion_region.current_content.find_node_by_name(
-                        pxe_server['name']).click()
+                    pxe_server['name']).click()
                 #This needs to be here
                 time.sleep(2)
                 pxe_image_names_from_page = infra_pxe_pg.pxe_image_names()
@@ -103,11 +107,10 @@ class TestPxeSetup:
             pxe_template_type):
         Assert.true(infra_pxe_pg.is_the_current_page)
         error_text = "There should be 4 accordion items instead of %s" % len(
-                infra_pxe_pg.accordion_region.accordion_items)
+            infra_pxe_pg.accordion_region.accordion_items)
         Assert.equal(len(infra_pxe_pg.accordion_region.accordion_items), 4,
                 error_text)
-        infra_pxe_pg.accordion_region.accordion_by_name(
-                "Customization Templates").click()
+        infra_pxe_pg.accordion_region.accordion_by_name("Customization Templates").click()
         infra_pxe_pg.center_buttons.configuration_button.click()
         add_pg = infra_pxe_pg.click_on_add_template()
         temp_pg = add_pg.new_pxe_template_select_type(pxe_template_type)
@@ -123,8 +126,7 @@ class TestPxeSetup:
 
     def test_iso_datastores(self, infra_pxe_pg, pxe_datastore_names):
         Assert.true(infra_pxe_pg.is_the_current_page)
-        infra_pxe_pg.accordion_region.accordion_by_name(
-                "ISO Datastores").click()
+        infra_pxe_pg.accordion_region.accordion_by_name("ISO Datastores").click()
         infra_pxe_pg.accordion_region.current_content.click()
         time.sleep(1)
         for name in pxe_datastore_names:
@@ -133,7 +135,7 @@ class TestPxeSetup:
             add_pg.select_provider(name)
             time.sleep(2)
             result_pg = add_pg.click_on_add()
-            flash_message = 'ISO Datastore "%s" was added' %name
+            flash_message = 'ISO Datastore "%s" was added' % name
             Assert.equal(result_pg.flash.message, flash_message,
                     FLASH_MESSAGE_NOT_MATCHED)
             datastore_name = result_pg.datastore_name()
