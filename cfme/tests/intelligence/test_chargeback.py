@@ -12,18 +12,18 @@ def new_compute_rate():
     return cb.ComputeRate(description='cb' + random.generate_random_string(),
                           cpu_alloc=(1000, cb.DAILY),
                           disk_io=(10, cb.DAILY),
-                          fixed_cost_1=(100, cb.MONTHLY),
-                          fixed_cost_2=(200, cb.DAILY),
-                          memory_allocated=(10000, cb.MONTHLY),
-                          memory_used=(4000, cb.WEEKLY),
-                          network_io=(6000, cb.WEEKLY))
+                          compute_fixed_1=(100, cb.MONTHLY),
+                          compute_fixed_2=(200, cb.DAILY),
+                          mem_alloc=(10000, cb.MONTHLY),
+                          mem_used=(4000, cb.WEEKLY),
+                          net_io=(6000, cb.WEEKLY))
 
 
 def new_storage_rate():
     return cb.StorageRate(description='cb' + random.generate_random_string(),
-                          fixed_cost_2=(4000, cb.MONTHLY),
-                          allocated_storage=(2000, cb.DAILY),
-                          used_storage=(6000, cb.DAILY))
+                          storage_fixed_2=(4000, cb.MONTHLY),
+                          storage_alloc=(2000, cb.DAILY),
+                          storage_used=(6000, cb.DAILY))
 
 
 def test_add_new_compute_chargeback():
@@ -32,6 +32,7 @@ def test_add_new_compute_chargeback():
     flash.assert_message_match('Chargeback Rate "%s" was added' % ccb.description)
 
 
+@pytest.mark.xfail(message='https://bugzilla.redhat.com/show_bug.cgi?id=1073366')
 def test_compute_chargeback_duplicate_disallowed():
     ccb = new_compute_rate()
     ccb.create()
@@ -52,11 +53,11 @@ def test_edit_compute_chargeback():
         ccb.description = ccb.description + "-edited"
         ccb.cpu_alloc = (5000, cb.DAILY)
         ccb.disk_io = (10, cb.WEEKLY)
-        ccb.fixed_cost_1 = (200, cb.WEEKLY)
-        ccb.fixed_cost_2 = (100, cb.DAILY)
-        ccb.memory_allocated = (1, cb.HOURLY)
-        ccb.memory_used = (2000, cb.WEEKLY)
-        ccb.network_io = (4000, cb.DAILY)
+        ccb.compute_fixed_1 = (200, cb.WEEKLY)
+        ccb.compute_fixed_2 = (100, cb.DAILY)
+        ccb.mem_alloc = (1, cb.HOURLY)
+        ccb.mem_used = (2000, cb.WEEKLY)
+        ccb.net_io = (4000, cb.DAILY)
     flash.assert_message_match('Chargeback Rate "%s" was saved' % ccb.description)
 
 
@@ -65,9 +66,9 @@ def test_edit_storage_chargeback():
     scb.create()
     with update(scb) as scb:
         scb.description = scb.description + "-edited"
-        scb.fixed_cost_2 = (2000, cb.MONTHLY)
-        scb.allocated_storage = (3000, cb.WEEKLY)
-        scb.used_storage = (6000, cb.MONTHLY)
+        scb.storage_fixed_2 = (2000, cb.MONTHLY)
+        scb.storage_alloc = (3000, cb.WEEKLY)
+        scb.storage_used = (6000, cb.MONTHLY)
     flash.assert_message_match('Chargeback Rate "%s" was saved' % scb.description)
 
 
