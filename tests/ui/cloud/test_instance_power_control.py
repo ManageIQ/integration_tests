@@ -8,6 +8,7 @@ from unittestzero import Assert
 
 from utils.conf import cfme_data
 from utils.providers import cloud_provider_type_map
+from utils.wait import wait_for
 
 pytestmark = [pytest.mark.nondestructive,
               pytest.mark.usefixtures("setup_cloud_providers")]
@@ -72,9 +73,12 @@ class TestInstanceDetailsPowerControlPerProvider:
         time.sleep(30)
         provider_details.click_on_refresh_relationships()
         # cfme issue where if detail value == 0 , its not a link so wait for the refresh to finish
-        while provider_details.details.get_section('Relationships').get_item('Instances') == 0:
-            time.sleep(15)
-            provider_details.refresh()
+        wait_for(lambda: provider_details.details.get_section('Relationships')
+                 .get_item('Instances').value,
+                 fail_condition="0",
+                 fail_func=pytest.sel.refresh,
+                 delay=15,
+                 num_sec=300)
         inst_list_pg = provider_details.all_instances()
         inst_details = inst_list_pg.find_instance_page(random_string, None, False, True, 15)
         inst_details.wait_for_instance_state_change('on', 12)
