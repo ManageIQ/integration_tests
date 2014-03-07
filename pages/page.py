@@ -4,6 +4,7 @@ from unittestzero import Assert
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import ElementNotVisibleException
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
@@ -108,10 +109,14 @@ class Page(object):
         self._wait_for_visible_element(*element)
         return self.selenium.find_element(*element)
 
-    def handle_popup(self, cancel=False):
-        wait = WebDriverWait(self.selenium, self.timeout)
+    def handle_popup(self, cancel=False, timeout=None):
+        timeout = timeout or self.timeout
+        wait = WebDriverWait(self.selenium, timeout)
         # throws timeout exception if not found
-        wait.until(EC.alert_is_present())
+        try:
+            wait.until(EC.alert_is_present())
+        except TimeoutException:
+            return
         popup = self.selenium.switch_to_alert()
         answer = 'cancel' if cancel else 'ok'
         print popup.text + " ...clicking " + answer

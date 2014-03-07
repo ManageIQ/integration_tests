@@ -98,6 +98,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture
 def cnf_settings_sched_pg(cnf_configuration_pg):
+    cnf_configuration_pg.handle_popup(timeout=5)
     sched_pg = cnf_configuration_pg.click_on_settings()\
                                    .click_on_schedules()
     assert sched_pg.is_the_current_page
