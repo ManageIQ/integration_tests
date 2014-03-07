@@ -192,7 +192,7 @@ class Infrastructure(Base):
             "tr.tr_btn[title='Copy this Customization Template']")
         _refresh_locator = (
             By.CSS_SELECTOR,
-            "tr.tr_btn[title='Refresh this PXE Server']")
+            "tr.tr_btn[title='Refresh Relationships for this PXE Server']")
         _pxe_image_names_locator = (
             By.CSS_SELECTOR,
             "div#pxe_info_div > fieldset > table[class='style3'] > tbody")

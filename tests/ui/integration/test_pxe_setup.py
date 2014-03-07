@@ -68,7 +68,8 @@ class TestPxeSetup:
         infra_pxe_pg.center_buttons.configuration_button.click()
         infra_pxe_pg.click_on_refresh()
         infra_pxe_pg.handle_popup()
-        flash_message = 'PXE Server "%s": synchronize_advertised_images_queue successfully initiated' % pxe_server['name']
+        flash_message = 'PXE Server "%s": Refresh Relationships successfully initiated'\
+                        % pxe_server['name']
         Assert.equal(infra_pxe_pg.flash.message, flash_message,
                 FLASH_MESSAGE_NOT_MATCHED)
 
