@@ -350,8 +350,8 @@ class TestVmAnalysis():
         self.verify_no_data(provider, vm_name)
         last_analysis_time = vm_details.details.get_section('Lifecycle').get_item(
             'Last Analyzed').value
-        # register_event(cfme_data['management_systems'][provider]['type'], 'vm', vm_name,
-        #     ['request_vm_scan', 'vm_scan_start', 'vm_scan_complete'])
+        register_event(cfme_data['management_systems'][provider]['type'], 'vm', vm_name,
+            ['vm_analysis_request', 'vm_analysis_start', 'vm_analysis_complete'])
         logger.info('Initiating vm smart scan on ' + provider + ":" + vm_name)
         vm_details.config_button.perform_smart_state_analysis()
         Assert.true(vm_details.flash.message.startswith("Smart State Analysis initiated"))

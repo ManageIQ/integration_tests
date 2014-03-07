@@ -105,12 +105,12 @@ class TestControlOnQuadicons():
 
     def test_power_off(
             self,
-            load_providers_vm_list,
             provider,
             vm_name,
             verify_vm_running,
             mgmt_sys_api_clients,
-            register_event):
+            register_event,
+            load_providers_vm_list):
         """ Test power off operation on a single quadicon.
 
         Verify vm transitions to stopped.
@@ -151,12 +151,12 @@ class TestControlOnQuadicons():
 
     def test_power_on(
             self,
-            load_providers_vm_list,
             provider,
             vm_name,
             verify_vm_stopped,
             mgmt_sys_api_clients,
-            register_event):
+            register_event,
+            load_providers_vm_list):
         """ Test power on operation for a single quadicon.
 
         Verify vm transitions to running.
@@ -178,12 +178,12 @@ class TestVmDetailsPowerControlPerProvider:
 
     def test_vm_power_off(
             self,
-            load_vm_details,
             provider,
             vm_name,
             verify_vm_running,
             mgmt_sys_api_clients,
-            register_event):
+            register_event,
+            load_vm_details):
         """Test power off operation from a vm details page. Verify vm
         transitions to stopped."""
         vm_details = load_vm_details
@@ -200,12 +200,12 @@ class TestVmDetailsPowerControlPerProvider:
 
     def test_vm_power_on(
             self,
-            load_vm_details,
             provider,
             vm_name,
             verify_vm_stopped,
             mgmt_sys_api_clients,
-            register_event):
+            register_event,
+            load_vm_details):
         """Test power on operation from a vm details page.  Verify vm
         transitions to running."""
         vm_details = load_vm_details
@@ -231,12 +231,12 @@ class TestVmDetailsPowerControlPerProvider:
     # a event is not sent when rhev finishes saving state
     def test_suspend(
             self,
-            load_vm_details,
             provider,
             vm_name,
             verify_vm_running,
             mgmt_sys_api_clients,
-            register_event):
+            register_event,
+            load_vm_details):
         """ Test suspend operation from a vm details page.  Verify vm
         transitions to suspended. """
         vm_details = load_vm_details
@@ -276,12 +276,12 @@ class TestVmDetailsPowerControlPerProvider:
 
     def test_start_from_suspend(
             self,
-            load_vm_details,
             provider,
             vm_name,
             verify_vm_suspended,
             mgmt_sys_api_clients,
-            register_event):
+            register_event,
+            load_vm_details):
         """Test power_on operation on a suspended vm.
 
         Verify vm transitions to running."""
