@@ -85,6 +85,10 @@ def _format_nodeid(nodeid, strip_filename=True):
     nodeid = nodeid.replace('::', ':')
     # Strip filename (everything before and including the first colon)
     if strip_filename:
-        return nodeid.split(':', 1)[1]
+        try:
+            return nodeid.split(':', 1)[1]
+        except IndexError:
+            # No colon to split on, return the whole nodeid
+            return nodeid
     else:
         return nodeid
