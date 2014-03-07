@@ -13,7 +13,6 @@ from ovirtsdk.xml import params
 from pysphere import VIServer, MORTypes, VITask, VIMor
 from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
-from pysphere.vi_task import VITask
 from novaclient.v1_1 import client as osclient
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
@@ -111,6 +110,15 @@ class MgmtSystemAPIBase(object):
         Returns: list of flavor names
         """
         raise NotImplementedError('list_flavor not implemented.')
+
+    def list_network(self):
+        """Returns a list of networks.
+
+        Only valid for OpenStack
+
+        Returns: list of network names
+        """
+        raise NotImplementedError('list_network not implemented.')
 
     @abstractmethod
     def info(self):
@@ -1144,6 +1152,10 @@ class OpenstackSystem(MgmtSystemAPIBase):
         flavor_list = self.api.flavors.list()
         return [flavor.name for flavor in flavor_list]
 
+    def list_network(self):
+        network_list = self.api.networks.list()
+        return [network.label for network in network_list]
+
     def info(self):
         return '%s %s' % (self.api.client.service_type, self.api.client.version)
 
@@ -1197,20 +1209,33 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def deploy_template(self, template, *args, **kwargs):
         """ Deploys a vm from a template.
 
-        If assign_floating_ip kwarg is present, then :py:meth:`OpenstackSystem.create_vm` will
-        attempt to register a floating IP address from the pool specified
-        in the arg.
+        Args:
+            template: The name of the template to use.
+            flavour_name: The name of the flavour to use.
+            vm_name: A name to use for the vm.
+            network_name: The name of the network if it is a multi network setup (Havanna).
+
+        Note: If assign_floating_ip kwarg is present, then :py:meth:`OpenstackSystem.create_vm` will
+            attempt to register a floating IP address from the pool specified in the arg.
         """
 
+        nics = []
         # defaults
         if 'flavour_name' not in kwargs:
             kwargs['flavour_name'] = 'm1.tiny'
         if 'vm_name' not in kwargs:
             kwargs['vm_name'] = 'new_instance_name'
+        if len(self.list_network()) > 1:
+            if 'network_name' not in kwargs:
+                raise NetworkNameNotFound('Must select a network name')
+            else:
+                net_id = self.api.networks.find(label=kwargs['network_name']).id
+                nics = [{'net-id': net_id}]
 
         image = self.api.images.find(name=template)
         flavour = self.api.flavors.find(name=kwargs['flavour_name'])
-        instance = self.api.servers.create(kwargs['vm_name'], image, flavour, *args, **kwargs)
+        instance = self.api.servers.create(kwargs['vm_name'], image, flavour, nics=nics,
+                                           *args, **kwargs)
         wait_for(self.is_vm_running, [kwargs['vm_name']])
 
         if 'assign_floating_ip' in kwargs and kwargs['assign_floating_ip'] is not None:
@@ -1268,3 +1293,7 @@ class MultipleInstancesError(Exception):
 
     def __str__(self):
         return repr(self.value)
+
+
+class NetworkNameNotFound(Exception):
+    pass
