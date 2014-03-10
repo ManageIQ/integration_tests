@@ -13,7 +13,7 @@ def all_possible_roles():
     return conf.cfme_data["server_roles"]["all"]
 
 
-@pytest.fixture(scope="module", params=["default", "default_candu"])
+@pytest.fixture(scope="module", params=conf.cfme_data["server_roles"]["sets"].keys())
 def roles(request, all_possible_roles):
     result = {}
     for role in all_possible_roles:
