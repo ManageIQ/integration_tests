@@ -17,7 +17,6 @@
   * :py:class:`Select`
   * :py:class:`SplitTable`
   * :py:class:`Table`
-  * :py:class:`TabStripForm`
   * :py:class:`Tree`
   * :py:mod:`cfme.web_ui.accordion`
   * :py:mod:`cfme.web_ui.flash`
@@ -42,8 +41,6 @@ from multimethods import multimethod, multidispatch, Anything
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import browser
-from cfme.web_ui import tabstrip
-from cfme.web_ui import flash
 
 from utils.log import logger
 
@@ -782,77 +779,6 @@ class Form(Region):
         self.identifying_loc = identifying_loc
 
 
-class _TabStripField(object):
-    """A form field type for use in TabStripForms"""
-    def __init__(self, ident_string, arg):
-        self.ident_string = ident_string
-        self.arg = arg
-
-
-@fill.method((_TabStripField, object))
-def _fill_tabstrip(tabstrip_field, value):
-    tabstrip.select_tab(tabstrip_field.ident_string)
-    logger.debug(' Navigating to tabstrip %s' % value)
-    fill(tabstrip_field.arg, value)
-
-
-class TabStripForm(Form):
-    """
-    A class for interacting with tabstrip-contained Form elements on pages.
-
-    This behaves exactly like a :py:class:`Form`, but is able to deal with form
-    elements being broken up into tabs, accessible via a tab strip.
-
-    Args:
-        fields: A list of field name/locator tuples (same as Form implementation)
-        tab_fields: A dict with tab names as keys, and each key's value being a list of
-            field name/locator tuples. The ordering of fields within a tab is guaranteed
-            (as it is with the normal Form) but the ordering of tabs is not guaranteed by default.
-            If such ordering is needed, tab_fields can be a ``collections.OrderedDict``.
-        identifying_loc: A locator which should be present if the form is visible.
-
-    Usage:
-
-        provisioning_form = web_ui.TabStripForm(
-            tab_fields={
-                'Request': [
-                    ('email', '//input[@name="requester__owner_email"]'),
-                    ('first_name', '//input[@id="requester__owner_first_name"]'),
-                    ('last_name', '//input[@id="requester__owner_last_name"]'),
-                    ('notes', '//textarea[@id="requester__request_notes"]'),
-                ],
-                'Catalog': [
-                    ('instance_name', '//input[@name="service__vm_name"]'),
-                    ('instance_description', '//textarea[@id="service__vm_description"]'),
-                ]
-            }
-        )
-
-    Each tab's fields will be exposed by their name on the resulting instance just like fields
-    on a Form. Don't use duplicate field names in the ``tab_fields`` dict.
-
-    Forms can then be filled in like so::
-
-        request_info = {
-            'email': 'your@email.com',
-            'first_name': 'First',
-            'last_name': 'Last',
-            'notes': 'Notes about this request',
-            'instance_name': 'An instance name',
-            'instance_description': 'This is my instance!',
-        }
-        web_ui.fill(provisioning_form, request_info)
-
-    """
-
-    def __init__(self, fields=None, tab_fields=None, identifying_loc=None):
-        fields = fields or list()
-        for tab_ident, field in tab_fields.iteritems():
-            for field_name, field_locator in field:
-                fields.append((field_name, _TabStripField(tab_ident, field_locator)))
-        super(TabStripForm, self).__init__(fields, identifying_loc)
-
-
 @fill.method((Form, list))
 def _fill_form_list(form, values, action=None):
     """
@@ -1578,106 +1504,3 @@ class DHTMLSelect(Select):
                 self._log('value', value)
             index = browser().execute_script('return %s.getIndexByValue("%s")' % (name, value))
             self.select_by_index(index, _cascade=True)
-
-
-class MultiBoxSelect(object):
-    def __init__(self, unselected, selected, to_unselected, to_selected, remove_all=None):
-        self._unselected = Select(unselected, multi=True)
-        self._selected = Select(selected, multi=True)
-        self._to_unselected = to_unselected
-        self._to_selected = to_selected
-        self._remove_all = remove_all
-
-    def _move_to_unselected(self):
-        browser.click(sel.element(self._to_unselected))
-        return not any(map(flash.is_error, flash.get_all_messages()))
-
-    def _move_to_selected(self):
-        browser.click(sel.element(self._to_selected))
-        return not any(map(flash.is_error, flash.get_all_messages()))
-
-    def _select_unselected(self, *items):
-        for item in items:
-            sel.select(self._unselected, item)
-
-    def _select_selected(self, *items):
-        for item in items:
-            sel.select(self._selected, item)
-
-    def _clear_selection(self):
-        self._unselected.deselect_all()
-        self._selected.deselect_all()
-
-    def remove_all(self):
-        """ Flush the list of selected items.
-
-        Returns: :py:class:`bool` with success.
-        """
-        if self._remove_all is None:
-            raise NotImplementedError("'Remove all' button was not specified!")
-        browser.click(sel.element(self._remove_all))
-        return not any(map(flash.is_error, flash.get_all_messages()))
-
-    def add(self, *values, **kwargs):
-        """ Mark items for selection and then clicks the button to select them.
-
-        Args:
-            *values: Values to select
-
-        Keywords:
-            flush: By using `flush` keyword, the selected items list is flushed prior to selecting
-                new ones
-        Retuns: :py:class:`bool` with success.
-        """
-        if kwargs.get("flush", False):
-            self.remove_all()
-        self._clear_selection()
-        self._select_unselected(*values)
-        return self._move_to_selected()
-
-    def remove(self, *values):
-        """ Mark items for deselection and then clicks the button to deselect them.
-
-        Args:
-            *values: Values to deselect
-
-        Returns: :py:class:`bool` with success.
-        """
-        self._clear_selection()
-        self._select_selected(*values)
-        return self._move_to_unselected()
-
-
-@fill.method((MultiBoxSelect, list))
-@fill.method((MultiBoxSelect, tuple))
-@fill.method((MultiBoxSelect, set))
-def _fill_multibox_list(multi, values):
-    """ Filler function for MultiBoxSelect
-
-    Returns: :py:class:`bool` with success.
-    """
-    return multi.add(*tuple(values), flush=True)
-
-
-@fill.method((MultiBoxSelect, basestring))
-def _fill_multibox_str(multi, string):
-    """ Filler function for MultiBoxSelect
-
-    Returns: :py:class:`bool` with success.
-    """
-    return multi.add(string)
-
-
-@fill.method((MultiBoxSelect, dict))
-def _fill_multibox_dict(multi, d):
-    """ Filler function for MultiBoxSelect
-
-    Returns: :py:class:`bool` with success.
-    """
-    enable_list, disable_list = [], []
-    for key, value in d.iteritems():
-        if value:
-            enable_list.append(key)
-        else:
-            disable_list.append(key)
-    return all((multi.remove(disable_list), multi.add(enable_list)))
