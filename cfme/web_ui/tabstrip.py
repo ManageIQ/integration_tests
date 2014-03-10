@@ -11,6 +11,8 @@ Usage:
 
 """
 import cfme.fixtures.pytest_selenium as sel
+from cfme.web_ui import fill, Form
+from utils.log import logger
 
 
 _entry_div = "//div[contains(@class, 'ui-tabs')]"  # Entry point
@@ -91,3 +93,74 @@ def select_tab(ident_string):
     """
     if not is_tab_selected(ident_string):
         return sel.click(get_clickable_tab(ident_string))
+
+
+class _TabStripField(object):
+    """A form field type for use in TabStripForms"""
+    def __init__(self, ident_string, arg):
+        self.ident_string = ident_string
+        self.arg = arg
+
+
+@fill.method((_TabStripField, object))
+def _fill_tabstrip(tabstrip_field, value):
+    select_tab(tabstrip_field.ident_string)
+    logger.debug(' Navigating to tabstrip %s' % value)
+    fill(tabstrip_field.arg, value)
+
+
+class TabStripForm(Form):
+    """
+    A class for interacting with tabstrip-contained Form elements on pages.
+
+    This behaves exactly like a :py:class:`Form`, but is able to deal with form
+    elements being broken up into tabs, accessible via a tab strip.
+
+    Args:
+        fields: A list of field name/locator tuples (same as Form implementation)
+        tab_fields: A dict with tab names as keys, and each key's value being a list of
+            field name/locator tuples. The ordering of fields within a tab is guaranteed
+            (as it is with the normal Form) but the ordering of tabs is not guaranteed by default.
+            If such ordering is needed, tab_fields can be a ``collections.OrderedDict``.
+        identifying_loc: A locator which should be present if the form is visible.
+
+    Usage:
+
+        provisioning_form = web_ui.TabStripForm(
+            tab_fields={
+                'Request': [
+                    ('email', '//input[@name="requester__owner_email"]'),
+                    ('first_name', '//input[@id="requester__owner_first_name"]'),
+                    ('last_name', '//input[@id="requester__owner_last_name"]'),
+                    ('notes', '//textarea[@id="requester__request_notes"]'),
+                ],
+                'Catalog': [
+                    ('instance_name', '//input[@name="service__vm_name"]'),
+                    ('instance_description', '//textarea[@id="service__vm_description"]'),
+                ]
+            }
+        )
+
+    Each tab's fields will be exposed by their name on the resulting instance just like fields
+    on a Form. Don't use duplicate field names in the ``tab_fields`` dict.
+
+    Forms can then be filled in like so::
+
+        request_info = {
+            'email': 'your@email.com',
+            'first_name': 'First',
+            'last_name': 'Last',
+            'notes': 'Notes about this request',
+            'instance_name': 'An instance name',
+            'instance_description': 'This is my instance!',
+        }
+        web_ui.fill(provisioning_form, request_info)
+
+    """
+
+    def __init__(self, fields=None, tab_fields=None, identifying_loc=None):
+        fields = fields or list()
+        for tab_ident, field in tab_fields.iteritems():
+            for field_name, field_locator in field:
+                fields.append((field_name, _TabStripField(tab_ident, field_locator)))
+        super(TabStripForm, self).__init__(fields, identifying_loc)
