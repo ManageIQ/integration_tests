@@ -8,10 +8,14 @@ from datetime import datetime
 
 import pytest
 
+from utils import providers
+from utils.cfmedb import db_session_maker
 from utils.conf import cfme_data
 from utils.datafile import template_env
+from utils.events import setup_for_event_testing
 from utils.log import create_logger
 from utils.path import scripts_path
+from utils.ssh import SSHClient
 from utils.wait import wait_for, TimedOutError
 
 logger = create_logger('events')
@@ -368,10 +372,19 @@ def pytest_configure(config):
         plugin.start()
 
 
+@pytest.fixture(scope="module")
+def configure_appliance_for_event_testing(listener_info):
+    """ This fixture ensures that the appliance is configured for event testing.
+    """
+    return setup_for_event_testing(
+        SSHClient(), db_session_maker(), listener_info, providers.list_infra_providers()
+    )
+
+
 @pytest.yield_fixture(scope="function")
-def register_event(uses_event_listener, request):
+def register_event(uses_event_listener, configure_appliance_for_event_testing, request):
     """register_event(sys_type, obj_type, obj, event)
-    Event registration fixture
+    Event registration fixture (ALWAYS PLACE BEFORE PAGE NAVIGATION FIXTURE!)
 
     This fixture is used to notify the testing system that some event
     should have occured during execution of the test case using it.
