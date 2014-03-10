@@ -1648,9 +1648,36 @@ class MultiBoxSelect(object):
         return self._move_to_unselected()
 
 
-@fill.method((MultiBoxSelect, object))
-def _fill_multibox(multi, values):
+@fill.method((MultiBoxSelect, list))
+@fill.method((MultiBoxSelect, tuple))
+@fill.method((MultiBoxSelect, set))
+def _fill_multibox_list(multi, values):
     """ Filler function for MultiBoxSelect
 
+    Returns: :py:class:`bool` with success.
     """
-    return multi.add(*values, flush=True)
+    return multi.add(*tuple(values), flush=True)
+
+
+@fill.method((MultiBoxSelect, basestring))
+def _fill_multibox_str(multi, string):
+    """ Filler function for MultiBoxSelect
+
+    Returns: :py:class:`bool` with success.
+    """
+    return multi.add(string)
+
+
+@fill.method((MultiBoxSelect, dict))
+def _fill_multibox_dict(multi, d):
+    """ Filler function for MultiBoxSelect
+
+    Returns: :py:class:`bool` with success.
+    """
+    enable_list, disable_list = [], []
+    for key, value in d.iteritems():
+        if value:
+            enable_list.append(key)
+        else:
+            disable_list.append(key)
+    return all((multi.remove(disable_list), multi.add(enable_list)))
