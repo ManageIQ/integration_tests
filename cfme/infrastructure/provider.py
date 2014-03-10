@@ -445,4 +445,4 @@ def wait_for_a_provider():
     sel.force_navigate('infrastructure_providers')
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
-             num_sec=180, fail_func=sel.refresh)
+             num_sec=700, fail_func=sel.refresh)
