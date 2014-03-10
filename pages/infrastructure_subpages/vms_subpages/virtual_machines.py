@@ -6,6 +6,7 @@ import re
 from pages.regions.quadicons import Quadicons
 from pages.regions.quadiconitem import QuadiconItem
 from pages.infrastructure_subpages.vms_subpages.common import VmCommonComponents
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
 from utils.wait import wait_for
@@ -33,8 +34,19 @@ class VirtualMachines(VmCommonComponents):
         return Search(self.testsetup)
 
     def return_to_all_vms(self):
-        button = self.selenium.find_element(*self._all_vms_button_locator)
-        button.click()
+        """A function to return to the all vms page.
+
+        As we use a single browser session, the "Virtual Machines" page can sometimes
+        be left in a state where it is showing a VM and not a list of all VMs. This
+        function attempts to return to the state of showing all VMs. However, this method
+        can also be called whilst in a providers details page, in which case the
+        button will not be present.
+        """
+        try:
+            button = self.selenium.find_element(*self._all_vms_button_locator)
+            button.click()
+        except NoSuchElementException:
+            pass
 
     def _mark_icon_and_call_method(self, vm_names, op_func):
         self.quadicon_region.mark_icon_checkbox(vm_names)
