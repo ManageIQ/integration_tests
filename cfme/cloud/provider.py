@@ -196,7 +196,7 @@ class Provider(Updateable):
                           [client, stats_to_match],
                           message="do_stats_match",
                           fail_func=sel.refresh,
-                          num_sec=600,
+                          num_sec=700,
                           delay=10)
         client.disconnect()
 
@@ -388,4 +388,4 @@ def wait_for_a_provider():
     sel.force_navigate('clouds_providers')
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
-             num_sec=180, fail_func=sel.refresh)
+             num_sec=700, fail_func=sel.refresh)
