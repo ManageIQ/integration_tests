@@ -42,7 +42,7 @@ class ServerRoleList:
         Returns:
             A list of the default appliance roles
         """
-        return cfme_data["server_roles"]["default"][:]
+        return list(cfme_data["server_roles"]["sets"]["default"])
 
     def ui_only_role_list(self):
         """ Single UI interface role which can be used to flush all the server roles but that one
