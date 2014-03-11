@@ -67,6 +67,13 @@ def test_provider_edit(provider_crud):
     flash.assert_message_match('Infrastructure Provider "%s" was saved' % provider_crud.name)
 
 
+def test_provider_delete(provider_crud):
+    provider_crud.delete(cancel=False)
+    flash.assert_message_match(
+        'Delete initiated for 1 Infrastructure Provider from the CFME Database')
+    provider.wait_for_provider_delete(provider_crud)
+
+
 def test_that_checks_flash_when_add_cancelled():
     """Tests that the flash message is correct when add is cancelled."""
     prov = provider.VMwareProvider()

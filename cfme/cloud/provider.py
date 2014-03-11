@@ -169,6 +169,18 @@ class Provider(Updateable):
         fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, edit_page.save_button)
 
+    def delete(self, cancel=True):
+        """
+        Deletes a provider from CFME
+
+        Args:
+            cancel: Whether to cancel the deletion, defaults to True
+        """
+
+        sel.force_navigate('cloud_provider', context={'provider': self})
+        cfg_btn('Remove this Cloud Provider from the VMDB', invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+
     def validate(self):
         """ Validates that the detail page matches the Providers information.
 
@@ -389,3 +401,11 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
+
+
+def wait_for_provider_delete(provider):
+    sel.force_navigate('clouds_providers')
+    quad = Quadicon(provider.name, 'cloud_prov')
+    logger.info('Waiting for a provider to delete...')
+    wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
+             message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)
