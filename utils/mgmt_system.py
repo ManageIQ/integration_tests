@@ -279,14 +279,23 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.username = username
         self.password = password
         self.api = VIServer()
-        self._connect()
 
     @property
     def api(self):
         # wrap calls to the API with a keepalive check, reconnect if needed
-        if not self._api.keep_session_alive():
-            logger.debug('The connection to %s "%s" timed out' %
-                (type(self).__name__, self.hostname))
+        try:
+            keepalive = self._api.keep_session_alive()
+            if not keepalive:
+                logger.debug('The connection to %s "%s" timed out' %
+                    (type(self).__name__, self.hostname))
+        except VIException as ex:
+            if ex.fault == "Not Connected":
+                # set this to trigger a connection below
+                keepalive = None
+            else:
+                raise
+
+        if not keepalive:
             self._connect()
         return self._api
 
