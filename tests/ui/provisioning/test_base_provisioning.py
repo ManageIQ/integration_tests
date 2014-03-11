@@ -62,9 +62,9 @@ class TestBaseProvisioning:
         Assert.equal(services_requests_pg.flash_message,
             "VM Provision Request was Submitted, "
             "you will be notified when your VMs are ready")
-        services_requests_pg.approve_request(1)
+        request_id = services_requests_pg.approve_request(1)
         services_requests_pg.wait_for_request_status("Last 24 Hours",
-            "Finished", 12)
+            "Finished", 12, request_id)
 
     def assert_vm_state(self, provisioning_data, current_page,
             current_state, random_name):
