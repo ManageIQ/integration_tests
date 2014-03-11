@@ -28,7 +28,7 @@ def vm_info(db_session):
 
 @pytest.mark.nondestructive
 @pytest.mark.usefixtures("maximized")
-#@pytest.mark.usefixtures("setup_infrastructure_providers")
+@pytest.mark.usefixtures("setup_infrastructure_providers")
 def test_delete_vm_metric_data(db_session, vm_info):
     resource_id = vm_info.id
     delete_raw_metric_data(db_session, resource_id)
