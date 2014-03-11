@@ -2,14 +2,32 @@
 
 Intended to functionalize common tasks when working with the pytest_generate_tests hook.
 
-More detail on how the function returns ``argnames``, ``argvalues``, and ``idlist`` are used
-can be found in pytest's parametrize documentation:
+The function return values use in the module, ``argnames``, ``argvalues``, and ``idlist``,
+can be thought of as parts of a table, where ``argnames`` are the table's column headers,
+``idlist`` is a list of row labels, and ``argvalues`` is a list of rows in the table. Each "row"
+in ``argvalues`` is a list of values. Therefore, the number of items in ``argvalues`` must
+correspond to the number of entries in ``idlist``, and the number of items in each ``argvalues``
+row list must correspond to the number of ``argnames``. Here's an example table:
+
+========= =============== =============== =============== ===============
+~         argnames[0]     argnames[1]     argnames[2]     argnames[3]
+========= =============== =============== =============== ===============
+idlist[0] argvalues[0][0] argvalues[0][1] argvalues[0][2] argvalues[0][3]
+idlist[1] argvalues[1][0] argvalues[1][1] argvalues[1][2] argvalues[1][3]
+idlist[2] argvalues[2][0] argvalues[2][1] argvalues[2][2] argvalues[2][3]
+========= =============== =============== =============== ===============
+
+Additionally, py.test joins the values of ``idlist`` with dashes to generate a unique id for this
+test, falling back to joining ``argnames`` with dashes if ``idlist`` is not set. This is the value
+seen in square brackets in a test report on parametrized tests.
+
+More information on ``parametrize`` can be found in pytest's documentation:
 
 * https://pytest.org/latest/parametrize.html#_pytest.python.Metafunc.parametrize
 
 """
 
-#import itertools
+import pytest
 
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.cloud.provider import get_from_config as get_cloud_provider
@@ -65,7 +83,7 @@ def parametrize(gen_func, *args, **kwargs):
         if filter_unused:
             argnames, argvalues = _fixture_filter(metafunc, argnames, argvalues)
         # See if we have to parametrize at all after filtering
-        if argnames:
+        if not checkskip(metafunc, argvalues):
             metafunc.parametrize(argnames, argvalues, indirect=indirect, ids=idlist, scope=scope)
     return pytest_generate_tests
 
@@ -186,3 +204,31 @@ def infra_providers(metafunc, *fields):
 
     """
     return provider_by_type(metafunc, infra_provider_type_map, *fields)
+
+
+def checkskip(metafunc, argvalues):
+    """Helper function to check if parametrizing yielded results
+
+    If argvalues is empty, the test being represented by metafunc will be skipped in collection.
+
+    Args:
+        metafunc: metafunc objects from pytest_generate_tests
+        argvalues: argvalues list for use in metafunc.parametrize
+
+    Returns:
+        True if this test should be skipped due to empty argvalues
+
+    """
+    if not argvalues:
+        # module and class are optional, but function isn't
+        modname = getattr(metafunc.module, '__name__', None)
+        classname = getattr(metafunc.cls, '__name__', None)
+        funcname = metafunc.function.__name__
+
+        test_name = '.'.join(filter(None, (modname, classname, funcname)))
+        logger.warning('Parametrization for %s yielded no values, skipping' %
+            test_name)
+        # Raising pytest.skip in collection halts future fixture evaluation,
+        # and preemptively filters this test out of the test results
+        pytest.skip(msg="Parametrize yielded no values")(metafunc.function)
+        return True
