@@ -9,7 +9,7 @@ def provisioning_start_page(infra_vms_pg):
     return vm_pg.click_on_provision_vms()
 
 
-@pytest.fixture()
+@pytest.fixture
 def service_dialog(automate_customization_pg, random_string, provisioning_data):
     '''Fixture to create Catalog item and bundle'''
     new_dialog_pg = automate_customization_pg\
@@ -20,7 +20,7 @@ def service_dialog(automate_customization_pg, random_string, provisioning_data):
     return service_dialog_name
 
 
-@pytest.fixture()
+@pytest.fixture
 def catalog(svc_catalogs_pg, random_string, provisioning_data):
     '''Fixture to create Catalog item and bundle'''
     new_cat_pg = svc_catalogs_pg.click_on_catalogs_accordion().add_new_catalog()
@@ -29,7 +29,7 @@ def catalog(svc_catalogs_pg, random_string, provisioning_data):
     return catalog_name
 
 
-@pytest.fixture()
+@pytest.fixture
 def check_service_name(random_string, create_service_name_script, create_generic_catalog_item,
         svc_catalogs_pg):
     '''test automate script to change service name'''
@@ -44,7 +44,7 @@ def check_service_name(random_string, create_service_name_script, create_generic
     return service_name
 
 
-@pytest.fixture()
+@pytest.fixture
 def create_service_name_script(automate_explorer_pg):
     '''Fixture to specify service name change script'''
     ae_namespace_pg = automate_explorer_pg.click_on_class_access_node(
@@ -55,7 +55,7 @@ def create_service_name_script(automate_explorer_pg):
     inst_pg.click_on_save_button()
 
 
-@pytest.fixture()
+@pytest.fixture
 def create_generic_catalog_item(random_string, service_dialog, svc_catalogs_pg, catalog):
     '''Fixture to create generic item'''
     service_dialog_name = service_dialog
