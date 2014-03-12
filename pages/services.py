@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-
 import operator
 from time import sleep
-from pages.base import Base
-from pages.regions.paginator import PaginatorMixin
+
 from selenium.webdriver.common.by import By
-from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.support.select import Select
-from pages.services_subpages.catalog_subpages.catalogs import Catalogs
+
+from pages.base import Base
+from pages.regions.list import ListRegion, ListItem
+from pages.regions.paginator import PaginatorMixin
 from pages.services_subpages.catalog_subpages.catalog_items import CatalogItems
+from pages.services_subpages.catalog_subpages.catalogs import Catalogs
 from pages.services_subpages.catalog_subpages.service_catalogs import ServiceCatalogs
 
 
@@ -136,7 +137,8 @@ class Services(Base):
                         *self._requests_link_locator).click()
             return request_number
 
-        def wait_for_request_status(self, time_period_text, request_status, timeout_in_minutes, request_number):
+        def wait_for_request_status(self, time_period_text, request_status, timeout_in_minutes,
+                request_number):
             '''Wait for request status'''
             if not self.get_element(*self._check_box_approved).is_selected():
                 self.get_element(*self._check_box_approved).click()
@@ -158,10 +160,8 @@ class Services(Base):
             while (minute_count < timeout_in_minutes):
                 if self.requests_list.items[requests_index]\
                         .request_id == request_number:
-                    if self.requests_list.items[requests_index]\
-                        .request_state == request_status:
-                        if self.requests_list.items[requests_index]\
-                            .status == "Ok":
+                    if self.requests_list.items[requests_index].request_state == request_status:
+                        if self.requests_list.items[requests_index].status == "Ok":
                             break
                         else:
                             raise Exception("Status of request is " +

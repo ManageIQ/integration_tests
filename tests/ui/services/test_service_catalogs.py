@@ -1,35 +1,14 @@
-'''
-Created on July 25th, 2013
-
-@author: Shveta
-'''
-
 import pytest
 from unittestzero import Assert
 from tests.ui.services.test_base_catalogs import TestBaseCatalogs
 
 
-@pytest.mark.nondestructive
 @pytest.mark.fixtureconf(server_roles='+automate')
-@pytest.mark.usefixtures(
-    "server_roles",
-    "setup_infrastructure_providers",
-    "setup_pxe_provision",
-    "mgmt_sys_api_clients",
-    "db_session",
-    "soap_client")
+@pytest.mark.usefixtures("server_roles", "setup_infrastructure_providers",
+    "setup_pxe_provision", "mgmt_sys_api_clients", "db_session", "soap_client")
 class TestAllCatalogs(TestBaseCatalogs):
-
-    def test_order_service_catalog_item(
-            self,
-            mgmt_sys_api_clients,
-            provisioning_data,
-            service_dialog,
-            catalog,
-            svc_catalogs_pg,
-            random_name,
-            db_session,
-            soap_client):
+    def test_order_service_catalog_item(self, mgmt_sys_api_clients, provisioning_data,
+            service_dialog, catalog, svc_catalogs_pg, random_name, db_session, soap_client):
         '''Test Basic Provisioning Workflow'''
         service_dialog_name = service_dialog
         catalog_name = catalog
@@ -60,16 +39,8 @@ class TestAllCatalogs(TestBaseCatalogs):
             mgmt_sys_api_clients,
             vm_name + "_0001")
 
-    def test_order_service_catalog_bundle(
-            self,
-            mgmt_sys_api_clients,
-            provisioning_data,
-            random_name,
-            service_dialog,
-            catalog,
-            db_session,
-            soap_client,
-            svc_catalogs_pg):
+    def test_order_service_catalog_bundle(self, mgmt_sys_api_clients, provisioning_data,
+            random_name, service_dialog, catalog, db_session, soap_client, svc_catalogs_pg):
         '''Order Catalog Bundle'''
         service_dialog_name = service_dialog
         catalog_name = catalog
@@ -107,13 +78,8 @@ class TestAllCatalogs(TestBaseCatalogs):
             mgmt_sys_api_clients,
             vm_name + "_0001")
 
-    def test_delete_catalog_deletes_service(
-            self,
-            provisioning_data,
-            random_name,
-            service_dialog,
-            catalog,
-            svc_catalogs_pg):
+    def test_delete_catalog_deletes_service(self, provisioning_data, random_name, service_dialog,
+            catalog, svc_catalogs_pg):
         '''Delete Catalog should delete service'''
         service_dialog_name = service_dialog
         catalog_name = catalog
@@ -137,13 +103,8 @@ class TestAllCatalogs(TestBaseCatalogs):
         Assert.false(svc_catalogs_pg.click_on_service_catalogs_accordion().
             is_catalog_present(catalog_name), "service catalog not found")
 
-    def test_delete_catalog_item_deletes_service(
-            self,
-            provisioning_data,
-            random_name,
-            service_dialog,
-            catalog,
-            svc_catalogs_pg):
+    def test_delete_catalog_item_deletes_service(self, provisioning_data, random_name,
+            service_dialog, catalog, svc_catalogs_pg):
         '''Delete Catalog should delete service'''
         service_dialog_name = service_dialog
         catalog_name = catalog
@@ -167,13 +128,8 @@ class TestAllCatalogs(TestBaseCatalogs):
         Assert.false(svc_catalogs_pg.click_on_service_catalogs_accordion().
         is_catalog_item_present(cat_item_name), "service catalog item not found")
 
-    def test_service_circular_reference_not_allowed(
-            self,
-            random_name,
-            provisioning_data,
-            service_dialog,
-            catalog,
-            svc_catalogs_pg):
+    def test_service_circular_reference_not_allowed(self, random_name, provisioning_data,
+            service_dialog, catalog, svc_catalogs_pg):
         '''service calling itself should not be allowed'''
         service_dialog_name = service_dialog
         catalog_name = catalog
@@ -214,13 +170,10 @@ class TestAllCatalogs(TestBaseCatalogs):
         resource_pg = reso_pg.click_on_resources_tab()
         resource_pg.select_catalog_item_and_edit(sec_catalog_bundle)
         Assert.equal(resource_pg.flash.message,
-            "Error during 'Resource Add': Adding resource <%s> to Service <%s> will create a circular reference"
-            % (sec_catalog_bundle, cat_bundle_name))
+            ("Error during 'Resource Add': Adding resource <%s> to Service <%s> "
+             "will create a circular reference") % (sec_catalog_bundle, cat_bundle_name))
 
-    def test_service_name_change_script(
-            self,
-            check_service_name,
-            svc_myservices_pg):
+    def test_service_name_change_script(self, check_service_name, svc_myservices_pg):
         '''test automate script to change service name'''
         service_name = check_service_name
         svc_myservices_pg.select_service_in_tree(service_name)

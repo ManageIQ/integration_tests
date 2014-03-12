@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=W0621
 from unittestzero import Assert
 from utils.conf import cfme_data
 import db
 
 
 class TestBaseCatalogs:
-
-    def complete_sc_pages_info(self,
-            provisioning_data, catalog_pg, random_name, vm_name):
+    def complete_sc_pages_info(self, provisioning_data, catalog_pg, random_name, vm_name):
         ''' Fills in data for Provisioning tabs'''
         tab_buttons = catalog_pg.tabbutton_region
         catalog_pg.fill_catalog_tab(
@@ -34,8 +31,8 @@ class TestBaseCatalogs:
                 provisioning_data["key_pair"],
                 provisioning_data["public_ip_address"])
         else:
-            hardware_pg = tab_buttons.tabbutton_by_name("Hardware").click()
-            network_pg = tab_buttons.tabbutton_by_name("Network").click()
+            tab_buttons.tabbutton_by_name("Hardware").click()
+            tab_buttons.tabbutton_by_name("Network").click()
         if provisioning_data["provision_type"] is not None:
             if ("PXE" in provisioning_data["provision_type"]) or \
                     ("ISO" in provisioning_data["provision_type"]):
@@ -51,13 +48,8 @@ class TestBaseCatalogs:
             str(provisioning_data["time_until_retirement"]))
         catalog_pg.save_catalog_item()
 
-    def create_catalog_bundle(self,
-        random_string,
-        provisioning_data,
-        svc_catalogs_pg,
-        cat_name,
-        service_dialog,
-        cat_item_name):
+    def create_catalog_bundle(self, random_string, provisioning_data, svc_catalogs_pg, cat_name,
+            service_dialog, cat_item_name):
         '''Fixture to create Catalog item and bundle'''
         new_bundle_pg = svc_catalogs_pg.click_on_catalog_item_accordion()\
             .add_new_catalog_bundle()
@@ -71,8 +63,7 @@ class TestBaseCatalogs:
         res_pg.select_catalog_item_and_add(cat_item_name)
         return catalog_bundle_name
 
-    def assert_vm_state(self, provisioning_data, current_page,
-            current_state, vm_name):
+    def assert_vm_state(self, provisioning_data, current_page, current_state, vm_name):
         ''' Asserts that the VM is created in the expected state '''
         if provisioning_data["availability_zone"] is not None:
             vm_pg = current_page.header.site_navigation_menu(
@@ -110,7 +101,6 @@ class TestBaseCatalogs:
                     print "Template found or VM is off"
                     if template:
                         print "Template to be deleted from provider"
-                        provider = mgmt_sys_api_clients.values()[0]
                         soap_client.service.EVMDeleteVmByName(vm_name)
                     break
         else:
