@@ -1,6 +1,5 @@
 import requests
 import signal
-import socket
 import subprocess
 import time
 from collections import defaultdict
@@ -8,12 +7,13 @@ from datetime import datetime
 
 import pytest
 
+from utils import lazycache
 from utils import providers
 from utils.db import cfmedb
-from utils.conf import cfme_data
 from utils.datafile import template_env
 from utils.events import setup_for_event_testing
 from utils.log import create_logger
+from utils.net import my_ip_address, random_port
 from utils.path import scripts_path
 from utils.ssh import SSHClient
 from utils.wait import wait_for, TimedOutError
@@ -107,37 +107,12 @@ class EventListener(object):
         self.processed_expectations = defaultdict(list)
         self.listener = None
 
-    @property
+    @lazycache
     def listener_port(self):
-        if self._listener_port is 0:
-            # Ask the OS for an open port by creating a temporary socket
-            s = socket.socket()
-            # 0 results in a randomly chosen open port
-            s.bind(('', 0))
-            addr, port = s.getsockname()
-            s.close()
-            self._listener_port = port
-        return self._listener_port
+        return random_port()
 
     def get_listener_host(self):
-        return "http://%s" % self.get_ip_address()
-
-    def get_ip_address(self):
-        """Use a remote service to get the test runner's ip address for event routing"""
-        data = cfme_data.get("event_testing")
-        assert data, "No event_testing section in cfme_data yaml"
-        ipecho = data.get("ip_echo")
-        assert ipecho, "No event_testing/ip_echo in cfme_data yaml"
-        try:
-            host = ipecho["host"]
-            port = int(ipecho["port"])
-        except (TypeError, KeyError):
-            raise Exception("Could not read data from event_testing/ip_echo/{host, port}")
-        connection = socket.create_connection((host, port))
-        try:
-            return str(connection.recv(39)).strip()
-        finally:
-            connection.close()
+        return "http://%s" % my_ip_address()
 
     def _get(self, route):
         """ Query event listener

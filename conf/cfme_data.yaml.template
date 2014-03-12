@@ -645,10 +645,11 @@ clone_retire_setup:
         owner_first_name: testFirst
         owner_last_name: testLast
         owner_email: test@company.com
-event_testing:
-    ip_echo:
-        host: "somehost"
-        port: 8080
+ip_echo:
+    host: "somehost"
+    port: 8080
+mail_collector:
+    test_email: "email@email.com"
 log_db_depot:
     machine:
         credentials: machine_creds
