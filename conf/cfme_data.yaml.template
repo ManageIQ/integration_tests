@@ -138,22 +138,29 @@ pxe:
     datastores:
         - datastore1
         - datastore2
-ldap_server:
-    session_timeout_hours: "1"
-    session_timeout_mins: "0"
-    mode: LDAP
-    hostname1: ad.example.com
-    hostname2:
-    hostname3:
-    port: "389"
-    user_type: userprincipalname
-    user_suffix: ad.example.com
-    get_groups: True
-    get_roles: True
-    follow_referrals: False
-    base_dn: dc=ad,dc=example,dc=com
-    bind_dn: administrator@ad.example.com
-    bind_passwd: password
+auth_modes:
+    ldap_server:
+        session_timeout_hours: "1"
+        session_timeout_mins: "0"
+        mode: LDAP
+        hostname1: ad.example.com
+        hostname2:
+        hostname3:
+        port: "389"
+        user_type: userprincipalname
+        user_suffix: ad.example.com
+        get_groups: True
+        get_roles: True
+        follow_referrals: False
+        base_dn: dc=ad,dc=example,dc=com
+        bind_dn: administrator@ad.example.com
+        bind_passwd: password
+    aws_iam:
+        session_timeout_hours: "1"
+        session_timeout_mins: "0"
+        mode: amazon
+        get_groups: True
+        credentials: aws
 server_roles:
     all:    # Do not change, unless there is a change in the UI!
         - ems_operations
@@ -190,7 +197,7 @@ server_roles:
 group_roles:
     evmgroup-administrator:
         menus:
-            Virtual Intelligence:
+            Cloud Intelligence:
                 - Dashboard
                 - Reports
                 - Usage
@@ -199,8 +206,15 @@ group_roles:
                 - RSS
             Services:
                 - My Services
+                - Catalogs
                 - Requests
                 - Workloads
+            Clouds:
+                - Providers
+                - Availability Zones
+                - Flavors
+                - Security Groups
+                - Instances
             Infrastructure:
                 - Providers
                 - Clusters
@@ -234,7 +248,7 @@ group_roles:
                 - About
     evmgroup-approver:
         menus:
-            Virtual Intelligence:
+            Cloud Intelligence:
                 - Dashboard
                 - Reports
                 - Usage
@@ -244,6 +258,8 @@ group_roles:
             Services:
                 - Requests
                 - Workloads
+            Clouds:
+                - Instances
             Infrastructure:
                 - Providers
                 - Clusters
@@ -263,7 +279,7 @@ group_roles:
                 - About
     evmgroup-auditor:
         menus:
-            Virtual Intelligence:
+            Cloud Intelligence:
                 - Dashboard
                 - Reports
                 - Usage
@@ -272,6 +288,8 @@ group_roles:
                 - RSS
             Services:
                 - Workloads
+            Clouds:
+                - Instances
             Infrastructure:
                 - Providers
                 - Clusters
@@ -294,7 +312,7 @@ group_roles:
                 - About
     evmgroup-desktop:
         menus:
-            Virtual Intelligence:
+            Cloud Intelligence:
                 - Dashboard
             Services:
                 - Requests
@@ -304,7 +322,7 @@ group_roles:
                 - About
     evmgroup-operator:
         menus:
-            Virtual Intelligence:
+            Cloud Intelligence:
                 - Dashboard
                 - Reports
                 - Usage
@@ -313,6 +331,8 @@ group_roles:
                 - RSS
             Services:
                 - Workloads
+            Clouds:
+                - Instances
             Infrastructure:
                 - Providers
                 - Clusters
@@ -327,7 +347,7 @@ group_roles:
                 - About
     evmgroup-security:
         menus:
-            Virtual Intelligence:
+            Cloud Intelligence:
                 - Dashboard
                 - Reports
                 - Usage
@@ -336,6 +356,8 @@ group_roles:
                 - RSS
             Services:
                 - Workloads
+            Clouds:
+                - Instances
             Infrastructure:
                 - Providers
                 - Clusters
@@ -354,7 +376,7 @@ group_roles:
                 - About
     evmgroup-super_administrator:
         menus:
-            Virtual Intelligence:
+            Cloud Intelligence:
                 - Dashboard
                 - Reports
                 - Usage
@@ -366,6 +388,12 @@ group_roles:
                 - Catalogs
                 - Requests
                 - Workloads
+            Clouds:
+                - Providers
+                - Availability Zones
+                - Flavors
+                - Security Groups
+                - Instances
             Infrastructure:
                 - Providers
                 - Clusters
@@ -400,7 +428,7 @@ group_roles:
                 - About
     evmgroup-support:
         menus:
-            Virtual Intelligence:
+            Cloud Intelligence:
                 - Dashboard
                 - Reports
                 - Usage
@@ -409,6 +437,8 @@ group_roles:
                 - RSS
             Services:
                 - Workloads
+            Clouds:
+                - Instances
             Infrastructure:
                 - Providers
                 - Clusters
@@ -427,7 +457,7 @@ group_roles:
                 - About
     evmgroup-user:
         menus:
-            Virtual Intelligence:
+            Cloud Intelligence:
                 - Dashboard
                 - Reports
                 - Usage
@@ -436,6 +466,8 @@ group_roles:
                 - RSS
             Services:
                 - Workloads
+            Clouds:
+                - Instances
             Infrastructure:
                 - Providers
                 - Clusters
@@ -452,7 +484,9 @@ group_roles:
         menus:
             Services:
                 - Requests
-                - Workloads
+            Infrastructure:
+                - Virtual Machines
+                - Requests
             Configure:
                 - My Settings
                 - About
@@ -460,7 +494,9 @@ group_roles:
         menus:
             Services:
                 - Requests
-                - Workloads
+            Infrastructure:
+                - Virtual Machines
+                - Requests
             Configure:
                 - My Settings
                 - About
