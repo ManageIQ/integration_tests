@@ -133,7 +133,7 @@ Members
 import logging
 import sys
 import warnings
-from logging.handlers import RotatingFileHandler
+from logging.handlers import RotatingFileHandler, SysLogHandler
 from time import time
 from traceback import extract_tb
 
@@ -171,6 +171,14 @@ def _load_conf(logger_name=None):
         logging_conf.update(logging_conf[logger_name])
 
     return logging_conf
+
+
+def _get_syslog_settings():
+    try:
+        syslog = conf['env']['syslog']
+        return (syslog['address'], int(syslog['port']))
+    except KeyError:
+        return None
 
 
 class _RelpathFilter(logging.Filter):
@@ -277,6 +285,10 @@ def create_logger(logger_name):
 
     logger = logging.getLogger(logger_name)
     logger.addHandler(file_handler)
+
+    syslog_settings = _get_syslog_settings()
+    if syslog_settings:
+        logger.addHandler(SysLogHandler(address=syslog_settings))
     logger.setLevel(conf['level'])
     if conf['errors_to_console']:
         stream_formatter = logging.Formatter(conf['stream_format'])
