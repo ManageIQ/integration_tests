@@ -4,6 +4,12 @@ import pytest
 from utils.conf import cfme_data
 import db
 
+pytestmark = [
+    pytest.mark.fixtureconf(server_roles='+automate'),
+    pytest.mark.usefixtures("server_roles", "setup_infrastructure_providers",
+    "setup_pxe_provision", "mgmt_sys_api_clients", "db_session", "soap_client")
+]
+
 
 def complete_sc_pages_info(provisioning_data, catalog_pg, random_name, vm_name):
     ''' Fills in data for Provisioning tabs'''
@@ -107,9 +113,6 @@ def teardown_remove_from_provider(db_session, provisioning_data, soap_client,
         mgmt_sys_api_clients[provisioning_data["provider_key"]].delete_vm(vm_name)
 
 
-@pytest.mark.fixtureconf(server_roles='+automate')
-@pytest.mark.usefixtures("server_roles", "setup_infrastructure_providers",
-    "setup_pxe_provision", "mgmt_sys_api_clients", "db_session", "soap_client")
 def test_order_service_catalog_item(mgmt_sys_api_clients, provisioning_data,
         service_dialog, catalog, svc_catalogs_pg, random_name, db_session, soap_client):
     '''Test Basic Provisioning Workflow'''
@@ -124,7 +127,7 @@ def test_order_service_catalog_item(mgmt_sys_api_clients, provisioning_data,
         "item_desc_" + random_name,
         catalog_name,
         service_dialog_name)
-    vm_name = "vm_name" + random_name
+    vm_name = "sc_item-" + random_name
     req_pg = new_cat_item_pg.click_on_request_info_tab()
     complete_sc_pages_info(provisioning_data,
         req_pg, random_name, vm_name)
@@ -157,7 +160,7 @@ def test_order_service_catalog_bundle(mgmt_sys_api_clients, provisioning_data,
         "item_desc_" + random_name,
         catalog_name,
         service_dialog_name)
-    vm_name = "vm_name" + random_name
+    vm_name = "sc_bundle-" + random_name
     req_pg = new_cat_item_pg.click_on_request_info_tab()
     complete_sc_pages_info(provisioning_data,
         req_pg, random_name, vm_name)
@@ -197,7 +200,7 @@ def test_delete_catalog_deletes_service(provisioning_data, random_name, service_
         "item_desc_" + random_name,
         catalog_name,
         service_dialog_name)
-    vm_name = "vm_name" + random_name
+    vm_name = "sc_delete-" + random_name
     req_pg = new_cat_item_pg.click_on_request_info_tab()
     complete_sc_pages_info(provisioning_data,
         req_pg, random_name, vm_name)
@@ -223,7 +226,7 @@ def test_delete_catalog_item_deletes_service(provisioning_data, random_name,
         "item_desc_" + random_name,
         catalog_name,
         service_dialog_name)
-    vm_name = "vm_name" + random_name
+    vm_name = "sc_delete_item-" + random_name
     req_pg = new_cat_item_pg.click_on_request_info_tab()
     complete_sc_pages_info(provisioning_data,
         req_pg, random_name, vm_name)
@@ -249,7 +252,7 @@ def test_service_circular_reference_not_allowed(random_name, provisioning_data,
         "item_desc_" + random_name,
         catalog_name,
         service_dialog_name)
-    vm_name = "vm_name" + random_name
+    vm_name = "sc_circular-" + random_name
     req_pg = new_cat_item_pg.click_on_request_info_tab()
     complete_sc_pages_info(provisioning_data,
         req_pg, random_name, vm_name)
