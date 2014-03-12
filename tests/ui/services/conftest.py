@@ -56,10 +56,7 @@ def create_service_name_script(automate_explorer_pg):
 
 
 @pytest.fixture()
-def create_generic_catalog_item(random_string,
-        service_dialog,
-        svc_catalogs_pg,
-        catalog):
+def create_generic_catalog_item(random_string, service_dialog, svc_catalogs_pg, catalog):
     '''Fixture to create generic item'''
     service_dialog_name = service_dialog
     catalog_name = catalog
@@ -89,11 +86,3 @@ def provisioning_data(request, cfme_data):
 def random_name(random_string):
     '''Returns random name addition for vms'''
     return '_%s' % random_string
-
-
-@pytest.fixture
-def enables_automation_engine(cnf_configuration_pg):
-    '''Enables Automate Engine in Configure'''
-    conf_pg = cnf_configuration_pg
-    conf_pg.click_on_settings()
-    return conf_pg.enable_automation_engine()
