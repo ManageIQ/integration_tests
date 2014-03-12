@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-
-import operator
-from time import sleep
-from pages.base import Base
-from pages.regions.paginator import PaginatorMixin
 from selenium.webdriver.common.by import By
-from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.support.select import Select
-from pages.services_subpages.catalog_subpages.catalogs import Catalogs
+
+from cfme.web_ui import paginator
+from pages.base import Base
+from pages.regions.list import ListRegion, ListItem
+from pages.regions.paginator import PaginatorMixin
 from pages.services_subpages.catalog_subpages.catalog_items import CatalogItems
+from pages.services_subpages.catalog_subpages.catalogs import Catalogs
 from pages.services_subpages.catalog_subpages.service_catalogs import ServiceCatalogs
+from utils.wait import wait_for
 
 
 class Services(Base):
@@ -89,6 +89,25 @@ class Services(Base):
                 Services.RequestItem)
 
         @property
+        def request_items(self):
+            # skip the first item in the list, it's an empty row
+            return self.requests_list.items[1:]
+
+        def request_by_id(self, request_id):
+            """Loop over request pages and return the request with matching id
+            or None if that request isn't found.
+
+            """
+            for page in paginator.pages():
+                for request_item in self.request_items:
+                    if request_item.request_id == request_id:
+                        return request_item
+
+        def reload(self):
+            self.get_element(*self._reload_button).click()
+            self._wait_for_results_refresh()
+
+        @property
         def flash_message(self):
             '''Flash Message'''
             return self.flash.message
@@ -108,8 +127,6 @@ class Services(Base):
                 self.get_element(*self._check_box_denied).click()
             if not self.get_element(*self._check_box_pending).is_selected():
                 self.get_element(*self._check_box_pending).click()
-            self.get_element(*self._reload_button).click()
-            self._wait_for_results_refresh()
 
             if len(self.requests_list.items) > 0 and \
                     self.requests_list.items[item_number]\
@@ -136,8 +153,13 @@ class Services(Base):
                         *self._requests_link_locator).click()
             return request_number
 
-        def wait_for_request_status(self, time_period_text, request_status, timeout_in_minutes, request_number):
-            '''Wait for request status'''
+        def wait_for_request_status(self, time_period_text, request_state, timeout_in_minutes,
+                request_number):
+            '''Wait for request state to match request_state
+
+            request status must be 'Ok'
+
+            '''
             if not self.get_element(*self._check_box_approved).is_selected():
                 self.get_element(*self._check_box_approved).click()
             if self.get_element(*self._check_box_denied).is_selected():
@@ -145,38 +167,18 @@ class Services(Base):
             if not self.get_element(*self._check_box_pending).is_selected():
                 self.get_element(*self._check_box_pending).click()
             self.time_period.select_by_visible_text(time_period_text)
-            self.get_element(*self._reload_button).click()
-            self._wait_for_results_refresh()
 
-            data = {}
-            requests_items = self.requests_list.items
-            for i in range(1, len(requests_items)):
-                data.update({i: requests_items[i].request_id})
-            sorted_data = sorted(data.iteritems(), key=operator.itemgetter(1), reverse=True)
-            requests_index = sorted_data[0][0]
-            minute_count = 0
-            while (minute_count < timeout_in_minutes):
-                if self.requests_list.items[requests_index]\
-                        .request_id == request_number:
-                    if self.requests_list.items[requests_index]\
-                        .request_state == request_status:
-                        if self.requests_list.items[requests_index]\
-                            .status == "Ok":
-                            break
-                        else:
-                            raise Exception("Status of request is " +
-                            self.requests_list.items[requests_index].request_id)
-                print "Waiting for provisioning status: " + request_status
-                sleep(60)
-                self.time_period.select_by_visible_text(time_period_text)
-                self.get_element(*self._reload_button).click()
-                self._wait_for_results_refresh()
-                if (minute_count == timeout_in_minutes) and \
-                   (self.requests_list.items[requests_index].request_state != request_status):
-                    raise Exception("timeout reached(" + str(timeout_in_minutes) +
-                       " minutes) before desired state (" +
-                       request_status + ") reached... current state(" +
-                       self.requests_list.items[requests_index].request_state + ")")
+            def wait_func():
+                request = self.request_by_id(request_number)
+                if request.status != 'Ok':
+                    raise Exception("Status of request is not Ok: %s" %
+                        request.request_id)
+
+                if request.request_state != request_state:
+                    return False
+                else:
+                    return request
+            wait_for(wait_func, num_sec=timeout_in_minutes * 60, fail_func=self.reload, delay=10)
             return Services.Requests(self.testsetup)
 
     class RequestItem(ListItem):
