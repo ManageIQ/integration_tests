@@ -1,9 +1,7 @@
 from functools import partial
 
-import ui_navigate as nav
-
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
+from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Form, SplitTable, Tree, fill
 from utils.log import logger
@@ -87,6 +85,8 @@ def select_namespace(ns):
 
 def edit_namespace(ns):
     select_namespace(ns)
+    import time
+    time.sleep(5)  # Needed because it seems ajax_wait doesn't detect and it's not observed
     if ns.path:
         cfg_btn('Edit Selected Item')
     else:
