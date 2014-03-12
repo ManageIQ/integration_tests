@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from unittestzero import Assert
 from utils.conf import cfme_data
 import db
 
@@ -77,9 +76,7 @@ class TestBaseCatalogs:
                 'Virtual Machines').click()
             vm_pg.refresh()
             vm_pg.wait_for_vm_state_change(vm_name, current_state, 12)
-        Assert.equal(vm_pg.quadicon_region.get_quadicon_by_title(vm_name)
-            .current_state, current_state,
-            "vm not in correct state: " + current_state)
+        assert vm_pg.quadicon_region.get_quadicon_by_title(vm_name).current_state == current_state
         return vm_pg
 
     def teardown_remove_from_provider(
@@ -95,7 +92,7 @@ class TestBaseCatalogs:
             if vm_name in name:
                 if power_state == 'on':
                     result = soap_client.service.EVMSmartStop(guid)
-                    Assert.equal(result.result, 'true')
+                    assert result.result == 'true'
                     break
                 else:
                     print "Template found or VM is off"

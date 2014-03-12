@@ -1,5 +1,4 @@
 import pytest
-from unittestzero import Assert
 from tests.ui.services.test_base_catalogs import TestBaseCatalogs
 
 
@@ -29,7 +28,7 @@ class TestAllCatalogs(TestBaseCatalogs):
             .select_catalog_in_service_tree(catalog_name)
         order_pg = table_pg.select_catalog_item(cat_item_name,
                     "service_" + cat_item_name)
-        Assert.equal(order_pg.flash.message, "Order Request was Submitted")
+        assert order_pg.flash.message == "Order Request was Submitted"
         request_id = order_pg.approve_request(1)
         order_pg.wait_for_request_status("Last 24 Hours",
             "Finished", 12, request_id)
@@ -63,12 +62,12 @@ class TestAllCatalogs(TestBaseCatalogs):
             catalog_name,
             service_dialog_name,
             cat_item_name)
-        Assert.true(svc_catalogs_pg.is_the_current_page)
+        svc_catalogs_pg.is_the_current_page
         table_pg = svc_catalogs_pg.click_on_service_catalogs_accordion()\
             .select_catalog_in_service_tree(catalog_name)
         order_pg = table_pg.select_catalog_item(cat_bundle_name,
                     "service_" + cat_bundle_name)
-        Assert.equal(order_pg.flash.message, "Order Request was Submitted")
+        assert order_pg.flash.message == "Order Request was Submitted"
         request_id = order_pg.approve_request(1)
         order_pg.wait_for_request_status("Last 24 Hours",
             "Finished", 12, request_id)
@@ -96,12 +95,12 @@ class TestAllCatalogs(TestBaseCatalogs):
         req_pg = new_cat_item_pg.click_on_request_info_tab()
         self.complete_sc_pages_info(provisioning_data,
             req_pg, random_name, vm_name)
-        Assert.true(svc_catalogs_pg.is_the_current_page)
+        svc_catalogs_pg.is_the_current_page
         delete_pg = svc_catalogs_pg.click_on_catalogs_accordion().\
             click_on_catalog(catalog_name)
         delete_pg.delete_catalog()
-        Assert.false(svc_catalogs_pg.click_on_service_catalogs_accordion().
-            is_catalog_present(catalog_name), "service catalog not found")
+        assert not svc_catalogs_pg.click_on_service_catalogs_accordion()\
+            .is_catalog_present(catalog_name), "service catalog not found"
 
     def test_delete_catalog_item_deletes_service(self, provisioning_data, random_name,
             service_dialog, catalog, svc_catalogs_pg):
@@ -121,12 +120,12 @@ class TestAllCatalogs(TestBaseCatalogs):
         req_pg = new_cat_item_pg.click_on_request_info_tab()
         self.complete_sc_pages_info(provisioning_data,
             req_pg, random_name, vm_name)
-        Assert.true(svc_catalogs_pg.is_the_current_page)
-        delete_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
-            click_on_catalog_item(cat_item_name)
+        svc_catalogs_pg.is_the_current_page
+        delete_pg = svc_catalogs_pg.click_on_catalog_item_accordion()\
+            .click_on_catalog_item(cat_item_name)
         delete_pg.delete_catalog_item()
-        Assert.false(svc_catalogs_pg.click_on_service_catalogs_accordion().
-        is_catalog_item_present(cat_item_name), "service catalog item not found")
+        assert not svc_catalogs_pg.click_on_service_catalogs_accordion()\
+            .is_catalog_item_present(cat_item_name), "service catalog item not found"
 
     def test_service_circular_reference_not_allowed(self, random_name, provisioning_data,
             service_dialog, catalog, svc_catalogs_pg):
@@ -161,20 +160,19 @@ class TestAllCatalogs(TestBaseCatalogs):
         res_pg = new_bundle_pg.click_on_resources_tab()
         # second catalog bundle calling first
         res_pg.select_catalog_item_and_add(cat_bundle_name)
-        Assert.true(res_pg.flash.message.startswith(
-            'Catalog Bundle "%s" was added' % sec_catalog_bundle))
+        assert res_pg.flash.message.startswith(
+            'Catalog Bundle "%s" was added' % sec_catalog_bundle)
         # Edit first catalog bundle to call second
         edit_pg = svc_catalogs_pg.click_on_catalog_item_accordion().\
             click_on_catalog_item(cat_bundle_name)
         reso_pg = edit_pg.edit_catalog_bundle()
         resource_pg = reso_pg.click_on_resources_tab()
         resource_pg.select_catalog_item_and_edit(sec_catalog_bundle)
-        Assert.equal(resource_pg.flash.message,
-            ("Error during 'Resource Add': Adding resource <%s> to Service <%s> "
-             "will create a circular reference") % (sec_catalog_bundle, cat_bundle_name))
+        assert resource_pg.flash.message == ("Error during 'Resource Add': Adding resource <%s> to "
+            "Service <%s> will create a circular reference") % (sec_catalog_bundle, cat_bundle_name)
 
     def test_service_name_change_script(self, check_service_name, svc_myservices_pg):
         '''test automate script to change service name'''
         service_name = check_service_name
         svc_myservices_pg.select_service_in_tree(service_name)
-        Assert.true(svc_myservices_pg.is_service_present(service_name), "service not found")
+        assert svc_myservices_pg.is_service_present(service_name), "service not found"
