@@ -118,7 +118,10 @@ def assign_policy_profile_to_infra_provider(policy_profile, provider):
 
     """
     infra_providers_pg = nav.infra_providers_pg()
-    infra_providers_pg.select_provider(cfme_data['management_systems'][provider]['name'])
+    try:
+        infra_providers_pg.select_provider(cfme_data['management_systems'][provider]['name'])
+    except Exception:
+        return
     policy_pg = infra_providers_pg.click_on_manage_policies()
     if not policy_pg.policy_selected(policy_profile):
         policy_pg.select_profile_item(policy_profile)
