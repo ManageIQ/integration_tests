@@ -78,6 +78,23 @@ def login(username, password, submit_method=_click_on_login):
         flash.assert_no_errors()
 
 
+def force_login_user(*args, **kwargs):
+    """
+    Force login to CFME using valid username and password; log out if already logged in.
+
+    Args:
+        args: A list of arguments to supply to the :py:meth:`login` method.
+        kwargs: A dict of keyword arguments to supply to the :py:meth:`login` method.
+
+    Warning:
+        Use only with valid credentials.
+    """
+    if logged_in():
+        logout()
+    login(*args, **kwargs)
+    sel.wait_for_element(page.user_dropdown)
+
+
 def login_admin(**kwargs):
     """
     Convenience function to log into CFME using the admin credentials from the yamls.

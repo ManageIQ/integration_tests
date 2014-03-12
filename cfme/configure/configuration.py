@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 
-import cfme.fixtures.pytest_selenium as browser
+import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound
+from cfme.exceptions import ScheduleNotFound, CFMEException
 from cfme.web_ui import Form, Region, Select, Table, Tree, accordion, fill, flash
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
@@ -315,7 +315,7 @@ class ServerLogDepot(object):
             Args:
                 cancel: If set to True, the Cancel button is clicked instead of saving.
             """
-            browser.force_navigate("cfg_diagnostics_server_collect_settings")
+            sel.force_navigate("cfg_diagnostics_server_collect_settings")
             details = {
                 "type": self.p_types[self.p_type],
                 "uri": self.uri
@@ -342,7 +342,7 @@ class ServerLogDepot(object):
             Args:
                 cancel: If set to True, the Cancel button is clicked instead of saving.
             """
-            browser.force_navigate("cfg_diagnostics_server_collect_settings")
+            sel.force_navigate("cfg_diagnostics_server_collect_settings")
 
             if cancel:
                 action = crud_buttons.cancel_button
@@ -378,7 +378,7 @@ class ServerLogDepot(object):
             selection: The item in Collect menu ('Collect all logs' or 'Collect current logs')
             wait_minutes: How many minutes should we wait for the collection process to finish?
         """
-        browser.force_navigate("cfg_diagnostics_server_collect")
+        sel.force_navigate("cfg_diagnostics_server_collect")
         last_collection = self.get_last_collection()
         # Initiate the collection
         tb.select("Collect", selection)
@@ -460,7 +460,7 @@ class BasicInformation(Updateable):
         """ Navigate to a correct page, change details and save.
 
         """
-        browser.force_navigate("cfg_settings_currentserver_server")
+        sel.force_navigate("cfg_settings_currentserver_server")
         fill(self.basic_information, self.details, action=crud_buttons.save_button)
 
 
@@ -534,7 +534,7 @@ class SMTPSettings(Updateable):
         )
 
     def update(self):
-        browser.force_navigate("cfg_settings_currentserver_server")
+        sel.force_navigate("cfg_settings_currentserver_server")
         fill(self.smtp_settings, self.details, action=crud_buttons.save_button)
 
 
@@ -566,7 +566,7 @@ class DatabaseAuthSetting(object):
         )
 
     def update(self):
-        browser.force_navigate("cfg_settings_currentserver_auth")
+        sel.force_navigate("cfg_settings_currentserver_auth")
         fill(self.form, self.details, action=crud_buttons.save_button)
 
 
@@ -607,7 +607,7 @@ class AmazonAuthSetting(object):
         )
 
     def update(self):
-        browser.force_navigate("cfg_settings_currentserver_auth")
+        sel.force_navigate("cfg_settings_currentserver_auth")
         fill(self.form, self.details, action=crud_buttons.save_button)
 
 
@@ -616,15 +616,15 @@ class LDAPAuthSetting(object):
 
     Args:
         hosts: List of LDAP servers (max 3).
-        user_type: "User Principal Name", "E-mail Address", ...
+        user_type: "userprincipalname", "mail", ...
         user_suffix: User suffix.
         base_dn: Base DN.
         bind_dn: Bind DN.
         bind_password: Bind Password.
         get_groups: Get user groups from LDAP.
-        get_direct_groups: Get roles from home forest.
+        get_roles: Get roles from home forest.
         follow_referrals: Follow Referrals.
-        ldapport: LDAP connection port.
+        port: LDAP connection port.
         timeout_h: Timeout in hours
         timeout_m: Timeout in minutes
 
@@ -632,7 +632,7 @@ class LDAPAuthSetting(object):
 
         ldapauth = LDAPAuthSetting(
             ["host1", "host2"],
-            "E-mail Address",
+            "mail",
             "user.acme.com"
         )
         ldapauth.update()
@@ -645,7 +645,7 @@ class LDAPAuthSetting(object):
         ("ldaphost_1", "//input[@id='authentication_ldaphost_1']"),
         ("ldaphost_2", "//input[@id='authentication_ldaphost_2']"),
         ("ldaphost_3", "//input[@id='authentication_ldaphost_3']"),
-        ("ldapport", "//input[@id='authentication_ldapport']"),
+        ("port", "//input[@id='authentication_ldapport']"),
         ("user_type", Select("//select[@id='authentication_user_type']")),
         ("user_suffix", "//input[@id='authentication_user_suffix']"),
         ("get_groups", "//input[@id='ldap_role']"),
@@ -666,22 +666,22 @@ class LDAPAuthSetting(object):
                  bind_dn=None,
                  bind_password=None,
                  get_groups=False,
-                 get_direct_groups=False,
+                 get_roles=False,
                  follow_referrals=False,
-                 ldapport=None,
+                 port=None,
                  timeout_h=None,
                  timeout_m=None,
                  ):
         self.details = dict(
-            user_type=user_type,
+            user_type=(sel.VALUE, user_type),
             user_suffix=user_suffix,
             base_dn=base_dn,
             bind_dn=bind_dn,
             bind_password=bind_password,
             get_groups=get_groups,
-            get_direct_groups=get_direct_groups,
+            get_roles=get_roles,
             follow_referrals=follow_referrals,
-            ldapport=ldapport,
+            port=port,
             timeout_m=timeout_m,
             timeout_h=timeout_h,
             auth_mode=self.AUTH_MODE
@@ -691,7 +691,7 @@ class LDAPAuthSetting(object):
             self.details["ldaphost_%d" % (enum + 1)] = host
 
     def update(self):
-        browser.force_navigate("cfg_settings_currentserver_auth")
+        sel.force_navigate("cfg_settings_currentserver_auth")
         fill(self.form, self.details, action=crud_buttons.save_button)
 
 
@@ -700,15 +700,15 @@ class LDAPSAuthSetting(LDAPAuthSetting):
 
     Args:
         hosts: List of LDAPS servers (max 3).
-        user_type: "User Principal Name", "E-mail Address", ...
+        user_type: "userprincipalname", "mail", ...
         user_suffix: User suffix.
         base_dn: Base DN.
         bind_dn: Bind DN.
         bind_password: Bind Password.
         get_groups: Get user groups from LDAP.
-        get_direct_groups: Get roles from home forest.
+        get_roles: Get roles from home forest.
         follow_referrals: Follow Referrals.
-        ldapport: LDAPS connection port.
+        port: LDAPS connection port.
         timeout_h: Timeout in hours
         timeout_m: Timeout in minutes
 
@@ -716,7 +716,7 @@ class LDAPSAuthSetting(LDAPAuthSetting):
 
         ldapauth = LDAPSAuthSetting(
             ["host1", "host2"],
-            "E-mail Address",
+            "mail",
             "user.acme.com"
         )
         ldapauth.update()
@@ -827,7 +827,7 @@ class Schedule(object):
         Args:
             cancel: Whether to click on the cancel button to interrupt the creation.
         """
-        browser.force_navigate("cfg_settings_schedules")
+        sel.force_navigate("cfg_settings_schedules")
         tb.select("Configuration", "Add a new Schedule")
 
         if cancel:
@@ -846,8 +846,8 @@ class Schedule(object):
         Args:
             cancel: Whether to click on the cancel button to interrupt the editation.
         """
-        browser.force_navigate("cfg_settings_schedule_edit",
-                               context={"schedule_name": self.details["name"]})
+        sel.force_navigate("cfg_settings_schedule_edit",
+                           context={"schedule_name": self.details["name"]})
         if cancel:
             action = crud_buttons.cancel_button
         else:
@@ -892,9 +892,9 @@ class Schedule(object):
             name: Name of the schedule.
             cancel: Whether to click on the cancel button in the pop-up.
         """
-        browser.force_navigate("cfg_settings_schedule", context={"schedule_name": name})
+        sel.force_navigate("cfg_settings_schedule", context={"schedule_name": name})
         tb.select("Configuration", "Delete this Schedule from the Database", invokes_alert=True)
-        browser.handle_alert(cancel)
+        sel.handle_alert(cancel)
 
     @classmethod
     def select_by_names(self, *names):
@@ -912,14 +912,14 @@ class Schedule(object):
                 if row.name.strip() == name:
                     checkbox = row[0].find_element_by_xpath("//input[@type='checkbox']")
                     if not checkbox.is_selected():
-                        browser.click(checkbox)
+                        sel.click(checkbox)
                     break
             else:
                 raise ScheduleNotFound(
                     "Schedule '%s' could not be found for selection!" % name
                 )
 
-        browser.force_navigate("cfg_settings_schedules")
+        sel.force_navigate("cfg_settings_schedules")
         for name in names:
             select_by_name(name)
 
@@ -950,7 +950,7 @@ def set_server_roles(**roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
-    browser.force_navigate("cfg_settings_currentserver_server")
+    sel.force_navigate("cfg_settings_currentserver_server")
     fill(server_roles, roles, action=crud_buttons.save_button)
 
 
@@ -960,8 +960,8 @@ def get_server_roles():
     Returns: :py:class:`dict` with the roles in the same format as :py:func:`set_server_roles`
         accepts as kwargs.
     """
-    browser.force_navigate("cfg_settings_currentserver_server")
-    return {name: browser.element(locator).is_selected() for (name, locator) in server_roles.fields}
+    sel.force_navigate("cfg_settings_currentserver_server")
+    return {name: sel.element(locator).is_selected() for (name, locator) in server_roles.fields}
 
 
 def set_ntp_servers(*servers):
@@ -970,7 +970,7 @@ def set_ntp_servers(*servers):
     Args:
         *servers: Maximum of 3 hostnames.
     """
-    browser.force_navigate("cfg_settings_currentserver_server")
+    sel.force_navigate("cfg_settings_currentserver_server")
     assert len(servers) <= 3, "There is place only for 3 servers!"
     fields = {}
     for enum, server in enumerate(servers):
@@ -989,7 +989,7 @@ def set_database_internal():
     """ Set the database as the internal one.
 
     """
-    browser.force_navigate("cfg_settings_currentserver_database")
+    sel.force_navigate("cfg_settings_currentserver_database")
     fill(
         db_configuration,
         dict(type="Internal Database on this CFME Appliance"),
@@ -1003,7 +1003,7 @@ def set_database_external_appliance(hostname):
     Args:
         hostname: Host name of the another appliance
     """
-    browser.force_navigate("cfg_settings_currentserver_database")
+    sel.force_navigate("cfg_settings_currentserver_database")
     fill(
         db_configuration,
         dict(
@@ -1023,7 +1023,7 @@ def set_database_external_postgres(hostname, database, username, password):
         username: User name
         password: User password
     """
-    browser.force_navigate("cfg_settings_currentserver_database")
+    sel.force_navigate("cfg_settings_currentserver_database")
     fill(
         db_configuration,
         dict(
@@ -1047,7 +1047,7 @@ def restart_workers(name, wait_time_min=1):
     """
 
     table = Table("//div[@id='records_div']/table[@class='style3']")
-    browser.force_navigate("cfg_diagnostics_server_workers")
+    sel.force_navigate("cfg_diagnostics_server_workers")
 
     def get_all_pids(worker_name):
         return {row.pid.text for row in table.rows() if worker_name in row.name.text}
@@ -1059,7 +1059,7 @@ def restart_workers(name, wait_time_min=1):
     for pid in pids:
         table.click_cell("pid", pid)
         tb.select("Configuration", "Restart selected worker", invokes_alert=True)
-        browser.handle_alert(cancel=False)
+        sel.handle_alert(cancel=False)
         reload_func()
 
     # Check they have finished
@@ -1090,3 +1090,17 @@ def restart_workers(name, wait_time_min=1):
         return True
     except TimedOutError:
         return False
+
+
+def set_auth_mode(mode, **kwargs):
+    if mode == 'ldap':
+        auth_pg = LDAPAuthSetting(**kwargs)
+    elif mode == 'ldaps':
+        auth_pg = LDAPSAuthSetting(**kwargs)
+    elif mode == 'amazon':
+        auth_pg = AmazonAuthSetting(**kwargs)
+    elif mode == 'database':
+        auth_pg = DatabaseAuthSetting(**kwargs)
+    else:
+        raise CFMEException("{} is not a valid authentication mode".format(mode))
+    auth_pg.update()
