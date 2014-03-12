@@ -293,12 +293,9 @@ def create_logger(logger_name):
 def _showwarning(message, category, filename, lineno, file=None, line=None):
     relpath = get_rel_path(filename)
     if relpath:
-        _from = relpath
-    else:
-        _from = filename
-
-    message = "%s from %s:%d: %s" % (category.__name__, _from, lineno, message)
-    logger.warning(message)
+        # Only show warnings from inside this project
+        message = "%s from %s:%d: %s" % (category.__name__, relpath, lineno, message)
+        logger.warning(message)
 
 
 def format_marker(mstring, mark="-"):
