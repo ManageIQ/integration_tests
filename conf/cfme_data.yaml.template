@@ -138,22 +138,30 @@ pxe:
     datastores:
         - datastore1
         - datastore2
-ldap_server:
-    session_timeout_hours: "1"
-    session_timeout_mins: "0"
-    mode: LDAP
-    hostname1: ad.example.com
-    hostname2:
-    hostname3:
-    port: "389"
-    user_type: userprincipalname
-    user_suffix: ad.example.com
-    get_groups: True
-    get_roles: True
-    follow_referrals: False
-    base_dn: dc=ad,dc=example,dc=com
-    bind_dn: administrator@ad.example.com
-    bind_passwd: password
+auth_modes:
+    ldap_server:
+        timeout_h: "1"
+        timeout_m: "0"
+        mode: ldap
+        hosts:
+            - ad1.example.com
+            - ad2.example.com
+            - ad3.example.com
+        port: "389"
+        user_type: userprincipalname
+        user_suffix: ad.example.com
+        get_groups: True
+        get_roles: True
+        follow_referrals: False
+        base_dn: dc=ad,dc=example,dc=com
+        bind_dn: administrator@ad.example.com
+        bind_password: password
+    aws_iam:
+        session_timeout_hours: "1"
+        session_timeout_mins: "0"
+        mode: amazon
+        get_groups: True
+        credentials: aws
 server_roles:
     all:    # Do not change, unless there is a change in the UI!
         - ems_operations
@@ -190,288 +198,309 @@ server_roles:
 group_roles:
     evmgroup-administrator:
         menus:
-            Virtual Intelligence:
-                - Dashboard
-                - Reports
-                - Usage
-                - Chargeback
-                - Timelines
-                - RSS
-            Services:
-                - My Services
-                - Requests
-                - Workloads
-            Infrastructure:
-                - Providers
-                - Clusters
-                - Hosts
-                - Virtual Machines
-                - Resource Pools
-                - Datastores
-                - Repositories
-                - PXE
-                - Requests
-            Control:
-                - Explorer
-                - Simulation
-                - Import / Export
-                - Log
-            Automate:
-                - Explorer
-                - Simulation
-                - Customization
-                - Import / Export
-                - Log
-                - Requests
-            Optimize:
-                - Utilization
-                - Planning
-                - Bottlenecks
-            Configure:
-                - My Settings
-                - Tasks
-                - SmartProxies
-                - About
+            cloud_intelligence:
+                - dashboard
+                - reports
+                - chargeback
+                - timelines
+                - rss
+            services:
+                - my_services
+                - catalogs
+                - requests
+                - workloads
+            clouds:
+                - providers
+                - availability_zones
+                - flavors
+                - security_groups
+                - instances
+            infrastructure:
+                - providers
+                - clusters
+                - hosts
+                - virtual_machines
+                - resource_pools
+                - datastores
+                - repositories
+                - pxe
+                - requests
+            control:
+                - explorer
+                - simulation
+                - import_export
+                - log
+            automate:
+                - explorer
+                - simulation
+                - customization
+                - import_export
+                - log
+                - requests
+            optimize:
+                - utilization
+                - planning
+                - bottlenecks
+            configure:
+                - my_settings
+                - tasks
+                - smartproxies
+                - about
     evmgroup-approver:
         menus:
-            Virtual Intelligence:
-                - Dashboard
-                - Reports
-                - Usage
-                - Chargeback
-                - Timelines
-                - RSS
-            Services:
-                - Requests
-                - Workloads
-            Infrastructure:
-                - Providers
-                - Clusters
-                - Hosts
-                - Virtual Machines
-                - Resource Pools
-                - Datastores
-                - Repositories
-                - Requests
-            Control:
-                - Explorer
-                - Simulation
-                - Log
-            Configure:
-                - My Settings
-                - Tasks
-                - About
+            cloud_intelligence:
+                - dashboard
+                - reports
+                - chargeback
+                - timelines
+                - rss
+            services:
+                - requests
+                - workloads
+            clouds:
+                - instances
+            infrastructure:
+                - providers
+                - clusters
+                - hosts
+                - virtual_machines
+                - resource_pools
+                - datastores
+                - repositories
+                - requests
+            control:
+                - explorer
+                - simulation
+                - log
+            configure:
+                - my_settings
+                - tasks
+                - about
     evmgroup-auditor:
         menus:
-            Virtual Intelligence:
-                - Dashboard
-                - Reports
-                - Usage
-                - Chargeback
-                - Timelines
-                - RSS
-            Services:
-                - Workloads
-            Infrastructure:
-                - Providers
-                - Clusters
-                - Hosts
-                - Virtual Machines
-                - Resource Pools
-                - Datastores
-                - Repositories
-            Control:
-                - Explorer
-                - Simulation
-                - Log
-            Optimize:
-                - Utilization
-                - Planning
-                - Bottlenecks
-            Configure:
-                - My Settings
-                - Tasks
-                - About
+            cloud_intelligence:
+                - dashboard
+                - reports
+                - chargeback
+                - timelines
+                - rss
+            services:
+                - workloads
+            clouds:
+                - instances
+            infrastructure:
+                - providers
+                - clusters
+                - hosts
+                - virtual_machines
+                - resource_pools
+                - datastores
+                - repositories
+            control:
+                - explorer
+                - simulation
+                - log
+            optimize:
+                - utilization
+                - planning
+                - bottlenecks
+            configure:
+                - my_settings
+                - tasks
+                - about
     evmgroup-desktop:
         menus:
-            Virtual Intelligence:
-                - Dashboard
-            Services:
-                - Requests
-                - Workloads
-            Configure:
-                - My Settings
-                - About
+            cloud_intelligence:
+                - dashboard
+            services:
+                - requests
+                - workloads
+            configure:
+                - my_settings
+                - about
     evmgroup-operator:
         menus:
-            Virtual Intelligence:
-                - Dashboard
-                - Reports
-                - Usage
-                - Chargeback
-                - Timelines
-                - RSS
-            Services:
-                - Workloads
-            Infrastructure:
-                - Providers
-                - Clusters
-                - Hosts
-                - Virtual Machines
-                - Resource Pools
-                - Datastores
-                - Repositories
-            Configure:
-                - My Settings
-                - Tasks
-                - About
+            cloud_intelligence:
+                - dashboard
+                - reports
+                - chargeback
+                - timelines
+                - rss
+            services:
+                - workloads
+            clouds:
+                - instances
+            infrastructure:
+                - providers
+                - clusters
+                - hosts
+                - virtual_machines
+                - resource_pools
+                - datastores
+                - repositories
+            configure:
+                - my_settings
+                - tasks
+                - about
     evmgroup-security:
         menus:
-            Virtual Intelligence:
-                - Dashboard
-                - Reports
-                - Usage
-                - Chargeback
-                - Timelines
-                - RSS
-            Services:
-                - Workloads
-            Infrastructure:
-                - Providers
-                - Clusters
-                - Hosts
-                - Virtual Machines
-                - Resource Pools
-                - Datastores
-                - Repositories
-            Control:
-                - Explorer
-                - Simulation
-                - Log
-            Configure:
-                - My Settings
-                - Tasks
-                - About
+            cloud_intelligence:
+                - dashboard
+                - reports
+                - chargeback
+                - timelines
+                - rss
+            services:
+                - workloads
+            clouds:
+                - instances
+            infrastructure:
+                - providers
+                - clusters
+                - hosts
+                - virtual_machines
+                - resource_pools
+                - datastores
+                - repositories
+            control:
+                - explorer
+                - simulation
+                - log
+            configure:
+                - my_settings
+                - tasks
+                - about
     evmgroup-super_administrator:
         menus:
-            Virtual Intelligence:
-                - Dashboard
-                - Reports
-                - Usage
-                - Chargeback
-                - Timelines
-                - RSS
-            Services:
-                - My Services
-                - Catalogs
-                - Requests
-                - Workloads
-            Infrastructure:
-                - Providers
-                - Clusters
-                - Hosts
-                - Virtual Machines
-                - Resource Pools
-                - Datastores
-                - Repositories
-                - PXE
-                - Requests
-            Control:
-                - Explorer
-                - Simulation
-                - Import / Export
-                - Log
-            Automate:
-                - Explorer
-                - Simulation
-                - Customization
-                - Import / Export
-                - Log
-                - Requests
-            Optimize:
-                - Utilization
-                - Planning
-                - Bottlenecks
-            Configure:
-                - My Settings
-                - Tasks
-                - Configuration
-                - SmartProxies
-                - About
+            cloud_intelligence:
+                - dashboard
+                - reports
+                - chargeback
+                - timelines
+                - rss
+            services:
+                - my_services
+                - catalogs
+                - requests
+                - workloads
+            clouds:
+                - providers
+                - availability_zones
+                - flavors
+                - security_groups
+                - instances
+            infrastructure:
+                - providers
+                - clusters
+                - hosts
+                - virtual_machines
+                - resource_pools
+                - datastores
+                - repositories
+                - pxe
+                - requests
+            control:
+                - explorer
+                - simulation
+                - import_export
+                - log
+            automate:
+                - explorer
+                - simulation
+                - customization
+                - import_export
+                - log
+                - requests
+            optimize:
+                - utilization
+                - planning
+                - bottlenecks
+            configure:
+                - my_settings
+                - tasks
+                - configuration
+                - smartproxies
+                - about
     evmgroup-support:
         menus:
-            Virtual Intelligence:
-                - Dashboard
-                - Reports
-                - Usage
-                - Chargeback
-                - Timelines
-                - RSS
-            Services:
-                - Workloads
-            Infrastructure:
-                - Providers
-                - Clusters
-                - Hosts
-                - Virtual Machines
-                - Resource Pools
-                - Datastores
-                - Repositories
-            Control:
-                - Explorer
-                - Simulation
-                - Log
-            Configure:
-                - My Settings
-                - Tasks
-                - About
+            cloud_intelligence:
+                - dashboard
+                - reports
+                - chargeback
+                - timelines
+                - rss
+            services:
+                - workloads
+            clouds:
+                - instances
+            infrastructure:
+                - providers
+                - clusters
+                - hosts
+                - virtual_machines
+                - resource_pools
+                - datastores
+                - repositories
+            control:
+                - explorer
+                - simulation
+                - log
+            configure:
+                - my_settings
+                - tasks
+                - about
     evmgroup-user:
         menus:
-            Virtual Intelligence:
-                - Dashboard
-                - Reports
-                - Usage
-                - Chargeback
-                - Timelines
-                - RSS
-            Services:
-                - Workloads
-            Infrastructure:
-                - Providers
-                - Clusters
-                - Hosts
-                - Virtual Machines
-                - Resource Pools
-                - Datastores
-                - Repositories
-            Configure:
-                - My Settings
-                - Tasks
-                - About
+            cloud_intelligence:
+                - dashboard
+                - reports
+                - chargeback
+                - timelines
+                - rss
+            services:
+                - workloads
+            clouds:
+                - instances
+            infrastructure:
+                - providers
+                - clusters
+                - hosts
+                - virtual_machines
+                - resource_pools
+                - datastores
+                - repositories
+            configure:
+                - my_settings
+                - tasks
+                - about
     evmgroup-user_limited_self_service:
         menus:
-            Services:
-                - Requests
-                - Workloads
-            Configure:
-                - My Settings
-                - About
+            services:
+                - requests
+            infrastructure:
+                - virtual_machines
+                - requests
+            configure:
+                - my_settings
+                - about
     evmgroup-user_self_service:
         menus:
-            Services:
-                - Requests
-                - Workloads
-            Configure:
-                - My Settings
-                - About
+            services:
+                - requests
+            infrastructure:
+                - virtual_machines
+                - requests
+            configure:
+                - my_settings
+                - about
     evmgroup-vm_user:
         menus:
-            Services:
-                - Requests
-                - Workloads
-            Configure:
-                - My Settings
-                - About
+            services:
+                - requests
+                - workloads
+            configure:
+                - my_settings
+                - about
 provisioning:
     linux_template_workflow:
         template: linux_template
