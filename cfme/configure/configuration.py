@@ -1093,6 +1093,15 @@ def restart_workers(name, wait_time_min=1):
 
 
 def set_auth_mode(mode, **kwargs):
+    """ Set up authentication mode
+
+    Args:
+        mode: Authentication mode to set up.
+        kwargs: A dict of keyword arguments used to initialize one of
+                the *AuthSetting classes - class type is mode-dependent.
+    Raises:
+        CFMEException: when the given mode is not valid
+    """
     if mode == 'ldap':
         auth_pg = LDAPAuthSetting(**kwargs)
     elif mode == 'ldaps':
