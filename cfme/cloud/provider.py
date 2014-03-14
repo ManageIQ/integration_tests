@@ -166,7 +166,7 @@ class Provider(Updateable):
 
         sel.force_navigate('cloud_provider_edit', context={'provider': self})
         fill(properties_form, self._form_mapping(**updates))
-        fill(credential_form, self.credentials, validate=validate_credentials)
+        fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
         self._submit(cancel, edit_page.save_button)
 
     def delete(self, cancel=True):
