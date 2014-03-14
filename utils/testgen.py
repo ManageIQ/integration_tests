@@ -33,7 +33,7 @@ from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.cloud.provider import get_from_config as get_cloud_provider
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.providers import cloud_provider_type_map, infra_provider_type_map
+from utils.providers import cloud_provider_type_map, infra_provider_type_map, provider_factory
 
 
 def parametrize(gen_func, *args, **kwargs):
@@ -121,6 +121,9 @@ def provider_by_type(metafunc, provider_types, *fields):
             the provider's CRUD object, either a :py:class:`cfme.cloud.provider.Provider`
             or a :py:class:`cfme.infrastructure.provider.Provider`
 
+        ``provider_mgmt``
+            the provider's backend manager, from :py:class:`utils.mgmt_system`
+
     Returns:
         An tuple of ``(argnames, argvalues, idlist)`` for use in a pytest_generate_tests hook, or
         with the :py:func:`parametrize` helper.
@@ -150,14 +153,16 @@ def provider_by_type(metafunc, provider_types, *fields):
     argvalues = []
     idlist = []
 
-    special_args = 'provider_key', 'provider_data', 'provider_crud'
+    special_args = ('provider_key', 'provider_data', 'provider_crud',
+        'provider_mgmt', 'provider_type')
     # Hook on special attrs if requested
     for argname in special_args:
         if argname in metafunc.fixturenames and argname not in argnames:
             argnames.append(argname)
 
     for provider, data in cfme_data['management_systems'].iteritems():
-        if provider_types is not None and data['type'] not in provider_types:
+        prov_type = data['type']
+        if provider_types is not None and prov_type not in provider_types:
             # Skip unwanted types
             continue
 
@@ -175,13 +180,15 @@ def provider_by_type(metafunc, provider_types, *fields):
                     (field, provider)
                 )
 
-        if data['type'] in cloud_provider_type_map:
+        if prov_type in cloud_provider_type_map:
             crud = get_cloud_provider(provider)
-        elif data['type'] in infra_provider_type_map:
+        elif prov_type in infra_provider_type_map:
             crud = get_infra_provider(provider)
         # else: wat? You deserve the NameError you're about to receive
 
-        special_args_map = dict(zip(special_args, (provider, data, crud)))
+        mgmt = provider_factory(provider)
+
+        special_args_map = dict(zip(special_args, (provider, data, crud, mgmt, prov_type)))
         for arg in special_args:
             if arg in argnames:
                 values.append(special_args_map[arg])

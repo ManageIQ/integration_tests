@@ -1,10 +1,6 @@
     # pylint: disable=E1101
 import pytest
 
-from utils.providers import (
-    clear_providers,
-    provider_factory
-)
 from utils import providers
 
 
@@ -40,7 +36,7 @@ def mgmt_sys_api_clients(cfme_data, uses_providers):
     """Returns a list of management system api clients"""
     clients = {}
     for provider_key in cfme_data['management_systems']:
-        clients[provider_key] = provider_factory(provider_key)
+        clients[provider_key] = providers.provider_factory(provider_key)
     return clients
 
 
@@ -51,7 +47,7 @@ def has_no_providers():
     This is a destructive fixture. It will clear all managements systems from
     the current appliance.
     """
-    clear_providers()
+    providers.clear_providers()
 
 
 @pytest.fixture

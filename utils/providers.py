@@ -8,7 +8,7 @@ To quickly add all providers::
 from functools import partial
 from operator import methodcaller
 
-from cfme.fixtures import pytest_selenium as sel
+import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Quadicon, paginator, toolbar
 from utils import conf, mgmt_system
 from utils.log import logger, perflog

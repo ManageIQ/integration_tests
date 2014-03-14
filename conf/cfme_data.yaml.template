@@ -32,6 +32,10 @@ management_systems:
             - example policy profile x
         test_vm_power_control:
             - vm_name
+        provisioning:
+            template: provisioning_template_name
+            host: target provisioning host name (from hosts above)
+            datastore: target provisioning datastore name (from datastores above)
     rhevm31:
         name: RHEV 3.1
         default_name: RHEV-M (10.0.0.3)
@@ -60,6 +64,11 @@ management_systems:
             - example policy profile y
         test_vm_power_control:
             - vm_name
+        provisioning:
+            template: provisioning_template_name
+            host: target provisioning host name (from hosts above)
+            datastore: target provisioning datastore name (from datastores above)
+            vlan: name of vlan to attach to vm (required only for rhevm providers)
     ec2:
         name: EC2 US East
         default_name: EC2 US East
