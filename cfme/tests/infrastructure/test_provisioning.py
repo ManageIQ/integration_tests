@@ -28,11 +28,9 @@ def pytest_generate_tests(metafunc):
             continue
 
         # required keys should be a subset of the dict keys set
-        if args.viewkeys() >= {'template', 'host', 'datastore'}:
+        if not {'template', 'host', 'datastore'}.issubset(args['provisioning'].viewkeys()):
             # Need all three for template provisioning
             continue
-
-        print args
 
         new_idlist.append(idlist[i])
         new_argvalues.append(argvalues[i])
@@ -64,7 +62,7 @@ def test_provision_from_template(setup_providers,
         provider_crud, provider_type, provider_mgmt, provisioning, vm_name):
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
-    pytest.sel.force_navigate('infrastructure_provision_instances', context={
+    pytest.sel.force_navigate('infrastructure_provision_vms', context={
         'provider': provider_crud,
         'template_name': template,
     })

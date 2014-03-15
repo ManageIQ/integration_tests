@@ -3,16 +3,14 @@
 """
 from collections import OrderedDict
 
-from cfme import web_ui
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Select, tabstrip, toolbar
+from cfme.web_ui import Calendar, Form, Radio, Select, Table, Tree, tabstrip, toolbar
 from cfme.web_ui.menu import nav
 
 
-template_select_form = web_ui.Form(
+template_select_form = Form(
     fields=[
-        ('template_table',
-            web_ui.Table('//div[@id="pre_prov_div"]/fieldset/table')),
+        ('template_table', Table('//div[@id="pre_prov_div"]/fieldset/table')),
         ('continue_button', '//img[@title="Continue"]'),
         ('cancel_button', '//img[@title="Continue"]')
     ]
@@ -32,11 +30,11 @@ provisioning_form = tabstrip.TabStripForm(
             ('manager_name', '//input[@id="requester__owner_manager"]'),
         ]),
         ('Purpose', [
-            ('apply_tags', web_ui.Tree('//div[@id="all_tags_treebox"]//table')),
+            ('apply_tags', Tree('//div[@id="all_tags_treebox"]//table')),
         ]),
         ('Catalog', [
             ('vm_filter', Select('//select[@id="service__vm_filter"]')),
-            ('catalog_name', web_ui.Table('//div[@id="prov_vm_div"]/table')),
+            ('catalog_name', Table('//div[@id="prov_vm_div"]/table')),
             ('num_vms', Select('//select[@id="service__number_of_vms"]')),
             ('vm_name', '//input[@name="service__vm_name"]'),
             ('vm_description', '//textarea[@id="service__vm_description"]'),
@@ -50,16 +48,16 @@ provisioning_form = tabstrip.TabStripForm(
             ('resource_pool', Select('//select[@id="environment__placement_rp_name"]')),
             ('folder', Select('//select[@id="environment__placement_folder_name"]')),
             ('host_filter', Select('//select[@id="environment__host_filter"]')),
-            ('host_name', web_ui.Table('//div[@id="prov_host_div"]/table')),
+            ('host_name', Table('//div[@id="prov_host_div"]/table')),
             ('datastore_create', '//*[@id="environment__new_datastore_create"]'),
             ('datastore_filter', Select('//select[@id="environment__ds_filter"]')),
-            ('datastore_name', web_ui.Table('//div[@id="prov_ds_div"]/table')),
+            ('datastore_name', Table('//div[@id="prov_ds_div"]/table')),
         ]),
         ('Hardware', [
             ('num_sockets', Select('//select[@id="hardware__number_of_sockets"]')),
             ('cores_per_socket', Select('//select[@id="hardware__cores_per_socket"]')),
             ('memory', Select('//select[@id="hardware__vm_memory"]')),
-            ('disk_format', web_ui.Radio('hardware__disk_format')),
+            ('disk_format', Radio('hardware__disk_format')),
             ('vm_limit_cpu', '//input[@id="hardware__cpu_limit"]'),
             ('vm_limit_memory', '//input[@id="hardware__memory_limit"]'),
             ('vm_reserve_cpu', '//input[@id="hardware__cpu_reserve"]'),
@@ -70,15 +68,15 @@ provisioning_form = tabstrip.TabStripForm(
         ]),
         ('Customize', [
             ('customize_type', Select('//select[@id="customize__sysprep_enabled"]')),
-            ('specification_name', web_ui.Table('//div[@id="prov_vc_div"]/table')),
+            ('specification_name', Table('//div[@id="prov_vc_div"]/table')),
             ('linux_host_name', '//input[@id="customize__linux_host_name"]'),
             ('linux_domain_name', '//input[@id="customize__linux_domain_name"]'),
             ('dns_servers', '//input[@id="customize__dns_servers"]'),
             ('dns_suffixes', '//input[@id="customize__dns_suffixes"]'),
         ]),
         ('Schedule', [
-            ('schedule_type', web_ui.Radio('schedule__schedule_type')),
-            ('provision_date', web_ui.Calendar('miq_date_1')),
+            ('schedule_type', Radio('schedule__schedule_type')),
+            ('provision_date', Calendar('miq_date_1')),
             ('provision_start_hour', Select('//select[@id="start_hour"]')),
             ('provision_start_min', Select('//select[@id="start_min"]')),
             ('retirement', Select('//select[@id="schedule__retirement"]')),
@@ -108,5 +106,5 @@ def _nav_to_provision_form(context):
             (template_name, provider.key))
 
 nav.add_branch('infrastructure_virtual_machines', {
-    'infrastructure_provision_instances': _nav_to_provision_form
+    'infrastructure_provision_vms': _nav_to_provision_form
 })
