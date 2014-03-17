@@ -154,9 +154,12 @@ class VirtualMachines(VmCommonComponents):
 
     def find_vm_page(self, vm_name=None, vm_type=None, mark_checkbox=False,
             load_details=False, retries=0):
-        logger.info("Trying to find VM quadicon (" + str(vm_name) + ") and/or vm_type: " + str(vm_type))
         self.return_to_all_vms()
         self._wait_for_results_refresh()
+        if not self.view_buttons.is_grid_view:
+            self.view_buttons.change_to_grid_view()
+        logger.info(
+            "Trying to find VM quadicon (" + str(vm_name) + ") and/or vm_type: " + str(vm_type))
         found = None
         retry_attempts = 0
         while not found:
