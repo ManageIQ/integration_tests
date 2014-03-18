@@ -12,15 +12,16 @@ def reload():
 
 
 def wait_for_request(cells):
-    """:py.func:`utils.wait.wait_for` helper function checks if a request is complete
+    """helper function checks if a request is complete
 
     After finding the request's row using the ``cells`` argument, this will wait for a request to
     reach the 'Finished' state and return it. In the event of an 'Error' state, it will raise an
     AssertionError, for use with ``pytest.raises``, if desired.
 
     Args:
-        A dict of cells use to identify the request row to inspect in the :py:attr:`request_list`
-        Table. See :py:meth:`cfme.web_ui.Table.find_rows_by_cells` for more.
+        cells: A dict of cells use to identify the request row to inspect in the
+            :py:attr:`request_list` Table. See :py:meth:`cfme.web_ui.Table.find_rows_by_cells`
+            for more.
 
     Usage:
 
@@ -38,7 +39,7 @@ def wait_for_request(cells):
         wait_for(wait_for_request, [cells], num_sec=600)
 
     Raises:
-        AssertionError if the matched request has status 'Error'
+        AssertionError: if the matched request has status 'Error'
 
     Returns:
 

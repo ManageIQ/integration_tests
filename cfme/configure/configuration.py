@@ -1098,7 +1098,7 @@ def set_auth_mode(mode, **kwargs):
     Args:
         mode: Authentication mode to set up.
         kwargs: A dict of keyword arguments used to initialize one of
-                the *AuthSetting classes - class type is mode-dependent.
+                the \*AuthSetting classes - class type is mode-dependent.
     Raises:
         CFMEException: when the given mode is not valid
     """
