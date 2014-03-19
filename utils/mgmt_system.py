@@ -622,7 +622,19 @@ class RHEVMSystem(MgmtSystemAPIBase):
         else:
             url = 'https://%s/api' % hostname
 
-        self.api = API(url=url, username=username, password=password, insecure=True)
+        self._api = None
+        self._api_kwargs = {
+            'url': url,
+            'username': username,
+            'password': password,
+            'insecure': True
+        }
+
+    @property
+    def api(self):
+        if self._api is None:
+            self._api = API(**self._api_kwargs)
+        return self._api
 
     def _get_vm(self, vm_name=None):
         """ Returns a vm from the RHEVM object.
