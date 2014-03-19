@@ -25,6 +25,14 @@ form = web_ui.Form(
      ('save_button', "//img[@title='Save Changes']"),
      ('cancel_button', "//img[@title='Cancel']")])
 
+item_form = web_ui.Form(
+    fields=
+    [('type_select', "//select[@id='st_prov_type']"),
+     ('name_text', "//input[@id='name']"),
+     ('description_text', "//input[@id='description']"),
+     ('display_checkbox', "//input[@id='display']"),
+     ('add_button', "//img[@title='Add']")])
+
 
 def catalog_in_table(catalog):
     return "//div[@class='objbox']//td[.='%s']" % catalog.name
@@ -44,4 +52,10 @@ nav.add_branch(
     {'catalogs': [nav.partial(accordion.click, 'Catalogs'),
                   {'catalog_new': _all_catalogs_add_new,
                    'catalog': [lambda ctx: sel.click(catalog_in_tree(ctx['catalog'])),
-                               {'catalog_edit': nav.partial(tb_select, "Edit this Item")}]}]})
+                               {'catalog_edit': nav.partial(tb_select, "Edit this Item")}]}],
+     'catalog_items': [nav.partial(accordion.click, 'Catalog Items'),
+                       {'catalog_item_new': _all_catalogs_add_new,
+                        'catalog_item': [lambda ctx:
+                                         sel.click(catalog_in_tree(ctx['catalog_item'])),
+                                         {'catalog_item_edit':
+                                          nav.partial(tb_select, "Edit this Item")}]}]})
