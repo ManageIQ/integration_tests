@@ -98,7 +98,7 @@ def setup_provider(provider_key, validate=True, check_existing=True):
 
     Returns:
         An instance of :py:class:`cfme.cloud.provider.Provider` or
-        `cfme.infrastructure.provider.Provider`for the named provider, as appropriate.
+        :py:class:`cfme.infrastructure.provider.Provider` for the named provider, as appropriate.
 
     """
     if provider_key in list_cloud_providers():

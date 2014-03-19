@@ -49,7 +49,8 @@ class MultiBoxSelect(object):
         Keywords:
             flush: By using `flush` keyword, the selected items list is flushed prior to selecting
                 new ones
-        Retuns: :py:class:`bool` with success.
+
+        Returns: :py:class:`bool` with success.
         """
         if kwargs.get("flush", False):
             self.remove_all()
