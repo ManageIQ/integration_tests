@@ -32,10 +32,16 @@ def catalog_in_table(catalog):
 
 def catalog_in_tree(catalog):
     return "//div[@id='stcat_tree_div']//td[@class='standartTreeRow']/span[.='%s']" % catalog.name
+
+
+def _all_catalogs_add_new(_):
+    sel.click("//div[@id='stcat_tree_div']//td[.='All Catalogs']")
+    tb_select('Add a New Catalog')
+
     
 nav.add_branch(
     'services_catalogs',
     {'catalogs': [nav.partial(accordion.click, 'Catalogs'),
-                  {'catalog_new': functools.partial(tb_select, 'Add a New Catalog'),
+                  {'catalog_new': _all_catalogs_add_new,
                    'catalog': [lambda ctx: sel.click(catalog_in_tree(ctx['catalog'])),
                                {'catalog_edit': nav.partial(tb_select, "Edit this Item")}]}]})
