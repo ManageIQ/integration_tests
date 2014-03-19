@@ -17,6 +17,8 @@ import requests
 import socket
 from utils.log import logger
 from utils.ssh import SSHClient
+from utils.events import setup_for_event_testing
+from utils import providers
 
 """
 This test suite focuses on vm analysis functionality.  Because analysis is specific to the provider,
@@ -265,7 +267,7 @@ def browser_setup(get_appliance, provider, vm_name, fs_type, mgmt_sys_api_client
 
 
 @pytest.fixture
-def configure_appliance(browser_setup, provider, vm_name):
+def configure_appliance(browser_setup, provider, vm_name, listener_info):
     ''' Configure the appliance for smart state analysis '''
     global appliance_vm_name
 
@@ -291,6 +293,16 @@ def configure_appliance(browser_setup, provider, vm_name):
     vm_details = nav_to_vm_details(provider, vm_name)
     wait_for(vm_details.config_button.is_smart_state_analysis_enabled, delay=30,
         num_sec=450, fail_func=pytest.sel.refresh)
+
+    # Configure for events
+    ssh_kwargs = {
+        'username': conf.credentials['ssh']['username'],
+        'password': conf.credentials['ssh']['password'],
+        'hostname': appliance_list[provider]
+    }
+    # Init SSH client
+    client = SSHClient(**ssh_kwargs)
+    setup_for_event_testing(client, None, listener_info, providers.list_infra_providers())
 
     return browser_setup
 
