@@ -1,3 +1,4 @@
+import sys
 from urlparse import urlparse
 
 import paramiko
@@ -12,9 +13,10 @@ class SSHClient(paramiko.SSHClient):
     Allows copying/overriding and use as a context manager
     Constructor kwargs are handed directly to paramiko.SSHClient.connect()
     """
-    def __init__(self, **connect_kwargs):
+    def __init__(self, stream_output=False, **connect_kwargs):
         super(SSHClient, self).__init__()
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self._streaming = stream_output
 
         # Set up some sane defaults
         default_connect_kwargs = dict()
@@ -53,13 +55,13 @@ class SSHClient(paramiko.SSHClient):
         self.close()
 
     def run_command(self, command):
-        return command_runner(self, command)
+        return command_runner(self, command, self._streaming)
 
     def run_rails_command(self, command):
-        return rails_runner(self, command)
+        return rails_runner(self, command, self._streaming)
 
     def run_rake_command(self, command):
-        return rake_runner(self, command)
+        return rake_runner(self, command, self._streaming)
 
     def put_file(self, local_file, remote_file='.'):
         return scp_putter(self, local_file, remote_file)
@@ -68,30 +70,46 @@ class SSHClient(paramiko.SSHClient):
         return scp_getter(self, remote_file, local_path)
 
 
-def command_runner(client, command):
+def command_runner(client, command, stream_output=False):
     template = '%s\n'
     command = template % command
     with client as ctx:
         transport = ctx.get_transport()
         session = transport.open_session()
-        session.set_combine_stderr(True)
         session.exec_command(command)
+        stdout = session.makefile()
+        stderr = session.makefile_stderr()
+        output = ''
+        while True:
+            if session.recv_ready:
+                for line in stdout:
+                    output += line
+                    if stream_output:
+                        sys.stdout.write(line)
+
+            if session.recv_stderr_ready:
+                for line in stderr:
+                    output += line
+                    if stream_output:
+                        sys.stderr.write(line)
+
+            if session.exit_status_ready():
+                break
         exit_status = session.recv_exit_status()
-        output = session.recv(-1)
         return exit_status, output
 
     # Returning two things so tuple unpacking the return works even if the ssh client fails
     return None, None
 
 
-def rails_runner(client, command):
-    template = '/var/www/miq/vmdb/script/rails runner %s'
-    return command_runner(client, template % command)
+def rails_runner(client, command, stream_output=False):
+    template = 'cd /var/www/miq/vmdb; rails runner %s'
+    return command_runner(client, template % command, stream_output)
 
 
-def rake_runner(client, command):
-    template = '/var/www/miq/vmdb/script/rake -f /var/www/miq/vmdb/Rakefile %s'
-    return rails_runner(client, template % command)
+def rake_runner(client, command, stream_output=False):
+    template = 'cd /var/www/miq/vmdb; rake %s'
+    return command_runner(client, template % command, stream_output)
 
 
 def scp_putter(client, local_file, remote_file):
