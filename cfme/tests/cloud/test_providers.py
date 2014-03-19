@@ -35,6 +35,7 @@ def test_providers_discovery():
     provider.wait_for_a_provider()
 
 
+@pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_add(provider_crud):
     """ Tests that a provider can be added """

@@ -8,10 +8,7 @@ import pytest
 from unittestzero import Assert
 import db
 
-pytestmark = [
-    pytest.mark.nondestructive,
-    pytest.mark.skip_selenium
-]
+pytestmark = pytest.mark.smoke
 
 
 @pytest.mark.parametrize(('package'), [
@@ -103,7 +100,7 @@ def test_cpu_total(ssh_client):
 @pytest.mark.parametrize(("filename", "given_md5"), [
     ("/etc/pki/product/69.pem", None),
     ("/etc/pki/product/167.pem", None)
-    ])
+])
 def test_certificates_present(ssh_client, filename, given_md5):
     """ Test whether the required product certificates are present.
 
