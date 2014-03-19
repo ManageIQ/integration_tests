@@ -1,13 +1,13 @@
-from os import devnull as os_devnull
 from utils import async
 from utils import conf
-from utils import path as utils_path
+from utils.path import scripts_path
 from utils.browser import browser_session
 from utils.cfmedb import build_cfme_db_url, db_session, get_yaml_config, set_yaml_config
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.wait import wait_for
+import os
 import requests
 import subprocess
 
@@ -98,11 +98,11 @@ class Appliance(object):
         Args:
             undo: Will undo the ajax wait code patch if set to ``True``
         """
-        script = utils_path.scripts_path.join('patch_ajax_wait.py')
+        script = scripts_path.join('patch_ajax_wait.py')
         args = [str(script), self.address]
         if undo:
             args.append('-R')
-        with open(os_devnull, 'w') as f_devnull:
+        with open(os.devnull, 'w') as f_devnull:
             subprocess.call(args, stdout=f_devnull)
 
     def ssh_client(self, **connect_kwargs):
@@ -156,9 +156,9 @@ class Appliance(object):
         """Enables internal database
         """
         self.db_address = Appliance._internal_db
-        script = utils_path.scripts_path.join('enable_internal_db.py')
+        script = scripts_path.join('enable_internal_db.py')
         args = [str(script), self.address]
-        with open(os_devnull, 'w') as f_devnull:
+        with open(os.devnull, 'w') as f_devnull:
             status = subprocess.call(args, stdout=f_devnull)
         if status != 0:
             raise ApplianceException('Appliance {} failed to enable internal DB'
@@ -172,9 +172,9 @@ class Appliance(object):
             region: Number of region to join
         """
         self.db_address = db_address
-        script = utils_path.scripts_path.join('enable_external_db.py')
+        script = scripts_path.join('enable_external_db.py')
         args = [str(script), self.address, db_address, '--region', str(region)]
-        with open(os_devnull, 'w') as f_devnull:
+        with open(os.devnull, 'w') as f_devnull:
             status = subprocess.call(args, stdout=f_devnull)
         if status != 0:
             raise ApplianceException('Appliance {} failed to enable external DB running on {}'
