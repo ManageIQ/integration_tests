@@ -47,8 +47,17 @@ class Appliance(object):
 
     @property
     def address(self):
+        def is_ip_available():
+            try:
+                return self._provider.get_ip_address(self._vm_name)
+            except AttributeError:
+                return False
+
         if self._address is None:
-            self._address = self._provider.get_ip_address(self._vm_name)
+            ec, tc = wait_for(is_ip_available,
+                              delay=5,
+                              num_sec=30)
+            self._address = ec
         return self._address
 
     def configure(self,
