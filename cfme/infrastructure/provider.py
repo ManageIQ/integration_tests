@@ -20,7 +20,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
-from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator
+from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
@@ -48,6 +48,11 @@ add_page = Region(
 edit_page = Region(
     locators={
         'save_button': "//img[@title='Save Changes']",
+    })
+
+manage_policies_page = Region(
+    locators={
+        'save_button': "//div[@id='buttons_on']//img[@alt='Save Changes']",
     })
 
 details_page = Region(infoblock_type='detail')
@@ -88,7 +93,13 @@ credential_form = Form(
         ('validate_btn', page_specific_locators.creds_validate_btn)
     ])
 
+manage_policies_form = Form(
+    fields=[
+        ('policy_select', Tree("//div[@id='treebox']/div/table")),
+    ])
+
 cfg_btn = partial(tb.select, 'Configuration')
+pol_btn = partial(tb.select, 'Policy')
 
 nav.add_branch('infrastructure_providers',
                {'infrastructure_provider_new': lambda _: cfg_btn(
@@ -98,7 +109,9 @@ nav.add_branch('infrastructure_providers',
                 'infrastructure_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
                                                                       'infra_prov')),
                                    {'infrastructure_provider_edit':
-                                    lambda _: cfg_btn('Edit this Infrastructure Provider')}]})
+                                    lambda _: cfg_btn('Edit this Infrastructure Provider'),
+                                    'infrastructure_provider_policy_assignment':
+                                    lambda _: pol_btn('Manage Policies')}]})
 
 
 class Provider(Updateable):
@@ -308,6 +321,85 @@ class Provider(Updateable):
                 return True
         else:
             return False
+
+    @property
+    def _all_available_policy_profiles(self):
+        pp_rows_locator = "//table/tbody/tr/td[@class='standartTreeImage']"\
+            "/img[contains(@src, 'policy_profile')]/../../td[@class='standartTreeRow']"
+        return sel.elements(pp_rows_locator)
+
+    def _is_policy_profile_row_checked(self, row):
+        return "Check" in row.find_element_by_xpath("../td[@width='16px']/img").get_attribute("src")
+
+    @property
+    def _assigned_policy_profiles(self):
+        result = set([])
+        for row in self._all_available_policy_profiles:
+            if self._is_policy_profile_row_checked(row):
+                result.add(row.text.encode("utf-8"))
+        return result
+
+    def get_assigned_policy_profiles(self):
+        """ Return a set of Policy Profiles which are available and assigned.
+
+        Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
+        """
+        sel.force_navigate('infrastructure_provider_policy_assignment', context={'provider': self})
+        return self._assigned_policy_profiles
+
+    @property
+    def _unassigned_policy_profiles(self):
+        result = set([])
+        for row in self._all_available_policy_profiles:
+            if not self._is_policy_profile_row_checked(row):
+                result.add(row.text.encode("utf-8"))
+        return result
+
+    def get_unassigned_policy_profiles(self):
+        """ Return a set of Policy Profiles which are available but not assigned.
+
+        Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
+        """
+        sel.force_navigate('infrastructure_provider_policy_assignment', context={'provider': self})
+        return self._unassigned_policy_profiles
+
+    def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
+        """ Assign or unassign Policy Profiles to this Provider. DRY method
+
+        Args:
+            assign: Whether this method assigns or unassigns policy profiles.
+            policy_profile_names: :py:class:`str` with Policy Profile's name. After Control/Explorer
+                coverage goes in, PolicyProfile object will be also passable.
+        """
+        sel.force_navigate('infrastructure_provider_policy_assignment', context={'provider': self})
+        policy_profiles = set([str(pp) for pp in policy_profile_names])
+        if assign:
+            do_not_process = self._assigned_policy_profiles
+        else:
+            do_not_process = self._unassigned_policy_profiles
+        fill(
+            manage_policies_form,
+            dict(policy_select=[(x,) for x in list(policy_profiles - do_not_process)]),
+            action=manage_policies_page.save_button
+        )
+
+    def assign_policy_profiles(self, *policy_profile_names):
+        """ Assign Policy Profiles to this Provider.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(True, *policy_profile_names)
+
+    def unassign_policy_profiles(self, *policy_profile_names):
+        """ Unssign Policy Profiles to this Provider.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(False, *policy_profile_names)
 
 
 class VMwareProvider(Provider):
