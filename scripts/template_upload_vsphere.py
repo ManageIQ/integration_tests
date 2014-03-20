@@ -9,53 +9,45 @@ from psphere.client import Client
 from psphere.errors import ObjectNotFoundError
 from psphere.managedobjects import VirtualMachine
 
-from utils.conf import conf
+from utils import conf
 from utils.wait import wait_for
+
+#ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
+NUM_OF_TRIES_OVFTOOL = 5
 
 
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
-    parser.add_argument('--url', metavar='URL', dest="url",
+    parser.add_argument('--image_url', metavar='URL', dest="image_url",
                         help="URL of OVA", required=True)
-    parser.add_argument('--name', dest="name",
+    parser.add_argument('--template_name', dest="template_name",
                         help="Override/Provide name of template")
     parser.add_argument('--datastore', dest="datastore",
                         help="Datastore name")
     parser.add_argument('--provider', dest="provider",
                         help="Specify a vCenter connection", required=True)
-    parser.add_argument('--no-template', dest='template', action='store_false',
+    parser.add_argument('--no_template', dest='template', action='store_false',
                         help="Do not templateize the OVA", default=True)
-    parser.add_argument('--no-upload', dest='upload', action='store_false',
+    parser.add_argument('--no_upload', dest='upload', action='store_false',
                         help="Do not upload the new OVA", default=True)
-    parser.add_argument('--no-disk', dest='disk', action='store_false',
+    parser.add_argument('--no_disk', dest='disk', action='store_false',
                         help="Do not add a second disk to OVA", default=True)
     parser.add_argument('--cluster', dest="cluster",
                         help="Specify a cluster")
     parser.add_argument('--datacenter', dest="datacenter",
                         help="Specify a datacenter")
+    parser.add_argument('--host', dest='host',
+                        help='Specify host in cluster')
     args = parser.parse_args()
     return args
 
 
-def get_vm_name(args):
-    if args.name:
-        name = args.name
-    else:
-        match = re.search("(\d\.\d-\d{4}-\d{2}-\d{2}\.\d)", args.url)
-        if match is None:
-            print "Could not automatically suggest a name from URL"
-            sys.exit(127)
-        else:
-            name = "cfme-%s" % match.groups()[0]
-    return name
-
-
 def upload_ova(hostname, username, password, name, datastore,
-               cluster, datacenter, url):
+               cluster, datacenter, url, host):
     client = Client(server=hostname, username=username, password=password)
     try:
         VirtualMachine.get(client, name=name)
-        print "A Machine with that name already exists"
+        print "VSPHERE: A Machine with that name already exists"
         sys.exit(127)
     except ObjectNotFoundError:
         pass
@@ -65,10 +57,10 @@ def upload_ova(hostname, username, password, name, datastore,
     cmd_args.append("--datastore=%s" % datastore)
     cmd_args.append("--name=%s" % name)
     cmd_args.append("--vCloudTemplate=True")
-    cmd_args.append(args.url)
+    cmd_args.append(url)
     cmd_args.append("vi://%s@%s/%s/host/%s" % (username, hostname, datacenter, cluster))
 
-    print "Running OVFTool..."
+    print "VSPHERE: Running OVFTool..."
     proc = subprocess.Popen(cmd_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
 
@@ -80,7 +72,7 @@ def upload_ova(hostname, username, password, name, datastore,
     if "'yes' or 'no'" in out_string:
         proc.stdin.write("yes\n")
         proc.stdin.flush()
-        print "Added host to SSL hosts"
+        print "VSPHERE: Added host to SSL hosts"
         out_string = ""
         while "Password:" not in out_string:
             out_string += proc.stdout.read(1)
@@ -90,16 +82,18 @@ def upload_ova(hostname, username, password, name, datastore,
     error = proc.stderr.read()
 
     if "successfully" in output:
-        print " Upload completed"
+        print " VSPHERE: Upload completed"
+        return 0, output
     else:
-        print "Upload did not complete"
-        print output
-        print error
-        sys.exit(127)
+        print "VSPHERE: Upload did not complete"
+        return -1, "\n".join([output, error])
+        #print output
+        #print error
+        #sys.exit(127)
 
 
 def add_disk(client, name):
-    print "Beginning disk add..."
+    print "VSPHERE: Beginning disk add..."
 
     backing = client.create("VirtualDiskFlatVer2BackingInfo")
     backing.datastore = None
@@ -136,52 +130,71 @@ def add_disk(client, name):
     wait_for(check_task, [task], fail_condition="running")
 
     if task.info.state == "success":
-        print " Successfully added new disk"
+        print " VSPHERE: Successfully added new disk"
         client.logout()
     else:
         client.logout()
-        print " Failed to add disk"
+        print " VSPHERE: Failed to add disk"
         sys.exit(127)
 
 
-def make_template(client, name):
-    print "Marking as Template"
+def make_template(client, name, hostname, username, password):
+    print "VSPHERE: Marking as Template"
     client = Client(server=hostname, username=username, password=password)
     vm = VirtualMachine.get(client, name=name)
 
     try:
         vm.MarkAsTemplate()
-        print " Successfully templatized machine"
+        print " VSPHERE: Successfully templatized machine"
     except:
-        print " Failed to templatize machine"
+        print " VSPHERE: Failed to templatize machine"
         sys.exit(127)
 
 
-if __name__ == "__main__":
-    args = parse_cmd_line()
-
-    provider = conf.cfme_data['management_systems'][args.provider]
+def run(**kwargs):
+    provider = conf.cfme_data['management_systems'][kwargs.get('provider')]
     creds = conf.credentials[provider['credentials']]
 
     hostname = provider['hostname']
     username = creds['username']
     password = creds['password']
-    datastore = args.datastore or provider['datastores'][0]
-    cluster = args.cluster or provider['clusters'][0]
-    datacenter = args.datacenter or provider['datacenters'][0]
+    datastore = kwargs.get('datastore')
+    cluster = kwargs.get('cluster')
+    datacenter = kwargs.get('datacenter')
+    host = kwargs.get('host')
 
-    name = get_vm_name(args)
-    url = args.url
-    print "Template Name: %s" % name
+    name = kwargs.get('template_name', None)
+    if name is None:
+        name = conf.cfme_data['basic_info']['cfme_template_name']
 
-    if args.upload:
-        upload_ova(hostname, username, password, name, datastore,
-                   cluster, datacenter, url)
+    url = kwargs.get('image_url')
+    print "VSPHERE: Template Name: %s" % name
+
+    if kwargs.get('upload'):
+        #Wrapper for ovftool - sometimes it just won't work
+        for i in range(0, NUM_OF_TRIES_OVFTOOL):
+            print "VSPHERE: Trying ovftool %s..." % i
+            ova_ret, ova_out = upload_ova(hostname, username, password, name, datastore,
+                                          cluster, datacenter, url, host)
+            if ova_ret is 0:
+                break
+        if ova_ret is -1:
+            print "VSPHERE: Ovftool failed to upload file."
+            print ova_out
+            sys.exit(127)
 
     client = Client(server=hostname, username=username, password=password)
-    if args.disk:
+    if kwargs.get('disk'):
         add_disk(client, name)
-    if args.template:
-        make_template(client, name)
+    if kwargs.get('template'):
+        make_template(client, name, hostname, username, password)
     client.logout()
-print "Completed successfully"
+    print "VSPHERE: Completed successfully"
+
+
+if __name__ == "__main__":
+    args = parse_cmd_line()
+
+    kwargs = dict(args._get_kwargs())
+
+    run(**kwargs)
