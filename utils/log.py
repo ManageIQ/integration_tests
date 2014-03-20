@@ -133,12 +133,15 @@ Members
 import logging
 import sys
 import warnings
+import datetime as dt
+
 from logging.handlers import RotatingFileHandler, SysLogHandler
 from time import time
 from traceback import extract_tb
 
 from utils import conf
 from utils.path import get_rel_path, log_path
+from utils.randomness import generate_random_string
 
 MARKER_LEN = 80
 
@@ -151,6 +154,23 @@ _default_conf = {
     'file_format': '%(asctime)-15s [%(levelname).1s] %(message)s (%(source)s)',
     'stream_format': '[%(levelname)s] %(message)s (%(source)s)'
 }
+
+
+class SyslogMsecFormatter(logging.Formatter):
+    """ A custom Formatter for the syslogger which changes the log timestamps to
+    have millisecond resolution for compatibility with splunk.
+    """
+
+    converter = dt.datetime.fromtimestamp
+
+    def formatTime(self, record, datefmt=None):
+        ct = self.converter(record.created)
+        if datefmt:
+            s = ct.strftime(datefmt)
+        else:
+            t = ct.strftime("%Y-%m-%d %H:%M:%S")
+            s = "%s.%03d" % (t, record.msecs)
+        return s
 
 
 def _load_conf(logger_name=None):
@@ -288,7 +308,12 @@ def create_logger(logger_name):
 
     syslog_settings = _get_syslog_settings()
     if syslog_settings:
-        logger.addHandler(SysLogHandler(address=syslog_settings))
+        lid = generate_random_string(8)
+        fmt = '%(asctime)s [' + lid + '] %(message)s'
+        syslog_formatter = SyslogMsecFormatter(fmt=fmt)
+        syslog_handler = SysLogHandler(address=syslog_settings)
+        syslog_handler.setFormatter(syslog_formatter)
+        logger.addHandler(syslog_handler)
     logger.setLevel(conf['level'])
     if conf['errors_to_console']:
         stream_formatter = logging.Formatter(conf['stream_format'])
