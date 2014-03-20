@@ -52,7 +52,8 @@ class Region(object):
     Args:
         locators: A dict of locator objects for the given region
         title: A string containing the title of the page
-        identifying_loc: Not sure
+        identifying_loc: Single locator key from locators used by :py:meth:`Region.is_displayed`
+                         to check if the region is currently visible
 
     Usage:
 
@@ -61,7 +62,8 @@ class Region(object):
             'discover_button': (By.CSS_SELECTOR,
                 "tr[title='Discover Cloud Providers']>td.td_btn_txt>" "div.btn_sel_text")
             },
-            title='CloudForms Management Engine: Cloud Providers'
+            title='CloudForms Management Engine: Cloud Providers',
+            identifying_loc='discover_button'
         )
 
     The elements can then accessed like so::
