@@ -140,7 +140,7 @@
             :ae_message: create
             :ae_request: RelayEvents
             :ae_hash:
-              events: vm_analysis_complete
+              event: vm_analysis_complete
       Condition: []
     - name: 177634d0-8373-11e3-b73a-005056bfa4fd
       description: vm_standby_guest_req
