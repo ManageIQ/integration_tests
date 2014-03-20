@@ -391,7 +391,7 @@ class EC2Provider(Provider):
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'Amazon EC2',
-                'amazon_region_select': (sel.VALUE, kwargs.get('region'))}
+                'amazon_region_select': sel.ByValue(kwargs.get('region'))}
 
 
 class OpenStackProvider(Provider):

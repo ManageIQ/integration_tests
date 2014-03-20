@@ -32,8 +32,8 @@ import os
 import re
 import types
 from datetime import date
-
 from selenium.webdriver.common.action_chains import ActionChains
+from collections import Sequence, Mapping
 from selenium.common import exceptions as sel_exceptions
 from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import multimethod, multidispatch, Anything
@@ -73,10 +73,10 @@ class Region(object):
 
     """
     def __getattr__(self, name):
-        try:
+        if hasattr(self, 'locators'):
             return self.locators[name]
-        except KeyError:
-            return object.__getattribute__(self, name)
+        else:
+            raise AttributeError("Region has no attribute named " + name)
 
     def __init__(self, locators=None, title=None, identifying_loc=None, infoblock_type=None):
         self.locators = locators
@@ -660,7 +660,6 @@ def fill(loc, content):
         fill(myform, [ ... data to fill ...])
         fill(radio, "choice to select")
 
-    Default implementation just throws an error.
     """
     action, logval = fill_tag(loc, content)
     logger.debug('  Filling in [%s], with value "%s"' % (loc, logval))
@@ -761,19 +760,6 @@ class Form(Region):
         }
         web_ui.fill(provider_form, request_info)
 
-    For Form objects, the :py:func:`cfme.web_ui.fill` function can also accept
-    a list of super tuples instead of a dict. This has the advantage of being able to
-    do things like multiple selects in a multiselect without running multiple calls
-    to the ``fill`` function, e.g.::
-
-        child_vm_info = [
-            ('child_vm', 'machine1'),
-            ('child_vm', 'machine2'),
-        ]
-
-    This would then be able to make two selections, whereas a dict would not be able
-    to do that due to the reuse of the child_vm key.
-
     Note:
         Using supertuples in a list, although ordered due to the properties of a List,
         will not overide the field order defined in the Form.
@@ -788,7 +774,7 @@ class Form(Region):
         fill(self, fill_data)
 
 
-@fill.method((Form, list))
+@fill.method((Form, Sequence))
 def _fill_form_list(form, values, action=None):
     """
     Fills in field elements on forms
@@ -823,7 +809,7 @@ def _fill_form_list(form, values, action=None):
     logger.debug('Finished filling in form')
 
 
-@fill.method((Form, dict))
+@fill.method((object, Mapping))
 def _fill_form_dict(form, values, action=None):
     '''Fill in a dict by converting it to a list'''
     fill(form, values.items(), action=action)
@@ -1513,3 +1499,30 @@ class DHTMLSelect(Select):
                 self._log('value', value)
             index = browser().execute_script('return %s.getIndexByValue("%s")' % (name, value))
             self.select_by_index(index, _cascade=True)
+
+
+class MultiSelect(Region):
+    '''Represents a UI widget where there are two select boxes, one with
+    possible selections, and another with selected items.  Has two
+    arrow buttons to move items between the two'''
+
+    def __init__(self,
+                 available_select=None,
+                 selected_select=None,
+                 select_arrow=None,
+                 deselect_arrow=None):
+        self.available_select = available_select
+        self.selected_select = selected_select
+        self.select_arrow = select_arrow
+        self.deselect_arrow = deselect_arrow
+
+
+@sel.select.method((MultiSelect, Sequence))
+def select_multiselect(ms, values):
+    sel.select(ms.available_select, values)
+    sel.click(ms.select_arrow)
+
+
+@fill.method((MultiSelect, Sequence))
+def fill_multiselect(ms, items):
+    sel.select(ms, items)

@@ -673,7 +673,7 @@ class LDAPAuthSetting(object):
                  timeout_m=None,
                  ):
         self.details = dict(
-            user_type=(sel.VALUE, user_type),
+            user_type=sel.ByValue(user_type),
             user_suffix=user_suffix,
             base_dn=base_dn,
             bind_dn=bind_dn,
