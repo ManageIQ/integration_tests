@@ -10,6 +10,7 @@
 * **Elemental**
 
   * :py:class:`DHTMLSelect`
+  * :py:class:`Filter`
   * :py:class:`Form`
   * :py:class:`InfoBlock`
   * :py:class:`Quadicon`
@@ -1515,3 +1516,54 @@ class DHTMLSelect(Select):
                 self._log('value', value)
             index = browser().execute_script('return %s.getIndexByValue("%s")' % (name, value))
             self.select_by_index(index, _cascade=True)
+
+
+class Filter(Form):
+    """ Filters requests pages
+
+    This class inherits Form as its base and adds a few methods to assist in filtering
+    request pages.
+
+    Usage:
+        f = Filter(fields=[
+            ('type', Select('//select[@id="type_choice"]')),
+            ('approved', '//input[@id="state_choice__approved"]'),
+            ('denied', '//input[@id="state_choice__denied"]'),
+            ('pending_approval', '//input[@id="state_choice__pending_approval"]'),
+            ('date', Select('//select[@id="time_period"]')),
+            ('reason', '//input[@id="reason_text"]'),
+        ])
+
+        f.apply_filter(type="VM Clone", approved=False,
+            pending_approval=False, date="Last 24 Hours", reason="Just Because")
+    """
+
+    buttons = {
+        'default_off': '//div[@id="buttons_off"]/li/a/img[@alt="Set filters to default"]',
+        'default_on': '//div[@id="buttons_on"]/li/a/img[@alt="Set filters to default"]',
+        'apply': '//div[@id="buttons_on"]//a[@title="Apply the selected filters"]',
+        'reset': '//div[@id="buttons_on"]//a[@title="Reset filter changes"]'
+    }
+
+    def default_filter(self):
+        """ Method to reset the filter back to defaults.
+        """
+        sel.click(self.buttons['default_off'])
+        sel.click(self.buttons['default_on'])
+
+    def reset_filter(self):
+        """ Method to reset the changes to the filter since last applying.
+        """
+        sel.click(self.buttons['reset'])
+
+    def apply_filter(self, **kwargs):
+        """ Method to apply a filter.
+
+        First resets the filter to default and then applies the filter.
+
+        Args:
+            **kwargs: A dictionary of form elements to fill and their values.
+        """
+        self.default_filter()
+        self.fill(kwargs)
+        sel.click(self.buttons['apply'])
