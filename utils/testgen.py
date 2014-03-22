@@ -27,8 +27,6 @@ More information on ``parametrize`` can be found in pytest's documentation:
 
 """
 
-import pytest
-
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.cloud.provider import get_from_config as get_cloud_provider
 from utils.conf import cfme_data
@@ -36,7 +34,7 @@ from utils.log import logger
 from utils.providers import cloud_provider_type_map, infra_provider_type_map, provider_factory
 
 
-def parametrize(gen_func, *args, **kwargs):
+def generate(gen_func, *args, **kwargs):
     """Functional handler for inline pytest_generate_tests definition
 
     Args:
@@ -55,10 +53,10 @@ def parametrize(gen_func, *args, **kwargs):
     Usage:
 
         # Abstract example:
-        pytest_generate_tests = testgen.parametrize(testgen.test_gen_func, arg1, arg2, kwarg1='a')
+        pytest_generate_tests = testgen.generate(testgen.test_gen_func, arg1, arg2, kwarg1='a')
 
         # Concrete example using infra_providers and scope
-        pytest_generate_tests = testgen.parametrize(testgen.infra_providers, 'provider_crud',
+        pytest_generate_tests = testgen.generate(testgen.infra_providers, 'provider_crud',
             scope="module")
 
     Note:
@@ -70,7 +68,7 @@ def parametrize(gen_func, *args, **kwargs):
         at least one common argname in every test signature to give pytest a clue in sorting tests.
 
     """
-    # Pull out/default kwargs for this function and metafunc.parametrize
+    # Pull out/default kwargs for this function and parametrize
     scope = kwargs.pop('scope', 'function')
     indirect = kwargs.pop('indirect', False)
     filter_unused = kwargs.pop('filter_unused', True)
@@ -81,23 +79,33 @@ def parametrize(gen_func, *args, **kwargs):
         # Filter out argnames that aren't requested on the metafunc test item, so not all tests
         # need all fixtures to run, and tests not using gen_func's fixtures aren't parametrized.
         if filter_unused:
-            argnames, argvalues = _fixture_filter(metafunc, argnames, argvalues)
+            argnames, argvalues = fixture_filter(metafunc, argnames, argvalues)
         # See if we have to parametrize at all after filtering
-        if not checkskip(metafunc, argvalues):
-            metafunc.parametrize(argnames, argvalues, indirect=indirect, ids=idlist, scope=scope)
+        parametrize(metafunc, argnames, argvalues, indirect=indirect, ids=idlist, scope=scope)
     return pytest_generate_tests
 
 
-def _fixture_filter(metafunc, argnames, argvalues):
+def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
+    """parametrize wrapper that calls :py:func:`param_check`, and only parametrizes when needed
+
+    This can be used in any place where conditional parametrization is used.
+
+    """
+    if param_check(metafunc, argvalues):
+        metafunc.parametrize(argnames, argvalues, *args, **kwargs)
+
+
+def fixture_filter(metafunc, argnames, argvalues):
+    """Filter fixtures based on fixturenames in the function represented by ``metafunc``"""
     # Identify indeces of matches between argnames and fixturenames
     keep_index = [e[0] for e in enumerate(argnames) if e[1] in metafunc.fixturenames]
 
     # Keep items at indices in keep_index
-    fixture_filter = lambda l: [e[1] for e in enumerate(l) if e[0] in keep_index]
+    f = lambda l: [e[1] for e in enumerate(l) if e[0] in keep_index]
 
     # Generate the new values
-    argnames = fixture_filter(argnames)
-    argvalues = map(fixture_filter, argvalues)
+    argnames = f(argnames)
+    argvalues = map(f, argvalues)
     return argnames, argvalues
 
 
@@ -213,20 +221,24 @@ def infra_providers(metafunc, *fields):
     return provider_by_type(metafunc, infra_provider_type_map, *fields)
 
 
-def checkskip(metafunc, argvalues):
-    """Helper function to check if parametrizing yielded results
+def param_check(metafunc, argvalues):
+    """Helper function to check if parametrizing is necessary
 
     If argvalues is empty, the test being represented by metafunc will be skipped in collection.
+
+    See usage in :py:func:`parametrize`
 
     Args:
         metafunc: metafunc objects from pytest_generate_tests
         argvalues: argvalues list for use in metafunc.parametrize
 
     Returns:
-        True if this test should be skipped due to empty argvalues
+        True if this test should be parametrized
 
     """
-    if not argvalues:
+    if any(argvalues):
+        return True
+    else:
         # module and class are optional, but function isn't
         modname = getattr(metafunc.module, '__name__', None)
         classname = getattr(metafunc.cls, '__name__', None)
@@ -237,5 +249,3 @@ def checkskip(metafunc, argvalues):
             test_name)
         # Raising pytest.skip in collection halts future fixture evaluation,
         # and preemptively filters this test out of the test results
-        pytest.skip(msg="Parametrize yielded no values")(metafunc.function)
-        return True

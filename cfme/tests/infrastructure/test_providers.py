@@ -9,8 +9,7 @@ from cfme.infrastructure import provider
 from utils import testgen
 from utils.update import update
 
-pytest_generate_tests = testgen.parametrize(testgen.infra_providers, scope="module")
-pytestmark = [pytest.mark.usefixtures("logged_in")]
+pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
 
 
 def test_that_checks_flash_with_empty_discovery_form():
@@ -23,6 +22,13 @@ def test_that_checks_flash_when_discovery_cancelled():
     """ Tests that the flash message is correct when discovery is cancelled."""
     provider.discover(None, cancel=True)
     flash.assert_message_match('Infrastructure Providers Discovery was cancelled by the user')
+
+
+def test_that_checks_flash_when_add_cancelled():
+    """Tests that the flash message is correct when add is cancelled."""
+    prov = provider.VMwareProvider()
+    prov.create(cancel=True)
+    flash.assert_message_match('Add of new Infrastructure Provider was cancelled by the user')
 
 
 @pytest.mark.usefixtures('has_no_infra_providers')
@@ -70,10 +76,3 @@ def test_provider_delete(provider_crud):
     flash.assert_message_match(
         'Delete initiated for 1 Infrastructure Provider from the CFME Database')
     provider.wait_for_provider_delete(provider_crud)
-
-
-def test_that_checks_flash_when_add_cancelled():
-    """Tests that the flash message is correct when add is cancelled."""
-    prov = provider.VMwareProvider()
-    prov.create(cancel=True)
-    flash.assert_message_match('Add of new Infrastructure Provider was cancelled by the user')
