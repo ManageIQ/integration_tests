@@ -74,6 +74,19 @@ class NotAllItemsClicked(CFMEException):
         return "Not all the required data elements were clicked [%s]" % ",".join(self.failed_clicks)
 
 
+class NotAllCheckboxesFound(CFMEException):
+    """
+    Raised if not all the checkboxes could be found during e.g.
+    :py:meth:`cfme.web_ui.CheckboxTable.select_by_cell` and other methods of this class.
+    """
+    def __init__(self, failed_selects):
+        self.failed_selects = failed_selects
+
+    def __str__(self):
+        return "Not all the required data elements were selected/deselected [%s]" % ","\
+               .join(self.failed_selects)
+
+
 class ProviderHasNoKey(CFMEException):
     """
     Raised if the :py:meth:`cfme.cloud.provider.Provider.get_mgmt_system` method is called
