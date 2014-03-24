@@ -5,6 +5,7 @@ import cfme.web_ui.toolbar as tb
 import ui_navigate as nav
 import functools
 import cfme.fixtures.pytest_selenium as sel
+from functools import partial
 
 assert cfme.web_ui.menu  # to placate flake8 (otherwise menu import is unused)
 
@@ -46,7 +47,7 @@ def _all_catalogs_add_new(_):
     sel.click("//div[@id='stcat_tree_div']//td[.='All Catalogs']")
     tb_select('Add a New Catalog')
 
-    
+
 nav.add_branch(
     'services_catalogs',
     {'catalogs': [nav.partial(accordion.click, 'Catalogs'),
