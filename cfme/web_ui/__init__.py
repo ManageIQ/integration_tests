@@ -1566,6 +1566,9 @@ class Select(SeleniumSelect, object):
     def observer_wait(self):
         sel.detect_observed_field(self._loc)
 
+    def locate(self):
+        return self.loc
+
 
 @fill.method((Select, object))
 def fill_select(slist, val):
