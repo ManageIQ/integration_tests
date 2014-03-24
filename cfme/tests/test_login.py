@@ -7,6 +7,7 @@ from utils import conf
 pytestmark = pytest.mark.usefixtures('browser')
 
 
+@pytest.mark.smoke
 def test_login():
     """ Tests that the appliance can be logged into and shows dashboard page. """
     pytest.sel.get(pytest.sel.base_url())
