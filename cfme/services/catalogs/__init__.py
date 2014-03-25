@@ -50,7 +50,8 @@ class CatalogItem(Updateable):
     def create(self):
         nav.go_to('catalog_item_new',context={'provider': self.item_type})
         print  self.item_type+"_____-"
-        web_ui.fill(catalog_item.item_form, {'name_text': self.name,
+        print  self.select_catalog+"----dialog----"+self.select_dialog
+        web_ui.fill(catalog_item.catalog_item_form, {'name_text': self.name,
                                         'description_text': self.description,
                                         'display_checkbox': self.display_in,
                                         'select_catalog': self.select_catalog,

@@ -10,16 +10,11 @@ from cfme.web_ui import tabstrip
 from cfme.infrastructure.provisioning import provisioning_form
 from cfme.web_ui import Select, fill
 from time import sleep
-
+from selenium.webdriver.common.by import By
 
 assert cfme.web_ui.menu  # to placate flake8 (otherwise menu import is unused)
 
 tb_select = functools.partial(tb.select, "Configuration")
-
-prov_select_form = web_ui.Form(
-    fields=
-    [('type_select', Select("//select[@id='st_prov_type']"))]
-)
 
 catalog_item_form = tabstrip.TabStripForm(
     fields=[
@@ -31,8 +26,8 @@ catalog_item_form = tabstrip.TabStripForm(
             ('name_text', "//input[@id='name']"),
             ('description_text', "//input[@id='description']"),
             ('display_checkbox', "//input[@id='display']"),
-            ('select_catalog', "select#catalog_id"),
-            ('select_dialog', "select#dialog_id]")
+            ('select_catalog', Select(By.CSS_SELECTOR,'//select[@id="catalog_id"]')),
+            ('select_dialog', Select(By.CSS_SELECTOR,'//select[@id="dialog_id"]'))
         ]),
         ('Details', [
             ('long_desc', "//textarea[@id='long_description']")
@@ -56,11 +51,7 @@ def _all_catalogitems_add_new(context):
     sel.click("//div[@id='sandt_tree_div']//td[.='All Catalog Items']")
     tb_select('Add a New Catalog Item')
     provider = context['provider']
-    sleep(5)
-    fill(
-        prov_select_form,
-        {"type_select": provider}
-    )
+    sel.select("//select[@id='st_prov_type']",provider)
 
 nav.add_branch(
     'services_catalogs',
