@@ -200,6 +200,39 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
     def all(cls):
         return [cls(ems.guid) for ems in client.service.GetEmsList()]
 
+    @property
+    def direct_connection(self):
+        """ Returns an API from mgmt_system.py targeted at this provider
+        """
+        # Find the credentials entry
+        name = str(self.host_name)
+        from utils.conf import cfme_data, credentials
+        for prov_id, provider in cfme_data.get("management_systems", {}).iteritems():
+            if provider.get("hostname", None) == name:
+                credentials = credentials.get(provider["credentials"], {})
+                provider_id = prov_id
+                break
+        else:
+            raise NameError("Could not find provider %s in the credentials!" % name)
+        ptype = str(self.type).lower()
+        if ptype == "emsredhat":
+            from utils.mgmt_system import RHEVMSystem
+            return RHEVMSystem(self.host_name, credentials["username"], credentials["password"])
+        elif ptype == "emsvmware":
+            from utils.mgmt_system import VMWareSystem
+            return VMWareSystem(self.host_name, credentials["username"], credentials["password"])
+        elif ptype == "emsamazon":
+            from utils.mgmt_system import EC2System
+            return EC2System(**credentials)
+        elif ptype == "emsopenstack":
+            from utils.mgmt_system import OpenstackSystem
+            credentials.update(
+                {"auth_url": cfme_data["management_systems"][provider_id]["auth_url"]}
+            )
+            return OpenstackSystem(**credentials)
+        else:
+            TypeError("Unknown Provider type!")
+
 
 class MiqVM(HasManyDatastores, BelongsToCluster):
     GETTER_FUNC = "FindVmByGuid"
