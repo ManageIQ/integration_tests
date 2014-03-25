@@ -86,10 +86,10 @@ credential_form = Form(
         ('default_principal', "//*[@id='default_userid']"),
         ('default_secret', "//*[@id='default_password']"),
         ('default_verify_secret', "//*[@id='default_verify']"),
-        ('candu_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('candu_principal', "//*[@id='default_userid']"),
-        ('candu_secret', "//*[@id='default_password']"),
-        ('candu_verify_secret', "//*[@id='default_verify']"),
+        ('candu_button', "//div[@id='auth_tabs']/ul/li/a[@href='#metrics']"),
+        ('candu_principal', "//*[@id='metrics_userid']"),
+        ('candu_secret', "//*[@id='metrics_password']"),
+        ('candu_verify_secret', "//*[@id='metrics_verify']"),
         ('validate_btn', page_specific_locators.creds_validate_btn)
     ])
 
