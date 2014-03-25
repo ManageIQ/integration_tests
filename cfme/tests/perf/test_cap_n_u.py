@@ -20,7 +20,7 @@ def test_cap_and_u_timings():
     ssh_kwargs = {
         'username': conf.credentials['ssh']['username'],
         'password': conf.credentials['ssh']['password'],
-        'hostname': conf.env['base_url']
+        'hostname': conf.env['hostname']
     }
 
     # Set Roles
@@ -51,7 +51,7 @@ def test_cap_and_u_timings():
     # Place the shell script that compiles all evm log files into single log file
     logger.info('Sending perf_evmlog.sh to Appliance...')
     client = SSHClient(**ssh_kwargs)
-    client.put_file('cfme_tests/scripts/perf_evmlog.sh', '/root/perf_evmlog.sh')
+    client.put_file('scripts/perf_evmlog.sh', '/root/perf_evmlog.sh')
     client.close()
 
     logger.info('Finished setting up host appliance...')
@@ -67,5 +67,5 @@ def test_cap_and_u_timings():
 
     # Get that file
     logger.info('Getting evm.total.log.gz...')
-    client.get_file('/var/www/miq/vmdb/log/evm.total.log.gz', 'cfme_tests/log/evm.total.log.gz')
+    client.get_file('/var/www/miq/vmdb/log/evm.total.log.gz', 'log/evm.total.log.gz')
     client.close()
