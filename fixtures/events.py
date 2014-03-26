@@ -97,13 +97,12 @@ class EventListener(object):
 
     TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
 
-    def __init__(self, listener_port, settle_time, verbose=False):
+    def __init__(self, listener_port=0, verbose=False):
         self._listener_port = int(listener_port)
         listener_filename = scripts_path.join('listener.py').strpath
         self.listener_script = "%s 0.0.0.0 %d" % (listener_filename, self.listener_port)
         if not verbose:
             self.listener_script += ' --quiet'
-        self.settle_time = int(settle_time)
         self.expectations = []
         self.processed_expectations = defaultdict(list)
         self.listener = None
@@ -353,12 +352,6 @@ def pytest_addoption(parser):
                      dest='event_testing_port',
                      default="0",
                      help='Port of the testing listener. (default: random port)')
-    parser.addoption('--event-testing-settletime',
-                     action='store',
-                     dest='event_testing_settletime',
-                     default=60,
-                     help='Time to wait after all testing has been finished' +
-                     'for remaining events to come. (default: %default)')
     parser.addoption('--event-testing-verbose-listener',
                      action='store_true',
                      dest='event_testing_verbose_listener',
@@ -373,7 +366,6 @@ def pytest_configure(config):
     If the testing is enabled, listener is started.
     """
     plugin = EventListener(config.getoption("event_testing_port"),
-                           config.getoption("event_testing_settletime"),
                            config.getoption("event_testing_verbose_listener"))
     registration = config.pluginmanager.register(plugin, "event_testing")
     assert registration
