@@ -208,7 +208,7 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
         name = str(self.host_name)
         from utils.conf import cfme_data, credentials
         for prov_id, provider in cfme_data.get("management_systems", {}).iteritems():
-            if provider.get("hostname", None) == name:
+            if provider.get("hostname", None) == name or provider.get("region", None) == name:
                 credentials = credentials.get(provider["credentials"], {})
                 provider_id = prov_id
                 break
