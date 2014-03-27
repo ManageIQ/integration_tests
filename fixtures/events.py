@@ -97,25 +97,33 @@ class EventListener(object):
 
     TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
 
-    def __init__(self, listener_port, settle_time, verbose=False):
-        self.listener_port = int(listener_port)
+    def __init__(self, listener_port=0, verbose=False):
+        self._listener_port = int(listener_port)
         listener_filename = scripts_path.join('listener.py').strpath
         self.listener_script = "%s 0.0.0.0 %d" % (listener_filename, self.listener_port)
         if not verbose:
             self.listener_script += ' --quiet'
-        self.settle_time = int(settle_time)
         self.expectations = []
         self.processed_expectations = defaultdict(list)
         self.listener = None
+
+    @property
+    def listener_port(self):
+        if self._listener_port is 0:
+            # Ask the OS for an open port by creating a temporary socket
+            s = socket.socket()
+            # 0 results in a randomly chosen open port
+            s.bind(('', 0))
+            addr, port = s.getsockname()
+            s.close()
+            self._listener_port = port
+        return self._listener_port
 
     def get_listener_host(self):
         return "http://%s" % self.get_ip_address()
 
     def get_ip_address(self):
-        """ This returns this machine's active IP address.
-
-        It uses Sean's service to query the address.
-        """
+        """Use a remote service to get the test runner's ip address for event routing"""
         data = cfme_data.get("event_testing")
         assert data, "No event_testing section in cfme_data yaml"
         ipecho = data.get("ip_echo")
@@ -342,14 +350,8 @@ def pytest_addoption(parser):
     parser.addoption('--event-testing-port',
                      action='store',
                      dest='event_testing_port',
-                     default="65432",
-                     help='Port of the testing listener. (default: %default)')
-    parser.addoption('--event-testing-settletime',
-                     action='store',
-                     dest='event_testing_settletime',
-                     default=60,
-                     help='Time to wait after all testing has been finished' +
-                     'for remaining events to come. (default: %default)')
+                     default="0",
+                     help='Port of the testing listener. (default: random port)')
     parser.addoption('--event-testing-verbose-listener',
                      action='store_true',
                      dest='event_testing_verbose_listener',
@@ -364,7 +366,6 @@ def pytest_configure(config):
     If the testing is enabled, listener is started.
     """
     plugin = EventListener(config.getoption("event_testing_port"),
-                           config.getoption("event_testing_settletime"),
                            config.getoption("event_testing_verbose_listener"))
     registration = config.pluginmanager.register(plugin, "event_testing")
     assert registration
