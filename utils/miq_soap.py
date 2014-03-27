@@ -298,7 +298,9 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
             cpus: How many CPUs should the VM have.
             memory: How much memory (in MB) should the VM have.
             vlan: Where to connect the VM. Obligatory for RHEV
-            first_name, last_name, email: Informations about requestee.
+            first_name: Name of the requestee
+            last_name: Surname of the requestee
+            email: Email of the requestee
         Returns: :py:class:`MiqVM` object with freshly provisioned VM.
         """
         db_session = db_session_maker()
