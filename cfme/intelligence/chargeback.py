@@ -77,7 +77,7 @@ MONTHLY = 'monthly'
 def _fill_rateform(rf, value):
     '''value should be like (5, HOURLY)'''
     fill(rf.rate_loc, value[0])
-    fill(rf.unit_select_loc, (sel.VALUE, value[1]))
+    fill(rf.unit_select_loc, sel.ByValue(value[1]))
 
 
 class ComputeRate(Updateable):

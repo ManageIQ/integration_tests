@@ -54,7 +54,7 @@ def results_per_page(num):
         num: Number of results per page
     """
     select = sel.element(_locator + _num_results)
-    sel.select(Select(select), (sel.TEXT, str(num)))
+    sel.select(Select(select), sel.ByText(str(num)))
 
 
 def sort_by(sort):
@@ -64,7 +64,7 @@ def sort_by(sort):
         sort: Value to sort by (visible text in select box)
     """
     select = sel.element(_locator + _sort_by)
-    sel.select(Select(select), (sel.TEXT, sort))
+    sel.select(Select(select), sel.ByText(sort))
 
 
 def rec_offset():
