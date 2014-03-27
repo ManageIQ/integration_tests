@@ -12,6 +12,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 """
 from time import sleep
 from traceback import format_exc
+from collections import Iterable
 import json
 
 import ui_navigate
@@ -22,7 +23,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
-
+from selenium.webdriver.support.select import Select
 from multimethods import singledispatch, multidispatch
 
 import pytest
@@ -31,8 +32,18 @@ from utils import conf
 from utils.browser import browser, ensure_browser_open
 from utils.log import logger
 
-VALUE = 'val'
-TEXT = 'txt'
+
+class ByValue(object):
+    def __init__(self, value):
+        self.value = value
+
+
+class ByText(object):
+    def __init__(self, text):
+        self.text = text
+
+    def __str__(self):
+        return text
 
 
 @singledispatch
@@ -566,29 +577,21 @@ def select(loc, o):
     raise NotImplementedError('Unable to select {} in this type: {}'.format(o, loc))
 
 
-@select.method((object, tuple))
-def _select_tuple(select_element, o):
-    """
-    Takes a locator and an object and selects using the correct method.
-
-    If o is a string, then it is assumed the user wishes to select by visible text.
-    If o is a tuple, then the first argument defines the type. Either ``TEXT`` or ``VALUE``.
-    A choice of select method is then determined.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        o: An object, can be either a string or a tuple.
-    """
-    vtype, value = o
-    if vtype == TEXT:
-        select_by_text(select_element, value)
-    if vtype == VALUE:
-        select_by_value(select_element, value)
+@select.method((object, ByValue))
+def _select_tuple(loc, val):
+    select_by_value(Select(element(loc)), val.value)
 
 
 @select.method((object, str))
-def _select_str(select_element, s):
-    select_by_text(select_element, s)
+@select.method((object, ByText))
+def _select_str(loc, s):
+    select_by_text(Select(element(loc)), str(s))
+
+
+@select.method((object, Iterable))
+def _select_iter(loc, items):
+    for item in items:
+        select(loc, item)
 
 
 def select_by_text(select_element, text):
@@ -617,28 +620,6 @@ def select_by_value(select_element, value):
         wait_for_ajax()
 
 
-def deselect(loc, o):
-    """
-    Takes a locator and an object and deselects using the correct method.
-
-    If o is a string, then it is assumed the user wishes to select by visible text.
-    If o is a tuple, then the first argument defines the type. Either ``TEXT`` or ``VALUE``.
-    A choice of select method is then determined.
-
-    Args:
-        loc: A locator, expects either a string, WebElement, tuple.
-        o: An object, can be either a string or a tuple.
-    """
-    if isinstance(o, basestring):
-        deselect_by_text(loc, o)
-    else:
-        vtype, value = o
-        if vtype == TEXT:
-            deselect_by_text(loc, value)
-        if vtype == VALUE:
-            deselect_by_value(loc, value)
-
-
 def deselect_by_text(select_element, text):
     """
     Works on a select element and deselects an option by the visible text.
@@ -663,3 +644,25 @@ def deselect_by_value(select_element, value):
     if value is not None:
         select_element.deselect_by_value(value)
         wait_for_ajax()
+
+
+@multidispatch
+def deselect(loc, o):
+    raise NotImplementedError('Unable to select {} in this type: {}'.format(o, loc))
+
+
+@deselect.method((object, ByValue))
+def _deselect_val(loc, val):
+    deselect_by_value(loc, val.value)
+
+
+@deselect.method((object, str))
+@deselect.method((object, ByText))
+def _deselect_text(loc, s):
+    deselect_by_text(loc, str(s))
+
+
+@deselect.method((object, Iterable))
+def _deselect_iter(loc, items):
+    for item in items:
+        deselect(loc, item)
