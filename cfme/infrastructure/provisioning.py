@@ -40,6 +40,8 @@ provisioning_form = tabstrip.TabStripForm(
             ('vm_description', '//textarea[@id="service__vm_description"]'),
             ('provision_type', Select('//select[@id="service__provision_type"]')),
             ('linked_clone', '//input[@id="service__linked_clone"]'),
+            ('pxe_server', Select('//select[@id="service__pxe_server_id"]')),
+            ('pxe_image', Table('//div[@id="prov_pxe_img_div"]/table'))
         ]),
         ('Environment', [
             ('automatic_placement', '//input[@id="environment__placement_auto"]'),
@@ -73,6 +75,9 @@ provisioning_form = tabstrip.TabStripForm(
             ('linux_domain_name', '//input[@id="customize__linux_domain_name"]'),
             ('dns_servers', '//input[@id="customize__dns_servers"]'),
             ('dns_suffixes', '//input[@id="customize__dns_suffixes"]'),
+            ('custom_template', Table('//div[@id="prov_template_div"]/table')),
+            ('root_password', '//input[@id="customize__root_password"]'),
+            ('vm_host_name', '//input[@id="customize__hostname"]'),
         ]),
         ('Schedule', [
             ('schedule_type', Radio('schedule__schedule_type')),

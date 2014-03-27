@@ -33,6 +33,11 @@ management_systems:
         test_vm_power_control:
             - vm_name
         provisioning:
+            pxe_template: pxe_prov_template
+            pxe_server: pxe_server
+            pxe_image: image
+            pxe_kickstart: customizationscript
+            pxe_root_password: password
             template: provisioning_template_name
             host: target provisioning host name (from hosts above)
             datastore: target provisioning datastore name (from datastores above)
