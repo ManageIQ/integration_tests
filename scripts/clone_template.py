@@ -44,10 +44,10 @@ def main():
                 logging.warning('Destroying VM %s', args.vm_name)
                 if provider.is_vm_running(args.vm_name):
                     provider.stop_vm(args.vm_name)
-                status = provider.delete_vm(args.vm_name)
-                if not status:
+                if provider.delete_vm(args.vm_name):
+                    logging.info('VM %s destroyed', args.vm_name)
+                else:
                     logging.error('Error destroying VM %s', args.vm_name)
-                logging.info('VM %s destroyed', args.vm_name)
         except Exception as e:
             logging.error('Could not destroy VM %s (%s)', args.vm_name, e.message)
             return 11

@@ -668,9 +668,9 @@ class RHEVMSystem(MgmtSystemAPIBase):
         if vm.status.get_state() == 'up':
             return True
         else:
-            ack = vm.start()
-            if ack.get_status().get_state() == 'complete':
-                return True
+            vm.start()
+            wait_for(self.is_vm_running, [vm_name])
+            return True
         return False
 
     def stop_vm(self, vm_name):
@@ -678,20 +678,18 @@ class RHEVMSystem(MgmtSystemAPIBase):
         if vm.status.get_state() == 'down':
             return True
         else:
-            ack = vm.stop()
-            if ack.get_status().get_state() == 'complete':
-                return True
+            vm.stop()
+            wait_for(self.is_vm_stopped, [vm_name])
+            return True
         return False
 
     def delete_vm(self, vm_name):
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'up':
             self.stop_vm(vm_name)
-        ack = vm.delete()
-        if ack == '':
-            return True
-        else:
-            return False
+        vm.delete()
+        wait_for(self.does_vm_exist, [vm_name], fail_condition=True)
+        return True
 
     def create_vm(self, vm_name):
         raise NotImplementedError('This function has not yet been implemented.')
