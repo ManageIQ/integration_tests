@@ -4,7 +4,7 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound, CFMEException
+from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
 from cfme.web_ui import Form, Region, Select, Table, Tree, accordion, fill, flash
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
@@ -81,7 +81,7 @@ crud_buttons = Region(
         'cancel_button': make_button("Cancel"),
         'add_button': make_button("Add"),
     },
-    identifying_loc="//div[@id='buttons_on']/ul[@id='form_buttons']",
+    identifying_loc="save_button",
 )
 
 records_table = Table("//div[@id='records_div']/table[@class='style3']")
@@ -93,7 +93,31 @@ nav.add_branch("configuration",
             lambda _: accordion.click("Settings"),
             {
                 "cfg_settings_region":
-                lambda _: settings_tree.click_path("Region: Region"),
+                [
+                    lambda _: settings_tree.click_path("Region: Region"),
+                    {
+                        "cfg_settings_region_details":
+                        lambda _: tabs.select_tab("Details"),
+
+                        "cfg_settings_region_cu_collection":
+                        lambda _: tabs.select_tab("C & U Collection"),
+
+                        "cfg_settings_region_my_company_categories":
+                        lambda _: tabs.select_tab("My Company Categories"),
+
+                        "cfg_settings_region_my_company_tags":
+                        lambda _: tabs.select_tab("My Company Tags"),
+
+                        "cfg_settings_region_import_tags":
+                        lambda _: tabs.select_tab("Import Tags"),
+
+                        "cfg_settings_region_import":
+                        lambda _: tabs.select_tab("Import"),
+
+                        "cfg_settings_region_red_hat_updates":
+                        lambda _: tabs.select_tab("Red Hat Updates")
+                    }
+                ],
 
                 "cfg_settings_defaultzone":
                 lambda _: settings_tree.click_path("Region: Region", "Zones", "Default Zone"),
@@ -336,7 +360,7 @@ class ServerLogDepot(object):
             )
 
         @classmethod
-        def clear(self, cancel=False):
+        def clear(cls, cancel=False):
             """ Navigate to correct page and set <No Depot>.
 
             Args:
@@ -349,29 +373,29 @@ class ServerLogDepot(object):
             else:
                 action = crud_buttons.save_button
             fill(
-                self.server_collect_logs,
+                cls.server_collect_logs,
                 {"type": "<No Depot>"},
                 action=action
             )
 
     @classmethod
-    def get_last_message(self):
+    def get_last_message(cls):
         """ Returns the Last Message that is displayed in the InfoBlock.
 
         """
-        return self.elements.infoblock.text("Basic Info", "Last Message")
+        return cls.elements.infoblock.text("Basic Info", "Last Message")
 
     @classmethod
-    def get_last_collection(self):
+    def get_last_collection(cls):
         """ Returns the Last Log Collection that is displayed in the InfoBlock.
 
         Returns: If it is Never, returns `None`, otherwise :py:class:`utils.timeutil.parsetime`.
         """
-        d = self.elements.infoblock.text("Basic Info", "Last Log Collection")
+        d = cls.elements.infoblock.text("Basic Info", "Last Log Collection")
         return None if d.strip().lower() == "never" else parsetime.from_american_with_utc(d.strip())
 
     @classmethod
-    def _collect(self, selection, wait_minutes=4):
+    def _collect(cls, selection, wait_minutes=4):
         """ Initiate and wait for collection to finish. DRY method.
 
         Args:
@@ -379,7 +403,7 @@ class ServerLogDepot(object):
             wait_minutes: How many minutes should we wait for the collection process to finish?
         """
         sel.force_navigate("cfg_diagnostics_server_collect")
-        last_collection = self.get_last_collection()
+        last_collection = cls.get_last_collection()
         # Initiate the collection
         tb.select("Collect", selection)
         flash.assert_no_errors()
@@ -398,32 +422,32 @@ class ServerLogDepot(object):
             # The time is updated just after the collection has started
             # If the Text is Never, we will not wait as there is nothing in the last message.
             wait_for(
-                lambda: self.get_last_collection() > last_collection,
+                lambda: cls.get_last_collection() > last_collection,
                 num_sec=90,
                 fail_func=_refresh,
                 message="wait_for_log_collection_start"
             )
         # Wait for finish
         wait_for(
-            lambda: "were successfully collected" in self.get_last_message(),
+            lambda: "were successfully collected" in cls.get_last_message(),
             num_sec=wait_minutes * 60,
             fail_func=_refresh,
             message="wait_for_log_collection_finish"
         )
 
     @classmethod
-    def collect_all(self):
+    def collect_all(cls):
         """ Initiate and wait for collection of all logs to finish.
 
         """
-        self._collect("Collect all logs")
+        cls._collect("Collect all logs")
 
     @classmethod
-    def collect_current(self):
+    def collect_current(cls):
         """ Initiate and wait for collection of the current log to finish.
 
         """
-        self._collect("Collect current logs")
+        cls._collect("Collect current logs")
 
 
 class BasicInformation(Updateable):
@@ -809,7 +833,7 @@ class Schedule(object):
             action=action,
             filter_type=filter_type,
             filter_value=filter_value,
-            time_zone=("val", time_zone),
+            time_zone=(sel.VALUE, time_zone),
             start_date=start_date,
             start_hour=start_hour,
             start_min=start_min,
@@ -885,7 +909,7 @@ class Schedule(object):
     # CLASS METHODS
     #
     @classmethod
-    def delete_by_name(self, name, cancel=False):
+    def delete_by_name(cls, name, cancel=False):
         """ Finds a particular schedule by its name and then deletes it.
 
         Args:
@@ -897,7 +921,7 @@ class Schedule(object):
         sel.handle_alert(cancel)
 
     @classmethod
-    def select_by_names(self, *names):
+    def select_by_names(cls, *names):
         """ Select all checkboxes at the schedules with specified names.
 
         Can select multiple of them.
@@ -907,7 +931,7 @@ class Schedule(object):
         Args:
             *names: Arguments with all schedules' names.
         """
-        def select_by_name(self, name):
+        def select_by_name(name):
             for row in records_table.rows():
                 if row.name.strip() == name:
                     checkbox = row[0].find_element_by_xpath("//input[@type='checkbox']")
@@ -924,23 +948,23 @@ class Schedule(object):
             select_by_name(name)
 
     @classmethod
-    def enable_by_names(self, *names):
+    def enable_by_names(cls, *names):
         """ Checks all schedules that are passed with `names` and then enables them via menu.
 
         Args:
             *names: Names of schedules to enable.
         """
-        self.select_by_names(*names)
+        cls.select_by_names(*names)
         tb.select("Configuration", "Enable the selected Schedules")
 
     @classmethod
-    def disable_by_names(self, *names):
+    def disable_by_names(cls, *names):
         """ Checks all schedules that are passed with `names` and then disables them via menu.
 
         Args:
             *names: Names of schedules to disable.
         """
-        self.select_by_names(*names)
+        cls.select_by_names(*names)
         tb.select("Configuration", "Disable the selected Schedules")
 
 
@@ -962,6 +986,18 @@ def get_server_roles():
     """
     sel.force_navigate("cfg_settings_currentserver_server")
     return {name: sel.element(locator).is_selected() for (name, locator) in server_roles.fields}
+
+
+def set_server_role(role_name, state=True):
+    """ Change state of given role only
+
+    Args:
+        role_name: Name of the role to set/unset
+        state: Enable if `True`, disable otherwise (default `True`)
+    """
+    roles_to_set = get_server_roles()
+    roles_to_set[role_name] = state
+    set_server_roles(roles_to_set)
 
 
 def set_ntp_servers(*servers):
@@ -1100,7 +1136,7 @@ def set_auth_mode(mode, **kwargs):
         kwargs: A dict of keyword arguments used to initialize one of
                 the \*AuthSetting classes - class type is mode-dependent.
     Raises:
-        CFMEException: when the given mode is not valid
+        AuthModeUnknown: when the given mode is not valid
     """
     if mode == 'ldap':
         auth_pg = LDAPAuthSetting(**kwargs)
@@ -1111,5 +1147,5 @@ def set_auth_mode(mode, **kwargs):
     elif mode == 'database':
         auth_pg = DatabaseAuthSetting(**kwargs)
     else:
-        raise CFMEException("{} is not a valid authentication mode".format(mode))
+        raise AuthModeUnknown("{} is not a valid authentication mode".format(mode))
     auth_pg.update()
