@@ -1,7 +1,15 @@
 #!/usr/bin/python
 
+"""This script takes various parameters specified in
+cfme_data['template_upload']['template_upload_vsphere'] and/or by command-line arguments.
+Parameters specified by command-line have higher priority, and override data in cfme_data.
+
+This script is designed to run either as a standalone vsphere template uploader, or it can be used
+together with template_upload_all script. This is why all the function calls, which would
+normally be placed in main function, are located in function run(**kwargs).
+"""
+
 import argparse
-import re
 import subprocess
 import sys
 
@@ -9,7 +17,8 @@ from psphere.client import Client
 from psphere.errors import ObjectNotFoundError
 from psphere.managedobjects import VirtualMachine
 
-from utils import conf
+from utils.conf import cfme_data
+from utils.conf import credentials
 from utils.wait import wait_for
 
 #ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
@@ -19,25 +28,25 @@ NUM_OF_TRIES_OVFTOOL = 5
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--image_url', metavar='URL', dest="image_url",
-                        help="URL of OVA", required=True)
+                        help="URL of OVA", default=None)
     parser.add_argument('--template_name', dest="template_name",
-                        help="Override/Provide name of template")
+                        help="Override/Provide name of template", default=None)
     parser.add_argument('--datastore', dest="datastore",
-                        help="Datastore name")
+                        help="Datastore name", default=None)
     parser.add_argument('--provider', dest="provider",
-                        help="Specify a vCenter connection", required=True)
+                        help="Specify a vCenter connection", default=None)
     parser.add_argument('--no_template', dest='template', action='store_false',
-                        help="Do not templateize the OVA", default=True)
+                        help="Do not templateize the OVA", default=None)
     parser.add_argument('--no_upload', dest='upload', action='store_false',
-                        help="Do not upload the new OVA", default=True)
+                        help="Do not upload the new OVA", default=None)
     parser.add_argument('--no_disk', dest='disk', action='store_false',
-                        help="Do not add a second disk to OVA", default=True)
+                        help="Do not add a second disk to OVA", default=None)
     parser.add_argument('--cluster', dest="cluster",
-                        help="Specify a cluster")
+                        help="Specify a cluster", default=None)
     parser.add_argument('--datacenter', dest="datacenter",
-                        help="Specify a datacenter")
+                        help="Specify a datacenter", default=None)
     parser.add_argument('--host', dest='host',
-                        help='Specify host in cluster')
+                        help='Specify host in cluster', default=None)
     args = parser.parse_args()
     return args
 
@@ -61,6 +70,7 @@ def upload_ova(hostname, username, password, name, datastore,
     cmd_args.append("vi://%s@%s/%s/host/%s" % (username, hostname, datacenter, cluster))
 
     print "VSPHERE: Running OVFTool..."
+
     proc = subprocess.Popen(cmd_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
 
@@ -151,31 +161,170 @@ def make_template(client, name, hostname, username, password):
         sys.exit(127)
 
 
+def api_params_resolution(item_list, item_name, item_param):
+    if len(item_list) == 0:
+        print "VSPHERE: Cannot find %s (%s) automatically." % (item_name, item_param)
+        print "Please specify it by cmd-line parameter '--%s' or in cfme_data." % item_param
+        return None
+    elif len(item_list) > 1:
+        for item in item_list:
+            if hasattr(item, 'summary'):
+                if hasattr(item.summary, 'overallStatus'):
+                    if item.summary.overallStatus != 'red':
+                        print "VSPHERE: Found multiple instances of %s. \
+                               Picking '%s'." % (item_name, item.name)
+                        return item
+                elif hasattr(item.summary, 'accessible'):
+                    if item.summary.accessible is True:
+                        print "VSPHERE: Found multiple instances of %s. \
+                               Picking '%s'." % (item_name, item.name)
+                        return item
+            elif hasattr(item, 'overallStatus'):
+                if item.overallStatus != 'red':
+                    print "VSPHERE: Found multiple instances of %s. \
+                           Picking '%s'." % (item_name, item.name)
+                    return item
+        print "VSPHERE: Found instances of %s, but all have status 'red'." % item_name
+        print "Please specify %s manually." % item_name
+        return None
+    else:
+        item = item_list[0]
+        if hasattr(item, 'summary'):
+            if hasattr(item.summary, 'overallStatus'):
+                if item_list[0].summary.overallStatus != 'red':
+                    print "VSPHERE: Found %s '%s'." % (item_name, item.name)
+                    return item_list[0]
+            elif hasattr(item.summary, 'accessible'):
+                if item_list[0].summary.accessible is True:
+                    print "VSPHERE: Found %s '%s'." % (item_name, item.name)
+                    return item_list[0]
+        elif hasattr(item, 'overallStatus'):
+            if item_list[0].overallStatus != 'red':
+                print "VSPHERE: Found %s '%s'." % (item_name, item.name)
+                return item_list[0]
+        print "VSPHERE: Found %s, but it has status 'red'." % item_name
+        print "Please specify %s manually." % item_name
+        return None
+
+
+def get_cluster(client):
+    from psphere.managedobjects import ClusterComputeResource
+    clusters = ClusterComputeResource.all(client)
+
+    return api_params_resolution(clusters, 'cluster', 'cluster')
+
+
+def get_host(client, name):
+    from psphere.managedobjects import HostSystem
+    hosts = HostSystem.all(client)
+
+    if name is None:
+        return api_params_resolution(hosts, 'host', 'host')
+    else:
+        for host in hosts:
+            if host.name == name:
+                return host
+        print "VSPHERE: Could not find specified host '%s'" % name
+
+
+def get_datastore(client, host):
+    datastores = host.datastore
+
+    return api_params_resolution(datastores, 'datastore', 'datastore')
+
+
+def get_datacenter(client):
+    from psphere.managedobjects import Datacenter
+    datacenters = Datacenter.all(client)
+
+    return api_params_resolution(datacenters, 'datacenter', 'datacenter')
+
+
+def check_kwargs(**kwargs):
+    for key, val in kwargs.iteritems():
+        if val is None:
+            print "VSPHERE: please supply required parameter '%s'." % key
+            sys.exit(127)
+
+
+def update_params_api(client, **kwargs):
+    if kwargs.get('cluster') is None:
+        cluster = get_cluster(client)
+        kwargs['cluster'] = cluster.name
+    if kwargs.get('host') is None:
+        host = get_host(client, None)
+        kwargs['host'] = host.name
+    if kwargs.get('datastore') is None:
+        if kwargs.get('host') is None:
+            host = get_host(client, kwargs.get('host'))
+        datastore = get_datastore(client, host)
+        kwargs['datastore'] = datastore.name
+    if kwargs.get('datacenter') is None:
+        datacenter = get_datacenter(client)
+        kwargs['datacenter'] = datacenter.name
+    return kwargs
+
+
+def make_kwargs(args, **kwargs):
+    args_kwargs = dict(args._get_kwargs())
+
+    if len(kwargs) is 0:
+        return args_kwargs
+
+    template_name = kwargs.get('template_name', None)
+    if template_name is None:
+        template_name = cfme_data['basic_info']['appliance_template']
+        kwargs.update({'template_name': template_name})
+
+    for kkey, kval in kwargs.iteritems():
+        for akey, aval in args_kwargs.iteritems():
+            if aval is not None:
+                if kkey == akey:
+                    if kval != aval:
+                        kwargs[akey] = aval
+
+    for akey, aval in args_kwargs.iteritems():
+        if akey not in kwargs.iterkeys():
+            kwargs[akey] = aval
+
+    return kwargs
+
+
 def run(**kwargs):
-    provider = conf.cfme_data['management_systems'][kwargs.get('provider')]
-    creds = conf.credentials[provider['credentials']]
+    provider = cfme_data['management_systems'][kwargs.get('provider')]
+    creds = credentials[provider['credentials']]
 
     hostname = provider['hostname']
     username = creds['username']
     password = creds['password']
-    datastore = kwargs.get('datastore')
-    cluster = kwargs.get('cluster')
-    datacenter = kwargs.get('datacenter')
-    host = kwargs.get('host')
+
+    client = Client(server=hostname, username=username, password=password)
+
+    kwargs = update_params_api(client, **kwargs)
 
     name = kwargs.get('template_name', None)
     if name is None:
-        name = conf.cfme_data['basic_info']['cfme_template_name']
+        name = cfme_data['basic_info']['appliance_template']
+
+    print "VSPHERE: Template Name: %s" % name
+
+    check_kwargs(**kwargs)
 
     url = kwargs.get('image_url')
-    print "VSPHERE: Template Name: %s" % name
 
     if kwargs.get('upload'):
         #Wrapper for ovftool - sometimes it just won't work
         for i in range(0, NUM_OF_TRIES_OVFTOOL):
             print "VSPHERE: Trying ovftool %s..." % i
-            ova_ret, ova_out = upload_ova(hostname, username, password, name, datastore,
-                                          cluster, datacenter, url, host)
+            ova_ret, ova_out = upload_ova(hostname,
+                                          username,
+                                          password,
+                                          name,
+                                          kwargs.get('datastore'),
+                                          kwargs.get('cluster'),
+                                          kwargs.get('datacenter'),
+                                          url,
+                                          kwargs.get('host'))
             if ova_ret is 0:
                 break
         if ova_ret is -1:
@@ -183,7 +332,6 @@ def run(**kwargs):
             print ova_out
             sys.exit(127)
 
-    client = Client(server=hostname, username=username, password=password)
     if kwargs.get('disk'):
         add_disk(client, name)
     if kwargs.get('template'):
@@ -195,6 +343,8 @@ def run(**kwargs):
 if __name__ == "__main__":
     args = parse_cmd_line()
 
-    kwargs = dict(args._get_kwargs())
+    kwargs = cfme_data['template_upload']['template_upload_vsphere']
 
-    run(**kwargs)
+    final_kwargs = make_kwargs(args, **kwargs)
+
+    run(**final_kwargs)
