@@ -9,6 +9,7 @@
 
 * **Elemental**
 
+  * :py:class:`CheckboxTable`
   * :py:class:`DHTMLSelect`
   * :py:class:`Filter`
   * :py:class:`Form`
@@ -339,7 +340,7 @@ class Table(object):
         """
         # accept dicts or supertuples
         cells = dict(cells)
-        cell_text_loc = '//td[contains(text(), "%s")]/..'
+        cell_text_loc = '//td/descendant-or-self::*[contains(text(), "%s")]/ancestor::tr[1]'
         matching_rows_list = list()
         for value in cells.values():
             # Get all td elements that contain the value text
@@ -615,6 +616,166 @@ class SplitTable(Table):
         return self._header_loc
 
 
+class CheckboxTable(Table):
+    """:py:class:`Table` with support for checkboxes
+
+    Args:
+        table_locator: See :py:class:`cfme.web_ui.Table`
+        header_checkbox_locator: Locator of header checkbox (default `None`)
+                                 Specify in case the header checkbox is not part of the header row
+        header_offset: See :py:class:`cfme.web_ui.Table`
+        body_offset: See :py:class:`cfme.web_ui.Table`
+    """
+
+    _checkbox_loc = ".//input[@type='checkbox']"
+
+    def __init__(self, table_locator, header_checkbox_locator=None, header_offset=0, body_offset=0):
+        super(CheckboxTable, self).__init__(table_locator, header_offset, body_offset)
+        self._header_checkbox_loc = header_checkbox_locator
+
+    @property
+    def header_checkbox(self):
+        """Checkbox used to select/deselect all rows"""
+        if self._header_checkbox_loc is not None:
+            return sel.element(self._header_checkbox_loc)
+        else:
+            return sel.element(self._checkbox_loc, root=self.header_row)
+
+    def select_all(self):
+        """Select all rows using the header checkbox"""
+        sel.uncheck(self.header_checkbox)
+        sel.check(self.header_checkbox)
+
+    def deselect_all(self):
+        """Deselect all rows using the header checkbox"""
+        sel.check(self.header_checkbox)
+        sel.uncheck(self.header_checkbox)
+
+    def _set_row_checkbox(self, row, set_to=False):
+        row_checkbox = sel.element(self._checkbox_loc, root=row.locate())
+        sel.checkbox(row_checkbox, set_to)
+
+    def _set_row(self, header, value, set_to=False):
+        """ Internal method used to select/deselect a row by column header and cell value
+
+        Args:
+            header: See :py:meth:`Table.find_row`
+            value: See :py:meth:`Table.find_row`
+            set_to: Select if `True`, deselect if `False`
+        """
+        row = self.find_row(header, value)
+        if row:
+            self._set_row_checkbox(row, set_to)
+            return True
+        else:
+            return False
+
+    def select_row(self, header, value):
+        """Select a single row specified by column header and cell value
+
+        Args:
+            header: See :py:meth:`Table.find_row`
+            value: See :py:meth:`Table.find_row`
+
+        Returns: `True` if successful, `False` otherwise
+        """
+        return self._set_row(header, value, True)
+
+    def deselect_row(self, header, value):
+        """Deselect a single row specified by column header and cell value
+
+        Args:
+            header: See :py:meth:`Table.find_row`
+            value: See :py:meth:`Table.find_row`
+
+        Returns: `True` if successful, `False` otherwise
+        """
+        return self._set_row(header, value, False)
+
+    def _set_rows(self, cell_map, set_to=False):
+        """ Internal method used to select/deselect multiple rows
+
+        Args:
+            cell_map: See :py:meth:`Table.click_cells`
+            set_to: Select if `True`, deselect if `False`
+        """
+        failed_selects = []
+        for header, values in cell_map.items():
+            if isinstance(values, basestring):
+                values = [values]
+            for value in values:
+                res = self._set_row(header, value, set_to)
+                if not res:
+                    failed_selects.append("%s:%s" % (header, value))
+        if failed_selects:
+            raise exceptions.NotAllCheckboxesFound(failed_selects)
+
+    def select_rows(self, cell_map):
+        """Select multiple rows
+
+        Args:
+            cell_map: See :py:meth:`Table.click_cells`
+
+        Raises:
+            NotAllCheckboxesFound: If some cells were unable to be found
+        """
+        self._set_rows(cell_map, True)
+
+    def deselect_rows(self, cell_map):
+        """Deselect multiple rows
+
+        Args:
+            cell_map: See :py:meth:`Table.click_cells`
+
+        Raises:
+            NotAllCheckboxesFound: If some cells were unable to be found
+        """
+        self._set_rows(cell_map, False)
+
+    def _set_row_by_cells(self, cells, set_to=False):
+        row = self.find_row_by_cells(cells)
+        self._set_row_checkbox(row, set_to)
+
+    def select_row_by_cells(self, cells):
+        """Select the first row matched by ``cells``
+
+        Args:
+            cells: See :py:meth:`Table.find_rows_by_cells`
+
+        """
+        self._set_row_by_cells(cells, True)
+
+    def deselect_row_by_cells(self, cells):
+        """Deselect the first row matched by ``cells``
+
+        Args:
+            cells: See :py:meth:`Table.find_rows_by_cells`
+
+        """
+        self._set_row_by_cells(cells, False)
+
+    def _set_rows_by_cells(self, cells, set_to=False):
+        rows = self.find_rows_by_cells(cells)
+        for row in rows:
+            self._set_row_checkbox(row, set_to)
+
+    def select_rows_by_cells(self, cells):
+        """Select the rows matched by ``cells``
+
+        Args:
+            cells: See :py:meth:`Table.find_rows_by_cells`
+        """
+        self._set_rows_by_cells(cells, True)
+
+    def deselect_rows_by_cells(self, cells):
+        """Deselect the rows matched by ``cells``
+
+        Args:
+            cells: See :py:meth:`Table.find_rows_by_cells`
+        """
+        self._set_rows_by_cells(cells, False)
+
+
 @multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))
 def fill_tag(loc, value):
     ''' Return a tuple of function to do the filling, and a value to log.'''
@@ -679,6 +840,16 @@ def _sd_fill_table(table, cells):
     table._update_cache()
     logger.debug('  Clicking Table cell')
     table.click_cells(cells)
+
+
+@fill.method((CheckboxTable, object))
+def _sd_fill_checkboxtable(table, cells):
+    """ How to fill a checkboxtable with a value (by selecting the right rows)
+    See CheckboxTable.select_by_cells
+    """
+    table._update_cache()
+    logger.debug('  Selecting CheckboxTable row')
+    table.select_rows(cells)
 
 
 class Calendar(object):
