@@ -1,167 +1,94 @@
 import ui_navigate as nav
 
-from cfme.fixtures.pytest_selenium import click_fn, move_to_fn
-from cfme.web_ui import Region
+from cfme.fixtures import pytest_selenium as sel
+
+toplevel_loc = '//div[@class="navbar"]//li/a[normalize-space(.)="%s"]'
+secondlevel_loc = '../ul/li/a[normalize-space(.)="%s"]'
 
 
-def item(text):
-    """
-    Returns a text locator where the link is related to the provided text.
+def nav_to_fn(toplevel, secondlevel=None):
+    def f(_):
+        toplevel_elem = sel.element(toplevel_loc % toplevel)
+        if secondlevel is None:
+            sel.click(toplevel_elem)
+        else:
+            sel.move_to_element(toplevel_elem)
+            sel.click(sel.element(secondlevel_loc % secondlevel, root=toplevel_elem))
+    return f
 
-    Args:
-        text: The link text as a string.
-    Return: The locator as an XPATH string
-    """
-    return ("//div[@class='navbar']//a[normalize-space(.)='%s' and "
-            "not(ancestor::*[contains(@style,'display: none')])]" % text)
+# Dictionary of (nav destination name, section title) section tuples
+# Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel sections
+sections = {
+    ('cloud_intelligence', 'Cloud Intelligence'): (
+        ('dashboard', 'Dashboard'),
+        ('reports', 'Reports'),
+        ('chargeback', 'Chargeback'),
+        ('timelines', 'Timelines'),
+        ('rss', 'RSS')
+    ),
+    ('services', 'Services'): (
+        ('my_services', 'My Services'),
+        ('services_catalogs', 'Catalogs'),
+        ('services_workloads', 'Workloads'),
+        ('services_requests', 'Requests')
+    ),
+    ('clouds', 'Clouds'): (
+        ('clouds_providers', 'Providers'),
+        ('clouds_availability_zones', 'Availability Zones'),
+        ('clouds_flavors', 'Flavors'),
+        ('clouds_security_groups', 'Security Groups'),
+        ('clouds_instances', 'Instances')
+    ),
+    ('infrastructure', 'Infrastructure'): (
+        ('infrastructure_providers', 'Providers'),
+        ('infrastructure_clusters', 'Clusters'),
+        ('infrastructure_hosts', 'Hosts'),
+        ('infrastructure_virtual_machines', 'Virtual Machines'),
+        ('infrastructure_resource_pools', 'Resource Pools'),
+        ('infrastructure_datastores', 'Datastores'),
+        ('infrastructure_repositories', 'Repositories'),
+        ('infrastructure_pxe', 'PXE'),
+        ('infrastructure_requests', 'Requests')
+    ),
+    ('control', 'Control'): (
+        ('control_explorer', 'Explorer'),
+        ('control_simulation', 'Simulation'),
+        ('control_import_export', 'Import / Export'),
+        ('control_log', 'Log')
+    ),
+    ('automate', 'Automate'): (
+        ('automate_explorer', 'Explorer'),
+        ('automate_simulation', 'Simulation'),
+        ('automate_customization', 'Customization'),
+        ('automate_import_export', 'Import / Export'),
+        ('automate_log', 'Log'),
+        ('automate_requests', 'Requests')
+    ),
+    ('optimize', 'Optimize'): (
+        ('utilization', 'Utilization'),
+        ('planning', 'Planning'),
+        ('bottlenecks', 'Bottlenecks')
+    ),
+    ('configure', 'Configure'): (
+        ('my_settings', 'My Settings'),
+        ('tasks', 'Tasks'),
+        ('configuration', 'Configuration'),
+        ('smartproxies', 'SmartProxies'),
+        ('about', 'About')
+    )
+}
 
+_branches = dict()
+for (toplevel_dest, toplevel), secondlevels in sections.items():
+    _branch_dests = dict()
+    for secondlevel_dest, secondlevel in secondlevels:
+        _branch_dests[secondlevel_dest] = nav_to_fn(toplevel, secondlevel)
+    # The main tab destination is always the first secondlevel page in that tab
+    # Since this is redundant, it's arguable that the toplevel tabs should be
+    # nav destination at all; they're included here "just in case".
+    _branches[toplevel_dest] = [
+        nav_to_fn(toplevel, None),
+        _branch_dests
+    ]
 
-def make_items(dct):
-    """
-    Converts a dictionary of visible text to locators
-
-    Args:
-        dct: A dictionary of name and visible text
-    Return: Converted dictionary
-    """
-    return {k: item(v) for k, v in dct.items()}
-
-
-main = Region(locators=
-              make_items(
-                  {'cloud_intelligence': 'Cloud Intelligence',
-                   'services': 'Services',
-                   'clouds': 'Clouds',
-                   'infrastructure': 'Infrastructure',
-                   'control': 'Control',
-                   'automate': 'Automate',
-                   'optimize': 'Optimize',
-                   'configure': 'Configure'}))
-
-cloud_intelligence = Region(locators=
-                            make_items(
-                                {"dashboard": 'Dashboard',
-                                 "reports": 'Reports',
-                                 "usage": 'Usage',
-                                 "chargeback": 'Chargeback',
-                                 "timelines": 'Timelines',
-                                 "rss": 'RSS'}))
-
-services = Region(locators=
-                  make_items(
-                      {"my_services": "My Services",
-                       "catalogs": "Catalogs",
-                       "workloads": "Workloads",
-                       "requests": "Requests"}))
-
-clouds = Region(locators=
-                make_items(
-                    {"providers": "Providers",
-                     "availability_zones": "Availability Zones",
-                     "flavors": "Flavors",
-                     "security_groups": "Security Groups",
-                     "instances": "Instances"}))
-
-infrastructure = Region(locators=
-                        make_items(
-                            {"providers": "Providers",
-                             "clusters": "Clusters",
-                             "hosts": "Hosts",
-                             "virtual_machines": "Virtual Machines",
-                             "resource_pools": "Resource Pools",
-                             "datastores": "Datastores",
-                             "repositories": "Repositories",
-                             "pxe": "PXE",
-                             "requests": "Requests"}))
-
-control = Region(locators=
-                 make_items(
-                     {"explorer": "Explorer",
-                      "simulation": "Simulation",
-                      "import_export": "Import / Export",
-                      "log": "Log"}))
-
-automate = Region(locators=
-                  make_items(
-                      {"explorer": "Explorer",
-                       "simulation": "Simulation",
-                       "customization": "Customization",
-                       "import_export": "Import / Export",
-                       "log": "Log",
-                       "requests": "Requests"}))
-
-optimize = Region(locators=
-                  make_items(
-                      {"utilization": "Utilization",
-                       "planning": "Planning",
-                       "bottlenecks": "Bottlenecks"}))
-
-configure = Region(locators=
-                   make_items(
-                       {"my_settings": "My Settings",
-                        "tasks": "Tasks",
-                        "configuration": "Configuration",
-                        "smartproxies": "SmartProxies",
-                        "about": "About"}))
-
-nav_tree = {"cloud_intelligence":
-            [move_to_fn(main.cloud_intelligence),
-             {"dashboard": click_fn(cloud_intelligence.dashboard),
-              "reports": click_fn(cloud_intelligence.reports),
-              "usage": click_fn(cloud_intelligence.usage),
-              "chargeback": click_fn(cloud_intelligence.chargeback),
-              "timelines": click_fn(cloud_intelligence.timelines),
-              "rss": click_fn(cloud_intelligence.rss)}],
-            "services":
-            [move_to_fn(main.services),
-             {"my_services": click_fn(services.my_services),
-              "services_catalogs": click_fn(services.catalogs),
-              "services_workloads": click_fn(services.workloads),
-              "services_requests": click_fn(services.requests)}],
-            "clouds":
-            [move_to_fn(main.clouds),
-             {"clouds_providers": click_fn(clouds.providers),
-              "clouds_availability_zones": click_fn(clouds.availability_zones),
-              "clouds_flavors": click_fn(clouds.flavors),
-              "clouds_security_groups": click_fn(clouds.security_groups),
-              "clouds_instances": click_fn(clouds.instances)}],
-            "infrastructure":
-            [move_to_fn(main.infrastructure),
-             {"infrastructure_providers": click_fn(infrastructure.providers),
-              "infrastructure_clusters": click_fn(infrastructure.clusters),
-              "infrastructure_hosts": click_fn(infrastructure.hosts),
-              "infrastructure_virtual_machines": click_fn(infrastructure.virtual_machines),
-              "infrastructure_resource_pools": click_fn(infrastructure.resource_pools),
-              "infrastructure_datastores": click_fn(infrastructure.datastores),
-              "infrastructure_repositories": click_fn(infrastructure.repositories),
-              "infrastructure_pxe": click_fn(infrastructure.pxe),
-              "infrastructure_requests": click_fn(infrastructure.requests)}],
-            "control":
-            [move_to_fn(main.control),
-             {"control_explorer": click_fn(control.explorer),
-              "control_simulation": click_fn(control.simulation),
-              "control_import_export": click_fn(control.import_export),
-              "control_log": click_fn(control.log)}],
-            "automate":
-            [move_to_fn(main.automate),
-             {"automate_explorer": click_fn(automate.explorer),
-              "automate_simulation": click_fn(automate.simulation),
-              "automate_customization": click_fn(automate.customization),
-              "automate_import_export": click_fn(automate.import_export),
-              "automate_log": click_fn(automate.log),
-              "automate_requests": click_fn(automate.requests)}],
-            "optimize":
-            [move_to_fn(main.optimize),
-             {"utilization": click_fn(optimize.utilization),
-              "planning": click_fn(optimize.planning),
-              "bottlenecks": click_fn(optimize.bottlenecks)}],
-            "configure":
-            [move_to_fn(main.configure),
-             {"my_settings": click_fn(configure.my_settings),
-              "tasks": click_fn(configure.tasks),
-              "configuration": click_fn(configure.configuration),
-              "smartproxies": click_fn(configure.smartproxies),
-              "about": click_fn(configure.about)}]}
-
-
-nav.add_branch('toplevel', nav_tree)
+nav.add_branch('toplevel', _branches)
