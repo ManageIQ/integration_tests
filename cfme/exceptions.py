@@ -14,6 +14,13 @@ class AddProviderError(CFMEException):
     pass
 
 
+class AuthModeUnknown(CFMEException):
+    """
+    Raised if an invalid authenctication mode is passed to
+    :py:func:`cfme.configure.configuration.set_auth_mode`
+    """
+
+
 class BlockTypeUnknown(CFMEException):
     """
     Raised if the block type requested to :py:class:`cfme.web_ui.InfoBlock`.
