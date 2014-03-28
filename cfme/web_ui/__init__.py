@@ -1561,17 +1561,20 @@ class Select(SeleniumSelect, object):
     """
 
     def __init__(self, loc, multi=False):
-        self.loc = loc
+        self._loc = loc
         self.is_multiple = multi
 
     @property
     def _el(self):
-        el = sel.element(self.loc)
+        el = sel.element(self._loc)
         ActionChains(browser()).move_to_element(el).perform()
         return el
 
+    def locate(self):
+        return self._loc
+
     def observer_wait(self):
-        sel.detect_observed_field(self.loc)
+        sel.detect_observed_field(self._loc)
 
 
 @fill.method((Select, object))
