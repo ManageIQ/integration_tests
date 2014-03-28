@@ -18,6 +18,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
+from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -123,7 +124,7 @@ class Host(Updateable):
 
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,
-                 ipmi_credentials=None):
+                 ipmi_credentials=None, interface_type='lan'):
         self.name = name
         self.hostname = hostname
         self.ip_address = ip_address
@@ -133,6 +134,7 @@ class Host(Updateable):
         self.mac_address = mac_address
         self.credentials = credentials
         self.ipmi_credentials = ipmi_credentials
+        self.interface_type = interface_type
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -203,6 +205,10 @@ class Host(Updateable):
         sel.force_navigate('infrastructure_host', context={'host': self})
         cfg_btn('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
+
+    def get_ipmi(self):
+        return IPMI(hostname=self.ipmi_address, username=self.ipmi_credentials.principal,
+                    password=self.ipmi_credentials.secret, interface_type=self.interface_type)
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
@@ -359,6 +365,7 @@ def get_from_config(provider_config_name):
                 host_platform=prov_config['host_platform'],
                 ipmi_address=prov_config['ipmi_address'],
                 mac_address=prov_config['mac_address'],
+                interface_type=prov_config['interface_type'],
                 credentials=credentials,
                 ipmi_credentials=ipmi_credentials)
 
