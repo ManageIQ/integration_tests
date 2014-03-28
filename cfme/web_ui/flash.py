@@ -81,3 +81,9 @@ def assert_message_match(m):
     """ Asserts that a message matches a specific string."""
     if not any([fm.message == m for fm in get_messages()]):
         raise Exception("No matching flash message for '%s'" % m)
+
+
+def assert_message_contain(m):
+    """ Asserts that a message contains a specific string """
+    if not any([m in fm.message for fm in get_messages()]):
+        raise Exception("No flash message contains '%s'" % m)
