@@ -10,6 +10,8 @@ Usage:
     print get_selected_tab()
 
 """
+from collections import Mapping
+
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import fill, Form
 from utils.log import logger
@@ -101,12 +103,20 @@ class _TabStripField(object):
         self.ident_string = ident_string
         self.arg = arg
 
+    def locate(self):
+        select_tab(self.ident_string)
+        return self.arg
+
 
 @fill.method((_TabStripField, object))
 def _fill_tabstrip(tabstrip_field, value):
-    select_tab(tabstrip_field.ident_string)
     logger.debug(' Navigating to tabstrip %s' % value)
-    fill(tabstrip_field.arg, value)
+    fill(tabstrip_field.locate(), value)
+
+
+# In a fight between _TabStripField and object, _TabStripField should win,
+# since it always delegates back to fill
+fill.prefer((_TabStripField, object), (object, Mapping))
 
 
 class TabStripForm(Form):

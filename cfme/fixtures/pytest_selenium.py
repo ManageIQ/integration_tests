@@ -43,7 +43,7 @@ class ByText(object):
         self.text = text
 
     def __str__(self):
-        return text
+        return str(self.text)
 
 
 @singledispatch

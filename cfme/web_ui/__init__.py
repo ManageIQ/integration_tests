@@ -833,7 +833,7 @@ def fill(loc, content):
     sel.detect_observed_field(loc)
 
 
-@fill.method((Table, object))
+@fill.method((Table, Mapping))
 def _sd_fill_table(table, cells):
     """ How to fill a table with a value (by selecting the value as cells in the table)
     See Table.click_cells
