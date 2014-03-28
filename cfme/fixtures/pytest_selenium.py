@@ -226,6 +226,18 @@ def text(loc):
     return element(loc).text
 
 
+def value(loc):
+    """
+    Returns the value of an input element.
+
+    Args:
+        loc: A locator, expects eithera  string, WebElement, tuple.
+
+    Returns: A string containing the value of the input element.
+    """
+    return get_attribute(loc, 'value')
+
+
 def tag(loc):
     """
     Returns the tag name of an element
