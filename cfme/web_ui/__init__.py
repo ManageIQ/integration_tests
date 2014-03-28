@@ -260,12 +260,8 @@ class Table(object):
         return re.sub('[^0-9a-zA-Z_]+', '', header.replace(' ', '_')).lower()
 
     @property
-    def is_displayed(self):
-        """ Whether the table is displayed or not.
-
-        Returns: True if visible, otherwise False
-        """
-        return sel.is_displayed(self.header_row)
+    def _root_loc(self):
+        return self._loc
 
     def _update_cache(self):
         """Updates the internal cache of headers
@@ -340,11 +336,13 @@ class Table(object):
         """
         # accept dicts or supertuples
         cells = dict(cells)
-        cell_text_loc = '//td/descendant-or-self::*[contains(text(), "%s")]/ancestor::tr[1]'
+        cell_text_loc = './/td/descendant-or-self::*[contains(text(), "%s")]/ancestor::tr[1]'
         matching_rows_list = list()
         for value in cells.values():
+            # Get a root locator ready, self._body_loc is the SplitTable body locator
+            root = sel.element(self._root_loc)
             # Get all td elements that contain the value text
-            matching_rows_list.append(sel.elements(cell_text_loc % value))
+            matching_rows_list.append(sel.elements(cell_text_loc % value, root))
 
         # Now, find the common row elements that matched all the input cells
         # (though not yet matching values to headers)
@@ -597,6 +595,10 @@ class SplitTable(Table):
         self._body_loc, body_offset = body_data
         self.header_offset = int(header_offset)
         self.body_offset = int(body_offset)
+
+    @property
+    def _root_loc(self):
+        return self._body_loc
 
     @property
     def header_row(self):

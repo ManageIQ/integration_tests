@@ -6,7 +6,7 @@
 Todo: Finish the rest of the things.
 """
 
-import cfme.fixtures.pytest_selenium as browser
+import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 from cfme.web_ui import Form, Region, Select, Table, fill, paginator
 from cfme.web_ui.menu import nav
@@ -71,8 +71,8 @@ def _filter(
     """
     fill(filter_form, locals())
     try:
-        wait_for(lambda: browser.is_displayed(buttons.apply), num_sec=5)
-        browser.click(buttons.apply)
+        wait_for(lambda: sel.is_displayed(buttons.apply), num_sec=5)
+        sel.click(buttons.apply)
     except TimedOutError:
         pass
 
@@ -85,12 +85,12 @@ def _get_tasks(location, **filter_kwargs):
         **filter_kwargs: See :py:meth:`_filter`
     Returns: List of dicts.
     """
-    browser.force_navigate(location)
+    sel.force_navigate(location)
     if any([filter_kwargs[key] is not None for key in filter_kwargs.keys()]):
         _filter(**filter_kwargs)
     tasks = []
 
-    if tasks_table.is_displayed:
+    if sel.is_displayed(tasks_table):
         have_next_page = True
         while have_next_page:
             for row in tasks_table.rows():
@@ -109,7 +109,7 @@ def _get_tasks(location, **filter_kwargs):
                     )
                 )
             if int(paginator.rec_end()) < int(paginator.rec_total()):
-                browser.click(paginator.next())
+                sel.click(paginator.next())
             else:
                 have_next_page = False
     return tasks
