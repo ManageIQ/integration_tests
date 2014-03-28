@@ -88,5 +88,5 @@ class SmokeTests(object):
     def pytest_runtest_teardown(self, item, nextitem):
         # This condition should only be met on the last smoke test, since they were
         # all moved to the top of the test run.
-        if item.get_marker('smoke') and not nextitem.get_marker('smoke'):
+        if item.get_marker('smoke') and not (nextitem and nextitem.get_marker('smoke')):
             self.complete = True
