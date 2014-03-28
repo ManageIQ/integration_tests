@@ -19,6 +19,11 @@ def host_provisioning_setup_data(cfme_data):
     return cfme_data["provisioning_setup"]['host_provisioning_setup']['pxe_server']
 
 
+@pytest.fixture
+def vm_provisioning_setup_data(cfme_data):
+    return cfme_data["provisioning_setup"]['vm_provisioning_setup']['pxe_server']
+
+
 def setup_pxe_server(db_session, provisioning_setup_data):
     session = db_session
 
@@ -159,4 +164,22 @@ def setup_host_provisioning_pxe(uses_pxe, db_session, host_provisioning_setup_da
     '''Edit System Image Type'''
     rhel_type = db_session.query(db.PxeImageType).get(row_val)
     rhel_type.provision_type = 'host'
+    db_session.commit()
+
+
+@pytest.fixture
+def setup_vm_provisioning_pxe(uses_pxe, db_session, vm_provisioning_setup_data, datafile):
+    row_val, server_last_id = setup_pxe_server(db_session, vm_provisioning_setup_data)
+    if server_last_id is not False:
+        doc = requests.get(vm_provisioning_setup_data['ks_file'], verify=False)
+        ks_file_handle = StringIO.StringIO(doc.content)
+        menu_last_id = setup_pxe_menu(db_session, vm_provisioning_setup_data, server_last_id)
+        setup_pxe_image(db_session, vm_provisioning_setup_data, server_last_id, menu_last_id,
+                        row_val)
+        setup_customization_template(db_session, vm_provisioning_setup_data, row_val,
+                                     ks_file_handle=ks_file_handle)
+
+    '''Edit System Image Type'''
+    rhel_type = db_session.query(db.PxeImageType).get(row_val)
+    rhel_type.provision_type = 'vm'
     db_session.commit()
