@@ -85,6 +85,7 @@ manage_policies_form = Form(
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
+pow_btn = partial(tb.select, 'Power')
 
 nav.add_branch('infrastructure_hosts',
                {'infrastructure_host_new': lambda _: cfg_btn(
@@ -205,6 +206,16 @@ class Host(Updateable):
         sel.force_navigate('infrastructure_host', context={'host': self})
         cfg_btn('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
+
+    def power_on(self):
+        sel.force_navigate('infrastructure_host', context={'host': self})
+        pow_btn('Power On')
+        sel.handle_alert()
+
+    def power_off(self):
+        sel.force_navigate('infrastructure_host', context={'host': self})
+        pow_btn('Power Off')
+        sel.handle_alert()
 
     def get_ipmi(self):
         return IPMI(hostname=self.ipmi_address, username=self.ipmi_credentials.principal,
