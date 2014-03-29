@@ -468,7 +468,7 @@ class BasicInformation(Updateable):
         fields=[
             ('company_name', "//input[@id='server_company']"),
             ('appliance_name', "//input[@id='server_name']"),
-            ('time_zone', "//input[@id='server_timezone']"),
+            ('time_zone', Select("//select[@id='server_timezone']")),
         ]
     )
 
@@ -833,7 +833,7 @@ class Schedule(object):
             action=action,
             filter_type=filter_type,
             filter_value=filter_value,
-            time_zone=(sel.VALUE, time_zone),
+            time_zone=sel.ByValue(time_zone),
             start_date=start_date,
             start_hour=start_hour,
             start_min=start_min,
@@ -997,7 +997,7 @@ def set_server_role(role_name, state=True):
     """
     roles_to_set = get_server_roles()
     roles_to_set[role_name] = state
-    set_server_roles(roles_to_set)
+    set_server_roles(**roles_to_set)
 
 
 def set_ntp_servers(*servers):
