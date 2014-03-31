@@ -26,6 +26,7 @@ More information on ``parametrize`` can be found in pytest's documentation:
 * https://pytest.org/latest/parametrize.html#_pytest.python.Metafunc.parametrize
 
 """
+import pytest
 
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.cloud.provider import get_from_config as get_cloud_provider
@@ -221,12 +222,43 @@ def infra_providers(metafunc, *fields):
     return provider_by_type(metafunc, infra_provider_type_map, *fields)
 
 
+def auth_groups(metafunc, auth_mode):
+    """Provides two test params based on the 'auth_modes' and 'group_roles' in cfme_data:
+
+        ``group_name``:
+            expected group name in provided by the backend specified in ``auth_mode``
+
+        ``group_data``:
+            list of nav destinations that should be visible as a member of ``group_name``
+
+    Args:
+
+        auth_mode: One of the auth_modes specified in ``cfme_data['auth_modes']``
+
+    """
+    argnames = ['group_name', 'group_data']
+    argvalues = []
+    idlist = []
+
+    if auth_mode in cfme_data.get('auth_modes', {}):
+        # If auth_modes exists, group_roles is assumed to exist as well
+        for group in cfme_data.get('group_roles', []):
+            argvalues.append([group, sorted(cfme_data['group_roles'][group])])
+            idlist.append(group)
+    return argnames, argvalues, idlist
+
+
 def param_check(metafunc, argvalues):
     """Helper function to check if parametrizing is necessary
 
     If argvalues is empty, the test being represented by metafunc will be skipped in collection.
 
     See usage in :py:func:`parametrize`
+
+    Note:
+
+        Raising a skip in collection will cause the entire test module to be skipped, not just
+        a specific test.
 
     Args:
         metafunc: metafunc objects from pytest_generate_tests
@@ -245,7 +277,8 @@ def param_check(metafunc, argvalues):
         funcname = metafunc.function.__name__
 
         test_name = '.'.join(filter(None, (modname, classname, funcname)))
-        logger.warning('Parametrization for %s yielded no values, skipping' %
-            test_name)
+        skip_msg = 'Parametrization for %s yielded no values, skipping' % test_name
+        logger.warning(skip_msg)
         # Raising pytest.skip in collection halts future fixture evaluation,
         # and preemptively filters this test out of the test results
+        pytest.skip(skip_msg)
