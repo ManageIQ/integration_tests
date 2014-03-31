@@ -1,18 +1,9 @@
 import pytest
 
-from cfme.exceptions import CFMEException
 from cfme.fixtures import pytest_selenium as sel
 from cfme.login import force_login_user, logout
+from cfme.web_ui import menu
 from utils.conf import cfme_data, credentials
-
-
-def menu_by_name(menu_name):
-    import cfme.web_ui.menu
-    try:
-        return getattr(cfme.web_ui.menu, menu_name)
-    except KeyError:
-        raise CFMEException("There is no '{}' menu defined in cfme.web_ui.menu module"
-                            .format(menu_name))
 
 
 def pytest_generate_tests(metafunc):
@@ -28,26 +19,25 @@ def pytest_generate_tests(metafunc):
 
 
 def validate_menus(group_name, group_data):
-    displayed_menus = {}
-    navbar = menu_by_name('main')
+    # Gather up all the visible toplevel tabs
+    menu_names = []
+    toplevel_links = sel.element(menu.toplevel_tabs_loc)
+    for menu_elem in sel.elements('li/a', root=toplevel_links):
+        menu_names.append(sel.text(menu_elem))
 
-    # Save menus that are available to the user and sort them
-    for menu_name, menu_loc in navbar.locators.iteritems():
-        if sel.is_displayed(menu_loc):
-            displayed_menus[menu_name] = []
-            sel.move_to_element(menu_loc)
-            menu = menu_by_name(menu_name)
-            for submenu_name, submenu_loc in menu.locators.iteritems():
-                if sel.is_displayed(submenu_loc):
-                    displayed_menus[menu_name].append(submenu_name)
-            displayed_menus[menu_name].sort()
+    # Now go from tab to tab and pull the secondlevel names from the visible links
+    displayed_menus = []
+    for menu_name in menu_names:
+        menu_elem = sel.element(menu.toplevel_loc % menu_name)
+        sel.move_to_element(menu_elem)
+        for submenu_elem in sel.elements('../ul/li/a', root=menu_elem):
+            displayed_menus.append((menu_name, sel.text(submenu_elem)))
 
-    # Sort the yaml menus
-    for menu_name in group_data["menus"]:
-        group_data["menus"][menu_name].sort()
+    # Do reverse lookups so we can compare to the list of nav destinations for this group
+    displayed_dests = [menu.reverse_lookup(*displayed_menu) for displayed_menu in displayed_menus]
 
     # Compare them
-    assert displayed_menus == group_data["menus"]
+    assert sorted(displayed_dests) == sorted(group_data)
 
 
 @pytest.mark.usefixtures("maximized",
