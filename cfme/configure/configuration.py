@@ -5,7 +5,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
-from cfme.web_ui import Form, Region, Select, Table, Tree, accordion, fill, flash
+from cfme.web_ui import Calendar, Form, Region, Select, Table, Tree, accordion, fill, flash
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
 from utils.update import Updateable
@@ -808,7 +808,7 @@ class Schedule(object):
         ("timer_weeks", Select("//select[@id='timer_weekss']")),    # Not a typo!
         ("timer_months", Select("//select[@id='timer_months']")),
         ("time_zone", Select("//select[@id='time_zone']")),
-        ("start_date", "//input[@id='miq_date_1']"),
+        ("start_date", Calendar("miq_date_1")),
         ("start_hour", Select("//select[@id='start_hour']")),
         ("start_min", Select("//select[@id='start_min']")),
     ])
@@ -868,14 +868,16 @@ class Schedule(object):
         """ Modify an existing schedule with informations from this instance.
 
         Args:
+            updates: Dict with fields to be updated
             cancel: Whether to click on the cancel button to interrupt the editation.
+
         """
         sel.force_navigate("cfg_settings_schedule_edit",
                            context={"schedule_name": self.details["name"]})
         if cancel:
             action = crud_buttons.cancel_button
         else:
-            action = crud_buttons.add_button
+            action = crud_buttons.save_button
         self.details.update(updates)
         fill(
             self.form,
@@ -966,6 +968,172 @@ class Schedule(object):
         """
         cls.select_by_names(*names)
         tb.select("Configuration", "Disable the selected Schedules")
+
+
+class DatabaseBackupSchedule(Schedule):
+    """ Configure/Configuration/Region/Schedules - Database Backup type
+
+    Args:
+        name: Schedule name
+        description: Schedule description
+        active: Whether the schedule should be active (default `True`)
+        protocol: One of ``{'Samba', 'Network File System'}``
+        run_type: Once, Hourly, Daily, ...
+        run_every: If `run_type` is not Once, then you can specify how often it should be run
+        time_zone: Time zone selection
+        start_date: Specify start date (mm/dd/yyyy or datetime.datetime())
+        start_hour: Starting hour
+        start_min: Starting minute
+
+    Usage:
+        smb_schedule = DatabaseBackupSchedule(
+            name="Bi-hourly Samba Database Backup",
+            description="Everybody's favorite backup schedule",
+            protocol="Samba",
+            uri="samba.example.com/share_name",
+            username="samba_user",
+            password="secret",
+            password_verify="secret",
+            time_zone="UTC",
+            start_date=datetime.datetime.utcnow(),
+            run_type="Hourly",
+            run_every="2 Hours"
+        )
+        smb_schedule.create()
+        smb_schedule.delete()
+
+        ... or ...
+
+        nfs_schedule = DatabaseBackupSchedule(
+            name="One-time NFS Database Backup",
+            description="The other backup schedule",
+            protocol="Network File System",
+            uri="nfs.example.com/path/to/share",
+            time_zone="Chihuahua",
+            start_date="21/6/2014",
+            start_hour="7",
+            start_min="45"
+        )
+        nfs_schedule.create()
+        nfs_schedule.delete()
+
+    """
+    form = Form(fields=[
+        ("name", "//input[@id='name']"),
+        ("description", "//input[@id='description']"),
+        ("active", "//input[@id='enabled']"),
+        ("action", Select("//select[@id='action_typ']")),
+        ("log_protocol", Select("//select[@id='log_protocol']")),
+        ("uri", "//input[@id='uri']"),
+        ("log_userid", "//input[@id='log_userid']"),
+        ("log_password", "//input[@id='log_password']"),
+        ("log_verify", "//input[@id='log_verify']"),
+        ("validate", "//a[@title='Validate the credentials by logging into the Server']"),
+        ("timer_type", Select("//select[@id='timer_typ']")),
+        ("timer_hours", Select("//select[@id='timer_hours']")),
+        ("timer_days", Select("//select[@id='timer_days']")),
+        ("timer_weeks", Select("//select[@id='timer_weekss']")),    # Not a typo!
+        ("timer_months", Select("//select[@id='timer_months']")),
+        ("time_zone", Select("//select[@id='time_zone']")),
+        ("start_date", Calendar("miq_date_1")),
+        ("start_hour", Select("//select[@id='start_hour']")),
+        ("start_min", Select("//select[@id='start_min']"))
+    ])
+
+    def __init__(self,
+                 name,
+                 description,
+                 active=True,
+                 protocol=None,
+                 uri=None,
+                 username=None,
+                 password=None,
+                 password_verify=None,
+                 run_type="Once",
+                 run_every=None,
+                 time_zone=None,
+                 start_date=None,
+                 start_hour=None,
+                 start_min=None):
+
+        assert protocol in {'Samba', 'Network File System'},\
+            "Unknown protocol type '{}'".format(protocol)
+
+        if protocol == 'Samba':
+            self.details = dict(
+                name=name,
+                description=description,
+                active=active,
+                action='Database Backup',
+                log_protocol=sel.ByValue(protocol),
+                uri=uri,
+                log_userid=username,
+                log_password=password,
+                log_verify=password_verify,
+                time_zone=sel.ByValue(time_zone),
+                start_date=start_date,
+                start_hour=start_hour,
+                start_min=start_min,
+            )
+        else:
+            self.details = dict(
+                name=name,
+                description=description,
+                active=active,
+                action='Database Backup',
+                log_protocol=sel.ByValue(protocol),
+                uri=uri,
+                time_zone=sel.ByValue(time_zone),
+                start_date=start_date,
+                start_hour=start_hour,
+                start_min=start_min,
+            )
+
+        if run_type == "Once":
+            self.details["timer_type"] = "Once"
+        else:
+            self.details["timer_type"] = run_type
+            self.details[self.tab[run_type]] = run_every
+
+    def create(self, cancel=False, samba_validate=False):
+        """ Create a new schedule from the informations stored in the object.
+
+        Args:
+            cancel: Whether to click on the cancel button to interrupt the creation.
+            samba_validate: Samba-only option to click the `Validate` button to check
+                            if entered samba credentials are valid or not
+        """
+        sel.force_navigate("cfg_settings_schedules")
+        tb.select("Configuration", "Add a new Schedule")
+
+        fill(self.form, self.details)
+        if samba_validate:
+            sel.click(self.form.validate)
+        if cancel:
+            sel.click(crud_buttons.cancel_button)
+        else:
+            sel.click(crud_buttons.add_button)
+
+    def update(self, updates, cancel=False, samba_validate=False):
+        """ Modify an existing schedule with informations from this instance.
+
+        Args:
+            updates: Dict with fields to be updated
+            cancel: Whether to click on the cancel button to interrupt the editation.
+            samba_validate: Samba-only option to click the `Validate` button to check
+                            if entered samba credentials are valid or not
+        """
+        sel.force_navigate("cfg_settings_schedule_edit",
+                           context={"schedule_name": self.details["name"]})
+
+        self.details.update(updates)
+        fill(self.form, self.details)
+        if samba_validate:
+            sel.click(self.form.validate)
+        if cancel:
+            sel.click(crud_buttons.cancel_button)
+        else:
+            sel.click(crud_buttons.save_button)
 
 
 def set_server_roles(**roles):
