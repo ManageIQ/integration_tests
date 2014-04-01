@@ -61,7 +61,9 @@ def update(o, **kwargs):
     cp = deepcopy(o)
     yield cp
     try:
-        o.update(updates(o, cp), **kwargs)
+        o_updates = updates(o, cp)
+        if o_updates:
+            o.update(o_updates, **kwargs)
     except:
         cp.__dict__ = o.__dict__  # rollback
         raise
