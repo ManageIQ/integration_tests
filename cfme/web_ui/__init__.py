@@ -16,6 +16,7 @@
   * :py:class:`InfoBlock`
   * :py:class:`Quadicon`
   * :py:class:`Radio`
+  * :py:class:`ScriptBox`
   * :py:class:`Select`
   * :py:class:`SplitTable`
   * :py:class:`Table`
@@ -1744,3 +1745,29 @@ def select_multiselect(ms, values):
 @fill.method((MultiSelect, Sequence))
 def fill_multiselect(ms, items):
     sel.select(ms, items)
+
+
+class ScriptBox(object):
+    """Represents a script box as is present on the customization templates pages.
+    This box has to be activated before keys can be sent. Since this can't be done
+    until the box element is visible, and some dropdowns change the element, it must
+    be activated "inline".
+
+    Args:
+    """
+
+    def __init__(self, locator=None):
+        self.locator = locator
+
+
+@fill.method((ScriptBox, Anything))
+def fill_scriptbox(sb, script):
+    """Please note, this function does not clear the box, IE it appends and does not
+    "SET" the text like the other fill functions do.
+    """
+    root = sel.element("%s/.." % sb.locator)
+    activate = sel.element(
+        ".//div[@class='CodeMirror' or @class='CodeMirror CodeMirror-focused']", root=root)
+    sel.click(activate)
+    script_area = sel.element('.//div/div/textarea', root=root)
+    sel.send_keys(script_area, script)
