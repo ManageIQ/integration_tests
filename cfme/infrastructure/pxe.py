@@ -120,7 +120,20 @@ nav.add_branch('infrastructure_pxe',
 
 
 class PXEServer(Updateable):
-    """To be written"""
+    """Model of a PXE Server object in CFME
+
+    Args:
+        name: Name of PXE server.
+        depot_type: Depot type, either Samba or Network File System.
+        uri: The Depot URI.
+        userid: The Samba username.
+        password: The Samba password.
+        access_url: HTTP access path for PXE server.
+        pxe_dir: The PXE dir for accessing configuration.
+        windows_dir: Windows source directory.
+        customize_dir: Customization directory for templates.
+        menu_filename: Menu filename for iPXE/syslinux menu.
+    """
 
     def __init__(self, name=None, depot_type=None, uri=None, userid=None, password=None,
                  access_url=None, pxe_dir=None, windows_dir=None, customize_dir=None,
@@ -219,7 +232,15 @@ class PXEServer(Updateable):
 
 
 class CustomizationTemplate(Updateable):
-    """To be written"""
+    """Model of a Customization Template in CFME
+
+    Args:
+        name: The name of the template.
+        description = Template description.
+        image_type = Image type name, must be one of an existing System Image Type.
+        script_type = Script type, either Kickstart, Cloudinit or Sysprep.
+        script_data = The scripts data.
+    """
 
     def __init__(self, name=None, description=None, image_type=None, script_type=None,
                  script_data=None):
@@ -289,7 +310,12 @@ class CustomizationTemplate(Updateable):
 
 
 class SystemImageType(Updateable):
-    """To be written"""
+    """Model of a System Image Type in CFME.
+
+    Args:
+        name: The name of the System Image Type.
+        provision_type: The provision type, either Vm or Host.
+    """
 
     def __init__(self, name=None, provision_type=None):
         self.name = name
