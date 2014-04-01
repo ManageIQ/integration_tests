@@ -6,8 +6,15 @@ from cfme.web_ui import Region
 from selenium.webdriver.common.by import By
 import cfme.fixtures.pytest_selenium as sel
 
+flash_divs_cond = [
+    "@id='flash_text_div'",
+    "@id='flash_div'",
+    "@id='flash_text_div_ns_list'",
+    "@id='flash_text_div_ns_details'"]
+
+flash_area_xpath = "//div[%s]//li" % " or ".join(flash_divs_cond)
 area = Region(locators=
-              {'message': (By.XPATH, "//div[@id='flash_text_div' or @id='flash_div']//li")})
+              {'message': (By.XPATH, flash_area_xpath)})
 
 
 class Message(object):
