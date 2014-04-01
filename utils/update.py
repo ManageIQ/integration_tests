@@ -57,13 +57,9 @@ def update(o, **kwargs):
        myrecord.address.zipcode = '27707'
 
     '''
-
     cp = deepcopy(o)
     yield cp
-    try:
-        o_updates = updates(o, cp)
-        if o_updates:
-            o.update(o_updates, **kwargs)
-    except:
-        cp.__dict__ = o.__dict__  # rollback
-        raise
+    o_updates = updates(o, cp)
+    if o_updates:
+        o.update(o_updates, **kwargs)
+        o.__dict__ = cp.__dict__
