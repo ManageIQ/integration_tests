@@ -6,8 +6,15 @@ from cfme.web_ui import Region
 from selenium.webdriver.common.by import By
 import cfme.fixtures.pytest_selenium as sel
 
+flash_divs_cond = [
+    "@id='flash_text_div'",
+    "@id='flash_div'",
+    "@id='flash_text_div_ns_list'",
+    "@id='flash_text_div_ns_details'"]
+
+flash_area_xpath = "//div[%s]//li" % " or ".join(flash_divs_cond)
 area = Region(locators=
-              {'message': (By.XPATH, "//div[@id='flash_text_div' or @id='flash_div']//li")})
+              {'message': (By.XPATH, flash_area_xpath)})
 
 
 class Message(object):
@@ -67,9 +74,11 @@ def is_error(message):
     return message.level == 'error'
 
 
-def assert_no_errors():
-    """ Asserts that there are no current Error messages."""
-    all_messages = get_messages()
+def assert_no_errors(messages=None):
+    """Asserts that there are no current Error messages. If no messages
+    are passed in, they will be retrieved from the UI."""
+
+    all_messages = messages or get_messages()
     errors = filter(is_error, all_messages)
     if errors:
         raise Exception(errors)
@@ -87,3 +96,12 @@ def assert_message_contain(m):
     """ Asserts that a message contains a specific string """
     if not any([m in fm.message for fm in get_messages()]):
         raise Exception("No flash message contains '%s'" % m)
+
+
+def assert_success_message(m):
+    """Asserts that there are no errors and a (green) info message
+    matches the given string."""
+    messages = get_messages()
+    assert_no_errors(messages)
+    if not any([(fm.message == m and fm.level == 'info') for fm in messages]):
+        raise Exception("No matching info flash message for '%s'" % m)

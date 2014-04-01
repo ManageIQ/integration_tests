@@ -1118,7 +1118,8 @@ class Tree(object):
             # Dynatree
             self.expandable = 'span'
             self.is_expanded_condition = ('class', 'dynatree-expanded')
-            self.node_search = "//li/span/a[contains(., '%s')]/../.."
+            self.node_search = "//li/span/a[.='%s']/../.."
+            self.node_root = "//li/span/a[.='%s']"
             self.click_expand = "span/span"
             self.leaf = "span/a"
             self.node_select_support = False
@@ -1126,7 +1127,8 @@ class Tree(object):
             # Legacy Tree
             self.expandable = 'tr/td[1]/img'
             self.is_expanded_condition = ('src', 'open.png')
-            self.node_search = "//tbody/tr/td/table/tbody/tr/td[4]/span[contains(., '%s')]/../../.."
+            self.node_search = "//tbody/tr/td/table/tbody/tr/td[4]/span[.='%s']/../../.."
+            self.node_root = "//tbody/tr/td/table/tbody/tr/td[4]/span[.='%s']"
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
             self.node_select_support = True
@@ -1163,31 +1165,22 @@ class Tree(object):
         if not self._is_expanded(el):
             sel.click(sel.element(self.click_expand, root=el))
 
-    def expose_path(self, *path, **kwargs):
+    def node_element(self, node_name, parent):
+        return sel.element(self.node_search % node_name, root=parent)
+
+    def node_root_element(self, node_name, parent):
+        return sel.element(self.node_root % node_name, root=parent)
+
+    def expand_path(self, *path):
         """ Clicks through a series of elements in a path.
 
         Clicks through a tree, by expanding the levels in a single straight path and
         returns the final element without clicking it.
 
-        .. note: This is a recursive function.
-
-        The function determines if it is starting at the root element, or if it is in the
-        middle of a path, this is required because the first entrace into a tree needs to be
-        treated different. Plus we need to set the root element because one will not be supplied.
-
-        The next step is to check if the current element is expanded and if not, to
-        expand it.
-
-        Finally we search for the next element in the list and then recursively
-        call the :py:meth:`click_path` function again, this time with the reduced path, and
-        substituting the matching element as the new root element.
-
         Args:
             *path: The path as multiple positional string arguments denoting the course to take.
-            root: The root path to begin at. This is usually not set manually
-                and is required for the recursion.
 
-        Returns: The element at the end of the tree.
+        Returns: The element at the leaf of the tree.
 
         Raises:
             cfme.exceptions.CandidateNotFound: A candidate in the tree could not be found to
@@ -1201,40 +1194,36 @@ class Tree(object):
         #Tree goes off screen and returns.
         self._detect()
 
-        root = kwargs.get('root', None)
-        root_el = root if root else self.root_el
+        parent = None
+
         path = list(path)
+        node = None
+        while path:
+            try:
+                node_name = path.pop(0)
+                node = self.node_element(node_name, parent)
+            except sel_exceptions.NoSuchElementException:
+                raise exceptions.CandidateNotFound("%s: could not be found in the tree." %
+                                                   node_name)
 
-        if root:
-            self._expand(root_el)
+            self._expand(node)
+            parent = node
 
-        needle = path.pop(0)
-        xpath = self.node_search % needle
+        return node
 
-        try:
-            new_leaf = sel.element(xpath, root=root_el)
-        except sel_exceptions.NoSuchElementException:
-            raise exceptions.CandidateNotFound("%s: could not be found in the tree." % needle)
-
-        if path:
-            return self.expose_path(*path, root=new_leaf)
-        else:
-            return new_leaf
-
-    def click_path(self, *path, **kwargs):
+    def click_path(self, *path):
         """ Exposes a path and then clicks it.
 
         Args:
             *path: The path as multiple positional string arguments denoting the course to take.
-            root: The root path to begin at. This is usually not set manually
-                and is required for the recursion during :py:meth:expose_path:.
 
         Returns: The leaf web element.
 
         """
-        root = kwargs.get('root', None)
-        leaf = self.expose_path(*path, root=root)
-        sel.click(sel.element(self.leaf, root=leaf))
+        # expand all but the last item
+        leaf = self.expand_path(*path[:-1]) or sel.element(self.locator)
+        if leaf:
+            sel.click(self.node_root_element(path[-1], leaf))
         return leaf
 
     def _select_or_deselect_node(self, *path, **kwargs):
@@ -1244,13 +1233,12 @@ class Tree(object):
             *path: The path as multiple positional string arguments denoting the course to take.
             select: If ``True``, the node is selected, ``False`` the node is deselected.
             root: The root path to begin at. This is usually not set manually
-                and is required for the recursion during :py:meth:expose_path:.
+                and is required for the recursion during :py:meth:expand_path:.
         """
         self._detect()
         select = kwargs.get('select', False)
         if self.node_select_support:
-            root = kwargs.get('root', None)
-            leaf = self.expose_path(*path, root=root)
+            leaf = self.expand_path(*path)
             leaf_chkbox = sel.element(self.node_select, root=leaf)
             for img_type in self.node_images['select']:
                 if img_type in sel.get_attribute(leaf_chkbox, 'src'):
@@ -1268,7 +1256,7 @@ class Tree(object):
         Args:
             *path: The path as multiple positional string arguments denoting the course to take.
             root: The root path to begin at. This is usually not set manually
-                and is required for the recursion during :py:meth:expose_path:.
+                and is required for the recursion during :py:meth:expand_path:.
         """
         kwargs.update({'select': True})
         self._select_or_deselect_node(*path, **kwargs)
@@ -1279,7 +1267,7 @@ class Tree(object):
         Args:
             *path: The path as multiple positional string arguments denoting the course to take.
             root: The root path to begin at. This is usually not set manually
-                and is required for the recursion during :py:meth:expose_path:.
+                and is required for the recursion during :py:meth:expand_path:.
         """
         kwargs.update({'select': False})
         self._select_or_deselect_node(*path, **kwargs)
