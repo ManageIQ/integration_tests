@@ -216,8 +216,7 @@ class PXEServer(Updateable):
         flash.assert_message_match('PXE Server "{}": Delete successful'.format(self.name))
 
     def refresh(self, wait=True):
-        """
-        Refreshes the PXE relationships and waits for it to be updated
+        """ Refreshes the PXE relationships and waits for it to be updated
         """
         sel.force_navigate('infrastructure_pxe_server', context=self)
         last_time = pxe_details_page.infoblock.text('Basic Information', 'Last Refreshed On')
@@ -232,14 +231,14 @@ class PXEServer(Updateable):
 
 
 class CustomizationTemplate(Updateable):
-    """Model of a Customization Template in CFME
+    """ Model of a Customization Template in CFME
 
     Args:
         name: The name of the template.
-        description = Template description.
-        image_type = Image type name, must be one of an existing System Image Type.
-        script_type = Script type, either Kickstart, Cloudinit or Sysprep.
-        script_data = The scripts data.
+        description: Template description.
+        image_type: Image type name, must be one of an existing System Image Type.
+        script_type: Script type, either Kickstart, Cloudinit or Sysprep.
+        script_data: The scripts data.
     """
 
     def __init__(self, name=None, description=None, image_type=None, script_type=None,
