@@ -48,14 +48,14 @@ def nav_new_class(path):
     cfg_btn('Add a New Class')
 
 
-nav.add_branch('automate_explorer',
-               {
-                   'automate_explorer_add_ns': lambda ctx: nav_add_namespace(ctx['namespace'].path),
-                   'automate_explorer_edit_ns':
-                   lambda ctx: nav_edit_namespace(ctx['namespace'].path),
-                   'namespace': lambda ctx: nav_new_class(ctx['namespace'].path),
-                   'class': lambda ctx: nav_edit_namespace(ctx['class'].path)
-               })
+nav.add_branch(
+    'automate_explorer',
+    {
+        'automate_explorer_add_ns': lambda ctx: nav_add_namespace(ctx['namespace'].path),
+        'automate_explorer_edit_ns': lambda ctx: nav_edit_namespace(ctx['namespace'].path),
+        'namespace': lambda ctx: nav_new_class(ctx['namespace'].path),
+        'class': lambda ctx: nav_edit_namespace(ctx['class'].path)
+    })
 
 
 class Namespace(Updateable):
