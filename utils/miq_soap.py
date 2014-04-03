@@ -21,7 +21,7 @@ from utils.wait import wait_for
 
 
 if "client" not in globals():
-    client = soap_client()  # Ügly, but easiest to use :/
+    client = soap_client()  # Ugly, but easiest to use :/
 
 
 class MiqInfraObject(object):
