@@ -38,6 +38,7 @@ from datetime import date
 from selenium.webdriver.common.action_chains import ActionChains
 from collections import Sequence, Mapping
 from selenium.common import exceptions as sel_exceptions
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import multimethod, multidispatch, Anything
 
@@ -1770,4 +1771,17 @@ def fill_scriptbox(sb, script):
         ".//div[@class='CodeMirror' or @class='CodeMirror CodeMirror-focused']", root=root)
     sel.click(activate)
     script_area = sel.element('.//div/div/textarea', root=root)
-    sel.send_keys(script_area, script)
+
+    tabs = 0
+    import time
+    import re
+    for line in script.split("\n"):
+        for n in range(tabs):
+            sel.send_keys(script_area, Keys.BACK_SPACE)
+        time.sleep(0.01)
+        tb = re.findall('^[ ]*', line)
+        tabs = len(tb[0])
+        sel.send_keys(script_area, line)
+        time.sleep(0.01)
+        sel.send_keys(script_area, Keys.RETURN)
+        time.sleep(0.01)
