@@ -26,7 +26,7 @@ def load_data_file(filename, replacements=None):
 
         output = template.substitute(replacements)
 
-        outfile = NamedTemporaryFile()
+        outfile = NamedTemporaryFile(mode="rw+")
         outfile.write(output)
         outfile.flush()
         outfile.seek(0)

@@ -15,6 +15,9 @@ import cfme.web_ui.flash as flash
 from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import fill, Region, Form, ScriptBox, Select, Table, Tree
+import utils.conf as conf
+from utils.datafile import load_data_file
+from utils.path import project_path
 from utils.update import Updateable
 from utils.wait import wait_for
 
@@ -372,3 +375,22 @@ class SystemImageType(Updateable):
         cfg_btn('Remove this System Image Type from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match('System Image Type "{}": Delete successful'.format(self.name))
+
+
+def get_template_from_yaml(template_config_name):
+    """
+    Convenience function to grab the details for a template from the yamls.
+    """
+
+    template_config = conf.cfme_data['customization_templates'][template_config_name]
+
+    script_data = load_data_file(str(project_path.join(template_config['script_file'])),
+                                 replacements=template_config['replacements'])
+
+    script_data = script_data.read()
+
+    return CustomizationTemplate(name=template_config['name'],
+                                 description=template_config['description'],
+                                 image_type=template_config['image_type'],
+                                 script_type=template_config['script_type'],
+                                 script_data=script_data)
