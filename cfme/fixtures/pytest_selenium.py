@@ -515,6 +515,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     if recycle:
         browser().quit()
         logger.debug('browser killed on try %d' % _tries)
+        # If given a "start" nav destination, it won't be valid after quitting the browser
+        kwargs.pop("start", None)
         force_navigate(page_name, _tries, *args, **kwargs)
 
 
