@@ -1,3 +1,5 @@
+from warnings import catch_warnings, warn
+
 import yaml
 from yaml.loader import Loader
 
@@ -15,7 +17,7 @@ class YamlConfigLoader(Loader):
 YamlConfigLoader.add_constructor('tag:yaml.org,2002:map', YamlConfigLoader.construct_yaml_map)
 
 
-class ConfigNotFoundException(Exception):
+class ConfigNotFound(UserWarning):
     pass
 
 
@@ -93,12 +95,14 @@ class Config(dict):
     a reload of config files.
 
     """
-    # Stash the exception on the class for convenience, e.g.
-    # try:
-    #     conf[does_not_exist]
-    # except conf.NotFoundException
-    #     ...
-    NotFoundException = ConfigNotFoundException
+    def __init__(self, path):
+        # stash a path to better impersonate a module
+        self.path = path
+
+    @property
+    def __path__(self):
+        # and return that path when asked
+        return self.path
 
     # Support for descriptor access, e.g. instance.attrname
     # Note that this is only on the get side, for support of nefarious things
@@ -119,12 +123,10 @@ class Config(dict):
             yaml_dict = load_yaml(key)
 
             # Graft in local yaml updates if they're available
-            try:
+            with catch_warnings():
                 local_yaml = '%s.local' % key
-                local_yaml_dict = load_yaml(local_yaml)
+                local_yaml_dict = load_yaml(local_yaml, warn_on_fail=False)
                 yaml_dict.update(local_yaml_dict)
-            except ConfigNotFoundException:
-                pass
 
             # Returning self[key] instead of yaml_dict as a small sanity check
             self[key] = yaml_dict
@@ -168,7 +170,7 @@ class RecursiveUpdateDict(dict):
                 self[key] = new_data[key]
 
 
-def load_yaml(filename=None):
+def load_yaml(filename=None, warn_on_fail=True):
     # Find the requested yaml in the config dir, relative to this file's location
     # (aiming for cfme_tests/config)
     path = conf_path.join('%s.yaml' % filename)
@@ -176,6 +178,9 @@ def load_yaml(filename=None):
     if path.check():
         with path.open() as config_fh:
             return yaml.load(config_fh, Loader=YamlConfigLoader)
-    else:
+
+    if warn_on_fail:
         msg = 'Unable to load configuration file at %s' % path
-        raise ConfigNotFoundException(msg)
+        warn(msg, ConfigNotFound)
+
+    return {}
