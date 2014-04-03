@@ -507,12 +507,16 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             # There was still an alert when we tried again, shoot the browser in the head
             logger.debug("Unxpected alert on try %d, recycling browser" % _tries)
             browser().quit()
+            if "start" in kwargs:
+                del kwargs["start"]  # Now the start does not matter because browser is recycled
         force_navigate(page_name, _tries, *args, **kwargs)
     except Exception as ex:
         # Anything else happened, nuke the browser and try again.
         logger.info('Caught %s during navigation, trying again.' % type(ex).__name__)
         logger.debug(format_exc())
         browser().quit()
+        if "start" in kwargs:
+            del kwargs["start"]  # Now the start does not matter because browser is recycled
         force_navigate(page_name, _tries, *args, **kwargs)
 
 
