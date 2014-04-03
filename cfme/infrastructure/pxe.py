@@ -377,7 +377,7 @@ class SystemImageType(Updateable):
         flash.assert_message_match('System Image Type "{}": Delete successful'.format(self.name))
 
 
-def get_template_from_yaml(template_config_name):
+def get_template_from_config(template_config_name):
     """
     Convenience function to grab the details for a template from the yamls.
     """
@@ -394,3 +394,22 @@ def get_template_from_yaml(template_config_name):
                                  image_type=template_config['image_type'],
                                  script_type=template_config['script_type'],
                                  script_data=script_data)
+
+
+def get_pxe_server_from_config(pxe_config_name):
+    """
+    Convenience function to grab the details for a pxe server fomr the yamls.
+    """
+
+    pxe_config = conf.cfme_data['pxe_servers'][pxe_config_name]
+
+    return PXEServer(name=pxe_config['name'],
+                     depot_type=pxe_config['depot_type'],
+                     uri=pxe_config['uri'],
+                     userid=pxe_config.get('userid') or None,
+                     password=pxe_config.get('password') or None,
+                     access_url=pxe_config['access_url'],
+                     pxe_dir=pxe_config['pxe_dir'],
+                     windows_dir=pxe_config['windows_dir'],
+                     customize_dir=pxe_config['customize_dir'],
+                     menu_filename=pxe_config['menu_filename'])
