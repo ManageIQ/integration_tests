@@ -1,9 +1,10 @@
 import os
+from warnings import catch_warnings
 
 import pytest
 
 from utils import conf
-from utils._conf import Config, RecursiveUpdateDict
+from utils._conf import Config, ConfigNotFound, RecursiveUpdateDict
 
 test_yaml_contents = '''
 test_key: test_value
@@ -81,12 +82,13 @@ def test_conf_yamls_import(test_yaml):
 
 
 def test_conf_yamls_not_found(random_string):
-    # Make sure the the raising of ConfigNotFoundException
-    # is caught as conf.NotFoundException
-    try:
+    # Make sure the the ConfigNotFound warning is issued correctly
+    with catch_warnings(record=True) as warnings:
         conf[random_string]
-    except conf.NotFoundException:
-        # test passes, return out
-        return
 
-    pytest.fail('conf.NotFoundException not raised for nonexistent yaml')
+    # Should only be one warning, the attempt to load a nonexistent conf file should warn,
+    # but loading a nonexistent local yaml override should not
+    assert len(warnings) == 1
+    # The warning we caught should be the correct type, and contain random_string
+    assert issubclass(ConfigNotFound, warnings[0].category)
+    assert random_string in str(warnings[0].message)
