@@ -2,6 +2,7 @@
 from cfme.web_ui import Select
 import cfme.fixtures.pytest_selenium as sel
 import re
+from selenium.common.exceptions import NoSuchElementException
 
 _locator = '(//div[@id="paging_div"] | //div[@id="records_div"])'
 _next = '//img[@alt="Next"]'
@@ -12,6 +13,15 @@ _num_results = '//select[@id="ppsetting" or @id="perpage_setting1"]'
 _sort_by = '//select[@id="sort_choice"]'
 _page_cell = '//td//td[contains(., " of ")]'
 _check_all = '//input[@id="masterToggle"]'
+
+
+def page_controls_exist():
+    """ Simple check to see if page controls exist. """
+    try:
+        rec_total()
+        return True
+    except NoSuchElementException:
+        return False
 
 
 def _page_nums():
