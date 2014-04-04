@@ -1,10 +1,4 @@
-""" A model of an PXE Server in CFME
-
-
-:var page: A :py:class:`cfme.web_ui.Region` object describing common elements on the
-           Providers pages.
-:var properties_form: A :py:class:`cfme.web_ui.Form` object describing the main add form.
-:var credentials_form: A :py:class:`cfme.web_ui.Form` object describing the credentials form.
+""" A model of a PXE Server in CFME
 """
 
 from functools import partial
@@ -455,9 +449,12 @@ def get_pxe_server_from_config(pxe_config_name):
 
 
 def remove_all_pxe_servers():
+    """
+    Convenience function to remove all PXE servers
+    """
     logger.debug('Removing all PXE servers')
     sel.force_navigate('infrastructure_pxe_servers')
-    sel.force_navigate('infrastructure_pxe_servers')
+    sel.force_navigate('infrastructure_pxe_servers')  # Yes we really do this twice.
     if sel.is_displayed(pxe_server_table_exist):
         sel.click(pg.check_all())
         cfg_btn('Remove PXE Servers from the VMDB', invokes_alert=True)

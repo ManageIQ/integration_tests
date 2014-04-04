@@ -16,6 +16,7 @@ _check_all = '//input[@id="masterToggle"]'
 
 
 def page_controls_exist():
+    """ Simple check to see if page controls exist. """
     try:
         rec_total()
         return True

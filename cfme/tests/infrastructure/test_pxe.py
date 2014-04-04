@@ -1,7 +1,6 @@
 import pytest
 
 from cfme.infrastructure import pxe
-from utils.randomness import generate_random_string
 from utils.update import update
 from utils.testgen import pxe_servers, generate
 
@@ -15,22 +14,16 @@ def has_no_pxe_servers():
 
 @pytest.mark.usefixtures('has_no_pxe_servers')
 def test_pxe_server_add(pxe_name, pxe_server_crud):
-    """Basic default LDAP group role RBAC test
-
-    Validates expected menu and submenu names are present for default
-    LDAP group roles
-
+    """
+    Basic Add test for PXE server including refresh.
     """
     pxe_server_crud.create()
 
 
 @pytest.mark.usefixtures('has_no_pxe_servers')
 def test_pxe_server_edit(pxe_name, pxe_server_crud):
-    """Basic default LDAP group role RBAC test
-
-    Validates expected menu and submenu names are present for default
-    LDAP group roles
-
+    """
+    Basic edit test for a PXE server.
     """
     pxe_server_crud.create(refresh=False)
     with update(pxe_server_crud) as pxe_server_crud:
@@ -39,11 +32,8 @@ def test_pxe_server_edit(pxe_name, pxe_server_crud):
 
 @pytest.mark.usefixtures('has_no_pxe_servers')
 def test_pxe_server_delete(pxe_name, pxe_server_crud):
-    """Basic default LDAP group role RBAC test
-
-    Validates expected menu and submenu names are present for default
-    LDAP group roles
-
+    """
+    Basic delete test for a PXE server.
     """
     pxe_server_crud.create(refresh=False)
     pxe_server_crud.delete(cancel=False)

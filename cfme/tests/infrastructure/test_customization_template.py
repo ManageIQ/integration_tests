@@ -8,11 +8,8 @@ pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
 def test_customization_template_crud():
-    """Basic default LDAP group role RBAC test
-
-    Validates expected menu and submenu names are present for default
-    LDAP group roles
-
+    """
+    Basic CRUD test for customization templates.
     """
     template_crud = pxe.CustomizationTemplate(
         name=generate_random_string(size=8),

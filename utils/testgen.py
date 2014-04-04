@@ -253,7 +253,7 @@ def pxe_servers(metafunc, server_name):
     """Provides pxe data based on the server_type
 
     Args:
-        server_type: One of the server types, either syslinux or ipxe.
+        server_name: One of the server names to filter by, or 'all'.
 
     """
     argnames = ['pxe_name', 'pxe_server_crud']
