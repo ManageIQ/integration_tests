@@ -29,6 +29,7 @@ More information on ``parametrize`` can be found in pytest's documentation:
 import pytest
 
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
+from cfme.infrastructure.pxe import get_pxe_server_from_config
 from cfme.cloud.provider import get_from_config as get_cloud_provider
 from utils.conf import cfme_data
 from utils.log import logger
@@ -245,6 +246,27 @@ def auth_groups(metafunc, auth_mode):
         for group in cfme_data.get('group_roles', []):
             argvalues.append([group, sorted(cfme_data['group_roles'][group])])
             idlist.append(group)
+    return argnames, argvalues, idlist
+
+
+def pxe_servers(metafunc, server_name):
+    """Provides pxe data based on the server_type
+
+    Args:
+        server_name: One of the server names to filter by, or 'all'.
+
+    """
+    argnames = ['pxe_name', 'pxe_server_crud']
+    argvalues = []
+    idlist = []
+
+    data = cfme_data.get('pxe_servers', {})
+
+    for pxe_server in data:
+        if (data[pxe_server].get('name', None) == server_name) or (server_name == 'all'):
+            argvalues.append([data[pxe_server]['name'],
+                              get_pxe_server_from_config(pxe_server)])
+            idlist.append(pxe_server)
     return argnames, argvalues, idlist
 
 

@@ -5,6 +5,7 @@
 from cfme.web_ui import Region
 from selenium.webdriver.common.by import By
 import cfme.fixtures.pytest_selenium as sel
+from utils.log import logger
 
 flash_divs_cond = [
     "@id='flash_text_div'",
@@ -88,7 +89,9 @@ def assert_no_errors(messages=None):
 
 def assert_message_match(m):
     """ Asserts that a message matches a specific string."""
+    logger.debug('Asserting flash message match for "{}"'.format(m))
     if not any([fm.message == m for fm in get_messages()]):
+        logger.debug(' No match found in...{}'.format(get_messages()))
         raise Exception("No matching flash message for '%s'" % m)
 
 
