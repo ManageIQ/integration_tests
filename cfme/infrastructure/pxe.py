@@ -15,14 +15,19 @@ import cfme.web_ui.flash as flash
 from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import fill, Region, Form, ScriptBox, Select, Table, Tree
+from cfme.web_ui import paginator as pg
 import utils.conf as conf
 from utils.datafile import load_data_file
+from utils.log import logger
 from utils.path import project_path
 from utils.update import Updateable
 from utils.wait import wait_for
 
 cfg_btn = partial(tb.select, 'Configuration')
 
+pxe_resetter = "//span[contains(., 'All PXE Servers')]"
+
+pxe_server_table_exist = Table('//div[@id="records_div"]/table/tbody/tr/td')
 pxe_server_tree = Tree('//div[@id="pxe_servers_treebox"]//table')
 
 pxe_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
@@ -100,8 +105,14 @@ image_properties_form = Form(
         ('provision_type', Select('//select[@id="provision_type"]'))
     ])
 
+
+def pxe_servers_pg():
+    acc.click('PXE Servers')
+    sel.click(sel.element(pxe_resetter))
+
+
 nav.add_branch('infrastructure_pxe',
-               {'infrastructure_pxe_servers': [lambda _: acc.click('PXE Servers'),
+               {'infrastructure_pxe_servers': [lambda _: pxe_servers_pg(),
                 {'infrastructure_pxe_server_new': lambda _: cfg_btn('Add a New PXE Server'),
                  'infrastructure_pxe_server': [lambda ctx: pxe_server_tree.click_path(ctx.name),
                                                {'infrastructure_pxe_server_edit':
@@ -280,6 +291,17 @@ class CustomizationTemplate(Updateable):
         self._submit(cancel, template_add_page.add_btn)
         flash.assert_message_match('Customization Template "{}" was added'.format(self.name))
 
+    def exists(self):
+        """
+        Checks if the Customization template already exists
+        """
+        sel.force_navigate('infrastructure_pxe_templates')
+        try:
+            template_tree.click_path(self.image_type, self.name)
+            return True
+        except KeyError:
+            return False
+
     def update(self, updates, cancel=False):
         """
         Updates a Customization Template server in the UI.  Better to use utils.update.update
@@ -413,3 +435,13 @@ def get_pxe_server_from_config(pxe_config_name):
                      windows_dir=pxe_config['windows_dir'],
                      customize_dir=pxe_config['customize_dir'],
                      menu_filename=pxe_config['menu_filename'])
+
+
+def remove_all_pxe_servers():
+    logger.debug('Removing all PXE servers')
+    sel.force_navigate('infrastructure_pxe_servers')
+    sel.force_navigate('infrastructure_pxe_servers')
+    if sel.is_displayed(pxe_server_table_exist):
+        sel.click(pg.check_all())
+        cfg_btn('Remove PXE Servers from the VMDB', invokes_alert=True)
+        sel.handle_alert(cancel=False)
