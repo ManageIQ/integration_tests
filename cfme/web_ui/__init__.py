@@ -1722,9 +1722,9 @@ class Filter(Form):
 
 
 class MultiSelect(Region):
-    '''Represents a UI widget where there are two select boxes, one with
+    """Represents a UI widget where there are two select boxes, one with
     possible selections, and another with selected items.  Has two
-    arrow buttons to move items between the two'''
+    arrow buttons to move items between the two"""
 
     def __init__(self,
                  available_select=None,
