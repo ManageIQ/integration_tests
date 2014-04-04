@@ -49,7 +49,7 @@ def test_add_new_storage_chargeback():
 def test_edit_compute_chargeback():
     ccb = new_compute_rate()
     ccb.create()
-    with update(ccb) as ccb:
+    with update(ccb):
         ccb.description = ccb.description + "-edited"
         ccb.cpu_alloc = (5000, cb.DAILY)
         ccb.disk_io = (10, cb.WEEKLY)
@@ -64,7 +64,7 @@ def test_edit_compute_chargeback():
 def test_edit_storage_chargeback():
     scb = new_storage_rate()
     scb.create()
-    with update(scb) as scb:
+    with update(scb):
         scb.description = scb.description + "-edited"
         scb.storage_fixed_2 = (2000, cb.MONTHLY)
         scb.storage_alloc = (3000, cb.WEEKLY)
