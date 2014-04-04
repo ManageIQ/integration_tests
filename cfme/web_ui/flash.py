@@ -11,7 +11,8 @@ flash_divs_cond = [
     "@id='flash_text_div'",
     "@id='flash_div'",
     "@id='flash_text_div_ns_list'",
-    "@id='flash_text_div_ns_details'"]
+    "@id='flash_text_div_ns_details'",
+    "@id='flash_text_div_class_props'"]
 
 flash_area_xpath = "//div[%s]//li" % " or ".join(flash_divs_cond)
 area = Region(locators=
