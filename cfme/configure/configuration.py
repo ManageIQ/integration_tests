@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+from urlparse import urlparse
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
@@ -7,6 +8,7 @@ import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
 from cfme.web_ui import Calendar, Form, Region, Select, Table, Tree, accordion, fill, flash
 from cfme.web_ui.menu import nav
+from utils.db_queries import get_server_id, get_server_name, get_server_region
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
@@ -86,6 +88,29 @@ crud_buttons = Region(
 
 records_table = Table("//div[@id='records_div']/table[@class='style3']")
 
+
+def get_ip_address():
+    """Returns an IP address of the appliance
+    """
+    return urlparse(sel.base_url()).netloc
+
+
+def server_region():
+    return get_server_region(get_ip_address())
+
+
+def server_region_pair():
+    r = server_region()
+    return r, r
+
+
+def server_name():
+    return get_server_name(get_ip_address())
+
+
+def server_id():
+    return get_server_id(get_ip_address())
+
 nav.add_branch("configuration",
     {
         "configuration_settings":
@@ -94,7 +119,9 @@ nav.add_branch("configuration",
             {
                 "cfg_settings_region":
                 [
-                    lambda _: settings_tree.click_path("Region: Region"),
+                    lambda _: settings_tree.click_path(
+                        "Region: Region %d [%d]" % server_region_pair()
+                    ),
                     {
                         "cfg_settings_region_details":
                         lambda _: tabs.select_tab("Details"),
@@ -120,11 +147,17 @@ nav.add_branch("configuration",
                 ],
 
                 "cfg_settings_defaultzone":
-                lambda _: settings_tree.click_path("Region: Region", "Zones", "Default Zone"),
+                lambda _: settings_tree.click_path(
+                    "Region: Region %d [%d]" % server_region_pair(),
+                    "Zones",
+                    "Zone: Default Zone"
+                ),
 
                 "cfg_settings_schedules":
                 [
-                    lambda _: settings_tree.click_path("Region: Region", "Schedules"),
+                    lambda _: settings_tree.click_path(
+                        "Region: Region %d [%d]" % server_region_pair(),
+                        "Schedules"),
                     {
                         "cfg_settings_schedule":
                         [
@@ -139,10 +172,12 @@ nav.add_branch("configuration",
 
                 "cfg_settings_currentserver":
                 [
-                    lambda _: settings_tree.click_path("Region: Region",
-                                                       "Zones",
-                                                       "Default Zone",
-                                                       "(current)"),
+                    lambda _: settings_tree.click_path(
+                        "Region: Region %d [%d]" % server_region_pair(),
+                        "Zones",
+                        "Zone: Default Zone",
+                        "Server: %s [%d] (current)" % (server_name(), server_id())
+                    ),
                     {
                         "cfg_settings_currentserver_server":
                         lambda _: tabs.select_tab("Server"),
@@ -177,7 +212,11 @@ nav.add_branch("configuration",
             {
                 "cfg_diagnostics_currentserver":
                 [
-                    lambda _: diagnostics_tree.click_path("CFME Region", "Default Zone", "Server:"),
+                    lambda _: diagnostics_tree.click_path(
+                        "CFME Region: Region %d [%d]" % server_region_pair(),
+                        "Zone: Default Zone",
+                        "Server: %s [%d] (current)" % (server_name(), server_id())
+                    ),
                     {
                         "cfg_diagnostics_server_summary":
                         lambda _: tabs.select_tab("Summary"),
@@ -212,7 +251,10 @@ nav.add_branch("configuration",
                 ],
                 "cfg_diagnostics_defaultzone":
                 [
-                    lambda _: diagnostics_tree.click_path("CFME Region", "Default Zone"),
+                    lambda _: diagnostics_tree.click_path(
+                        "CFME Region: Region %d [%d]" % server_region_pair(),
+                        "Zone: Default Zone"
+                    ),
                     {
                         "cfg_diagnostics_zone_roles_by_servers":
                         lambda _: tabs.select_tab("Roles by Servers"),
@@ -232,7 +274,9 @@ nav.add_branch("configuration",
                 ],
                 "cfg_diagnostics_region":
                 [
-                    lambda _: diagnostics_tree.click_path("CFME Region"),
+                    lambda _: diagnostics_tree.click_path(
+                        "CFME Region: Region %d [%d]" % server_region_pair()
+                    ),
                     {
                         "cfg_diagnostics_region_zones":
                         lambda _: tabs.select_tab("Zones"),
