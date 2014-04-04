@@ -60,6 +60,8 @@ pxe_properties_form = Form(
         ('pxe_menu_text', "//input[@id='pxemenu_0']"),
     ])
 
+template_resetter = "//span[contains(., 'All Customization Templates - System Image Types')]"
+
 template_tree = Tree('//div[@id="customization_templates_treebox"]//table')
 
 template_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
@@ -84,6 +86,9 @@ template_properties_form = Form(
         ('script_type', Select('//select[@id="typ"]')),
         ('script_data', ScriptBox("//textarea[@id='script_data']"))
     ])
+
+
+image_resetter = "//span[contains(., 'All System Image Types')]"
 
 image_table = Table('//div[@id="records_div"]//table')
 
@@ -111,20 +116,32 @@ def pxe_servers_pg():
     sel.click(sel.element(pxe_resetter))
 
 
+def template_pg():
+    acc.click('Customization Templates')
+    sel.click(sel.element(template_resetter))
+
+
+def system_image_pg():
+    acc.click('System Image Types')
+    sel.click(sel.element(image_resetter))
+
+
 nav.add_branch('infrastructure_pxe',
                {'infrastructure_pxe_servers': [lambda _: pxe_servers_pg(),
                 {'infrastructure_pxe_server_new': lambda _: cfg_btn('Add a New PXE Server'),
                  'infrastructure_pxe_server': [lambda ctx: pxe_server_tree.click_path(ctx.name),
                                                {'infrastructure_pxe_server_edit':
                                                 lambda _: cfg_btn('Edit this PXE Server')}]}],
-                'infrastructure_pxe_templates': [lambda _: acc.click('Customization Templates'),
+
+                'infrastructure_pxe_templates': [lambda _: template_pg(),
                 {'infrastructure_pxe_template_new':
                  lambda _: cfg_btn('Add a New Customization Template'),
                  'infrastructure_pxe_template':
                  [lambda ctx: template_tree.click_path(ctx.image_type, ctx.name),
                   {'infrastructure_pxe_template_edit':
                    lambda _: cfg_btn('Edit this Customization Template')}]}],
-                'infrastructure_pxe_image_types': [lambda _: acc.click('System Image Types'),
+
+                'infrastructure_pxe_image_types': [lambda _: system_image_pg(),
                 {'infrastructure_pxe_image_type_new':
                  lambda _: cfg_btn('Add a new System Image Type'),
                  'infrastructure_pxe_image_type':
