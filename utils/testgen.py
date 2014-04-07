@@ -268,7 +268,10 @@ def param_check(metafunc, argvalues):
         True if this test should be parametrized
 
     """
-    if any(argvalues):
+    # For unknown reasons (see #618), py.test sometimes pops fixtures off of fixturenames during
+    # collection. The "or not metafunc.fixturenames" is a workaround to prevent skipping a module
+    # in the last iteration of the fixture pop loop, but doesn't address the underlying problem.
+    if any(argvalues) or not metafunc.fixturenames:
         return True
     else:
         # module and class are optional, but function isn't
