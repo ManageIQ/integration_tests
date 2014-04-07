@@ -23,7 +23,8 @@ def catalog_item_in_table(catalog_item):
 
 
 def catalog_item_in_tree(catalog_item):
-    return "//div[@id='sandt_tree_div']//td[@class='standartTreeRow']/span[.='%s']" % catalog_item.name
+    return ("//div[@id='sandt_tree_div']//td[@class='standartTreeRow']/span[.='%s']"
+        % catalog_item.name)
 
 
 def _all_catalogitems_add_new(context):
@@ -110,8 +111,9 @@ nav.add_branch(
 
 class CatalogItem(Updateable):
 
-    def __init__(self, item_type=None, name=None, description=None, display_in=False, catalog=None, dialog=None, long_desc=None,
-    	catalog_name=None, provider=None, prov_data=None):
+    def __init__(self, item_type=None, name=None, description=None,
+        display_in=False, catalog=None, dialog=None, long_desc=None,
+        catalog_name=None, provider=None, prov_data=None):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -132,10 +134,9 @@ class CatalogItem(Updateable):
                                'select_dialog': self.dialog})
         tabstrip.select_tab("Request Info")
         template = template_select_form.template_table.find_row_by_cells({
-        'Name': self.catalog_name,
-        'Provider': self.provider
-    	})
+            'Name': self.catalog_name,
+            'Provider': self.provider
+        })
         sel.click(template)
         request_form.fill(self.provisioning_data)
         sel.click(template_select_form.add_button)
-

@@ -5,7 +5,6 @@ import cfme.web_ui.toolbar as tb
 import ui_navigate as nav
 import functools
 import cfme.fixtures.pytest_selenium as sel
-from functools import partial
 
 assert cfme.web_ui.menu  # to placate flake8 (otherwise menu import is unused)
 
