@@ -93,7 +93,7 @@ def parametrize(metafunc, argnames, argvalues, *args, **kwargs):
     This can be used in any place where conditional parametrization is used.
 
     """
-    if param_check(metafunc, argvalues):
+    if param_check(metafunc, argnames, argvalues):
         metafunc.parametrize(argnames, argvalues, *args, **kwargs)
 
 
@@ -269,31 +269,36 @@ def pxe_servers(metafunc):
     return argnames, argvalues, idlist
 
 
-def param_check(metafunc, argvalues):
+def param_check(metafunc, argnames, argvalues):
     """Helper function to check if parametrizing is necessary
 
-    If argvalues is empty, the test being represented by metafunc will be skipped in collection.
+    * If no argnames were specified, parametrization is unnecessary.
+    * If argvalues were generated, parametrization is necessary.
+    * If argnames were specified, but no values were generated, the test cannot run successfully,
+      and will be uncollected using the :py:mod:`markers.uncollect` mark.
 
     See usage in :py:func:`parametrize`
 
-    Note:
-
-        Raising a skip in collection will cause the entire test module to be skipped, not just
-        a specific test.
-
     Args:
         metafunc: metafunc objects from pytest_generate_tests
+        argnames: argnames list for use in metafunc.parametrize
         argvalues: argvalues list for use in metafunc.parametrize
 
     Returns:
-        True if this test should be parametrized
+        * ``True`` if this test should be parametrized
+        * ``False`` if it shouldn't be parametrized
+        * ``None`` if the test will be uncollected
 
     """
-    # For unknown reasons (see #618), py.test sometimes pops fixtures off of fixturenames during
-    # collection. The "or not metafunc.fixturenames" is a workaround to prevent skipping a module
-    # in the last iteration of the fixture pop loop, but doesn't address the underlying problem.
-    if any(argvalues) or not metafunc.fixturenames:
+    # If no parametrized args were named, don't parametrize
+    if not argnames:
+        return False
+    # If parametrized args were named and values were generated, parametrize
+    elif any(argvalues):
         return True
+    # If parametrized args were named, but no values were generated, mark this test to be
+    # removed from the test collection. Otherwise, py.test will try to find values for the
+    # items in argnames by looking in its fixture pool, which will almost certainly fail.
     else:
         # module and class are optional, but function isn't
         modname = getattr(metafunc.module, '__name__', None)
@@ -301,8 +306,8 @@ def param_check(metafunc, argvalues):
         funcname = metafunc.function.__name__
 
         test_name = '.'.join(filter(None, (modname, classname, funcname)))
-        skip_msg = 'Parametrization for %s yielded no values, skipping' % test_name
+        skip_msg = 'Parametrization for %s yielded no values, marked for uncollection' % test_name
         logger.warning(skip_msg)
-        # Raising pytest.skip in collection halts future fixture evaluation,
-        # and preemptively filters this test out of the test results
-        pytest.skip(skip_msg)
+
+        # apply the mark
+        pytest.mark.uncollect()(metafunc.function)
