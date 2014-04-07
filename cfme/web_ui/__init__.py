@@ -1593,7 +1593,7 @@ class DHTMLSelect(Select):
         """ Get's the name reference of the element from its hidden attribute.
         """
 
-        root_el = sel.element(self.loc)
+        root_el = sel.element(self)
         el = sel.element("div/input[2]", root=root_el)
         name = sel.get_attribute(el, 'name')
         return name
