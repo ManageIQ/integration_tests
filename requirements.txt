@@ -18,6 +18,7 @@ requests
 scp
 selenium
 multimethods.py
+sphinx-rtd-theme
 sqlalchemy
 suds
 tornado
