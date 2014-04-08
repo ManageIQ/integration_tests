@@ -28,6 +28,14 @@ if on_rtd:
     a = open('../conf/credentials.yaml', 'w')
     a.write(open('../conf/credentials.yaml.template', 'r').read())
     a.close()
+else:
+    try:
+        import sphinx_rtd_theme
+        html_theme = 'sphinx_rtd_theme'
+        html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+    except ImportError:
+        html_theme = 'default'
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -35,7 +43,20 @@ if on_rtd:
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'cartouche', 'utils.apidoc']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.viewcode',
+    'cartouche',
+    'utils.apidoc'
+]
+
+intersphinx_mapping = {
+    'python': ('http://docs.python.org/2.7', None),
+    'pytest': ('http://pytest.org/latest/', None),
+    'selenium': ('http://selenium-python.readthedocs.org/en/latest/', None),
+    'sqlalchemy': ('http://docs.sqlalchemy.org/en/latest/', None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -101,7 +122,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'default'
+#html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
