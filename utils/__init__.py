@@ -35,7 +35,10 @@ def lazycache(wrapped_method):
     """
     attr = '_' + wrapped_method.__name__
 
-    doc = wrapped_method.__doc__ + '\n\nThis attribute is lazily evaluated and cached.'
+    if wrapped_method.__doc__:
+        doc = wrapped_method.__doc__ + '\n\nThis attribute is lazily evaluated and cached.'
+    else:
+        doc = None
 
     def get_lazy(self):
         if not hasattr(self, attr):
