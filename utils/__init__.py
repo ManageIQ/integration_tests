@@ -35,19 +35,19 @@ def lazycache(wrapped_method):
     """
     attr = '_' + wrapped_method.__name__
 
-    @property
-    def _lazy(self):
+    doc = wrapped_method.__doc__ + '\n\nThis attribute is lazily evaluated and cached.'
+
+    def get_lazy(self):
         if not hasattr(self, attr):
             setattr(self, attr, wrapped_method(self))
         return getattr(self, attr)
 
-    @_lazy.setter
-    def _lazy(self, value):
+    def set_lazy(self, value):
         setattr(self, attr, value)
 
-    @_lazy.deleter
-    def _lazy(self):
+    def del_lazy(self):
         if hasattr(self, attr):
             delattr(self, attr)
 
-    return _lazy
+    lazy = property(get_lazy, set_lazy, del_lazy, doc)
+    return lazy
