@@ -318,13 +318,10 @@ class VMWareSystem(MgmtSystemAPIBase):
         Returns: a pysphere object.
         """
         if vm_name is None:
-            raise Exception('Could not find a VM named %s.' % vm_name)
+            raise VMInstanceNotFound('Could not find a VM named %s.' % vm_name)
         else:
-            try:
-                vm = self.api.get_vm_by_name(vm_name)
-                return vm
-            except VIException as ex:
-                raise Exception(ex)
+            vm = self.api.get_vm_by_name(vm_name)
+            return vm
 
     def does_vm_exist(self, name):
         """ Checks if a vm exists or not.
@@ -499,7 +496,7 @@ class VMWareSystem(MgmtSystemAPIBase):
     def suspend_vm(self, vm_name):
         vm = self._get_vm(vm_name)
         if vm.is_powered_off():
-            raise Exception('Could not suspend %s because it\'s not running.' % vm_name)
+            raise VMInstanceNotSuspended(vm_name)
         else:
             vm.suspend()
             return self.is_vm_suspended(vm_name)
@@ -516,7 +513,7 @@ class VMWareSystem(MgmtSystemAPIBase):
                 resourcepool=self._get_resource_pool(kwargs['resourcepool']))
             return kwargs['vm_name']
         else:
-            raise Exception('Could not clone %s' % template)
+            raise VMInstanceNotCloned(template)
 
     def remove_host_from_cluster(self, hostname):
         req = VI.DisconnectHost_TaskRequestMsg()
@@ -645,11 +642,11 @@ class RHEVMSystem(MgmtSystemAPIBase):
         Returns: an ovirtsdk vm object.
         """
         if vm_name is None:
-            raise Exception('Could not find a VM named %s.' % vm_name)
+            raise VMInstanceNotFound(vm_name)
         else:
             vm = self.api.vms.get(name=vm_name)
             if vm is None:
-                raise Exception('Could not find a VM named %s.' % vm_name)
+                raise VMInstanceNotFound(vm_name)
             return vm
 
     def get_ip_address(self, vm_name):
@@ -786,7 +783,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def suspend_vm(self, vm_name):
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'down':
-            raise Exception('Could not suspend %s because it\'s not running.' % vm_name)
+            raise VMInstanceNotSuspended(vm_name)
         else:
             ack = vm.suspend()
             return ack.get_status().get_state() == 'complete'
@@ -984,9 +981,9 @@ class EC2System(MgmtSystemAPIBase):
         Args:
             instance_id: ID of the instance to act on
         Raises:
-            Exception: The action is not supported on the system
+            ActionNotSupported: The action is not supported on the system
         """
-        raise Exception('Requested action is not supported by this system')
+        raise ActionNotSupported()
 
     def is_vm_suspended(self, instance_id):
         """Is the VM suspended? We'll never know because EC2 don't support this.
@@ -994,9 +991,9 @@ class EC2System(MgmtSystemAPIBase):
         Args:
             instance_id: ID of the instance to inspect
         Raises:
-            Exception: The action is not supported on the system
+            ActionNotSupported: The action is not supported on the system
         """
-        raise Exception('Requested action is not supported by this system')
+        raise ActionNotSupported()
 
     def clone_vm(self, source_name, vm_name):
         raise NotImplementedError('This function has not yet been implemented.')
@@ -1050,7 +1047,7 @@ class EC2System(MgmtSystemAPIBase):
         reservations = self.api.get_all_instances(filters=filters)
         instances = self._get_instances_from_reservations(reservations)
         if not instances:
-            raise Exception('Instance with name "%s" not found.' % instance_name)
+            raise VMInstanceNotFound(instance_name)
         elif len(instances) > 1:
             raise MultipleInstancesError('Instance name "%s" is not unique' % instance_name)
         else:
@@ -1289,7 +1286,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
             if instance.name == name:
                 return instance
         else:
-            raise Exception('Invalid instance ID: %s' % name)
+            raise VMInstanceNotFound(name)
 
     def does_vm_exist(self, name):
         try:
@@ -1300,6 +1297,13 @@ class OpenstackSystem(MgmtSystemAPIBase):
 
     def remove_host_from_cluster(self, hostname):
         raise NotImplementedError('remove_host_from_cluster not implemented')
+
+
+class ActionNotSupported(Exception):
+    """
+    Raised when an action is not supported.
+    """
+    pass
 
 
 class ActionTimedOutError(Exception):
@@ -1316,3 +1320,36 @@ class MultipleInstancesError(Exception):
 
 class NetworkNameNotFound(Exception):
     pass
+
+
+class VMInstanceNotCloned(Exception):
+    """
+    Raised if a VM is not found.
+    """
+    def __init__(self, template):
+        self.template = template
+
+    def __str__(self):
+        return 'Could not clone %s' % self.template
+
+
+class VMInstanceNotFound(Exception):
+    """
+    Raised if a VM is not found.
+    """
+    def __init__(self, vm_name):
+        self.vm_name = vm_name
+
+    def __str__(self):
+        return 'Could not find a VM named %s.' % self.vm_name
+
+
+class VMInstanceNotSuspended(Exception):
+    """
+    Raised if a VM is not able to be suspended.
+    """
+    def __init__(self, vm_name):
+        self.vm_name = vm_name
+
+    def __str__(self):
+        return 'Could not suspend %s because it\'s not running.' % self.vm_name
