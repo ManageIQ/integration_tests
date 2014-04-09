@@ -6,6 +6,22 @@ from utils.providers import provider_factory
 import time
 
 
+def destroy(provider, args):
+    try:
+        if provider.does_vm_exist(args.vm_name):
+            # Stop the vm first
+            logging.warning('Destroying VM %s', args.vm_name)
+            if provider.is_vm_running(args.vm_name):
+                provider.stop_vm(args.vm_name)
+            if provider.delete_vm(args.vm_name):
+                logging.info('VM %s destroyed', args.vm_name)
+            else:
+                logging.error('Error destroying VM %s', args.vm_name)
+    except Exception as e:
+        logging.error('Could not destroy VM %s (%s)', args.vm_name, e.message)
+        return 11
+
+
 def main():
     parser = argparse.ArgumentParser(epilog=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -38,19 +54,7 @@ def main():
     provider = provider_factory(args.provider_name)
 
     if args.destroy:
-        try:
-            if provider.does_vm_exist(args.vm_name):
-                # Stop the vm first
-                logging.warning('Destroying VM %s', args.vm_name)
-                if provider.is_vm_running(args.vm_name):
-                    provider.stop_vm(args.vm_name)
-                if provider.delete_vm(args.vm_name):
-                    logging.info('VM %s destroyed', args.vm_name)
-                else:
-                    logging.error('Error destroying VM %s', args.vm_name)
-        except Exception as e:
-            logging.error('Could not destroy VM %s (%s)', args.vm_name, e.message)
-            return 11
+        destroy(provider, args)
     else:
         logging.info('Cloning %s to %s', args.template, args.vm_name)
         # passing unused args to ec2 provider would blow up so I
@@ -67,7 +71,13 @@ def main():
         if args.ec2_flavor is not None:
             deply_args.update(instance_type=args.ec2_flavor)
 
-        vm = provider.deploy_template(args.template, **deply_args)
+        try:
+            vm = provider.deploy_template(args.template, **deply_args)
+        except:
+            print "Unexpected error:", sys.exc_info()[0]
+            destroy(provider, args)
+            return 12
+
         if not provider.is_vm_running(vm):
             logging.error("VM is not running")
             return 10
