@@ -58,8 +58,15 @@ def update(o, **kwargs):
 
     '''
     cp = deepcopy(o)
-    yield cp
+
+    # let the block presumably mutate o
+    yield
+
+    #swap the states of o and cp so that cp is the updated one
+    o.__dict__, cp.__dict__ = cp.__dict__, o.__dict__
+
     o_updates = updates(o, cp)
     if o_updates:
         o.update(o_updates, **kwargs)
+        # if update succeeds, have o reflect the changes that are now in cp
         o.__dict__ = cp.__dict__
