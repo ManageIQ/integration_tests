@@ -33,6 +33,7 @@ provider it is running one, see the following:
             appliances_provider: vsphere5
             appliance_template: cfme-5218-0109
             vddk_url: http://fileserver.mydomain.com/VMware-vix-disklib-5.1.1-1042608.x86_64.tar.gz
+            rhel_updates_url: http://repos.mydomain.com/rhel_updates/x86_64
 
 If any of the providers are vsphere, you also need to specify where the vddk is located to install,
 see above yaml snippet.
@@ -89,6 +90,17 @@ def run_command(cmd):
     return output
 
 
+def wait_for_ssh(ip_addr):
+    ssh_up = False
+    while not ssh_up:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = s.connect_ex((ip_addr, 22))
+        if(result == 0):
+            ssh_up = True
+        else:
+            time.sleep(2)
+
+
 def provision_appliance(provider):
     '''Provisions appliance and setups up for smart state analysis'''
     global appliance_vm_name
@@ -112,14 +124,11 @@ def provision_appliance(provider):
     logger.info('Appliance IP: ' + ip_addr)
 
     # wait for ssh
-    ssh_up = False
-    while not ssh_up:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        result = s.connect_ex((ip_addr, 22))
-        if(result == 0):
-            ssh_up = True
-        else:
-            time.sleep(2)
+    wait_for_ssh(ip_addr)
+    run_command("scripts/update_rhel.py " + ip_addr + " " +
+        cfme_data['basic_info']['rhel_updates_url'] + " --reboot")
+    time.sleep(120)
+    wait_for_ssh(ip_addr)
 
     # enable internal db
     logger.info('Enabling internal database...')
