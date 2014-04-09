@@ -56,6 +56,7 @@ def test_provider_add_with_bad_credentials(provider_crud):
     elif isinstance(provider_crud, provider.RHEVMProvider):
         with error.expected('401 Unauthorized'):
             provider_crud.create(validate_credentials=True)
+    provider_crud.delete(cancel=False)
 
 
 @pytest.mark.usefixtures('has_no_infra_providers')
