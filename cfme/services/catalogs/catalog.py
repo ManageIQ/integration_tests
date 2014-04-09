@@ -46,7 +46,7 @@ def _all_catalogs_add_new(_):
     sel.click("//div[@id='stcat_tree_div']//td[.='All Catalogs']")
     tb_select('Add a New Catalog')
 
-    
+
 nav.add_branch(
     'services_catalogs',
     {'catalogs': [nav.partial(accordion.click, 'Catalogs'),

@@ -35,19 +35,3 @@ class Catalog(Updateable):
                                    'description_text': updates.get('description', None),
                                    'button_multiselect': updates.get('items', None)},
                     action=catalog.form.save_button)
-
-
-class CatalogItem(Updateable):
-    def __init__(self, item_type=None, name=None, description=None, display_in=False):
-        self.item_type = item_type
-        self.name = name
-        self.description = description
-        self.display_in = display_in
-
-    def create(self):
-        nav.go_to('catalog_item_new')
-        web_ui.fill(catalog.item_form, {'name_text': self.name,
-                                        'description_text': self.description,
-                                        'display_checkbox': self.display_in},
-                    action=catalog.item_form.add_button)
-        flash.assert_no_errors()
