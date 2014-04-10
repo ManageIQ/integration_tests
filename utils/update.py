@@ -3,9 +3,9 @@ from copy import deepcopy
 
 
 def public_fields(o):
-    '''
+    """
     Returns: a dict of fields whose name don't start with underscore.
-    '''
+    """
 
     return dict((key, value) for key, value in o.__dict__.iteritems() if not key.startswith('_'))
 
@@ -15,9 +15,9 @@ def all_public_fields_equal(a, b):
 
 
 def updates(old, new):
-    '''
+    """
     Return a dict of fields that are different between old and new.
-    '''
+    """
 
     d = {}
     o = public_fields(old)
@@ -28,10 +28,10 @@ def updates(old, new):
 
 
 class Updateable(object):
-    '''
+    """
     A mixin that helps make an object easily updateable. Two Updateables
     are equal if all their public fields are equal.
-    '''
+    """
 
     def __eq__(self, other):
         return all_public_fields_equal(self, other)
@@ -39,7 +39,7 @@ class Updateable(object):
 
 @contextmanager
 def update(o, **kwargs):
-    '''
+    """
     Update an object and then sync it with an external application.
 
     It will deepcopy the object into whatever is named in the 'as'
@@ -56,7 +56,7 @@ def update(o, **kwargs):
        myrecord.lastname = 'Smith'
        myrecord.address.zipcode = '27707'
 
-    '''
+    """
     cp = deepcopy(o)
     yield cp
     o_updates = updates(o, cp)

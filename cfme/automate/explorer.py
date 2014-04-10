@@ -143,7 +143,7 @@ class Class(Updateable):
         self.path = namespace.path + [name]
 
     def path_str(self):
-        '''Returns string path to this class, eg ns1/ns2/ThisClass'''
+        """Returns string path to this class, eg ns1/ns2/ThisClass."""
         if self.namespace:
             p = self.namespace.path
         else:

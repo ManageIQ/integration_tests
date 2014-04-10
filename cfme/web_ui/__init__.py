@@ -782,7 +782,7 @@ class CheckboxTable(Table):
 
 @multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))
 def fill_tag(loc, value):
-    ''' Return a tuple of function to do the filling, and a value to log.'''
+    """ Return a tuple of function to do the filling, and a value to log."""
     raise NotImplementedError("Don't know how to fill {} into this type: {}".format(value, loc))
 
 
@@ -801,7 +801,7 @@ def fill_password(pwbox, password):
 @fill_tag.method(('img', Anything))
 @fill_tag.method((Anything, 'image'))
 def fill_click(el, val):
-    '''Click only when given a truthy value'''
+    """Click only when given a truthy value"""
     def click_if(e, v):
         if v:
             sel.click(e)
@@ -989,7 +989,7 @@ def _fill_form_list(form, values, action=None):
 
 @fill.method((object, Mapping))
 def _fill_form_dict(form, values, action=None):
-    '''Fill in a dict by converting it to a list'''
+    """Fill in a dict by converting it to a list"""
     fill(form, values.items(), action=action)
 
 

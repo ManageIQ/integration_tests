@@ -6,7 +6,7 @@ from cfme.web_ui import flash, InfoBlock
 
 
 def test_server_name():
-    '''Tests that changing the server name updates the about page'''
+    """Tests that changing the server name updates the about page"""
     form_infoblocks = InfoBlock('form')
     flash_msg = 'Configuration settings saved for CFME Server "{}'
 
