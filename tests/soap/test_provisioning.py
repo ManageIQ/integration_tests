@@ -10,8 +10,6 @@ from time import time, sleep
 import pytest
 from unittestzero import Assert
 
-import db
-
 pytestmark = [
     pytest.mark.slow,
     pytest.mark.skip_selenium,
@@ -32,12 +30,13 @@ For more info: https://github.com/RedHatQE/cfme_tests/issues/64
 # Adding the skip mark to all tests in here for now...
 pytestmark.append(pytest.mark.skipif("skipmsg"))
 
-def test_create_request(db_session, soap_client):
+def test_create_request(db, soap_client):
     global request_id
+    vms_table = db['vms']
 
     # Find template guid
     template_guid = None
-    for name, guid in db_session.query(db.Vm.name, db.Vm.guid).filter(db.Vm.template==True):
+    for name, guid in db.session.query(vms_table.guid).filter(vms_table.template==True):
         if 'cfme' in name.lower():
             template_guid = guid.strip()
             logging.info('Using (%s,%s) template.' % (name, guid))

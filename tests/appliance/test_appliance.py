@@ -6,7 +6,6 @@ import re
 import pytest
 
 from unittestzero import Assert
-import db
 
 pytestmark = pytest.mark.smoke
 
@@ -119,12 +118,12 @@ def test_certificates_present(ssh_client, filename, given_md5):
         Assert.equal(given_md5, md5_of_file)
 
 
-def test_db_connection(db_session):
+def test_db_connection(db):
     """Test that the pgsql db is listening externally
 
     This looks for a row in the miq_databases table, which should always exist
     on an appliance with a working database and UI
 
     """
-    databases = db_session.query(db.MiqDatabase).all()
+    databases = db.session.query(db['miq_databases']).all()
     Assert.greater(len(databases), 0)

@@ -9,7 +9,7 @@ from datetime import datetime
 import pytest
 
 from utils import providers
-from utils.cfmedb import db_session_maker
+from utils.db import cfmedb
 from utils.conf import cfme_data
 from utils.datafile import template_env
 from utils.events import setup_for_event_testing
@@ -378,7 +378,7 @@ def configure_appliance_for_event_testing(listener_info):
     """ This fixture ensures that the appliance is configured for event testing.
     """
     return setup_for_event_testing(
-        SSHClient(), db_session_maker(), listener_info, providers.list_infra_providers()
+        SSHClient(), cfmedb, listener_info, providers.list_infra_providers()
     )
 
 

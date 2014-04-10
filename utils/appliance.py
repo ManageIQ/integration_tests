@@ -1,15 +1,15 @@
-from utils import async
-from utils import conf
-from utils.path import scripts_path
+import os
+import subprocess
+
+import requests
+
+from utils import async, conf, db, lazycache
 from utils.browser import browser_session
-from utils.cfmedb import build_cfme_db_url, db_session, get_yaml_config, set_yaml_config
+from utils.path import scripts_path
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.wait import wait_for
-import os
-import requests
-import subprocess
 
 
 class ApplianceException(Exception):
@@ -35,7 +35,6 @@ class Appliance(object):
 
         self._provider_name = provider_name
         self._vm_name = vm_name
-        self._address = None
 
     @property
     def _provider(self):
@@ -45,7 +44,7 @@ class Appliance(object):
         """
         return provider_factory(self._provider_name)
 
-    @property
+    @lazycache
     def address(self):
         def is_ip_available():
             try:
@@ -57,8 +56,18 @@ class Appliance(object):
             ec, tc = wait_for(is_ip_available,
                               delay=5,
                               num_sec=30)
-            self._address = ec
-        return self._address
+        return self.ec
+
+    @lazycache
+    def db_address(self):
+        # returns the appliance address by default, methods that set up the internal
+        # db should set db_address to something else when they do that
+        return self.address
+
+    @lazycache
+    def db(self):
+        # slightly crappy: anything that changes self.db_address should also del(self.db)
+        return db.Db(self.db_address)
 
     def configure(self,
                   db_address=None,
@@ -157,14 +166,11 @@ class Appliance(object):
             with appliance.db_session() as db:
                 db.do_stuff(TM)
         """
-        address_to_use = self.address if self.is_db_internal else self.db_address
-        cfme_db_url = build_cfme_db_url(base_url='https://' + address_to_use)
-        return db_session(cfme_db_url)
+        return self.db.session
 
     def enable_internal_db(self):
         """Enables internal database
         """
-        self.db_address = Appliance._internal_db
         script = scripts_path.join('enable_internal_db.py')
         args = [str(script), self.address]
         with open(os.devnull, 'w') as f_devnull:
@@ -180,7 +186,9 @@ class Appliance(object):
             db_address: Address of the external database
             region: Number of region to join
         """
+        # reset the db address and clear the cached db object if we have one
         self.db_address = db_address
+        del(self.db)
         script = scripts_path.join('enable_external_db.py')
         args = [str(script), self.address, db_address, '--region', str(region)]
         with open(os.devnull, 'w') as f_devnull:
@@ -200,9 +208,9 @@ class Appliance(object):
             for the name change to take effect.
         """
         with self.db_session():
-            vmdb_config = get_yaml_config('vmdb')
+            vmdb_config = db.get_yaml_config('vmdb', self.db)
             vmdb_config['server']['name'] = new_name
-            set_yaml_config('vmdb', vmdb_config, self.address)
+            db.set_yaml_config('vmdb', vmdb_config, self.address)
         self.name = new_name
 
     def restart_evm_service(self):
