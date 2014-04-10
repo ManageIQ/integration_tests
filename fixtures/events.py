@@ -378,7 +378,8 @@ def configure_appliance_for_event_testing(listener_info):
     """ This fixture ensures that the appliance is configured for event testing.
     """
     return setup_for_event_testing(
-        SSHClient(), db_session_maker(), listener_info, providers.list_infra_providers()
+        SSHClient(), db_session_maker(recreate=True), listener_info,
+        providers.list_infra_providers()
     )
 
 

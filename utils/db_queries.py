@@ -6,14 +6,6 @@ from functools import wraps
 from utils.cfmedb import db_session_maker
 
 
-def get_db_session():
-    """Caches and provides the db connection
-    """
-    if "db_session" not in globals():
-        globals()["db_session"] = db_session_maker()
-    return globals()["db_session"]
-
-
 def db_query(function):
     """Decorator providing the DB session for functions that want it.
 
@@ -25,7 +17,7 @@ def db_query(function):
     """
     @wraps(function)
     def f(*args, **kwargs):
-        return function(get_db_session(), *args, **kwargs)
+        return function(db_session_maker(recreate=True), *args, **kwargs)
     return f
 
 
