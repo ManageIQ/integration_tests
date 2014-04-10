@@ -303,7 +303,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
             email: Email of the requestee
         Returns: :py:class:`MiqVM` object with freshly provisioned VM.
         """
-        db_session = db_session_maker()
+        db_session = db_session_maker(recreate=True)
         for vm in db_session.query(db.Vm.name, db.Vm.guid).filter(db.Vm.template == True):
             # Previous line is ok, if you change it to `is`, it won't work!
             if vm.name.strip() == template_name.strip():
