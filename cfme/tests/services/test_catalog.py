@@ -27,7 +27,7 @@ def test_update_catalog():
     cat = Catalog(name=rand.generate_random_string(),
                   description="my catalog")
     cat.create()
-    with update(cat) as cat:
+    with update(cat):
         cat.description = "my edited description"
     flash.assert_no_errors()
 

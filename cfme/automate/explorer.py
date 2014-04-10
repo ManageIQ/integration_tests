@@ -7,6 +7,7 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Form, Tree, fill, Select
 from utils.log import logger
 from utils.update import Updateable
+import utils.error as error
 
 tree = Tree('//table//tr[@title="Datastore"]/../..')
 cfg_btn = partial(tb.select, 'Configuration')
@@ -53,7 +54,7 @@ nav.add_branch(
     {
         'automate_explorer_add_ns': lambda ctx: nav_add_namespace(ctx['namespace'].path),
         'automate_explorer_edit_ns': lambda ctx: nav_edit_namespace(ctx['namespace'].path),
-        'namespace': lambda ctx: nav_new_class(ctx['namespace'].path),
+        'class_new': lambda ctx: nav_new_class(ctx['class'].path),
         'class': lambda ctx: nav_edit_namespace(ctx['class'].path)
     })
 
@@ -152,13 +153,19 @@ class Class(Updateable):
         return "/".join(p)
 
     def create(self, cancel=False):
-        nav.go_to("namespace", context={"namespace": self.namespace})
+        nav.go_to("class_new", context={"class": self})
         fill(self.form, {'name_text': self.name,
                          'description_text': self.description,
                          'display_name_text': self.display_name,
                          'inherits_from_select':
                          self.inherits_from and self.inherits_from.path_str()},
              action={True: self.form.cancel_btn, False: self.form.add_btn}[cancel])
+        try:
+            flash.assert_success_message('Automate Class "%s" was added' % self.path_str())
+        except Exception as e:
+            if error.match("Name has already been taken", e):
+                sel.click(self.form.cancel_btn)
+            raise
 
     def update(self, updates, cancel=False):
         nav.go_to("class", context={"class": self})
@@ -175,3 +182,10 @@ class Class(Updateable):
         cfg_btn('Remove selected Items', invokes_alert=True)
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
+
+    def exists(self):
+        try:
+            nav.go_to("class", context={"class": self})
+            return True
+        except:
+            return False
