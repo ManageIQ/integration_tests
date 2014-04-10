@@ -63,11 +63,11 @@ def test_provider_edit(provider_crud):
     """ Tests that editing a management system shows the proper detail after an edit."""
     provider_crud.create()
     old_name = provider_crud.name
-    with update(provider_crud) as provider_crud:
+    with update(provider_crud):
         provider_crud.name = str(uuid.uuid4())  # random uuid
     flash.assert_message_match('Cloud Provider "%s" was saved' % provider_crud.name)
 
-    with update(provider_crud) as provider_crud:
+    with update(provider_crud):
         provider_crud.name = old_name  # old name
     flash.assert_message_match('Cloud Provider "%s" was saved' % provider_crud.name)
 

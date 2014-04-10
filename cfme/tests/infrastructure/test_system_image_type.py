@@ -15,6 +15,6 @@ def test_system_image_type_crud():
         name=generate_random_string(size=8),
         provision_type='Vm')
     sys_image_type.create()
-    with update(sys_image_type) as sys_image_type:
+    with update(sys_image_type):
         sys_image_type.name = sys_image_type.name + "_update"
     sys_image_type.delete(cancel=False)

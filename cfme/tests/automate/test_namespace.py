@@ -47,9 +47,9 @@ def test_delete_nested(gen_namespace):
 def test_edit(gen_namespace):
     gen_namespace.create()
     old_name = gen_namespace.name
-    with update(gen_namespace) as gen_namespace:
+    with update(gen_namespace):
         gen_namespace.name = generate_random_string(8)
-    with update(gen_namespace) as gen_namespace:
+    with update(gen_namespace):
         gen_namespace.name = old_name
 
 
@@ -65,9 +65,9 @@ def test_add_with_path(gen_namespace_path):
 def test_edit_with_path(gen_namespace_path):
     gen_namespace_path.create()
     old_name = gen_namespace_path.name
-    with update(gen_namespace_path) as gen_namespace_path:
+    with update(gen_namespace_path):
         gen_namespace_path.name = generate_random_string(8)
-    with update(gen_namespace_path) as gen_namespace_path:
+    with update(gen_namespace_path):
         gen_namespace_path.name = old_name
 
 
