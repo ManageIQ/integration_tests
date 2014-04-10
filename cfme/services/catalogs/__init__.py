@@ -7,7 +7,7 @@ import cfme.web_ui.flash as flash
 
 
 class Catalog(Updateable):
-    '''Represents a Catalog'''
+    """Represents a Catalog"""
 
     def __init__(self, name=None, description=None, items=None):
         self.name = name
