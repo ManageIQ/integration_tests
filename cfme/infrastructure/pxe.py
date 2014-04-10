@@ -10,6 +10,7 @@ from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import fill, Region, Form, ScriptBox, Select, Table, Tree
 from cfme.web_ui import paginator as pg
+from selenium.common.exceptions import NoSuchElementException
 import utils.conf as conf
 from utils.datafile import load_data_file
 from utils.log import logger
@@ -52,6 +53,11 @@ pxe_properties_form = Form(
         ('windows_dir_text', "//input[@id='windows_images_directory']"),
         ('customize_dir_text', "//input[@id='customization_directory']"),
         ('pxe_menu_text', "//input[@id='pxemenu_0']"),
+    ])
+
+pxe_image_type_form = Form(
+    fields=[
+        ('image_type', Select("//select[@id='image_typ']"))
     ])
 
 template_resetter = "//span[contains(., 'All Customization Templates - System Image Types')]"
@@ -211,6 +217,17 @@ class PXEServer(Updateable):
         if refresh:
             self.refresh()
 
+    def exists(self):
+        """
+        Checks if the PXE server already exists
+        """
+        sel.force_navigate('infrastructure_pxe_servers')
+        try:
+            pxe_server_tree.click_path(self.name)
+            return True
+        except NoSuchElementException:
+            return False
+
     def update(self, updates, cancel=False):
         """
         Updates a PXE server in the UI.  Better to use utils.update.update context
@@ -253,6 +270,15 @@ class PXEServer(Updateable):
             wait_for(lambda lt: lt != pxe_details_page.infoblock.text
                      ('Basic Information', 'Last Refreshed On'),
                      func_args=[last_time], fail_func=sel.refresh, num_sec=120)
+
+    def set_pxe_image_type(self, image_name, image_type):
+        """
+        Function to set the image type of a PXE image
+        """
+        sel.force_navigate('infrastructure_pxe_servers')
+        pxe_server_tree.click_path(self.name, 'PXE Images', image_name)
+        cfg_btn('Edit this PXE Image')
+        fill(pxe_image_type_form, {'image_type': image_type}, action=pxe_edit_page.save_btn)
 
 
 class CustomizationTemplate(Updateable):
@@ -310,7 +336,7 @@ class CustomizationTemplate(Updateable):
         try:
             template_tree.click_path(self.image_type, self.name)
             return True
-        except KeyError:
+        except NoSuchElementException:
             return False
 
     def update(self, updates, cancel=False):
