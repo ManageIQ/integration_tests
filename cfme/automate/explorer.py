@@ -4,85 +4,123 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, Tree, fill, Select
-from utils.log import logger
+from cfme.web_ui.tabstrip import select_tab
+from cfme.web_ui import Form, Tree, fill, Select, ScriptBox
 from utils.update import Updateable
 import utils.error as error
 
 tree = Tree('//table//tr[@title="Datastore"]/../..')
 cfg_btn = partial(tb.select, 'Configuration')
 
+submit_and_cancel_buttons = [('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']"),
+                           ('save_btn', "//ul[@id='form_buttons']/li/img[@alt='Save Changes']"),
+                           ('cancel_btn', "//ul[@id='form_buttons']/li/img[@alt='Cancel']")]
+
 
 def datastore_checkbox(name):
     return "//img[contains(@src, 'chk') and ../../td[.='%s']]" % name
 
 
-def nav_namespace(path):
-    logger.debug('Navigating the path')
-    tree.click_path("Datastore", *path)
+def nav_tree_item(path):
+    tree.click_path(*path)
 
 
-def nav_namespace_parent(path):
-    nav_namespace(path[:-1])
+def table_select(name):
+    sel.check(datastore_checkbox(name))
 
 
-def nav_add_namespace(path):
-    nav_namespace_parent(path)
-    cfg_btn('Add a New Namespace')
-
-
-def nav_select(path):
-    nav_namespace_parent(path)
-    sel.check(datastore_checkbox(path[-1]))
-
-
-def nav_edit_namespace(path):
-    nav_select(path)
+def nav_edit(path):
     if len(path) > 1:
         cfg_btn('Edit Selected Item')
     else:
         cfg_btn('Edit Selected Namespaces')
 
 
-def nav_new_class(path):
-    nav_namespace(path[:-1])
-    cfg_btn('Add a New Class')
-
+def get_path(o):
+    # prepend the top level "Datastore"
+    p = getattr(o, 'path', [])
+    return ["Datastore"] + p
 
 nav.add_branch(
     'automate_explorer',
     {
-        'automate_explorer_add_ns': lambda ctx: nav_add_namespace(ctx['namespace'].path),
-        'automate_explorer_edit_ns': lambda ctx: nav_edit_namespace(ctx['namespace'].path),
-        'class_new': lambda ctx: nav_new_class(ctx['class'].path),
-        'class': lambda ctx: nav_edit_namespace(ctx['class'].path)
+        'automate_explorer_tree_path':
+        [lambda ctx: nav_tree_item(get_path(ctx['tree_item'])),
+         {
+             'automate_explorer_table_select':
+             [lambda ctx: table_select(ctx['table_item'].name),
+              {
+                  'automate_explorer_edit':
+                  lambda ctx: nav_edit(get_path(ctx['tree_item'])),
+                  'automate_explorer_delete':
+                  lambda _: cfg_btn('Remove selected Items', invokes_alert=True)
+              }],
+             'automate_explorer_namespace_new': lambda _: cfg_btn('Add a New Namespace'),
+             'automate_explorer_class_new': lambda _: cfg_btn('Add a New Class'),
+             'automate_explorer_method_edit': lambda _: cfg_btn('Edit this Method'),
+             'automate_explorer_methods': [lambda _: select_tab('Methods'),
+              {
+                  'automate_explorer_methods_new': lambda _: cfg_btn('Add a New Method'),
+                  'automate_explorer_method_table_select':
+                  lambda ctx: table_select(ctx['table_item'].name)
+              }]
+         }]
     })
 
 
-class Namespace(Updateable):
-    form = Form(
-        fields=[
-            ('name', "//*[@id='ns_name']"),
-            ('description', "//*[@id='ns_description']"),
-            ('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']"),
-            ('save_btn', "//ul[@id='form_buttons']/li/img[@alt='Save Changes']"),
-            ('cancel_btn', "//ul[@id='form_buttons']/li/img[@alt='Cancel']"),
-        ])
+class TreeNode(object):
+    @property
+    def path(self):
+        '''Returns the path to this object as a list starting from the root'''
+        # A node with no name is the root node
+        if self.parent:
+            return list(self.parent.path) + [self.name]
+        else:
+            return [self.name]
+
+    def __repr__(self):
+        return "<%s name=%s>" % (self.__class__.__name__, self.name)
+
+
+class Namespace(TreeNode, Updateable):
+    form = Form(fields=
+                [('name', "//*[@id='ns_name']"),
+                 ('description', "//*[@id='ns_description']"),
+                 ('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']")]
+                + submit_and_cancel_buttons)
 
     create_btn_map = {True: form.cancel_btn, False: form.add_btn}
     update_btn_map = {True: form.cancel_btn, False: form.save_btn}
 
-    def __init__(self, name=None, description=None, path=None):
+    @staticmethod
+    def make_path(*names):
+        '''Make a set of nested Namespace objects with the given path.
+             eg.
+               n = Namespace.make_path("foo", "bar")
+             is equivalent to:
+               n = Namespace(name="bar", parent=Namespace(name="foo"))
+        '''
+        
+        if names:
+            names = list(names)
+            return Namespace(name=names.pop(), parent=Namespace.make_path(*names))
+        else:
+            return None
+
+    def __init__(self, name=None, description=None, parent=None):
         self.name = name
         self.description = description
-        self._path = path or []
+        self.parent = parent
 
-    @property
-    def path(self):
-        return list(self._path) + [self.name]  # because name can be changed
+    # @property
+    # def parent(self):
+    #     if not self._path:
+    #         return Namespace(name="Datastore", path=[])
+    #     else:
+    #         return Namespace(name=self._path[-1], path=self._path[:-1])
 
     def create(self, cancel=False):
-        nav.go_to('automate_explorer_add_ns', context={'namespace': self})
+        nav.go_to('automate_explorer_namespace_new', context={'tree_item': self.parent})
         form_data = {'name': self.name,
                      'description': self.description}
         try:
@@ -94,7 +132,8 @@ class Namespace(Updateable):
                 sel.click(self.form.cancel_btn)
 
     def update(self, updates, cancel=False):
-        nav.go_to('automate_explorer_edit_ns', context={'namespace': self})
+        nav.go_to('automate_explorer_edit', context={'tree_item': self.parent,
+                                                     'table_item': self})
         form_data = {'name': updates.get('name') or None,
                      'description': updates.get('description') or None}
         fill(self.form, form_data, action=self.update_btn_map[cancel])
@@ -102,8 +141,8 @@ class Namespace(Updateable):
                                      updates.get('name', self.name))
 
     def delete(self, cancel=False):
-        nav.go_to("automate_explorer")
-        nav_select(self.path)
+        nav.go_to("automate_explorer_table_select", context={'tree_item': self.parent,
+                                                             'table_item': self})
         if len(self.path) > 1:
             cfg_btn('Remove selected Items', invokes_alert=True)
         else:
@@ -114,7 +153,7 @@ class Namespace(Updateable):
 
     def exists(self):
         try:
-            nav.go_to('automate_explorer_edit_ns', context={'namespace': self})
+            nav.go_to('automate_explorer_edit', context={'namespace': self})
             return True
         except:
             return False
@@ -124,39 +163,38 @@ class Namespace(Updateable):
                                              self.name, self.path)
 
 
-class Class(Updateable):
-    form = Form(
-        fields=[('name_text', "//input[@name='name']"),
-                ('display_name_text', "//input[@name='display_name']"),
-                ('description_text', "//input[@name='description']"),
-                ('inherits_from_select', Select("//select[@name='inherits_from']")),
-                ('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']"),
-                ('save_btn', "//ul[@id='form_buttons']/li/img[@alt='Save Changes']"),
-                ('cancel_btn', "//ul[@id='form_buttons']/li/img[@alt='Cancel']")])
+class Class(TreeNode, Updateable):
+    '''Represents a Class in the CFME ui.  `Display Name` is not supported
+       (it causes the name to be displayed differently in different
+       places in the UI).'''
+
+    form = Form(fields=[('name_text', "//input[@name='name']"),
+                        ('display_name_text', "//input[@name='display_name']"),
+                        ('description_text', "//input[@name='description']"),
+                        ('inherits_from_select', Select("//select[@name='inherits_from']"))]
+                + submit_and_cancel_buttons)
 
     def __init__(self, name=None, display_name=None, description=None, inherits_from=None,
                  namespace=None):
         self.name = name
-        self.display_name = display_name
+        # self.display_name = display_name
         self.description = description
         self.inherits_from = inherits_from
         self.namespace = namespace
-        self.path = namespace.path + [name]
+
+    @property
+    def parent(self):
+        return self.namespace
 
     def path_str(self):
         '''Returns string path to this class, eg ns1/ns2/ThisClass'''
-        if self.namespace:
-            p = self.namespace.path
-        else:
-            p = []
-        p = p + [self.name]
-        return "/".join(p)
+        return "/".join(self.path)
 
     def create(self, cancel=False):
-        nav.go_to("class_new", context={"class": self})
+        nav.go_to("automate_explorer_class_new", context={"tree_item": self.namespace})
         fill(self.form, {'name_text': self.name,
                          'description_text': self.description,
-                         'display_name_text': self.display_name,
+                         # 'display_name_text': self.display_name,
                          'inherits_from_select':
                          self.inherits_from and self.inherits_from.path_str()},
              action={True: self.form.cancel_btn, False: self.form.add_btn}[cancel])
@@ -168,24 +206,84 @@ class Class(Updateable):
             raise
 
     def update(self, updates, cancel=False):
-        nav.go_to("class", context={"class": self})
+        nav.go_to("automate_explorer_edit", context={"tree_item": self.parent,
+                                                     "table_item": self})
         fill(self.form, {'name_text': updates.get('name'),
                          'description_text': updates.get('description'),
-                         'display_name_text': updates.get('display_name'),
+                         # 'display_name_text': updates.get('display_name'),
                          'inherits_from_select':
                          updates.get('inherits_from') and updates.get('inherits_from').path_str()},
              action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
 
     def delete(self, cancel=False):
-        nav.go_to("automate_explorer")
-        nav_select(self.path)
-        cfg_btn('Remove selected Items', invokes_alert=True)
+        nav.go_to("automate_explorer_delete", context={'tree_item': self.parent,
+                                                       'table_item': self})
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
 
     def exists(self):
         try:
-            nav.go_to("class", context={"class": self})
+            nav.go_to('automate_explorer_edit', context={'tree_item': self.parent,
+                                                         'table_item': self})
+            return True
+        except:
+            return False
+
+
+class Method(TreeNode, Updateable):
+    '''Represents a Method in the CFME ui.  `Display Name` is not
+       supported (it causes the name to be displayed differently in
+       different places in the UI). '''
+
+    form = Form(
+        fields=[('name_text', "//input[contains(@name,'method_name')]"),
+                ('display_name_text', "//input[contains(@name,'method_display_name')]"),
+                ('location_select', Select("//select[contains(@id,'method_location')]")),
+                ('data_text', ScriptBox("//textarea[contains(@name,'method_data')]"))]
+        + submit_and_cancel_buttons)
+
+    def __init__(self, name=None, display_name=None, location=None, data=None, cls=None):
+        self.name = name
+        # self.display_name = display_name
+        self.location = location
+        self.data = data
+        self.cls = cls
+
+    @property
+    def parent(self):
+        return self.cls
+
+    def create(self, cancel=False):
+        nav.go_to("automate_explorer_methods_new", context={'tree_item': self.cls})
+        fill(self.form, {'name_text': self.name,
+                         # 'display_name_text': self.display_name,
+                         'location_select': self.location,
+                         'data_text': self.data},
+             action={True: self.form.cancel_btn, False: self.form.add_btn}[cancel])
+        try:
+            flash.assert_success_message('Automate Method "%s" was added' % self.name)
+        except Exception as e:
+            if error.match("Name has already been taken", e):
+                sel.click(self.form.cancel_btn)
+            raise
+
+    def update(self, updates, cancel=False):
+        nav.go_to("automate_explorer_method_edit", context={"tree_item": self})
+        fill(self.form, {'name_text': updates.get('name'),
+                         'description_text': updates.get('description'),
+                         'location_select': updates.get('location'),
+                         'data_text': updates.get('data')},
+             action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
+
+    def delete(self, cancel=False):
+        nav.go_to("automate_explorer_tree_path", context={'tree_item': self})
+        cfg_btn('Remove this Method', invokes_alert=True)
+        sel.handle_alert(cancel)
+        return flash.assert_no_errors()
+
+    def exists(self):
+        try:
+            nav.go_to("automate_explorer_tree_path", context={'tree_item': self})
             return True
         except:
             return False

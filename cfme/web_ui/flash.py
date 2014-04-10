@@ -3,20 +3,12 @@
 :var area: A :py:class:`cfme.web_ui.Region` object representing the flash region.
 """
 from cfme.web_ui import Region
-from selenium.webdriver.common.by import By
 import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
 
-flash_divs_cond = [
-    "@id='flash_text_div'",
-    "@id='flash_div'",
-    "@id='flash_text_div_ns_list'",
-    "@id='flash_text_div_ns_details'",
-    "@id='flash_text_div_class_props'"]
-
-flash_area_xpath = "//div[%s]//li" % " or ".join(flash_divs_cond)
-area = Region(locators=
-              {'message': (By.XPATH, flash_area_xpath)})
+area = Region(locators= 
+              {'message': "//div[starts-with(@id, 'flash_') and "
+               "not(ancestor::*[contains(@style,'display: none')])]//li"})
 
 
 class Message(object):

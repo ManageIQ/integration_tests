@@ -11,74 +11,44 @@ import utils.error as error
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
-@pytest.fixture
 def a_namespace():
     name = generate_random_string(8)
     description = generate_random_string(32)
     return Namespace(name=name, description=description)
 
 
-@pytest.fixture
 def a_namespace_with_path():
     name = generate_random_string(8)
-    description = generate_random_string(32)
-    path = ('Factory', 'StateMachines')
-    return Namespace(name=name, description=description, path=path)
+    n = Namespace.make_path('Factory', 'StateMachines', name)
+    n.description = generate_random_string(32)
+    return n
 
 
-def test_add(a_namespace):
-    a_namespace.create()
+@pytest.fixture(params=[a_namespace, a_namespace_with_path])
+def namespace(request):
+    return request.param()
 
 
-def test_add_nested(a_namespace):
-    a_namespace.create()
-    nested_ns = Namespace(name="Nested", path=a_namespace.path)
+def test_crud(namespace):
+    namespace.create()
+    old_name = namespace.name
+    with update(namespace):
+        namespace.name = generate_random_string(8)
+    with update(namespace):
+        namespace.name = old_name
+    namespace.delete()
+    assert not namespace.exists()
+
+
+def test_add_delete_nested(namespace):
+    namespace.create()
+    nested_ns = Namespace(name="Nested", parent=namespace)
     nested_ns.create()
+    nested_ns.delete()
+    assert not namespace.exists()
 
 
-def test_delete_nested(a_namespace):
-    a_namespace.create()
-    nested_ns = Namespace(name="Nested", path=a_namespace.path)
-    nested_ns.create()
-    a_namespace.delete()
-    assert not a_namespace.exists()
-
-
-def test_edit(a_namespace):
-    a_namespace.create()
-    old_name = a_namespace.name
-    with update(a_namespace):
-        a_namespace.name = generate_random_string(8)
-    with update(a_namespace):
-        a_namespace.name = old_name
-
-
-def test_delete(a_namespace):
-    a_namespace.create()
-    a_namespace.delete()
-
-
-def test_add_with_path(a_namespace_with_path):
-    a_namespace_with_path.create()
-
-
-def test_edit_with_path(a_namespace_with_path):
-    a_namespace_with_path.create()
-    old_name = a_namespace_with_path.name
-    with update(a_namespace_with_path):
-        a_namespace_with_path.name = generate_random_string(8)
-    with update(a_namespace_with_path):
-        a_namespace_with_path.name = old_name
-
-
-def test_delete_with_path(a_namespace_with_path):
-    a_namespace_with_path.create()
-    a_namespace_with_path.delete(cancel=False)
-
-
-def test_duplicate_disallowed(a_namespace):
-    a_namespace.create()
+def test_duplicate_disallowed(namespace):
+    namespace.create()
     with error.expected("Error during 'add': Validation failed: fqname must be unique"):
-        a_namespace.create()
-
-    
+        namespace.create()

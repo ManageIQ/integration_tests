@@ -28,8 +28,15 @@ def a_class(a_namespace):
                  namespace=a_namespace)
 
 
-def test_add(a_class):
+def test_crud(a_class):
     a_class.create()
+    orig = a_class.description
+    with update(a_class):
+        a_class.description = 'edited'
+    with update(a_class):
+        a_class.description = orig
+    a_class.delete()
+    assert not a_class.exists()
 
 
 def test_add_inherited(a_class):
@@ -39,20 +46,6 @@ def test_add_inherited(a_class):
                      inherits_from=a_class)
     a_class.create()
     subclass.create()
-
-
-def test_edit(a_class):
-    a_class.create()
-    orig = a_class.description
-    with update(a_class):
-        a_class.description = 'edited'
-    with update(a_class):
-        a_class.description = orig
-
-
-def test_delete(a_class):
-    a_class.create()
-    a_class.delete()
 
 
 def test_duplicate_disallowed(a_class):
