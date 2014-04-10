@@ -8,6 +8,7 @@ import time
 import boto
 from abc import ABCMeta, abstractmethod
 from boto.ec2 import EC2Connection, get_region
+from functools import partial
 from ovirtsdk.api import API
 from ovirtsdk.xml import params
 from pysphere import VIServer, MORTypes, VITask, VIMor
@@ -412,6 +413,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         return False
 
     def stop_vm(self, vm_name):
+        logger.debug(' Stopping vm... ({})'.format(vm_name))
         vm = self._get_vm(vm_name)
         if vm.is_powered_off():
             return True
@@ -657,7 +659,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         try:
             self._get_vm(name)
             return True
-        except Exception:
+        except VMInstanceNotFound:
             return False
 
     def start_vm(self, vm_name=None):
@@ -671,6 +673,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return False
 
     def stop_vm(self, vm_name):
+        logger.debug(' Stopping VM....({})'.format(vm_name))
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'down':
             return True
@@ -681,9 +684,9 @@ class RHEVMSystem(MgmtSystemAPIBase):
         return False
 
     def delete_vm(self, vm_name):
+        logger.debug(' Deleting VM....({})'.format(vm_name))
         vm = self._get_vm(vm_name)
-        if vm.status.get_state() == 'up':
-            self.stop_vm(vm_name)
+        wait_for(self.stop_vm, [vm_name], fail_condition='False', num_sec=300, delay=10)
         vm.delete()
         wait_for(self.does_vm_exist, [vm_name], fail_condition=True)
         return True
