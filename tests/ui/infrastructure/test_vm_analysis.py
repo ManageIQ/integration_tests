@@ -363,7 +363,7 @@ class TestVmAnalysis():
             return False
 
         tasks_pg.task_buttons.reload()
-        wait_for(is_task_finished, func_args=[tasks_pg, vm_name], delay=30, num_sec=600)
+        wait_for(is_task_finished, func_args=[tasks_pg, vm_name], delay=30, num_sec=900)
 
     def test_analyze_vm(self, provider, vm_name, fs_type, register_event):
         """Test scanning a VM"""
