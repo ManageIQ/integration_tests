@@ -2,20 +2,74 @@
 
 Intended to functionalize common tasks when working with the pytest_generate_tests hook.
 
-The function return values use in the module, ``argnames``, ``argvalues``, and ``idlist``,
-can be thought of as parts of a table, where ``argnames`` are the table's column headers,
-``idlist`` is a list of row labels, and ``argvalues`` is a list of rows in the table. Each "row"
-in ``argvalues`` is a list of values. Therefore, the number of items in ``argvalues`` must
-correspond to the number of entries in ``idlist``, and the number of items in each ``argvalues``
-row list must correspond to the number of ``argnames``. Here's an example table:
+When running a test, it is quite often the case that multiple parameters need to be passed
+to a single test. An example of this would be the need to run a Provider Add test against
+multiple providers. We will assume that the providers are stored in the yaml under a common
+structure like so::
 
-========= =============== =============== =============== ===============
-~         argnames[0]     argnames[1]     argnames[2]     argnames[3]
-========= =============== =============== =============== ===============
-idlist[0] argvalues[0][0] argvalues[0][1] argvalues[0][2] argvalues[0][3]
-idlist[1] argvalues[1][0] argvalues[1][1] argvalues[1][2] argvalues[1][3]
-idlist[2] argvalues[2][0] argvalues[2][1] argvalues[2][2] argvalues[2][3]
-========= =============== =============== =============== ===============
+    providers:
+        prov_1:
+            name: test
+            ip: 10.0.0.1
+        prov_2:
+            name: test2
+            ip: 10.0.0.2
+
+Our test requires that we have a Provider Object and a management system object. Let's
+assume a test prototype like so::
+
+    test_provider_add(provider_obj, provider_mgmt_sys):
+
+In this case we require the test to be run twice, once for prov_1 and then again for prov_2.
+We are going to use the generate function to help us provide parameters to pass to
+``pytest_generate_tests()``. ``pytest_generate_tests()`` requires three pieces of
+information, ``argnames``, ``argvalues`` and an ``idlist``. ``argnames`` turns into the
+names we use for fixtures. In this case, ``provider_obj`` and ``provider_mgmt_sys``.
+``argvalues`` becomes the place where the ``provider_obj`` and ``provider_mgmt_sys``
+items are stored. Each element of ``argvalues`` is a list containing a value for both
+``provider_obj`` and ``provider_mgmt_sys``. Thus, taking an element from ``argvalues``
+gives us the values to unpack to make up one test. An example is below, where we assume
+that a provider object is obtained via the ``Provider`` class, and the ``mgmt_sys object``
+is obtained via a ``MgmtSystem`` class.
+
+===== =============== =================
+~     provider_obj    provider_mgmt_sys
+===== =============== =================
+prov1 Provider(prov1) MgmtSystem(prov1)
+prov2 Provider(prov2) MgmtSystem(prov2)
+===== =============== =================
+
+This is analogous to the following layout:
+
+========= =============== ===============
+~         argnames[0]     argnames[1]
+========= =============== ===============
+idlist[0] argvalues[0][0] argvalues[0][1]
+idlist[1] argvalues[1][0] argvalues[1][1]
+========= =============== ===============
+
+This could be generated like so:
+
+.. code-block:: python
+
+    def gen_providers:
+
+        argnames = ['provider_obj', 'provider_mgmt_sys']
+        argvalues = []
+        idlist = []
+
+        for provider in yaml['providers']:
+            idlist.append(provider)
+            argvalues.append([
+                Provider(yaml['providers'][provider]['name']),
+                MgmtSystem(yaml['providers'][provider]['ip']))
+            ])
+
+        return argnames, argvalues, idlist
+
+This is then used with pytest_generate_tests like so::
+
+    pytest_generate_tests(gen_providers)
 
 Additionally, py.test joins the values of ``idlist`` with dashes to generate a unique id for this
 test, falling back to joining ``argnames`` with dashes if ``idlist`` is not set. This is the value
