@@ -19,6 +19,6 @@ def test_customization_template_crud():
         script_data='Testing the script')
 
     template_crud.create()
-    with update(template_crud) as template_crud:
+    with update(template_crud):
         template_crud.name = template_crud.name + "_update"
     template_crud.delete(cancel=False)
