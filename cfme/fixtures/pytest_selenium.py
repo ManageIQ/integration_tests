@@ -11,14 +11,11 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 :var ajax_wait_js: A Javascript function for ajax wait checking
 """
 from time import sleep
-from traceback import format_exc
 from collections import Iterable
 import json
 
-import ui_navigate
-from selenium.common.exceptions import (NoSuchElementException,
-                                        UnexpectedAlertPresentException,
-                                        NoSuchAttributeException)
+from selenium.common.exceptions import (ErrorInResponseException, InvalidSwitchToTargetException,
+    NoSuchAttributeException, NoSuchElementException, UnexpectedAlertPresentException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
@@ -478,7 +475,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # circular import prevention: cfme.login uses functions in this module
     from cfme import login
     # Import the top-level nav menus for convenience
-    from cfme.web_ui import menu  # NOQA
+    from cfme.web_ui import menu
 
     # browser fixture should do this, but it's needed for subsequent calls
     ensure_browser_open()
@@ -490,11 +487,14 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # miqSparkleOff undefined, so it's definitely off.
         pass
 
+    # Set this to True in the handlers below to trigger a browser restart
+    recycle = False
+
     try:
         # What we'd like to happen...
         login.login_admin()
         logger.info('Navigating to %s' % page_name)
-        ui_navigate.go_to(page_name, *args, **kwargs)
+        menu.nav.go_to(page_name, *args, **kwargs)
     except (KeyboardInterrupt, ValueError):
         # KeyboardInterrupt: Don't block this while navigating
         # ValueError: ui_navigate.go_to can't handle this page, give up
@@ -505,14 +505,18 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             handle_alert(wait=0)
         else:
             # There was still an alert when we tried again, shoot the browser in the head
-            logger.debug("Unxpected alert on try %d, recycling browser" % _tries)
-            browser().quit()
-        force_navigate(page_name, _tries, *args, **kwargs)
-    except Exception as ex:
-        # Anything else happened, nuke the browser and try again.
-        logger.info('Caught %s during navigation, trying again.' % type(ex).__name__)
-        logger.debug(format_exc())
+            logger.debug('Unxpected alert, recycling browser' % _tries)
+            recycle = True
+    except (ErrorInResponseException, InvalidSwitchToTargetException):
+        # Unable to switch to the browser at all, need to recycle
+        logger.info('Invalid browser state, recycling browser' % _tries)
+        recycle = True
+
+    if recycle:
         browser().quit()
+        logger.debug('browser killed on try %d' % _tries)
+        # If given a "start" nav destination, it won't be valid after quitting the browser
+        kwargs.pop("start", None)
         force_navigate(page_name, _tries, *args, **kwargs)
 
 
