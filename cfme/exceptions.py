@@ -62,6 +62,15 @@ class NavigationError(CFMEException):
     pass
 
 
+class CannotContinueWithNavigation(CFMEException):
+    """Used for telling force_navigate that is not possible to continue with navigation.
+
+    Raising it will recycle the browser, therefore refresh the session. If you pass a string to
+    the constructor, it will be written to the log.
+    """
+    pass
+
+
 class NoElementsInsideValue(CFMEException):
     """
     Raised if the value part of key/value contains no elements during

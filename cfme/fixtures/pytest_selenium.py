@@ -15,7 +15,8 @@ from collections import Iterable
 import json
 
 from selenium.common.exceptions import (ErrorInResponseException, InvalidSwitchToTargetException,
-    NoSuchAttributeException, NoSuchElementException, UnexpectedAlertPresentException)
+    NoSuchAttributeException, NoSuchElementException, UnexpectedAlertPresentException,
+    CannotContinueWithNavigation)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
@@ -462,11 +463,10 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         page_name: Name a page from the current :py:data:`ui_navigate.nav_tree` tree to navigate to.
 
     """
-    if _tries >= 3:
+    if _tries >= 2:
         # Need at least three tries:
-        # 1: login_admin handles an alert or closes the browser due any error
-        # 2: If login_admin handles an alert, go_to can still encounter an unexpected error
-        # 3: Everything should work. If not, NavigationError.
+        # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
+        # 2: Everything should work. If not, NavigationError.
         raise exceptions.NavigationError(page_name)
 
     _tries += 1
@@ -510,6 +510,10 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     except (ErrorInResponseException, InvalidSwitchToTargetException):
         # Unable to switch to the browser at all, need to recycle
         logger.info('Invalid browser state, recycling browser' % _tries)
+        recycle = True
+    except CannotContinueWithNavigation as e:
+        # The some of the navigation steps cannot succeed
+        logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
         recycle = True
 
     if recycle:
