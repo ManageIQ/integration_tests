@@ -7,14 +7,13 @@
 
 from fixtures import navigation as nav
 import re
-import db
 from lxml import etree
 from py.path import local
 from selenium.common.exceptions import TimeoutException
 from utils.conf import cfme_data
 
 
-def setup_for_event_testing(ssh_client, db_session, listener_info, providers):
+def setup_for_event_testing(ssh_client, db, listener_info, providers):
     # FIX THE ENV ERROR IF PRESENT
     if ssh_client.run_command("ruby -v")[0] != 0:
         success = ssh_client.run_command("echo 'source /etc/default/evm' >> .bashrc")[0] == 0
@@ -73,8 +72,9 @@ def setup_for_event_testing(ssh_client, db_session, listener_info, providers):
             raise
 
     # CREATE AUTOMATE INSTANCE HOOK
-    if db_session is None or db_session.query(db.MiqAeInstance.name)\
-            .filter(db.MiqAeInstance.name == "RelayEvents").count() == 0:   # Check presence
+    if db.session.query(db['miq_ae_instances'].name)\
+            .filter(db['miq_ae_instances'].name == "RelayEvents").count() == 0:
+        # Check presence
         automate_explorer_pg = nav.automate_explorer_pg()
         parent_class = "Automation Requests (Request)"
         instance_details = [

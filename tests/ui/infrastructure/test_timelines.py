@@ -3,18 +3,15 @@
 # pylint: disable=R0913
 # pylint: disable=E1101
 
-import db
 import pytest
 from fixtures import navigation as nav
 from unittestzero import Assert
-from utils.cfmedb import db_session_maker
 from utils.conf import cfme_data
 
-pytestmark = [pytest.mark.destructive,
+pytestmark = [pytest.mark.usefixtures("setup_infrastructure_providers"),
               pytest.mark.usefixtures("fetch_providers"),
               pytest.mark.usefixtures("get_host_name"),
               pytest.mark.usefixtures("delete_fx_provider_event"),
-              pytest.mark.usefixtures("db_session"),
               pytest.mark.usefixtures("verify_vm_stopped")]
 
 
@@ -23,11 +20,16 @@ host = ""
 
 
 @pytest.fixture(scope="module")
-def delete_fx_provider_event(db_session, provider_name):
-    db_session.query(db.EmEvent).filter(db.EmEvent.id.in_(db_session.query(db.EmEvent.id).
-        join(db.ExtManagementSystem, db.EmEvent.ems_id == db.ExtManagementSystem.id).
-        filter(db.ExtManagementSystem.name == provider_name).subquery())).delete(False)
-    db_session.commit()
+def delete_fx_provider_event(db, provider_name):
+    ems = db['ext_management_systems']
+    ems_events = db['ems_events']
+    with db.transaction as session:
+        providers = (
+            session.query(ems_events.id)
+            .join(ems, ems_events.ems_id == ems.id)
+            .filter(ems.name == provider_name)
+        )
+        session.query(ems_events).filter(ems_events.id.in_(providers.subquery())).delete(False)
 
 
 def fetch_list(data):
@@ -47,14 +49,8 @@ def fetch_list(data):
 
 
 def pytest_generate_tests(metafunc):
-    argnames = []
     argnames = ['fetch_providers', 'provider', 'vm_name', 'provider_type', 'provider_name']
     metafunc.parametrize(argnames, fetch_list(cfme_data), scope="module")
-
-
-@pytest.fixture(scope="module")
-def db_session():
-    return db_session_maker()
 
 
 @pytest.fixture(scope="module")

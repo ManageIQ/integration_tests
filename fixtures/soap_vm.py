@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=W0621
 import pytest
-import db
 from unittestzero import Assert
 from time import time, sleep
 
@@ -10,15 +9,17 @@ from time import time, sleep
 def setup_soap_create_vm(
         request,
         soap_client,
-        db_session,
+        db,
         server_roles,
         provisioning_data_basic_only,
         vmware_linux_setup_data):
     '''Sets up first VM for clone/retirement tests'''
+    vm_table = db.table('vms')
+
     # Check if VM already exists
-    for name, guid, power_state in db_session.query(
-            db.Vm.name, db.Vm.guid, db.Vm.power_state).filter(
-            db.Vm.template is False):
+    for name, guid, power_state in db.session.query(
+            vm_table.name, vm_table.guid, vm_table.power_state).filter(
+            vm_table.template is False):
         if vmware_linux_setup_data['vm_name'] in name:
             # VM exists
             print "VM exits"
@@ -29,7 +30,8 @@ def setup_soap_create_vm(
     else:
         # Find template guid
         template_guid = None
-        for name, guid in db_session.query(db.Vm.name, db.Vm.guid).filter(db.Vm.template is True):
+        for name, guid in db.session.query(vm_table.name, vm_table.guid)\
+                .filter(vm_table.template is True):
             if provisioning_data_basic_only['template'] in name:
                 template_guid = guid.strip()
                 break

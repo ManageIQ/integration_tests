@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=W0621
 import pytest
-import db
 import requests
 import StringIO
 from datetime import datetime
@@ -24,21 +23,19 @@ def vm_provisioning_setup_data(cfme_data):
     return cfme_data["provisioning_setup"]['vm_provisioning_setup']['pxe_server']
 
 
-def setup_pxe_server(db_session, provisioning_setup_data):
-    session = db_session
-
+def setup_pxe_server(db, provisioning_setup_data):
     row_val = None
-    for row in session.query(db.PxeImageType):
+    for row in db.session.query(db['pxe_image_types']):
         if row.name == provisioning_setup_data['pxe_image_type_name']:
             row_val = row.id
 
     server_name = []
-    for row in session.query(db.PxeServer):
+    for row in db.session.query(db['pxe_servers']):
         server_name.append(row.name)
     if not provisioning_setup_data['pxe_server_name'] in server_name:
 
         '''Add a PXE Server'''
-        new_pxe_server = db.PxeServer(
+        new_pxe_server = db['pxe_servers'](
             access_url=provisioning_setup_data['access_url'],
             pxe_directory=provisioning_setup_data['pxe_directory'],
             customization_directory=provisioning_setup_data['customization_directory'],
@@ -49,43 +46,41 @@ def setup_pxe_server(db_session, provisioning_setup_data):
             visibility=provisioning_setup_data['visibility'],
             created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
             updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"))
-        session.add(new_pxe_server)
-        session.commit()
+        db.session.add(new_pxe_server)
+        db.session.commit()
         server_id = []
-        for row in session.query(db.PxeServer):
+        for row in db.session.query(db['pxe_servers']):
             server_id.append(row.id)
         server_last_id = server_id.pop()
         return row_val, server_last_id
     return row_val, False
 
 
-def setup_pxe_menu(db_session, provisioning_setup_data, server_last_id):
+def setup_pxe_menu(db, provisioning_setup_data, server_last_id):
     ''' Add PXE Menu'''
-
-    session = db_session
-
+    pxe_menu = db['pxe_menu']
     doc = requests.get(provisioning_setup_data['pxe_menu_file'], verify=False)
     content = StringIO.StringIO(doc.content).read()
-    new_pxe_menu = db.PxeMenu(
+    new_pxe_menu = pxe_menu(
         file_name=provisioning_setup_data['menu_file_name'],
         created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
         pxe_server_id=server_last_id,
         type=provisioning_setup_data['menu_type'],
         updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
         contents=content)
-    session.add(new_pxe_menu)
-    session.commit()
+    db.session.add(new_pxe_menu)
+    db.session.commit()
     menu_id = []
-    for row in session.query(db.PxeMenu):
+    for row in db.session.query(pxe_menu):
         menu_id.append(row.id)
     menu_last_id = menu_id.pop()
     return menu_last_id
 
 
-def setup_pxe_image(db_session, provisioning_setup_data, server_last_id, menu_last_id, row_val):
+def setup_pxe_image(db, provisioning_setup_data, server_last_id,
+        menu_last_id, row_val):
     '''Add PXE Image'''
-    session = db_session
-    new_pxe_image = db.PxeImage(
+    new_pxe_image = db['pxe_images'](
         default_for_windows=None,
         description=provisioning_setup_data['image_description'],
         initrd=provisioning_setup_data['initrd'],
@@ -99,21 +94,19 @@ def setup_pxe_image(db_session, provisioning_setup_data, server_last_id, menu_la
         type=provisioning_setup_data['image_type'],
         created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
         updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"))
-    session.add(new_pxe_image)
-    session.commit()
+    with db.transaction:
+        db.session.add(new_pxe_image)
 
 
-def setup_customization_template(db_session, provisioning_setup_data, row_val,
-                                 ks_file_handle=None):
-    session = db_session
-
+def setup_customization_template(db, provisioning_setup_data, row_val,
+        ks_file_handle=None):
     row_val = None
-    for row in session.query(db.PxeImageType):
+    for row in db.session.query(db['pxe_image_types']):
         if row.name == provisioning_setup_data['pxe_image_type_name']:
             row_val = row.id
 
     customization_template = []
-    for row in session.query(db.CustomizationTemplate):
+    for row in db.session.query(db['customization_templates']):
         customization_template.append(row.name)
     if not provisioning_setup_data['ct_name'] in customization_template:
 
@@ -122,7 +115,7 @@ def setup_customization_template(db_session, provisioning_setup_data, row_val,
             f_ks = open(provisioning_setup_data['ks_file'], 'r+')
         else:
             f_ks = ks_file_handle
-        new_customization_template = db.CustomizationTemplate(
+        new_customization_template = db['customization_templates'](
             created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
             description=provisioning_setup_data['ct_description'],
             name=provisioning_setup_data['ct_name'],
@@ -131,55 +124,56 @@ def setup_customization_template(db_session, provisioning_setup_data, row_val,
             type=provisioning_setup_data['ct_type'],
             updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
             script=f_ks.read())
-        session.add(new_customization_template)
-        session.commit()
+        with db.transaction as session:
+            session.add(new_customization_template)
 
 
 @pytest.fixture
-def setup_pxe_provision(uses_pxe, db_session, provisioning_setup_data):
+def setup_pxe_provision(uses_pxe, db, provisioning_setup_data):
     '''Sets up Infrastructure PXE for provisioning'''
-    row_val, server_last_id = setup_pxe_server(db_session, provisioning_setup_data)
+    row_val, server_last_id = setup_pxe_server(db, provisioning_setup_data)
     if server_last_id is not False:
-        menu_last_id = setup_pxe_menu(db_session, provisioning_setup_data, server_last_id)
-        setup_pxe_image(db_session, provisioning_setup_data, server_last_id, menu_last_id, row_val)
-    setup_customization_template(db_session, provisioning_setup_data, row_val)
+        menu_last_id = setup_pxe_menu(db, provisioning_setup_data, server_last_id)
+        setup_pxe_image(db, provisioning_setup_data, server_last_id, menu_last_id, row_val)
+    setup_customization_template(db, provisioning_setup_data, row_val)
 
     '''Edit System Image Type'''
-    rhel_type = db_session.query(db.PxeImageType).get(row_val)
-    rhel_type.provision_type = 'vm'
-    db_session.commit()
+    rhel_type = db.session.query(db['pxe_image_types']).get(row_val)
+    with db.transaction:
+        rhel_type.provision_type = 'vm'
 
 
 @pytest.fixture
-def setup_host_provisioning_pxe(uses_pxe, db_session, host_provisioning_setup_data, datafile):
-    row_val, server_last_id = setup_pxe_server(db_session, host_provisioning_setup_data)
+def setup_host_provisioning_pxe(uses_pxe, db, host_provisioning_setup_data,
+        datafile):
+    row_val, server_last_id = setup_pxe_server(db, host_provisioning_setup_data)
     if server_last_id is not False:
         ks_file_handle = datafile(host_provisioning_setup_data['ks_file'])
-        menu_last_id = setup_pxe_menu(db_session, host_provisioning_setup_data, server_last_id)
-        setup_pxe_image(db_session, host_provisioning_setup_data, server_last_id, menu_last_id,
+        menu_last_id = setup_pxe_menu(db, host_provisioning_setup_data, server_last_id)
+        setup_pxe_image(db, host_provisioning_setup_data, server_last_id, menu_last_id,
                         row_val)
-        setup_customization_template(db_session, host_provisioning_setup_data, row_val,
+        setup_customization_template(db, host_provisioning_setup_data, row_val,
                                      ks_file_handle=ks_file_handle)
 
-    '''Edit System Image Type'''
-    rhel_type = db_session.query(db.PxeImageType).get(row_val)
-    rhel_type.provision_type = 'host'
-    db_session.commit()
+    # Edit System Image Type
+    rhel_type = db.session.query(db['pxe_image_types']).get(row_val)
+    with db.transaction:
+        rhel_type.provision_type = 'host'
 
 
 @pytest.fixture
-def setup_vm_provisioning_pxe(uses_pxe, db_session, vm_provisioning_setup_data, datafile):
-    row_val, server_last_id = setup_pxe_server(db_session, vm_provisioning_setup_data)
+def setup_vm_provisioning_pxe(uses_pxe, db, vm_provisioning_setup_data, datafile):
+    row_val, server_last_id = setup_pxe_server(db, vm_provisioning_setup_data)
     if server_last_id is not False:
         doc = requests.get(vm_provisioning_setup_data['ks_file'], verify=False)
         ks_file_handle = StringIO.StringIO(doc.content)
-        menu_last_id = setup_pxe_menu(db_session, vm_provisioning_setup_data, server_last_id)
-        setup_pxe_image(db_session, vm_provisioning_setup_data, server_last_id, menu_last_id,
+        menu_last_id = setup_pxe_menu(db, vm_provisioning_setup_data, server_last_id)
+        setup_pxe_image(db, vm_provisioning_setup_data, server_last_id, menu_last_id,
                         row_val)
-        setup_customization_template(db_session, vm_provisioning_setup_data, row_val,
+        setup_customization_template(db, vm_provisioning_setup_data, row_val,
                                      ks_file_handle=ks_file_handle)
 
-    '''Edit System Image Type'''
-    rhel_type = db_session.query(db.PxeImageType).get(row_val)
-    rhel_type.provision_type = 'vm'
-    db_session.commit()
+    # Edit System Image Type
+    with db.transaction:
+        rhel_type = db.session.query(db['pxe_image_types']).get(row_val)
+        rhel_type.provision_type = 'vm'

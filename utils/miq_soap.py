@@ -11,10 +11,9 @@ Todo:
 
 """
 from suds import WebFault
-import db
 import re
 
-from utils.cfmedb import db_session_maker
+from utils.db import cfmedb
 from utils.log import logger
 from utils.soap import soap_client
 from utils.wait import wait_for
@@ -303,8 +302,9 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
             email: Email of the requestee
         Returns: :py:class:`MiqVM` object with freshly provisioned VM.
         """
-        db_session = db_session_maker()
-        for vm in db_session.query(db.Vm.name, db.Vm.guid).filter(db.Vm.template == True):
+        vm_table = cfmedb['vms']
+        for vm in cfmedb.session.query(vm_table.name, vm_table.guid)\
+            .filter(vm_table.template == True):  # NOQA
             # Previous line is ok, if you change it to `is`, it won't work!
             if vm.name.strip() == template_name.strip():
                 template_guid = vm.guid

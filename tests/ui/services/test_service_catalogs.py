@@ -2,12 +2,11 @@ import pytest
 
 # -*- coding: utf-8 -*-
 from utils.conf import cfme_data
-import db
 
 pytestmark = [
     pytest.mark.fixtureconf(server_roles='+automate'),
-    pytest.mark.usefixtures("server_roles", "setup_infrastructure_providers",
-    "setup_pxe_provision", "mgmt_sys_api_clients", "db_session", "soap_client")
+    pytest.mark.usefixtures(
+        "server_roles", "setup_infrastructure_providers", "setup_pxe_provision")
 ]
 
 
@@ -89,11 +88,12 @@ def assert_vm_state(provisioning_data, current_page, current_state, vm_name):
     return vm_pg
 
 
-def teardown_remove_from_provider(db_session, provisioning_data, soap_client,
+def teardown_remove_from_provider(db, provisioning_data, soap_client,
         mgmt_sys_api_clients, vm_name):
     '''Stops a VM and removes VM or Template from provider'''
-    for name, guid, power_state, template in db_session.query(
-            db.Vm.name, db.Vm.guid, db.Vm.power_state, db.Vm.template):
+    vms = db['vms']
+    for name, guid, power_state, template in db.session.query(
+            vms.name, vms.guid, vms.power_state, vms.template):
         if vm_name in name:
             if power_state == 'on':
                 result = soap_client.service.EVMSmartStop(guid)
@@ -114,7 +114,7 @@ def teardown_remove_from_provider(db_session, provisioning_data, soap_client,
 
 
 def test_order_service_catalog_item(mgmt_sys_api_clients, provisioning_data,
-        service_dialog, catalog, svc_catalogs_pg, random_name, db_session, soap_client):
+        service_dialog, catalog, svc_catalogs_pg, random_name, db, soap_client):
     '''Test Basic Provisioning Workflow'''
     service_dialog_name = service_dialog
     catalog_name = catalog
@@ -141,13 +141,13 @@ def test_order_service_catalog_item(mgmt_sys_api_clients, provisioning_data,
         "Finished", 12, request_id)
     assert_vm_state(provisioning_data, svc_catalogs_pg,
         "on", (vm_name + "_0001"))
-    teardown_remove_from_provider(db_session, provisioning_data, soap_client,
+    teardown_remove_from_provider(db, provisioning_data, soap_client,
         mgmt_sys_api_clients,
         vm_name + "_0001")
 
 
 def test_order_service_catalog_bundle(mgmt_sys_api_clients, provisioning_data,
-        random_name, service_dialog, catalog, db_session, soap_client, svc_catalogs_pg):
+        random_name, service_dialog, catalog, db, soap_client, svc_catalogs_pg):
     '''Order Catalog Bundle'''
     service_dialog_name = service_dialog
     catalog_name = catalog
@@ -181,7 +181,7 @@ def test_order_service_catalog_bundle(mgmt_sys_api_clients, provisioning_data,
         "Finished", 12, request_id)
     assert_vm_state(provisioning_data, svc_catalogs_pg,
         "on", (vm_name + "_0001"))
-    teardown_remove_from_provider(db_session, provisioning_data, soap_client,
+    teardown_remove_from_provider(db, provisioning_data, soap_client,
         mgmt_sys_api_clients,
         vm_name + "_0001")
 
