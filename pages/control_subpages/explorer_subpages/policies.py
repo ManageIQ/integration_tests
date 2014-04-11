@@ -202,7 +202,7 @@ class PolicyView(Policies, TaskbarMixin, ReloadMixin):
     @property
     def configuration_edit_policy_event_assignment_button(self):
         return self.selenium\
-                   .find_element(*self._configuration_edit_policy_event_assignment_locator)
+                   .find_element(*self._configuration_edit_policy_event_locator)
 
     @property
     def can_be_deleted(self):
@@ -403,9 +403,11 @@ class PolicyView(Policies, TaskbarMixin, ReloadMixin):
         policy = policy.set_assigned_events({"foo": True})
 
         """
-        return self.edit_policy_event_assignments()\
-                   .mass_set(policies)\
-                   .save()
+        pg = self.edit_policy_event_assignments().mass_set(policies)
+        if pg.can_save:
+            return pg.save()
+        else:
+            return pg.cancel()
 
 
 class EditPolicy(Policies, ExpressionEditorMixin):
@@ -534,6 +536,14 @@ class BasicEditPolicy(EditPolicy):
     def reset_button(self):
         return self.selenium.find_element(*self._reset_locator)
 
+    @property
+    def can_save(self):
+        try:
+            self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
+
     def save(self):
         """ Save changes.
 
@@ -553,6 +563,14 @@ class BasicEditPolicy(EditPolicy):
         self.cancel_button.click()
         self._wait_for_results_refresh()
         return PolicyView(self.testsetup)
+
+    @property
+    def can_reset(self):
+        try:
+            self._wait_for_visible_element(*self._reset_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
 
     def reset(self):
         """ Reset changes.
@@ -583,6 +601,14 @@ class NewPolicy(EditPolicy):
     def cancel_button(self):
         return self.selenium.find_element(*self._cancel_locator)
 
+    @property
+    def can_add(self):
+        try:
+            self._wait_for_visible_element(*self._add_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
+
     def add(self):
         """ Save changes.
 
@@ -592,7 +618,8 @@ class NewPolicy(EditPolicy):
         self.add_button.click()
         self._wait_for_results_refresh()
         result = PolicyView(self.testsetup)
-        if not result.is_element_present(*result._configuration_edit_basic_locator):
+        if not result.is_element_present(*result._configuration_edit_basic_locator) and\
+                "already been taken" not in result.flash.message:
             # Workaround for a glitch that occurs in not-the-last version
             # DISCARDS FLASH MESSAGES!!
             result.reload()
@@ -646,6 +673,14 @@ class NewConditionForPolicy(BaseConditionForPolicy):
         self._wait_for_results_refresh()
         return PolicyView(self.testsetup)
 
+    @property
+    def can_add(self):
+        try:
+            self._wait_for_visible_element(*self._add_button_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
+
     def add(self):
         """ Clicks on Add button and returns back to the PolicyConditionView
 
@@ -678,6 +713,14 @@ class EditConditionForPolicy(BaseConditionForPolicy):
     @property
     def reset_button(self):
         return self.selenium.find_element(*self._reset_locator)
+
+    @property
+    def can_save(self):
+        try:
+            self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
 
     def save(self):
         """ Save changes.
@@ -842,9 +885,9 @@ class PolicyConditionAssignments(Policies):
     """ This class models the Condition assignment editor
 
     """
-    _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
-    _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
-    _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+    _save_locator = (By.CSS_SELECTOR, "div[style*='display:display'] > ul > li > img[title='Save Changes']")
+    _cancel_locator = (By.CSS_SELECTOR, "div[style*='display:display'] > ul > li > img[title='Cancel']")
+    _reset_locator = (By.CSS_SELECTOR, "div[style*='display:display'] > ul > li > img[title='Reset Changes']")
 
     # Boxes
     _available_locator = (By.CSS_SELECTOR, "span#choices_chosen_div > select#choices_chosen")
@@ -949,6 +992,14 @@ class PolicyConditionAssignments(Policies):
     def unuse_condition(self, name):
         return self.select_from_used(name).unuse_selected_condition()
 
+    @property
+    def can_save(self):
+        try:
+            self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
+
     def save(self):
         """ Save changes.
 
@@ -968,6 +1019,14 @@ class PolicyConditionAssignments(Policies):
         self.cancel_button.click()
         self._wait_for_results_refresh()
         return PolicyView(self.testsetup)
+
+    @property
+    def can_reset(self):
+        try:
+            self._wait_for_visible_element(*self._reset_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
 
     def reset(self):
         """ Reset changes.
@@ -986,9 +1045,12 @@ class PolicyEventAssignments(Policies):
     """ This class models the Event assignment editor
 
     """
-    _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
-    _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
-    _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+    _save_locator = (By.CSS_SELECTOR,
+        "div[style*='display:display'] > ul > li > img[title='Save Changes']")
+    _cancel_locator = (By.CSS_SELECTOR,
+        "div[style*='display:display'] > ul > li > img[title='Cancel']")
+    _reset_locator = (By.CSS_SELECTOR,
+        "div[style*='display:display'] > ul > li > img[title='Reset Changes']")
 
     @property
     def save_button(self):
@@ -1002,8 +1064,18 @@ class PolicyEventAssignments(Policies):
     def reset_button(self):
         return self.selenium.find_element(*self._reset_locator)
 
+    @property
+    def can_save(self):
+        try:
+            self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
+
     def save(self):
         """ Save changes.
+
+        If there were no changes, clicks Cancel.
 
         @return: PolicyView
         """
@@ -1011,16 +1083,24 @@ class PolicyEventAssignments(Policies):
         self.save_button.click()
         self._wait_for_results_refresh()
         return PolicyView(self.testsetup)
-
+        
     def cancel(self):
         """ Cancel changes.
 
         @return: PolicyView
         """
-        self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+        self._wait_for_visible_element(*self._cancel_locator, visible_timeout=5)
         self.cancel_button.click()
         self._wait_for_results_refresh()
         return PolicyView(self.testsetup)
+
+    @property
+    def can_reset(self):
+        try:
+            self._wait_for_visible_element(*self._reset_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
 
     def reset(self):
         """ Reset changes.
@@ -1035,9 +1115,9 @@ class PolicyEventAssignments(Policies):
         return "All changes have been reset" in self.flash.message
 
     def search_by_name(self, name):
-        checkbox_divs = self.selenium.find_elements_by_css_selector("div:contains('%s')" % name)
+        checkbox_divs = self.selenium.find_elements_by_css_selector("fieldset > fieldset > div")
         for checkbox_div in checkbox_divs:
-            if checkbox_div.text.strip() == name:
+            if checkbox_div.text.strip() == name.strip():
                 return checkbox_div.find_element_by_css_selector("input[type='checkbox']")
         raise Exception("Event %s was not found!" % name)
 
@@ -1167,9 +1247,9 @@ class PolicyEventActionsEdit(Policies):
       or bottom box on the page
 
     """
-    _save_locator = (By.CSS_SELECTOR, "img[title='Save Changes']")
-    _cancel_locator = (By.CSS_SELECTOR, "img[title='Cancel']")
-    _reset_locator = (By.CSS_SELECTOR, "img[title='Reset Changes']")
+    _save_locator = (By.CSS_SELECTOR, "div[style*='display:display'] > ul > li > img[title='Save Changes']")
+    _cancel_locator = (By.CSS_SELECTOR, "div[style*='display:display'] > ul > li > img[title='Cancel']")
+    _reset_locator = (By.CSS_SELECTOR, "div[style*='display:display'] > ul > li > img[title='Reset Changes']")
 
     _event_group_locator = (By.XPATH,
         "//*[@id='event_info_div']/fieldset[1]/table/tbody/tr[1]/td[2]")
@@ -1325,6 +1405,14 @@ class PolicyEventActionsEdit(Policies):
         return self.selenium.find_element(*self._set_member_async_false_locator)
 
     # Main buttons actions
+    @property
+    def can_save(self):
+        try:
+            self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
+
     def save(self):
         """ Save changes.
 
@@ -1340,10 +1428,18 @@ class PolicyEventActionsEdit(Policies):
 
         @return: PolicyView
         """
-        self._wait_for_visible_element(*self._save_locator, visible_timeout=5)
+        self._wait_for_visible_element(*self._cancel_locator, visible_timeout=5)
         self.cancel_button.click()
         self._wait_for_results_refresh()
         return PolicyEventView(self.testsetup)
+
+    @property
+    def can_reset(self):
+        try:
+            self._wait_for_visible_element(*self._reset_locator, visible_timeout=5)
+            return True
+        except TimeoutException:
+            return False
 
     def reset(self):
         """ Reset changes.
