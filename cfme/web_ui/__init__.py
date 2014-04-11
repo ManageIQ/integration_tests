@@ -40,6 +40,7 @@ from collections import Sequence, Mapping
 from selenium.common import exceptions as sel_exceptions
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.select import Select as SeleniumSelect
+from selenium.common.exceptions import NoSuchElementException
 from multimethods import multimethod, multidispatch, Anything
 
 import cfme.fixtures.pytest_selenium as sel
@@ -1111,8 +1112,10 @@ class Tree(object):
         * expandable: the element to check if the tree is expanded/collapsed.
         * is_expanded_condition: a tuple containing the element attribute and value to
           identify that an element **is** expanded.
-        * node_search: an XPATH which describes a node, needing expansion with format specifier for
+        * node_label: an XPATH which describes a node's label (the element with just the text,
+          not including the expand arrow, etc), needing expansion with format specifier for
           matching.
+        * node_root: XPATH expression for the entire node (including the expand arrow etc)
         * click_expand: the element to click on to expand the tree at that level.
         """
         self.root_el = sel.element(self.locator)
@@ -1120,8 +1123,8 @@ class Tree(object):
             # Dynatree
             self.expandable = 'span'
             self.is_expanded_condition = ('class', 'dynatree-expanded')
-            self.node_search = "//li/span/a[.='%s']/../.."
-            self.node_root = "//li/span/a[.='%s']"
+            self.node_root = "//li/span/a[.='%s']/../.."
+            self.node_label = "//li/span/a[.='%s']"
             self.click_expand = "span/span"
             self.leaf = "span/a"
             self.node_select_support = False
@@ -1129,8 +1132,8 @@ class Tree(object):
             # Legacy Tree
             self.expandable = 'tr/td[1]/img'
             self.is_expanded_condition = ('src', 'open.png')
-            self.node_search = "//tbody/tr/td/table/tbody/tr/td[4]/span[.='%s']/../../.."
-            self.node_root = "//tbody/tr/td/table/tbody/tr/td[4]/span[.='%s']"
+            self.node_root = ".//span[.='%s']/../../.."
+            self.node_label = ".//span[.='%s']"
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
             self.node_select_support = True
@@ -1149,7 +1152,11 @@ class Tree(object):
 
         Returns: ``True`` if the element is expanded, ``False`` if not.
         """
-        meta = sel.element(self.expandable, root=el)
+        try:
+            meta = sel.element(self.expandable, root=el)
+        except NoSuchElementException:
+            return True  # Some trees have always-expanded roots
+
         if self.is_expanded_condition[1] in sel.get_attribute(
                 meta, self.is_expanded_condition[0]):
             return True
@@ -1168,10 +1175,10 @@ class Tree(object):
             sel.click(sel.element(self.click_expand, root=el))
 
     def node_element(self, node_name, parent):
-        return sel.element(self.node_search % node_name, root=parent)
+        return sel.element((self.node_label % node_name), root=parent)
 
     def node_root_element(self, node_name, parent):
-        return sel.element(self.node_root % node_name, root=parent)
+        return sel.element((self.node_root % node_name), root=parent)
 
     def expand_path(self, *path):
         """ Clicks through a series of elements in a path.
@@ -1203,7 +1210,7 @@ class Tree(object):
         while path:
             try:
                 node_name = path.pop(0)
-                node = self.node_element(node_name, parent)
+                node = self.node_root_element(node_name, parent)
             except sel_exceptions.NoSuchElementException:
                 raise exceptions.CandidateNotFound("%s: could not be found in the tree." %
                                                    node_name)
@@ -1225,7 +1232,7 @@ class Tree(object):
         # expand all but the last item
         leaf = self.expand_path(*path[:-1]) or sel.element(self.locator)
         if leaf:
-            sel.click(self.node_root_element(path[-1], leaf))
+            sel.click(self.node_element(path[-1], leaf))
         return leaf
 
     def _select_or_deselect_node(self, *path, **kwargs):
