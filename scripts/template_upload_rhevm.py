@@ -1,9 +1,12 @@
 #!/usr/bin/python
 
-"""Please check your cfme_data and credentials. This script needs some valid
-data from those files
+"""This script takes various parameters specified in
+cfme_data['template_upload']['template_upload_rhevm'] and/or by command-line arguments.
+Parameters specified by command-line have higher priority, and override data in cfme_data.
 
-Please, place all the function calls into the function 'run(**kwargs)'.
+This script is designed to run either as a standalone rhevm template uploader, or it can be used
+together with template_upload_all script. This is why all the function calls, which would
+normally be placed in main function, are located in function run(**kwargs).
 """
 
 import argparse
@@ -27,24 +30,24 @@ TEMP_TMP_NAME = 'automated-template-temporary'
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument("--image_url", dest="image_url",
-                        help="URL of ova file to upload", required=True)
+                        help="URL of ova file to upload", default=None)
     parser.add_argument("--template_name", dest="template_name",
-                        help="Name of the new template", required=True)
+                        help="Name of the new template", default=None)
     parser.add_argument("--edomain", dest="edomain",
-                        help="Export domain for the remplate", required=True)
+                        help="Export domain for the remplate", default=None)
     parser.add_argument("--sdomain", dest="sdomain",
-                        help="Storage domain for vm and disk", required=True)
+                        help="Storage domain for vm and disk", default=None)
     parser.add_argument("--cluster", dest="cluster",
-                        help="Set cluster to operate in", required=True)
+                        help="Set cluster to operate in", default=None)
     parser.add_argument("--disk_size", dest="disk_size",
                         help="Size of the second (database) disk, in B",
-                        default=5000000000, type=int)
+                        default=None, type=int)
     parser.add_argument("--disk_format", dest="disk_format",
-                        help="Format of the second (database) disk", default="cow")
+                        help="Format of the second (database) disk", default=None)
     parser.add_argument("--disk_interface", dest="disk_interface",
-                        help="Interface of second (database) disk", default="VirtIO")
+                        help="Interface of second (database) disk", default=None)
     parser.add_argument("--provider", dest="provider",
-                        help="Rhevm provider (to look for in cfme_data)", default="rhevm32")
+                        help="Rhevm provider (to look for in cfme_data)", default=None)
     args = parser.parse_args()
     return args
 
@@ -59,10 +62,17 @@ def make_ssh_client(rhevip, sshname, sshpass):
 
 
 def get_ova_name(ovaurl):
+    """Returns ova filename."""
     return ovaurl.split("/")[-1]
 
 
 def download_ova(ssh_client, ovaurl):
+    """Downloads ova file using ssh_client and url
+
+    Args:
+        ssh_client: :py:class:`utils.ssh.SSHClient` instance
+        ovaurl: URL of ova file
+    """
     command = 'curl -O %s' % ovaurl
     exit_status, output = ssh_client.run_command(command)
     if exit_status != 0:
@@ -72,6 +82,17 @@ def download_ova(ssh_client, ovaurl):
 
 
 def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_client):
+    """Uses rhevm-image-uploader to make a template from ova file.
+
+    Args:
+        api: API for RHEVM.
+        username: Username to chosen RHEVM provider.
+        password: Password to chosen RHEVM provider.
+        rhevip: IP of chosen RHEVM provider.
+        edomain: Export domain of selected RHEVM provider.
+        ovaname: Name of ova file.
+        ssh_client: :py:class:`utils.ssh.SSHClient` instance
+    """
     if api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME) is not None:
         print "RHEVM: Warning: found another template with this name."
         print "RHEVM: Skipping this step. Attempting to continue..."
@@ -92,6 +113,14 @@ def template_from_ova(api, username, password, rhevip, edomain, ovaname, ssh_cli
 
 
 def import_template(api, edomain, sdomain, cluster):
+    """Imports template from export domain to storage domain.
+
+    Args:
+        api: API to RHEVM instance.
+        edomain: Export domain of selected RHEVM provider.
+        sdomain: Storage domain of selected RHEVM provider.
+        cluster: Cluster to save imported template on.
+    """
     if api.templates.get(TEMP_TMP_NAME) is not None:
         print "RHEVM: Warning: found another template with this name."
         print "RHEVM: Skipping this step, attempting to continue..."
@@ -109,6 +138,13 @@ def import_template(api, edomain, sdomain, cluster):
 
 
 def make_vm_from_template(api, cluster):
+    """Makes temporary VM from imported template. This template will be later deleted.
+       It's used to add a new disk and to convert back to template.
+
+    Args:
+        api: API to chosen RHEVM provider.
+        cluster: Cluster to save the temporary VM on.
+    """
     if api.vms.get(TEMP_VM_NAME) is not None:
         print "RHEVM: Warning: found another VM with this name."
         print "RHEVM: Skipping this step, attempting to continue..."
@@ -151,6 +187,15 @@ def check_edomain_template(api, edomain):
 
 
 def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface):
+    """Adds second disk to a temporary VM.
+
+    Args:
+        api: API to chosen RHEVM provider.
+        sdomain: Storage domain to save new disk onto.
+        disk_size: Size of the new disk (in B).
+        disk_format: Format of the new disk.
+        disk_interface: Interface of the new disk.
+    """
     if len(api.vms.get(TEMP_VM_NAME).disks.list()) > 1:
         print "RHEVM: Warning: found more than one disk in existing VM."
         print "RHEVM: Skipping this step, attempting to continue..."
@@ -161,7 +206,7 @@ def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface):
                               interface=disk_interface, format=disk_format)
     temp_vm.disks.add(params_disk)
 
-    wait_for(check_disks, [api], fail_condition=False, delay=5, num_sec=600)
+    wait_for(check_disks, [api], fail_condition=False, delay=5, num_sec=900)
 
     #check, if there are two disks
     if len(api.vms.get(TEMP_VM_NAME).disks.list()) < 2:
@@ -170,6 +215,13 @@ def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface):
 
 
 def templatize_vm(api, template_name, cluster):
+    """Templatizes temporary VM. Result is template with two disks.
+
+    Args:
+        api: API to chosen RHEVM provider.
+        template_name: Name of the final template.
+        cluster: Cluster to save the final template onto.
+    """
     if api.templates.get(template_name) is not None:
         print "RHEVM: Warning: found finished template with this name."
         print "RHEVM: Skipping this step, attempting to continue..."
@@ -188,6 +240,12 @@ def templatize_vm(api, template_name, cluster):
 
 
 def cleanup(api, edomain):
+    """Cleans up all the mess that the previous functions left behind.
+
+    Args:
+        api: API to chosen RHEVM provider.
+        edomain: Export domain of chosen RHEVM provider.
+    """
     temporary_vm = api.vms.get(TEMP_VM_NAME)
     if temporary_vm is not None:
         temporary_vm.delete()
@@ -203,7 +261,137 @@ def cleanup(api, edomain):
         unimported_template.delete()
 
 
+def api_params_resolution(item_list, item_name, item_param):
+    """Picks and prints info about parameter obtained by api call.
+
+    Args:
+        item_list: List of possible candidates to pick from.
+        item_name: Name of parameter obtained by api call.
+        item_param: Name of parameter representing data in the script.
+    """
+    if len(item_list) == 0:
+        print "RHEVM: Cannot find %s (%s) automatically." % (item_name, item_param)
+        print "Please specify it by cmd-line parameter '--%s' or in cfme_data." % item_param
+        return None
+    elif len(item_list) > 1:
+        print "RHEVM: Found multiple instances of %s. Picking '%s'." % (item_name, item_list[0])
+    else:
+        print "RHEVM: Found %s '%s'." % (item_name, item_list[0])
+
+    return item_list[0]
+
+
+def get_edomain(api):
+    """Discovers suitable export domain automatically.
+
+    Args:
+        api: API to RHEVM instance.
+    """
+    edomain_names = []
+
+    for domain in api.storagedomains.list():
+        if domain.get_type() == 'export':
+            edomain_names.append(domain.get_name())
+
+    return api_params_resolution(edomain_names, 'export domain', 'edomain')
+
+
+def get_sdomain(api):
+    """Discovers suitable storage domain automatically.
+
+    Args:
+        api: API to RHEVM instance.
+    """
+    sdomain_names = []
+
+    for domain in api.storagedomains.list():
+        if domain.get_type() == 'data':
+            sdomain_names.append(domain.get_name())
+
+    return api_params_resolution(sdomain_names, 'storage domain', 'sdomain')
+
+
+def get_cluster(api):
+    """Discovers suitable cluster automatically.
+
+    Args:
+        api: API to RHEVM instance.
+    """
+    cluster_names = []
+
+    for cluster in api.clusters.list():
+        for host in api.hosts.list():
+            if host.get_cluster().id == cluster.id:
+                cluster_names.append(cluster.get_name())
+
+    return api_params_resolution(cluster_names, 'cluster', 'cluster')
+
+
+def check_kwargs(**kwargs):
+    for key, val in kwargs.iteritems():
+        if val is None:
+            print "RHEVM: please supply required parameter '%s'." % key
+            sys.exit(127)
+
+
+def update_params_api(api, **kwargs):
+    """Updates parameters with ones determined from api call.
+
+    Args:
+        api: API to RHEVM instance.
+        kwargs: Kwargs generated from cfme_data['template_upload']['template_upload_rhevm']
+    """
+    if kwargs.get('edomain') is None:
+        kwargs['edomain'] = get_edomain(api)
+    if kwargs.get('sdomain') is None:
+        kwargs['sdomain'] = get_sdomain(api)
+    if kwargs.get('cluster') is None:
+        kwargs['cluster'] = get_cluster(api)
+
+    return kwargs
+
+
+def make_kwargs(args, cfme_data, **kwargs):
+    """Assembles all the parameters in case of running as a standalone script.
+       Makes sure, that the parameters given by command-line arguments have higher priority.
+       Makes sure, that all the needed parameters have proper values.
+
+    Args:
+        args: Arguments given from command-line.
+        cfme_data: Data in cfme_data.yaml
+        kwargs: Kwargs generated from cfme_data['template_upload']['template_upload_rhevm']
+    """
+    args_kwargs = dict(args._get_kwargs())
+
+    if len(kwargs) is 0:
+        return args_kwargs
+
+    template_name = kwargs.get('template_name', None)
+    if template_name is None:
+        template_name = cfme_data['basic_info']['appliance_template']
+        kwargs.update({'template_name': template_name})
+
+    for kkey, kval in kwargs.iteritems():
+        for akey, aval in args_kwargs.iteritems():
+            if aval is not None:
+                if kkey == akey:
+                    if kval != aval:
+                        kwargs[akey] = aval
+
+    for akey, aval in args_kwargs.iteritems():
+        if akey not in kwargs.iterkeys():
+            kwargs[akey] = aval
+
+    return kwargs
+
+
 def run(**kwargs):
+    """Calls all the functions needed to upload new template to RHEVM.
+       This is called either by template_upload_all script, or by main function.
+
+    Args:
+        **kwargs: Kwargs generated from cfme_data['template_upload']['template_upload_rhevm'].
+    """
     ovaname = get_ova_name(kwargs.get('image_url'))
 
     mgmt_sys = cfme_data['management_systems'][kwargs.get('provider')]
@@ -225,7 +413,11 @@ def run(**kwargs):
 
     template_name = kwargs.get('template_name', None)
     if template_name is None:
-        template_name = cfme_data['basic_info']['cfme_template_name']
+        template_name = cfme_data['basic_info']['appliance_template']
+
+    kwargs = update_params_api(api, **kwargs)
+
+    check_kwargs(**kwargs)
 
     if api.templates.get(template_name) is not None:
         print "RHEVM: Found finished template with this name."
@@ -256,6 +448,8 @@ def run(**kwargs):
 if __name__ == "__main__":
     args = parse_cmd_line()
 
-    kwargs = dict(args._get_kwargs())
+    kwargs = cfme_data['template_upload']['template_upload_rhevm']
 
-    run(**kwargs)
+    final_kwargs = make_kwargs(args, cfme_data, **kwargs)
+
+    run(**final_kwargs)
