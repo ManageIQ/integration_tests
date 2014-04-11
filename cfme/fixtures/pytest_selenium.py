@@ -15,7 +15,8 @@ from collections import Iterable
 import json
 
 from selenium.common.exceptions import (ErrorInResponseException, InvalidSwitchToTargetException,
-    NoSuchAttributeException, NoSuchElementException, UnexpectedAlertPresentException)
+    NoSuchAttributeException, NoSuchElementException, UnexpectedAlertPresentException,
+    CannotContinueWithNavigation)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
@@ -510,6 +511,10 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     except (ErrorInResponseException, InvalidSwitchToTargetException):
         # Unable to switch to the browser at all, need to recycle
         logger.info('Invalid browser state, recycling browser' % _tries)
+        recycle = True
+    except CannotContinueWithNavigation as e:
+        # The some of the navigation steps cannot succeed
+        logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
         recycle = True
 
     if recycle:
