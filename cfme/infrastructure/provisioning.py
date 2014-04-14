@@ -21,7 +21,9 @@ template_select_form = Form(
 provisioning_form = tabstrip.TabStripForm(
     fields=[
         ('submit_button', submit_button),
-        ('cancel_button', form_buttons.cancel)
+        ('cancel_button', form_buttons.cancel),
+        ('host_submit_button', form_buttons.host_provision_submit),
+        ('host_cancel_button', form_buttons.host_provision_cancel)
     ],
     tab_fields=OrderedDict([
         ('Request', [
@@ -50,6 +52,7 @@ provisioning_form = tabstrip.TabStripForm(
             ('automatic_placement', '//input[@id="environment__placement_auto"]'),
             ('datacenter', Select('//select[@id="environment__placement_dc_name"]')),
             ('cluster', Select('//select[@id="environment__placement_cluster_name"]')),
+            ('provider_name', Select('//select[@id="environment__placement_ems_name"]')),
             ('resource_pool', Select('//select[@id="environment__placement_rp_name"]')),
             ('folder', Select('//select[@id="environment__placement_folder_name"]')),
             ('host_filter', Select('//select[@id="environment__host_filter"]')),
@@ -76,6 +79,10 @@ provisioning_form = tabstrip.TabStripForm(
             ('specification_name', Table('//div[@id="prov_vc_div"]/table')),
             ('linux_host_name', '//input[@id="customize__linux_host_name"]'),
             ('linux_domain_name', '//input[@id="customize__linux_domain_name"]'),
+            ('host_name', '//input[@id="customize__hostname"]'),
+            ('ip_address', '//input[@id="customize__ip_addr"]'),
+            ('subnet_mask', '//input[@id="customize__subnet_mask"]'),
+            ('gateway', '//input[@id="customize__gateway"]'),
             ('dns_servers', '//input[@id="customize__dns_servers"]'),
             ('dns_suffixes', '//input[@id="customize__dns_suffixes"]'),
             ('custom_template', Table('//div[@id="prov_template_div"]/table')),
@@ -87,6 +94,7 @@ provisioning_form = tabstrip.TabStripForm(
             ('provision_date', Calendar('miq_date_1')),
             ('provision_start_hour', Select('//select[@id="start_hour"]')),
             ('provision_start_min', Select('//select[@id="start_min"]')),
+            ('stateless', '//input[@id="schedule__stateless"]'),
             ('retirement', Select('//select[@id="schedule__retirement"]')),
             ('retirement_warning', Select('//select[@id="schedule__retirement_warn"]')),
         ])

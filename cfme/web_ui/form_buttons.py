@@ -68,6 +68,8 @@ add = FormButton("Add")
 save = FormButton("Save Changes", dimmed_alt="Save")
 cancel = FormButton("Cancel")
 reset = FormButton("Reset Changes", dimmed_alt="Reset")
+host_provision_submit = FormButton("Submit this provisioning request")
+host_provision_cancel = FormButton("Cancel this provisioning request")
 
 
 @fill.method((FormButton, bool))
