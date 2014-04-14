@@ -72,7 +72,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
             raise
 
     # CREATE AUTOMATE INSTANCE HOOK
-    if db.session.query(db['miq_ae_instances'].name)\
+    if db is None or db.session.query(db['miq_ae_instances'].name)\
             .filter(db['miq_ae_instances'].name == "RelayEvents").count() == 0:
         # Check presence
         automate_explorer_pg = nav.automate_explorer_pg()
