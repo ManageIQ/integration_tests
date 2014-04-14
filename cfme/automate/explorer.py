@@ -6,6 +6,7 @@ import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
 from cfme.web_ui import Form, Tree, fill, Select, ScriptBox
+import cfme.exceptions as exceptions
 from utils.update import Updateable
 import utils.error as error
 
@@ -41,6 +42,13 @@ def get_path(o):
     p = getattr(o, 'path', [])
     return ["Datastore"] + p
 
+
+def tree_item_not_found_is_leaf(e):
+    '''Returns true if the given exception was while navigating a tree and
+       the item in the path that was missing was the last item.'''
+    data = e.args[0]  # the data mapping
+    return isinstance(e, exceptions.CandidateNotFound) and data['index'] == len(data['path']) - 1
+
 nav.add_branch(
     'automate_explorer',
     {
@@ -58,10 +66,17 @@ nav.add_branch(
              'automate_explorer_namespace_new': lambda _: cfg_btn('Add a New Namespace'),
              'automate_explorer_class_new': lambda _: cfg_btn('Add a New Class'),
              'automate_explorer_method_edit': lambda _: cfg_btn('Edit this Method'),
+             'automate_explorer_instance_edit': lambda _: cfg_btn('Edit this Instance'),
              'automate_explorer_methods': [lambda _: select_tab('Methods'),
               {
-                  'automate_explorer_methods_new': lambda _: cfg_btn('Add a New Method'),
+                  'automate_explorer_method_new': lambda _: cfg_btn('Add a New Method'),
                   'automate_explorer_method_table_select':
+                  lambda ctx: table_select(ctx['table_item'].name)
+              }],
+             'automate_explorer_instances': [lambda _: select_tab('Instances'),
+              {
+                  'automate_explorer_instance_new': lambda _: cfg_btn('Add a New Instance'),
+                  'automate_explorer_instance_table_select':
                   lambda ctx: table_select(ctx['table_item'].name)
               }]
          }]
@@ -77,6 +92,12 @@ class TreeNode(object):
             return list(self.parent.path) + [self.name]
         else:
             return [self.name]
+
+    def exists(self):
+        with error.handler(tree_item_not_found_is_leaf):
+            sel.force_navigate('automate_explorer_tree_path', context={'tree_item': self})
+            return True
+        return False
 
     def __repr__(self):
         return "<%s name=%s>" % (self.__class__.__name__, self.name)
@@ -151,13 +172,6 @@ class Namespace(TreeNode, Updateable):
         flash.assert_message_contain('Delete successful')
         flash.assert_success_message('The selected Automate Namespaces were deleted')
 
-    def exists(self):
-        try:
-            sel.force_navigate('automate_explorer_edit', context={'namespace': self})
-            return True
-        except:
-            return False
-
     def __repr__(self):
         return "<%s.%s name=%s, path=%s>" % (__name__, self.__class__.__name__,
                                              self.name, self.path)
@@ -221,14 +235,6 @@ class Class(TreeNode, Updateable):
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
 
-    def exists(self):
-        try:
-            sel.force_navigate('automate_explorer_edit', context={'tree_item': self.parent,
-                                                         'table_item': self})
-            return True
-        except:
-            return False
-
 
 class Method(TreeNode, Updateable):
     '''Represents a Method in the CFME ui.  `Display Name` is not
@@ -238,7 +244,6 @@ class Method(TreeNode, Updateable):
     form = Form(
         fields=[('name_text', "//input[contains(@name,'method_name')]"),
                 ('display_name_text', "//input[contains(@name,'method_display_name')]"),
-                ('location_select', Select("//select[contains(@id,'method_location')]")),
                 ('data_text', ScriptBox("//textarea[contains(@name,'method_data')]"))]
         + submit_and_cancel_buttons)
 
@@ -254,10 +259,9 @@ class Method(TreeNode, Updateable):
         return self.cls
 
     def create(self, cancel=False):
-        sel.force_navigate("automate_explorer_methods_new", context={'tree_item': self.cls})
+        sel.force_navigate("automate_explorer_method_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,
                          # 'display_name_text': self.display_name,
-                         'location_select': self.location,
                          'data_text': self.data},
              action={True: self.form.cancel_btn, False: self.form.add_btn}[cancel])
         try:
@@ -271,7 +275,6 @@ class Method(TreeNode, Updateable):
         sel.force_navigate("automate_explorer_method_edit", context={"tree_item": self})
         fill(self.form, {'name_text': updates.get('name'),
                          'description_text': updates.get('description'),
-                         'location_select': updates.get('location'),
                          'data_text': updates.get('data')},
              action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
 
@@ -281,9 +284,50 @@ class Method(TreeNode, Updateable):
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
 
-    def exists(self):
+
+class Instance(TreeNode, Updateable):
+    '''Represents a Instance in the CFME ui.  `Display Name` is not
+       supported (it causes the name to be displayed differently in
+       different places in the UI). '''
+
+    form = Form(
+        fields=[('name_text', "//input[contains(@name,'inst_name')]"),
+                ('display_name_text', "//input[contains(@name,'inst_display_name')]"),
+                ('description_text', "//input[contains(@name,'inst_description')]")]
+        + submit_and_cancel_buttons)
+
+    def __init__(self, name=None, display_name=None, description=None, cls=None):
+        self.name = name
+        self.description = description
+        # self.display_name = display_name
+        self.cls = cls
+
+    @property
+    def parent(self):
+        return self.cls
+
+    def create(self, cancel=False):
+        sel.force_navigate("automate_explorer_instance_new", context={'tree_item': self.cls})
+        fill(self.form, {'name_text': self.name,
+                         # 'display_name_text': self.display_name,
+                         'description_text': self.description},
+             action={True: self.form.cancel_btn, False: self.form.add_btn}[cancel])
         try:
-            sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})
-            return True
-        except:
-            return False
+            flash.assert_success_message('Automate Instance "%s" was added' % self.name)
+        except Exception as e:
+            if error.match("Name has already been taken", e):
+                sel.click(self.form.cancel_btn)
+            raise
+
+    def update(self, updates, cancel=False):
+        sel.force_navigate("automate_explorer_instance_edit", context={"tree_item": self})
+        fill(self.form, {'name_text': updates.get('name'),
+                         # 'display_name_text': updates.get('display_name'),
+                         'description_text': updates.get('description')},
+             action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
+
+    def delete(self, cancel=False):
+        sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})
+        cfg_btn('Remove this Instance', invokes_alert=True)
+        sel.handle_alert(cancel)
+        return flash.assert_no_errors()
