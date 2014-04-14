@@ -136,14 +136,22 @@ def is_displayed(loc):
         return False
 
 
-def wait_for_element(loc):
+def wait_for_element(*locs, **kwargs):
     """
     Wrapper around wait_until, specific to an element.
 
     Args:
         loc: A locator, expects either a string, WebElement, tuple.
+    Keywords:
+        all_elements: Whether to wait not for one, but all elements (Default False)
     """
-    wait_until(lambda s: is_displayed(loc), "Element '{}' did not appear as expected.".format(loc))
+    #wait_until(lambda s: is_displayed(loc), "Element '{}' did not appear as expected.".format(loc))
+    filt = all if kwargs.get("all_elements", False) else any
+    msg = "All" if kwargs.get("all_elements", False) else "Any"
+    wait_until(
+        lambda s: filt([is_displayed(loc) for loc in locs]),
+        "{} of the elements '{}' did not appear as expected.".format(msg, str(locs))
+    )
 
 
 def handle_alert(cancel=False, wait=30.0, squash=False):
@@ -290,6 +298,7 @@ def checkbox(loc, set_to=False):
         el = element(loc)
         ActionChains(browser()).move_to_element(el).perform()
         if el.is_selected() is not set_to:
+            logger.debug("Setting checkbox %s to %s" % (str(loc), str(set_to)))
             click(el)
 
 
@@ -311,6 +320,17 @@ def uncheck(loc):
         loc: The locator of the element
     """
     checkbox(loc, False)
+
+
+def multi_check(locators):
+    """ Mass-check and uncheck for checkboxes.
+
+    Args:
+        locators: :py:class:`dict` or :py:class:`list` or whatever iterable of tuples.
+            Key is the locator, value bool with check status.
+    """
+    for locator, checked in dict(locators).iteritems():
+        checkbox(locator, checked)
 
 
 def current_url():

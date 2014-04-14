@@ -322,7 +322,10 @@ class Table(object):
         """
         matching_cell_rows = self.find_rows_by_cells({header: value})
         try:
-            return getattr(matching_cell_rows[0], header)
+            if isinstance(header, basestring):
+                return getattr(matching_cell_rows[0], header)
+            else:
+                return matching_cell_rows[0][header]
         except IndexError:
             return None
 
@@ -1098,8 +1101,9 @@ class Tree(object):
 
     """
 
-    def __init__(self, locator):
+    def __init__(self, locator, fill_click=False):
         self.locator = locator
+        self.fill_click = fill_click
 
     def _detect(self):
         """ Detects which type of tree is being used
@@ -1285,9 +1289,12 @@ class Tree(object):
 @fill.method((Tree, object))
 def _fill_tree(tree, values):
     # Assume a list of paths, select_node on each path
-    for path in values:
-        logger.debug(' Navigating the tree: %s' % " -> ".join(path))
-        tree.select_node(*path)
+    if not tree.fill_click:
+        for path in values:
+            logger.debug(' Navigating the tree: %s' % " -> ".join(path))
+            tree.select_node(*path)
+    else:
+        tree.click_path(*values)
 
 
 class InfoBlock(object):

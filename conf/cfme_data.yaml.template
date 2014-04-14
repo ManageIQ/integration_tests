@@ -664,3 +664,6 @@ log_db_depot:
         ftp:
             hostname: ftp.example.com
             use_for_log_collection: True
+datastores_not_for_provision:
+    - datastore-name-1      # uses `in` operator
+    - datastore-name-2

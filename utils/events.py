@@ -13,7 +13,110 @@ from selenium.common.exceptions import TimeoutException
 from utils.conf import cfme_data
 
 
-def setup_for_event_testing(ssh_client, db, listener_info, providers):
+ALL_EVENTS = [
+    ('Datastore Analysis Complete', 'datastore_analysis_complete'),
+    ('Datastore Analysis Request', 'datastore_analysis_req'),
+    ('Host Added to Cluster', 'host_added_to_cluster'),
+    ('Host Analysis Complete', 'host_analysis_complete'),
+    ('Host Analysis Request', 'host_analysis_req'),
+    ('Host Auth Changed', 'host_auth_changed'),
+    ('Host Auth Error', 'host_auth_error'),
+    ('Host Auth Incomplete Credentials', 'host_auth_incomplete_credentials'),
+    ('Host Auth Invalid', 'host_auth_invalid'),
+    ('Host Auth Unreachable', 'host_auth_unreachable'),
+    ('Host Auth Valid', 'host_auth_valid'),
+    ('Host C & U Processing Complete', 'host_c_and_u_processing_complete'),
+    ('Host Compliance Check', 'host_compliance_check'),
+    ('Host Compliance Failed', 'host_compliance_failed'),
+    ('Host Compliance Passed', 'host_compliance_passed'),
+    ('Host Connect', 'host_connect'),
+    ('Host Disconnect', 'host_disconnect'),
+    ('Host Provision Complete', 'host_provision_complete'),
+    ('Host Removed from Cluster', 'host_removed_from_cluster'),
+    ('Provider Auth Changed', 'provider_auth_changed'),
+    ('Provider Auth Error', 'provider_auth_error'),
+    ('Provider Auth Incomplete Credentials', 'provider_auth_incomplete_credentials'),
+    ('Provider Auth Invalid', 'provider_auth_invalid'),
+    ('Provider Auth Unreachable', 'provider_auth_unreachable'),
+    ('Provider Auth Valid', 'provider_auth_valid'),
+    ('Service Provision Complete', 'service_provision_complete'),
+    ('Service Retired', 'service_retired'),
+    ('Service Retirement Warning', 'service_retirement_warning'),
+    ('Service Start Request', 'service_start_req'),
+    ('Service Started', 'service_started'),
+    ('Service Stop Request', 'service_stop_req'),
+    ('Service Stopped', 'service_stopped'),
+    ('Tag Complete', 'tag_complete'),
+    ('Tag Parent Cluster Complete', 'tag_parent_cluster_complete'),
+    ('Tag Parent Datastore Complete', 'tag_parent_datastore_complete'),
+    ('Tag Parent Host Complete', 'tag_parent_host_complete'),
+    ('Tag Parent Resource Pool Complete', 'tag_parent_resource_pool_complete'),
+    ('Tag Request', 'tag_req'),
+    ('Un-Tag Complete', 'untag_complete'),
+    ('Un-Tag Parent Cluster Complete', 'untag_parent_cluster_complete'),
+    ('Un-Tag Parent Datastore Complete', 'untag_parent_datastore_complete'),
+    ('Un-Tag Parent Host Complete', 'untag_parent_host_complete'),
+    ('Un-Tag Parent Resource Pool Complete', 'untag_parent_resource_pool_complete'),
+    ('Un-Tag Request', 'untag_req'),
+    ('VDI Connecting to Session', 'vdi_connecting_to_session'),
+    ('VDI Console Login Session', 'vdi_console_login_session'),
+    ('VDI Disconnected from Session', 'vdi_disconnected_from_session'),
+    ('VDI Login Session', 'vdi_login_session'),
+    ('VDI Logoff Session', 'vdi_logoff_session'),
+    ('VM Analysis Complete', 'vm_analysis_complete'),
+    ('VM Analysis Failure', 'vm_analysis_failure'),
+    ('VM Analysis Request', 'vm_analysis_req'),
+    ('VM Analysis Start', 'vm_analysis_start'),
+    ('VM C & U Processing Complete', 'vm_c_and_u_processing_complete'),
+    ('VM Clone Complete', 'vm_clone_complete'),
+    ('VM Clone Start', 'vm_clone_start'),
+    ('VM Compliance Check', 'vm_compliance_check'),
+    ('VM Compliance Failed', 'vm_compliance_failed'),
+    ('VM Compliance Passed', 'vm_compliance_passed'),
+    ('VM Create Complete', 'vm_create_complete'),
+    ('VM Delete (from Disk) Request', 'vm_delete_from_disk_req'),
+    ('VM Discovery', 'vm_discovery'),
+    ('VM Guest Reboot', 'vm_guest_reboot'),
+    ('VM Guest Reboot Request', 'vm_guest_reboot_req'),
+    ('VM Guest Shutdown', 'vm_guest_shutdown'),
+    ('VM Guest Shutdown Request', 'vm_guest_shutdown_req'),
+    ('VM Live Migration (VMOTION)', 'vm_live_migration_vmotion'),
+    ('VM Power Off', 'vm_power_off'),
+    ('VM Power Off Request', 'vm_power_off_req'),
+    ('VM Power On', 'vm_power_on'),
+    ('VM Power On Request', 'vm_power_on_req'),
+    ('VM Provision Complete', 'vm_provision_complete'),
+    ('VM Remote Console Connected', 'vm_remote_console_connected'),
+    ('VM Removal from Inventory', 'vm_removal_from_inventory'),
+    ('VM Removal from Inventory Request', 'vm_removal_from_inventory_req'),
+    ('VM Renamed Event', 'vm_renamed_event'),
+    ('VM Reset', 'vm_reset'),
+    ('VM Reset Request', 'vm_reset_req'),
+    ('VM Retired', 'vm_retired'),
+    ('VM Retirement Warning', 'vm_retirement_warning'),
+    ('VM Settings Change', 'vm_settings_change'),
+    ('VM Snapshot Create Complete', 'vm_snapshot_create_complete'),
+    ('VM Snapshot Create Request', 'vm_snapshot_create_req'),
+    ('VM Snapshot Create Started', 'vm_snapshot_create_started'),
+    ('VM Standby of Guest', 'vm_standby_of_guest'),
+    ('VM Standby of Guest Request', 'vm_standby_of_guest_req'),
+    ('VM Suspend', 'vm_suspend'),
+    ('VM Suspend Request', 'vm_suspend_req'),
+    ('VM Template Create Complete', 'vm_template_create_complete')
+]
+
+ALL_VM_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("vm_")]
+ALL_HOST_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("host_")]
+ALL_TAG_EVENTS = [
+    event for event in ALL_EVENTS if event[1].startswith("tag_") or event[1].startswith("untag_")
+]
+ALL_DATASTORE_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("datastore_")]
+ALL_PROVIDER_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("provider_")]
+ALL_SERVICE_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("service_")]
+ALL_VDI_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("vdi_")]
+
+
+def setup_for_event_testing(ssh_client, db_session, listener_info, providers):
     # FIX THE ENV ERROR IF PRESENT
     if ssh_client.run_command("ruby -v")[0] != 0:
         success = ssh_client.run_command("echo 'source /etc/default/evm' >> .bashrc")[0] == 0
