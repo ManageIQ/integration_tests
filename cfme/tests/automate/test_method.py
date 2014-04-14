@@ -36,7 +36,7 @@ def a_method(a_class):
                   cls=a_class)
 
 
-def test_crud(a_method):
+def test_method_crud(a_method):
     a_method.create()
     origname = a_method.name
     with update(a_method):
@@ -48,7 +48,7 @@ def test_crud(a_method):
     assert not a_method.exists()
 
 
-def test_duplicate_disallowed(a_method):
+def test_duplicate_method_disallowed(a_method):
     a_method.create()
     with error.expected("Name has already been taken"):
         a_method.create()
