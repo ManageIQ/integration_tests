@@ -23,13 +23,13 @@ host = ""
 def delete_fx_provider_event(db, provider_name):
     ems = db['ext_management_systems']
     ems_events = db['ems_events']
-    with db.transaction as session:
+    with db.transaction:
         providers = (
-            session.query(ems_events.id)
+            db.session.query(ems_events.id)
             .join(ems, ems_events.ems_id == ems.id)
             .filter(ems.name == provider_name)
         )
-        session.query(ems_events).filter(ems_events.id.in_(providers.subquery())).delete(False)
+        db.session.query(ems_events).filter(ems_events.id.in_(providers.subquery())).delete(False)
 
 
 def fetch_list(data):

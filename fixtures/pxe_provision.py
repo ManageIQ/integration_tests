@@ -46,8 +46,8 @@ def setup_pxe_server(db, provisioning_setup_data):
             visibility=provisioning_setup_data['visibility'],
             created_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
             updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"))
-        db.session.add(new_pxe_server)
-        db.session.commit()
+        with db.transaction:
+            db.session.add(new_pxe_server)
         server_id = []
         for row in db.session.query(db['pxe_servers']):
             server_id.append(row.id)
@@ -68,8 +68,8 @@ def setup_pxe_menu(db, provisioning_setup_data, server_last_id):
         type=provisioning_setup_data['menu_type'],
         updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
         contents=content)
-    db.session.add(new_pxe_menu)
-    db.session.commit()
+    with db.transaction:
+        db.session.add(new_pxe_menu)
     menu_id = []
     for row in db.session.query(pxe_menu):
         menu_id.append(row.id)
@@ -124,8 +124,8 @@ def setup_customization_template(db, provisioning_setup_data, row_val,
             type=provisioning_setup_data['ct_type'],
             updated_at=datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%M%m"),
             script=f_ks.read())
-        with db.transaction as session:
-            session.add(new_customization_template)
+        with db.transaction:
+            db.session.add(new_customization_template)
 
 
 @pytest.fixture
