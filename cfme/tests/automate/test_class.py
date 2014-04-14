@@ -28,7 +28,7 @@ def a_class(a_namespace):
                  namespace=a_namespace)
 
 
-def test_crud(a_class):
+def test_class_crud(a_class):
     a_class.create()
     orig = a_class.description
     with update(a_class):
@@ -39,7 +39,7 @@ def test_crud(a_class):
     assert not a_class.exists()
 
 
-def test_add_inherited(a_class):
+def test_add_class_inherited(a_class):
     subclass = Class(name=generate_random_string(8),
                      namespace=a_class.namespace,
                      description="subclass",
@@ -48,13 +48,13 @@ def test_add_inherited(a_class):
     subclass.create()
 
 
-def test_duplicate_disallowed(a_class):
+def test_duplicate_class_disallowed(a_class):
     a_class.create()
     with error.expected("Name has already been taken"):
         a_class.create()
 
 
-def test_same_name_different_namespace(a_namespace):
+def test_same_class_name_different_namespace(a_namespace):
     other_namespace = _make_namespace()
     name = generate_random_string(8)
     cls1 = Class(name=name, namespace=a_namespace)

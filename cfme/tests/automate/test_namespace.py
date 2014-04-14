@@ -29,7 +29,7 @@ def namespace(request):
     return request.param()
 
 
-def test_crud(namespace):
+def test_namespace_crud(namespace):
     namespace.create()
     old_name = namespace.name
     with update(namespace):
@@ -40,7 +40,7 @@ def test_crud(namespace):
     assert not namespace.exists()
 
 
-def test_add_delete_nested(namespace):
+def test_add_delete_namespace_nested(namespace):
     namespace.create()
     nested_ns = Namespace(name="Nested", parent=namespace)
     nested_ns.create()
@@ -48,7 +48,7 @@ def test_add_delete_nested(namespace):
     assert not namespace.exists()
 
 
-def test_duplicate_disallowed(namespace):
+def test_duplicate_namespace_disallowed(namespace):
     namespace.create()
     with error.expected("Error during 'add': Validation failed: fqname must be unique"):
         namespace.create()
