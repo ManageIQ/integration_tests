@@ -150,16 +150,15 @@ def visible_pages():
 
 # Construct the nav tree based on sections
 _branches = dict()
+# The main tab destination is usually the first secondlevel page in that tab
+# Since this is redundant, it's arguable that the toplevel tabs should be
+# nav destination at all; they're included here "just in case". The toplevel
+# and secondlevel destinations exist at the same level of nav_tree because the
+# secondlevel destinations don't depend on the toplevel nav taking place to reach
+# their destination.
 for (toplevel_dest, toplevel), secondlevels in sections.items():
-    _branch_dests = dict()
     for secondlevel_dest, secondlevel in secondlevels:
-        _branch_dests[secondlevel_dest] = nav_to_fn(toplevel, secondlevel)
-    # The main tab destination is always the first secondlevel page in that tab
-    # Since this is redundant, it's arguable that the toplevel tabs should be
-    # nav destination at all; they're included here "just in case".
-    _branches[toplevel_dest] = [
-        nav_to_fn(toplevel, None),
-        _branch_dests
-    ]
+        _branches[secondlevel_dest] = nav_to_fn(toplevel, secondlevel)
+    _branches[toplevel_dest] = [nav_to_fn(toplevel, None), {}]
 
 nav.add_branch('toplevel', _branches)
