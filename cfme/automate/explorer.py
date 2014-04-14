@@ -6,6 +6,7 @@ import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
 from cfme.web_ui import Form, Tree, fill, Select, ScriptBox
+import cfme.exceptions as exceptions
 from utils.update import Updateable
 import utils.error as error
 
@@ -40,6 +41,13 @@ def get_path(o):
     # prepend the top level "Datastore"
     p = getattr(o, 'path', [])
     return ["Datastore"] + p
+
+
+def tree_item_not_found_is_leaf(e):
+    '''Returns true if the given exception was while navigating a tree and
+       the item in the path that was missing was the last item.'''
+    data = e.args[0]  # the data mapping
+    return isinstance(e, exceptions.CandidateNotFound) and data['index'] == len(data['path']) - 1
 
 nav.add_branch(
     'automate_explorer',
@@ -84,6 +92,12 @@ class TreeNode(object):
             return list(self.parent.path) + [self.name]
         else:
             return [self.name]
+
+    def exists(self):
+        with error.handler(tree_item_not_found_is_leaf):
+            nav.go_to('automate_explorer_tree_path', context={'tree_item': self})
+            return True
+        return False
 
     def __repr__(self):
         return "<%s name=%s>" % (self.__class__.__name__, self.name)
@@ -158,12 +172,6 @@ class Namespace(TreeNode, Updateable):
         flash.assert_message_contain('Delete successful')
         flash.assert_success_message('The selected Automate Namespaces were deleted')
 
-    def exists(self):
-        try:
-            nav.go_to('automate_explorer_edit', context={'namespace': self})
-            return True
-        except:
-            return False
 
     def __repr__(self):
         return "<%s.%s name=%s, path=%s>" % (__name__, self.__class__.__name__,
@@ -228,14 +236,6 @@ class Class(TreeNode, Updateable):
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
 
-    def exists(self):
-        try:
-            nav.go_to('automate_explorer_edit', context={'tree_item': self.parent,
-                                                         'table_item': self})
-            return True
-        except:
-            return False
-
 
 class Method(TreeNode, Updateable):
     '''Represents a Method in the CFME ui.  `Display Name` is not
@@ -285,13 +285,6 @@ class Method(TreeNode, Updateable):
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
 
-    def exists(self):
-        try:
-            nav.go_to("automate_explorer_tree_path", context={'tree_item': self})
-            return True
-        except:
-            return False
-
 
 class Instance(TreeNode, Updateable):
     '''Represents a Instance in the CFME ui.  `Display Name` is not
@@ -339,10 +332,3 @@ class Instance(TreeNode, Updateable):
         cfg_btn('Remove this Instance', invokes_alert=True)
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
-
-    def exists(self):
-        try:
-            nav.go_to("automate_explorer_tree_path", context={'tree_item': self})
-            return True
-        except:
-            return False
