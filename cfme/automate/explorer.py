@@ -120,7 +120,7 @@ class Namespace(TreeNode, Updateable):
     #         return Namespace(name=self._path[-1], path=self._path[:-1])
 
     def create(self, cancel=False):
-        nav.go_to('automate_explorer_namespace_new', context={'tree_item': self.parent})
+        sel.force_navigate('automate_explorer_namespace_new', context={'tree_item': self.parent})
         form_data = {'name': self.name,
                      'description': self.description}
         try:
@@ -132,7 +132,7 @@ class Namespace(TreeNode, Updateable):
                 sel.click(self.form.cancel_btn)
 
     def update(self, updates, cancel=False):
-        nav.go_to('automate_explorer_edit', context={'tree_item': self.parent,
+        sel.force_navigate('automate_explorer_edit', context={'tree_item': self.parent,
                                                      'table_item': self})
         form_data = {'name': updates.get('name') or None,
                      'description': updates.get('description') or None}
@@ -141,7 +141,7 @@ class Namespace(TreeNode, Updateable):
                                      updates.get('name', self.name))
 
     def delete(self, cancel=False):
-        nav.go_to("automate_explorer_table_select", context={'tree_item': self.parent,
+        sel.force_navigate("automate_explorer_table_select", context={'tree_item': self.parent,
                                                              'table_item': self})
         if len(self.path) > 1:
             cfg_btn('Remove selected Items', invokes_alert=True)
@@ -153,7 +153,7 @@ class Namespace(TreeNode, Updateable):
 
     def exists(self):
         try:
-            nav.go_to('automate_explorer_edit', context={'namespace': self})
+            sel.force_navigate('automate_explorer_edit', context={'namespace': self})
             return True
         except:
             return False
@@ -191,7 +191,7 @@ class Class(TreeNode, Updateable):
         return "/".join(self.path)
 
     def create(self, cancel=False):
-        nav.go_to("automate_explorer_class_new", context={"tree_item": self.namespace})
+        sel.force_navigate("automate_explorer_class_new", context={"tree_item": self.namespace})
         fill(self.form, {'name_text': self.name,
                          'description_text': self.description,
                          # 'display_name_text': self.display_name,
@@ -206,7 +206,7 @@ class Class(TreeNode, Updateable):
             raise
 
     def update(self, updates, cancel=False):
-        nav.go_to("automate_explorer_edit", context={"tree_item": self.parent,
+        sel.force_navigate("automate_explorer_edit", context={"tree_item": self.parent,
                                                      "table_item": self})
         fill(self.form, {'name_text': updates.get('name'),
                          'description_text': updates.get('description'),
@@ -216,14 +216,14 @@ class Class(TreeNode, Updateable):
              action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
 
     def delete(self, cancel=False):
-        nav.go_to("automate_explorer_delete", context={'tree_item': self.parent,
+        sel.force_navigate("automate_explorer_delete", context={'tree_item': self.parent,
                                                        'table_item': self})
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
 
     def exists(self):
         try:
-            nav.go_to('automate_explorer_edit', context={'tree_item': self.parent,
+            sel.force_navigate('automate_explorer_edit', context={'tree_item': self.parent,
                                                          'table_item': self})
             return True
         except:
@@ -254,7 +254,7 @@ class Method(TreeNode, Updateable):
         return self.cls
 
     def create(self, cancel=False):
-        nav.go_to("automate_explorer_methods_new", context={'tree_item': self.cls})
+        sel.force_navigate("automate_explorer_methods_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,
                          # 'display_name_text': self.display_name,
                          'location_select': self.location,
@@ -268,7 +268,7 @@ class Method(TreeNode, Updateable):
             raise
 
     def update(self, updates, cancel=False):
-        nav.go_to("automate_explorer_method_edit", context={"tree_item": self})
+        sel.force_navigate("automate_explorer_method_edit", context={"tree_item": self})
         fill(self.form, {'name_text': updates.get('name'),
                          'description_text': updates.get('description'),
                          'location_select': updates.get('location'),
@@ -276,14 +276,14 @@ class Method(TreeNode, Updateable):
              action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
 
     def delete(self, cancel=False):
-        nav.go_to("automate_explorer_tree_path", context={'tree_item': self})
+        sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})
         cfg_btn('Remove this Method', invokes_alert=True)
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
 
     def exists(self):
         try:
-            nav.go_to("automate_explorer_tree_path", context={'tree_item': self})
+            sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})
             return True
         except:
             return False
