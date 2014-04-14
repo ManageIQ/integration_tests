@@ -608,7 +608,7 @@ def set_text(loc, text):
         el = element(loc)
         ActionChains(browser()).move_to_element(el).perform()
         el.clear()
-        el.send_keys(text)
+        send_keys(el, text)
 
 
 @multidispatch
