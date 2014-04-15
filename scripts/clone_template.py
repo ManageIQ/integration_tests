@@ -30,6 +30,10 @@ def main():
     parser.add_argument('--template', help='the name of the template to clone')
     parser.add_argument('--vm_name', help='the name of the VM on which to act')
     parser.add_argument('--rhev_cluster', help='the name of the VM on which to act', default=None)
+    parser.add_argument('--rhev_place_policy_host', help='the host for the vm to start on',
+        default=None)
+    parser.add_argument('--rhev_place_policy_aff', help='the affinity of the vm on a host',
+        default=None)
     parser.add_argument('--ec2_flavor', help='ec2 flavor', default=None)
     parser.add_argument('--rhos_flavor', help='rhos flavor', default=None)
     parser.add_argument('--rhos_floating_ip_pool', dest='ip_pool', default=None,
@@ -68,6 +72,10 @@ def main():
             deply_args.update(assign_floating_ip=args.ip_pool)
         if args.rhev_cluster is not None:
             deply_args.update(cluster_name=args.rhev_cluster)
+        if args.rhev_place_policy_host is not None:
+            deply_args.update(placement_policy_host=args.rhev_place_policy_host)
+        if args.rhev_place_policy_aff is not None:
+            deply_args.update(placement_policy_affinity=args.rhev_place_policy_aff)
         if args.ec2_flavor is not None:
             deply_args.update(instance_type=args.ec2_flavor)
 

@@ -809,9 +809,15 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
     def deploy_template(self, template, *args, **kwargs):
         logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
+        vm_placement_policy = None
+        if kwargs['placement_policy_host']:
+            vm_host = params.Host(name=kwargs['placement_policy_host'])
+            vm_placement_policy = params.VmPlacementPolicy(host=vm_host,
+                affinity=kwargs['placement_policy_affinity'])
         self.api.vms.add(params.VM(
             name=kwargs['vm_name'],
             cluster=self.api.clusters.get(kwargs['cluster_name']),
+            placement_policy=vm_placement_policy,
             template=self.api.templates.get(template)))
         wait_for(
             lambda: self.is_vm_stopped(kwargs['vm_name']),
