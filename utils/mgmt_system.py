@@ -670,7 +670,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             vm.start()
             wait_for(
                 lambda: self.is_vm_running(vm_name),
-                num_sec=180,
+                num_sec=240,
                 delay=5,
                 message="RHEV VM %s started" % vm_name
             )
@@ -685,7 +685,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             vm.stop()
             wait_for(
                 lambda: self.is_vm_stopped(vm_name),
-                num_sec=180,
+                num_sec=240,
                 delay=5,
                 message="RHEV VM %s stopped" % vm_name
             )
@@ -800,7 +800,8 @@ class RHEVMSystem(MgmtSystemAPIBase):
             vm.suspend()
             wait_for(
                 lambda: self.is_vm_suspended(vm_name),
-                message="wait for RHEV VM %s suspended" % vm_name
+                message="wait for RHEV VM %s suspended" % vm_name,
+                num_sec=240
             )
             return True
 
