@@ -33,6 +33,8 @@ item_form = web_ui.Form(
      ('display_checkbox', "//input[@id='display']"),
      ('add_button', "//img[@title='Add']")])
 
+catalog_tree = web_ui.Tree('//div[@id="stcat_tree_box"]//table')
+
 
 def catalog_in_table(catalog):
     return "//div[@class='objbox']//td[.='%s']" % catalog.name
@@ -51,7 +53,7 @@ nav.add_branch(
     'services_catalogs',
     {'catalogs': [nav.partial(accordion.click, 'Catalogs'),
                   {'catalog_new': _all_catalogs_add_new,
-                   'catalog': [lambda ctx: sel.click(catalog_in_tree(ctx['catalog'])),
+                   'catalog': [lambda ctx: catalog_tree.click_path('All Catalogs', ctx['catalog'].name),
                                {'catalog_edit': nav.partial(tb_select, "Edit this Item")}]}],
      'catalog_items': [nav.partial(accordion.click, 'Catalog Items'),
                        {'catalog_item_new': _all_catalogs_add_new,
