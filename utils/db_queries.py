@@ -15,11 +15,13 @@ def db_query(function):
     """
     @wraps(function)
     def f(*args, **kwargs):
-        if "db_session" in kwargs:
-            db_session = kwargs["db_session"]
-        else:
-            db_session = cfmedb
-        return function(db_session, *args, **kwargs)
+        db = None
+        if 'db' in kwargs:
+            db = kwargs.pop('db')
+
+        if db is None:
+            db = cfmedb
+        return function(db, *args, **kwargs)
     return f
 
 
