@@ -1787,15 +1787,11 @@ def fill_scriptbox(sb, script):
     script_area = sel.element('.//div/div/textarea', root=root)
 
     tabs = 0
-    import time
     import re
     for line in script.split("\n"):
         for n in range(tabs):
             sel.send_keys(script_area, Keys.BACK_SPACE)
-        time.sleep(0.01)
         tb = re.findall('^[ ]*', line)
         tabs = len(tb[0])
         sel.send_keys(script_area, line)
-        time.sleep(0.01)
         sel.send_keys(script_area, Keys.RETURN)
-        time.sleep(0.01)
