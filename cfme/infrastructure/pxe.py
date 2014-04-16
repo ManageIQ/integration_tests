@@ -213,9 +213,12 @@ class PXEServer(Updateable):
         sel.force_navigate('infrastructure_pxe_server_new')
         fill(pxe_properties_form, self._form_mapping(True, **self.__dict__))
         self._submit(cancel, pxe_add_page.add_btn)
-        flash.assert_message_match('PXE Server "{}" was added'.format(self.name))
-        if refresh:
-            self.refresh()
+        if not cancel:
+            flash.assert_message_match('PXE Server "{}" was added'.format(self.name))
+            if refresh:
+                self.refresh()
+        else:
+            flash.assert_message_match('Add of new PXE Server was cancelled by the user')
 
     def exists(self):
         """
@@ -242,7 +245,11 @@ class PXEServer(Updateable):
         fill(pxe_properties_form, self._form_mapping(**updates))
         self._submit(cancel, pxe_edit_page.save_btn)
         name = updates.get('name') or self.name
-        flash.assert_message_match('PXE Server "{}" was saved'.format(name))
+        if not cancel:
+            flash.assert_message_match('PXE Server "{}" was saved'.format(name))
+        else:
+            flash.assert_message_match(
+                'Edit of PXE Server "{}" was cancelled by the user'.format(name))
 
     def delete(self, cancel=True):
         """
@@ -255,7 +262,8 @@ class PXEServer(Updateable):
         sel.force_navigate('infrastructure_pxe_server', context=self)
         cfg_btn('Remove this PXE Server from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
-        flash.assert_message_match('PXE Server "{}": Delete successful'.format(self.name))
+        if not cancel:
+            flash.assert_message_match('PXE Server "{}": Delete successful'.format(self.name))
 
     def refresh(self, wait=True):
         """ Refreshes the PXE relationships and waits for it to be updated
@@ -326,7 +334,11 @@ class CustomizationTemplate(Updateable):
         sel.force_navigate('infrastructure_pxe_template_new')
         fill(template_properties_form, self._form_mapping(True, **self.__dict__))
         self._submit(cancel, template_add_page.add_btn)
-        flash.assert_message_match('Customization Template "{}" was added'.format(self.name))
+        if not cancel:
+            flash.assert_message_match('Customization Template "{}" was added'.format(self.name))
+        else:
+            flash.assert_message_match(
+                'Add of new Customization Template was cancelled by the user')
 
     def exists(self):
         """
@@ -353,7 +365,11 @@ class CustomizationTemplate(Updateable):
         fill(template_properties_form, self._form_mapping(**updates))
         self._submit(cancel, template_edit_page.save_btn)
         name = updates.get('name') or self.name
-        flash.assert_message_match('Customization Template "{}" was saved'.format(name))
+        if not cancel:
+            flash.assert_message_match('Customization Template "{}" was saved'.format(name))
+        else:
+            flash.assert_message_match(
+                'Edit of Customization Template "{}" was cancelled by the user'.format(name))
 
     def delete(self, cancel=True):
         """
@@ -405,7 +421,11 @@ class SystemImageType(Updateable):
         sel.force_navigate('infrastructure_pxe_image_type_new')
         fill(image_properties_form, self._form_mapping(True, **self.__dict__))
         self._submit(cancel, image_add_page.add_btn)
-        flash.assert_message_match('System Image Type "{}" was added'.format(self.name))
+        if not cancel:
+            flash.assert_message_match('System Image Type "{}" was added'.format(self.name))
+        else:
+            flash.assert_message_match(
+                'Add of new System Image Type was cancelled by the user')
 
     def update(self, updates, cancel=False):
         """
