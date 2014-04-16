@@ -17,6 +17,8 @@ import subprocess
 from utils.conf import env
 from utils.path import log_path
 
+vid_options = env.get('logging', {}).get('video')
+
 
 def get_path_and_file_name(node):
     """Extract filename and location from the node.
@@ -33,38 +35,34 @@ def get_path_and_file_name(node):
 
 @pytest.mark.tryfirst
 def pytest_runtest_setup(item):
-    if env['logging'].get('video'):
-        vid_options = env['logging']['video']
-        if vid_options['enabled']:
-            vid_log_path = log_path.join(vid_options['dir'])
-            vid_dir, vid_name = get_path_and_file_name(item)
-            full_vid_path = vid_log_path.join(vid_dir)
-            try:
-                os.makedirs(str(full_vid_path))
-            except OSError:
-                pass
-            filename = str(full_vid_path.join(vid_name))
-            cmd_line = ['recordmydesktop',
-                        '--display', vid_options['display'],
-                        '-o', filename,
-                        '--no-sound',
-                        '--v_quality', vid_options['display'],
-                        '--on-the-fly-encoding',
-                        '--overwrite']
-            try:
-                proc = subprocess.Popen(cmd_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                with open(str(vid_log_path.join('pid')), "w") as f:
-                    f.write(str(proc.pid))
-            except OSError:
-                print "Couldn't initialize videoer"
+    if vid_options and vid_options['enabled']:
+        vid_log_path = log_path.join(vid_options['dir'])
+        vid_dir, vid_name = get_path_and_file_name(item)
+        full_vid_path = vid_log_path.join(vid_dir)
+        try:
+            os.makedirs(str(full_vid_path))
+        except OSError:
+            pass
+        filename = str(full_vid_path.join(vid_name))
+        cmd_line = ['recordmydesktop',
+                    '--display', vid_options['display'],
+                    '-o', filename,
+                    '--no-sound',
+                    '--v_quality', vid_options['display'],
+                    '--on-the-fly-encoding',
+                    '--overwrite']
+        try:
+            proc = subprocess.Popen(cmd_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            with open(str(vid_log_path.join('pid')), "w") as f:
+                f.write(str(proc.pid))
+        except OSError:
+            print "Couldn't initialize videoer"
 
 
 @pytest.mark.trylast
 def pytest_runtest_teardown(item, nextitem):
-    if env['logging'].get('video'):
-        vid_options = env['logging']['video']
-        if vid_options['enabled']:
-            vid_log_path = log_path.join(vid_options['dir'])
-            with open(str(vid_log_path.join('pid')), "r") as f:
-                pid = int(f.read())
-            os.kill(pid, signal.SIGHUP)
+    if vid_options and vid_options['enabled']:
+        vid_log_path = log_path.join(vid_options['dir'])
+        with open(str(vid_log_path.join('pid')), "r") as f:
+            pid = int(f.read())
+        os.kill(pid, signal.SIGHUP)
