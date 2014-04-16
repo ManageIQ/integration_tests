@@ -52,11 +52,10 @@ class Appliance(object):
             except AttributeError:
                 return False
 
-        if self._address is None:
-            ec, tc = wait_for(is_ip_available,
-                              delay=5,
-                              num_sec=30)
-        return self.ec
+        ec, tc = wait_for(is_ip_available,
+                          delay=5,
+                          num_sec=30)
+        return ec
 
     @lazycache
     def db_address(self):
