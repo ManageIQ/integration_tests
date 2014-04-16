@@ -110,6 +110,22 @@ image_properties_form = Form(
         ('provision_type', Select('//select[@id="provision_type"]'))
     ])
 
+iso_resetter = "//span[contains(., 'All ISO Datastores')]"
+
+iso_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
+
+iso_properties_form = Form(
+    fields=[
+        ('provider', Select('//select[@id="ems_id"]')),
+    ])
+
+iso_tree = Tree('//div[@id="iso_datastores_treebox"]//table')
+
+iso_image_type_form = Form(
+    fields=[
+        ('image_type', Select("//select[@id='image_typ']"))
+    ])
+
 
 def pxe_servers_pg():
     acc.click('PXE Servers')
@@ -124,6 +140,11 @@ def template_pg():
 def system_image_pg():
     acc.click('System Image Types')
     sel.click(sel.element(image_resetter))
+
+
+def iso_datastore_pg():
+    acc.click('ISO Datastores')
+    sel.click(sel.element(iso_resetter))
 
 
 nav.add_branch('infrastructure_pxe',
@@ -147,7 +168,13 @@ nav.add_branch('infrastructure_pxe',
                  'infrastructure_pxe_image_type':
                  [lambda ctx: image_table.click_cell('name', ctx.name),
                   {'infrastructure_pxe_image_type_edit':
-                   lambda _: cfg_btn('Edit this System Image Type')}]}]})
+                   lambda _: cfg_btn('Edit this System Image Type')}]}],
+
+                'infrastructure_iso_datastores': [lambda _: iso_datastore_pg(),
+                {'infrastructure_iso_datastore_new':
+                 lambda _: cfg_btn('Add a New ISO Datastore'),
+                 'infrastructure_iso_datastore':
+                 lambda ctx: iso_tree.click_path(ctx.provider)}]})
 
 
 class PXEServer(Updateable):
@@ -454,6 +481,93 @@ class SystemImageType(Updateable):
         cfg_btn('Remove this System Image Type from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match('System Image Type "{}": Delete successful'.format(self.name))
+
+
+class ISODatastore(Updateable):
+    """Model of a PXE Server object in CFME
+
+    Args:
+        provider: Provider name.
+    """
+
+    def __init__(self, provider=None):
+        self.provider = provider
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'provider': kwargs.get('provider')}
+
+    def _submit(self, cancel, submit_button):
+        if cancel:
+            sel.click(pxe_add_page.cancel_btn)
+            # sel.wait_for_element(page.configuration_btn)
+        else:
+            sel.click(submit_button)
+            flash.assert_no_errors()
+
+    def create(self, cancel=False, refresh=True):
+        """
+        Creates an ISO datastore object
+
+        Args:
+            cancel (boolean): Whether to cancel out of the creation.  The cancel is done
+                after all the information present in the ISO datastore has been filled in the UI.
+            refresh (boolean): Whether to run the refresh operation on the ISO datastore after
+                the add has been completed.
+        """
+        sel.force_navigate('infrastructure_iso_datastore_new')
+        fill(iso_properties_form, self._form_mapping(True, **self.__dict__))
+        self._submit(cancel, pxe_add_page.add_btn)
+        flash.assert_message_match('ISO Datastore "{}" was added'.format(self.provider))
+        if refresh:
+            self.refresh()
+
+    def exists(self):
+        """
+        Checks if the ISO Datastore already exists
+        """
+        sel.force_navigate('infrastructure_iso_datastores')
+        try:
+            pxe_server_tree.click_path(self.provider)
+            return True
+        except NoSuchElementException:
+            return False
+
+    def delete(self, cancel=True):
+        """
+        Deletes an ISO Datastore from CFME
+
+        Args:
+            cancel: Whether to cancel the deletion, defaults to True
+        """
+
+        sel.force_navigate('infrastructure_iso_datastore', context=self)
+        cfg_btn('Remove this ISO Datastore from the VMDB', invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+        flash.assert_message_match('ISO Datastore "{}": Delete successful'.format(self.provider))
+
+    def refresh(self, wait=True):
+        """ Refreshes the PXE relationships and waits for it to be updated
+        """
+        sel.force_navigate('infrastructure_iso_datastore', context=self)
+        last_time = iso_details_page.infoblock.text('Basic Information', 'Last Refreshed On')
+        cfg_btn('Refresh Relationships', invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_message_match(
+            'ISO Datastore "{}": Refresh Relationships successfully initiated'
+            .format(self.provider))
+        if wait:
+            wait_for(lambda lt: lt != pxe_details_page.infoblock.text
+                     ('Basic Information', 'Last Refreshed On'),
+                     func_args=[last_time], fail_func=sel.refresh, num_sec=120)
+
+    def set_iso_image_type(self, image_name, image_type):
+        """
+        Function to set the image type of a PXE image
+        """
+        sel.force_navigate('infrastructure_iso_datastores')
+        pxe_server_tree.click_path(self.provider, 'ISO Images', image_name)
+        cfg_btn('Edit this ISO Image')
+        fill(iso_image_type_form, {'image_type': image_type}, action=pxe_edit_page.save_btn)
 
 
 def get_template_from_config(template_config_name):
