@@ -522,6 +522,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         if _tries == 1:
             # There was an alert, accept it and try again
             handle_alert(wait=0)
+            force_navigate(page_name, _tries, *args, **kwargs)
         else:
             # There was still an alert when we tried again, shoot the browser in the head
             logger.debug('Unxpected alert, recycling browser' % _tries)
