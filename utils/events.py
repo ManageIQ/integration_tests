@@ -116,7 +116,7 @@ ALL_SERVICE_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("serv
 ALL_VDI_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("vdi_")]
 
 
-def setup_for_event_testing(ssh_client, db_session, listener_info, providers):
+def setup_for_event_testing(ssh_client, db, listener_info, providers):
     # FIX THE ENV ERROR IF PRESENT
     if ssh_client.run_command("ruby -v")[0] != 0:
         success = ssh_client.run_command("echo 'source /etc/default/evm' >> .bashrc")[0] == 0
