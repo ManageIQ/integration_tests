@@ -15,7 +15,11 @@ def db_query(function):
     """
     @wraps(function)
     def f(*args, **kwargs):
-        return function(cfmedb, *args, **kwargs)
+        if "db_session" in kwargs:
+            db_session = kwargs["db_session"]
+        else:
+            db_session = cfmedb
+        return function(db_session, *args, **kwargs)
     return f
 
 
@@ -53,22 +57,22 @@ def get_configuration_details(db, ip_address=None):
         return None
 
 
-def get_server_id(ip_address=None):
+def get_server_id(ip_address=None, **kwargs):
     try:
-        return get_configuration_details(ip_address)[2]
+        return get_configuration_details(ip_address, **kwargs)[2]
     except TypeError:
         return None
 
 
-def get_server_region(ip_address=None):
+def get_server_region(ip_address=None, **kwargs):
     try:
-        return get_configuration_details(ip_address)[0]
+        return get_configuration_details(ip_address, **kwargs)[0]
     except TypeError:
         return None
 
 
-def get_server_name(ip_address=None):
+def get_server_name(ip_address=None, **kwargs):
     try:
-        return get_configuration_details(ip_address)[1]
+        return get_configuration_details(ip_address, **kwargs)[1]
     except TypeError:
         return None
