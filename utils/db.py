@@ -5,16 +5,34 @@ from urlparse import urlparse
 from tempfile import NamedTemporaryFile
 
 import yaml
-from sqlalchemy import MetaData, create_engine, inspect
-from sqlalchemy.exc import ArgumentError, InvalidRequestError
+from sqlalchemy import MetaData, create_engine, event, inspect
+from sqlalchemy.exc import ArgumentError, DisconnectionError, InvalidRequestError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import Pool
 
 from utils import conf, lazycache
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.path import data_path
 from utils.ssh import SSHClient
+
+
+@event.listens_for(Pool, "checkout")
+def ping_connection(dbapi_connection, connection_record, connection_proxy):
+    """ping_connection event hook, used to reconnect db sessions that time out
+
+    Note:
+
+        See also: :ref:`Connection Invalidation <sqlalchemy:pool_connection_invalidation>`
+
+    """
+    cursor = dbapi_connection.cursor()
+    try:
+        cursor.execute("SELECT 1")
+    except StandardError:
+        raise DisconnectionError
+    cursor.close()
 
 
 class Db(Mapping):
@@ -42,16 +60,15 @@ class Db(Mapping):
         # List comprehension to get all templates
         [(vm.name, vm.guid) for vm in session.query(db['vms']).all() if vm.template is True]
 
-        # Using the transaction manager:
-        with db.transaction as session:
-            for vm in session.query(db['vms']).all():
-                yield vm.name, vm.guid, vm.template
+        # Use the transaction manager for write operations:
+        with db.transaction:
+            db.session.query(db['vms']).all().delete()
 
     Note:
 
         Creating a table object requires a call to the database so that SQLAlchemy can do
         reflection to determine the table's structure (columns, keys, indices, etc). On
-        a slow connection, this can be extremely slow, which will affect methods that return
+        a latent connection, this can be extremely slow, which will affect methods that return
         tables, like the mapping interface or :py:meth:`values`.
 
     '''
@@ -137,8 +154,13 @@ class Db(Mapping):
 
     @lazycache
     def engine(self):
-        """The :py:class:`Engine <sqlalchemy:sqlalchemy.engine.Engine>` for this database"""
-        return create_engine(self.db_url)
+        """The :py:class:`Engine <sqlalchemy:sqlalchemy.engine.Engine>` for this database
+
+        It uses pessimistic disconnection handling, checking that the database is still
+        connected before executing commands.
+
+        """
+        return create_engine(self.db_url, echo_pool=True)
 
     @lazycache
     def sessionmaker(self):
@@ -188,7 +210,8 @@ class Db(Mapping):
     def session(self):
         """Returns a :py:class:`Session <sqlalchemy:sqlalchemy.orm.session.Session>`
 
-        This is used for database queries.
+        This is used for database queries. For writing to the database, start a
+        :py:meth:`transaction`.
 
         Note:
 
@@ -196,7 +219,7 @@ class Db(Mapping):
             use :py:meth:`sessionmaker`.
 
         """
-        return self.sessionmaker()
+        return self.sessionmaker(autocommit=True)
 
     @property
     @contextmanager
@@ -206,22 +229,19 @@ class Db(Mapping):
         Sessions understand the concept of transactions, and provider context managers to
         handle conditionally committing or rolling back transactions as needed.
 
-        This creates a new session for the life of the transaction.
+        Note:
+
+            Sessions automatically commit transactions by default. For predictable results when
+            writing to the database, use the transaction manager.
 
         Usage:
 
-            # The 'with' context provides the session if you like
-            with db.transaction as session:
-                session.do_something()
-
-            # Since a  new session is created, using the cached session
-            # will result in unpredicatable behavior:
             with db.transaction:
-                db.session.do_something()  # This might or might not explode?
+                db.session.do_something()
 
         """
-        with self.session.begin_nested():
-            yield self.sessionmaker()
+        with self.session.begin():
+            yield
 
     def reflect_table(self, table_name):
         """Populate :py:attr:`metadata` with information on a table
@@ -273,9 +293,9 @@ def db_yamls(db=None):
 
     """
     db = db or cfmedb
-    with db.transaction as session:
+    with db.transaction:
         config = db['configurations']
-        configs = session.query(config.typ, config.settings)
+        configs = db.session.query(config.typ, config.settings)
         return {name: yaml.load(settings) for name, settings in configs}
 
 
