@@ -19,7 +19,9 @@ import signal
 import subprocess
 
 from utils.conf import env
+from utils.log import logger
 from utils.path import log_path
+from utils.wait import wait_for, TimedOutError
 
 vid_options = env.get('logging', {}).get('video')
 
@@ -37,6 +39,19 @@ def get_path_and_file_name(node):
     return node.parent.name, vid_name
 
 
+def process_running(pid):
+    """Check whether specified process is running"""
+    try:
+        os.kill(pid, 0)
+    except OSError as e:
+        if e.errno == 3:
+            return False
+        else:
+            raise
+    else:
+        return True
+
+
 @pytest.mark.tryfirst
 def pytest_runtest_setup(item):
     if vid_options and vid_options['enabled']:
@@ -47,6 +62,7 @@ def pytest_runtest_setup(item):
             os.makedirs(str(full_vid_path))
         except OSError:
             pass
+        vid_name = vid_name + ".ogv"
         filename = str(full_vid_path.join(vid_name))
         cmd_line = ['recordmydesktop',
                     '--display', vid_options['display'],
@@ -59,14 +75,39 @@ def pytest_runtest_setup(item):
             proc = subprocess.Popen(cmd_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             with open(str(vid_log_path.join('pid')), "w") as f:
                 f.write(str(proc.pid))
+            try:
+                wait_for(
+                    lambda: full_vid_path.join(vid_name).exists(),
+                    num_sec=10, message="recording of %s started" % item.name
+                )
+            except TimedOutError:
+                logger.exception("Could not check whether recording of %s started!" % item.name)
         except OSError:
-            print "Couldn't initialize videoer"
+            logger.exception("Couldn't initialize videoer! Make sure recordmydesktop is installed!")
+
+
+def stop_recording():
+    if vid_options and vid_options['enabled']:
+        vid_log_path = log_path.join(vid_options['dir'])
+        try:
+            with open(str(vid_log_path.join('pid')), "r") as f:
+                pid = int(f.read())
+        except IOError:
+            return  # No PID file, therefore no recorder running.
+        if process_running(pid):
+            os.kill(pid, signal.SIGINT)
+            os.waitpid(pid, 0)
+            vid_log_path.join('pid').remove()
+            logger.info("Recording finished")
+        else:
+            logger.exception("Could not find recordmydesktop process %d!" % pid)
 
 
 @pytest.mark.trylast
 def pytest_runtest_teardown(item, nextitem):
-    if vid_options and vid_options['enabled']:
-        vid_log_path = log_path.join(vid_options['dir'])
-        with open(str(vid_log_path.join('pid')), "r") as f:
-            pid = int(f.read())
-        os.kill(pid, signal.SIGHUP)
+    stop_recording()
+
+
+@pytest.mark.trylast
+def pytest_unconfigure(config):
+    stop_recording()
