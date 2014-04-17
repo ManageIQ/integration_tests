@@ -810,7 +810,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def deploy_template(self, template, *args, **kwargs):
         logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
         vm_placement_policy = None
-        if kwargs['placement_policy_host'] and kwargs['placement_policy_affinity']:
+        if 'placement_policy_host' in kwargs and 'placement_policy_affinity' in kwargs:
             vm_host = params.Host(name=kwargs['placement_policy_host'])
             vm_placement_policy = params.VmPlacementPolicy(host=vm_host,
                 affinity=kwargs['placement_policy_affinity'])
