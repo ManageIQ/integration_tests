@@ -230,6 +230,11 @@ def provider_by_type(metafunc, provider_types, *fields):
             # Skip unwanted types
             continue
 
+        cmd_filter = metafunc.config.getvalueorskip('use_provider')
+        if cmd_filter:
+            if provider not in cmd_filter:
+                continue
+
         # Use the provider name for idlist, helps with readable parametrized test output
         idlist.append(provider)
 

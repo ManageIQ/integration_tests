@@ -22,5 +22,10 @@ def _pytest_plugins_generator(*extension_pkgs):
             if not is_package:
                 yield modname
 
+
+def pytest_addoption(parser):
+    parser.addoption("--use-provider", action="append", default=[],
+        help="list of providers to work on")
+
 pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers, cfme.fixtures))
 collect_ignore = ["tests/scenarios"]
