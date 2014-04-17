@@ -4,24 +4,17 @@ import random
 import os
 import shutil
 from utils.wait import wait_for
+from utils import browser
 
 
-DIRECTORY = "/tmp/cfme_tests"   # Download directory
 TIMEOUT = 60.0                  # Wait time for download
-
-
-# Create the working directory
-try:
-    os.listdir(DIRECTORY)
-except OSError:
-    os.mkdir(DIRECTORY)
 
 
 def clean_temp_directory():
     """ Clean the temporary directory.
 
     """
-    for root, dirs, files in os.walk(DIRECTORY):
+    for root, dirs, files in os.walk(browser.firefox_profile_tmpdir):
         for f in files:
             os.unlink(os.path.join(root, f))
         for d in dirs:
@@ -29,12 +22,12 @@ def clean_temp_directory():
 
 
 @pytest.fixture
-def needs_firefox(duckwebqa):
+def needs_firefox():
     """ Fixture which skips the test if not run under firefox.
 
     I recommend putting it in the first place.
     """
-    if duckwebqa.selenium_client.driver != "firefox":
+    if browser.browser().name != "firefox":
         pytest.skip(msg="This test needs firefox to run")
 
 
@@ -54,6 +47,7 @@ def test_have_some_reports(intel_reports_pg):
 
 @pytest.mark.requires_test("test_have_some_reports")
 @pytest.mark.parametrize("filetype", ["txt", "csv", "pdf"])
+@pytest.sel.go_to('dashboard')
 def test_download_report_firefox(needs_firefox, intel_reports_pg, filetype):
     """ Download the report as a file and check whether it was downloaded.
 
@@ -72,7 +66,7 @@ def test_download_report_firefox(needs_firefox, intel_reports_pg, filetype):
         lambda: any(
             [file.endswith(extension)
              for file
-             in os.listdir(DIRECTORY)]
+             in os.listdir(browser.firefox_profile_tmpdir)]
         ),
         num_sec=TIMEOUT
     )

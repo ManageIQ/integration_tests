@@ -39,6 +39,9 @@ class VirtualIntelligence(Base):
         def click_on_saved_reports(self):
             self.accordion.accordion_by_name("Saved Reports").click()
             self._wait_for_results_refresh()
+            from cfme.web_ui import Tree
+            tree = Tree("//tr[@title='All Saved Reports']/../..")
+            tree.click_path("All Saved Reports")
             return VirtualIntelligence.SavedReportsSection(self.testsetup)
 
     class SavedReportsSection(Reports, ReloadMixin):
