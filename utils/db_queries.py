@@ -1,26 +1,10 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-from utils.db import cfmedb
-from functools import wraps
+import utils.db
 
 
-def db_query(function):
-    """Decorator providing DB access functions that want it.
-
-    Puts db as the first argument, other arguments follow. db will be an instance of
-    :py:class:`utils.Db`.
-
-    Returns: Wrapped function.
-    """
-    @wraps(function)
-    def f(*args, **kwargs):
-        return function(cfmedb, *args, **kwargs)
-    return f
-
-
-@db_query
-def get_configuration_details(db, ip_address=None):
+def get_configuration_details(ip_address=None):
     """Return details that are necessary to navigate through Configuration accordions.
 
     Args:
@@ -32,25 +16,27 @@ def get_configuration_details(db, ip_address=None):
         If the data were found, it returns tuple `(region, server name, server id)`
     """
     if ip_address is None:
-        ip_address = db.hostname
-    SEQ_FACT = 1000000000000
-    miq_servers = db['miq_servers']
-    for region in db.session.query(db['miq_regions']):
-        reg_min = region.region * SEQ_FACT
-        reg_max = reg_min + SEQ_FACT
-        servers = list(db.session.query(miq_servers)
-            .filter(
-                miq_servers.id >= reg_min,
-                miq_servers.id < reg_max,
-                miq_servers.ipaddress == ip_address
+        ip_address = utils.db.cfmedb.hostname
+
+    with utils.db.database_on_server(ip_address) as db:
+        SEQ_FACT = 1000000000000
+        miq_servers = db['miq_servers']
+        for region in db.session.query(db['miq_regions']):
+            reg_min = region.region * SEQ_FACT
+            reg_max = reg_min + SEQ_FACT
+            servers = list(db.session.query(miq_servers)
+                .filter(
+                    miq_servers.id >= reg_min,
+                    miq_servers.id < reg_max,
+                    miq_servers.ipaddress == ip_address
+                )
             )
-        )
-        if servers:
-            return region.region, servers[0].name, servers[0].id
+            if servers:
+                return region.region, servers[0].name, servers[0].id
+            else:
+                return None, None, None
         else:
-            return None, None, None
-    else:
-        return None
+            return None
 
 
 def get_server_id(ip_address=None):
