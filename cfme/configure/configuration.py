@@ -89,27 +89,25 @@ crud_buttons = Region(
 records_table = Table("//div[@id='records_div']/table[@class='style3']")
 
 
-def get_ip_address():
-    """Returns an IP address of the appliance
-    """
-    return urlparse(sel.base_url()).netloc
+def get_server_ctx(server_db=None):
+    try:
+        cached = get_server_ctx.cached
+    except AttributeError:
+        cached = dict(ip_addr=None, ctx_data=dict())
 
+    ip_addr = urlparse(sel.base_url()).netloc
+    if ip_addr == cached['ip_addr']:
+        return cached['ctx_data']
 
-def server_region():
-    return get_server_region(get_ip_address())
+    cached['ip_addr'] = ip_addr
+    cached['ctx_data'] = dict(
+        region=get_server_region(db=server_db, ip_address=ip_addr),
+        server_name=get_server_name(db=server_db, ip_address=ip_addr),
+        server_id=get_server_id(db=server_db, ip_address=ip_addr)
+    )
+    get_server_ctx.cached = cached
+    return cached['ctx_data']
 
-
-def server_region_pair():
-    r = server_region()
-    return r, r
-
-
-def server_name():
-    return get_server_name(get_ip_address())
-
-
-def server_id():
-    return get_server_id(get_ip_address())
 
 nav.add_branch("configuration",
     {
@@ -119,8 +117,11 @@ nav.add_branch("configuration",
             {
                 "cfg_settings_region":
                 [
-                    lambda _: settings_tree.click_path(
-                        "Region: Region %d [%d]" % server_region_pair()
+                    lambda ctx_db: settings_tree.click_path(
+                        "Region: Region %d [%d]" % (
+                            get_server_ctx(ctx_db)['region'],
+                            get_server_ctx(ctx_db)['region']
+                        )
                     ),
                     {
                         "cfg_settings_region_details":
@@ -147,16 +148,22 @@ nav.add_branch("configuration",
                 ],
 
                 "cfg_settings_defaultzone":
-                lambda _: settings_tree.click_path(
-                    "Region: Region %d [%d]" % server_region_pair(),
+                lambda ctx_db: settings_tree.click_path(
+                    "Region: Region %d [%d]" % (
+                        get_server_ctx(ctx_db)['region'],
+                        get_server_ctx(ctx_db)['region']
+                    ),
                     "Zones",
                     "Zone: Default Zone"
                 ),
 
                 "cfg_settings_schedules":
                 [
-                    lambda _: settings_tree.click_path(
-                        "Region: Region %d [%d]" % server_region_pair(),
+                    lambda ctx_db: settings_tree.click_path(
+                        "Region: Region %d [%d]" % (
+                            get_server_ctx(ctx_db)['region'],
+                            get_server_ctx(ctx_db)['region']
+                        ),
                         "Schedules"),
                     {
                         "cfg_settings_schedule":
@@ -172,11 +179,17 @@ nav.add_branch("configuration",
 
                 "cfg_settings_currentserver":
                 [
-                    lambda _: settings_tree.click_path(
-                        "Region: Region %d [%d]" % server_region_pair(),
+                    lambda ctx_db: settings_tree.click_path(
+                        "Region: Region %d [%d]" % (
+                            get_server_ctx(ctx_db)['region'],
+                            get_server_ctx(ctx_db)['region']
+                        ),
                         "Zones",
                         "Zone: Default Zone",
-                        "Server: %s [%d] (current)" % (server_name(), server_id())
+                        "Server: %s [%d] (current)" % (
+                            get_server_ctx(ctx_db)['server_name'],
+                            get_server_ctx(ctx_db)['server_id']
+                        )
                     ),
                     {
                         "cfg_settings_currentserver_server":
@@ -212,10 +225,16 @@ nav.add_branch("configuration",
             {
                 "cfg_diagnostics_currentserver":
                 [
-                    lambda _: diagnostics_tree.click_path(
-                        "CFME Region: Region %d [%d]" % server_region_pair(),
+                    lambda ctx_db: diagnostics_tree.click_path(
+                        "CFME Region: Region %d [%d]" % (
+                            get_server_ctx(ctx_db)['region'],
+                            get_server_ctx(ctx_db)['region']
+                        ),
                         "Zone: Default Zone",
-                        "Server: %s [%d] (current)" % (server_name(), server_id())
+                        "Server: %s [%d] (current)" % (
+                            get_server_ctx(ctx_db)['server_name'],
+                            get_server_ctx(ctx_db)['server_id']
+                        )
                     ),
                     {
                         "cfg_diagnostics_server_summary":
@@ -251,8 +270,11 @@ nav.add_branch("configuration",
                 ],
                 "cfg_diagnostics_defaultzone":
                 [
-                    lambda _: diagnostics_tree.click_path(
-                        "CFME Region: Region %d [%d]" % server_region_pair(),
+                    lambda ctx_db: diagnostics_tree.click_path(
+                        "CFME Region: Region %d [%d]" % (
+                            get_server_ctx(ctx_db)['region'],
+                            get_server_ctx(ctx_db)['region']
+                        ),
                         "Zone: Default Zone"
                     ),
                     {
@@ -274,8 +296,11 @@ nav.add_branch("configuration",
                 ],
                 "cfg_diagnostics_region":
                 [
-                    lambda _: diagnostics_tree.click_path(
-                        "CFME Region: Region %d [%d]" % server_region_pair()
+                    lambda ctx_db: diagnostics_tree.click_path(
+                        "CFME Region: Region %d [%d]" % (
+                            get_server_ctx(ctx_db)['region'],
+                            get_server_ctx(ctx_db)['region']
+                        )
                     ),
                     {
                         "cfg_diagnostics_region_zones":
