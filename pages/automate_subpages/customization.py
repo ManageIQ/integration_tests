@@ -52,6 +52,7 @@ class Customization(Base):
         '''Click on Configuration , add new service dialog'''
         self.accordion.current_content\
             .find_node_by_name("All Dialogs").click()
+        time.sleep(5)
         self.get_element(*self._configuration_button_locator).click()
         self.get_element(*self._add_dialog_button_locator).click()
         return Customization(self.testsetup)
@@ -67,6 +68,7 @@ class Customization(Base):
         self.get_element(*self._del_dialog_button_locator).click()
         self.handle_popup()
         self._wait_for_results_refresh()
+        time.sleep(3)
         return Customization(self.testsetup)
 
     def edit_service_dialog(self, dialog_name):
