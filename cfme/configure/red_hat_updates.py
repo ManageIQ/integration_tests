@@ -130,7 +130,7 @@ def update_registration(service,
     sel.force_navigate("cfg_settings_region_red_hat_updates")
     sel.click(update_buttons.edit_registration)
     details = dict(
-        service=(sel.VALUE, service_value),
+        service=sel.ByValue(service_value),
         url=url,
         username=username,
         password=password,

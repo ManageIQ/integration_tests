@@ -368,5 +368,12 @@ def set_yaml_config(config_name, data_dict, hostname=None):
     # Run it
     _ssh_client.run_rails_command(dest_ruby)
 
+
+@contextmanager
+def database_on_server(hostname, **kwargs):
+    db_obj = Db(hostname=hostname, **kwargs)
+    yield db_obj
+
+
 #: :py:class:`Db` instance configured with default settings from conf yamls
 cfmedb = Db()
