@@ -525,11 +525,11 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             force_navigate(page_name, _tries, *args, **kwargs)
         else:
             # There was still an alert when we tried again, shoot the browser in the head
-            logger.debug('Unxpected alert, recycling browser' % _tries)
+            logger.debug('Unxpected alert, recycling browser')
             recycle = True
     except (ErrorInResponseException, InvalidSwitchToTargetException):
         # Unable to switch to the browser at all, need to recycle
-        logger.info('Invalid browser state, recycling browser' % _tries)
+        logger.info('Invalid browser state, recycling browser')
         recycle = True
     except exceptions.CannotContinueWithNavigation as e:
         # The some of the navigation steps cannot succeed
