@@ -58,7 +58,7 @@ def setup_pxe_server(db, provisioning_setup_data):
 
 def setup_pxe_menu(db, provisioning_setup_data, server_last_id):
     ''' Add PXE Menu'''
-    pxe_menu = db['pxe_menu']
+    pxe_menu = db['pxe_menus']
     doc = requests.get(provisioning_setup_data['pxe_menu_file'], verify=False)
     content = StringIO.StringIO(doc.content).read()
     new_pxe_menu = pxe_menu(
