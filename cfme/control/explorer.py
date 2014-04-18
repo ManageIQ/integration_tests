@@ -22,12 +22,12 @@ import cfme.web_ui.toolbar as tb
 
 
 events_table = Table(
-    table_locator="//div[@id='event_list_div']/fieldset/table[@class='style3']"
+    table_locator="//div[@id='event_list_div']/table[@class='style3']"
 )
 EVENT_NAME_CELL = 1
 
 events_policies_table = Table(
-    table_locator="//div[@id='event_info_div']/fieldset/table[@class='style3']"
+    table_locator="//div[@id='event_info_div']/table[@class='style3']"
 )
 
 events_in_policy_table = Table(
@@ -35,12 +35,12 @@ events_in_policy_table = Table(
 )
 
 condition_folders_table = Table(
-    table_locator="//div[@id='condition_folders_div']/fieldset/table[@class='style3']"
+    table_locator="//div[@id='condition_folders_div']/table[@class='style3']"
 )
 CONDITION_FOLDERS_CELL = 1
 
 condition_list_table = Table(
-    table_locator="//div[@id='condition_list_div']/fieldset/table[@class='style3']"
+    table_locator="//div[@id='condition_list_div']/table[@class='style3']"
 )
 CONDITION_LIST_CELL = 1
 
@@ -53,11 +53,11 @@ alerts_table = Table(
 )
 
 alert_profiles_main_table = Table(
-    table_locator="//div[@id='alert_profile_folders_div']/fieldset/table[@class='style3']"
+    table_locator="//div[@id='alert_profile_folders_div']/table[@class='style3']"
 )
 
 alert_profiles_list_table = Table(
-    table_locator="//div[@id='alert_profile_list_div']/fieldset/table[@class='style3']"
+    table_locator="//div[@id='alert_profile_list_div']/table[@class='style3']"
 )
 ALERT_PROFILES_CELL = 1
 
@@ -66,12 +66,12 @@ visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
                    "/ul[@class='dynatree-container']")
 
 policies_main_table = Table(
-    table_locator="//div[@id='main_div']/fieldset/table[@class='style3']"
+    table_locator="//div[@id='main_div']/table[@class='style3']"
 )
 POLICIES_MAIN_CELL = 1
 
 policy_profiles_table = Table(
-    table_locator="//div[@id='main_div']/fieldset/table[@class='style3']"
+    table_locator="//div[@id='main_div']/table[@class='style3']"
 )
 POLICY_PROFILES_CELL = 1
 
@@ -1470,7 +1470,15 @@ class Action(Updateable):
         "Tag":
         Form(
             fields=[
-                ("tag", Tree("//div[@id='action_tags_treebox']/div/table", fill_click=True)),
+                (
+                    "tag",
+                    Tree(
+                        "//div[@id='action_tags_treebox']/div/table"    # Old builds
+                        "|"
+                        "//div[@id='action_tags_treebox']/ul",          # New builds
+                        fill_click=True
+                    )
+                ),
             ]
         ),
 
@@ -1734,86 +1742,112 @@ class BaseAlertProfile(Updateable):
         "The Enterprise": Form(fields=[]),
         "Selected Clusters": Form(
             fields=[
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Selected Folders": Form(
             fields=[
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Selected Hosts": Form(
             fields=[
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Selected Infrastructure Providers": Form(
             fields=[
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Selected Resource Pools": Form(
             fields=[
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Selected Hosts": Form(
             fields=[
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Tagged Clusters": Form(
             fields=[
                 ("category", Select("//select[@id='chosen_cat']")),
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Tagged Hosts": Form(
             fields=[
                 ("category", Select("//select[@id='chosen_cat']")),
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Tagged Clusters": Form(
             fields=[
                 ("category", Select("//select[@id='chosen_cat']")),
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Tagged Infrastructure Providers": Form(
             fields=[
                 ("category", Select("//select[@id='chosen_cat']")),
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Tagged Clusters": Form(
             fields=[
                 ("category", Select("//select[@id='chosen_cat']")),
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Tagged Resource Pools": Form(
             fields=[
                 ("category", Select("//select[@id='chosen_cat']")),
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
 
         "Tagged VMs and Instances": Form(
             fields=[
                 ("category", Select("//select[@id='chosen_cat']")),
-                ("selections", Tree("//div[@id='obj_treebox']/div/table", fill_click=True))
+                ("selections",
+                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
+                        fill_click=True))
             ]
         ),
     }
