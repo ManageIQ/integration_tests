@@ -92,7 +92,7 @@ records_table = Table("//div[@id='records_div']/table[@class='style3']")
 def get_ip_address():
     """Returns an IP address of the appliance
     """
-    return urlparse(sel.base_url()).netloc
+    return urlparse(sel.current_url()).netloc
 
 
 def server_region():

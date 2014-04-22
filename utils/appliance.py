@@ -25,7 +25,6 @@ class Appliance(object):
     """
 
     _default_name = 'EVM'
-    _internal_db = 'INTERNAL'
 
     def __init__(self, provider_name, vm_name):
         """Initializes a deployed appliance VM
@@ -165,11 +164,13 @@ class Appliance(object):
             with appliance.db_session() as db:
                 db.do_stuff(TM)
         """
-        return self.db.session
+        return self.db.transaction
 
     def enable_internal_db(self):
         """Enables internal database
         """
+        self.db_address = self.address
+        del(self.db)
         script = scripts_path.join('enable_internal_db.py')
         args = [str(script), self.address]
         with open(os.devnull, 'w') as f_devnull:
@@ -248,7 +249,7 @@ class Appliance(object):
 
     @property
     def is_db_internal(self):
-        if self.db_address == Appliance._internal_db:
+        if self.db_address == self.address:
             return True
         return False
 
