@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=W0621
 import pytest
-from unittestzero import Assert
-from utils.wait import wait_for, TimedOutError
 import time
+from utils.wait import wait_for, TimedOutError
 
 pytestmark = [
     pytest.mark.nondestructive,
@@ -26,7 +25,7 @@ def test_simple_wait():
                       fail_condition=0,
                       delay=.05)
     print "Function output %s in time %s " % (ec, tc)
-    Assert.less(tc, 1, "Should take less than 1 seconds")
+    assert tc < 1, "Should take less than 1 seconds"
 
 
 def test_lambda_wait():
@@ -35,14 +34,10 @@ def test_lambda_wait():
                       [incman],
                       delay=.05)
     print "Function output %s in time %s " % (ec, tc)
-    Assert.less(tc, 2, "Should take less than 2 seconds")
+    assert tc < 2, "Should take less than 2 seconds"
 
 
 def test_lambda_long_wait():
     incman = Incrementor()
-    Assert.raises(TimedOutError,
-                  wait_for,
-                  lambda self: self.i_sleep_a_lot() > 10,
-                  [incman],
-                  num_sec=1,
-                  message="waiting for sleepy head")
+    with pytest.raises(TimedOutError):
+        wait_for(lambda self: self.i_sleep_a_lot() > 10, [incman], num_sec=1, message="this fails")
