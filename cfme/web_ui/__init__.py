@@ -1208,16 +1208,17 @@ class Tree(object):
         self._detect()
 
         parent = None
-
         path = list(path)
         node = None
-        while path:
+        for i, item in enumerate(path):
             try:
-                node_name = path.pop(0)
-                node = self.node_root_element(node_name, parent)
-            except sel_exceptions.NoSuchElementException:
-                raise exceptions.CandidateNotFound("%s: could not be found in the tree." %
-                                                   node_name)
+                node = self.node_root_element(item, parent)
+            except sel_exceptions.NoSuchElementException as e:
+                raise exceptions.CandidateNotFound(
+                    {'message': "%s: could not be found in the tree." % item,
+                     'path': path,
+                     'index': i,
+                     'cause': e})
 
             self._expand(node)
             parent = node
@@ -1236,7 +1237,14 @@ class Tree(object):
         # expand all but the last item
         leaf = self.expand_path(*path[:-1]) or sel.element(self.locator)
         if leaf:
-            sel.click(self.node_element(path[-1], leaf))
+            try:
+                sel.click(self.node_element(path[-1], leaf))
+            except sel_exceptions.NoSuchElementException as e:
+                raise exceptions.CandidateNotFound(
+                    {'message': "%s: could not be found in the tree." % path[-1],
+                     'path': path,
+                     'index': len(path) - 1,
+                     'cause': e})
         return leaf
 
     def _select_or_deselect_node(self, *path, **kwargs):

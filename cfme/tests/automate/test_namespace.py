@@ -44,8 +44,8 @@ def test_add_delete_namespace_nested(namespace):
     namespace.create()
     nested_ns = Namespace(name="Nested", parent=namespace)
     nested_ns.create()
-    nested_ns.delete()
-    assert not namespace.exists()
+    namespace.delete()
+    assert not nested_ns.exists()
 
 
 def test_duplicate_namespace_disallowed(namespace):
