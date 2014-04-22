@@ -1,11 +1,4 @@
-'''
-Created on Mar 5, 2013
-
-@author: bcrochet
-'''
-
-# -*- coding: utf-8 -*-
-
+from cfme.fixtures import pytest_selenium as sel
 from pages.base import Base
 from pages.configuration_subpages.access_control import AccessControl
 from pages.configuration_subpages.settings import Settings
@@ -13,7 +6,6 @@ from pages.configuration_subpages.diagnostics import Diagnostics
 from pages.configuration_subpages.tasks_tabs import Tasks
 from pages.regions.list import ListRegion, ListItem
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.action_chains import ActionChains
 
 
 class Configuration(Base):
@@ -55,16 +47,19 @@ class Configuration(Base):
 
         def click_on_access_control(self):
             self.accordion.accordion_by_name('Access Control').click()
+            sel.handle_alert(wait=1.0, squash=True)
             self._wait_for_results_refresh()
             return AccessControl(self.testsetup)
 
         def click_on_settings(self):
             self.accordion.accordion_by_name('Settings').click()
+            sel.handle_alert(wait=1.0, squash=True)
             self._wait_for_results_refresh()
             return Settings(self.testsetup)
 
         def click_on_diagnostics(self):
             self.accordion.accordion_by_name('Diagnostics').click()
+            sel.handle_alert(wait=1.0, squash=True)
             self._wait_for_results_refresh()
             return Diagnostics(self.testsetup)
 

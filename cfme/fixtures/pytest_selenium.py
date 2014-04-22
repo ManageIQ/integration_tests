@@ -180,8 +180,7 @@ def handle_alert(cancel=False, wait=30.0, squash=False):
     # throws timeout exception if not found
     try:
         if wait:
-            wait = WebDriverWait(browser(), 30.0)
-            wait.until(expected_conditions.alert_is_present())
+            WebDriverWait(browser(), wait).until(expected_conditions.alert_is_present())
         popup = browser().switch_to_alert()
         answer = 'cancel' if cancel else 'ok'
         logger.info('Handling popup "%s", clicking %s' % (popup.text, answer))
