@@ -12,6 +12,7 @@ from utils.update import Updateable
 
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
+message = (By.CSS_SELECTOR, "div#flash_msg_div")
 
 label_form = Form(
     fields=
@@ -57,7 +58,8 @@ class ServiceDialog(Updateable):
         submit=False, cancel=False,
         tab_label=None, tab_desc=None,
         box_label=None, box_desc=None,
-        ele_label=None, ele_name=None, ele_desc=None, choose_type=None, default_text_box=None):
+        ele_label=None, ele_name=None,
+        ele_desc=None, choose_type=None, default_text_box=None):
         self.label = label
         self.description = description
         self.submit = submit
@@ -78,19 +80,24 @@ class ServiceDialog(Updateable):
                           'description_text': self.description,
                           'submit_button': self.submit,
                           'cancel_button': self.cancel})
-        plus_btn("Add a New Tab to this Dialog")
-        sel.wait_for_element(tab_form.tab_label)
-        fill(tab_form, {'tab_label': self.tab_label,
+        print self.tab_label
+        if(self.tab_label is not None):
+            plus_btn("Add a New Tab to this Dialog")
+            sel.wait_for_element(tab_form.tab_label)
+            fill(tab_form, {'tab_label': self.tab_label,
                         'tab_desc': self.tab_desc})
-        plus_btn("Add a New Box to this Tab")
-        sel.wait_for_element(box_form.box_label)
-        fill(box_form, {'box_label': self.box_label,
+        if(self.box_label is not None):
+            plus_btn("Add a New Box to this Tab")
+            sel.wait_for_element(box_form.box_label)
+            fill(box_form, {'box_label': self.box_label,
                         'box_desc': self.box_desc})
-        plus_btn("Add a New Element to this Box")
-        sel.wait_for_element(element_form.ele_label)
-        fill(element_form, {'ele_label': self.ele_label,
+        if(self.ele_label is not None):
+            plus_btn("Add a New Element to this Box")
+            sel.wait_for_element(element_form.ele_label)
+            fill(element_form, {'ele_label': self.ele_label,
                             'ele_name': self.ele_name,
                             'ele_desc': self.ele_desc,
                             'choose_type': self.choose_type,
-                            'default_text_box': self.default_text_box},
-             action=element_form.add_button)
+                            'default_text_box': self.default_text_box})
+        sel.click(element_form.add_button)
+        sel.wait_for_element(message)
