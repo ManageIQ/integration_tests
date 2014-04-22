@@ -123,6 +123,7 @@ class Provider(Updateable):
         details: a details record (see VMwareDetails, RHEVMDetails inner class).
         credentials (Credential): see Credential inner class.
         key: The CFME key of the provider in the yaml.
+        candu: C&U credentials if this is a RHEVMDetails class.
 
     Usage:
 
@@ -138,6 +139,7 @@ class Provider(Updateable):
         self.credentials = credentials
         self.key = key
         self.zone = zone
+        self.candu = None
 
     class Credential(cfme.Credential, Updateable):
         """Provider credentials
@@ -170,6 +172,7 @@ class Provider(Updateable):
         sel.force_navigate('infrastructure_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
+        fill(credential_form, self.candu, validate=validate_credentials)
         self._submit(cancel, add_page.add_submit)
 
     def update(self, updates, cancel=False, validate_credentials=False):
@@ -185,6 +188,7 @@ class Provider(Updateable):
         sel.force_navigate('infrastructure_provider_edit', context={'provider': self})
         fill(properties_form, self._form_mapping(**updates))
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
+        fill(credential_form, updates.get('candu', None), validate=validate_credentials)
         self._submit(cancel, edit_page.save_button)
 
     def delete(self, cancel=True):
@@ -422,7 +426,7 @@ class VMwareProvider(Provider):
 
 class RHEVMProvider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, start_ip=None, end_ip=None):
+                 ip_address=None, api_port=None, start_ip=None, end_ip=None, candu=None):
         super(RHEVMProvider, self).__init__(name=name, credentials=credentials,
                                             zone=zone, key=key)
 
@@ -431,6 +435,7 @@ class RHEVMProvider(Provider):
         self.api_port = api_port
         self.start_ip = start_ip
         self.end_ip = end_ip
+        self.candu = candu
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -488,11 +493,17 @@ def get_from_config(provider_config_name):
                               start_ip=prov_config['discovery_range']['start'],
                               end_ip=prov_config['discovery_range']['end'])
     else:
+        if prov_config.get('candu_credentials', None):
+            candu_credentials = get_credentials_from_config(prov_config['candu_credentials'])
+            candu_credentials.candu = True
+        else:
+            candu_credentials = None
         return RHEVMProvider(name=prov_config['name'],
                              hostname=prov_config['hostname'],
                              ip_address=prov_config['ipaddress'],
                              api_port='',
                              credentials=credentials,
+                             candu=candu_credentials,
                              zone=prov_config['server_zone'],
                              key=provider_config_name,
                              start_ip=prov_config['discovery_range']['start'],
