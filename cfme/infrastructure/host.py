@@ -249,6 +249,16 @@ class Host(Updateable):
             return False
 
     @property
+    def has_valid_credentials(self):
+        """ Check if host has valid credentials saved
+
+        Returns: ``True`` if credentials are saved and valid; ``False`` otherwise
+        """
+        sel.force_navigate('infrastructure_hosts')
+        quad = Quadicon(self.name, 'host')
+        return quad.creds == 'checkmark'
+
+    @property
     def _all_available_policy_profiles(self):
         pp_rows_locator = "//table/tbody/tr/td[@class='standartTreeImage']"\
             "/img[contains(@src, 'policy_profile')]/../../td[@class='standartTreeRow']"
