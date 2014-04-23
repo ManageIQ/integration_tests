@@ -5,7 +5,7 @@ from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
-from cfme.web_ui import Form, Tree, fill, Select, ScriptBox
+from cfme.web_ui import Form, Tree, fill, Select, ScriptBox, DHTMLSelect, Region
 import cfme.exceptions as exceptions
 from utils.update import Updateable
 import utils.error as error
@@ -78,7 +78,11 @@ nav.add_branch(
                   'automate_explorer_instance_new': lambda _: cfg_btn('Add a New Instance'),
                   'automate_explorer_instance_table_select':
                   lambda ctx: table_select(ctx['table_item'].name)
-              }]
+              }],
+             'automate_explorer_schema': [lambda _: select_tab("Schema"),
+             {
+                 'automate_explorer_schema_edit': lambda _: cfg_btn("Edit selected Schema")
+             }]
          }]
     })
 
@@ -135,13 +139,6 @@ class Namespace(TreeNode, Updateable):
         self.name = name
         self.description = description
         self.parent = parent
-
-    # @property
-    # def parent(self):
-    #     if not self._path:
-    #         return Namespace(name="Datastore", path=[])
-    #     else:
-    #         return Namespace(name=self._path[-1], path=self._path[:-1])
 
     def create(self, cancel=False):
         sel.force_navigate('automate_explorer_namespace_new', context={'tree_item': self.parent})
@@ -234,9 +231,105 @@ class Class(TreeNode, Updateable):
 
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_delete", context={'tree_item': self.parent,
-                                                       'table_item': self})
+                                                                'table_item': self})
         sel.handle_alert(cancel)
         return flash.assert_no_errors()
+
+    class SchemaField(Updateable):
+        def __init__(self, name=None, type_=None, data_type=None, default_value=None,
+                     display_name=None, description=None, sub=None, collect=None, message=None,
+                     on_entry=None, on_exit=None, on_error=None, max_retries=None, max_time=None):
+            self.name = name
+            self.type_ = type_
+            self.data_type = data_type
+            self.default_value = default_value
+            self.display_name = display_name
+            self.description = description
+            self.sub = sub
+            self.collect = collect
+            self.message = message
+            self.on_entry = on_entry
+            self.on_exit = on_exit
+            self.on_error = on_error
+            self.max_retries = max_retries
+            self.max_time = max_time
+
+        def get_form(self, blank=False):
+            '''Gets a form for a field that already exists (by its name). Or if
+               blank=True, get the form for a new field.  Must be on
+               the correct page before calling this.
+
+            '''
+            idx = ""
+            if blank:
+                row_id = ""  # for new entries, id attribute has no trailing '_x'
+            else:
+                idx = sel.get_attribute("//input[starts-with(@id, 'fields_name') and @value='%s']" %
+                                    self.name, 'id').split("_")[2]
+                row_id = "_" + idx
+
+            def loc(fmt):
+                if blank:
+                    plural = ""
+                else:
+                    plural = "s"
+                return fmt % (plural, row_id)
+
+            def remove(loc):
+                '''return a callable that clicks but still allows popup dismissal'''
+                return lambda _: sel.click(loc, wait_ajax=False)
+
+            return Form(
+                fields=
+                [('name_text', loc("//input[@id='field%s_name%s']")),
+                 ('type_select', DHTMLSelect(loc("//div[@id='field%s_aetype_id%s']"))),
+                 ('data_type_select',
+                  DHTMLSelect(loc("//div[@id='field%s_datatype_id%s']"))),
+                 ('default_value_text', loc("//input[@id='field%s_default_value%s']")),
+                 ('display_name_text', loc("//input[@id='field%s_display_name%s']")),
+                 ('description_text', loc("//input[@id='field%s_description%s']")),
+                 ('sub_cb', loc("//input[@id='field%s_substitution%s']")),
+                 ('collect_text', loc("//input[@id='field%s_collect%s']")),
+                 ('message_text', loc("//input[@id='field%s_message%s']")),
+                 ('on_entry_text', loc("//input[@id='field%s_on_entry%s']")),
+                 ('on_exit_text', loc("//input[@id='field%s_on_exit%s']")),
+                 ('max_retries_text', loc("//input[@id='field%s_max_retries%s']")),
+                 ('max_time_text', loc("//input[@id='field%s_max_time%s']")),
+                 ('add_entry_button', "//img[@alt='Add this entry']"),
+                 ('remove_entry_button',
+                  remove("//a[contains(@title, 'delete this') and contains(@href, 'arr_id=%s')]"
+                         % idx))])
+
+    schema_edit_page = Region(
+        locators=dict({'add_field_btn': "//img[@alt='Equal-green']"}.items() +
+                      submit_and_cancel_buttons))
+
+    def edit_schema(self, add_fields=None, remove_fields=None):
+        sel.force_navigate("automate_explorer_schema_edit", context={'tree_item': self})
+        for remove_field in remove_fields or []:
+            f = remove_field.get_form()
+            fill(f, {}, action=f.remove_entry_button)
+            sel.handle_alert()
+
+        for add_field in add_fields or []:
+            sel.click(self.schema_edit_page.add_field_btn)
+            f = add_field.get_form(blank=True)
+            fill(f, {'name_text': add_field.name,
+                     'type_select': add_field.type_,
+                     'data_type_select': add_field.data_type,
+                     'default_value_text': add_field.default_value,
+                     'description_text': add_field.description,
+                     'sub_cb': add_field.sub,
+                     'collect_text': add_field.collect,
+                     'message_text': add_field.message,
+                     'on_entry_text': add_field.on_entry,
+                     'on_exit_text': add_field.on_exit,
+                     'max_retries_text': add_field.max_retries,
+                     'max_time_text': add_field.max_time},
+                 action=f.add_entry_button)
+
+        sel.click(self.schema_edit_page.save_btn)
+        flash.assert_success_message('Schema for Automate Class "%s" was saved' % self.name)
 
 
 class Method(TreeNode, Updateable):

@@ -39,6 +39,15 @@ def test_class_crud(a_class):
     assert not a_class.exists()
 
 
+def test_schema_crud(a_class):
+    a_class.create()
+    f1 = Class.SchemaField(name='foo')
+    f2 = Class.SchemaField(name='bar')
+    f3 = Class.SchemaField(name='baz')
+    a_class.edit_schema(add_fields=(f1, f2))
+    a_class.edit_schema(remove_fields=(f1,), add_fields=(f3,))
+
+
 def test_add_class_inherited(a_class):
     subclass = Class(name=generate_random_string(8),
                      namespace=a_class.namespace,

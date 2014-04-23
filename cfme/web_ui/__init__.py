@@ -36,7 +36,7 @@ import re
 import types
 from datetime import date
 from selenium.webdriver.common.action_chains import ActionChains
-from collections import Sequence, Mapping
+from collections import Sequence, Mapping, Callable
 from selenium.common import exceptions as sel_exceptions
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.select import Select as SeleniumSelect
@@ -1593,6 +1593,9 @@ class Select(SeleniumSelect, object):
 
     def observer_wait(self):
         sel.detect_observed_field(self._loc)
+
+    def __repr__(self):
+        return "<%s.Select loc='%s'>" % (__name__, self._loc)
 
 
 @fill.method((Select, object))
