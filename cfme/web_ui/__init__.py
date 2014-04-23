@@ -859,6 +859,12 @@ def _sd_fill_checkboxtable(table, cells):
     table.select_rows(cells)
 
 
+@fill.method((Callable, object))
+def fill_callable(f, val):
+    '''Fill in a Callable by just calling it with the value, allow for arbitrary actions'''
+    f(val)
+
+
 class Calendar(object):
     """A CFME calendar form field
 
@@ -987,7 +993,7 @@ def _fill_form_list(form, values, action=None):
 
     if action:
         logger.debug(' Invoking end of form action')
-        sel.click(sel.element(action))
+        fill(action, True)  # re-dispatch with truthy value
     logger.debug('Finished filling in form')
 
 
