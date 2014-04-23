@@ -155,17 +155,6 @@ class Appliance(object):
         """
         return browser_session(base_url='https://' + self.address)
 
-    def db_session(self):
-        """Creates db session connected to db this appliance is connected to
-
-        Returns: Creates db session connected to db this appliance is connected to.
-
-        Usage:
-            with appliance.db_session() as db:
-                db.do_stuff(TM)
-        """
-        return self.db.transaction
-
     def enable_internal_db(self):
         """Enables internal database
         """
@@ -207,10 +196,9 @@ class Appliance(object):
             Database must be up and running and evm service must be (re)started afterwards
             for the name change to take effect.
         """
-        with self.db_session():
-            vmdb_config = db.get_yaml_config('vmdb', self.db)
-            vmdb_config['server']['name'] = new_name
-            db.set_yaml_config('vmdb', vmdb_config, self.address)
+        vmdb_config = db.get_yaml_config('vmdb', self.db)
+        vmdb_config['server']['name'] = new_name
+        db.set_yaml_config('vmdb', vmdb_config, self.address)
         self.name = new_name
 
     def restart_evm_service(self):
