@@ -185,8 +185,10 @@ if __name__ == "__main__":
             if kwargs:
                 kwargs.update({'image_url':dir_files[module]})
 
-                if cfme_data['template_upload']['name'] == 'auto':
-                    kwargs.update({'template_name':template_name(dir_files[module])})
+                name_strategy = cfme_data['template_upload']['name']
+                if name_strategy is not None:
+                    if name_strategy == 'auto':
+                        kwargs.update({'template_name':template_name(dir_files[module])})
 
                 print "---Start of %s: %s---" % (module, provider)
 
