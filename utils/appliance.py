@@ -3,8 +3,10 @@ import subprocess
 
 import requests
 
-from utils import async, conf, db, lazycache
+from time import sleep
+from utils import conf, db, lazycache
 from utils.browser import browser_session
+from utils.log import logger
 from utils.path import scripts_path
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
@@ -222,7 +224,8 @@ class Appliance(object):
             running: Specifies if we wait for web UI to start or stop (default ``True``)
                      ``True`` == start, ``False`` == stop
         """
-        wait_for(func=lambda: self.is_web_ui_running,
+        wait_for(func=lambda unsure: self.is_web_ui_running(unsure),
+                 func_args=[not running],
                  message='appliance.is_web_ui_running',
                  delay=10,
                  fail_condition=not running,
@@ -249,16 +252,35 @@ class Appliance(object):
     def is_running(self):
         return self._provider.is_vm_running(self._vm_name)
 
-    @property
-    def is_web_ui_running(self):
-        try:
-            resp = requests.get("https://" + self.address, verify=False, timeout=20)
-        except (requests.Timeout, requests.ConnectionError):
-            return False
+    def is_web_ui_running(self, unsure=False):
+        """Triple checks if web UI is up and running
 
-        if resp.status_code == 200 and 'CloudForms' in resp.content:
+        Args:
+            unsure: Variable to return when not sure if web UI is running or not
+                    (default ``False``)
+
+        Note:
+            Waits/sleeps for 3 seconds inbetween checks.
+        """
+        num_of_tries = 3
+        was_running_count = 0
+        for try_num in range(num_of_tries):
+            try:
+                resp = requests.get("https://" + self.address, verify=False, timeout=15)
+                if resp.status_code == 200 and 'CloudForms' in resp.content:
+                    was_running_count += 1
+            except (requests.Timeout, requests.ConnectionError):
+                # wasn't running
+                pass
+            if try_num < (num_of_tries - 1):
+                sleep(3)
+
+        if was_running_count == 0:
+            return False
+        elif was_running_count == num_of_tries:
             return True
-        return False
+        else:
+            return unsure
 
 
 class ApplianceSet(object):
@@ -371,41 +393,25 @@ def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
     secondary_data = appliance_set_data.get('secondary_appliances') or []
     all_appliances_data = [primary_data] + secondary_data
 
-    # --- Provisioning stage
-    # Provisioning runs asynchronously, out of order; results are returned in order (crucial)
-    prov_args = []
-    for appliance_data in all_appliances_data:
-        prov_args.append((appliance_data['version'], vm_name_prefix))
-
+    logger.info('Provisioning appliances')
+    provisioned_appliances = []
     try:
-        # This can raise very cryptic exceptions
-        with async.ResultsPool() as res_pool:
-            res_pool.map_async(_provision_appliance_wrapped, prov_args)
+        for appliance_data in all_appliances_data:
+            app = provision_appliance(appliance_data['version'], vm_name_prefix)
+            provisioned_appliances.append(app)
     except:
         raise ApplianceException(
             'Failed to provision appliance set - error in provisioning stage\n'
-            'Check cfme_data yaml for errors in template names and provider setup')
-
-    provisioned_appliances = res_pool.results[0].get()
-    # ---
-
-    # --- Configuration stage
+            'Check cfme_data yaml for errors in template names and provider setup'
+        )
     appliance_set = ApplianceSet(provisioned_appliances[0], provisioned_appliances[1:])
+    logger.info('Done - provisioning appliances')
+
+    logger.info('Configuring appliances')
     appliance_set.primary.configure(name_to_set=primary_data['name'])
     for i, appliance in enumerate(appliance_set.secondary):
         appliance.configure(db_address=appliance_set.primary.address,
                             name_to_set=secondary_data[i]['name'])
-    # ---
+    logger.info('Done - configuring appliances')
 
     return appliance_set
-
-
-def _provision_appliance_wrapped(args):
-    """A wrapper to use for async provisioning
-
-    Needed, because map_async only accepts a single iterable.
-
-    Note:
-        Must be defined in top level.
-    """
-    return provision_appliance(*args)

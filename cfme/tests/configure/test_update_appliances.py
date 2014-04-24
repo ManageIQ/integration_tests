@@ -8,7 +8,6 @@
 from cfme.configure.configuration import set_server_role
 from cfme.configure import red_hat_updates
 from cfme.web_ui import flash
-from time import sleep
 from utils import conf
 from utils.appliance import provision_appliance_set
 from utils.log import logger
@@ -322,10 +321,6 @@ def run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update):
             appliance_set.primary.wait_for_web_ui(timeout=120, running=False)
             logger.info('Done')
 
-            # schrodinger's web ui on cfme appliance sometimes appears both running and stopped
-            # when polled twice in a row without wait inbetween
-            sleep(3)
-
             logger.info('Waiting for web UI to start')
             appliance_set.primary.wait_for_web_ui(timeout=600)
             logger.info('Done')
@@ -377,8 +372,6 @@ def run_platform_updates(appliance_set, appliances_to_update):
                 # else, we will have to wait for it to come up again
                 logger.info("Done - web UI stopped")
                 logger.info("Waiting for web UI to start")
-                # ctrl+F schrodinger
-                sleep(3)
                 appliance_set.primary.wait_for_web_ui(timeout=600)
                 logger.info("Done")
 
