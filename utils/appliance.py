@@ -67,6 +67,10 @@ class Appliance(object):
         # slightly crappy: anything that changes self.db_address should also del(self.db)
         return db.Db(self.db_address)
 
+    @lazycache
+    def version(self):
+        return self.ssh_client().get_version()
+
     def configure(self,
                   db_address=None,
                   name_to_set=None,
