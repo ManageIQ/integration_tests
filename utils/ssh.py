@@ -69,6 +69,9 @@ class SSHClient(paramiko.SSHClient):
     def get_file(self, remote_file, local_path=''):
         return scp_getter(self, remote_file, local_path)
 
+    def get_version(self):
+        return version_getter(self)
+
 
 def command_runner(client, command, stream_output=False):
     template = '%s\n'
@@ -110,6 +113,12 @@ def rails_runner(client, command, stream_output=False):
 def rake_runner(client, command, stream_output=False):
     template = 'cd /var/www/miq/vmdb; rake %s'
     return command_runner(client, template % command, stream_output)
+
+
+def version_getter(client):
+    command = 'cd /var/www/miq/vmdb; cat /var/www/miq/vmdb/VERSION'
+    x, version = command_runner(client, command, stream_output=False)
+    return version.strip()
 
 
 def scp_putter(client, local_file, remote_file):
