@@ -332,6 +332,7 @@ def run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update):
             # Primary will not be updated but we still need to wait for secondaries the full time
             version_check_wait_sec = 720
 
+    with appliance_set.primary.browser_session():
         logger.info('Waiting for appliances to update (checking versions)')
         wait_for(red_hat_updates.versions_match,
                  func_args=version_match_args,
@@ -379,6 +380,7 @@ def run_platform_updates(appliance_set, appliances_to_update):
             red_hat_updates.check_updates(*appliances_to_update)
             red_hat_updates.refresh()
 
+    with appliance_set.primary.browser_session():
         logger.info("Waiting for platform update statuses to change")
         wait_for(red_hat_updates.platform_updates_available,
                  func_args=appliances_to_update,
