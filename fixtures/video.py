@@ -1,10 +1,14 @@
-"""
-logging:
-   video:
-       enabled: True
-       dir: video
-       display: ":99"
-       quality: 10
+""" Provides video options
+
+Yaml example:
+    .. code-block:: yaml
+
+        logging:
+           video:
+               enabled: True
+               dir: video
+               display: ":99"
+               quality: 10
 """
 
 import os

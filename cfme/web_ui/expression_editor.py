@@ -333,25 +333,29 @@ def run_commands(command_list, clear_expression=True):
     """ Run commands from the command list.
 
     Command list syntax:
-    [
-        "function1",                                                # no args
-        "function2",                                                # dtto
-        {"fill_fields": {"field1": "value", "field2": "value"}},    # Passes kwargs
-        {"do_other_things": [1,2,3]}                                # Passes args
-    ]
+        .. code-block:: python
+
+            [
+                "function1",                                                # no args
+                "function2",                                                # dtto
+                {"fill_fields": {"field1": "value", "field2": "value"}},    # Passes kwargs
+                {"do_other_things": [1,2,3]}                                # Passes args
+            ]
 
     In YAML:
-    - function1
-    - function2
-    -
-        fill_fields:
-            field1: value
-            field2: value
-    -
-        do_other_things:
-            - 1
-            - 2
-            - 3
+        .. code-block:: yaml
+
+            - function1
+            - function2
+            -
+                fill_fields:
+                    field1: value
+                    field2: value
+            -
+                do_other_things:
+                    - 1
+                    - 2
+                    - 3
 
     Args:
         command_list: :py:class:`list` object of the commands

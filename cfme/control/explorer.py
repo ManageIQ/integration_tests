@@ -484,14 +484,13 @@ class BaseCondition(Updateable):
     They differ just with the navigation prefix, so that is the self.PREFIX which gets changed.
 
     Usage:
-
-        >>> cond = HostCondition("mycond",         # or VMCondition
-        ...     expression="fill_count(Host.VMs, >, 50)",
-        ...     scope="fill_count(Host.Files, >, 150)")
-        >>> cond.create()
-        >>> with update(cond):
-        ...     cond.notes = "Important!"
-        >>> cond.delete()
+        >> cond = HostCondition("mycond",         # or VMCondition
+        ..     expression="fill_count(Host.VMs, >, 50)",
+        ..     scope="fill_count(Host.Files, >, 150)")
+        >> cond.create()
+        >> with update(cond):
+        ..     cond.notes = "Important!"
+        >> cond.delete()
 
     Args:
         description: Name of the condition.
@@ -1010,15 +1009,17 @@ class Alert(Updateable):
         based_on: Cluster, Datastore, Host, Provider, ...
         evaluate: If specified as :py:class:`str`, it will select 'Expression (Custom)' and compile
             the string into the program which selects the expression. If specified as callable
-            (something that has `.__call__` method inside), then it will also select the custom
+            (something that has ``.__call__`` method inside), then it will also select the custom
             expression and will use the function to fill the expression. If specified as tuple(list)
-            it will use it as follows: `("What to Evaluate selection", dict(values="for form")).
-            If you want to select Nothing, you will therefore pass ("Nothing", {}).
+            it will use it as follows: ``("What to Evaluate selection", dict(values="for form"))``.
+            If you want to select Nothing, you will therefore pass ``("Nothing", {})``.
 
             Other example:
-                ("Hardware Reconfigured",
-                 dict(hw_attribute="Number of CPUs", hw_attribute_operator="Increased")
-                )
+                .. code-block:: python
+
+                    ("Hardware Reconfigured",
+                     dict(hw_attribute="Number of CPUs", hw_attribute_operator="Increased")
+                    )
 
             For all fields, check the `form` class variable.
         driving_event: This Alert's driving event (Hourly Timer, ...).
@@ -1577,13 +1578,13 @@ class PolicyProfile(Updateable):
 
     Example:
 
-        >>> from cfme.control.explorer import PolicyProfile, HostControlPolicy, VMCompliancePolicy
-        >>> profile = PolicyProfile("some_profile",
-        ...     policies=[HostControlPolicy("funny"), VMCompliancePolicy("things")])
-        >>> profile.create()
-        >>> with update(profile):
-        ...     profile.notes = "notes!"
-        >>> profile.delete()
+        >> from cfme.control.explorer import PolicyProfile, HostControlPolicy, VMCompliancePolicy
+        >> profile = PolicyProfile("some_profile",
+        ..     policies=[HostControlPolicy("funny"), VMCompliancePolicy("things")])
+        >> profile.create()
+        >> with update(profile):
+        ..     profile.notes = "notes!"
+        >> profile.delete()
 
     Args:
         description: Name of the Alert Profile.
@@ -1696,14 +1697,14 @@ class BaseAlertProfile(Updateable):
 
     Example:
 
-        >>> from cfme.control.explorer import Alert, VMInstanceAlertProfile
-        >>> p = VMInstanceAlertProfile("aprofile",
-        ...     alerts=[Alert("somealert", timeline_event=True, driving_event="Hourly Timer")])
-        >>> p.create()
-        >>> p.assign_to("The Enterprise")
-        >>> with update(p):
-        ...     p.notes = "Notes!"
-        >>> p.delete()
+        >> from cfme.control.explorer import Alert, VMInstanceAlertProfile
+        >> p = VMInstanceAlertProfile("aprofile",
+        ..     alerts=[Alert("somealert", timeline_event=True, driving_event="Hourly Timer")])
+        >> p.create()
+        >> p.assign_to("The Enterprise")
+        >> with update(p):
+        ..     p.notes = "Notes!"
+        >> p.delete()
 
     Args:
         description: Name of the Alert Profile.
