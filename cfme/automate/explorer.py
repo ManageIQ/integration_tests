@@ -44,8 +44,8 @@ def get_path(o):
 
 
 def tree_item_not_found_is_leaf(e):
-    '''Returns true if the given exception was while navigating a tree and
-       the item in the path that was missing was the last item.'''
+    """Returns true if the given exception was while navigating a tree and
+       the item in the path that was missing was the last item."""
     data = e.args[0]  # the data mapping
     return isinstance(e, exceptions.CandidateNotFound) and data['index'] == len(data['path']) - 1
 
@@ -86,7 +86,7 @@ nav.add_branch(
 class TreeNode(object):
     @property
     def path(self):
-        '''Returns the path to this object as a list starting from the root'''
+        """Returns the path to this object as a list starting from the root"""
         # A node with no name is the root node
         if self.parent:
             return list(self.parent.path) + [self.name]
@@ -115,13 +115,16 @@ class Namespace(TreeNode, Updateable):
 
     @staticmethod
     def make_path(*names):
-        '''Make a set of nested Namespace objects with the given path.
-             eg.
-               n = Namespace.make_path("foo", "bar")
-             is equivalent to:
-               n = Namespace(name="bar", parent=Namespace(name="foo"))
-        '''
-        
+        """
+        Make a set of nested Namespace objects with the given path.
+
+        Usage:
+            #eg.
+                n = Namespace.make_path("foo", "bar")
+            #is equivalent to:
+                n = Namespace(name="bar", parent=Namespace(name="foo"))
+        """
+
         if names:
             names = list(names)
             return Namespace(name=names.pop(), parent=Namespace.make_path(*names))
@@ -178,9 +181,9 @@ class Namespace(TreeNode, Updateable):
 
 
 class Class(TreeNode, Updateable):
-    '''Represents a Class in the CFME ui.  `Display Name` is not supported
+    """Represents a Class in the CFME ui.  `Display Name` is not supported
        (it causes the name to be displayed differently in different
-       places in the UI).'''
+       places in the UI)."""
 
     form = Form(fields=[('name_text', "//input[@name='name']"),
                         ('display_name_text', "//input[@name='display_name']"),
@@ -201,7 +204,7 @@ class Class(TreeNode, Updateable):
         return self.namespace
 
     def path_str(self):
-        '''Returns string path to this class, eg ns1/ns2/ThisClass'''
+        """Returns string path to this class, eg ns1/ns2/ThisClass"""
         return "/".join(self.path)
 
     def create(self, cancel=False):
@@ -237,9 +240,9 @@ class Class(TreeNode, Updateable):
 
 
 class Method(TreeNode, Updateable):
-    '''Represents a Method in the CFME ui.  `Display Name` is not
+    """Represents a Method in the CFME ui.  `Display Name` is not
        supported (it causes the name to be displayed differently in
-       different places in the UI). '''
+       different places in the UI). """
 
     form = Form(
         fields=[('name_text', "//input[contains(@name,'method_name')]"),
@@ -286,9 +289,9 @@ class Method(TreeNode, Updateable):
 
 
 class Instance(TreeNode, Updateable):
-    '''Represents a Instance in the CFME ui.  `Display Name` is not
+    """Represents a Instance in the CFME ui.  `Display Name` is not
        supported (it causes the name to be displayed differently in
-       different places in the UI). '''
+       different places in the UI). """
 
     form = Form(
         fields=[('name_text', "//input[contains(@name,'inst_name')]"),
