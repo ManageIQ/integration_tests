@@ -59,8 +59,8 @@ def datafile(request):
 
 
 def pytest_addoption(parser):
-    group = parser.getgroup('cfme', 'cfme')
-    group._addoption('--udf-report', action='store_true', default=False,
+    group = parser.getgroup('cfme')
+    group.addoption('--udf-report', action='store_true', default=False,
         dest='udf_report',
         help='flag to generate an unused data files report')
 

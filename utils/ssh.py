@@ -63,11 +63,11 @@ class SSHClient(paramiko.SSHClient):
     def run_rake_command(self, command):
         return rake_runner(self, command, self._streaming)
 
-    def put_file(self, local_file, remote_file='.'):
-        return scp_putter(self, local_file, remote_file)
+    def put_file(self, local_file, remote_file='.', **kwargs):
+        return scp_putter(self, local_file, remote_file, **kwargs)
 
-    def get_file(self, remote_file, local_path=''):
-        return scp_getter(self, remote_file, local_path)
+    def get_file(self, remote_file, local_path='', **kwargs):
+        return scp_getter(self, remote_file, local_path, **kwargs)
 
     def get_version(self):
         return version_getter(self)
@@ -121,13 +121,13 @@ def version_getter(client):
     return version.strip()
 
 
-def scp_putter(client, local_file, remote_file):
+def scp_putter(client, local_file, remote_file, **kwargs):
     with client as ctx:
         transport = ctx.get_transport()
-        SCPClient(transport).put(local_file, remote_file)
+        SCPClient(transport).put(local_file, remote_file, **kwargs)
 
 
-def scp_getter(client, remote_file, local_path):
+def scp_getter(client, remote_file, local_path, **kwargs):
     with client as ctx:
         transport = ctx.get_transport()
-        SCPClient(transport).get(remote_file, local_path)
+        SCPClient(transport).get(remote_file, local_path, **kwargs)
