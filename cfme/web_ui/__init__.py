@@ -36,7 +36,7 @@ import re
 import types
 from datetime import date
 from selenium.webdriver.common.action_chains import ActionChains
-from collections import Sequence, Mapping
+from collections import Sequence, Mapping, Callable
 from selenium.common import exceptions as sel_exceptions
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.select import Select as SeleniumSelect
@@ -859,6 +859,12 @@ def _sd_fill_checkboxtable(table, cells):
     table.select_rows(cells)
 
 
+@fill.method((Callable, object))
+def fill_callable(f, val):
+    '''Fill in a Callable by just calling it with the value, allow for arbitrary actions'''
+    f(val)
+
+
 class Calendar(object):
     """A CFME calendar form field
 
@@ -987,7 +993,7 @@ def _fill_form_list(form, values, action=None):
 
     if action:
         logger.debug(' Invoking end of form action')
-        sel.click(sel.element(action))
+        fill(action, True)  # re-dispatch with truthy value
     logger.debug('Finished filling in form')
 
 
@@ -1588,6 +1594,9 @@ class Select(SeleniumSelect, object):
     def observer_wait(self):
         sel.detect_observed_field(self._loc)
 
+    def __repr__(self):
+        return "<%s.Select loc='%s'>" % (__name__, self._loc)
+
 
 @fill.method((Select, object))
 def fill_select(slist, val):
@@ -1690,6 +1699,11 @@ class DHTMLSelect(Select):
                 self._log('value', value)
             index = browser().execute_script('return %s.getIndexByValue("%s")' % (name, value))
             self.select_by_index(index, _cascade=True)
+
+
+@sel.select.method((DHTMLSelect, str))
+def select_dhtml(dhtml, s):
+    dhtml.select_by_visible_text(s)
 
 
 class Filter(Form):
