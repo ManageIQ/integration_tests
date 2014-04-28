@@ -326,6 +326,12 @@ class Provider(Updateable):
         else:
             return False
 
+    def load_all_provider_vms(self):
+        """ Loads the list of VMs that are running under the provider. """
+        if not self._on_detail_page():
+            sel.force_navigate('infrastructure_provider', context={'provider': self})
+        sel.click(details_page.infoblock.element("Relationships", "VMs"))
+
     @property
     def _all_available_policy_profiles(self):
         pp_rows_locator = "//table/tbody/tr/td[@class='standartTreeImage']"\

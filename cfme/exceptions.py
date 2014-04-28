@@ -139,3 +139,32 @@ class UnidentifiableTagType(CFMEException):
     :py:meth:`cfme.web_ui.Form.fill_fields`.
     """
     pass
+
+
+class NoVmFound(CFMEException):
+    """
+    Raised if a specific VM cannot be found.
+    """
+    pass
+
+
+class NoOptionAvailable(CFMEException):
+    """
+    Raised if required option is not specified.
+    """
+    pass
+
+
+class ParmRequired(CFMEException):
+    """
+    Raised if a required parameter is not passed to a particular method.
+    """
+    pass
+
+
+class ParmConfusion(CFMEException):
+    """
+    Raised when two exclusive function parameters for a particular method are passed in
+    at the same time.
+    """
+    pass

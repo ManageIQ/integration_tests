@@ -10,6 +10,16 @@ Usage:
 """
 import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
+from cfme.web_ui import Region
+
+# Common locators
+locators = Region(
+    locators={
+        'grid_view': "//div[@title='Grid View']",
+        'list_view': "//div[@title='List View']",
+        'tile_view': "//div[@title='Tile View']"
+    }
+)
 
 
 def root_loc(root):
@@ -116,3 +126,51 @@ def is_greyed(root, sub=None):
         if "dis" in class_att:
             return True
     return False
+
+
+def refresh():
+    """Refreshes page, attempts to use cfme refresh button otherwise falls back to browser refresh.
+    """
+    if sel.is_displayed("//div[@title='Reload current display']"):
+        sel.click("//div[@title='Reload current display']")
+    else:
+        sel.refresh()
+
+
+def is_vms_grid_view():
+    """Returns whether grid view is selected or not.
+    """
+    return "pres_dis" in sel.get_attribute(locators.grid_view, "class")
+
+
+def is_vms_list_view():
+    """Returns whether list view is selected or not.
+    """
+    return "pres_dis" in sel.get_attribute(locators.list_view, "class")
+
+
+def is_vms_tile_view():
+    """Returns whether tile view is selected or not.
+    """
+    return "pres_dis" in sel.get_attribute(locators.tile_view, "class")
+
+
+def set_vms_grid_view():
+    """Set the view to grid.
+    """
+    if not is_vms_grid_view():
+        sel.click(locators.grid_view)
+
+
+def set_vms_list_view():
+    """Set the view to list.
+    """
+    if not is_vms_list_view():
+        sel.click(locators.list_view)
+
+
+def set_vms_tile_view():
+    """Set the view to tile.
+    """
+    if not is_vms_tile_view():
+        sel.click(locators.tile_view)
