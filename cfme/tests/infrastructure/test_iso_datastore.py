@@ -3,7 +3,10 @@ import pytest
 from cfme.infrastructure import pxe
 from utils import testgen
 
-pytestmark = [pytest.mark.usefixtures("logged_in")]
+pytestmark = [
+    pytest.mark.usefixtures("logged_in"),
+    pytest.mark.usefixtures('uses_infra_providers')
+]
 
 
 def pytest_generate_tests(metafunc):
@@ -24,6 +27,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
+@pytest.mark.usefixtures('setup_infrastructure_providers')
 def test_iso_datastore_crud(provider_crud, iso_datastore):
     """
     Basic CRUD test for ISO datastores.
