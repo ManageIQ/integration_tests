@@ -87,44 +87,46 @@ policy_events = Table(
 cfg_btn = partial(tb.select, "Configuration")
 
 
-def _alert_profile_branch(ugly, nice):
-    """Shortcut for generating the Alert Profile nav subtree."""
+def _ap_single_branch(ugly, nice):
+    """generates branch for specific Alert Profile"""
     return [
-        lambda _: alert_profiles_main_table.click_cell(ALERT_PROFILES_CELL,
-                                                       "%s Alert Profiles" % nice),
+        lambda ctx: accordion_func(
+            "Alert Profiles", "All Alert Profiles", "%s Alert Profiles" % nice,
+            ctx["alert_profile_name"])(None),
         {
-            "%s_alert_profile" % ugly:
-            [
-                lambda ctx: alert_profiles_list_table
-                .click_cell(ALERT_PROFILES_CELL, ctx["alert_profile_name"]),
-                {
-                    "%s_alert_profile_edit" % ugly:
-                    lambda _: cfg_btn("Edit this Alert Profile"),
+            "%s_alert_profile_edit" % ugly:
+            lambda _: cfg_btn("Edit this Alert Profile"),
 
-                    "%s_alert_profile_assignments" % ugly:
-                    lambda _: cfg_btn("Edit assignments for this Alert Profile")
-                }
-            ],
+            "%s_alert_profile_assignments" % ugly:
+            lambda _: cfg_btn("Edit assignments for this Alert Profile"),
+        }
+    ]
 
+
+def _ap_multi_branch(ugly, nice):
+    """Generates branch for listing and adding the profiles"""
+    return [
+        accordion_func(
+            "Alert Profiles", "All Alert Profiles", "%s Alert Profiles" % nice),
+        {
             "%s_alert_profile_new" % ugly:
             lambda _: cfg_btn("Add a New")
         }
     ]
 
 
-def accordion_func(accordion_title, tree_root_node):
+def accordion_func(accordion_title, *nodes):
     """Function to click on the accordion and then on the root node of the underlying tree.
 
     Automatically handles the "blank page" bug.
 
     Args:
         accordion_title: Text on accordion.
-        tree_root_node: Text on the root node of the tree in accordion.
+        *nodes: Nodes to click through.
     """
     def f(_):
         try:
-            accordion.click(accordion_title)
-            visible_tree.click_path(tree_root_node)
+            accordion.tree(accordion_title, *nodes)
         except NoSuchElementException:
             raise CannotContinueWithNavigation("blank screen bug!")
     return f
@@ -136,260 +138,245 @@ nav.add_branch(
         [
             accordion_func("Policy Profiles", "All Policy Profiles"),
             {
-                "policy_profile":
-                [
-                    lambda ctx: policy_profiles_table.click_cell(POLICY_PROFILES_CELL,
-                                                                 ctx["policy_profile_name"]),
-                    {
-                        "policy_profile_edit": lambda _: cfg_btn("Edit this")
-                    }
-                ],
-
                 "policy_profile_new":
                 lambda _: cfg_btn("Add a New Policy Profile")
             }
         ],
 
-        "control_explorer_policies":
+        "policy_profile":
         [
-            accordion_func("Policies", "All Policies"),
+            lambda ctx: accordion_func(
+                "Policy Profiles", "All Policy Profiles", ctx["policy_profile_name"])(None),
+            {   # None because it normally takes a dummy context and returns a function, therefore()
+                "policy_profile_edit": lambda _: cfg_btn("Edit this")
+            }
+        ],
+
+        "host_compliance_policy":
+        [
+            lambda ctx: accordion_func(
+                "Policies", "All Policies", "Compliance Policies",
+                "Host Compliance Policies", ctx["policy_name"])(None),
             {
-                "control_explorer_compliance_policies":
+                "host_compliance_policy_edit":
+                lambda _: cfg_btn("Edit Basic Info"),
+
+                "host_compliance_policy_events":
+                lambda _: cfg_btn("Event assignments"),
+
+                "host_compliance_policy_conditions":
+                lambda _: cfg_btn("Condition assignments"),
+
+                "host_compliance_policy_condition_new":
+                lambda _: cfg_btn("new Condition"),
+
+                "host_compliance_policy_event":
                 [
-                    lambda _: policies_main_table.click_cell(POLICIES_MAIN_CELL,
-                                                             "Compliance Policies"),
+                    lambda ctx: events_in_policy_table.click_cell(
+                        1, ctx["event_name"]
+                    ),
                     {
-                        "host_compliance_policies":
-                        [
-                            lambda _: policies_main_table.click_cell(POLICIES_MAIN_CELL,
-                                                                     "Host Compliance Policies"),
-                            {
-                                "host_compliance_policy":
-                                [
-                                    lambda ctx: policies_table.click_cell("description",
-                                                                          ctx["policy_name"]),
-                                    {
-                                        "host_compliance_policy_edit":
-                                        lambda _: cfg_btn("Edit Basic Info"),
-
-                                        "host_compliance_policy_events":
-                                        lambda _: cfg_btn("Event assignments"),
-
-                                        "host_compliance_policy_conditions":
-                                        lambda _: cfg_btn("Condition assignments"),
-
-                                        "host_compliance_policy_condition_new":
-                                        lambda _: cfg_btn("new Condition"),
-
-                                        "host_compliance_policy_event":
-                                        [
-                                            lambda ctx: events_in_policy_table.click_cell(
-                                                1, ctx["event_name"]
-                                            ),
-                                            {
-                                                "host_compliance_policy_event_actions":
-                                                lambda _: cfg_btn(
-                                                    "Edit Actions for this Policy Event"
-                                                ),
-                                            }
-                                        ],
-                                    }
-                                ],
-
-                                "host_compliance_policy_new":
-                                lambda _: cfg_btn("Add a New Host Compliance Policy")
-                            }
-                        ],
-
-                        "vm_compliance_policies":
-                        [
-                            lambda _: policies_main_table.click_cell(POLICIES_MAIN_CELL,
-                                                                     "Vm Compliance Policies"),
-                            {
-                                "vm_compliance_policy":
-                                [
-                                    lambda ctx: policies_table.click_cell("description",
-                                                                          ctx["policy_name"]),
-                                    {
-                                        "vm_compliance_policy_edit":
-                                        lambda _: cfg_btn("Edit Basic Info"),
-
-                                        "vm_compliance_policy_events":
-                                        lambda _: cfg_btn("Event assignments"),
-
-                                        "vm_compliance_policy_conditions":
-                                        lambda _: cfg_btn("Condition assignments"),
-
-                                        "vm_compliance_policy_condition_new":
-                                        lambda _: cfg_btn("new Condition"),
-
-                                        "vm_compliance_policy_event":
-                                        [
-                                            lambda ctx: events_in_policy_table.click_cell(
-                                                1, ctx["event_name"]
-                                            ),
-                                            {
-                                                "vm_compliance_policy_event_actions":
-                                                lambda _: cfg_btn(
-                                                    "Edit Actions for this Policy Event"
-                                                ),
-                                            }
-                                        ],
-                                    }
-                                ],
-
-                                "vm_compliance_policy_new":
-                                lambda _: cfg_btn("Add a New Vm Compliance Policy")
-                            }
-                        ],
-                    }
-                ],
-
-                "control_explorer_control_policies":
-                [
-                    lambda _: policies_main_table.click_cell(POLICIES_MAIN_CELL,
-                                                             "Control Policies"),
-                    {
-                        "host_control_policies":
-                        [
-                            lambda _: policies_main_table.click_cell(POLICIES_MAIN_CELL,
-                                                                     "Host Control Policies"),
-                            {
-                                "host_control_policy":
-                                [
-                                    lambda ctx: policies_table.click_cell("description",
-                                                                          ctx["policy_name"]),
-                                    {
-                                        "host_control_policy_edit":
-                                        lambda _: cfg_btn("Edit Basic Info"),
-
-                                        "host_control_policy_events":
-                                        lambda _: cfg_btn("Event assignments"),
-
-                                        "host_control_policy_conditions":
-                                        lambda _: cfg_btn("Condition assignments"),
-
-                                        "host_control_policy_condition_new":
-                                        lambda _: cfg_btn("new Condition"),
-
-                                        "host_control_policy_event":
-                                        [
-                                            lambda ctx: events_in_policy_table.click_cell(
-                                                1, ctx["event_name"]
-                                            ),
-                                            {
-                                                "host_control_policy_event_actions":
-                                                lambda _: cfg_btn(
-                                                    "Edit Actions for this Policy Event"
-                                                ),
-                                            }
-                                        ],
-                                    }
-                                ],
-
-                                "host_control_policy_new":
-                                lambda _: cfg_btn("Add a New Host Control Policy")
-                            }
-                        ],
-
-                        "vm_control_policies":
-                        [
-                            lambda _: policies_main_table.click_cell(POLICIES_MAIN_CELL,
-                                                                     "Vm Control Policies"),
-                            {
-                                "vm_control_policy":
-                                [
-                                    lambda ctx: policies_table.click_cell("description",
-                                                                          ctx["policy_name"]),
-                                    {
-                                        "vm_control_policy_edit":
-                                        lambda _: cfg_btn("Edit Basic Info"),
-
-                                        "vm_control_policy_events":
-                                        lambda _: cfg_btn("Event assignments"),
-
-                                        "vm_control_policy_conditions":
-                                        lambda _: cfg_btn("Condition assignments"),
-
-                                        "vm_control_policy_condition_new":
-                                        lambda _: cfg_btn("new Condition"),
-
-                                        "vm_control_policy_event":
-                                        [
-                                            lambda ctx: events_in_policy_table.click_cell(
-                                                1, ctx["event_name"]
-                                            ),
-                                            {
-                                                "vm_control_policy_event_actions":
-                                                lambda _: cfg_btn(
-                                                    "Edit Actions for this Policy Event"
-                                                ),
-                                            }
-                                        ],
-                                    }
-                                ],
-
-                                "vm_control_policy_new":
-                                lambda _: cfg_btn("Add a New Vm Control Policy")
-                            }
-                        ],
+                        "host_compliance_policy_event_actions":
+                        lambda _: cfg_btn(
+                            "Edit Actions for this Policy Event"
+                        ),
                     }
                 ],
             }
         ],
 
-        "control_explorer_events":
+        "vm_compliance_policy":
         [
-            accordion_func("Events", "All Events"),
+            lambda ctx: accordion_func(
+                "Policies", "All Policies", "Compliance Policies",
+                "Vm Compliance Policies", ctx["policy_name"])(None),
             {
-                "control_explorer_event":
-                lambda ctx: events_table.click_cell(EVENT_NAME_CELL, ctx["event_name"]),
-            },
-        ],
+                "vm_compliance_policy_edit":
+                lambda _: cfg_btn("Edit Basic Info"),
 
-        "control_explorer_conditions":
-        [
-            accordion_func("Conditions", "All Conditions"),
-            {
-                "host_conditions":
+                "vm_compliance_policy_events":
+                lambda _: cfg_btn("Event assignments"),
+
+                "vm_compliance_policy_conditions":
+                lambda _: cfg_btn("Condition assignments"),
+
+                "vm_compliance_policy_condition_new":
+                lambda _: cfg_btn("new Condition"),
+
+                "vm_compliance_policy_event":
                 [
-                    lambda _: condition_folders_table.click_cell(CONDITION_FOLDERS_CELL,
-                                                                 "Host Conditions"),
+                    lambda ctx: events_in_policy_table.click_cell(
+                        1, ctx["event_name"]
+                    ),
                     {
-                        "host_condition":
-                        [
-                            lambda ctx: condition_list_table.click_cell(CONDITION_LIST_CELL,
-                                                                        ctx["condition_name"]),
-                            {
-                                "host_condition_edit":
-                                lambda _: cfg_btn("Edit this Condition")
-                            }
-                        ],
-
-                        "host_condition_new":
-                        lambda _: cfg_btn("Add a New Host Condition")
+                        "vm_compliance_policy_event_actions":
+                        lambda _: cfg_btn(
+                            "Edit Actions for this Policy Event"
+                        ),
                     }
                 ],
+            }
+        ],
 
-                "vm_conditions":
+        "host_compliance_policies":
+        [
+            accordion_func(
+                "Policies", "All Policies", "Compliance Policies", "Host Compliance Policies"
+            ),
+            {
+                "host_compliance_policy_new":
+                lambda _: cfg_btn("Add a New Host Compliance Policy")
+            }
+        ],
+
+        "vm_compliance_policies":
+        [
+            accordion_func(
+                "Policies", "All Policies", "Compliance Policies", "Vm Compliance Policies"
+            ),
+            {
+                "vm_compliance_policy_new":
+                lambda _: cfg_btn("Add a New Vm Compliance Policy")
+            }
+        ],
+
+        "host_control_policy":
+        [
+            lambda ctx: accordion_func(
+                "Policies", "All Policies", "Control Policies",
+                "Host Control Policies", ctx["policy_name"])(None),
+            {
+                "host_control_policy_edit":
+                lambda _: cfg_btn("Edit Basic Info"),
+
+                "host_control_policy_events":
+                lambda _: cfg_btn("Event assignments"),
+
+                "host_control_policy_conditions":
+                lambda _: cfg_btn("Condition assignments"),
+
+                "host_control_policy_condition_new":
+                lambda _: cfg_btn("new Condition"),
+
+                "host_control_policy_event":
                 [
-                    lambda _: condition_folders_table.click_cell(CONDITION_FOLDERS_CELL,
-                                                                 "VM and Instance Conditions"),
+                    lambda ctx: events_in_policy_table.click_cell(
+                        1, ctx["event_name"]
+                    ),
                     {
-                        "vm_condition":
-                        [
-                            lambda ctx: condition_list_table.click_cell(CONDITION_LIST_CELL,
-                                                                        ctx["condition_name"]),
-                            {
-                                "vm_condition_edit":
-                                lambda _: cfg_btn("Edit this Condition")
-                            }
-                        ],
-
-                        "vm_condition_new":
-                        lambda _: cfg_btn("Add a New Vm Condition")
+                        "host_control_policy_event_actions":
+                        lambda _: cfg_btn(
+                            "Edit Actions for this Policy Event"
+                        ),
                     }
-                ]
+                ],
+            }
+        ],
+
+        "vm_control_policy":
+        [
+            lambda ctx: accordion_func(
+                "Policies", "All Policies", "Control Policies",
+                "Vm Control Policies", ctx["policy_name"])(None),
+            {
+                "vm_control_policy_edit":
+                lambda _: cfg_btn("Edit Basic Info"),
+
+                "vm_control_policy_events":
+                lambda _: cfg_btn("Event assignments"),
+
+                "vm_control_policy_conditions":
+                lambda _: cfg_btn("Condition assignments"),
+
+                "vm_control_policy_condition_new":
+                lambda _: cfg_btn("new Condition"),
+
+                "vm_control_policy_event":
+                [
+                    lambda ctx: events_in_policy_table.click_cell(
+                        1, ctx["event_name"]
+                    ),
+                    {
+                        "vm_control_policy_event_actions":
+                        lambda _: cfg_btn(
+                            "Edit Actions for this Policy Event"
+                        ),
+                    }
+                ],
+            }
+        ],
+
+        "host_control_policies":
+        [
+            accordion_func(
+                "Policies", "All Policies", "Control Policies", "Host Control Policies"
+            ),
+            {
+                "host_control_policy_new":
+                lambda _: cfg_btn("Add a New Host Control Policy")
+            }
+        ],
+
+        "vm_control_policies":
+        [
+            accordion_func(
+                "Policies", "All Policies", "Control Policies", "Vm Control Policies"
+            ),
+            {
+                "vm_control_policy_new":
+                lambda _: cfg_btn("Add a New Vm Control Policy")
+            }
+        ],
+
+        "control_explorer_events": accordion_func("Events", "All Events"),
+
+        "control_explorer_event":
+        lambda ctx: accordion_func("Events", "All Events", ctx["event_name"])(None),
+
+        "host_condition":
+        [
+            lambda ctx: accordion_func(
+                "Conditions", "All Conditions", "Host Conditions", ctx["condition_name"])(None),
+            {
+                "host_condition_edit":
+                lambda _: cfg_btn("Edit this Condition")
+            }
+        ],
+
+        "vm_condition":
+        [
+            lambda ctx: accordion_func(
+                "Conditions", "All Conditions", "VM Conditions", ctx["condition_name"])(None),
+            {
+                "vm_condition_edit":
+                lambda _: cfg_btn("Edit this Condition")
+            }
+        ],
+
+        "host_conditions":
+        [
+            accordion_func("Conditions", "All Conditions", "Host Conditions"),
+            {
+                "host_condition_new":
+                lambda _: cfg_btn("Add a New Host Condition")
+            }
+        ],
+
+        "vm_conditions":
+        [
+            accordion_func("Conditions", "All Conditions", "VM Conditions"),
+            {
+                "vm_condition_new":
+                lambda _: cfg_btn("Add a New Vm Condition")
+            }
+        ],
+
+        "control_explorer_action":
+        [
+            lambda ctx: accordion_func("Actions", "All Actions", ctx["action_name"])(None),
+            {
+                "control_explorer_action_edit":
+                lambda _: cfg_btn("Edit this Action")
             }
         ],
 
@@ -397,61 +384,46 @@ nav.add_branch(
         [
             accordion_func("Actions", "All Actions"),
             {
-                "control_explorer_action":
-                [
-                    lambda ctx: actions_table.click_cell("description", ctx["action_name"]),
-                    {
-                        "control_explorer_action_edit":
-                        lambda _: cfg_btn("Edit this Action")
-                    }
-                ],
-
                 "control_explorer_action_new":
                 lambda _: cfg_btn("Add a new Action"),
             },
         ],
 
-        "control_explorer_alert_profiles":
+        "control_explorer_alert":
         [
-            accordion_func("Alert Profiles", "All Alert Profiles"),
+            lambda ctx: accordion_func("Alerts", "All Alerts", ctx["alert_name"])(None),
             {
-                "cluster_alert_profiles":
-                _alert_profile_branch("cluster", "Cluster"),
-
-                "datastore_alert_profiles":
-                _alert_profile_branch("datastore", "Datastore"),
-
-                "host_alert_profiles":
-                _alert_profile_branch("host", "Host"),
-
-                "provider_alert_profiles":
-                _alert_profile_branch("provider", "Provider"),
-
-                "server_alert_profiles":
-                _alert_profile_branch("server", "Server"),
-
-                "vm_instance_alert_profiles":
-                _alert_profile_branch("vm_instance", "VM and Instance"),
-            }
+                "control_explorer_alert_edit":
+                lambda ctx: cfg_btn("Edit this Alert")
+            },
         ],
 
         "control_explorer_alerts":
         [
             accordion_func("Alerts", "All Alerts"),
             {
-                "control_explorer_alert":
-                [
-                    lambda ctx: alerts_table.click_cell("description", ctx["alert_name"]),
-                    {
-                        "control_explorer_alert_edit":
-                        lambda ctx: cfg_btn("Edit this Alert")
-                    },
-                ],
-
                 "control_explorer_alert_new":
                 lambda _: cfg_btn("Add a New Alert"),
             }
         ],
+
+        "vm_instance_alert_profile": _ap_single_branch("vm_instance", "VM and Instance"),
+        "vm_instance_alert_profiles": _ap_multi_branch("vm_instance", "VM and Instance"),
+
+        "server_alert_profile": _ap_single_branch("server", "Server"),
+        "server_alert_profiles": _ap_multi_branch("server", "Server"),
+
+        "provider_alert_profile": _ap_single_branch("provider", "Provider"),
+        "provider_alert_profiles": _ap_multi_branch("provider", "Provider"),
+
+        "host_alert_profile": _ap_single_branch("host", "Host"),
+        "host_alert_profiles": _ap_multi_branch("host", "Host"),
+
+        "datastore_alert_profile": _ap_single_branch("datastore", "Datastore"),
+        "datastore_alert_profiles": _ap_multi_branch("datastore", "Datastore"),
+
+        "cluster_alert_profile": _ap_single_branch("cluster", "Cluster"),
+        "cluster_alert_profiles": _ap_multi_branch("cluster", "Cluster"),
     }
 )
 

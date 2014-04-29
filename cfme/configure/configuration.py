@@ -6,7 +6,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
-from cfme.web_ui import Calendar, Form, Region, Select, Table, Tree, accordion, fill, flash
+from cfme.web_ui import Calendar, Form, Region, Select, Table, accordion, fill, flash
 from cfme.web_ui.menu import nav
 from utils.db_queries import get_server_id, get_server_name, get_server_region
 from utils.timeutil import parsetime
@@ -14,19 +14,10 @@ from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
 
 
-def make_tree_locator(acc_name, root_name):
-    """ Make a specific locator for the tree in accordions.
-
-    Args:
-        acc_name: Accordion title
-        root_name: Title of the root node of the tree in the accordion.
-    """
-    return '//span[.="%s"]/../..//table//tr[contains(@title, "%s")]/../..' % (acc_name, root_name)
-
-settings_tree = Tree(make_tree_locator("Settings", "Region"))
-access_tree = Tree(make_tree_locator("Access Control", "Region"))
-diagnostics_tree = Tree(make_tree_locator("Diagnostics", "Region"))
-database_tree = Tree(make_tree_locator("Database", "VMDB"))
+access_tree = partial(accordion.tree, "Access Control")
+database_tree = partial(accordion.tree, "Database")
+settings_tree = partial(accordion.tree, "Settings")
+diagnostics_tree = partial(accordion.tree, "Diagnostics")
 
 server_roles = Form(
     fields=[
@@ -113,194 +104,182 @@ def server_id():
 
 nav.add_branch("configuration",
     {
-        "configuration_settings":
+        "cfg_settings_region":
         [
-            lambda _: accordion.click("Settings"),
+            lambda _: settings_tree(
+                "Region: Region %d [%d]" % server_region_pair()
+            ),
             {
-                "cfg_settings_region":
-                [
-                    lambda _: settings_tree.click_path(
-                        "Region: Region %d [%d]" % server_region_pair()
-                    ),
-                    {
-                        "cfg_settings_region_details":
-                        lambda _: tabs.select_tab("Details"),
+                "cfg_settings_region_details":
+                lambda _: tabs.select_tab("Details"),
 
-                        "cfg_settings_region_cu_collection":
-                        lambda _: tabs.select_tab("C & U Collection"),
+                "cfg_settings_region_cu_collection":
+                lambda _: tabs.select_tab("C & U Collection"),
 
-                        "cfg_settings_region_my_company_categories":
-                        lambda _: tabs.select_tab("My Company Categories"),
+                "cfg_settings_region_my_company_categories":
+                lambda _: tabs.select_tab("My Company Categories"),
 
-                        "cfg_settings_region_my_company_tags":
-                        lambda _: tabs.select_tab("My Company Tags"),
+                "cfg_settings_region_my_company_tags":
+                lambda _: tabs.select_tab("My Company Tags"),
 
-                        "cfg_settings_region_import_tags":
-                        lambda _: tabs.select_tab("Import Tags"),
+                "cfg_settings_region_import_tags":
+                lambda _: tabs.select_tab("Import Tags"),
 
-                        "cfg_settings_region_import":
-                        lambda _: tabs.select_tab("Import"),
+                "cfg_settings_region_import":
+                lambda _: tabs.select_tab("Import"),
 
-                        "cfg_settings_region_red_hat_updates":
-                        lambda _: tabs.select_tab("Red Hat Updates")
-                    }
-                ],
-
-                "cfg_settings_defaultzone":
-                lambda _: settings_tree.click_path(
-                    "Region: Region %d [%d]" % server_region_pair(),
-                    "Zones",
-                    "Zone: Default Zone"
-                ),
-
-                "cfg_settings_schedules":
-                [
-                    lambda _: settings_tree.click_path(
-                        "Region: Region %d [%d]" % server_region_pair(),
-                        "Schedules"),
-                    {
-                        "cfg_settings_schedule":
-                        [
-                            lambda ctx: records_table.click_cell("name", ctx["schedule_name"]),
-                            {
-                                "cfg_settings_schedule_edit":
-                                lambda _: tb.select("Configuration", "Edit this Schedule")
-                            }
-                        ]
-                    }
-                ],
-
-                "cfg_settings_currentserver":
-                [
-                    lambda _: settings_tree.click_path(
-                        "Region: Region %d [%d]" % server_region_pair(),
-                        "Zones",
-                        "Zone: Default Zone",
-                        "Server: %s [%d] (current)" % (server_name(), server_id())
-                    ),
-                    {
-                        "cfg_settings_currentserver_server":
-                        lambda _: tabs.select_tab("Server"),
-
-                        "cfg_settings_currentserver_auth":
-                        lambda _: tabs.select_tab("Authentication"),
-
-                        "cfg_settings_currentserver_workers":
-                        lambda _: tabs.select_tab("Workers"),
-
-                        "cfg_settings_currentserver_database":
-                        lambda _: tabs.select_tab("Database"),
-
-                        "cfg_settings_currentserver_logos":
-                        lambda _: tabs.select_tab("Custom Logos"),
-
-                        "cfg_settings_currentserver_maintenance":
-                        lambda _: tabs.select_tab("Maintenance"),
-
-                        "cfg_settings_currentserver_smartproxy":
-                        lambda _: tabs.select_tab("SmartProxy"),
-
-                        "cfg_settings_currentserver_advanced":
-                        lambda _: tabs.select_tab("Advanced")
-                    }
-                ],
+                "cfg_settings_region_red_hat_updates":
+                lambda _: tabs.select_tab("Red Hat Updates")
             }
         ],
-        "configuration_diagnostics":
+
+        "cfg_settings_defaultzone":
+        lambda _: settings_tree(
+            "Region: Region %d [%d]" % server_region_pair(),
+            "Zones",
+            "Zone: Default Zone"
+        ),
+
+        "cfg_settings_schedules":
         [
-            lambda _: accordion.click("Diagnostics"),
+            lambda _: settings_tree(
+                "Region: Region %d [%d]" % server_region_pair(),
+                "Schedules"),
             {
-                "cfg_diagnostics_currentserver":
+                "cfg_settings_schedule":
                 [
-                    lambda _: diagnostics_tree.click_path(
-                        "CFME Region: Region %d [%d]" % server_region_pair(),
-                        "Zone: Default Zone",
-                        "Server: %s [%d] (current)" % (server_name(), server_id())
-                    ),
+                    lambda ctx: records_table.click_cell("name", ctx["schedule_name"]),
                     {
-                        "cfg_diagnostics_server_summary":
-                        lambda _: tabs.select_tab("Summary"),
+                        "cfg_settings_schedule_edit":
+                        lambda _: tb.select("Configuration", "Edit this Schedule")
+                    }
+                ]
+            }
+        ],
 
-                        "cfg_diagnostics_server_workers":
-                        lambda _: tabs.select_tab("Workers"),
+        "cfg_settings_currentserver":
+        [
+            lambda _: settings_tree(
+                "Region: Region %d [%d]" % server_region_pair(),
+                "Zones",
+                "Zone: Default Zone",
+                "Server: %s [%d] (current)" % (server_name(), server_id())
+            ),
+            {
+                "cfg_settings_currentserver_server":
+                lambda _: tabs.select_tab("Server"),
 
-                        "cfg_diagnostics_server_collect":
-                        [
-                            lambda _: tabs.select_tab("Collect Logs"),
-                            {
-                                "cfg_diagnostics_server_collect_settings":
-                                lambda _: tb.select("Edit")
-                            }
-                        ],
+                "cfg_settings_currentserver_auth":
+                lambda _: tabs.select_tab("Authentication"),
 
-                        "cfg_diagnostics_server_cfmelog":
-                        lambda _: tabs.select_tab("CFME Log"),
+                "cfg_settings_currentserver_workers":
+                lambda _: tabs.select_tab("Workers"),
 
-                        "cfg_diagnostics_server_auditlog":
-                        lambda _: tabs.select_tab("Audit Log"),
+                "cfg_settings_currentserver_database":
+                lambda _: tabs.select_tab("Database"),
 
-                        "cfg_diagnostics_server_productionlog":
-                        lambda _: tabs.select_tab("Production Log"),
+                "cfg_settings_currentserver_logos":
+                lambda _: tabs.select_tab("Custom Logos"),
 
-                        "cfg_diagnostics_server_utilization":
-                        lambda _: tabs.select_tab("Utilization"),
+                "cfg_settings_currentserver_maintenance":
+                lambda _: tabs.select_tab("Maintenance"),
 
-                        "cfg_diagnostics_server_timelines":
-                        lambda _: tabs.select_tab("Timelines"),
+                "cfg_settings_currentserver_smartproxy":
+                lambda _: tabs.select_tab("SmartProxy"),
+
+                "cfg_settings_currentserver_advanced":
+                lambda _: tabs.select_tab("Advanced")
+            }
+        ],
+        "cfg_diagnostics_currentserver":
+        [
+            lambda _: diagnostics_tree(
+                "CFME Region: Region %d [%d]" % server_region_pair(),
+                "Zone: Default Zone",
+                "Server: %s [%d] (current)" % (server_name(), server_id())
+            ),
+            {
+                "cfg_diagnostics_server_summary":
+                lambda _: tabs.select_tab("Summary"),
+
+                "cfg_diagnostics_server_workers":
+                lambda _: tabs.select_tab("Workers"),
+
+                "cfg_diagnostics_server_collect":
+                [
+                    lambda _: tabs.select_tab("Collect Logs"),
+                    {
+                        "cfg_diagnostics_server_collect_settings":
+                        lambda _: tb.select("Edit")
                     }
                 ],
-                "cfg_diagnostics_defaultzone":
-                [
-                    lambda _: diagnostics_tree.click_path(
-                        "CFME Region: Region %d [%d]" % server_region_pair(),
-                        "Zone: Default Zone"
-                    ),
-                    {
-                        "cfg_diagnostics_zone_roles_by_servers":
-                        lambda _: tabs.select_tab("Roles by Servers"),
 
-                        "cfg_diagnostics_zone_servers_by_roles":
-                        lambda _: tabs.select_tab("Servers by Roles"),
+                "cfg_diagnostics_server_cfmelog":
+                lambda _: tabs.select_tab("CFME Log"),
 
-                        "cfg_diagnostics_zone_servers":
-                        lambda _: tabs.select_tab("Servers"),
+                "cfg_diagnostics_server_auditlog":
+                lambda _: tabs.select_tab("Audit Log"),
 
-                        "cfg_diagnostics_zone_collect":
-                        lambda _: tabs.select_tab("Collect Logs"),
+                "cfg_diagnostics_server_productionlog":
+                lambda _: tabs.select_tab("Production Log"),
 
-                        "cfg_diagnostics_zone_gap_collect":
-                        lambda _: tabs.select_tab("C & U Gap Collection"),
-                    }
-                ],
-                "cfg_diagnostics_region":
-                [
-                    lambda _: diagnostics_tree.click_path(
-                        "CFME Region: Region %d [%d]" % server_region_pair()
-                    ),
-                    {
-                        "cfg_diagnostics_region_zones":
-                        lambda _: tabs.select_tab("Zones"),
+                "cfg_diagnostics_server_utilization":
+                lambda _: tabs.select_tab("Utilization"),
 
-                        "cfg_diagnostics_region_roles_by_servers":
-                        lambda _: tabs.select_tab("Roles by Servers"),
+                "cfg_diagnostics_server_timelines":
+                lambda _: tabs.select_tab("Timelines"),
+            }
+        ],
+        "cfg_diagnostics_defaultzone":
+        [
+            lambda _: diagnostics_tree(
+                "CFME Region: Region %d [%d]" % server_region_pair(),
+                "Zone: Default Zone"
+            ),
+            {
+                "cfg_diagnostics_zone_roles_by_servers":
+                lambda _: tabs.select_tab("Roles by Servers"),
 
-                        "cfg_diagnostics_region_servers_by_roles":
-                        lambda _: tabs.select_tab("Servers by Roles"),
+                "cfg_diagnostics_zone_servers_by_roles":
+                lambda _: tabs.select_tab("Servers by Roles"),
 
-                        "cfg_diagnostics_region_servers":
-                        lambda _: tabs.select_tab("Servers"),
+                "cfg_diagnostics_zone_servers":
+                lambda _: tabs.select_tab("Servers"),
 
-                        "cfg_diagnostics_region_replication":
-                        lambda _: tabs.select_tab("Replication"),
+                "cfg_diagnostics_zone_collect":
+                lambda _: tabs.select_tab("Collect Logs"),
 
-                        "cfg_diagnostics_region_database":
-                        lambda _: tabs.select_tab("Database"),
+                "cfg_diagnostics_zone_gap_collect":
+                lambda _: tabs.select_tab("C & U Gap Collection"),
+            }
+        ],
+        "cfg_diagnostics_region":
+        [
+            lambda _: diagnostics_tree(
+                "CFME Region: Region %d [%d]" % server_region_pair()
+            ),
+            {
+                "cfg_diagnostics_region_zones":
+                lambda _: tabs.select_tab("Zones"),
 
-                        "cfg_diagnostics_region_orphaned":
-                        lambda _: tabs.select_tab("Orphaned Data"),
-                    }
-                ],
-            },
+                "cfg_diagnostics_region_roles_by_servers":
+                lambda _: tabs.select_tab("Roles by Servers"),
+
+                "cfg_diagnostics_region_servers_by_roles":
+                lambda _: tabs.select_tab("Servers by Roles"),
+
+                "cfg_diagnostics_region_servers":
+                lambda _: tabs.select_tab("Servers"),
+
+                "cfg_diagnostics_region_replication":
+                lambda _: tabs.select_tab("Replication"),
+
+                "cfg_diagnostics_region_database":
+                lambda _: tabs.select_tab("Database"),
+
+                "cfg_diagnostics_region_orphaned":
+                lambda _: tabs.select_tab("Orphaned Data"),
+            }
         ],
 
         "configuration_access_control": lambda _: accordion.click("Access Control"),
