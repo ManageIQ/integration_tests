@@ -14,6 +14,7 @@ from time import sleep
 from collections import Iterable
 import json
 
+from pkg_resources import parse_version
 from selenium.common.exceptions import (ErrorInResponseException, InvalidSwitchToTargetException,
     NoSuchAttributeException, NoSuchElementException, UnexpectedAlertPresentException)
 from selenium.webdriver.common.action_chains import ActionChains
@@ -25,9 +26,52 @@ from multimethods import singledispatch, multidispatch
 
 import pytest
 from cfme import exceptions
-from utils import conf
+from utils import conf, lazycache
 from utils.browser import browser, ensure_browser_open
 from utils.log import logger
+from utils.ssh import SSHClient
+
+
+class Version(object):
+    """
+    A lazycached object which simply returns the appliance version.
+    """
+    @lazycache
+    def version(self):
+        """ A lazy cached method to return the appliance version. """
+        return SSHClient().get_version()
+
+ver = Version()
+
+
+class VersionLocator(object):
+    """
+    Represents a locator which is in a state of uncertainty of being potentially multiple versions
+    at the same time.  This ambiguity collapses when the locator is accessed by the selenium
+    element call.
+    """
+
+    def __init__(self, version_dict):
+        self.version_dict = version_dict
+
+    @lazycache
+    def _locate(self):
+        """
+        Emulates the locate function that normal web_ui elements have and collapses the ambiguity.
+        """
+        version = parse_version(ver.version)
+        prev = None
+        for ver_test in sorted([(parse_version(key), key) for key in self.version_dict.keys()]):
+            if version >= ver_test[0]:
+                prev = ver_test[1]
+            else:
+                break
+        logger.debug(" Collapsing Singularity Cap'n, returning: {}".format(self.version_dict[prev]))
+        return self.version_dict[prev]
+
+    def locate(self):
+        """ Dirty hack to cache the locator. """
+        return self._locate
 
 
 class ByValue(object):
