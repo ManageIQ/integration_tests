@@ -11,6 +11,7 @@ Usage:
       acc.is_active('Diagnostics')
 """
 import cfme.fixtures.pytest_selenium as sel
+from cfme.web_ui import Tree
 
 DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
 DHX_LABEL = '*[contains(@class, "dhx_acc_item_label") or contains(@data-remote, "true")]'
@@ -59,3 +60,31 @@ def is_active(name):
         return True
     else:
         return False
+
+
+def tree(name, *path):
+    """Get underlying Tree() object. And eventually click path.
+
+    If the accordion is not active, will be clicked.
+    Attention! The object is 'live' so when it's obscured, it won't work!
+
+    Usage:
+        accordion.tree("Something").click_path("level 1", "level 2")
+        accordion.tree("Something", "level 1", "level 2")  # is the same
+
+    Args:
+        *path: If specified, it will directly pass these parameters into click_path of Tree.
+            Otherwise it returns the Tree object.
+    """
+    click(name)
+    tree = Tree(
+        sel.first_from(
+            "//ul[@class='dynatree-container']",
+            "//div[@class='containerTableStyle']/table",
+            root=sel.element(locate(name))
+        )
+    )
+    if path:
+        return tree.click_path(*path)
+    else:
+        return tree
