@@ -6,9 +6,13 @@ from cfme.web_ui import Region
 import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
 
-area = Region(locators= 
-              {'message': "//div[starts-with(@id, 'flash_') and "
-               "not(ancestor::*[contains(@style,'display: none')])]//li"})
+area = Region(locators=
+              {'message': sel.VersionLocator(
+                  {'default': '//div[starts-with(@id, "flash_") and '
+                   'not(ancestor::*[contains(@style,"display: none")])]//li',
+                   '9.9.9.9': '//div[starts-with(@id, "flash_") and '
+                   'not(ancestor::*[contains(@style,"display: none")])]'
+                   '//div[contains(@class,"alert")]'})})
 
 
 class Message(object):
@@ -65,7 +69,7 @@ def is_error(message):
     Args:
         message: The message object.
     """
-    return message.level == 'error'
+    return any([lev in message.level for lev in ['error', 'alert-danger']])
 
 
 def assert_no_errors(messages=None):

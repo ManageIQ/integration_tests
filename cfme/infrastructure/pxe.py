@@ -3,6 +3,7 @@
 
 from functools import partial
 
+from cfme.exceptions import CandidateNotFound
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.accordion as acc
 import cfme.web_ui.flash as flash
@@ -23,7 +24,8 @@ cfg_btn = partial(tb.select, 'Configuration')
 pxe_resetter = "//span[contains(., 'All PXE Servers')]"
 
 pxe_server_table_exist = Table('//div[@id="records_div"]/table/tbody/tr/td')
-pxe_server_tree = Tree('//div[@id="pxe_servers_treebox"]//table')
+pxe_server_tree = sel.VersionLocator({'default': Tree('//div[@id="pxe_servers_treebox"]//table'),
+                                      '9.9.9.9': Tree('//div[@id="pxe_servers_treebox"]//ul')})
 
 pxe_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
 
@@ -62,7 +64,10 @@ pxe_image_type_form = Form(
 
 template_resetter = "//span[contains(., 'All Customization Templates - System Image Types')]"
 
-template_tree = Tree('//div[@id="customization_templates_treebox"]//table')
+template_tree = sel.VersionLocator({
+    'default': Tree('//div[@id="customization_templates_treebox"]//table'),
+    '9.9.9.9': Tree('//div[@id="customization_templates_treebox"]//ul')
+})
 
 template_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
 
@@ -119,7 +124,8 @@ iso_properties_form = Form(
         ('provider', Select('//select[@id="ems_id"]')),
     ])
 
-iso_tree = Tree('//div[@id="iso_datastores_treebox"]//table')
+iso_tree = sel.VersionLocator({'default': Tree('//div[@id="iso_datastores_treebox"]//table'),
+                               '9.9.9.9': Tree('//div[@id="iso_datastores_treebox"]//ul')})
 
 iso_image_type_form = Form(
     fields=[
@@ -150,7 +156,8 @@ def iso_datastore_pg():
 nav.add_branch('infrastructure_pxe',
                {'infrastructure_pxe_servers': [lambda _: pxe_servers_pg(),
                 {'infrastructure_pxe_server_new': lambda _: cfg_btn('Add a New PXE Server'),
-                 'infrastructure_pxe_server': [lambda ctx: pxe_server_tree.click_path(ctx.name),
+                 'infrastructure_pxe_server': [lambda ctx: pxe_server_tree.locate()
+                                               .click_path(ctx.name),
                                                {'infrastructure_pxe_server_edit':
                                                 lambda _: cfg_btn('Edit this PXE Server')}]}],
 
@@ -158,7 +165,7 @@ nav.add_branch('infrastructure_pxe',
                 {'infrastructure_pxe_template_new':
                  lambda _: cfg_btn('Add a New Customization Template'),
                  'infrastructure_pxe_template':
-                 [lambda ctx: template_tree.click_path(ctx.image_type, ctx.name),
+                 [lambda ctx: template_tree.locate().click_path(ctx.image_type, ctx.name),
                   {'infrastructure_pxe_template_edit':
                    lambda _: cfg_btn('Edit this Customization Template')}]}],
 
@@ -174,7 +181,7 @@ nav.add_branch('infrastructure_pxe',
                 {'infrastructure_iso_datastore_new':
                  lambda _: cfg_btn('Add a New ISO Datastore'),
                  'infrastructure_iso_datastore':
-                 lambda ctx: iso_tree.click_path(ctx.provider)}]})
+                 lambda ctx: iso_tree.locate().click_path(ctx.provider)}]})
 
 
 class PXEServer(Updateable):
@@ -253,7 +260,7 @@ class PXEServer(Updateable):
         """
         sel.force_navigate('infrastructure_pxe_servers')
         try:
-            pxe_server_tree.click_path(self.name)
+            pxe_server_tree.locate().click_path(self.name)
             return True
         except NoSuchElementException:
             return False
@@ -311,7 +318,7 @@ class PXEServer(Updateable):
         Function to set the image type of a PXE image
         """
         sel.force_navigate('infrastructure_pxe_servers')
-        pxe_server_tree.click_path(self.name, 'PXE Images', image_name)
+        pxe_server_tree.locate().click_path(self.name, 'PXE Images', image_name)
         cfg_btn('Edit this PXE Image')
         fill(pxe_image_type_form, {'image_type': image_type}, action=pxe_edit_page.save_btn)
 
@@ -373,7 +380,7 @@ class CustomizationTemplate(Updateable):
         """
         sel.force_navigate('infrastructure_pxe_templates')
         try:
-            template_tree.click_path(self.image_type, self.name)
+            template_tree.locate().click_path(self.image_type, self.name)
             return True
         except NoSuchElementException:
             return False
@@ -527,9 +534,9 @@ class ISODatastore(Updateable):
         """
         sel.force_navigate('infrastructure_iso_datastores')
         try:
-            pxe_server_tree.click_path(self.provider)
+            iso_tree.locate().click_path(self.provider)
             return True
-        except NoSuchElementException:
+        except CandidateNotFound:
             return False
 
     def delete(self, cancel=True):
@@ -565,7 +572,7 @@ class ISODatastore(Updateable):
         Function to set the image type of a PXE image
         """
         sel.force_navigate('infrastructure_iso_datastores')
-        pxe_server_tree.click_path(self.provider, 'ISO Images', image_name)
+        iso_tree.locate().click_path(self.provider, 'ISO Images', image_name)
         cfg_btn('Edit this ISO Image')
         fill(iso_image_type_form, {'image_type': image_type}, action=pxe_edit_page.save_btn)
 

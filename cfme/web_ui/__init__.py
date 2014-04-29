@@ -1344,7 +1344,11 @@ class InfoBlock(object):
     """
     def __init__(self, itype):
         if itype == "detail":
-            self._box_locator = '//div[@class="modbox"]/h2[@class="modtitle"][contains(., "%s")]/..'
+            #We have to collapse the locator singularity early here, hence the .locate()
+            self._box_locator = sel.VersionLocator({
+                '9.9.9.9': '//table//th[contains(., "%s")]/../../../..',
+                'default': '//div[@class="modbox"]/h2[@class="modtitle"]'
+                '[contains(., "%s")]/..'}).locate()
             self._pair_locator = 'table/tbody/tr/td[1][@class="label"][.="%s"]/..'
             self._value_locator = 'td[2]'
         elif itype == "form":
