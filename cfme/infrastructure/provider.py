@@ -234,6 +234,12 @@ class Provider(Updateable):
                           delay=10)
         client.disconnect()
 
+    def refresh_provider_relationships(self):
+        """Clicks on Refresh relationships button in provider"""
+        sel.force_navigate('infrastructure_provider', context={"provider": self})
+        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
+        sel.handle_alert(cancel=False)
+
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
         """
