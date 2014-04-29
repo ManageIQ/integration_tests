@@ -41,7 +41,8 @@ provisioning_form = tabstrip.TabStripForm(
             ('provision_type', Select('//select[@id="service__provision_type"]')),
             ('linked_clone', '//input[@id="service__linked_clone"]'),
             ('pxe_server', Select('//select[@id="service__pxe_server_id"]')),
-            ('pxe_image', Table('//div[@id="prov_pxe_img_div"]/table'))
+            ('pxe_image', Table('//div[@id="prov_pxe_img_div"]/table')),
+            ('iso_file', Table('//div[@id="prov_iso_img_div"]/table'))
         ]),
         ('Environment', [
             ('automatic_placement', '//input[@id="environment__placement_auto"]'),
