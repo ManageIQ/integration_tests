@@ -8,7 +8,6 @@ import time
 import boto
 from abc import ABCMeta, abstractmethod
 from boto.ec2 import EC2Connection, get_region
-from functools import partial
 from ovirtsdk.api import API
 from ovirtsdk.xml import params
 from pysphere import VIServer, MORTypes, VITask, VIMor
@@ -1091,8 +1090,8 @@ class EC2System(MgmtSystemAPIBase):
             return True
         except MultipleInstancesError:
             return True
-        except Exception:
-            return True
+        else:
+            return False
 
     def _get_instances_from_reservations(self, reservations):
         """Takes a sequence of reservations and returns their instances"""
