@@ -103,6 +103,7 @@ def make_kwargs_vsphere(cfme_data, provider):
     template = temp_up.get('template', None)
     upload = temp_up.get('upload', None)
     disk = temp_up.get('disk', None)
+    proxy = data['template_upload'].get('proxy', None)
 
     kwargs = {}
     kwargs.update({'provider':provider})
@@ -120,6 +121,8 @@ def make_kwargs_vsphere(cfme_data, provider):
         kwargs.update({'upload':upload})
     if disk:
         kwargs.update({'disk':disk})
+    if proxy:
+        kwargs.update({'proxy':proxy})
 
     return kwargs
 
