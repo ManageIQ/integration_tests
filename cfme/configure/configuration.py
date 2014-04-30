@@ -556,6 +556,12 @@ class SMTPSettings(Updateable):
         ]
     )
 
+    buttons = Region(
+        locators=dict(
+            test="//img[@alt='Send test email']"
+        )
+    )
+
     def __init__(self,
                  host=None,
                  port=None,
@@ -583,6 +589,16 @@ class SMTPSettings(Updateable):
     def update(self):
         sel.force_navigate("cfg_settings_currentserver_server")
         fill(self.smtp_settings, self.details, action=crud_buttons.save_button)
+
+    @classmethod
+    def send_test_email(self, to_address):
+        """ Send a testing e-mail on specified address. Needs configured SMTP.
+
+        Args:
+            to_address: Destination address.
+        """
+        sel.force_navigate("cfg_settings_currentserver_server")
+        fill(self.smtp_settings, dict(to_email=to_address), action=self.buttons.test)
 
 
 class DatabaseAuthSetting(object):

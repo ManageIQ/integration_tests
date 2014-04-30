@@ -16,6 +16,7 @@ class parsetime(_datetime):
     _american_with_utc_format = "%m/%d/%y %H:%M:%S UTC"
     _american_date_only_format = "%m/%d/%y"
     _iso_date_only_format = "%Y-%m-%d"
+    _request_format = "%Y-%m-%d-%H-%M-%S"
 
     @classmethod
     def _parse(self, fmt, time_string):
@@ -90,3 +91,24 @@ class parsetime(_datetime):
         Returns: :py:class`str` object
         """
         return self.strftime(self._iso_date_only_format)
+
+    @classmethod
+    def from_request_format(self, time_string):
+        """ Convert the string representation of the time into parsetime()
+
+        Format here is 'YYYY-MM-DD-HH-MM-SS'. Used for transmitting data over http
+
+        Args:
+            time_string: String with time to parse
+        Returns: :py:class`utils.timeutil.datetime()` object
+        """
+        return self._parse(self._request_format, time_string)
+
+    def to_request_format(self):
+        """ Convert the this object to string representation in http request.
+
+        Format here is 'YYYY-MM-DD-HH-MM-SS'
+
+        Returns: :py:class`str` object
+        """
+        return self.strftime(self._request_format)
