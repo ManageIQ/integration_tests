@@ -1,13 +1,16 @@
-import ui_navigate as nav
-import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Form, Select, fill, Table, tabstrip, Radio
-from utils.update import Updateable
-import cfme.web_ui.accordion as accordion
-import cfme.web_ui.toolbar as tb
 import functools
+
+import ui_navigate as nav
+
+import cfme.fixtures.pytest_selenium as sel
+import cfme.web_ui as web_ui
+import cfme.web_ui.toolbar as tb
 from collections import OrderedDict
+from cfme.web_ui import Form, Select, fill, Table, tabstrip, Radio, accordion
+from utils.update import Updateable
 
 tb_select = functools.partial(tb.select, "Configuration")
+catalog_item_tree = web_ui.Tree('//div[@id="sandt_tree_box"]//table')
 
 template_select_form = Form(
     fields=[
@@ -16,15 +19,6 @@ template_select_form = Form(
         ('cancel_button', '//*[@id="form_buttons"]/li[2]/img')
     ]
 )
-
-
-def catalog_item_in_table(catalog_item):
-    return "//div[@class='objbox']//td[.='%s']" % catalog_item.name
-
-
-def catalog_item_in_tree(catalog_item):
-    return ("//div[@id='sandt_tree_div']//td[@class='standartTreeRow']/span[.='%s']"
-        % catalog_item.name)
 
 
 def _all_catalogitems_add_new(context):
@@ -41,6 +35,7 @@ basic_info_form = Form(
         ('display_checkbox', "//input[@id='display']"),
         ('select_catalog', Select("//select[@id='catalog_id']")),
         ('select_dialog', Select("//select[@id='dialog_id']")),
+        ('edit_button', "//img[@alt='Save Changes']")
     ])
 
 
@@ -57,6 +52,7 @@ request_form = tabstrip.TabStripForm(
             ('vm_name', '//input[@name="service__vm_name"]'),
             ('provision_type', Select('//select[@id="service__provision_type"]')),
             ('linked_clone', '//input[@id="service__linked_clone"]'),
+            ('iso_file', Table('//div[@id="prov_iso_img_div"]/table')),
         ]),
         ('Environment', [
             ('automatic_placement', '//input[@id="environment__placement_auto"]'),
@@ -103,10 +99,9 @@ nav.add_branch(
     'services_catalogs',
     {'catalog_items': [nav.partial(accordion.click, 'Catalog Items'),
                        {'catalog_item_new': _all_catalogitems_add_new,
-                        'catalog_item': [lambda ctx:
-                                         sel.click(catalog_item_in_tree(ctx['catalog_item'])),
-                                         {'catalog_item_edit':
-                                          nav.partial(tb_select, "Edit this Item")}]}]})
+                        'catalog_item': [lambda ctx: catalog_item_tree.click_path(
+                            'All Catalog Items', ctx['catalog'], ctx['catalog_item'].name),
+                            {'catalog_item_edit': nav.partial(tb_select, "Edit this Item")}]}]})
 
 
 class CatalogItem(Updateable):
@@ -140,3 +135,15 @@ class CatalogItem(Updateable):
         sel.click(template)
         request_form.fill(self.provisioning_data)
         sel.click(template_select_form.add_button)
+
+    def update(self, updates):
+        sel.force_navigate('catalog_item_edit',
+            context={'catalog': self.catalog, 'catalog_item': self})
+        fill(basic_info_form, {'name_text': updates.get('name', None),
+                               'description_text': updates.get('description', None)},
+            action=basic_info_form.edit_button)
+
+    def delete(self):
+        sel.force_navigate('catalog_item', context={'catalog': self.catalog, 'catalog_item': self})
+        tb_select("Remove Item from the VMDB", invokes_alert=True)
+        sel.handle_alert()
