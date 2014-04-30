@@ -262,6 +262,8 @@ class PXEServer(Updateable):
         try:
             pxe_server_tree.locate().click_path(self.name)
             return True
+        except CandidateNotFound:
+            return False
         except NoSuchElementException:
             return False
 
@@ -382,6 +384,8 @@ class CustomizationTemplate(Updateable):
         try:
             template_tree.locate().click_path(self.image_type, self.name)
             return True
+        except CandidateNotFound:
+            return False
         except NoSuchElementException:
             return False
 

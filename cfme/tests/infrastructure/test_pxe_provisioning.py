@@ -6,7 +6,7 @@ from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_fro
 from cfme.services import requests
 from cfme.web_ui import flash, fill
 from utils import testgen
-from utils.providers import setup_infrastructure_providers
+from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
@@ -57,12 +57,6 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
-
-
-@pytest.fixture(scope="module")
 def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
     if not pxe_server.exists():
         pxe_server.create()
@@ -74,7 +68,7 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
 @pytest.yield_fixture(scope="function")
 def vm_name(provider_key, provider_mgmt):
     # also tries to delete the VM that gets made with this name
-    vm_name = 'provtest-%s' % generate_random_string()
+    vm_name = 'pxe_provtest-%s' % generate_random_string()
     yield vm_name
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
@@ -85,8 +79,10 @@ def vm_name(provider_key, provider_mgmt):
 
 
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
-def test_pxe_provision_from_template(setup_providers, provider_crud, provider_type,
+def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
                                      provider_mgmt, provisioning, vm_name):
+
+    setup_provider(provider_key)
 
     # generate_tests makes sure these have values
     pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart,\
