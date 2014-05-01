@@ -10,7 +10,6 @@ from pages.page import Page
 from pages.infrastructure import Infrastructure
 from pages.services import Services
 from pages.automate import Automate
-from pages.control import Control
 from pages.configuration import Configuration
 from pages.configuration_subpages.tasks_tabs import Tasks
 from pages.infrastructure_subpages.vms_subpages.virtual_machines import VirtualMachines
@@ -37,7 +36,6 @@ class HeaderMenu(Page):
                   "Services": Services,
                   "Clouds": Services,
                   "Infrastructure": Infrastructure,
-                  "Control": Control,
                   "Automate": Automate,
                   "Optimize": Optimize,
                   "Configure": Configuration}
@@ -126,12 +124,6 @@ class HeaderMenu(Page):
                 #"Repositories":
                 "PXE": Infrastructure.PXE,
                 "Requests": HostProvisionRequests,
-            },
-            "Control": {
-                "Explorer": Control.Explorer,
-                "Simulation": Control.Simulation,
-                "Import / Export": Control.ImportExport,
-                "Log": Control.Log
             },
             "Automate": {
                 "Explorer": Automate.Explorer,
