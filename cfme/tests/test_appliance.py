@@ -93,6 +93,7 @@ def test_cpu_total(ssh_client):
     assert stdout >= 4
 
 
+@pytest.mark.downstream
 @pytest.mark.parametrize(("filename", "given_md5"), [
     ("/etc/pki/product/69.pem", None),
     ("/etc/pki/product/167.pem", None)
