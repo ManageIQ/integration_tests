@@ -11,6 +11,7 @@ Usage:
 import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
 from cfme.web_ui import Region
+from xml.sax.saxutils import quoteattr
 
 # Common locators
 locators = Region(
@@ -30,7 +31,7 @@ def root_loc(root):
     Returns: A locator for the root button.
     """
     return (By.XPATH,
-        "//div[contains(@class, 'dhx_toolbar_btn')][contains(@title, '%s')]" % root)
+            "//div[contains(@class, 'dhx_toolbar_btn')][contains(@title, %s)]" % quoteattr(root))
 
 
 def sub_loc(sub):
@@ -40,7 +41,8 @@ def sub_loc(sub):
         sub: The string name of the button.
     Returns: A locator for the sub button.
     """
-    return (By.XPATH, "//div[contains(@class, 'btn_sel_text')][contains(., '%s')]/../.." % sub)
+    return (By.XPATH,
+            "//div[contains(@class, 'btn_sel_text')][contains(., %s)]/../.." % quoteattr(sub))
 
 
 def select_n_move(el):
