@@ -1090,7 +1090,7 @@ class EC2System(MgmtSystemAPIBase):
             return True
         except MultipleInstancesError:
             return True
-        else:
+        except VMInstanceNotFound:
             return False
 
     def _get_instances_from_reservations(self, reservations):
