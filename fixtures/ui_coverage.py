@@ -1,5 +1,10 @@
 """UI Coverage for a CFME/MIQ Appliance
 
+Usage
+-----
+
+``py.test --ui-coverage``
+
 General Notes
 -------------
 simplecov can merge test results, but doesn't appear to like working in a
