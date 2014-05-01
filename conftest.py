@@ -1,9 +1,9 @@
-'''
+"""
 Top-level conftest.py does a couple of things:
 
 1) Add cfme_pages repo to the sys.path automatically
 2) Load a number of plugins and fixtures automatically
-'''
+"""
 from pkgutil import iter_modules
 
 import cfme.fixtures
