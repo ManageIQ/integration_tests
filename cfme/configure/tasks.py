@@ -8,7 +8,7 @@ Todo: Finish the rest of the things.
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
-from cfme.web_ui import Form, Region, Select, Table, fill, paginator
+from cfme.web_ui import Form, Region, Select, CheckboxTable, fill, paginator
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
@@ -45,7 +45,10 @@ filter_form = Form(
     ]
 )
 
-tasks_table = Table('//div[@id="records_div"]/table[@class="style3"]')
+tasks_table = CheckboxTable(
+    table_locator='//div[@id="records_div"]/table[@class="style3"]',
+    header_checkbox_locator="//div[@id='records_div']//input[@id='masterToggle']"
+)
 
 
 def _filter(
