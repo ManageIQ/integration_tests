@@ -255,11 +255,10 @@ class Class(TreeNode, Updateable):
             self.max_time = max_time
 
         def get_form(self, blank=False):
-            '''Gets a form for a field that already exists (by its name). Or if
+            """Gets a form for a field that already exists (by its name). Or if
                blank=True, get the form for a new field.  Must be on
                the correct page before calling this.
-
-            '''
+            """
             idx = ""
             if blank:
                 row_id = ""  # for new entries, id attribute has no trailing '_x'
@@ -276,7 +275,7 @@ class Class(TreeNode, Updateable):
                 return fmt % (plural, row_id)
 
             def remove(loc):
-                '''return a callable that clicks but still allows popup dismissal'''
+                """Return a callable that clicks but still allows popup dismissal"""
                 return lambda _: sel.click(loc, wait_ajax=False)
 
             return Form(

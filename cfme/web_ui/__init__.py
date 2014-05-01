@@ -861,7 +861,7 @@ def _sd_fill_checkboxtable(table, cells):
 
 @fill.method((Callable, object))
 def fill_callable(f, val):
-    '''Fill in a Callable by just calling it with the value, allow for arbitrary actions'''
+    """Fill in a Callable by just calling it with the value, allow for arbitrary actions"""
     f(val)
 
 
