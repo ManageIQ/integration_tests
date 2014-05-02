@@ -25,6 +25,20 @@ visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
                     "[not(contains(@style, 'display: none'))]/div/div/div"
                     "/ul[@class='dynatree-container']")
 
+manage_policies_tree = Tree(
+    sel.VersionLocator(
+        {
+            "default": "//div[@id='treebox']/div/table",
+            "9.9.9.9": "//div[@id='protect_treebox']/ul"
+        }
+    )
+)
+
+manage_policies_page = Region(
+    locators={
+        'save_button': "//div[@id='buttons_on']//img[@alt='Save Changes']",
+    })
+
 
 def accordion_fn(acc, tree):
     def f(_):
@@ -525,3 +539,52 @@ def find_quadicon(vm, do_not_navigate=False):
             return quadicon
     else:
         raise NoVmFound("VM '{}' not found in UI!".format(vm))
+
+
+def _assign_unassign_policy_profiles(vm_name, assign, *policy_profile_names, **kwargs):
+    """DRY function for managing policy profiles.
+
+    See :py:func:`assign_policy_profiles` and :py:func:`assign_policy_profiles`
+
+    Args:
+        vm_name: Name of the VM.
+        assign: Wheter to assign or unassign.
+        policy_profile_names: :py:class:`str` with Policy Profile names.
+
+    Keywords:
+        datastore_name, provider_name: see :py:func:`load_vm_details`
+    """
+    load_vm_details(vm_name, **kwargs)
+    toolbar.select("Policy", "Manage Policies")
+    for policy_profile in policy_profile_names:
+        if assign:
+            manage_policies_tree.select_node(policy_profile)
+        else:
+            manage_policies_tree.deselect_node(policy_profile)
+    sel.click(manage_policies_page.save_button)
+
+
+def assign_policy_profiles(vm_name, *policy_profile_names, **kwargs):
+    """Assign Policy Profiles to specified VM.
+
+    Args:
+        vm_name: Name of the VM.
+        policy_profile_names: :py:class:`str` with Policy Profile names.
+
+    Keywords:
+        datastore_name, provider_name: see :py:func:`load_vm_details`
+    """
+    return _assign_unassign_policy_profiles(vm_name, True, *policy_profile_names, **kwargs)
+
+
+def unassign_policy_profiles(vm_name, *policy_profile_names, **kwargs):
+    """Unassign Policy Profiles to specified VM.
+
+    Args:
+        vm_name: Name of the VM.
+        policy_profile_names: :py:class:`str` with Policy Profile names.
+
+    Keywords:
+        datastore_name, provider_name: see :py:func:`load_vm_details`
+    """
+    return _assign_unassign_policy_profiles(vm_name, False, *policy_profile_names, **kwargs)
