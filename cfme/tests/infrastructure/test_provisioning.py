@@ -10,7 +10,7 @@ from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.fixtureconf(server_roles="+automate"),
+    pytest.mark.fixtureconf(server_roles="+automate +notifier"),
     pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
 ]
 
@@ -58,7 +58,7 @@ def vm_name(provider_key, provider_mgmt):
 
 
 def test_provision_from_template(setup_providers,
-        provider_crud, provider_type, provider_mgmt, provisioning, vm_name):
+        provider_crud, provider_type, provider_mgmt, provisioning, vm_name, smtp_test):
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
     pytest.sel.force_navigate('infrastructure_provision_vms', context={
@@ -107,3 +107,20 @@ def test_provision_from_template(setup_providers,
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'VM Provisioned Successfully'
+
+    # Wait for e-mails to appear
+    def verify():
+        return (
+            len(
+                smtp_test.get_emails(
+                    text_like="%%Your Virtual Machine Request was approved%%"
+                )
+            ) > 0
+            and len(
+                smtp_test.get_emails(
+                    subject="Your virtual machine request has Completed - VM: %s" % vm_name
+                )
+            ) > 0
+        )
+
+    wait_for(verify, message="email receive check", delay=5)
