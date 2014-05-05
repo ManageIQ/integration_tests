@@ -33,21 +33,22 @@ def parse_cmd_line():
     args = parser.parse_args()
     return args
 
+
 #TODO allow suffix
 def template_name(image_name):
     #MIQ
-    pattern = re.compile('[^\d]*?TEST-BUILD-[^\d]*(\d*).\w*')
+    pattern = re.compile(r'[^\d]*?TEST-BUILD-[^\d]*(\d*).\w*')
     result = pattern.findall(image_name)
     if result:
         #for now, actual version for MIQ is manually defined.
         actual_version = '30'
-        return "miq-" + actual_version + "-" + result[0][4:8]
+        return "miq-%s-%s" % (actual_version, result[0][4:8])
     else:
         #CFME
-        pattern = re.compile('[^\d]*(\d*).\w*?')
+        pattern = re.compile(r'[^\d]*(\d*).\w*?')
         result = pattern.findall(image_name)
         #this will produce: 'cfme-30-0304'
-        return "cfme-" + result[0] + result[1] + "-" + result[3] + result[4]
+        return "cfme-%s%s-%s%s" % (result[0], result[1], result[3], result[4])
 
 
 def make_kwargs_rhevm(cfme_data, provider):
@@ -61,20 +62,19 @@ def make_kwargs_rhevm(cfme_data, provider):
     disk_format = temp_up.get('disk_format', None)
     disk_interface = temp_up.get('disk_interface', None)
 
-    kwargs = {}
-    kwargs.update({'provider':provider})
+    kwargs = {'provider': provider}
     if edomain:
-        kwargs.update({'edomain':edomain})
+        kwargs['edomain'] = edomain
     if sdomain:
-        kwargs.update({'sdomain':sdomain})
+        kwargs['sdomain'] = sdomain
     if cluster:
-        kwargs.update({'cluster':cluster})
+        kwargs['cluster'] = cluster
     if disk_size:
-        kwargs.update({'disk_size':disk_size})
+        kwargs['disk_size'] = disk_size
     if disk_format:
-        kwargs.update({'disk_format':disk_format})
+        kwargs['disk_format'] = disk_format
     if disk_interface:
-        kwargs.update({'disk_interface':disk_interface})
+        kwargs['disk_interface'] = disk_interface
 
     return kwargs
 
@@ -84,10 +84,9 @@ def make_kwargs_rhos(cfme_data, provider):
 
     tenant_id = data['template_upload'].get('tenant_id', None)
 
-    kwargs = {}
-    kwargs.update({'provider':provider})
+    kwargs = {'provider': provider}
     if tenant_id:
-        kwargs.update({'tenant_id':tenant_id})
+        kwargs['tenant_id'] = tenant_id
 
     return kwargs
 
@@ -105,24 +104,23 @@ def make_kwargs_vsphere(cfme_data, provider):
     disk = temp_up.get('disk', None)
     proxy = data['template_upload'].get('proxy', None)
 
-    kwargs = {}
-    kwargs.update({'provider':provider})
+    kwargs = {'provider': provider}
     if datastore:
-        kwargs.update({'datastore':datastore})
+        kwargs['datastore'] = datastore
     if cluster:
-        kwargs.update({'cluster':cluster})
+        kwargs['cluster'] = cluster
     if datacenter:
-        kwargs.update({'datacenter':datacenter})
+        kwargs['datacenter'] = datacenter
     if host:
-        kwargs.update({'host':host})
+        kwargs['host'] = host
     if template:
-        kwargs.update({'template':template})
+        kwargs['template'] = template
     if upload:
-        kwargs.update({'upload':upload})
+        kwargs['upload'] = upload
     if disk:
-        kwargs.update({'disk':disk})
+        kwargs['disk'] = disk
     if proxy:
-        kwargs.update({'proxy':proxy})
+        kwargs['proxy'] = proxy
 
     return kwargs
 
@@ -132,19 +130,19 @@ def browse_directory(dir_url):
     with closing(urlopen(dir_url)) as urlpath:
         string_from_url = urlpath.read()
 
-    rhevm_pattern = re.compile('<a href="?\'?([^"\']*rhevm[^"\'>]*)')
+    rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*rhevm[^"\'>]*)')
     rhevm_image_name = rhevm_pattern.findall(string_from_url)
-    rhos_pattern = re.compile('<a href="?\'?([^"\']*rhos[^"\'>]*)')
+    rhos_pattern = re.compile(r'<a href="?\'?([^"\']*rhos[^"\'>]*)')
     rhos_image_name = rhos_pattern.findall(string_from_url)
-    vsphere_pattern = re.compile('<a href="?\'?([^"\']*vsphere[^"\'>]*)')
+    vsphere_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')
     vsphere_image_name = vsphere_pattern.findall(string_from_url)
 
     if len(rhevm_image_name) is not 0:
-        name_dict.update({'template_upload_rhevm': rhevm_image_name[0]})
+        name_dict['template_upload_rhevm'] = rhevm_image_name[0]
     if len(rhos_image_name) is not 0:
-        name_dict.update({'template_upload_rhos': rhos_image_name[0]})
+        name_dict['template_upload_rhos'] = rhos_image_name[0]
     if len(vsphere_image_name) is not 0:
-        name_dict.update({'template_upload_vsphere': vsphere_image_name[0]})
+        name_dict['template_upload_vsphere'] = vsphere_image_name[0]
 
     if not dir_url.endswith('/'):
         dir_url = dir_url + '/'
@@ -169,35 +167,34 @@ if __name__ == "__main__":
 
     for provider in mgmt_sys:
         if mgmt_sys[provider].get('template_upload', None):
-            if 'rhevm' in provider:
+            if 'rhevm' in mgmt_sys[provider]['type']:
                 module = 'template_upload_rhevm'
                 if module not in dir_files.iterkeys():
                     continue
                 kwargs = make_kwargs_rhevm(cfme_data, provider)
-            if 'rhos' in provider:
+            if 'openstack' in mgmt_sys[provider]['type']:
                 module = 'template_upload_rhos'
                 if module not in dir_files.iterkeys():
                     continue
                 kwargs = make_kwargs_rhos(cfme_data, provider)
-            if 'vsphere' in provider:
+            if 'virtualcenter' in mgmt_sys[provider]['type']:
                 module = 'template_upload_vsphere'
                 if module not in dir_files.iterkeys():
                     continue
                 kwargs = make_kwargs_vsphere(cfme_data, provider)
 
             if kwargs:
-                kwargs.update({'image_url':dir_files[module]})
+                kwargs['image_url'] = dir_files[module]
 
-                name_strategy = cfme_data['template_upload']['name']
-                if name_strategy is not None:
-                    if name_strategy == 'auto':
-                        kwargs.update({'template_name':template_name(dir_files[module])})
+                if cfme_data['template_upload']['automatic_name_strategy']:
+                    kwargs['template_name'] = template_name(dir_files[module])
 
                 print "---Start of %s: %s---" % (module, provider)
 
                 try:
                     getattr(__import__(module), "run")(**kwargs)
                 except:
-                    print "Exception: Module '%s' with provider '%s' exitted with error." % (module, provider)
+                    print "Exception: Module '%s' with provider '%s' exitted with error." \
+                        % (module, provider)
 
                 print "---End of %s: %s---" % (module, provider)
