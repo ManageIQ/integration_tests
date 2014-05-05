@@ -97,8 +97,7 @@ class EventListener(object):
 
     TIME_FORMAT = "%Y-%m-%d-%H-%M-%S"
 
-    def __init__(self, listener_port=0, verbose=False):
-        self._listener_port = int(listener_port)
+    def __init__(self, verbose=False):
         listener_filename = scripts_path.join('listener.py').strpath
         self.listener_script = "%s 0.0.0.0 %d" % (listener_filename, self.listener_port)
         if not verbose:
@@ -111,14 +110,15 @@ class EventListener(object):
     def listener_port(self):
         return random_port()
 
-    def get_listener_host(self):
+    @lazycache
+    def listener_host(self):
         return "http://%s" % my_ip_address()
 
     def _get(self, route):
         """ Query event listener
         """
         assert not self.finished, "Listener dead!"
-        listener_url = "%s:%d" % (self.get_listener_host(), self.listener_port)
+        listener_url = "%s:%d" % (self.listener_host, self.listener_port)
         logger.info("checking api: %s%s" % (listener_url, route))
         r = requests.get(listener_url + route)
         r.raise_for_status()
@@ -135,7 +135,7 @@ class EventListener(object):
             Boolean signalizing success.
         """
         assert not self.finished, "Listener dead!"
-        listener_url = "%s:%d" % (self.get_listener_host(), self.listener_port)
+        listener_url = "%s:%d" % (self.listener_host, self.listener_port)
         r = requests.delete(listener_url + "/events")
         r.raise_for_status()
         return r.json().get("result") == "success"
@@ -261,7 +261,7 @@ class EventListener(object):
             "Listener",
             (object,),
             {
-                "host": self.get_listener_host(),
+                "host": self.listener_host,
                 "port": self.listener_port
             }
         )
@@ -322,11 +322,6 @@ def pytest_addoption(parser):
                      dest='event_testing_result',
                      default="log/events.html",
                      help='Filename of result report. (default: %default)')
-    parser.addoption('--event-testing-port',
-                     action='store',
-                     dest='event_testing_port',
-                     default="0",
-                     help='Port of the testing listener. (default: random port)')
     parser.addoption('--event-testing-verbose-listener',
                      action='store_true',
                      dest='event_testing_verbose_listener',
@@ -340,8 +335,7 @@ def pytest_configure(config):
     Sets up and registers the EventListener plugin for py.test.
     If the testing is enabled, listener is started.
     """
-    plugin = EventListener(config.getoption("event_testing_port"),
-                           config.getoption("event_testing_verbose_listener"))
+    plugin = EventListener(config.getoption("event_testing_verbose_listener"))
     registration = config.pluginmanager.register(plugin, "event_testing")
     assert registration
     if config.getoption("event_testing_enabled"):
