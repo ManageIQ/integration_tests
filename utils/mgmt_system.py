@@ -246,6 +246,33 @@ class MgmtSystemAPIBase(object):
         requested_stats = requested_stats or self._stats_available
         return {stat: self._stats_available[stat](self) for stat in requested_stats}
 
+    def in_steady_state(self, vm_name):
+        """Return whether the specified virtual machine is in steady state
+
+        Args:
+            vm_name: VM name
+        Returns: boolean
+        """
+        return (
+            self.is_vm_running(vm_name)
+            or self.is_vm_stopped(vm_name)
+            or self.is_vm_suspended(vm_name)
+        )
+
+    def wait_vm_steady(self, vm_name, num_sec=120):
+        """Waits 2 (or user-specified time) minutes for VM to settle in steady state
+
+        Args:
+            vm_name: VM name
+            num_sec: Timeout for wait_for
+        """
+        return wait_for(
+            lambda: self.in_steady_state(vm_name),
+            num_sec=num_sec,
+            delay=2,
+            message="VM %s in steady state" % vm_name
+        )
+
 
 class VMWareSystem(MgmtSystemAPIBase):
     """Client to Vsphere API

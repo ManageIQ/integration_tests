@@ -55,6 +55,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def power_on_vm(mgmt_sys_api_clients, provider, vm_name):
+    mgmt_sys_api_clients[provider].wait_vm_steady(vm_name)
     mgmt_sys_api_clients[provider].start_vm(vm_name)
 
 
