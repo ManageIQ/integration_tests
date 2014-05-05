@@ -12,7 +12,7 @@ def import_policy_file(request):
     return data_path.join("ui/control/policies.yaml").realpath().strpath
 
 
-@pytest.sel.go_to('dashboard')
+@pytest.sel.go_to('control_import_export')
 def test_import_policies(import_policy_file):
     import_export.import_file(import_policy_file)
     flash.assert_no_errors()

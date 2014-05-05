@@ -34,7 +34,7 @@ def import_file(filename, cancel=False):
     fill(
         import_form,
         {"file_select": filename},
-        action=import_form.upload_button
     )
+    sel.click(import_form.upload_button)
     flash.assert_no_errors()
     return sel.click(upload_buttons.cancel_button if cancel else upload_buttons.commit_button)
