@@ -117,6 +117,7 @@ class User(Updateable):
             tb.select('Configuration', 'Copy this User to a new User')
             fill(self.user_form, form_data, action=crud_buttons.add_button)
             flash.assert_success_message('User "%s" was saved' % self.username)
+            return self
 
         def delete(self):
             sel.force_navigate("cfg_accesscontrol_user_ed", context=self)

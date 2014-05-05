@@ -30,70 +30,36 @@ def new_role():
                      vm_restriction_select = 'None')
 
 
-@pytest.mark.nondestructive
-def test_add_new_user():
-        nu = new_user()
-        nu.create()
 
-
-def test_edit_user():
-        ue = new_user()
-        ue.create()
-        with update(ue):
-            ue.username = ue.username + "-edited"
-            ue.userid = ue.userid + "edited"
-
-
-def test_copy_user():
-        uc = new_user()
-        uc.create()
-        uc.copy()
-
-
-def test_delete_user():
-        du = new_user()
-        du.create()
-        du.delete()
+def test_user_crud():
+    user = new_user()
+    user.create()
+    with update(user):
+        user.username = user.username + "edited"
+    copied_user = user.copy()
+    copied_user.delete()
+    user.delete()
 
 
 def test_user_duplicate_name():
-        nu = new_user()
+    nu = new_user()
+    nu.create()
+    with error.expected("Userid has already been taken"):
         nu.create()
-        with error.expected("Userid has already been taken"):
-            nu.create()
+    nu.delete()
 
 
-def test_add_new_group():
-        ng = new_group()
-        ng.create()
+def test_group_crud():
+    group = new_group()
+    group.create()
+    with update(group):
+        group.description = group.description + "edited"
+    group.delete()
 
 
-def test_edit_group():
-        ge = new_group()
-        ge.create()
-        with update(ge):
-            ge.description = ge.description + "edited"
-
-
-def test_delete_group():
-        gd = new_group()
-        gd.create()
-        gd.delete()
-
-
-def test_add_new_role():
-        nr = new_role()
-        nr.create()
-
-
-def test_edit_role():
-        re = new_role()
-        re.create()
-        with update(re):
-            re.name = re.name + "edited"
-
-
-def test_delete_role():
-        rd = new_role()
-        rd.create()
-        rd.delete()
+def test_role_crud():
+    role = new_role()
+    role.create()
+    with update(role):
+        role.name = role.name + "edited"
+    role.delete()
