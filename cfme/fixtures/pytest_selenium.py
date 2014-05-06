@@ -15,8 +15,9 @@ from collections import Iterable
 import json
 
 from pkg_resources import parse_version
-from selenium.common.exceptions import (ErrorInResponseException, InvalidSwitchToTargetException,
-    NoSuchAttributeException, NoSuchElementException, UnexpectedAlertPresentException)
+from selenium.common.exceptions import \
+    (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
+     NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
@@ -210,7 +211,8 @@ def handle_alert(cancel=False, wait=30.0, squash=False):
             Default False
 
     Returns:
-        True if the alert was handled, False if exceptions were squashed.
+        True if the alert was handled, False if exceptions were
+        squashed, None if there was no alert.
 
     No exceptions will be raised if ``squash`` is True.
 
@@ -231,6 +233,8 @@ def handle_alert(cancel=False, wait=30.0, squash=False):
         popup.dismiss() if cancel else popup.accept()
         wait_for_ajax()
         return True
+    except NoAlertPresentException:
+        return None
     except:
         if squash:
             return False

@@ -1,10 +1,11 @@
 import functools
 
 import ui_navigate as nav
+from cfme.web_ui import menu
+assert menu
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
-import cfme.web_ui.menu
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Form, fill, Select, accordion, flash
 from utils.update import Updateable
@@ -59,11 +60,11 @@ nav.add_branch(
 class ServiceDialog(Updateable):
 
     def __init__(self, label=None, description=None,
-        submit=False, cancel=False,
-        tab_label=None, tab_desc=None,
-        box_label=None, box_desc=None,
-        ele_label=None, ele_name=None,
-        ele_desc=None, choose_type=None, default_text_box=None):
+                 submit=False, cancel=False,
+                 tab_label=None, tab_desc=None,
+                 box_label=None, box_desc=None,
+                 ele_label=None, ele_name=None,
+                 ele_desc=None, choose_type=None, default_text_box=None):
         self.label = label
         self.description = description
         self.submit = submit
