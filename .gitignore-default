@@ -47,3 +47,6 @@ docs/modules
 # Ipython notebooks need to be explicitly added
 notebooks/*.ipynb
 notebooks/.ipynb_checkpoints
+
+#ignore .gitignore
+.gitignore
