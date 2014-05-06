@@ -126,6 +126,13 @@ class ScheduleNotFound(CFMEException):
     """
 
 
+class RequestNotFound(CFMEException):
+    """
+    Raised if a request was not found during *_request functions in
+    :py:module:`cfme.services.requests`
+    """
+
+
 class TreeTypeUnknown(CFMEException):
     """
     Raised if the tree type is known whilst detection in :py:class:`cfme.web_ui.Tree`

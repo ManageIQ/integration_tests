@@ -1,4 +1,6 @@
-from cfme.web_ui import SplitTable, paginator, toolbar
+from cfme.exceptions import RequestNotFound
+from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import Region, SplitTable, fill, flash, paginator, toolbar
 from utils.log import logger
 
 request_list = SplitTable(
@@ -6,9 +8,113 @@ request_list = SplitTable(
     ('//*[@id="list_grid"]//table[contains(@class, "obj")]/tbody', 1)
 )
 
+buttons = Region(
+    locators=dict(
+        approve="//div[@id='miq_alone' and @title='Approve this Request']/img",
+        deny="//div[@id='miq_alone' and @title='Deny this Request']/img",
+        copy="//div[@id='miq_alone' and @title='Copy original Request']/img",
+        edit="//div[@id='miq_alone' and @title='Edit the original Request']/img",
+        delete="//div[@id='miq_alone' and @title='Delete this Request']/img",
+        submit="//span[@id='buttons_on']/a[@title='Submit']",
+        cancel="//a[@title='Cancel']",
+    )
+)
+
+fields = Region(
+    locators=dict(
+        reason="//input[@id='reason']"
+    )
+)
+
 
 def reload():
     toolbar.select('Reload')
+
+
+def approve(reason, cancel=False):
+    """Approve currently opened request
+
+    Args:
+        reason: Reason for approving the request.
+        cancel: Whether to cancel the approval.
+    """
+    sel.click(buttons.approve)
+    fill(fields.reason, reason)
+    sel.click(buttons.submit if not cancel else buttons.cancel)
+    flash.assert_no_errors()
+
+
+def approve_request(cells, reason, cancel=False):
+    """Open the specified request and approve it.
+
+    Args:
+        cells: Search data for the requests table.
+        reason: Reason for approving the request.
+        cancel: Whether to cancel the approval.
+
+    Raises:
+        :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
+    """
+    if not go_to_request(cells):
+        raise RequestNotFound("Request with identification {} not found!".format(str(cells)))
+    approve(reason, cancel)
+
+
+def deny(reason, cancel=False):
+    """Deny currently opened request
+
+    Args:
+        reason: Reason for denying the request.
+        cancel: Whether to cancel the denial.
+    """
+    sel.click(buttons.deny)
+    fill(fields.reason, reason)
+    sel.click(buttons.submit if not cancel else buttons.cancel)
+    flash.assert_no_errors()
+
+
+def deny_request(cells, reason, cancel=False):
+    """Open the specified request and deny it.
+
+    Args:
+        cells: Search data for the requests table.
+        reason: Reason for denying the request.
+        cancel: Whether to cancel the denial.
+
+    Raises:
+        :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
+    """
+    if not go_to_request(cells):
+        raise RequestNotFound("Request with identification {} not found!".format(str(cells)))
+    deny(reason, cancel)
+
+
+def delete(cancel=False):
+    """Delete currently opened request
+
+    Args:
+        cancel: Whether to cancel the deletion.
+    """
+    sel.wait_for_element(buttons.delete)
+    sel.click(buttons.delete, wait_ajax=False)
+    sel.handle_alert(cancel)
+    sel.wait_for_ajax()
+    flash.assert_no_errors()
+
+
+def delete_request(cells, cancel=False):
+    """Open the specified request and delete it.
+
+    Args:
+        cells: Search data for the requests table.
+        cancel: Whether to cancel the deletion.
+
+    Raises:
+        :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
+    """
+    if not go_to_request(cells):
+        raise RequestNotFound("Request with identification {} not found!".format(str(cells)))
+    delete(cancel)
 
 
 def wait_for_request(cells):
@@ -62,4 +168,29 @@ def wait_for_request(cells):
     if row.request_state.text == 'Finished':
         return row
     else:
+        return False
+
+
+def go_to_request(cells):
+    """Finds the request and opens the page
+
+    See :py:func:`wait_for_request` for futher details.
+
+    Args:
+        cells: Search data for the requests table.
+    Returns: Success of the action.
+    """
+    sel.force_navigate("services_requests")
+    for page in paginator.pages():
+        try:
+            # found the row!
+            row, = request_list.find_rows_by_cells(cells)
+            sel.click(row)
+            return True
+        except ValueError:
+            # row not on this page, assume it has yet to appear
+            # it might be nice to add an option to fail at this point
+            continue
+    else:
+        # Request not found at all, can't continue
         return False
