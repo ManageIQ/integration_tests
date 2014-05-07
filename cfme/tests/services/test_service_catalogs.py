@@ -126,3 +126,20 @@ def test_order_catalog_item(setup_providers, catalog_item):
     assert row.last_message.text == 'Request complete'
 
 
+def test_order_catalog_bundle(setup_providers, catalog_item):
+    catalog_item.create()
+    bundle_name = generate_random_string()
+    catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
+                   display_in=True, catalog=catalog_item.catalog,
+                   dialog=catalog_item.dialog, cat_item=catalog_item.name)
+    catalog_bundle.create()
+    service_catalogs = ServiceCatalogs("service_name")
+    service_catalogs.order(catalog_item.catalog, catalog_bundle)
+    flash.assert_no_errors()
+    logger.info('Waiting for cfme provision request for service %s' % bundle_name)
+    row_description = 'Provisioning [%s] for Service [%s]' % (bundle_name, bundle_name)
+    cells = {'Description': row_description}
+
+    row, __ = wait_for(requests.wait_for_request, [cells],
+        fail_func=requests.reload, num_sec=600, delay=20)
+    assert row.last_message.text == 'Request complete'
