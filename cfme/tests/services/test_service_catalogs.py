@@ -1,15 +1,23 @@
 import pytest
-import cfme.web_ui.flash as flash
-import utils.randomness as rand
-from utils.randomness import generate_random_string
-from utils import testgen
-from utils.log import logger
-from utils.wait import wait_for
+
 from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
+from cfme.web_ui import flash
+from utils import testgen
+from utils.providers import setup_infrastructure_providers
+from utils.randomness import generate_random_string
+from utils.log import logger
+from utils.wait import wait_for
+
+pytestmark = [
+    pytest.mark.usefixtures("logged_in"),
+    pytest.mark.fixtureconf(server_roles="+automate"),
+    pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
+]
 
 
 def pytest_generate_tests(metafunc):
@@ -35,6 +43,12 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
+@pytest.fixture(scope="module")
+def setup_providers():
+    # Normally function-scoped
+    setup_infrastructure_providers()
+
+
 @pytest.yield_fixture(scope="function")
 def vm_name(provider_key, provider_mgmt):
     # also tries to delete the VM that gets made with this name
@@ -50,12 +64,12 @@ def vm_name(provider_key, provider_mgmt):
 
 @pytest.yield_fixture(scope="function")
 def dialog():
-    dialog = "dialog_" + rand.generate_random_string()
+    dialog = "dialog_" + generate_random_string()
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                      submit=True, cancel=True,
-                     tab_label="tab_" + rand.generate_random_string(), tab_desc="tab_desc",
-                     box_label="box_" + rand.generate_random_string(), box_desc="box_desc",
-                     ele_label="ele_" + rand.generate_random_string(),
+                     tab_label="tab_" + generate_random_string(), tab_desc="tab_desc",
+                     box_label="box_" + generate_random_string(), box_desc="box_desc",
+                     ele_label="ele_" + generate_random_string(),
                      ele_name="service_name",
                      ele_desc="ele_desc", choose_type="Text Box", default_text_box="default value")
     service_dialog.create()
@@ -65,7 +79,7 @@ def dialog():
 
 @pytest.yield_fixture(scope="function")
 def catalog():
-    catalog = "cat_" + rand.generate_random_string()
+    catalog = "cat_" + generate_random_string()
     cat = Catalog(name=catalog,
                   description="my catalog")
     cat.create()
@@ -76,6 +90,7 @@ def catalog():
 def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
+
     provisioning_data = {
         'vm_name': vm_name,
         'host_name': {'name': [host]},
@@ -83,30 +98,31 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     }
 
     if provider_type == 'rhevm':
+        provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = provisioning['vlan']
-        provisioning_data['iso_file'] = {'name': [iso_file]}
-
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=rand.generate_random_string(),
+    elif provider_type == 'virtualcenter':
+        provisioning_data['provision_type'] = 'VMware'
+    item_name = generate_random_string()
+    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog, long_desc=None, catalog_name=template,
+                  dialog=dialog, catalog_name=template,
                   provider=provider_crud.name, prov_data=provisioning_data)
     yield catalog_item
 
 
-def test_order_service_catalog_item(catalog_item):
+def test_order_catalog_item(setup_providers, catalog_item):
+    # generate_tests makes sure these have values
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
     flash.assert_no_errors()
-    # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
-    logger.info('Waiting for vm %s to appear on provider %s', vm_name, catalog_item.provider_crud.key)
-    wait_for(catalog_item.provider_mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
-
     # nav to requests page happens on successful provision
-    logger.info('Waiting for cfme provision request for vm %s' % catalog_item.vm_name)
-    row_description = 'Provision from [%s] to [%s]' % (catalog_item.template, catalog_item.vm_name)
+    logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
+    row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
 
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=1500, delay=20)
-    assert row.last_message.text == 'VM Provisioned Successfully'
+        fail_func=requests.reload, num_sec=600, delay=20)
+    assert row.last_message.text == 'Request complete'
+
+
