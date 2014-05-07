@@ -17,6 +17,7 @@ import cfme.web_ui.flash as flash
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
+from cfme.exceptions import HostNotFound
 from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
 from utils.ipmi import IPMI
 from utils.log import logger
@@ -404,3 +405,32 @@ def wait_for_host_delete(host):
     logger.info('Waiting for a host to delete...')
     wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
              message="Wait host to disappear", num_sec=1000, fail_func=sel.refresh)
+
+
+def get_all_hosts(do_not_navigate=False):
+    """Returns list of all hosts"""
+    if not do_not_navigate:
+        sel.force_navigate('infrastructure_hosts')
+    hosts = set([])
+    for page in paginator.pages():
+        for title in sel.elements(
+                "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'host/show')]"):
+            hosts.add(sel.get_attribute(title, "title"))
+    return hosts
+
+
+def find_quadicon(host, do_not_navigate=False):
+    """Find and return a quadicon belonging to a specific host
+
+    Args:
+        host: Host name as displayed at the quadicon
+    Returns: :py:class:`cfme.web_ui.Quadicon` instance
+    """
+    if not do_not_navigate:
+        sel.force_navigate('infrastructure_hosts')
+    for page in paginator.pages():
+        quadicon = Quadicon(host, "host")
+        if sel.is_displayed(quadicon):
+            return quadicon
+    else:
+        raise HostNotFound("Host '{}' not found in UI!".format(host))
