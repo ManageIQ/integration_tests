@@ -1,6 +1,5 @@
 import pytest
 import cfme.web_ui.flash as flash
-import utils.randomness as rand
 from utils.randomness import generate_random_string
 from utils import testgen, error
 from utils.update import update
@@ -8,6 +7,8 @@ from utils.log import logger
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs import Catalog
+
+pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
 def pytest_generate_tests(metafunc):
@@ -48,7 +49,7 @@ def vm_name(provider_key, provider_mgmt):
 
 @pytest.yield_fixture(scope="function")
 def dialog():
-    dialog = "dialog_" + rand.generate_random_string()
+    dialog = "dialog_" + generate_random_string()
     service_dialog = ServiceDialog(label=dialog,
                   description="my dialog", submit=True, cancel=True)
     service_dialog.create()
@@ -58,7 +59,7 @@ def dialog():
 
 @pytest.yield_fixture(scope="function")
 def catalog():
-    catalog = "cat_" + rand.generate_random_string()
+    catalog = "cat_" + generate_random_string()
     cat = Catalog(name=catalog,
                   description="my catalog")
     cat.create()
@@ -79,9 +80,9 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
         provisioning_data['vlan'] = provisioning['vlan']
         provisioning_data['iso_file'] = {'name': [iso_file]}
 
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=rand.generate_random_string(),
+    catalog_item = CatalogItem(item_type=catalog_item_type, name=generate_random_string(),
                   description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog, long_desc=None, catalog_name=template,
+                  dialog=dialog, catalog_name=template,
                   provider=provider_crud.name, prov_data=provisioning_data)
     yield catalog_item
 

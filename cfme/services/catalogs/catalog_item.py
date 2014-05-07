@@ -20,13 +20,6 @@ template_select_form = Form(
     ]
 )
 
-
-def _all_catalogitems_add_new(context):
-    sel.click("//div[@id='sandt_tree_div']//td[.='All Catalog Items']")
-    tb_select('Add a New Catalog Item')
-    provider_type = context['provider_type']
-    sel.select("//select[@id='st_prov_type']", provider_type)
-
 # Forms
 basic_info_form = Form(
     fields=[
@@ -95,19 +88,49 @@ request_form = tabstrip.TabStripForm(
     ])
 )
 
+resources_form = Form(
+    fields=[
+        ('choose_resource', Select("//select[@id='resource_id']")),
+        ('add_button', "//img[@alt='Add']"),
+        ('save_button', "//img[@alt='Save Changes']")
+    ])
+
+
+def _all_catalogitems_add_new(context):
+    sel.click("//div[@id='sandt_tree_div']//td[.='All Catalog Items']")
+    tb_select('Add a New Catalog Item')
+    provider_type = context['provider_type']
+    sel.select("//select[@id='st_prov_type']", provider_type)
+
+
+def _all_catalogbundle_add_new(context):
+    sel.click("//div[@id='sandt_tree_div']//td[.='All Catalog Items']")
+    tb_select('Add a New Catalog Bundle')
+
+
 nav.add_branch(
     'services_catalogs',
-    {'catalog_items': [nav.partial(accordion.click, 'Catalog Items'),
-                       {'catalog_item_new': _all_catalogitems_add_new,
-                        'catalog_item': [lambda ctx: catalog_item_tree.click_path(
-                            'All Catalog Items', ctx['catalog'], ctx['catalog_item'].name),
-                            {'catalog_item_edit': nav.partial(tb_select, "Edit this Item")}]}]})
+        {'catalog_items': [nav.partial(accordion.click, 'Catalog Items'),
+                           {'catalog_item_new': _all_catalogitems_add_new,
+                            'catalog_item': [lambda ctx: catalog_item_tree.
+                                            click_path('All Catalog Items',
+                                            ctx['catalog'], ctx['catalog_item'].name),
+                                            {'catalog_item_edit': nav.partial(tb_select,
+                                                "Edit this Item")}]}],
+        'catalog_bundle': [nav.partial(accordion.click, 'Catalog Items'),
+                          {'catalog_bundle_new': _all_catalogbundle_add_new,
+                           'catalog_bundle': [lambda ctx: catalog_item_tree.
+                                              click_path('All Catalog Items',
+                                              ctx['catalog'], ctx['catalog_bundle'].name),
+                                             {'catalog_bundle_edit': nav.partial(tb_select,
+                                                "Edit this Item")}]}]})
+
 
 
 class CatalogItem(Updateable):
 
     def __init__(self, item_type=None, name=None, description=None,
-        display_in=False, catalog=None, dialog=None, long_desc=None,
+        display_in=False, catalog=None, dialog=None,
         catalog_name=None, provider=None, prov_data=None):
         self.item_type = item_type
         self.name = name
@@ -115,7 +138,6 @@ class CatalogItem(Updateable):
         self.display_in = display_in
         self.catalog = catalog
         self.dialog = dialog
-        self.long_desc = long_desc
         self.catalog_name = catalog_name
         self.provider = provider
         self.provisioning_data = prov_data
@@ -147,3 +169,26 @@ class CatalogItem(Updateable):
         sel.force_navigate('catalog_item', context={'catalog': self.catalog, 'catalog_item': self})
         tb_select("Remove Item from the VMDB", invokes_alert=True)
         sel.handle_alert()
+
+
+class CatalogBundle(Updateable):
+
+    def __init__(self, name=None, description=None,
+        display_in=False, catalog=None, dialog=None, cat_item=None):
+        self.name = name
+        self.description = description
+        self.display_in = display_in
+        self.catalog = catalog
+        self.dialog = dialog
+        self.cat_item = cat_item
+
+    def create(self):
+        sel.force_navigate('catalog_bundle_new')
+        fill(basic_info_form, {'name_text': self.name,
+                               'description_text': self.description,
+                               'display_checkbox': self.display_in,
+                               'select_catalog': self.catalog,
+                               'select_dialog': self.dialog})
+        tabstrip.select_tab("Resources")
+        fill(resources_form, {'choose_resource': self.cat_item},
+            action=resources_form.add_button)

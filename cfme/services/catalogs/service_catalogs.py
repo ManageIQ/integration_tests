@@ -1,7 +1,8 @@
 import ui_navigate as nav
-from cfme.web_ui import Form, accordion, fill
+
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
+from cfme.web_ui import Form, accordion, fill
 from utils.update import Updateable
 
 order_button = "//img[@title='Order this Service']"
