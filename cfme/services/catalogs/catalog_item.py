@@ -126,7 +126,6 @@ nav.add_branch(
                                                 "Edit this Item")}]}]})
 
 
-
 class CatalogItem(Updateable):
 
     def __init__(self, item_type=None, name=None, description=None,
