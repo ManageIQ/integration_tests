@@ -199,6 +199,12 @@ def wait_for_element(*locs, **kwargs):
     )
 
 
+def on_cfme_page():
+    """Check whether we are on a CFME page and not another or blank page"""
+    return (is_displayed("//div[@id='page_header_div']//div[contains(@class, 'brand')]")
+        and is_displayed("//div[@id='footer']")) or is_displayed("//ul[@class='login_buttons']")
+
+
 def handle_alert(cancel=False, wait=30.0, squash=False):
     """Handles an alert popup.
 
