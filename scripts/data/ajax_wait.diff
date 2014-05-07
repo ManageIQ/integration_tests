@@ -1,29 +1,17 @@
 diff --git a/vmdb/public/javascripts/application.js b/vmdb/public/javascripts/application.js
 --- a/vmdb/public/javascripts/application.js
 +++ b/vmdb/public/javascripts/application.js
-@@ -663,17 +663,24 @@ function miqChartMenuClick(itemId, itemValue) {
-    if (itemId != "cancel") miqAsyncAjax("?menu_click=" + itemId);
- }
+@@ -568,13 +568,6 @@
+ //	wrapFish();
+ //});
  
-+var miqAjaxTimers = 0;
-+
- // Handle an ajax form button press (i.e. Submit) by starting the spinning Q, then waiting for .7 seconds for observers to finish
- function miqAjaxButton(url, serialize_fields){
-    if (typeof serialize_fields == "unknown") serialize_fields = false;
-    if($('notification')) $('notification').show();
-+   miqAjaxTimers++;
-    self.setTimeout("miqAjaxButtonSend('" + url + "', " + serialize_fields + ")",700);
- }
- 
- // Send ajax url after any outstanding ajax requests, wait longer if needed
- function miqAjaxButtonSend(url, serialize_fields){
--   if (Ajax.activeRequestCount>0) self.setTimeout("miqAjaxButtonSend('" + url + "')",700);
-+   if (Ajax.activeRequestCount>0) {
-+       miqAjaxTimers++;
-+       self.setTimeout("miqAjaxButtonSend('" + url + "')",700);
-+   }
-    else miqAjax(url, serialize_fields);
-+   miqAjaxTimers--;
- }
- 
- // Function to generate an Ajax request
+-// Register prototype Ajax Responders
+-Ajax.Responders.register({
+-	onException: function(parm1, parm2) {
+-		Ajax.activeRequestCount-- // decrement request count when ajax throws an exception (workaround)
+-	}
+-});
+-
+ // Load XML/SWF charts data (non-IE)
+ // This method is called by the XML/SWF charts when a chart is loaded into the DOM
+ var miq_chart_data;
