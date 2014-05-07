@@ -33,7 +33,7 @@ class Appliance(object):
         self.db_address = None
 
         self._provider_name = provider_name
-        self._vm_name = vm_name
+        self.vmname = vm_name
 
     @property
     def _provider(self):
@@ -43,11 +43,16 @@ class Appliance(object):
         """
         return provider_factory(self._provider_name)
 
+    @property
+    def vm_name(self):
+        """ VM's name of the appliance on the provider """
+        return self.vmname
+
     @lazycache
     def address(self):
         def is_ip_available():
             try:
-                return self._provider.get_ip_address(self._vm_name)
+                return self._provider.get_ip_address(self.vm_name)
             except AttributeError:
                 return False
 
@@ -231,7 +236,7 @@ class Appliance(object):
     def destroy(self):
         """Destroys the VM this appliance is running as
         """
-        self._provider.delete_vm(self._vm_name)
+        self._provider.delete_vm(self.vm_name)
 
     @property
     def is_db_enabled(self):
@@ -247,7 +252,7 @@ class Appliance(object):
 
     @property
     def is_running(self):
-        return self._provider.is_vm_running(self._vm_name)
+        return self._provider.is_vm_running(self.vm_name)
 
     @property
     def is_web_ui_running(self):
@@ -285,7 +290,7 @@ class ApplianceSet(object):
         return None
 
 
-def provision_appliance(version, vm_name_prefix='cfme'):
+def provision_appliance(version=None, vm_name_prefix='cfme', template=None, provider_name=None):
     """Provisions fresh, unconfigured appliance of a specific version
 
     Note:
@@ -310,20 +315,28 @@ def provision_appliance(version, vm_name_prefix='cfme'):
     """
 
     def _generate_vm_name():
-        version_digits = ''.join([letter for letter in version if letter.isdigit()])
-        return '{}_{}_{}'.format(vm_name_prefix, version_digits, generate_random_string())
+        if version is not None:
+            version_digits = ''.join([letter for letter in version if letter.isdigit()])
+            return '{}_{}_{}'.format(vm_name_prefix, version_digits, generate_random_string())
+        else:
+            return '{}_{}'.format(vm_name_prefix, generate_random_string())
 
-    templates_by_version = conf.cfme_data['appliance_provisioning']['versions']
-    provider_name = conf.cfme_data['appliance_provisioning']['provider']
+    if version is not None:
+        templates_by_version = conf.cfme_data['appliance_provisioning']['versions']
+        try:
+            template_name = templates_by_version[version]
+        except KeyError:
+            raise ApplianceException('No template found matching version {}'.format(version))
+
+    if template is not None:
+        template_name = template
+
+    if provider_name is None:
+        provider_name = conf.cfme_data['appliance_provisioning']['provider']
     prov_data = conf.cfme_data['management_systems'][provider_name]
 
     provider = provider_factory(provider_name)
     vm_name = _generate_vm_name()
-
-    try:
-        template_name = templates_by_version[version]
-    except KeyError:
-        raise ApplianceException('No template found matching version {}'.format(version))
 
     deploy_args = {}
     deploy_args['vm_name'] = vm_name
