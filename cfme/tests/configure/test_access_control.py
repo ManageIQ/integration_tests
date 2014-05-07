@@ -30,7 +30,6 @@ def new_role():
                      vm_restriction_select = 'None')
 
 
-
 def test_user_crud():
     user = new_user()
     user.create()

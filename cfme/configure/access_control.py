@@ -109,15 +109,20 @@ class User(Updateable):
             flash.assert_success_message('User "%s" was saved' % updates.get('username', self.username))
 
         def copy(self):
-            form_data = {'self.username': self.username + "copy",
+            form_data = {'username': self.username + "copy",
                          'userid': self.userid + "copy",
                          'password': "redhat",
                          'password_verify': "redhat"}
             sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
             tb.select('Configuration', 'Copy this User to a new User')
             fill(self.user_form, form_data, action=crud_buttons.add_button)
-            flash.assert_success_message('User "%s" was saved' % self.username)
-            return self
+            flash.assert_success_message('User "%s" was saved' % form_data['username'])
+            copied_user = User(
+                    username = form_data['username'],
+                    userid = form_data['userid'],
+                    password = form_data['password'],
+                    password_verify = form_data['password_verify'])
+            return copied_user
 
         def delete(self):
             sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
