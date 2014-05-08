@@ -6,7 +6,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from collections import OrderedDict
-from cfme.web_ui import Form, Select, fill, Table, tabstrip, Radio, accordion
+from cfme.web_ui import Form, Select, fill, Table, tabstrip, Radio, accordion, flash
 from utils.update import Updateable
 
 tb_select = functools.partial(tb.select, "Configuration")
@@ -191,3 +191,4 @@ class CatalogBundle(Updateable):
         tabstrip.select_tab("Resources")
         fill(resources_form, {'choose_resource': self.cat_item},
             action=resources_form.add_button)
+        flash.assert_no_errors()

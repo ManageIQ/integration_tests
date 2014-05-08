@@ -2,7 +2,7 @@ import ui_navigate as nav
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
-from cfme.web_ui import Form, accordion, fill
+from cfme.web_ui import Form, accordion, fill, flash
 from utils.update import Updateable
 
 order_button = "//img[@title='Order this Service']"
@@ -31,3 +31,4 @@ class ServiceCatalogs(Updateable):
             context={'catalog': catalog, 'catalog_item': catalog_item})
         fill(service_order_form, {'dialog_service_name_field': self.service_name},
             action=service_order_form.submit_button)
+        flash.assert_no_errors()
