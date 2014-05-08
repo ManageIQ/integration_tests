@@ -5,6 +5,7 @@ import ui_navigate as nav
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
+import cfme.web_ui.flash as flash
 from collections import OrderedDict
 from cfme.web_ui import Form, Select, fill, Table, tabstrip, Radio, accordion
 from utils.update import Updateable
@@ -135,6 +136,7 @@ class CatalogItem(Updateable):
         sel.click(template)
         request_form.fill(self.provisioning_data)
         sel.click(template_select_form.add_button)
+        flash.assert_no_errors()
 
     def update(self, updates):
         sel.force_navigate('catalog_item_edit',
@@ -142,8 +144,10 @@ class CatalogItem(Updateable):
         fill(basic_info_form, {'name_text': updates.get('name', None),
                                'description_text': updates.get('description', None)},
             action=basic_info_form.edit_button)
+        flash.assert_no_errors()
 
     def delete(self):
         sel.force_navigate('catalog_item', context={'catalog': self.catalog, 'catalog_item': self})
         tb_select("Remove Item from the VMDB", invokes_alert=True)
         sel.handle_alert()
+        flash.assert_no_errors()
