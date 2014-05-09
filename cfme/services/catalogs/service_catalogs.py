@@ -31,4 +31,4 @@ class ServiceCatalogs(Updateable):
             context={'catalog': catalog, 'catalog_item': catalog_item})
         fill(service_order_form, {'dialog_service_name_field': self.service_name},
             action=service_order_form.submit_button)
-        flash.assert_no_errors()
+        flash.assert_success_message("Order Request was Submitted")

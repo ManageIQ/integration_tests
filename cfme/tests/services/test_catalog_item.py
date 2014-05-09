@@ -1,12 +1,13 @@
 import pytest
 import cfme.web_ui.flash as flash
+from cfme.services.catalogs.catalog_item import CatalogItem
+from cfme.automate.service_dialogs import ServiceDialog
+from cfme.services.catalogs import Catalog
+from utils.providers import setup_infrastructure_providers
 from utils.randomness import generate_random_string
 from utils import testgen, error
 from utils.update import update
 from utils.log import logger
-from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.automate.service_dialogs import ServiceDialog
-from cfme.services.catalogs import Catalog
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
@@ -32,6 +33,12 @@ def pytest_generate_tests(metafunc):
         new_argvalues.append(argvalues[i])
 
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+
+
+@pytest.fixture(scope="module")
+def setup_providers():
+    # Normally function-scoped
+    setup_infrastructure_providers()
 
 
 @pytest.yield_fixture(scope="function")
@@ -87,12 +94,12 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
-def test_create_catalog_item(catalog_item):
+def test_create_catalog_item(setup_providers, catalog_item):
     catalog_item.create()
     flash.assert_no_errors()
 
 
-def test_update_catalog_item(catalog_item):
+def test_update_catalog_item(setup_providers, catalog_item):
     catalog_item.create()
     with update(catalog_item):
         catalog_item.description = "my edited description"
@@ -100,13 +107,13 @@ def test_update_catalog_item(catalog_item):
     flash.assert_success_message('Service Catalog Item "%s" was saved' % catalog_item.name)
 
 
-def test_delete_catalog_item(catalog_item):
+def test_delete_catalog_item(setup_providers, catalog_item):
     catalog_item.create()
     catalog_item.delete()
     flash.assert_no_errors()
 
 
-def test_catalog_item_duplicate_name(catalog_item):
+def test_catalog_item_duplicate_name(setup_providers, catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):
         catalog_item.create()

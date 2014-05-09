@@ -105,6 +105,7 @@ class ServiceDialog(Updateable):
                             'default_text_box': self.default_text_box})
         sel.click(element_form.add_button)
         flash.assert_no_errors()
+        sel.wait_for_element(message)
 
     def update(self, updates):
         sel.force_navigate('service_dialog_edit',

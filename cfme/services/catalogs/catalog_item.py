@@ -156,6 +156,7 @@ class CatalogItem(Updateable):
         sel.click(template)
         request_form.fill(self.provisioning_data)
         sel.click(template_select_form.add_button)
+        flash.assert_success_message('Service Catalog Item "%s" was added' % self.name)
 
     def update(self, updates):
         sel.force_navigate('catalog_item_edit',
@@ -163,11 +164,13 @@ class CatalogItem(Updateable):
         fill(basic_info_form, {'name_text': updates.get('name', None),
                                'description_text': updates.get('description', None)},
             action=basic_info_form.edit_button)
+        flash.assert_success_message('Service Catalog Item "%s" was saved' % self.name)
 
     def delete(self):
         sel.force_navigate('catalog_item', context={'catalog': self.catalog, 'catalog_item': self})
         tb_select("Remove Item from the VMDB", invokes_alert=True)
         sel.handle_alert()
+        flash.assert_success_message('The selected Catalog Item was deleted')
 
 
 class CatalogBundle(Updateable):
@@ -191,4 +194,4 @@ class CatalogBundle(Updateable):
         tabstrip.select_tab("Resources")
         fill(resources_form, {'choose_resource': self.cat_item},
             action=resources_form.add_button)
-        flash.assert_no_errors()
+        flash.assert_success_message('Catalog Bundle "%s" was added' % self.name)
