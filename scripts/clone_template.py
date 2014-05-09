@@ -1,25 +1,26 @@
 #!/usr/bin/env python2
-import sys
 import argparse
-import logging
+import sys
+
+from utils.log import logger
 from utils.providers import provider_factory
-import time
+from utils.wait import wait_for
 
 
 def destroy(provider, args):
     try:
         if provider.does_vm_exist(args.vm_name):
             # Stop the vm first
-            logging.warning('Destroying VM %s', args.vm_name)
+            logger.warning('Destroying VM %s', args.vm_name)
             if provider.is_vm_running(args.vm_name):
                 provider.stop_vm(args.vm_name)
             if provider.delete_vm(args.vm_name):
-                logging.info('VM %s destroyed', args.vm_name)
+                logger.info('VM %s destroyed', args.vm_name)
             else:
-                logging.error('Error destroying VM %s', args.vm_name)
+                logger.error('Error destroying VM %s', args.vm_name)
     except Exception as e:
-        logging.error('Could not destroy VM %s (%s)', args.vm_name, e.message)
-        return 11
+        logger.error('Could not destroy VM %s (%s)', args.vm_name, e.message)
+        sys.exit(11)
 
 
 def main():
@@ -46,66 +47,53 @@ def main():
         help='Write provisioning details to the named file', default='')
 
     args = parser.parse_args()
+    if not args.provider_name:
+        parser.error('--provider is required')
 
-    # Set the logging level from the CLI
-    try:
-        loglevel = getattr(logging, args.loglevel)
-        logging.basicConfig(level=loglevel)
-    except NameError:
-        raise ValueError('Invalid log level: %s' % args.loglevel)
-
-    logging.info('Connecting to %s', args.provider_name)
+    logger.info('Connecting to %s', args.provider_name)
     provider = provider_factory(args.provider_name)
 
     if args.destroy:
         destroy(provider, args)
     else:
-        logging.info('Cloning %s to %s', args.template, args.vm_name)
+        logger.info('Cloning %s to %s', args.template, args.vm_name)
         # passing unused args to ec2 provider would blow up so I
         #   had to make it a little more specific
-        deply_args = {}
+        deploy_args = {}
         if args.vm_name is not None:
-            deply_args.update(vm_name=args.vm_name)
+            deploy_args.update(vm_name=args.vm_name)
         if args.rhos_flavor is not None:
-            deply_args.update(flavour_name=args.rhos_flavor)
+            deploy_args.update(flavour_name=args.rhos_flavor)
         if args.ip_pool is not None:
-            deply_args.update(assign_floating_ip=args.ip_pool)
+            deploy_args.update(assign_floating_ip=args.ip_pool)
         if args.rhev_cluster is not None:
-            deply_args.update(cluster_name=args.rhev_cluster)
+            deploy_args.update(cluster_name=args.rhev_cluster)
         if args.rhev_place_policy_host is not None:
-            deply_args.update(placement_policy_host=args.rhev_place_policy_host)
+            deploy_args.update(placement_policy_host=args.rhev_place_policy_host)
         if args.rhev_place_policy_aff is not None:
-            deply_args.update(placement_policy_affinity=args.rhev_place_policy_aff)
+            deploy_args.update(placement_policy_affinity=args.rhev_place_policy_aff)
         if args.ec2_flavor is not None:
-            deply_args.update(instance_type=args.ec2_flavor)
+            deploy_args.update(instance_type=args.ec2_flavor)
 
         try:
-            vm = provider.deploy_template(args.template, **deply_args)
+            vm_name = provider.deploy_template(args.template, **deploy_args)
         except:
-            print "Unexpected error:", sys.exc_info()[0]
+            logger.exception(sys.exc_info()[0])
             destroy(provider, args)
             return 12
 
-        if not provider.is_vm_running(vm):
-            logging.error("VM is not running")
+        if not provider.is_vm_running(vm_name):
+            logger.error("VM is not running")
             return 10
-        ip_found = False
-        timeout_count = 0
-        while not ip_found:
-            try:
-                ip = provider.get_ip_address(vm)
-                ip_found = True
-            except AttributeError as e:
-                if timeout_count < 20:
-                    time.sleep(15)
-                    timeout_count += 1
-                else:
-                    raise e
-        logging.info("VM " + vm + " is running")
-        logging.info('IP Address returned is %s', ip)
+
+        ip, time_taken = wait_for(provider.get_ip_address, [vm_name], num_sec=600)
+        logger.info("VM " + vm_name + " is running")
+        logger.info('IP Address returned is %s', ip)
         if args.outfile:
             with open(args.outfile, 'w') as outfile:
                 outfile.write("appliance_ip_address=%s\n" % ip)
+        # In addition to the outfile, drop the ip address on stdout for easy parsing
+        print ip
     return 0
 
 if __name__ == "__main__":
