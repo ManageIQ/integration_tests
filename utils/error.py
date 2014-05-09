@@ -31,6 +31,12 @@ def match(o, e):
     raise NotImplemented("Don't know how to match {} to an error".format(o))
 
 
+@match.method(type)
+def _exception(cls_e, e):
+    '''Simulates normal except: clauses by matching the exception type'''
+    return isinstance(e, cls_e)
+
+
 @match.method(Callable)
 def _callable(f, e):
     '''Pass the exception to the callable, if the callable returns truthy,
