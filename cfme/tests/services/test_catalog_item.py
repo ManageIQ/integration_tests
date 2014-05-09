@@ -11,6 +11,8 @@ from utils.log import logger
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
+pytestmark = [pytest.mark.usefixtures("logged_in")]
+
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
