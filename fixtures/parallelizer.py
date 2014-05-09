@@ -1,5 +1,15 @@
+import difflib
+import os
+import queue
 import sys
-import py, pytest
+
+import _pytest
+import execnet
+import py
+import pytest
+import xdist
+from _pytest import runner
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("xdist", "distributed and subprocess testing")
@@ -39,22 +49,9 @@ def pytest_addoption(parser):
         help="directories to check for changes", default=[py.path.local()])
 
 # -------------------------------------------------------------------------
-# distributed testing hooks
-# -------------------------------------------------------------------------
-def pytest_addhooks(pluginmanager):
-    from xdist import newhooks
-    pluginmanager.addhooks(newhooks)
-
-# -------------------------------------------------------------------------
 # distributed testing initialization
 # -------------------------------------------------------------------------
 
-def pytest_cmdline_main(config):
-    check_options(config)
-    if config.getvalue("looponfail"):
-        from xdist.looponfail import looponfail_main
-        looponfail_main(config)
-        return 2 # looponfail only can get stop with ctrl-C anyway
 
 def pytest_configure(config, __multicall__):
     __multicall__.execute()
@@ -62,6 +59,7 @@ def pytest_configure(config, __multicall__):
         from xdist.dsession import DSession
         session = DSession(config)
         config.pluginmanager.register(session, "dsession")
+
 
 def check_options(config):
     if config.option.numprocesses:
@@ -87,6 +85,7 @@ def pytest_runtest_protocol(item):
             item.ihook.pytest_runtest_logreport(report=rep)
         return True
 
+
 def forked_run_report(item):
     # for now, we run setup/teardown in the subprocess
     # XXX optionally allow sharing of setup/teardown
@@ -95,6 +94,7 @@ def forked_run_report(item):
     import marshal
     from xdist.remote import serialize_report
     from xdist.slavemanage import unserialize_report
+
     def runforked():
         try:
             reports = runtestprotocol(item, log=False)
@@ -109,28 +109,18 @@ def forked_run_report(item):
         return [unserialize_report("testreport", x) for x in report_dumps]
     else:
         if result.exitstatus == EXITSTATUS_TESTEXIT:
-            py.test.exit("forked test item %s raised Exit" %(item,))
+            py.test.exit("forked test item %s raised Exit" % item)
         return [report_process_crash(item, result)]
+
 
 def report_process_crash(item, result):
     path, lineno = item._getfslineno()
-    info = "%s:%s: running the test CRASHED with signal %d" %(
-            path, lineno, result.signal)
-    from _pytest import runner
-    call = runner.CallInfo(lambda: 0/0, "???")
+    info = "%s:%s: running the test CRASHED with signal %d" % (
+        path, lineno, result.signal)
+    call = runner.CallInfo(lambda: 0 / 0, "???")
     call.excinfo = info
     rep = runner.pytest_runtest_makereport(item, call)
     return rep
-
-import sys
-import difflib
-
-import pytest
-import py
-from xdist.slavemanage import NodeManager
-
-
-queue = py.builtin._tryimport('queue', 'Queue')
 
 
 class EachScheduling:
@@ -182,6 +172,7 @@ class EachScheduling:
             node.send_runtest_all()
             pending[:] = self.node2collection[node]
 
+
 class LoadScheduling:
     LOAD_THRESHOLD_NEWITEMS = 5
     ITEM_CHUNKSIZE = 10
@@ -222,7 +213,8 @@ class LoadScheduling:
         if item not in self.item2nodes:
             raise AssertionError(item, self.item2nodes)
         nodes = self.item2nodes[item]
-        if node in nodes: # the node might have gone down already
+        # the node might have gone down already
+        if node in nodes:
             nodes.remove(node)
         #if not nodes:
         #    del self.item2nodes[item]
@@ -234,7 +226,7 @@ class LoadScheduling:
             pending.append(item)
             self.item2nodes.setdefault(item, []).append(node)
             node.send_runtest(item)
-        self.log("items waiting for node: %d" %(len(self.pending)))
+        self.log("items waiting for node: %d" % (len(self.pending)))
         #self.log("item2pending still executing: %s" %(self.item2nodes,))
         #self.log("node2pending: %s" %(self.node2pending,))
 
@@ -282,6 +274,7 @@ class LoadScheduling:
                 break
         del self.pending[:i + 1]
 
+
 def report_collection_diff(from_collection, to_collection, from_id, to_id):
     """Report the collected test difference between two nodes.
 
@@ -311,6 +304,7 @@ def report_collection_diff(from_collection, to_collection, from_id, to_id):
 
 class Interrupted(KeyboardInterrupt):
     """ signals an immediate interruption. """
+
 
 class DSession:
     def __init__(self, config):
@@ -342,7 +336,8 @@ class DSession:
 
     def pytest_sessionfinish(self, session):
         """ teardown any resources after a test run. """
-        nm = getattr(self, 'nodemanager', None) # if not fully initialized
+        # if not fully initialized
+        nm = getattr(self, 'nodemanager', None)
         if nm is not None:
             nm.teardown_nodes()
 
@@ -399,12 +394,13 @@ class DSession:
 
     def slave_slavefinished(self, node):
         self.config.hook.pytest_testnodedown(node=node, error=None)
-        if node.slaveoutput['exitstatus'] == 2: # keyboard-interrupt
-            self.shouldstop = "%s received keyboard-interrupt" % (node,)
+        # keyboard-interrupt
+        if node.slaveoutput['exitstatus'] == 2:
+            self.shouldstop = "%s received keyboard-interrupt" % node
             self.slave_errordown(node, "keyboard-interrupt")
             return
-        crashitem = self.sched.remove_node(node)
-        #assert not crashitem, (crashitem, node)
+        # crashitem = self.sched.remove_node(node)
+        # assert not crashitem, (crashitem, node)
         if self.shuttingdown and not self.sched.hasnodes():
             self.session_finished = True
 
@@ -424,13 +420,13 @@ class DSession:
     def slave_collectionfinish(self, node, ids):
         self.sched.addnode_collection(node, ids)
         if self.terminal:
-            self.trdist.setstatus(node.gateway.spec, "[%d]" %(len(ids)))
+            self.trdist.setstatus(node.gateway.spec, "[%d]" % (len(ids)))
 
         if self.sched.collection_is_completed:
             if self.terminal:
                 self.trdist.ensure_show_status()
                 self.terminal.write_line("")
-                self.terminal.write_line("scheduling tests via %s" %(
+                self.terminal.write_line("scheduling tests via %s" % (
                     self.sched.__class__.__name__))
 
             self.sched.init_distribute()
@@ -477,11 +473,12 @@ class DSession:
         # XXX get more reporting info by recording pytest_runtest_logstart?
         runner = self.config.pluginmanager.getplugin("runner")
         fspath = nodeid.split("::")[0]
-        msg = "Slave %r crashed while running %r" %(slave.gateway.id, nodeid)
+        msg = "Slave %r crashed while running %r" % (slave.gateway.id, nodeid)
         rep = runner.TestReport(nodeid, (fspath, None, fspath), (),
             "failed", msg, "???")
         rep.node = slave
         self.config.hook.pytest_runtest_logreport(report=rep)
+
 
 class TerminalDistReporter:
     def __init__(self, config):
@@ -503,12 +500,11 @@ class TerminalDistReporter:
             self.rewrite(self.getstatus())
 
     def getstatus(self):
-        parts = ["%s %s" %(spec.id, self._status[spec.id])
-                   for spec in self._specs]
+        parts = ["%s %s" % (spec.id, self._status[spec.id]) for spec in self._specs]
         return " / ".join(parts)
 
     def rewrite(self, line, newline=False):
-        pline = line + " " * max(self._lastlen-len(line), 0)
+        pline = line + " " * max(self._lastlen - len(line), 0)
         if newline:
             self._lastlen = 0
             pline += "\n"
@@ -535,16 +531,17 @@ class TerminalDistReporter:
     def pytest_testnodeready(self, node):
         if self.config.option.verbose > 0:
             d = node.slaveinfo
-            infoline = "[%s] Python %s" %(
+            infoline = "[%s] Python %s" % (
                 d['id'],
-                d['version'].replace('\n', ' -- '),)
+                d['version'].replace('\n', ' -- ')
+            )
             self.rewrite(infoline, newline=True)
         self.setstatus(node.gateway.spec, "ok")
 
     def pytest_testnodedown(self, node, error):
         if not error:
             return
-        self.write_line("[%s] node down: %s" %(node.gateway.id, error))
+        self.write_line("[%s] node down: %s" % (node.gateway.id, error))
 
     #def pytest_xdist_rsyncstart(self, source, gateways):
     #    targets = ",".join([gw.id for gw in gateways])
@@ -562,7 +559,6 @@ class TerminalDistReporter:
     needs not to be installed in remote environments.
 """
 
-import sys, os
 
 class SlaveInteractor:
     def __init__(self, config, channel):
@@ -608,7 +604,7 @@ class SlaveInteractor:
                     torun.append(self._id2item[nodeid])
             elif name == "runtests_all":
                 torun.extend(session.items)
-            self.log("items to run: %s" %(len(torun)))
+            self.log("items to run: %s" % (len(torun)))
             while len(torun) >= 2:
                 item = torun.pop(0)
                 nextitem = torun[0]
@@ -642,6 +638,7 @@ class SlaveInteractor:
         data = serialize_report(report)
         self.sendevent("collectreport", data=data)
 
+
 def serialize_report(rep):
     import py
     d = rep.__dict__.copy()
@@ -653,19 +650,22 @@ def serialize_report(rep):
         if isinstance(d[name], py.path.local):
             d[name] = str(d[name])
         elif name == "result":
-            d[name] = None # for now
+            # for now
+            d[name] = None
     return d
+
 
 def getinfodict():
     import platform
     return dict(
-        version = sys.version,
-        version_info = tuple(sys.version_info),
-        sysplatform = sys.platform,
-        platform = platform.platform(),
-        executable = sys.executable,
-        cwd = os.getcwd(),
+        version=sys.version,
+        version_info=tuple(sys.version_info),
+        sysplatform=sys.platform,
+        platform=platform.platform(),
+        executable=sys.executable,
+        cwd=os.getcwd(),
     )
+
 
 def remote_initconfig(option_dict, args):
     from _pytest.config import Config
@@ -680,33 +680,28 @@ def remote_initconfig(option_dict, args):
     return config
 
 
-if __name__ == '__channelexec__':
-    # python3.2 is not concurrent import safe, so let's play it safe
-    # https://bitbucket.org/hpk42/pytest/issue/347/pytest-xdist-and-python-32
-    if sys.version_info[:2] == (3,2):
-        os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
-    slaveinput,args,option_dict = channel.receive()
-    importpath = os.getcwd()
-    sys.path.insert(0, importpath) # XXX only for remote situations
-    os.environ['PYTHONPATH'] = (importpath + os.pathsep +
-        os.environ.get('PYTHONPATH', ''))
-    #os.environ['PYTHONPATH'] = importpath
-    import py
-    config = remote_initconfig(option_dict, args)
-    config.slaveinput = slaveinput
-    config.slaveoutput = {}
-    interactor = SlaveInteractor(config, channel)
-    config.hook.pytest_cmdline_main(config=config)
+# if __name__ == '__channelexec__':
+#     # python3.2 is not concurrent import safe, so let's play it safe
+#     # https://bitbucket.org/hpk42/pytest/issue/347/pytest-xdist-and-python-32
+#     if sys.version_info[:2] == (3,2):
+#         os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+#     slaveinput, args, option_dict = channel.receive()
+#     importpath = os.getcwd()
+#     sys.path.insert(0, importpath) # XXX only for remote situations
+#     os.environ['PYTHONPATH'] = (importpath + os.pathsep +
+#         os.environ.get('PYTHONPATH', ''))
+#     #os.environ['PYTHONPATH'] = importpath
+#     import py
+#     config = remote_initconfig(option_dict, args)
+#     config.slaveinput = slaveinput
+#     config.slaveoutput = {}
+#     interactor = SlaveInteractor(config, channel)
+#     config.hook.pytest_cmdline_main(config=config)
 
-import py, pytest
-import sys, os
-import execnet
-import xdist.remote
-
-from _pytest import runner # XXX load dynamically
 
 class NodeManager(object):
     EXIT_TIMEOUT = 10
+
     def __init__(self, config, specs=None, defaultchdir="pyexecnetcache"):
         self.config = config
         self._nodesready = py.std.threading.Event()
@@ -768,7 +763,7 @@ class NodeManager(object):
             except ValueError:
                 xspeclist.append(xspec)
             else:
-                xspeclist.extend([xspec[i+1:]] * num)
+                xspeclist.extend([xspec[i + 1:]] * num)
         if not xspeclist:
             raise pytest.UsageError(
                 "MISSING test execution (tx) nodes: please specify --tx")
@@ -780,11 +775,11 @@ class NodeManager(object):
                 break
         else:
             return []
-        import pytest, _pytest
+
         pytestpath = pytest.__file__.rstrip("co")
         pytestdir = py.path.local(_pytest.__file__).dirpath()
         config = self.config
-        candidates = [py._pydir,pytestpath,pytestdir]
+        candidates = [py._pydir, pytestpath, pytestdir]
         candidates += config.option.rsyncdir
         rsyncroots = config.getini("rsyncdirs")
         if rsyncroots:
@@ -793,7 +788,7 @@ class NodeManager(object):
         for root in candidates:
             root = py.path.local(root).realpath()
             if not root.check():
-                raise pytest.UsageError("rsyncdir doesn't exist: %r" %(root,))
+                raise pytest.UsageError("rsyncdir doesn't exist: %r" % root)
             if root not in roots:
                 roots.append(root)
         return roots
@@ -831,12 +826,13 @@ class NodeManager(object):
                 gateways=gateways,
             )
 
+
 class HostRSync(execnet.RSync):
     """ RSyncer that filters out common files
     """
     def __init__(self, sourcedir, *args, **kwargs):
         self._synced = {}
-        ignores= None
+        ignores = None
         if 'ignores' in kwargs:
             ignores = kwargs.pop('ignores')
         self._ignores = ignores or []
@@ -857,7 +853,7 @@ class HostRSync(execnet.RSync):
         remotepath = os.path.basename(self._sourcedir)
         super(HostRSync, self).add_target(gateway, remotepath,
                                           finishedcallback=finished,
-                                          delete=True,)
+                                          delete=True)
 
     def _report_send_file(self, gateway, modified_rel_path):
         if self._verbose:
@@ -880,9 +876,10 @@ def make_reltoroot(roots, args):
                 parts[0] = root.basename + "/" + x
                 break
         else:
-            raise ValueError("arg %s not relative to an rsync root" % (arg,))
+            raise ValueError("arg %s not relative to an rsync root" % arg)
         l.append(splitcode.join(parts))
     return l
+
 
 class SlaveController(object):
     ENDMARK = -1
@@ -899,7 +896,7 @@ class SlaveController(object):
             py.log.setconsumer(self.log._keywords, None)
 
     def __repr__(self):
-        return "<%s %s>" %(self.__class__.__name__, self.gateway.id,)
+        return "<%s %s>" % (self.__class__.__name__, self.gateway.id)
 
     def setup(self):
         self.log("setting up slave session")
@@ -934,7 +931,7 @@ class SlaveController(object):
         self.sendcommand("runtests", ids=[nodeid])
 
     def send_runtest_all(self):
-        self.sendcommand("runtests_all",)
+        self.sendcommand("runtests_all")
 
     def shutdown(self):
         if not self._down:
@@ -965,13 +962,14 @@ class SlaveController(object):
                 err = self.channel._getremoteerror()
                 if not self._down:
                     if not err or isinstance(err, EOFError):
-                        err = "Not properly terminated" # lost connection?
+                        # lost connection?
+                        err = "Not properly terminated"
                     self.notify_inproc("errordown", node=self, error=err)
                     self._down = True
                 return
             eventname, kwargs = eventcall
             if eventname in ("collectionstart"):
-                self.log("ignoring %s(%s)" %(eventname, kwargs))
+                self.log("ignoring %s(%s)" % (eventname, kwargs))
             elif eventname == "slaveready":
                 self.notify_inproc(eventname, node=self, **kwargs)
             elif eventname == "slavefinished":
@@ -986,7 +984,7 @@ class SlaveController(object):
             elif eventname == "collectionfinish":
                 self.notify_inproc(eventname, node=self, ids=kwargs['ids'])
             else:
-                raise ValueError("unknown event: %s" %(eventname,))
+                raise ValueError("unknown event: %s" % eventname)
         except KeyboardInterrupt:
             # should not land in receiver-thread
             raise
@@ -994,6 +992,7 @@ class SlaveController(object):
             excinfo = py.code.ExceptionInfo()
             py.builtin.print_("!" * 20, excinfo)
             self.config.pluginmanager.notify_exception(excinfo)
+
 
 def unserialize_report(name, reportdict):
     d = reportdict
