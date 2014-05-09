@@ -10,6 +10,12 @@ class CFMEException(Exception):
     pass
 
 
+class CFMEExceptionOccured(CFMEException):
+    """Raised by :py:func:`cfme.web_ui.cfme_exception.assert_no_cfme_exception` when there is
+    a Rails exception currently on page."""
+    pass
+
+
 class AddProviderError(CFMEException):
     pass
 
