@@ -26,7 +26,7 @@ def locate(name):
     Returns: A web element of the selected accordion.
     """
 
-    xpath = '//%s/%s//span[.="%s"]' % (DHX_ITEM, DHX_LABEL, name)
+    xpath = '//%s/%s//span[normalize-space(.)="%s"]' % (DHX_ITEM, DHX_LABEL, name)
     return xpath
 
 
