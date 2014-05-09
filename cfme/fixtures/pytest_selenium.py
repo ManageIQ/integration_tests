@@ -10,7 +10,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 
 :var ajax_wait_js: A Javascript function for ajax wait checking
 """
-from time import sleep
+from time import sleep, time
 from collections import Iterable
 import json
 
@@ -147,7 +147,8 @@ def wait_until(f, msg="Webdriver wait timed out"):
     """
     Wrapper around WebDriverWait from selenium
     """
-    WebDriverWait(browser(), 120.0).until(f, msg)
+    t = time()
+    return WebDriverWait(browser(), 120.0).until(f, msg) and time() - t
 
 
 def _nothing_in_flight(s):
@@ -160,7 +161,7 @@ def wait_for_ajax():
     Waits unti lall ajax timers are complete, in other words, waits until there are no
     more pending ajax requests, page load should be finished completely.
     """
-    wait_until(_nothing_in_flight, "Ajax wait timed out")
+    return wait_until(_nothing_in_flight, "Ajax wait timed out")
 
 
 def is_displayed(loc):

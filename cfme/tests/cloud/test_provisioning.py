@@ -1,15 +1,11 @@
 # These tests don't work at the moment, due to the security_groups multi select not working
 # in selenium (the group is selected then immediately reset)
 import pytest
-
-from cfme.services import requests
-from cfme.cloud.provisioning import provisioning_form
-from cfme.web_ui import flash
 from utils import testgen
 from utils.providers import setup_cloud_providers
 from utils.randomness import generate_random_string
 from utils.log import logger
-from utils.wait import wait_for
+from cfme.cloud import provisioning as prov
 
 pytestmark = pytest.mark.fixtureconf(server_roles="+automate")
 
@@ -44,10 +40,28 @@ def setup_providers():
 
 
 @pytest.yield_fixture(scope="function")
-def vm_name(provider_key, provider_mgmt):
-    # also tries to delete the VM that gets made with this name
+def instance(setup_providers, provider_key, provider_mgmt, provisioning, provider_crud):
+    # tries to delete the VM that gets created here
     vm_name = 'provtest-%s' % generate_random_string()
-    yield vm_name
+    image = provisioning['image']['name']
+    note = ('Testing provisioning from image %s to vm %s on provider %s' %
+        (image, vm_name, provider_crud.key))
+
+    instance = prov.Instance(
+        name=vm_name,
+        email='image_provisioner@example.com',
+        first_name='Image',
+        last_name='Provisioner',
+        notes=note,
+        instance_type=provisioning['instance_type'],
+        availability_zone=provisioning['availability_zone'],
+        security_groups=[provisioning['security_group']],
+        provider_mgmt=provider_mgmt,
+        provider=provider_crud,
+        guest_keypair="shared",
+        template=prov.Template(image))
+    instance.create()
+    yield instance
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
         provider_mgmt.delete_vm(vm_name)
@@ -56,43 +70,18 @@ def vm_name(provider_key, provider_mgmt):
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
-def test_provision_from_template(setup_providers, vm_name, provider_crud, provider_mgmt,
-        provisioning):
-    # This is ensured to work by pytest_generate_tests
-    image = provisioning['image']['name']
+def test_provision_from_template(setup_providers, provider_mgmt, instance):
+    assert(provider_mgmt.is_vm_running(instance.name))
 
-    pytest.sel.force_navigate('clouds_provision_instances', context={
-        'provider': provider_crud,
-        'template_name': image,
-    })
 
-    note = ('Testing provisioning from image %s to vm %s on provider %s' %
-        (image, vm_name, provider_crud.key))
+def test_stop_start(provider_mgmt, instance):
+    instance.stop()
+    assert(provider_mgmt.is_vm_stopped(instance.name))
+    instance.start()
+    assert(provider_mgmt.is_vm_running(instance.name))
 
-    # Currently broken: security group can't be selected with selenium
-    provisioning_data = {
-        'email': 'image_provisioner@example.com',
-        'first_name': 'Image',
-        'last_name': 'Provisioner',
-        'notes': note,
-        'instance_name': vm_name,
-        'instance_type': provisioning['instance_type'],
-        'availability_zone': provisioning['availability_zone'],
-        'security_groups': provisioning['security_group']
-    }
-    provisioning_form.fill(provisioning_data)
-    pytest.sel.click(provisioning_form.submit_button)
-    flash.assert_no_errors()
 
-    # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
-    logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider_crud.key)
-    wait_for(provider_mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
-
-    # nav to requests page happens on successful provision
-    logger.info('Waiting for cfme provision request for vm %s' % vm_name)
-    row_description = 'Provision from [%s] to [%s]' % (image, vm_name)
-    cells = {'Description': row_description}
-
-    row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
-    assert row.last_message.text == 'VM Provisioned Successfully'
+def test_terminate(provider_mgmt, instance):
+    instance.terminate()
+    assert(provider_mgmt.is_vm_state(instance.name,
+                                     provider_mgmt.states['deleted']))
