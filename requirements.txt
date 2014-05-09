@@ -2,6 +2,7 @@ cartouche
 boto
 bottle
 bottle-sqlite
+execnet
 flake8
 ipython
 Jinja2
