@@ -1349,11 +1349,12 @@ class InfoBlock(object):
             self._box_locator = sel.VersionLocator({
                 '9.9.9.9': '//table//th[contains(., "%s")]/../../../..',
                 'default': '//div[@class="modbox"]/h2[@class="modtitle"]'
-                '[contains(., "%s")]/..'}).locate()
+                '[contains(., "%s")]/..'})
             self._pair_locator = 'table/tbody/tr/td[1][@class="label"][.="%s"]/..'
             self._value_locator = 'td[2]'
         elif itype == "form":
-            self._box_locator = '//fieldset/p[@class="legend"][contains(., "%s")]/..'
+            self._box_locator = sel.VersionLocator({
+                'default': '//fieldset/p[@class="legend"][contains(., "%s")]/..'})
             self._pair_locator = 'table/tbody/tr/td[1][@class="key"][.="%s"]/..'
             self._value_locator = 'td[2]'
         else:
@@ -1413,7 +1414,8 @@ class InfoBlock(object):
             indent: Identifiers in the form of a list of strings.
         Returns: The Value as a WebElement
         """
-        xpath_core = "%s/%s/%s" % (self._box_locator, self._pair_locator, self._value_locator)
+        xpath_core = "%s/%s/%s" % (self._box_locator.locate(),
+                                   self._pair_locator, self._value_locator)
         xpath = xpath_core % (ident[0], ident[1])
         try:
             el = sel.element(xpath)
