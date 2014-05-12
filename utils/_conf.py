@@ -126,7 +126,8 @@ class Config(dict):
             with catch_warnings():
                 local_yaml = '%s.local' % key
                 local_yaml_dict = load_yaml(local_yaml, warn_on_fail=False)
-                yaml_dict.update(local_yaml_dict)
+                if local_yaml_dict:
+                    yaml_dict.update(local_yaml_dict)
 
             # Returning self[key] instead of yaml_dict as a small sanity check
             self[key] = yaml_dict
