@@ -98,21 +98,17 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
 
 def test_create_catalog_item(setup_providers, catalog_item):
     catalog_item.create()
-    flash.assert_no_errors()
 
 
 def test_update_catalog_item(setup_providers, catalog_item):
     catalog_item.create()
     with update(catalog_item):
         catalog_item.description = "my edited description"
-    flash.assert_no_errors()
-    flash.assert_success_message('Service Catalog Item "%s" was saved' % catalog_item.name)
 
 
 def test_delete_catalog_item(setup_providers, catalog_item):
     catalog_item.create()
     catalog_item.delete()
-    flash.assert_no_errors()
 
 
 def test_catalog_item_duplicate_name(setup_providers, catalog_item):
