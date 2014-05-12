@@ -110,7 +110,6 @@ class EventListener(object):
     def listener_port(self):
         return random_port()
 
-    @lazycache
     def listener_host(self):
         return "http://%s" % my_ip_address()
 
@@ -118,7 +117,7 @@ class EventListener(object):
         """ Query event listener
         """
         assert not self.finished, "Listener dead!"
-        listener_url = "%s:%d" % (self.listener_host, self.listener_port)
+        listener_url = "%s:%d" % (self.listener_host(), self.listener_port)
         logger.info("checking api: %s%s" % (listener_url, route))
         r = requests.get(listener_url + route)
         r.raise_for_status()
@@ -135,7 +134,7 @@ class EventListener(object):
             Boolean signalizing success.
         """
         assert not self.finished, "Listener dead!"
-        listener_url = "%s:%d" % (self.listener_host, self.listener_port)
+        listener_url = "%s:%d" % (self.listener_host(), self.listener_port)
         r = requests.delete(listener_url + "/events")
         r.raise_for_status()
         return r.json().get("result") == "success"
@@ -261,7 +260,7 @@ class EventListener(object):
             "Listener",
             (object,),
             {
-                "host": self.listener_host,
+                "host": self.listener_host(),
                 "port": self.listener_port
             }
         )
