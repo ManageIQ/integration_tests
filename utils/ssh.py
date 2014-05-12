@@ -106,12 +106,12 @@ def command_runner(client, command, stream_output=False):
 
 
 def rails_runner(client, command, stream_output=False):
-    template = 'cd /var/www/miq/vmdb; rails runner %s'
+    template = 'cd /var/www/miq/vmdb; bin/rails runner %s'
     return command_runner(client, template % command, stream_output)
 
 
 def rake_runner(client, command, stream_output=False):
-    template = 'cd /var/www/miq/vmdb; rake %s'
+    template = 'cd /var/www/miq/vmdb; bin/rake %s'
     return command_runner(client, template % command, stream_output)
 
 
