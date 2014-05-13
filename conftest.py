@@ -6,11 +6,17 @@ Top-level conftest.py does a couple of things:
 """
 from pkgutil import iter_modules
 
-import cfme.fixtures
+import pytest
 
-# From cfme_tests
+import cfme.fixtures
 import fixtures
 import markers
+
+
+@pytest.mark.tryfirst
+def pytest_addoption(parser):
+    # Create the cfme option group for use in other plugins
+    parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
 
 
 def _pytest_plugins_generator(*extension_pkgs):
