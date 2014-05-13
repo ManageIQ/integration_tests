@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 from IPython import embed
 
 from fixtures import navigation as nav

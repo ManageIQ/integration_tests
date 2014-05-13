@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 Given the name of a provider from cfme_data and using credentials from
 the credentials stash, call the corresponding action on that provider, along

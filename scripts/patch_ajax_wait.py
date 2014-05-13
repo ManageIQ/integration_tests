@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """Patch appliance.js on a running appliance with an ajax wait fix
 

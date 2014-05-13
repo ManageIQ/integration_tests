@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """Add/activate/remove a direct_lun disk on a rhevm appliance
 """

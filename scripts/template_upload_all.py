@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 """This script takes an url to a web directory containing links to CFME *.ova images, and runs
 whatever uploader script is needed to upload the image & make a template from it. When this ends,

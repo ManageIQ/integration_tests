@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """SSH into a running appliance and install Netapp SDK
 """
