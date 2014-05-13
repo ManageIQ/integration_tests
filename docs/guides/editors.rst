@@ -140,7 +140,7 @@ So far the best emacs setup I've found is iPython notebook, combined with the
 
 Installing iPython is covered on its `homepage <http://ipython.org/install.html>`_.
 
-You can run ``M-x package-install`` `ein` in emacs to install ein (if you have the right
+You can run ``M-x package-install``, ``ein`` in emacs to install ein (if you have the right
 repositories set up - check out `Melpa <http://melpa.milkbox.net/#/>`_)
 
 Then in a shell somewhere, you can start up iPython notebook process.  This is the python
@@ -166,18 +166,18 @@ the ``magit`` package, which I highly recommend (it is a git client for emacs).
    (autoload 'magit-get-top-dir "magit" nil t)
    (defun magit-project-dir ()
      (magit-get-top-dir (file-name-directory (or (buffer-file-name) default-directory))))
-
    (defun start-ipython-current-project (virtualenv-dir)
-    (interactive "DVirtualenv dir: ")
-
-   (save-excursion
-     (let ((buf (get-buffer-create
-                (generate-new-buffer-name (file-name-nondirectory
-                                           (directory-file-name (file-name-directory (magit-project-dir))))))))
-      (shell buf)
-      (process-send-string buf (format ". %s/bin/activate\n" virtualenv-dir))
-      (process-send-string buf (format "cd %s;ipython notebook\n" (magit-project-dir))))))
-
+     (interactive
+      (let ((d (read-directory-name "VirtualEnv dir: " "~/.virtualenvs/" nil t)))
+        (list d)))
+     (save-excursion
+       (let ((buf (get-buffer-create
+                   (generate-new-buffer-name (file-name-nondirectory
+                                              (directory-file-name (file-name-directory (magit-project-dir))))))))
+         (shell buf)
+         (process-send-string buf (format ". %s/bin/activate\n" virtualenv-dir))
+         (process-send-string buf (format "cd %s;ipython notebook\n" (magit-project-dir))))))
+   
 
 To use the above snippet,
 
@@ -187,3 +187,17 @@ To use the above snippet,
 
 It will start ipython in emacs' shell buffer.
 
+Flake8 Lint
+^^^^^^^^^^^
+
+Flycheck is recommended because it highlights the column where the problem occurs instead of just the line.
+
+Run ``M-x package-install``, ``flycheck``, and see the `Flycheck homepage <https://github.com/flycheck/flycheck>`_.
+
+You can use the global mode as described on the homepage, or to just enable flymake for python files
+
+.. code-block:: cl
+
+  (autoload 'flycheck "flycheck-mode")
+  (eval-after-load 'python
+    '(add-hook 'python-mode-hook 'flycheck-mode))
