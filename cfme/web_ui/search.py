@@ -16,7 +16,7 @@ search_box = Region(
         search_field="//div[@id='searchbox']//input[@id='search_text']",
 
         # The icon buttons for searching
-        search_icon="//div[@id='searchbox']//input[@id='searchicon']",
+        search_icon="//div[@id='searchbox']//*[@id='searchicon']",
 
         # The arrow opening/closing the advanced search box
         toggle_advanced="//img[@id='adv_search_img']",
@@ -53,7 +53,7 @@ search_box = Region(
         global_search="//input[@id='search_type']",
 
         # On the main page, this link clears the filters
-        clear_advanced_search="//a[@href='/host/adv_search_clear']",
+        clear_advanced_search="//a[contains(@href, 'adv_search_clear')]",
     )
 )
 

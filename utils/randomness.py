@@ -3,20 +3,54 @@ import string
 import sys
 import uuid
 
+
 def generate_random_int(max=sys.maxint):
     max = int(max)
     return random.randint(0, max)
 
+
 def generate_random_string(size=8):
     size = int(size)
+
     def random_string_generator(size):
         choice_chars = string.letters + string.digits
         for x in xrange(size):
             yield random.choice(choice_chars)
     return ''.join(random_string_generator(size))
 
+
 def generate_random_uuid_as_str():
     return str(uuid.uuid4())
+
+
+def pick(from_where, n, quiet=True):
+    """Picks `n` elements randomly from source iterable.
+
+    Will be converted during processing so no side effects
+
+    Args:
+        from_where: Source iterable.
+        n: How many elements to pick
+        quiet: Whether raise the exception about n bigger than len(from_where) or not. Default True.
+    Returns: n-length list with randomly picked elements from `from_where`
+    """
+    if len(from_where) < n:
+        # We want more
+        if not quiet:
+            raise ValueError("Less elements in from_where than you want!")
+        else:
+            return list(from_where)
+    elif len(from_where) == n:
+        # We want all
+        return list(from_where)
+    # Random picking
+    result = []
+    from_where = list(from_where)  # to prevent side effects
+    while len(result) < n:
+        index = random.choice(range(len(from_where)))
+        result.append(from_where.pop(index))
+    return result
+
 
 class RandomizeValues(object):
     _randomizers = {
@@ -46,8 +80,7 @@ class RandomizeValues(object):
         Returns a modified dict with randomize values
 
         """
-
-        return {k: cls._randomize_item(v) for k,v in d.items()}
+        return {k: cls._randomize_item(v) for k, v in d.items()}
 
     @classmethod
     def _randomize_item(cls, item):
@@ -86,5 +119,3 @@ class RandomizeValues(object):
             # randomizer was tripped, but no matching randomizers found
             # in _randomizers, just return what was there
             return item
-
-
