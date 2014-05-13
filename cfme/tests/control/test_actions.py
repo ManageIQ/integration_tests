@@ -15,8 +15,6 @@ import pytest
 from cfme.control import explorer
 from cfme.infrastructure import provider
 from datetime import datetime
-from functools import wraps
-from ovirtsdk.infrastructure.errors import RequestError
 from utils import mgmt_system
 from utils.db import cfmedb
 from utils.conf import cfme_data, credentials
@@ -131,7 +129,7 @@ def automate_role_set():
 
 
 @pytest.fixture(scope="module")
-def vm_provisioned(vm_name, vm_provider, provider_template, provider_id, provider_data):
+def vm_provisioned(request, vm_name, vm_provider, provider_template, provider_id, provider_data):
     if provider_id in skipped_providers:
         pytest.skip("Skipping %s" % provider_id)
     if isinstance(vm_provider, mgmt_system.RHEVMSystem):
@@ -174,6 +172,24 @@ def vm_provisioned(vm_name, vm_provider, provider_template, provider_id, provide
     else:
         raise Exception("Unknown provider")
 
+    # Now finalizer to be 100% sure it gets deleted!
+    def finalize():
+        """Not a yield fixture because this is much more reliable"""
+        logger.info("Shutting down VM with name %s" % vm_name)
+        if vm_provider.is_vm_suspended(vm_name):
+            logger.info("Powering up VM %s to shut it down correctly." % vm_name)
+            vm_provider.start_vm(vm_name)
+        if vm_provider.is_vm_running(vm_name):
+            logger.info("Powering off VM %s" % vm_name)
+            vm_provider.stop_vm(vm_name)
+        logger.info("Deleting VM %s in VMDB." % vm_name)
+        #vm_obj.delete()  # CFME delete
+        logger.info("VM %s deleted in VMDB, now it's time to check the provider" % vm_name)
+        if vm_provider.does_vm_exist(vm_name):
+            logger.info("Deleting VM %s in %s" % (vm_name, vm_provider.__class__.__name__))
+            vm_provider.delete_vm(vm_name)
+    request.addfinalizer(finalize)
+
 
 def get_vm_object(vm_name):
     """Looks up the CFME database for the VM.
@@ -193,144 +209,57 @@ def get_vm_object(vm_name):
         return None
 
 
-@pytest.yield_fixture(scope="module")
+@pytest.fixture(scope="module")
 def vm(vm_provisioned, automate_role_set, vm_name, vm_provider, provider_object):
     """This fixture ensures that the provisioned VM appears in VMDB and returns SOAP object
     to operate on. Also ensures that the VM gets deleted after the test.
     """
-    vm_obj = get_vm_object(vm_name)
-    if vm_obj is None:
-        provider_object.refresh_provider_relationships()
-        vm_obj = wait_for(
-            lambda: get_vm_object(vm_name),
-            message="VM object %s appears in CFME" % vm_name,
-            fail_condition=None,
-            num_sec=180,
-            delay=4,
-        )[0]
-    yield vm_obj
-    logger.info("Shutting down VM with name %s" % vm_name)
-    if vm_provider.is_vm_suspended(vm_name):
-        logger.info("Powering up VM %s to shut it down correctly." % vm_name)
-        vm_provider.start_vm(vm_name)
-        wait_for(
-            lambda: vm_provider.is_vm_running(vm_name),
-            num_sec=240, delay=5, message="VM %s running" % vm_name
-        )
-    if vm_provider.is_vm_running(vm_name):
-        logger.info("Powering off VM %s" % vm_name)
-        vm_provider.stop_vm(vm_name)
-        wait_for(
-            lambda: vm_provider.is_vm_stopped(vm_name),
-            num_sec=240, delay=5, message="VM %s stopped" % vm_name
-        )
-    logger.info("Deleting VM %s in VMDB." % vm_name)
-    # vm_obj.delete()  # CFME delete
-    logger.info("VM %s deleted in VMDB, now it's time to check the provider" % vm_name)
-    if vm_provider.does_vm_exist(vm_name):
-        logger.info("Deleting VM %s in %s" % (vm_name, vm_provider.__class__.__name__))
-        vm_provider.delete_vm(vm_name)
-        wait_for(
-            lambda: not vm_provider.does_vm_exist(vm_name),
-            num_sec=120, message="check the VM %s does not exist any more" % vm_name, delay=5
-        )
-
-
-def protected_from_ovirt_errors(f, name=None):
-    """Try to circumvent errors by wait_for when 'Bad Request' or something similar happens."""
-    class _was_req_err(object):
-        pass
-    if name:
-        f.__name__ = name
-
-    @wraps(f)
-    def g():
-        try:
-            return f()
-        except RequestError:
-            return _was_req_err
-    try:
-        @wraps(g)
-        def h():
-            return wait_for(
-                g, fail_condition=_was_req_err, num_sec=10, delay=0.25, message=g.__name__
-            )[0]
-        return h
-    except TimedOutError:
-        return False
+    return wait_for(
+        lambda: get_vm_object(vm_name),
+        message="VM object %s appears in CFME" % vm_name,
+        fail_condition=None,
+        fail_func=lambda: provider_object.refresh_provider_relationships(),
+        num_sec=240,
+        delay=30,
+    )[0]
 
 
 # "PARTIAL" functions provided as fixtures. They always correspond to current `vm` object
 @pytest.fixture(scope="module")
 def vm_start_func(vm, vm_name, vm_provider):
-    return protected_from_ovirt_errors(
-        lambda: vm_provider.start_vm(vm_name), "vm_start_func-%s" % vm_name
-    )
+    return lambda: vm_provider.start_vm(vm_name)
 
 
 @pytest.fixture(scope="module")
 def vm_stop_func(vm, vm_name, vm_provider):
-    return protected_from_ovirt_errors(
-        lambda: vm_provider.stop_vm(vm_name), "vm_stop_func-%s" % vm_name
-    )
+    return lambda: vm_provider.stop_vm(vm_name)
 
 
 @pytest.fixture(scope="module")
 def vm_is_on_func(vm, vm_name, vm_provider):
-    return protected_from_ovirt_errors(
-        lambda: vm_provider.is_vm_running(vm_name), "vm_is_on_func-%s" % vm_name
-    )
+    return lambda: vm_provider.is_vm_running(vm_name)
 
 
 @pytest.fixture(scope="module")
 def vm_is_off_func(vm, vm_name, vm_provider):
-    return protected_from_ovirt_errors(
-        lambda: vm_provider.is_vm_stopped(vm_name), "vm_is_off_func-%s" % vm_name
-    )
+    return lambda: vm_provider.is_vm_stopped(vm_name)
 
 
 @pytest.fixture(scope="module")
 def vm_is_suspended_func(vm, vm_name, vm_provider):
-    return protected_from_ovirt_errors(
-        lambda: vm_provider.is_vm_suspended(vm_name), "vm_is_suspended_func-%s" % vm_name
-    )
-
-
-@pytest.fixture(scope="module")
-def vm_in_steady_state_func(vm_is_off_func, vm_is_on_func, vm_is_suspended_func):
-    """To prevent errors from launching a machine which is currently suspending and so,
-    one can use this fixture for wait_for to guarantee that the VM is in steady state.
-    """
-    return protected_from_ovirt_errors(
-        lambda: vm_is_off_func() or vm_is_on_func() or vm_is_suspended_func(),
-        "vm_in_steady_state_func"
-    )
+    return lambda: vm_provider.is_vm_suspended(vm_name)
 
 
 @pytest.fixture(scope="function")
-def vm_on(vm_start_func, vm_is_on_func, vm_in_steady_state_func, vm_name, vm_provider):
+def vm_on(vm, vm_provider, vm_name):
     """ Ensures that the VM is on when the control goes to the test."""
-    wait_for(vm_in_steady_state_func, message="wait for VM %s to settle" % vm_name, delay=1)
-    if not vm_is_on_func():
-        logger.info("Powering on %s in provider %s" % (vm_name, vm_provider.__class__.__name__))
-        vm_start_func()
-        wait_for(vm_is_on_func, num_sec=240, delay=5, message="Wait %s on" % vm_name)
+    vm_provider.start_vm(vm_name)
 
 
 @pytest.fixture(scope="function")
-def vm_off(
-        vm_stop_func, vm_is_off_func, vm_is_suspended_func, vm_start_func, vm_is_on_func, vm_name,
-        vm_provider, vm_in_steady_state_func):
+def vm_off(vm, vm_name, vm_provider):
     """ Ensures that the VM is off when the control goes to the test."""
-    wait_for(vm_in_steady_state_func, message="wait for VM %s to settle" % vm_name, delay=1)
-    if not vm_is_off_func():
-        if vm_is_suspended_func():
-            logger.info("Powering on %s from suspend to power off without exception" % vm_name)
-            vm_start_func()
-            wait_for(vm_is_on_func, num_sec=240, delay=5, message="Wait %s on for pwroff" % vm_name)
-        logger.info("Powering off %s in provider %s" % (vm_name, vm_provider.__class__.__name__))
-        vm_stop_func()
-        wait_for(vm_is_off_func, num_sec=240, delay=5, message="Wait %s off" % vm_name)
+    vm_provider.stop_vm(vm_name)
 
 
 @pytest.yield_fixture(scope="module")
@@ -363,13 +292,9 @@ def test_action_start_virtual_machine_after_stopping(
     request.addfinalizer(lambda: policy_for_testing.assign_events())
     # Stop the VM
     vm_stop_func()
-    try:
-        wait_for(vm_is_off_func, num_sec=80, delay=5)
-    except TimedOutError:
-        pass
     # Wait for VM powered on by CFME
     try:
-        wait_for(vm_is_on_func, num_sec=240, delay=5)
+        wait_for(vm_is_on_func, num_sec=600, delay=5)
     except TimedOutError:
         pytest.fail("CFME did not power on the VM %s" % vm_name)
 
@@ -387,13 +312,9 @@ def test_action_stop_virtual_machine_after_starting(
     request.addfinalizer(lambda: policy_for_testing.assign_events())
     # Start the VM
     vm_start_func()
-    try:
-        wait_for(vm_is_on_func, num_sec=80, delay=5)
-    except TimedOutError:
-        pass
     # Wait for VM powered off by CFME
     try:
-        wait_for(vm_is_off_func, num_sec=240, delay=5)
+        wait_for(vm_is_off_func, num_sec=600, delay=5)
     except TimedOutError:
         pytest.fail("CFME did not power off the VM %s" % vm_name)
 
@@ -413,7 +334,7 @@ def test_action_suspend_virtual_machine_after_starting(
     vm_start_func()
     # Wait for VM be suspended by CFME
     try:
-        wait_for(vm_is_suspended_func, num_sec=300, delay=5)
+        wait_for(vm_is_suspended_func, num_sec=600, delay=5)
     except TimedOutError:
         pytest.fail("CFME did not suspend the VM %s" % vm_name)
 
@@ -434,7 +355,7 @@ def test_action_prevent_event(
     # Request VM's start
     vm.power_on()   # THROUGH SOAP, because through mgmt_sys would not generate req event.
     try:
-        wait_for(vm_is_on_func, num_sec=300, delay=5)
+        wait_for(vm_is_on_func, num_sec=600, delay=5)
     except TimedOutError:
         pass  # VM did not start, so that's what we want
     else:
@@ -453,7 +374,6 @@ def test_action_power_on_logged(
     request.addfinalizer(lambda: policy_for_testing.assign_events())
     # Start the VM
     vm_start_func()
-    wait_for(vm_is_on_func, num_sec=90, delay=5)
     policy_desc = policy_for_testing.description
 
     # Search the logs
@@ -489,7 +409,6 @@ def test_action_power_on_audit(
     request.addfinalizer(lambda: policy_for_testing.assign_events())
     # Start the VM
     vm_start_func()
-    wait_for(vm_is_on_func, num_sec=90, delay=5)
     policy_desc = policy_for_testing.description
 
     # Search the logs
@@ -539,8 +458,7 @@ def test_action_create_snapshot_and_delete_last(
     snapshots_before = vm.ws_attributes["v_total_snapshots"]
     # Power off to invoke snapshot creation
     vm_stop_func()
-    wait_for(vm_is_off_func, num_sec=90, delay=5)
-    wait_for(lambda: vm.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=300,
+    wait_for(lambda: vm.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=500,
         message="wait for snapshot appear", delay=5)
     assert vm.ws_attributes["v_snapshot_newest_description"] == "Created by EVM Policy Action"
     assert vm.ws_attributes["v_snapshot_newest_name"] == snapshot_name
@@ -548,8 +466,7 @@ def test_action_create_snapshot_and_delete_last(
     snapshots_before = vm.ws_attributes["v_total_snapshots"]
     # Power on to invoke last snapshot deletion
     vm_start_func()
-    wait_for(vm_is_on_func, num_sec=90, delay=5)
-    wait_for(lambda: vm.ws_attributes["v_total_snapshots"] < snapshots_before, num_sec=300,
+    wait_for(lambda: vm.ws_attributes["v_total_snapshots"] < snapshots_before, num_sec=500,
         message="wait for snapshot deleted", delay=5)
 
 
@@ -586,23 +503,19 @@ def test_action_create_snapshots_and_delete_them(
         # Power off to invoke snapshot creation
         snapshots_before = vm.ws_attributes["v_total_snapshots"]
         vm_stop_func()
-        wait_for(vm_is_off_func, num_sec=90, delay=5)
-        wait_for(lambda: vm.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=300,
+        wait_for(lambda: vm.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=500,
             message="wait for snapshot %d to appear" % (n + 1), delay=5)
         assert vm.ws_attributes["v_snapshot_newest_name"] == snapshot_name
         vm_start_func()
-        wait_for(vm_is_on_func, num_sec=90, delay=5)
 
     for i in range(4):
         create_one_snapshot(i)
     policy_for_testing.assign_events()
     vm_stop_func()
     policy_for_testing.assign_actions_to_event("VM Power On", ["Delete all Snapshots"])
-    wait_for(vm_is_off_func, num_sec=90, delay=5)   # we can check it later here to speed up
     # Power on to invoke all snapshots deletion
     vm_start_func()
-    wait_for(vm_is_on_func, num_sec=90, delay=5)
-    wait_for(lambda: vm.ws_attributes["v_total_snapshots"] == 0, num_sec=300,
+    wait_for(lambda: vm.ws_attributes["v_total_snapshots"] == 0, num_sec=500,
         message="wait for snapshots to be deleted", delay=5)
 
 
@@ -622,7 +535,6 @@ def test_action_initiate_smartstate_analysis(
     switched_on = datetime.now()
     # Start the VM
     vm_start_func()
-    wait_for(vm_is_on_func, num_sec=90, delay=5)
 
     # Wait for VM being tried analysed by CFME
     def wait_analysis_tried():
@@ -655,7 +567,6 @@ def test_action_raise_automation_event(
     request.addfinalizer(lambda: policy_for_testing.assign_events())
     # Start the VM
     vm_stop_func()
-    wait_for(vm_is_off_func, num_sec=90, delay=5)
 
     # Search the logs
     def search_logs():
@@ -690,7 +601,6 @@ def test_action_tag(request, policy_for_testing, vm, vm_off, vm_start_func, vm_i
     request.addfinalizer(finalize)
 
     vm_start_func()
-    wait_for(vm_is_on_func, num_sec=120, delay=5)
     try:
         wait_for(
             lambda: any(
@@ -717,7 +627,6 @@ def test_action_untag(request, policy_for_testing, vm, vm_off, vm_start_func, vm
     request.addfinalizer(finalize)
 
     vm_start_func()
-    wait_for(vm_is_on_func, num_sec=120, delay=5)
     try:
         wait_for(
             lambda: not any(
