@@ -151,6 +151,7 @@ field_form = web_ui.Form(
         ("field", web_ui.Select("//select[@id='chosen_field']")),
         ("key", web_ui.Select("//select[@id='chosen_key']")),
         ("value", "//*[@id='chosen_value']"),
+        ("user_input", "//input[@id='user_input']"),
     ]
 )
 
@@ -168,6 +169,7 @@ count_form = web_ui.Form(
         ("count", web_ui.Select("//select[@id='chosen_count']")),
         ("key", web_ui.Select("//select[@id='chosen_key']")),
         ("value", "//*[@id='chosen_value']"),
+        ("user_input", "//input[@id='user_input']"),
     ]
 )
 
@@ -176,6 +178,7 @@ tag_form = web_ui.Form(
         ("type", web_ui.Select("//select[@id='chosen_typ']")),
         ("count", web_ui.Select("//select[@id='chosen_tag']")),
         ("value", "//*[@id='chosen_value']"),
+        ("user_input", "//input[@id='user_input']"),
     ]
 )
 
@@ -207,22 +210,31 @@ date_relative_form = web_ui.Form(
 def fill_count(count=None, key=None, value=None):
     """ Fills the 'Count of' type of form.
 
+    If the value is unspecified and we are in the advanced search form (user input), the user_input
+    checkbox will be checked if the value is None.
+
     Args:
         count: Name of the field to compare (Host.VMs, ...).
         key: Operation to do (=, <, >=, ...).
         value: Value to check against.
     Returns: See :py:func:`cfme.web_ui.fill`.
     """
-    return web_ui.fill(
+    web_ui.fill(
         count_form,
         dict(
             type="Count of",
             count=count,
             key=key,
-            value=value
+            value=value,
         ),
-        action=buttons.commit
     )
+    # In case of advanced search box
+    if sel.is_displayed(field_form.user_input):
+        user_input = value is None
+    else:
+        user_input = None
+    web_ui.fill(field_form.user_input, user_input)
+    sel.click(buttons.commit)
 
 
 def fill_tag(tag=None, value=None):
@@ -233,15 +245,21 @@ def fill_tag(tag=None, value=None):
         value: Value to check against.
     Returns: See :py:func:`cfme.web_ui.fill`.
     """
-    return web_ui.fill(
+    web_ui.fill(
         tag_form,
         dict(
             type="Tag",
             tag=tag,
-            value=value
+            value=value,
         ),
-        action=buttons.commit
     )
+    # In case of advanced search box
+    if sel.is_displayed(field_form.user_input):
+        user_input = value is None
+    else:
+        user_input = None
+    web_ui.fill(field_form.user_input, user_input)
+    sel.click(buttons.commit)
 
 
 def fill_field(field=None, key=None, value=None):
@@ -255,19 +273,24 @@ def fill_field(field=None, key=None, value=None):
     """
     field_norm = field.strip().lower()
     if "date updated" in field_norm or "date created" in field_norm or "boot time" in field_norm:
-        no_date = None
+        no_date = False
     else:
-        no_date = buttons.commit
+        no_date = True
     web_ui.fill(
         field_form,
         dict(
             type="Field",
             field=field,
             key=key,
-            value=value if no_date else None
+            value=value if no_date else None,
         ),
-        action=no_date
     )
+    # In case of advanced search box
+    if sel.is_displayed(field_form.user_input):
+        user_input = value is None
+    else:
+        user_input = None
+    web_ui.fill(field_form.user_input, user_input)
     if not no_date:
         # Flip the right part of form
         if isinstance(value, basestring) and not re.match(r"^[0-9]{2}/[0-9]{2}/[0-9]{4}$", value):
@@ -301,6 +324,8 @@ def fill_field(field=None, key=None, value=None):
             finally:
                 # And finally, commit the expression :)
                 sel.click(buttons.commit)
+    else:
+        sel.click(buttons.commit)
 
 
 ###

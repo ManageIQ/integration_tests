@@ -161,6 +161,11 @@ class NoVmFound(CFMEException):
     pass
 
 
+class HostNotFound(CFMEException):
+    """Raised if a specific host cannot be found in UI."""
+    pass
+
+
 class NoOptionAvailable(CFMEException):
     """
     Raised if required option is not specified.
