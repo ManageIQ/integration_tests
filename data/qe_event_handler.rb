@@ -47,11 +47,11 @@ if otype == "vm"
     else
         $evm.log(:warn, "Could not execute the RelayEvent query")
     end
-elsif otype == "host"
-    $evm.log("info", "Relaying host event:")
-    put(base_url, CGI::escape("host"), CGI::escape($evm.root["host"].name))
+elsif !$evm.root["vmdb_object_type"].nil?   # original one because nil.to_s == ''
+    $evm.log("info", "Relaying #{otype} event (generic):")
+    put(base_url, CGI::escape(otype), CGI::escape($evm.root[otype].name))
 else
-    $evm.log("error", "Unknown vmdb_object_type: " + otype)
+    $evm.log(:warn, "Could not determine the vmdb object!")
 end
 
 $evm.log("info", "Custom Automate Method Ended")
