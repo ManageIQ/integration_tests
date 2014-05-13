@@ -1,6 +1,7 @@
 import socket
 
-from utils.conf import cfme_data
+import urlparse
+from utils.conf import env
 
 
 def random_port(tcp=True):
@@ -33,11 +34,12 @@ def my_ip_address(http=False):
     connection. See a working example of this in :py:func:`ip_echo_socket`.
 
     """
-    address = (cfme_data['ip_echo']['host'], int(cfme_data['ip_echo']['port']))
-    cxn = socket.create_connection(address)
-    my_ip_address = cxn.recv(1024)
-    cxn.close()
-    return my_ip_address.strip()
+    address = urlparse.urlparse(env['base_url']).hostname
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((address, 22))
+    ip = sock.getsockname()[0]
+    sock.close()
+    return ip
 
 
 def ip_echo_socket(port=32123):

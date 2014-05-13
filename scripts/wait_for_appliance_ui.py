@@ -26,31 +26,38 @@ def main():
         help='Maximum number of seconds to wait before giving up, default 600 (10 minutes)')
 
     args = parser.parse_args()
-
-    def check_appliance_ui(url):
-        # Get the URL, don't verify ssl cert
-        try:
-            response = requests.get(url, timeout=10, verify=False)
-            if response.status_code == 200:
-                logger.info("Appliance online")
-                return True
-            else:
-                logger.debug('Appliance online, status code %d' %
-                    response.status_code)
-        except requests.exceptions.Timeout:
-            logger.debug('Appliance offline, connection timed out')
-        except ValueError:
-            # requests exposes invalid URLs as ValueErrors, which is excellent.
-            raise
-        except Exception as ex:
-            logger.debug('Appliance online, but connection failed: %s' % ex.message)
-        return False
-
-    try:
-        wait_for(check_appliance_ui, [args.url], num_sec=args.num_sec, delay=10)
+    if check_appliance_ui(args.url, args.num_sec):
         return 0
-    except TimedOutError:
+    else:
         return 1
+
+
+def check_appliance_ui(url, num_sec=600):
+    try:
+        wait_for(_check_appliance_ui_wait_fn, [url], num_sec=num_sec, delay=10)
+        return True
+    except TimedOutError:
+        pass
+
+
+def _check_appliance_ui_wait_fn(url):
+    # Get the URL, don't verify ssl cert
+    try:
+        response = requests.get(url, timeout=10, verify=False)
+        if response.status_code == 200:
+            logger.info("Appliance online")
+            return True
+        else:
+            logger.debug('Appliance online, status code %d' %
+                response.status_code)
+    except requests.exceptions.Timeout:
+        logger.debug('Appliance offline, connection timed out')
+    except ValueError:
+        # requests exposes invalid URLs as ValueErrors, which is excellent.
+        raise
+    except Exception as ex:
+        logger.debug('Appliance online, but connection failed: %s' % ex.message)
+    return False
 
 if __name__ == '__main__':
     sys.exit(main())

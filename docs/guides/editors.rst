@@ -5,7 +5,8 @@ Sublime
 -------
 
 The "supported" editor of choice for working on this project is
-`Sublime Text 2 <http://www.sublimetext.com>`_ (sublime). Of course you're free to use whichever
+`Sublime Text 2 <http://www.sublimetext.com>`_ (sublime), though these instructions will likely
+also work for Sublime Text 3. Of course you're free to use whichever
 editor helps you be the most productive, but the preponderance of Sublime users on the team
 make it the most useful target for our development environment setup documentation.
 
@@ -52,7 +53,7 @@ Package Control
 Once sublime is up and running, we'll need to install some package management, which we'll be
 using hereafter to bring in sublime extensions. Follow the installation instructions
 `here <https://sublime.wbond.net/installation#st2>`_. Be sure to follow the instructions for
-Sublime Text 2, not Sublime Text 3.
+Sublime Text 2, unless you're beta testing Sublime Text 3.
 
 .. note:: When installing packages, it is sometimes necessary to restart sublime for the
    installed packages to initialize. For simplicity, it is probably easiest to restart sublime
