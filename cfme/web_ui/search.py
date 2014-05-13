@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """This module operates the `Advanced search` box located on multiple pages."""
 import re
