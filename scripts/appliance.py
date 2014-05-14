@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 Given the name of a provider from cfme_data and an appliance vm name, call the
 corresponding action on that appliance, along with any additional action arguments.

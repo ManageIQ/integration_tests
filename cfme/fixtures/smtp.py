@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """This module provides a fixture useful for checking the e-mails arrived.
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # -*- coding: utf-8 -*-
 # pylint: disable=E1101
 
@@ -77,7 +75,7 @@ class TestInfrastructureTags:
 
         title = infra_vms_pg.quadicon_region.mark_random_quadicon_checkbox()
         edit_tags_pg = infra_vms_pg.click_on_edit_tags()
-        
+
         tag_cat, tag_value = edit_tags_pg.add_random_tag()
         Assert.true(edit_tags_pg.is_tag_displayed(tag_cat, tag_value))
         edit_tags_pg.save_tag_edits()
@@ -101,7 +99,7 @@ class TestInfrastructureTags:
 
         title = infra_vms_pg.quadicon_region.mark_random_quadicon_checkbox()
         edit_tags_pg = infra_vms_pg.click_on_edit_tags()
-        
+
         tag_cat, tag_value = edit_tags_pg.add_random_tag()
         Assert.true(edit_tags_pg.is_tag_displayed(tag_cat, tag_value))
         edit_tags_pg.save_tag_edits()

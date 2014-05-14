@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """ Tests used to check whether assigned actions really do what they're supposed to do.
 

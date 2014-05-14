@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """This testing module tests the behaviour of the search box in the Hosts section"""
 import pytest

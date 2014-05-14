@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 """This script takes various parameters specified in
 cfme_data['template_upload']['template_upload_rhos'] and/or by command-line arguments.

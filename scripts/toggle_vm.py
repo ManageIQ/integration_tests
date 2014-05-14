@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 Given a provider from cfme_data along with a vm_name,
 how long you want the vm to run (uptime, in seconds),

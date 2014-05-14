@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """ Tests checking the basic functionality of the Control/Explorer section.
 

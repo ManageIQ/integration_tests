@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 """SSH in to a running appliance and set up an internal DB.
 
