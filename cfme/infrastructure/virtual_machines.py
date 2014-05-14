@@ -75,7 +75,7 @@ nav.add_branch(
 
         "infra_vms":
         [
-            accordion.click("VMs"),
+            lambda _: accordion.click("VMs"),
             {
                 "infra_vms_filter_folder":
                 [
@@ -89,7 +89,7 @@ nav.add_branch(
 
         "infra_templates":
         [
-            accordion.click("Templates"),
+            lambda _: accordion.click("Templates"),
             {
                 "infra_templates_filter_folder":
                 [
@@ -493,3 +493,35 @@ def refresh_relationships(vm_names, from_details=False, provider_name=None, data
         datacenter_name=datacenter_name)
     cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
     sel.handle_alert(cancel=cancel)
+
+
+def get_all_vms(do_not_navigate=False):
+    """Returns list of all hosts"""
+    if not do_not_navigate:
+        sel.force_navigate('infra_vms')
+    vms = set([])
+    try:
+        for page in paginator.pages():
+            for title in sel.elements(
+                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')]"):
+                vms.add(sel.get_attribute(title, "title"))
+        return vms
+    except NoSuchElementException:
+        return set([])
+
+
+def find_quadicon(vm, do_not_navigate=False):
+    """Find and return a quadicon belonging to a specific vm
+
+    Args:
+        vm: Host name as displayed at the quadicon
+    Returns: :py:class:`cfme.web_ui.Quadicon` instance
+    """
+    if not do_not_navigate:
+        sel.force_navigate('infra_vms')
+    for page in paginator.pages():
+        quadicon = Quadicon(vm, "vm")
+        if sel.is_displayed(quadicon):
+            return quadicon
+    else:
+        raise NoVmFound("VM '{}' not found in UI!".format(vm))
