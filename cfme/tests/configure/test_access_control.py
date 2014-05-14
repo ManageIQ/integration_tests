@@ -28,6 +28,7 @@ def new_role():
                    vm_restriction_select='None')
 
 
+#User test cases
 def test_user_crud():
     user = new_user()
     user.create()
@@ -46,6 +47,67 @@ def test_user_duplicate_name():
     nu.delete()
 
 
+def test_username_required_error_validation():
+    user = ac.User(
+        username=None,
+        userid='uid' + random.generate_random_string(),
+        password='redhat',
+        password_verify='redhat',
+        email='xyz@redhat.com',
+        user_group_select='EvmGroup-user')
+    with error.expected("Name can't be blank"):
+        user.create()
+
+
+def test_userid_required_error_validation():
+    user = ac.User(
+        username='user' + random.generate_random_string(),
+        userid=None,
+        password='redhat',
+        password_verify='redhat',
+        email='xyz@redhat.com',
+        user_group_select='EvmGroup-user')
+    with error.expected("Userid can't be blank"):
+        user.create()
+
+
+def test_user_password_required_error_validation():
+    user = ac.User(
+        username='user' + random.generate_random_string(),
+        userid='uid' + random.generate_random_string(),
+        password=None,
+        password_verify='redhat',
+        email='xyz@redhat.com',
+        user_group_select='EvmGroup-user')
+    with error.expected("Password_digest can't be blank"):
+        user.create()
+
+
+def test_user_group_error_validation():
+    user = ac.User(
+        username='user' + random.generate_random_string(),
+        userid='uid' + random.generate_random_string(),
+        password='redhat',
+        password_verify='redhat',
+        email='xyz@redhat.com',
+        user_group_select='<Choose a Group>')
+    with error.expected("A User must be assigned to a Group"):
+        user.create()
+
+
+def test_user_email_error_validation():
+    user = ac.User(
+        username='user' + random.generate_random_string(),
+        userid='uid' + random.generate_random_string(),
+        password='redhat',
+        password_verify='redhat',
+        email='xyzdhat.com',
+        user_group_select='EvmGroup-user')
+    with error.expected("Email must be a valid email address"):
+        user.create()
+
+
+#Group test cases
 def test_group_crud():
     group = new_group()
     group.create()
@@ -54,6 +116,7 @@ def test_group_crud():
     group.delete()
 
 
+#Role test cases
 def test_role_crud():
     role = new_role()
     role.create()
