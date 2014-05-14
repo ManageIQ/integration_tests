@@ -12,7 +12,7 @@ from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.fixtureconf(server_roles="+automate"),
+    pytest.mark.fixtureconf(server_roles="+automate +notifier"),
     pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
 ]
 
@@ -80,7 +80,7 @@ def vm_name(provider_key, provider_mgmt):
 
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
-                                     provider_mgmt, provisioning, vm_name):
+                                     provider_mgmt, provisioning, vm_name, smtp_test):
 
     setup_provider(provider_key)
 
@@ -127,3 +127,20 @@ def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=1500, delay=20)
     assert row.last_message.text == 'VM Provisioned Successfully'
+
+    # Wait for e-mails to appear
+    def verify():
+        return (
+            len(
+                smtp_test.get_emails(
+                    text_like="%%Your Virtual Machine Request was approved%%"
+                )
+            ) > 0
+            and len(
+                smtp_test.get_emails(
+                    subject_like="Your virtual machine request has Completed - VM:%%%s" % vm_name
+                )
+            ) > 0
+        )
+
+    wait_for(verify, message="email receive check", delay=5)
