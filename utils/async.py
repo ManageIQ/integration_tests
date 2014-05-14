@@ -1,4 +1,5 @@
-from multiprocessing.pool import CLOSE, Pool
+from multiprocessing.pool import Pool
+
 
 class ResultsPool(Pool):
     """multiprocessing.Pool boilerplate wrapper
