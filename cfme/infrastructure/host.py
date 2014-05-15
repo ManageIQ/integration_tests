@@ -343,11 +343,11 @@ def get_from_config(provider_config_name):
     return Host(name=prov_config['name'],
                 hostname=prov_config['hostname'],
                 ip_address=prov_config['ipaddress'],
-                custom_ident=prov_config['custom_ident'],
-                host_platform=prov_config['host_platform'],
+                custom_ident=prov_config.get('custom_ident', None),
+                host_platform=prov_config.get('host_platform', None),
                 ipmi_address=prov_config['ipmi_address'],
                 mac_address=prov_config['mac_address'],
-                interface_type=prov_config['interface_type'],
+                interface_type=prov_config.get('interface_type', None),
                 credentials=credentials,
                 ipmi_credentials=ipmi_credentials)
 
