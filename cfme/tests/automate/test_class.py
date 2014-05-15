@@ -3,7 +3,7 @@ from cfme.automate.explorer import Namespace, Class
 from utils.randomness import generate_random_string
 from utils.update import update
 import utils.error as error
-
+import cfme.fixtures.pytest_selenium as sel
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
@@ -28,15 +28,6 @@ def a_class(a_namespace):
                  namespace=a_namespace)
 
 
-def test_class_crud(a_class):
-    a_class.create()
-    orig = a_class.description
-    with update(a_class):
-        a_class.description = 'edited'
-    with update(a_class):
-        a_class.description = orig
-    a_class.delete()
-    assert not a_class.exists()
 
 
 def test_schema_crud(a_class):
@@ -73,3 +64,30 @@ def test_same_class_name_different_namespace(a_namespace):
     # delete one and check the other still exists
     cls1.delete()
     assert cls2.exists()
+
+
+#Cheap test fixture
+@pytest.fixture
+def ming():
+    return "tom"
+
+
+@pytest.mark.requires(test_add_class_inherited)
+def new_func(ming):
+    print "Hi, I'm new here"
+    print ming
+
+
+def old_func(ming):
+    print "I'm old"
+    a_class.create()
+    orig = a_class.description
+    with update(a_class):
+        a_class.description = 'edited'
+    with update(a_class):
+        a_class.description = orig
+    a_class.delete()
+    assert not a_class.exists()
+
+test_class_crud = sel.ver_pick({'default': old_func,
+                                '9.9.9.9': new_func})
