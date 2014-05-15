@@ -80,12 +80,10 @@ credential_form = Form(
     ])
 
 manage_policies_tree = Tree(
-    sel.VersionLocator(
-        {
-            "default": "//div[@id='treebox']/div/table",
-            "9.9.9.9": "//div[@id='protect_treebox']/ul"
-        }
-    )
+    sel.ver_pick({
+        "default": "//div[@id='treebox']/div/table",
+        "9.9.9.9": "//div[@id='protect_treebox']/ul"
+    })
 )
 
 cfg_btn = partial(tb.select, 'Configuration')

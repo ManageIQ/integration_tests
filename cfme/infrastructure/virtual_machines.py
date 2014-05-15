@@ -26,12 +26,10 @@ visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
                     "/ul[@class='dynatree-container']")
 
 manage_policies_tree = Tree(
-    sel.VersionLocator(
-        {
-            "default": "//div[@id='treebox']/div/table",
-            "9.9.9.9": "//div[@id='protect_treebox']/ul"
-        }
-    )
+    sel.ver_pick({
+        "default": "//div[@id='treebox']/div/table",
+        "9.9.9.9": "//div[@id='protect_treebox']/ul"
+    })
 )
 
 manage_policies_page = Region(

@@ -45,34 +45,20 @@ class Version(object):
 ver = Version()
 
 
-class VersionLocator(object):
+def ver_pick(v_dict):
     """
-    Represents a locator which is in a state of uncertainty of being potentially multiple versions
-    at the same time.  This ambiguity collapses when the locator is accessed by the selenium
-    element call.
+    Collapses an ambiguous series of objects bound to specific versions
+    by interrogating the CFME Version and returning the correct item.
     """
-
-    def __init__(self, version_dict):
-        self.version_dict = version_dict
-
-    @lazycache
-    def _locate(self):
-        """
-        Emulates the locate function that normal web_ui elements have and collapses the ambiguity.
-        """
-        version = parse_version(ver.version)
-        prev = None
-        for ver_test in sorted([(parse_version(key), key) for key in self.version_dict.keys()]):
-            if version >= ver_test[0]:
-                prev = ver_test[1]
-            else:
-                break
-        logger.debug(" Collapsing Singularity Cap'n, returning: {}".format(self.version_dict[prev]))
-        return self.version_dict[prev]
-
-    def locate(self):
-        """ Dirty hack to cache the locator. """
-        return self._locate
+    version = parse_version(ver.version)
+    prev = None
+    for ver_test in sorted([(parse_version(key), key) for key in v_dict.keys()]):
+        if version >= ver_test[0]:
+            prev = ver_test[1]
+        else:
+            break
+    logger.debug(" Collapsing Singularity Cap'n, returning: {}".format(v_dict[prev]))
+    return v_dict[prev]
 
 
 class ByValue(object):
