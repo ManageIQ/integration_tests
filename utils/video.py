@@ -14,12 +14,10 @@ Configuration for this module + fixture:
 import os
 import subprocess
 
-from py.path import local
 from signal import SIGINT
 
 from utils.conf import env
 from utils.log import logger
-from utils.wait import wait_for, TimedOutError
 
 vid_options = env.get('logging', {}).get('video')
 

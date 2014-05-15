@@ -14,8 +14,10 @@ import pytest
 
 _no_mark_arg_err = '%s mark required test name or nodeid as first argument'
 
+
 def pytest_configure(config):
     config.addinivalue_line("markers", __doc__)
+
 
 def _find_test_in_reports(test_id, reports):
     # nodeids end with the test name, so the description of this mark
@@ -25,6 +27,7 @@ def _find_test_in_reports(test_id, reports):
     # anything in between.
 
     return any([report.nodeid.endswith(test_id) for report in reports])
+
 
 def pytest_runtest_setup(item):
     mark = 'requires_test'
@@ -48,7 +51,7 @@ def pytest_runtest_setup(item):
         return
 
     if _find_test_in_reports(test_id, failed):
-        error_verb = 'failed' 
+        error_verb = 'failed'
     elif _find_test_in_reports(test_id, skipped):
         error_verb = 'was skipped'
     else:

@@ -7,8 +7,10 @@ tuple will be packed into the dict under the 'args' key.
 Use the "fixtureconf" fixture in tests to easily access the fixtureconf dict
 '''
 
+
 def pytest_configure(config):
     config.addinivalue_line('markers', __doc__)
+
 
 def pytest_runtest_setup(item):
     fixtureconf_mark = item.keywords.get('fixtureconf')
