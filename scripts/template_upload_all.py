@@ -37,18 +37,21 @@ def parse_cmd_line():
 #TODO allow suffix
 def template_name(image_name):
     #MIQ
-    pattern = re.compile(r'[^\d]*?TEST-BUILD-[^\d]*(\d*).\w*')
+    #pattern = re.compile(r'[^\d]*?TEST-BUILD-[^\d]*(\d*).\w*')
+    pattern = re.compile(r'[^\d]*?manageiq[^\d]*(\d*).\w*')
     result = pattern.findall(image_name)
     if result:
         #for now, actual version for MIQ is manually defined.
-        actual_version = '30'
-        return "miq-%s-%s" % (actual_version, result[0][4:8])
+        actual_version = '31'
+        #return "miq-%s-%s" % (actual_version, result[0][4:8])
+        return "miq-%s-%s" % (actual_version, result[0])
     else:
         #CFME
         pattern = re.compile(r'[^\d]*(\d*).\w*?')
         result = pattern.findall(image_name)
         #this will produce: 'cfme-30-0304'
-        return "cfme-%s%s-%s%s" % (result[0], result[1], result[3], result[4])
+        #return "cfme-%s%s-%s%s" % (result[0], result[1], result[3], result[4])
+        return "cfme-%s-%s" % (result[0], result[1])
 
 
 def make_kwargs_rhevm(cfme_data, provider):
@@ -130,9 +133,11 @@ def browse_directory(dir_url):
     with closing(urlopen(dir_url)) as urlpath:
         string_from_url = urlpath.read()
 
-    rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*rhevm[^"\'>]*)')
+    #rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*rhevm[^"\'>]*)')
+    rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm|ovirt)[^"\'>]*)')
     rhevm_image_name = rhevm_pattern.findall(string_from_url)
-    rhos_pattern = re.compile(r'<a href="?\'?([^"\']*rhos[^"\'>]*)')
+    #rhos_pattern = re.compile(r'<a href="?\'?([^"\']*rhos[^"\'>]*)')
+    rhos_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhos|openstack|rhelosp)[^"\'>]*)')
     rhos_image_name = rhos_pattern.findall(string_from_url)
     vsphere_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')
     vsphere_image_name = vsphere_pattern.findall(string_from_url)
