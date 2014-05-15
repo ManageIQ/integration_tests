@@ -17,7 +17,7 @@ from utils.log import logger
 
 
 _entry_div = "//div[contains(@class, 'ui-tabs')]"  # Entry point
-_entry_ul = sel.VersionLocator({
+_entry_ul = sel.ver_pick({
     '9.9.9.9': '//ul[@class="tab2"]',
     'default': '//ul[@id="tab" and @class="tab"]'
 })
