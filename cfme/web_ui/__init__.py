@@ -1138,7 +1138,8 @@ class Tree(object):
             self.node_label = "//li/span/a[.='%s']"
             self.click_expand = "span/span"
             self.leaf = "span/a"
-            self.node_select_support = False
+            self.node_select = "span/span[@class='dynatree-checkbox']"
+            self.node_images = None
         elif sel.tag(self.root_el) == 'table':
             # Legacy Tree
             self.expandable = 'tr/td[1]/img'
@@ -1147,7 +1148,6 @@ class Tree(object):
             self.node_label = ".//span[.='%s']"
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
-            self.node_select_support = True
             self.node_select = "tr/td[2]/img"
             self.node_images = {'select': ['iconCheckAll', 'radio_on'],
                                 'deselect': ['iconUncheckAll', 'radio_off']}
@@ -1265,18 +1265,24 @@ class Tree(object):
         """
         self._detect()
         select = kwargs.get('select', False)
-        if self.node_select_support:
-            leaf = self.expand_path(*path)
-            leaf_chkbox = sel.element(self.node_select, root=leaf)
+        leaf = self.expand_path(*path)
+        leaf_chkbox = sel.element(self.node_select, root=leaf)
+        if self.node_images:
+            # Legacy tree
             for img_type in self.node_images['select']:
                 if img_type in sel.get_attribute(leaf_chkbox, 'src'):
                     node_open = True
-                else:
+            for img_type in self.node_images['deselect']:
+                if img_type in sel.get_attribute(leaf_chkbox, 'src'):
                     node_open = False
-            if select is not node_open:
-                sel.click(leaf_chkbox)
         else:
-            raise Exception('This Tree type does not support select yet.')
+            # New tree
+            node_open = "dynatree-selected" in sel.get_attribute(
+                sel.element("span", root=leaf),
+                "class"
+            )
+        if select is not node_open:
+            sel.click(leaf_chkbox)
 
     def select_node(self, *path, **kwargs):
         """ Convenience function to select a node
