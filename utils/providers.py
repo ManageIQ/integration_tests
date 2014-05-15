@@ -10,6 +10,7 @@ from operator import methodcaller
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Quadicon, paginator, toolbar
+from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
 from utils.log import logger, perflog
 from utils.wait import wait_for
@@ -41,6 +42,8 @@ def list_providers(allowed_types):
     providers = []
     for provider, data in conf.cfme_data["management_systems"].iteritems():
         provider_type = data.get("type", None)
+        if provider not in filtered:
+            continue
         assert provider_type is not None, "Provider %s has no type specified!" % provider
         if provider_type in allowed_types:
             providers.append(provider)
@@ -177,6 +180,8 @@ def _setup_providers(cloud_or_infra, validate, check_existing):
     }
     # Check for existing providers all at once, to prevent reloading
     # the providers page for every provider in cfme_data
+    if not options_map[cloud_or_infra]['list']():
+        return []
     if check_existing:
         sel.force_navigate(options_map[cloud_or_infra]['navigate'])
         add_providers = []

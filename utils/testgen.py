@@ -85,6 +85,7 @@ import pytest
 from cfme.cloud.provider import get_from_config as get_cloud_provider
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
+from fixtures.prov_filter import filtered
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.providers import cloud_provider_type_map, infra_provider_type_map, provider_factory
@@ -230,13 +231,9 @@ def provider_by_type(metafunc, provider_types, *fields):
             # Skip unwanted types
             continue
 
-        cmd_filter = metafunc.config.getvalueorskip('use_provider')
-        if not cmd_filter:
-            cmd_filter = ["default"]
-        tags = data.get('tags', [])
-        if cmd_filter:
-            if provider not in cmd_filter and not set(tags) & set(cmd_filter):
-                continue
+        # Check provider hasn't been filtered out with --use-provider
+        if provider not in filtered:
+            continue
 
         # Use the provider name for idlist, helps with readable parametrized test output
         idlist.append(provider)
