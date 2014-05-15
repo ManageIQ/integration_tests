@@ -107,7 +107,10 @@ nav.add_branch("configuration",
         "cfg_settings_region":
         [
             lambda _: settings_tree(
-                "Region: Region %d [%d]" % server_region_pair()
+                sel.ver_pick({
+                    "default": "Region: Region %d [%d]" % server_region_pair(),
+                    "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
+                })
             ),
             {
                 "cfg_settings_region_details":
@@ -135,15 +138,24 @@ nav.add_branch("configuration",
 
         "cfg_settings_defaultzone":
         lambda _: settings_tree(
-            "Region: Region %d [%d]" % server_region_pair(),
+            sel.ver_pick({
+                "default": "Region: Region %d [%d]" % server_region_pair(),
+                "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
+            }),
             "Zones",
-            "Zone: Default Zone"
+            sel.ver_pick({
+                "default": "Zone: Default Zone",
+                "9.9.9.9": "Zone: Default Zone (current)"
+            }),
         ),
 
         "cfg_settings_schedules":
         [
             lambda _: settings_tree(
-                "Region: Region %d [%d]" % server_region_pair(),
+                sel.ver_pick({
+                    "default": "Region: Region %d [%d]" % server_region_pair(),
+                    "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
+                }),
                 "Schedules"),
             {
                 "cfg_settings_schedule":
@@ -160,9 +172,15 @@ nav.add_branch("configuration",
         "cfg_settings_currentserver":
         [
             lambda _: settings_tree(
-                "Region: Region %d [%d]" % server_region_pair(),
+                sel.ver_pick({
+                    "default": "Region: Region %d [%d]" % server_region_pair(),
+                    "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
+                }),
                 "Zones",
-                "Zone: Default Zone",
+                sel.ver_pick({
+                    "default": "Zone: Default Zone",
+                    "9.9.9.9": "Zone: Default Zone (current)"
+                }),
                 "Server: %s [%d] (current)" % (server_name(), server_id())
             ),
             {
@@ -195,7 +213,10 @@ nav.add_branch("configuration",
         [
             lambda _: diagnostics_tree(
                 "CFME Region: Region %d [%d]" % server_region_pair(),
-                "Zone: Default Zone",
+                sel.ver_pick({
+                    "default": "Zone: Default Zone",
+                    "9.9.9.9": "Zone: Default Zone (current)"
+                }),
                 "Server: %s [%d] (current)" % (server_name(), server_id())
             ),
             {
@@ -234,7 +255,10 @@ nav.add_branch("configuration",
         [
             lambda _: diagnostics_tree(
                 "CFME Region: Region %d [%d]" % server_region_pair(),
-                "Zone: Default Zone"
+                sel.ver_pick({
+                    "default": "Zone: Default Zone",
+                    "9.9.9.9": "Zone: Default Zone (current)"
+                }),
             ),
             {
                 "cfg_diagnostics_zone_roles_by_servers":
