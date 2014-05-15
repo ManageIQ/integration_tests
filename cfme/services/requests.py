@@ -53,7 +53,7 @@ def approve_request(cells, reason, cancel=False):
         cancel: Whether to cancel the approval.
 
     Raises:
-        :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
+        RequestNotFound: :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
     """
     if not go_to_request(cells):
         raise RequestNotFound("Request with identification {} not found!".format(str(cells)))
@@ -82,7 +82,7 @@ def deny_request(cells, reason, cancel=False):
         cancel: Whether to cancel the denial.
 
     Raises:
-        :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
+        RequestNotFound: :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
     """
     if not go_to_request(cells):
         raise RequestNotFound("Request with identification {} not found!".format(str(cells)))
@@ -110,7 +110,7 @@ def delete_request(cells, cancel=False):
         cancel: Whether to cancel the deletion.
 
     Raises:
-        :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
+        RequestNotFound: :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
     """
     if not go_to_request(cells):
         raise RequestNotFound("Request with identification {} not found!".format(str(cells)))
