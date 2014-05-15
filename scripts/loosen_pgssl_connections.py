@@ -12,15 +12,17 @@ from utils.ssh import SSHClient
 def main():
     parser = argparse.ArgumentParser(epilog=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('address', help='hostname or ip address of target appliance')
+    parser.add_argument('address', help='hostname or ip address of target appliance',
+        nargs='?', default=None)
 
     args = parser.parse_args()
 
     ssh_kwargs = {
         'username': credentials['ssh']['username'],
         'password': credentials['ssh']['password'],
-        'hostname': args.address
     }
+    if args.address:
+        ssh_kwargs['hostname'] = args.address
 
     # Init SSH client
     client = SSHClient(**ssh_kwargs)
