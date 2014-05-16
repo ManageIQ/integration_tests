@@ -22,7 +22,15 @@ import cfme.web_ui.toolbar as tb
 
 
 def table_in_object(table_title):
-    """If you want to point to tables inside object view, use this function"""
+    """If you want to point to tables inside object view, this is what you want to use.
+
+    Works both on down- and upstream.
+
+    Args:
+        table_title: Text in `p` element preceeding the table
+    Returns: XPath locator for the desired table.
+    """
+    # Description     paragraph with the text       following element    which is the table
     return "//p[@class='legend' and text()='{}']/following-sibling::*[1][@class='style3']".format(
         table_title
     )

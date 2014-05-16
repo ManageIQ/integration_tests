@@ -189,5 +189,6 @@ class ParmConfusion(CFMEException):
 
 
 class FormButtonNotFound(CFMEException):
-    """Raised when form_buttons module cannot find provided button"""
+    """Raised when ::py:func:`cfme.web_ui.form_buttons._get_button_element` function cannot
+    find provided button by its title."""
     pass
