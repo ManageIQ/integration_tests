@@ -18,7 +18,6 @@ The scripts for respective providers are:
 
 import argparse
 import re
-import yaml
 
 from contextlib import closing
 from urllib2 import urlopen
@@ -48,11 +47,11 @@ def browse_directory(dir_url):
     vsphere_image_name = vsphere_pattern.findall(string_from_url)
 
     if len(rhevm_image_name) is not 0:
-        name_dict.update({'template_upload_rhevm':rhevm_image_name[0]})
+        name_dict.update({'template_upload_rhevm': rhevm_image_name[0]})
     if len(rhos_image_name) is not 0:
-        name_dict.update({'template_upload_rhos':rhos_image_name[0]})
+        name_dict.update({'template_upload_rhos': rhos_image_name[0]})
     if len(vsphere_image_name) is not 0:
-        name_dict.update({'template_upload_vsphere':vsphere_image_name[0]})
+        name_dict.update({'template_upload_vsphere': vsphere_image_name[0]})
 
     if not dir_url.endswith('/'):
         dir_url = dir_url + '/'
@@ -76,7 +75,7 @@ if __name__ == "__main__":
 
         kwargs = cfme_data['template_upload'][module]
 
-        kwargs.update({'image_url':dir_files[module]})
+        kwargs.update({'image_url': dir_files[module]})
 
         print "---Start of %s---" % module
 

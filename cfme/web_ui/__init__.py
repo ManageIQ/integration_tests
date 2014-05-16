@@ -1210,8 +1210,8 @@ class Tree(object):
 
         """
 
-        #The detect here is required every time to avoid a StaleElementException if the
-        #Tree goes off screen and returns.
+        # The detect here is required every time to avoid a StaleElementException if the
+        # Tree goes off screen and returns.
         self._detect()
 
         parent = None
@@ -1351,7 +1351,7 @@ class InfoBlock(object):
     """
     def __init__(self, itype):
         if itype == "detail":
-            #We have to collapse the locator singularity early here, hence the .locate()
+            # We have to collapse the locator singularity early here, hence the .locate()
             self._box_locator = sel.ver_pick({
                 '9.9.9.9': '//table//th[contains(., "%s")]/../../../..',
                 'default': '//div[@class="modbox"]/h2[@class="modtitle"]'
@@ -1556,9 +1556,9 @@ class Quadicon(object):
         if name in self._quad_data:
             corner, rtype = self._quad_data[name]
             locator = self._locate_quadrant(corner)
-            #.. We have to have a try/except here as some quadrants
-            #.. do not exist if they have no data, e.g. current_state in a host
-            #.. with no credentials.
+            # We have to have a try/except here as some quadrants
+            # do not exist if they have no data, e.g. current_state in a host
+            # with no credentials.
             try:
                 el = sel.element(locator)
             except sel_exceptions.NoSuchElementException:
