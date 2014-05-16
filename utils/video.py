@@ -1,14 +1,15 @@
 """Video recording library
 
 Configuration for this module + fixture:
-```yaml
-    logging:
+.. code-block:: yaml
+
+   logging:
        video:
-           enabled: True
-           dir: video
-           display: ":99"
-           quality: 10
-```
+          enabled: True
+          dir: video
+          display: ":99"
+          quality: 10
+
 """
 
 import os

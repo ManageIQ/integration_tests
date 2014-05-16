@@ -121,14 +121,11 @@ def on_vm_details(vm_name, force=False, provider_name=None, datacenter_name=None
     """A function to determine if the browser is already on the proper vm details page.
 
     Args:
-        vm_name:
-            VM name that you are looking for.
-        force:
-            If its not on the right page, load it.
-        provider_name:
-            name of provider the vm resides on.
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
+        vm_name: VM name that you are looking for.
+        force: If its not on the right page, load it.
+        provider_name: name of provider the vm resides on.
+        datacenter_name: When passed with provider_name, allows navigation through tree
+            when navigating to the vm
     """
     locator = "//div[@class='dhtmlxInfoBarLabel' and contains(. , 'VM and Instance') ]"
     if not sel.is_displayed(locator):
@@ -156,14 +153,11 @@ def load_vm_details(vm_name, provider_name=None, datacenter_name=None, refresh=F
     """Navigates to a VM's details page.
 
     Args:
-        vm_name:
-            VM name that you are looking for.
-        provider_name:
-            name of provider the vm resides on.
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
-        refresh:
-            Refreshes the vm page if already there
+        vm_name: VM name that you are looking for.
+        provider_name: name of provider the vm resides on.
+        datacenter_name: When passed with provider_name, allows navigation through tree
+            when navigating to the vm
+        refresh: Refreshes the vm page if already there
 
     Raises:
         TimedOutError:
@@ -197,10 +191,8 @@ def does_vm_exist(vm_name, provider_name=None):
     Note: provider_name is optional
 
     Args:
-        vm_name:
-            VM name that you are looking for.
-        provider_name:
-            name of provider the vm resides on.
+        vm_name: VM name that you are looking for.
+        provider_name: Name of provider the vm resides on.
     """
     if not isinstance(vm_name, str):
         raise Exception("vm_name must be a string object")
@@ -221,17 +213,12 @@ def _determine_whether_details(vm_names, from_details=False, provider_name=None,
     """A private function to handle navigating to either VM details or the VM list.
 
     Args:
-        vm_names:
-            List of VMs to interact with, if from_details=True is passed,
+        vm_names: List of VMs to interact with, if from_details=True is passed,
             only one VM can be passed in the list.
-        timeout_in_minutes:
-            Specify amount of time to wait until TimedOutError is raised in minutes.
-        provider_name:
-            name of provider vm resides on, only needed if fromDetails=True
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
-        from_details:
-            whether to navigate to the VM details page (vm_names length must be one)
+        from_details: whether to navigate to the VM details page (vm_names length must be one)
+        provider_name: name of provider vm resides on, only needed if fromDetails=True
+        datacenter_name: When passed with provider_name, allows navigation through tree
+            when navigating to the vm
 
     Raises:
         ParmConfusion:
@@ -268,17 +255,13 @@ def remove(vm_names, cancel=True, from_details=False, provider_name=None, datace
     """Removes a VM from CFME VMDB
 
     Args:
-        vm_names:
-            List of VMs to interact with, if from_details=True is passed,
+        vm_names: List of VMs to interact with, if from_details=True is passed,
             only one VM can be passed in the list.
-        cancel:
-            Whether to cancel the deletion, defaults to True
-        from_details:
-            whether to delete from the details page (vm_names length must be one)
-        provider_name:
-            name of provider vm resides on, only needed if fromDetails=True
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
+        cancel: Whether to cancel the deletion, defaults to True
+        from_details: whether to delete from the details page (vm_names length must be one)
+        provider_name: name of provider vm resides on, only needed if fromDetails=True
+        datacenter_name: When passed with provider_name, allows navigation through tree
+            when navigating to the vm
     """
 
     _determine_whether_details(vm_names, from_details=from_details,
@@ -298,14 +281,11 @@ def get_detail(vm_name, provider_name=None, datacenter_name=None, properties=Non
     The function first ensures that we are on the detail page for the specific vm.
 
     Args:
-        vm_name:
-            name of vm_name
-        provider_name:
-            name of provider vm resides on, only needed if fromDetails=True
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
-        properties:
-            An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+        vm_name: name of vm_name
+        provider_name: name of provider vm resides on, only needed if fromDetails=True
+        datacenter_name: When passed with provider_name, allows navigation through tree
+            when navigating to the vm
+        properties: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
 
     Returns:
         A string representing the contents of the InfoBlock's value.
@@ -321,19 +301,14 @@ def wait_for_vm_state_change(vm_name, desired_state, timeout_in_minutes, provide
     This function waits just the needed amount of time thanks to wait_for.
 
     Args:
-        vm_name:
-            Displayed name of the VM
-        desired_state:
-            'on' or 'off'
-        timeout_in_minutes:
-            Specify amount of time to wait until TimedOutError is raised in minutes.
-        provider_name:
-            name of provider vm resides on, only needed if fromDetails=True
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
-        from_details:
-            Whether or not to check state from vm details page (vm_names length must be one)
-            or from the vms list
+        vm_name: Displayed name of the VM
+        desired_state: 'on' or 'off'
+        timeout_in_minutes: Specify amount of time to wait until TimedOutError is raised in minutes.
+        provider_name: name of provider vm resides on, only needed if fromDetails=True
+        datacenter_name: When passed with provider_name, allows navigation through tree
+            when navigating to the vm
+        from_details: Whether or not to check state from vm details page (vm_names length must
+            be one) or from the vms list
 
     Raises:
         TimedOutError:
@@ -365,16 +340,12 @@ def _is_pwr_helper(vm_names, from_details=False, provider_name=None, datacenter_
     This function gets navigates to the correct page and if not details, marks checkboxes.
 
     Args:
-        vm_names:
-            List of VMs to interact with, if from_details=True is passed,
+        vm_names: List of VMs to interact with, if from_details=True is passed,
             only one VM can be passed in the list.
-        provider_name:
-            name of provider vm resides on, only needed if fromDetails=True
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
-        from_details:
-            Whether or not to perform action from vm details page (vm_names length must be one)
-            or from the vms list
+        provider_name: name of provider vm resides on, only needed if fromDetails=True
+        datacenter_name: When passed with provider_name, allows navigation through tree when
+            navigating to the vm
+        option: Power option param.
     """
     _determine_whether_details(vm_names, from_details=from_details, provider_name=provider_name,
         datacenter_name=datacenter_name)
@@ -390,16 +361,12 @@ def is_pwr_option_visible(vm_names, from_details=False, provider_name=None, data
     """Returns whether a particular power option is visible.
 
     Args:
-        vm_names:
-            List of VMs to interact with, if from_details=True is passed,
-            only one VM can be passed in the list.
-        provider_name:
-            name of provider vm resides on, only needed if fromDetails=True
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
-        from_details:
-            Whether or not to perform check from vm details page (vm_names length must be one)
-            or from the vms list
+        vm_names: List of VMs to interact with, if from_details=True is passed, only one VM can
+            be passed in the list.
+        provider_name: name of provider vm resides on, only needed if fromDetails=True
+        datacenter_name: When passed with provider_name, allows navigation through tree
+            when navigating to the vm
+        option: Power option param.
 
     Raises:
         ParmRequired:
@@ -419,16 +386,14 @@ def is_pwr_option_enabled(vm_names, from_details=False, provider_name=None, data
     """Returns whether a particular power option is enabled.
 
     Args:
-        vm_names:
-            List of VMs to interact with, if from_details=True is passed,
+        vm_names: List of VMs to interact with, if from_details=True is passed,
             only one VM can be passed in the list.
-        provider_name:
-            name of provider vm resides on, only needed if fromDetails=True
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
-        from_details:
-            Whether or not to perform check from vm details page (vm_names length must be one)
-            or from the vms list
+        from_details: Whether or not to perform action from vm details page (vm_names length must
+            be one) or from the vms list
+        provider_name: name of provider vm resides on, only needed if fromDetails=True
+        datacenter_name: When passed with provider_name, allows navigation through tree
+            when navigating to the vm
+        option: Power option param.
 
     Raises:
         NoOptionAvailable:
@@ -449,18 +414,15 @@ def do_power_control(vm_names, from_details=False, provider_name=None, datacente
     """Executes a power option against a list of VMs.
 
     Args:
-        vm_names:
-            List of VMs to interact with, if from_details=True is passed,
+        vm_names: List of VMs to interact with, if from_details=True is passed,
             only one VM can be passed in the list.
-        provider_name:
-            name of provider vm resides on, only needed if fromDetails=True
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
-        from_details:
-            Whether or not to perform action from vm details page (vm_names length must be one)
-            or from the vms list
-        cancel:
-            Whether or not to cancel the power control action
+        provider_name: name of provider vm resides on, only needed if fromDetails=True
+        datacenter_name: When passed with provider_name, allows navigation through tree when
+            navigating to the vm
+        from_details: Whether or not to perform action from vm details page (vm_names length
+            must be one) or from the vms list
+        cancel: Whether or not to cancel the power control action
+        option: Power option param.
 
     Raises:
         NoOptionAvailable:
@@ -488,18 +450,14 @@ def refresh_relationships(vm_names, from_details=False, provider_name=None, data
     """Executes a refresh relationships action against a list of VMs.
 
     Args:
-        vm_names:
-            List of VMs to interact with, if from_details=True is passed,
+        vm_names: List of VMs to interact with, if from_details=True is passed,
             only one VM can be passed in the list.
-        provider_name:
-            name of provider vm resides on, only needed if fromDetails=True
-        datacenter_name:
-            When passed with provider_name, allows navigation through tree when navigating to the vm
-        from_details:
-            Whether or not to perform action from vm details page (vm_names length must be one)
-            or from the vms list
-        cancel:
-            Whether or not to cancel the refresh relationships action
+        provider_name: name of provider vm resides on, only needed if fromDetails=True
+        datacenter_name: When passed with provider_name, allows navigation through tree
+            when navigating to the vm
+        from_details: Whether or not to perform action from vm details page (vm_names length must
+            be one) or from the vms list
+        cancel: Whether or not to cancel the refresh relationships action
     """
     _determine_whether_details(vm_names, from_details=from_details, provider_name=provider_name,
         datacenter_name=datacenter_name)
