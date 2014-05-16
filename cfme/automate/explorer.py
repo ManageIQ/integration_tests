@@ -10,7 +10,8 @@ import cfme.exceptions as exceptions
 from utils.update import Updateable
 import utils.error as error
 
-tree = Tree('//table//tr[@title="Datastore"]/../..')
+tree = sel.ver_pick({'default': Tree('//table//tr[@title="Datastore"]/../..'),
+                     '9.9.9.9': Tree('//div[@id="ae_treebox"]/ul')})
 cfg_btn = partial(tb.select, 'Configuration')
 
 submit_and_cancel_buttons = [('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']"),
