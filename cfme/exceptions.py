@@ -134,8 +134,8 @@ class ScheduleNotFound(CFMEException):
 
 class RequestNotFound(CFMEException):
     """
-    Raised if a request was not found during *_request functions in
-    :py:module:`cfme.services.requests`
+    Raised if a request was not found during _request functions in
+    :py:mod:`cfme.services.requests`
     """
 
 

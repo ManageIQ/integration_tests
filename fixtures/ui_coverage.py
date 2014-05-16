@@ -24,6 +24,7 @@ Workflow Overview
 -----------------
 
 Pre-testing (``pytest_configure`` hook):
+
 1. Add ``Gemfile.dev.rb`` to the rails root, then run bundler to install simplecov
    and its dependencies.
 2. Install and require the coverage hook (copy ``coverage_hook`` to config/, add
@@ -34,6 +35,7 @@ Pre-testing (``pytest_configure`` hook):
    Fork this process off and come back to it later
 
 Post-testing (``pytest_unconfigure`` hook):
+
 1. Poll ``thing_toucher`` to make sure it completed; block if needed.
 2. Stop EVM, but nicely this time so the coverage atexit hooks run:
    ``service evmserverd stop``

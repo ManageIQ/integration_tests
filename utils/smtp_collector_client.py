@@ -52,6 +52,7 @@ class SMTPCollectorClient(object):
             time_to: E-mail arrived before this time.
             text: Text matches exactly.
             text_like: Text is LIKE.
+
         Returns: List of dicts with e-mails matching the criteria.
         """
         if filter.get("time_from", None) is not None:

@@ -30,9 +30,9 @@ def navigate(page_name, first_level, second_level):
     """Navigate function that represents the old navigation fixtures.
 
     Args:
-        page_name:
-        first_level:
-        second_level:
+        page_name: The page name.
+        first_level: The first level of nav.
+        second_level: The second level of nav.
 
     """
     warnings.warn(_warn_msg, FutureWarning)

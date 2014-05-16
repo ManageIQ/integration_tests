@@ -3,7 +3,7 @@ import re
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import CheckboxTable, Form, Region, Select, fill, flash
-from cfme.configure.configuration import nav # noqa
+from cfme.configure.configuration import nav  # noqa
 from cfme.configure.configuration import crud_buttons
 
 
@@ -115,10 +115,6 @@ def update_registration(service,
         proxy_url: Address of the proxy server.
         proxy_username: Username for the proxy server.
         proxy_password: Password for the proxy server.
-        url_default:
-            Click the 'Default' button to reset url (default `False`).
-        repo_or_channel_default:
-            Click the 'Default' button to reset repo (default `False`).
         validate: Click the Validate button and check the
                   flash message for errors if `True` (default `False`)
         cancel: Click the Cancel button if `True` or the Save button
