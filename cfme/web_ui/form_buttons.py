@@ -29,13 +29,45 @@ def add(*_, **__):
     return sel.click(_get_button_element("Add"))
 
 
+def can_add():
+    try:
+        _get_button_element("Add")
+        return True
+    except FormButtonNotFound:
+        return False
+
+
 def cancel(*_, **__):
     return sel.click(_get_button_element("Cancel"))
+
+
+def can_cancel():
+    try:
+        _get_button_element("Cancel")
+        return True
+    except FormButtonNotFound:
+        return False
 
 
 def save(*_, **__):
     return sel.click(_get_button_element("Save Changes"))
 
 
+def can_save():
+    try:
+        _get_button_element("Save Changes")
+        return True
+    except FormButtonNotFound:
+        return False
+
+
 def reset(*_, **__):
     return sel.click(_get_button_element("Reset Changes"))
+
+
+def can_reset():
+    try:
+        _get_button_element("Reset Changes")
+        return True
+    except FormButtonNotFound:
+        return False
