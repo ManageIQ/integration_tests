@@ -8,8 +8,6 @@ from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
 from cfme.web_ui import fill, form_buttons
 from cfme.web_ui import Region, Form, Tree, Table, Select, EmailSelectForm, CheckboxSelect
-from cfme.web_ui import fill, form_buttons
-from cfme.web_ui import Region, Form, Tree, Table, Select
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
 from utils.db import cfmedb
