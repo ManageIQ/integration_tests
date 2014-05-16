@@ -5,17 +5,13 @@ from cfme.web_ui import menu
 assert menu
 
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, fill, Select, accordion, flash
+from cfme.web_ui import Form, fill, form_buttons, Select, accordion, flash
 from utils.update import Updateable
 
 
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
-message = "//div[@id='flash_msg_div']"
-service_dialog_tree = web_ui.Tree('//div[@id="dialogs_treebox"]/div/table')
-save_btn = "//img[@title='Save Changes']"
 
 label_form = Form(
     fields=
@@ -41,7 +37,7 @@ element_form = Form(
      ('ele_desc', "//input[@id='field_description']"),
      ('choose_type', Select("//select[@id='field_typ']")),
      ('default_text_box', "//input[@id='field_default_value']"),
-     ('add_button', "//img[@title='Add']")])
+     ])
 
 
 def _all_servicedialogs_add_new(context):
@@ -53,7 +49,7 @@ nav.add_branch(
     'automate_customization',
     {'service_dialogs': [nav.partial(accordion.click, 'Service Dialogs'),
         {'service_dialog_new': _all_servicedialogs_add_new,
-         'service_dialog': [lambda ctx: service_dialog_tree.click_path(ctx['dialog'].label),
+         'service_dialog': [lambda ctx: accordion.tree('Service Dialogs', ctx['dialog'].label),
             {'service_dialog_edit': nav.partial(cfg_btn, "Edit this Dialog")}]}]})
 
 
@@ -103,7 +99,7 @@ class ServiceDialog(Updateable):
                             'ele_desc': self.ele_desc,
                             'choose_type': self.choose_type,
                             'default_text_box': self.default_text_box})
-        sel.click(element_form.add_button)
+        form_buttons.add()
         flash.assert_no_errors()
 
     def update(self, updates):
@@ -111,7 +107,7 @@ class ServiceDialog(Updateable):
             context={'dialog': self})
         fill(label_form, {'name_text': updates.get('name', None),
                           'description_text': updates.get('description', None)})
-        sel.click(save_btn)
+        form_buttons.save()
         flash.assert_no_errors()
 
     def delete(self):

@@ -26,7 +26,7 @@ class Message(object):
         self.level = level
 
     def __repr__(self):
-        return "[Flash %s message '%s']" % (self.level, self.message)
+        return "[Flash %s message %s]" % (self.level, str(repr(self.message)))
 
 
 def message(el):
@@ -102,5 +102,8 @@ def assert_success_message(m):
     matches the given string."""
     messages = get_messages()
     assert_no_errors(messages)
-    if not any([(fm.message == m and fm.level == 'info') for fm in messages]):
+    if not any([
+            (fm.message == m and (fm.level == 'info' or "success" in fm.level))
+            for fm
+            in messages]):
         raise Exception("No matching info flash message for '%s'" % m)
