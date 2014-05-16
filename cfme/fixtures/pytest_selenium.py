@@ -548,6 +548,10 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # Set this to True in the handlers below to trigger a browser restart
     recycle = False
 
+    # If the page is blocked, then recycle...
+    if is_displayed("//div[@id='blocker_div']"):
+        recycle = True
+
     try:
         # What we'd like to happen...
         login.login_admin()
