@@ -1542,7 +1542,10 @@ class Quadicon(object):
 
     def locate(self):
         """ Returns:  a locator for the quadicon itself"""
-        return "//div[@id='quadicon' and ../../..//a[@title='%s']]" % self._name
+        return sel.ver_pick({
+            '9.9.9.9': "//div[@id='quadicon']/../../..//a[@title='%s']" % self._name,
+            'default': "//div[@id='quadicon' and ../../..//a[@title='%s']]" % self._name
+        })
 
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
