@@ -4,27 +4,31 @@ import cfme.configure.access_control as ac
 from utils.update import update
 import utils.error as error
 import utils.randomness as random
+from cfme import Credential
+from cfme import login
+
+
+usergrp = ac.Group(description='EvmGroup-user')
 
 
 def new_user():
-    return ac.User(username='user' + random.generate_random_string(),
-                   userid='uid' + random.generate_random_string(),
-                   password='redhat',
-                   password_verify='redhat',
+    return ac.User(name='user' + random.generate_random_string(),
+                   credential=Credential(principal='uid' + random.generate_random_string(),
+                                         secret='redhat'),
                    email='xyz@redhat.com',
-                   user_group_select='EvmGroup-user',
-                   cost_center_select='Workload',
-                   value_assign_select='Database')
+                   group=usergrp,
+                   cost_center='Workload',
+                   value_assign='Database')
 
 
 def new_group():
     return ac.Group(description='grp' + random.generate_random_string(),
-                    group_role_select='EvmRole-approver')
+                    role='EvmRole-approver')
 
 
 def new_role():
     return ac.Role(name='rol' + random.generate_random_string(),
-                   vm_restriction_select='None')
+                   vm_restriction='None')
 
 
 #User test cases
@@ -36,6 +40,15 @@ def test_user_crud():
     copied_user = user.copy()
     copied_user.delete()
     user.delete()
+
+
+def test_user_login():
+    user = new_user()
+    user.create()
+    try:
+        login.force_login_user(user.credential.principal, user.credential.secret)
+    finally:
+        login.login_admin()
 
 
 def test_user_duplicate_name():

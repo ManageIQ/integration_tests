@@ -40,8 +40,8 @@ def _click_on_login():
 
 
 def logged_in():
-        if sel.is_displayed(page.user_dropdown):
-            return True
+    if sel.is_displayed(page.user_dropdown):
+        return True
 
 
 def press_enter_after_password():
@@ -92,7 +92,6 @@ def force_login_user(*args, **kwargs):
     if logged_in():
         logout()
     login(*args, **kwargs)
-    sel.wait_for_element(page.user_dropdown)
 
 
 def login_admin(**kwargs):
