@@ -186,3 +186,8 @@ class ParmConfusion(CFMEException):
     at the same time.
     """
     pass
+
+
+class FormButtonNotFound(CFMEException):
+    """Raised when form_buttons module cannot find provided button"""
+    pass

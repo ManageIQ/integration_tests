@@ -2,9 +2,8 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, Form, Region, Select, fill, flash
+from cfme.web_ui import CheckboxTable, Form, Region, Select, fill, flash, form_buttons
 from cfme.configure.configuration import nav  # noqa
-from cfme.configure.configuration import crud_buttons
 
 
 """
@@ -146,10 +145,9 @@ def update_registration(service,
         flash.dismiss()
 
     if cancel:
-        action = crud_buttons.cancel_button
+        form_buttons.cancel()
     else:
-        action = crud_buttons.save_button
-    sel.click(action)
+        form_buttons.save()
 
 
 def refresh():

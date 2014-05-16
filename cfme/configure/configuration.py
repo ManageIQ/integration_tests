@@ -6,7 +6,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
-from cfme.web_ui import Calendar, Form, Region, Select, Table, accordion, fill, flash
+from cfme.web_ui import Calendar, Form, Region, Select, Table, accordion, fill, flash, form_buttons
 from cfme.web_ui.menu import nav
 from utils.db_queries import get_server_id, get_server_name, get_server_region
 from utils.timeutil import parsetime
@@ -60,22 +60,6 @@ db_configuration = Form(
     ]
 )
 
-
-def make_button(button_title):
-    """ Precise button factory. Targets only buttons that are visible.
-
-    """
-    return "//div[@id='buttons_on']/ul[@id='form_buttons']/li/img[@title='%s']" % button_title
-
-crud_buttons = Region(
-    locators={
-        'save_button': make_button("Save Changes"),
-        'reset_button': make_button("Reset Changes"),
-        'cancel_button': make_button("Cancel"),
-        'add_button': make_button("Add"),
-    },
-    identifying_loc="save_button",
-)
 
 records_table = Table("//div[@id='records_div']/table[@class='style3']")
 
@@ -397,9 +381,9 @@ class ServerLogDepot(object):
                 details["password_verify"] = self.password
 
             if cancel:
-                action = crud_buttons.cancel_button
+                action = form_buttons.cancel
             else:
-                action = crud_buttons.save_button
+                action = form_buttons.save
             fill(
                 self.server_collect_logs,
                 details,
@@ -416,9 +400,9 @@ class ServerLogDepot(object):
             sel.force_navigate("cfg_diagnostics_server_collect_settings")
 
             if cancel:
-                action = crud_buttons.cancel_button
+                action = form_buttons.cancel
             else:
-                action = crud_buttons.save_button
+                action = form_buttons.save
             fill(
                 cls.server_collect_logs,
                 {"type": "<No Depot>"},
@@ -532,7 +516,7 @@ class BasicInformation(Updateable):
 
         """
         sel.force_navigate("cfg_settings_currentserver_server")
-        fill(self.basic_information, self.details, action=crud_buttons.save_button)
+        fill(self.basic_information, self.details, action=form_buttons.save)
 
 
 class SMTPSettings(Updateable):
@@ -612,7 +596,7 @@ class SMTPSettings(Updateable):
 
     def update(self):
         sel.force_navigate("cfg_settings_currentserver_server")
-        fill(self.smtp_settings, self.details, action=crud_buttons.save_button)
+        fill(self.smtp_settings, self.details, action=form_buttons.save)
 
     @classmethod
     def send_test_email(self, to_address):
@@ -654,7 +638,7 @@ class DatabaseAuthSetting(object):
 
     def update(self):
         sel.force_navigate("cfg_settings_currentserver_auth")
-        fill(self.form, self.details, action=crud_buttons.save_button)
+        fill(self.form, self.details, action=form_buttons.save)
 
 
 class AmazonAuthSetting(object):
@@ -695,7 +679,7 @@ class AmazonAuthSetting(object):
 
     def update(self):
         sel.force_navigate("cfg_settings_currentserver_auth")
-        fill(self.form, self.details, action=crud_buttons.save_button)
+        fill(self.form, self.details, action=form_buttons.save)
 
 
 class LDAPAuthSetting(object):
@@ -779,7 +763,7 @@ class LDAPAuthSetting(object):
 
     def update(self):
         sel.force_navigate("cfg_settings_currentserver_auth")
-        fill(self.form, self.details, action=crud_buttons.save_button)
+        fill(self.form, self.details, action=form_buttons.save)
 
 
 class LDAPSAuthSetting(LDAPAuthSetting):
@@ -918,9 +902,9 @@ class Schedule(object):
         tb.select("Configuration", "Add a new Schedule")
 
         if cancel:
-            action = crud_buttons.cancel_button
+            action = form_buttons.cancel
         else:
-            action = crud_buttons.add_button
+            action = form_buttons.add
         fill(
             self.form,
             self.details,
@@ -938,9 +922,9 @@ class Schedule(object):
         sel.force_navigate("cfg_settings_schedule_edit",
                            context={"schedule_name": self.details["name"]})
         if cancel:
-            action = crud_buttons.cancel_button
+            action = form_buttons.cancel
         else:
-            action = crud_buttons.save_button
+            action = form_buttons.save
         self.details.update(updates)
         fill(
             self.form,
@@ -1173,9 +1157,9 @@ class DatabaseBackupSchedule(Schedule):
         if samba_validate:
             sel.click(self.form.validate)
         if cancel:
-            sel.click(crud_buttons.cancel_button)
+            sel.click(form_buttons.cancel)
         else:
-            sel.click(crud_buttons.add_button)
+            sel.click(form_buttons.add)
 
     def update(self, updates, cancel=False, samba_validate=False):
         """ Modify an existing schedule with informations from this instance.
@@ -1194,9 +1178,9 @@ class DatabaseBackupSchedule(Schedule):
         if samba_validate:
             sel.click(self.form.validate)
         if cancel:
-            sel.click(crud_buttons.cancel_button)
+            sel.click(form_buttons.cancel)
         else:
-            sel.click(crud_buttons.save_button)
+            sel.click(form_buttons.save)
 
 
 def set_server_roles(**roles):
@@ -1206,7 +1190,7 @@ def set_server_roles(**roles):
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
     sel.force_navigate("cfg_settings_currentserver_server")
-    fill(server_roles, roles, action=crud_buttons.save_button)
+    fill(server_roles, roles, action=form_buttons.save)
 
 
 def get_server_roles():
@@ -1242,7 +1226,7 @@ def set_ntp_servers(*servers):
     fields = {}
     for enum, server in enumerate(servers):
         fields["ntp_server_%d" % (enum + 1)] = server
-    fill(ntp_servers, fields, action=crud_buttons.save_button)
+    fill(ntp_servers, fields, action=form_buttons.save)
 
 
 def unset_ntp_servers():
@@ -1260,7 +1244,7 @@ def set_database_internal():
     fill(
         db_configuration,
         dict(type="Internal Database on this CFME Appliance"),
-        action=crud_buttons.save_button
+        action=form_buttons.save
     )
 
 
@@ -1277,7 +1261,7 @@ def set_database_external_appliance(hostname):
             type="External Database on another CFME Appliance",
             hostname=hostname
         ),
-        action=crud_buttons.save_button
+        action=form_buttons.save
     )
 
 
@@ -1301,7 +1285,7 @@ def set_database_external_postgres(hostname, database, username, password):
             password=password,
             password_verify=password
         ),
-        action=crud_buttons.save_button
+        action=form_buttons.save
     )
 
 
