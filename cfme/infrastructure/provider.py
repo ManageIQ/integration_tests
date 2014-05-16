@@ -20,40 +20,16 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
-from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
+from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, form_buttons, paginator
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
 
 
-# Common locators
-page_specific_locators = Region(
-    locators={
-        'cancel_button': "//img[@title='Cancel']",
-        'creds_validate_btn': "//div[@id='default_validate_buttons_on']"
-                              "/ul[@id='form_buttons']/li/a/img",
-        'creds_verify_disabled_btn': "//div[@id='default_validate_buttons_off']"
-                                     "/ul[@id='form_buttons']/li/a/img",
-    }
+add_infra_provider = form_buttons.click_func(
+    "Add this Infrastructure Provider"
 )
-
-# Page specific locators
-add_page = Region(
-    locators={
-        'add_submit': "//img[@alt='Add this Infrastructure Provider']",
-    },
-    title='CloudForms Management Engine: Infrastructure Providers')
-
-edit_page = Region(
-    locators={
-        'save_button': "//img[@title='Save Changes']",
-    })
-
-manage_policies_page = Region(
-    locators={
-        'save_button': "//div[@id='buttons_on']//img[@alt='Save Changes']",
-    })
 
 details_page = Region(infoblock_type='detail')
 
@@ -90,7 +66,9 @@ credential_form = Form(
         ('candu_principal', "//*[@id='metrics_userid']"),
         ('candu_secret', "//*[@id='metrics_password']"),
         ('candu_verify_secret', "//*[@id='metrics_verify']"),
-        ('validate_btn', page_specific_locators.creds_validate_btn)
+        ('validate_btn', form_buttons.click_func(
+            "Validate the credentials by logging into the Server"
+        ))
     ])
 
 manage_policies_tree = Tree(
@@ -155,10 +133,10 @@ class Provider(Updateable):
 
     def _submit(self, cancel, submit_button):
         if cancel:
-            sel.click(page_specific_locators.cancel_button)
+            form_buttons.cancel()
             # sel.wait_for_element(page.configuration_btn)
         else:
-            sel.click(submit_button)
+            submit_button()
             flash.assert_no_errors()
 
     def create(self, cancel=False, validate_credentials=False):
@@ -175,7 +153,7 @@ class Provider(Updateable):
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
         fill(credential_form, self.candu, validate=validate_credentials)
-        self._submit(cancel, add_page.add_submit)
+        self._submit(cancel, add_infra_provider)
 
     def update(self, updates, cancel=False, validate_credentials=False):
         """
@@ -191,7 +169,7 @@ class Provider(Updateable):
         fill(properties_form, self._form_mapping(**updates))
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
         fill(credential_form, updates.get('candu', None), validate=validate_credentials)
-        self._submit(cancel, edit_page.save_button)
+        self._submit(cancel, form_buttons.save)
 
     def delete(self, cancel=True):
         """
@@ -373,7 +351,7 @@ class Provider(Updateable):
                 manage_policies_tree.select_node(policy_profile)
             else:
                 manage_policies_tree.deselect_node(policy_profile)
-        sel.click(manage_policies_page.save_button)
+        form_buttons.save()
 
 
 class VMwareProvider(Provider):
