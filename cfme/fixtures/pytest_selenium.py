@@ -662,12 +662,14 @@ def select(loc, o):
 
 @select.method((object, ByValue))
 def _select_tuple(loc, val):
+    move_to_element(loc)  # Not having this caused problems in upstream, the select wasn't visible
     select_by_value(Select(element(loc)), val.value)
 
 
 @select.method((object, str))
 @select.method((object, ByText))
 def _select_str(loc, s):
+    move_to_element(loc)  # Not having this caused problems in upstream, the select wasn't visible
     select_by_text(Select(element(loc)), str(s))
 
 

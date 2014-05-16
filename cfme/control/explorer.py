@@ -6,8 +6,10 @@ from cfme.web_ui.menu import nav
 
 from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
-from cfme.web_ui import fill
+from cfme.web_ui import fill, form_buttons
 from cfme.web_ui import Region, Form, Tree, Table, Select, EmailSelectForm, CheckboxSelect
+from cfme.web_ui import fill, form_buttons
+from cfme.web_ui import Region, Form, Tree, Table, Select
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
 from utils.db import cfmedb
@@ -19,6 +21,12 @@ import cfme.web_ui.expression_editor as editor
 import cfme.web_ui.toolbar as tb
 
 
+def table_in_object(table_title):
+    """If you want to point to tables inside object view, use this function"""
+    return "//p[@class='legend' and text()='{}']/following-sibling::*[1][@class='style3']".format(
+        table_title
+    )
+
 events_table = Table(
     table_locator="//div[@id='event_list_div']//table[@class='style3']"
 )
@@ -29,7 +37,7 @@ events_policies_table = Table(
 )
 
 events_in_policy_table = Table(
-    table_locator="//fieldset/p[contains(text(), 'Events')]/../table[@class='style3']"
+    table_locator=table_in_object("Events")
 )
 
 condition_folders_table = Table(
@@ -75,11 +83,6 @@ POLICY_PROFILES_CELL = 1
 
 policies_table = Table(
     table_locator="//div[@id='records_div']//table[@class='style3']"
-)
-
-
-policy_events = Table(
-    "//fieldset/p[@class='legend'][contains(text(), 'Events')]/../table[@class='style3']"
 )
 
 cfg_btn = partial(tb.select, "Configuration")
@@ -472,10 +475,6 @@ class BaseCondition(Updateable):
 
     buttons = Region(
         locators=dict(
-            add="//div[@id='buttons_on']//img[@alt='Add']",
-            cancel="//div[@id='buttons_on']//img[@alt='Cancel']",
-            save="//div[@id='buttons_on']//img[@alt='Save Changes']",
-            reset="//div[@id='buttons_on']//img[@alt='Reset Changes']",
             edit_scope="//div[@id='form_scope_div']//img[@alt='Edit this Scope']",
             edit_expression="//div[@id='form_expression_div']//img[@alt='Edit this Expression']",
         )
@@ -532,7 +531,7 @@ class BaseCondition(Updateable):
         sel.force_navigate(self.PREFIX + "condition_new")
         self._do_expression_editing()
         self._do_scope_editing()
-        action = self.buttons.cancel if cancel else self.buttons.add
+        action = form_buttons.cancel if cancel else form_buttons.add
         return fill(self.form, dict(description=self.description, notes=self.notes), action=action)
 
     def update(self, updates, cancel=False):
@@ -558,7 +557,7 @@ class BaseCondition(Updateable):
             self.expression = updates["expression"]
             self._do_expression_editing()
 
-        action = self.buttons.cancel if cancel else self.buttons.save
+        action = form_buttons.cancel if cancel else form_buttons.save
         return fill(self.form, dict(description=self.description, notes=self.notes), action=action)
 
     def delete(self, cancel=False):
@@ -606,23 +605,12 @@ class HostCondition(BaseCondition, HostObject):
 class BasePolicy(Updateable):
     PREFIX = None
 
-    buttons = Region(
-        locators=dict(
-            add="//div[@id='buttons_on']//img[@alt='Add']",
-            cancel="//div[@id='buttons_on']//img[@alt='Cancel']",
-            save="//div[@id='buttons_on']//img[@alt='Save Changes']",
-            reset="//div[@id='buttons_on']//img[@alt='Reset Changes']",
-        )
-    )
-
     assigned_conditions = Table(
-        table_locator="//div[@id='policy_info_div']/fieldset/p[@class='legend']"
-                      "[contains(text(), 'Conditions')]/../table[@class='style3']"
+        table_locator=table_in_object("Conditions")
     )
 
     assigned_events = Table(
-        table_locator="//div[@id='policy_info_div']/fieldset/p[@class='legend']"
-                      "[contains(text(), 'Events')]/../table[@class='style3']"
+        table_locator=table_in_object("Events")
     )
 
     form = Form(
@@ -695,7 +683,7 @@ class BasePolicy(Updateable):
         sel.force_navigate(self.PREFIX + "policy_new")
         if self.scope is not None:
             editor.create_program(self.scope)()
-        action = self.buttons.cancel if cancel else self.buttons.add
+        action = form_buttons.cancel if cancel else form_buttons.add
         return fill(
             self.form,
             dict(
@@ -724,7 +712,7 @@ class BasePolicy(Updateable):
             self.scope = updates["scope"]
             editor.create_program(self.scope)()
 
-        action = self.buttons.cancel if cancel else self.buttons.save
+        action = form_buttons.cancel if cancel else form_buttons.save
         return fill(
             self.form,
             dict(
@@ -779,7 +767,7 @@ class BasePolicy(Updateable):
         sel.force_navigate(self.PREFIX + "policy_conditions",
                            context=dict(policy_name=self.description))
         fill(self.conditions, assign_names)
-        sel.click(self.buttons.save)
+        form_buttons.save()
         return self
 
     def is_condition_assigned(self, condition):
@@ -873,7 +861,7 @@ class BasePolicy(Updateable):
                 false=[str(action) for action in false],
             )
         )
-        sel.click(self.buttons.save)
+        form_buttons.save()
 
 
 class BaseControlPolicy(BasePolicy):
@@ -893,7 +881,7 @@ class BaseControlPolicy(BasePolicy):
         if not kwargs.get("do_not_uncheck", False):
             fill(self.events, False)
         fill(self.events, {sel.ByText(event) for event in events})
-        sel.click(self.buttons.save)
+        form_buttons.save()
 
 
 class HostCompliancePolicy(BasePolicy, HostObject):
@@ -997,15 +985,6 @@ class Alert(Updateable):
         snmp_trap_hosts), the dependent variables will be None'd to ensure that things like
         :py:class:`NoSuchElementException` do not happen.
     """
-    buttons = Region(
-        locators=dict(
-            add="//div[@id='buttons_on']//img[@alt='Add']",
-            cancel="//div[@id='buttons_on']//img[@alt='Cancel']",
-            save="//div[@id='buttons_on']//img[@alt='Save Changes']",
-            reset="//div[@id='buttons_on']//img[@alt='Reset Changes']",
-        )
-    )
-
     manual_email = Region(
         locators=dict(
             field="//input[@id='email']",
@@ -1093,9 +1072,9 @@ class Alert(Updateable):
         sel.force_navigate("control_explorer_alert_new")
         self._fill()
         if cancel:
-            sel.click(self.buttons.cancel)
+            form_buttons.cancel()
         else:
-            sel.click(self.buttons.add)
+            form_buttons.add()
 
     def update(self, updates, cancel=False):
         """Update the object with new values and save.
@@ -1118,9 +1097,9 @@ class Alert(Updateable):
                            context={"alert_name": self.description})
         self._fill()
         if cancel:
-            sel.click(self.buttons.cancel)
+            form_buttons.cancel()
         else:
-            sel.click(self.buttons.save)
+            form_buttons.save()
 
     def delete(self, cancel=False):
         """Delete this Alert from CFME.
@@ -1211,15 +1190,6 @@ class Action(Updateable):
             For `Evaluate Alerts`, you have to pass an iterable with list of alerts to select.
 
     """
-    buttons = Region(
-        locators=dict(
-            add="//div[@id='buttons_on']//img[@alt='Add']",
-            cancel="//div[@id='buttons_on']//img[@alt='Cancel']",
-            save="//div[@id='buttons_on']//img[@alt='Save Changes']",
-            reset="//div[@id='buttons_on']//img[@alt='Reset Changes']",
-        )
-    )
-
     form = Form(
         fields=[
             ("description", "//input[@id='description']"),
@@ -1364,8 +1334,7 @@ class Action(Updateable):
         of forms."""
         fill(self.form, dict(description=self.description, action_type=self.action_type))
         if self.sub_forms[self.action_type] is not None:
-            fill(self.sub_forms[self.action_type], self.action_values)
-            sel.click(action)
+            fill(self.sub_forms[self.action_type], self.action_values, action=action)
         else:
             raise Exception("You must specify action_type!")
 
@@ -1376,7 +1345,7 @@ class Action(Updateable):
             cancel: Whether to cancel the creation (default False).
         """
         sel.force_navigate("control_explorer_action_new")
-        action = self.buttons.cancel if cancel else self.buttons.add
+        action = form_buttons.cancel if cancel else form_buttons.add
         return self._fill(action)
 
     def update(self, updates, cancel=False):
@@ -1388,7 +1357,7 @@ class Action(Updateable):
         """
         sel.force_navigate("control_explorer_action_edit",
                            context={"action_name": self.description})
-        action = self.buttons.cancel if cancel else self.buttons.save
+        action = form_buttons.cancel if cancel else form_buttons.save
         if "description" in updates:
             self.description = updates["description"]
 
@@ -1449,15 +1418,6 @@ class PolicyProfile(Updateable):
         ]
     )
 
-    buttons = Region(
-        locators=dict(
-            add="//div[@id='buttons_on']//img[@alt='Add']",
-            cancel="//div[@id='buttons_on']//img[@alt='Cancel']",
-            save="//div[@id='buttons_on']//img[@alt='Save Changes']",
-            reset="//div[@id='buttons_on']//img[@alt='Reset Changes']",
-        )
-    )
-
     def __init__(self, description, policies=None, notes=None):
         self.policies = policies
         self.description = description
@@ -1493,9 +1453,9 @@ class PolicyProfile(Updateable):
         sel.force_navigate("policy_profile_new")
         fill(
             self.form,
-            dict(description=self.description, notes=self.notes, policies=policy_list)
+            dict(description=self.description, notes=self.notes, policies=policy_list),
+            action=form_buttons.cancel if cancel else form_buttons.add
         )
-        sel.click(self.buttons.cancel if cancel else self.buttons.add)
 
     def update(self, updates, cancel=False):
         """Update informations, verify presence of policies, navigate to page and update the info.
@@ -1524,7 +1484,7 @@ class PolicyProfile(Updateable):
             self.form,
             dict(description=self.description, notes=self.notes, policies=policy_list)
         )
-        sel.click(self.buttons.cancel if cancel else self.buttons.save)
+        form_buttons.cancel() if cancel else form_buttons.save()
 
     def delete(self, cancel=False):
         """Delete this Policy Profile. Does not delete child policies.
@@ -1569,15 +1529,6 @@ class BaseAlertProfile(Updateable):
             ("notes", "//textarea[@id='notes']"),
             ("alerts", MultiBoxSelect.default())
         ]
-    )
-
-    buttons = Region(
-        locators=dict(
-            add="//div[@id='buttons_on']//img[@alt='Add']",
-            cancel="//div[@id='buttons_on']//img[@alt='Cancel']",
-            save="//div[@id='buttons_on']//img[@alt='Save Changes']",
-            reset="//div[@id='buttons_on']//img[@alt='Reset Changes']",
-        )
     )
 
     assignments = Form(
@@ -1738,9 +1689,9 @@ class BaseAlertProfile(Updateable):
             alerts=self.alerts,
         ))
         if not cancel:
-            sel.click(self.buttons.add)
+            form_buttons.add()
         else:
-            sel.click(self.buttons.cancel)
+            form_buttons.cancel()
 
     def update(self, updates, cancel=False):
         """ Update informations, verify presence of alerts, navigate to page and update the info.
@@ -1768,9 +1719,9 @@ class BaseAlertProfile(Updateable):
             alerts=self.alerts,
         ))
         if not cancel:
-            sel.click(self.buttons.save)
+            form_buttons.save()
         else:
-            sel.click(self.buttons.cancel)
+            form_buttons.cancel()
 
     def delete(self, cancel=False):
         """Delete this Alert Profile. Does not delete child Alerts.
@@ -1796,7 +1747,7 @@ class BaseAlertProfile(Updateable):
         fill(self.assignments, dict(assign=assign))
         if selections or tag_category:
             fill(self.sub_assignments[assign], dict(category=tag_category, selections=selections))
-        sel.click(self.buttons.save)
+        form_buttons.save()
 
 
 class ClusterAlertProfile(BaseAlertProfile):
