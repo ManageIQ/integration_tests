@@ -4,15 +4,14 @@ from functools import partial
 
 from cfme.web_ui.menu import nav
 
+from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
 from cfme.web_ui import fill
-from cfme.web_ui import Region, Form, Tree, Table, Select
+from cfme.web_ui import Region, Form, Tree, Table, Select, EmailSelectForm, CheckboxSelect
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
 from utils.db import cfmedb
 from utils.log import logger
-from utils.text import normalize_text
 from utils.update import Updateable
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.accordion as accordion
@@ -878,6 +877,8 @@ class BasePolicy(Updateable):
 
 
 class BaseControlPolicy(BasePolicy):
+    events = CheckboxSelect("//div[@id='policy_info_div']")
+
     def assign_events(self, *events, **kwargs):
         """(un)Assign one or more events to this Policy.
 
@@ -889,20 +890,9 @@ class BaseControlPolicy(BasePolicy):
         """
         sel.force_navigate(self.PREFIX + "policy_events",
                            context=dict(policy_name=self.description))
-        event_ids = {}
-        # Create event mapping
-        for event_cb in sel.elements("//input[@type='checkbox'][contains(@id, 'event_')]"):
-            desc = event_cb.find_element_by_xpath("..").text.encode("utf-8")
-            event_ids[desc] = event_cb.get_attribute("id")
-        # Create dictionary to pass to the checker func (could be merged with code above though)
-        check_dict = {}
-        normalized_events = set([normalize_text(event) for event in events])
-        for desc, id in event_ids.iteritems():
-            if normalize_text(desc) in normalized_events:
-                check_dict[(By.ID, id)] = True
-            elif not kwargs.get("do_not_uncheck", False):
-                check_dict[(By.ID, id)] = False
-        sel.multi_check(check_dict)
+        if not kwargs.get("do_not_uncheck", False):
+            fill(self.events, False)
+        fill(self.events, {sel.ByText(event) for event in events})
         sel.click(self.buttons.save)
 
 
@@ -967,7 +957,7 @@ class VMControlPolicy(BaseControlPolicy, VMObject):
 
 
 class Alert(Updateable):
-    """Alarm representation object.
+    """Alert representation object.
 
     Example:
 
@@ -995,15 +985,12 @@ class Alert(Updateable):
             For all fields, check the `form` class variable.
         driving_event: This Alert's driving event (Hourly Timer, ...).
         notification_frequency: 1 Minute, 2 Minutes, ...
-        snmp_trap: Whether to raise SNMP trap (reveals another part of form).
-        snmp_trap_hosts: :py:class:`list` of hosts (max 3) for SNMP trap (depends on snmp_trap!).
-        snmp_trap_version: v1 or v2 (depends on snmp_trap!).
-        snmp_trap_number: SNMP trap number (depends on snmp_trap!).
-        snmp_objects: :py:class:`list` of 2- or 3-tuples in format (oid, type[, value])
-            (depends on snmp_trap!).
+        snmp_trap: Values for :py:class:`cfme.web_ui.snmp_form.SNMPForm`. If `False`, it is disabled
+        emails: Whether to send e-mails. `False` disables, string or list of strings
+            with emails enables.
         timeline_event: Whether generate a timeline event.
-        mgmt_event: Whether to send a Management Event (reveals another part of form).
-        mgmt_event_name:  Management Event's name (depends on mgmt_event!).
+        mgmt_event: If specified as string, it will reveal teh form and types it into the text box.
+            If False, then it will be disabled. None - don't care.
 
     Note:
         If you don't specify the 'master' option or set it False (like snmp_trap for
@@ -1065,48 +1052,12 @@ class Alert(Updateable):
             ("vmware_alarm_type", Select("//select[@id='select_ems_alarm_mor']")),
             # Different evaluations end
             ("send_email", "//input[@id='send_email_cb']"),
-            ("send_email", "//input[@id='send_email_cb']"),
-            ("send_email_from", "//input[@id='from']"),
-            ("send_email_to", Select("//select[@id='user_email']")),
-            ("snmp_trap", "//input[@id='send_snmp_cb']"),
-            ("snmp_trap_host_1", "//input[@id='host_1']"),
-            ("snmp_trap_host_2", "//input[@id='host_2']"),
-            ("snmp_trap_host_3", "//input[@id='host_3']"),
-            ("snmp_trap_version", Select("//select[@id='snmp_version']")),
-            ("snmp_trap_number", "//input[@id='trap_id']"),
-            ("snmp_trap_oid_1", "//input[@id='oid__1']"),
-            ("snmp_trap_oid_2", "//input[@id='oid__2']"),
-            ("snmp_trap_oid_3", "//input[@id='oid__3']"),
-            ("snmp_trap_oid_4", "//input[@id='oid__4']"),
-            ("snmp_trap_oid_5", "//input[@id='oid__5']"),
-            ("snmp_trap_oid_6", "//input[@id='oid__6']"),
-            ("snmp_trap_oid_7", "//input[@id='oid__7']"),
-            ("snmp_trap_oid_8", "//input[@id='oid__8']"),
-            ("snmp_trap_oid_9", "//input[@id='oid__9']"),
-            ("snmp_trap_oid_10", "//input[@id='oid__10']"),
-            ("snmp_trap_type_1", "//input[@id='var_type__1']"),
-            ("snmp_trap_type_2", "//input[@id='var_type__2']"),
-            ("snmp_trap_type_3", "//input[@id='var_type__3']"),
-            ("snmp_trap_type_4", "//input[@id='var_type__4']"),
-            ("snmp_trap_type_5", "//input[@id='var_type__5']"),
-            ("snmp_trap_type_6", "//input[@id='var_type__6']"),
-            ("snmp_trap_type_7", "//input[@id='var_type__7']"),
-            ("snmp_trap_type_8", "//input[@id='var_type__8']"),
-            ("snmp_trap_type_9", "//input[@id='var_type__9']"),
-            ("snmp_trap_type_10", "//input[@id='var_type__10']"),
-            ("snmp_trap_value_1", "//input[@id='value__1']"),
-            ("snmp_trap_value_2", "//input[@id='value__2']"),
-            ("snmp_trap_value_3", "//input[@id='value__3']"),
-            ("snmp_trap_value_4", "//input[@id='value__4']"),
-            ("snmp_trap_value_5", "//input[@id='value__5']"),
-            ("snmp_trap_value_6", "//input[@id='value__6']"),
-            ("snmp_trap_value_7", "//input[@id='value__7']"),
-            ("snmp_trap_value_8", "//input[@id='value__8']"),
-            ("snmp_trap_value_9", "//input[@id='value__9']"),
-            ("snmp_trap_value_10", "//input[@id='value__10']"),
+            ("emails", EmailSelectForm()),
+            ("snmp_trap_send", "//input[@id='send_snmp_cb']"),
+            ("snmp_trap", SNMPForm()),
             ("timeline_event", "//input[@id='send_evm_event_cb']"),
-            ("mgmt_event", "//input[@id='send_event_cb']"),
-            ("mgmt_event_name", "//input[@id='event_name']"),
+            ("mgmt_event_send", "//input[@id='send_event_cb']"),
+            ("mgmt_event", "//input[@id='event_name']"),
         ]
     )
 
@@ -1118,13 +1069,9 @@ class Alert(Updateable):
                  driving_event=None,
                  notification_frequency=None,
                  snmp_trap=None,
-                 snmp_trap_hosts=None,
-                 snmp_trap_version=None,
-                 snmp_trap_number=None,
-                 snmp_objects=None,
+                 emails=None,
                  timeline_event=None,
-                 mgmt_event=None,
-                 mgmt_event_name=None):
+                 mgmt_event=None):
         for key, value in locals().iteritems():
             if key == "self":
                 continue
@@ -1144,7 +1091,6 @@ class Alert(Updateable):
 
     def create(self, cancel=False):
         sel.force_navigate("control_explorer_alert_new")
-        self._fix_dependencies()
         self._fill()
         if cancel:
             sel.click(self.buttons.cancel)
@@ -1170,7 +1116,6 @@ class Alert(Updateable):
         # Go update!
         sel.force_navigate("control_explorer_alert_edit",
                            context={"alert_name": self.description})
-        self._fix_dependencies()
         self._fill()
         if cancel:
             sel.click(self.buttons.cancel)
@@ -1187,14 +1132,6 @@ class Alert(Updateable):
         cfg_btn("Delete this Alert", invokes_alert=True)
         sel.handle_alert(cancel)
 
-    def _fix_dependencies(self):
-        """This function 'Nones' all child choices of the mgmt_event and snmp_trap."""
-        if self.mgmt_event is False:
-            self.mgmt_event_name = None
-        if self.snmp_trap is False:
-            for item in [x for x in dir(self) if x.startswith("snmp_trap_")]:
-                setattr(self, item, None)
-
     def _fill(self):
         """This function prepares the values and fills the form."""
         fill_details = dict(
@@ -1203,25 +1140,35 @@ class Alert(Updateable):
             based_on=self.based_on,
             driving_event=self.driving_event,
             notification_frequency=self.notification_frequency,
-            snmp_trap=self.snmp_trap,
-            snmp_trap_version=self.snmp_trap_version,
-            snmp_trap_number=self.snmp_trap_number,
             timeline_event=self.timeline_event,
-            mgmt_event=self.mgmt_event,
-            mgmt_event_name=self.mgmt_event_name
         )
-        # evaluate and snmp hosts and objects missing
+        # Hideable sections:
+        if self.snmp_trap is not None:
+            # We have to check or uncheck the checkbox and then subsequently handle the form fill
+            if self.snmp_trap is False:
+                fill_details["snmp_trap_send"] = False
+                fill_details["snmp_trap"] = None
+            else:
+                fill_details["snmp_trap_send"] = True
+                fill_details["snmp_trap"] = self.snmp_trap
+        if self.emails is not None:
+            # We have to check or uncheck the checkbox and then subsequently handle the form fill
+            if self.emails is False:
+                fill_details["send_email"] = False
+                fill_details["emails"] = None
+            else:
+                fill_details["send_email"] = True
+                fill_details["emails"] = self.emails
+        if self.mgmt_event is not None:
+            # We have to check or uncheck the checkbox and then subsequently handle the form fill
+            if self.mgmt_event is False:
+                fill_details["mgmt_event_send"] = False
+                fill_details["mgmt_event"] = None
+            else:
+                fill_details["mgmt_event_send"] = True
+                fill_details["mgmt_event"] = self.mgmt_event
+        # Evaluate expression
         form_func = lambda: None
-        if self.snmp_trap_hosts:
-            for i, host in enumerate(self.snmp_trap_hosts):
-                fill_details["snmp_trap_host_%d" % (i + 1)] = host
-        if self.snmp_objects:
-            for i, obj in enumerate(self.snmp_objects):
-                assert 2 <= len(obj) <= 3, "SNMP object must be 2- or 3-tuple"
-                fill_details["snmp_trap_oid_%d" % (i + 1)] = obj[0]
-                fill_details["snmp_trap_type_%d" % (i + 1)] = obj[1]
-                if len(obj) == 3:
-                    fill_details["snmp_trap_value_%d" % (i + 1)] = obj[2]
         if self.evaluate:
             if isinstance(self.evaluate, basestring):
                 # String -> compile program
@@ -1307,24 +1254,8 @@ class Action(Updateable):
         Form(
             fields=[
                 ("parent_type", Select("//select[@id='parent_type']")),
-                ("approve_max_cpu", "//input[@id='cat_prov_max_cpu']"),
-                ("approve_max_vm", "//input[@id='cat_prov_max_vm']"),
-                ("approve_max_memory", "//input[@id='cat_prov_max_memory']"),
-                ("approve_max_retirement_days", "//input[@id='cat_prov_max_retirement_days']"),
-                ("cost_center", "//input[@id='cat_cc']"),
-                ("department", "//input[@id='cat_department']"),
-                ("environment", "//input[@id='cat_environment']"),
-                ("evm_operations", "//input[@id='cat_operations']"),
-                ("exclusions", "//input[@id='cat_exclusions']"),
-                ("location", "//input[@id='cat_location']"),
-                ("network_location", "//input[@id='cat_network_location']"),
-                ("owner", "//input[@id='cat_owner']"),
-                ("provisioning_scope", "//input[@id='cat_prov_scope']"),
-                ("quota_max_memory", "//input[@id='cat_quota_max_memory']"),
-                ("quota_max_storage", "//input[@id='cat_quota_max_storage']"),
-                ("quota_max_cpu", "//input[@id='cat_quota_max_cpu']"),
-                ("service_level", "//input[@id='cat_service_level']"),
-                ("workload", "//input[@id='cat_function']"),
+                ("tags", CheckboxSelect(
+                    "//*[@id='action_options_div']/fieldset/table/tbody/tr[2]/td[2]/table")),
             ]
         ),
 
@@ -1361,27 +1292,9 @@ class Action(Updateable):
         ),
 
         "Remove Tags":
-        Form(
-            fields=[
-                ("approve_max_cpu", "//input[@id='cat_prov_max_cpu']"),
-                ("approve_max_vm", "//input[@id='cat_prov_max_vm']"),
-                ("approve_max_memory", "//input[@id='cat_prov_max_memory']"),
-                ("approve_max_retirement_days", "//input[@id='cat_prov_max_retirement_days']"),
-                ("cost_center", "//input[@id='cat_cc']"),
-                ("department", "//input[@id='cat_department']"),
-                ("environment", "//input[@id='cat_environment']"),
-                ("evm_operations", "//input[@id='cat_operations']"),
-                ("exclusions", "//input[@id='cat_exclusions']"),
-                ("location", "//input[@id='cat_location']"),
-                ("network_location", "//input[@id='cat_network_location']"),
-                ("owner", "//input[@id='cat_owner']"),
-                ("provisioning_scope", "//input[@id='cat_prov_scope']"),
-                ("quota_max_memory", "//input[@id='cat_quota_max_memory']"),
-                ("quota_max_storage", "//input[@id='cat_quota_max_storage']"),
-                ("quota_max_cpu", "//input[@id='cat_quota_max_cpu']"),
-                ("service_level", "//input[@id='cat_service_level']"),
-                ("workload", "//input[@id='cat_function']"),
-            ]
+        CheckboxSelect(
+            "//div[@id='action_options_div']//td[@class='key' and .='Categories']"
+            "/../td/table/tbody"
         ),
 
         "Send an E-mail":
@@ -1401,43 +1314,7 @@ class Action(Updateable):
         ),
 
         "Send an SNMP Trap":
-        Form(
-            fields=[
-                ("host", "//input[@id='host']"),
-                ("version", Select("//select[@id='snmp_version']")),
-                ("number", "//input[@id='trap_id']"),
-                ("oid_1", "//input[@id='oid__1']"),
-                ("oid_2", "//input[@id='oid__2']"),
-                ("oid_3", "//input[@id='oid__3']"),
-                ("oid_4", "//input[@id='oid__4']"),
-                ("oid_5", "//input[@id='oid__5']"),
-                ("oid_6", "//input[@id='oid__6']"),
-                ("oid_7", "//input[@id='oid__7']"),
-                ("oid_8", "//input[@id='oid__8']"),
-                ("oid_9", "//input[@id='oid__9']"),
-                ("oid_10", "//input[@id='oid__10']"),
-                ("type_1", "//input[@id='var_type__1']"),
-                ("type_2", "//input[@id='var_type__2']"),
-                ("type_3", "//input[@id='var_type__3']"),
-                ("type_4", "//input[@id='var_type__4']"),
-                ("type_5", "//input[@id='var_type__5']"),
-                ("type_6", "//input[@id='var_type__6']"),
-                ("type_7", "//input[@id='var_type__7']"),
-                ("type_8", "//input[@id='var_type__8']"),
-                ("type_9", "//input[@id='var_type__9']"),
-                ("type_10", "//input[@id='var_type__10']"),
-                ("value_1", "//input[@id='value__1']"),
-                ("value_2", "//input[@id='value__2']"),
-                ("value_3", "//input[@id='value__3']"),
-                ("value_4", "//input[@id='value__4']"),
-                ("value_5", "//input[@id='value__5']"),
-                ("value_6", "//input[@id='value__6']"),
-                ("value_7", "//input[@id='value__7']"),
-                ("value_8", "//input[@id='value__8']"),
-                ("value_9", "//input[@id='value__9']"),
-                ("value_10", "//input[@id='value__10']"),
-            ]
-        ),
+        SNMPForm(),
 
         "Tag":
         Form(

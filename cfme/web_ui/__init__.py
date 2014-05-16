@@ -10,7 +10,9 @@
 * **Elemental**
 
   * :py:class:`CheckboxTable`
+  * :py:class:`CheckboxSelect`
   * :py:class:`DHTMLSelect`
+  * :py:class:`EmailSelectForm`
   * :py:class:`Filter`
   * :py:class:`Form`
   * :py:class:`InfoBlock`
@@ -27,6 +29,7 @@
   * :py:mod:`cfme.web_ui.listnav`
   * :py:mod:`cfme.web_ui.menu`
   * :py:mod:`cfme.web_ui.paginator`
+  * :py:mod:`cfme.web_ui.snmp_form`
   * :py:mod:`cfme.web_ui.tabstrip`
   * :py:mod:`cfme.web_ui.toolbar`
 
@@ -1830,3 +1833,197 @@ def fill_scriptbox(sb, script):
         tabs = len(tb[0])
         sel.send_keys(script_area, line)
         sel.send_keys(script_area, Keys.RETURN)
+
+
+class EmailSelectForm(object):
+    """Class encapsulating the e-mail selector, eg. in Control/Alarms editing."""
+    fields = Region(locators=dict(
+        from_address="//input[@id='from']",
+        user_emails=Select("//select[@id='user_email']"),
+        manual_input="//input[@id='email']",
+        add_email_manually="//img[@title='Add' and contains(@onclick, 'add_email')]"
+    ))
+
+    @property
+    def to_emails(self):
+        """Returns list of e-mails that are selected"""
+        return [
+            sel.text(el)
+            for el
+            in sel.elements("//a[contains(@href, 'remove_email')]")
+        ]
+
+    @property
+    def user_emails(self):
+        """Returns list of e-mail that users inside CFME have so that they can be selected"""
+        try:
+            return [
+                sel.get_attribute(el, "value")
+                for el
+                in self.fields.user_emails.options
+                if len(sel.get_attribute(el, "value").strip()) > 0
+            ]
+        except NoSuchElementException:  # It disappears when empty
+            return []
+
+    def remove_email(self, email):
+        """Remove specified e-mail
+
+        Args:
+            email: E-mail to remove
+        """
+        if email in self.to_emails:
+            sel.click("//a[contains(@href, 'remove_email')][.='%s']" % email)
+            return email not in self.to_emails
+        else:
+            return True
+
+    @to_emails.setter
+    def to_emails(self, emails):
+        """Function for filling e-mails
+
+        Args:
+            emails: List of e-mails that should be filled. Any existing e-mails that are not in this
+                variable will be deleted.
+        """
+        if isinstance(emails, basestring):
+            emails = [emails]
+        # Delete e-mails that have nothing to do here
+        for email in self.to_emails:
+            if email not in emails:
+                assert self.remove_email(email), "Could not remove e-mail '%s'" % email
+        # Add new
+        for email in emails:
+            if email in self.to_emails:
+                continue
+            if email in self.user_emails:
+                sel.select(self.fields.user_emails, sel.ByValue(email))
+            else:
+                fill(self.fields.manual_input, email)
+                sel.click(self.fields.add_email_manually)
+                assert email in self.to_emails, "Adding e-mail '%s' manually failed!" % email
+
+
+@fill.method((EmailSelectForm, basestring))
+@fill.method((EmailSelectForm, list))
+@fill.method((EmailSelectForm, set))
+@fill.method((EmailSelectForm, tuple))
+def fill_email_select_form(form, emails):
+    form.to_emails = emails
+
+
+class CheckboxSelect(object):
+    """Class used for filling those bunches of checkboxes I (@mfalesni) always hated to search for.
+
+    Can fill by values, text or both. To search the text for the checkbox, you have 2 choices:
+
+    * If the text can be got from parent's tag (like `<div><input type="checkbox">blablabla</div>`
+        where blablabla is the checkbox's description looked up), you can leave the
+        `text_access_func` unfilled.
+    * If there is more complicated layout and you don't mind a bit slower operation, you can pass
+        the text_access_func, which should be like `lambda checkbox_el: get_text_of(checkbox_el)`.
+        The checkbox `WebElement` is passed to it and the description text is the expected output
+        of the function.
+
+    Args:
+        search_root: Root element for checkbox search
+        text_access_func: Function returning descriptive text about passed CB element.
+    """
+    def __init__(self, search_root, text_access_func=None):
+        self._root = search_root
+        self._access_func = text_access_func
+
+    @property
+    def checkboxes(self):
+        """All checkboxes."""
+        return set(sel.elements(".//input[@type='checkbox']", root=sel.element(self._root)))
+
+    @property
+    def selected_checkboxes(self):
+        """Only selected checkboxes."""
+        return {cb for cb in self.checkboxes if cb.is_selected()}
+
+    @property
+    def selected_values(self):
+        """Only selected checkboxes' values."""
+        return {sel.get_attribute(cb, "value") for cb in self.selected_checkboxes}
+
+    @property
+    def unselected_checkboxes(self):
+        """Only unselected checkboxes."""
+        return {cb for cb in self.checkboxes if not cb.is_selected()}
+
+    @property
+    def unselected_values(self):
+        """Only unselected checkboxes' values."""
+        return {sel.get_attribute(cb, "value") for cb in self.unselected_checkboxes}
+
+    def checkbox_by_id(self, id):
+        """Find checkbox's WebElement by id."""
+        return sel.element(
+            ".//input[@type='checkbox' and @id='%s']" % id, root=sel.element(self._root)
+        )
+
+    def select_all(self):
+        """Selects all checkboxes."""
+        for cb in self.unselected_checkboxes:
+            sel.check(cb)
+
+    def unselect_all(self):
+        """Unselects all checkboxes."""
+        for cb in self.selected_checkboxes:
+            sel.uncheck(cb)
+
+    def checkbox_by_text(self, text):
+        """Returns checkbox's WebElement by searched by its text."""
+        if self._access_func is not None:
+            for cb in self.checkboxes:
+                txt = self._access_func(cb)
+                if txt == text:
+                    return cb
+            else:
+                raise NameError("Checkbox with text %s not found!" % text)
+        else:
+            # Has to be only single
+            return sel.element(
+                ".//*[contains(., '%s')]/input[@type='checkbox']" % text,
+                root=sel.element(self._root)
+            )
+
+    def check(self, values):
+        """Checking function.
+
+        Args:
+            values: Dictionary with key=CB name, value=bool with status.
+
+        Look in the function to see.
+        """
+        for name, value in values.iteritems():
+            if isinstance(name, sel.ByText):
+                sel.checkbox(self.checkbox_by_text(str(name)), value)
+            else:
+                sel.checkbox(self.checkbox_by_id(name), value)
+
+
+@fill.method((CheckboxSelect, bool))
+def fill_cb_select_bool(select, all_state):
+    if all_state is True:
+        return select.select_all()
+    else:
+        return select.unselect_all()
+
+
+@fill.method((CheckboxSelect, list))
+@fill.method((CheckboxSelect, set))
+def fill_cb_select_set(select, names):
+    return select.check({k: True for k in names})
+
+
+@fill.method((CheckboxSelect, Mapping))
+def fill_cb_select_dictlist(select, dictlist, action):
+    return select.check(dictlist)
+
+
+@fill.method((CheckboxSelect, basestring))
+def fill_cb_select_string(select, cb):
+    return fill(select, {cb})
