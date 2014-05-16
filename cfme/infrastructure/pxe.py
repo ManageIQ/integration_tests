@@ -479,7 +479,7 @@ class SystemImageType(Updateable):
         sel.force_navigate('infrastructure_pxe_image_type_edit', context=self)
         fill(image_properties_form, self._form_mapping(**updates))
         self._submit(cancel, image_edit_page.save_btn)
-        #No flash message
+        # No flash message
 
     def delete(self, cancel=True):
         """

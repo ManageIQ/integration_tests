@@ -29,7 +29,8 @@ def main():
     client = SSHClient(**ssh_kwargs)
 
     # create repo file
-    repo_file = "[rhel-updates]\nname=rhel6-updates\nbaseurl=" + args.repo_url + "\nenabled=1\ngpgcheck=0"
+    repo_file = "[rhel-updates]\nname=rhel6-updates\nbaseurl=" + \
+                args.repo_url + "\nenabled=1\ngpgcheck=0"
 
     # create repo file on appliance
     print 'Create update repo file'
@@ -42,7 +43,6 @@ def main():
     if status != 0:
         print "ERROR during update"
         sys.exit(1)
-
 
     # reboot
     if args.reboot:

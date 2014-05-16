@@ -83,6 +83,7 @@ def random_alert_name():
 def random_alert(random_alert_name):
     return explorer.Alert(random_alert_name, timeline_event=True, driving_event="Hourly Timer")
 
+
 @pytest.fixture(scope="module")
 def random_action_name():
     return randomness.generate_random_string()

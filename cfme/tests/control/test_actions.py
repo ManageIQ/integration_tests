@@ -28,9 +28,10 @@ from utils.wait import wait_for, TimedOutError
 
 pytestmark = [pytest.mark.usefixtures("setup_infrastructure_providers")]
 
-skipped_providers = set([])     # Holds a list of providers that were skipped so they can be skipped
-                                # on next pass - py.test workaround, module-scoped fixture skipping
-                                # makes skip only the current test
+# Holds a list of providers that were skipped so they can be skipped
+# on next pass - py.test workaround, module-scoped fixture skipping
+# makes skip only the current test
+skipped_providers = set([])
 
 
 @pytest.fixture(scope="module", params=list_infra_providers())
@@ -224,7 +225,7 @@ def vm(vm_provisioned, automate_role_set, vm_name, vm_provider, provider_object)
             num_sec=240, delay=5, message="VM %s stopped" % vm_name
         )
     logger.info("Deleting VM %s in VMDB." % vm_name)
-    #vm_obj.delete()  # CFME delete
+    # vm_obj.delete()  # CFME delete
     logger.info("VM %s deleted in VMDB, now it's time to check the provider" % vm_name)
     if vm_provider.does_vm_exist(vm_name):
         logger.info("Deleting VM %s in %s" % (vm_name, vm_provider.__class__.__name__))

@@ -110,27 +110,27 @@ def _all_catalogbundle_add_new(context):
 
 nav.add_branch(
     'services_catalogs',
-        {'catalog_items': [nav.partial(accordion.click, 'Catalog Items'),
-                           {'catalog_item_new': _all_catalogitems_add_new,
-                            'catalog_item': [lambda ctx: catalog_item_tree.
-                                            click_path('All Catalog Items',
-                                            ctx['catalog'], ctx['catalog_item'].name),
-                                            {'catalog_item_edit': nav.partial(tb_select,
-                                                "Edit this Item")}]}],
-        'catalog_bundle': [nav.partial(accordion.click, 'Catalog Items'),
-                          {'catalog_bundle_new': _all_catalogbundle_add_new,
-                           'catalog_bundle': [lambda ctx: catalog_item_tree.
-                                              click_path('All Catalog Items',
-                                              ctx['catalog'], ctx['catalog_bundle'].name),
-                                             {'catalog_bundle_edit': nav.partial(tb_select,
-                                                "Edit this Item")}]}]})
+    {'catalog_items': [nav.partial(accordion.click, 'Catalog Items'),
+        {'catalog_item_new': _all_catalogitems_add_new,
+         'catalog_item': [lambda ctx: catalog_item_tree.
+                          click_path('All Catalog Items',
+                                     ctx['catalog'], ctx['catalog_item'].name),
+                          {'catalog_item_edit': nav.partial(tb_select,
+                                                            "Edit this Item")}]}],
+     'catalog_bundle': [nav.partial(accordion.click, 'Catalog Items'),
+        {'catalog_bundle_new': _all_catalogbundle_add_new,
+         'catalog_bundle': [lambda ctx: catalog_item_tree.
+                            click_path('All Catalog Items',
+                                       ctx['catalog'], ctx['catalog_bundle'].name),
+                            {'catalog_bundle_edit': nav.partial(tb_select,
+                                                                "Edit this Item")}]}]})
 
 
 class CatalogItem(Updateable):
 
     def __init__(self, item_type=None, name=None, description=None,
-        display_in=False, catalog=None, dialog=None,
-        catalog_name=None, provider=None, prov_data=None):
+                 display_in=False, catalog=None, dialog=None,
+                 catalog_name=None, provider=None, prov_data=None):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -177,7 +177,7 @@ class CatalogItem(Updateable):
 class CatalogBundle(Updateable):
 
     def __init__(self, name=None, description=None,
-        display_in=False, catalog=None, dialog=None, cat_item=None):
+                 display_in=False, catalog=None, dialog=None, cat_item=None):
         self.name = name
         self.description = description
         self.display_in = display_in
