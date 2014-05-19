@@ -6,7 +6,7 @@ from cfme.web_ui.menu import nav
 
 from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
-from cfme.web_ui import fill, flash, form_buttons
+from cfme.web_ui import fill, flash, form_buttons, table_in_object
 from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSelectForm, \
     CheckboxSelect
 from cfme.web_ui.multibox import MultiBoxSelect
@@ -19,20 +19,6 @@ import cfme.web_ui.accordion as accordion
 import cfme.web_ui.expression_editor as editor
 import cfme.web_ui.toolbar as tb
 
-
-def table_in_object(table_title):
-    """If you want to point to tables inside object view, this is what you want to use.
-
-    Works both on down- and upstream.
-
-    Args:
-        table_title: Text in `p` element preceeding the table
-    Returns: XPath locator for the desired table.
-    """
-    # Description     paragraph with the text       following element    which is the table
-    return "//p[@class='legend' and text()='{}']/following-sibling::*[1][@class='style3']".format(
-        table_title
-    )
 
 events_table = Table(
     table_locator="//div[@id='event_list_div']//table[@class='style3']"

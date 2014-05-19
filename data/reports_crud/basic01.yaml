@@ -1,0 +1,39 @@
+menu_name: testing report
+title: Testing report
+base_report_on: VMs and Instances
+report_fields:
+    - Archived
+    - Autostart
+    - Boot Time
+    - Busy
+    - CPU - % Overallocated
+    - Name
+cancel_after: 1 Hour
+group_records:
+    - Busy
+    - Archived
+calculations_grouped:
+    CPU - % Overallocated:
+        - Maximum
+        - Minimum
+        - Average
+page_size: A4 - 210mm x 297mm (default)
+headers:
+    Archived:
+        header: Test1
+        format: Boolean (T/F)
+    Busy:
+        header: Such busy
+        format: Boolean (Yes/No)
+column_styles:
+    Name:
+        -
+            - Blue Text
+            - "="
+            - asdf
+        -
+            - Yellow Background
+            - IS NULL
+        -
+            - Red Background
+            - IS NOT NULL

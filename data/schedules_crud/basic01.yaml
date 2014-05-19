@@ -1,0 +1,13 @@
+name: testing schedule 1
+description: description of testing schedule 1
+filter:
+    - Events
+    - Policy
+    - Policy Events for Last Week
+active: True
+timer:
+    run: Hourly
+    hours: 2 Hours
+send_email:
+    - test1@example.test
+    - test2@example.test
