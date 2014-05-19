@@ -5,7 +5,7 @@ from functools import partial
 from cfme.web_ui.menu import nav
 
 from cfme.control.snmp_form import SNMPForm
-from cfme.exceptions import CannotContinueWithNavigation
+from cfme.exceptions import CannotContinueWithNavigation, FormButtonNotFound
 from cfme.web_ui import fill, form_buttons
 from cfme.web_ui import Region, Form, Tree, Table, Select, EmailSelectForm, CheckboxSelect
 from cfme.web_ui.multibox import MultiBoxSelect
@@ -795,9 +795,10 @@ class BasePolicy(Updateable):
         if not self._on_detail_page:
             sel.force_navigate(self.PREFIX + "policy",
                                context=dict(policy_name=self.description))
-        if sel.is_displayed(self.assigned_conditions):
+        try:
+            sel.move_to_element(self.assigned_conditions)
             return bool(self.assigned_conditions.find_cell("description", condition_name))
-        else:
+        except NoSuchElementException:
             return False
 
     def is_event_assigned(self, event):
@@ -812,10 +813,8 @@ class BasePolicy(Updateable):
             sel.force_navigate(self.PREFIX + "policy",
                                context=dict(policy_name=self.description))
         try:
-            if sel.is_displayed(self.assigned_events):
-                return bool(self.assigned_events.find_cell("description", event))
-            else:
-                return False
+            sel.move_to_element(self.assigned_events)
+            return bool(self.assigned_events.find_cell("description", event))
         except NoSuchElementException:
             return False
 
@@ -881,13 +880,20 @@ class BaseControlPolicy(BasePolicy):
                 checked. If it is not present, it will be unchecked.
         Keywords:
             do_not_uncheck: If specified and True, no unchecking will happen.
+            quiet: Whether to raise an exception or not when Save button is not available (True)
         """
         sel.force_navigate(self.PREFIX + "policy_events",
                            context=dict(policy_name=self.description))
         if not kwargs.get("do_not_uncheck", False):
             fill(self.events, False)
         fill(self.events, {sel.ByText(event) for event in events})
-        form_buttons.save()
+        try:
+            form_buttons.save()
+        except FormButtonNotFound:
+            if kwargs.get("quiet", True):
+                pass
+            else:
+                raise
 
 
 class HostCompliancePolicy(BasePolicy, HostObject):
