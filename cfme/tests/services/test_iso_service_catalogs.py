@@ -1,17 +1,17 @@
 import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services import requests
-from cfme.web_ui import flash
 from utils import testgen
 from utils.providers import setup_infrastructure_providers
 from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
+from utils.conf import cfme_data
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
@@ -24,6 +24,7 @@ pytestmark = [
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
     argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
+    argnames = argnames + ['iso_cust_template', 'iso_datastore']
 
     new_idlist = []
     new_argvalues = []
@@ -33,11 +34,25 @@ def pytest_generate_tests(metafunc):
             # No provisioning data available
             continue
 
-        # required keys should be a subset of the dict keys set
-        if not {'template', 'host', 'datastore'}.issubset(args['provisioning'].viewkeys()):
-            # Need all three for template provisioning
+        provider_data = cfme_data['management_systems'][
+            argvalue_tuple[argnames.index('provider_key')]]
+        if not provider_data.get('iso_datastore', False):
             continue
 
+        # required keys should be a subset of the dict keys set
+        if not {'iso_template', 'host', 'datastore',
+                'iso_file', 'iso_kickstart',
+                'iso_root_password',
+                'iso_image_type', 'vlan'}.issubset(args['provisioning'].viewkeys()):
+            # Need all  for template provisioning
+            continue
+
+        iso_cust_template = args['provisioning']['iso_kickstart']
+        if iso_cust_template not in cfme_data['customization_templates'].keys():
+            continue
+
+        argvalues[i].append(get_template_from_config(iso_cust_template))
+        argvalues[i].append(ISODatastore(provider_data['name']))
         new_idlist.append(idlist[i])
         new_argvalues.append(argvalues[i])
 
@@ -45,9 +60,18 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="module")
-def setup_providers():
+def setup_iso_providers():
     # Normally function-scoped
     setup_infrastructure_providers()
+
+
+@pytest.fixture(scope="module")
+def setup_iso_datastore(iso_cust_template, provisioning, iso_datastore):
+    if not iso_datastore.exists():
+        iso_datastore.create()
+    iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
+    if not iso_cust_template.exists():
+        iso_cust_template.create()
 
 
 @pytest.yield_fixture(scope="function")
@@ -61,7 +85,6 @@ def dialog():
                      ele_name="service_name",
                      ele_desc="ele_desc", choose_type="Text Box", default_text_box="default value")
     service_dialog.create()
-    flash.assert_success_message('Dialog "%s" was added' % dialog)
     yield dialog
 
 
@@ -76,34 +99,34 @@ def catalog():
 
 @pytest.yield_fixture(scope="function")
 def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
-    template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
-        ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
+    iso_template, host, datastore, iso_file, iso_kickstart,\
+        iso_root_password, iso_image_type, vlan = map(provisioning.get, ('pxe_template', 'host',
+                                'datastore', 'iso_file', 'iso_kickstart',
+                                'iso_root_password', 'iso_image_type', 'vlan'))
 
     provisioning_data = {
         'vm_name': vm_name,
         'host_name': {'name': [host]},
-        'datastore_name': {'name': [datastore]}
+        'datastore_name': {'name': [datastore]},
+        'provision_type': 'ISO',
+        'iso_file': {'name': [iso_file]},
+        'custom_template': {'name': [iso_kickstart]},
+        'root_password': iso_root_password,
+        'vlan': vlan
     }
 
-    if provider_type == 'rhevm':
-        provisioning_data['provision_type'] = 'Native Clone'
-        provisioning_data['vlan'] = provisioning['vlan']
-    elif provider_type == 'virtualcenter':
-        provisioning_data['provision_type'] = 'VMware'
     item_name = generate_random_string()
-    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
+    catalog_item = CatalogItem(item_type="Redhat", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog, catalog_name=template,
+                  dialog=dialog, catalog_name=iso_template,
                   provider=provider_crud.name, prov_data=provisioning_data)
     yield catalog_item
 
-
-def test_order_catalog_item(setup_providers, catalog_item):
-    # generate_tests makes sure these have values
+@pytest.mark.usefixtures('setup_iso_providers', 'setup_iso_datastore')
+def test_rhev_iso_servicecatalog(catalog_item):
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
-    flash.assert_no_errors()
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
     row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
@@ -113,21 +136,3 @@ def test_order_catalog_item(setup_providers, catalog_item):
         fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'Request complete'
 
-
-def test_order_catalog_bundle(setup_providers, catalog_item):
-    catalog_item.create()
-    bundle_name = generate_random_string()
-    catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog,
-                   dialog=catalog_item.dialog, cat_item=catalog_item.name)
-    catalog_bundle.create()
-    service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_bundle)
-    flash.assert_no_errors()
-    logger.info('Waiting for cfme provision request for service %s' % bundle_name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (bundle_name, bundle_name)
-    cells = {'Description': row_description}
-
-    row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
-    assert row.last_message.text == 'Request complete'
