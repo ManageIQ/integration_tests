@@ -2,49 +2,116 @@
 
 
 from functools import partial
+from urlparse import urlparse
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Form, Select, accordion, fill, flash, form_buttons
 from cfme.web_ui.menu import nav
+from utils.db_queries import get_server_region
 from utils.update import Updateable
 
 
+def get_ip_address():
+    """Returns an IP address of the appliance
+    """
+    return urlparse(sel.current_url()).netloc
+
+
+def server_region():
+    return get_server_region(get_ip_address())
+
+
+def server_region_pair():
+    r = server_region()
+    return r, r
+
+
+def ac_tree(*path):
+    """DRY function to access the shared level of the accordion tree.
+
+    Args:
+        *path: Path to click in the tree that follows the '[cfme] region xyz' node
+    """
+    path = sel.ver_pick({
+        "9.9.9.9": ["CFME Region: Region %d [%d]" % server_region_pair()] + list(path),
+        "default": path,
+    })
+    return accordion.tree(
+        "Access Control",
+        *path
+    )
+
 tb_select = partial(tb.select, "Configuration")
-#pol_btn = partial(tb.select, "Policy")
-nav.add_branch('configuration',
-               {'configuration_accesscontrol':
-                [nav.fn(partial(accordion.click, "Access Control")),
-                 {'cfg_accesscontrol_users':
-                  [lambda d: accordion.tree("Access Control", "Users"),
-                   {'cfg_accesscontrol_user_add':
-                    lambda d: tb.select("Configuration", "Add a new User")}],
+# pol_btn = partial(tb.select, "Policy")
+nav.add_branch(
+    'configuration',
+    {
+        'configuration_accesscontrol':
+        [
+            nav.fn(partial(accordion.click, "Access Control")),
+            {
+                'cfg_accesscontrol_users':
+                [
+                    lambda d: ac_tree("Users"),
+                    {
+                        'cfg_accesscontrol_user_add':
+                        lambda d: tb.select("Configuration", "Add a new User")
+                    }
+                ],
 
-                  'cfg_accesscontrol_user_ed':
-                  [lambda ctx: accordion.tree("Access Control", 'Users', ctx.username),
-                   {'cfg_accesscontrol_user_edit': lambda d: tb_select('Edit this User')}],
+                'cfg_accesscontrol_user_ed':
+                [
+                    lambda ctx: ac_tree('Users', ctx.username),
+                    {
+                        'cfg_accesscontrol_user_edit':
+                        lambda d: tb_select('Edit this User')
+                    }
+                ],
 
-                  'cfg_accesscontrol_groups':
-                  [lambda d: accordion.tree("Access Control", "Groups"),
-                   {'cfg_accesscontrol_group_add':
-                    lambda d: tb.select("Configuration", "Add a new Group")}],
+                'cfg_accesscontrol_groups':
+                [
+                    lambda d: ac_tree("Groups"),
+                    {
+                        'cfg_accesscontrol_group_add':
+                        lambda d: tb.select("Configuration", "Add a new Group")
+                    }
+                ],
 
-                  'cfg_accesscontrol_group_ed':
-                  [lambda ctx: accordion.tree("Access Control", 'Groups', ctx.description),
-                   {'cfg_accesscontrol_group_edit': lambda d: tb_select('Edit this Group')}],
+                'cfg_accesscontrol_group_ed':
+                [
+                    lambda ctx: ac_tree('Groups', ctx.description),
+                    {
+                        'cfg_accesscontrol_group_edit':
+                        lambda d: tb_select('Edit this Group')
+                    }
+                ],
 
-                  'cfg_accesscontrol_Roles':
-                  [lambda d: accordion.tree("Access Control", "Roles"),
-                   {'cfg_accesscontrol_role_add':
-                    lambda d: tb.select("Configuration", "Add a new Role")}],
+                'cfg_accesscontrol_Roles':
+                [
+                    lambda d: ac_tree("Roles"),
+                    {
+                        'cfg_accesscontrol_role_add':
+                        lambda d: tb.select("Configuration", "Add a new Role")
+                    }
+                ],
 
-                  'cfg_accesscontrol_role_ed':
-                  [lambda ctx: accordion.tree("Access Control", 'Roles', ctx.name),
-                   {'cfg_accesscontrol_role_edit': lambda d: tb_select('Edit this Role')}],
+                'cfg_accesscontrol_role_ed':
+                [
+                    lambda ctx: ac_tree('Roles', ctx.name),
+                    {
+                        'cfg_accesscontrol_role_edit':
+                        lambda d: tb_select('Edit this Role')
+                    }
+                ],
 
-                  }],
+            }
+        ],
 
-                'chargeback_assignments': nav.fn(partial(accordion.click, "Assignments"))})
+        'chargeback_assignments':
+        nav.fn(partial(accordion.click, "Assignments"))
+    }
+)
 
 
 class User(Updateable):

@@ -79,8 +79,12 @@ def tree(name, *path):
     click(name)
     tree = Tree(
         sel.first_from(
-            "//ul[@class='dynatree-container']",
-            "//div[@class='containerTableStyle']/table",
+            # Current tree
+            "../../div[contains(@class, 'dhxcont_global_content_area')]//"
+            "ul[@class='dynatree-container']",
+            # Legacy tree
+            "../../div[contains(@class, 'dhxcont_global_content_area')]//"
+            "div[@class='containerTableStyle']//table[not(ancestor::tr[contains(@style,'none')])]",
             root=sel.element(locate(name))
         )
     )

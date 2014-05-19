@@ -1075,7 +1075,6 @@ class DatabaseBackupSchedule(Schedule):
         ("log_userid", "//input[@id='log_userid']"),
         ("log_password", "//input[@id='log_password']"),
         ("log_verify", "//input[@id='log_verify']"),
-        ("validate", "//a[@title='Validate the credentials by logging into the Server']"),
         ("timer_type", Select("//select[@id='timer_typ']")),
         ("timer_hours", Select("//select[@id='timer_hours']")),
         ("timer_days", Select("//select[@id='timer_days']")),
@@ -1086,6 +1085,10 @@ class DatabaseBackupSchedule(Schedule):
         ("start_hour", Select("//select[@id='start_hour']")),
         ("start_min", Select("//select[@id='start_min']"))
     ])
+
+    validate = form_buttons.click_func(
+        "Validate the credentials by logging into the Server"
+    )
 
     def __init__(self,
                  name,
@@ -1155,11 +1158,11 @@ class DatabaseBackupSchedule(Schedule):
 
         fill(self.form, self.details)
         if samba_validate:
-            sel.click(self.form.validate)
+            self.validate()
         if cancel:
-            sel.click(form_buttons.cancel)
+            form_buttons.cancel()
         else:
-            sel.click(form_buttons.add)
+            form_buttons.add()
 
     def update(self, updates, cancel=False, samba_validate=False):
         """ Modify an existing schedule with informations from this instance.
@@ -1176,11 +1179,11 @@ class DatabaseBackupSchedule(Schedule):
         self.details.update(updates)
         fill(self.form, self.details)
         if samba_validate:
-            sel.click(self.form.validate)
+            self.validate()
         if cancel:
-            sel.click(form_buttons.cancel)
+            form_buttons.cancel()
         else:
-            sel.click(form_buttons.save)
+            form_buttons.save()
 
 
 def set_server_roles(**roles):
