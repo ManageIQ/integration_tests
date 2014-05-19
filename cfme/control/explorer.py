@@ -1340,7 +1340,8 @@ class Action(Updateable):
         of forms."""
         fill(self.form, dict(description=self.description, action_type=self.action_type))
         if self.sub_forms[self.action_type] is not None:
-            fill(self.sub_forms[self.action_type], self.action_values, action=action)
+            fill(self.sub_forms[self.action_type], self.action_values)
+            action()
         else:
             raise Exception("You must specify action_type!")
 
