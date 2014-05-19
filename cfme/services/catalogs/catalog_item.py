@@ -9,6 +9,7 @@ from collections import OrderedDict
 from cfme.web_ui import Form, Select, fill, Table, tabstrip, Radio, accordion, flash
 from utils.update import Updateable
 
+
 tb_select = functools.partial(tb.select, "Configuration")
 catalog_item_tree = web_ui.Tree('//div[@id="sandt_tree_box"]//table')
 
@@ -196,3 +197,13 @@ class CatalogBundle(Updateable):
         fill(resources_form, {'choose_resource': self.cat_item},
             action=resources_form.add_button)
         flash.assert_success_message('Catalog Bundle "%s" was added' % self.name)
+
+    def update(self, updates):
+        sel.force_navigate('catalog_bundle_edit',
+            context={'catalog': self.catalog, 'catalog_bundle': self})
+        fill(basic_info_form, {'name_text': updates.get('name', None),
+                               'description_text': updates.get('description', None)})
+        tabstrip.select_tab("Resources")
+        fill(resources_form, {'choose_resource': updates.get('cat_item', None)},
+            action=resources_form.save_button)
+        flash.assert_success_message('Catalog Bundle "%s" was saved' % self.name)
