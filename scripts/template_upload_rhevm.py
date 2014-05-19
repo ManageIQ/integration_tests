@@ -231,7 +231,7 @@ def templatize_vm(api, template_name, cluster):
     new_template = params.Template(name=template_name, vm=temporary_vm, cluster=actual_cluster)
     api.templates.add(new_template)
 
-    wait_for(check_disks, [api], fail_condition=False, delay=5)
+    wait_for(check_disks, [api], fail_condition=False, delay=5, num_sec=900)
 
     #check, if template is really there
     if not api.templates.get(template_name):
