@@ -9,6 +9,7 @@ from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
 from cfme.web_ui import Calendar, Form, Region, Select, Table, accordion, fill, flash, form_buttons
 from cfme.web_ui.menu import nav
 from utils.db_queries import get_server_id, get_server_name, get_server_region
+from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
@@ -1193,16 +1194,20 @@ def set_server_roles(**roles):
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
     sel.force_navigate("cfg_settings_currentserver_server")
+    if get_server_roles(navigate=False) == roles:
+        logger.debug(' Roles already match, returning...')
+        return
     fill(server_roles, roles, action=form_buttons.save)
 
 
-def get_server_roles():
+def get_server_roles(navigate=True):
     """ Get server roles from Configure / Configuration
 
     Returns: :py:class:`dict` with the roles in the same format as :py:func:`set_server_roles`
         accepts as kwargs.
     """
-    sel.force_navigate("cfg_settings_currentserver_server")
+    if navigate:
+        sel.force_navigate("cfg_settings_currentserver_server")
     return {name: sel.element(locator).is_selected() for (name, locator) in server_roles.fields}
 
 
