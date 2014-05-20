@@ -30,6 +30,9 @@ def parse_cmd_line():
     parser.add_argument('--dir_url', dest='dir_url',
                         help='URL of a web directory containing links to CFME images',
                         default=None)
+    parser.add_argument('--stream', dest='stream',
+                        help='Stream to work with (downstream, upstream)',
+                        default=None)
     args = parser.parse_args()
     return args
 
@@ -162,44 +165,48 @@ if __name__ == "__main__":
 
     args = parse_cmd_line()
 
-    dir_url = args.dir_url or cfme_data['basic_info']['cfme_images_url']
-
-    dir_files = browse_directory(dir_url)
-
+    urls = cfme_data['basic_info']['cfme_images_url']
+    stream = args.stream or cfme_data['template_upload']['stream']
     mgmt_sys = cfme_data['management_systems']
 
-    kwargs = {}
+    #TODO: args.dir_url not used right now
+    for key, url in urls.iteritems():
+        if stream is not None:
+            if key != stream:
+                continue
+        dir_files = browse_directory(url)
+        kwargs = {}
 
-    for provider in mgmt_sys:
-        if mgmt_sys[provider].get('template_upload', None):
-            if 'rhevm' in mgmt_sys[provider]['type']:
-                module = 'template_upload_rhevm'
-                if module not in dir_files.iterkeys():
-                    continue
-                kwargs = make_kwargs_rhevm(cfme_data, provider)
-            if 'openstack' in mgmt_sys[provider]['type']:
-                module = 'template_upload_rhos'
-                if module not in dir_files.iterkeys():
-                    continue
-                kwargs = make_kwargs_rhos(cfme_data, provider)
-            if 'virtualcenter' in mgmt_sys[provider]['type']:
-                module = 'template_upload_vsphere'
-                if module not in dir_files.iterkeys():
-                    continue
-                kwargs = make_kwargs_vsphere(cfme_data, provider)
+        for provider in mgmt_sys:
+            if mgmt_sys[provider].get('template_upload', None):
+                if 'rhevm' in mgmt_sys[provider]['type']:
+                    module = 'template_upload_rhevm'
+                    if module not in dir_files.iterkeys():
+                        continue
+                    kwargs = make_kwargs_rhevm(cfme_data, provider)
+                if 'openstack' in mgmt_sys[provider]['type']:
+                    module = 'template_upload_rhos'
+                    if module not in dir_files.iterkeys():
+                        continue
+                    kwargs = make_kwargs_rhos(cfme_data, provider)
+                if 'virtualcenter' in mgmt_sys[provider]['type']:
+                    module = 'template_upload_vsphere'
+                    if module not in dir_files.iterkeys():
+                        continue
+                    kwargs = make_kwargs_vsphere(cfme_data, provider)
 
-            if kwargs:
-                kwargs['image_url'] = dir_files[module]
+                if kwargs:
+                    kwargs['image_url'] = dir_files[module]
 
-                if cfme_data['template_upload']['automatic_name_strategy']:
-                    kwargs['template_name'] = template_name(dir_files[module])
+                    if cfme_data['template_upload']['automatic_name_strategy']:
+                        kwargs['template_name'] = template_name(dir_files[module])
 
-                print "---Start of %s: %s---" % (module, provider)
+                    print "---Start of %s: %s---" % (module, provider)
 
-                try:
-                    getattr(__import__(module), "run")(**kwargs)
-                except:
-                    print "Exception: Module '%s' with provider '%s' exitted with error." \
-                        % (module, provider)
+                    try:
+                        getattr(__import__(module), "run")(**kwargs)
+                    except:
+                        print "Exception: Module '%s' with provider '%s' exitted with error." \
+                            % (module, provider)
 
-                print "---End of %s: %s---" % (module, provider)
+                    print "---End of %s: %s---" % (module, provider)
