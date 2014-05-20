@@ -2,7 +2,7 @@ import pytest
 import cfme.web_ui.flash as flash
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
-from cfme.services.catalogs import Catalog
+from cfme.services.catalogs.catalog import Catalog
 from utils.randomness import generate_random_string
 from utils import error
 from utils.update import update

@@ -2,7 +2,7 @@ import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
-from cfme.services.catalogs import Catalog
+from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services import requests
