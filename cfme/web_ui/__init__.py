@@ -1138,8 +1138,8 @@ class Tree(object):
             # Dynatree
             self.expandable = 'span'
             self.is_expanded_condition = ('class', 'dynatree-expanded')
-            self.node_root = "//li/span/a[.='%s']/../.."
-            self.node_label = "//li/span/a[.='%s']"
+            self.node_root = ".//li/span/a[.='%s']/../.."
+            self.node_label = ".//li/span/a[.='%s']"
             self.click_expand = "span/span"
             self.leaf = "span/a"
             self.node_select = "span/span[@class='dynatree-checkbox']"
