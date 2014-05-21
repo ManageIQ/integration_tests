@@ -11,7 +11,10 @@ from utils.update import Updateable
 
 
 tb_select = functools.partial(tb.select, "Configuration")
-catalog_item_tree = web_ui.Tree('//div[@id="sandt_tree_box"]//table')
+catalog_item_tree = web_ui.Tree(sel.ver_pick({
+    'default': '//div[@id="sandt_tree_box"]//table',
+    '9.9.9.9': '//div[@id="sandt_treebox"]//ul'
+}))
 
 template_select_form = Form(
     fields=[
@@ -98,7 +101,7 @@ resources_form = Form(
 
 
 def _all_catalogitems_add_new(context):
-    sel.click("//div[@id='sandt_tree_div']//td[.='All Catalog Items']")
+    catalog_item_tree.click_path('All Catalog Items')
     tb_select('Add a New Catalog Item')
     provider_type = context['provider_type']
     sel.select("//select[@id='st_prov_type']", provider_type)

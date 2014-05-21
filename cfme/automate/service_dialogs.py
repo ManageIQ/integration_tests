@@ -6,7 +6,7 @@ assert menu
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, fill, form_buttons, Select, accordion, flash
+from cfme.web_ui import Form, fill, form_buttons, Select, accordion, flash, Tree
 from utils.update import Updateable
 
 
@@ -39,9 +39,13 @@ element_form = Form(
      ('default_text_box', "//input[@id='field_default_value']"),
      ])
 
+service_dialog_tree = Tree(sel.ver_pick({
+    'default': "//div[@id='dialogs_tree_div']//table",
+    '9.9.9.9': "//div[@id='dialogs_tree_div']//ul"}))
+
 
 def _all_servicedialogs_add_new(context):
-    sel.click("//div[@id='dialogs_tree_div']//td[.='All Dialogs']")
+    service_dialog_tree.click_path('All Dialogs')
     cfg_btn('Add a new Dialog')
     sel.wait_for_element(label_form.label)
 
@@ -82,17 +86,23 @@ class ServiceDialog(Updateable):
                           'submit_button': self.submit,
                           'cancel_button': self.cancel})
         if(self.tab_label is not None):
-            plus_btn("Add a New Tab to this Dialog")
+            btn_marker = sel.ver_pick({'default': "Add a New Tab to this Dialog",
+                                       '9.9.9.9': "Add a new Tab to this Dialog"})
+            plus_btn(btn_marker)
             sel.wait_for_element(tab_form.tab_label)
             fill(tab_form, {'tab_label': self.tab_label,
                         'tab_desc': self.tab_desc})
         if(self.box_label is not None):
-            plus_btn("Add a New Box to this Tab")
+            btn_marker = sel.ver_pick({'default': "Add a New Box to this Tab",
+                                       '9.9.9.9': "Add a new Box to this Tab"})
+            plus_btn(btn_marker)
             sel.wait_for_element(box_form.box_label)
             fill(box_form, {'box_label': self.box_label,
                         'box_desc': self.box_desc})
         if(self.ele_label is not None):
-            plus_btn("Add a New Element to this Box")
+            btn_marker = sel.ver_pick({'default': "Add a New Element to this Box",
+                                       '9.9.9.9': "Add a new Element to this Box"})
+            plus_btn(btn_marker)
             sel.wait_for_element(element_form.ele_label)
             fill(element_form, {'ele_label': self.ele_label,
                             'ele_name': self.ele_name,
