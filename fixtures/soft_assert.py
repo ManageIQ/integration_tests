@@ -33,6 +33,7 @@ from utils.path import get_rel_path
 _thread_locals = local()
 
 
+@pytest.mark.tryfirst
 def pytest_runtest_call(__multicall__, item):
     """pytest hook to handle :py:func:`soft_assert` fixture usage"""
     # If a test is using soft_assert, wrap it in the context manager
