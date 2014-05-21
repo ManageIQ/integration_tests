@@ -17,14 +17,15 @@ from ovirtsdk.xml import params
 
 from utils.conf import cfme_data
 from utils.conf import credentials
+from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 
 #temporary vm name (this vm will be deleted)
-TEMP_VM_NAME = 'automated-temporary'
+TEMP_VM_NAME = 'auto-vm-%s' % generate_random_string()
 #temporary template name (this template will be deleted)
-TEMP_TMP_NAME = 'automated-template-temporary'
+TEMP_TMP_NAME = 'auto-tmp-%s' % generate_random_string()
 
 
 def parse_cmd_line():

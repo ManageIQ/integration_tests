@@ -25,11 +25,11 @@ from urllib2 import urlopen
 from utils.conf import cfme_data
 
 
+MIQ_ACTUAL_VERSION = '31'
+
+
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
-    parser.add_argument('--dir_url', dest='dir_url',
-                        help='URL of a web directory containing links to CFME images',
-                        default=None)
     parser.add_argument('--stream', dest='stream',
                         help='Stream to work with (downstream, upstream)',
                         default=None)
@@ -37,23 +37,17 @@ def parse_cmd_line():
     return args
 
 
-#TODO allow suffix
 def template_name(image_name):
     #MIQ
-    #pattern = re.compile(r'[^\d]*?TEST-BUILD-[^\d]*(\d*).\w*')
     pattern = re.compile(r'[^\d]*?manageiq[^\d]*(\d*).\w*')
     result = pattern.findall(image_name)
     if result:
         #for now, actual version for MIQ is manually defined.
-        actual_version = '31'
-        #return "miq-%s-%s" % (actual_version, result[0][4:8])
-        return "miq-%s-%s" % (actual_version, result[0])
+        return "miq-%s-%s" % (MIQ_ACTUAL_VERSION, result[0])
     else:
         #CFME
         pattern = re.compile(r'[^\d]*(\d*).\w*?')
         result = pattern.findall(image_name)
-        #this will produce: 'cfme-30-0304'
-        #return "cfme-%s%s-%s%s" % (result[0], result[1], result[3], result[4])
         return "cfme-%s-%s" % (result[0], result[1])
 
 
@@ -136,10 +130,8 @@ def browse_directory(dir_url):
     with closing(urlopen(dir_url)) as urlpath:
         string_from_url = urlpath.read()
 
-    #rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*rhevm[^"\'>]*)')
     rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm|ovirt)[^"\'>]*)')
     rhevm_image_name = rhevm_pattern.findall(string_from_url)
-    #rhos_pattern = re.compile(r'<a href="?\'?([^"\']*rhos[^"\'>]*)')
     rhos_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhos|openstack|rhelosp)[^"\'>]*)')
     rhos_image_name = rhos_pattern.findall(string_from_url)
     vsphere_pattern = re.compile(r'<a href="?\'?([^"\']*vsphere[^"\'>]*)')
@@ -169,7 +161,6 @@ if __name__ == "__main__":
     stream = args.stream or cfme_data['template_upload']['stream']
     mgmt_sys = cfme_data['management_systems']
 
-    #TODO: args.dir_url not used right now
     for key, url in urls.iteritems():
         if stream is not None:
             if key != stream:
