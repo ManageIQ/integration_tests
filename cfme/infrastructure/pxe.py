@@ -9,7 +9,7 @@ import cfme.web_ui.accordion as acc
 import cfme.web_ui.flash as flash
 from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill, Region, Form, ScriptBox, Select, Table, Tree
+from cfme.web_ui import fill, Region, Form, ScriptBox, Select, Table, Tree, form_buttons
 from cfme.web_ui import paginator as pg
 from selenium.common.exceptions import NoSuchElementException
 import utils.conf as conf
@@ -70,6 +70,9 @@ template_tree = sel.ver_pick({
 })
 
 template_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
+
+template_add_button = sel.ver_pick({'default': form_buttons.add,
+                                    '9.9.9.9': form_buttons.save})
 
 template_add_page = Region(
     locators={
@@ -370,9 +373,13 @@ class CustomizationTemplate(Updateable):
         """
         sel.force_navigate('infrastructure_pxe_template_new')
         fill(template_properties_form, self._form_mapping(True, **self.__dict__))
-        self._submit(cancel, template_add_page.add_btn)
+        self._submit(cancel, template_add_button)
         if not cancel:
-            flash.assert_message_match('Customization Template "{}" was added'.format(self.name))
+            flash.assert_message_match(
+                sel.ver_pick({
+                    'default': 'Customization Template "{}" was added'.format(self.name),
+                    '9.9.9.9': 'Customization Template "{}" was saved'.format(self.name)
+                }))
         else:
             flash.assert_message_match(
                 'Add of new Customization Template was cancelled by the user')
