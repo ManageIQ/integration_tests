@@ -13,7 +13,6 @@ Required YAML keys:
 
 import pytest
 from cfme.control import explorer
-from cfme.infrastructure import provider
 from datetime import datetime
 from functools import wraps
 from ovirtsdk.infrastructure.errors import RequestError
@@ -22,11 +21,9 @@ from utils.db import cfmedb
 from utils.conf import cfme_data, credentials
 from utils.log import logger
 from utils.miq_soap import MiqVM
-from utils.providers import list_infra_providers
+from utils.providers import list_infra_providers, setup_provider
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
-
-pytestmark = [pytest.mark.usefixtures("setup_infrastructure_providers")]
 
 # Holds a list of providers that were skipped so they can be skipped
 # on next pass - py.test workaround, module-scoped fixture skipping
@@ -37,13 +34,19 @@ skipped_providers = set([])
 @pytest.fixture(scope="module", params=list_infra_providers())
 def provider_id(request):
     """ This fixture ensures parametrization across multiple providers. Infra so far."""
+    if request.param in skipped_providers:
+        pytest.skip("This provider behaved incorrectly before, therefore skipping...")
     return request.param
 
 
 @pytest.fixture(scope="module")
 def provider_object(provider_id):
     """cfme/infrastructure/provider.py provider object."""
-    return provider.get_from_config(provider_id)
+    try:
+        return setup_provider(provider_id)
+    except Exception:
+        skipped_providers.add(provider_id)
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 @pytest.fixture(scope="module")
@@ -57,7 +60,7 @@ def provider_credentials(provider_data):
 
 
 @pytest.fixture(scope="module")
-def vm_provider(provider_data, provider_credentials):
+def vm_provider(provider_object, provider_data, provider_credentials):
     """Provider object from mgmt_system.py"""
     if provider_data["type"] == "virtualcenter":
         return mgmt_system.VMWareSystem(
