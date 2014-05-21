@@ -3,129 +3,46 @@
 Whenever you use Add, Save, Cancel, Reset button, use this module.
 You can use it also for the other buttons with same shape like those CRUD ones.
 """
-from cfme.exceptions import FormButtonNotFound
+from selenium.common.exceptions import NoSuchElementException
+
 from cfme.fixtures import pytest_selenium as sel
 
 
-def _locate_buttons(alt):
-    """Get locator for the specific button.
+class FormButton(object):
+    """This class reresents the small black button usually located in forms or CRUD.
 
     Args:
-        alt: `alt` attribute of the button to look up for.
-    Returns: XPath locator.
+        alt: The text from `alt` field of the image
     """
-    return "//img[@alt='{}' and not(contains(@class, 'dimmed'))"\
-        " and contains(@class, 'button')]".format(alt)
+    def __init__(self, alt):
+        self._alt = alt
 
+    def locate(self):
+        """This hairy locator ensures that the button is not dimmed and not hidden."""
+        return ("//img[@alt='{}' and not(contains(@class, 'dimmed')) and contains(@class, 'button')"
+            "and not(ancestor::*[contains(@style, 'display:none')"
+            " or contains(@style, 'display: none')])]".format(self._alt))
 
-def _get_button_element(alt):
-    """Get button WebElement. Cycle through the found elements to find a visible one.
+    @property
+    def can_be_clicked(self):
+        """Whether the button is displayed, therefore clickable."""
+        try:
+            sel.move_to_element(self)
+            return sel.is_displayed(self)
+        except NoSuchElementException:
+            return False
 
-    Args:
-        alt: Button's `img` `alt` attribute.
-    Raises: :py:class:`cfme.exceptions.FormButtonNotFound` if the specified button cannot be found.
-    Returns: `WebElement` with the button.
-    """
-    for button in sel.elements(_locate_buttons(alt)):
-        if sel.is_displayed(button):
-            return button
-    else:
-        raise FormButtonNotFound("Could not find clickable button for '{}'".format(alt))
+    def __call__(self, *args, **kwargs):
+        """For maintaining backward compatibility"""
+        return sel.click(self)
 
+    def __str__(self):
+        return self.locate()
 
-# Functions used for operating the buttons.
-# They take bogus parameters that they can be used wherever one wants.
-def click_button(alt):
-    """Generic function to click
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, str(repr(self._alt)))
 
-    Args:
-        alt: Button's `alt` attribute
-    """
-    return sel.click(_get_button_element(alt))
-
-
-def click_func(alt):
-    """Generic function factory for function to click.
-
-    Useful for :py:class:`cfme.web_ui.Form` filling, you can generate the action with this function.
-
-    Args:
-        alt: Button's `alt` attribute
-    """
-    return lambda *_, **__: sel.click(_get_button_element(alt))
-
-
-def add(*_, **__):
-    """Click on the Add button.
-    Raises: :py:class:`cfme.exceptions.FormButtonNotFound` if the specified button cannot be found.
-    """
-    return click_button("Add")
-
-
-def can_add():
-    """Check whether is 'Add' button displayed == we can click on it.
-
-    Returns: :py:class:`bool`
-    """
-    try:
-        _get_button_element("Add")
-        return True
-    except FormButtonNotFound:
-        return False
-
-
-def cancel(*_, **__):
-    """Click on the Cancel button.
-    Raises: :py:class:`cfme.exceptions.FormButtonNotFound` if the specified button cannot be found.
-    """
-    return click_button("Cancel")
-
-
-def can_cancel():
-    """Check whether is 'Cancel' button displayed == we can click on it.
-
-    Returns: :py:class:`bool`
-    """
-    try:
-        _get_button_element("Cancel")
-        return True
-    except FormButtonNotFound:
-        return False
-
-
-def save(*_, **__):
-    """Click on the Save button.
-    Raises: :py:class:`cfme.exceptions.FormButtonNotFound` if the specified button cannot be found.
-    """
-    return click_button("Save Changes")
-
-
-def can_save():
-    """Check whether is 'Save' button displayed == we can click on it.
-
-    Returns: :py:class:`bool`
-    """
-    try:
-        _get_button_element("Save Changes")
-        return True
-    except FormButtonNotFound:
-        return False
-
-
-def reset(*_, **__):
-    """Click on the Reset button.
-    Raises: :py:class:`cfme.exceptions.FormButtonNotFound` if the specified button cannot be found.
-    """
-    return click_button("Reset Changes")
-
-
-def can_reset():
-    """Check whether is 'Reset' button displayed == we can click on it.
-
-    Returns: :py:class:`bool`
-    """
-    try:
-        _get_button_element("Reset Changes")
-        return True
-    except FormButtonNotFound:
-        return False
+add = FormButton("Add")
+save = FormButton("Save Changes")
+cancel = FormButton("Cancel")
+reset = FormButton("Reset Changes")

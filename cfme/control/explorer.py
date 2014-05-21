@@ -5,7 +5,7 @@ from functools import partial
 from cfme.web_ui.menu import nav
 
 from cfme.control.snmp_form import SNMPForm
-from cfme.exceptions import CannotContinueWithNavigation, FormButtonNotFound
+from cfme.exceptions import CannotContinueWithNavigation
 from cfme.web_ui import fill, form_buttons
 from cfme.web_ui import Region, Form, Tree, Table, Select, EmailSelectForm, CheckboxSelect
 from cfme.web_ui.multibox import MultiBoxSelect
@@ -880,20 +880,13 @@ class BaseControlPolicy(BasePolicy):
                 checked. If it is not present, it will be unchecked.
         Keywords:
             do_not_uncheck: If specified and True, no unchecking will happen.
-            quiet: Whether to raise an exception or not when Save button is not available (True)
         """
         sel.force_navigate(self.PREFIX + "policy_events",
                            context=dict(policy_name=self.description))
         if not kwargs.get("do_not_uncheck", False):
             fill(self.events, False)
         fill(self.events, {sel.ByText(event) for event in events})
-        try:
-            form_buttons.save()
-        except FormButtonNotFound:
-            if kwargs.get("quiet", True):
-                pass
-            else:
-                raise
+        form_buttons.save()
 
 
 class HostCompliancePolicy(BasePolicy, HostObject):
