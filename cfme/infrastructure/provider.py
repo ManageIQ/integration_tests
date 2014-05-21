@@ -21,15 +21,14 @@ import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
 from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, form_buttons, paginator
+from cfme.web_ui.form_buttons import FormButton
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
 
 
-add_infra_provider = form_buttons.click_func(
-    "Add this Infrastructure Provider"
-)
+add_infra_provider = FormButton("Add this Infrastructure Provider")
 
 details_page = Region(infoblock_type='detail')
 
@@ -66,9 +65,7 @@ credential_form = Form(
         ('candu_principal', "//*[@id='metrics_userid']"),
         ('candu_secret', "//*[@id='metrics_password']"),
         ('candu_verify_secret', "//*[@id='metrics_verify']"),
-        ('validate_btn', form_buttons.click_func(
-            "Validate the credentials by logging into the Server"
-        ))
+        ('validate_btn', FormButton("Validate the credentials by logging into the Server"))
     ])
 
 manage_policies_tree = Tree(

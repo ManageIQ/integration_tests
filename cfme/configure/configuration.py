@@ -7,6 +7,7 @@ import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
 from cfme.web_ui import Calendar, Form, Region, Select, Table, accordion, fill, flash, form_buttons
+from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
 from utils.db_queries import get_server_id, get_server_name, get_server_region
 from utils.log import logger
@@ -1087,9 +1088,7 @@ class DatabaseBackupSchedule(Schedule):
         ("start_min", Select("//select[@id='start_min']"))
     ])
 
-    validate = form_buttons.click_func(
-        "Validate the credentials by logging into the Server"
-    )
+    validate = FormButton("Validate the credentials by logging into the Server")
 
     def __init__(self,
                  name,
