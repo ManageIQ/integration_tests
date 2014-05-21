@@ -3,7 +3,7 @@ import pytest
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.automate.service_dialogs import ServiceDialog
-from cfme.services.catalogs import Catalog
+from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
