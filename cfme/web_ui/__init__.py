@@ -1335,9 +1335,9 @@ def _fill_chkboxtree_mapping(tree, on_off):
                        True:  [["node1", "node4"]])
 
     '''
-    for path in on_off[False]:
+    for path in on_off.get(False, []):
         tree.uncheck_node(*path)
-    for path in on_off[True]:
+    for path in on_off.get(True, []):
         tree.check_node(*path)
 
 

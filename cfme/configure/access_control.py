@@ -155,10 +155,11 @@ class User(Updateable):
                               'password_txt': updates.get('credential').secret,
                               'password_verify_txt': updates.get('credential').verify_secret,
                               'email_txt': updates.get('email'),
-                              'user_group_select': updates.get('group').description},
+                              'user_group_select': getattr(updates.get('group'),
+                                                           'description', None)},
              action=form_buttons.save)
         flash.assert_success_message(
-            'User "%s" was saved' % updates.get('username', self.name))
+            'User "%s" was saved' % updates.get('name', self.name))
 
     def copy(self):
         sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
@@ -197,21 +198,21 @@ class Group(Updateable):
         fill(self.group_form, {'description_txt': self.description,
                                'role_select': self.role},
              action=form_buttons.add)
-        flash.assert_message_match('Group "%s" was saved' % self.description)
+        flash.assert_success_message('Group "%s" was saved' % self.description)
 
     def update(self, updates):
         sel.force_navigate("cfg_accesscontrol_group_edit", context=self)
         fill(self.group_form, {'description_txt': updates.get('description'),
                                'role_select': updates.get('role')},
              action=form_buttons.save)
-        flash.assert_message_match(
+        flash.assert_success_message(
             'Group "%s" was saved' % updates.get('description', self.description))
 
     def delete(self):
         sel.force_navigate("cfg_accesscontrol_group_ed", context=self)
         tb_select('Delete this Group', invokes_alert=True)
         sel.handle_alert()
-        flash.assert_message_match('EVM Group "%s": Delete successful' % self.description)
+        flash.assert_success_message('EVM Group "%s": Delete successful' % self.description)
 
 
 class Role(Updateable):
@@ -225,7 +226,7 @@ class Role(Updateable):
     def __init__(self, name=None, vm_restriction=None, product_features=None):
         self.name = name
         self.vm_restriction = vm_restriction
-        self.product_features = product_features or []
+        self.product_features = product_features or {}
 
     def create(self):
         sel.force_navigate('cfg_accesscontrol_role_add')
@@ -233,7 +234,7 @@ class Role(Updateable):
                          'vm_restriction_select': self.vm_restriction,
                          'product_features_tree': self.product_features},
              action=form_buttons.add)
-        flash.assert_message_match('Role "%s" was saved' % self.name)
+        flash.assert_success_message('Role "%s" was saved' % self.name)
 
     def update(self, updates):
         sel.force_navigate("cfg_accesscontrol_role_edit", context=self)
@@ -241,10 +242,10 @@ class Role(Updateable):
                          'vm_restriction_select': updates.get('vm_restriction'),
                          'product_features_tree': updates.get('product_features')},
              action=form_buttons.save)
-        flash.assert_message_match('Role "%s" was saved' % updates.get('name', self.name))
+        flash.assert_success_message('Role "%s" was saved' % updates.get('name', self.name))
 
     def delete(self):
         sel.force_navigate("cfg_accesscontrol_role_ed", context=self)
         tb_select('Delete this Role', invokes_alert=True)
         sel.handle_alert()
-        flash.assert_message_match('Role "%s": Delete successful' % self.name)
+        flash.assert_success_message('Role "%s": Delete successful' % self.name)

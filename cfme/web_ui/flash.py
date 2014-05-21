@@ -7,7 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
 
 area = Region(locators=
-              {'message': sel.sel.ver_pick(
+              {'message': sel.ver_pick(
                   {'default': '//div[starts-with(@id, "flash_") and '
                    'not(ancestor::*[contains(@style,"display: none")])]//li'
                    '| //div[@id="flash_div"]',  # login screen
@@ -65,7 +65,7 @@ def get_all_messages():
 
 
 def is_error(message):
-    """ Checks a given message to see if is an Error.
+    """ Checks a given message to see if is an Error.'
 
     Args:
         message: The message object.
@@ -108,4 +108,4 @@ def assert_success_message(m):
             (fm.message == m and (fm.level == 'info' or "success" in fm.level))
             for fm
             in messages]):
-        raise Exception("No matching info flash message for '%s'" % m)
+        raise Exception("No matching info flash message for '%s', instead got %s" % (m, messages))
