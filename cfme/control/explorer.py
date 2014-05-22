@@ -6,7 +6,7 @@ from cfme.web_ui.menu import nav
 
 from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
-from cfme.web_ui import fill, form_buttons
+from cfme.web_ui import fill, flash, form_buttons
 from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSelectForm, \
     CheckboxSelect
 from cfme.web_ui.multibox import MultiBoxSelect
@@ -539,7 +539,8 @@ class BaseCondition(Updateable):
         self._do_expression_editing()
         self._do_scope_editing()
         action = form_buttons.cancel if cancel else form_buttons.add
-        return fill(self.form, dict(description=self.description, notes=self.notes), action=action)
+        fill(self.form, dict(description=self.description, notes=self.notes), action=action)
+        flash.assert_no_errors()
 
     def update(self, updates, cancel=False):
         """Updates the informations in the object and then updates the Condition in CFME.
@@ -565,7 +566,8 @@ class BaseCondition(Updateable):
             self._do_expression_editing()
 
         action = form_buttons.cancel if cancel else form_buttons.save
-        return fill(self.form, dict(description=self.description, notes=self.notes), action=action)
+        fill(self.form, dict(description=self.description, notes=self.notes), action=action)
+        flash.assert_no_errors()
 
     def delete(self, cancel=False):
         """Deletes the condition in CFME.
@@ -577,6 +579,7 @@ class BaseCondition(Updateable):
                            context=dict(condition_name=self.description))
         cfg_btn("Delete this", invokes_alert=True)
         sel.handle_alert(cancel)
+        flash.assert_no_errors()
 
     @property
     def is_editing_scope(self):
@@ -691,7 +694,7 @@ class BasePolicy(Updateable):
         if self.scope is not None:
             editor.create_program(self.scope)()
         action = form_buttons.cancel if cancel else form_buttons.add
-        return fill(
+        fill(
             self.form,
             dict(
                 description=self.description,
@@ -699,6 +702,7 @@ class BasePolicy(Updateable):
                 active=self.active
             ),
             action=action)
+        flash.assert_no_errors()
 
     def update(self, updates, cancel=False):
         """Updates the informations in the object and then updates the Condition in CFME.
@@ -720,7 +724,7 @@ class BasePolicy(Updateable):
             editor.create_program(self.scope)()
 
         action = form_buttons.cancel if cancel else form_buttons.save
-        return fill(
+        fill(
             self.form,
             dict(
                 description=self.description,
@@ -728,6 +732,7 @@ class BasePolicy(Updateable):
                 active=self.active
             ),
             action=action)
+        flash.assert_no_errors()
 
     def delete(self, cancel=False):
         """Deletes the condition in CFME.
@@ -735,10 +740,10 @@ class BasePolicy(Updateable):
         Args:
             cancel: Whether to cancel the process instead of saving.
         """
-        if not self._on_detail_page:
-            sel.force_navigate(self.PREFIX + "policy", context=dict(policy_name=self.description))
+        sel.force_navigate(self.PREFIX + "policy", context=dict(policy_name=self.description))
         cfg_btn("Delete this", invokes_alert=True)
         sel.handle_alert(cancel)
+        flash.assert_no_errors()
 
     def assign_conditions(self, *conditions):
         """Assign one or more conditions to this Policy.
@@ -775,6 +780,7 @@ class BasePolicy(Updateable):
                            context=dict(policy_name=self.description))
         fill(self.conditions, assign_names)
         form_buttons.save()
+        flash.assert_no_errors()
         return self
 
     def is_condition_assigned(self, condition):
@@ -793,9 +799,8 @@ class BasePolicy(Updateable):
             condition_name = condition.description
         else:
             raise TypeError("is_condition_assigned accepts string or BaseCondition object only!")
-        if not self._on_detail_page:
-            sel.force_navigate(self.PREFIX + "policy",
-                               context=dict(policy_name=self.description))
+        sel.force_navigate(self.PREFIX + "policy",
+                           context=dict(policy_name=self.description))
         try:
             sel.move_to_element(self.assigned_conditions)
             return bool(self.assigned_conditions.find_cell("description", condition_name))
@@ -810,9 +815,8 @@ class BasePolicy(Updateable):
 
         Returns: :py:class:`bool` - `True` if present, `False` if not.
         """
-        if not self._on_detail_page:
-            sel.force_navigate(self.PREFIX + "policy",
-                               context=dict(policy_name=self.description))
+        sel.force_navigate(self.PREFIX + "policy",
+                           context=dict(policy_name=self.description))
         try:
             sel.move_to_element(self.assigned_events)
             return bool(self.assigned_events.find_cell("description", event))
@@ -868,6 +872,7 @@ class BasePolicy(Updateable):
             )
         )
         form_buttons.save()
+        flash.assert_no_errors()
 
 
 class BaseControlPolicy(BasePolicy):
@@ -888,6 +893,7 @@ class BaseControlPolicy(BasePolicy):
             fill(self.events, False)
         fill(self.events, {sel.ByText(event) for event in events})
         form_buttons.save()
+        flash.assert_no_errors()
 
 
 class HostCompliancePolicy(BasePolicy, HostObject):
@@ -896,28 +902,12 @@ class HostCompliancePolicy(BasePolicy, HostObject):
     def __str__(self):
         return "Host Compliance: %s" % self.description
 
-    @property
-    def _on_detail_page(self):
-        return sel.is_displayed(
-            "//div[@class='dhtmlxInfoBarLabel' and contains(text(), '%s')]" % (
-                "Host Compliance Policy \"%s\"" % self.description
-            )
-        )
-
 
 class VMCompliancePolicy(BasePolicy, VMObject):
     PREFIX = "vm_compliance_"
 
     def __str__(self):
         return "VM and Instance Compliance: %s" % self.description
-
-    @property
-    def _on_detail_page(self):
-        return sel.is_displayed(
-            "//div[@class='dhtmlxInfoBarLabel' and contains(text(), '%s')]" % (
-                "Vm Compliance Policy \"%s\"" % self.description
-            )
-        )
 
 
 class HostControlPolicy(BaseControlPolicy, HostObject):
@@ -926,28 +916,12 @@ class HostControlPolicy(BaseControlPolicy, HostObject):
     def __str__(self):
         return "Host Control: %s" % self.description
 
-    @property
-    def _on_detail_page(self):
-        return sel.is_displayed(
-            "//div[@class='dhtmlxInfoBarLabel' and contains(text(), '%s')]" % (
-                "Host Control Policy \"%s\"" % self.description
-            )
-        )
-
 
 class VMControlPolicy(BaseControlPolicy, VMObject):
     PREFIX = "vm_control_"
 
     def __str__(self):
         return "VM and Instance Control: %s" % self.description
-
-    @property
-    def _on_detail_page(self):
-        return sel.is_displayed(
-            "//div[@class='dhtmlxInfoBarLabel' and contains(text(), '%s')]" % (
-                "Vm Control Policy \"%s\"" % self.description
-            )
-        )
 
 
 class Alert(Updateable):
@@ -1081,6 +1055,7 @@ class Alert(Updateable):
             form_buttons.cancel()
         else:
             form_buttons.add()
+        flash.assert_no_errors()
 
     def update(self, updates, cancel=False):
         """Update the object with new values and save.
@@ -1106,6 +1081,7 @@ class Alert(Updateable):
             form_buttons.cancel()
         else:
             form_buttons.save()
+        flash.assert_no_errors()
 
     def delete(self, cancel=False):
         """Delete this Alert from CFME.
@@ -1116,6 +1092,7 @@ class Alert(Updateable):
         sel.force_navigate("control_explorer_alert", context={"alert_name": self.description})
         cfg_btn("Delete this Alert", invokes_alert=True)
         sel.handle_alert(cancel)
+        flash.assert_no_errors()
 
     def _fill(self):
         """This function prepares the values and fills the form."""
@@ -1341,6 +1318,7 @@ class Action(Updateable):
         if self.sub_forms[self.action_type] is not None:
             fill(self.sub_forms[self.action_type], self.action_values)
             action()
+            flash.assert_no_errors()
         else:
             raise Exception("You must specify action_type!")
 
@@ -1392,6 +1370,7 @@ class Action(Updateable):
                            context={"action_name": self.description})
         cfg_btn("Delete this Action", invokes_alert=True)
         sel.handle_alert(cancel)
+        flash.assert_no_errors()
 
 
 class PolicyProfile(Updateable):
@@ -1462,6 +1441,7 @@ class PolicyProfile(Updateable):
             dict(description=self.description, notes=self.notes, policies=policy_list),
             action=form_buttons.cancel if cancel else form_buttons.add
         )
+        flash.assert_no_errors()
 
     def update(self, updates, cancel=False):
         """Update informations, verify presence of policies, navigate to page and update the info.
@@ -1491,6 +1471,7 @@ class PolicyProfile(Updateable):
             dict(description=self.description, notes=self.notes, policies=policy_list)
         )
         form_buttons.cancel() if cancel else form_buttons.save()
+        flash.assert_no_errors()
 
     def delete(self, cancel=False):
         """Delete this Policy Profile. Does not delete child policies.
@@ -1501,6 +1482,7 @@ class PolicyProfile(Updateable):
         sel.force_navigate("policy_profile", context={"policy_profile_name": self.description})
         cfg_btn("Remove this Policy Profile", invokes_alert=True)
         sel.handle_alert(cancel)
+        flash.assert_no_errors()
 
 
 class BaseAlertProfile(Updateable):
@@ -1616,6 +1598,7 @@ class BaseAlertProfile(Updateable):
             form_buttons.add()
         else:
             form_buttons.cancel()
+        flash.assert_no_errors()
 
     def update(self, updates, cancel=False):
         """ Update informations, verify presence of alerts, navigate to page and update the info.
@@ -1646,6 +1629,7 @@ class BaseAlertProfile(Updateable):
             form_buttons.save()
         else:
             form_buttons.cancel()
+        flash.assert_no_errors()
 
     def delete(self, cancel=False):
         """Delete this Alert Profile. Does not delete child Alerts.
@@ -1657,6 +1641,7 @@ class BaseAlertProfile(Updateable):
                            context={"alert_profile_name": self.description})
         cfg_btn("Delete this Alert Profile", invokes_alert=True)
         sel.handle_alert(cancel)
+        flash.assert_no_errors()
 
     def assign_to(self, assign, selections=None, tag_category=None):
         """Assigns this Alert Profile to specified objects.
@@ -1672,6 +1657,7 @@ class BaseAlertProfile(Updateable):
         if selections or tag_category:
             fill(self.sub_assignments[assign], dict(category=tag_category, selections=selections))
         form_buttons.save()
+        flash.assert_no_errors()
 
 
 class ClusterAlertProfile(BaseAlertProfile):
