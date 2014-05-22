@@ -54,7 +54,7 @@ def get_host_data_by_name(host_name):
     return None
 
 
-def test_run_host_analysis(provider, host_type, host_name, register_event):
+def test_run_host_analysis(provider, host_type, host_name, register_event, soft_assert):
     """ Run host SmartState analysis """
     # Add credentials to host
     host_data = get_host_data_by_name(host_name)
@@ -109,24 +109,25 @@ def test_run_host_analysis(provider, host_type, host_name, register_event):
     sel.handle_alert()
 
     # Check results of the analysis
-    assert test_host.get_detail('Configuration', 'Services') != '0',\
-        'No services found in host detail'
+    soft_assert(test_host.get_detail('Configuration', 'Services') != '0',
+        'No services found in host detail')
 
     if host_type in ('rhel', 'rhev'):
-        assert test_host.get_detail('Security', 'Users') != '0',\
-            'No users found in host detail'
-        assert test_host.get_detail('Security', 'Groups') != '0',\
-            'No groups found in host detail'
-        assert test_host.get_detail('Configuration', 'Packages') != '0',\
-            'No packages found in host detail'
+        soft_assert(test_host.get_detail('Security', 'Users') != '0',
+            'No users found in host detail')
+        soft_assert(test_host.get_detail('Security', 'Groups') != '0',
+            'No groups found in host detail')
+        soft_assert(test_host.get_detail('Configuration', 'Packages') != '0',
+            'No packages found in host detail')
 
     elif host_type in ('esx', 'esxi'):
-        assert test_host.get_detail('Configuration', 'Advanced Settings') != '0',\
-            'No advanced settings found in host detail'
+        soft_assert(test_host.get_detail('Configuration', 'Advanced Settings') != '0',
+            'No advanced settings found in host detail')
 
         # If the Firewall Rules are 0, the element can't be found (it's not a link)
         try:
             # This fails for vsphere4...  https://bugzilla.redhat.com/show_bug.cgi?id=1055657
             list_acc.select('Security', 'Show the firewall rules on this Host')
         except ListAccordionLinkNotFound:
-            pytest.fail("No firewall rules found in host detail accordion")
+            # py.test's .fail would wipe the soft_assert data
+            soft_assert(False, "No firewall rules found in host detail accordion")
