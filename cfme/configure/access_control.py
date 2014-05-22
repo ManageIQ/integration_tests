@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-
-
 from functools import partial
 from urlparse import urlparse
-
+import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, Select, accordion, fill, flash, form_buttons
+from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons
 from cfme.web_ui.menu import nav
 from utils.db_queries import get_server_region
 from utils.update import Updateable
@@ -115,120 +112,140 @@ nav.add_branch(
 
 
 class User(Updateable):
-        user_form = Form(
-            fields=[
-                ('username', "//*[@id='name']"),
-                ('userid', "//*[@id='userid']"),
-                ('password', "//*[@id='password']"),
-                ('password_verify', "//*[@id='password2']"),
-                ('email', "//*[@id='email']"),
-                ('user_group_select', Select("//*[@id='chosen_group']")),
-            ])
+    user_form = Form(
+        fields=[
+            ('name_txt', "//*[@id='name']"),
+            ('userid_txt', "//*[@id='userid']"),
+            ('password_txt', "//*[@id='password']"),
+            ('password_verify_txt', "//*[@id='password2']"),
+            ('email_txt', "//*[@id='email']"),
+            ('user_group_select', Select("//*[@id='chosen_group']")),
+        ])
 
-        user_tag_form = Form(
-            fields=[
-                ('cost_center_select', Select("//*[@id='tag_cat']")),
-                ('value_assign_select', Select("//*[@id='tag_add']")),
-            ])
+    user_tag_form = Form(
+        fields=[
+            ('cost_center_select', Select("//*[@id='tag_cat']")),
+            ('value_assign_select', Select("//*[@id='tag_add']")),
+        ])
 
-        def __init__(self, username=None, userid=None, password=None, password_verify=None,
-                     email=None, user_group_select=None, cost_center_select=None,
-                     value_assign_select=None):
-            self.username = username
-            self.userid = userid
-            self.password = password
-            self.password_verify = password
-            self.email = email
-            self.user_group_select = user_group_select
-            self.cost_center_select = cost_center_select
-            self.value_assign_select = value_assign_select
+    def __init__(self, name=None, credential=None, email=None,
+                 group=None, cost_center=None, value_assign=None):
+        self.name = name
+        self.credential = credential
+        self.email = email
+        self.group = group
+        self.cost_center = cost_center
+        self.value_assign = value_assign
 
-        def create(self):
-            sel.force_navigate('cfg_accesscontrol_user_add')
-            fill(self.user_form, self.__dict__, action=form_buttons.add)
-            flash.assert_success_message('User "%s" was saved' % self.username)
+    def create(self):
+        sel.force_navigate('cfg_accesscontrol_user_add')
+        fill(self.user_form, {'name_txt': self.name,
+                              'userid_txt': self.credential.principal,
+                              'password_txt': self.credential.secret,
+                              'password_verify_txt': self.credential.verify_secret,
+                              'email_txt': self.email,
+                              'user_group_select': self.group.description},
+             action=form_buttons.add)
+        flash.assert_success_message('User "%s" was saved' % self.name)
 
-        def update(self, updates):
-            sel.force_navigate("cfg_accesscontrol_user_edit", context=self)
-            fill(self.user_form, updates, action=form_buttons.save)
-            flash.assert_success_message(
-                'User "%s" was saved' % updates.get('username', self.username))
+    def update(self, updates):
+        sel.force_navigate("cfg_accesscontrol_user_edit", context=self)
+        fill(self.user_form, {'name_txt': updates.get('name'),
+                              'userid_txt': updates.get('credential').principal,
+                              'password_txt': updates.get('credential').secret,
+                              'password_verify_txt': updates.get('credential').verify_secret,
+                              'email_txt': updates.get('email'),
+                              'user_group_select': getattr(updates.get('group'),
+                                                           'description', None)},
+             action=form_buttons.save)
+        flash.assert_success_message(
+            'User "%s" was saved' % updates.get('name', self.name))
 
-        def copy(self):
-            form_data = {'username': self.username + "copy",
-                         'userid': self.userid + "copy",
-                         'password': "redhat",
-                         'password_verify': "redhat"}
-            sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
-            tb.select('Configuration', 'Copy this User to a new User')
-            fill(self.user_form, form_data, action=form_buttons.add)
-            flash.assert_success_message('User "%s" was saved' % form_data['username'])
-            copied_user = User(
-                username=form_data['username'],
-                userid=form_data['userid'],
-                password=form_data['password'],
-                password_verify=form_data['password_verify'])
-            return copied_user
+    def copy(self):
+        sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
+        tb.select('Configuration', 'Copy this User to a new User')
+        new_user = User(name=self.name + "copy",
+                        credential=cfme.Credential(principal='redhat', secret='redhat'))
 
-        def delete(self):
-            sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
-            tb.select('Configuration', 'Delete this User', invokes_alert=True)
-            sel.handle_alert()
-            flash.assert_success_message('EVM User "%s": Delete successful' % self.username)
+        fill(self.user_form, {'name_txt': new_user.name,
+                              'userid_txt': new_user.credential.principal,
+                              'password_txt': new_user.credential.secret,
+                              'password_verify_txt': new_user.credential.verify_secret},
+             action=form_buttons.add)
+        flash.assert_success_message('User "%s" was saved' % new_user.name)
+        return new_user
+
+    def delete(self):
+        sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
+        tb.select('Configuration', 'Delete this User', invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_success_message('EVM User "%s": Delete successful' % self.name)
 
 
 class Group(Updateable):
-        group_form = Form(
-            fields=[
-                ('description', "//*[@id='description']"),
-                ('group_role_select', Select("//*[@id='group_role']")),
-            ])
+    group_form = Form(
+        fields=[
+            ('description_txt', "//*[@id='description']"),
+            ('role_select', Select("//*[@id='group_role']")),
+        ])
 
-        def __init__(self, description=None, group_role_select=None):
-            self.description = description
-            self.group_role_select = group_role_select
+    def __init__(self, description=None, role=None):
+        self.description = description
+        self.role = role
 
-        def create(self):
-            sel.force_navigate('cfg_accesscontrol_group_add')
-            fill(self.group_form, self.__dict__, action=form_buttons.add)
-            flash.assert_message_match('Group "%s" was saved' % self.description)
+    def create(self):
+        sel.force_navigate('cfg_accesscontrol_group_add')
+        fill(self.group_form, {'description_txt': self.description,
+                               'role_select': self.role},
+             action=form_buttons.add)
+        flash.assert_success_message('Group "%s" was saved' % self.description)
 
-        def update(self, updates):
-            sel.force_navigate("cfg_accesscontrol_group_edit", context=self)
-            fill(self.group_form, updates, action=form_buttons.save)
-            flash.assert_message_match(
-                'Group "%s" was saved' % updates.get('description', self.description))
+    def update(self, updates):
+        sel.force_navigate("cfg_accesscontrol_group_edit", context=self)
+        fill(self.group_form, {'description_txt': updates.get('description'),
+                               'role_select': updates.get('role')},
+             action=form_buttons.save)
+        flash.assert_success_message(
+            'Group "%s" was saved' % updates.get('description', self.description))
 
-        def delete(self):
-            sel.force_navigate("cfg_accesscontrol_group_ed", context=self)
-            tb_select('Delete this Group', invokes_alert=True)
-            sel.handle_alert()
-            flash.assert_message_match('EVM Group "%s": Delete successful' % self.description)
+    def delete(self):
+        sel.force_navigate("cfg_accesscontrol_group_ed", context=self)
+        tb_select('Delete this Group', invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_success_message('EVM Group "%s": Delete successful' % self.description)
 
 
 class Role(Updateable):
-        role_form = Form(
-            fields=[
-                ('name', "//*[@id='name']"),
-                ('vm_restriction_select', Select("//*[@id='vm_restriction']")),
-            ])
+    form = Form(
+        fields=[
+            ('name_txt', "//*[@id='name']"),
+            ('vm_restriction_select', Select("//*[@id='vm_restriction']")),
+            ('product_features_tree', CheckboxTree("//div[@id='features_treebox']/ul")),
+        ])
 
-        def __init__(self, name=None, vm_restriction_select=None):
-            self.name = name
-            self.vm_restriction_select = vm_restriction_select
+    def __init__(self, name=None, vm_restriction=None, product_features=None):
+        self.name = name
+        self.vm_restriction = vm_restriction
+        self.product_features = product_features or {}
 
-        def create(self):
-            sel.force_navigate('cfg_accesscontrol_role_add')
-            fill(self.role_form, self.__dict__, action=form_buttons.add)
-            flash.assert_message_match('Role "%s" was saved' % self.name)
+    def create(self):
+        sel.force_navigate('cfg_accesscontrol_role_add')
+        fill(self.form, {'name_txt': self.name,
+                         'vm_restriction_select': self.vm_restriction,
+                         'product_features_tree': self.product_features},
+             action=form_buttons.add)
+        flash.assert_success_message('Role "%s" was saved' % self.name)
 
-        def update(self, updates):
-            sel.force_navigate("cfg_accesscontrol_role_edit", context=self)
-            fill(self.role_form, updates, action=form_buttons.save)
-            flash.assert_message_match('Role "%s" was saved' % updates.get('name', self.name))
+    def update(self, updates):
+        sel.force_navigate("cfg_accesscontrol_role_edit", context=self)
+        fill(self.form, {'name_txt': updates.get('name'),
+                         'vm_restriction_select': updates.get('vm_restriction'),
+                         'product_features_tree': updates.get('product_features')},
+             action=form_buttons.save)
+        flash.assert_success_message('Role "%s" was saved' % updates.get('name', self.name))
 
-        def delete(self):
-            sel.force_navigate("cfg_accesscontrol_role_ed", context=self)
-            tb_select('Delete this Role', invokes_alert=True)
-            sel.handle_alert()
-            flash.assert_message_match('Role "%s": Delete successful' % self.name)
+    def delete(self):
+        sel.force_navigate("cfg_accesscontrol_role_ed", context=self)
+        tb_select('Delete this Role', invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_success_message('Role "%s": Delete successful' % self.name)

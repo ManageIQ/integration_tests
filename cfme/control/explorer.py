@@ -7,7 +7,8 @@ from cfme.web_ui.menu import nav
 from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
 from cfme.web_ui import fill, form_buttons
-from cfme.web_ui import Region, Form, Tree, Table, Select, EmailSelectForm, CheckboxSelect
+from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSelectForm, \
+    CheckboxSelect
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
 from utils.db import cfmedb
@@ -74,8 +75,8 @@ alert_profiles_list_table = Table(
 ALERT_PROFILES_CELL = 1
 
 visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
-                   "[not(contains(@style, 'display: none'))]/div/div/div"
-                   "/ul[@class='dynatree-container']")
+                    "[not(contains(@style, 'display: none'))]/div/div/div"
+                    "/ul[@class='dynatree-container']")
 
 policies_main_table = Table(
     table_locator="//div[@id='main_div']//table[@class='style3']"
@@ -1300,7 +1301,6 @@ class Action(Updateable):
                         "//div[@id='action_tags_treebox']/div/table"    # Old builds
                         "|"
                         "//div[@id='action_tags_treebox']/ul",          # New builds
-                        fill_click=True
                     )
                 ),
             ]
@@ -1537,6 +1537,21 @@ class BaseAlertProfile(Updateable):
         ]
     )
 
+    selected_form = Form(
+        fields=[
+            ("selections",
+             CheckboxTree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul"))]
+    ),
+
+    buttons = Region(
+        locators=dict(
+            add="//div[@id='buttons_on']//img[@alt='Add']",
+            cancel="//div[@id='buttons_on']//img[@alt='Cancel']",
+            save="//div[@id='buttons_on']//img[@alt='Save Changes']",
+            reset="//div[@id='buttons_on']//img[@alt='Reset Changes']",
+        )
+    )
+
     assignments = Form(
         fields=[
             ("assign", Select("//select[@id='chosen_assign_to']")),
@@ -1546,116 +1561,19 @@ class BaseAlertProfile(Updateable):
     sub_assignments = {
         "<Nothing>": Form(fields=[]),
         "The Enterprise": Form(fields=[]),
-        "Selected Clusters": Form(
-            fields=[
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Selected Folders": Form(
-            fields=[
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Selected Hosts": Form(
-            fields=[
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Selected Infrastructure Providers": Form(
-            fields=[
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Selected Resource Pools": Form(
-            fields=[
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Selected Hosts": Form(
-            fields=[
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Tagged Clusters": Form(
-            fields=[
-                ("category", Select("//select[@id='chosen_cat']")),
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Tagged Hosts": Form(
-            fields=[
-                ("category", Select("//select[@id='chosen_cat']")),
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Tagged Clusters": Form(
-            fields=[
-                ("category", Select("//select[@id='chosen_cat']")),
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Tagged Infrastructure Providers": Form(
-            fields=[
-                ("category", Select("//select[@id='chosen_cat']")),
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Tagged Clusters": Form(
-            fields=[
-                ("category", Select("//select[@id='chosen_cat']")),
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Tagged Resource Pools": Form(
-            fields=[
-                ("category", Select("//select[@id='chosen_cat']")),
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
-
-        "Tagged VMs and Instances": Form(
-            fields=[
-                ("category", Select("//select[@id='chosen_cat']")),
-                ("selections",
-                    Tree("//div[@id='obj_treebox']/div/table|//div[@id='obj_treebox']/ul",
-                        fill_click=True))
-            ]
-        ),
+        "Selected Clusters": selected_form,
+        "Selected Folders": selected_form,
+        "Selected Hosts": selected_form,
+        "Selected Infrastructure Providers": selected_form,
+        "Selected Resource Pools": selected_form,
+        "Selected Hosts": selected_form,
+        "Tagged Clusters": selected_form,
+        "Tagged Hosts": selected_form,
+        "Tagged Clusters": selected_form,
+        "Tagged Infrastructure Providers": selected_form,
+        "Tagged Clusters": selected_form,
+        "Tagged Resource Pools": selected_form,
+        "Tagged VMs and Instances": selected_form
     }
 
     def __init__(self, description, alerts=None, notes=None):

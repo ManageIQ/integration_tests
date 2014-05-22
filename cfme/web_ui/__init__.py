@@ -1087,7 +1087,7 @@ class Tree(object):
     Each path element will be expanded along the way, but will not be clicked.
 
     When used in a :py:class:`Form`, a list of path tuples is expected in the form fill data.
-    The paths will be passed individually to :py:meth:`Tree.select_node`::
+    The paths will be passed individually to :py:meth:`Tree.check_node`::
 
         form = Form(fields=[
             ('tree_field', List(locator)),
@@ -1112,9 +1112,13 @@ class Tree(object):
 
     """
 
-    def __init__(self, locator, fill_click=False):
+    def __init__(self, locator):
         self.locator = locator
-        self.fill_click = fill_click
+
+    def _get_tag(self):
+        if getattr(self, 'tag', None) is None:
+            self.tag = sel.tag(sel.element(self.locator))
+        return self.tag
 
     def _detect(self):
         """ Detects which type of tree is being used
@@ -1134,17 +1138,15 @@ class Tree(object):
         * click_expand: the element to click on to expand the tree at that level.
         """
         self.root_el = sel.element(self.locator)
-        if sel.tag(self.root_el) == 'ul':
+        if self._get_tag() == 'ul':
             # Dynatree
             self.expandable = 'span'
             self.is_expanded_condition = ('class', 'dynatree-expanded')
-            self.node_root = ".//li/span/a[.='%s']/../.."
+            self.node_root = ".//li[span/a[.='%s']]"
             self.node_label = ".//li/span/a[.='%s']"
             self.click_expand = "span/span"
             self.leaf = "span/a"
-            self.node_select = "span/span[@class='dynatree-checkbox']"
-            self.node_images = None
-        elif sel.tag(self.root_el) == 'table':
+        elif self._get_tag() == 'table':
             # Legacy Tree
             self.expandable = 'tr/td[1]/img'
             self.is_expanded_condition = ('src', 'open.png')
@@ -1152,9 +1154,6 @@ class Tree(object):
             self.node_label = ".//span[.='%s']"
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
-            self.node_select = "tr/td[2]/img"
-            self.node_images = {'select': ['iconCheckAll', 'radio_on'],
-                                'deselect': ['iconUncheckAll', 'radio_off']}
         else:
             raise exceptions.TreeTypeUnknown(
                 'The locator described does not point to a known tree type')
@@ -1258,68 +1257,88 @@ class Tree(object):
                      'cause': e})
         return leaf
 
-    def _select_or_deselect_node(self, *path, **kwargs):
-        """ Selects or deselects a node.
+
+class CheckboxTree(Tree):
+    '''Tree that has a checkbox on each node, adds methods to check/uncheck them'''
+
+    def _is_legacy_checked(self, leaf):
+        checkbox = sel.element(self.node_checkbox, root=leaf)
+        src = sel.get_attribute(checkbox, 'src')
+        for on_off, imgattrs in self.node_images.items():
+            for imgattr in imgattrs:
+                if imgattr in src:
+                    return on_off
+        raise LookupError("Could not determine if Tree checkbox %s was checked or not"
+                          % checkbox)
+
+    def _is_dynatree_checked(self, leaf):
+        return 'dynatree-selected' in \
+            sel.get_attribute(sel.element("span", root=leaf), 'class')
+
+    def _detect(self):
+        super(CheckboxTree, self)._detect()
+        if self._get_tag() == 'ul':
+            self.node_checkbox = "span/span[@class='dynatree-checkbox']"
+            self._is_checked = self._is_dynatree_checked
+        elif self._get_tag() == 'table':
+            self.node_checkbox = "tr/td[2]/img"
+            self.node_images = {True: ['iconCheckAll', 'radio_on'],
+                                False: ['iconUncheckAll', 'radio_off']}
+            self._is_checked = self._is_legacy_checked
+
+    def _check_uncheck_node(self, path, check=False):
+        """ Checks or unchecks a node.
 
         Args:
             *path: The path as multiple positional string arguments denoting the course to take.
-            select: If ``True``, the node is selected, ``False`` the node is deselected.
-            root: The root path to begin at. This is usually not set manually
-                and is required for the recursion during :py:meth:expand_path:.
+            check: If ``True``, the node is checked, ``False`` the node is unchecked.
         """
         self._detect()
-        select = kwargs.get('select', False)
         leaf = self.expand_path(*path)
-        leaf_chkbox = sel.element(self.node_select, root=leaf)
-        if self.node_images:
-            # Legacy tree
-            for img_type in self.node_images['select']:
-                if img_type in sel.get_attribute(leaf_chkbox, 'src'):
-                    node_open = True
-            for img_type in self.node_images['deselect']:
-                if img_type in sel.get_attribute(leaf_chkbox, 'src'):
-                    node_open = False
-        else:
-            # New tree
-            node_open = "dynatree-selected" in sel.get_attribute(
-                sel.element("span", root=leaf),
-                "class"
-            )
-        if select is not node_open:
-            sel.click(leaf_chkbox)
+        cb = sel.element(self.node_checkbox, root=leaf)
+        if check is not self._is_checked(leaf):
+            sel.click(cb)
 
-    def select_node(self, *path, **kwargs):
-        """ Convenience function to select a node
+    def check_node(self, *path):
+        """ Convenience function to check a node
 
         Args:
             *path: The path as multiple positional string arguments denoting the course to take.
-            root: The root path to begin at. This is usually not set manually
-                and is required for the recursion during :py:meth:expand_path:.
         """
-        kwargs.update({'select': True})
-        self._select_or_deselect_node(*path, **kwargs)
+        self._check_uncheck_node(path, check=True)
 
-    def deselect_node(self, *path, **kwargs):
-        """ Convenience function to deselect a node
+    def uncheck_node(self, *path):
+        """ Convenience function to uncheck a node
 
         Args:
             *path: The path as multiple positional string arguments denoting the course to take.
-            root: The root path to begin at. This is usually not set manually
-                and is required for the recursion during :py:meth:expand_path:.
         """
-        kwargs.update({'select': False})
-        self._select_or_deselect_node(*path, **kwargs)
+        self._check_uncheck_node(path, check=False)
 
 
-@fill.method((Tree, object))
-def _fill_tree(tree, values):
-    # Assume a list of paths, select_node on each path
-    if not tree.fill_click:
-        for path in values:
-            logger.debug(' Navigating the tree: %s' % " -> ".join(path))
-            tree.select_node(*path)
-    else:
-        tree.click_path(*values)
+@fill.method((Tree, Sequence))
+def _fill_tree_seq(tree, values):
+    tree.click_path(*values)
+
+
+@fill.method((CheckboxTree, Mapping))
+def _fill_chkboxtree_mapping(tree, on_off):
+    '''Mapping should have two entries, False and True, the paths to
+       uncheck and the paths to check.  Unchecks are always done
+       first, so if you specify to check a parent node and uncheck a
+       child node, the child will end up being checked (because
+       checking the parent will check all its children).
+
+       Usage:
+
+          fill(mytree {False: [["node1", "node2"] ["node1", "node3"]]
+                       True:  [["node1", "node4"]])
+
+    '''
+    for path in on_off.get(False, []):
+        tree.uncheck_node(*path)
+    for path in on_off.get(True, []):
+        tree.check_node(*path)
 
 
 class InfoBlock(object):
