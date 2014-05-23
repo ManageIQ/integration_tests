@@ -3,6 +3,7 @@ from cfme.web_ui import Select
 import cfme.fixtures.pytest_selenium as sel
 import re
 from selenium.common.exceptions import NoSuchElementException
+from functools import partial
 
 _locator = '(//div[@id="paging_div"] | //div[@id="records_div"])'
 _next = '//img[@alt="Next"]'
@@ -112,7 +113,7 @@ def pages():
 
     Usage:
 
-        for page in pages:
+        for page in pages():
             # Do seleniumy things here, like finding and clicking elements
 
     """
@@ -123,3 +124,21 @@ def pages():
     while 'dimmed' not in next().get_attribute('class'):
         sel.click(next())
         yield
+
+
+def find(pred):
+    """Advance the pages until pred (a no-arg function) is true."""
+    for page in pages():
+        if pred():
+            break
+
+
+def find_element(el):
+    '''Advance the pages until the given element is displayed'''
+    find(partial(sel.is_displayed, el))
+
+
+def click_element(el):
+    '''Advance the page until the given element is displayed, and click it'''
+    find_element(el)
+    sel.click(el)

@@ -12,7 +12,7 @@ Usage:
 from collections import Mapping
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import fill, Form
+from cfme import web_ui
 from utils.log import logger
 
 
@@ -110,18 +110,18 @@ class _TabStripField(object):
         return self.arg
 
 
-@fill.method((_TabStripField, object))
+@web_ui.fill.method((_TabStripField, object))
 def _fill_tabstrip(tabstrip_field, value):
     logger.debug(' Navigating to tabstrip %s' % value)
-    fill(tabstrip_field.locate(), value)
+    web_ui.fill(tabstrip_field.locate(), value)
 
 
 # In a fight between _TabStripField and object, _TabStripField should win,
 # since it always delegates back to fill
-fill.prefer((_TabStripField, object), (object, Mapping))
+web_ui.fill.prefer((_TabStripField, object), (object, Mapping))
 
 
-class TabStripForm(Form):
+class TabStripForm(web_ui.Form):
     """
     A class for interacting with tabstrip-contained Form elements on pages.
 

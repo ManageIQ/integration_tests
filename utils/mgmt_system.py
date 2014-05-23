@@ -1059,6 +1059,9 @@ class EC2System(MgmtSystemAPIBase):
         logger.info(" Restarting EC2 instance %s" % instance_id)
         return self.stop_vm(instance_id) and self.start_vm(instance_id)
 
+    def is_vm_state(self, instance_id, state):
+        return self.vm_status(instance_id) in state
+
     def is_vm_running(self, instance_id):
         """Is the VM running?
 
