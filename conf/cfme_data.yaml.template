@@ -25,7 +25,12 @@ management_systems:
               type: esxi
               test_fleece: True
         datastores:
-            - iscsi
+            - type: iscsi
+              name: iscsi_storage
+              test_fleece: True
+            - type: vmfs
+              name: vmfs_storage
+              test_fleece: False
         tags:
             Provisioning Scope: All
         policy_profiles:
@@ -62,7 +67,9 @@ management_systems:
               type: rhel
               test_fleece: False
         datastores:
-            - iscsi
+            - type: iscsi
+              name: rhevm_iscsi
+              test_fleece: True
         tags:
             Provisioning Scope: All
         policy_profiles:
