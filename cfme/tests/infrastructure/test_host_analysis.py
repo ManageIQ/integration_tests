@@ -1,10 +1,10 @@
 #-*- coding: utf-8 -*-
 
 from cfme.configure import tasks
+from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
-from cfme.web_ui import flash, listnav, tabstrip as tabs, toolbar as tb
-from selenium.common.exceptions import NoSuchElementException
+from cfme.web_ui import flash, listaccordion as list_acc, tabstrip as tabs, toolbar as tb
 from utils import conf
 from utils.providers import infra_provider_type_map
 from utils.wait import wait_for
@@ -127,6 +127,6 @@ def test_run_host_analysis(provider, host_type, host_name, register_event):
         # If the Firewall Rules are 0, the element can't be found (it's not a link)
         try:
             # This fails for vsphere4...  https://bugzilla.redhat.com/show_bug.cgi?id=1055657
-            sel.element(listnav.locate('Firewall Rules'))
-        except NoSuchElementException:
+            list_acc.select('Security', 'Show the firewall rules on this Host')
+        except ListAccordionLinkNotFound:
             pytest.fail("No firewall rules found in host detail accordion")

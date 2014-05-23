@@ -27,7 +27,7 @@
   * :py:mod:`cfme.web_ui.cfme_exception`
   * :py:mod:`cfme.web_ui.flash`
   * :py:mod:`cfme.web_ui.form_buttons`
-  * :py:mod:`cfme.web_ui.listnav`
+  * :py:mod:`cfme.web_ui.listaccordion`
   * :py:mod:`cfme.web_ui.menu`
   * :py:mod:`cfme.web_ui.paginator`
   * :py:mod:`cfme.web_ui.snmp_form`
