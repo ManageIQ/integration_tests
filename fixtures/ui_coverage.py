@@ -54,7 +54,6 @@ Post-testing (e.g. ci environment):
 # please keep that in mind when reviewing or altering this module.
 import json
 import traceback
-from functools import partial
 from multiprocessing import Process
 
 import pytest
@@ -63,15 +62,15 @@ from py.path import local
 from cfme.fixtures.pytest_selenium import base_url
 from scripts.wait_for_appliance_ui import check_appliance_ui
 from utils.log import logger
-from utils.path import log_path, scripts_path
+from utils.path import log_path, scripts_data_path
 from utils.ssh import SSHClient
 
 rails_root = local('/var/www/miq/vmdb')
-coverage_data = partial(scripts_path.join, 'data', 'coverage')
-gemfile = coverage_data('Gemfile.dev.rb')
-coverage_hook = coverage_data('coverage_hook.rb')
-coverage_merger = coverage_data('coverage_merger.rb')
-thing_toucher = coverage_data('thing_toucher.rb')
+coverage_data = scripts_data_path.join('coverage')
+gemfile = coverage_data.join('Gemfile.dev.rb')
+coverage_hook = coverage_data.join('coverage_hook.rb')
+coverage_merger = coverage_data.join('coverage_merger.rb')
+thing_toucher = coverage_data.join('thing_toucher.rb')
 coverage_output_dir = log_path.join('coverage')
 
 
