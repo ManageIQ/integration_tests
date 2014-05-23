@@ -7,7 +7,7 @@ import ui_navigate as nav
 from cfme.exceptions import NoVmFound, NoOptionAvailable, ParmRequired, ParmConfusion
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import provider
-from cfme.web_ui import Region, Quadicon, Tree, paginator, accordion, toolbar
+from cfme.web_ui import Region, Quadicon, CheckboxTree, Tree, paginator, accordion, toolbar
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.wait import wait_for
@@ -25,7 +25,7 @@ visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
                     "[not(contains(@style, 'display: none'))]/div/div/div"
                     "/ul[@class='dynatree-container']")
 
-manage_policies_tree = Tree(
+manage_policies_tree = CheckboxTree(
     sel.ver_pick({
         "default": "//div[@id='treebox']/div/table",
         "9.9.9.9": "//div[@id='protect_treebox']/ul"
@@ -514,9 +514,9 @@ def _assign_unassign_policy_profiles(vm_name, assign, *policy_profile_names, **k
     toolbar.select("Policy", "Manage Policies")
     for policy_profile in policy_profile_names:
         if assign:
-            manage_policies_tree.select_node(policy_profile)
+            manage_policies_tree.check_node(policy_profile)
         else:
-            manage_policies_tree.deselect_node(policy_profile)
+            manage_policies_tree.uncheck_node(policy_profile)
     sel.click(manage_policies_page.save_button)
 
 

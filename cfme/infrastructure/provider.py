@@ -20,7 +20,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
-from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, form_buttons, paginator
+from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator
 from cfme.web_ui.form_buttons import FormButton
 from utils.log import logger
 from utils.providers import provider_factory
@@ -68,7 +68,7 @@ credential_form = Form(
         ('validate_btn', FormButton("Validate the credentials by logging into the Server"))
     ])
 
-manage_policies_tree = Tree(
+manage_policies_tree = CheckboxTree(
     sel.ver_pick({
         "default": "//div[@id='treebox']/div/table",
         "9.9.9.9": "//div[@id='protect_treebox']/ul"
@@ -345,9 +345,9 @@ class Provider(Updateable):
         sel.force_navigate('infrastructure_provider_policy_assignment', context={'provider': self})
         for policy_profile in policy_profile_names:
             if assign:
-                manage_policies_tree.select_node(policy_profile)
+                manage_policies_tree.check_node(policy_profile)
             else:
-                manage_policies_tree.deselect_node(policy_profile)
+                manage_policies_tree.uncheck_node(policy_profile)
         form_buttons.save()
 
 

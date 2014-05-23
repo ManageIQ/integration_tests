@@ -18,7 +18,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostNotFound
-from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
+from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, paginator
 from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
@@ -79,7 +79,7 @@ credential_form = Form(
         ('validate_btn', page_specific_locators.creds_validate_btn)
     ])
 
-manage_policies_tree = Tree(
+manage_policies_tree = CheckboxTree(
     sel.ver_pick({
         "default": "//div[@id='treebox']/div/table",
         "9.9.9.9": "//div[@id='protect_treebox']/ul"
@@ -273,9 +273,9 @@ class Host(Updateable):
         sel.force_navigate('infrastructure_host_policy_assignment', context={'host': self})
         for policy_profile in policy_profile_names:
             if assign:
-                manage_policies_tree.select_node(policy_profile)
+                manage_policies_tree.check_node(policy_profile)
             else:
-                manage_policies_tree.deselect_node(policy_profile)
+                manage_policies_tree.uncheck_node(policy_profile)
         sel.click(manage_policies_page.save_button)
 
     def assign_policy_profiles(self, *policy_profile_names):
