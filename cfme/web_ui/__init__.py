@@ -1514,6 +1514,13 @@ class Quadicon(object):
       * d. **no_snapshot** - The number of snapshots
       * g. **policy** - The state of the policy
 
+    * **datastore** - *from the infra/datastores page* - has quads:
+
+      * a. **type** - File system type
+      * b. **no_vm** - Number of VMs
+      * c. **no_host** - Number of hosts
+      * d. **avail_space** - Available space
+
     Returns: A :py:class:`Quadicon` object.
     """
 
@@ -1548,6 +1555,12 @@ class Quadicon(object):
             "vendor": ("c", 'img'),
             "no_snapshot": ("d", 'txt'),
             "policy": ("g", 'img'),
+        },
+        "datastore": {
+            "type": ("a", 'img'),
+            "no_vm": ("b", 'txt'),
+            "no_host": ("c", 'txt'),
+            "avail_space": ("d", 'img'),
         },
     }
 
