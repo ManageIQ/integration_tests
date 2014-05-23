@@ -31,7 +31,7 @@ def ac_tree(*path):
         *path: Path to click in the tree that follows the '[cfme] region xyz' node
     """
     path = sel.ver_pick({
-        "9.9.9.9": ["CFME Region: Region %d [%d]" % server_region_pair()] + list(path),
+        #"9.9.9.9": ["CFME Region: Region %d [%d]" % server_region_pair()] + list(path),
         "default": path,
     })
     return accordion.tree(
@@ -144,7 +144,8 @@ class User(Updateable):
                               'password_txt': self.credential.secret,
                               'password_verify_txt': self.credential.verify_secret,
                               'email_txt': self.email,
-                              'user_group_select': self.group.description},
+                              'user_group_select': getattr(self.group,
+                                                           'description', None)},
              action=form_buttons.add)
         flash.assert_success_message('User "%s" was saved' % self.name)
 

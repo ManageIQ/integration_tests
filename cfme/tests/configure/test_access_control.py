@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+2# -*- coding: utf-8 -*-
 import pytest
 import cfme.configure.access_control as ac
 from utils.update import update
@@ -58,6 +58,8 @@ def test_user_duplicate_name():
     with error.expected("Userid has already been taken"):
         nu.create()
 
+group_user = ac.Group("EvmGroup-user")
+
 
 def test_username_required_error_validation():
     user = ac.User(
@@ -66,7 +68,7 @@ def test_username_required_error_validation():
         password='redhat',
         password_verify='redhat',
         email='xyz@redhat.com',
-        user_group_select='EvmGroup-user')
+        group=group_user)
     with error.expected("Name can't be blank"):
         user.create()
 
@@ -78,7 +80,7 @@ def test_userid_required_error_validation():
         password='redhat',
         password_verify='redhat',
         email='xyz@redhat.com',
-        user_group_select='EvmGroup-user')
+        group=group_user)
     with error.expected("Userid can't be blank"):
         user.create()
 
@@ -90,7 +92,7 @@ def test_user_password_required_error_validation():
         password=None,
         password_verify='redhat',
         email='xyz@redhat.com',
-        user_group_select='EvmGroup-user')
+        group=group_user)
     with error.expected("Password_digest can't be blank"):
         user.create()
 
@@ -102,7 +104,7 @@ def test_user_group_error_validation():
         password='redhat',
         password_verify='redhat',
         email='xyz@redhat.com',
-        user_group_select='<Choose a Group>')
+        group=None)
     with error.expected("A User must be assigned to a Group"):
         user.create()
 
@@ -114,7 +116,7 @@ def test_user_email_error_validation():
         password='redhat',
         password_verify='redhat',
         email='xyzdhat.com',
-        user_group_select='EvmGroup-user')
+        group=group_user)
     with error.expected("Email must be a valid email address"):
         user.create()
 
