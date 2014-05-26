@@ -1740,7 +1740,7 @@ class DHTMLSelect(Select):
             self.select_by_index(index, _cascade=True)
 
 
-@sel.select.method((DHTMLSelect, str))
+@sel.select.method((DHTMLSelect, basestring))
 def select_dhtml(dhtml, s):
     dhtml.select_by_visible_text(s)
 
