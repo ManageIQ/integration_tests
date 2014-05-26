@@ -19,6 +19,7 @@ from utils import mgmt_system, testgen
 from utils.db import cfmedb
 from utils.log import logger
 from utils.miq_soap import MiqVM
+from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
@@ -73,6 +74,7 @@ def get_vm_object(vm_name):
 
 @pytest.fixture(scope="module")
 def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small_template):
+    setup_provider(provider_key)
     vm_name = "test_actions-{}-{}".format(provider_key, generate_random_string())
     if isinstance(provider_mgmt, mgmt_system.RHEVMSystem):
         # RHEV-M is sometimes overloaded, so a little protection here
@@ -117,9 +119,6 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
         if provider_mgmt.is_vm_running(vm_name):
             logger.info("Powering off VM %s" % vm_name)
             provider_mgmt.stop_vm(vm_name)
-        logger.info("Deleting VM %s in VMDB." % vm_name)
-        #vm_obj.delete()  # CFME delete
-        logger.info("VM %s deleted in VMDB, now it's time to check the provider" % vm_name)
         if provider_mgmt.does_vm_exist(vm_name):
             logger.info("Deleting VM %s in %s" % (vm_name, provider_mgmt.__class__.__name__))
             provider_mgmt.delete_vm(vm_name)
@@ -342,15 +341,13 @@ def test_action_power_on_audit(request, policy_for_testing, vm, vm_off, ssh_clie
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-def test_action_create_snapshot_and_delete_last(
-        request, policy_for_testing, vm, vm_on, vm_stop_func, vm_is_off_func, vm_start_func,
-        vm_is_on_func, vm_provider):
+def test_action_create_snapshot_and_delete_last(request, policy_for_testing, vm, vm_on):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
     powered back on, it deletes the last snapshot.
     """
-    if isinstance(vm_provider, mgmt_system.RHEVMSystem):
+    if isinstance(vm.provider, mgmt_system.RHEVMSystem):
         pytest.skip("No snapshots on RHEV")
     # Set up the policy and prepare finalizer
     snapshot_name = generate_random_string()
@@ -367,18 +364,18 @@ def test_action_create_snapshot_and_delete_last(
         snapshot_create_action.delete()
     request.addfinalizer(finalize)
 
-    snapshots_before = vm.ws_attributes["v_total_snapshots"]
+    snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
     # Power off to invoke snapshot creation
-    vm_stop_func()
-    wait_for(lambda: vm.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=500,
+    vm.stop_vm()
+    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=500,
         message="wait for snapshot appear", delay=5)
-    assert vm.ws_attributes["v_snapshot_newest_description"] == "Created by EVM Policy Action"
-    assert vm.ws_attributes["v_snapshot_newest_name"] == snapshot_name
+    assert vm.soap.ws_attributes["v_snapshot_newest_description"] == "Created by EVM Policy Action"
+    assert vm.soap.ws_attributes["v_snapshot_newest_name"] == snapshot_name
     # Snapshot created and validated, so let's delete it
-    snapshots_before = vm.ws_attributes["v_total_snapshots"]
+    snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
     # Power on to invoke last snapshot deletion
-    vm_start_func()
-    wait_for(lambda: vm.ws_attributes["v_total_snapshots"] < snapshots_before, num_sec=500,
+    vm.start_vm()
+    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] < snapshots_before, num_sec=500,
         message="wait for snapshot deleted", delay=5)
 
 
@@ -525,7 +522,7 @@ def test_action_untag(request, policy_for_testing, vm, vm_off):
     tag_unassign_action = explorer.Action(
         generate_random_string(),
         action_type="Remove Tags",
-        action_values={"service_level": True}
+        action_values={"cat_service_level": True}
     )
     policy_for_testing.assign_actions_to_event("VM Power On", [tag_unassign_action])
 
