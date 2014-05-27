@@ -59,7 +59,7 @@ nav.add_branch(
 
                 'cfg_accesscontrol_user_ed':
                 [
-                    lambda ctx: ac_tree('Users', ctx.username),
+                    lambda ctx: ac_tree('Users', ctx.name),
                     {
                         'cfg_accesscontrol_user_edit':
                         lambda d: tb_select('Edit this User')

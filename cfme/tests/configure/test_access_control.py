@@ -10,11 +10,12 @@ from cfme.web_ui.menu import nav
 
 usergrp = ac.Group(description='EvmGroup-user')
 
+def new_credential():
+    return Credential(principal='uid' + random.generate_random_string(), secret='redhat')
 
 def new_user(group=usergrp):
     return ac.User(name='user' + random.generate_random_string(),
-                   credential=Credential(principal='uid' + random.generate_random_string(),
-                                         secret='redhat'),
+                   credential=new_credential(),
                    email='xyz@redhat.com',
                    group=group,
                    cost_center='Workload',
@@ -63,10 +64,8 @@ group_user = ac.Group("EvmGroup-user")
 
 def test_username_required_error_validation():
     user = ac.User(
-        username=None,
-        userid='uid' + random.generate_random_string(),
-        password='redhat',
-        password_verify='redhat',
+        name=None,
+        credential=new_credential(),
         email='xyz@redhat.com',
         group=group_user)
     with error.expected("Name can't be blank"):
@@ -75,10 +74,8 @@ def test_username_required_error_validation():
 
 def test_userid_required_error_validation():
     user = ac.User(
-        username='user' + random.generate_random_string(),
-        userid=None,
-        password='redhat',
-        password_verify='redhat',
+        name='user' + random.generate_random_string(),
+        credential=Credential(principal=None, secret='redhat'),
         email='xyz@redhat.com',
         group=group_user)
     with error.expected("Userid can't be blank"):
@@ -87,10 +84,8 @@ def test_userid_required_error_validation():
 
 def test_user_password_required_error_validation():
     user = ac.User(
-        username='user' + random.generate_random_string(),
-        userid='uid' + random.generate_random_string(),
-        password=None,
-        password_verify='redhat',
+        name='user' + random.generate_random_string(),
+        credential=Credential(principal='uid' + random.generate_random_string(), secret=None),
         email='xyz@redhat.com',
         group=group_user)
     with error.expected("Password_digest can't be blank"):
@@ -99,10 +94,8 @@ def test_user_password_required_error_validation():
 
 def test_user_group_error_validation():
     user = ac.User(
-        username='user' + random.generate_random_string(),
-        userid='uid' + random.generate_random_string(),
-        password='redhat',
-        password_verify='redhat',
+        name='user' + random.generate_random_string(),
+        credential=new_credential(),
         email='xyz@redhat.com',
         group=None)
     with error.expected("A User must be assigned to a Group"):
@@ -111,10 +104,8 @@ def test_user_group_error_validation():
 
 def test_user_email_error_validation():
     user = ac.User(
-        username='user' + random.generate_random_string(),
-        userid='uid' + random.generate_random_string(),
-        password='redhat',
-        password_verify='redhat',
+        name='user' + random.generate_random_string(),
+        credential=new_credential(),
         email='xyzdhat.com',
         group=group_user)
     with error.expected("Email must be a valid email address"):
@@ -178,7 +169,7 @@ def _go_to(dest):
           'automate explorer': _go_to('automate_explorer'),
       }]])
 def test_permissions(role, allowed_actions, disallowed_actions):
-    pytest.skip('https://bugzilla.redhat.com/show_bug.cgi?id=1098343')
+    # pytest.skip('https://bugzilla.redhat.com/show_bug.cgi?id=1098343')
     # create a user and role
     role = role()  # call function to get role
     role.create()
