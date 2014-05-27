@@ -2043,7 +2043,7 @@ def fill_cb_select_set(select, names):
 
 
 @fill.method((CheckboxSelect, Mapping))
-def fill_cb_select_dictlist(select, dictlist, action):
+def fill_cb_select_dictlist(select, dictlist):
     return select.check(dictlist)
 
 
