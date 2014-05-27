@@ -7,6 +7,7 @@ from datetime import datetime
 
 import pytest
 
+from fixtures.terminalreporter import reporter
 from utils import lazycache
 from utils import providers
 from utils.db import cfmedb
@@ -304,7 +305,7 @@ class EventListener(object):
                 report = HTMLReport(self.processed_expectations)
                 report.generate(config.getoption("event_testing_result"))
                 # Report to the terminal
-                termreporter = config.pluginmanager.getplugin('terminalreporter')
+                termreporter = reporter(config)
                 termreporter.write_sep('-', 'Stopping event listener')
             finally:
                 self.stop()

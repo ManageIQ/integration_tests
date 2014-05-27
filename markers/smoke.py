@@ -17,6 +17,8 @@ from time import time
 
 import pytest
 
+from fixtures.terminalreporter import reporter
+
 
 def pytest_addoption(parser):
     group = parser.getgroup("smoke_tests", "smoke test marking")
@@ -27,8 +29,7 @@ def pytest_addoption(parser):
 
 @pytest.mark.trylast
 def pytest_configure(config):
-    reporter = config.pluginmanager.getplugin('terminalreporter')
-    smoke_tests = SmokeTests(reporter)
+    smoke_tests = SmokeTests(reporter(config))
     config.pluginmanager.register(smoke_tests, 'smoke_tests')
     config.addinivalue_line('markers', __doc__.splitlines()[0])
 
@@ -46,7 +47,7 @@ def pytest_collection_modifyitems(session, config, items):
 
     if split_tests['smoke']:
         smoke_tests = config.pluginmanager.getplugin('smoke_tests')
-        smoke_tests.reporter.write_sep('=', 'Running smoke tests')
+        reporter(config).write_sep('=', 'Running smoke tests')
         smoke_tests.start_time = time()
         smoke_tests.halt_on_fail = config.getvalue('haltonsmokefail')
 
