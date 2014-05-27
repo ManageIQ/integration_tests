@@ -4,7 +4,7 @@ from warnings import catch_warnings
 import pytest
 
 from utils import conf
-from utils._conf import Config, ConfigNotFound, RecursiveUpdateDict
+from utils._conf import Config, ConfigTree, ConfigNotFound, RecursiveUpdateDict
 
 test_yaml_contents = '''
 test_key: test_value
@@ -18,6 +18,13 @@ test_key: test_overridden_value
 nested_test_root:
     nested_test_key_1: overridden_nested_test_value
 '''
+
+
+@pytest.fixture
+def clear_conf():
+    # Ensure the conf is cleared before every test
+    conf.clear()
+pytestmark = pytest.mark.usefixtures('clear_conf')
 
 
 @pytest.fixture(scope='function')
@@ -50,10 +57,11 @@ def create_test_yaml(request, contents, filename, local=False):
     return test_yaml
 
 
-def test_conf_yamls_dict(test_yaml):
+def test_conf_basics(test_yaml):
     # Dict lookup method works
     assert conf[test_yaml]['test_key'] == 'test_value'
     assert isinstance(conf, Config)
+    assert isinstance(conf.runtime, ConfigTree)
     assert isinstance(conf[test_yaml], RecursiveUpdateDict)
     assert isinstance(conf[test_yaml]['nested_test_root'], RecursiveUpdateDict)
 
@@ -92,3 +100,26 @@ def test_conf_yamls_not_found(random_string):
     # The warning we caught should be the correct type, and contain random_string
     assert issubclass(ConfigNotFound, warnings[0].category)
     assert random_string in str(warnings[0].message)
+
+
+def test_conf_runtime_override(random_string):
+    # sanity check: If the random string is in conf.env, INSTANITY.
+    assert random_string not in conf.env
+    # Add the random string to the runtime dict, as well as a junk value to
+    # prove we can add more than one thing via the ConfTree
+    conf.runtime['env'][random_string] = True
+    conf.runtime['foo'] = 'bar'
+    # the override is in place
+    assert random_string in conf.env
+    conf.clear()
+    # the override is still in place
+    assert random_string in conf.env
+    # deleting works
+    del(conf.runtime['env'][random_string])
+    assert random_string not in conf.env
+
+
+def test_conf_runtime_update(random_string):
+    # In addition to direct nested assignment, dict update should also work
+    conf.runtime = {'env': {random_string: True}}
+    assert random_string in conf.env
