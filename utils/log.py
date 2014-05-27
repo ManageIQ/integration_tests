@@ -136,6 +136,7 @@ import warnings
 import datetime as dt
 
 from functools import partial
+from logging import LoggerAdapter
 from logging.handlers import RotatingFileHandler, SysLogHandler
 from time import time
 from traceback import extract_tb
@@ -172,6 +173,12 @@ class SyslogMsecFormatter(logging.Formatter):
             t = ct.strftime("%Y-%m-%d %H:%M:%S")
             s = "%s.%03d" % (t, record.msecs)
         return s
+
+
+class NamedLoggerAdapter(LoggerAdapter):
+    """An adapter that injects a name into log messages"""
+    def process(self, message, kwargs):
+        return '(%s) %s' % (self.extra, message), kwargs
 
 
 def _load_conf(logger_name=None):
@@ -329,6 +336,11 @@ def create_logger(logger_name, filename=None):
 
     logger.addFilter(relpath_filter)
     return logger
+
+
+def create_sublogger(logger_sub_name, logger_name='cfme'):
+    logger = create_logger(logger_name)
+    return NamedLoggerAdapter(logger, logger_sub_name)
 
 
 def _showwarning(message, category, filename, lineno, file=None, line=None):
