@@ -23,6 +23,7 @@ from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
+from utils import version
 
 
 # Common locators
@@ -80,7 +81,7 @@ credential_form = Form(
     ])
 
 manage_policies_tree = CheckboxTree(
-    sel.ver_pick({
+    version.pick({
         "default": "//div[@id='treebox']/div/table",
         "9.9.9.9": "//div[@id='protect_treebox']/ul"
     })

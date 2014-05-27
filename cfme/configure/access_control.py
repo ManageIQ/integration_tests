@@ -7,6 +7,7 @@ from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form
 from cfme.web_ui.menu import nav
 from utils.db_queries import get_server_region
 from utils.update import Updateable
+from utils import version
 
 
 def get_ip_address():

@@ -7,7 +7,7 @@ import cfme.web_ui.toolbar as tb
 import ui_navigate as nav
 import functools
 from utils.update import Updateable
-
+from utils import version
 assert cfme.web_ui.menu  # to placate flake8 (otherwise menu import is unused)
 
 tb_select = functools.partial(tb.select, "Configuration")
@@ -35,7 +35,7 @@ item_form = web_ui.Form(
      ('display_checkbox', "//input[@id='display']"),
      ('add_button', "//img[@title='Add']")])
 
-catalog_tree = sel.ver_pick({'default': web_ui.Tree('//div[@id="stcat_tree_box"]//table'),
+catalog_tree = version.pick({'default': web_ui.Tree('//div[@id="stcat_tree_box"]//table'),
                              '9.9.9.9': web_ui.Tree('//div[@id="stcat_treebox"]//ul')})
 
 

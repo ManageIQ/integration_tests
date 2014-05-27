@@ -14,7 +14,7 @@ from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
-
+from utils import version
 
 access_tree = partial(accordion.tree, "Access Control")
 database_tree = partial(accordion.tree, "Database")
@@ -93,7 +93,7 @@ nav.add_branch("configuration",
         "cfg_settings_region":
         [
             lambda _: settings_tree(
-                sel.ver_pick({
+                version.pick({
                     "default": "Region: Region %d [%d]" % server_region_pair(),
                     "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
                 })
@@ -124,12 +124,12 @@ nav.add_branch("configuration",
 
         "cfg_settings_defaultzone":
         lambda _: settings_tree(
-            sel.ver_pick({
+            version.pick({
                 "default": "Region: Region %d [%d]" % server_region_pair(),
                 "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
             }),
             "Zones",
-            sel.ver_pick({
+            version.pick({
                 "default": "Zone: Default Zone",
                 "9.9.9.9": "Zone: Default Zone (current)"
             }),
@@ -138,7 +138,7 @@ nav.add_branch("configuration",
         "cfg_settings_schedules":
         [
             lambda _: settings_tree(
-                sel.ver_pick({
+                version.pick({
                     "default": "Region: Region %d [%d]" % server_region_pair(),
                     "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
                 }),
@@ -158,12 +158,12 @@ nav.add_branch("configuration",
         "cfg_settings_currentserver":
         [
             lambda _: settings_tree(
-                sel.ver_pick({
+                version.pick({
                     "default": "Region: Region %d [%d]" % server_region_pair(),
                     "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
                 }),
                 "Zones",
-                sel.ver_pick({
+                version.pick({
                     "default": "Zone: Default Zone",
                     "9.9.9.9": "Zone: Default Zone (current)"
                 }),
@@ -199,7 +199,7 @@ nav.add_branch("configuration",
         [
             lambda _: diagnostics_tree(
                 "CFME Region: Region %d [%d]" % server_region_pair(),
-                sel.ver_pick({
+                version.pick({
                     "default": "Zone: Default Zone",
                     "9.9.9.9": "Zone: Default Zone (current)"
                 }),
@@ -241,7 +241,7 @@ nav.add_branch("configuration",
         [
             lambda _: diagnostics_tree(
                 "CFME Region: Region %d [%d]" % server_region_pair(),
-                sel.ver_pick({
+                version.pick({
                     "default": "Zone: Default Zone",
                     "9.9.9.9": "Zone: Default Zone (current)"
                 }),

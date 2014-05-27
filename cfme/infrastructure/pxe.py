@@ -18,13 +18,14 @@ from utils.log import logger
 from utils.path import project_path
 from utils.update import Updateable
 from utils.wait import wait_for
+from utils import version
 
 cfg_btn = partial(tb.select, 'Configuration')
 
 pxe_resetter = "//span[contains(., 'All PXE Servers')]"
 
 pxe_server_table_exist = Table('//div[@id="records_div"]/table/tbody/tr/td')
-pxe_server_tree = sel.ver_pick({'default': Tree('//div[@id="pxe_servers_treebox"]//table'),
+pxe_server_tree = version.pick({'default': Tree('//div[@id="pxe_servers_treebox"]//table'),
                                 '9.9.9.9': Tree('//div[@id="pxe_servers_treebox"]//ul')})
 
 pxe_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
@@ -64,7 +65,7 @@ pxe_image_type_form = Form(
 
 template_resetter = "//span[contains(., 'All Customization Templates - System Image Types')]"
 
-template_tree = sel.ver_pick({
+template_tree = version.pick({
     'default': Tree('//div[@id="customization_templates_treebox"]//table'),
     '9.9.9.9': Tree('//div[@id="customization_templates_treebox"]//ul')
 })
@@ -124,7 +125,7 @@ iso_properties_form = Form(
         ('provider', Select('//select[@id="ems_id"]')),
     ])
 
-iso_tree = sel.ver_pick({
+iso_tree = version.pick({
     'default': Tree('//div[@id="iso_datastores_treebox"]//table'),
     '9.9.9.9': Tree('//div[@id="iso_datastores_treebox"]//ul')
 })

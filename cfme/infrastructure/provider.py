@@ -26,7 +26,7 @@ from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
-
+from utils import version
 
 add_infra_provider = FormButton("Add this Infrastructure Provider")
 
@@ -69,7 +69,7 @@ credential_form = Form(
     ])
 
 manage_policies_tree = CheckboxTree(
-    sel.ver_pick({
+    version.pick({
         "default": "//div[@id='treebox']/div/table",
         "9.9.9.9": "//div[@id='protect_treebox']/ul"
     })

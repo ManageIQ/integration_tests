@@ -5,15 +5,17 @@
 from cfme.web_ui import Region
 import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
+from multimethods import MultiMethod, Default
+from utils import version
 
 area = Region(locators=
-              {'message': sel.ver_pick(
+              {'message': version.pick(
                   {'default': '//div[starts-with(@id, "flash_") and '
                    'not(ancestor::*[contains(@style,"display: none")])]//li'
                    '| //div[@id="flash_div"]',  # login screen
                    '9.9.9.9': '//div[starts-with(@id, "flash_") and '
                    'not(ancestor::*[contains(@style,"display: none")])]'
-                   '//div[contains(@class,"alert")]'})})
+                   '//div[contains(@class,"alert")] | //div[@id="flash_div"]'})})
 
 _mapping_new = {
     "alert-warning": "warning",
@@ -37,32 +39,39 @@ class Message(object):
     def __repr__(self):
         return "[Flash %s message %s]" % (self.level, str(repr(self.message)))
 
+upstream = version.LooseVersion("9.9.9.9")
 
-def get_message_level(el):
-    if el.tag_name == "div":
-        # New
-        _class = sel.get_attribute(el, "class")
-        for key, value in _mapping_new.iteritems():
-            if key in _class:
-                return value
-        else:
-            raise Exception("Could not get flash message type from '{}'".format(_class))
-    elif el.tag_name == "li":
-        # Old
-        return sel.get_attribute(el, "class") or "error"
+get_message_level = MultiMethod("get_message_level", version.product_version_dispatch)
+
+
+@get_message_level.method(Default)
+def get_message_level_def(el):
+    return sel.get_attribute(el, "class") or "error"
+
+
+@get_message_level.method(upstream)
+def get_message_level_up(el):
+    _class = sel.get_attribute(el, "class")
+    for key, value in _mapping_new.iteritems():
+        if key in _class:
+            return value
+    return "error"
+
+get_message_text = MultiMethod("get_message_text", version.product_version_dispatch)
+
+
+@get_message_text.method(Default)
+def get_message_text_def(el):
+    strong = sel.elements("./strong", root=el)
+    if strong:
+        return sel.text(strong)
     else:
-        raise Exception("Could not determine flash message!")
-
-
-def get_message_text(el):
-    if el.tag_name == "div":
-        # New
-        return sel.text(sel.element("./strong", root=el))
-    elif el.tag_name == "li":
-        # Old
         return sel.text(el)
-    else:
-        raise Exception("Could not determine flash message!")
+
+
+@get_message_text.method(upstream)
+def get_message_text_up(el):
+    return sel.text(el)
 
 
 def message(el):
