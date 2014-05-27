@@ -667,7 +667,7 @@ def _select_tuple(loc, val):
     select_by_value(Select(element(loc)), val.value)
 
 
-@select.method((object, str))
+@select.method((object, basestring))
 @select.method((object, ByText))
 def _select_str(loc, s):
     move_to_element(loc)  # Not having this caused problems in upstream, the select wasn't visible
@@ -742,7 +742,7 @@ def _deselect_val(loc, val):
     deselect_by_value(loc, val.value)
 
 
-@deselect.method((object, str))
+@deselect.method((object, basestring))
 @deselect.method((object, ByText))
 def _deselect_text(loc, s):
     deselect_by_text(loc, str(s))
