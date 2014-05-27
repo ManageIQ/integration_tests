@@ -15,6 +15,13 @@ area = Region(locators=
                    'not(ancestor::*[contains(@style,"display: none")])]'
                    '//div[contains(@class,"alert")]'})})
 
+_mapping_new = {
+    "alert-warning": "warning",
+    "alert-success": "success",
+    "alert-danger": "error",
+    "alert-info": "info"
+}
+
 
 class Message(object):
     """ A simple class to represent a flash error in CFME.
@@ -31,6 +38,33 @@ class Message(object):
         return "[Flash %s message %s]" % (self.level, str(repr(self.message)))
 
 
+def get_message_level(el):
+    if el.tag_name == "div":
+        # New
+        _class = sel.get_attribute(el, "class")
+        for key, value in _mapping_new.iteritems():
+            if key in _class:
+                return value
+        else:
+            raise Exception("Could not get flash message type from '{}'".format(_class))
+    elif el.tag_name == "li":
+        # Old
+        return sel.get_attribute(el, "class") or "error"
+    else:
+        raise Exception("Could not determine flash message!")
+
+
+def get_message_text(el):
+    if el.tag_name == "div":
+        # New
+        return sel.text(sel.element("./strong", root=el))
+    elif el.tag_name == "li":
+        # Old
+        return sel.text(el)
+    else:
+        raise Exception("Could not determine flash message!")
+
+
 def message(el):
     """ Turns an element into a :py:class:`Message` object.
 
@@ -38,8 +72,8 @@ def message(el):
         el: The element containing the flass message.
     Returns: A :py:class:`Message` object.
     """
-    return Message(message=sel.text(el),
-                   level=sel.get_attribute(el, 'class') or 'error')  # no class attr on login screen
+    return Message(message=get_message_text(el),
+                   level=get_message_level(el))  # no class attr on login screen
 
 
 def get_messages():
@@ -70,7 +104,7 @@ def is_error(message):
     Args:
         message: The message object.
     """
-    return any([lev in message.level for lev in ['error', 'alert-danger']])
+    return any([lev in message.level for lev in {"error"}])
 
 
 def assert_no_errors(messages=None):
@@ -105,7 +139,7 @@ def assert_success_message(m):
     messages = get_messages()
     assert_no_errors(messages)
     if not any([
-            (fm.message == m and (fm.level == 'info' or "success" in fm.level))
+            (fm.message == m and (fm.level in {"info", "success"}))
             for fm
             in messages]):
         raise Exception("No matching info flash message for '%s', instead got %s" % (m, messages))
