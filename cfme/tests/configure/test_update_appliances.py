@@ -10,7 +10,6 @@ from cfme.configure import red_hat_updates
 from cfme.web_ui import flash
 from time import sleep
 from utils import conf
-from utils.appliance import provision_appliance_set
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
 import pytest
@@ -97,21 +96,6 @@ def appliances_to_update(rh_updates_data):
         if appliance_data.get('update', False):
             appliance_names.append(appliance_name)
     return appliance_names
-
-
-@pytest.yield_fixture(scope='function')
-def appliance_set(cfme_data):
-    appliance_set_data = cfme_data['appliance_provisioning']['appliance_set']
-    appliance_set = provision_appliance_set(appliance_set_data, 'rh_updates')
-
-    yield appliance_set
-
-    # Unregister and destroy all
-    for appliance in appliance_set.all_appliances:
-        with appliance.ssh_client() as ssh:
-            ssh.run_command('subscription-manager remove --all')
-            ssh.run_command('subscription-manager unregister')
-        appliance.destroy()
 
 
 def update_registration(appliance_set, rh_updates_data, reg_method):
