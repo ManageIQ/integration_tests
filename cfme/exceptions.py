@@ -186,3 +186,12 @@ class ParmConfusion(CFMEException):
     at the same time.
     """
     pass
+
+
+class ListAccordionLinkNotFound(CFMEException):
+    """
+    Raised when active link containing specific text could not be found in
+    expended :py:module:`cfme.web_ui.listaccordion` content section.
+    """
+    pass
+
