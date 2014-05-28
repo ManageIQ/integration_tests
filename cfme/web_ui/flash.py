@@ -7,6 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
 from multimethods import MultiMethod, Default
 from utils import version
+from cfme.versions import upstream
 
 area = Region(locators=
               {'message': version.pick(
@@ -39,13 +40,9 @@ class Message(object):
     def __repr__(self):
         return "[Flash %s message %s]" % (self.level, str(repr(self.message)))
 
-upstream = version.LooseVersion("9.9.9.9")
 
-get_message_level = MultiMethod("get_message_level", version.product_version_dispatch)
-
-
-@get_message_level.method(Default)
-def get_message_level_def(el):
+@version.dependent
+def get_message_level(el):
     return sel.get_attribute(el, "class") or "error"
 
 
@@ -57,14 +54,12 @@ def get_message_level_up(el):
             return value
     return "error"
 
-get_message_text = MultiMethod("get_message_text", version.product_version_dispatch)
 
-
-@get_message_text.method(Default)
-def get_message_text_def(el):
+@version.dependent
+def get_message_text(el):
     strong = sel.elements("./strong", root=el)
     if strong:
-        return sel.text(strong)
+        return sel.text(strong[0])
     else:
         return sel.text(el)
 

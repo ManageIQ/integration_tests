@@ -6,6 +6,7 @@ from utils import memoized
 from utils.ssh import SSHClient
 from pkg_resources import parse_version
 from utils.log import logger
+import multimethods as mm
 
 
 @memoized
@@ -18,6 +19,12 @@ def product_version_dispatch(*_args, **_kwargs):
     '''Dispatch function for use in multimethods that just ignores
        arguments and dispatches on the current product version.'''
     return current_version()
+
+
+def dependent(default_function):
+    m = mm.MultiMethod(default_function.__name__, product_version_dispatch)
+    m.add_method(mm.Default, default_function)
+    return m
 
 
 def pick(v_dict):
@@ -297,3 +304,9 @@ class LooseVersion (Version):
 
 
 # end class LooseVersion
+
+
+# Compare Versions using > for dispatch
+@mm.is_a.method((LooseVersion, LooseVersion))
+def _is_a_loose(x, y):
+    return x >= y
