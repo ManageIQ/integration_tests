@@ -17,14 +17,15 @@ from ovirtsdk.xml import params
 
 from utils.conf import cfme_data
 from utils.conf import credentials
+from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 
 #temporary vm name (this vm will be deleted)
-TEMP_VM_NAME = 'automated-temporary'
+TEMP_VM_NAME = 'auto-vm-%s' % generate_random_string()
 #temporary template name (this template will be deleted)
-TEMP_TMP_NAME = 'automated-template-temporary'
+TEMP_TMP_NAME = 'auto-tmp-%s' % generate_random_string()
 
 
 def parse_cmd_line():
@@ -231,7 +232,7 @@ def templatize_vm(api, template_name, cluster):
     new_template = params.Template(name=template_name, vm=temporary_vm, cluster=actual_cluster)
     api.templates.add(new_template)
 
-    wait_for(check_disks, [api], fail_condition=False, delay=5)
+    wait_for(check_disks, [api], fail_condition=False, delay=5, num_sec=900)
 
     #check, if template is really there
     if not api.templates.get(template_name):

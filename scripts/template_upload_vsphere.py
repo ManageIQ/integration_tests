@@ -52,7 +52,7 @@ def parse_cmd_line():
 
 
 def upload_ova(hostname, username, password, name, datastore,
-               cluster, datacenter, url, host):
+               cluster, datacenter, url, host, proxy):
     client = Client(server=hostname, username=username, password=password)
     try:
         VirtualMachine.get(client, name=name)
@@ -66,6 +66,8 @@ def upload_ova(hostname, username, password, name, datastore,
     cmd_args.append("--datastore=%s" % datastore)
     cmd_args.append("--name=%s" % name)
     cmd_args.append("--vCloudTemplate=True")
+    if proxy:
+        cmd_args.append("--proxy=%s" % proxy)
     cmd_args.append(url)
     cmd_args.append("vi://%s@%s/%s/host/%s" % (username, hostname, datacenter, cluster))
 
@@ -324,7 +326,8 @@ def run(**kwargs):
                                           kwargs.get('cluster'),
                                           kwargs.get('datacenter'),
                                           url,
-                                          kwargs.get('host'))
+                                          kwargs.get('host'),
+                                          kwargs.get('proxy'))
             if ova_ret is 0:
                 break
         if ova_ret is -1:
