@@ -74,6 +74,15 @@ def setup_providers():
     # Normally function-scoped
     setup_infrastructure_providers()
 
+def cleanup_vm(vm_name, provider_key, provider_mgmt):
+    try:
+        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
+        provider_mgmt.delete_vm(vm_name+"_0001")
+    except:
+        # The mgmt_sys classes raise Exception :\
+        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
+
+
 
 @pytest.yield_fixture(scope="function")
 def dialog():
@@ -126,7 +135,8 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 @pytest.mark.usefixtures('setup_providers', 'setup_pxe_servers_vm_prov')
-def test_rhev_pxe_servicecatalog(catalog_item):
+def test_rhev_pxe_servicecatalog(provider_key, provider_mgmt, catalog_item, request):
+    vm_name = catalog_item.provisioning_data["vm_name"]
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
@@ -138,3 +148,4 @@ def test_rhev_pxe_servicecatalog(catalog_item):
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'Request complete'
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
