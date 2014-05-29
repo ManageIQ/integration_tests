@@ -43,7 +43,7 @@ def setup_providers():
 @pytest.yield_fixture(scope="function")
 def instance(setup_providers, provider_key, provider_mgmt, provisioning, provider_crud):
     # tries to delete the VM that gets created here
-    vm_name = 'provtest-%s' % generate_random_string()
+    vm_name = 'test_image_prov_%s' % generate_random_string()
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
         (image, vm_name, provider_crud.key))
