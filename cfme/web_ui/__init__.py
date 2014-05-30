@@ -1636,7 +1636,8 @@ class Select(SeleniumSelect, object):
 
     @property
     def _el(self):
-        ActionChains(browser()).move_to_element(sel.element(self)).perform()
+        el = sel.element(self)
+        ActionChains(browser()).move_to_element(el).perform()
         return el
 
     def locate(self):
