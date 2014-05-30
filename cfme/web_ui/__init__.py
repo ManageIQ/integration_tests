@@ -251,7 +251,7 @@ class Table(object):
         return self._header_indexes
 
     def locate(self):
-        return self._loc
+        return sel.move_to_element(self._loc)
 
     @staticmethod
     def _convert_header(header):
@@ -269,7 +269,7 @@ class Table(object):
 
     @property
     def _root_loc(self):
-        return self._loc
+        return self.locate()
 
     def _update_cache(self):
         """Updates the internal cache of headers
@@ -540,7 +540,7 @@ class Table(object):
 
         def locate(self):
             # table.create_row_from_element(row_instance) might actually work...
-            return self.row_element
+            return sel.move_to_element(self.row_element)
 
 
 class SplitTable(Table):
@@ -626,7 +626,7 @@ class SplitTable(Table):
 
     def locate(self):
         # Use the header locator as the overall table locator
-        return self._header_loc
+        return sel.move_to_element(self._header_loc)
 
 
 class CheckboxTable(Table):
@@ -892,7 +892,7 @@ class Calendar(object):
         self.name = name
 
     def locate(self):
-        return '//input[@name="%s"]' % self.name
+        return sel.move_to_element('//input[@name="%s"]' % self.name)
 
 
 @fill.method((Calendar, object))
@@ -1575,10 +1575,10 @@ class Quadicon(object):
 
     def locate(self):
         """ Returns:  a locator for the quadicon itself"""
-        return sel.ver_pick({
+        return sel.move_to_element(sel.ver_pick({
             '9.9.9.9': "//div[@id='quadicon']/../../..//a[@title='%s']" % self._name,
             'default': "//div[@id='quadicon' and ../../..//a[@title='%s']]" % self._name
-        })
+        }))
 
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
@@ -1636,12 +1636,11 @@ class Select(SeleniumSelect, object):
 
     @property
     def _el(self):
-        el = sel.element(self._loc)
-        ActionChains(browser()).move_to_element(el).perform()
+        ActionChains(browser()).move_to_element(sel.element(self)).perform()
         return el
 
     def locate(self):
-        return self._loc
+        return sel.move_to_element(self._loc)
 
     def observer_wait(self):
         sel.detect_observed_field(self._loc)

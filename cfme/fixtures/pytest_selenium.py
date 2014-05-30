@@ -255,8 +255,11 @@ def move_to_element(loc):
 
     Args:
         loc: A locator, expects either a string, WebElement, tuple.
+    Returns: It passes `loc` through to make it possible to use in case we want to immediately use
+        the element that it is being moved to.
     """
     ActionChains(browser()).move_to_element(element(loc)).perform()
+    return loc
 
 
 def text(loc):

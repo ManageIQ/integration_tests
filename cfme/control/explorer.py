@@ -301,9 +301,7 @@ nav.add_branch(
 
                 "vm_control_policy_event":
                 [
-                    lambda ctx: events_in_policy_table.click_cell(
-                        1, ctx["event_name"]
-                    ),
+                    lambda ctx: events_in_policy_table.click_cell("description", ctx["event_name"]),
                     {
                         "vm_control_policy_event_actions":
                         lambda _: cfg_btn(
