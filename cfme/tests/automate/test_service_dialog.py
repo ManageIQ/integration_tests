@@ -1,5 +1,6 @@
 import pytest
 import utils.randomness as rand
+from cfme.fixtures.pytest_selenium import ver_pick
 from utils.update import update
 from utils import error
 from cfme.automate.service_dialogs import ServiceDialog
@@ -37,5 +38,7 @@ def test_service_dialog_duplicate_name():
     dialog = ServiceDialog(label=rand.generate_random_string(),
                   description="my dialog", submit=True, cancel=True)
     dialog.create()
-    with error.expected("Dialog Label has already been taken"):
+    error_msg = ver_pick({'default': "Dialog Label has already been taken",
+                          '9.9.9.9': "Label has already been taken"})
+    with error.expected(error_msg):
         dialog.create()
