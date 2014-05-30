@@ -754,10 +754,10 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
     def delete_vm(self, vm_name):
         self.wait_vm_steady(vm_name, num_sec=300)
-        logger.info(' Deleting RHEV VM %s' % vm_name)
         vm = self._get_vm(vm_name)
         if not self.is_vm_stopped(vm_name):
             self.stop_vm(vm_name)
+        logger.debug(' Deleting RHEV VM %s' % vm_name)
         vm.delete()
         wait_for(
             lambda: self.does_vm_exist(vm_name),
