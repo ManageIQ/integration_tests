@@ -105,7 +105,7 @@ def provision_appliance(provider):
     '''Provisions appliance and setups up for smart state analysis'''
     global appliance_vm_name
     if appliance_vm_name == "":
-        appliance_vm_name = "vm_fleece_test_" + generate_random_string()
+        appliance_vm_name = "test_vm_analysis_" + generate_random_string()
 
     base_cmd = ('./scripts/clone_template.py --provider ' + provider + ' '
         '--vm_name ' + appliance_vm_name + ' ')
@@ -145,9 +145,10 @@ def provision_appliance(provider):
     return ip_addr
 
 
-def add_rhev_direct_lun_disk(provider, vm_name, ip_addr):
+def add_rhev_direct_lun_disk(provider, vm_to_analyze, ip_addr):
     logger.info('Adding RHEV direct_lun hook...')
-    run_command("./scripts/connect_directlun.py --provider " + provider + " --vm_name " + vm_name)
+    run_command(
+        "./scripts/connect_directlun.py --provider " + provider + " --vm_name " + vm_to_analyze)
     logger.info('Waiting for WUI to come online...')
     wait_for(is_web_ui_running, func_args=[ip_addr], delay=30, num_sec=600)
     logger.info('WUI back online')
@@ -189,17 +190,17 @@ def nav_to_roles():
     return server_settings_pg.click_on_server_tab()
 
 
-def nav_to_vm_details(provider, vm_name):
+def nav_to_vm_details(provider, vm_to_analyze):
     '''Helper nav function to get to vm details and avoid unneccessary navigation'''
 
     from pages.infrastructure_subpages.vms_subpages.details import VirtualMachineDetails
     page = VirtualMachineDetails(testsetup)
-    if page.on_vm_details(vm_name):
+    if page.on_vm_details(vm_to_analyze):
         return page
     else:
         provider_details = nav.infra_providers_pg().load_provider_details(
             cfme_data["management_systems"][provider]["name"])
-        return provider_details.all_vms().find_vm_page(vm_name, None, False, True, 6)
+        return provider_details.all_vms().find_vm_page(vm_to_analyze, None, False, True, 6)
 
 
 @pytest.fixture
@@ -240,7 +241,7 @@ def get_appliance(provider):
 
 
 @pytest.yield_fixture
-def browser_setup(get_appliance, provider, vm_name, fs_type, mgmt_sys_api_clients):
+def browser_setup(get_appliance, provider, vm_to_analyze, fs_type, mgmt_sys_api_clients):
     '''Overrides env.conf and points a browser to the appliance IP passed to it.
 
     Once finished with the test, it checks if any tests need the appliance and delete it if not the
@@ -249,7 +250,7 @@ def browser_setup(get_appliance, provider, vm_name, fs_type, mgmt_sys_api_client
     global appliance_vm_name
     global test_list
 
-    test_list.remove(['', provider, vm_name, fs_type])
+    test_list.remove(['', provider, vm_to_analyze, fs_type])
     with browser_session(base_url='https://' + get_appliance):
         yield nav.home_page_logged_in(testsetup)
 
@@ -276,7 +277,7 @@ def browser_setup(get_appliance, provider, vm_name, fs_type, mgmt_sys_api_client
 
 
 @pytest.fixture
-def configure_appliance(browser_setup, provider, vm_name, listener_info):
+def configure_appliance(browser_setup, provider, vm_to_analyze, listener_info):
     ''' Configure the appliance for smart state analysis '''
     global appliance_vm_name
 
@@ -299,7 +300,7 @@ def configure_appliance(browser_setup, provider, vm_name, listener_info):
 
     #wait for vm smart state to enable
     logger.info('Waiting for smartstate option to enable...')
-    vm_details = nav_to_vm_details(provider, vm_name)
+    vm_details = nav_to_vm_details(provider, vm_to_analyze)
     wait_for(vm_details.config_button.is_smart_state_analysis_enabled, delay=30,
         num_sec=450, fail_func=pytest.sel.refresh)
 
@@ -319,7 +320,7 @@ def configure_appliance(browser_setup, provider, vm_name, listener_info):
 def pytest_generate_tests(metafunc):
     '''Test generator'''
     global test_list
-    argnames = ['analyze_vms', 'provider', 'vm_name', 'fs_type']
+    argnames = ['analyze_vms', 'provider', 'vm_to_analyze', 'fs_type']
     tests = []
     for provider in cfme_data["test_vm_analysis"]:
         test_data = cfme_data["test_vm_analysis"][provider]
@@ -365,29 +366,29 @@ class TestVmAnalysis():
         tasks_pg.task_buttons.reload()
         wait_for(is_task_finished, func_args=[tasks_pg, vm_name], delay=30, num_sec=900)
 
-    def test_analyze_vm(self, provider, vm_name, fs_type, register_event):
+    def test_analyze_vm(self, provider, vm_to_analyze, fs_type, register_event):
         """Test scanning a VM"""
-        vm_details = nav_to_vm_details(provider, vm_name)
-        self.verify_no_data(provider, vm_name)
+        vm_details = nav_to_vm_details(provider, vm_to_analyze)
+        self.verify_no_data(provider, vm_to_analyze)
         last_analysis_time = vm_details.details.get_section('Lifecycle').get_item(
             'Last Analyzed').value
-        register_event(cfme_data['management_systems'][provider]['type'], 'vm', vm_name,
+        register_event(cfme_data['management_systems'][provider]['type'], 'vm', vm_to_analyze,
             ['vm_analysis_request', 'vm_analysis_start', 'vm_analysis_complete'])
-        logger.info('Initiating vm smart scan on ' + provider + ":" + vm_name)
+        logger.info('Initiating vm smart scan on ' + provider + ":" + vm_to_analyze)
         vm_details.config_button.perform_smart_state_analysis()
         Assert.true(vm_details.flash.message.startswith("Smart State Analysis initiated"))
 
         # wait for task to complete
         tasks_pg = nav.cnf_tasks_pg()
-        self.is_vm_analysis_finished(tasks_pg, vm_name)
+        self.is_vm_analysis_finished(tasks_pg, vm_to_analyze)
 
         # Then delete the tasks
         tasks_pg.task_buttons.delete_all()
 
         # back to vm_details
         logger.info('Checking vm details metadata...')
-        vm_details = nav_to_vm_details(provider, vm_name)
-        yaml_vm_os = cfme_data["test_vm_analysis"][provider][vm_name]["os"]
+        vm_details = nav_to_vm_details(provider, vm_to_analyze)
+        yaml_vm_os = cfme_data["test_vm_analysis"][provider][vm_to_analyze]["os"]
 
         # check users/group counts
         assert vm_details.details.get_section('Security').get_item('Users').value != '0',\
@@ -414,8 +415,8 @@ class TestVmAnalysis():
             'Analysis History').value == "1"
 
         # check OS
-        assert vm_details.details.get_section('Properties').get_item(
-            'Operating System').value == cfme_data["test_vm_analysis"][provider][vm_name]["os"]
+        assert (vm_details.details.get_section('Properties').get_item('Operating System').value ==
+            cfme_data["test_vm_analysis"][provider][vm_to_analyze]["os"])
 
         # check os specific values
         if "Fedora" in yaml_vm_os or "Linux" in yaml_vm_os:
@@ -441,12 +442,12 @@ class TestVmAnalysis():
         provider_details = nav.infra_providers_pg().load_provider_details(
             cfme_data["management_systems"][provider]["name"])
         all_vms = provider_details.all_vms()
-        all_vms.find_vm_page(vm_name, None, False, False, 6)
+        all_vms.find_vm_page(vm_to_analyze, None, False, False, 6)
         quadicon_os_icon = all_vms.quadicon_region.get_quadicon_by_title(
-            vm_name).os
+            vm_to_analyze).os
 
         # check os icon images
-        yaml_vm_os = cfme_data["test_vm_analysis"][provider][vm_name]["os"]
+        yaml_vm_os = cfme_data["test_vm_analysis"][provider][vm_to_analyze]["os"]
         if "Red Hat Enterprise Linux" in yaml_vm_os:
             assert "os-linux_redhat.png" in details_os_icon
             assert "linux_redhat" in quadicon_os_icon
