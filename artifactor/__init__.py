@@ -121,10 +121,12 @@ This is how the artifact_path is returned. This hook can be removed, by running 
 ``unregister_hook_callback`` with the name of the hook callback.
 
 """
-
+from artifactor.utils import parse_setup_dir, start_session
 from riggerlib import Rigger
-from artifactor.utils import start_test, finish_test, start_session
+import os
 import sys
+import traceback
+from utils import create_logger
 
 
 class Artifactor(Rigger):
@@ -137,7 +139,12 @@ class Artifactor(Rigger):
         """
         Reads the config data and sets up values
         """
+        if not self.config:
+            return False
         self.log_dir = self.config.get('log_dir', None)
+        if not os.path.isdir(self.log_dir):
+            os.makedirs(self.log_dir)
+        self.squash_exceptions = self.config.get('squash_exceptions', False)
         if not self.log_dir:
             print "!!! Log dir must be specified in yaml"
             sys.exit(127)
@@ -145,13 +152,26 @@ class Artifactor(Rigger):
         self.global_data = {'artifactor_config': self.config, 'log_dir': self.config['log_dir'],
                             'artifacts': dict()}
 
+        log_file_name = os.path.join(self.log_dir, "artifactor_log.txt")
+        self.logger = create_logger('artifactor_logger', log_file_name)
+
+    def handle_failure(self, exc):
+        self.logger.debug(exc[0])
+        self.logger.debug(exc[1])
+        self.logger.debug(traceback.format_tb(exc[2]))
+
+    def log_message(self, message):
+        self.logger.debug(message)
+
 artifactor = Artifactor(None)
 
 
 def initialize():
     artifactor.parse_config()
-    artifactor.register_hook_callback('start_test', 'pre', start_test, name="default_start_test")
-    artifactor.register_hook_callback('finish_test', 'pre', finish_test,
+    artifactor.register_hook_callback('start_test', 'pre', parse_setup_dir,
+                                      name="default_start_test")
+    artifactor.register_hook_callback('finish_test', 'pre', parse_setup_dir,
                                       name="default_finish_test")
     artifactor.register_hook_callback('start_session', 'pre', start_session,
                                       name="default_start_session")
+    artifactor.initialized = True

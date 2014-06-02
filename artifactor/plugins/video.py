@@ -1,4 +1,4 @@
-""" Logger plugin for Artifactor
+""" Video plugin for Artifactor
 
 Add a stanza to the artifactor config like this,
 artifactor:
@@ -6,29 +6,31 @@ artifactor:
     per_run: test #test, run, None
     overwrite: True
     plugins:
-        logger:
+        video:
             enabled: True
-            plugin: logger
-            level: DEBUG
+            plugin: video
+            quality: 10
+            display: ":99"
 """
 
 from artifactor.utils import ArtifactorBasePlugin
 import os
-from utils.log import create_logger
+from utils.video import Recorder
 
 
-class Logger(ArtifactorBasePlugin):
+class Video(ArtifactorBasePlugin):
 
     def plugin_initialize(self):
         self.register_plugin_hook('start_test', self.start_test)
         self.register_plugin_hook('finish_test', self.finish_test)
-        self.register_plugin_hook('log_message', self.log_message)
+        self.register_plugin_hook('finish_session', self.finish_session)
 
     def configure(self):
         self.configured = True
         self.test_in_progress = False
-        self.current_logger = None
-        self.level = self.data.get('level', 'DEBUG')
+        self.current_recorder = None
+        self.quality = self.data.get('quality', '10')
+        self.display = self.data.get('display', ':0')
 
     @ArtifactorBasePlugin.check_configured
     def start_test(self, artifact_path, test_name, test_location):
@@ -36,14 +38,17 @@ class Logger(ArtifactorBasePlugin):
             print "Test already running, can't start another"
             return None
         artifacts = []
-        os_filename = self.ident + "-" + "cfme.log"
+        os_filename = self.ident + "-" + self.ident + ".ogv"
         os_filename = os.path.join(artifact_path, os_filename)
         if os.path.isfile(os_filename):
             os.remove(os_filename)
         artifacts.append(os_filename)
-        self.current_logger = create_logger(self.ident + test_name, os_filename)
-        self.current_logger.setLevel(self.level)
-
+        try:
+            self.current_recorder = Recorder(os_filename, display=self.display,
+                                             quality=self.quality)
+            self.current_recorder.start()
+        except:
+            pass
         self.test_in_progress = True
         test_ident = "{}/{}".format(test_location, test_name)
         return None, {'artifacts': {test_ident: {'files': {self.ident: artifacts}}}}
@@ -51,10 +56,14 @@ class Logger(ArtifactorBasePlugin):
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifact_path, test_name):
         """Finish test"""
+        try:
+            self.current_recorder.stop()
+        except:
+            pass
         self.test_in_progress = False
 
-    @ArtifactorBasePlugin.check_configured
-    def log_message(self, log_record):
-        if self.current_logger:
-            fn = getattr(self.current_logger, log_record['level'])
-            fn(log_record['message'], extra=log_record['extra'])
+    def finish_session(self):
+        try:
+            self.current_recorder.stop()
+        except:
+            pass

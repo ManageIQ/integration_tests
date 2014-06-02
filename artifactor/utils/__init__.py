@@ -1,4 +1,6 @@
 from riggerlib import RiggerBasePlugin
+import logging
+from logging.handlers import RotatingFileHandler
 import os
 import re
 import sys
@@ -15,30 +17,13 @@ def start_session(run_id=None):
     return None, {'run_id': run_id}
 
 
-def start_test(test_name=None, test_location=None, artifactor_config=None,
-               log_dir=None, run_id=None):
+def parse_setup_dir(test_name, test_location, artifactor_config, log_dir, run_id):
     """
     Convenience fire_hook for built in hook
     """
     if test_name and test_location:
         run_type = artifactor_config.get('per_run', None)
-        overwrite = artifactor_config.get('overwrite', None)
-        path = setup_artifact_dir(root_dir=log_dir, test_name=test_name,
-                                  test_location=test_location, run_type=run_type,
-                                  run_id=run_id, overwrite=overwrite)
-    else:
-        raise Exception('Not enough information to create artifact')
-    return {'artifact_path': path}, None
-
-
-def finish_test(test_name=None, test_location=None, artifactor_config=None,
-               log_dir=None, run_id=None):
-    """
-    Convenience fire_hook for built in hook
-    """
-    if test_name and test_location:
-        run_type = artifactor_config.get('per_run', None)
-        overwrite = artifactor_config.get('overwrite', None)
+        overwrite = artifactor_config.get('reuse_dir', False)
         path = setup_artifact_dir(root_dir=log_dir, test_name=test_name,
                                   test_location=test_location, run_type=run_type,
                                   run_id=run_id, overwrite=overwrite)
@@ -80,3 +65,27 @@ def setup_artifact_dir(root_dir=None, test_name=None, test_location=None,
             raise
 
     return path
+
+
+def create_logger(logger_name, filename):
+    """Creates and returns the named logger
+
+    If the logger already exists, it will be destroyed and recreated
+    with the current config in env.yaml
+
+    """
+    # If the logger already exists, destroy it
+    if logger_name in logging.root.manager.loggerDict:
+        del(logging.root.manager.loggerDict[logger_name])
+
+    log_file = filename
+
+    file_formatter = logging.Formatter('%(asctime)-15s [%(levelname).1s] %(message)s')
+    file_handler = RotatingFileHandler(log_file, maxBytes=2048, encoding='utf8')
+    file_handler.setFormatter(file_formatter)
+
+    logger = logging.getLogger(logger_name)
+    logger.addHandler(file_handler)
+
+    logger.setLevel('DEBUG')
+    return logger
