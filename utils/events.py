@@ -4,13 +4,16 @@
 
 """
 
-from fixtures import navigation as nav
 import re
 from lxml import etree
 from py.path import local
-from selenium.common.exceptions import TimeoutException
-from utils.conf import cfme_data
-
+from cfme.automate.explorer import Namespace, Instance, Class
+from cfme.control.import_export import import_file, is_imported
+from cfme.exceptions import AutomateImportError
+from cfme.infrastructure.provider import get_from_config
+from cfme.web_ui import flash
+from utils import version
+from utils.log import logger
 
 ALL_EVENTS = [
     ('Datastore Analysis Complete', 'datastore_analysis_complete'),
@@ -161,76 +164,68 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
     if ssh_client.run_command("ls /root/%s" % qe_automate_namespace_xml)[0] != 0:
         ssh_client.put_file(tmp_automate_file, '/root/')
 
+        # We have to convert it first for new version
+        convert_cmd = version.pick({
+            "default": None,
+
+            "5.3.0.0":
+            "evm:automate:convert DOMAIN=Default FILE=/root/{} ZIP_FILE=/root/{}.zip".format(
+                qe_automate_namespace_xml, qe_automate_namespace_xml),
+        })
+        if convert_cmd is not None:
+            logger.info("Converting namespace for use on newer appliance...")
+            return_code, stdout = ssh_client.run_rake_command(convert_cmd)
+            if return_code != 0:
+                logger.error("Namespace conversion was unsuccessful")
+                logger.error(stdout)
+                # We didn't successfully do that so remove the file to know
+                # that it's needed to do it again when run again
+                ssh_client.run_command("rm -f /root/%s*" % qe_automate_namespace_xml)
+                raise AutomateImportError(stdout)
+
         # run rake cmd on appliance to import automate namespace
-        rake_cmd = "evm:automate:import FILE=/root/%s" % \
-            qe_automate_namespace_xml
+        rake_cmd = version.pick({
+            "default": "evm:automate:import FILE=/root/{}".format(qe_automate_namespace_xml),
+
+            "5.3.0.0":
+            "evm:automate:import ZIP_FILE=/root/{}.zip DOMAIN=Default OVERWRITE=true "
+            "PREVIEW=false".format(qe_automate_namespace_xml),
+        })
+        logger.info("Importing the QE Automation namespace ...")
         return_code, stdout = ssh_client.run_rake_command(rake_cmd)
-        try:
-            assert return_code == 0, "namespace import was unsuccessful"
-        except AssertionError:
+        if return_code != 0:
+            logger.error("Namespace import was unsuccessful")
+            logger.error(stdout)
             # We didn't successfully do that so remove the file to know
             # that it's needed to do it again when run again
-            ssh_client.run_command("rm -f /root/%s" % qe_automate_namespace_xml)
-            raise
+            ssh_client.run_command("rm -f /root/%s*" % qe_automate_namespace_xml)
+            raise AutomateImportError(stdout)
 
     # CREATE AUTOMATE INSTANCE HOOK
     if db is None or db.session.query(db['miq_ae_instances'].name)\
             .filter(db['miq_ae_instances'].name == "RelayEvents").count() == 0:
         # Check presence
-        automate_explorer_pg = nav.automate_explorer_pg()
-        parent_class = "Automation Requests (Request)"
-        instance_details = [
-            "RelayEvents",
-            "RelayEvents",
-            "relationship hook to link to custom QE events relay namespace"
-        ]
-        instance_row = 2
-        instance_value = "/QE/Automation/APIMethods/relay_events?event=$evm.object['event']"
-
-        class_pg = automate_explorer_pg.click_on_class_access_node(parent_class)
-        if not class_pg.is_instance_present("RelayEvents"):
-            instance_pg = class_pg.click_on_add_new_instance()
-            instance_pg.fill_instance_info(*instance_details)
-            instance_pg.fill_instance_field_row_info(instance_row, instance_value)
-            class_pg = instance_pg.click_on_add_system_button()
-            assert class_pg.flash_message_class == 'Automate Instance "%s" was added' %\
-                instance_details[0]
+        instance = Instance(
+            name="RelayEvents",
+            display_name="RelayEvents",
+            description="relationship hook to link to custom QE events relay namespace",
+            values={
+                "rel2": {
+                    "value": "/QE/Automation/APIMethods/relay_events?event=$evm.object['event']"
+                }
+            },
+            cls=Class(name="Automation Requests (Request)", namespace=Namespace("System"))
+        )
+        instance.create()
 
     # IMPORT POLICIES
     policy_yaml = "profile_relay_events.yaml"
     policy_path = local(__file__).new(basename="../data/%s" % policy_yaml)
-
-    home_pg = nav.home_page_logged_in()
-    import_pg = home_pg.header.site_navigation_menu("Control")\
-        .sub_navigation_menu("Import / Export")\
-        .click()
-    if not import_pg.has_profile_available("Automate event policies"):
-        import_pg = import_pg.import_policies(policy_path.strpath)
-        assert import_pg.flash.message == "Press commit to Import"
-        import_pg = import_pg.click_on_commit()
-        assert "was uploaded successfully" in import_pg.flash.message
+    if not is_imported("Automate event policies"):
+        import_file(policy_path.strpath)
 
     # ASSIGN POLICY PROFILES
     for provider in providers:
-        assign_policy_profile_to_infra_provider("Automate event policies", provider)
-
-
-def assign_policy_profile_to_infra_provider(policy_profile, provider):
-    """ Assigns the Policy Profile to a provider
-
-    """
-    infra_providers_pg = nav.infra_providers_pg()
-    try:
-        infra_providers_pg.select_provider(cfme_data['management_systems'][provider]['name'])
-    except Exception:
-        return
-    policy_pg = infra_providers_pg.click_on_manage_policies()
-    if not policy_pg.policy_selected(policy_profile):
-        policy_pg.select_profile_item(policy_profile)
-        try:
-            policy_pg.save(visible_timeout=10)
-        except TimeoutException:
-            pass
-        else:
-            assert policy_pg.flash.message == 'Policy assignments successfully changed',\
-                'Save policy assignment flash message did not match'
+        prov_obj = get_from_config(provider)
+        prov_obj.assign_policy_profiles("Automate event policies")
+        flash.assert_no_errors()

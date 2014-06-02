@@ -5,10 +5,13 @@ from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
-from cfme.web_ui import Form, Tree, fill, Select, ScriptBox, DHTMLSelect, Region
+from cfme.web_ui import Form, Table, Tree, fill, Select, ScriptBox, DHTMLSelect, Region
 import cfme.exceptions as exceptions
 from utils.update import Updateable
 from utils import error, version
+from collections import Mapping
+import re
+from utils.log import logger
 
 tree = Tree(version.pick({'default': '//table//tr[@title="Datastore"]/../..',
                          '9.9.9.9': '//ul//a[@title="Datastore"]/../../..'}))
@@ -410,6 +413,80 @@ class Method(TreeNode, Updateable):
         return flash.assert_no_errors()
 
 
+class InstanceFieldsRow(object):
+    """Represents one row of instance fields.
+
+    Args:
+        row_id: Sequential id of the row (begins with 0)
+    """
+    table = Table("//div[@id='form_div']//table[@class='style3']")
+    columns = ("value", "on_entry", "on_exit", "on_error", "collect")
+    fields = (
+        "inst_value_{}", "inst_on_entry_{}", "inst_on_exit_{}",
+        "inst_on_error_{}", "inst_collect_{}"
+    )
+
+    def __init__(self, row_id):
+        self._row_id = row_id
+
+    @property
+    def form(self):
+        """Returns the form with fields targeted at our row_id.
+
+        Does not need to be on the page.
+        """
+        return Form(fields=[
+            (
+                col_name,
+                "//input[contains(@id, '{}')]".format(self.fields[i].format(self._row_id))
+            )
+            for i, col_name
+            in enumerate(self.columns)
+        ])
+
+
+class InstanceFields(object):
+    """Represents the table of fields defined for instance.
+
+    It uses web-scraping to determine what fields are available. It is maybe a slight slowdown, but
+    no better solution with similar complexity (2 SLoC) exists.
+
+    Only real drawback is that you cannot use `form` when being somewhere else than on the page.
+    """
+
+    @property
+    def form(self):
+        """Returns Form filled with fields. Scraps the webpage to determine the fields.
+
+        Requires to be on the page
+        """
+        names = []
+        for cell in sel.elements("//div[@id='form_div']//table[@class='style3']//td[img]"):
+            # The received text is something like u'  (blabla)' so we extract 'blabla'
+            sel.move_to_element(cell)  # This is required in order to correctly read the content
+            names.append(re.sub(r"^[^(]*\(([^)]+)\)[^)]*$", "\\1", sel.text(cell).encode("utf-8")))
+        return Form(fields=[(name, InstanceFieldsRow(i)) for i, name in enumerate(names)])
+
+
+@fill.method((InstanceFields, Mapping))
+def _fill_ifields_obj(ifields, d):
+    logger.info("   Delegating the filling of the fields to the form.")
+    return fill(ifields.form, d)
+
+
+@fill.method((InstanceFieldsRow, Mapping))
+def _fill_ifr_map(ifr, d):
+    logger.info("   Filling row with data {}".format(str(d)))
+    return fill(ifr.form, dict(zip(ifr.columns, (d.get(x, None) for x in ifr.columns))))
+
+
+@fill.method((InstanceFieldsRow, basestring))
+def _fill_ifr_str(ifr, s):
+    """You don't have to specify full dict when filling just value ..."""
+    logger.info("   Filling row with value {}".format(s))
+    return fill(ifr, {"value": s})
+
+
 class Instance(TreeNode, Updateable):
     """Represents a Instance in the CFME ui.  `Display Name` is not
        supported (it causes the name to be displayed differently in
@@ -418,12 +495,14 @@ class Instance(TreeNode, Updateable):
     form = Form(
         fields=[('name_text', "//input[contains(@name,'inst_name')]"),
                 ('display_name_text', "//input[contains(@name,'inst_display_name')]"),
-                ('description_text', "//input[contains(@name,'inst_description')]")]
+                ('description_text', "//input[contains(@name,'inst_description')]"),
+                ('values', InstanceFields())]
         + submit_and_cancel_buttons)
 
-    def __init__(self, name=None, display_name=None, description=None, cls=None):
+    def __init__(self, name=None, display_name=None, description=None, values=None, cls=None):
         self.name = name
         self.description = description
+        self.values = values
         # self.display_name = display_name
         self.cls = cls
 
@@ -435,7 +514,8 @@ class Instance(TreeNode, Updateable):
         sel.force_navigate("automate_explorer_instance_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,
                          # 'display_name_text': self.display_name,
-                         'description_text': self.description},
+                         'description_text': self.description,
+                         'values': self.values},
              action={True: self.form.cancel_btn, False: self.form.add_btn}[cancel])
         try:
             flash.assert_success_message('Automate Instance "%s" was added' % self.name)
@@ -448,7 +528,8 @@ class Instance(TreeNode, Updateable):
         sel.force_navigate("automate_explorer_instance_edit", context={"tree_item": self})
         fill(self.form, {'name_text': updates.get('name'),
                          # 'display_name_text': updates.get('display_name'),
-                         'description_text': updates.get('description')},
+                         'description_text': updates.get('description'),
+                         'values': updates.get('values')},
              action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
 
     def delete(self, cancel=False):

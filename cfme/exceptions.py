@@ -30,6 +30,12 @@ class AuthModeUnknown(CFMEException):
     Raised if an invalid authenctication mode is passed to
     :py:func:`cfme.configure.configuration.set_auth_mode`
     """
+    pass
+
+
+class AutomateImportError(CFMEException):
+    """Raised by scripts dealing with Automate when importing automate XML fails"""
+    pass
 
 
 class BlockTypeUnknown(CFMEException):
