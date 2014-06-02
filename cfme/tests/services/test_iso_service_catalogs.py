@@ -142,8 +142,7 @@ def test_rhev_iso_servicecatalog(provider_key, provider_mgmt, catalog_item, requ
     row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
 
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'Request complete'
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
-
