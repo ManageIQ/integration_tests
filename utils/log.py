@@ -135,6 +135,7 @@ import sys
 import warnings
 import datetime as dt
 
+from functools import partial
 from logging.handlers import RotatingFileHandler, SysLogHandler
 from time import time
 from traceback import extract_tb
@@ -275,7 +276,7 @@ class Perflog(object):
             return None
 
 
-def create_logger(logger_name):
+def create_logger(logger_name, filename=None):
     """Creates and returns the named logger
 
     If the logger already exists, it will be destroyed and recreated
@@ -290,7 +291,10 @@ def create_logger(logger_name):
     conf = _load_conf(logger_name)
 
     log_path.ensure(dir=True)
-    log_file = str(log_path.join('%s.log' % logger_name))
+    if filename:
+        log_file = filename
+    else:
+        log_file = str(log_path.join('%s.log' % logger_name))
 
     relpath_filter = _RelpathFilter()
 
@@ -370,7 +374,39 @@ if '_original_excepthook' not in globals():
     # Guard the original excepthook against reloads so we don't hook twice
     _original_excepthook = sys.excepthook
 
-logger = create_logger('cfme')
+
+class MultiLogger():
+    def __init__(self):
+        self.loggers = []
+        self._art_instance = None
+
+    def add_logger(self, logger):
+        self.loggers.append(logger)
+
+    def __getattr__(self, name):
+        return partial(self.log_me, name)
+
+    @property
+    def _art(self):
+        if not self._art_instance:
+            from fixtures.artifactor_plugin import art
+            self._art_instance = art
+        return self._art_instance
+
+    def log_me(self, name, *args, **kwargs):
+        for logger in self.loggers:
+            getattr(logger, name)(*args, **kwargs)
+        log_record = {'level': name,
+                      'message': args[0],
+                      'extra': kwargs.get('extra', None)}
+        self._art.fire_hook('log_message', log_record=log_record)
+
+
+cfme_logger = create_logger('cfme')
+
+logger = MultiLogger()
+logger.add_logger(cfme_logger)
+
 perflog = Perflog()
 
 # Capture warnings to the cfme logger using the warnings.showwarning hook
