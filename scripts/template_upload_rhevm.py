@@ -240,7 +240,7 @@ def templatize_vm(api, template_name, cluster):
         sys.exit(127)
 
 
-def cleanup(api, edomain):
+def cleanup(api, edomain, ssh_client, ovaname):
     """Cleans up all the mess that the previous functions left behind.
 
     Args:
@@ -250,6 +250,8 @@ def cleanup(api, edomain):
     temporary_vm = api.vms.get(TEMP_VM_NAME)
     if temporary_vm is not None:
         temporary_vm.delete()
+    #wait to make sure the vm is deleted
+    #wait_for(lambda: api.vms.get(TEMP_VM_NAME) != '', fail_condition=True, delay=5)
     temporary_template = api.templates.get(TEMP_TMP_NAME)
     if temporary_template is not None:
         temporary_template.delete()
@@ -260,6 +262,13 @@ def cleanup(api, edomain):
     unimported_template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
     if unimported_template is not None:
         unimported_template.delete()
+
+    command = 'rm %s' % ovaname
+    exit_status, output = ssh_client.run_command(command)
+    if exit_status != 0:
+        print "RHEVM: There was an error while removing ova file:"
+        print output
+        sys.exit(127)
 
 
 def api_params_resolution(item_list, item_name, item_param):
@@ -439,7 +448,7 @@ def run(**kwargs):
         print "RHEVM: Templatizing VM..."
         templatize_vm(api, template_name, kwargs.get('cluster'))
         print "RHEVM: Cleaning up..."
-        cleanup(api, kwargs.get('edomain'))
+        cleanup(api, kwargs.get('edomain'), ssh_client, ovaname)
 
     ssh_client.close()
     api.disconnect()

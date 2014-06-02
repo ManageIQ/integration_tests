@@ -51,17 +51,19 @@ def parse_cmd_line():
     return args
 
 
-def upload_ova(hostname, username, password, name, datastore,
-               cluster, datacenter, url, host, proxy):
+def check_template_exists(hostname, username, password, name):
     client = Client(server=hostname, username=username, password=password)
     try:
         VirtualMachine.get(client, name=name)
         print "VSPHERE: A Machine with that name already exists"
-        sys.exit(127)
     except ObjectNotFoundError:
-        pass
+        return False
     client.logout()
+    return True
 
+
+def upload_ova(hostname, username, password, name, datastore,
+               cluster, datacenter, url, host, proxy):
     cmd_args = ['ovftool']
     cmd_args.append("--datastore=%s" % datastore)
     cmd_args.append("--name=%s" % name)
@@ -314,32 +316,33 @@ def run(**kwargs):
 
     url = kwargs.get('image_url')
 
-    if kwargs.get('upload'):
-        #Wrapper for ovftool - sometimes it just won't work
-        for i in range(0, NUM_OF_TRIES_OVFTOOL):
-            print "VSPHERE: Trying ovftool %s..." % i
-            ova_ret, ova_out = upload_ova(hostname,
-                                          username,
-                                          password,
-                                          name,
-                                          kwargs.get('datastore'),
-                                          kwargs.get('cluster'),
-                                          kwargs.get('datacenter'),
-                                          url,
-                                          kwargs.get('host'),
-                                          kwargs.get('proxy'))
-            if ova_ret is 0:
-                break
-        if ova_ret is -1:
-            print "VSPHERE: Ovftool failed to upload file."
-            print ova_out
-            sys.exit(127)
+    if not check_template_exists(hostname, username, password, name):
+        if kwargs.get('upload'):
+            #Wrapper for ovftool - sometimes it just won't work
+            for i in range(0, NUM_OF_TRIES_OVFTOOL):
+                print "VSPHERE: Trying ovftool %s..." % i
+                ova_ret, ova_out = upload_ova(hostname,
+                                              username,
+                                              password,
+                                              name,
+                                              kwargs.get('datastore'),
+                                              kwargs.get('cluster'),
+                                              kwargs.get('datacenter'),
+                                              url,
+                                              kwargs.get('host'),
+                                              kwargs.get('proxy'))
+                if ova_ret is 0:
+                    break
+            if ova_ret is -1:
+                print "VSPHERE: Ovftool failed to upload file."
+                print ova_out
+                sys.exit(127)
 
-    if kwargs.get('disk'):
-        add_disk(client, name)
-    if kwargs.get('template'):
-        make_template(client, name, hostname, username, password)
-    client.logout()
+        if kwargs.get('disk'):
+            add_disk(client, name)
+        if kwargs.get('template'):
+            make_template(client, name, hostname, username, password)
+        client.logout()
     print "VSPHERE: Completed successfully"
 
 
