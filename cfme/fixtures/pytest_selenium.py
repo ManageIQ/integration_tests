@@ -19,6 +19,7 @@ from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException)
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
@@ -85,30 +86,51 @@ def elements(o, root=None):
 
     Returns: A list of WebElement objects
     """
-    return elements(o.locate(), root=root)  # if object implements locate(), try to get elements
-    # from that locator.  If it doesn't implement locate(), we're in trouble so
+    if hasattr(o, "locate"):
+        return elements(o.locate(), root=root)
+    elif callable(o):
+        return elements(o(), root=root)
+    else:
+        raise TypeError("Unprocessable type for elements() -> {}".format(str(type(o))))
+    # If it doesn't implement locate() or __call__(), we're in trouble so
     # let the error bubble up.
 
 
 @elements.method(basestring)
-def _s(s, root=None):
-    """Assume string is an xpath locator"""
-    parent = root or browser()
-    return parent.find_elements_by_xpath(s)
+def _s(s, **kwargs):
+    """Assume string is an xpath locator.
+
+    If the root element is actually multiple elements, then the locator is resolved for each
+    of root nodes.
+
+    Result: Flat list of elements
+    """
+    return elements((By.XPATH, s), **kwargs)
 
 
 @elements.method(WebElement)
 def _w(webelement, **kwargs):
-    """Return a 1-item list of webelements"""
+    """Return a 1-item list of webelements
+
+    If the root element is actually multiple elements, then the locator is resolved for each
+    of root nodes.
+
+    Result: Flat list of elements
+    """
     # accept **kwargs to deal with root if it's passed by singledispatch
     return [webelement]
 
 
 @elements.method(tuple)
 def _t(t, root=None):
-    """Assume tuple is a 2-item tuple like (By.ID, 'myid')"""
-    parent = root or browser()
-    return parent.find_elements(*t)
+    """Assume tuple is a 2-item tuple like (By.ID, 'myid').
+
+    Handles the case when root= locator resolves to multiple elements. In that case all of them
+    are processed and all results are put in the same list."""
+    result = []
+    for root_element in (elements(root) if root is not None else [browser()]):
+        result += root_element.find_elements(*t)
+    return result
 
 
 def element(o, **kwargs):
