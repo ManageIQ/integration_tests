@@ -17,7 +17,8 @@ import json
 from pkg_resources import parse_version
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
-     NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException)
+     NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
+     InvalidElementStateException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
@@ -574,10 +575,6 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # Set this to True in the handlers below to trigger a browser restart
     recycle = False
 
-    # If the page is blocked, then recycle...
-    if is_displayed("//div[@id='blocker_div']"):
-        recycle = True
-
     try:
         # What we'd like to happen...
         login.login_admin()
@@ -604,6 +601,20 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # The some of the navigation steps cannot succeed
         logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
         recycle = True
+    except (NoSuchElementException, InvalidElementStateException):
+        from cfme.web_ui import cfme_exception as cfme_exc  # To prevent circular imports
+        # If the page is blocked, then recycle...
+        if is_displayed("//div[@id='blocker_div']"):
+            logger.warning("Page was blocked with blocker div, recycling.")
+            recycle = True
+        elif cfme_exc.is_cfme_exception():
+            logger.exception("CFME Exception before force_navigate started!: `{}`".format(
+                cfme_exc.cfme_exception_text()
+            ))
+            recycle = True
+        else:
+            logger.error("Could not determine the reason for failing the navigation. Reraising.")
+            raise
 
     if recycle:
         browser().quit()
