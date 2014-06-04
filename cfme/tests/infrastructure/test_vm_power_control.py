@@ -4,7 +4,9 @@ import random
 import time
 from cfme.infrastructure.provider import RHEVMProvider
 from cfme.infrastructure.virtual_machines import Vm
-from utils import testgen
+from cfme.web_ui import toolbar
+from selenium.common.exceptions import NoSuchElementException
+from utils import testgen, error
 from utils.log import logger
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
@@ -271,5 +273,8 @@ class TestVmDetailsPowerControlPerProvider(object):
             "ui: " + new_last_boot_time + " should !=  orig: " + last_boot_time)
 
 
-#def test_no_template_power_control(provider_crud):
-#    provider_crud.load_all_provider_templates()
+def test_no_template_power_control(provider_crud):
+    """ Ensures that no power button is displayed on the templates page. """
+    provider_crud.load_all_provider_templates()
+    with error.expected(NoSuchElementException):
+        toolbar.select("Power")
