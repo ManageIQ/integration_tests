@@ -3,8 +3,10 @@ import pytest
 import random
 import time
 from cfme.infrastructure.provider import RHEVMProvider
-from cfme.infrastructure.virtual_machines import Vm
-from utils import testgen
+from cfme.infrastructure.virtual_machines import Vm, get_all_vms
+from cfme.web_ui import toolbar
+from selenium.common.exceptions import NoSuchElementException
+from utils import testgen, error
 from utils.log import logger
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
@@ -271,5 +273,20 @@ class TestVmDetailsPowerControlPerProvider(object):
             "ui: " + new_last_boot_time + " should !=  orig: " + last_boot_time)
 
 
-# def test_no_template_power_control(provider_crud):
-#     provider_crud.load_all_provider_templates()
+def test_no_template_power_control(provider_crud, provider_init):
+    """ Ensures that no power button is displayed for templates. """
+    provider_crud.load_all_provider_templates()
+    with error.expected(NoSuchElementException):
+        toolbar.select("Power")
+    # Ensure selecting a template doesn't cause power menu to appear
+    toolbar.set_vms_grid_view()
+    templates = list(get_all_vms(True))
+    template_name = random.choice(templates)
+    selected_template = Vm(template_name, provider_crud)
+    quadicon = selected_template.find_quadicon(do_not_navigate=True, mark=False, refresh=False)
+    with error.expected(NoSuchElementException):
+        toolbar.select("Power")
+    # Ensure there isn't a power button on the details page
+    pytest.sel.click(quadicon)
+    with error.expected(NoSuchElementException):
+        toolbar.select("Power")

@@ -339,13 +339,13 @@ class Provider(Updateable):
 
     def load_all_provider_vms(self):
         """ Loads the list of VMs that are running under the provider. """
-        if sel.is_displayed(
-                '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (All VMs)")]' % self.name):
-            paginator.first()
-        else:
-            if not self._on_detail_page():
-                self._load_details()
-            sel.click(details_page.infoblock.element("Relationships", "VMs"))
+        sel.force_navigate('infrastructure_provider', context={'provider': self})
+        sel.click(details_page.infoblock.element("Relationships", "VMs"))
+
+    def load_all_provider_templates(self):
+        """ Loads the list of templates that are running under the provider. """
+        sel.force_navigate('infrastructure_provider', context={'provider': self})
+        sel.click(details_page.infoblock.element("Relationships", "Templates"))
 
     def assign_policy_profiles(self, *policy_profile_names):
         """ Assign Policy Profiles to this Provider.
