@@ -122,7 +122,7 @@ This is how the artifact_path is returned. This hook can be removed, by running 
 
 """
 from artifactor.utils import parse_setup_dir, start_session
-from riggerlib import Rigger
+from riggerlib import Rigger, RiggerClient
 import os
 import sys
 import traceback
@@ -142,6 +142,8 @@ class Artifactor(Rigger):
         if not self.config:
             return False
         self.log_dir = self.config.get('log_dir', None)
+        log_file_name = os.path.join(self.log_dir, "artifactor_log.txt")
+        self.logger = create_logger('artifactor_logger', log_file_name)
         if not os.path.isdir(self.log_dir):
             os.makedirs(self.log_dir)
         self.squash_exceptions = self.config.get('squash_exceptions', False)
@@ -149,11 +151,9 @@ class Artifactor(Rigger):
             print "!!! Log dir must be specified in yaml"
             sys.exit(127)
         self.setup_plugin_instances()
+        self.start_server()
         self.global_data = {'artifactor_config': self.config, 'log_dir': self.config['log_dir'],
                             'artifacts': dict()}
-
-        log_file_name = os.path.join(self.log_dir, "artifactor_log.txt")
-        self.logger = create_logger('artifactor_logger', log_file_name)
 
     def handle_failure(self, exc):
         self.logger.debug(exc[0])
@@ -175,3 +175,7 @@ def initialize():
     artifactor.register_hook_callback('start_session', 'pre', start_session,
                                       name="default_start_session")
     artifactor.initialized = True
+
+
+class ArtifactorClient(RiggerClient):
+    pass
