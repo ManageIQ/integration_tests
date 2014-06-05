@@ -99,7 +99,9 @@ def update_registration(service,
                         proxy_username=None,
                         proxy_password=None,
                         validate=False,
-                        cancel=False):
+                        cancel=False,
+                        set_default_rhsm_address=False,
+                        set_default_repository=False):
     """ Fill in the registration form, validate and save/cancel
 
     Args:
@@ -118,6 +120,10 @@ def update_registration(service,
                   flash message for errors if `True` (default `False`)
         cancel: Click the Cancel button if `True` or the Save button
                 if `False` (default `False`)
+        set_default_rhsm_address: Click the Default button connected to
+                                  the RHSM (only) address if `True`
+        set_default_repository: Click the Default button connected to
+                                the repo/channel if `True`
     """
     assert service in service_types, "Unknown service type '{}'".format(service)
     service_value = service_types[service]
@@ -139,6 +145,12 @@ def update_registration(service,
 
     fill(registration_form, details)
 
+    if set_default_rhsm_address:
+        sel.click(registration_buttons.url_default)
+
+    if set_default_repository:
+        sel.click(registration_buttons.repo_default)
+
     if validate:
         sel.click(registration_buttons.validate)
         flash.assert_no_errors()
@@ -148,6 +160,8 @@ def update_registration(service,
         form_buttons.cancel()
     else:
         form_buttons.save()
+        flash.assert_message_match("Customer Information successfully saved")
+        flash.dismiss()
 
 
 def refresh():
@@ -160,7 +174,7 @@ def register_appliances(*appliance_names):
     """ Register appliances by names
 
     Args:
-        appliance_names: Names of appliances to register; will register all if empty or `None`
+        appliance_names: Names of appliances to register; will register all if empty
     """
     select_appliances(*appliance_names)
     sel.click(update_buttons.register)
@@ -170,7 +184,7 @@ def update_appliances(*appliance_names):
     """ Update appliances by names
 
     Args:
-        appliance_names: Names of appliances to update; will update all if empty or `None`
+        appliance_names: Names of appliances to update; will update all if empty
     """
     select_appliances(*appliance_names)
     sel.click(update_buttons.apply_updates)
@@ -180,7 +194,7 @@ def check_updates(*appliance_names):
     """ Run update check on appliances by names
 
     Args:
-        appliance_names: Names of appliances to check; will check all if empty or `None`
+        appliance_names: Names of appliances to check; will check all if empty
     """
     select_appliances(*appliance_names)
     sel.click(update_buttons.check_updates)
@@ -190,7 +204,7 @@ def are_registered(*appliance_names):
     """ Check if appliances are registered
 
     Args:
-        appliance_names: Names of appliances to check; will check all if empty or `None`
+        appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
         if row.update_status.text == 'Not Registered':
@@ -202,7 +216,7 @@ def are_subscribed(*appliance_names):
     """ Check if appliances are subscribed
 
     Args:
-        appliance_names: Names of appliances to check; will check all if empty or `None`
+        appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
         if row.update_status.text in {'Not Registered', 'Unsubscribed'}:
@@ -215,7 +229,7 @@ def versions_match(version, *appliance_names):
 
     Args:
         version: Version to match against
-        appliance_names: Names of appliances to check; will check all if empty or `None`
+        appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
         if row.cfme_version.text != version:
@@ -227,7 +241,7 @@ def checked_updates(*appliance_names):
     """ Check if appliances checked if there is an update available
 
     Args:
-        appliance_names: Names of appliances to check; will check all if empty or `None`
+        appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
         if row.last_checked_for_updates.text == '':
@@ -239,7 +253,7 @@ def platform_updates_available(*appliance_names):
     """ Check if appliances have a platform update available
 
     Args:
-        appliance_names: Names of appliances to check; will check all if empty or `None`
+        appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
         if row.platform_updates_available.text != 'Yes':
@@ -268,7 +282,7 @@ def select_appliances(*appliance_names):
     """ Select appliances by names
 
     Args:
-        appliance_names: Names of appliances to select; will select all if empty or `None`
+        appliance_names: Names of appliances to select; will select all if empty
     """
     if not update_buttons.is_displayed():
         sel.force_navigate("cfg_settings_region_red_hat_updates")
@@ -284,7 +298,7 @@ def get_appliance_rows(*appliance_names):
     """ Get appliances as table rows
 
     Args:
-        appliance_names: Names of appliances to get; will get all if empty or `None`
+        appliance_names: Names of appliances to get; will get all if empty
     """
     if not update_buttons.is_displayed():
         sel.force_navigate("cfg_settings_region_red_hat_updates")
