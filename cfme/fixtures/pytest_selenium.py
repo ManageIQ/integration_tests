@@ -18,13 +18,13 @@ from pkg_resources import parse_version
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
-     InvalidElementStateException)
+     InvalidElementStateException, MoveTargetOutOfBoundsException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import singledispatch, multidispatch
 
 import pytest
@@ -160,9 +160,15 @@ def wait_until(f, msg="Webdriver wait timed out"):
     return WebDriverWait(browser(), 120.0).until(f, msg) and time() - t
 
 
-def _nothing_in_flight(s):
+def _something_in_flight(s):
+    blockers = ["blocker_div", "notification"]
     in_flt = s.execute_script(ajax_wait_js)
-    return in_flt == 0
+    if in_flt != 0:
+        return True
+    for blocker in blockers:
+        if is_displayed((By.ID, blocker)):
+            return True
+    return False
 
 
 def wait_for_ajax():
@@ -170,7 +176,7 @@ def wait_for_ajax():
     Waits unti lall ajax timers are complete, in other words, waits until there are no
     more pending ajax requests, page load should be finished completely.
     """
-    return wait_until(_nothing_in_flight, "Ajax wait timed out")
+    return wait_until(lambda *a, **k: not _something_in_flight(*a, **k), "Ajax wait timed out")
 
 
 def is_displayed(loc):
@@ -267,12 +273,12 @@ def click(loc, wait_ajax=True):
         wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
             handy to not do that. (some toolbar clicks)
     """
-    ActionChains(browser()).move_to_element(element(loc)).click().perform()
+    move_to_element(loc).click()
     if wait_ajax:
         wait_for_ajax()
 
 
-def move_to_element(loc):
+def move_to_element(loc, **kwargs):
     """
     Moves to an element.
 
@@ -281,8 +287,21 @@ def move_to_element(loc):
     Returns: It passes `loc` through to make it possible to use in case we want to immediately use
         the element that it is being moved to.
     """
-    ActionChains(browser()).move_to_element(element(loc)).perform()
-    return loc
+    brand = "//div[@id='page_header_div']//div[contains(@class, 'brand')]"
+    wait_for_ajax()
+    el = element(loc, **kwargs)
+    try:
+        ActionChains(browser()).move_to_element(el).perform()
+    except MoveTargetOutOfBoundsException:
+        # ff workaround
+        browser().execute_script("arguments[0].scrollIntoView();", el)
+        if elements(brand) and not is_displayed(brand):
+            # If it does it badly that it moves whole page, this moves it back
+            try:
+                browser().execute_script("arguments[0].scrollIntoView();", element(brand))
+            except MoveTargetOutOfBoundsException:
+                pass
+    return el
 
 
 def text(loc):
@@ -343,8 +362,7 @@ def send_keys(loc, text):
         text: The text to inject into the element.
     """
     if text is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).send_keys_to_element(el, text).perform()
+        move_to_element(loc).send_keys(text)
         wait_for_ajax()
 
 
@@ -361,8 +379,7 @@ def checkbox(loc, set_to=False):
     Returns: None
     """
     if set_to is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
+        el = move_to_element(loc)
         if el.is_selected() is not set_to:
             logger.debug("Setting checkbox %s to %s" % (str(loc), str(set_to)))
             click(el)
@@ -694,10 +711,43 @@ def set_text(loc, text):
         text: The text to inject into the element.
     """
     if text is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
+        el = move_to_element(loc)
         el.clear()
         send_keys(el, text)
+
+
+class Select(SeleniumSelect, object):
+    """ A proxy class for the real selenium Select() object.
+
+    We differ in one important point, that we can instantiate the object
+    without it being present on the page. The object is located at the beginning
+    of each function call.
+
+    Args:
+        loc: A locator.
+
+    Returns: A :py:class:`cfme.web_ui.Select` object.
+    """
+    def __init__(self, loc, multi=False):
+        if isinstance(loc, Select):
+            self._loc = loc._loc
+        else:
+            self._loc = loc
+        self.is_multiple = multi
+
+    @property
+    def _el(self):
+        return move_to_element(self)
+
+    def locate(self):
+        logger.error(type(self._loc))
+        return move_to_element(element(self._loc))
+
+    def observer_wait(self):
+        detect_observed_field(self._loc)
+
+    def __str__(self):
+        return "<%s.Select loc='%s'>" % (__name__, self._loc)
 
 
 @multidispatch
@@ -707,15 +757,13 @@ def select(loc, o):
 
 @select.method((object, ByValue))
 def _select_tuple(loc, val):
-    move_to_element(loc)  # Not having this caused problems in upstream, the select wasn't visible
-    select_by_value(Select(element(loc)), val.value)
+    select_by_value(Select(loc), val.value)
 
 
 @select.method((object, basestring))
 @select.method((object, ByText))
 def _select_str(loc, s):
-    move_to_element(loc)  # Not having this caused problems in upstream, the select wasn't visible
-    select_by_text(Select(element(loc)), str(s))
+    select_by_text(Select(loc), str(s))
 
 
 @select.method((object, Iterable))
@@ -783,13 +831,13 @@ def deselect(loc, o):
 
 @deselect.method((object, ByValue))
 def _deselect_val(loc, val):
-    deselect_by_value(loc, val.value)
+    deselect_by_value(Select(loc), val.value)
 
 
 @deselect.method((object, basestring))
 @deselect.method((object, ByText))
 def _deselect_text(loc, s):
-    deselect_by_text(loc, str(s))
+    deselect_by_text(Select(loc), str(s))
 
 
 @deselect.method((object, Iterable))
