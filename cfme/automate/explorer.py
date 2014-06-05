@@ -10,7 +10,8 @@ import cfme.exceptions as exceptions
 from utils.update import Updateable
 import utils.error as error
 
-tree = Tree('//table//tr[@title="Datastore"]/../..')
+tree = Tree(sel.ver_pick({'default': '//table//tr[@title="Datastore"]/../..',
+                         '9.9.9.9': '//ul//a[@title="Datastore"]/../../..'}))
 cfg_btn = partial(tb.select, 'Configuration')
 
 submit_and_cancel_buttons = [('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']"),
@@ -31,7 +32,9 @@ def table_select(name):
 
 
 def nav_edit(path):
-    if len(path) > 1:
+    dp_length = sel.ver_pick({'default': 1,
+                              '9.9.9.9': 2})
+    if len(path) > dp_length:
         cfg_btn('Edit Selected Item')
     else:
         cfg_btn('Edit Selected Namespaces')
@@ -107,6 +110,16 @@ class TreeNode(object):
         return "<%s name=%s>" % (self.__class__.__name__, self.name)
 
 
+class Domain(TreeNode):
+    def __init__(self, name=None):
+        self.name = name
+        self.parent = None
+
+
+def_domain = sel.ver_pick({'default': None,
+                           '9.9.9.9': Domain('Default')})
+
+
 class Namespace(TreeNode, Updateable):
     form = Form(fields=
                 [('name', "//*[@id='ns_name']"),
@@ -118,7 +131,7 @@ class Namespace(TreeNode, Updateable):
     update_btn_map = {True: form.cancel_btn, False: form.save_btn}
 
     @staticmethod
-    def make_path(*names):
+    def make_path(*names, **kwargs):
         """
         Make a set of nested Namespace objects with the given path.
 
@@ -129,16 +142,28 @@ class Namespace(TreeNode, Updateable):
                 n = Namespace(name="bar", parent=Namespace(name="foo"))
         """
 
-        if names:
+        domain = kwargs.get('domain', def_domain)
+
+        if len(names) == 1 and domain:
             names = list(names)
-            return Namespace(name=names.pop(), parent=Namespace.make_path(*names))
+            return Namespace(name=names.pop(), parent=domain)
+        elif names:
+            names = list(names)
+            if domain:
+                return Namespace(name=names.pop(),
+                                 parent=Namespace.make_path(domain=domain, *names))
+            else:
+                return Namespace(name=names.pop(), parent=Namespace.make_path(*names))
         else:
             return None
 
-    def __init__(self, name=None, description=None, parent=None):
+    def __init__(self, name=None, description=None, parent=None, domain=def_domain):
         self.name = name
         self.description = description
-        self.parent = parent
+        if domain:
+            self.parent = domain
+        else:
+            self.parent = parent
 
     def create(self, cancel=False):
         sel.force_navigate('automate_explorer_namespace_new', context={'tree_item': self.parent})
@@ -164,13 +189,18 @@ class Namespace(TreeNode, Updateable):
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_table_select", context={'tree_item': self.parent,
                                                              'table_item': self})
-        if len(self.path) > 1:
+        dp_length = sel.ver_pick({'default': 1,
+                                  '9.9.9.9': 2})
+        if len(self.path) > dp_length:
             cfg_btn('Remove selected Items', invokes_alert=True)
         else:
             cfg_btn('Remove Namespaces', invokes_alert=True)
         sel.handle_alert(cancel)
-        flash.assert_message_contain('Delete successful')
-        flash.assert_success_message('The selected Automate Namespaces were deleted')
+        del_msg = sel.ver_pick({
+            'default': 'The selected Automate Namespaces were deleted',
+            '9.9.9.9': 'Automate Namespace "{}": Delete successful'.format(self.description)
+        })
+        flash.assert_success_message(del_msg)
 
     def __repr__(self):
         return "<%s.%s name=%s, path=%s>" % (__name__, self.__class__.__name__,
