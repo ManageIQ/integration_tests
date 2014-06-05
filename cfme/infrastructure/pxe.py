@@ -24,8 +24,10 @@ cfg_btn = partial(tb.select, 'Configuration')
 pxe_resetter = "//span[contains(., 'All PXE Servers')]"
 
 pxe_server_table_exist = Table('//div[@id="records_div"]/table/tbody/tr/td')
-pxe_server_tree = sel.ver_pick({'default': Tree('//div[@id="pxe_servers_treebox"]//table'),
-                                '9.9.9.9': Tree('//div[@id="pxe_servers_treebox"]//ul')})
+pxe_server_tree = sel.ver_pick({
+    'default': Tree('//div[@id="pxe_servers_treebox"]//table'),
+    '5.3': Tree('//div[@id="pxe_servers_treebox"]//ul')
+})
 
 pxe_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
 
@@ -66,13 +68,15 @@ template_resetter = "//span[contains(., 'All Customization Templates - System Im
 
 template_tree = sel.ver_pick({
     'default': Tree('//div[@id="customization_templates_treebox"]//table'),
-    '9.9.9.9': Tree('//div[@id="customization_templates_treebox"]//ul')
+    '5.3': Tree('//div[@id="customization_templates_treebox"]//ul')
 })
 
 template_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
 
-template_add_button = sel.ver_pick({'default': form_buttons.add,
-                                    '9.9.9.9': form_buttons.save})
+template_add_button = sel.ver_pick({
+    'default': form_buttons.add,
+    '5.3': form_buttons.save
+})
 
 template_add_page = Region(
     locators={
@@ -129,7 +133,7 @@ iso_properties_form = Form(
 
 iso_tree = sel.ver_pick({
     'default': Tree('//div[@id="iso_datastores_treebox"]//table'),
-    '9.9.9.9': Tree('//div[@id="iso_datastores_treebox"]//ul')
+    '5.3': Tree('//div[@id="iso_datastores_treebox"]//ul')
 })
 
 iso_image_type_form = Form(
@@ -378,7 +382,7 @@ class CustomizationTemplate(Updateable):
             flash.assert_message_match(
                 sel.ver_pick({
                     'default': 'Customization Template "{}" was added'.format(self.name),
-                    '9.9.9.9': 'Customization Template "{}" was saved'.format(self.name)
+                    '5.3': 'Customization Template "{}" was saved'.format(self.name)
                 }))
         else:
             flash.assert_message_match(

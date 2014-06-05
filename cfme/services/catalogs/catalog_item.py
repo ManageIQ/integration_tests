@@ -13,7 +13,7 @@ from utils.update import Updateable
 tb_select = functools.partial(tb.select, "Configuration")
 catalog_item_tree = web_ui.Tree(sel.ver_pick({
     'default': '//div[@id="sandt_tree_box"]//table',
-    '9.9.9.9': '//div[@id="sandt_treebox"]//ul'
+    '5.3': '//div[@id="sandt_treebox"]//ul'
 }))
 
 template_select_form = Form(
