@@ -15,8 +15,9 @@ class Test(ArtifactorBasePlugin):
         with open(filename, "a+") as f:
             f.write(test_name + "\n")
             f.write(str(time.time()) + "\n")
+        for i in range(2):
+            time.sleep(2)
+            print "houh"
 
-    def finish_test(self, test_name, artifact_path, test_result):
-        filename = artifact_path + "-" + self.ident + ".log"
-        with open(filename, "a+") as f:
-            f.write(test_result + "\n")
+    def finish_test(self, test_name, artifact_path):
+        print "finished"

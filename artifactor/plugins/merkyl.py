@@ -23,6 +23,11 @@ import requests
 
 class Merkyl(ArtifactorBasePlugin):
 
+    class Test(object):
+        def __init__(self, ident):
+            self.ident = ident
+            self.in_progress = False
+
     def plugin_initialize(self):
         self.register_plugin_hook('start_session', self.start_session)
         self.register_plugin_hook('start_test', self.start_test)
@@ -33,21 +38,26 @@ class Merkyl(ArtifactorBasePlugin):
         self.ip = ip
         self.files = self.data.get('log_files', [])
         self.port = self.data.get('port', '8192')
+        self.tests = {}
         self.configured = True
-        self.test_in_progress = False
 
     @ArtifactorBasePlugin.check_configured
-    def start_test(self):
+    def start_test(self, test_name, test_location):
         """Start a test"""
-        if self.test_in_progress:
-            print "Test already running, can't start another"
-            return None
+        test_ident = "{}/{}".format(test_location, test_name)
+        if test_ident in self.tests:
+            if self.tests[test_ident].in_progress:
+                print "Test already running, can't start another"
+                return None
+        else:
+            self.tests[test_ident] = self.Test(test_ident)
         url = "http://{}:{}/resetall".format(self.ip, self.port)
         requests.get(url, timeout=15)
-        self.test_in_progress = True
+        self.tests[test_ident].in_progress = True
 
     @ArtifactorBasePlugin.check_configured
     def finish_test(self, artifact_path, test_name, test_location):
+        test_ident = "{}/{}".format(test_location, test_name)
         """Finish test"""
         artifacts = []
         for filename in self.files:
@@ -60,8 +70,7 @@ class Merkyl(ArtifactorBasePlugin):
                 content = doc.content
                 f.write(content)
                 artifacts.append(os_filename)
-        self.test_in_progress = False
-        test_ident = "{}/{}".format(test_location, test_name)
+        del self.tests[test_ident]
         return None, {'artifacts': {test_ident: {'files': {self.ident: artifacts}}}}
 
     @ArtifactorBasePlugin.check_configured
