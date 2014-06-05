@@ -612,6 +612,14 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 cfme_exc.cfme_exception_text()
             ))
             recycle = True
+        elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
+            # Rails exception detection
+            logger.exception("Rails exception before force_navigate started!: {}:{} at {}".format(
+                text("//body/div[@class='dialog']/h1").encode("utf-8"),
+                text("//body/div[@class='dialog']/p").encode("utf-8"),
+                current_url()
+            ))
+            recycle = True
         else:
             logger.error("Could not determine the reason for failing the navigation. Reraising.")
             raise
