@@ -351,8 +351,9 @@ def configure_appliance_for_event_testing(listener_info):
     )
 
 
-@pytest.yield_fixture(scope="function")
-def register_event(uses_event_listener, configure_appliance_for_event_testing, request):
+@pytest.fixture(scope="function")
+def register_event(
+        uses_event_listener, configure_appliance_for_event_testing, request, soft_assert):
     """register_event(sys_type, obj_type, obj, event)
     Event registration fixture (ALWAYS PLACE BEFORE PAGE NAVIGATION FIXTURE!)
 
@@ -384,33 +385,49 @@ def register_event(uses_event_listener, configure_appliance_for_event_testing, r
     It can also partially prevent scumbag 'Jimmy' ruining the test if he does
     something in the hypervisor that the listener registers.
 
-    After the test function finishes, it checks the listener whether it has caught the events.
-    If any of the events has not been caught, it raises a pytest.fail.
-    Before and after each test run using this fixture, database is cleared.
-
     """
     # We pull out the plugin directly.
     self = request.config.pluginmanager.getplugin("event_testing")  # Workaround for bind
-    node_id = request.node.nodeid
 
     if self.listener is not None:
         logger.info("Clearing the database before testing ...")
         self._delete_database()
         self.expectations = []
 
-    yield self  # Run the test and provide the plugin as a fixture
+    return self  # Run the test and provide the plugin as a fixture
 
-    if self.listener is not None:
-        logger.info("Checking the events ...")
-        try:
-            wait_for(self.check_all_expectations,
-                     delay=5,
-                     num_sec=75,
-                     handle_exception=True)
-        except TimedOutError:
-            pass
 
-        self.processed_expectations[node_id].extend(self.expectations)
-        logger.info("Clearing the database after testing ...")
-        self._delete_database()
-        self.expectations = []
+@pytest.mark.trylast
+def pytest_runtest_call(__multicall__, item):
+    """If we use register_event, then collect the events and fail the test if not all came.
+
+    After the test function finishes, it checks the listener whether it has caught the events.
+    It uses `soft_assert` fixture.
+    Before and after each test run using `register_event` fixture, database is cleared.
+    """
+    __multicall__.execute()
+    if "register_event" not in item.funcargs:
+        return
+
+    node_id = item._nodeid
+    register_event = item.funcargs["register_event"]
+    # If the event testing is disabled, skip the collection and failing
+    if register_event.listener is None:
+        return
+
+    # Event testing is enabled.
+    try:
+        wait_for(register_event.check_all_expectations,
+                 delay=5,
+                 num_sec=75,
+                 handle_exception=True)
+    except TimedOutError:
+        pass
+
+    register_event.processed_expectations[node_id].extend(register_event.expectations)
+    logger.info("Clearing the database after testing ...")
+    register_event._delete_database()
+    soft_assert = item.funcargs["soft_assert"]
+    for expectation in register_event.expectations:
+        soft_assert(expectation.arrived, "Event {} did not come!".format(expectation.event))
+    register_event.expectations = []
