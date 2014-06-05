@@ -1,9 +1,10 @@
+import base64
 import pytest
 from py.error import ENOENT
 from selenium.common.exceptions import WebDriverException
 
 import utils.browser
-from fixtures.artifactor_plugin import art
+from fixtures.artifactor_plugin import art_client
 from utils.datafile import template_env
 from utils.path import log_path
 from fixtures import navigation
@@ -32,9 +33,9 @@ def pytest_runtest_setup(item):
 def pytest_exception_interact(node, call, report):
     val = unicode(call.excinfo.value)
     short_tb = '%s\n%s' % (call.excinfo.type.__name__, val.encode('ascii', 'ignore'))
-    art.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+    art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
                   filename="traceback.txt", contents=str(report.longrepr), fd_ident="tb")
-    art.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+    art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
                   filename="short-traceback.txt", contents=short_tb, fd_ident="short_tb")
 
     if set(getattr(node, 'fixturenames', [])) & browser_fixtures:
@@ -43,9 +44,11 @@ def pytest_exception_interact(node, call, report):
         # errors are when exceptions are thrown outside of the test call phase
         is_error = report.when != 'call'
 
-        art.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+        art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
                       filename="screenshot.png", fd_ident="screenshot",
-                      contents=utils.browser.browser().get_screenshot_as_png(), mode="wb")
+                             contents=base64.b64encode(utils.browser.browser()
+                                                       .get_screenshot_as_png()),
+                             mode="wb", contents_base64=True)
 
         template_data = {
             'name': node.name,
