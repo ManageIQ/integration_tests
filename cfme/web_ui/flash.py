@@ -6,14 +6,16 @@ from cfme.web_ui import Region
 import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
 
-area = Region(locators=
-              {'message': sel.ver_pick(
-                  {'default': '//div[starts-with(@id, "flash_") and '
+area = Region(locators={
+    'message': sel.ver_pick({
+        'default': '//div[starts-with(@id, "flash_") and '
                    'not(ancestor::*[contains(@style,"display: none")])]//li'
                    '| //div[@id="flash_div"]',  # login screen
-                   '9.9.9.9': '//div[starts-with(@id, "flash_") and '
-                   'not(ancestor::*[contains(@style,"display: none")])]'
-                   '//div[contains(@class,"alert")]'})})
+        '5.3': '//div[starts-with(@id, "flash_") and '
+               'not(ancestor::*[contains(@style,"display: none")])]'
+               '//div[contains(@class,"alert")]'
+    })
+})
 
 
 class Message(object):
