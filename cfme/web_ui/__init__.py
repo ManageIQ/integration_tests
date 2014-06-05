@@ -40,18 +40,18 @@ import os
 import re
 import types
 from datetime import date
-from selenium.webdriver.common.action_chains import ActionChains
 from collections import Sequence, Mapping, Callable
+
 from selenium.common import exceptions as sel_exceptions
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.select import Select as SeleniumSelect
 from selenium.common.exceptions import NoSuchElementException
 from multimethods import multimethod, multidispatch, Anything
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import browser
-
+# For backward compatibility with code that pulls in Select from web_ui instead of sel
+from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
 
 
@@ -870,6 +870,14 @@ def fill_callable(f, val):
     f(val)
 
 
+@fill.method((Select, object))
+def fill_select(slist, val):
+    stype = type(slist)
+    logger.debug('  Filling in %s with value %s' % (stype, val))
+    sel.select(slist, val)
+    slist.observer_wait()
+
+
 class Calendar(object):
     """A CFME calendar form field
 
@@ -1613,45 +1621,6 @@ class Quadicon(object):
 
     def __str__(self):
         return self.locate()
-
-
-class Select(SeleniumSelect, object):
-    """ A poor man's Proxy class for the real selenium Select() object.
-
-    We differ in one important point, that we can instantiate the object
-    without it being present on the page. The object is located at the beginning
-    of each function call.
-
-    Args:
-        loc: A locator.
-
-    Returns: A :py:class:`cfme.web_ui.Select` object.
-    """
-
-    def __init__(self, loc, multi=False):
-        self._loc = loc
-        self.is_multiple = multi
-
-    @property
-    def _el(self):
-        return sel.move_to_element(self)
-
-    def locate(self):
-        return sel.move_to_element(self._loc)
-
-    def observer_wait(self):
-        sel.detect_observed_field(self._loc)
-
-    def __repr__(self):
-        return "<%s.Select loc='%s'>" % (__name__, self._loc)
-
-
-@fill.method((Select, object))
-def fill_select(slist, val):
-    stype = type(slist)
-    logger.debug('  Filling in %s with value %s' % (stype, val))
-    sel.select(slist, val)
-    slist.observer_wait()
 
 
 class DHTMLSelect(Select):
