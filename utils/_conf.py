@@ -1,3 +1,4 @@
+from collections import defaultdict
 from warnings import catch_warnings, warn
 
 import yaml
@@ -98,11 +99,33 @@ class Config(dict):
     def __init__(self, path):
         # stash a path to better impersonate a module
         self.path = path
+        # Abuse the runtime deleter to create the runtime property for this instance
+        del(self.runtime)
 
     @property
     def __path__(self):
         # and return that path when asked
         return self.path
+
+    def _runtime_overrides(self):
+        # Need to NOQA this since flake8 doesn't know it gets inititalized in __init__
+        return _runtime  # NOQA
+
+    def _set_runtime_overrides(self, overrides_dict):
+        # Writing to the overrides_dict clears cached conf,
+        # ensuring new value on next access
+        global _runtime
+
+        for key in overrides_dict:
+            if key in self:
+                del(self[key])
+        _runtime = ConfigTree(overrides_dict)
+
+    def _del_runtime_overrides(self):
+        global _runtime
+        _runtime = ConfigTree()
+
+    runtime = property(_runtime_overrides, _set_runtime_overrides, _del_runtime_overrides)
 
     # Support for descriptor access, e.g. instance.attrname
     # Note that this is only on the get side, for support of nefarious things
@@ -129,9 +152,37 @@ class Config(dict):
                 if local_yaml_dict:
                     yaml_dict.update(local_yaml_dict)
 
+            # Graft on the local overrides
+            yaml_dict.update(self.runtime.get(key, {}))
+
             # Returning self[key] instead of yaml_dict as a small sanity check
             self[key] = yaml_dict
             return self[key]
+
+
+class ConfigTree(defaultdict):
+    """A tree class that knows to clear the config when mutated
+
+    This is needed to ensure runtime overrides persist though conf changes
+    """
+    def __init__(self, *args, **kwargs):
+        super(ConfigTree, self).__init__(type(self), *args, **kwargs)
+
+    @property
+    def _sup(self):
+        return super(ConfigTree, self)
+
+    def __setitem__(self, key, value):
+        self._sup.__setitem__(key, value)
+        self._clear_conf()
+
+    def __delitem__(self, key):
+        self._sup.__delitem__(key)
+        self._clear_conf()
+
+    def _clear_conf(self):
+        from utils import conf
+        conf.clear()
 
 
 class RecursiveUpdateDict(dict):

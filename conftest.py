@@ -27,8 +27,7 @@ def _pytest_plugins_generator(*extension_pkgs):
         path = extension_pkg.__path__
         prefix = '%s.' % extension_pkg.__name__
         for importer, modname, is_package in iter_modules(path, prefix):
-            if not is_package:
-                yield modname
+            yield modname
 
 pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers, cfme.fixtures))
 collect_ignore = ["tests/scenarios"]

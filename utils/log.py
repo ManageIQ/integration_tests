@@ -136,6 +136,7 @@ import warnings
 import datetime as dt
 
 from functools import partial
+from logging import LoggerAdapter
 from logging.handlers import RotatingFileHandler, SysLogHandler
 from time import time
 from traceback import extract_tb
@@ -172,6 +173,12 @@ class SyslogMsecFormatter(logging.Formatter):
             t = ct.strftime("%Y-%m-%d %H:%M:%S")
             s = "%s.%03d" % (t, record.msecs)
         return s
+
+
+class NamedLoggerAdapter(LoggerAdapter):
+    """An adapter that injects a name into log messages"""
+    def process(self, message, kwargs):
+        return '(%s) %s' % (self.extra, message), kwargs
 
 
 def _load_conf(logger_name=None):
@@ -331,6 +338,11 @@ def create_logger(logger_name, filename=None):
     return logger
 
 
+def create_sublogger(logger_sub_name, logger_name='cfme'):
+    logger = create_logger(logger_name)
+    return NamedLoggerAdapter(logger, logger_sub_name)
+
+
 def _showwarning(message, category, filename, lineno, file=None, line=None):
     relpath = get_rel_path(filename)
     if relpath:
@@ -389,17 +401,22 @@ class MultiLogger():
     @property
     def _art(self):
         if not self._art_instance:
-            from fixtures.artifactor_plugin import art
-            self._art_instance = art
+            from fixtures.artifactor_plugin import art_client, SLAVEID
+            self._slaveid = SLAVEID
+            self._art_instance = art_client
         return self._art_instance
 
     def log_me(self, name, *args, **kwargs):
         for logger in self.loggers:
             getattr(logger, name)(*args, **kwargs)
+        extra_info = kwargs.get('extra', None)
+        if extra_info:
+            if not isinstance(extra_info['source_file'], basestring):
+                extra_info['source_file'] = extra_info['source_file'].strpath
         log_record = {'level': name,
                       'message': args[0],
-                      'extra': kwargs.get('extra', None)}
-        self._art.fire_hook('log_message', log_record=log_record)
+                      'extra': extra_info}
+        self._art.fire_hook('log_message', log_record=log_record, slaveid=self._slaveid)
 
 
 cfme_logger = create_logger('cfme')

@@ -4,7 +4,7 @@ Add a stanza to the artifactor config like this,
 artifactor:
     log_dir: /home/username/outdir
     per_run: test #test, run, None
-    overwrite: True
+    reuse_dir: True
     plugins:
         reporter:
             enabled: True
@@ -43,14 +43,10 @@ class Reporter(ArtifactorBasePlugin):
         return None, {'artifacts': {test_ident: {'finish_time': time.time()}}}
 
     @ArtifactorBasePlugin.check_configured
-    def report_test(self, test_location, test_name, test_report):
+    def report_test(self, test_location, test_name, test_xfail, test_when, test_outcome):
         test_ident = "{}/{}".format(test_location, test_name)
-        if hasattr(test_report, 'wasxfail'):
-            xfail = True
-        else:
-            xfail = False
         return None, {'artifacts': {test_ident: {'statuses': {
-            test_report.when: (test_report.outcome, xfail)}}}}
+            test_when: (test_outcome, test_xfail)}}}}
 
     @ArtifactorBasePlugin.check_configured
     def run_report(self, artifacts, log_dir):

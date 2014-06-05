@@ -2,6 +2,7 @@ cartouche
 boto
 bottle
 bottle-sqlite
+execnet
 flake8
 ipython
 Jinja2
@@ -16,7 +17,7 @@ python-dateutil
 python-novaclient
 PyYAML
 requests
-riggerlib==1.0.14
+riggerlib
 scp
 selenium
 multimethods.py
