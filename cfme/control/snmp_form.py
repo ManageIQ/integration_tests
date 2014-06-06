@@ -95,6 +95,7 @@ def fill_snmp_trap_field_dict(field, val):
 
 class SNMPTrapsField(object):
     """Encapsulates all trap fields to simplify form filling
+
     Args:
         num_fields: How many SNMPTrapField to generate
     """
@@ -147,7 +148,7 @@ def fill_snmp_hosts_field_basestr(field, value):
 class SNMPForm(object):
     """Class encapsulating the most common (and hopefully single) configuration of SNMP form
 
-    Example:
+    Example::
 
         form = SNMPForm()
         fill(form, dict(
