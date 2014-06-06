@@ -30,4 +30,4 @@ def pytest_collection_modifyitems(session, config, items):
         # --collect-only output?
         terminalreporter = reporter(config)
         terminalreporter.write('collected %d items' % len_filtered, bold=True)
-        terminalreporter.write(' (uncollect mark removed %d items), ' % filtered_count)
+        terminalreporter.write(' (uncollected %d items)\n' % filtered_count)
