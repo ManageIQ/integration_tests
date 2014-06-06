@@ -736,7 +736,7 @@ class Select(SeleniumSelect, object):
         return move_to_element(self)
 
     def locate(self):
-        return move_to_element(element(self._loc))
+        return move_to_element(self._loc)
 
     def observer_wait(self):
         detect_observed_field(self._loc)

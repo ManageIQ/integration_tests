@@ -1583,8 +1583,8 @@ class Quadicon(object):
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
-        return sel.move_to_element(sel.element('div/a',
-            root="//div[@id='quadicon' and ../../..//a[@title='%s']]" % self._name))
+        return sel.move_to_element('div/a',
+            root="//div[@id='quadicon' and ../../..//a[@title='%s']]" % self._name)
 
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
