@@ -3,6 +3,8 @@ import socket
 import urlparse
 from utils.conf import env
 
+_ports = {}
+
 
 def random_port(tcp=True):
     """Get a random port number for making a socket
@@ -51,3 +53,17 @@ def ip_echo_socket(port=32123):
         conn, addr = s.accept()
         conn.sendall(addr[0])
         conn.close()
+
+
+def net_check(port, addr=None, force=False):
+    """Checks the availablility of a port"""
+    port = int(port)
+    if not addr:
+        addr = urlparse.urlparse(env['base_url']).hostname
+    if port not in _ports or force:
+        try:
+            socket.create_connection((addr, port), timeout=10)
+            _ports[port] = True
+        except socket.error:
+            _ports[port] = False
+    return _ports[port]
