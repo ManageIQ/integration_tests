@@ -740,7 +740,6 @@ class Select(SeleniumSelect, object):
         return move_to_element(self)
 
     def locate(self):
-        logger.error(type(self._loc))
         return move_to_element(element(self._loc))
 
     def observer_wait(self):

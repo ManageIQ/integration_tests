@@ -414,7 +414,7 @@ class MultiLogger():
             if not isinstance(extra_info['source_file'], basestring):
                 extra_info['source_file'] = extra_info['source_file'].strpath
         log_record = {'level': name,
-                      'message': args[0],
+                      'message': str(args[0]),
                       'extra': extra_info}
         self._art.fire_hook('log_message', log_record=log_record, slaveid=self._slaveid)
 
