@@ -94,7 +94,7 @@ def is_advanced_search_possible():
 def is_advanced_filter_applied():
     """Checks whether any filter is in effect on quadicon view"""
     ensure_advanced_search_closed()
-    return len(sel.elements(search_box.clear_advanced_search)) > 0
+    return len(filter(sel.is_displayed, sel.elements(search_box.clear_advanced_search))) > 0
 
 
 def ensure_no_filter_applied():
@@ -103,7 +103,7 @@ def ensure_no_filter_applied():
     if is_advanced_filter_applied():
         sel.click(search_box.clear_advanced_search)
     # The simple filter
-    if len(sel.get_attribute(search_box.search_field, "value").strip()) > 0:
+    if len(sel.value(search_box.search_field).strip()) > 0:
         sel.set_text(search_box.search_field, "")
         sel.click(search_box.search_icon)
 
