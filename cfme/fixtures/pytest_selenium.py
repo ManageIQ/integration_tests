@@ -161,14 +161,10 @@ def wait_until(f, msg="Webdriver wait timed out"):
 
 
 def _something_in_flight(s):
-    blockers = ["blocker_div", "notification"]
     in_flt = s.execute_script(ajax_wait_js)
     if in_flt != 0:
         return True
-    for blocker in blockers:
-        if is_displayed((By.ID, blocker)):
-            return True
-    return False
+    return is_displayed((By.ID, "spinner_div"))
 
 
 def wait_for_ajax():
