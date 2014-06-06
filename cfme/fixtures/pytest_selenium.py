@@ -42,7 +42,11 @@ class Version(object):
     @lazycache
     def version(self):
         """ A lazy cached method to return the appliance version. """
-        return SSHClient().get_version()
+        try:
+            version = SSHClient().get_version()
+        except:
+            version = 'default'
+        return version
 
 ver = Version()
 

@@ -1,9 +1,9 @@
+from collections import defaultdict
 import socket
-
 import urlparse
 from utils.conf import env
 
-_ports = {}
+_ports = defaultdict(dict)
 
 
 def random_port(tcp=True):
@@ -61,9 +61,17 @@ def net_check(port, addr=None, force=False):
     if not addr:
         addr = urlparse.urlparse(env['base_url']).hostname
     if port not in _ports or force:
+
+        # First try DNS resolution
         try:
-            socket.create_connection((addr, port), timeout=10)
-            _ports[port] = True
-        except socket.error:
-            _ports[port] = False
-    return _ports[port]
+            addr = socket.gethostbyname(addr)
+
+            # Then try to connect to the port
+            try:
+                socket.create_connection((addr, port), timeout=10)
+                _ports[addr][port] = True
+            except socket.error:
+                _ports[addr][port] = False
+        except:
+            _ports[addr][port] = False
+    return _ports[addr][port]
