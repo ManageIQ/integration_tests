@@ -133,11 +133,11 @@ class DSession(object):
             self.slave_errordown(node, "keyboard-interrupt")
             return
         self.sched.remove_node(node)
-        #assert not crashitem, (crashitem, node)
+        # assert not crashitem, (crashitem, node)
         if self.shuttingdown and not self.sched.hasnodes():
             self.session_finished = True
 
-        #self.send_tests(node)
+        # self.send_tests(node)
 
     def slave_errordown(self, node, error):
         self.trdist.testnodedown(node, error)
@@ -148,7 +148,7 @@ class DSession(object):
         else:
             if crashitem:
                 self.handle_crashitem(crashitem, node)
-                #self.report_line("item crashed on node: %s" % crashitem)
+                # self.report_line("item crashed on node: %s" % crashitem)
         if not self.sched.hasnodes():
             self.session_finished = True
 
@@ -174,7 +174,7 @@ class DSession(object):
         if not (rep.passed and rep.when != "call"):
             if rep.when in ("setup", "call"):
                 self.sched.remove_item(node, rep.item_index, rep.duration)
-        #self.report_line("testreport %s: %s" %(rep.id, rep.status))
+        # self.report_line("testreport %s: %s" %(rep.id, rep.status))
         rep.node = node
         self.config.hook.pytest_runtest_logreport(report=rep)
         self._handlefailures(rep)
@@ -240,7 +240,7 @@ class ModscopeScheduling(object):
         if not self.collection_is_completed or self.pending:
             self.log.debug('pending: %r' % self.pending)
             return False
-        #for items in self.node2pending.values():
+        # for items in self.node2pending.values():
         #    if items:
         #        return False
         return True
@@ -297,7 +297,7 @@ class ModscopeScheduling(object):
         for node in self.node2pending:
             self.send_tests(node)
 
-    #f = open("/tmp/sent", "w")
+    # f = open("/tmp/sent", "w")
     def send_tests(self, node):
         if self.module_testindex_gen is None:
             self.module_testindex_gen = self._modscope_item_generator(self.pending, self.collection)
@@ -516,11 +516,11 @@ class SlaveController(object):
             if not self.channel.isclosed():
                 self.log.info("closing", self.channel)
                 self.channel.close()
-            #del self.channel
+            # del self.channel
         if hasattr(self, 'gateway'):
             self.log.info("exiting", self.gateway)
             self.gateway.exit()
-            #del self.gateway
+            # del self.gateway
 
     def send_runtest_some(self, indices):
         self.sendcommand("runtests", indices=indices)

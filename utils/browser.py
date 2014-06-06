@@ -15,7 +15,7 @@ from utils import conf
 from utils.path import data_path
 
 # Conditional guards against getting a new thread_locals when this module is reloaded.
-if not 'thread_locals' in globals():
+if 'thread_locals' not in globals():
     # New threads get their own browser instances
     thread_locals = threading.local()
     thread_locals.browser = None

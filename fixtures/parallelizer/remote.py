@@ -139,7 +139,7 @@ if __name__ == '__channelexec__':
     sys.path.insert(0, importpath)
     os.environ['PYTHONPATH'] = (importpath + os.pathsep +
         os.environ.get('PYTHONPATH', ''))
-    #os.environ['PYTHONPATH'] = importpath
+    # os.environ['PYTHONPATH'] = importpath
     config = remote_initconfig(option_dict, args)
     config.slaveinput = slaveinput
     config.slaveoutput = {}
