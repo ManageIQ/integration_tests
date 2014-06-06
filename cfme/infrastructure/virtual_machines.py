@@ -484,7 +484,7 @@ def wait_for_vm_state_change(vm_name, desired_state, timeout_in_minutes=300, pro
         vm_name: Displayed name of the VM
         desired_state: 'on' or 'off'
         timeout_in_minutes: Specify amount of time to wait until TimedOutError is raised in minutes.
-        provider_crud:
+        provider_crud: provider object where vm resides on (optional)
     """
     def _looking_for_state_change():
         toolbar.refresh()
@@ -500,7 +500,7 @@ def is_pwr_option_visible(vm_names, provider_crud=None, option=None):
     Args:
         vm_names: List of VMs to interact with, if from_details=True is passed, only one VM can
             be passed in the list.
-        provider_crud:
+        provider_crud: provider object where vm resides on (optional)
         option: Power option param.
 
     Raises:
@@ -545,7 +545,7 @@ def do_power_control(vm_names, provider_crud=None, option=None, cancel=True):
 
     Args:
         vm_names: List of VMs to interact with
-        provider_crud:
+        provider_crud: provider object where vm resides on (optional)
         cancel: Whether or not to cancel the power control action
         option: Power option param.
 
@@ -569,7 +569,7 @@ def refresh_relationships(vm_names, provider_crud=None, cancel=True):
 
     Args:
         vm_names: List of VMs to interact with
-        provider_crud:
+        provider_crud: provider object where vm resides on (optional)
         cancel: Whether or not to cancel the refresh relationships action
     """
     _method_setup(vm_names, provider_crud)
@@ -582,7 +582,7 @@ def perform_smartstate_analysis(vm_names, provider_crud=None, cancel=True):
 
     Args:
         vm_names: List of VMs to interact with
-        provider_crud:
+        provider_crud: provider object where vm resides on (optional)
         cancel: Whether or not to cancel the refresh relationships action
     """
     _method_setup(vm_names, provider_crud)

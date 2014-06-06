@@ -1,10 +1,11 @@
-"""crud: Marker for marking the test as a CRUD test
+"""Marker for marking the test as a CRUD test (crud)
 
 Useful for eg. running only crud tests.
 Tests will be marked automatically if:
-* their name starts with crud_
-* their name ends with _crud
-* their name contains _crud_
+
+* their name starts with crud\_
+* their name ends with \_crud
+* their name contains \_crud\_
 """
 import re
 

@@ -1,14 +1,15 @@
-"""
-artifactor:
-    log_dir: /home/test/workspace/cfme_tests/artiout
-    per_run: test #test, run, None
-    reuse_dir: True
-    squash_exceptions: False
-    threaded: False
-    server_address: 127.0.0.1
-    server_port: 21212
-    server_enabled: True
-    plugins:
+"""An example config::
+
+    artifactor:
+        log_dir: /home/test/workspace/cfme_tests/artiout
+        per_run: test #test, run, None
+        reuse_dir: True
+        squash_exceptions: False
+        threaded: False
+        server_address: 127.0.0.1
+        server_port: 21212
+        server_enabled: True
+        plugins:
 
 ``log_dir`` is the destination for all artifacts
 
@@ -17,6 +18,7 @@ artifactor:
 ``reuse_dir`` if this is False and Artifactor comes across a dir that has
 already been used, it will die
 """
+
 from artifactor import ArtifactorClient
 import pytest
 from urlparse import urlparse
