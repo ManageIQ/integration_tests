@@ -18,7 +18,7 @@ from pkg_resources import parse_version
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
-     InvalidElementStateException, MoveTargetOutOfBoundsException)
+     InvalidElementStateException, MoveTargetOutOfBoundsException, WebDriverException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
@@ -618,7 +618,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # The some of the navigation steps cannot succeed
         logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
         recycle = True
-    except (NoSuchElementException, InvalidElementStateException):
+    except (NoSuchElementException, InvalidElementStateException, WebDriverException):
         from cfme.web_ui import cfme_exception as cfme_exc  # To prevent circular imports
         # If the page is blocked, then recycle...
         if is_displayed("//div[@id='blocker_div']"):
