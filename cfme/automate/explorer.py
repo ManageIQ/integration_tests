@@ -326,7 +326,7 @@ class Class(TreeNode, Updateable):
                  ('max_time_text', loc("//input[@id='field%s_max_time%s']")),
                  ('add_entry_button', "//img[@alt='Add this entry']"),
                  ('remove_entry_button',
-                  remove("//a[contains(@title, 'delete this') and contains(@href, 'arr_id=%s')]"
+                  remove("//a[contains(@title, 'delete this') and contains(@href, 'arr_id=%s')]/img"
                          % idx))])
 
     schema_edit_page = Region(
