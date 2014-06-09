@@ -2,6 +2,10 @@ from utils.conf import cfme_data
 from utils.log import logger
 
 
+def provider_keys():
+    return cfme_data.get('management_systems', {}).keys()
+
+
 class ProviderFilter(object):
     def __init__(self, defaults):
         self._filtered_providers = defaults
@@ -17,7 +21,7 @@ class ProviderFilter(object):
     def __contains__(self, provider):
         return provider in self.providers
 
-filtered = ProviderFilter(cfme_data['management_systems'].keys())
+filtered = ProviderFilter(provider_keys())
 
 
 def pytest_configure(config):
@@ -40,8 +44,8 @@ def parse_filter(cmd_filter):
         cmd_filter: A list of ``--use-provider`` options.
     """
 
-    filtered_providers = cfme_data['management_systems'].keys()
-    for provider in cfme_data['management_systems']:
+    filtered_providers = provider_keys()
+    for provider in provider_keys():
         data = cfme_data['management_systems'][provider]
         tags = data.get('tags', [])
         if provider not in cmd_filter and not set(tags) & set(cmd_filter):
