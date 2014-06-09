@@ -5,6 +5,7 @@ import paramiko
 from scp import SCPClient
 
 from utils import conf
+from utils.net import net_check
 
 
 class SSHClient(paramiko.SSHClient):
@@ -14,6 +15,9 @@ class SSHClient(paramiko.SSHClient):
     Constructor kwargs are handed directly to paramiko.SSHClient.connect()
     """
     def __init__(self, stream_output=False, **connect_kwargs):
+        port = connect_kwargs.get('port', 22)
+        if not net_check(port):
+            raise Exception("Connection is not available as port is unavailable")
         super(SSHClient, self).__init__()
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self._streaming = stream_output
