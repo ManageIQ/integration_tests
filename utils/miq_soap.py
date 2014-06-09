@@ -32,6 +32,10 @@ def is_datastore_banned(datastore_name):
         return False
 
 
+def set_client(client):
+    globals()["client"] = client
+
+
 class MiqInfraObject(object):
     """Base class for all infrastructure objects.
 

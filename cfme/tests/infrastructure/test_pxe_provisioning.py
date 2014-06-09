@@ -68,7 +68,7 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
 @pytest.yield_fixture(scope="function")
 def vm_name(provider_key, provider_mgmt):
     # also tries to delete the VM that gets made with this name
-    vm_name = 'pxe_provtest-%s' % generate_random_string()
+    vm_name = 'test_pxe_prov_%s' % generate_random_string()
     yield vm_name
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))

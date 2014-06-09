@@ -1,5 +1,8 @@
 import os
+
 import pytest
+
+from fixtures.terminalreporter import reporter
 from utils.datafile import data_path_for_filename, load_data_file
 from utils.path import data_path, log_path
 
@@ -92,9 +95,9 @@ def pytest_sessionfinish(session, exitstatus):
         udf_log_file.write(udf_log + '\n')
 
         # Throw a notice into the terminal reporter to check the log
-        reporter = session.config.pluginmanager.getplugin('terminalreporter')
-        reporter.write_line('')
-        reporter.write_sep(
+        tr = reporter()
+        tr.write_line('')
+        tr.write_sep(
             '-',
             '%d unused data files after test run, check %s' % (
                 len(unused_data_files), udf_log_file.basename

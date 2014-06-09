@@ -27,7 +27,7 @@
   * :py:mod:`cfme.web_ui.cfme_exception`
   * :py:mod:`cfme.web_ui.flash`
   * :py:mod:`cfme.web_ui.form_buttons`
-  * :py:mod:`cfme.web_ui.listnav`
+  * :py:mod:`cfme.web_ui.listaccordion`
   * :py:mod:`cfme.web_ui.menu`
   * :py:mod:`cfme.web_ui.paginator`
   * :py:mod:`cfme.web_ui.snmp_form`
@@ -40,11 +40,10 @@ import os
 import re
 import types
 from datetime import date
-from selenium.webdriver.common.action_chains import ActionChains
 from collections import Sequence, Mapping, Callable
+
 from selenium.common import exceptions as sel_exceptions
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.select import Select as SeleniumSelect
 from selenium.common.exceptions import NoSuchElementException
 from multimethods import multimethod, multidispatch, Anything
 
@@ -52,6 +51,8 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import browser
 from utils import version
+# For backward compatibility with code that pulls in Select from web_ui instead of sel
+from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
 
 
@@ -251,7 +252,7 @@ class Table(object):
         return self._header_indexes
 
     def locate(self):
-        return self._loc
+        return sel.move_to_element(self._loc)
 
     @staticmethod
     def _convert_header(header):
@@ -269,7 +270,7 @@ class Table(object):
 
     @property
     def _root_loc(self):
-        return self._loc
+        return self.locate()
 
     def _update_cache(self):
         """Updates the internal cache of headers
@@ -353,7 +354,7 @@ class Table(object):
             # Get a root locator ready, self._body_loc is the SplitTable body locator
             root = sel.element(self._root_loc)
             # Get all td elements that contain the value text
-            matching_rows_list.append(sel.elements(cell_text_loc % value, root))
+            matching_rows_list.append(sel.elements(cell_text_loc % value, root=root))
 
         # Now, find the common row elements that matched all the input cells
         # (though not yet matching values to headers)
@@ -540,7 +541,7 @@ class Table(object):
 
         def locate(self):
             # table.create_row_from_element(row_instance) might actually work...
-            return self.row_element
+            return sel.move_to_element(self.row_element)
 
 
 class SplitTable(Table):
@@ -626,7 +627,7 @@ class SplitTable(Table):
 
     def locate(self):
         # Use the header locator as the overall table locator
-        return self._header_loc
+        return sel.move_to_element(self._header_loc)
 
 
 class CheckboxTable(Table):
@@ -870,6 +871,14 @@ def fill_callable(f, val):
     f(val)
 
 
+@fill.method((Select, object))
+def fill_select(slist, val):
+    stype = type(slist)
+    logger.debug('  Filling in %s with value %s' % (stype, val))
+    sel.select(slist, val)
+    slist.observer_wait()
+
+
 class Calendar(object):
     """A CFME calendar form field
 
@@ -892,7 +901,7 @@ class Calendar(object):
         self.name = name
 
     def locate(self):
-        return '//input[@name="%s"]' % self.name
+        return sel.move_to_element('//input[@name="%s"]' % self.name)
 
 
 @fill.method((Calendar, object))
@@ -1376,9 +1385,9 @@ class InfoBlock(object):
         if itype == "detail":
             # We have to collapse the locator singularity early here, hence the .locate()
             self._box_locator = version.pick({
-                '9.9.9.9': '//table//th[contains(., "%s")]/../../../..',
+                '5.3': '//table//th[contains(., "%s")]/../../../..',
                 'default': '//div[@class="modbox"]/h2[@class="modtitle"]'
-                '[contains(., "%s")]/..'})
+                           '[contains(., "%s")]/..'})
             self._pair_locator = 'table/tbody/tr/td[1][@class="label"][.="%s"]/..'
             self._value_locator = 'td[2]'
         elif itype == "form":
@@ -1514,6 +1523,13 @@ class Quadicon(object):
       * d. **no_snapshot** - The number of snapshots
       * g. **policy** - The state of the policy
 
+    * **datastore** - *from the infra/datastores page* - has quads:
+
+      * a. **type** - File system type
+      * b. **no_vm** - Number of VMs
+      * c. **no_host** - Number of hosts
+      * d. **avail_space** - Available space
+
     Returns: A :py:class:`Quadicon` object.
     """
 
@@ -1549,6 +1565,12 @@ class Quadicon(object):
             "no_snapshot": ("d", 'txt'),
             "policy": ("g", 'img'),
         },
+        "datastore": {
+            "type": ("a", 'img'),
+            "no_vm": ("b", 'txt'),
+            "no_host": ("c", 'txt'),
+            "avail_space": ("d", 'img'),
+        },
     }
 
     def __init__(self, name, qtype):
@@ -1561,11 +1583,9 @@ class Quadicon(object):
         return "//input[@type='checkbox' and ../../..//a[@title='%s']]" % self._name
 
     def locate(self):
-        """ Returns:  a locator for the quadicon itself"""
-        return version.pick({
-            '9.9.9.9': "//div[@id='quadicon']/../../..//a[@title='%s']" % self._name,
-            'default': "//div[@id='quadicon' and ../../..//a[@title='%s']]" % self._name
-        })
+        """ Returns:  a locator for the quadicon anchor"""
+        return sel.move_to_element('div/a',
+            root="//div[@id='quadicon' and ../../..//a[@title='%s']]" % self._name)
 
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
@@ -1602,47 +1622,6 @@ class Quadicon(object):
 
     def __str__(self):
         return self.locate()
-
-
-class Select(SeleniumSelect, object):
-    """ A poor man's Proxy class for the real selenium Select() object.
-
-    We differ in one important point, that we can instantiate the object
-    without it being present on the page. The object is located at the beginning
-    of each function call.
-
-    Args:
-        loc: A locator.
-
-    Returns: A :py:class:`cfme.web_ui.Select` object.
-    """
-
-    def __init__(self, loc, multi=False):
-        self._loc = loc
-        self.is_multiple = multi
-
-    @property
-    def _el(self):
-        el = sel.element(self._loc)
-        ActionChains(browser()).move_to_element(el).perform()
-        return el
-
-    def locate(self):
-        return self._loc
-
-    def observer_wait(self):
-        sel.detect_observed_field(self._loc)
-
-    def __repr__(self):
-        return "<%s.Select loc='%s'>" % (__name__, self._loc)
-
-
-@fill.method((Select, object))
-def fill_select(slist, val):
-    stype = type(slist)
-    logger.debug('  Filling in %s with value %s' % (stype, val))
-    sel.select(slist, val)
-    slist.observer_wait()
 
 
 class DHTMLSelect(Select):
@@ -2043,7 +2022,7 @@ def fill_cb_select_set(select, names):
 
 
 @fill.method((CheckboxSelect, Mapping))
-def fill_cb_select_dictlist(select, dictlist, action):
+def fill_cb_select_dictlist(select, dictlist):
     return select.check(dictlist)
 
 

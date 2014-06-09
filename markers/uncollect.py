@@ -15,6 +15,7 @@ for adding a test that won't run...), e.g. ``@pytest.mark.uncollect`` before the
 ``pytest.mark.uncollect()(test_function)``
 
 """
+from fixtures.terminalreporter import reporter
 
 
 def pytest_collection_modifyitems(session, config, items):
@@ -27,6 +28,6 @@ def pytest_collection_modifyitems(session, config, items):
         # It might be good to write uncollected test names out via terminalreporter,
         # but I suspect it would be extremely spammy. It might be useful in the
         # --collect-only output?
-        terminalreporter = config.pluginmanager.getplugin("terminalreporter")
+        terminalreporter = reporter(config)
         terminalreporter.write('collected %d items' % len_filtered, bold=True)
-        terminalreporter.write(' (uncollect mark removed %d items), ' % filtered_count)
+        terminalreporter.write(' (uncollected %d items)\n' % filtered_count)

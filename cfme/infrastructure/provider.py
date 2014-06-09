@@ -71,7 +71,7 @@ credential_form = Form(
 manage_policies_tree = CheckboxTree(
     version.pick({
         "default": "//div[@id='treebox']/div/table",
-        "9.9.9.9": "//div[@id='protect_treebox']/ul"
+        "5.3": "//div[@id='protect_treebox']/ul"
     })
 )
 
@@ -117,6 +117,9 @@ class Provider(Updateable):
         self.key = key
         self.zone = zone
         self.candu = None
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name')}
 
     class Credential(cfme.Credential, Updateable):
         """Provider credentials
@@ -217,6 +220,14 @@ class Provider(Updateable):
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
         sel.handle_alert(cancel=False)
 
+    def get_yaml_data(self):
+        """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
+        """
+        if not self.key:
+            raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data')
+        else:
+            return conf.cfme_data['management_systems'][self.key]
+
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
         """
@@ -224,6 +235,10 @@ class Provider(Updateable):
             raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
         else:
             return provider_factory(self.key)
+
+    def _load_details(self):
+        if not self._on_detail_page():
+            sel.force_navigate('infrastructure_provider', context={'provider': self})
 
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
@@ -234,8 +249,7 @@ class Provider(Updateable):
             *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
         Returns: A string representing the contents of the InfoBlock's value.
         """
-        if not self._on_detail_page():
-            sel.force_navigate('infrastructure_provider', context={'provider': self})
+        self._load_details()
         return details_page.infoblock.text(*ident)
 
     def _do_stats_match(self, client, stats_to_match=None):
@@ -272,8 +286,8 @@ class Provider(Updateable):
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
-        return sel.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
-                                % self.name)
+        return sel.is_displayed(
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
 
     @property
     def num_template(self):
@@ -311,9 +325,13 @@ class Provider(Updateable):
 
     def load_all_provider_vms(self):
         """ Loads the list of VMs that are running under the provider. """
-        if not self._on_detail_page():
-            sel.force_navigate('infrastructure_provider', context={'provider': self})
-        sel.click(details_page.infoblock.element("Relationships", "VMs"))
+        if sel.is_displayed(
+                '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (All VMs)")]' % self.name):
+            paginator.first()
+        else:
+            if not self._on_detail_page():
+                self._load_details()
+            sel.click(details_page.infoblock.element("Relationships", "VMs"))
 
     def assign_policy_profiles(self, *policy_profile_names):
         """ Assign Policy Profiles to this Provider.

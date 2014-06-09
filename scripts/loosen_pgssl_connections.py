@@ -14,6 +14,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('address', help='hostname or ip address of target appliance',
         nargs='?', default=None)
+    parser.add_argument('--with_ssl', help='update for ssl connections', action="store_true")
 
     args = parser.parse_args()
 
@@ -41,8 +42,9 @@ def main():
         "/opt/rh/postgresql92/root/var/lib/pgsql/data/pg_hba.conf")
     client.run_command("echo 'host all all 0.0.0.0/0 md5' >> " +
         "/opt/rh/postgresql92/root/var/lib/pgsql/data/pg_hba.conf")
-    client.run_command("echo 'hostssl all all all cert map=sslmap' >> " +
-        "/opt/rh/postgresql92/root/var/lib/pgsql/data/pg_hba.conf")
+    if args.with_ssl:
+        client.run_command("echo 'hostssl all all all cert map=sslmap' >> " +
+            "/opt/rh/postgresql92/root/var/lib/pgsql/data/pg_hba.conf")
     client.run_command("chown postgres:postgres " +
         "/opt/rh/postgresql92/root/var/lib/pgsql/data/pg_hba.conf")
 

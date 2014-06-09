@@ -83,7 +83,7 @@ credential_form = Form(
 manage_policies_tree = CheckboxTree(
     version.pick({
         "default": "//div[@id='treebox']/div/table",
-        "9.9.9.9": "//div[@id='protect_treebox']/ul"
+        "5.3": "//div[@id='protect_treebox']/ul"
     })
 )
 

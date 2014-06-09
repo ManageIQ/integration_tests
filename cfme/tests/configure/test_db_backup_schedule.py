@@ -76,7 +76,7 @@ class DbBackupData(object):
     def id(self):
         """ Used for pretty test identification string in report
         """
-        return '{machine_id}-{protocol_type}-{hostname}-{schedule_name}'.format(**self.__dict__)
+        return '{machine_id}-{protocol_type}-{hostname}'.format(**self.__dict__)
 
 
 def pytest_generate_tests(metafunc):

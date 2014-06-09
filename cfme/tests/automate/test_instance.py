@@ -36,7 +36,7 @@ def an_instance(a_class):
                     cls=a_class)
 
 
-def test_crud(an_instance):
+def test_instance_crud(an_instance):
     an_instance.create()
     origname = an_instance.name
     with update(an_instance):

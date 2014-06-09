@@ -16,12 +16,14 @@ import json
 from utils import conf
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
-     NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException)
+     NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
+     InvalidElementStateException, MoveTargetOutOfBoundsException)
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import singledispatch, multidispatch
 
 import pytest
@@ -54,30 +56,51 @@ def elements(o, root=None):
 
     Returns: A list of WebElement objects
     """
-    return elements(o.locate(), root=root)  # if object implements locate(), try to get elements
-    # from that locator.  If it doesn't implement locate(), we're in trouble so
+    if hasattr(o, "locate"):
+        return elements(o.locate(), root=root)
+    elif callable(o):
+        return elements(o(), root=root)
+    else:
+        raise TypeError("Unprocessable type for elements() -> {}".format(str(type(o))))
+    # If it doesn't implement locate() or __call__(), we're in trouble so
     # let the error bubble up.
 
 
 @elements.method(basestring)
-def _s(s, root=None):
-    """Assume string is an xpath locator"""
-    parent = root or browser()
-    return parent.find_elements_by_xpath(s)
+def _s(s, **kwargs):
+    """Assume string is an xpath locator.
+
+    If the root element is actually multiple elements, then the locator is resolved for each
+    of root nodes.
+
+    Result: Flat list of elements
+    """
+    return elements((By.XPATH, s), **kwargs)
 
 
 @elements.method(WebElement)
 def _w(webelement, **kwargs):
-    """Return a 1-item list of webelements"""
+    """Return a 1-item list of webelements
+
+    If the root element is actually multiple elements, then the locator is resolved for each
+    of root nodes.
+
+    Result: Flat list of elements
+    """
     # accept **kwargs to deal with root if it's passed by singledispatch
     return [webelement]
 
 
 @elements.method(tuple)
 def _t(t, root=None):
-    """Assume tuple is a 2-item tuple like (By.ID, 'myid')"""
-    parent = root or browser()
-    return parent.find_elements(*t)
+    """Assume tuple is a 2-item tuple like (By.ID, 'myid').
+
+    Handles the case when root= locator resolves to multiple elements. In that case all of them
+    are processed and all results are put in the same list."""
+    result = []
+    for root_element in (elements(root) if root is not None else [browser()]):
+        result += root_element.find_elements(*t)
+    return result
 
 
 def element(o, **kwargs):
@@ -106,9 +129,11 @@ def wait_until(f, msg="Webdriver wait timed out"):
     return WebDriverWait(browser(), 120.0).until(f, msg) and time() - t
 
 
-def _nothing_in_flight(s):
+def _something_in_flight(s):
     in_flt = s.execute_script(ajax_wait_js)
-    return in_flt == 0
+    if in_flt != 0:
+        return True
+    return is_displayed((By.ID, "spinner_div"))
 
 
 def wait_for_ajax():
@@ -116,7 +141,7 @@ def wait_for_ajax():
     Waits unti lall ajax timers are complete, in other words, waits until there are no
     more pending ajax requests, page load should be finished completely.
     """
-    return wait_until(_nothing_in_flight, "Ajax wait timed out")
+    return wait_until(lambda *a, **k: not _something_in_flight(*a, **k), "Ajax wait timed out")
 
 
 def is_displayed(loc):
@@ -213,19 +238,35 @@ def click(loc, wait_ajax=True):
         wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
             handy to not do that. (some toolbar clicks)
     """
-    ActionChains(browser()).move_to_element(element(loc)).click().perform()
+    move_to_element(loc).click()
     if wait_ajax:
         wait_for_ajax()
 
 
-def move_to_element(loc):
+def move_to_element(loc, **kwargs):
     """
     Moves to an element.
 
     Args:
         loc: A locator, expects either a string, WebElement, tuple.
+    Returns: It passes `loc` through to make it possible to use in case we want to immediately use
+        the element that it is being moved to.
     """
-    ActionChains(browser()).move_to_element(element(loc)).perform()
+    brand = "//div[@id='page_header_div']//div[contains(@class, 'brand')]"
+    wait_for_ajax()
+    el = element(loc, **kwargs)
+    try:
+        ActionChains(browser()).move_to_element(el).perform()
+    except MoveTargetOutOfBoundsException:
+        # ff workaround
+        browser().execute_script("arguments[0].scrollIntoView();", el)
+        if elements(brand) and not is_displayed(brand):
+            # If it does it badly that it moves whole page, this moves it back
+            try:
+                browser().execute_script("arguments[0].scrollIntoView();", element(brand))
+            except MoveTargetOutOfBoundsException:
+                pass
+    return el
 
 
 def text(loc):
@@ -286,8 +327,7 @@ def send_keys(loc, text):
         text: The text to inject into the element.
     """
     if text is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).send_keys_to_element(el, text).perform()
+        move_to_element(loc).send_keys(text)
         wait_for_ajax()
 
 
@@ -304,8 +344,7 @@ def checkbox(loc, set_to=False):
     Returns: None
     """
     if set_to is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
+        el = move_to_element(loc)
         if el.is_selected() is not set_to:
             logger.debug("Setting checkbox %s to %s" % (str(loc), str(set_to)))
             click(el)
@@ -518,10 +557,6 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # Set this to True in the handlers below to trigger a browser restart
     recycle = False
 
-    # If the page is blocked, then recycle...
-    if is_displayed("//div[@id='blocker_div']"):
-        recycle = True
-
     try:
         # What we'd like to happen...
         login.login_admin()
@@ -548,6 +583,28 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # The some of the navigation steps cannot succeed
         logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
         recycle = True
+    except (NoSuchElementException, InvalidElementStateException):
+        from cfme.web_ui import cfme_exception as cfme_exc  # To prevent circular imports
+        # If the page is blocked, then recycle...
+        if is_displayed("//div[@id='blocker_div']"):
+            logger.warning("Page was blocked with blocker div, recycling.")
+            recycle = True
+        elif cfme_exc.is_cfme_exception():
+            logger.exception("CFME Exception before force_navigate started!: `{}`".format(
+                cfme_exc.cfme_exception_text()
+            ))
+            recycle = True
+        elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
+            # Rails exception detection
+            logger.exception("Rails exception before force_navigate started!: {}:{} at {}".format(
+                text("//body/div[@class='dialog']/h1").encode("utf-8"),
+                text("//body/div[@class='dialog']/p").encode("utf-8"),
+                current_url()
+            ))
+            recycle = True
+        else:
+            logger.error("Could not determine the reason for failing the navigation. Reraising.")
+            raise
 
     if recycle:
         browser().quit()
@@ -619,10 +676,42 @@ def set_text(loc, text):
         text: The text to inject into the element.
     """
     if text is not None:
-        el = element(loc)
-        ActionChains(browser()).move_to_element(el).perform()
+        el = move_to_element(loc)
         el.clear()
         send_keys(el, text)
+
+
+class Select(SeleniumSelect, object):
+    """ A proxy class for the real selenium Select() object.
+
+    We differ in one important point, that we can instantiate the object
+    without it being present on the page. The object is located at the beginning
+    of each function call.
+
+    Args:
+        loc: A locator.
+
+    Returns: A :py:class:`cfme.web_ui.Select` object.
+    """
+    def __init__(self, loc, multi=False):
+        if isinstance(loc, Select):
+            self._loc = loc._loc
+        else:
+            self._loc = loc
+        self.is_multiple = multi
+
+    @property
+    def _el(self):
+        return move_to_element(self)
+
+    def locate(self):
+        return move_to_element(self._loc)
+
+    def observer_wait(self):
+        detect_observed_field(self._loc)
+
+    def __str__(self):
+        return "<%s.Select loc='%s'>" % (__name__, self._loc)
 
 
 @multidispatch
@@ -632,15 +721,13 @@ def select(loc, o):
 
 @select.method((object, ByValue))
 def _select_tuple(loc, val):
-    move_to_element(loc)  # Not having this caused problems in upstream, the select wasn't visible
-    select_by_value(Select(element(loc)), val.value)
+    select_by_value(Select(loc), val.value)
 
 
 @select.method((object, basestring))
 @select.method((object, ByText))
 def _select_str(loc, s):
-    move_to_element(loc)  # Not having this caused problems in upstream, the select wasn't visible
-    select_by_text(Select(element(loc)), str(s))
+    select_by_text(Select(loc), str(s))
 
 
 @select.method((object, Iterable))
@@ -708,13 +795,13 @@ def deselect(loc, o):
 
 @deselect.method((object, ByValue))
 def _deselect_val(loc, val):
-    deselect_by_value(loc, val.value)
+    deselect_by_value(Select(loc), val.value)
 
 
 @deselect.method((object, basestring))
 @deselect.method((object, ByText))
 def _deselect_text(loc, s):
-    deselect_by_text(loc, str(s))
+    deselect_by_text(Select(loc), str(s))
 
 
 @deselect.method((object, Iterable))

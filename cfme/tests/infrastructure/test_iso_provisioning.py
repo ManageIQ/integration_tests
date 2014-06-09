@@ -73,7 +73,7 @@ def setup_iso_datastore(iso_cust_template, provisioning, iso_datastore):
 @pytest.yield_fixture(scope="function")
 def vm_name(provider_key, provider_mgmt):
     # also tries to delete the VM that gets made with this name
-    vm_name = 'provtest-%s' % generate_random_string()
+    vm_name = 'test_iso_prov_%s' % generate_random_string()
     yield vm_name
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))

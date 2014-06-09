@@ -10,7 +10,7 @@ product_assistance = Region(
         'control_guide': "//a[.='Control Guide']",
         'lifecycle_and_automation_guide': "//a[.='Lifecycle and Automation Guide']",
         'integrate_guide': version.pick({'default': "//a[.='Integrate Guide']",
-                                        '9.9.9.9': "//a[.='Integration Services Guide']"}),
+                                        '5.3': "//a[.='Integration Services Guide']"}),
         'settings_and_operations_guide': "//a[.='Settings and Operations Guide']",
         'red_hat_customer_portal': "//a[.='Red Hat Customer Portal']"
     },

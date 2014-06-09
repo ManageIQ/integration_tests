@@ -36,7 +36,7 @@ item_form = web_ui.Form(
      ('add_button', "//img[@title='Add']")])
 
 catalog_tree = version.pick({'default': web_ui.Tree('//div[@id="stcat_tree_box"]//table'),
-                             '9.9.9.9': web_ui.Tree('//div[@id="stcat_treebox"]//ul')})
+                             '5.3': web_ui.Tree('//div[@id="stcat_treebox"]//ul')})
 
 
 def _all_catalogs_add_new(_):

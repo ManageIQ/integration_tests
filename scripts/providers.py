@@ -43,7 +43,7 @@ def main():
         result = call_provider(args.provider_name, args.action, *args.action_args)
         if isinstance(result, list):
             exit = 0
-            for entry in result:
+            for entry in sorted(result):
                 print entry
         elif isinstance(result, str):
             exit = 0

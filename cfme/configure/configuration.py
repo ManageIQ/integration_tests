@@ -95,7 +95,7 @@ nav.add_branch("configuration",
             lambda _: settings_tree(
                 version.pick({
                     "default": "Region: Region %d [%d]" % server_region_pair(),
-                    "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
+                    "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
                 })
             ),
             {
@@ -126,12 +126,12 @@ nav.add_branch("configuration",
         lambda _: settings_tree(
             version.pick({
                 "default": "Region: Region %d [%d]" % server_region_pair(),
-                "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
+                "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
             }),
             "Zones",
             version.pick({
                 "default": "Zone: Default Zone",
-                "9.9.9.9": "Zone: Default Zone (current)"
+                "5.3": "Zone: Default Zone (current)"
             }),
         ),
 
@@ -140,7 +140,7 @@ nav.add_branch("configuration",
             lambda _: settings_tree(
                 version.pick({
                     "default": "Region: Region %d [%d]" % server_region_pair(),
-                    "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
+                    "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
                 }),
                 "Schedules"),
             {
@@ -160,12 +160,12 @@ nav.add_branch("configuration",
             lambda _: settings_tree(
                 version.pick({
                     "default": "Region: Region %d [%d]" % server_region_pair(),
-                    "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
+                    "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
                 }),
                 "Zones",
                 version.pick({
                     "default": "Zone: Default Zone",
-                    "9.9.9.9": "Zone: Default Zone (current)"
+                    "5.3": "Zone: Default Zone (current)"
                 }),
                 "Server: %s [%d] (current)" % (server_name(), server_id())
             ),
@@ -201,7 +201,7 @@ nav.add_branch("configuration",
                 "CFME Region: Region %d [%d]" % server_region_pair(),
                 version.pick({
                     "default": "Zone: Default Zone",
-                    "9.9.9.9": "Zone: Default Zone (current)"
+                    "5.3": "Zone: Default Zone (current)"
                 }),
                 "Server: %s [%d] (current)" % (server_name(), server_id())
             ),
@@ -243,7 +243,7 @@ nav.add_branch("configuration",
                 "CFME Region: Region %d [%d]" % server_region_pair(),
                 version.pick({
                     "default": "Zone: Default Zone",
-                    "9.9.9.9": "Zone: Default Zone (current)"
+                    "5.3": "Zone: Default Zone (current)"
                 }),
             ),
             {
