@@ -79,7 +79,11 @@ nav.add_branch(
 
                 "vm_templates_archived_branch":
                 [
-                    lambda ctx: visible_tree.click_path('Archived'),
+                    lambda ctx: visible_tree.click_path(version.pick({
+                                                        version.LOWEST: "Archived",
+                                                        "5.3": "<Archived>"
+                                                        })
+                    ),
                     {
                         "infra_archive_obj":
                         lambda ctx: visible_tree.click_path(ctx["archive_name"]),
@@ -645,3 +649,8 @@ def unassign_policy_profiles(vm_name, *policy_profile_names, **kwargs):
         policy_profile_names: :py:class:`str` with Policy Profile names.
     """
     return _assign_unassign_policy_profiles(vm_name, False, *policy_profile_names, **kwargs)
+
+
+def load_archived_vms():
+    """ Load list of archived vms """
+    sel.force_navigate("vm_templates_archived_branch")
