@@ -9,10 +9,11 @@ import utils.log
 class SlaveInteractor:
     def __init__(self, config, channel):
         self.config = config
-        self.slaveid = conf.env['slaveid']
-        self.base_url = conf.env['base_url']
+        self.slaveid = conf.runtime['env']['slaveid'] = config.slaveinput['slaveid']
+        self.base_url = conf.runtime['env']['base_url'] = config.slaveinput['base_url']
         # Override the base_url for this process and set the slave_id
         self.log = utils.log.create_sublogger('slave-%s' % self.slaveid)
+        self.log.info('slave started with slaveinput: %r' % self.config.slaveinput)
         utils.log.logger = self.log
         self.channel = channel
         config.pluginmanager.register(self)
