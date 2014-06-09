@@ -32,7 +32,7 @@ def test_add_new_compute_chargeback():
     flash.assert_message_match('Chargeback Rate "%s" was added' % ccb.description)
 
 
-@pytest.mark.xfail(message='https://bugzilla.redhat.com/show_bug.cgi?id=1073366')
+@pytest.mark.bugzilla(1073366)
 def test_compute_chargeback_duplicate_disallowed():
     ccb = new_compute_rate()
     ccb.create()

@@ -17,6 +17,22 @@ def current_version():
         return None
 
 
+@lru_cache(maxsize=32)
+def appliance_build_datetime():
+    try:
+        return SSHClient().get_build_datetime()
+    except:
+        return None
+
+
+@lru_cache(maxsize=32)
+def appliance_is_downstream():
+    try:
+        return SSHClient().is_appliance_downstream()
+    except:
+        return None
+
+
 def product_version_dispatch(*_args, **_kwargs):
     '''Dispatch function for use in multimethods that just ignores
        arguments and dispatches on the current product version.'''

@@ -31,6 +31,7 @@ class TestSoapBasicInteraction(object):
     def test_version(self, soap_client):
         assert isinstance(soap_client.service.Version(), list)
 
+    @pytest.mark.bugzilla(1096768)
     def test_get_hosts_from_ems(self, soap_client):
         for ems in soap_client.service.GetEmsList():
             assert isinstance(soap_client.service.EVMGetHosts(ems.guid), list)
@@ -45,32 +46,38 @@ class TestSoapBasicInteraction(object):
         for ems in soap_client.service.GetEmsList():
             assert isinstance(soap_client.service.EVMGetClusters(ems.guid), list)
 
+    @pytest.mark.bugzilla(1096708)
     def test_get_cluster(self, soap_client):
         for cluster in soap_client.service.EVMClusterList():
             get_cluster = soap_client.service.EVMGetCluster(cluster.id)
             assert get_cluster.id == cluster.id
             assert get_cluster.name == cluster.name
 
+    @pytest.mark.bugzilla(1096768)
     def test_get_resource_pools_from_ems(self, soap_client):
         for ems in soap_client.service.GetEmsList():
             assert isinstance(soap_client.service.EVMGetResourcePools(ems.guid), list)
 
+    @pytest.mark.bugzilla(1096708)
     def test_get_resource_pool(self, soap_client):
         for resource_pool in soap_client.service.EVMResourcePoolList():
             get_resource_pool = soap_client.service.EVMGetResourcePool(resource_pool.id)
             assert get_resource_pool.id == resource_pool.id
             assert get_resource_pool.name == resource_pool.name
 
+    @pytest.mark.bugzilla(1096768)
     def test_get_datastores_from_ems(self, soap_client):
         for ems in soap_client.service.GetEmsList():
             assert isinstance(soap_client.service.EVMGetDatastores(ems.guid), list)
 
+    @pytest.mark.bugzilla(1096708)
     def test_get_datastore(self, soap_client):
         for datastore in soap_client.service.EVMDatastoreList():
             get_datastore = soap_client.service.EVMGetDatastore(datastore.id)
             assert get_datastore.id == datastore.id
             assert get_datastore.name == datastore.name
 
+    @pytest.mark.bugzilla(1096768)
     def test_get_vms_from_host(self, soap_client):
         host = choice(soap_client.service.EVMHostList())
         vms = soap_client.service.EVMGetVms(host.guid)

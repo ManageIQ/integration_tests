@@ -211,6 +211,7 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
+@pytest.mark.bugzilla(1097150)
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     sel.force_navigate("infra_vms")
@@ -226,6 +227,7 @@ def test_delete_button_should_appear_after_save(request):
         pytest.fail("Could not delete filter right after saving!")
 
 
+@pytest.mark.bugzilla(1097150)
 def test_cannot_delete_more_than_once(request):
     """When Delete button appars, it does not want to go away"""
     sel.force_navigate("infra_vms")
