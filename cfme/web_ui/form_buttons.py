@@ -6,6 +6,7 @@ You can use it also for the other buttons with same shape like those CRUD ones.
 from selenium.common.exceptions import NoSuchElementException
 
 from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import fill
 
 
 class FormButton(object):
@@ -46,3 +47,9 @@ add = FormButton("Add")
 save = FormButton("Save Changes")
 cancel = FormButton("Cancel")
 reset = FormButton("Reset Changes")
+
+
+@fill.method((FormButton, bool))
+def _fill_fb_bool(fb, b):
+    if b:
+        sel.click(fb)
