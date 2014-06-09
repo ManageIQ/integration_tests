@@ -1225,7 +1225,7 @@ class Tree(object):
         # Tree goes off screen and returns.
         self._detect()
 
-        parent = None
+        parent = self.locator
         path = list(path)
         node = None
         for i, item in enumerate(path):
