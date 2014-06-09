@@ -66,13 +66,15 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
 
 
 @pytest.yield_fixture(scope="function")
-def vm_name(provider_key, provider_mgmt):
+def vm_name():
     # also tries to delete the VM that gets made with this name
     vm_name = 'test_pxe_prov_%s' % generate_random_string()
     yield vm_name
+
+def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name)
+        provider_mgmt.delete_vm(vm_name+"_0001")
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
@@ -80,7 +82,7 @@ def vm_name(provider_key, provider_mgmt):
 
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
-                                     provider_mgmt, provisioning, vm_name, smtp_test):
+                                     provider_mgmt, provisioning, vm_name, smtp_test, request):
 
     setup_provider(provider_key)
 
@@ -123,7 +125,7 @@ def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
     logger.info('Waiting for cfme provision request for vm %s' % vm_name)
     row_description = 'Provision from [%s] to [%s]' % (pxe_template, vm_name)
     cells = {'Description': row_description}
-
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=1500, delay=20)
     assert row.last_message.text == 'VM Provisioned Successfully'

@@ -45,20 +45,22 @@ def setup_providers():
 
 
 @pytest.yield_fixture(scope="function")
-def vm_name(provider_key, provider_mgmt):
+def vm_name():
     # also tries to delete the VM that gets made with this name
     vm_name = 'test_tmpl_prov_%s' % generate_random_string()
     yield vm_name
+
+def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name)
+        provider_mgmt.delete_vm(vm_name+"_0001")
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
-def test_provision_from_template(setup_providers,
-        provider_crud, provider_type, provider_mgmt, provisioning, vm_name, smtp_test):
+def test_provision_from_template(setup_providers, provider_key,
+        provider_crud, provider_type, provider_mgmt, provisioning, vm_name, smtp_test, request):
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
     pytest.sel.force_navigate('infrastructure_provision_vms', context={
@@ -103,7 +105,7 @@ def test_provision_from_template(setup_providers,
     logger.info('Waiting for cfme provision request for vm %s' % vm_name)
     row_description = 'Provision from [%s] to [%s]' % (template, vm_name)
     cells = {'Description': row_description}
-
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'VM Provisioned Successfully'
