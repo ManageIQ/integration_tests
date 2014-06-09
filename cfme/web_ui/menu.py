@@ -85,6 +85,11 @@ def nav_to_fn(toplevel, secondlevel=None):
             sel.click(toplevel_elem)
         else:
             sel.move_to_element(toplevel_elem)
+            for (toplevel_dest, toplv), secondlevels in sections.items():
+                if toplv == toplevel:
+                    sel.move_to_element(sel.element(
+                        secondlevel_loc % (toplevel, secondlevels[0][1])))
+                    break
             sel.click(sel.element(secondlevel_loc % (toplevel, secondlevel)))
     return f
 
