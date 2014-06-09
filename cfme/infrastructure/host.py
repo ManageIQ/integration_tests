@@ -18,41 +18,15 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostNotFound
-from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, paginator
+from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator
+from cfme.web_ui.form_buttons import FormButton
 from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
 
 
-# Common locators
-page_specific_locators = Region(
-    locators={
-        'cancel_button': "//img[@title='Cancel']",
-        'creds_validate_btn': "//div[@id='default_validate_buttons_on']"
-                              "/ul[@id='form_buttons']/li/a/img",
-        'creds_verify_disabled_btn': "//div[@id='default_validate_buttons_off']"
-                                     "/ul[@id='form_buttons']/li/a/img",
-    }
-)
-
 # Page specific locators
-add_page = Region(
-    locators={
-        'add_submit': "//img[@alt='Add this Host']",
-    },
-    title='CloudForms Management Engine: Hosts')
-
-edit_page = Region(
-    locators={
-        'save_button': "//img[@title='Save Changes']",
-    })
-
-manage_policies_page = Region(
-    locators={
-        'save_button': "//div[@id='buttons_on']//img[@alt='Save Changes']",
-    })
-
 details_page = Region(infoblock_type='detail')
 
 properties_form = Form(
@@ -76,7 +50,7 @@ credential_form = Form(
         ('ipmi_principal', "//*[@id='ipmi_userid']"),
         ('ipmi_secret', "//*[@id='ipmi_password']"),
         ('ipmi_verify_secret', "//*[@id='ipmi_verify']"),
-        ('validate_btn', page_specific_locators.creds_validate_btn)
+        ('validate_btn', FormButton('Validate the credentials by logging into the Server'))
     ])
 
 manage_policies_tree = CheckboxTree(
@@ -85,6 +59,8 @@ manage_policies_tree = CheckboxTree(
         "5.3": "//div[@id='protect_treebox']/ul"
     })
 )
+
+host_add_btn = FormButton('Add this Host')
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
@@ -161,7 +137,7 @@ class Host(Updateable):
 
     def _submit(self, cancel, submit_button):
         if cancel:
-            sel.click(page_specific_locators.cancel_button)
+            sel.click(form_buttons.cancel)
             # sel.wait_for_element(page.configuration_btn)
         else:
             sel.click(submit_button)
@@ -181,7 +157,7 @@ class Host(Updateable):
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
         fill(credential_form, self.ipmi_credentials, validate=validate_credentials)
-        self._submit(cancel, add_page.add_submit)
+        self._submit(cancel, host_add_btn)
 
     def update(self, updates, cancel=False, validate_credentials=False):
         """
@@ -196,7 +172,7 @@ class Host(Updateable):
         sel.force_navigate('infrastructure_host_edit', context={'host': self})
         fill(properties_form, self._form_mapping(**updates))
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
-        self._submit(cancel, edit_page.save_button)
+        self._submit(cancel, form_buttons.save)
 
     def delete(self, cancel=True):
         """
@@ -276,7 +252,7 @@ class Host(Updateable):
                 manage_policies_tree.check_node(policy_profile)
             else:
                 manage_policies_tree.uncheck_node(policy_profile)
-        sel.click(manage_policies_page.save_button)
+        sel.click(form_buttons.save)
 
     def assign_policy_profiles(self, *policy_profile_names):
         """ Assign Policy Profiles to this Host.
