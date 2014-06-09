@@ -72,7 +72,7 @@ template_tree = version.pick({
 
 template_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
 
-template_add_button = sel.ver_pick({
+template_add_button = version.pick({
     'default': form_buttons.add,
     '5.3': form_buttons.save
 })
