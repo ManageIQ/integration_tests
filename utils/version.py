@@ -2,14 +2,14 @@
 import string
 import re
 from types import StringType
-from utils import memoized
+from functools32 import lru_cache
 from utils.ssh import SSHClient
 from pkg_resources import parse_version
 from utils.log import logger
 import multimethods as mm
 
 
-@memoized
+@lru_cache(maxsize=32)
 def current_version():
         """ A lazy cached method to return the appliance version. """
         return LooseVersion(SSHClient().get_version())
