@@ -61,13 +61,19 @@ class SlaveInteractor:
     def run_tests(self, torun):
         items = self.session.items
         self.item_index = torun.pop(0)
+        item = items[self.item_index]
         if torun:
             nextitem = items[torun[0]]
         else:
             nextitem = None
-        self.config.hook.pytest_runtest_protocol(
-            item=items[self.item_index],
-            nextitem=nextitem)
+
+        if self.config.option.collectonly:
+            module, testname = item.nodeid.rsplit('::', 1)
+            message = '%s: %s' % (module, str(item))
+            self.sendevent('message', message=message)
+        else:
+            self.config.hook.pytest_runtest_protocol(
+                item=item, nextitem=nextitem)
 
         if not nextitem:
             self.sendevent("needs_tests")
