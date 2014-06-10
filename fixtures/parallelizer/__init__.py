@@ -55,13 +55,9 @@ class DSession(object):
         self.maxfail = config.getvalue("maxfail")
         self.queue = queue.Queue()
         self._failed_collection_errors = {}
-        try:
-            self.terminal = config.pluginmanager.getplugin("terminalreporter")
-        except KeyError:
-            self.terminal = None
-        else:
-            self.trdist = TerminalDistReporter(config)
-            config.pluginmanager.register(self.trdist, "terminaldistreporter")
+        self.terminal = reporter()
+        self.trdist = TerminalDistReporter(config)
+        config.pluginmanager.register(self.trdist, "terminaldistreporter")
 
     def report_line(self, line):
         if self.terminal and self.config.option.verbose >= 0:
@@ -69,6 +65,9 @@ class DSession(object):
 
     @pytest.mark.trylast
     def pytest_sessionstart(self, session):
+        # If reporter() gave us a fake terminal reporter in __init__, the real
+        # terminal reporter is registered by now
+        self.terminal = reporter()
         self.nodemanager = NodeManager(self.config)
         self.nodemanager.setup_nodes(putevent=self.queue.put)
 
@@ -185,6 +184,9 @@ class DSession(object):
 
     def slave_needs_tests(self, node):
         self.sched.send_tests(node)
+
+    def slave_message(self, node, message):
+        self.trdist.nodemessage(node, message)
 
     def _failed_slave_collectreport(self, node, rep):
         # Check we haven't already seen this report (from
@@ -432,6 +434,9 @@ class TerminalDistReporter(object):
             return
         self.write_line("[%s] node down: %s" % (node.gateway.id, error))
 
+    def nodemessage(self, node, message):
+        self.write_line("[%s] %s" % (node.gateway.id, message))
+
 
 class NodeManager(object):
     EXIT_TIMEOUT = 10
@@ -583,6 +588,8 @@ class SlaveController(object):
                 self.notify_inproc(eventname, node=self, ids=kwargs['ids'])
             elif eventname == "needs_tests":
                 self.notify_inproc(eventname, node=self)
+            elif eventname == "message":
+                self.notify_inproc(eventname, node=self, message=kwargs['message'])
             else:
                 raise ValueError("unknown event: %s" % eventname)
         except KeyboardInterrupt:
