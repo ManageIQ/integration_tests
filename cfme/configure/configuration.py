@@ -5,7 +5,7 @@ from urlparse import urlparse
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
+from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound
 from cfme.web_ui import Calendar, Form, Region, Select, Table, accordion, fill, flash, form_buttons
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
@@ -64,6 +64,7 @@ db_configuration = Form(
 
 
 records_table = Table("//div[@id='records_div']/table[@class='style3']")
+zones_table = Table("//div[@id='settings_list']/table[@class='style3']")
 
 
 def get_ip_address():
@@ -134,6 +135,26 @@ nav.add_branch("configuration",
                 "5.3": "Zone: Default Zone (current)"
             }),
         ),
+
+        "cfg_settings_zones":
+        [
+            lambda _: settings_tree(
+                sel.ver_pick({
+                    "default": "Region: Region %d [%d]" % server_region_pair(),
+                    "9.9.9.9": "CFME Region: Region %d [%d]" % server_region_pair(),
+                }),
+                "Zones"),
+            {
+                "cfg_settings_zone":
+                [
+                    lambda ctx: zones_table.click_cell("name", ctx["zone_name"]),
+                    {
+                        "cfg_settings_zone_edit":
+                        lambda _: tb.select("Configuration", "Edit this Zone")
+                    }
+                ]
+            }
+        ],
 
         "cfg_settings_schedules":
         [
@@ -1184,6 +1205,134 @@ class DatabaseBackupSchedule(Schedule):
             form_buttons.cancel()
         else:
             form_buttons.save()
+
+
+class Zone(object):
+    """ Configure/Configuration/Region/Zones functionality
+
+    Create/Read/Update/Delete functionality.
+    """
+    form = Form(fields=[
+        ("name", "//input[@id='name']"),
+        ("description", "//input[@id='description']"),
+        ("smartproxy_ip", "//input[@id='proxy_server_ip']"),
+        ("ntp_server_1", "//input[@id='ntp_server_1']"),
+        ("ntp_server_2", "//input[@id='ntp_server_2']"),
+        ("ntp_server_3", "//input[@id='ntp_server_3']"),
+        ("max_scans", Select("//*[@id='max_scans']")),
+        ("user", "//input[@id='userid']"),
+        ("password", "//input[@id='password']"),
+        ("verify", "//input[@id='verify']"),
+    ])
+
+    def __init__(self,
+                 name,
+                 description,
+                 smartproxy_ip=None,
+                 ntp_server_1=None,
+                 ntp_server_2=None,
+                 ntp_server_3=None,
+                 max_scans=None,
+                 user=None,
+                 password=None,
+                 verify=None):
+        self.details = dict(
+            name=name,
+            description=description,
+            smartproxy_ip=smartproxy_ip,
+            ntp_server_1=ntp_server_1,
+            ntp_server_2=ntp_server_2,
+            ntp_server_3=ntp_server_3,
+            max_scans=sel.ByValue(max_scans),
+            user=user,
+            password=password,
+            verify=verify,
+        )
+
+    def create(self, cancel=False):
+        """ Create a new Zone from the information stored in the object.
+
+        Args:
+            cancel: Whether to click on the cancel button to interrupt the creation.
+        """
+        sel.force_navigate("cfg_settings_zones")
+        tb.select("Configuration", "Add a new Zone")
+        if cancel:
+            action = form_buttons.cancel
+        else:
+            action = form_buttons.add
+        fill(
+            self.form,
+            self.details,
+            action=action
+        )
+
+    def update(self, updates, cancel=False):
+        """ Modify an existing zone with information from this instance.
+
+        Args:
+            updates: Dict with fields to be updated
+            cancel: Whether to click on the cancel button to interrupt the edit.
+
+        """
+        #sel.force_navigate("cfg_settings_zone_edit",
+        #    context={"zone_name": self.details["name"]})
+        self.go_to_by_description(self.details["description"])
+        tb.select("Configuration", "Edit this Zone")
+        if cancel:
+            action = form_buttons.cancel
+        else:
+            action = form_buttons.save
+        self.details.update(updates)
+        fill(
+            self.form,
+            self.details,
+            action=action
+        )
+
+    def delete(self, cancel=False):
+        """ Delete the Zone represented by this object.
+
+        Args:
+            cancel: Whether to click on the cancel button in the pop-up.
+        """
+        self.go_to_by_description(self.details["description"])
+        tb.select("Configuration", "Delete this Zone", invokes_alert=True)
+        sel.handle_alert(cancel)
+
+    @classmethod
+    def delete_by_name(cls, name, cancel=False):
+        """ Finds a particular Zone by its name and then deletes it.
+
+        Args:
+            name: Name of the Zone.
+            cancel: Whether to click the cancel button in the pop-up.
+        """
+        sel.force_navigate("cfg_settings_zone", context={"zone_name": name})
+        tb.select("Configuration", "Delete this Zone", invokes_alert=True)
+        sel.handle_alert(cancel)
+
+    @classmethod
+    def go_to_by_description(cls, description):
+        """ Finds and navigates to a particular Zone by its description.
+
+        This method looks for a Zone with the provided description. If it
+        finds one (and only one) Zone with that description, it navigates to it.
+        Otherwise, it raises an Exception.
+
+        Args:
+            description: description of the Zone.
+
+        Raises:
+            ZoneNotFound: If no single Zone is found with the specified description.
+        """
+        # TODO Stop using this method as a workaround once Zones can be located by name in the UI.
+        sel.force_navigate("cfg_settings_zones")
+        links = sel.elements("//table[@class='style3']//td[contains(text(), '%s')]" % description)
+        if len(links) == 1:
+            sel.click(links.pop())
+        else:
+            raise ZoneNotFound("No unique Zones with the description '%s'" % description)
 
 
 def set_server_roles(**roles):
