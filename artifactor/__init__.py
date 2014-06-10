@@ -142,6 +142,8 @@ class Artifactor(Rigger):
         if not self.config:
             return False
         self.log_dir = self.config.get('log_dir', None)
+        if not os.path.isdir(self.log_dir):
+            os.makedirs(self.log_dir)
         log_file_name = os.path.join(self.log_dir, "artifactor_log.txt")
         self.logger = create_logger('artifactor_logger', log_file_name)
         if not os.path.isdir(self.log_dir):
