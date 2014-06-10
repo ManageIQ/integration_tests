@@ -178,6 +178,7 @@ def test_db_backup_schedule(request, db_backup_data):
     full_path = get_full_path_to_file(path_on_host, db_backup_data.schedule_name)
 
     sched = DatabaseBackupSchedule(**sched_args)
+    # Fails on upstream - BZ1099341
     sched.create()
     flash.assert_message_contain('Schedule "{}" was saved'.format(db_backup_data.schedule_name))
     # ----
