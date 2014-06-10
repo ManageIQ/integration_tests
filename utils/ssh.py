@@ -16,7 +16,8 @@ class SSHClient(paramiko.SSHClient):
     """
     def __init__(self, stream_output=False, **connect_kwargs):
         port = connect_kwargs.get('port', 22)
-        if not net_check(port):
+        addr = connect_kwargs.get('hostname', None)
+        if not net_check(port, addr=addr):
             raise Exception("Connection is not available as port is unavailable")
         super(SSHClient, self).__init__()
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
