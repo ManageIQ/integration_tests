@@ -128,7 +128,7 @@ def test_provider_add(provider_crud):
     """ Tests that a provider can be added """
     provider_crud.create()
     flash.assert_message_match('Infrastructure Providers "%s" was saved' % provider_crud.name)
-    # Fails on upstream, vsphere55 - BZ1087476
+    # Fails on upstream, all provider types - BZ1087476
     provider_crud.validate()
 
 
