@@ -160,7 +160,7 @@ class Namespace(TreeNode, Updateable):
     def __init__(self, name=None, description=None, parent=None, domain=def_domain):
         self.name = name
         self.description = description
-        if domain:
+        if domain and not parent:
             self.parent = domain
         else:
             self.parent = parent
