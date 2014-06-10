@@ -65,16 +65,17 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
         pxe_cust_template.create()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="module")
 def vm_name():
     # also tries to delete the VM that gets made with this name
     vm_name = 'test_pxe_prov_%s' % generate_random_string()
     yield vm_name
 
+
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name+"_0001")
+        provider_mgmt.delete_vm(vm_name)
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
