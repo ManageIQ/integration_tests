@@ -1,17 +1,21 @@
-2# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import pytest
 import cfme.configure.access_control as ac
 from utils.update import update
 import utils.error as error
 import utils.randomness as random
+import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme import login
 from cfme.web_ui.menu import nav
+from cfme.configure import tasks
 
 usergrp = ac.Group(description='EvmGroup-user')
 
+
 def new_credential():
     return Credential(principal='uid' + random.generate_random_string(), secret='redhat')
+
 
 def new_user(group=usergrp):
     return ac.User(name='user' + random.generate_random_string(),
@@ -159,7 +163,7 @@ def _go_to(dest):
     'role,allowed_actions,disallowed_actions',
     [[_mk_role(product_features={False: [['Everything']],  # minimal permission
                                  True: [['Settings & Operations', 'Tasks']]}),
-      {'tasks': _go_to('tasks')},  # can only access one thing
+      {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
       {
           'my services': _go_to('my_services'),
           'chargeback': _go_to('chargeback'),
