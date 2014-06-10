@@ -223,7 +223,7 @@ class EventListener(object):
                                  ]
             # Get immediate predecessor's of follower's time of this event
             preceeding_event = preceeding_events[-1].time if preceeding_events else expectation.time
-            #following_event = following_events[0].time if following_events else check_started
+            # following_event = following_events[0].time if following_events else check_started
             # Shorten the params
             params = [expectation.sys_type,
                       expectation.obj_type,

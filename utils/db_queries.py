@@ -23,8 +23,8 @@ def get_configuration_details(ip_address=None):
         for region in db.session.query(db['miq_regions']):
             reg_min = region.region * SEQ_FACT
             reg_max = reg_min + SEQ_FACT
-            servers = list(db.session.query(miq_servers)
-                .filter(
+            servers = list(
+                db.session.query(miq_servers).filter(
                     miq_servers.id >= reg_min,
                     miq_servers.id < reg_max,
                     miq_servers.ipaddress == ip_address

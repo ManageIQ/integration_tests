@@ -142,7 +142,7 @@ class Config(dict):
         try:
             return super(Config, self).__getitem__(key)
         except KeyError:
-             # Cache miss, load the requested yaml
+            # Cache miss, load the requested yaml
             yaml_dict = load_yaml(key)
 
             # Graft in local yaml updates if they're available
