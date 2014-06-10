@@ -111,7 +111,7 @@ class ListAccordionLink(object):
         """ Locates an active link.
 
         Returns: An XPATH locator for the element."""
-        return './/div[@class="panecontent"]//a[@title="%s"]/img/..' % self.title
+        return './/div[@class="panecontent"]//a[@title="%s"]/img' % self.title
 
     def _check_exists(self):
         try:
