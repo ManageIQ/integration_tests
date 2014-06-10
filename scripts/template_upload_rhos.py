@@ -103,6 +103,21 @@ def check_image_status(image_id, export, ssh_client):
     return True
 
 
+def check_image_exists(image_name, export, ssh_client):
+    command = ['glance']
+    command.append('image-list')
+    command.append('|')
+    command.append('grep %s' % image_name)
+
+    res_command = ' '.join(command)
+    res = '%s && %s' % (export, res_command)
+    exit_status, output = ssh_client.run_command(res)
+
+    if output:
+        return True
+    return False
+
+
 def make_kwargs(args, **kwargs):
     args_kwargs = dict(args._get_kwargs())
 
@@ -155,12 +170,15 @@ def run(**kwargs):
 
     export = make_export(username, password, kwargs.get('tenant_id'), auth_url)
 
-    output = upload_qc2_file(ssh_client, kwargs.get('image_url'), template_name, export)
+    if not check_image_exists(template_name, export, ssh_client):
+        output = upload_qc2_file(ssh_client, kwargs.get('image_url'), template_name, export)
 
-    image_id = get_image_id(output)
+        image_id = get_image_id(output)
 
-    wait_for(check_image_status, [image_id, export, ssh_client],
-             fail_condition=False, delay=5, num_sec=300)
+        wait_for(check_image_status, [image_id, export, ssh_client],
+                 fail_condition=False, delay=5, num_sec=300)
+    else:
+        print "RHOS: Found image with same name. Exiting..."
 
     ssh_client.close()
     print "RHOS: Done."
