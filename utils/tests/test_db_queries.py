@@ -25,6 +25,7 @@ def test_server_name(appliance_ip):
 def test_server_region_and_id(appliance_ip):
     """Server ID begins with region number, so check that.
     """
-    assert str(db_queries.get_server_id(appliance_ip)).startswith(
-        str(db_queries.get_server_region(appliance_ip))
-    )
+    region = db_queries.get_server_region(appliance_ip)
+    if region == 0:
+        pytest.skip("Can't check this if the region is 0")
+    assert str(db_queries.get_server_id(appliance_ip)).startswith(str(region))
