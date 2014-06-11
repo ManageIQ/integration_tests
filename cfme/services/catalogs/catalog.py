@@ -1,16 +1,14 @@
-import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.accordion as accordion
-import cfme.web_ui.flash as flash
-import cfme.web_ui as web_ui
-import cfme.web_ui.menu  # load the menu nav endpoints
-import cfme.web_ui.toolbar as tb
-import ui_navigate as nav
-import functools
+# -*- coding: utf-8 -*-
+from functools import partial
+
+from cfme import web_ui
+from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import accordion, flash, menu
+from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 
-assert cfme.web_ui.menu  # to placate flake8 (otherwise menu import is unused)
-
-tb_select = functools.partial(tb.select, "Configuration")
+cfg_btn = partial(tb.select, "Configuration")
+catalog_tree = partial(accordion.tree, "Catalogs")
 
 item_multiselect = web_ui.MultiSelect(
     "//select[@id='available_fields']",
@@ -35,24 +33,31 @@ item_form = web_ui.Form(
      ('display_checkbox', "//input[@id='display']"),
      ('add_button', "//img[@title='Add']")])
 
-catalog_tree = sel.ver_pick({
-    'default': web_ui.Tree('//div[@id="stcat_tree_box"]//table'),
-    '5.3': web_ui.Tree('//div[@id="stcat_treebox"]//ul')
-})
-
 
 def _all_catalogs_add_new(_):
-    catalog_tree.click_path('All Catalogs')
-    tb_select('Add a New Catalog')
+    catalog_tree('All Catalogs')
+    cfg_btn('Add a New Catalog')
 
 
-nav.add_branch(
+menu.nav.add_branch(
     'services_catalogs',
-    {'catalogs': [nav.partial(accordion.click, 'Catalogs'),
-                  {'catalog_new': _all_catalogs_add_new,
-                   'catalog': [lambda ctx: catalog_tree.click_path('All Catalogs',
-                                                                   ctx['catalog'].name),
-                               {'catalog_edit': nav.partial(tb_select, "Edit this Item")}]}]})
+    {
+        'catalogs':
+        [
+            lambda _: accordion.click('Catalogs'),
+            {
+                'catalog_new': _all_catalogs_add_new,
+                'catalog':
+                [
+                    lambda ctx: catalog_tree('All Catalogs', ctx['catalog'].name),
+                    {
+                        'catalog_edit': lambda _: cfg_btn("Edit this Item")
+                    }
+                ]
+            }
+        ]
+    }
+)
 
 
 class Catalog(Updateable):
@@ -81,6 +86,6 @@ class Catalog(Updateable):
 
     def delete(self):
         sel.force_navigate('catalog', context={'catalog': self})
-        tb_select("Remove Item from the VMDB", invokes_alert=True)
+        cfg_btn("Remove Item from the VMDB", invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('Catalog "{}": Delete successful'.format(self.description))

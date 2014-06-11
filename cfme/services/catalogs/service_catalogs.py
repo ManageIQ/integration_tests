@@ -1,24 +1,37 @@
-import ui_navigate as nav
+# -*- coding: utf-8 -*-
+from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui as web_ui
-from cfme.web_ui import Form, accordion, fill, flash
+from cfme.web_ui import Form, accordion, fill, flash, menu
 from utils.update import Updateable
 
 order_button = "//img[@title='Order this Service']"
-service_catalog_tree = web_ui.Tree('//div[@id="sandt_tree_box"]//table')
 
 service_order_form = Form(
     fields=[('dialog_service_name_field', "//tr/td[@title='ele_desc']/input[@id='service_name']"),
             ('submit_button', "//img[@title='Submit']")])
 
+accordion_tree = partial(accordion.tree, "Service Catalogs")
 
-nav.add_branch(
+menu.nav.add_branch(
     'services_catalogs',
-    {'service_catalogs': [nav.partial(accordion.click, 'Service Catalogs'),
-        {'service_catalog': [lambda ctx: service_catalog_tree.click_path('All Services',
-        ctx['catalog'], ctx['catalog_item'].name),
-            {'order_service_catalog': nav.partial(sel.click, order_button)}]}]})
+    {
+        'service_catalogs':
+        [
+            lambda _: accordion.click('Service Catalogs'),
+            {
+                'service_catalog':
+                [
+                    lambda ctx: accordion_tree(
+                        'All Services', ctx['catalog'], ctx['catalog_item'].name),
+                    {
+                        'order_service_catalog': lambda _: sel.click(order_button)
+                    }
+                ]
+            }
+        ]
+    }
+)
 
 
 class ServiceCatalogs(Updateable):
