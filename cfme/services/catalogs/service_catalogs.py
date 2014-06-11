@@ -1,12 +1,10 @@
 import ui_navigate as nav
 
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui as web_ui
 from cfme.web_ui import Form, accordion, fill, flash
 from utils.update import Updateable
 
 order_button = "//img[@title='Order this Service']"
-service_catalog_tree = web_ui.Tree('//div[@id="sandt_tree_box"]//table')
 
 service_order_form = Form(
     fields=[('dialog_service_name_field', "//tr/td[@title='ele_desc']/input[@id='service_name']"),
@@ -16,7 +14,7 @@ service_order_form = Form(
 nav.add_branch(
     'services_catalogs',
     {'service_catalogs': [nav.partial(accordion.click, 'Service Catalogs'),
-        {'service_catalog': [lambda ctx: service_catalog_tree.click_path('All Services',
+        {'service_catalog': [lambda ctx: accordion.tree('Service Catalogs', 'All Services',
         ctx['catalog'], ctx['catalog_item'].name),
             {'order_service_catalog': nav.partial(sel.click, order_button)}]}]})
 
