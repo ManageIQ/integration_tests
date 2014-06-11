@@ -39,6 +39,8 @@ def main():
 
     client = SSHClient(stream_output=True, **ssh_kwargs)
 
+    # Make sure the working dir exists
+    client.run_command('mkdir -p /tmp/miq')
     print 'Exporting domain...'
     export_opts = 'DOMAIN={} EXPORT_DIR=/tmp/miq PREVIEW=false OVERWRITE=true'.format(args.source)
     export_cmd = 'evm:automate:export {}'.format(export_opts)
