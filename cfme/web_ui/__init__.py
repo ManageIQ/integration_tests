@@ -336,7 +336,7 @@ class Table(object):
         except IndexError:
             return None
 
-    def find_rows_by_cells(self, cells):
+    def find_rows_by_cells(self, cells, partial_check=False):
         """A fast row finder, based on cell content.
 
         Args:
@@ -372,14 +372,17 @@ class Table(object):
 
         # Only include rows where the expected values are in the right columns
         matching_rows = list()
-        matching_row_filter = lambda heading, value: row[heading].text == value
+        if partial_check:
+            matching_row_filter = lambda heading, value: value in row[heading].text
+        else:
+            matching_row_filter = lambda heading, value: row[heading].text == value
         for row in rows:
             if all(matching_row_filter(*cell) for cell in cells.items()):
                 matching_rows.append(row)
 
         return matching_rows
 
-    def find_row_by_cells(self, cells):
+    def find_row_by_cells(self, cells, partial_check=False):
         """Find the first row containing cells
 
         Args:
@@ -389,12 +392,12 @@ class Table(object):
 
         """
         try:
-            rows = self.find_rows_by_cells(cells)
+            rows = self.find_rows_by_cells(cells, partial_check=partial_check)
             return rows[0]
         except IndexError:
             return None
 
-    def click_rows_by_cells(self, cells, click_column=None):
+    def click_rows_by_cells(self, cells, click_column=None, partial_check=False):
         """Click the cell at ``click_column`` in the rows matched by ``cells``
 
         Args:
@@ -407,13 +410,13 @@ class Table(object):
             the item accessor (``__getitem__``) for :py:class:`Table.Row`
 
         """
-        rows = self.find_rows_by_cells(cells)
+        rows = self.find_rows_by_cells(cells, partial_check=partial_check)
         if click_column is None:
             map(sel.click, rows)
         else:
             map(sel.click, [row[click_column] for row in rows])
 
-    def click_row_by_cells(self, cells, click_column=None):
+    def click_row_by_cells(self, cells, click_column=None, partial_check=False):
         """Click the cell at ``click_column`` in the first row matched by ``cells``
 
         Args:
@@ -421,7 +424,7 @@ class Table(object):
             click_column: See :py:meth:`Table.click_rows_by_cells`
 
         """
-        row = self.find_row_by_cells(cells)
+        row = self.find_row_by_cells(cells, partial_check=partial_check)
         if click_column is None:
             sel.click(row)
         else:
@@ -1638,6 +1641,11 @@ class Quadicon(object):
 
     def __str__(self):
         return self.locate()
+
+    @staticmethod
+    def select_first_quad():
+        elem = sel.element("//div[@id='quadicon']").find_element_by_xpath('./../..//input')
+        fill(elem, True)
 
 
 class DHTMLSelect(Select):
