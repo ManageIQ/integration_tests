@@ -16,6 +16,11 @@ class CFMEExceptionOccured(CFMEException):
     pass
 
 
+class ToolbarOptionGreyed(CFMEException):
+    """Raised when toolbar wants to click item that is greyed"""
+    pass
+
+
 class AddProviderError(CFMEException):
     pass
 

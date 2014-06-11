@@ -10,6 +10,7 @@ Usage:
 """
 import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
+from cfme.exceptions import ToolbarOptionGreyed
 from cfme.web_ui import Region
 from xml.sax.saxutils import quoteattr
 
@@ -69,7 +70,8 @@ def select(root, sub=None, invokes_alert=False):
         invokes_alert: If ``True``, then the behaviour is little bit different. After the last
             click, no ajax wait and no move away is done to be able to operate the alert that
             appears after click afterwards. Defaults to ``False``.
-    Returns: ``True`` if the button was enabled at time of clicking, ``False`` if not.
+    Returns: ``True`` if everything went smoothly
+    Raises: :py:class:`cfme.exceptions.ToolbarOptionGreyed`
     """
     if not is_greyed(root):
         if sub is None and invokes_alert:
@@ -78,7 +80,7 @@ def select(root, sub=None, invokes_alert=False):
         else:
             select_n_move(root_loc(root))
     else:
-        return False
+        raise ToolbarOptionGreyed("Toolbar button {} is greyed!".format(root))
     if sub:
         if not is_greyed(root, sub):
             if invokes_alert:
@@ -87,7 +89,7 @@ def select(root, sub=None, invokes_alert=False):
             else:
                 select_n_move(sub_loc(sub))
         else:
-            return False
+            raise ToolbarOptionGreyed("Toolbar option {}/{} is greyed!".format(root, sub))
     return True
 
 
