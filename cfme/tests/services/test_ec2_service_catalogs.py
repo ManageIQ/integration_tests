@@ -4,16 +4,21 @@ from cfme.services.catalogs import ec2_catalog_item as ec2
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from utils import error, testgen
+from utils import testgen
 from utils.randomness import generate_random_string
 from utils.providers import setup_cloud_providers
+from cfme.services import requests
+from cfme.web_ui import flash
+from utils.log import logger
+from utils.wait import wait_for
+import time
 
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
-    pytest.mark.fixtureconf(server_roles="+automate"),
-    pytest.mark.usefixtures('server_roles', 'setup_providers')
+    pytest.mark.fixtureconf(server_roles="+automate")
 ]
+
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
@@ -38,11 +43,11 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-
 @pytest.fixture(scope="module")
 def setup_providers():
     # Normally function-scoped
     setup_cloud_providers()
+
 
 @pytest.yield_fixture(scope="function")
 def dialog():
@@ -61,16 +66,26 @@ def catalog():
     catalog.create()
     yield catalog
 
+
+def cleanup_vm(vm_name, provider_key, provider_mgmt):
+    try:
+        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
+        provider_mgmt.delete_vm(vm_name+"_0001")
+    except:
+        # The mgmt_sys classes raise Exception :\
+        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
+
+
 @pytest.mark.usefixtures('setup_providers')
-def test_ec2_catalog_item(provider_mgmt, provider_crud, provider_type, provisioning, dialog, catalog):
+def test_ec2_catalog_item(provider_key, provider_mgmt, provider_crud, provider_type, provisioning, dialog, catalog, request):
     # tries to delete the VM that gets created here
-    vm_name = 'service_catalog_%s' % generate_random_string()
+    vm_name = 'test_ec2_servicecatalog-%s' % generate_random_string()
     image = provisioning['image']['name']
-    item_name = generate_random_string()
+    item_name = "ec2_" + generate_random_string()
 
     ec2_catalog_item = ec2.Instance(
         item_type="Amazon",
-        item_name=item_name,
+        name=item_name,
         description="my catalog",
         display_in=True,
         catalog=catalog.name,
@@ -85,4 +100,15 @@ def test_ec2_catalog_item(provider_mgmt, provider_crud, provider_type, provision
         guest_keypair="shared")
 
     ec2_catalog_item.create()
+    service_catalogs = ServiceCatalogs("service_name")
+    time.sleep(5)
+    service_catalogs.order(catalog.name, ec2_catalog_item)
+    flash.assert_no_errors()
+    logger.info('Waiting for cfme provision request for service %s' % item_name)
+    row_description = 'Provisioning [%s] for Service [%s]' % (item_name, item_name)
+    cells = {'Description': row_description}
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    row, __ = wait_for(requests.wait_for_request, [cells],
+        fail_func=requests.reload, num_sec=600, delay=20)
+    assert row.last_message.text == 'Request complete'
 

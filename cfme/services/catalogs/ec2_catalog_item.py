@@ -127,12 +127,12 @@ class Template(object):
 
 class Instance(Updateable):
 
-    def __init__(self, item_type=None, item_name=None, description=None,
+    def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None, vm_name=None, catalog_name=None,
                  instance_type=None, availability_zone=None, security_groups=None,
                  provider=None, provider_mgmt=None, guest_keypair=None):
         self.item_type = item_type
-        self.item_name = item_name
+        self.name = name
         self.description = description
         self.display_in = display_in
         self.catalog = catalog
@@ -148,7 +148,7 @@ class Instance(Updateable):
 
     def create(self):
         sel.force_navigate('catalog_item_new', context={'provider_type': self.item_type})
-        fill(basic_info_form, {'name_text': self.item_name,
+        fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
                                'select_catalog': self.catalog,
@@ -167,20 +167,5 @@ class Instance(Updateable):
             'security_groups': self.security_groups[0],  # not supporting multiselect now,
                                                          # just take first value
         })
-        #request_form.fill(self.provisioning_data)
         sel.click(template_select_form.add_button)
-        flash.assert_success_message('Service Catalog Item "%s" was added' % self.item_name)
-
-    def update(self, updates):
-        sel.force_navigate('catalog_item_edit',
-            context={'catalog': self.catalog, 'catalog_item': self})
-        fill(basic_info_form, {'name_text': updates.get('name', None),
-                               'description_text': updates.get('description', None)},
-            action=basic_info_form.edit_button)
-        flash.assert_success_message('Service Catalog Item "%s" was saved' % self.name)
-
-    def delete(self):
-        sel.force_navigate('catalog_item', context={'catalog': self.catalog, 'catalog_item': self})
-        tb_select("Remove Item from the VMDB", invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('The selected Catalog Item was deleted')
+        flash.assert_success_message('Service Catalog Item "%s" was added' % self.name)
