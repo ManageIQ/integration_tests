@@ -70,11 +70,14 @@ def setup_iso_datastore(iso_cust_template, provisioning, iso_datastore):
         iso_cust_template.create()
 
 
-@pytest.yield_fixture(scope="function")
-def vm_name(provider_key, provider_mgmt):
+@pytest.fixture(scope="module")
+def vm_name():
     # also tries to delete the VM that gets made with this name
     vm_name = 'test_iso_prov_%s' % generate_random_string()
     yield vm_name
+
+
+def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
         provider_mgmt.delete_vm(vm_name)
@@ -83,9 +86,10 @@ def vm_name(provider_key, provider_mgmt):
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
+
 @pytest.mark.usefixtures('setup_iso_providers', 'setup_iso_datastore')
-def test_iso_provision_from_template(provider_crud, provider_type, provider_mgmt, provisioning,
-                                     vm_name):
+def test_iso_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt, provisioning,
+                                     vm_name, request):
 
     # generate_tests makes sure these have values
     iso_template, host, datastore, iso_file, iso_kickstart,\
@@ -125,7 +129,7 @@ def test_iso_provision_from_template(provider_crud, provider_type, provider_mgmt
     logger.info('Waiting for cfme provision request for vm %s' % vm_name)
     row_description = 'Provision from [%s] to [%s]' % (iso_template, vm_name)
     cells = {'Description': row_description}
-
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=1500, delay=20)
     assert row.last_message.text == 'VM Provisioned Successfully'
