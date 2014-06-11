@@ -44,11 +44,11 @@ def pytest_exception_interact(node, call, report):
         # errors are when exceptions are thrown outside of the test call phase
         is_error = report.when != 'call'
 
-        art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
-                      filename="screenshot.png", fd_ident="screenshot",
-                             contents=base64.b64encode(utils.browser.browser()
-                                                       .get_screenshot_as_png()),
-                             mode="wb", contents_base64=True)
+        if utils.browser.browser() is not None:
+            screenshot = utils.browser.browser().get_screenshot_as_base64()
+            art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+                filename="screenshot.png", fd_ident="screenshot", contents=screenshot, mode="wb",
+                contents_base64=True)
 
         template_data = {
             'name': node.name,
