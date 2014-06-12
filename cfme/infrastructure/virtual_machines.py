@@ -364,16 +364,16 @@ class Vm():
     # def edit_tags(self, cancel=True, from_details=False):
     #     raise NotImplementedError('edit tags is not implemented.')
 
-    # def _nav_to_snapshot_mgmt(self):
-    #     locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
-    #         "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
-    #     if not sel.is_displayed(locator):
-    #         self.load_details()
-    #         sel.click(details_page.infoblock.element("Properties", "Snapshots"))
+    def _nav_to_snapshot_mgmt(self):
+        locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
+             "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
+        if not sel.is_displayed(locator):
+            self.load_details()
+            sel.click(details_page.infoblock.element("Properties", "Snapshots"))
 
-    # def create_snapshot(self, name, description, snapshot_memory=False):
-    #     self._nav_to_snapshot_mgmt()
-    #     raise NotImplementedError('snapshot mgmt is not implemented.')
+    def create_snapshot(self):
+        self._nav_to_snapshot_mgmt()
+        toolbar.select('Create a new snapshot for this VM')
 
     # def remove_selected_snapshot(self, name):
     #     self._nav_to_snapshot_mgmt()
