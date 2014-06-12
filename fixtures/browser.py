@@ -1,4 +1,3 @@
-import base64
 import pytest
 from py.error import ENOENT
 from selenium.common.exceptions import WebDriverException
@@ -44,12 +43,6 @@ def pytest_exception_interact(node, call, report):
         # errors are when exceptions are thrown outside of the test call phase
         is_error = report.when != 'call'
 
-        if utils.browser.browser() is not None:
-            screenshot = utils.browser.browser().get_screenshot_as_base64()
-            art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
-                filename="screenshot.png", fd_ident="screenshot", contents=screenshot, mode="wb",
-                contents_base64=True)
-
         template_data = {
             'name': node.name,
             'file': node.fspath,
@@ -61,6 +54,9 @@ def pytest_exception_interact(node, call, report):
 
         try:
             template_data['screenshot'] = utils.browser.browser().get_screenshot_as_base64()
+            art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+                filename="screenshot.png", fd_ident="screenshot", mode="wb", contents_base64=True,
+                contents=template_data['screenshot'])
         except (AttributeError, WebDriverException):
             # See comments utils.browser.ensure_browser_open for why these two exceptions
             template_data['screenshot'] = None
