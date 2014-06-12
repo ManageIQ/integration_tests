@@ -8,7 +8,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Form, fill, form_buttons, Select, accordion, flash, Tree
 from utils.update import Updateable
-
+from utils import version
 
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
@@ -39,7 +39,7 @@ element_form = Form(
      ('default_text_box', "//input[@id='field_default_value']"),
      ])
 
-service_dialog_tree = Tree(sel.ver_pick({
+service_dialog_tree = Tree(version.pick({
     'default': "//div[@id='dialogs_tree_div']//table",
     '5.3': "//div[@id='dialogs_tree_div']//ul"
 }))
@@ -87,7 +87,7 @@ class ServiceDialog(Updateable):
                           'submit_button': self.submit,
                           'cancel_button': self.cancel})
         if(self.tab_label is not None):
-            btn_marker = sel.ver_pick({
+            btn_marker = version.pick({
                 'default': "Add a New Tab to this Dialog",
                 '5.3': "Add a new Tab to this Dialog"
             })
@@ -96,7 +96,7 @@ class ServiceDialog(Updateable):
             fill(tab_form, {'tab_label': self.tab_label,
                             'tab_desc': self.tab_desc})
         if(self.box_label is not None):
-            btn_marker = sel.ver_pick({
+            btn_marker = version.pick({
                 'default': "Add a New Box to this Tab",
                 '5.3': "Add a new Box to this Tab"
             })
@@ -105,7 +105,7 @@ class ServiceDialog(Updateable):
             fill(box_form, {'box_label': self.box_label,
                             'box_desc': self.box_desc})
         if(self.ele_label is not None):
-            btn_marker = sel.ver_pick({
+            btn_marker = version.pick({
                 'default': "Add a New Element to this Box",
                 '5.3': "Add a new Element to this Box"
             })

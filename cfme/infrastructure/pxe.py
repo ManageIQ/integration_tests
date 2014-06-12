@@ -379,7 +379,7 @@ class CustomizationTemplate(Updateable):
         self._submit(cancel, template_add_button)
         if not cancel:
             flash.assert_message_match(
-                sel.ver_pick({
+                version.pick({
                     'default': 'Customization Template "{}" was added'.format(self.name),
                     '5.3': 'Customization Template "{}" was saved'.format(self.name)
                 }))
