@@ -1,4 +1,3 @@
-    # pylint: disable=E1101
 import pytest
 
 from utils import providers

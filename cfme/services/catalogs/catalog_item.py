@@ -1,20 +1,15 @@
-import functools
-
-import ui_navigate as nav
-
-import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui as web_ui
-import cfme.web_ui.toolbar as tb
+# -*- coding: utf-8 -*-
+from functools import partial
 from collections import OrderedDict
-from cfme.web_ui import Form, Select, fill, Table, tabstrip, Radio, accordion, flash
+
+from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import Form, Radio, Select, Table, accordion, fill, flash, menu, tabstrip
+from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 
 
-tb_select = functools.partial(tb.select, "Configuration")
-catalog_item_tree = web_ui.Tree(sel.ver_pick({
-    'default': '//div[@id="sandt_tree_box"]//table',
-    '5.3': '//div[@id="sandt_treebox"]//ul'
-}))
+cfg_btn = partial(tb.select, "Configuration")
+accordion_tree = partial(accordion.tree, "Catalog Items")
 
 template_select_form = Form(
     fields=[
@@ -101,33 +96,52 @@ resources_form = Form(
 
 
 def _all_catalogitems_add_new(context):
-    catalog_item_tree.click_path('All Catalog Items')
-    tb_select('Add a New Catalog Item')
+    accordion_tree('All Catalog Items')
+    cfg_btn('Add a New Catalog Item')
     provider_type = context['provider_type']
     sel.select("//select[@id='st_prov_type']", provider_type)
 
 
 def _all_catalogbundle_add_new(context):
-    sel.click("//div[@id='sandt_tree_div']//td[.='All Catalog Items']")
-    tb_select('Add a New Catalog Bundle')
+    accordion_tree('All Catalog Items')
+    cfg_btn('Add a New Catalog Bundle')
 
 
-nav.add_branch(
+menu.nav.add_branch(
     'services_catalogs',
-    {'catalog_items': [nav.partial(accordion.click, 'Catalog Items'),
-        {'catalog_item_new': _all_catalogitems_add_new,
-         'catalog_item': [lambda ctx: catalog_item_tree.
-                          click_path('All Catalog Items',
-                                     ctx['catalog'], ctx['catalog_item'].name),
-                          {'catalog_item_edit': nav.partial(tb_select,
-                                                            "Edit this Item")}]}],
-     'catalog_bundle': [nav.partial(accordion.click, 'Catalog Items'),
-        {'catalog_bundle_new': _all_catalogbundle_add_new,
-         'catalog_bundle': [lambda ctx: catalog_item_tree.
-                            click_path('All Catalog Items',
-                                       ctx['catalog'], ctx['catalog_bundle'].name),
-                            {'catalog_bundle_edit': nav.partial(tb_select,
-                                                                "Edit this Item")}]}]})
+    {
+        'catalog_items':
+        [
+            lambda _: accordion.click('Catalog Items'),
+            {
+                'catalog_item_new': _all_catalogitems_add_new,
+                'catalog_item':
+                [
+                    lambda ctx: accordion_tree(
+                        'All Catalog Items', ctx['catalog'], ctx['catalog_item'].name),
+                    {
+                        'catalog_item_edit': lambda _: cfg_btn("Edit this Item")
+                    }
+                ]
+            }
+        ],
+        'catalog_bundle':
+        [
+            lambda _: accordion.click('Catalog Items'),
+            {
+                'catalog_bundle_new': _all_catalogbundle_add_new,
+                'catalog_bundle':
+                [
+                    lambda ctx: accordion_tree(
+                        'All Catalog Items', ctx['catalog'], ctx['catalog_bundle'].name),
+                    {
+                        'catalog_bundle_edit': lambda _: cfg_btn("Edit this Item")
+                    }
+                ]
+            }
+        ]
+    }
+)
 
 
 class CatalogItem(Updateable):
@@ -173,7 +187,7 @@ class CatalogItem(Updateable):
 
     def delete(self):
         sel.force_navigate('catalog_item', context={'catalog': self.catalog, 'catalog_item': self})
-        tb_select("Remove Item from the VMDB", invokes_alert=True)
+        cfg_btn("Remove Item from the VMDB", invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('The selected Catalog Item was deleted')
 

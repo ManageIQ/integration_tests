@@ -352,7 +352,7 @@ class Table(object):
         matching_rows_list = list()
         for value in cells.values():
             # Get a root locator ready, self._body_loc is the SplitTable body locator
-            root = sel.element(self._root_loc)
+            root = sel.move_to_element(self._root_loc)
             # Get all td elements that contain the value text
             matching_rows_list.append(sel.elements(cell_text_loc % value, root=root))
 
@@ -1226,7 +1226,7 @@ class Tree(object):
         # Tree goes off screen and returns.
         self._detect()
 
-        parent = None
+        parent = self.locator
         path = list(path)
         node = None
         for i, item in enumerate(path):

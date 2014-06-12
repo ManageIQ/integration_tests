@@ -9,10 +9,11 @@ import utils.log
 class SlaveInteractor:
     def __init__(self, config, channel):
         self.config = config
-        self.slaveid = conf.env['slaveid']
-        self.base_url = conf.env['base_url']
+        self.slaveid = conf.runtime['env']['slaveid'] = config.slaveinput['slaveid']
+        self.base_url = conf.runtime['env']['base_url'] = config.slaveinput['base_url']
         # Override the base_url for this process and set the slave_id
         self.log = utils.log.create_sublogger('slave-%s' % self.slaveid)
+        self.log.info('slave started with slaveinput: %r' % self.config.slaveinput)
         utils.log.logger = self.log
         self.channel = channel
         config.pluginmanager.register(self)
@@ -60,13 +61,19 @@ class SlaveInteractor:
     def run_tests(self, torun):
         items = self.session.items
         self.item_index = torun.pop(0)
+        item = items[self.item_index]
         if torun:
             nextitem = items[torun[0]]
         else:
             nextitem = None
-        self.config.hook.pytest_runtest_protocol(
-            item=items[self.item_index],
-            nextitem=nextitem)
+
+        if self.config.option.collectonly:
+            module, testname = item.nodeid.rsplit('::', 1)
+            message = '%s: %s' % (module, str(item))
+            self.sendevent('message', message=message)
+        else:
+            self.config.hook.pytest_runtest_protocol(
+                item=item, nextitem=nextitem)
 
         if not nextitem:
             self.sendevent("needs_tests")
@@ -139,7 +146,7 @@ if __name__ == '__channelexec__':
     sys.path.insert(0, importpath)
     os.environ['PYTHONPATH'] = (importpath + os.pathsep +
         os.environ.get('PYTHONPATH', ''))
-    #os.environ['PYTHONPATH'] = importpath
+    # os.environ['PYTHONPATH'] = importpath
     config = remote_initconfig(option_dict, args)
     config.slaveinput = slaveinput
     config.slaveoutput = {}

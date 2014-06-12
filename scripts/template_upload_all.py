@@ -33,6 +33,12 @@ def parse_cmd_line():
     parser.add_argument('--stream', dest='stream',
                         help='Stream to work with (downstream, upstream)',
                         default=None)
+    parser.add_argument('--provider-type', dest='provider_type',
+                        help='Type of provider to upload to (virtualcenter, rhevm, openstack)',
+                        default=None)
+    parser.add_argument('--provider-version', dest='provider_version',
+                        help='Version of chosen provider',
+                        default=None)
     args = parser.parse_args()
     return args
 
@@ -160,6 +166,8 @@ if __name__ == "__main__":
     urls = cfme_data['basic_info']['cfme_images_url']
     stream = args.stream or cfme_data['template_upload']['stream']
     mgmt_sys = cfme_data['management_systems']
+    provider_type = args.provider_type or cfme_data['template_upload']['provider_type']
+    provider_version = args.provider_version or cfme_data['template_upload']['provider_version']
 
     for key, url in urls.iteritems():
         if stream is not None:
@@ -169,6 +177,12 @@ if __name__ == "__main__":
         kwargs = {}
 
         for provider in mgmt_sys:
+            if provider_type is not None:
+                if mgmt_sys[provider]['type'] != provider_type:
+                    continue
+                if provider_version is not None:
+                    if str(mgmt_sys[provider]['version']) != str(provider_version):
+                        continue
             if mgmt_sys[provider].get('template_upload', None):
                 if 'rhevm' in mgmt_sys[provider]['type']:
                     module = 'template_upload_rhevm'

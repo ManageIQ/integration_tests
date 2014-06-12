@@ -160,7 +160,7 @@ class Namespace(TreeNode, Updateable):
     def __init__(self, name=None, description=None, parent=None, domain=def_domain):
         self.name = name
         self.description = description
-        if domain:
+        if domain and not parent:
             self.parent = domain
         else:
             self.parent = parent
@@ -326,7 +326,7 @@ class Class(TreeNode, Updateable):
                  ('max_time_text', loc("//input[@id='field%s_max_time%s']")),
                  ('add_entry_button', "//img[@alt='Add this entry']"),
                  ('remove_entry_button',
-                  remove("//a[contains(@title, 'delete this') and contains(@href, 'arr_id=%s')]"
+                  remove("//a[contains(@title, 'delete this') and contains(@href, 'arr_id=%s')]/img"
                          % idx))])
 
     schema_edit_page = Region(

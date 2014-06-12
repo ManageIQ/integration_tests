@@ -62,7 +62,7 @@ def update(o, **kwargs):
     # let the block presumably mutate o
     yield
 
-    #swap the states of o and cp so that cp is the updated one
+    # swap the states of o and cp so that cp is the updated one
     o.__dict__, cp.__dict__ = cp.__dict__, o.__dict__
 
     o_updates = updates(o, cp)

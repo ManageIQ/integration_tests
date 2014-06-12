@@ -106,7 +106,7 @@ def setup_provider(provider_key, validate=True, check_existing=True):
     """
     if provider_key in list_cloud_providers():
         from cfme.cloud.provider import get_from_config
-        #provider = setup_infrastructure_provider(provider_key, validate, check_existing)
+        # provider = setup_infrastructure_provider(provider_key, validate, check_existing)
     elif provider_key in list_infra_providers():
         from cfme.infrastructure.provider import get_from_config
     else:

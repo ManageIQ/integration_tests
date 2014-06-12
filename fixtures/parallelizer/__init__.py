@@ -55,13 +55,9 @@ class DSession(object):
         self.maxfail = config.getvalue("maxfail")
         self.queue = queue.Queue()
         self._failed_collection_errors = {}
-        try:
-            self.terminal = config.pluginmanager.getplugin("terminalreporter")
-        except KeyError:
-            self.terminal = None
-        else:
-            self.trdist = TerminalDistReporter(config)
-            config.pluginmanager.register(self.trdist, "terminaldistreporter")
+        self.terminal = reporter()
+        self.trdist = TerminalDistReporter(config)
+        config.pluginmanager.register(self.trdist, "terminaldistreporter")
 
     def report_line(self, line):
         if self.terminal and self.config.option.verbose >= 0:
@@ -69,6 +65,9 @@ class DSession(object):
 
     @pytest.mark.trylast
     def pytest_sessionstart(self, session):
+        # If reporter() gave us a fake terminal reporter in __init__, the real
+        # terminal reporter is registered by now
+        self.terminal = reporter()
         self.nodemanager = NodeManager(self.config)
         self.nodemanager.setup_nodes(putevent=self.queue.put)
 
@@ -133,11 +132,11 @@ class DSession(object):
             self.slave_errordown(node, "keyboard-interrupt")
             return
         self.sched.remove_node(node)
-        #assert not crashitem, (crashitem, node)
+        # assert not crashitem, (crashitem, node)
         if self.shuttingdown and not self.sched.hasnodes():
             self.session_finished = True
 
-        #self.send_tests(node)
+        # self.send_tests(node)
 
     def slave_errordown(self, node, error):
         self.trdist.testnodedown(node, error)
@@ -148,7 +147,7 @@ class DSession(object):
         else:
             if crashitem:
                 self.handle_crashitem(crashitem, node)
-                #self.report_line("item crashed on node: %s" % crashitem)
+                # self.report_line("item crashed on node: %s" % crashitem)
         if not self.sched.hasnodes():
             self.session_finished = True
 
@@ -174,7 +173,7 @@ class DSession(object):
         if not (rep.passed and rep.when != "call"):
             if rep.when in ("setup", "call"):
                 self.sched.remove_item(node, rep.item_index, rep.duration)
-        #self.report_line("testreport %s: %s" %(rep.id, rep.status))
+        # self.report_line("testreport %s: %s" %(rep.id, rep.status))
         rep.node = node
         self.config.hook.pytest_runtest_logreport(report=rep)
         self._handlefailures(rep)
@@ -185,6 +184,9 @@ class DSession(object):
 
     def slave_needs_tests(self, node):
         self.sched.send_tests(node)
+
+    def slave_message(self, node, message):
+        self.trdist.nodemessage(node, message)
 
     def _failed_slave_collectreport(self, node, rep):
         # Check we haven't already seen this report (from
@@ -240,7 +242,7 @@ class ModscopeScheduling(object):
         if not self.collection_is_completed or self.pending:
             self.log.debug('pending: %r' % self.pending)
             return False
-        #for items in self.node2pending.values():
+        # for items in self.node2pending.values():
         #    if items:
         #        return False
         return True
@@ -297,7 +299,7 @@ class ModscopeScheduling(object):
         for node in self.node2pending:
             self.send_tests(node)
 
-    #f = open("/tmp/sent", "w")
+    # f = open("/tmp/sent", "w")
     def send_tests(self, node):
         if self.module_testindex_gen is None:
             self.module_testindex_gen = self._modscope_item_generator(self.pending, self.collection)
@@ -432,6 +434,9 @@ class TerminalDistReporter(object):
             return
         self.write_line("[%s] node down: %s" % (node.gateway.id, error))
 
+    def nodemessage(self, node, message):
+        self.write_line("[%s] %s" % (node.gateway.id, message))
+
 
 class NodeManager(object):
     EXIT_TIMEOUT = 10
@@ -516,11 +521,11 @@ class SlaveController(object):
             if not self.channel.isclosed():
                 self.log.info("closing", self.channel)
                 self.channel.close()
-            #del self.channel
+            # del self.channel
         if hasattr(self, 'gateway'):
             self.log.info("exiting", self.gateway)
             self.gateway.exit()
-            #del self.gateway
+            # del self.gateway
 
     def send_runtest_some(self, indices):
         self.sendcommand("runtests", indices=indices)
@@ -583,6 +588,8 @@ class SlaveController(object):
                 self.notify_inproc(eventname, node=self, ids=kwargs['ids'])
             elif eventname == "needs_tests":
                 self.notify_inproc(eventname, node=self)
+            elif eventname == "message":
+                self.notify_inproc(eventname, node=self, message=kwargs['message'])
             else:
                 raise ValueError("unknown event: %s" % eventname)
         except KeyboardInterrupt:

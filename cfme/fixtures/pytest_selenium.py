@@ -17,7 +17,7 @@ from utils import conf
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
-     InvalidElementStateException, MoveTargetOutOfBoundsException)
+     InvalidElementStateException, MoveTargetOutOfBoundsException, WebDriverException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
@@ -238,7 +238,11 @@ def click(loc, wait_ajax=True):
         wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
             handy to not do that. (some toolbar clicks)
     """
-    move_to_element(loc).click()
+    # Move mouse cursor to element
+    move_to_element(loc)
+    # and then click on current mouse position
+    ActionChains(browser()).click().perform()
+    # -> using this approach, we don't check if we clicked a specific element
     if wait_ajax:
         wait_for_ajax()
 
@@ -255,8 +259,9 @@ def move_to_element(loc, **kwargs):
     brand = "//div[@id='page_header_div']//div[contains(@class, 'brand')]"
     wait_for_ajax()
     el = element(loc, **kwargs)
+    move_to = ActionChains(browser()).move_to_element(el)
     try:
-        ActionChains(browser()).move_to_element(el).perform()
+        move_to.perform()
     except MoveTargetOutOfBoundsException:
         # ff workaround
         browser().execute_script("arguments[0].scrollIntoView();", el)
@@ -266,6 +271,7 @@ def move_to_element(loc, **kwargs):
                 browser().execute_script("arguments[0].scrollIntoView();", element(brand))
             except MoveTargetOutOfBoundsException:
                 pass
+        move_to.perform()
     return el
 
 
@@ -583,7 +589,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # The some of the navigation steps cannot succeed
         logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
         recycle = True
-    except (NoSuchElementException, InvalidElementStateException):
+    except (NoSuchElementException, InvalidElementStateException, WebDriverException):
         from cfme.web_ui import cfme_exception as cfme_exc  # To prevent circular imports
         # If the page is blocked, then recycle...
         if is_displayed("//div[@id='blocker_div']"):

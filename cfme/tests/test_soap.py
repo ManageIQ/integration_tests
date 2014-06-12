@@ -4,16 +4,8 @@
 import pytest
 from random import choice
 
-from utils import miq_soap
 
-
-@pytest.fixture(scope="function")
-def set_client(soap_client):
-    """To be 100%% sure we work with correct client"""
-    miq_soap.set_client(soap_client)
-
-
-@pytest.mark.skip_selenium
+@pytest.mark.usefixtures("setup_infrastructure_providers")
 class TestSoapBasicInteraction(object):
     def test_connectivity(self, soap_client):
         assert soap_client.service.EVMPing(), "Could not do EVMPing()!"
