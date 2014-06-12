@@ -4,14 +4,13 @@ from cfme.services.catalogs import ec2_catalog_item as ec2
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from utils import testgen
-from utils.randomness import generate_random_string
-from utils.providers import setup_cloud_providers
 from cfme.services import requests
 from cfme.web_ui import flash
+from utils import testgen
+from utils.randomness import generate_random_string
+from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
-import time
 
 
 pytestmark = [
@@ -22,7 +21,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
+    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, 'ec2', 'provisioning')
 
     new_argvalues = []
     new_idlist = []
@@ -43,18 +42,27 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_cloud_providers()
+@pytest.fixture
+def provider_init(provider_key):
+    """cfme/infrastructure/provider.py provider object."""
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + generate_random_string()
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                     submit=True, cancel=True)
+                     submit=True, cancel=True,
+                     tab_label="tab_" + generate_random_string(), tab_desc="tab_desc",
+                     box_label="box_" + generate_random_string(), box_desc="box_desc",
+                     ele_label="ele_" + generate_random_string(),
+                     ele_name="service_name",
+                     ele_desc="ele_desc", choose_type="Text Box", default_text_box="default value")
     service_dialog.create()
+    flash.assert_success_message('Dialog "%s" was added' % dialog)
     yield dialog
 
 
@@ -77,7 +85,7 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 
 
 @pytest.mark.usefixtures('setup_providers')
-def test_ec2_catalog_item(provider_key, provider_mgmt, provider_crud, provider_type, provisioning, dialog, catalog, request):
+def test_ec2_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud, provider_type, provisioning, dialog, catalog, request):
     # tries to delete the VM that gets created here
     vm_name = 'test_ec2_servicecatalog-%s' % generate_random_string()
     image = provisioning['image']['name']
@@ -101,7 +109,6 @@ def test_ec2_catalog_item(provider_key, provider_mgmt, provider_crud, provider_t
 
     ec2_catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
-    time.sleep(5)
     service_catalogs.order(catalog.name, ec2_catalog_item)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s' % item_name)

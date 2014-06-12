@@ -6,7 +6,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from collections import OrderedDict
-from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash
+from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash, form_buttons
 from utils.update import Updateable
 
 
@@ -19,8 +19,8 @@ catalog_item_tree = web_ui.Tree(sel.ver_pick({
 template_select_form = Form(
     fields=[
         ('template_table', Table('//div[@id="prov_vm_div"]//table[@class="style3"]')),
-        ('add_button', "//img[@title='Add']"),
-        ('cancel_button', '//*[@id="form_buttons"]/li[2]/img')
+        ('add_button', form_buttons.add),
+        ('cancel_button', form_buttons.cancel)
     ]
 )
 
