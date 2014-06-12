@@ -15,10 +15,6 @@ class SSHClient(paramiko.SSHClient):
     Constructor kwargs are handed directly to paramiko.SSHClient.connect()
     """
     def __init__(self, stream_output=False, **connect_kwargs):
-        port = connect_kwargs.get('port', 22)
-        addr = connect_kwargs.get('hostname', None)
-        if not net_check(port, addr=addr):
-            raise Exception("Connection is not available as port is unavailable")
         super(SSHClient, self).__init__()
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self._streaming = stream_output
@@ -58,6 +54,14 @@ class SSHClient(paramiko.SSHClient):
 
     def __exit__(self, *args, **kwargs):
         self.close()
+
+    def connect(self, hostname, *args, **kwargs):
+        """See paramiko.SSHClient.connect"""
+        port = int(kwargs.get('port', 22))
+        if not net_check(port, hostname):
+            raise Exception("Connection to %s is not available as port %d is unavailable"
+                            % (hostname, port))
+        super(SSHClient, self).connect(hostname, *args, **kwargs)
 
     def run_command(self, command):
         return command_runner(self, command, self._streaming)
