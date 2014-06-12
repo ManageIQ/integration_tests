@@ -172,6 +172,7 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
             depot_type,
             depot_machine
         )
+    # Fails on upstream - BZ1108087
     credentials.update()
     flash.assert_no_errors()
     request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
