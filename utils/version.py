@@ -1,4 +1,3 @@
-# Taken from stdlib, just change classes to new-style and clean up
 import string
 import re
 from types import StringType
@@ -11,8 +10,11 @@ import multimethods as mm
 
 @lru_cache(maxsize=32)
 def current_version():
-        """ A lazy cached method to return the appliance version. """
+    """ A lazy cached method to return the appliance version. """
+    try:
         return LooseVersion(SSHClient().get_version())
+    except:
+        return None
 
 
 def product_version_dispatch(*_args, **_kwargs):
@@ -56,7 +58,7 @@ class Version(object):
     def __repr__(self):
         return "%s ('%s')" % (self.__class__.__name__, str(self))
 
-
+# Taken from stdlib, just change classes to new-style and clean up
 # Interface for version-number classes -- must be implemented
 # by the following classes (the concrete ones -- Version should
 # be treated as an abstract class).
