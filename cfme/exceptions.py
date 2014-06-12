@@ -137,9 +137,9 @@ class ScheduleNotFound(CFMEException):
     """
 
 
-class RequestNotFound(CFMEException):
+class RequestException(CFMEException):
     """
-    Raised if a request was not found during _request functions in
+    Raised if a request was not found or multiple rows matched during _request functions in
     :py:mod:`cfme.services.requests`
     """
 
@@ -199,4 +199,3 @@ class ListAccordionLinkNotFound(CFMEException):
     expended :py:mod:`cfme.web_ui.listaccordion` content section.
     """
     pass
-
