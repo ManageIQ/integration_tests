@@ -13,8 +13,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 from time import sleep, time
 from collections import Iterable
 import json
-
-from pkg_resources import parse_version
+from utils import conf
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
@@ -29,42 +28,8 @@ from multimethods import singledispatch, multidispatch
 
 import pytest
 from cfme import exceptions
-from utils import conf, lazycache
 from utils.browser import browser, ensure_browser_open
 from utils.log import logger
-from utils.ssh import SSHClient
-
-
-class Version(object):
-    """
-    A lazycached object which simply returns the appliance version.
-    """
-    @lazycache
-    def version(self):
-        """ A lazy cached method to return the appliance version. """
-        try:
-            version = SSHClient().get_version()
-        except:
-            version = 'default'
-        return version
-
-ver = Version()
-
-
-def ver_pick(v_dict):
-    """
-    Collapses an ambiguous series of objects bound to specific versions
-    by interrogating the CFME Version and returning the correct item.
-    """
-    version = parse_version(ver.version)
-    prev = None
-    for ver_test in sorted([(parse_version(key), key) for key in v_dict.keys()]):
-        if version >= ver_test[0]:
-            prev = ver_test[1]
-        else:
-            break
-    logger.debug(" Collapsing Singularity Cap'n, returning: {}".format(v_dict[prev]))
-    return v_dict[prev]
 
 
 class ByValue(object):

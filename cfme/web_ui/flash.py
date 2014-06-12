@@ -5,17 +5,26 @@
 from cfme.web_ui import Region
 import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
+from utils import version
+from cfme.versions import upstream
 
-area = Region(locators={
-    'message': sel.ver_pick({
-        'default': '//div[starts-with(@id, "flash_") and '
+area = Region(locators=
+              {'message': version.pick(
+                  {'default': '//div[starts-with(@id, "flash_") and '
                    'not(ancestor::*[contains(@style,"display: none")])]//li'
                    '| //div[@id="flash_div"]',  # login screen
-        '5.3': '//div[starts-with(@id, "flash_") and '
-               'not(ancestor::*[contains(@style,"display: none")])]'
-               '//div[contains(@class,"alert")]'
-    })
-})
+                   '5.3': '//div[starts-with(@id, "flash_") and '
+                   'not(ancestor::*[contains(@style,"display: none")])]'
+                   '//div[contains(@class,"alert")]'
+                   })
+               })
+
+_mapping_new = {
+    "alert-warning": "warning",
+    "alert-success": "success",
+    "alert-danger": "error",
+    "alert-info": "info"
+}
 
 
 class Message(object):
@@ -33,6 +42,34 @@ class Message(object):
         return "[Flash %s message %s]" % (self.level, str(repr(self.message)))
 
 
+@version.dependent
+def get_message_level(el):
+    return sel.get_attribute(el, "class") or "error"
+
+
+@get_message_level.method(upstream)
+def get_message_level_up(el):
+    _class = sel.get_attribute(el, "class")
+    for key, value in _mapping_new.iteritems():
+        if key in _class:
+            return value
+    return "error"
+
+
+@version.dependent
+def get_message_text(el):
+    strong = sel.elements("./strong", root=el)
+    if strong:
+        return sel.text(strong[0])
+    else:
+        return sel.text(el)
+
+
+@get_message_text.method(upstream)
+def get_message_text_up(el):
+    return sel.text(el)
+
+
 def message(el):
     """ Turns an element into a :py:class:`Message` object.
 
@@ -40,8 +77,8 @@ def message(el):
         el: The element containing the flass message.
     Returns: A :py:class:`Message` object.
     """
-    return Message(message=sel.text(el),
-                   level=sel.get_attribute(el, 'class') or 'error')  # no class attr on login screen
+    return Message(message=get_message_text(el),
+                   level=get_message_level(el))  # no class attr on login screen
 
 
 def get_messages():
@@ -72,7 +109,7 @@ def is_error(message):
     Args:
         message: The message object.
     """
-    return any([lev in message.level for lev in ['error', 'alert-danger']])
+    return any([lev in message.level for lev in {"error"}])
 
 
 def assert_no_errors(messages=None):
@@ -107,7 +144,7 @@ def assert_success_message(m):
     messages = get_messages()
     assert_no_errors(messages)
     if not any([
-            (fm.message == m and (fm.level == 'info' or "success" in fm.level))
+            (fm.message == m and (fm.level in {"info", "success"}))
             for fm
             in messages]):
         raise Exception("No matching info flash message for '%s', instead got %s" % (m, messages))

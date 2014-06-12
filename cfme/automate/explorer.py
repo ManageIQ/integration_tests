@@ -8,9 +8,9 @@ from cfme.web_ui.tabstrip import select_tab
 from cfme.web_ui import Form, Tree, fill, Select, ScriptBox, DHTMLSelect, Region
 import cfme.exceptions as exceptions
 from utils.update import Updateable
-import utils.error as error
+from utils import error, version
 
-tree = Tree(sel.ver_pick({'default': '//table//tr[@title="Datastore"]/../..',
+tree = Tree(version.pick({'default': '//table//tr[@title="Datastore"]/../..',
                          '9.9.9.9': '//ul//a[@title="Datastore"]/../../..'}))
 cfg_btn = partial(tb.select, 'Configuration')
 
@@ -32,7 +32,7 @@ def table_select(name):
 
 
 def nav_edit(path):
-    dp_length = sel.ver_pick({'default': 1,
+    dp_length = version.pick({'default': 1,
                               '9.9.9.9': 2})
     if len(path) > dp_length:
         cfg_btn('Edit Selected Item')
@@ -116,7 +116,7 @@ class Domain(TreeNode):
         self.parent = None
 
 
-def_domain = sel.ver_pick({'default': None,
+def_domain = version.pick({'default': None,
                            '9.9.9.9': Domain('Default')})
 
 
@@ -189,14 +189,14 @@ class Namespace(TreeNode, Updateable):
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_table_select", context={'tree_item': self.parent,
                                                              'table_item': self})
-        dp_length = sel.ver_pick({'default': 1,
+        dp_length = version.pick({'default': 1,
                                   '9.9.9.9': 2})
         if len(self.path) > dp_length:
             cfg_btn('Remove selected Items', invokes_alert=True)
         else:
             cfg_btn('Remove Namespaces', invokes_alert=True)
         sel.handle_alert(cancel)
-        del_msg = sel.ver_pick({
+        del_msg = version.pick({
             'default': 'The selected Automate Namespaces were deleted',
             '9.9.9.9': 'Automate Namespace "{}": Delete successful'.format(self.description)
         })

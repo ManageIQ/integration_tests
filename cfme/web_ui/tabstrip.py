@@ -14,10 +14,10 @@ from collections import Mapping
 import cfme.fixtures.pytest_selenium as sel
 from cfme import web_ui
 from utils.log import logger
-
+from utils import version
 
 _entry_div = "//div[contains(@class, 'ui-tabs')]"  # Entry point
-_entry_ul = sel.ver_pick({
+_entry_ul = version.pick({
     '5.3': '//ul[@class="tab2"]',
     'default': '//ul[@id="tab" and @class="tab"]'
 })

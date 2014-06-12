@@ -12,6 +12,7 @@ from selenium.common.exceptions import NoSuchElementException
 from utils.log import logger
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
+from utils import version
 
 
 details_page = Region(infoblock_type='detail')
@@ -27,7 +28,7 @@ visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
                     "/ul[@class='dynatree-container']")
 
 manage_policies_tree = CheckboxTree(
-    sel.ver_pick({
+    version.pick({
         "default": "//div[@id='treebox']/div/table",
         "5.3": "//div[@id='protect_treebox']/ul"
     })

@@ -4,6 +4,7 @@ bottle
 bottle-sqlite
 execnet
 flake8
+functools32
 ipython
 Jinja2
 ovirt-engine-sdk-python

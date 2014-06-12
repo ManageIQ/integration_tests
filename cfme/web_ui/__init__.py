@@ -50,6 +50,7 @@ from multimethods import multimethod, multidispatch, Anything
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import browser
+from utils import version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
@@ -1383,14 +1384,14 @@ class InfoBlock(object):
     def __init__(self, itype):
         if itype == "detail":
             # We have to collapse the locator singularity early here, hence the .locate()
-            self._box_locator = sel.ver_pick({
+            self._box_locator = version.pick({
                 '5.3': '//table//th[contains(., "%s")]/../../../..',
                 'default': '//div[@class="modbox"]/h2[@class="modtitle"]'
                            '[contains(., "%s")]/..'})
             self._pair_locator = 'table/tbody/tr/td[1][@class="label"][.="%s"]/..'
             self._value_locator = 'td[2]'
         elif itype == "form":
-            self._box_locator = sel.ver_pick({
+            self._box_locator = version.pick({
                 'default': '//fieldset/p[@class="legend"][contains(., "%s")]/..'})
             self._pair_locator = 'table/tbody/tr/td[1][@class="key"][.="%s"]/..'
             self._value_locator = 'td[2]'

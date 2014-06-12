@@ -7,6 +7,7 @@ from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form
 from cfme.web_ui.menu import nav
 from utils.db_queries import get_server_region
 from utils.update import Updateable
+from utils import version
 
 
 def get_ip_address():
@@ -30,7 +31,7 @@ def ac_tree(*path):
     Args:
         *path: Path to click in the tree that follows the '[cfme] region xyz' node
     """
-    path = sel.ver_pick({
+    path = version.pick({
         #"9.9.9.9": ["CFME Region: Region %d [%d]" % server_region_pair()] + list(path),
         "default": path,
     })
