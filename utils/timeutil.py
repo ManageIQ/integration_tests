@@ -13,6 +13,8 @@ class parsetime(_datetime):
 
     """
     _american_with_utc_format = "%m/%d/%y %H:%M:%S UTC"
+    _iso_with_utc_format = "%Y-%m-%d %H:%M:%S UTC"
+    _american_minutes = "%m/%d/%y %H:%M"
     _american_date_only_format = "%m/%d/%y"
     _iso_date_only_format = "%Y-%m-%d"
     _request_format = "%Y-%m-%d-%H-%M-%S"
@@ -41,13 +43,55 @@ class parsetime(_datetime):
         return self._parse(self._american_with_utc_format, time_string)
 
     def to_american_with_utc(self):
-        """ Convert the this object to string representation in american utc format.
+        """ Convert the this object to string representation in american with UTC.
 
         CFME's format here is 'mm/dd/yy hh:mm:ss UTC'
 
         Returns: :py:class`str` object
         """
         return self.strftime(self._american_with_utc_format)
+
+    @classmethod
+    def from_iso_with_utc(self, time_string):
+        """ Convert the string representation of the time into parsetime()
+
+        CFME's format here is 'mm-dd-yy hh:mm:ss UTC'
+
+        Args:
+            time_string: String with time to parse
+        Returns: :py:class`utils.timeutil.datetime()` object
+        """
+        return self._parse(self._iso_with_utc_format, time_string)
+
+    def to_iso_with_utc(self):
+        """ Convert the this object to string representation in american with UTC.
+
+        CFME's format here is 'mm-dd-yy hh:mm:ss UTC'
+
+        Returns: :py:class`str` object
+        """
+        return self.strftime(self._iso_with_utc_format)
+
+    @classmethod
+    def from_american_minutes(self, time_string):
+        """ Convert the string representation of the time into parsetime()
+
+        CFME's format here is 'mm/dd/yy hh:mm'
+
+        Args:
+            time_string: String with time to parse
+        Returns: :py:class`utils.timeutil.datetime()` object
+        """
+        return self._parse(self._american_minutes, time_string)
+
+    def to_american_minutes(self):
+        """ Convert the this object to string representation in american with just minutes.
+
+        CFME's format here is 'mm/dd/yy hh:mm'
+
+        Returns: :py:class`str` object
+        """
+        return self.strftime(self._american_minutes)
 
     @classmethod
     def from_american_date_only(self, time_string):

@@ -68,11 +68,13 @@ class MultiBoxSelect(object):
 
         Returns: :py:class:`bool` with success.
         """
-        if self._remove_all is None:
-            raise NotImplementedError("'Remove all' button was not specified!")
         if len(self._selected.options) == 0:
             return  # No need to flush
-        sel.click(sel.element(self._remove_all))
+        if self._remove_all is None:
+            # Check all selected
+            self.remove(*[sel.text(o).encode("utf-8").strip() for o in self._selected.options])
+        else:
+            sel.click(sel.element(self._remove_all))
         return not any(map(flash.is_error, flash.get_all_messages()))
 
     def add(self, *values, **kwargs):

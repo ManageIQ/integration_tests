@@ -135,6 +135,8 @@ class TabStripForm(web_ui.Form):
             (as it is with the normal Form) but the ordering of tabs is not guaranteed by default.
             If such ordering is needed, tab_fields can be a ``collections.OrderedDict``.
         identifying_loc: A locator which should be present if the form is visible.
+        order: If specified, specifies order of the tabs. Can be lower number than number of tabs,
+            remaining values will be complemented.
 
     Usage:
 
@@ -170,9 +172,20 @@ class TabStripForm(web_ui.Form):
 
     """
 
-    def __init__(self, fields=None, tab_fields=None, identifying_loc=None):
+    def __init__(self, fields=None, tab_fields=None, identifying_loc=None, order=None):
         fields = fields or list()
-        for tab_ident, field in tab_fields.iteritems():
+        if order is None:
+            order = tab_fields.keys()
+        else:
+            order = list(order)
+            if len(order) > len(tab_fields.keys()):
+                raise ValueError("More order items passed than there is in real!")
+            if len(order) < len(tab_fields.keys()):
+                remaining_keys = set(tab_fields.keys()) - set(order)
+                for key in remaining_keys:
+                    order.append(key)
+        for tab_ident in order:
+            field = tab_fields[tab_ident]
             for field_name, field_locator in field:
                 fields.append((field_name, _TabStripField(tab_ident, field_locator)))
         super(TabStripForm, self).__init__(fields, identifying_loc)

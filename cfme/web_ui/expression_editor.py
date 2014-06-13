@@ -485,3 +485,20 @@ def _create_program_from_list(command_list):
 @create_program.method(types.NoneType)
 def _create_program_from_none(none):
     return lambda: none
+
+
+class Expression(object):
+    """This class enables to embed the expression in a Form.
+
+    Args:
+        show_func: Function to call to show the expression if there are more of them.
+    """
+    def __init__(self, show_func=lambda: None):
+        self.show_func = show_func
+
+
+@web_ui.fill.method((Expression, web_ui.Anything))
+def _fill_expression(e, p):
+    e.show_func()
+    prog = create_program(p)
+    prog()

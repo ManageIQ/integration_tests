@@ -20,6 +20,7 @@
   * :py:class:`Radio`
   * :py:class:`ScriptBox`
   * :py:class:`Select`
+  * :py:class:`ShowingInputs`
   * :py:class:`SplitTable`
   * :py:class:`Table`
   * :py:class:`Tree`
@@ -788,6 +789,21 @@ class CheckboxTable(Table):
             cells: See :py:meth:`Table.find_rows_by_cells`
         """
         self._set_rows_by_cells(cells, False)
+
+
+def table_in_object(table_title):
+    """If you want to point to tables inside object view, this is what you want to use.
+
+    Works both on down- and upstream.
+
+    Args:
+        table_title: Text in `p` element preceeding the table
+    Returns: XPath locator for the desired table.
+    """
+    # Description     paragraph with the text       following element    which is the table
+    return "//p[@class='legend' and text()='{}']/following-sibling::*[1][@class='style3']".format(
+        table_title
+    )
 
 
 @multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))
@@ -2027,5 +2043,44 @@ def fill_cb_select_dictlist(select, dictlist):
 
 
 @fill.method((CheckboxSelect, basestring))
+@fill.method((CheckboxSelect, sel.ByText))
 def fill_cb_select_string(select, cb):
     return fill(select, {cb})
+
+
+class ShowingInputs(object):
+    """This class abstracts out as a container of inputs, that appear after preceeding was filled.
+
+    Args:
+        *locators: In-order-of-display specification of locators.
+    Keywords:
+        min_values: How many values are required (Default: 0)
+    """
+
+    def __init__(self, *locators, **kwargs):
+        self._locators = locators
+        self._min = kwargs.get("min_values", 0)
+
+    def zip(self, with_values):
+        if len(with_values) < self._min:
+            raise ValueError("Not enough values provided ({}, expected {})".format(
+                len(with_values), self._min)
+            )
+        if len(with_values) > len(self._locators):
+            raise ValueError("Too many values provided!")
+        return zip(self._locators, with_values)
+
+    def __getitem__(self, i):
+        """To delegate access to the separate locators"""
+        return self._locators[i]
+
+
+@fill.method((ShowingInputs, Sequence))
+def _fill_showing_inputs_seq(si, i):
+    for loc, val in si.zip(i):
+        fill(loc, val)
+
+
+@fill.method((ShowingInputs, basestring))
+def _fill_showing_inputs_str(si, s):
+    fill(si, [s])
