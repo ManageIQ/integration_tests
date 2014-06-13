@@ -52,9 +52,9 @@ def template_name(image_name):
         return "miq-%s-%s" % (MIQ_ACTUAL_VERSION, result[0])
     else:
         #CFME
-        pattern = re.compile(r'[^\d]*(\d*).\w*?')
+        pattern = re.compile(r'[.-]\d+(?:-\d+)?')
         result = pattern.findall(image_name)
-        return "cfme-%s-%s" % (result[0], result[1])
+        return "cfme-%s%s" % (MIQ_ACTUAL_VERSION, ''.join(result))
 
 
 def make_kwargs_rhevm(cfme_data, provider):
