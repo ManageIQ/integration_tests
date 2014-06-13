@@ -317,6 +317,7 @@ class ModscopeScheduling(object):
         # Make local copies on instantiation
         indices = list(indices)
         collection = list(collection)
+        sent_tests = 0
         module_indices_cache = []
         for i in indices:
             # collection is a list of nodeids
@@ -336,12 +337,15 @@ class ModscopeScheduling(object):
             else:
                 # This item and the next item are in different modules,
                 # yield the indices if any items were generated
-                if module_indices_cache:
-                    self.log.info('sending %d tests for module %s' %
-                        (len(module_indices_cache), i_fspath))
+                cache_len = len(module_indices_cache)
+                if cache_len > 0:
+                    sent_tests += cache_len
+                    self.log.info('sending %d tests for module %s, %d tests remaining to send' %
+                        (cache_len, i_fspath, len(collection) - sent_tests))
                     yield module_indices_cache
-                # Then clear the cache in-place
-                module_indices_cache[:] = []
+
+                    # Then clear the cache in-place
+                    module_indices_cache[:] = []
 
 
 def report_collection_diff(from_collection, to_collection, from_id, to_id):
