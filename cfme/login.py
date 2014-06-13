@@ -16,6 +16,7 @@ from utils.log import logger
 from threading import local
 
 thread_locals = local()
+thread_locals.current_user = None
 
 
 class User(object):
