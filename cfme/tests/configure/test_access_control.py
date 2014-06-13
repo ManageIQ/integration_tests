@@ -161,8 +161,8 @@ def _go_to(dest):
 
 @pytest.mark.parametrize(
     'role,allowed_actions,disallowed_actions',
-    [[_mk_role(product_features={False: [['Everything']],  # minimal permission
-                                 True: [['Settings & Operations', 'Tasks']]}),
+    [[_mk_role(product_features=[[['Everything'], False],  # minimal permission
+                                 [['Settings & Operations', 'Tasks'], True]]),
       {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
       {
           'my services': _go_to('my_services'),
@@ -171,7 +171,17 @@ def _go_to(dest):
           'infrastructure providers': _go_to('infrastructure_providers'),
           'control explorer': _go_to('control_explorer'),
           'automate explorer': _go_to('automate_explorer'),
-      }]])
+      }],
+     [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
+      {
+          'my services': _go_to('my_services'),
+          'chargeback': _go_to('chargeback'),
+          'clouds providers': _go_to('clouds_providers'),
+          'infrastructure providers': _go_to('infrastructure_providers'),
+          'control explorer': _go_to('control_explorer'),
+          'automate explorer': _go_to('automate_explorer'),
+      },
+      {}]])
 def test_permissions(role, allowed_actions, disallowed_actions):
     # pytest.skip('https://bugzilla.redhat.com/show_bug.cgi?id=1098343')
     # create a user and role
@@ -199,3 +209,18 @@ def test_permissions(role, allowed_actions, disallowed_actions):
             raise Exception(fails)
     finally:
         login.login_admin()
+
+
+def single_task_permission_test(product_features, actions):
+    '''Tests that action succeeds when product_features are enabled, and
+       fail when everything but product_features are enabled'''
+    test_permissions(_mk_role(name=random.generate_random_string(),
+                              product_features=[(['Everything'], False)] +
+                              [(f, True) for f in product_features]),
+                     actions,
+                     {})
+    test_permissions(_mk_role(name=random.generate_random_string(),
+                              product_features=[(['Everything'], True)] +
+                              [(f, False) for f in product_features]),
+                     {},
+                     actions)

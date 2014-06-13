@@ -10,6 +10,7 @@ import utils.error as error
 from cfme.cloud import provider
 from utils import testgen
 from utils.update import update
+import cfme.tests.configure.test_access_control as tac
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
 
@@ -76,3 +77,13 @@ def test_provider_delete(provider_crud):
     provider_crud.delete(cancel=False)
     flash.assert_message_match('Delete initiated for 1 Cloud Provider from the CFME Database')
     provider.wait_for_provider_delete(provider_crud)
+
+
+@pytest.mark.usefixtures('has_no_cloud_providers')
+def test_permissions_provider_add(provider_crud):
+    """ Tests that a provider can be added only with the right permissions"""
+    def add():
+        provider_crud.create()
+        flash.assert_message_match('Cloud Providers "%s" was saved' % provider_crud.name)
+        provider_crud.validate()
+    tac.single_task_permission_test([['Clouds', 'Cloud Providers']], {'Add Provider': add})

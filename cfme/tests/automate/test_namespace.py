@@ -7,6 +7,7 @@ from cfme.automate.explorer import Namespace
 from utils.randomness import generate_random_string
 from utils.update import update
 import utils.error as error
+import cfme.tests.configure.test_access_control as tac
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
@@ -52,3 +53,9 @@ def test_duplicate_namespace_disallowed(namespace):
     namespace.create()
     with error.expected("Error during 'add': Validation failed: fqname must be unique"):
         namespace.create()
+
+
+def test_permissions_namespace_crud():
+    """ Tests that a namespace can be manipulated only with the right permissions"""
+    tac.single_task_permission_test([['Automate', 'Explorer']],
+                                    {'Namespace CRUD': lambda: test_namespace_crud(a_namespace())})

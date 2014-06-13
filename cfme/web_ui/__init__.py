@@ -1370,24 +1370,22 @@ def _fill_tree_seq(tree, values):
     tree.click_path(*values)
 
 
-@fill.method((CheckboxTree, Mapping))
-def _fill_chkboxtree_mapping(tree, on_off):
-    '''Mapping should have two entries, False and True, the paths to
-       uncheck and the paths to check.  Unchecks are always done
-       first, so if you specify to check a parent node and uncheck a
-       child node, the child will end up being checked (because
-       checking the parent will check all its children).
+@sel.select.method((CheckboxTree, Sequence))
+@fill.method((CheckboxTree, Sequence))
+def _select_chkboxtree_seq(cbtree, values):
+    '''values should be a list of tuple pairs, where the first item is the
+       path to select, and the second is whether to check or uncheck.
 
        Usage:
 
-          fill(mytree {False: [["node1", "node2"] ["node1", "node3"]]
-                       True:  [["node1", "node4"]])
-
+         select(cbtree, [(['Foo', 'Bar'], False),
+                         (['Baz'], True)])
     '''
-    for path in on_off.get(False, []):
-        tree.uncheck_node(*path)
-    for path in on_off.get(True, []):
-        tree.check_node(*path)
+    for (path, to_select) in values:
+        if to_select:
+            cbtree.check_node(*path)
+        else:
+            cbtree.uncheck_node(*path)
 
 
 class InfoBlock(object):
