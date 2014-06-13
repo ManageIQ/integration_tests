@@ -2,11 +2,11 @@
 quadicon lists, and VM details page.
 """
 
-
+import cfme.web_ui.flash as flash
 import ui_navigate as nav
 from cfme.exceptions import NoVmFound, NoOptionAvailable, ParmRequired
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Region, Quadicon, CheckboxTree, Tree, paginator, accordion, toolbar
+from cfme.web_ui import Form, Region, Quadicon, CheckboxTree, Tree, paginator, accordion, toolbar, fill
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.log import logger
@@ -41,11 +41,11 @@ manage_policies_page = Region(
 
 snapshot_form = Form(
     fields=[
-        ('name', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('descrition', "//*[@id='default_userid']"),
-        ('snapshot_memory', "//*[@id='default_password']"),
-        ('create_button', "//input[@name='create']"),
-        ('cancel_button', "//input[@name='cancel']")
+        ('name', "//*[@id='name']"),
+        ('descrition', "//*[@id='description']"),
+        ('snapshot_memory', "//input[@id='snap_memory']"),
+        ('create_button', "//input[@name='Create']"),
+        ('cancel_button', "//input[@name='Cancel']")
     ])
 
 
@@ -142,10 +142,15 @@ class Vm():
     STATE_OFF = "off"
     STATE_SUSPENDED = "suspended"
 
-    def __init__(self, name, provider_crud, template_name=None):
+    def __init__(self, name, provider_crud, template_name=None, description=None,
+                snapshot_memory=False, create=False, cancel=False):
         self.name = name
         self.template_name = template_name
         self.provider_crud = provider_crud
+        self.description = description
+        self.snapshot_memory = snapshot_memory
+        self.create_button = create
+        self.cancel_button = cancel
 
     def create_on_provider(self):
         """Create the VM on the provider"""
@@ -371,9 +376,17 @@ class Vm():
             self.load_details()
             sel.click(details_page.infoblock.element("Properties", "Snapshots"))
 
-    def create_snapshot(self):
+    def create_snapshot(self, new_snapshot):
         self._nav_to_snapshot_mgmt()
         toolbar.select('Create a new snapshot for this VM')
+        fill(snapshot_form, {'name': new_snapshot.name,
+                             'description': new_snapshot.description,
+                             'snapshot_memory': new_snapshot.snapshot_memory,
+                             'create_button': new_snapshot.create,
+                             'cancel_button': new_snapshot.cancel
+                             },
+        action=snapshot_form.create)
+        flash.assert_message_match('Create Snapshot for VM and Instance "%s" was started' % new_snapshot.name)
 
     # def remove_selected_snapshot(self, name):
     #     self._nav_to_snapshot_mgmt()
