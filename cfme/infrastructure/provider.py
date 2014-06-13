@@ -21,6 +21,7 @@ import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
 from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator
+from cfme.web_ui import Timelines
 from cfme.web_ui.form_buttons import FormButton
 from utils.log import logger
 from utils.providers import provider_factory
@@ -31,6 +32,8 @@ from utils import version
 add_infra_provider = FormButton("Add this Infrastructure Provider")
 
 details_page = Region(infoblock_type='detail')
+
+prov_timeline = Timelines('//div[@id="miq_timeline"]')
 
 # Forms
 discover_form = Form(
@@ -77,6 +80,7 @@ manage_policies_tree = CheckboxTree(
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
+mon_btn = partial(tb.select, 'Monitoring')
 
 nav.add_branch('infrastructure_providers',
                {'infrastructure_provider_new': lambda _: cfg_btn(
@@ -88,7 +92,9 @@ nav.add_branch('infrastructure_providers',
                                    {'infrastructure_provider_edit':
                                     lambda _: cfg_btn('Edit this Infrastructure Provider'),
                                     'infrastructure_provider_policy_assignment':
-                                    lambda _: pol_btn('Manage Policies')}]})
+                                    lambda _: pol_btn('Manage Policies'),
+                                    'infrastructure_provider_timelines':
+                                    lambda _: mon_btn('Timelines')}]})
 
 
 class Provider(Updateable):
