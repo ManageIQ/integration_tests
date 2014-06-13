@@ -581,7 +581,11 @@ class BasePolicy(Updateable):
                     "select#members_chosen_true",
                     "//a[contains(@href, 'true')]/img[contains(@alt, 'Remove selected')]",
                     "//a[contains(@href, 'true')]/img[contains(@alt, 'Move selected')]",
-                    "//a[contains(@href, 'true')]/img[contains(@alt, 'Remove all')]",
+                    remove_all="//a[contains(@href, 'true')]/img[contains(@alt, 'Remove all')]",
+                    async="//a[contains(@href, 'true')]"
+                    "/img[contains(@alt, 'Set selected Actions to Asynchronous')]",
+                    sync="//a[contains(@href, 'true')]"
+                    "/img[contains(@alt, 'Set selected Actions to Synchronous')]",
                 )
             ),
             (
@@ -591,7 +595,11 @@ class BasePolicy(Updateable):
                     "select#members_chosen_false",
                     "//a[contains(@href, 'false')]/img[contains(@alt, 'Remove selected')]",
                     "//a[contains(@href, 'false')]/img[contains(@alt, 'Move selected')]",
-                    "//a[contains(@href, 'false')]/img[contains(@alt, 'Remove all')]",
+                    remove_all="//a[contains(@href, 'false')]/img[contains(@alt, 'Remove all')]",
+                    async="//a[contains(@href, 'false')]"
+                    "/img[contains(@alt, 'Set selected Actions to Asynchronous')]",
+                    sync="//a[contains(@href, 'false')]"
+                    "/img[contains(@alt, 'Set selected Actions to Synchronous')]",
                 )
             ),
         ]
