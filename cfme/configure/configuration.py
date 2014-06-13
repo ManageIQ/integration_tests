@@ -62,8 +62,30 @@ db_configuration = Form(
     ]
 )
 
+category_form = Form(
+    fields=[
+        ('new_tr', "//tr[@id='new_tr']"),
+        ('name', "//input[@id='name']"),
+        ('display_name', "//input[@id='description']"),
+        ('description', "//input[@id='example_text']"),
+        ('show_in_console', "//input[@id='show']"),
+        ('single_value', "//input[@id='single_value']"),
+        ('capture_candu', "//input[@id='perf_by_tag']")
+    ])
+
+tag_form = Form(
+    fields=[
+        ('category', Select("//select[@id='classification_name']")),
+        ('name', "//input[@id='entry_name']"),
+        ('display_name', "//input[@id='entry_description']"),
+        ('add', "//input[@id='accept']"),
+        ('new', version.pick({'default': "//img[@alt='New']",
+                              '5.3': "//span[@class='glyphicon glyphicon-plus']"}))
+    ])
 
 records_table = Table("//div[@id='records_div']/table[@class='style3']")
+category_table = Table("//div[@id='settings_co_categories']//table[@class='style3']")
+classification_table = Table("//div[@id='classification_entries_div']//table[@class='style3']")
 
 
 def get_ip_address():
@@ -88,6 +110,16 @@ def server_name():
 def server_id():
     return get_server_id(get_ip_address())
 
+
+def add_tag(cat_name):
+    fill(tag_form, {'category': cat_name})
+    sel.click(tag_form.new)
+
+
+def edit_tag(cat_name, tag_name):
+    fill(tag_form, {'category': cat_name})
+    classification_table.click_cell('name', tag_name)
+
 nav.add_branch("configuration",
     {
         "cfg_settings_region":
@@ -106,10 +138,28 @@ nav.add_branch("configuration",
                 lambda _: tabs.select_tab("C & U Collection"),
 
                 "cfg_settings_region_my_company_categories":
-                lambda _: tabs.select_tab("My Company Categories"),
+                [
+                    lambda _: tabs.select_tab("My Company Categories"),
+                    {
+                        "cfg_settings_region_my_company_category_new":
+                        lambda _: sel.click(category_form.new_tr),
+
+                        "cfg_settings_region_my_company_category_edit":
+                        lambda ctx: category_table.click_cell("name", ctx.name)
+                    },
+                ],
 
                 "cfg_settings_region_my_company_tags":
-                lambda _: tabs.select_tab("My Company Tags"),
+                [
+                    lambda _: tabs.select_tab("My Company Tags"),
+                    {
+                        "cfg_settings_region_my_company_tag_new":
+                        lambda ctx: add_tag(ctx.category.display_name),
+
+                        "cfg_settings_region_my_company_tag_edit":
+                        lambda ctx: edit_tag(ctx.category.display_name, ctx.name)
+                    },
+                ],
 
                 "cfg_settings_region_import_tags":
                 lambda _: tabs.select_tab("Import Tags"),
@@ -1184,6 +1234,88 @@ class DatabaseBackupSchedule(Schedule):
             form_buttons.cancel()
         else:
             form_buttons.save()
+
+
+class Category(object):
+    def __init__(self, name=None, display_name=None, description=None, show_in_console=True,
+                 single_value=True, capture_candu=False):
+        self.name = name
+        self.display_name = display_name
+        self.description = description
+        self.show_in_console = show_in_console
+        self.single_value = single_value
+        self.capture_candu = capture_candu
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {
+            'name': kwargs.get('name'),
+            'display_name': kwargs.get('display_name'),
+            'description': kwargs.get('description'),
+            'show_in_console': kwargs.get('show_in_console'),
+            'single_value': kwargs.get('single_value'),
+            'capture_candu': kwargs.get('capture_candu'),
+        }
+
+    def create(self, cancel=False):
+        sel.force_navigate("cfg_settings_region_my_company_category_new")
+        fill(category_form, self._form_mapping(True, **self.__dict__))
+        if cancel:
+            form_buttons.cancel()
+        else:
+            form_buttons.add()
+            flash.assert_success_message('Category "{}" was added'.format(self.display_name))
+
+    def update(self, updates, cancel=False):
+        sel.force_navigate("cfg_settings_region_my_company_category_edit",
+                           context=self)
+        fill(category_form, self._form_mapping(**updates))
+        if cancel:
+            form_buttons.cancel()
+        else:
+            form_buttons.save()
+            flash.assert_success_message('Category "{}" was saved'.format(self.name))
+
+    def delete(self, cancel=True):
+        """
+        """
+        if not cancel:
+            sel.force_navigate("cfg_settings_region_my_company_categories")
+            row = category_table.find_row_by_cells({'name': self.name})
+            sel.click(row[0], wait_ajax=False)
+            sel.handle_alert()
+            flash.assert_success_message('Category "{}": Delete successful'.format(self.name))
+
+
+class Tag(object):
+    def __init__(self, name=None, display_name=None, category=None):
+        self.name = name
+        self.display_name = display_name
+        self.category = category
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {
+            'name': kwargs.get('name'),
+            'display_name': kwargs.get('display_name'),
+        }
+
+    def create(self):
+        sel.force_navigate("cfg_settings_region_my_company_tag_new", context=self)
+        fill(tag_form, self._form_mapping(True, **self.__dict__), action=tag_form.add)
+
+    def update(self, updates):
+        sel.force_navigate("cfg_settings_region_my_company_tag_edit",
+                           context=self)
+        fill(tag_form, self._form_mapping(**updates), action=tag_form.add)
+
+    def delete(self, cancel=True):
+        """
+        """
+        if not cancel:
+            sel.force_navigate("cfg_settings_region_my_company_tags")
+            fill(tag_form, {'category': self.category.display_name})
+            row = classification_table.find_row_by_cells({'name': self.name})
+            sel.click(row[0], wait_ajax=False)
+            sel.handle_alert()
 
 
 def set_server_roles(**roles):
