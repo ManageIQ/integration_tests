@@ -72,9 +72,17 @@ def test_vm(request, provider_crud, provider_mgmt, vm_name):
     return vm
 
 
+@pytest.fixture(scope="class")
+def new_snapshot():
+    return Vm(name='snapshot' + generate_random_string(),
+              description='snpshot_test'
+              snapshot_memory= False
+              )
+
+
 @pytest.mark.usefixtures("random_snpsht_mgt_vm")
 class TestVsphereSnapshot(object):
 
     def test_create_snapshot(self, test_vm, verify_vm_running, soft_assert, provider_init):
         test_vm.load_details()
-        test_vm.create_snapshot()
+        test_vm.create_snapshot(new_snapshot)
