@@ -814,3 +814,8 @@ def _deselect_text(loc, s):
 def _deselect_iter(loc, items):
     for item in items:
         deselect(loc, item)
+
+
+def execute_script(*args, **kwargs):
+    """Wrapper for execute_script() to not have to pull browser() from somewhere."""
+    return browser().execute_script(*args, **kwargs)
