@@ -5,13 +5,14 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import DashboardWidgetSelector
 from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar
 from cfme.web_ui.menu import nav
+from utils import version
 
 
 def go_to_default_func(_):
     """This can change, because the title of the default dashboard is mutable. However, we can xpath
     there quite reliable, so we use it that way we extract the name from the tree directly.
     """
-    t = sel.ver_pick({
+    t = version.pick({
         "9.9.9.9": "//div[@id='db_treebox']/ul/li[@id='db_root']/ul/li/"
                    "span[contains(@class, 'dynatree-node') and img[contains(@src, 'dashboard')]]/a",
         "default": "//div[@id='db_treebox']/div/table/tbody/tr/td/table/"
