@@ -13,6 +13,16 @@ import cfme.web_ui.flash as flash
 from cfme.web_ui import Region, Form, fill
 from utils import conf
 from utils.log import logger
+from threading import local
+
+thread_locals = local()
+
+
+class User(object):
+    def __init__(self, username=None, password=None, full_name=None):
+        self.full_name = full_name
+        self.password = password
+        self.username = username
 
 
 page = Region(title="CloudForms Management Engine: Dashboard",
@@ -65,9 +75,9 @@ def login(username, password, submit_method=_click_on_login):
     Raises:
         RuntimeError: If the login fails, ie. if a flash message appears
     """
-    # TODO: Should probably do the username check here, but there are pretty usernames to deal with
-    # e.g. 'admin' shows up in the UI as 'Administrator'
-    if not logged_in():
+    if not logged_in() or username is not current_username():
+        if logged_in():
+            logout()
         # workaround for strange bug where we are logged out
         # as soon as we click something on the dashboard
         sel.sleep(1.0)
@@ -76,22 +86,7 @@ def login(username, password, submit_method=_click_on_login):
         fill(form, {'username': username, 'password': password})
         submit_method()
         flash.assert_no_errors()
-
-
-def force_login_user(*args, **kwargs):
-    """
-    Force login to CFME using valid username and password; log out if already logged in.
-
-    Args:
-        args: A list of arguments to supply to the :py:meth:`login` method.
-        kwargs: A dict of keyword arguments to supply to the :py:meth:`login` method.
-
-    Warning:
-        Use only with valid credentials.
-    """
-    if logged_in():
-        logout()
-    login(*args, **kwargs)
+        thread_locals.current_user = User(username, password, _full_name())
 
 
 def login_admin(**kwargs):
@@ -101,12 +96,12 @@ def login_admin(**kwargs):
     Args:
         kwargs: A dict of keyword arguments to supply to the :py:meth:`login` method.
     """
-    if current_username() != 'Administrator':
+    if current_full_name() != 'Administrator':
         logout()
 
-    username = conf.credentials['default']['username']
-    password = conf.credentials['default']['password']
-    login(username, password, **kwargs)
+        username = conf.credentials['default']['username']
+        password = conf.credentials['default']['password']
+        login(username, password, **kwargs)
 
 
 def logout():
@@ -117,14 +112,28 @@ def logout():
         if not sel.is_displayed(page.logout):
             sel.click(page.user_dropdown)
         sel.click(page.logout)
+        thread_locals.current_user = None
 
 
-def current_username():
+def _full_name():
+    return sel.text(page.user_dropdown).split('|')[0].strip()
+
+
+def current_full_name():
     """ Returns the current username.
 
     Returns: the current username.
     """
     if logged_in():
-        return sel.text(page.user_dropdown).split('|')[0].strip()
+        return _full_name()
     else:
         return None
+
+
+def current_user():
+    return thread_locals.current_user
+
+
+def current_username():
+    u = current_user()
+    return u and u.username

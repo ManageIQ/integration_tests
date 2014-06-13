@@ -1,6 +1,6 @@
 import pytest
 
-from cfme.login import force_login_user
+from cfme.login import login
 from cfme.web_ui import menu
 from utils.conf import credentials
 from utils.testgen import auth_groups, generate
@@ -22,5 +22,5 @@ def test_group_roles(configure_aws_iam_auth_mode, group_name, group_data):
     except KeyError:
         pytest.fail('No match in credentials file for group "%s"' % iam_group_name)
 
-    force_login_user(username, password)
+    login(username, password)
     assert set(menu.visible_pages()) == set(group_data)
