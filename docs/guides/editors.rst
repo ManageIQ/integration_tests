@@ -127,11 +127,88 @@ Trailing Spaces
 Using Package Control, install the "Trailing Spaces" plugin. This highlights trailing spaces
 so you can clean them up before flake8 sees them.
 
-Sublime 3?
-^^^^^^^^^^
+Sublime Text 3
+--------------
 
-Sublime Text 3 is currently in beta, and (like all other editors/IDEs) not currently supported
-by this project.
+Sublime Text 3 is currently in beta, but it is perfectly usable for python development. I will show
+you my setup here (``mfalesni``). Prerequisities are the same as for ST2 (Package Control).
+
+SublimePythonIDE
+""""""""""""""""
+It is a rewrite of SublimeRope for ST3. It is both Python Autocompletion and PEP8 checker.
+Install it from package manager the same way is described in chapter about ST2.
+
+After installation, go to ``Preferences -> Package Settings -> SublimePythonIDE -> User`` and insert
+this code:
+
+.. code-block:: json
+   
+   {
+      "open_pydoc_in_view": true,
+      "create_view_in_same_group": false,
+
+      // Linter settings
+      "python_linting": true,
+      "python_linter_mark_style": "outline", // "none" or "outline"
+      "python_linter_gutter_marks": true,
+      "python_linter_gutter_marks_theme": "alpha", // see folder gutter_mark_themes
+      "pep8": true,
+      "pep8_ignore": ["E128"],
+      "pep8_max_line_length": 100,
+      "pyflakes_ignore": []
+   }
+
+For the project file (``Project -> Edit Project``), use this code:
+
+.. code-block:: json
+   
+   {
+     "folders":
+     [
+       {
+         "follow_symlinks": true,
+         "path": "/home/mfalesni/sublime-workspace/cfme_tests",
+       },
+
+       {
+         "follow_symlinks": true,
+         "path": "/home/mfalesni/sublime-workspace/whatever_else_directory_you_need",
+       },
+     ],
+
+     "settings":
+     {
+       "python_interpreter": "/home/mfalesni/sublime-workspace/.cfme_tests_ve/bin/python",
+       "tab_size": 4,
+     },
+   }
+
+
+Of course, replace the paths according to your setup. ``python_interpreter`` is the path for your
+virtualenv python.
+
+From now, Sublime will know about all modules that are in virtualenv/cfme_tests namespace.
+
+When you right-click a symbol, you can view a documentation, or jump to the symbol definition.
+
+GitGutter
+"""""""""
+Very good plugin, showing you lines that are added/modified/removed in your git repository in form
+of marks on left side of the editor window. (first suggested by jkrocil)
+
+BracketHighlighter
+""""""""""""""""""
+Simple plugin that shows you location of brackets, parenthesis and others that you are in on left
+side of editor window.
+
+Neon color scheme
+"""""""""""""""""
+You might find default colour theme a bit humdrum. I use Neon color scheme, which uses more colours
+and the colouring depends on the context so one has better view on the situation.
+
+To install, simply install ``Neon Color Scheme`` package. Then open ``Preferences -> Settings - User``
+and add this entry ``"color_scheme": "Packages/Neon Color Scheme/Neon.tmTheme"`` to the conf dict.
+
 
 emacs
 -----
