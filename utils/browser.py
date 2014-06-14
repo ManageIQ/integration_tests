@@ -94,10 +94,11 @@ def start(webdriver_name=None, base_url=None, **kwargs):
     browser_kwargs = browser_conf.get('webdriver_options', {})
 
     # Handle firefox profile for Firefox or Remote webdriver
-    if webdriver_name == 'Firefox' or (
-            webdriver_name == 'Remote' and
-            browser_kwargs['desired_capabilities']['browserName'] == 'firefox'):
+    if webdriver_name == 'Firefox':
         browser_kwargs['firefox_profile'] = _load_firefox_profile()
+    elif (webdriver_name == 'Remote' and
+          browser_kwargs['desired_capabilities']['browserName'] == 'firefox'):
+        browser_kwargs['browser_profile'] = _load_firefox_profile()
 
     # Update it with passed-in options/overrides
     browser_kwargs.update(kwargs)
