@@ -929,7 +929,7 @@ def _sd_fill_date(calendar, value):
         date_str = str(value)
 
     # need to write to a readonly field: resort to evil
-    browser().execute_script("arguments[0].value = '%s'" % date_str, input)
+    sel.set_attribute(input, "value", date_str)
 
 
 @fill.method((object, types.NoneType))

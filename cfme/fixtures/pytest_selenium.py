@@ -324,6 +324,35 @@ def get_attribute(loc, attr):
     return element(loc).get_attribute(attr)
 
 
+def set_attribute(loc, attr, value):
+    """Sets the attribute of an element.
+
+    This is usually not done, that's why it is not implemented in selenium. But sometimes ...
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        attr: Attribute name.
+        value: Value to set.
+    """
+    logger.info(
+        "!!! ATTENTION! SETTING READ-ONLY ATTRIBUTE {} OF {} TO {}!!!".format(attr, loc, value))
+    return execute_script(
+        "arguments[0].setAttribute(arguments[1], arguments[2]);", element(loc), attr, value)
+
+
+def unset_attribute(loc, attr):
+    """Removes an attribute of an element.
+
+    This is usually not done, that's why it is not implemented in selenium. But sometimes ...
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        attr: Attribute name.
+    """
+    logger.info("!!! ATTENTION! REMOVING READ-ONLY ATTRIBUTE {} OF {} TO {}!!!".format(attr, loc))
+    return execute_script("arguments[0].removeAttribute(arguments[1]);", element(loc), attr)
+
+
 def send_keys(loc, text):
     """
     Sends the supplied keys to an element.
