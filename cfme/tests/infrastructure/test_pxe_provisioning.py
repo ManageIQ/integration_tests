@@ -69,7 +69,7 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
 def vm_name():
     # also tries to delete the VM that gets made with this name
     vm_name = 'test_pxe_prov_%s' % generate_random_string()
-    yield vm_name
+    return vm_name
 
 
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
