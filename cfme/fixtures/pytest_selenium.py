@@ -563,9 +563,15 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # Set this to True in the handlers below to trigger a browser restart
     recycle = False
 
+    # remember the current user, if any
+    current_user = login.current_user()
+
     try:
         # What we'd like to happen...
-        login.login_admin()
+        if not current_user:  # default to admin user
+            login.login_admin()
+        else:  # we recycled and want to log back in
+            login.login(current_user.username, current_user.password)
         logger.info('Navigating to %s' % page_name)
         menu.nav.go_to(page_name, *args, **kwargs)
     except (KeyboardInterrupt, ValueError):
@@ -613,7 +619,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             raise
 
     if recycle:
-        browser().quit()
+        browser().quit()  # login.current_user() will be retained for next login
         logger.debug('browser killed on try %d' % _tries)
         # If given a "start" nav destination, it won't be valid after quitting the browser
         kwargs.pop("start", None)

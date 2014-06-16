@@ -52,7 +52,7 @@ def test_user_login():
     user = new_user()
     user.create()
     try:
-        login.force_login_user(user.credential.principal, user.credential.secret)
+        login.login(user.credential.principal, user.credential.secret)
     finally:
         login.login_admin()
 
@@ -183,7 +183,7 @@ def test_permissions(role, allowed_actions, disallowed_actions):
     user.create()
     fails = {}
     try:
-        login.force_login_user(user.credential.principal, user.credential.secret)
+        login.login(user.credential.principal, user.credential.secret)
         for name, action_thunk in allowed_actions.items():
             try:
                 action_thunk()
