@@ -239,14 +239,14 @@ def provider_by_type(metafunc, provider_types, *fields):
         idlist.append(provider)
 
         # Get values for the requested fields, filling in with None for undefined fields
-        values = [data.get(field, '') for field in fields]
+        data_values = {field: data.get(field, None) for field in fields}
 
         # Go through the values and handle the special 'data' name
         # report the undefined fields to the log
-        for i, (field, value) in enumerate(zip(fields, values)):
+        for key, value in data_values.iteritems():
             if value is None:
                 logger.warn('Field "%s" not defined for provider "%s", defaulting to None' %
-                    (field, provider)
+                    (key, provider)
                 )
 
         if prov_type in cloud_provider_type_map:
@@ -257,10 +257,13 @@ def provider_by_type(metafunc, provider_types, *fields):
 
         mgmt = provider_factory(provider)
 
+        values = []
         special_args_map = dict(zip(special_args, (provider, data, crud, mgmt, prov_type)))
-        for arg in special_args:
-            if arg in argnames:
+        for arg in argnames:
+            if arg in special_args_map:
                 values.append(special_args_map[arg])
+            elif arg in data_values:
+                values.append(data_values[arg])
         argvalues.append(values)
 
     return argnames, argvalues, idlist
