@@ -7,21 +7,25 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Region, Table
 from utils.timeutil import parsetime
 from utils.wait import wait_for
+from cfme.web_ui import Region
 
 _css_reset_button = 'div.dhx_toolbar_btn[title="Reset Dashboard Widgets to the defaults"] img'
 
-page = Region(title="CloudForms Management Engine: Dashboard",
-              locators={'reset_widgets_button': (By.CSS_SELECTOR, _css_reset_button)})
+page = Region(
+    title="CloudForms Management Engine: Dashboard",
+    locators={
+        'reset_widgets_button': (By.CSS_SELECTOR, _css_reset_button),
+        'csrf_token': "//meta[@name='csrf-token']",
+    })
 
 
 def reset_widgets(cancel=False):
-    """
-    Resets the widgets on the dashboard page.
+    """Resets the widgets on the dashboard page.
 
     Args:
         cancel: Set whether to accept the popup confirmation box. Defaults to ``False``.
     """
-    sel.click(page.reset_widgets_button)
+    sel.click(page.reset_widgets_button, wait_ajax=False)
     sel.handle_alert(cancel)
 
 
@@ -173,3 +177,30 @@ class ReportWidgetContent(BaseWidgetContent):
     @property
     def data(self):
         return Table(lambda: sel.element("./div/table[@class='style3']", root=self.root))
+
+
+def get_csrf_token():
+    """Retuns current CSRF token.
+
+    Returns: Current  CSRF token.
+    """
+    return sel.get_attribute(page.csrf_token, "content")
+
+
+def set_csrf_token(csrf_token):
+    """Changing the CSRF Token on the fly via the DOM by iterating over the meta tags
+
+    Args:
+        csrf_token: Token to set as the CSRF token.
+    """
+    script = '''
+        var elements = document.getElementsByTagName("meta");
+        for (var i=0, element; element = elements[i]; i++) {
+            var ename = element.getAttribute("name");
+            if (ename != null && ename.toLowerCase() == "csrf-token") {
+                element.setAttribute("content", "%s");
+                break;
+            }
+        }
+    ''' % csrf_token
+    return sel.execute_script(script)
