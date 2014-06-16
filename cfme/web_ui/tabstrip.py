@@ -18,7 +18,7 @@ from utils import version
 
 _entry_div = "//div[contains(@class, 'ui-tabs')]"  # Entry point
 _entry_ul = version.pick({
-    '5.3': '//ul[@class="tab2"]',
+    '5.3': '//ul[@class="tab2" or @class="tab3"]',
     'default': '//ul[@id="tab" and @class="tab"]'
 })
 
@@ -64,7 +64,9 @@ def is_tab_element_selected(element):
     if aria is not None:
         return "true" in aria.lower()
     else:
-        return sel.element("..", root=element).get_attribute("class").lower() == "active"
+        return sel.element("..", root=element)\
+                  .get_attribute("class")\
+                  .lower() in {"active", "active-single"}
 
 
 def is_tab_selected(ident_string):

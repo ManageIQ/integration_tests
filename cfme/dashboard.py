@@ -3,7 +3,7 @@
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the dashboard page
 """
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Region, Table, toolbar
+from cfme.web_ui import Region, Table, tabstrip, toolbar
 from utils.timeutil import parsetime
 from utils.wait import wait_for
 
@@ -27,6 +27,17 @@ def reset_widgets(cancel=False):
     """
     sel.click(page.reset_widgets_button, wait_ajax=False)
     sel.handle_alert(cancel)
+
+
+def dashboards():
+    """Returns a generator that iterates through the available dashboards"""
+    sel.force_navigate("dashboard")
+    # We have to click any other of the tabs (glitch)
+    # Otherwise the first one is not displayed (O_O)
+    tabstrip.select_tab(tabstrip.get_all_tabs()[-1])
+    for dashboard_name in tabstrip.get_all_tabs():
+        tabstrip.select_tab(dashboard_name)
+        yield dashboard_name
 
 
 class Widget(object):
