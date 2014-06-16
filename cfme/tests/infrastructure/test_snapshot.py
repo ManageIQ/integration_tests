@@ -1,4 +1,3 @@
-import cfme.web_ui.flash as flash
 import pytest
 import random
 import time
@@ -6,6 +5,7 @@ from cfme.infrastructure.virtual_machines import Vm
 from utils.conf import cfme_data
 from utils import testgen
 from utils.log import logger
+from cfme.web_ui import flash
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
@@ -23,7 +23,7 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         provider_data = cfme_data['management_systems'][
             argvalue_tuple[argnames.index('provider_key')]]
-        print provider_data
+        #print provider_data
         if provider_data.get('type', False) != 'virtualcenter':
             continue
 
@@ -71,18 +71,34 @@ def test_vm(request, provider_crud, provider_mgmt, vm_name):
         vm.create(timeout_in_minutes=15)
     return vm
 
-
-@pytest.fixture(scope="class")
+"""
 def new_snapshot():
-    return Vm(name='snapshot' + generate_random_string(),
-              description='snpshot_test'
-              snapshot_memory= False
-              )
+    return dict(name='snapshot' + generate_random_string(),
+              description='snpshot_test',
+              snapshot_memory=False
+                )
+"""
 
 
 @pytest.mark.usefixtures("random_snpsht_mgt_vm")
-class TestVsphereSnapshot(object):
-
-    def test_create_snapshot(self, test_vm, verify_vm_running, soft_assert, provider_init):
+def test_create_snapshot(test_vm, verify_vm_running, soft_assert, provider_init, provider_mgmt):
         test_vm.load_details()
-        test_vm.create_snapshot(new_snapshot)
+        test_vm.create_snapshot(name='snapshot' + generate_random_string(), description='snpshot_test', snapshot_memory=False)
+
+
+def test_delete_selected_snapshot(test_vm):
+        test_vm.load_details()
+        test_vm.create_snapshot(name='snapshot' + generate_random_string(), description='snpshot_test', snapshot_memory=False)
+        test_vm.remove_selected_snapshot()
+
+
+def test_delete_all_snapshots(test_vm):
+        test_vm.load_details()
+        test_vm.create_snapshot(name='snapshot' + generate_random_string(), description='snpshot_test', snapshot_memory=False)
+        test_vm.remove_all_snapshots()
+
+
+def test_revert_snapshot(test_vm):
+        test_vm.load_details()
+        test_vm.create_snapshot(name='snapshot' + generate_random_string(), description='snpshot_test', snapshot_memory=False)
+        test_vm.revert_to_snapshot()
