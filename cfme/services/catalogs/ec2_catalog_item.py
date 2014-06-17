@@ -8,10 +8,11 @@ import cfme.web_ui.toolbar as tb
 from collections import OrderedDict
 from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash, form_buttons
 from utils.update import Updateable
+from utils import version
 
 
 tb_select = functools.partial(tb.select, "Configuration")
-catalog_item_tree = web_ui.Tree(sel.ver_pick({
+catalog_item_tree = web_ui.Tree(version.pick({
     'default': '//div[@id="sandt_tree_box"]//table',
     '9.9.9.9': '//div[@id="sandt_treebox"]//ul'
 }))
@@ -40,6 +41,7 @@ detail_form = Form(
     fields=[
         ('long_desc', "//textarea[@id='long_description']")
     ])
+
 
 def select_security_group(sg):
     '''Workaround for select box that is immediately replaced by the same
@@ -119,6 +121,7 @@ nav.add_branch(
                                      ctx['catalog'], ctx['catalog_item'].name),
                           {'catalog_item_edit': nav.partial(tb_select,
                                                             "Edit this Item")}]}]})
+
 
 class Template(object):
     def __init__(self, name):
