@@ -1,5 +1,7 @@
-import functools
+"""Service Catalog item for EC2 , does not provision any VM just create a catalog item of type "Amazon
 
+"""
+import functools
 import ui_navigate as nav
 
 import cfme.fixtures.pytest_selenium as sel
