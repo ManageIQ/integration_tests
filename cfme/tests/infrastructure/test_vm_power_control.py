@@ -25,7 +25,7 @@ def pytest_generate_tests(metafunc):
             argnames, new_argvalues, new_idlist = random_vm_test
         else:
             single_index = random.choice(range(len(idlist)))
-            new_idlist = [idlist[single_index]]
+            new_idlist = ['random_provider']
             new_argvalues = argvalues[single_index]
             argnames.append('random_pwr_ctl_vm')
             new_argvalues.append('')
