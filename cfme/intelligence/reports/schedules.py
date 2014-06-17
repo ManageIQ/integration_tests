@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """Module handling schedules"""
-import re
 from functools import partial
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import Timer
-from cfme.web_ui import (Calendar, EmailSelectForm, Form, CheckboxTable, InfoBlock, Select,
+from cfme.web_ui import (EmailSelectForm, Form, CheckboxTable, InfoBlock, Select,
     ShowingInputs, accordion, fill, flash, toolbar, form_buttons)
 from cfme.web_ui.menu import nav
 from utils.db import cfmedb

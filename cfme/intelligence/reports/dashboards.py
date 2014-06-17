@@ -6,6 +6,7 @@ from cfme.intelligence.reports.ui_elements import DashboardWidgetSelector
 from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar
 from cfme.web_ui.menu import nav
 from utils import version
+from utils.update import Updateable
 
 
 def go_to_default_func(_):
@@ -59,7 +60,7 @@ nav.add_branch(
 )
 
 
-class Dashboard(object):
+class Dashboard(Updateable):
     form = Form(fields=[
         ("name", "//input[@id='name']"),
         ("title", "//input[@id='description']"),
@@ -100,7 +101,7 @@ class Dashboard(object):
         flash.assert_no_errors()
 
 
-class DefaultDashboard(object):
+class DefaultDashboard(Updateable):
     form = Form(fields=[
         ("title", "//input[@id='description']"),
         ("locked", "//input[@id='locked']"),
