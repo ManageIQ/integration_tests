@@ -7,6 +7,7 @@ import ui_navigate as nav
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
+from cfme.cloud import provisioning as prov
 from collections import OrderedDict
 from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash, form_buttons
 from utils.update import Updateable
@@ -45,22 +46,6 @@ detail_form = Form(
     ])
 
 
-def select_security_group(sg):
-    '''Workaround for select box that is immediately replaced by the same
-       select box no matter what selenium clicks on (but works fine
-       manually).  For now only selects one item even though it's a
-       multiselect.
-
-    '''
-    val = sel.get_attribute("//select[@id='environment__security_groups']/option[.='%s']" %
-                            sg, 'value')
-    sel.browser().execute_script(
-        "$j('#environment__security_groups').val('%s');"
-        "$j.ajax({type: 'POST', url: '/miq_request/prov_field_changed/new',"
-        " data: {'environment__security_groups':'%s'}})" % (val, val))
-    sel.wait_for_ajax()
-    sel.sleep(1)
-
 request_form = tabstrip.TabStripForm(
     tab_fields=OrderedDict([
         ('Catalog', [
@@ -73,7 +58,7 @@ request_form = tabstrip.TabStripForm(
             ('automatic_placement', '//input[@id="environment__placement_auto"]'),
             ('availability_zone',
                 web_ui.Select('//select[@id="environment__placement_availability_zone"]')),
-            ('security_groups', select_security_group),
+            ('security_groups', prov.select_security_group),
             ('public_ip_address', web_ui.Select('//select[@id="environment__floating_ip_address"]')),
         ]),
         ('Properties', [
