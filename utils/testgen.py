@@ -245,7 +245,7 @@ def provider_by_type(metafunc, provider_types, *fields):
         # report the undefined fields to the log
         for key, value in data_values.iteritems():
             if value is None:
-                logger.warn('Field "%s" not defined for provider "%s", defaulting to None' %
+                logger.warning('Field "%s" not defined for provider "%s", defaulting to None' %
                     (key, provider)
                 )
 

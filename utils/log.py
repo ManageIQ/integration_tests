@@ -387,7 +387,7 @@ if '_original_excepthook' not in globals():
     _original_excepthook = sys.excepthook
 
 
-class MultiLogger():
+class MultiLogger(object):
     def __init__(self):
         self.loggers = []
         self._art_instance = None
