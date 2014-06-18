@@ -207,7 +207,6 @@ class DSession(object):
         self.log.debug("triggering shutdown")
         self.shuttingdown = True
         for node in self.sched.node2pending:
-            self.log.info('shutting down node %r' % node)
             node.shutdown()
 
     def handle_crashitem(self, nodeid, slave):

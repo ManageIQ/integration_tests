@@ -55,6 +55,7 @@ class SlaveInteractor:
             while torun:
                 self.run_tests(torun)
             if name == "shutdown":
+                self.sendevent('message', message='slave shutting down')
                 break
         return True
 
