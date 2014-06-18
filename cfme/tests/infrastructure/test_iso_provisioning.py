@@ -65,16 +65,16 @@ def setup_iso_providers():
 def setup_iso_datastore(iso_cust_template, provisioning, iso_datastore):
     if not iso_datastore.exists():
         iso_datastore.create()
+    # Fails on upstream, BZ1109256
     iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
     if not iso_cust_template.exists():
         iso_cust_template.create()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vm_name():
-    # also tries to delete the VM that gets made with this name
     vm_name = 'test_iso_prov_%s' % generate_random_string()
-    yield vm_name
+    return vm_name
 
 
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
@@ -86,10 +86,9 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
-
 @pytest.mark.usefixtures('setup_iso_providers', 'setup_iso_datastore')
-def test_iso_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt, provisioning,
-                                     vm_name, request):
+def test_iso_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt,
+                                     provisioning, vm_name, smtp_test, request):
 
     # generate_tests makes sure these have values
     iso_template, host, datastore, iso_file, iso_kickstart,\
@@ -121,6 +120,8 @@ def test_iso_provision_from_template(provider_key, provider_crud, provider_type,
     fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
     flash.assert_no_errors()
 
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider_crud.key)
     wait_for(provider_mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
@@ -129,7 +130,23 @@ def test_iso_provision_from_template(provider_key, provider_crud, provider_type,
     logger.info('Waiting for cfme provision request for vm %s' % vm_name)
     row_description = 'Provision from [%s] to [%s]' % (iso_template, vm_name)
     cells = {'Description': row_description}
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=1500, delay=20)
+        fail_func=requests.reload, num_sec=1800, delay=20)
     assert row.last_message.text == 'VM Provisioned Successfully'
+
+    # Wait for e-mails to appear
+    def verify():
+        return (
+            len(
+                smtp_test.get_emails(
+                    text_like="%%Your Virtual Machine Request was approved%%"
+                )
+            ) > 0
+            and len(
+                smtp_test.get_emails(
+                    subject_like="Your virtual machine request has Completed - VM:%%%s" % vm_name
+                )
+            ) > 0
+        )
+
+    wait_for(verify, message="email receive check", delay=5)

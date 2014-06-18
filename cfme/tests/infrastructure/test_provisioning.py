@@ -2,7 +2,7 @@ import pytest
 
 from cfme.infrastructure.provisioning import provisioning_form
 from cfme.services import requests
-from cfme.web_ui import flash
+from cfme.web_ui import flash, fill
 from utils import testgen
 from utils.providers import setup_infrastructure_providers
 from utils.randomness import generate_random_string
@@ -44,11 +44,10 @@ def setup_providers():
     setup_infrastructure_providers()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def vm_name():
-    # also tries to delete the VM that gets made with this name
     vm_name = 'test_tmpl_prov_%s' % generate_random_string()
-    yield vm_name
+    return vm_name
 
 
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
@@ -94,9 +93,10 @@ def test_provision_from_template(setup_providers, provider_key,
         if provider_type == 'rhevm':
             raise pytest.fail('rhevm requires a vlan value in provisioning info')
 
-    provisioning_form.fill(provisioning_data)
-    pytest.sel.click(provisioning_form.submit_button)
+    fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
     flash.assert_no_errors()
+
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider_crud.key)
@@ -106,9 +106,8 @@ def test_provision_from_template(setup_providers, provider_key,
     logger.info('Waiting for cfme provision request for vm %s' % vm_name)
     row_description = 'Provision from [%s] to [%s]' % (template, vm_name)
     cells = {'Description': row_description}
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
+        fail_func=requests.reload, num_sec=900, delay=20)
     assert row.last_message.text == 'VM Provisioned Successfully'
 
     # Wait for e-mails to appear
@@ -121,7 +120,7 @@ def test_provision_from_template(setup_providers, provider_key,
             ) > 0
             and len(
                 smtp_test.get_emails(
-                    subject="Your virtual machine request has Completed - VM: %s" % vm_name
+                    subject_like="Your virtual machine request has Completed - VM:%%%s" % vm_name
                 )
             ) > 0
         )

@@ -1,4 +1,4 @@
-from cfme.exceptions import RequestNotFound
+from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Region, SplitTable, fill, flash, paginator, toolbar
 from utils.log import logger
@@ -53,10 +53,10 @@ def approve_request(cells, reason, cancel=False):
         cancel: Whether to cancel the approval.
 
     Raises:
-        RequestNotFound: :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
+        RequestException: :py:class:`cfme.exceptions.RequestException` if the request was not found
     """
     if not go_to_request(cells):
-        raise RequestNotFound("Request with identification {} not found!".format(str(cells)))
+        raise RequestException("Request with identification {} not found!".format(str(cells)))
     approve(reason, cancel)
 
 
@@ -82,10 +82,10 @@ def deny_request(cells, reason, cancel=False):
         cancel: Whether to cancel the denial.
 
     Raises:
-        RequestNotFound: :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
+        RequestException: :py:class:`cfme.exceptions.RequestException` if the request was not found
     """
     if not go_to_request(cells):
-        raise RequestNotFound("Request with identification {} not found!".format(str(cells)))
+        raise RequestException("Request with identification {} not found!".format(str(cells)))
     deny(reason, cancel)
 
 
@@ -110,10 +110,10 @@ def delete_request(cells, cancel=False):
         cancel: Whether to cancel the deletion.
 
     Raises:
-        RequestNotFound: :py:class:`cfme.exceptions.RequestNotFound` if the request was not found
+        RequestException: :py:class:`cfme.exceptions.RequestException` if the request was not found
     """
     if not go_to_request(cells):
-        raise RequestNotFound("Request with identification {} not found!".format(str(cells)))
+        raise RequestException("Request with identification {} not found!".format(str(cells)))
     delete(cancel)
 
 
@@ -146,20 +146,25 @@ def wait_for_request(cells):
 
     Raises:
         AssertionError: if the matched request has status 'Error'
+        RequestException: if multiple matching requests were found
 
     Returns:
-
+         The matching :py:class:`cfme.web_ui.Table.Row` if found, ``False`` otherwise.
     """
     for page in paginator.pages():
-        try:
+        results = request_list.find_rows_by_cells(cells)
+        if len(results) == 0:
+            # row not on this page, assume it has yet to appear
+            continue
+        elif len(results) > 1:
+            raise RequestException(
+                'Multiple requests with matching content found - be more specific!'
+            )
+        else:
             # found the row!
-            row, = request_list.find_rows_by_cells(cells)
+            row = results[0]
             logger.debug(' Request Message: %s' % row.last_message.text)
             break
-        except ValueError:
-            # row not on this page, assume it has yet to appear
-            # it might be nice to add an option to fail at this point
-            continue
     else:
         # Request not found at all, can't continue
         return False

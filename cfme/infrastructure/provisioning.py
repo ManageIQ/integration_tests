@@ -4,22 +4,24 @@
 from collections import OrderedDict
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Calendar, Form, Radio, Select, Table, Tree, tabstrip, toolbar
+from cfme.web_ui import Calendar, Form, Radio, Select, Table, Tree, form_buttons, tabstrip, toolbar
 from cfme.web_ui.menu import nav
 
+
+submit_button = form_buttons.FormButton("Submit")
 
 template_select_form = Form(
     fields=[
         ('template_table', Table('//div[@id="pre_prov_div"]/fieldset/table')),
-        ('continue_button', '//img[@title="Continue"]'),
-        ('cancel_button', '//img[@title="Continue"]')
+        ('continue_button', submit_button),
+        ('cancel_button', form_buttons.cancel)
     ]
 )
 
 provisioning_form = tabstrip.TabStripForm(
     fields=[
-        ('submit_button', '//*[@id="form_buttons"]/li[1]/img'),
-        ('cancel_button', '//*[@id="form_buttons"]/li[2]/img')
+        ('submit_button', submit_button),
+        ('cancel_button', form_buttons.cancel)
     ],
     tab_fields=OrderedDict([
         ('Request', [
