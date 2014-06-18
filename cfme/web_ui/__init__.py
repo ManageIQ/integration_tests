@@ -1210,13 +1210,10 @@ class Tree(object):
             self.node_label = ".//span[.='%s']"
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
-            # Locators for reading the tree
-            # Finds all child nodes
-            self.nodes_root = "./span[@class='standartTreeRow']/../../.."
-            # How to get from the node to the container of child nodes
-            self.nodes_root_continue = "./tr[@style]/td/table/tbody"
-            # Label locator
-            self.node_label_loc = "./tr/td[@class='standartTreeRow']/span"
+            # Locators for reading the tree - we do not support, therefore None
+            self.nodes_root = None
+            self.nodes_root_continue = None
+            self.node_label_loc = None
         else:
             raise exceptions.TreeTypeUnknown(
                 'The locator described does not point to a known tree type')
@@ -1256,9 +1253,6 @@ class Tree(object):
 
     def node_root_element(self, node_name, parent):
         return sel.element((self.node_root % node_name), root=parent)
-
-    def nodes_root_elements(self, parent):
-        return sel.elements(self.nodes_root, root=parent)
 
     def expand_path(self, *path):
         """ Clicks through a series of elements in a path.
@@ -1313,6 +1307,8 @@ class Tree(object):
         Returns: Tree in format mentioned in description
         """
         self._detect()
+        if self.nodes_root is None:
+            raise Exception("Cannot read contents of legacy tree!")
         parent = self.locator if parent is None else parent
 
         result = []
