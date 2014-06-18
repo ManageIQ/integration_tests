@@ -200,3 +200,10 @@ class ListAccordionLinkNotFound(CFMEException):
     """
     pass
 
+
+class ZoneNotFound(CFMEException):
+    """
+    Raised when a specific Zone cannot be found in the method
+    :py:meth:`cfme.configure.configuration`.
+    """
+    pass
