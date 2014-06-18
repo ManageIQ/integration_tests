@@ -1,17 +1,20 @@
 """Core functionality for starting, restarting, and stopping a selenium browser."""
 import atexit
 import json
+import os
 import threading
 from contextlib import contextmanager
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
 
+import requests
 from selenium import webdriver
 from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 from utils import conf
+from utils.log import logger
 from utils.path import data_path
 
 # Conditional guards against getting a new thread_locals when this module is reloaded.
@@ -19,6 +22,7 @@ if 'thread_locals' not in globals():
     # New threads get their own browser instances
     thread_locals = threading.local()
     thread_locals.browser = None
+    thread_locals.wharf = None
 
 
 #: After starting a firefox browser, this will be set to the temporary
@@ -37,6 +41,10 @@ def browser():
 
     """
     return thread_locals.browser
+
+
+def wharf():
+    return thread_locals.wharf
 
 
 def ensure_browser_open():
@@ -106,6 +114,21 @@ def start(webdriver_name=None, base_url=None, **kwargs):
     if webdriver_name != 'Remote' and 'desired_capabilities' in browser_kwargs:
         # desired_capabilities is only for Remote driver, but can sneak in
         del(browser_kwargs['desired_capabilities'])
+
+    if webdriver_name == 'Remote' and 'webdriver_wharf' in browser_conf and not thread_locals.wharf:
+        # Configured to use wharf, but it isn't configured yet; check out a webdriver container
+        wharf = Wharf(browser_conf['webdriver_wharf'])
+        # TODO: Error handling! :D
+        wharf.checkout()
+        atexit.register(wharf.checkin)
+        thread_locals.wharf = wharf
+
+    if thread_locals.wharf:
+        # Wharf is configured, make sure to use its command_executor
+        wharf_config = thread_locals.wharf.config
+        browser_kwargs['command_executor'] = wharf_config['webdriver_url']
+        logger.info('webdriver command executor set to %s' % wharf_config['webdriver_url'])
+        logger.info('tests can be viewed via vnc on display %s' % wharf_config['vnc_display'])
 
     browser = webdriver_class(**browser_kwargs)
     browser.maximize_window()
@@ -213,6 +236,27 @@ class DuckwebQaClient(object):
     def selenium(self):
         return browser()
 
+
+class Wharf(object):
+    def __init__(self, wharf_url):
+        self.wharf_url = wharf_url
+        self.docker_id = None
+
+    def checkout(self):
+        checkout = json.loads(requests.get(os.path.join(self.wharf_url, 'checkout')).content)
+        self.docker_id = checkout.keys()[0]
+        self.config = checkout[self.docker_id]
+        logger.info('Checked out webdriver container %s' % self.docker_id)
+        return self.docker_id
+
+    def checkin(self):
+        if self.docker_id:
+            requests.get(os.path.join(self.wharf_url, 'checkin', self.docker_id))
+            logger.info('Checked in webdriver container %s' % self.docker_id)
+            self.docker_id = None
+
+    def __nonzero__(self):
+        return bool(self.docker_id)
 
 # Convenience name, duckwebqa is stateless, so we can just make one here
 testsetup = DuckwebQaTestSetup()
