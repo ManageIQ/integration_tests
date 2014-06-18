@@ -1307,6 +1307,8 @@ class Tree(object):
         Returns: Tree in format mentioned in description
         """
         self._detect()
+        if parent is None and self._get_tag() == "table":
+            return self._legacy_read_contents()  # Legacy
         if self.nodes_root is None:
             raise Exception("Cannot read contents of legacy tree!")
         parent = self.locator if parent is None else parent
@@ -1326,6 +1328,22 @@ class Tree(object):
                 result.append(item_name)
 
         return result if len(result) > 0 else None
+
+    def _legacy_read_contents(self):
+        self._detect()
+        entry = sel.element(".//tbody[not(tr/td[contains(@class, 'hiddenRow')])]",
+                            root=self.locator)
+
+        def _process_subtree(entry):
+            node_title = sel.text("./tr/td[@class='standartTreeRow']/span", root=entry)
+            self._expand(entry)
+            child_nodes = sel.elements("./tr[not(@title)]/td/table/tbody", root=entry)
+            if not child_nodes:
+                return node_title
+            else:
+                return (node_title, map(lambda tree: _process_subtree(tree), child_nodes))
+
+        return [_process_subtree(entry)]
 
     def click_path(self, *path):
         """ Exposes a path and then clicks it.
