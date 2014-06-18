@@ -60,8 +60,7 @@ def net_check(port, addr=None, force=False):
     port = int(port)
     if not addr:
         addr = urlparse.urlparse(env['base_url']).hostname
-    if port not in _ports or force:
-
+    if port not in _ports[addr] or force:
         # First try DNS resolution
         try:
             addr = socket.gethostbyname(addr)
@@ -74,4 +73,37 @@ def net_check(port, addr=None, force=False):
                 _ports[addr][port] = False
         except:
             _ports[addr][port] = False
+    return _ports[addr][port]
+
+
+def net_check_remote(port, addr=None, machine_addr=None, ssh_creds=None, force=False):
+    """Checks the availability of a port from outside using another machine (over SSH)"""
+    from utils.ssh import SSHClient
+    port = int(port)
+    if not addr:
+        addr = my_ip_address()
+    if port not in _ports[addr] or force:
+        if not machine_addr:
+            machine_addr = urlparse.urlparse(env['base_url']).hostname
+        if not ssh_creds:
+            ssh = SSHClient(hostname=machine_addr)
+        else:
+            ssh = SSHClient(
+                hostname=machine_addr,
+                username=ssh_creds['username'],
+                password=ssh_creds['password']
+            )
+        with ssh:
+            # on exception => fails with return code 1
+            cmd = '''python -c "
+import sys, socket
+addr = socket.gethostbyname('%s')
+socket.create_connection((addr, %d), timeout=10)
+sys.exit(0)
+            "''' % (addr, port)
+            ret, out = ssh.run_command(cmd)
+            if ret == 0:
+                _ports[addr][port] = True
+            else:
+                _ports[addr][port] = False
     return _ports[addr][port]

@@ -13,7 +13,7 @@ import time
 
 from cfme.configure import configuration
 from utils.log import create_logger
-from utils.net import random_port, my_ip_address
+from utils.net import random_port, my_ip_address, net_check_remote
 from utils.path import scripts_path
 from utils.smtp_collector_client import SMTPCollectorClient
 
@@ -50,6 +50,12 @@ def _smtp_test_session(request):
     time.sleep(3)
     assert collector.poll() is None, "Collector has died. Something must be blocking selected ports"
     logger.info("Collector alive")
+    query_port_open = net_check_remote(mail_query_port, my_ip, force=True)
+    server_port_open = net_check_remote(mail_server_port, my_ip, force=True)
+    assert query_port_open and server_port_open,\
+        'Ports %d and %d on the machine executing the tests are closed.\n'\
+        'The ports are randomly chosen -> turn firewall off.'\
+        % (mail_query_port, mail_server_port)
     client = SMTPCollectorClient(
         my_ip,
         mail_query_port
