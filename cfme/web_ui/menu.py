@@ -1,7 +1,7 @@
 import ui_navigate as nav
 
 from cfme.fixtures import pytest_selenium as sel
-
+from selenium.common.exceptions import NoSuchElementException
 #: Locator for the unordered list that holds the top-level nav tabs.
 toplevel_tabs_loc = '//div[@class="navbar"]/ul'
 #: Locator for a specific top-level navigation tab.
@@ -13,7 +13,7 @@ secondlevel_links_loc = toplevel_loc + '/../ul'
 #: Locator for a specific second-level nav link
 #: Needs a top-level tab name and second-level link name to be %-interpolated.
 secondlevel_loc = secondlevel_links_loc + '/li/a[normalize-space(.)="%s"]'
-
+secondlevel_first_item_loc = secondlevel_links_loc + '/li[1]/a'
 
 # Dictionary of (nav destination name, section title) section tuples
 # Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel sections
@@ -80,15 +80,26 @@ sections = {
 
 def nav_to_fn(toplevel, secondlevel=None):
     def f(_):
-        toplevel_elem = sel.element(toplevel_loc % toplevel)
+        try:
+            toplevel_elem = sel.element(toplevel_loc % toplevel)
+        except NoSuchElementException:
+            if visible_pages():  # Target menu is missing
+                raise
+            else:
+                return  # no menu at all, assume single permission
+
         if secondlevel is None:
             sel.click(toplevel_elem)
         else:
             sel.move_to_element(toplevel_elem)
             for (toplevel_dest, toplv), secondlevels in sections.items():
                 if toplv == toplevel:
-                    sel.move_to_element(sel.element(
-                        secondlevel_loc % (toplevel, secondlevels[0][1])))
+                    try:
+                        sel.move_to_element(sel.element(secondlevel_first_item_loc % toplevel))
+                    except NoSuchElementException:
+                        # Target menu is missing
+                        sel.click(toplevel_elem)
+                        return  # no 2nd lvl menu, assume single permission
                     break
             sel.click(sel.element(secondlevel_loc % (toplevel, secondlevel)))
     return f
