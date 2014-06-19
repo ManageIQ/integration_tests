@@ -32,6 +32,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         delay: An integer describing the number of seconds to delay before trying func()
             again.
         fail_func: A function to be run after every unsuccessful attempt to run func()
+        quiet: Do not write time report to the log (default False)
 
     Returns:
         A tuple containing the output from func() and a float detailing the total wait time.
@@ -55,6 +56,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     handle_exception = kwargs.get('handle_exception', False)
     delay = kwargs.get('delay', 1)
     fail_func = kwargs.get('fail_func', None)
+    quiet = kwargs.get("quiet", False)
 
     t_delta = 0
     while t_delta <= num_sec:
@@ -74,7 +76,8 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
                 fail_func()
         else:
             duration = time.time() - st_time
-            logger.info('Took %f to do %s' % (duration, message))
+            if not quiet:
+                logger.info('Took %f to do %s' % (duration, message))
             return out, duration
         t_delta = time.time() - st_time
     logger.error('Could not complete %s in time, took %f' % (message, t_delta))

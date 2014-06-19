@@ -12,6 +12,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 """
 from time import sleep, time
 from collections import Iterable
+from textwrap import dedent
 import json
 from utils import conf
 from selenium.common.exceptions import \
@@ -30,6 +31,13 @@ import pytest
 from cfme import exceptions
 from utils.browser import browser, ensure_browser_open
 from utils.log import logger
+from utils.path import data_path
+from utils.wait import wait_for
+
+
+js_library = None  # Stores our library javascript file that gets prepended to each js call.
+with data_path.join("lib.js").open("r") as lib:
+    js_library = lib.read().strip()
 
 
 class ByValue(object):
@@ -129,11 +137,13 @@ def wait_until(f, msg="Webdriver wait timed out"):
     return WebDriverWait(browser(), 120.0).until(f, msg) and time() - t
 
 
-def _something_in_flight(s):
-    in_flt = s.execute_script(ajax_wait_js)
-    if in_flt != 0:
-        return True
-    return is_displayed((By.ID, "spinner_div"))
+def _nothing_in_flight():
+    """Check remaining requests.
+
+    The element visibility check is complex because lightbox_div invokes visibility of spinner_div
+    although it is not visible.
+    """
+    return execute_script("return nothing_in_flight();")
 
 
 def wait_for_ajax():
@@ -141,7 +151,9 @@ def wait_for_ajax():
     Waits unti lall ajax timers are complete, in other words, waits until there are no
     more pending ajax requests, page load should be finished completely.
     """
-    return wait_until(lambda *a, **k: not _something_in_flight(*a, **k), "Ajax wait timed out")
+    wait_for(
+        _nothing_in_flight,
+        num_sec=30, delay=0.1, message="wait for ajax", quiet=True)
 
 
 def is_displayed(loc):
@@ -264,11 +276,11 @@ def move_to_element(loc, **kwargs):
         move_to.perform()
     except MoveTargetOutOfBoundsException:
         # ff workaround
-        browser().execute_script("arguments[0].scrollIntoView();", el)
+        execute_script("arguments[0].scrollIntoView();", el)
         if elements(brand) and not is_displayed(brand):
             # If it does it badly that it moves whole page, this moves it back
             try:
-                browser().execute_script("arguments[0].scrollIntoView();", element(brand))
+                execute_script("arguments[0].scrollIntoView();", element(brand))
             except MoveTargetOutOfBoundsException:
                 pass
         move_to.perform()
@@ -505,18 +517,6 @@ def base_url():
     return conf.env['base_url']
 
 
-ajax_wait_js = """
-var inflight = function() {
-    return Array.prototype.slice.call(arguments,0).reduce(function (n, f) {
-        try {flt = f() || 0;
-             flt=(Math.abs(flt)+flt)/2; return flt + n;} catch (e) { return n }}, 0)};
-return inflight(function() { return jQuery.active},
-                function() { return Ajax.activeRequestCount},
-                function() { return window.miqAjaxTimers},
-                function() { if (document.readyState == "complete") { return 0 } else { return 1}});
-"""
-
-
 def go_to(page_name):
     """go_to task mark, used to ensure tests start on the named page, logged in as Administrator.
 
@@ -584,7 +584,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     # Clear any running "spinnies"
     try:
-        browser().execute_script('miqSparkleOff();')
+        execute_script('miqSparkleOff();')
     except:
         # miqSparkleOff undefined, so it's definitely off.
         pass
@@ -851,6 +851,18 @@ def _deselect_iter(loc, items):
         deselect(loc, item)
 
 
-def execute_script(*args, **kwargs):
-    """Wrapper for execute_script() to not have to pull browser() from somewhere."""
-    return browser().execute_script(*args, **kwargs)
+def _ensure_library_loaded():
+    if browser().execute_script("return typeof cfme_tests_library_loaded;").strip() == "undefined":
+        # We have to load it into the page
+        logger.debug("Uploading JS library.")
+        browser().execute_script(js_library)
+        browser().execute_script("cfme_tests_library_loaded = true;")
+
+
+def execute_script(script, *args, **kwargs):
+    """Wrapper for execute_script() to not have to pull browser() from somewhere.
+
+    It also provides our library which is stored in data/lib.js file.
+    """
+    _ensure_library_loaded()
+    return browser().execute_script(dedent(script), *args, **kwargs)

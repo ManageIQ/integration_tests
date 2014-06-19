@@ -72,7 +72,11 @@ class Widget(object):
         result = {}
         for item in cleaned:
             name, time = item.split(" ", 1)
-            result[name.strip().lower()] = parsetime.from_american_minutes(time.strip())
+            time = time.strip()
+            if time.lower() == "never":
+                result[name.strip().lower()] = None
+            else:
+                result[name.strip().lower()] = parsetime.from_american_minutes(time.strip())
         return result
 
     @property
