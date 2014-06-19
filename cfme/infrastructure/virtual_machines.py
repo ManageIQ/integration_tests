@@ -2,6 +2,7 @@
 quadicon lists, and VM details page.
 """
 
+
 import ui_navigate as nav
 import time
 from cfme.exceptions import NoVmFound, NoOptionAvailable, ParmRequired
@@ -45,7 +46,7 @@ snapshot_form = Form(
         ('descrition', "//*[@id='description']"),
         ('snapshot_memory', "//input[@id='snap_memory']"),
         ('create_button', "//img[@title='Create']"),
-        ('cancel_button', "//input[@title='Cancel']")
+        ('cancel_button', "//img[@title='Cancel']")
     ])
 
 
@@ -130,6 +131,74 @@ nav.add_branch(
 
 class Vm():
 
+    class Snapshot():
+        def __init__(self, name=None, description=None, memory=None, parent_vm=None):
+            self.name = name
+            self.description = description
+            self.memory = memory
+            self.vm = parent_vm
+
+        def _nav_to_snapshot_mgmt(self):
+            locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
+                 "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
+            if not sel.is_displayed(locator):
+                self.vm.load_details()
+                sel.click(details_page.infoblock.element("Properties", "Snapshots"))
+
+        def does_snapshot_exist(self):
+            self._nav_to_snapshot_mgmt()
+            #locator = ("//div[@class='dynatree-title' and "+
+             #   "contains("%s")]" %self.name)
+            if sel.is_displayed(locator):
+                return True
+            else:
+                return False
+
+        def wait_for_snapshot_to_appear(self, load_details=True):
+            """Wait for a snapshotto appear
+        Args:
+            timeout_in_minutes: time to wait for it to appear
+            from_details: when found, should it load the vm details
+            """
+            wait_for(self.does_snapshot_exist, num_sec=300, delay=30)
+            if load_details:
+                self.load_details()
+
+        def create(self):
+            self._nav_to_snapshot_mgmt()
+            toolbar.select('Create a new snapshot for this VM')
+            fill(snapshot_form, {'name': self.name,
+                                 'description': self.description,
+                                 'snapshot_memory': self.memory
+                                 },
+                 action=snapshot_form.create_button)
+            flash.assert_message_contain(
+                'Create Snapshot for VM and Instance "%s" was started' % self.name)
+            #wait_for(self.does_snapshot_exist, num_sec=300, delay=60)
+            self.wait_for_snapshot_to_appear(load_details=False)
+            #time.sleep(120)
+
+        def delete(self):
+            self._nav_to_snapshot_mgmt()
+            toolbar.select('Delete Snapshots', 'Delete Selected Snapshot', invokes_alert=True)
+            sel.handle_alert(cancel=False)
+            flash.assert_message_match(
+                'Delete Snapshot initiated for 1 VM and Instance from the CFME Database')
+
+        def delete_all(self):
+            self._nav_to_snapshot_mgmt()
+            toolbar.select('Delete Snapshots', 'Delete All Existing Snapshot', invokes_alert=True)
+            sel.handle_alert(cancel=False)
+            flash.assert_message_match(
+                'Delete All Snapshots initiated for 1 VM and Instance from the CFME Database')
+
+        def revert_to(self, name):
+            self._nav_to_snapshot_mgmt()
+            toolbar.select('Revert to selected snapshot')
+            sel.handle_alert(cancel=False)
+            flash.assert_message_match(
+                'Revert To A Snapshot initiated for 1 VM and Instance from the CFME Database')
+
     # POWER CONTROL OPTIONS
     SUSPEND = "Suspend"
     POWER_ON = "Power On"
@@ -142,15 +211,10 @@ class Vm():
     STATE_OFF = "off"
     STATE_SUSPENDED = "suspended"
 
-    def __init__(self, name, provider_crud, template_name=None, description=None,
-                snapshot_memory=False, create=False, cancel=False):
+    def __init__(self, name, provider_crud, template_name=None):
         self.name = name
         self.template_name = template_name
         self.provider_crud = provider_crud
-        self.description = description
-        self.snapshot_memory = snapshot_memory
-        self.create_button = create
-        self.cancel_button = cancel
 
     def create_on_provider(self):
         """Create the VM on the provider"""
@@ -369,50 +433,36 @@ class Vm():
     # def edit_tags(self, cancel=True, from_details=False):
     #     raise NotImplementedError('edit tags is not implemented.')
 
-    def list_snapshots(self):
-        self._nav_to_snapshot_mgmt()
-        if sel.is_displayed("//strong[contains(, 'has no snapshots')"):
-            return 0
-        else:
-            pass
+    # def _nav_to_snapshot_mgmt(self):
+    #     locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
+    #         "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
+    #     if not sel.is_displayed(locator):
+    #         self.load_details()
+    #         sel.click(details_page.infoblock.element("Properties", "Snapshots"))
 
-    def _nav_to_snapshot_mgmt(self):
-        locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
-             "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
-        if not sel.is_displayed(locator):
-            self.load_details()
-            sel.click(details_page.infoblock.element("Properties", "Snapshots"))
+    # def create_snapshot(self, name, description, snapshot_memory=False):
+    #     self._nav_to_snapshot_mgmt()
+    #     raise NotImplementedError('snapshot mgmt is not implemented.')
 
-    def create_snapshot(self, name, description, snapshot_memory):
-        self._nav_to_snapshot_mgmt()
-        toolbar.select('Create a new snapshot for this VM')
-        fill(snapshot_form, {'name': name,
-                             'description': description,
-                             'snapshot_memory': snapshot_memory
-                             },
-        action=snapshot_form.create_button)
-        flash.assert_message_contain('Create Snapshot for VM and Instance "%s" was started' % self.name)
-        time.sleep(120)
-        self.load_details()
-        sel.click(details_page.infoblock.element("Properties", "Snapshots"))
+    # def remove_selected_snapshot(self, name):
+    #     self._nav_to_snapshot_mgmt()
+    #     raise NotImplementedError('snapshot mgmt is not implemented.')
 
-    def remove_selected_snapshot(self, name):
-        self._nav_to_snapshot_mgmt()
-        toolbar.select('Delete Snapshots', 'Delete Selected Snapshot', invokes_alert=True)
-        sel.handle_alert(cancel=False)
-        flash.assert_message_match(' Delete Snapshot initiated for 1 VM and Instance from the CFME Database')
+    # def remove_all_snapshots(self):
+    #     self._nav_to_snapshot_mgmt()
+    #     raise NotImplementedError('snapshot mgmt is not implemented.')
 
-    def remove_all_snapshots(self):
-        self._nav_to_snapshot_mgmt()
-        toolbar.select('Delete Snapshots', 'Delete All Existing Snapshot', invokes_alert=True)
-        sel.handle_alert(cancel=False)
-        flash.assert_message_match('Delete All Snapshots initiated for 1 VM and Instance from the CFME Database')
+    # def list_snapshots(self):
+    #     self._nav_to_snapshot_mgmt()
+    #     if sel.is_displayed("//strong[contains(, 'has no snapshots')"):
+    #         return 0
+    #     else:
+    #         pass
+    #     raise NotImplementedError('snapshot mgmt is not implemented.')
 
-    def revert_to_snapshot(self, name):
-        self._nav_to_snapshot_mgmt()
-        toolbar.select('Revert to selected snapshot')
-        sel.handle_alert(cancel=False)
-        flash.assert_message_match(' Revert To A Snapshot initiated for 1 VM and Instance from the CFME Database')
+    # def revert_to_snapshot(self, name):
+    #     self._nav_to_snapshot_mgmt()
+    #     raise NotImplementedError('snapshot mgmt is not implemented.')
 
     def wait_for_vm_state_change(
             self, desired_state=None, timeout_in_minutes=5, from_details=False):

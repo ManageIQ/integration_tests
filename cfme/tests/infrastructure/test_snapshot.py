@@ -1,13 +1,14 @@
 import pytest
-import random
 import time
+import random
 from cfme.infrastructure.virtual_machines import Vm
 from utils.conf import cfme_data
+from cfme.web_ui import flash
 from utils import testgen
 from utils.log import logger
-from cfme.web_ui import flash
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
+from utils.ssh import SSHClient
 from utils.wait import wait_for, TimedOutError
 
 #Work in progress
@@ -20,13 +21,13 @@ def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.infra_providers(metafunc)
     new_idlist = []
     new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
+    """for i, argvalue_tuple in enumerate(argvalues):
         provider_data = cfme_data['management_systems'][
             argvalue_tuple[argnames.index('provider_key')]]
         #print provider_data
         if provider_data.get('type', False) != 'virtualcenter':
             continue
-
+    """
     if 'random_snpsht_mgt_vm' in metafunc.fixturenames:
         if random_vm_test:
             argnames, new_argvalues, new_idlist = random_vm_test
@@ -71,34 +72,34 @@ def test_vm(request, provider_crud, provider_mgmt, vm_name):
         vm.create(timeout_in_minutes=15)
     return vm
 
-"""
-def new_snapshot():
-    return dict(name='snapshot' + generate_random_string(),
-              description='snpshot_test',
-              snapshot_memory=False
-                )
-"""
+
+@pytest.fixture(scope="class")
+def new_snapshot(test_vm):
+    snapshot = Vm.Snapshot(name="snpshot_" + generate_random_string(), description="snapshot", memory=False, parent_vm=test_vm)
+    return snapshot
 
 
 @pytest.mark.usefixtures("random_snpsht_mgt_vm")
-def test_create_snapshot(test_vm, verify_vm_running, soft_assert, provider_init, provider_mgmt):
-        test_vm.load_details()
-        test_vm.create_snapshot(name='snapshot' + generate_random_string(), description='snpshot_test', snapshot_memory=False)
+def test_snapshot_crud(new_snapshot):
+        new_snapshot.create()
+        new_snapshot.delete()
 
 
-def test_delete_selected_snapshot(test_vm):
-        test_vm.load_details()
-        test_vm.create_snapshot(name='snapshot' + generate_random_string(), description='snpshot_test', snapshot_memory=False)
-        test_vm.remove_selected_snapshot()
+def test_delete_all_snapshots(new_snapshot):
+        new_snapshot.create()
+        new_snapshot.create()
+        new_snapshot.delete_all()
 
 
-def test_delete_all_snapshots(test_vm):
-        test_vm.load_details()
-        test_vm.create_snapshot(name='snapshot' + generate_random_string(), description='snpshot_test', snapshot_memory=False)
-        test_vm.remove_all_snapshots()
+def test_revert_snapshot(new_snapshot):
+        new_snapshot.create()
+        new_snapshot.create()
+        new_snapshot.revert_to()
 
 
-def test_revert_snapshot(test_vm):
-        test_vm.load_details()
-        test_vm.create_snapshot(name='snapshot' + generate_random_string(), description='snpshot_test', snapshot_memory=False)
-        test_vm.revert_to_snapshot()
+def test_verify_snapshot(new_snapshot):
+        new_snapshot.create()
+        ip = new_snapshot.vm.provider_crud.get_ip_address(new_snapshot.vm.name)
+        print ip
+        ssh = SSHClient(hostname=ip, port="22")
+        ssh.run_command('touch ~/tmp.file1')
