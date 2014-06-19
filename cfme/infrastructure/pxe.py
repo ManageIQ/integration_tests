@@ -22,7 +22,7 @@ from utils import version
 
 cfg_btn = partial(tb.select, 'Configuration')
 
-pxe_resetter = "//span[contains(., 'All PXE Servers')]"
+pxe_resetter = "//span[contains(., 'All PXE Servers')]/.."
 
 pxe_server_table_exist = Table('//div[@id="records_div"]/table/tbody/tr/td')
 pxe_server_tree = version.pick({'default': Tree('//div[@id="pxe_servers_treebox"]//table'),
@@ -63,7 +63,7 @@ pxe_image_type_form = Form(
         ('image_type', Select("//select[@id='image_typ']"))
     ])
 
-template_resetter = "//span[contains(., 'All Customization Templates - System Image Types')]"
+template_resetter = "//span[contains(., 'All Customization Templates - System Image Types')]/.."
 
 template_tree = version.pick({
     'default': Tree('//div[@id="customization_templates_treebox"]//table'),
@@ -99,7 +99,7 @@ template_properties_form = Form(
     ])
 
 
-image_resetter = "//span[contains(., 'All System Image Types')]"
+image_resetter = "//span[contains(., 'All System Image Types')]/.."
 
 image_table = Table('//div[@id="records_div"]//table')
 
@@ -121,7 +121,7 @@ image_properties_form = Form(
         ('provision_type', Select('//select[@id="provision_type"]'))
     ])
 
-iso_resetter = "//span[contains(., 'All ISO Datastores')]"
+iso_resetter = "//span[contains(., 'All ISO Datastores')]/.."
 
 iso_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
 
