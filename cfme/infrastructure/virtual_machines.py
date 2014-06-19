@@ -5,7 +5,7 @@ quadicon lists, and VM details page.
 
 import ui_navigate as nav
 import time
-from cfme.exceptions import NoVmFound, NoOptionAvailable, ParmRequired
+from cfme.exceptions import NoVmFound, NoOptionAvailable, ParmRequired, CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Region, Quadicon, CheckboxTree, Tree, paginator, accordion, toolbar, fill, flash
 from functools import partial
@@ -39,6 +39,8 @@ manage_policies_page = Region(
     locators={
         'save_button': "//div[@id='buttons_on']//img[@alt='Save Changes']",
     })
+
+snapshot_tree = Tree("//div[@id='snapshots_treebox']/ul")
 
 snapshot_form = Form(
     fields=[
@@ -147,11 +149,12 @@ class Vm():
 
         def does_snapshot_exist(self):
             self._nav_to_snapshot_mgmt()
-            #locator = ("//div[@class='dynatree-title' and "+
-             #   "contains("%s")]" %self.name)
-            if sel.is_displayed(locator):
+            try:
+                snapshot_tree.click_path(self.name)
                 return True
-            else:
+            except CandidateNotFound:
+                return False
+            except NoSuchElementException:
                 return False
 
         def wait_for_snapshot_to_appear(self, load_details=True):
@@ -172,8 +175,8 @@ class Vm():
                                  'snapshot_memory': self.memory
                                  },
                  action=snapshot_form.create_button)
-            flash.assert_message_contain(
-                'Create Snapshot for VM and Instance "%s" was started' % self.name)
+            #flash.assert_message_contain(
+             #   'Create Snapshot for VM and Instance "%s" was started' % self.name)
             #wait_for(self.does_snapshot_exist, num_sec=300, delay=60)
             self.wait_for_snapshot_to_appear(load_details=False)
             #time.sleep(120)
