@@ -347,6 +347,7 @@ def configure_appliance_for_event_testing(request, listener_info):
     """ This fixture ensures that the appliance is configured for event testing.
     """
     event_testing = request.config.pluginmanager.getplugin("event_testing")
+    # If we did not enable the event testing, do not setup
     if event_testing.listener is None:
         return
     return setup_for_event_testing(

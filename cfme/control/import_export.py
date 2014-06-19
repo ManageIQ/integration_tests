@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+from selenium.common.exceptions import NoSuchElementException
+
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Form, Region, fill, flash
+from cfme.web_ui import Form, Region, Select, fill, flash
+from cfme.web_ui.form_buttons import FormButton
 
 
 import_form = Form(
@@ -10,15 +13,16 @@ import_form = Form(
     ]
 )
 
-
-def make_button(button_alt):
-    return "//div[@id='buttons']/ul[@id='form_buttons']/li/a/img[@alt='%s']" % button_alt
-
+export_form = Form(
+    fields=[
+        ("available", Select("//select[@id='choices_chosen_']"))
+    ]
+)
 
 upload_buttons = Region(
     locators=dict(
-        commit_button=make_button("Commit Import"),
-        cancel_button=make_button("Cancel Import"),
+        commit_button=FormButton("Commit Import"),
+        cancel_button=FormButton("Cancel Import"),
     )
 )
 
@@ -38,3 +42,12 @@ def import_file(filename, cancel=False):
     sel.click(import_form.upload_button)
     flash.assert_no_errors()
     return sel.click(upload_buttons.cancel_button if cancel else upload_buttons.commit_button)
+
+
+def is_imported(policy_profile):
+    sel.force_navigate("control_import_export")
+    try:
+        export_form.available.select_by_visible_text(str(policy_profile))
+        return True
+    except NoSuchElementException:
+        return False

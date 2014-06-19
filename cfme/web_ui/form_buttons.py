@@ -20,8 +20,9 @@ class FormButton(object):
 
     def locate(self):
         """This hairy locator ensures that the button is not dimmed and not hidden."""
-        return ("//img[@alt='{}' and not(contains(@class, 'dimmed')) and contains(@class, 'button')"
-            "and not(ancestor::*[contains(@style, 'display:none')"
+        return ("//img[@alt='{}' and not(contains(@class, 'dimmed'))"
+            " and (contains(@class, 'button') or contains(@src, 'button'))"
+            " and not(ancestor::*[contains(@style, 'display:none')"
             " or contains(@style, 'display: none')])]".format(self._alt))
 
     @property
