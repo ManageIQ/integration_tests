@@ -1210,7 +1210,7 @@ class Tree(object):
             self.node_label = ".//span[.='%s']"
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
-            # Locators for reading the tree - we do not support, therefore None
+            # Locators for reading the tree - we do not support, this kind of getting, we have cust.
             self.nodes_root = None
             self.nodes_root_continue = None
             self.node_label_loc = None
@@ -1309,8 +1309,6 @@ class Tree(object):
         self._detect()
         if parent is None and self._get_tag() == "table":
             return self._legacy_read_contents()  # Legacy
-        if self.nodes_root is None:
-            raise Exception("Cannot read contents of legacy tree!")
         parent = self.locator if parent is None else parent
 
         result = []
