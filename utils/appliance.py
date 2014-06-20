@@ -81,6 +81,7 @@ class Appliance(object):
     def configure(self,
                   db_address=None,
                   name_to_set=None,
+                  region=0,
                   fix_ntp_clock=True,
                   patch_ajax_wait=True):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
@@ -91,6 +92,7 @@ class Appliance(object):
             db_address: Address of external database if set, internal database if ``None``
                         (default ``None``)
             name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
+            region: Number to assign to region (default ``0``)
             fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
             patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
 
@@ -100,9 +102,9 @@ class Appliance(object):
         if patch_ajax_wait is True:
             self.patch_ajax_wait()
         if db_address is None:
-            self.enable_internal_db()
+            self.enable_internal_db(region)
         else:
-            self.enable_external_db(db_address)
+            self.enable_external_db(db_address, region)
         self.wait_for_web_ui()
 
         if name_to_set is not None and name_to_set != self.name:
@@ -166,13 +168,13 @@ class Appliance(object):
         """
         return browser_session(base_url='https://' + self.address)
 
-    def enable_internal_db(self):
+    def enable_internal_db(self, region=0):
         """Enables internal database
         """
         self.db_address = self.address
         del(self.db)
         script = scripts_path.join('enable_internal_db.py')
-        args = [str(script), self.address]
+        args = [str(script), self.address, '--region', str(region)]
         with open(os.devnull, 'w') as f_devnull:
             status = subprocess.call(args, stdout=f_devnull)
         if status != 0:

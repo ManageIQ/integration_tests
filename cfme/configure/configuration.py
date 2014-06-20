@@ -6,7 +6,8 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
-from cfme.web_ui import Calendar, Form, Region, Select, Table, accordion, fill, flash, form_buttons
+from cfme.web_ui import \
+    (Calendar, Form, InfoBlock, Region, Select, Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
 from utils.db_queries import get_server_id, get_server_name, get_server_region
@@ -62,6 +63,16 @@ db_configuration = Form(
     ]
 )
 
+replication_worker = Form(
+    fields=[
+        ('database', "//input[@id='replication_worker_dbname']"),
+        ('port', "//input[@id='replication_worker_port']"),
+        ('username', "//input[@id='replication_worker_username']"),
+        ('password', "//input[@id='replication_worker_password']"),
+        ('password_verify', "//input[@id='replication_worker_username']"),
+        ('host', "//input[@id='replication_worker_host']"),
+    ]
+)
 
 records_table = Table("//div[@id='records_div']/table[@class='style3']")
 
@@ -1184,6 +1195,42 @@ class DatabaseBackupSchedule(Schedule):
             form_buttons.cancel()
         else:
             form_buttons.save()
+
+
+def set_replication_worker_host(host):
+    """ Set replication worker host on Configure / Configuration pages.
+
+    Args:
+        host: Address of the hostname to replicate to.
+    """
+    sel.force_navigate("cfg_settings_currentserver_workers")
+    fill(
+        replication_worker,
+        dict(host=host),
+        action=form_buttons.save
+    )
+
+
+def get_replication_status(navigate=True):
+    """ Gets replication status from Configure / Configuration pages.
+
+    Returns: bool of whether replication is Active or Inactive.
+    """
+    if navigate:
+        sel.force_navigate("cfg_diagnostics_region_replication")
+    block = InfoBlock("form")
+    return block.text("Replication Process", "Status") == "Active"
+
+
+def get_replication_backlog(navigate=True):
+    """ Gets replication backlog from Configure / Configuration pages.
+
+    Returns: int representing the remaining items in the replication backlog.
+    """
+    if navigate:
+        sel.force_navigate("cfg_diagnostics_region_replication")
+    block = InfoBlock("form")
+    return int(block.text("Replication Process", "Current Backlog"))
 
 
 def set_server_roles(**roles):
