@@ -25,6 +25,7 @@ from urlparse import urlparse
 from utils.conf import env
 from utils.path import log_path
 import atexit
+from utils import net
 
 
 class DummyClient:
@@ -34,7 +35,7 @@ class DummyClient:
 art_config = env.get('artifactor', {})
 
 if art_config:
-    art_client = ArtifactorClient(art_config['server_address'], art_config['server_port'])
+    art_client = ArtifactorClient(art_config['server_address'], port=21212)
 else:
     art_client = DummyClient()
 
@@ -69,6 +70,8 @@ def pytest_configure(config):
             art.register_hook_callback('filedump', 'pre', parse_setup_dir,
                                        name="filedump_dir_setup")
 
+            config.random_port_art = net.random_port()
+            art.set_port(config.random_port_art)
             artifactor.initialize()
             ip = urlparse(env['base_url']).hostname
 
@@ -78,6 +81,7 @@ def pytest_configure(config):
             art.configure_plugin('filedump')
             art.configure_plugin('reporter')
             art.fire_hook('start_session', run_id=config.getvalue('run_id'))
+    art_client.port = config.random_port_art
 
 
 def pytest_runtest_protocol(item):
