@@ -28,16 +28,10 @@ from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import singledispatch, multidispatch
 
 import pytest
-from cfme import exceptions
+from cfme import exceptions, js
 from utils.browser import browser, ensure_browser_open
 from utils.log import logger
-from utils.path import data_path
 from utils.wait import wait_for
-
-
-js_library = None  # Stores our library javascript file that gets prepended to each js call.
-with data_path.join("lib.js").open("r") as lib:
-    js_library = lib.read().strip()
 
 
 class ByValue(object):
@@ -143,7 +137,7 @@ def _nothing_in_flight():
     The element visibility check is complex because lightbox_div invokes visibility of spinner_div
     although it is not visible.
     """
-    return execute_script("return nothing_in_flight();")
+    return execute_script(js.nothing_in_flight)
 
 
 def wait_for_ajax():
@@ -851,18 +845,9 @@ def _deselect_iter(loc, items):
         deselect(loc, item)
 
 
-def _ensure_library_loaded():
-    if browser().execute_script("return typeof cfme_tests_library_loaded;").strip() == "undefined":
-        # We have to load it into the page
-        logger.debug("Uploading JS library.")
-        browser().execute_script(js_library)
-        browser().execute_script("cfme_tests_library_loaded = true;")
-
-
 def execute_script(script, *args, **kwargs):
     """Wrapper for execute_script() to not have to pull browser() from somewhere.
 
     It also provides our library which is stored in data/lib.js file.
     """
-    _ensure_library_loaded()
     return browser().execute_script(dedent(script), *args, **kwargs)
