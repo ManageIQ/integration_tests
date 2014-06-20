@@ -718,11 +718,11 @@ class RHEVMSystem(MgmtSystemAPIBase):
             return vm
 
     def get_ip_address(self, vm_name):
-        vm = self._get_vm(vm_name)
         try:
-            guest_info, tc = wait_for(vm.get_guest_info,
+            wait_for_me = lambda: self._get_vm(vm_name).get_guest_info()
+            guest_info, tc = wait_for(wait_for_me,
                 fail_condition=None, delay=5, num_sec=600,
-                message="get_ip_address from vsphere")
+                message="get_ip_address from rhevm")
             ip = guest_info.get_ips().get_ip()[0].get_address()
         except TimedOutError:
             ip = None
