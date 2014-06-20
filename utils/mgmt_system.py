@@ -720,10 +720,10 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def get_ip_address(self, vm_name):
         vm = self._get_vm(vm_name)
         try:
-            ips, tc = wait_for(vm.get_guest_info().get_ips,
+            guest_info, tc = wait_for(vm.get_guest_info,
                 fail_condition=None, delay=5, num_sec=600,
                 message="get_ip_address from vsphere")
-            ip = ips.get_ip()[0].get_address()
+            ip = guest_info.get_ips().get_ip()[0].get_address()
         except TimedOutError:
             ip = None
 
