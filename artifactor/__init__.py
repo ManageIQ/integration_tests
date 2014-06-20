@@ -149,12 +149,11 @@ class Artifactor(Rigger):
         if not os.path.isdir(self.log_dir):
             os.makedirs(self.log_dir)
         self.squash_exceptions = self.config.get('squash_exceptions', False)
-        if not self.config.get('server_port', None):
-            self.config['server_port'] = 21212
         if not self.log_dir:
             print "!!! Log dir must be specified in yaml"
             sys.exit(127)
         self.setup_plugin_instances()
+        self.start_server()
         self.global_data = {'artifactor_config': self.config, 'log_dir': self.config['log_dir'],
                             'artifacts': dict()}
 
@@ -166,14 +165,10 @@ class Artifactor(Rigger):
     def log_message(self, message):
         self.logger.debug(message)
 
-    def set_port(self, port):
-        self.config['server_port'] = port
-
 artifactor = Artifactor(None)
 
 
 def initialize():
-    artifactor.start_server()
     artifactor.parse_config()
     artifactor.register_hook_callback('start_test', 'pre', parse_setup_dir,
                                       name="default_start_test")

@@ -22,20 +22,29 @@ already been used, it will die
 from artifactor import ArtifactorClient
 import pytest
 from urlparse import urlparse
+from utils import log
 from utils.conf import env
+from utils.net import random_port
 from utils.path import log_path
 import atexit
-from utils import net
 
 
-class DummyClient:
+class DummyClient(object):
     def fire_hook(self, *args, **kwargs):
         return
+
+    def __nonzero__(self):
+        # DummyClient is always False, so it's easy to see if we have an artiactor client
+        return False
 
 art_config = env.get('artifactor', {})
 
 if art_config:
-    art_client = ArtifactorClient(art_config['server_address'], port=21212)
+    # If server_port isn't set, pick a random port
+    if 'server_port' not in art_config:
+        port = random_port()
+        art_config['server_port'] = port
+    art_client = ArtifactorClient(art_config['server_address'], art_config['server_port'])
 else:
     art_client = DummyClient()
 
@@ -51,37 +60,43 @@ def pytest_addoption(parser):
 
 @pytest.mark.tryfirst
 def pytest_configure(config):
-    if not SLAVEID:
+    if not art_client:
+        return
+
+    if SLAVEID:
+        art_client.port = config.option.artifactor_port
+    else:
         import artifactor
         from artifactor.plugins import merkyl, logger, video, filedump, reporter
         from artifactor import parse_setup_dir
 
         art = artifactor.artifactor
-        if art_config:
-            if 'log_dir' not in art_config:
-                art_config['log_dir'] = log_path.join('artifacts').strpath
-            art.set_config(art_config)
 
-            art.register_plugin(merkyl.Merkyl, "merkyl")
-            art.register_plugin(logger.Logger, "logger")
-            art.register_plugin(video.Video, "video")
-            art.register_plugin(filedump.Filedump, "filedump")
-            art.register_plugin(reporter.Reporter, "reporter")
-            art.register_hook_callback('filedump', 'pre', parse_setup_dir,
-                                       name="filedump_dir_setup")
+        if 'log_dir' not in art_config:
+            art_config['log_dir'] = log_path.join('artifacts').strpath
+        art.set_config(art_config)
 
-            config.random_port_art = net.random_port()
-            art.set_port(config.random_port_art)
-            artifactor.initialize()
-            ip = urlparse(env['base_url']).hostname
+        art.register_plugin(merkyl.Merkyl, "merkyl")
+        art.register_plugin(logger.Logger, "logger")
+        art.register_plugin(video.Video, "video")
+        art.register_plugin(filedump.Filedump, "filedump")
+        art.register_plugin(reporter.Reporter, "reporter")
+        art.register_hook_callback('filedump', 'pre', parse_setup_dir,
+                                   name="filedump_dir_setup")
 
-            art.configure_plugin('merkyl', ip=ip)
-            art.configure_plugin('logger')
-            art.configure_plugin('video')
-            art.configure_plugin('filedump')
-            art.configure_plugin('reporter')
-            art.fire_hook('start_session', run_id=config.getvalue('run_id'))
-    art_client.port = config.random_port_art
+        artifactor.initialize()
+        ip = urlparse(env['base_url']).hostname
+
+        art.configure_plugin('merkyl', ip=ip)
+        art.configure_plugin('logger')
+        art.configure_plugin('video')
+        art.configure_plugin('filedump')
+        art.configure_plugin('reporter')
+        art.fire_hook('start_session', run_id=config.getvalue('run_id'))
+
+        # Stash this where slaves can find it
+        config.option.artifactor_port = art_client.port
+        log.logger.info('artifactor listening on port %d', art_client.port)
 
 
 def pytest_runtest_protocol(item):
