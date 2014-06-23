@@ -14,7 +14,7 @@ list_page = Region(
         'zone_table': SplitTable(header_data=('//div[@class="xhdr"]/table/tbody', 1),
             body_data=('//div[@class="objbox"]/table/tbody', 1))
     },
-    title='CloudForms Management Engine: Cloud Providers')
+    title='Cloud Providers')
 
 
 details_page = Region(infoblock_type='detail')

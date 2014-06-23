@@ -26,7 +26,8 @@ class User(object):
         self.username = username
 
 
-page = Region(title="CloudForms Management Engine: Dashboard",
+page = Region(
+    title="Dashboard",
     locators={
         'username': '//input[@id="user_name"]',
         'password': '//input[@id="user_password"]',

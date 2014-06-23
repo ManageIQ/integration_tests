@@ -74,7 +74,7 @@ class Region(object):
             'discover_button': (By.CSS_SELECTOR,
                 "tr[title='Discover Cloud Providers']>td.td_btn_txt>" "div.btn_sel_text")
             },
-            title='CloudForms Management Engine: Cloud Providers',
+            title='Cloud Providers',
             identifying_loc='discover_button'
         )
 
@@ -84,6 +84,12 @@ class Region(object):
 
     Locator attributes will return the locator tuple for that particular element,
     and can be passed on to other functions, such as :py:func:`element` and :py:func:`click`.
+
+    Note:
+
+        When specifying a region title, omit the "Cloudforms Management Engine: " or "ManageIQ: "
+        prefix. They're included on every page, and different for the two versions of the appliance,
+        and :py:meth:`is_displayed` strips them off before checking for equality.
 
     """
     def __getattr__(self, name):
@@ -101,19 +107,33 @@ class Region(object):
 
     def is_displayed(self):
         """
-        Checks to see if the region is currently displayed
+        Checks to see if the region is currently displayed.
 
         Returns: A boolean describing if the region is currently displayed
         """
-        msg = "Region doesn't have an identifying locator or title, " +\
-            "can't determine if current page."
-        assert self.identifying_loc or self.title, msg
+        if not self.identifying_loc and not self.title:
+            logger.warning("Region doesn't have an identifying locator or title, "
+                "can't determine if current page.")
+            return True
 
-        # Automatically match ident/title if no identifying_loc/title
-        ident_match = (not self.identifying_loc or
-            sel.is_displayed(self.locators[self.identifying_loc]))
-        title_match = (not self.title or
-            browser().title == self.title)
+        # All page titles have a prefix; strip it off
+        try:
+            browser_title = browser().title.split(': ', 1)[1]
+        except IndexError:
+            browser_title = None
+
+        if self.identifying_loc and sel.is_displayed(self.locators[self.identifying_loc]):
+            ident_match = True
+        else:
+            logger.info('Identifying locator for region not found')
+            ident_match = False
+
+        if self.title and browser_title == self.title:
+            title_match = True
+        else:
+            logger.info("Title '%s' doesn't match expected title '%s'" %
+                (browser_title, self.title))
+            title_match = False
         return title_match and ident_match
 
 
