@@ -17,6 +17,6 @@ def test_csrf_post():
     dashboard.reset_widgets()
 
     try:
-        wait_for(lambda: login.page.is_displayed(), num_sec=15, delay=0.2)
+        wait_for(lambda: pytest.sel.is_displayed(login.page.submit_button), num_sec=15, delay=0.2)
     except TimedOutError:
         pytest.fail("CSRF attack succeeded!")
