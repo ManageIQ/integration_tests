@@ -7,10 +7,11 @@ function isHidden(el) {
     if(el === null) return true;
     return el.offsetParent === null;
 }
-return (jQuery.active +
-        Ajax.activeRequestCount +
-        window.miqAjaxTimers +
-        (document.readyState == "complete" ? 0 : 1) +
-        (!(!isHidden(document.getElementById("spinner_div")) &&
-            isHidden(document.getElementById("lightbox_div"))) ? 0 : 1)) == 0;
+
+function jqueryActive() { return jQuery.active > 0; }
+function prototypeActive() { return Ajax.activeRequestCount > 0; }
+function miqActive() { return window.miqAjaxTimers > 0; }
+function spinnerDisplayed() { return (!isHidden(document.getElementById("spinner_div"))) && isHidden(document.getElementById("lightbox_div")); }
+function documentComplete() { return document.readyState == "complete"; }
+return !(jqueryActive() || prototypeActive() || miqActive() || spinnerDisplayed() || !(documentComplete()));
 """
