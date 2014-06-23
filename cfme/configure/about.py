@@ -14,7 +14,7 @@ product_assistance = Region(
         'settings_and_operations_guide': "//a[.='Settings and Operations Guide']",
         'red_hat_customer_portal': "//a[.='Red Hat Customer Portal']"
     },
-    title='CloudForms Management Engine: About',
+    title='About',
     identifying_loc='quick_start_guide',
     infoblock_type="form"
 )

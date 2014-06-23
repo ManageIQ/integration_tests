@@ -23,7 +23,7 @@ page_specific_locators = Region(
 
 # Page specific locators
 list_page = Region(
-    title='CloudForms Management Engine: Instances'
+    title='Instances'
 )
 
 edit_page = Region(

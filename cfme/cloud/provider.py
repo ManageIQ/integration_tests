@@ -43,7 +43,7 @@ add_page = Region(
     locators={
         'add_submit': "//img[@alt='Add this Cloud Provider']",
     },
-    title='CloudForms Management Engine: Cloud Providers')
+    title='Cloud Providers')
 
 edit_page = Region(
     locators={

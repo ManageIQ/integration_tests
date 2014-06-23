@@ -7,12 +7,11 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Region, Table
 from utils.timeutil import parsetime
 from utils.wait import wait_for
-from cfme.web_ui import Region
 
 _css_reset_button = 'div.dhx_toolbar_btn[title="Reset Dashboard Widgets to the defaults"] img'
 
 page = Region(
-    title="CloudForms Management Engine: Dashboard",
+    title="Dashboard",
     locators={
         'reset_widgets_button': (By.CSS_SELECTOR, _css_reset_button),
         'csrf_token': "//meta[@name='csrf-token']",
