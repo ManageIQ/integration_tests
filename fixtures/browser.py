@@ -37,45 +37,44 @@ def pytest_exception_interact(node, call, report):
     art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
                   filename="short-traceback.txt", contents=short_tb, fd_ident="short_tb")
 
-    if set(getattr(node, 'fixturenames', [])) & browser_fixtures:
-        # base64 encoded to go into a data uri, same for screenshots
-        full_tb = str(report.longrepr).encode('base64').strip()
-        # errors are when exceptions are thrown outside of the test call phase
-        is_error = report.when != 'call'
+    # base64 encoded to go into a data uri, same for screenshots
+    full_tb = str(report.longrepr).encode('base64').strip()
+    # errors are when exceptions are thrown outside of the test call phase
+    is_error = report.when != 'call'
 
-        template_data = {
-            'name': node.name,
-            'file': node.fspath,
-            'is_error': is_error,
-            'fail_stage': report.when,
-            'short_tb': short_tb,
-            'full_tb': full_tb,
-        }
+    template_data = {
+        'name': node.name,
+        'file': node.fspath,
+        'is_error': is_error,
+        'fail_stage': report.when,
+        'short_tb': short_tb,
+        'full_tb': full_tb,
+    }
 
-        try:
-            template_data['screenshot'] = utils.browser.browser().get_screenshot_as_base64()
-            art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
-                filename="screenshot.png", fd_ident="screenshot", mode="wb", contents_base64=True,
-                contents=template_data['screenshot'])
-        except (AttributeError, WebDriverException):
-            # See comments utils.browser.ensure_browser_open for why these two exceptions
-            template_data['screenshot'] = None
-            template_data['screenshot_error'] = 'browser error'
-        except Exception as ex:
-            # If this fails for any other reason,
-            # leave out the screenshot but record the reason
-            template_data['screenshot'] = None
-            if ex.message:
-                screenshot_error = '%s: %s' % (type(ex).__name__, ex.message)
-            else:
-                screenshot_error = type(ex).__name__
-            template_data['screenshot_error'] = screenshot_error
-
-        failed_test_tracking['tests'].append(template_data)
-        if is_error:
-            failed_test_tracking['total_errored'] += 1
+    try:
+        template_data['screenshot'] = utils.browser.browser().get_screenshot_as_base64()
+        art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+            filename="screenshot.png", fd_ident="screenshot", mode="wb", contents_base64=True,
+            contents=template_data['screenshot'])
+    except (AttributeError, WebDriverException):
+        # See comments utils.browser.ensure_browser_open for why these two exceptions
+        template_data['screenshot'] = None
+        template_data['screenshot_error'] = 'browser error'
+    except Exception as ex:
+        # If this fails for any other reason,
+        # leave out the screenshot but record the reason
+        template_data['screenshot'] = None
+        if ex.message:
+            screenshot_error = '%s: %s' % (type(ex).__name__, ex.message)
         else:
-            failed_test_tracking['total_failed'] += 1
+            screenshot_error = type(ex).__name__
+        template_data['screenshot_error'] = screenshot_error
+
+    failed_test_tracking['tests'].append(template_data)
+    if is_error:
+        failed_test_tracking['total_errored'] += 1
+    else:
+        failed_test_tracking['total_failed'] += 1
 
 
 def pytest_sessionfinish(session, exitstatus):
