@@ -2,21 +2,21 @@
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the dashboard page
 """
-from selenium.webdriver.common.by import By
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Region, Table
+from cfme.web_ui import Region, Table, toolbar
 from utils.timeutil import parsetime
 from utils.wait import wait_for
-from cfme.web_ui import Region
 
 _css_reset_button = 'div.dhx_toolbar_btn[title="Reset Dashboard Widgets to the defaults"] img'
 
 page = Region(
     title="CloudForms Management Engine: Dashboard",
     locators={
-        'reset_widgets_button': (By.CSS_SELECTOR, _css_reset_button),
+        'reset_widgets_button': toolbar.root_loc('Reset Dashboard Widgets'),
         'csrf_token': "//meta[@name='csrf-token']",
-    })
+        'user_dropdown': '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
+    },
+    identifying_loc='reset_widgets_button')
 
 
 def reset_widgets(cancel=False):

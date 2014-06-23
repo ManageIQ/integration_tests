@@ -8,17 +8,20 @@ from utils.log import logger
 from utils import version
 from cfme.versions import upstream
 
-area = Region(locators=
-              {'message': version.pick(
-                  {'default': '//div[starts-with(@id, "flash_") and '
-                   'not(ancestor::*[contains(@style,"display: none")])]//li'
-                   '| //div[@id="flash_div"]',  # login screen
-                   '5.3': '//div[starts-with(@id, "flash_") and '
-                   'not(ancestor::*[contains(@style,"display: none")])]'
-                   '//div[contains(@class,"alert")]'
-                   })
-               })
-
+area = Region(locators={
+    'message': version.pick({
+        'default': ' | '.join([
+            ('//div[starts-with(@id, "flash_") and '
+                'not(ancestor::*[contains(@style,"display: none")])]//li'),
+            '//div[@id="flash_div"]',  # login screen
+        ]),
+        '5.3': ' | '.join([
+            ('//div[starts-with(@id, "flash_") and '
+                'not(ancestor::*[contains(@style,"display: none")])]'),
+            '//div[contains(@class,"alert")]'
+        ])
+    })
+})
 _mapping_new = {
     "alert-warning": "warning",
     "alert-success": "success",
