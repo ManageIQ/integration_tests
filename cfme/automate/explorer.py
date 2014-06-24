@@ -67,8 +67,8 @@ nav.add_branch(
                   'automate_explorer_edit':
                   lambda ctx: nav_edit(get_path(ctx['tree_item'])),
                   'automate_explorer_delete':
-                  lambda _: cfg_btn('Remove selected Items', invokes_alert=True)
-              }],
+                  lambda _: cfg_btn('Remove selected Items', invokes_alert=True)}],
+
              'automate_explorer_namespace_new': lambda _: cfg_btn('Add a New Namespace'),
              'automate_explorer_class_new': lambda _: cfg_btn('Add a New Class'),
              'automate_explorer_method_edit': lambda _: cfg_btn('Edit this Method'),
@@ -77,19 +77,18 @@ nav.add_branch(
               {
                   'automate_explorer_method_new': lambda _: cfg_btn('Add a New Method'),
                   'automate_explorer_method_table_select':
-                  lambda ctx: table_select(ctx['table_item'].name)
-              }],
+                  lambda ctx: table_select(ctx['table_item'].name)}],
+
              'automate_explorer_instances': [lambda _: select_tab('Instances'),
               {
                   'automate_explorer_instance_new': lambda _: cfg_btn('Add a New Instance'),
                   'automate_explorer_instance_table_select':
-                  lambda ctx: table_select(ctx['table_item'].name)
-              }],
+                  lambda ctx: table_select(ctx['table_item'].name)}],
+
              'automate_explorer_schema': [lambda _: select_tab("Schema"),
              {
                  'automate_explorer_schema_edit': lambda _: cfg_btn("Edit selected Schema")
-             }]
-         }]
+             }]}]
     })
 
 
@@ -124,10 +123,9 @@ def_domain = version.pick({'default': None,
 
 
 class Namespace(TreeNode, Updateable):
-    form = Form(fields=
-                [('name', "//*[@id='ns_name']"),
-                 ('description', "//*[@id='ns_description']"),
-                 ('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']")]
+    form = Form(fields=[('name', "//*[@id='ns_name']"),
+                        ('description', "//*[@id='ns_description']"),
+                        ('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']")]
                 + submit_and_cancel_buttons)
 
     create_btn_map = {True: form.cancel_btn, False: form.add_btn}
@@ -312,25 +310,24 @@ class Class(TreeNode, Updateable):
                 return lambda _: sel.click(loc, wait_ajax=False)
 
             return Form(
-                fields=
-                [('name_text', loc("//input[@id='field%s_name%s']")),
-                 ('type_select', DHTMLSelect(loc("//div[@id='field%s_aetype_id%s']"))),
-                 ('data_type_select',
-                  DHTMLSelect(loc("//div[@id='field%s_datatype_id%s']"))),
-                 ('default_value_text', loc("//input[@id='field%s_default_value%s']")),
-                 ('display_name_text', loc("//input[@id='field%s_display_name%s']")),
-                 ('description_text', loc("//input[@id='field%s_description%s']")),
-                 ('sub_cb', loc("//input[@id='field%s_substitution%s']")),
-                 ('collect_text', loc("//input[@id='field%s_collect%s']")),
-                 ('message_text', loc("//input[@id='field%s_message%s']")),
-                 ('on_entry_text', loc("//input[@id='field%s_on_entry%s']")),
-                 ('on_exit_text', loc("//input[@id='field%s_on_exit%s']")),
-                 ('max_retries_text', loc("//input[@id='field%s_max_retries%s']")),
-                 ('max_time_text', loc("//input[@id='field%s_max_time%s']")),
-                 ('add_entry_button', "//img[@alt='Add this entry']"),
-                 ('remove_entry_button',
-                  remove("//a[contains(@title, 'delete this') and contains(@href, 'arr_id=%s')]/img"
-                         % idx))])
+                fields=[('name_text', loc("//input[@id='field%s_name%s']")),
+                        ('type_select', DHTMLSelect(loc("//div[@id='field%s_aetype_id%s']"))),
+                        ('data_type_select',
+                         DHTMLSelect(loc("//div[@id='field%s_datatype_id%s']"))),
+                        ('default_value_text', loc("//input[@id='field%s_default_value%s']")),
+                        ('display_name_text', loc("//input[@id='field%s_display_name%s']")),
+                        ('description_text', loc("//input[@id='field%s_description%s']")),
+                        ('sub_cb', loc("//input[@id='field%s_substitution%s']")),
+                        ('collect_text', loc("//input[@id='field%s_collect%s']")),
+                        ('message_text', loc("//input[@id='field%s_message%s']")),
+                        ('on_entry_text', loc("//input[@id='field%s_on_entry%s']")),
+                        ('on_exit_text', loc("//input[@id='field%s_on_exit%s']")),
+                        ('max_retries_text', loc("//input[@id='field%s_max_retries%s']")),
+                        ('max_time_text', loc("//input[@id='field%s_max_time%s']")),
+                        ('add_entry_button', "//img[@alt='Add this entry']"),
+                        ('remove_entry_button',
+                         remove("//a[contains(@title, 'delete this') "
+                                "and contains(@href, 'arr_id=%s')]/img" % idx))])
 
     schema_edit_page = Region(
         locators=dict({'add_field_btn': "//img[@alt='Equal-green']"}.items() +
