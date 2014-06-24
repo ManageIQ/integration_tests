@@ -372,7 +372,7 @@ class Method(TreeNode, Updateable):
     form = Form(
         fields=[('name_text', "//input[contains(@name,'method_name')]"),
                 ('display_name_text', "//input[contains(@name,'method_display_name')]"),
-                ('data_text', ScriptBox("//textarea[contains(@name,'method_data')]"))]
+                ('data_text', ScriptBox("miqEditor"))]
         + submit_and_cancel_buttons)
 
     def __init__(self, name=None, display_name=None, location=None, data=None, cls=None):
