@@ -1365,6 +1365,32 @@ class Tree(object):
                      'cause': e})
         return leaf
 
+    @classmethod
+    def browse(cls, tree, *path):
+        """Browse through tree via path.
+
+        If node not found, raises exception.
+        If the browsing reached leaf(str), returns True if also the step was last, otherwise False.
+        If the result of the path is a subtree, it is returned.
+
+        Args:
+            tree: List with tree.
+            *path: Path to browse.
+        """
+        current = tree
+        for i, step in enumerate(path, start=1):
+            for node in current:
+                if isinstance(node, tuple):
+                    if node[0] == step:
+                        current = node[1]
+                        break
+                else:
+                    if node == step:
+                        return i == len(path)
+            else:
+                raise Exception("Could not find node {}".format(step))
+        return current
+
 
 class CheckboxTree(Tree):
     '''Tree that has a checkbox on each node, adds methods to check/uncheck them'''
