@@ -84,6 +84,5 @@ def test_permissions_provider_add(provider_crud):
     """ Tests that a provider can be added only with the right permissions"""
     def add():
         provider_crud.create()
-        flash.assert_message_match('Cloud Providers "%s" was saved' % provider_crud.name)
         provider_crud.validate()
     tac.single_task_permission_test([['Clouds', 'Cloud Providers']], {'Add Provider': add})

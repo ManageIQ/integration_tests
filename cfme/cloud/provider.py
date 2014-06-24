@@ -166,6 +166,8 @@ class Provider(Updateable):
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, add_page.add_submit)
+        if not cancel:
+            flash.assert_message_match('Cloud Providers "%s" was saved' % self.name)
 
     def update(self, updates, cancel=False, validate_credentials=False):
         """
