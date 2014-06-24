@@ -1867,7 +1867,12 @@ def fill_scriptbox(sb, script):
     """
     root = sel.element("%s/.." % sb.locator)
     activate = sel.element(
-        ".//div[@class='CodeMirror' or @class='CodeMirror CodeMirror-focused']", root=root)
+        version.pick({
+            'default': ".//div[@class='CodeMirror' or @class='CodeMirror CodeMirror-focused']",
+            '5.3': ".//div[@class='CodeMirror-code']"
+        }),
+        root=root
+    )
     sel.click(activate)
     script_area = sel.element('.//div/div/textarea', root=root)
 
