@@ -7,8 +7,6 @@ from cfme.web_ui import Region, Table, tabstrip, toolbar
 from utils.timeutil import parsetime
 from utils.wait import wait_for
 
-_css_reset_button = 'div.dhx_toolbar_btn[title="Reset Dashboard Widgets to the defaults"] img'
-
 page = Region(
     title="Dashboard",
     locators={
@@ -208,14 +206,4 @@ def set_csrf_token(csrf_token):
     Args:
         csrf_token: Token to set as the CSRF token.
     """
-    script = '''
-        var elements = document.getElementsByTagName("meta");
-        for (var i=0, element; element = elements[i]; i++) {
-            var ename = element.getAttribute("name");
-            if (ename != null && ename.toLowerCase() == "csrf-token") {
-                element.setAttribute("content", "%s");
-                break;
-            }
-        }
-    ''' % csrf_token
-    return sel.execute_script(script)
+    return sel.set_attribute(page.csrf_token, "content", csrf_token)
