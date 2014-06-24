@@ -1254,6 +1254,9 @@ class Tree(object):
     def node_root_element(self, node_name, parent):
         return sel.element((self.node_root % node_name), root=parent)
 
+    def nodes_root_elements(self, parent):
+        return sel.elements(self.nodes_root, root=parent)
+
     def expand_path(self, *path):
         """ Clicks through a series of elements in a path.
 
