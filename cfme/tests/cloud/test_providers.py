@@ -42,15 +42,6 @@ def test_providers_discovery_amazon():
     provider.wait_for_a_provider()
 
 
-@pytest.mark.smoke
-@pytest.mark.usefixtures('has_no_cloud_providers')
-def test_provider_add(provider_crud):
-    """ Tests that a provider can be added """
-    provider_crud.create()
-    flash.assert_message_match('Cloud Providers "%s" was saved' % provider_crud.name)
-    provider_crud.validate()
-
-
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_add_with_bad_credentials(provider_crud):
     provider_crud.credentials = provider.get_credentials_from_config('bad_credentials')
@@ -58,21 +49,19 @@ def test_provider_add_with_bad_credentials(provider_crud):
         provider_crud.create(validate_credentials=True)
 
 
+@pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_cloud_providers')
-def test_provider_edit(provider_crud):
-    """ Tests that editing a management system shows the proper detail after an edit."""
+def test_provider_crud(provider_crud):
+    """ Tests that a provider can be added """
     provider_crud.create()
+    provider_crud.validate()
+
     old_name = provider_crud.name
     with update(provider_crud):
         provider_crud.name = str(uuid.uuid4())  # random uuid
-    flash.assert_message_match('Cloud Provider "%s" was saved' % provider_crud.name)
 
     with update(provider_crud):
         provider_crud.name = old_name  # old name
-    flash.assert_message_match('Cloud Provider "%s" was saved' % provider_crud.name)
 
-
-def test_provider_delete(provider_crud):
     provider_crud.delete(cancel=False)
-    flash.assert_message_match('Delete initiated for 1 Cloud Provider from the CFME Database')
     provider.wait_for_provider_delete(provider_crud)

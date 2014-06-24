@@ -160,6 +160,8 @@ class Provider(Updateable):
         fill(credential_form, self.credentials, validate=validate_credentials)
         fill(credential_form, self.candu, validate=validate_credentials)
         self._submit(cancel, add_infra_provider)
+        if not cancel:
+            flash.assert_message_match('Infrastructure Providers "%s" was saved' % self.name)
 
     def update(self, updates, cancel=False, validate_credentials=False):
         """
@@ -176,6 +178,9 @@ class Provider(Updateable):
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
         fill(credential_form, updates.get('candu', None), validate=validate_credentials)
         self._submit(cancel, form_buttons.save)
+        name = updates['name'] or self.name
+        if not cancel:
+            flash.assert_message_match('Infrastructure Provider "%s" was saved' % name)
 
     def delete(self, cancel=True):
         """
@@ -188,6 +193,9 @@ class Provider(Updateable):
         sel.force_navigate('infrastructure_provider', context={'provider': self})
         cfg_btn('Remove this Infrastructure Provider from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
+        if not cancel:
+            flash.assert_message_match(
+                'Delete initiated for 1 Infrastructure Provider from the CFME Database')
 
     def validate(self):
         """ Validates that the detail page matches the Providers information.
