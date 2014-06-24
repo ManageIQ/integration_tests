@@ -10,6 +10,7 @@ from selenium.webdriver.common.keys import Keys
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
+from cfme import dashboard
 from cfme.web_ui import Region, Form, fill
 from utils import conf
 from utils.log import logger
@@ -34,10 +35,9 @@ page = Region(
         'submit_button': '//a[@id="login"]',
         # Login page has an abnormal flash div
         'flash': '//div[@id="flash_div"]',
-        'user_dropdown': '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
         'logout': '//a[contains(@href, "/logout")]',
     },
-    identifying_loc='username')
+    identifying_loc='submit_button')
 
 _form_fields = ('username', 'password', 'submit_button')
 form = Form(fields=[loc for loc in page.locators.items() if loc[0] in _form_fields],
@@ -52,7 +52,7 @@ def _click_on_login():
 
 
 def logged_in():
-    if sel.is_displayed(page.user_dropdown):
+    if sel.is_displayed(dashboard.page.user_dropdown):
         return True
 
 
@@ -112,13 +112,13 @@ def logout():
     """
     if logged_in():
         if not sel.is_displayed(page.logout):
-            sel.click(page.user_dropdown)
+            sel.click(dashboard.page.user_dropdown)
         sel.click(page.logout)
         thread_locals.current_user = None
 
 
 def _full_name():
-    return sel.text(page.user_dropdown).split('|')[0].strip()
+    return sel.text(dashboard.page.user_dropdown).split('|')[0].strip()
 
 
 def current_full_name():
