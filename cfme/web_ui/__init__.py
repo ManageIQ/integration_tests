@@ -1856,30 +1856,17 @@ class ScriptBox(object):
     Args:
     """
 
-    def __init__(self, locator=None):
-        self.locator = locator
+    def __init__(self, name="miqEditor"):
+        self.name = name
 
 
 @fill.method((ScriptBox, Anything))
 def fill_scriptbox(sb, script):
-    """Please note, this function does not clear the box, IE it appends and does not
-    "SET" the text like the other fill functions do.
+    """This function now clears and sets the ScriptBox.
     """
-    root = sel.element("%s/.." % sb.locator)
-    activate = sel.element(
-        ".//div[@class='CodeMirror' or @class='CodeMirror CodeMirror-focused']", root=root)
-    sel.click(activate)
-    script_area = sel.element('.//div/div/textarea', root=root)
-
-    tabs = 0
-    import re
-    for line in script.split("\n"):
-        for n in range(tabs):
-            sel.send_keys(script_area, Keys.BACK_SPACE)
-        tb = re.findall('^[ ]*', line)
-        tabs = len(tb[0])
-        sel.send_keys(script_area, line)
-        sel.send_keys(script_area, Keys.RETURN)
+    script = script.replace('"', '\\"')
+    js_script = '{}.setValue("{}")'.format(sb.name, script)
+    sel.execute_script(js_script)
 
 
 class EmailSelectForm(object):
