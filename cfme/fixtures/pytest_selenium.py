@@ -637,6 +637,11 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 current_url()
             ))
             recycle = True
+        elif elements("//ul[@id='maintab']/li[@class='inactive']") and not\
+                elements("//ul[@id='maintab']/li[@class='active']/ul/li"):
+            # If upstream and is the bottom part of menu is not displayed
+            logger.exception("Detected glitch from BZ#1112574. HEADSHOT!")
+            recycle = True
         else:
             logger.error("Could not determine the reason for failing the navigation. Reraising.")
             raise
