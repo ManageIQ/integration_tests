@@ -190,14 +190,19 @@ def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, 
     policy.create()
     policy_profile = explorer.PolicyProfile(policy_profile_name, policies=[policy])
     policy_profile.create()
-    provider_crud.assign_policy_profiles(policy_profile_name)
     yield policy
-    provider_crud.unassign_policy_profiles(policy_profile_name)
     policy_profile.delete()
     policy.delete()
 
 
-def test_action_start_virtual_machine_after_stopping(request, policy_for_testing, vm, vm_on):
+@pytest.yield_fixture(scope="module")
+def assign_policy_for_testing(vm, policy_for_testing, provider_crud, policy_profile_name):
+    provider_crud.assign_policy_profiles(policy_profile_name)
+    yield policy_for_testing
+    provider_crud.unassign_policy_profiles(policy_profile_name)
+
+
+def test_action_start_virtual_machine_after_stopping(request, assign_policy_for_testing, vm, vm_on):
     """ This test tests action 'Start Virtual Machine'
 
     This test sets the policy that it turns on the VM when it is turned off
@@ -205,8 +210,8 @@ def test_action_start_virtual_machine_after_stopping(request, policy_for_testing
     back alive.
     """
     # Set up the policy and prepare finalizer
-    policy_for_testing.assign_actions_to_event("VM Power Off", ["Start Virtual Machine"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    assign_policy_for_testing.assign_actions_to_event("VM Power Off", ["Start Virtual Machine"])
+    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Stop the VM
     vm.stop_vm()
     # Wait for VM powered on by CFME
@@ -216,7 +221,7 @@ def test_action_start_virtual_machine_after_stopping(request, policy_for_testing
         pytest.fail("CFME did not power on the VM %s" % vm.name)
 
 
-def test_action_stop_virtual_machine_after_starting(request, policy_for_testing, vm, vm_off):
+def test_action_stop_virtual_machine_after_starting(request, assign_policy_for_testing, vm, vm_off):
     """ This test tests action 'Stop Virtual Machine'
 
     This test sets the policy that it turns off the VM when it is turned on
@@ -224,8 +229,8 @@ def test_action_stop_virtual_machine_after_starting(request, policy_for_testing,
     back off.
     """
     # Set up the policy and prepare finalizer
-    policy_for_testing.assign_actions_to_event("VM Power On", ["Stop Virtual Machine"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Stop Virtual Machine"])
+    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
     # Wait for VM powered off by CFME
@@ -235,15 +240,16 @@ def test_action_stop_virtual_machine_after_starting(request, policy_for_testing,
         pytest.fail("CFME did not power off the VM %s" % vm.name)
 
 
-def test_action_suspend_virtual_machine_after_starting(request, policy_for_testing, vm, vm_off):
+def test_action_suspend_virtual_machine_after_starting(request,
+                                                       assign_policy_for_testing, vm, vm_off):
     """ This test tests action 'Suspend Virtual Machine'
 
     This test sets the policy that it suspends the VM when it's turned on. Then it powers on the vm,
     waits for it becoming alive and then it waits for the VM being suspended.
     """
     # Set up the policy and prepare finalizer
-    policy_for_testing.assign_actions_to_event("VM Power On", ["Suspend Virtual Machine"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Suspend Virtual Machine"])
+    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
     # Wait for VM be suspended by CFME
@@ -253,7 +259,7 @@ def test_action_suspend_virtual_machine_after_starting(request, policy_for_testi
         pytest.fail("CFME did not suspend the VM %s" % vm.name)
 
 
-def test_action_prevent_event(request, policy_for_testing, vm, vm_off):
+def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off):
     """ This test tests action 'Prevent current event from proceeding'
 
     Must be done with SOAP.
@@ -262,9 +268,9 @@ def test_action_prevent_event(request, policy_for_testing, vm, vm_off):
     and then it waits that VM does not come alive.
     """
     # Set up the policy and prepare finalizer
-    policy_for_testing.assign_actions_to_event("VM Power On Request",
+    assign_policy_for_testing.assign_actions_to_event("VM Power On Request",
                                                ["Prevent current event from proceeding"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Request VM's start
     vm.soap.power_on()   # THROUGH SOAP, because through mgmt_sys would not generate req event.
     try:
@@ -275,18 +281,18 @@ def test_action_prevent_event(request, policy_for_testing, vm, vm_off):
         pytest.fail("CFME did not prevent starting of the VM %s" % vm.name)
 
 
-def test_action_power_on_logged(request, policy_for_testing, vm, vm_off, ssh_client):
+def test_action_power_on_logged(request, assign_policy_for_testing, vm, vm_off, ssh_client):
     """ This test tests action 'Generate log message'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
     checks whether logs contain message about that.
     """
     # Set up the policy and prepare finalizer
-    policy_for_testing.assign_actions_to_event("VM Power On", ["Generate log message"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Generate log message"])
+    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
-    policy_desc = policy_for_testing.description
+    policy_desc = assign_policy_for_testing.description
 
     # Search the logs
     def search_logs():
@@ -299,7 +305,7 @@ def test_action_power_on_logged(request, policy_for_testing, vm, vm_off, ssh_cli
             if not "Policy success" in line:
                 continue
             match_string = "policy: [%s], event: [VM Power On], entity name: [%s]" % (
-                policy_for_testing.description, vm.name
+                assign_policy_for_testing.description, vm.name
             )
             if match_string in line:
                 logger.info("Found corresponding log message: %s" % line.strip())
@@ -309,18 +315,18 @@ def test_action_power_on_logged(request, policy_for_testing, vm, vm_off, ssh_cli
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-def test_action_power_on_audit(request, policy_for_testing, vm, vm_off, ssh_client):
+def test_action_power_on_audit(request, assign_policy_for_testing, vm, vm_off, ssh_client):
     """ This test tests action 'Generate Audit Event'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
     checks whether audit logs contain message about that.
     """
     # Set up the policy and prepare finalizer
-    policy_for_testing.assign_actions_to_event("VM Power On", ["Generate Audit Event"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Generate Audit Event"])
+    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
-    policy_desc = policy_for_testing.description
+    policy_desc = assign_policy_for_testing.description
 
     # Search the logs
     def search_logs():
@@ -341,7 +347,7 @@ def test_action_power_on_audit(request, policy_for_testing, vm, vm_off, ssh_clie
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-def test_action_create_snapshot_and_delete_last(request, policy_for_testing, vm, vm_on):
+def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testing, vm, vm_on):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
@@ -356,11 +362,12 @@ def test_action_create_snapshot_and_delete_last(request, policy_for_testing, vm,
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
     )
-    policy_for_testing.assign_actions_to_event("VM Power Off", [snapshot_create_action])
-    policy_for_testing.assign_actions_to_event("VM Power On", ["Delete Most Recent Snapshot"])
+    assign_policy_for_testing.assign_actions_to_event("VM Power Off", [snapshot_create_action])
+    assign_policy_for_testing.assign_actions_to_event("VM Power On",
+                                                      ["Delete Most Recent Snapshot"])
 
     def finalize():
-        policy_for_testing.assign_events()
+        assign_policy_for_testing.assign_events()
         snapshot_create_action.delete()
     request.addfinalizer(finalize)
 
@@ -379,7 +386,7 @@ def test_action_create_snapshot_and_delete_last(request, policy_for_testing, vm,
         message="wait for snapshot deleted", delay=5)
 
 
-def test_action_create_snapshots_and_delete_them(request, policy_for_testing, vm, vm_on):
+def test_action_create_snapshots_and_delete_them(request, assign_policy_for_testing, vm, vm_on):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and then it cycles
@@ -395,10 +402,10 @@ def test_action_create_snapshots_and_delete_them(request, policy_for_testing, vm
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
     )
-    policy_for_testing.assign_actions_to_event("VM Power Off", [snapshot_create_action])
+    assign_policy_for_testing.assign_actions_to_event("VM Power Off", [snapshot_create_action])
 
     def finalize():
-        policy_for_testing.assign_events()
+        assign_policy_for_testing.assign_events()
         snapshot_create_action.delete()
     request.addfinalizer(finalize)
 
@@ -417,9 +424,9 @@ def test_action_create_snapshots_and_delete_them(request, policy_for_testing, vm
 
     for i in range(4):
         create_one_snapshot(i)
-    policy_for_testing.assign_events()
+    assign_policy_for_testing.assign_events()
     vm.stop_vm()
-    policy_for_testing.assign_actions_to_event("VM Power On", ["Delete all Snapshots"])
+    assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Delete all Snapshots"])
     # Power on to invoke all snapshots deletion
     vm.start_vm()
     wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] == 0, num_sec=500,
@@ -427,16 +434,16 @@ def test_action_create_snapshots_and_delete_them(request, policy_for_testing, vm
 
 
 @pytest.mark.skipif("True")
-def test_action_initiate_smartstate_analysis(request, policy_for_testing, vm, vm_off):
+def test_action_initiate_smartstate_analysis(request, assign_policy_for_testing, vm, vm_off):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
 
     This test sets the policy that it analyses VM after it's powered on. Then it checks whether
     that really happened.
     """
     # Set up the policy and prepare finalizer
-    policy_for_testing.assign_actions_to_event("VM Power On",
+    assign_policy_for_testing.assign_actions_to_event("VM Power On",
                                                ["Initiate SmartState Analysis for VM"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Remember the time
     switched_on = datetime.now()
     # Start the VM
@@ -461,15 +468,15 @@ def test_action_initiate_smartstate_analysis(request, policy_for_testing, vm, vm
         pytest.fail("CFME did not analyse the VM %s" % vm.name)
 
 
-def test_action_raise_automation_event(request, policy_for_testing, vm, vm_on, ssh_client):
+def test_action_raise_automation_event(request, assign_policy_for_testing, vm, vm_on, ssh_client):
     """ This test tests actions 'Raise Automation Event'.
 
     This test sets the policy that it raises an automation event VM after it's powered on.
     Then it checks logs whether that really happened.
     """
     # Set up the policy and prepare finalizer
-    policy_for_testing.assign_actions_to_event("VM Power Off", ["Raise Automation Event"])
-    request.addfinalizer(lambda: policy_for_testing.assign_events())
+    assign_policy_for_testing.assign_actions_to_event("VM Power Off", ["Raise Automation Event"])
+    request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.stop_vm()
 
@@ -492,16 +499,16 @@ def test_action_raise_automation_event(request, policy_for_testing, vm, vm_on, s
 
 
 # Purely custom actions
-def test_action_tag(request, policy_for_testing, vm, vm_off):
+def test_action_tag(request, assign_policy_for_testing, vm, vm_off):
     tag_assign_action = explorer.Action(
         generate_random_string(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Service Level", "Gold")}
     )
-    policy_for_testing.assign_actions_to_event("VM Power On", [tag_assign_action])
+    assign_policy_for_testing.assign_actions_to_event("VM Power On", [tag_assign_action])
 
     def finalize():
-        policy_for_testing.assign_events()
+        assign_policy_for_testing.assign_events()
         tag_assign_action.delete()
     request.addfinalizer(finalize)
 
@@ -518,16 +525,16 @@ def test_action_tag(request, policy_for_testing, vm, vm_off):
         pytest.fail("Tags were not assigned!")
 
 
-def test_action_untag(request, policy_for_testing, vm, vm_off):
+def test_action_untag(request, assign_policy_for_testing, vm, vm_off):
     tag_unassign_action = explorer.Action(
         generate_random_string(),
         action_type="Remove Tags",
         action_values={"cat_service_level": True}
     )
-    policy_for_testing.assign_actions_to_event("VM Power On", [tag_unassign_action])
+    assign_policy_for_testing.assign_actions_to_event("VM Power On", [tag_unassign_action])
 
     def finalize():
-        policy_for_testing.assign_events()
+        assign_policy_for_testing.assign_events()
         tag_unassign_action.delete()
     request.addfinalizer(finalize)
 
