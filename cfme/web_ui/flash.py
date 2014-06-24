@@ -17,8 +17,9 @@ area = Region(locators={
         ]),
         '5.3': ' | '.join([
             ('//div[starts-with(@id, "flash_") and '
-                'not(ancestor::*[contains(@style,"display: none")])]'),
-            '//div[contains(@class,"alert")]'
+                'not(ancestor::*[contains(@style,"display: none")])]'
+                '//div[contains(@class,"alert")]'),
+            '//div[@id="flash_div"]',  # login screen
         ])
     })
 })
