@@ -83,7 +83,7 @@ def nav_to_fn(toplevel, secondlevel=None):
         try:
             toplevel_elem = sel.element(toplevel_loc % toplevel)
         except NoSuchElementException:
-            if visible_pages():  # Target menu is missing
+            if visible_toplevel_tabs():  # Target menu is missing
                 raise
             else:
                 return  # no menu at all, assume single permission
@@ -141,6 +141,13 @@ def reverse_lookup(toplevel_path, secondlevel_path=None):
                 return secondlevel_dest
 
 
+def visible_toplevel_tabs():
+    menu_names = []
+    toplevel_links = sel.element(toplevel_tabs_loc)
+    for menu_elem in sel.elements('li/a', root=toplevel_links):
+        menu_names.append(sel.text(menu_elem))
+    return menu_names
+
 def visible_pages():
     """Return a list of all the menu pages currently visible top- and second-level pages
 
@@ -148,10 +155,7 @@ def visible_pages():
 
     """
     # Gather up all the visible toplevel tabs
-    menu_names = []
-    toplevel_links = sel.element(toplevel_tabs_loc)
-    for menu_elem in sel.elements('li/a', root=toplevel_links):
-        menu_names.append(sel.text(menu_elem))
+    menu_names = visible_toplevel_tabs()
 
     # Now go from tab to tab and pull the secondlevel names from the visible links
     displayed_menus = []
