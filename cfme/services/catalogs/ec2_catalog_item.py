@@ -1,4 +1,5 @@
-"""Service Catalog item for EC2 , does not provision any VM just create a catalog item of type "Amazon
+"""Service Catalog item for EC2 , does not provision any VM just create a
+catalog item of type "Amazon
 
 """
 import functools
@@ -59,7 +60,8 @@ request_form = tabstrip.TabStripForm(
             ('availability_zone',
                 web_ui.Select('//select[@id="environment__placement_availability_zone"]')),
             ('security_groups', prov.select_security_group),
-            ('public_ip_address', web_ui.Select('//select[@id="environment__floating_ip_address"]')),
+            ('public_ip_address',
+             web_ui.Select('//select[@id="environment__floating_ip_address"]')),
         ]),
         ('Properties', [
             ('instance_type', web_ui.Select('//select[@id="hardware__instance_type"]')),

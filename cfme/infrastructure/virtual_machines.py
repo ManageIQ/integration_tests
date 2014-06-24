@@ -302,8 +302,8 @@ class Vm():
             self.provider_crud.get_mgmt_system().stop_vm(self.name)
         elif option == Vm.SUSPEND:
             self.provider_crud.get_mgmt_system().suspend_vm(self.name)
-        #elif reset:
-        #elif shutdown:
+        # elif reset:
+        # elif shutdown:
         else:
             raise NoOptionAvailable(option + " is not a supported action")
 
