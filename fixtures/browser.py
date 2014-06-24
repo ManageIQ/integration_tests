@@ -51,6 +51,11 @@ def pytest_exception_interact(node, call, report):
         'full_tb': full_tb,
     }
 
+    # Before trying to take a screenshot, we used to check if one of the browser_fixtures was
+    # in this node's fixturenames, but that was too limited and preventing the capture of
+    # screenshots. If removing that conditional now makes this too broad, we should consider
+    # an isinstance(val, WebDriverException) check in addition to the browser fixture check that
+    # exists here in commit 825ef50fd84a060b58d7e4dc316303a8b61b35d2
     try:
         template_data['screenshot'] = utils.browser.browser().get_screenshot_as_base64()
         art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
