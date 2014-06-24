@@ -19,6 +19,16 @@ def generate_random_string(size=8):
     return ''.join(random_string_generator(size))
 
 
+def generate_lowercase_random_string(size=8):
+    size = int(size)
+
+    def random_string_generator(size):
+        choice_chars = string.letters + string.digits
+        for x in xrange(size):
+            yield random.choice(choice_chars)
+    return ''.join(random_string_generator(size)).lower()
+
+
 def generate_random_uuid_as_str():
     return str(uuid.uuid4())
 
