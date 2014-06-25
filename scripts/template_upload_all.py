@@ -43,18 +43,61 @@ def parse_cmd_line():
     return args
 
 
-def template_name(image_name):
-    # MIQ
-    pattern = re.compile(r'[^\d]*?manageiq[^\d]*(\d*).\w*')
-    result = pattern.findall(image_name)
-    if result:
-        # for now, actual version for MIQ is manually defined.
-        return "miq-%s-%s" % (MIQ_ACTUAL_VERSION, result[0])
-    else:
-        # CFME
-        pattern = re.compile(r'[.-]\d+(?:-\d+)?')
+def template_name(image_name, version=None):
+    image_name = image_name.lower()
+    # nightly builds
+    if "nightly" in image_name:
+        pattern = re.compile(r'[^\d]*-(\d*).\w*')
         result = pattern.findall(image_name)
-        return "cfme-%s%s" % (MIQ_ACTUAL_VERSION, ''.join(result))
+        # downstream
+        if "cloudforms" in image_name:
+            # use version file
+            if version:
+                # cloudforms-nightly-xxxx*-yyyymmddhhmm.ova => cfme-nightly-vvvv*-mmdd
+                return "cfme-nightly-%s-%s" % (version, result[0][4:8])
+            # without version file
+            else:
+                # cloudforms-nightly-xxxx*-yyyymmddhhmm.ova => cfme-nightly-yyyymmddhhmm
+                return "cfme-nightly-%s" % result[0]
+        # upstream
+        elif "manageiq" in image_name:
+            # use version file
+            if version:
+                # manageiq-nightly-xxxx*--yyyymmddhhmm.ova => miq-nightly-vvvv*-mmdd
+                return "miq-nightly-%s-%s" % (version, result[0][4:8])
+            else:
+                # manageiq-nightly-xxxx*--yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
+                return "miq-nightly-%s" % result[0]
+    # z-stream
+    else:
+        if "cloudforms" in image_name:
+            pattern = re.compile(r'[.-](\d+(?:\d+)?)')
+            result = pattern.findall(image_name)
+            # use version file
+            if version:
+                # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-vvvv-mmdd
+                return "cfme-%s-%s%s" % (version, result[3], result[4])
+            # without version file
+            else:
+                # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-xy-yyyymmddi
+                str_res = ''.join(result)
+                return "cfme-%s-%s" % (str_res[0:2], str_res[2:])
+
+
+def get_version(dir_url):
+    if not dir_url.endswith("/"):
+        dir_url += "/"
+
+    version_url = dir_url + "version"
+
+    try:
+        urlo = urlopen(version_url)
+    except Exception:
+        return None
+
+    version = urlo.read()
+
+    return version.rstrip().replace('.', '')
 
 
 def make_kwargs_rhevm(cfme_data, provider):
@@ -204,7 +247,8 @@ if __name__ == "__main__":
                     kwargs['image_url'] = dir_files[module]
 
                     if cfme_data['template_upload']['automatic_name_strategy']:
-                        kwargs['template_name'] = template_name(dir_files[module])
+                        kwargs['template_name'] = template_name(dir_files[module],
+                                                                get_version(url))
 
                     print "---Start of %s: %s---" % (module, provider)
 
