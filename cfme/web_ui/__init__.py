@@ -1864,7 +1864,7 @@ class ScriptBox(object):
 def fill_scriptbox(sb, script):
     """This function now clears and sets the ScriptBox.
     """
-    script = script.replace('"', '\\"')
+    script = script.replace('"', '\\"').replace("\n", "\\n")
     js_script = '{}.setValue("{}")'.format(sb.name, script)
     sel.execute_script(js_script)
 
