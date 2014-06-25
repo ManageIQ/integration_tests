@@ -9,6 +9,7 @@ from cfme import Credential
 from cfme import login
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
+from utils import version
 
 usergrp = ac.Group(description='EvmGroup-user')
 
@@ -159,10 +160,14 @@ def _go_to(dest):
     return lambda: nav.go_to(dest)
 
 
+cat_name = version.pick({"default": "Settings & Operations",
+                        "5.3": "Configure"})
+
+
 @pytest.mark.parametrize(
     'role,allowed_actions,disallowed_actions',
     [[_mk_role(product_features={False: [['Everything']],  # minimal permission
-                                 True: [['Settings & Operations', 'Tasks']]}),
+                                 True: [[cat_name, 'Tasks']]}),
       {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
       {
           'my services': _go_to('my_services'),
