@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from cfme.configure import tasks
 from cfme.fixtures import pytest_selenium as sel

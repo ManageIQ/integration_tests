@@ -37,7 +37,7 @@ def new_role():
                    vm_restriction='None')
 
 
-#User test cases
+# User test cases
 def test_user_crud():
     user = new_user()
     user.create()
@@ -117,7 +117,7 @@ def test_user_email_error_validation():
         user.create()
 
 
-#Group test cases
+# Group test cases
 def test_group_crud():
     group = new_group()
     group.create()
@@ -126,7 +126,7 @@ def test_group_crud():
     group.delete()
 
 
-#Role test cases
+# Role test cases
 def test_role_crud():
     role = new_role()
     role.create()
@@ -166,17 +166,20 @@ cat_name = version.pick({"default": "Settings & Operations",
 
 @pytest.mark.parametrize(
     'role,allowed_actions,disallowed_actions',
-    [[_mk_role(product_features={False: [['Everything']],  # minimal permission
-                                 True: [[cat_name, 'Tasks']]}),
-      {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
-      {
-          'my services': _go_to('my_services'),
-          'chargeback': _go_to('chargeback'),
-          'clouds providers': _go_to('clouds_providers'),
-          'infrastructure providers': _go_to('infrastructure_providers'),
-          'control explorer': _go_to('control_explorer'),
-          'automate explorer': _go_to('automate_explorer'),
-      }]])
+    [[
+        _mk_role(product_features={False: [['Everything']],  # minimal permission
+                                   True: [[cat_name, 'Tasks']]}),
+        {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
+        {
+            'my services': _go_to('my_services'),
+            'chargeback': _go_to('chargeback'),
+            'clouds providers': _go_to('clouds_providers'),
+            'infrastructure providers': _go_to('infrastructure_providers'),
+            'control explorer': _go_to('control_explorer'),
+            'automate explorer': _go_to('automate_explorer'),
+        }
+    ]]
+)
 def test_permissions(role, allowed_actions, disallowed_actions):
     # pytest.skip('https://bugzilla.redhat.com/show_bug.cgi?id=1098343')
     # create a user and role

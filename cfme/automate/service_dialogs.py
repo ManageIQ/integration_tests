@@ -13,31 +13,30 @@ from utils import version
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
 
-label_form = Form(
-    fields=
-    [('label', "//input[@id='label']"),
-     ('description_text', "//input[@id='description']"),
-     ('submit_button', "//input[@id='chkbx_submit']"),
-     ('cancel_button', "//input[@id='chkbx_cancel']")])
+label_form = Form(fields=[
+    ('label', "//input[@id='label']"),
+    ('description_text', "//input[@id='description']"),
+    ('submit_button', "//input[@id='chkbx_submit']"),
+    ('cancel_button', "//input[@id='chkbx_cancel']")
+])
 
-tab_form = Form(
-    fields=
-    [('tab_label', "//input[@id='tab_label']"),
-     ('tab_desc', "//input[@id='tab_description']")])
+tab_form = Form(fields=[
+    ('tab_label', "//input[@id='tab_label']"),
+    ('tab_desc', "//input[@id='tab_description']")
+])
 
-box_form = Form(
-    fields=
-    [('box_label', "//input[@id='group_label']"),
-     ('box_desc', "//input[@id='group_description']")])
+box_form = Form(fields=[
+    ('box_label', "//input[@id='group_label']"),
+    ('box_desc', "//input[@id='group_description']")
+])
 
-element_form = Form(
-    fields=
-    [('ele_label', "//input[@id='field_label']"),
-     ('ele_name', "//input[@id='field_name']"),
-     ('ele_desc', "//input[@id='field_description']"),
-     ('choose_type', Select("//select[@id='field_typ']")),
-     ('default_text_box', "//input[@id='field_default_value']"),
-     ])
+element_form = Form(fields=[
+    ('ele_label', "//input[@id='field_label']"),
+    ('ele_name', "//input[@id='field_name']"),
+    ('ele_desc', "//input[@id='field_description']"),
+    ('choose_type', Select("//select[@id='field_typ']")),
+    ('default_text_box', "//input[@id='field_default_value']")
+])
 
 service_dialog_tree = Tree(version.pick({
     'default': "//div[@id='dialogs_tree_div']//table",
