@@ -7,7 +7,6 @@
 
 from cfme.configure.configuration import set_server_role
 from cfme.configure import red_hat_updates
-from cfme.web_ui import flash
 from utils import conf
 from utils.appliance import provision_appliance_set
 from utils.log import logger
@@ -142,13 +141,11 @@ def update_registration(appliance_set, rh_updates_data, reg_method):
             proxy_username=proxy_creds['username'],
             proxy_password=proxy_creds['password']
         )
-        flash.assert_message_match("Customer Information successfully saved")
 
 
 def register_appliances(appliance_set, appliances_to_register):
     with appliance_set.primary.browser_session():
         red_hat_updates.register_appliances(*appliances_to_register)
-        flash.assert_message_match("Registration has been initiated for the selected Servers")
 
         logger.info('Waiting for appliance statuses to change to Registered')
         wait_for(red_hat_updates.are_registered,
@@ -311,7 +308,6 @@ def run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update):
     """
     with appliance_set.primary.browser_session():
         red_hat_updates.update_appliances(*appliances_to_update)
-        flash.assert_message_match("Update has been initiated for the selected Servers")
 
         version_match_args = [rh_updates_data['current_version']] + appliances_to_update
 

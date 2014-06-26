@@ -178,6 +178,8 @@ def register_appliances(*appliance_names):
     """
     select_appliances(*appliance_names)
     sel.click(update_buttons.register)
+    flash.assert_message_match("Registration has been initiated for the selected Servers")
+    flash.dismiss()
 
 
 def update_appliances(*appliance_names):
@@ -188,6 +190,8 @@ def update_appliances(*appliance_names):
     """
     select_appliances(*appliance_names)
     sel.click(update_buttons.apply_updates)
+    flash.assert_message_match("Update has been initiated for the selected Servers")
+    flash.dismiss()
 
 
 def check_updates(*appliance_names):
@@ -198,6 +202,8 @@ def check_updates(*appliance_names):
     """
     select_appliances(*appliance_names)
     sel.click(update_buttons.check_updates)
+    flash.assert_message_match("Check for updates has been initiated for the selected Servers")
+    flash.dismiss()
 
 
 def are_registered(*appliance_names):
