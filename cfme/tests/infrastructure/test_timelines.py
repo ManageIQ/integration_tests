@@ -28,7 +28,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def provider_init(provider_key):
     """cfme/infrastructure/provider.py provider object."""
     try:
@@ -43,7 +43,7 @@ def vm_name():
 
 
 @pytest.fixture(scope="module")
-def test_vm(request, provider_crud, provider_mgmt, vm_name):
+def test_vm(request, provider_crud, provider_mgmt, vm_name, provider_init):
     """Fixture to provision appliance to the provider being tested if necessary"""
     pytest.sel.force_navigate('infrastructure_providers')
     vm = Vm(vm_name, provider_crud)
@@ -64,7 +64,7 @@ def gen_events(delete_fx_provider_event, provider_crud, test_vm):
 
 
 @pytest.mark.downstream
-def test_provider_event(provider_crud, gen_events, test_vm, provider_init):
+def test_provider_event(provider_crud, gen_events, test_vm):
     pytest.sel.force_navigate('infrastructure_provider_timelines',
                               context={'provider': provider_crud})
     events = []
@@ -75,7 +75,7 @@ def test_provider_event(provider_crud, gen_events, test_vm, provider_init):
 
 
 @pytest.mark.downstream
-def test_host_event(provider_crud, gen_events, test_vm, provider_init):
+def test_host_event(provider_crud, gen_events, test_vm):
     test_vm.load_details()
     pytest.sel.click(details_page.infoblock.element('Relationships', 'Host'))
     toolbar.select('Monitoring', 'Timelines')
@@ -87,7 +87,7 @@ def test_host_event(provider_crud, gen_events, test_vm, provider_init):
 
 
 @pytest.mark.downstream
-def test_vm_event(provider_crud, gen_events, test_vm, provider_init):
+def test_vm_event(provider_crud, gen_events, test_vm):
     test_vm.load_details()
     toolbar.select('Monitoring', 'Timelines')
     events = []
@@ -98,7 +98,7 @@ def test_vm_event(provider_crud, gen_events, test_vm, provider_init):
 
 
 @pytest.mark.downstream
-def test_cluster_event(provider_crud, gen_events, test_vm, provider_init):
+def test_cluster_event(provider_crud, gen_events, test_vm):
     test_vm.load_details()
     pytest.sel.click(details_page.infoblock.element('Relationships', 'Cluster'))
     toolbar.select('Monitoring', 'Timelines')
