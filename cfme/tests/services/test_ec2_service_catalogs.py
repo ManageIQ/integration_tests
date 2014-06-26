@@ -78,14 +78,15 @@ def catalog():
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name+"_0001")
+        provider_mgmt.delete_vm(vm_name + "_0001")
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
 @pytest.mark.usefixtures('setup_providers')
-def test_ec2_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud, provider_type, provisioning, dialog, catalog, request):
+def test_ec2_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud,
+                          provider_type, provisioning, dialog, catalog, request):
     # tries to delete the VM that gets created here
     vm_name = 'test_ec2_servicecatalog-%s' % generate_random_string()
     image = provisioning['image']['name']
@@ -118,4 +119,3 @@ def test_ec2_catalog_item(provider_init, provider_key, provider_mgmt, provider_c
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'Request complete'
-

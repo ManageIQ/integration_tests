@@ -177,7 +177,7 @@ def wait_for_element(*locs, **kwargs):
     Keywords:
         all_elements: Whether to wait not for one, but all elements (Default False)
     """
-    #wait_until(lambda s: is_displayed(loc), "Element '{}' did not appear as expected.".format(loc))
+    # wait_until(lambda s: is_displayed(loc),"Element '{}' did not appear as expected.".format(loc))
     filt = all if kwargs.get("all_elements", False) else any
     msg = "All" if kwargs.get("all_elements", False) else "Any"
     wait_until(

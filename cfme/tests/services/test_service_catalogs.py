@@ -73,10 +73,11 @@ def catalog():
     cat.create()
     yield catalog
 
+
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name+"_0001")
+        provider_mgmt.delete_vm(vm_name + "_0001")
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))

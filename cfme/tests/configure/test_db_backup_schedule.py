@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from cfme.configure.configuration import DatabaseBackupSchedule
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import flash, InfoBlock

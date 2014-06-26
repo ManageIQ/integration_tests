@@ -47,7 +47,7 @@ def test_name_required_error_validation():
 # Commenting the maximum charater validation due to
 # http://cfme-tests.readthedocs.org/guides/gotchas.html#
 #    selenium-is-not-clicking-on-the-element-it-says-it-is
-#def test_name_max_character_validation():
+# def test_name_max_character_validation():
 #    """
 #    Tests a System Image name with max characters.
 #    """

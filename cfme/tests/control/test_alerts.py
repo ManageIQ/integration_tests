@@ -7,7 +7,6 @@ from cfme.control import explorer
 from cfme.infrastructure import provider
 from utils import testgen
 from utils.log import logger
-from utils.update import update
 from utils.wait import wait_for
 
 
