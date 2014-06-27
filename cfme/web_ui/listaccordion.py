@@ -44,7 +44,7 @@ def click(name):
     was_active = is_active(name)
     sel.click(el)
     if not was_active:
-        #sel.wait_for_element(cls._content_element(name))
+        # sel.wait_for_element(cls._content_element(name))
         # This is ugly but the above doesn't work
         import time
         time.sleep(3)

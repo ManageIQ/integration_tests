@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 from cfme.configure import tasks
 from cfme.exceptions import ListAccordionLinkNotFound
@@ -47,7 +47,8 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-def test_run_host_analysis(request, provider_key, host_type, host_name, register_event, soft_assert):
+def test_run_host_analysis(request, provider_key, host_type, host_name, register_event,
+                           soft_assert):
     """ Run host SmartState analysis """
     # Add credentials to host
     host_data = get_host_data_by_name(provider_key, host_name)

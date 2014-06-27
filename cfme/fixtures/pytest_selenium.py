@@ -177,7 +177,7 @@ def wait_for_element(*locs, **kwargs):
     Keywords:
         all_elements: Whether to wait not for one, but all elements (Default False)
     """
-    #wait_until(lambda s: is_displayed(loc), "Element '{}' did not appear as expected.".format(loc))
+    # wait_until(lambda s: is_displayed(loc),"Element '{}' did not appear as expected.".format(loc))
     filt = all if kwargs.get("all_elements", False) else any
     msg = "All" if kwargs.get("all_elements", False) else "Any"
     wait_until(
@@ -559,7 +559,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         page_name: Name a page from the current :py:data:`ui_navigate.nav_tree` tree to navigate to.
 
     """
-    if _tries >= 2:
+    if _tries > 2:
         # Need at least three tries:
         # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
         # 2: Everything should work. If not, NavigationError.

@@ -133,6 +133,9 @@ Sublime Text 3
 Sublime Text 3 is currently in beta, but it is perfectly usable for python development. I will show
 you my setup here (``mfalesni``). Prerequisities are the same as for ST2 (Package Control).
 
+Recommended Extensions and Settings
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 SublimePythonIDE
 """"""""""""""""
 It is a rewrite of SublimeRope for ST3. It is both Python Autocompletion and PEP8 checker.
@@ -142,7 +145,7 @@ After installation, go to ``Preferences -> Package Settings -> SublimePythonIDE 
 this code:
 
 .. code-block:: json
-   
+
    {
       "open_pydoc_in_view": true,
       "create_view_in_same_group": false,
@@ -161,7 +164,7 @@ this code:
 For the project file (``Project -> Edit Project``), use this code:
 
 .. code-block:: json
-   
+
    {
      "folders":
      [
@@ -255,7 +258,7 @@ the ``magit`` package, which I highly recommend (it is a git client for emacs).
          (shell buf)
          (process-send-string buf (format ". %s/bin/activate\n" virtualenv-dir))
          (process-send-string buf (format "cd %s;ipython notebook\n" (magit-project-dir))))))
-   
+
 
 To use the above snippet,
 

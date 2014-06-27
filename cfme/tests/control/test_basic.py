@@ -39,7 +39,7 @@ VM_EXPRESSIONS_TO_TEST = [
         "fill_count(VM and Instance.Files, =, 150)",
         'COUNT OF VM and Instance.Files = 150'
     ),
-    #("fill_tag(VM and Instance.My Company Tags : Owner, Production Linux Team)",)
+    # ("fill_tag(VM and Instance.My Company Tags : Owner, Production Linux Team)",)
     # Needs working input/select mutability
 ]
 

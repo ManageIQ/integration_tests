@@ -183,6 +183,9 @@ class Provider(Updateable):
         fill(properties_form, self._form_mapping(**updates))
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
         self._submit(cancel, edit_page.save_button)
+        name = updates['name'] or self.name
+        if not cancel:
+            flash.assert_message_match('Cloud Provider "%s" was saved' % name)
 
     def delete(self, cancel=True):
         """
@@ -195,6 +198,9 @@ class Provider(Updateable):
         sel.force_navigate('cloud_provider', context={'provider': self})
         cfg_btn('Remove this Cloud Provider from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
+        if not cancel:
+            flash.assert_message_match(
+                'Delete initiated for 1 Cloud Provider from the CFME Database')
 
     def validate(self):
         """ Validates that the detail page matches the Providers information.

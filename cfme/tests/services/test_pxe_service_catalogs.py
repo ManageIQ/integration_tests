@@ -74,14 +74,14 @@ def setup_providers():
     # Normally function-scoped
     setup_infrastructure_providers()
 
+
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name+"_0001")
+        provider_mgmt.delete_vm(vm_name + "_0001")
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
-
 
 
 @pytest.yield_fixture(scope="function")
@@ -110,10 +110,13 @@ def catalog():
 @pytest.yield_fixture(scope="function")
 def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
     # generate_tests makes sure these have values
-    pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart,\
-        pxe_root_password, pxe_image_type, pxe_vlan, catalog_item_type = map(provisioning.get, ('pxe_template', 'host',
-                                'datastore', 'pxe_server', 'pxe_image', 'pxe_kickstart',
-                                'pxe_root_password', 'pxe_image_type', 'vlan', 'catalog_item_type'))
+    pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart, pxe_root_password,\
+        pxe_image_type, pxe_vlan, catalog_item_type = map(
+            provisioning.get, (
+                'pxe_template', 'host', 'datastore', 'pxe_server', 'pxe_image', 'pxe_kickstart',
+                'pxe_root_password', 'pxe_image_type', 'vlan', 'catalog_item_type'
+            )
+        )
 
     provisioning_data = {
         'vm_name': vm_name,
@@ -133,6 +136,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
                   dialog=dialog, catalog_name=pxe_template,
                   provider=provider_crud.name, prov_data=provisioning_data)
     yield catalog_item
+
 
 @pytest.mark.usefixtures('setup_providers', 'setup_pxe_servers_vm_prov')
 def test_rhev_pxe_servicecatalog(provider_key, provider_mgmt, catalog_item, request):

@@ -45,7 +45,6 @@ from datetime import date
 from collections import Sequence, Mapping, Callable
 
 from selenium.common import exceptions as sel_exceptions
-from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, MoveTargetOutOfBoundsException
 from multimethods import multimethod, multidispatch, Anything
 
@@ -129,7 +128,11 @@ class Region(object):
             logger.info('Identifying locator for region not found')
             ident_match = False
 
-        if self.title and browser_title == self.title:
+        if self.title is None:
+            # If we don't have a title we can't match it, and some Regions are multi-page
+            # so we can't have a title set.
+            title_match = True
+        elif self.title and browser_title == self.title:
             title_match = True
         else:
             logger.info("Title '%s' doesn't match expected title '%s'" %
@@ -1862,7 +1865,7 @@ class ScriptBox(object):
 def fill_scriptbox(sb, script):
     """This function now clears and sets the ScriptBox.
     """
-    script = script.replace('"', '\\"')
+    script = script.replace('"', '\\"').replace("\n", "\\n")
     js_script = '{}.setValue("{}")'.format(sb.name, script)
     sel.execute_script(js_script)
 

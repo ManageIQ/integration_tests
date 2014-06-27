@@ -1,6 +1,3 @@
-import collections
-import functools
-
 
 def lazycache(wrapped_method):
     """method decorator to create a lazily-evaluated and cached property

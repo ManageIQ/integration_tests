@@ -65,17 +65,17 @@ def test_delete_catalog_item_deletes_service(catalog_item):
 
 
 def test_service_circular_reference(catalog_item):
-    bundle_name = "first_"+generate_random_string()
+    bundle_name = "first_" + generate_random_string()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog,
                    dialog=catalog_item.dialog, cat_item=catalog_item.name)
     catalog_bundle.create()
-    sec_bundle_name = "sec_"+generate_random_string()
+    sec_bundle_name = "sec_" + generate_random_string()
     sec_catalog_bundle = CatalogBundle(name=sec_bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog,
                    dialog=catalog_item.dialog, cat_item=bundle_name)
     sec_catalog_bundle.create()
-    with error.expected("Error during 'Resource Add': Adding resource <%s> to "
-        "Service <%s> will create a circular reference" % (sec_bundle_name,bundle_name)):
+    with error.expected("Error during 'Resource Add': Adding resource <%s> to Service <%s> "
+                        "will create a circular reference" % (sec_bundle_name, bundle_name)):
         catalog_bundle.update({'description': "edit_desc",
                                'cat_item': sec_catalog_bundle.name})

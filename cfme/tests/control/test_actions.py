@@ -302,7 +302,7 @@ def test_action_power_on_logged(request, assign_policy_for_testing, vm, vm_off, 
         if rc != 0:  # Nothing found, so shortcut
             return False
         for line in stdout.strip().split("\n"):
-            if not "Policy success" in line:
+            if "Policy success" not in line:
                 continue
             match_string = "policy: [%s], event: [VM Power On], entity name: [%s]" % (
                 assign_policy_for_testing.description, vm.name
@@ -336,7 +336,7 @@ def test_action_power_on_audit(request, assign_policy_for_testing, vm, vm_off, s
         if rc != 0:  # Nothing found, so shortcut
             return False
         for line in stdout.strip().split("\n"):
-            if not "Policy success" in line or "MiqAction.action_audit" not in line:
+            if "Policy success" not in line or "MiqAction.action_audit" not in line:
                 continue
             match_string = "policy: [%s], event: [VM Power On]" % (policy_desc)
             if match_string in line:

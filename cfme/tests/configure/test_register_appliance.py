@@ -59,8 +59,8 @@ def unset_org_id():
         red_hat_updates.update_registration(
             service='sat5',
             url=None,
-            username=None,
-            password=None,
+            username='not_used_for_reg',
+            password='not_used_for_reg',
             organization=''
         )
     except sel.NoSuchElementException:
