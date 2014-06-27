@@ -66,9 +66,10 @@ def test_vm(request, provider_crud, provider_mgmt, vm_name):
 
 
 @pytest.mark.usefixtures("random_pwr_ctl_vm")
+@pytest.mark.usefixtures("provider_init")
 class TestControlOnQuadicons(object):
 
-    def test_power_off_cancel(self, test_vm, verify_vm_running, soft_assert, provider_init):
+    def test_power_off_cancel(self, test_vm, verify_vm_running, soft_assert):
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_ON, timeout_in_minutes=12)
         test_vm.power_control_from_cfme(option=Vm.POWER_OFF, cancel=True)
         time.sleep(60)
@@ -76,7 +77,7 @@ class TestControlOnQuadicons(object):
         soft_assert(
             test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm not running")
 
-    def test_power_off(self, test_vm, verify_vm_running, soft_assert, provider_init):
+    def test_power_off(self, test_vm, verify_vm_running, soft_assert):
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_ON, timeout_in_minutes=12)
         # register_event(
         #     test_vm.provider_crud.get_yaml_data()['type'],
@@ -90,7 +91,7 @@ class TestControlOnQuadicons(object):
         soft_assert(
             not test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm running")
 
-    def test_power_on_cancel(self, test_vm, verify_vm_stopped, soft_assert, provider_init):
+    def test_power_on_cancel(self, test_vm, verify_vm_stopped, soft_assert):
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, timeout_in_minutes=12)
         test_vm.power_control_from_cfme(option=Vm.POWER_ON, cancel=True)
         time.sleep(60)
@@ -98,7 +99,7 @@ class TestControlOnQuadicons(object):
         soft_assert(
             not test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm running")
 
-    def test_power_on(self, test_vm, verify_vm_stopped, soft_assert, provider_init):
+    def test_power_on(self, test_vm, verify_vm_stopped, soft_assert):
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, timeout_in_minutes=12)
         # register_event(
         #     test_vm.provider_crud.get_yaml_data()['type'],
@@ -168,7 +169,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(
             not vm.is_pwr_option_available_in_cfme(option=Vm.RESET, from_details=from_details))
 
-    def test_power_off(self, test_vm, verify_vm_running, soft_assert, provider_init):
+    def test_power_off(self, provider_init, test_vm, verify_vm_running, soft_assert):
         test_vm.wait_for_vm_state_change(
             desired_state=Vm.STATE_ON, timeout_in_minutes=12, from_details=True)
         last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
@@ -191,7 +192,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             soft_assert(new_last_boot_time == last_boot_time,
                 "ui: " + new_last_boot_time + " should ==  orig: " + last_boot_time)
 
-    def test_power_on(self, test_vm, verify_vm_stopped, soft_assert, provider_init):
+    def test_power_on(self, provider_init, test_vm, verify_vm_stopped, soft_assert):
         test_vm.wait_for_vm_state_change(
             desired_state='off', timeout_in_minutes=12, from_details=True)
         # register_event(
@@ -216,7 +217,7 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(new_last_boot_time != last_boot_time,
             "ui: " + new_last_boot_time + " ==  orig: " + last_boot_time)
 
-    def test_suspend(self, test_vm, verify_vm_running, soft_assert, provider_init):
+    def test_suspend(self, provider_init, test_vm, verify_vm_running, soft_assert):
         test_vm.wait_for_vm_state_change(
             desired_state=Vm.STATE_ON, timeout_in_minutes=12, from_details=True)
         last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
@@ -245,7 +246,7 @@ class TestVmDetailsPowerControlPerProvider(object):
             soft_assert(new_last_boot_time == last_boot_time,
                 "ui: " + new_last_boot_time + " should ==  orig: " + last_boot_time)
 
-    def test_start_from_suspend(self, test_vm, verify_vm_suspended, soft_assert, provider_init):
+    def test_start_from_suspend(self, provider_init, test_vm, verify_vm_suspended, soft_assert):
         test_vm.wait_for_vm_state_change(
             desired_state=Vm.STATE_SUSPENDED, timeout_in_minutes=12, from_details=True)
         # register_event(
