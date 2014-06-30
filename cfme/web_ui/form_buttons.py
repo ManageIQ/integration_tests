@@ -32,7 +32,11 @@ class FormButton(object):
         return sel.is_displayed("//img[@alt='{}' and contains(@class, 'dimmed')"
             " and (contains(@class, 'button') or contains(@src, 'button'))"
             " and not(ancestor::*[contains(@style, 'display:none')"
-            " or contains(@style, 'display: none')])]".format(self._dimmed_alt or self._alt))
+            " or contains(@style, 'display: none')])]|//button[.='{}' and @disabled='true'"
+            " and not(ancestor::*[contains(@style, 'display:none')"
+            " or contains(@style, 'display: none')])]|".format(
+                self._dimmed_alt or self._alt, self._dimmed_alt or self._alt
+            ))
 
     @property
     def can_be_clicked(self):
@@ -45,14 +49,14 @@ class FormButton(object):
 
     def __call__(self, *args, **kwargs):
         """For maintaining backward compatibility"""
-        if self.is_dimmed:
-            logger.info("Not clicking {} because it is dimmed".format(str(repr(self))))
-            return
-        return sel.click(self)
+        sel.click(self)
 
     def _custom_click_handler(self):
         """Handler called from pytest_selenium"""
-        return self()
+        if self.is_dimmed:
+            logger.info("Not clicking {} because it is dimmed".format(str(repr(self))))
+            return
+        return sel.click(self, no_custom_handler=True)
 
     def __str__(self):
         return self.locate()

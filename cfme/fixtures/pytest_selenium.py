@@ -235,7 +235,7 @@ def handle_alert(cancel=False, wait=30.0, squash=False):
             raise
 
 
-def click(loc, wait_ajax=True):
+def click(loc, wait_ajax=True, no_custom_handler=False):
     """
     Clicks on an element.
 
@@ -247,8 +247,9 @@ def click(loc, wait_ajax=True):
             `_custom_click_handler` method.
         wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
             handy to not do that. (some toolbar clicks)
+        no_custom_handler: To prevent recursion, the custom handler sets this to True.
     """
-    if hasattr(loc, "_custom_click_handler"):
+    if hasattr(loc, "_custom_click_handler") and not no_custom_handler:
         # Object can implement own modification of click behaviour
         return loc._custom_click_handler()
 
