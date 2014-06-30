@@ -228,7 +228,7 @@ class Role(Updateable):
     def __init__(self, name=None, vm_restriction=None, product_features=None):
         self.name = name
         self.vm_restriction = vm_restriction
-        self.product_features = product_features or {}
+        self.product_features = product_features or []
 
     def create(self):
         sel.force_navigate('cfg_accesscontrol_role_add')

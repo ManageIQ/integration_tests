@@ -113,7 +113,8 @@ def logout():
     if logged_in():
         if not sel.is_displayed(page.logout):
             sel.click(dashboard.page.user_dropdown)
-        sel.click(page.logout)
+        sel.click(page.logout, wait_ajax=False)
+        sel.handle_alert(wait=False)
         thread_locals.current_user = None
 
 
