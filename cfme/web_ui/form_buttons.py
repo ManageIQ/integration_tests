@@ -7,6 +7,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill
+from utils.log import logger
 
 
 class FormButton(object):
@@ -15,8 +16,9 @@ class FormButton(object):
     Args:
         alt: The text from `alt` field of the image
     """
-    def __init__(self, alt):
+    def __init__(self, alt, dimmed_alt=None):
         self._alt = alt
+        self._dimmed_alt = dimmed_alt
 
     def locate(self):
         """This hairy locator ensures that the button is not dimmed and not hidden."""
@@ -24,6 +26,17 @@ class FormButton(object):
             " and (contains(@class, 'button') or contains(@src, 'button'))"
             " and not(ancestor::*[contains(@style, 'display:none')"
             " or contains(@style, 'display: none')])]".format(self._alt))
+
+    @property
+    def is_dimmed(self):
+        return sel.is_displayed("//img[@alt='{}' and contains(@class, 'dimmed')"
+            " and (contains(@class, 'button') or contains(@src, 'button'))"
+            " and not(ancestor::*[contains(@style, 'display:none')"
+            " or contains(@style, 'display: none')])]|//button[.='{}' and @disabled='true'"
+            " and not(ancestor::*[contains(@style, 'display:none')"
+            " or contains(@style, 'display: none')])]|".format(
+                self._dimmed_alt or self._alt, self._dimmed_alt or self._alt
+            ))
 
     @property
     def can_be_clicked(self):
@@ -36,7 +49,14 @@ class FormButton(object):
 
     def __call__(self, *args, **kwargs):
         """For maintaining backward compatibility"""
-        return sel.click(self)
+        sel.click(self)
+
+    def _custom_click_handler(self):
+        """Handler called from pytest_selenium"""
+        if self.is_dimmed:
+            logger.info("Not clicking {} because it is dimmed".format(str(repr(self))))
+            return
+        return sel.click(self, no_custom_handler=True)
 
     def __str__(self):
         return self.locate()
@@ -45,9 +65,9 @@ class FormButton(object):
         return "{}({})".format(self.__class__.__name__, str(repr(self._alt)))
 
 add = FormButton("Add")
-save = FormButton("Save Changes")
+save = FormButton("Save Changes", dimmed_alt="Save")
 cancel = FormButton("Cancel")
-reset = FormButton("Reset Changes")
+reset = FormButton("Reset Changes", dimmed_alt="Reset")
 
 
 @fill.method((FormButton, bool))
