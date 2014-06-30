@@ -239,11 +239,19 @@ def click(loc, wait_ajax=True):
     """
     Clicks on an element.
 
+    If the element implements `_custom_click_handler` the control will be given to it. Then the
+    handler decides what to do (eg. do not click under some circumstances).
+
     Args:
-        loc: A locator, expects either a string, WebElement, tuple.
+        loc: A locator, expects either a string, WebElement, tuple or an object implementing
+            `_custom_click_handler` method.
         wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
             handy to not do that. (some toolbar clicks)
     """
+    if hasattr(loc, "_custom_click_handler"):
+        # Object can implement own modification of click behaviour
+        return loc._custom_click_handler()
+
     # Move mouse cursor to element
     move_to_element(loc)
     # and then click on current mouse position
