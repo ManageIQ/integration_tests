@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import pytest
+
 from cfme.configure.configuration import DatabaseBackupSchedule
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import flash, InfoBlock
@@ -135,6 +137,7 @@ def get_full_path_to_file(path_on_host, schedule_name):
     return full_path
 
 
+@pytest.mark.bugzilla(1099341)
 def test_db_backup_schedule(request, db_backup_data):
     """ Test scheduled one-type backup on given machines using smb/nfs
     """

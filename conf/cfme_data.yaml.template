@@ -1,5 +1,15 @@
 basic_info:
     app_version: 5.2.0
+bugzilla:
+    url: http://bugzilla.example.test/xmlrpc.cgi
+    loose:                  # Params of BugzillaBug to be converted to LooseVersion at runtime
+        - param1
+        - param2
+    credentials: bugzilla
+    skip:                   # Bug states taht are considered for skipping
+        - ON_DEV
+        - NEW
+        - ASSIGNED
 management_systems:
     vsphere5:
         name: vsphere 5

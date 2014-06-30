@@ -179,6 +179,7 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
 
 
 @pytest.mark.nondestructive
+@pytest.mark.bugzilla(1018578, 1108087)
 @pytest.sel.go_to('dashboard')
 def test_collect_log_depot(depot_type,
                            depot_machine,

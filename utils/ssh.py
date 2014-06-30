@@ -6,6 +6,7 @@ from scp import SCPClient
 
 from utils import conf
 from utils.net import net_check
+from utils.timeutil import parsetime
 
 
 class SSHClient(paramiko.SSHClient):
@@ -81,6 +82,12 @@ class SSHClient(paramiko.SSHClient):
     def get_version(self):
         return version_getter(self)
 
+    def get_build_datetime(self):
+        return build_datetime_getter(self)
+
+    def is_appliance_downstream(self):
+        return is_downstream_getter(self)
+
 
 def command_runner(client, command, stream_output=False):
     template = '%s\n'
@@ -130,6 +137,18 @@ def version_getter(client):
     if version.strip().lower() == "master":
         return "9.9.9.9"  # They have changed it
     return version.strip()
+
+
+def build_datetime_getter(client):
+    command = "stat --printf=%Y /var/www/miq/vmdb/VERSION"
+    x, build_seconds = command_runner(client, command, stream_output=False)
+    return parsetime.fromtimestamp(int(build_seconds.strip()))
+
+
+def is_downstream_getter(client):
+    command = "stat /var/www/miq/vmdb/BUILD"
+    result = command_runner(client, command, stream_output=False)[0]
+    return result == 0
 
 
 def scp_putter(client, local_file, remote_file, **kwargs):

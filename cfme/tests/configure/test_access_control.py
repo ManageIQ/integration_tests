@@ -48,8 +48,8 @@ def test_user_crud():
     user.delete()
 
 
+@pytest.mark.bugzilla(1098343)
 def test_user_login():
-    pytest.skip('https://bugzilla.redhat.com/show_bug.cgi?id=1098343')
     user = new_user()
     user.create()
     try:
@@ -187,8 +187,8 @@ cat_name = version.pick({"default": "Settings & Operations",
           'automate explorer': _go_to('automate_explorer'),
       },
       {}]])
+@pytest.mark.bugzilla(1098343)
 def test_permissions(role, allowed_actions, disallowed_actions):
-    # pytest.skip('https://bugzilla.redhat.com/show_bug.cgi?id=1098343')
     # create a user and role
     role = role()  # call function to get role
     role.create()
