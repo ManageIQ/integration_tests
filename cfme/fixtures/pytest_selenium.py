@@ -290,7 +290,7 @@ def move_to_element(loc, **kwargs):
     return el
 
 
-def text(loc):
+def text(loc, **kwargs):
     """
     Returns the text of an element.
 
@@ -299,7 +299,7 @@ def text(loc):
 
     Returns: A string containing the text of the element.
     """
-    return element(loc).text
+    return element(loc, **kwargs).text
 
 
 def value(loc):

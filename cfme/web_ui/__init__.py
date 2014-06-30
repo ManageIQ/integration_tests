@@ -1198,6 +1198,13 @@ class Tree(object):
             self.node_label = ".//li/span/a[.='%s']"
             self.click_expand = "span/span"
             self.leaf = "span/a"
+            # Locators for reading the tree
+            # Finds all child nodes
+            self.nodes_root = "./li[span/a[@class='dynatree-title']]"
+            # How to get from the node to the container of child nodes
+            self.nodes_root_continue = "./ul"
+            # Label locator
+            self.node_label_loc = "./span/a[@class='dynatree-title']"
         elif self._get_tag() == 'table':
             # Legacy Tree
             self.expandable = 'tr/td[1]/img'
@@ -1206,6 +1213,10 @@ class Tree(object):
             self.node_label = ".//span[.='%s']"
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
+            # Locators for reading the tree - we do not support, this kind of getting, we have cust.
+            self.nodes_root = None
+            self.nodes_root_continue = None
+            self.node_label_loc = None
         else:
             raise exceptions.TreeTypeUnknown(
                 'The locator described does not point to a known tree type')
@@ -1245,6 +1256,9 @@ class Tree(object):
 
     def node_root_element(self, node_name, parent):
         return sel.element((self.node_root % node_name), root=parent)
+
+    def nodes_root_elements(self, parent):
+        return sel.elements(self.nodes_root, root=parent)
 
     def expand_path(self, *path):
         """ Clicks through a series of elements in a path.
@@ -1287,6 +1301,54 @@ class Tree(object):
 
         return node
 
+    def read_contents(self, parent=None):
+        """Reads complete contents of the tree recursively.
+
+        Tree is represented as a list. If the item in the list is string, it is leaf element and it
+        is its name. If the item is a tuple, first element of the tuple is the name and second
+        element is the subtree (list).
+
+        Args:
+            parent: Starting element, used during recursion
+        Returns: Tree in format mentioned in description
+        """
+        self._detect()
+        if parent is None and self._get_tag() == "table":
+            return self._legacy_read_contents()  # Legacy
+        parent = self.locator if parent is None else parent
+
+        result = []
+
+        for item in self.nodes_root_elements(parent):
+            item_name = sel.text(self.node_label_loc, root=item).encode("utf-8").strip()
+            self._expand(item)
+            try:
+                item_contents = self.read_contents(sel.element(self.nodes_root_continue, root=item))
+                if item_contents is None:
+                    result.append(item_name)
+                else:
+                    result.append((item_name, item_contents))
+            except NoSuchElementException:
+                result.append(item_name)
+
+        return result if len(result) > 0 else None
+
+    def _legacy_read_contents(self):
+        self._detect()
+        entry = sel.element(".//tbody[not(tr/td[contains(@class, 'hiddenRow')])]",
+                            root=self.locator)
+
+        def _process_subtree(entry):
+            node_title = sel.text("./tr/td[@class='standartTreeRow']/span", root=entry)
+            self._expand(entry)
+            child_nodes = sel.elements("./tr[not(@title)]/td/table/tbody", root=entry)
+            if not child_nodes:
+                return node_title
+            else:
+                return (node_title, map(lambda tree: _process_subtree(tree), child_nodes))
+
+        return [_process_subtree(entry)]
+
     def click_path(self, *path):
         """ Exposes a path and then clicks it.
 
@@ -1308,6 +1370,32 @@ class Tree(object):
                      'index': len(path) - 1,
                      'cause': e})
         return leaf
+
+    @classmethod
+    def browse(cls, tree, *path):
+        """Browse through tree via path.
+
+        If node not found, raises exception.
+        If the browsing reached leaf(str), returns True if also the step was last, otherwise False.
+        If the result of the path is a subtree, it is returned.
+
+        Args:
+            tree: List with tree.
+            *path: Path to browse.
+        """
+        current = tree
+        for i, step in enumerate(path, start=1):
+            for node in current:
+                if isinstance(node, tuple):
+                    if node[0] == step:
+                        current = node[1]
+                        break
+                else:
+                    if node == step:
+                        return i == len(path)
+            else:
+                raise Exception("Could not find node {}".format(step))
+        return current
 
 
 class CheckboxTree(Tree):
