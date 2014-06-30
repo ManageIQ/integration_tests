@@ -599,7 +599,8 @@ def get_all_vms(do_not_navigate=False):
     try:
         for page in paginator.pages():
             for title in sel.elements(
-                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')]"):
+                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')" +
+                    " or contains(@href, '/show/')]"):  # for provider specific vm/template page
                 vms.add(sel.get_attribute(title, "title"))
         return vms
     except NoSuchElementException:
