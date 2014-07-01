@@ -3,11 +3,9 @@
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the dashboard page
 """
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Region, Table, toolbar
+from cfme.web_ui import Region, Table, tabstrip, toolbar
 from utils.timeutil import parsetime
 from utils.wait import wait_for
-
-_css_reset_button = 'div.dhx_toolbar_btn[title="Reset Dashboard Widgets to the defaults"] img'
 
 page = Region(
     title="Dashboard",
@@ -27,6 +25,17 @@ def reset_widgets(cancel=False):
     """
     sel.click(page.reset_widgets_button, wait_ajax=False)
     sel.handle_alert(cancel)
+
+
+def dashboards():
+    """Returns a generator that iterates through the available dashboards"""
+    sel.force_navigate("dashboard")
+    # We have to click any other of the tabs (glitch)
+    # Otherwise the first one is not displayed (O_O)
+    tabstrip.select_tab(tabstrip.get_all_tabs()[-1])
+    for dashboard_name in tabstrip.get_all_tabs():
+        tabstrip.select_tab(dashboard_name)
+        yield dashboard_name
 
 
 class Widget(object):
@@ -197,14 +206,4 @@ def set_csrf_token(csrf_token):
     Args:
         csrf_token: Token to set as the CSRF token.
     """
-    script = '''
-        var elements = document.getElementsByTagName("meta");
-        for (var i=0, element; element = elements[i]; i++) {
-            var ename = element.getAttribute("name");
-            if (ename != null && ename.toLowerCase() == "csrf-token") {
-                element.setAttribute("content", "%s");
-                break;
-            }
-        }
-    ''' % csrf_token
-    return sel.execute_script(script)
+    return sel.set_attribute(page.csrf_token, "content", csrf_token)
