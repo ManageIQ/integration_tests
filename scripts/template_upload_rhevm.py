@@ -22,9 +22,9 @@ from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 
-#temporary vm name (this vm will be deleted)
+# temporary vm name (this vm will be deleted)
 TEMP_VM_NAME = 'auto-vm-%s' % generate_random_string()
-#temporary template name (this template will be deleted)
+# temporary template name (this template will be deleted)
 TEMP_TMP_NAME = 'auto-tmp-%s' % generate_random_string()
 
 
@@ -132,7 +132,7 @@ def import_template(api, edomain, sdomain, cluster):
     import_action = params.Action(async=False, cluster=actual_cluster,
                                   storage_domain=actual_storage_domain)
     actual_template.import_template(action=import_action)
-    #Check if the template is really there
+    # Check if the template is really there
     if not api.templates.get(TEMP_TMP_NAME):
         print "RHEVM: The template failed to import"
         sys.exit(127)
@@ -155,7 +155,7 @@ def make_vm_from_template(api, cluster):
     params_vm = params.VM(name=TEMP_VM_NAME, template=actual_template, cluster=actual_cluster)
     api.vms.add(params_vm)
 
-    #we must wait for the vm do become available
+    # we must wait for the vm do become available
     def check_status():
         status = api.vms.get(TEMP_VM_NAME).get_status()
         if status.state != 'down':
@@ -164,7 +164,7 @@ def make_vm_from_template(api, cluster):
 
     wait_for(check_status, fail_condition=False, delay=5)
 
-    #check, if the vm is really there
+    # check, if the vm is really there
     if not api.vms.get(TEMP_VM_NAME):
         print "RHEVM: VM could not be provisioned"
         sys.exit(127)
@@ -178,8 +178,8 @@ def check_disks(api):
     return True
 
 
-#sometimes, rhevm is just not cooperative. This is function used to wait for template on
-#export domain to become unlocked
+# sometimes, rhevm is just not cooperative. This is function used to wait for template on
+# export domain to become unlocked
 def check_edomain_template(api, edomain):
     template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
     if template.get_status().state != "ok":
@@ -209,7 +209,7 @@ def add_disk_to_vm(api, sdomain, disk_size, disk_format, disk_interface):
 
     wait_for(check_disks, [api], fail_condition=False, delay=5, num_sec=900)
 
-    #check, if there are two disks
+    # check, if there are two disks
     if len(api.vms.get(TEMP_VM_NAME).disks.list()) < 2:
         print "RHEVM: Disk failed to add"
         sys.exit(127)
@@ -234,7 +234,7 @@ def templatize_vm(api, template_name, cluster):
 
     wait_for(check_disks, [api], fail_condition=False, delay=5, num_sec=900)
 
-    #check, if template is really there
+    # check, if template is really there
     if not api.templates.get(template_name):
         print "RHEVM: VM failed to templatize"
         sys.exit(127)
@@ -250,13 +250,13 @@ def cleanup(api, edomain, ssh_client, ovaname):
     temporary_vm = api.vms.get(TEMP_VM_NAME)
     if temporary_vm is not None:
         temporary_vm.delete()
-    #wait to make sure the vm is deleted
-    #wait_for(lambda: api.vms.get(TEMP_VM_NAME) != '', fail_condition=True, delay=5)
+    # wait to make sure the vm is deleted
+    # wait_for(lambda: api.vms.get(TEMP_VM_NAME) != '', fail_condition=True, delay=5)
     temporary_template = api.templates.get(TEMP_TMP_NAME)
     if temporary_template is not None:
         temporary_template.delete()
 
-    #waiting for template on export domain
+    # waiting for template on export domain
     wait_for(check_edomain_template, [api, edomain], fail_condition=False, delay=5)
 
     unimported_template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)

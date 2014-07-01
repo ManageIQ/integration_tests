@@ -148,6 +148,7 @@ def visible_toplevel_tabs():
         menu_names.append(sel.text(menu_elem))
     return menu_names
 
+
 def visible_pages():
     """Return a list of all the menu pages currently visible top- and second-level pages
 

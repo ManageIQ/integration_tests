@@ -21,7 +21,7 @@ from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.wait import wait_for
 
-#ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
+# ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
 NUM_OF_TRIES_OVFTOOL = 5
 
 
@@ -101,9 +101,9 @@ def upload_ova(hostname, username, password, name, datastore,
     else:
         print "VSPHERE: Upload did not complete"
         return -1, "\n".join([output, error])
-        #print output
-        #print error
-        #sys.exit(127)
+        # print output
+        # print error
+        # sys.exit(127)
 
 
 def add_disk(client, name):
@@ -318,7 +318,7 @@ def run(**kwargs):
 
     if not check_template_exists(hostname, username, password, name):
         if kwargs.get('upload'):
-            #Wrapper for ovftool - sometimes it just won't work
+            # Wrapper for ovftool - sometimes it just won't work
             for i in range(0, NUM_OF_TRIES_OVFTOOL):
                 print "VSPHERE: Trying ovftool %s..." % i
                 ova_ret, ova_out = upload_ova(hostname,

@@ -33,7 +33,7 @@ def main():
 
     # download
     print 'Downloading vddk'
-    #status, out = client.run_command('wget %s' % args.vddk_url)
+    # status, out = client.run_command('wget %s' % args.vddk_url)
     status, out = client.run_command('curl %(url)s -o %(file)s' %
         {'url': args.vddk_url, 'file': filename})
 
@@ -68,7 +68,7 @@ def main():
     if args.reboot:
         print 'Appliance reboot'
         status, out = client.run_command('reboot')
-        #print 'DB Enabled, evm watchdog should start the UI shortly.'
+        # print 'DB Enabled, evm watchdog should start the UI shortly.'
     else:
         print 'A reboot is required before vddk will work'
 
