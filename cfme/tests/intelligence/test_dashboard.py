@@ -35,7 +35,12 @@ def test_widgets_operation(request):
         widget.content
 
 
-# @pytest.mark.bugzilla(1110171)
+@pytest.mark.bugzilla(
+    1110171,
+    unskip={
+        1110171: lambda number_dashboards: number_dashboards != 1,  # Affects only when 1 dash
+    },
+)
 @pytest.mark.parametrize("number_dashboards", range(1, 4))
 def test_custom_dashboards(request, soft_assert, number_dashboards):
     """Create some custom dashboards and check their presence. Then check their contents."""

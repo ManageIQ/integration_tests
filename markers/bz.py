@@ -23,6 +23,8 @@ parameters, test machinery injects them. These are available:
 * appliance_downstream
 * bug (current bug)
 
+Also fixtures (funcargs) for the test are injected into the parameters
+
 The order of function parameters does not matter.
 
 The ``unskip`` hook is a little bit different. It is a dict of ``bug_id: function``, where if a bug
@@ -35,14 +37,19 @@ xfailing has precedence over skipping.
 Example:
 
 .. code-block:: python
+   @pytest.mark.parametrize("something_parametrized", [1,2,3])
    @pytest.mark.bugzilla(
-       1234, 2345,
+       1234, 2345, 3456,
        xfail_when=lambda bug, appliance_version: bug.fixed_in > appliance_version,
        unskip={
+           # Something easy
            1234: lambda bug: bug.something == "foo",
-           2345: True,  # This works too. Will be never skipped on this bug's conditions.
+           # This works too. Will be never skipped on this bug's conditions.
+           2345: True,
+           # Do not skip if fixture `something_parametrized` is not 1
+           3456: lambda something_parametrized: something_parametrized != 1
        })
-   def test_something(bugs):
+   def test_something(bugs, something_parametrized):
        pass
 
     @pytest.mark.bugzilla  # Needed so far, it stores bugzilla instance into the test for using it
@@ -268,6 +275,12 @@ def pytest_runtest_setup(item):
         appliance_version=current_version(),
         appliance_downstream=appliance_is_downstream(),
     )
+    # We will now extend the env with fixtures, so they can be used in the guard functions
+    # We will however add only those that are not in the global_env otherwise we could overwrite
+    # our own stuff.
+    for funcarg, value in item.callspec.params.iteritems():
+        if funcarg not in global_env:
+            global_env[funcarg] = value
     for bug in set(map(lambda bug: item._bugzilla_bugs.get_bug(bug.id), item._bugzilla_bugs)):
         local_env = {"bug": bug}
         local_env.update(global_env)
