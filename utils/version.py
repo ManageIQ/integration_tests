@@ -3,16 +3,28 @@ import re
 from types import StringType
 from functools32 import lru_cache
 from utils.ssh import SSHClient
-from pkg_resources import parse_version
-from utils.log import logger
 import multimethods as mm
+
+
+def get_version(vstring):
+    '''Return a LooseVersion based on vstring.  For CFME, 'master' version
+       means always the latest (compares as greater than any other
+       version)
+
+    '''
+    try:
+        if vstring == 'master':
+            return LooseVersion(latest=True)
+        return LooseVersion(vstring)
+    except:
+        return None
 
 
 @lru_cache(maxsize=32)
 def current_version():
     """ A lazy cached method to return the appliance version. """
     try:
-        return LooseVersion(SSHClient().get_version())
+        return get_version(SSHClient().get_version())
     except:
         return None
 
@@ -50,15 +62,12 @@ def pick(v_dict):
     Collapses an ambiguous series of objects bound to specific versions
     by interrogating the CFME Version and returning the correct item.
     """
-    version = parse_version(str(current_version()))
-    prev = None
-    for ver_test in sorted([(parse_version(key), key) for key in v_dict.keys()]):
-        if version >= ver_test[0]:
-            prev = ver_test[1]
-        else:
-            break
-    logger.debug(" Collapsing Singularity Cap'n, returning: {}".format(v_dict[prev]))
-    return v_dict[prev]
+    # convert keys to LooseVersions
+    v_dict = {get_version(k): v for (k, v) in v_dict.items()}
+    versions = v_dict.keys()
+    sorted_matching_versions = sorted(filter(lambda v: v <= current_version(), versions),
+                                      reverse=True)
+    return v_dict.get(sorted_matching_versions[0]) if sorted_matching_versions else None
 
 
 class Version(object):
@@ -285,12 +294,25 @@ class LooseVersion (Version):
     this scheme; the rules for comparison are simple and predictable,
     but may not always give the results you want (for some definition
     of "want").
+
+    Note: 'latest' and 'oldest' are special cases, latest = (greater
+    than everything else except itself). oldest = (less than
+    everything else except itself.)
+
     """
 
     component_re = re.compile(r'(\d+ | [a-z]+ | \.)', re.VERBOSE)
 
-    def __init__(self, vstring=None):
-        if vstring:
+    def __init__(self, vstring=None, latest=False, oldest=False):
+        if latest and oldest:
+            raise ValueError('Cannot be both latest and oldest')
+        if latest:
+            self._special = 1
+        elif oldest or vstring == 'default':
+            self._special = -1
+        else:
+            self._special = 0
+        if vstring and not self._special:
             self.parse(vstring)
 
     def parse(self, vstring):
@@ -309,7 +331,12 @@ class LooseVersion (Version):
         self.version = components
 
     def __str__(self):
-        return self.vstring
+        if self._special == -1:
+            return 'oldest'
+        elif self._special == 1:
+            return 'latest'
+        else:
+            return self.vstring
 
     def __repr__(self):
         return "LooseVersion ('%s')" % str(self)
@@ -317,11 +344,16 @@ class LooseVersion (Version):
     def __cmp__(self, other):
         if isinstance(other, StringType):
             other = LooseVersion(other)
-
-        return cmp(self.version, other.version)
-
+        special_cmp = cmp(self._special, other._special)
+        if special_cmp == 0:
+            return cmp(self.version, other.version)
+        else:
+            return special_cmp
 
 # end class LooseVersion
+
+LOWEST = LooseVersion(oldest=True)
+LATEST = LooseVersion(latest=True)
 
 
 # Compare Versions using > for dispatch

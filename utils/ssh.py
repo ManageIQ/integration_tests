@@ -134,8 +134,6 @@ def rake_runner(client, command, stream_output=False):
 def version_getter(client):
     command = 'cd /var/www/miq/vmdb; cat /var/www/miq/vmdb/VERSION'
     x, version = command_runner(client, command, stream_output=False)
-    if version.strip().lower() == "master":
-        return "9.9.9.9"  # They have changed it
     return version.strip()
 
 
