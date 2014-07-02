@@ -12,6 +12,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 from cfme import dashboard
 from cfme.web_ui import Region, Form, fill
+from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException
 from utils import conf
 from utils.log import logger
 from threading import local
@@ -36,13 +37,20 @@ page = Region(
         # Login page has an abnormal flash div
         'flash': '//div[@id="flash_div"]',
         'logout': '//a[contains(@href, "/logout")]',
+        'update_password':'//a[@title="Update Password"]',
+        'back':'//a[@title="Back"]',
+        'user_new_password': '//input[@id="user_new_password"]',
+        'user_verify_password': '//input[@id="user_verify_password"]'
     },
     identifying_loc='submit_button')
 
-_form_fields = ('username', 'password', 'submit_button')
-form = Form(fields=[loc for loc in page.locators.items() if loc[0] in _form_fields],
+_form_fields = ('username', 'password', 'user_new_password', 'user_verify_password')
+form = Form(
+    fields=[
+        loc for loc
+        in page.locators.items()
+        if loc[0] in _form_fields],
     identifying_loc='username')
-
 
 def _click_on_login():
     """
@@ -52,9 +60,7 @@ def _click_on_login():
 
 
 def logged_in():
-    if sel.is_displayed(dashboard.page.user_dropdown):
-        return True
-
+    return sel.is_displayed(dashboard.page.user_dropdown)
 
 def press_enter_after_password():
     """
@@ -140,3 +146,51 @@ def current_user():
 def current_username():
     u = current_user()
     return u and u.username
+
+
+def fill_login_fields(username, password):
+    """ Fills in login information without submitting the form """
+    if logged_in():
+        logout()
+    fill(form, {"username": username, "password": password})
+
+
+def show_password_update_form():
+    """ Shows the password update form """
+    if logged_in():
+        logout()
+    try:
+        sel.click(page.update_password)
+    except ElementNotVisibleException:
+        # Already on password change form
+        pass
+
+def update_password(username, password, new_password, verify_password=None, submit_method=_click_on_login):
+    """ Changes user password """
+    if logged_in():
+        logout()
+    show_password_update_form()
+    fill(form,{
+        "username": username,
+        "password": password,
+        "user_new_password": new_password,
+        "user_verify_password": verify_password if verify_password != None else new_password
+        })
+    submit_method()
+
+def close_password_update_form():
+    """ Goes back to main login form on login page """
+    try:
+        sel.click(page.back)
+    except (ElementNotVisibleException, NoSuchElementException):
+        # Already on main login form or not on login page at all
+        pass
+
+def clear_fields():
+    """ clears all form fields """
+    fill(form,{
+        "username": "",
+        "password": "",
+        "user_new_password": "",
+        "user_verify_password": ""
+        })
