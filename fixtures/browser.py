@@ -40,6 +40,7 @@ def pytest_exception_interact(node, call, report):
     # base64 encoded to go into a data uri, same for screenshots
     full_tb = str(report.longrepr).encode('base64').strip()
     # errors are when exceptions are thrown outside of the test call phase
+    report.when = getattr(report, 'when', 'setup')
     is_error = report.when != 'call'
 
     template_data = {
