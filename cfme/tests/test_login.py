@@ -23,6 +23,7 @@ def test_bad_password():
         login.login(conf.credentials['default']['username'], "badpassword@#$")
     assert login.page.is_displayed()
 
+
 @pytest.sel.go_to('dashboard')
 def test_logout(logged_in):
     """ Tests that the provider can be logged out of. """
