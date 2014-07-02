@@ -14,6 +14,11 @@ from utils import version
 usergrp = ac.Group(description='EvmGroup-user')
 
 
+# due to pytest.mark.bugzilla(1035399), non admin users can't login
+# with no providers added
+pytestmark = [pytest.mark.usefixtures("setup_cloud_providers")]
+
+
 def new_credential():
     return Credential(principal='uid' + random.generate_random_string(), secret='redhat')
 
@@ -48,7 +53,7 @@ def test_user_crud():
     user.delete()
 
 
-@pytest.mark.bugzilla(1098343)
+#@pytest.mark.bugzilla(1035399) # work around instead of skip
 def test_user_login():
     user = new_user()
     user.create()
@@ -185,7 +190,7 @@ cat_name = version.pick({"default": "Settings & Operations",
           'control explorer': _go_to('control_explorer'),
           'automate explorer': _go_to('automate_explorer')},
       {}]])
-@pytest.mark.bugzilla(1098343)
+#@pytest.mark.bugzilla(1035399) # work around instead of skip
 def test_permissions(role, allowed_actions, disallowed_actions):
     # create a user and role
     role = role()  # call function to get role

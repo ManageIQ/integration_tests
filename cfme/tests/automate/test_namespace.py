@@ -55,7 +55,8 @@ def test_duplicate_namespace_disallowed(namespace):
         namespace.create()
 
 
-def test_permissions_namespace_crud():
+# provider needed as workaround for bz1035399
+def test_permissions_namespace_crud(setup_cloud_providers):
     """ Tests that a namespace can be manipulated only with the right permissions"""
     tac.single_task_permission_test([['Automate', 'Explorer']],
                                     {'Namespace CRUD': lambda: test_namespace_crud(a_namespace())})
