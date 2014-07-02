@@ -53,7 +53,7 @@ def test_user_crud():
     user.delete()
 
 
-#@pytest.mark.bugzilla(1035399) # work around instead of skip
+# @pytest.mark.bugzilla(1035399) # work around instead of skip
 def test_user_login():
     user = new_user()
     user.create()
@@ -190,7 +190,7 @@ cat_name = version.pick({"default": "Settings & Operations",
           'control explorer': _go_to('control_explorer'),
           'automate explorer': _go_to('automate_explorer')},
       {}]])
-#@pytest.mark.bugzilla(1035399) # work around instead of skip
+# @pytest.mark.bugzilla(1035399) # work around instead of skip
 def test_permissions(role, allowed_actions, disallowed_actions):
     # create a user and role
     role = role()  # call function to get role
