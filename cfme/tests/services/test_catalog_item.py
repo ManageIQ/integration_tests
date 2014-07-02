@@ -1,5 +1,5 @@
 import pytest
-import cfme.web_ui.flash as flash
+from cfme.web_ui import flash
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog

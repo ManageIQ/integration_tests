@@ -8,6 +8,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Select, Tree, fill, flash
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
+from utils.pretty import Pretty
 
 rate_tree = Tree("//div[@id='cb_rates_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")
@@ -15,7 +16,9 @@ tb_select_new_chargeback = nav.fn(partial(tb_select, "Add a new Chargeback Rate"
 tb_select_edit_chargeback = nav.fn(partial(tb_select, "Edit this Chargeback Rate"))
 
 
-class RateFormItem(object):
+class RateFormItem(Pretty):
+    pretty_attrs = ['rate_loc', 'unit_select_loc']
+
     def __init__(self, rate_loc=None, unit_select_loc=None):
         self.rate_loc = rate_loc
         self.unit_select_loc = unit_select_loc
