@@ -20,6 +20,8 @@ random_vm_test = []    # use the same values(provider/vm) for all the quadicon t
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
     argnames, argvalues, idlist = testgen.infra_providers(metafunc)
+    if not idlist:
+        return
     new_idlist = []
     new_argvalues = []
     if 'random_pwr_ctl_vm' in metafunc.fixturenames:
