@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.DEBUG,
 logger = logging.getLogger('migration')
 
 
-#Execute command
+# Execute command
 def run_command(cmd):
     logger.info('Running: %s' % cmd)
     process = sub.Popen(cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
@@ -35,16 +35,16 @@ def run_command(cmd):
         logger.info('SUCCESS')
     return output
 
-#copy scripts
+# copy scripts
 run_command("cp " + options.scripts + " /var/www/miq/vmdb/")
 
-#changedir and untar scripts
+# changedir and untar scripts
 run_command("cd /var/www/miq/vmdb/;tar xvf " + options.scripts)
 
-#stop evm process
+# stop evm process
 run_command('service evmserverd stop')
 
-#check pg connections and execute restore script
+# check pg connections and execute restore script
 psql_output = run_command('psql -d vmdb_production -U root -c ' +
     '"SELECT count(*) from pg_stat_activity"')
 count = psql_output.split("\n")[2].strip()
@@ -57,7 +57,7 @@ run_command("cd /var/www/miq/vmdb/backup_and_restore/;./miq_vmdb_background_rest
 run_command("cat /tmp/restore.out")
 logger.info('Restore completed successfully')
 
-#if states relation exists then truncate table
+# if states relation exists then truncate table
 psql_output = run_command('psql -d vmdb_production -U root -c ' +
     '"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = \'states\')" ')
 table_output = psql_output.split("\n")[2].strip()
@@ -66,15 +66,15 @@ if "t" in table_output:
 else:
     logger.debug('Relation states does not exists')
 
-#changedir and  run rake
+# changedir and  run rake
 run_command("cd /var/www/miq/vmdb;bin/rails r bin/rake db:migrate --trace > /tmp/migrate.out 2>&1")
 run_command("cat /tmp/migrate.out")
 logger.info('rake completed')
 
-#check db migrate status
+# check db migrate status
 run_command("cd /var/www/miq/vmdb;rake db:migrate:status")
 
-#find version and if v4 run upgrade fixes
+# find version and if v4 run upgrade fixes
 psql_output = run_command('psql -d vmdb_production -U root -c ' +
     '"SELECT distinct (version) from miq_servers"')
 version = psql_output.split("\n")[2].strip()
@@ -86,7 +86,7 @@ if "4." in version and options.fixscripts:
 else:
     logger.info("%s: version value" % version)
 
-#check for REGION
+# check for REGION
 psql_output = run_command('psql -d vmdb_production -U root -c "select region from users"')
 region_output = psql_output.split("\n")[2].strip()
 logger.info("%s: region value" % region_output)

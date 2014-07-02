@@ -175,8 +175,7 @@ cat_name = version.pick({"default": "Settings & Operations",
           'clouds providers': _go_to('clouds_providers'),
           'infrastructure providers': _go_to('infrastructure_providers'),
           'control explorer': _go_to('control_explorer'),
-          'automate explorer': _go_to('automate_explorer'),
-      }],
+          'automate explorer': _go_to('automate_explorer')}],
      [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
       {
           'my services': _go_to('my_services'),
@@ -184,8 +183,7 @@ cat_name = version.pick({"default": "Settings & Operations",
           'clouds providers': _go_to('clouds_providers'),
           'infrastructure providers': _go_to('infrastructure_providers'),
           'control explorer': _go_to('control_explorer'),
-          'automate explorer': _go_to('automate_explorer'),
-      },
+          'automate explorer': _go_to('automate_explorer')},
       {}]])
 @pytest.mark.bugzilla(1098343)
 def test_permissions(role, allowed_actions, disallowed_actions):

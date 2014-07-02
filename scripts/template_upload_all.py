@@ -44,14 +44,14 @@ def parse_cmd_line():
 
 
 def template_name(image_name):
-    #MIQ
+    # MIQ
     pattern = re.compile(r'[^\d]*?manageiq[^\d]*(\d*).\w*')
     result = pattern.findall(image_name)
     if result:
-        #for now, actual version for MIQ is manually defined.
+        # for now, actual version for MIQ is manually defined.
         return "miq-%s-%s" % (MIQ_ACTUAL_VERSION, result[0])
     else:
-        #CFME
+        # CFME
         pattern = re.compile(r'[.-]\d+(?:-\d+)?')
         result = pattern.findall(image_name)
         return "cfme-%s%s" % (MIQ_ACTUAL_VERSION, ''.join(result))
