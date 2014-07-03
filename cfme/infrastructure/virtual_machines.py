@@ -3,10 +3,12 @@ quadicon lists, and VM details page.
 """
 
 
-from cfme.exceptions import VmNotFound, OptionNotAvailable
+import re
+from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    CheckboxTree, Form, Region, Quadicon, Tree, accordion, form_buttons, paginator, toolbar
+    CheckboxTree, Form, Region, Quadicon, Tree, accordion, fill, flash, form_buttons, paginator,
+    toolbar
 )
 from cfme.web_ui.menu import nav
 from functools import partial
@@ -15,7 +17,6 @@ from utils.log import logger
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 from utils import version
-
 
 details_page = Region(infoblock_type='detail')
 
@@ -36,13 +37,27 @@ manage_policies_tree = CheckboxTree(
     })
 )
 
+
+manage_policies_page = Region(
+    locators={
+        'save_button': "//div[@id='buttons_on']//img[@alt='Save Changes']",
+    })
+
+
+snapshot_tree = Tree(
+    version.pick({
+        version.LOWEST: "//div[@id='treebox']/div/table",
+        "5.3": "//div[@id='snapshots_treebox']/ul"
+    })
+)
+
 snapshot_form = Form(
     fields=[
-        ('name', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('descrition', "//*[@id='default_userid']"),
-        ('snapshot_memory', "//*[@id='default_password']"),
-        ('create_button', "//input[@name='create']"),
-        ('cancel_button', "//input[@name='cancel']")
+        ('name', "//*[@id='name']"),
+        ('descrition', "//*[@id='description']"),
+        ('snapshot_memory', "//input[@id='snap_memory']"),
+        ('create_button', "//img[@title='Create']"),
+        ('cancel_button', "//img[@title='Cancel']")
     ])
 
 
@@ -126,6 +141,77 @@ class Vm(object):
         provider_crud: :py:class:`cfme.cloud.provider.Provider` object
         template_name: Name of the template to use for provisioning
     """
+
+    class Snapshot(object):
+        def __init__(self, name=None, description=None, memory=None, parent_vm=None):
+            self.name = name
+            self.description = description
+            self.memory = memory
+            self.vm = parent_vm
+
+        def _nav_to_snapshot_mgmt(self):
+            locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
+                 "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
+            if not sel.is_displayed(locator):
+                self.vm.load_details()
+                sel.click(details_page.infoblock.element("Properties", "Snapshots"))
+
+        def does_snapshot_exist(self):
+            self._nav_to_snapshot_mgmt()
+            try:
+                snapshot_tree.find_path_to(re.compile(r".*?\(Active\)$"))
+                return True
+            except CandidateNotFound:
+                try:
+                    snapshot_tree.find_path_to(re.compile(self.name))
+                    return True
+                except CandidateNotFound:
+                    return False
+            except NoSuchElementException:
+                return False
+
+        def wait_for_snapshot_active(self):
+            self._nav_to_snapshot_mgmt()
+            try:
+                snapshot_tree.click_path(*snapshot_tree.find_path_to(re.compile(self.name)))
+                if sel.is_displayed_text(self.name + " (Active)"):
+                    return True
+            except CandidateNotFound:
+                return False
+
+        def create(self):
+            self._nav_to_snapshot_mgmt()
+            toolbar.select('Create a new snapshot for this VM')
+            fill(snapshot_form, {'name': self.name,
+                                 'description': self.description,
+                                 'snapshot_memory': self.memory
+                                 },
+                 action=snapshot_form.create_button)
+            wait_for(self.does_snapshot_exist, num_sec=300, delay=20, fail_func=sel.refresh)
+
+        def delete(self, cancel=False):
+            self._nav_to_snapshot_mgmt()
+            toolbar.select('Delete Snapshots', 'Delete Selected Snapshot', invokes_alert=True)
+            sel.handle_alert(cancel=cancel)
+            if not cancel:
+                flash.assert_message_match(
+                    'Delete Snapshot initiated for 1 VM and Instance from the CFME Database')
+
+        def delete_all(self, cancel=False):
+            self._nav_to_snapshot_mgmt()
+            toolbar.select('Delete Snapshots', 'Delete All Existing Snapshots', invokes_alert=True)
+            sel.handle_alert(cancel=cancel)
+            if not cancel:
+                flash.assert_message_match(
+                    'Delete All Snapshots initiated for 1 VM and Instance from the CFME Database')
+
+        def revert_to(self, cancel=False):
+            self._nav_to_snapshot_mgmt()
+            snapshot_tree.click_path(*snapshot_tree.find_path_to(re.compile(self.name)))
+            toolbar.select('Revert to selected snapshot', invokes_alert=True)
+            sel.handle_alert(cancel=cancel)
+            flash.assert_message_match(
+                'Revert To A Snapshot initiated for 1 VM and Instance from the CFME Database')
 
     # POWER CONTROL OPTIONS
     SUSPEND = "Suspend"
