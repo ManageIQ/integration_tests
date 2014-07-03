@@ -1,6 +1,6 @@
 import pytest
 
-from cfme.services.catalogs import ec2_catalog_item as ec2
+from cfme.services.catalogs import cloud_catalog_item as cct
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
@@ -21,8 +21,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, 'ec2', 'provisioning')
-
+    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
     new_argvalues = []
     new_idlist = []
     for i, argvalue_tuple in enumerate(argvalues):
@@ -85,15 +84,15 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 
 
 @pytest.mark.usefixtures('setup_providers')
-def test_ec2_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud,
+def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud,
                           provider_type, provisioning, dialog, catalog, request):
     # tries to delete the VM that gets created here
-    vm_name = 'test_ec2_servicecatalog-%s' % generate_random_string()
+    vm_name = 'test_servicecatalog-%s' % generate_random_string()
     image = provisioning['image']['name']
-    item_name = "ec2_" + generate_random_string()
+    item_name = generate_random_string()
 
-    ec2_catalog_item = ec2.Instance(
-        item_type="Amazon",
+    cloud_catalog_item = cct.Instance(
+        item_type=provisioning['item_type'],
         name=item_name,
         description="my catalog",
         display_in=True,
@@ -106,11 +105,11 @@ def test_ec2_catalog_item(provider_init, provider_key, provider_mgmt, provider_c
         security_groups=[provisioning['security_group']],
         provider_mgmt=provider_mgmt,
         provider=provider_crud.name,
-        guest_keypair="shared")
+        guest_keypair=provisioning['guest_keypair'])
 
-    ec2_catalog_item.create()
+    cloud_catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog.name, ec2_catalog_item)
+    service_catalogs.order(catalog.name, cloud_catalog_item)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s' % item_name)
     row_description = 'Provisioning [%s] for Service [%s]' % (item_name, item_name)
