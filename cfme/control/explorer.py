@@ -14,6 +14,7 @@ from selenium.common.exceptions import NoSuchElementException
 from utils.db import cfmedb
 from utils.log import logger
 from utils.update import Updateable
+from utils.wait import wait_for, TimedOutError
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.expression_editor as editor
@@ -442,6 +443,14 @@ class HostObject(_type_check_object):
     pass
 
 
+def click_if_displayed(loc):
+    try:
+        wait_for(lambda: sel.is_displayed(loc), num_sec=2, delay=0.2)
+        sel.click(loc)
+    except TimedOutError:
+        pass
+
+
 class BaseCondition(Updateable):
     """Base class for conditions.
 
@@ -464,17 +473,16 @@ class BaseCondition(Updateable):
     """
     PREFIX = None
 
-    buttons = Region(
-        locators=dict(
-            edit_scope="//div[@id='form_scope_div']//img[@alt='Edit this Scope']",
-            edit_expression="//div[@id='form_expression_div']//img[@alt='Edit this Expression']",
-        )
-    )
-
     form = Form(
         fields=[
             ("description", "//input[@id='description']"),
             ("notes", "//textarea[@id='notes']"),
+            ("scope", editor.Expression(
+                lambda: click_if_displayed(
+                    "//img[@alt='Edit this Scope']"))),
+            ("expression", editor.Expression(
+                lambda: click_if_displayed(
+                    "//img[@alt='Edit this Expression']"))),
         ]
     )
 
@@ -499,20 +507,6 @@ class BaseCondition(Updateable):
             .filter(conditions.description == self.description)\
             .count() > 0
 
-    def _do_expression_editing(self):
-        """Fills the expression field using the mini-programs."""
-        if self.expression is not None:
-            if not self.is_editing_expression:
-                sel.click(self.buttons.edit_expression)
-            editor.create_program(self.expression)()
-
-    def _do_scope_editing(self):
-        """Fills the scope field using the mini-program."""
-        if self.scope is not None:
-            if not self.is_editing_scope:
-                sel.click(self.buttons.edit_scope)
-            editor.create_program(self.scope)()
-
     def create(self, cancel=False):
         """Creates new Condition according to the informations filed in constructor.
 
@@ -520,37 +514,18 @@ class BaseCondition(Updateable):
             cancel: Whether to cancel the process instead of saving.
         """
         sel.force_navigate(self.PREFIX + "condition_new")
-        self._do_expression_editing()
-        self._do_scope_editing()
-        action = form_buttons.cancel if cancel else form_buttons.add
-        fill(self.form, dict(description=self.description, notes=self.notes), action=action)
+        fill(self.form, self.__dict__, action=form_buttons.cancel if cancel else form_buttons.add)
         flash.assert_no_errors()
 
-    def update(self, updates, cancel=False):
+    def update(self, updates):
         """Updates the informations in the object and then updates the Condition in CFME.
 
         Args:
             updates: Provided by update() context manager.
-            cancel: Whether to cancel the process instead of saving.
         """
         sel.force_navigate(self.PREFIX + "condition_edit",
                            context=dict(condition_name=self.description))
-        if "description" in updates:
-            self.description = updates["description"]
-
-        if "notes" in updates:
-            self.notes = updates["notes"]
-
-        if "scope" in updates:
-            self.scope = updates["scope"]
-            self._do_scope_editing()
-
-        if "expression" in updates:
-            self.expression = updates["expression"]
-            self._do_expression_editing()
-
-        action = form_buttons.cancel if cancel else form_buttons.save
-        fill(self.form, dict(description=self.description, notes=self.notes), action=action)
+        fill(self.form, updates, action=form_buttons.save)
         flash.assert_no_errors()
 
     def delete(self, cancel=False):
@@ -564,28 +539,6 @@ class BaseCondition(Updateable):
         cfg_btn("Delete this", invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
-
-    @property
-    def is_editing_scope(self):
-        """Is editor for Scope displayed?
-
-        Returns: :py:class:`bool`
-        """
-        self._wait_form_displayed()
-        return sel.is_displayed(self.buttons.edit_expression)
-
-    @property
-    def is_editing_expression(self):
-        """Is editor for Expression displayed?
-
-        Returns: :py:class:`bool`
-        """
-        self._wait_form_displayed()
-        return sel.is_displayed(self.buttons.edit_scope)
-
-    def _wait_form_displayed(self):
-        """The buttons for choosing Scope or Expression appear a bit later, so we have to wait."""
-        return sel.wait_for_element(self.buttons.edit_scope, self.buttons.edit_expression)
 
 
 class VMCondition(BaseCondition, VMObject):
@@ -611,6 +564,7 @@ class BasePolicy(Updateable):
         fields=[
             ("description", "//input[@id='description']"),
             ("active", "//input[@id='active']"),
+            ("scope", editor.Expression()),
             ("notes", "//textarea[@id='notes']"),
         ]
     )
@@ -675,47 +629,21 @@ class BasePolicy(Updateable):
             cancel: Whether to cancel the process instead of saving.
         """
         sel.force_navigate(self.PREFIX + "policy_new")
-        if self.scope is not None:
-            editor.create_program(self.scope)()
-        action = form_buttons.cancel if cancel else form_buttons.add
         fill(
             self.form,
-            dict(
-                description=self.description,
-                notes=self.notes,
-                active=self.active
-            ),
-            action=action)
+            self.__dict__,
+            action=form_buttons.cancel if cancel else form_buttons.add)
         flash.assert_no_errors()
 
-    def update(self, updates, cancel=False):
+    def update(self, updates):
         """Updates the informations in the object and then updates the Condition in CFME.
 
         Args:
             updates: Provided by update() context manager.
-            cancel: Whether to cancel the process instead of saving.
         """
         sel.force_navigate(self.PREFIX + "policy_edit",
                            context=dict(policy_name=self.description))
-        if "description" in updates:
-            self.description = updates["description"]
-
-        if "notes" in updates:
-            self.notes = updates["notes"]
-
-        if "scope" in updates:
-            self.scope = updates["scope"]
-            editor.create_program(self.scope)()
-
-        action = form_buttons.cancel if cancel else form_buttons.save
-        fill(
-            self.form,
-            dict(
-                description=self.description,
-                notes=self.notes,
-                active=self.active
-            ),
-            action=action)
+        fill(self.form, updates, action=form_buttons.save)
         flash.assert_no_errors()
 
     def delete(self, cancel=False):
