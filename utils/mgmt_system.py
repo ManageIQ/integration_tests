@@ -15,6 +15,7 @@ from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
 from novaclient.v1_1 import client as osclient
 from utils.log import logger
+from utils.version import LooseVersion
 from utils.wait import wait_for, TimedOutError
 
 
@@ -358,6 +359,10 @@ class VMWareSystem(MgmtSystemAPIBase):
         # Allow for changing the api object via public setter
         self._api = api
 
+    @property
+    def version(self):
+        return LooseVersion(self.api.get_api_version())
+
     def _connect(self):
         # Since self.api calls _connect, connect via self._api to prevent implosion
         logger.debug('Connecting to %s "%s"' % (type(self).__name__, self.hostname))
@@ -480,6 +485,12 @@ class VMWareSystem(MgmtSystemAPIBase):
             logger.info(" vSphere VM %s is already stopped" % vm_name)
             return True
         else:
+            if self.is_vm_suspended(vm_name) and self.version < "5.0":
+                logger.info(
+                    " Circumventing VSPH4 issues with poweroff suspended machine by starting it."
+                )
+                vm.power_on()
+                self.wait_vm_running(vm_name)
             vm.power_off()
             self.wait_vm_stopped(vm_name)
             return True
