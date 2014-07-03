@@ -9,7 +9,7 @@ import cfme.web_ui.accordion as acc
 import cfme.web_ui.flash as flash
 from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill, Region, Form, ScriptBox, Select, Table, form_buttons
+from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table, form_buttons
 from cfme.web_ui import paginator as pg
 from selenium.common.exceptions import NoSuchElementException
 import utils.conf as conf
@@ -253,14 +253,20 @@ class PXEServer(Updateable):
                      ('Basic Information', 'Last Refreshed On'),
                      func_args=[last_time], fail_func=sel.refresh, num_sec=120)
 
+    def get_pxe_image_type(self, image_name):
+        sel.force_navigate('infrastructure_pxe_servers')
+        pxe_tree(self.name, 'PXE Images', image_name)
+        return InfoBlock('form').text('Basic Information', 'Type')
+
     def set_pxe_image_type(self, image_name, image_type):
         """
         Function to set the image type of a PXE image
         """
-        sel.force_navigate('infrastructure_pxe_servers')
-        pxe_tree(self.name, 'PXE Images', image_name)
-        cfg_btn('Edit this PXE Image')
-        fill(pxe_image_type_form, {'image_type': image_type}, action=form_buttons.save)
+        if self.get_pxe_image_type(image_name) != image_type:
+            sel.force_navigate('infrastructure_pxe_servers')
+            pxe_tree(self.name, 'PXE Images', image_name)
+            cfg_btn('Edit this PXE Image')
+            fill(pxe_image_type_form, {'image_type': image_type}, action=form_buttons.save)
 
 
 class CustomizationTemplate(Updateable):
