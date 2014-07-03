@@ -598,6 +598,13 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # remember the current user, if any
     current_user = login.current_user()
 
+    # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right here
+    if is_displayed("//div[@id='blocker_div']"):
+        logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
+        browser().quit()
+        kwargs.pop("start", None)
+        force_navigate("dashboard")  # Start fresh
+
     try:
         # What we'd like to happen...
         if not current_user:  # default to admin user
