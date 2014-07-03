@@ -7,6 +7,7 @@ from cfme.control import explorer
 from cfme.infrastructure import provider
 from utils import testgen
 from utils.log import logger
+from utils.providers import setup_provider
 from utils.wait import wait_for
 
 
@@ -36,7 +37,7 @@ def wait_for_alert(smtp, alert, delay=None):
     )
 
 
-def setup_for_alerts(request, alerts, event, vm_name, provider_data):
+def setup_for_alerts(request, alerts, event, vm_name, provider_data, provider_key):
     """This function takes alerts and sets up CFME for testing it
 
     Args:
@@ -46,6 +47,7 @@ def setup_for_alerts(request, alerts, event, vm_name, provider_data):
         vm_name: VM name to use for policy filtering
         provider_data: funcarg provider_data
     """
+    setup_provider(provider_key)
     alert_profile = explorer.VMInstanceAlertProfile(
         "Alert profile for %s" % vm_name,
         alerts
@@ -76,14 +78,17 @@ def setup_for_alerts(request, alerts, event, vm_name, provider_data):
     prov.assign_policy_profiles(policy_profile.description)
 
 
+@pytest.mark.fixtureconf(server_roles="+automate")
+@pytest.mark.usefixtures("server_roles")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         test_vm_power_control, provider_crud, provider_data, provider_mgmt, provider_type, request,
-        smtp_test):
-    if len(test_vm_power_control) == 0:
+        smtp_test, provider_key):
+    if test_vm_power_control is None or len(test_vm_power_control) == 0:
         pytest.skip("No power control vm specified!")
     test_vm_power_control = test_vm_power_control[0]
     alert = explorer.Alert("VM Power On > 2 in last 15 min")
-    setup_for_alerts(request, [alert], "VM Power On", test_vm_power_control, provider_data)
+    setup_for_alerts(
+        request, [alert], "VM Power On", test_vm_power_control, provider_data, provider_key)
 
     # Ok, hairy stuff done, now - hammertime!
     provider_mgmt.stop_vm(test_vm_power_control)
