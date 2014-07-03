@@ -17,8 +17,8 @@ from utils import version
 
 tb_select = functools.partial(tb.select, "Configuration")
 catalog_item_tree = web_ui.Tree(version.pick({
-    'default': '//div[@id="sandt_tree_box"]//table',
-    '9.9.9.9': '//div[@id="sandt_treebox"]//ul'
+    version.LOWEST: '//div[@id="sandt_tree_box"]//table',
+    '5.3': '//div[@id="sandt_treebox"]//ul'
 }))
 
 template_select_form = Form(

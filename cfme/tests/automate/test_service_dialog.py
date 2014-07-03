@@ -38,7 +38,7 @@ def test_service_dialog_duplicate_name():
                   description="my dialog", submit=True, cancel=True)
     dialog.create()
     error_msg = version.pick({
-        'default': "Dialog Label has already been taken",
+        version.LOWEST: "Dialog Label has already been taken",
         '5.3': "Label has already been taken"
     })
     with error.expected(error_msg):

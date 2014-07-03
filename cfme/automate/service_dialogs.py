@@ -39,7 +39,7 @@ element_form = Form(fields=[
 ])
 
 service_dialog_tree = Tree(version.pick({
-    'default': "//div[@id='dialogs_tree_div']//table",
+    version.LOWEST: "//div[@id='dialogs_tree_div']//table",
     '5.3': "//div[@id='dialogs_tree_div']//ul"
 }))
 
@@ -87,7 +87,7 @@ class ServiceDialog(Updateable):
                           'cancel_button': self.cancel})
         if(self.tab_label is not None):
             btn_marker = version.pick({
-                'default': "Add a New Tab to this Dialog",
+                version.LOWEST: "Add a New Tab to this Dialog",
                 '5.3': "Add a new Tab to this Dialog"
             })
             plus_btn(btn_marker)
@@ -96,7 +96,7 @@ class ServiceDialog(Updateable):
                             'tab_desc': self.tab_desc})
         if(self.box_label is not None):
             btn_marker = version.pick({
-                'default': "Add a New Box to this Tab",
+                version.LOWEST: "Add a New Box to this Tab",
                 '5.3': "Add a new Box to this Tab"
             })
             plus_btn(btn_marker)
@@ -105,7 +105,7 @@ class ServiceDialog(Updateable):
                             'box_desc': self.box_desc})
         if(self.ele_label is not None):
             btn_marker = version.pick({
-                'default': "Add a New Element to this Box",
+                version.LOWEST: "Add a New Element to this Box",
                 '5.3': "Add a new Element to this Box"
             })
             plus_btn(btn_marker)

@@ -10,7 +10,7 @@ from cfme.versions import upstream
 
 area = Region(locators={
     'message': version.pick({
-        'default': ' | '.join([
+        version.LOWEST: ' | '.join([
             ('//div[starts-with(@id, "flash_") and '
                 'not(ancestor::*[contains(@style,"display: none")])]//li'),
             '//div[@id="flash_div"]',  # login screen

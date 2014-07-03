@@ -6,16 +6,18 @@ from utils.ssh import SSHClient
 import multimethods as mm
 
 
-def get_version(vstring):
-    '''Return a LooseVersion based on vstring.  For CFME, 'master' version
+def get_version(obj):
+    '''Return a LooseVersion based on obj.  For CFME, 'master' version
        means always the latest (compares as greater than any other
        version)
 
     '''
     try:
-        if vstring == 'master':
+        if isinstance(obj, Version):
+            return obj
+        if obj == 'master':
             return LooseVersion(latest=True)
-        return LooseVersion(vstring)
+        return LooseVersion(obj)
     except:
         return None
 
