@@ -12,7 +12,7 @@ import subprocess
 import time
 
 from cfme.configure import configuration
-from utils.conf import cfme_data
+from utils.conf import env
 from utils.log import create_logger
 from utils.net import random_port, my_ip_address, net_check_remote
 from utils.path import scripts_path
@@ -29,7 +29,7 @@ def _smtp_test_session(request):
     Returns: :py:class:`util.smtp_collector_client.SMTPCollectorClient` instance.
     """
     logger.info("Preparing start for e-mail collector")
-    ports = cfme_data.get("mail_collector", {}).get("ports", {})
+    ports = env.get("mail_collector", {}).get("ports", {})
     mail_server_port = ports.get("smtp", None) or random_port()
     mail_query_port = ports.get("json", None) or random_port()
     my_ip = my_ip_address()

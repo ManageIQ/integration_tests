@@ -1,4 +1,5 @@
 from collections import defaultdict
+import os
 import socket
 import urlparse
 from utils.conf import env
@@ -36,12 +37,17 @@ def my_ip_address(http=False):
     connection. See a working example of this in :py:func:`ip_echo_socket`.
 
     """
-    address = urlparse.urlparse(env['base_url']).hostname
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((address, 22))
-    ip = sock.getsockname()[0]
-    sock.close()
-    return ip
+    # Allow for DockerBot to set outside IP
+    my_ip = os.environ.get('CFME_MY_IP_ADDRESS')
+    if my_ip:
+        return my_ip
+    else:
+        address = urlparse.urlparse(env['base_url']).hostname
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((address, 22))
+        ip = sock.getsockname()[0]
+        sock.close()
+        return ip
 
 
 def ip_echo_socket(port=32123):
