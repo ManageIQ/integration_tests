@@ -140,4 +140,4 @@ def pytest_runtest_call(__multicall__, item):
 # fix the representation of various classes to not suck
 
 setattr(webelement.WebElement, '__repr__', pretty.pr_obj(['tag_name', 'id', 'text']))
-#setattr(Exception, '__repr__', pretty.pr_obj(['message']))
+# setattr(Exception, '__repr__', pretty.pr_obj(['message']))
