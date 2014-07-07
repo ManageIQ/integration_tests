@@ -20,6 +20,7 @@ import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator
 from cfme.web_ui.form_buttons import FormButton
+from cfme.web_ui import listaccordion as list_acc
 from utils.ipmi import IPMI
 from utils.log import logger
 from utils.update import Updateable
@@ -67,6 +68,7 @@ host_add_btn = FormButton('Add this Host')
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 pow_btn = partial(tb.select, 'Power')
+lif_btn = partial(tb.select, 'Lifecycle')
 
 nav.add_branch('infrastructure_hosts',
                {'infrastructure_host_new': lambda _: cfg_btn(
@@ -78,7 +80,9 @@ nav.add_branch('infrastructure_hosts',
                                    {'infrastructure_host_edit':
                                     lambda _: cfg_btn('Edit this Host'),
                                     'infrastructure_host_policy_assignment':
-                                    lambda _: pol_btn('Manage Policies')}]})
+                                    lambda _: pol_btn('Manage Policies'),
+                                    'infrastructure_provision_host':
+                                    lambda _: lif_btn('Provision this Host')}]})
 
 
 class Host(Updateable):
@@ -274,6 +278,30 @@ class Host(Updateable):
         """
         self._assign_unassign_policy_profiles(False, *policy_profile_names)
 
+    def get_datastores(self):
+        """ Gets list of all datastores used by this host"""
+        sel.force_navigate('infrastructure_host', context={'host': self})
+        list_acc.select('Relationships', 'Show Datastores')
+
+        datastores = set([])
+        for page in paginator.pages():
+            for title in sel.elements(
+                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'storage/show')]"):
+                datastores.add(sel.get_attribute(title, "title"))
+        return datastores
+
+    def get_hostname(self):
+        """ Gets list of all datastores used by this host"""
+        sel.force_navigate('infrastructure_hosts', context={'host': self})
+        list_acc.select('Relationships', 'Show Datastores')
+
+        datastores = set([])
+        for page in paginator.pages():
+            for title in sel.elements(
+                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'storage/show')]"):
+                datastores.add(sel.get_attribute(title, "title"))
+        return datastores
+
 
 @fill.method((Form, Host.Credential))
 def _fill_credential(form, cred, validate=None):
@@ -323,7 +351,7 @@ def get_from_config(provider_config_name):
                 host_platform=prov_config.get('host_platform', None),
                 ipmi_address=prov_config['ipmi_address'],
                 mac_address=prov_config['mac_address'],
-                interface_type=prov_config.get('interface_type', None),
+                interface_type=prov_config.get('interface_type', 'lan'),
                 credentials=credentials,
                 ipmi_credentials=ipmi_credentials)
 
