@@ -10,6 +10,7 @@ import pytest
 from fixtures.terminalreporter import reporter
 from utils import lazycache
 from utils import providers
+from utils.conf import env
 from utils.db import cfmedb
 from utils.datafile import template_env
 from utils.events import setup_for_event_testing
@@ -109,7 +110,7 @@ class EventListener(object):
 
     @lazycache
     def listener_port(self):
-        return random_port()
+        return env.get("event_listener", {}).get("port", None) or random_port()
 
     def listener_host(self):
         return "http://%s" % my_ip_address()
