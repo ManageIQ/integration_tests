@@ -77,11 +77,11 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
 def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server_roles,
         provider_crud, smtp_test, request):
 
-    #Add host before provisioning
+    # Add host before provisioning
     test_host = host.get_from_config('esx')
     test_host.create()
 
-    #Populate provisioning_data before submitting host provisioning form
+    # Populate provisioning_data before submitting host provisioning form
     pxe_server, pxe_image, pxe_image_type, pxe_kickstart, datacenter, cluster, datastores,\
         host_name, root_password, ip_addr, subnet_mask, gateway, dns = map(host_provisioning.get,
         ('pxe_server', 'pxe_image', 'pxe_image_type', 'pxe_kickstart', 'datacenter', 'cluster',
@@ -98,9 +98,9 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
             ipmi = test_host.get_ipmi()
             ipmi.power_off()
 
-            #During host provisioning,the host name gets changed from what's specified at creation
-            #time.If host provisioning succeeds,the original name is reverted to,otherwise the
-            #changed names are retained upon failure
+            # During host provisioning,the host name gets changed from what's specified at creation
+            # time.If host provisioning succeeds,the original name is reverted to,otherwise the
+            # changed names are retained upon failure
             renamed_host_name1 = "{} ({})".format('IPMI', host_provisioning['ipmi_address'])
             renamed_host_name2 = "{} ({})".format('VMware ESXi', host_provisioning['ip_addr'])
 
@@ -158,7 +158,7 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
     assert row.last_message.text == 'Host Provisioned Successfully'
     assert row.status.text != 'Error'
 
-    #Navigate to host details page and verify Provider and cluster names
+    # Navigate to host details page and verify Provider and cluster names
     sel.force_navigate('infrastructure_host', context={'host': test_host, })
     assert test_host.get_detail('Relationships', 'Infrastructure Provider') ==\
         provider_crud.name, 'Provider name does not match'
@@ -166,7 +166,7 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
     assert test_host.get_detail('Relationships', 'Cluster') ==\
         host_provisioning['cluster'], 'Cluster does not match'
 
-    #Navigate to host datastore page and verify that the requested datastore has been assigned
+    # Navigate to host datastore page and verify that the requested datastore has been assigned
     # to the host
     requested_ds = host_provisioning['datastores']
     datastores = test_host.get_datastores()
