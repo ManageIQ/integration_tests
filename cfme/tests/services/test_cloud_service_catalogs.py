@@ -54,12 +54,7 @@ def provider_init(provider_key):
 def dialog():
     dialog = "dialog_" + generate_random_string()
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                     submit=True, cancel=True,
-                     tab_label="tab_" + generate_random_string(), tab_desc="tab_desc",
-                     box_label="box_" + generate_random_string(), box_desc="box_desc",
-                     ele_label="ele_" + generate_random_string(),
-                     ele_name="service_name",
-                     ele_desc="ele_desc", choose_type="Text Box", default_text_box="default value")
+                     submit=True, cancel=True)
     service_dialog.create()
     flash.assert_success_message('Dialog "%s" was added' % dialog)
     yield dialog
