@@ -50,7 +50,7 @@ pxe_image_type_form = Form(
 template_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
 
 template_add_button = version.pick({
-    'default': form_buttons.add,
+    version.LOWEST: form_buttons.add,
     '5.3': form_buttons.save
 })
 
@@ -317,7 +317,7 @@ class CustomizationTemplate(Updateable):
         if not cancel:
             flash.assert_message_match(
                 version.pick({
-                    'default': 'Customization Template "{}" was added'.format(self.name),
+                    version.LOWEST: 'Customization Template "{}" was added'.format(self.name),
                     '5.3': 'Customization Template "{}" was saved'.format(self.name)
                 }))
         else:

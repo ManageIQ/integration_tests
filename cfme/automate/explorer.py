@@ -13,8 +13,8 @@ from collections import Mapping
 import re
 from utils.log import logger
 
-tree = Tree(version.pick({'default': '//table//tr[@title="Datastore"]/../..',
-                         '9.9.9.9': '//ul//a[@title="Datastore"]/../../..'}))
+tree = Tree(version.pick({version.LOWEST: '//table//tr[@title="Datastore"]/../..',
+                         '5.3': '//ul//a[@title="Datastore"]/../../..'}))
 cfg_btn = partial(tb.select, 'Configuration')
 
 submit_and_cancel_buttons = [('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']"),
@@ -35,8 +35,8 @@ def table_select(name):
 
 
 def nav_edit(path):
-    dp_length = version.pick({'default': 1,
-                              '9.9.9.9': 2})
+    dp_length = version.pick({version.LOWEST: 1,
+                              '5.3': 2})
     if len(path) > dp_length:
         cfg_btn('Edit Selected Item')
     else:
@@ -118,8 +118,8 @@ class Domain(TreeNode):
         self.parent = None
 
 
-def_domain = version.pick({'default': None,
-                           '9.9.9.9': Domain('Default')})
+def_domain = version.pick({version.LOWEST: None,
+                           '5.3': Domain('Default')})
 
 
 class Namespace(TreeNode, Updateable):
@@ -190,16 +190,16 @@ class Namespace(TreeNode, Updateable):
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_table_select", context={'tree_item': self.parent,
                                                              'table_item': self})
-        dp_length = version.pick({'default': 1,
-                                  '9.9.9.9': 2})
+        dp_length = version.pick({version.LOWEST: 1,
+                                  '5.3': 2})
         if len(self.path) > dp_length:
             cfg_btn('Remove selected Items', invokes_alert=True)
         else:
             cfg_btn('Remove Namespaces', invokes_alert=True)
         sel.handle_alert(cancel)
         del_msg = version.pick({
-            'default': 'The selected Automate Namespaces were deleted',
-            '9.9.9.9': 'Automate Namespace "{}": Delete successful'.format(self.description)
+            version.LOWEST: 'The selected Automate Namespaces were deleted',
+            '5.3': 'Automate Namespace "{}": Delete successful'.format(self.description)
         })
         flash.assert_success_message(del_msg)
 

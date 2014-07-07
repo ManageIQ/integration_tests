@@ -19,7 +19,7 @@ from utils import version
 _entry_div = "//div[contains(@class, 'ui-tabs')]"  # Entry point
 _entry_ul = version.pick({
     '5.3': '//ul[@class="tab2" or @class="tab3"]',
-    'default': '//ul[@id="tab" and @class="tab"]'
+    version.LOWEST: '//ul[@id="tab" and @class="tab"]'
 })
 
 

@@ -166,7 +166,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
 
         # We have to convert it first for new version
         convert_cmd = version.pick({
-            "default": None,
+            version.LOWEST: None,
 
             "5.3.0.0":
             "evm:automate:convert DOMAIN=Default FILE=/root/{} ZIP_FILE=/root/{}.zip".format(
@@ -185,7 +185,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
 
         # run rake cmd on appliance to import automate namespace
         rake_cmd = version.pick({
-            "default": "evm:automate:import FILE=/root/{}".format(qe_automate_namespace_xml),
+            version.LOWEST: "evm:automate:import FILE=/root/{}".format(qe_automate_namespace_xml),
 
             "5.3.0.0":
             "evm:automate:import ZIP_FILE=/root/{}.zip DOMAIN=Default OVERWRITE=true "

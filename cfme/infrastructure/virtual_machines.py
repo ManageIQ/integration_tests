@@ -29,7 +29,7 @@ visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
 
 manage_policies_tree = CheckboxTree(
     version.pick({
-        "default": "//div[@id='treebox']/div/table",
+        version.LOWEST: "//div[@id='treebox']/div/table",
         "5.3": "//div[@id='protect_treebox']/ul"
     })
 )

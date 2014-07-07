@@ -79,7 +79,7 @@ tag_form = Form(
         ('name', "//input[@id='entry_name']"),
         ('display_name', "//input[@id='entry_description']"),
         ('add', "//input[@id='accept']"),
-        ('new', version.pick({'default': "//img[@alt='New']",
+        ('new', version.pick({version.LOWEST: "//img[@alt='New']",
                               '5.3': "//span[@class='glyphicon glyphicon-plus']"}))
     ])
 
@@ -126,7 +126,7 @@ nav.add_branch("configuration",
         [
             lambda _: settings_tree(
                 version.pick({
-                    "default": "Region: Region %d [%d]" % server_region_pair(),
+                    version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
                     "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
                 })
             ),
@@ -175,12 +175,12 @@ nav.add_branch("configuration",
         "cfg_settings_defaultzone":
         lambda _: settings_tree(
             version.pick({
-                "default": "Region: Region %d [%d]" % server_region_pair(),
+                version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
                 "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
             }),
             "Zones",
             version.pick({
-                "default": "Zone: Default Zone",
+                version.LOWEST: "Zone: Default Zone",
                 "5.3": "Zone: Default Zone (current)"
             }),
         ),
@@ -189,7 +189,7 @@ nav.add_branch("configuration",
         [
             lambda _: settings_tree(
                 version.pick({
-                    "default": "Region: Region %d [%d]" % server_region_pair(),
+                    version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
                     "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
                 }),
                 "Schedules"),
@@ -209,12 +209,12 @@ nav.add_branch("configuration",
         [
             lambda _: settings_tree(
                 version.pick({
-                    "default": "Region: Region %d [%d]" % server_region_pair(),
+                    version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
                     "5.3": "CFME Region: Region %d [%d]" % server_region_pair()
                 }),
                 "Zones",
                 version.pick({
-                    "default": "Zone: Default Zone",
+                    version.LOWEST: "Zone: Default Zone",
                     "5.3": "Zone: Default Zone (current)"
                 }),
                 "Server: %s [%d] (current)" % (server_name(), server_id())
@@ -250,7 +250,7 @@ nav.add_branch("configuration",
             lambda _: diagnostics_tree(
                 "CFME Region: Region %d [%d]" % server_region_pair(),
                 version.pick({
-                    "default": "Zone: Default Zone",
+                    version.LOWEST: "Zone: Default Zone",
                     "5.3": "Zone: Default Zone (current)"
                 }),
                 "Server: %s [%d] (current)" % (server_name(), server_id())
@@ -292,7 +292,7 @@ nav.add_branch("configuration",
             lambda _: diagnostics_tree(
                 "CFME Region: Region %d [%d]" % server_region_pair(),
                 version.pick({
-                    "default": "Zone: Default Zone",
+                    version.LOWEST: "Zone: Default Zone",
                     "5.3": "Zone: Default Zone (current)"
                 }),
             ),

@@ -32,8 +32,8 @@ def ac_tree(*path):
         *path: Path to click in the tree that follows the '[cfme] region xyz' node
     """
     path = version.pick({
-        # "9.9.9.9": ["CFME Region: Region %d [%d]" % server_region_pair()] + list(path),
-        "default": path,
+        # "5.3": ["CFME Region: Region %d [%d]" % server_region_pair()] + list(path),
+        version.LOWEST: path,
     })
     return accordion.tree(
         "Access Control",

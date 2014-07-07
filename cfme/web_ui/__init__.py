@@ -1515,13 +1515,13 @@ class InfoBlock(object):
             # We have to collapse the locator singularity early here, hence the .locate()
             self._box_locator = version.pick({
                 '5.3': '//table//th[contains(., "%s")]/../../../..',
-                'default': '//div[@class="modbox"]/h2[@class="modtitle"]'
-                           '[contains(., "%s")]/..'})
+                version.LOWEST: '//div[@class="modbox"]/h2[@class="modtitle"]'
+                '[contains(., "%s")]/..'})
             self._pair_locator = 'table/tbody/tr/td[1][@class="label"][.="%s"]/..'
             self._value_locator = 'td[2]'
         elif itype == "form":
             self._box_locator = version.pick({
-                'default': '//fieldset/p[@class="legend"][contains(., "%s")]/..'})
+                version.LOWEST: '//fieldset/p[@class="legend"][contains(., "%s")]/..'})
             self._pair_locator = 'table/tbody/tr/td[1][@class="key"][.="%s"]/..'
             self._value_locator = 'td[2]'
         else:

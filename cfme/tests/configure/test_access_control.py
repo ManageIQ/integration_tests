@@ -165,8 +165,8 @@ def _go_to(dest):
     return lambda: nav.go_to(dest)
 
 
-cat_name = version.pick({"default": "Settings & Operations",
-                        "5.3": "Configure"})
+cat_name = version.pick({version.LOWEST: "Settings & Operations",
+                         "5.3": "Configure"})
 
 
 @pytest.mark.parametrize(
