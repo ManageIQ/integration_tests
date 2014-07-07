@@ -7,13 +7,14 @@
 import re
 from lxml import etree
 from py.path import local
-from cfme.automate.explorer import Namespace, Instance, Class
+from cfme.automate.explorer import Namespace, Instance, Class, def_domain
 from cfme.control.import_export import import_file, is_imported
 from cfme.exceptions import AutomateImportError
 from cfme.infrastructure.provider import get_from_config
 from cfme.web_ui import flash
 from utils import version
 from utils.log import logger
+from utils.update import update
 
 ALL_EVENTS = [
     ('Datastore Analysis Complete', 'datastore_analysis_complete'),
@@ -121,10 +122,20 @@ ALL_VDI_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("vdi_")]
 def setup_for_event_testing(ssh_client, db, listener_info, providers):
     # FIX THE ENV ERROR IF PRESENT
     if ssh_client.run_command("ruby -v")[0] != 0:
+        logger.info("Pathing env to correctly source EVM environment")
         success = ssh_client.run_command("echo 'source /etc/default/evm' >> .bashrc")[0] == 0
         assert success, "Issuing the patch command was unsuccessful"
         # Verify it works
         assert ssh_client.run_command("ruby -v")[0] == 0, "Patch failed"
+
+    # INSTALL REST-CLIENT - REQUIRED FOR THE EVENT DISPATCHER SCRIPT
+    if ssh_client.run_command("ruby -e 'require \"rest-client\"'")[0] != 0:
+        # We have to install the gem
+        logger.info("Installing rest-client ruby gem that is required by the event dispatcher.")
+        success = ssh_client.run_command("gem install rest-client")[0] == 0
+        assert success, "Could not install 'rest-client' gem"
+        # Verify it works
+        assert ssh_client.run_command("ruby -e 'require \"rest-client\"'")[0] == 0
 
     # IMPORT AUTOMATE NAMESPACE
     qe_automate_namespace_xml = "qe_event_handler.xml"
@@ -214,7 +225,12 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
                     "value": "/QE/Automation/APIMethods/relay_events?event=$evm.object['event']"
                 }
             },
-            cls=Class(name="Automation Requests (Request)", namespace=Namespace("System"))
+            cls=Class(
+                name=version.pick({
+                    version.LOWEST: "Automation Requests (Request)",
+                    "5.3.0.0": "Request"
+                }),
+                namespace=Namespace("System"))
         )
         instance.create()
 
@@ -227,5 +243,14 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
     # ASSIGN POLICY PROFILES
     for provider in providers:
         prov_obj = get_from_config(provider)
+        if not prov_obj.exists:
+            prov_obj.create()
         prov_obj.assign_policy_profiles("Automate event policies")
         flash.assert_no_errors()
+
+    # ENABLE THE DOMAIN IF UPSTREAM
+    if not version.appliance_is_downstream():
+        if not def_domain.is_enabled:
+            logger.info("Enabling the {} domain to enable our automation.".format(def_domain.name))
+            with update(def_domain):
+                def_domain.enabled = True
