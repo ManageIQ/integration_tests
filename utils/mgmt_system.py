@@ -485,9 +485,9 @@ class VMWareSystem(MgmtSystemAPIBase):
             logger.info(" vSphere VM %s is already stopped" % vm_name)
             return True
         else:
-            if self.is_vm_suspended(vm_name) and self.version < "5.0":
+            if self.is_vm_suspended(vm_name):
                 logger.info(
-                    " Circumventing VSPH4 issues with poweroff suspended machine by starting it."
+                    " Circumventing issues with poweroff suspended machine by starting it."
                 )
                 vm.power_on()
                 self.wait_vm_running(vm_name)
