@@ -7,6 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
 from utils import version
 from cfme.versions import upstream
+from utils.pretty import Pretty
 
 area = Region(locators={
     'message': version.pick({
@@ -31,19 +32,18 @@ _mapping_new = {
 }
 
 
-class Message(object):
+class Message(Pretty):
     """ A simple class to represent a flash error in CFME.
 
     Args:
         message: The message string.
         level: The level of the message.
     """
+    pretty_attrs = ['message', 'level']
+
     def __init__(self, message=None, level=None):
         self.message = message
         self.level = level
-
-    def __repr__(self):
-        return "[Flash %s message %s]" % (self.level, str(repr(self.message)))
 
 
 @version.dependent

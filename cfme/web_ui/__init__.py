@@ -55,9 +55,10 @@ from utils import version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
+from utils.pretty import Pretty
 
 
-class Region(object):
+class Region(Pretty):
     """
     Base class for all UI regions/pages
 
@@ -92,6 +93,8 @@ class Region(object):
         and :py:meth:`is_displayed` strips them off before checking for equality.
 
     """
+    pretty_attrs = ['title']
+
     def __getattr__(self, name):
         if hasattr(self, 'locators'):
             return self.locators[name]
@@ -152,7 +155,7 @@ def get_context_current_page():
     return stripped[stripped.find('/'):stripped.rfind('?')]
 
 
-class Table(object):
+class Table(Pretty):
     """
     Helper class for Table/List objects
 
@@ -236,6 +239,9 @@ class Table(object):
         the example above, there is no padding row, as our offset values are set to 0.
 
     """
+
+    pretty_attrs = ['_lock']
+
     def __init__(self, table_locator, header_offset=0, body_offset=0):
         self._headers = None
         self._header_indexes = None
@@ -922,7 +928,7 @@ def fill_select(slist, val):
     slist.observer_wait()
 
 
-class Calendar(object):
+class Calendar(Pretty):
     """A CFME calendar form field
 
     Calendar fields are readonly, and managed by the dxhtmlCalendar widget. A Calendar field
@@ -1010,6 +1016,8 @@ class Form(Region):
         will not overide the field order defined in the Form.
     """
 
+    pretty_attrs = ['fields']
+
     def __init__(self, fields=None, identifying_loc=None):
         self.locators = dict((key, value) for key, value in fields)
         self.fields = fields
@@ -1060,7 +1068,7 @@ def _fill_form_dict(form, values, action=None):
     fill(form, values.items(), action=action)
 
 
-class Radio(object):
+class Radio(Pretty):
     """ A class for Radio button groups
 
     Radio allows the usage of HTML radio elements without resorting to previous
@@ -1083,6 +1091,9 @@ class Radio(object):
     The :py:class:`Radio` object can be reused over and over with repeated calls to
     the :py:func:`Radio.choice` method.
     """
+
+    pretty_attrs = ['name']
+
     def __init__(self, name):
         self.name = name
 
@@ -1110,7 +1121,7 @@ def _fill_radio(radio, value):
     radio.observer_wait(value)
 
 
-class Tree(object):
+class Tree(Pretty):
     """ A class directed at CFME Tree elements
 
     The Tree class aims to deal with all kinds of CFME trees, at time of writing there
@@ -1163,6 +1174,7 @@ class Tree(object):
     Note: Dynatrees, rely on a ``<ul><li>`` setup. We class a ``<li>`` as a node.
 
     """
+    pretty_attrs = ['locator']
 
     def __init__(self, locator):
         self.locator = locator
@@ -1479,7 +1491,7 @@ def _select_chkboxtree_seq(cbtree, values):
             cbtree.uncheck_node(*path)
 
 
-class InfoBlock(object):
+class InfoBlock(Pretty):
     """ A helper class for information blocks on pages
 
     This class is able to work with both ``detail`` type information blocks and
@@ -1592,7 +1604,7 @@ class InfoBlock(object):
         return el
 
 
-class Quadicon(object):
+class Quadicon(Pretty):
     """
     Represents a single quadruple icon in the CFME UI.
 
@@ -1661,6 +1673,8 @@ class Quadicon(object):
 
     Returns: A :py:class:`Quadicon` object.
     """
+
+    pretty_attrs = ['_name', '_qtype']
 
     _quads = {
         "host": {
@@ -1936,7 +1950,7 @@ def fill_multiselect(ms, items):
     sel.select(ms, items)
 
 
-class ScriptBox(object):
+class ScriptBox(Pretty):
     """Represents a script box as is present on the customization templates pages.
     This box has to be activated before keys can be sent. Since this can't be done
     until the box element is visible, and some dropdowns change the element, it must
@@ -1944,6 +1958,8 @@ class ScriptBox(object):
 
     Args:
     """
+
+    pretty_attrs = ['locator']
 
     def __init__(self, name="miqEditor"):
         self.name = name
@@ -2035,7 +2051,7 @@ def fill_email_select_form(form, emails):
     form.to_emails = emails
 
 
-class CheckboxSelect(object):
+class CheckboxSelect(Pretty):
     """Class used for filling those bunches of checkboxes I (@mfalesni) always hated to search for.
 
     Can fill by values, text or both. To search the text for the checkbox, you have 2 choices:
@@ -2052,6 +2068,9 @@ class CheckboxSelect(object):
         search_root: Root element for checkbox search
         text_access_func: Function returning descriptive text about passed CB element.
     """
+
+    pretty_attrs = ['_root']
+
     def __init__(self, search_root, text_access_func=None):
         self._root = search_root
         self._access_func = text_access_func

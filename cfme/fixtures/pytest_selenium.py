@@ -32,14 +32,19 @@ from cfme import exceptions, js
 from utils.browser import browser, ensure_browser_open
 from utils.log import logger
 from utils.wait import wait_for
+from utils.pretty import Pretty
 
 
-class ByValue(object):
+class ByValue(Pretty):
+    pretty_attrs = ['value']
+
     def __init__(self, value):
         self.value = value
 
 
-class ByText(object):
+class ByText(Pretty):
+    pretty_attrs = ['text']
+
     def __init__(self, text):
         self.text = text
 
@@ -737,7 +742,7 @@ def set_text(loc, text):
         send_keys(el, text)
 
 
-class Select(SeleniumSelect, object):
+class Select(SeleniumSelect, Pretty):
     """ A proxy class for the real selenium Select() object.
 
     We differ in one important point, that we can instantiate the object
@@ -749,6 +754,9 @@ class Select(SeleniumSelect, object):
 
     Returns: A :py:class:`cfme.web_ui.Select` object.
     """
+
+    pretty_attrs = ['_loc', 'is_multiple']
+
     def __init__(self, loc, multi=False):
         if isinstance(loc, Select):
             self._loc = loc._loc

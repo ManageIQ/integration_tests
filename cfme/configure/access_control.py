@@ -8,6 +8,7 @@ from cfme.web_ui.menu import nav
 from utils.db_queries import get_server_region
 from utils.update import Updateable
 from utils import version
+from utils.pretty import Pretty
 
 
 def get_ip_address():
@@ -112,7 +113,7 @@ nav.add_branch(
 )
 
 
-class User(Updateable):
+class User(Updateable, Pretty):
     user_form = Form(
         fields=[
             ('name_txt', "//*[@id='name']"),
@@ -128,6 +129,8 @@ class User(Updateable):
             ('cost_center_select', Select("//*[@id='tag_cat']")),
             ('value_assign_select', Select("//*[@id='tag_add']")),
         ])
+
+    pretty_attrs = ['name', 'group']
 
     def __init__(self, name=None, credential=None, email=None,
                  group=None, cost_center=None, value_assign=None):
@@ -184,12 +187,13 @@ class User(Updateable):
         flash.assert_success_message('EVM User "%s": Delete successful' % self.name)
 
 
-class Group(Updateable):
+class Group(Updateable, Pretty):
     group_form = Form(
         fields=[
             ('description_txt', "//*[@id='description']"),
             ('role_select', Select("//*[@id='group_role']")),
         ])
+    pretty_attrs = ['description', 'role']
 
     def __init__(self, description=None, role=None):
         self.description = description
@@ -217,13 +221,14 @@ class Group(Updateable):
         flash.assert_success_message('EVM Group "%s": Delete successful' % self.description)
 
 
-class Role(Updateable):
+class Role(Updateable, Pretty):
     form = Form(
         fields=[
             ('name_txt', "//*[@id='name']"),
             ('vm_restriction_select', Select("//*[@id='vm_restriction']")),
             ('product_features_tree', CheckboxTree("//div[@id='features_treebox']/ul")),
         ])
+    pretty_attrs = ['name', 'product_features']
 
     def __init__(self, name=None, vm_restriction=None, product_features=None):
         self.name = name

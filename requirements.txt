@@ -5,6 +5,7 @@ bottle-sqlite
 execnet
 flake8
 functools32
+function_trace
 ipython
 Jinja2
 ovirt-engine-sdk-python

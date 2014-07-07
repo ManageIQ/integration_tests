@@ -56,6 +56,7 @@ def product_version_dispatch(*_args, **_kwargs):
 def dependent(default_function):
     m = mm.MultiMethod(default_function.__name__, product_version_dispatch)
     m.add_method(mm.Default, default_function)
+    mm._copy_attrs(default_function, m)
     return m
 
 
