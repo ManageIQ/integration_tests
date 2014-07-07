@@ -19,7 +19,7 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    # Filter out providers without host provisioning data defined
+    #Filter out providers without host provisioning data defined
     argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'host_provisioning')
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
@@ -77,19 +77,19 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
 def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server_roles,
         provider_crud, smtp_test, request):
 
-    #Add host before provisioning
+    # Add host before provisioning
     test_host = host.get_from_config('esx')
     test_host.create()
 
-    #Populate provisioning_data before submitting host provisioning form
+    # Populate provisioning_data before submitting host provisioning form
     pxe_server, pxe_image, pxe_image_type, pxe_kickstart, datacenter, cluster, datastores,\
-        host_name, root_password, ip_addr, subnet_mask, gateway, dns = map(host_provisioning.get,
+        hostname, root_password, ip_addr, subnet_mask, gateway, dns = map(host_provisioning.get,
         ('pxe_server', 'pxe_image', 'pxe_image_type', 'pxe_kickstart', 'datacenter', 'cluster',
         'datastores', 'hostname', 'root_password', 'ip_addr', 'subnet_mask', 'gateway', 'dns'))
 
     def cleanup_host():
         try:
-            logger.info('Cleaning up host %s on provider %s' % (host_name, provider_crud.key))
+            logger.info('Cleaning up host %s on provider %s' % (hostname, provider_crud.key))
             mgmt_system = provider_crud.get_mgmt_system()
             host_list = mgmt_system.list_host()
             if host_provisioning['ip_addr'] in host_list.values():
@@ -98,9 +98,9 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
             ipmi = test_host.get_ipmi()
             ipmi.power_off()
 
-            #During host provisioning,the host name gets changed from what's specified at creation
-            #time.If host provisioning succeeds,the original name is reverted to,otherwise the
-            #changed names are retained upon failure
+            # During host provisioning,the host name gets changed from what's specified at creation
+            # time.If host provisioning succeeds,the original name is reverted to,otherwise the
+            # changed names are retained upon failure
             renamed_host_name1 = "{} ({})".format('IPMI', host_provisioning['ipmi_address'])
             renamed_host_name2 = "{} ({})".format('VMware ESXi', host_provisioning['ip_addr'])
 
@@ -119,14 +119,14 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
         except:
             # The mgmt_sys classes raise Exception :\
             logger.warning('Failed to clean up host %s on provider %s' %
-                (host_name, provider_crud.key))
+                (hostname, provider_crud.key))
 
     request.addfinalizer(cleanup_host)
 
     pytest.sel.force_navigate('infrastructure_provision_host', context={
         'host': test_host, })
 
-    note = ('Provisioning host %s on provider %s' % (host_name, provider_crud.key))
+    note = ('Provisioning host %s on provider %s' % (hostname, provider_crud.key))
     provisioning_data = {
         'email': 'template_provisioner@example.com',
         'first_name': 'Template',
@@ -138,7 +138,7 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
         'cluster': "{} / {}".format(datacenter, cluster),
         'datastore_name': {'name': datastores},
         'root_password': root_password,
-        'host_name': host_name,
+        'hostname': hostname,
         'ip_address': ip_addr,
         'subnet_mask': subnet_mask,
         'gateway': gateway,
@@ -150,7 +150,7 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
     flash.assert_success_message(
         "Host Request was Submitted, you will be notified when your Hosts are ready")
 
-    row_description = 'PXE install on [%s] from image [%s]' % (host_name, pxe_image)
+    row_description = 'PXE install on [%s] from image [%s]' % (hostname, pxe_image)
     cells = {'Description': row_description}
 
     row, __ = wait_for(requests.wait_for_request, [cells],
@@ -158,7 +158,7 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
     assert row.last_message.text == 'Host Provisioned Successfully'
     assert row.status.text != 'Error'
 
-    #Navigate to host details page and verify Provider and cluster names
+    # Navigate to host details page and verify Provider and cluster names
     sel.force_navigate('infrastructure_host', context={'host': test_host, })
     assert test_host.get_detail('Relationships', 'Infrastructure Provider') ==\
         provider_crud.name, 'Provider name does not match'
@@ -166,7 +166,7 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
     assert test_host.get_detail('Relationships', 'Cluster') ==\
         host_provisioning['cluster'], 'Cluster does not match'
 
-    #Navigate to host datastore page and verify that the requested datastore has been assigned
+    # Navigate to host datastore page and verify that the requested datastore has been assigned
     # to the host
     requested_ds = host_provisioning['datastores']
     datastores = test_host.get_datastores()
@@ -183,7 +183,7 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
             and len(
                 smtp_test.get_emails(
                     subject_like="Your host provisioning request has Completed - Host:%%%s" %
-                    host_name
+                    hostname
                 )
             ) > 0
         )
