@@ -51,9 +51,6 @@ import cfme.web_ui.search
 import cfme.web_ui.tabstrip
 import cfme.web_ui.toolbar
 
-import selenium.webdriver.remote.webelement as webelement
-import utils.pretty as pretty
-
 
 default_to_trace = list(itertools.chain.from_iterable(
     map(function_trace.all,
