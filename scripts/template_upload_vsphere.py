@@ -82,6 +82,10 @@ def upload_ova(hostname, username, password, name, datastore,
 
     while "'yes' or 'no'" not in out_string and "Password:" not in out_string:
         out_string += proc.stdout.read(1)
+        # on error jump out of the while loop to prevent infinite cycling
+        if "error" in out_string.lower():
+            print "VSPHERE: Upload did not complete"
+            return -1, out_string
 
     if "'yes' or 'no'" in out_string:
         proc.stdin.write("yes\n")
