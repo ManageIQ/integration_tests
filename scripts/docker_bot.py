@@ -3,10 +3,12 @@ from utils.conf import docker as docker_conf
 from utils.randomness import generate_random_string
 from utils.net import random_port, my_ip_address
 import argparse
+import requests
 import os
 import os.path
 import docker
 import subprocess
+import sys
 
 
 def _dgci(d, key):
@@ -21,6 +23,25 @@ def _name(docker_info):
 dc = docker.Client(base_url='unix://var/run/docker.sock',
                    version='1.12',
                    timeout=10)
+
+
+def find_files_by_pr(pr=None):
+    files = []
+    token = docker_conf.get('gh_token', None)
+    owner = docker_conf.get('gh_owner', None)
+    repo = docker_conf.get('gh_repo', None)
+    if token:
+        headers = {'Authorization': 'token {}'.format(token)}
+        r = requests.get(
+            'https://api.github.com/repos/{}/{}/pulls/{}/files'.format(owner, repo, pr),
+            headers=headers)
+        try:
+            for filen in r.json():
+                if filen['filename'].startswith('cfme/tests') and filen['status'] != "deleted":
+                    files.append(filen['filename'])
+            return files
+        except:
+            return None
 
 
 def parse_cmd_line():
@@ -64,6 +85,9 @@ def parse_cmd_line():
     parser.add_argument('--output', action='store_true',
                         help="Output the console?",
                         default=None)
+    parser.add_argument('--auto-gen-test', action='store_true',
+                        help="Attempt to auto generate related tests",
+                        default=None)
     args = parser.parse_args()
     return args
 
@@ -88,6 +112,19 @@ if args.upstream:
 elif args.downstream:
     appliance = args.downstream_server
     isup = "Downstream"
+
+if args.auto_gen_test and args.pr:
+    files = find_files_by_pr(args.pr)
+    if files:
+        args.pytest = "py.test {} --use-provider default".format(" ".join(files))
+    else:
+        print "  Could not autogenerate test, the following files were "
+        print "  modified but included no tests..."
+        print
+        print files
+        print
+        print "Exiting..."
+        sys.exit(127)
 
 print "  APPLIANCE: {} ({})".format(appliance, isup)
 
