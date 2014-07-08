@@ -1,6 +1,5 @@
 import pytest
-import cfme.login as login
-from cfme import dashboard
+from cfme import dashboard, login
 from utils import conf, error
 
 pytestmark = pytest.mark.usefixtures('browser')
