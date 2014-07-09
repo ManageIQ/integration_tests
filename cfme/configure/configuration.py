@@ -1342,18 +1342,6 @@ def get_server_roles(navigate=True):
     return {name: sel.element(locator).is_selected() for (name, locator) in server_roles.fields}
 
 
-def set_server_role(role_name, state=True):
-    """ Change state of given role only
-
-    Args:
-        role_name: Name of the role to set/unset
-        state: Enable if `True`, disable otherwise (default `True`)
-    """
-    roles_to_set = get_server_roles()
-    roles_to_set[role_name] = state
-    set_server_roles(**roles_to_set)
-
-
 def set_ntp_servers(*servers):
     """ Set NTP servers on Configure / Configuration pages.
 

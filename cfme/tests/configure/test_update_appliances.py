@@ -5,7 +5,7 @@
 @author: jkrocil@redhat.com
 """
 
-from cfme.configure.configuration import set_server_role
+from cfme.configure.configuration import set_server_roles
 from cfme.configure import red_hat_updates
 from utils import conf
 from utils.appliance import provision_appliance_set
@@ -252,7 +252,7 @@ def rhn_mirror_setup(appliance_set):
     """
 
     with appliance_set.primary.browser_session():
-        set_server_role('rhn_mirror', True)
+        set_server_roles(rhn_mirror=True)
 
     appliance_set.primary.restart_evm_service()
 

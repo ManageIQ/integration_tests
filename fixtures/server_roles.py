@@ -39,60 +39,57 @@ To ensure the appliance has the default roles::
     def test_appliance_roles(server_roles):
         do(test)
 
-List of server role names currently exposed in the CFME interface:
-
-    - automate
-    - ems_metrics_coordinator
-    - ems_metrics_collector
-    - ems_metrics_processor
-    - database_operations
-    - database_synchronization
-    - event
-    - ems_inventory
-    - ems_operations
-    - notifier
-    - reporting
-    - scheduler
-    - rhn_mirror
-    - smartproxy
-    - smartstate
-    - user_interface
-    - web_services
+For a list of server role names currently exposed in the CFME interface,
+see keys of :py:data:`cfme.configure.configuration.server_roles`.
 """
 import pytest
-from pages.configuration_subpages.settings_subpages.server_settings_subpages.server_roles import (
-    RoleChangesRequired
-)
+from cfme.configure.configuration import get_server_roles, set_server_roles, server_roles
 from utils.conf import cfme_data
+
+available_roles = {field[0] for field in server_roles.fields}
 
 
 @pytest.fixture
-def server_roles(fixtureconf, cnf_configuration_pg):
+def server_roles(fixtureconf):
     """The fixture that does the work. See usage in :py:mod:`fixtures.server_roles`"""
-    # Nav to the settings tab
-    settings_pg = cnf_configuration_pg.click_on_settings()
-    # Workaround to rudely bypass a popup that sometimes appears for
-    # unknown reasons.
-    # See also: https://github.com/RedHatQE/cfme_tests/issues/168
-    from pages.configuration_subpages.settings_subpages.server_settings import ServerSettings
-    server_settings_pg = ServerSettings(settings_pg.testsetup)
-    # sst is a configuration_subpages.settings_subpages.server_settings_subpages.
-    #   server_settings_tab.ServerSettingsTab
-    sst = server_settings_pg.click_on_server_tab()
 
+    # Disable all server roles
+    # and then figure out which ones should be enabled
+    roles_with_vals = {k: False for k in available_roles}
     if 'clear_roles' in fixtureconf:
-        sst.set_server_roles(sst.ui_only_role_list())
+        # Only user interface
+        roles_with_vals['user_interface'] = True
     elif 'set_default_roles' in fixtureconf:
-        sst.set_server_roles(sst.default_server_roles_list())
+        # The ones specified in YAML
+        roles_list = cfme_data["server_roles"]["sets"]["default"]
+        roles_with_vals.update({k: True for k in roles_list})
     elif 'server_roles' in fixtureconf:
-        sst.edit_current_role_list(fixtureconf['server_roles'])
+        # The ones that are already enabled and enable/disable the ones specified
+        # -server_role, +server_role or server_role
+        roles_with_vals = get_server_roles()
+        fixture_roles = fixtureconf['server_roles']
+        if isinstance(fixture_roles, basestring):
+            fixture_roles = fixture_roles.split(' ')
+        for role in fixture_roles:
+            if role.startswith('-'):
+                roles_with_vals[role[1:]] = False
+            elif role.startswith('+'):
+                roles_with_vals[role[1:]] = True
+            else:
+                roles_with_vals[role] = True
     elif 'server_roles_cfmedata' in fixtureconf:
         roles_list = cfme_data
         # Drills down into cfme_data YAML by selector, expecting a list
-        # of roles at the end. A KeyError here probably means the YAMe
+        # of roles at the end. A KeyError here probably means the YAML
         # selector is wrong
         for selector in fixtureconf['server_roles_cfmedata']:
             roles_list = roles_list[selector]
-        sst.set_server_roles(roles_list)
+        roles_with_vals.update({k: True for k in roles_list})
     else:
-        raise RoleChangesRequired('No server role changes defined.')
+        raise Exception('No server role changes defined.')
+
+    if not available_roles.issuperset(set(roles_with_vals)):
+        unknown_roles = ', '.join(set(roles_with_vals) - available_roles)
+        raise Exception('Unknown server role(s): {}'.format(unknown_roles))
+
+    set_server_roles(**roles_with_vals)
