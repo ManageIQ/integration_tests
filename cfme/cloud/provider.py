@@ -134,6 +134,9 @@ class Provider(Updateable):
         self.zone = zone
         self.key = key
 
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name')}
+
     class Credential(cfme.Credential, Updateable):
         """Provider credentials
 
