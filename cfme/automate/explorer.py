@@ -40,7 +40,8 @@ def nav_edit(path):
     if len(path) > dp_length:
         cfg_btn('Edit Selected Item')
     else:
-        cfg_btn('Edit Selected Namespaces')
+        cfg_btn(version.pick({version.LOWEST: 'Edit Selected Namespaces',
+                              '5.3': 'Edit Selected Namespace'}))
 
 
 def get_path(o):
@@ -70,6 +71,7 @@ nav.add_branch(
                   lambda _: cfg_btn('Remove selected Items', invokes_alert=True)}],
 
              'automate_explorer_namespace_new': lambda _: cfg_btn('Add a New Namespace'),
+             'automate_explorer_domain_new': lambda _: cfg_btn('Add a New Domain'),
              'automate_explorer_class_new': lambda _: cfg_btn('Add a New Class'),
              'automate_explorer_method_edit': lambda _: cfg_btn('Edit this Method'),
              'automate_explorer_instance_edit': lambda _: cfg_btn('Edit this Instance'),
@@ -113,9 +115,24 @@ class TreeNode(object):
 
 
 class Domain(TreeNode):
-    def __init__(self, name=None):
+    form = Form(fields=[('name', "//input[@id='ns_name']"),
+                        ('description', "//input[@id='ns_description']"),
+                        ('enabled', "//input[@id='ns_enabled']")]
+                + submit_and_cancel_buttons)
+    create_btn_map = {True: form.cancel_btn, False: form.add_btn}
+
+    def __init__(self, name=None, description=None, enabled=False):
         self.name = name
         self.parent = None
+        self.description = description
+        self.enabled = enabled
+
+    def create(self, cancel=False):
+        sel.force_navigate('automate_explorer_domain_new', context={'tree_item': self.parent})
+        fill(self.form, {'name': self.name,
+                         'description': self.description,
+                         'enabled': self.enabled},
+             action=self.create_btn_map[cancel])
 
 
 def_domain = version.pick({version.LOWEST: None,
@@ -143,7 +160,7 @@ class Namespace(TreeNode, Updateable):
                 n = Namespace(name="bar", parent=Namespace(name="foo"))
         """
 
-        domain = kwargs.get('domain', def_domain)
+        domain = kwargs.get('domain', None)
 
         if len(names) == 1 and domain:
             names = list(names)
@@ -161,10 +178,7 @@ class Namespace(TreeNode, Updateable):
     def __init__(self, name=None, description=None, parent=None, domain=def_domain):
         self.name = name
         self.description = description
-        if domain and not parent:
-            self.parent = domain
-        else:
-            self.parent = parent
+        self.parent = parent or domain
 
     def create(self, cancel=False):
         sel.force_navigate('automate_explorer_namespace_new', context={'tree_item': self.parent})
@@ -180,7 +194,7 @@ class Namespace(TreeNode, Updateable):
 
     def update(self, updates, cancel=False):
         sel.force_navigate('automate_explorer_edit', context={'tree_item': self.parent,
-                                                     'table_item': self})
+                                                              'table_item': self})
         form_data = {'name': updates.get('name') or None,
                      'description': updates.get('description') or None}
         fill(self.form, form_data, action=self.update_btn_map[cancel])

@@ -6,26 +6,19 @@ import pytest
 from cfme.automate.explorer import Namespace
 from utils.randomness import generate_random_string
 from utils.update import update
+from utils import version
 import utils.error as error
 import cfme.tests.configure.test_access_control as tac
+import cfme.tests.automate as ta
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
-
-def a_namespace():
-    name = generate_random_string(8)
-    description = generate_random_string(32)
-    return Namespace(name=name, description=description)
+# don't test with existing paths on upstream (there aren't any)
+ns_data = version.pick({version.LOWEST: [ta.a_namespace, ta.a_namespace_with_path],
+                        '5.3': [ta.a_namespace]})
 
 
-def a_namespace_with_path():
-    name = generate_random_string(8)
-    n = Namespace.make_path('Factory', 'StateMachines', name)
-    n.description = generate_random_string(32)
-    return n
-
-
-@pytest.fixture(params=[a_namespace, a_namespace_with_path])
+@pytest.fixture(params=ns_data)
 def namespace(request):
     return request.param()
 
@@ -59,4 +52,5 @@ def test_duplicate_namespace_disallowed(namespace):
 def test_permissions_namespace_crud(setup_cloud_providers):
     """ Tests that a namespace can be manipulated only with the right permissions"""
     tac.single_task_permission_test([['Automate', 'Explorer']],
-                                    {'Namespace CRUD': lambda: test_namespace_crud(a_namespace())})
+                                    {'Namespace CRUD':
+                                     lambda: test_namespace_crud(ta.a_namespace())})

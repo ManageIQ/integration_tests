@@ -15,7 +15,7 @@ def get_version(obj):
     try:
         if isinstance(obj, Version):
             return obj
-        if obj == 'master':
+        if obj.startswith('master'):
             return LooseVersion(latest=True)
         return LooseVersion(obj)
     except:
@@ -307,6 +307,7 @@ class LooseVersion (Version):
     component_re = re.compile(r'(\d+ | [a-z]+ | \.)', re.VERBOSE)
 
     def __init__(self, vstring=None, latest=False, oldest=False):
+        self.version = None
         if latest and oldest:
             raise ValueError('Cannot be both latest and oldest')
         if latest:
@@ -363,3 +364,13 @@ LATEST = LooseVersion(latest=True)
 @mm.is_a.method((LooseVersion, LooseVersion))
 def _is_a_loose(x, y):
     return x >= y
+
+
+@mm.is_a.method((str, LooseVersion))
+def _is_a_slv(x, y):
+    return mm.is_a(LooseVersion(x), y)
+
+
+@mm.is_a.method((LooseVersion, str))
+def _is_a_lvs(x, y):
+    return mm.is_a(x, LooseVersion(y))
