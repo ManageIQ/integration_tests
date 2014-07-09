@@ -83,7 +83,7 @@ nav.add_branch(
                                                         version.LOWEST: "Archived",
                                                         "5.3": "<Archived>"
                                                         })
-                    ),
+                                                        ),
                     {
                         "infra_archive_obj":
                         lambda ctx: visible_tree.click_path(ctx["archive_name"]),
