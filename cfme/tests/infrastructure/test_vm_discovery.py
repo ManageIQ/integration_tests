@@ -1,6 +1,6 @@
 import pytest
 from cfme.infrastructure import virtual_machines
-from utils import testgen, error
+from utils import testgen
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
