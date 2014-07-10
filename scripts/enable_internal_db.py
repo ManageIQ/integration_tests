@@ -36,32 +36,42 @@ def main():
         'password': credentials['ssh']['password'],
         'hostname': args.address
     }
-    rbt_repl = {
-        'miq_lib': '/var/www/miq/lib',
-        'region': args.region
-    }
-
-    # Find and load our rb template with replacements
-    base_path = os.path.dirname(__file__)
-    rbt = datafile.data_path_for_filename(
-        'enable-internal-db.rbt', base_path)
-    rb = datafile.load_data_file(rbt, rbt_repl)
-
-    # Init SSH client and sent rb file over to /tmp
-    remote_file = '/tmp/%s' % generate_random_string()
     client = SSHClient(**ssh_kwargs)
-    client.put_file(rb.name, remote_file)
-
-    # Run the rb script, clean it up when done
     print 'Initializing Appliance Internal DB'
-    status, out = client.run_command('ruby %s' % remote_file)
-    client.run_command('rm %s' % remote_file)
-    if status != 0:
-        print 'Enabling DB failed with error:'
-        print out
-        sys.exit(1)
+
+    if client.run_command('ls -l /bin/appliance_console_cli')[0] == 0:
+        status, out = client.run_command('appliance_console_cli --ca --region 1 --internal')
+        if status != 0:
+            print 'Enabling DB failed with error:'
+            print out
+            sys.exit(1)
+        else:
+            print 'DB Enabled, evm watchdog should start the UI shortly.'
     else:
-        print 'DB Enabled, evm watchdog should start the UI shortly.'
+        rbt_repl = {
+            'miq_lib': '/var/www/miq/lib',
+            'region': args.region
+        }
+
+        # Find and load our rb template with replacements
+        base_path = os.path.dirname(__file__)
+        rbt = datafile.data_path_for_filename(
+            'enable-internal-db.rbt', base_path)
+        rb = datafile.load_data_file(rbt, rbt_repl)
+
+        # sent rb file over to /tmp
+        remote_file = '/tmp/%s' % generate_random_string()
+        client.put_file(rb.name, remote_file)
+
+        # Run the rb script, clean it up when done
+        status, out = client.run_command('ruby %s' % remote_file)
+        client.run_command('rm %s' % remote_file)
+        if status != 0:
+            print 'Enabling DB failed with error:'
+            print out
+            sys.exit(1)
+        else:
+            print 'DB Enabled, evm watchdog should start the UI shortly.'
 
 
 if __name__ == '__main__':
