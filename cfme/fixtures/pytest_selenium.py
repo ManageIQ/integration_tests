@@ -9,11 +9,13 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
     pytest.sel.click(locator)
 
 :var ajax_wait_js: A Javascript function for ajax wait checking
+:var class_selector: Regular expression to detect simple CSS locators
 """
 from time import sleep, time
 from collections import Iterable
 from textwrap import dedent
 import json
+import re
 from utils import conf
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
@@ -34,6 +36,8 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils.pretty import Pretty
 
+class_selector = re.compile(r"^(?:[a-zA-Z][a-zA-Z0-9]*)?(?:[#.][a-zA-Z0-9_-]+)+$")
+
 
 class ByValue(Pretty):
     pretty_attrs = ['value']
@@ -53,7 +57,7 @@ class ByText(Pretty):
 
 
 @singledispatch
-def elements(o, root=None):
+def elements(o, **kwargs):
     """
     Convert object o to list of matching WebElements. Can be extended by registering the type of o
     to this function.
@@ -64,25 +68,37 @@ def elements(o, root=None):
     Returns: A list of WebElement objects
     """
     if hasattr(o, "locate"):
-        return elements(o.locate(), root=root)
+        return elements(o.locate(), **kwargs)
     elif callable(o):
-        return elements(o(), root=root)
+        return elements(o(), **kwargs)
     else:
-        raise TypeError("Unprocessable type for elements() -> {}".format(str(type(o))))
+        raise TypeError("Unprocessable type for elements({}) -> class {} (kwargs: {})".format(
+            str(repr(o)), o.__class__.__name__, str(repr(kwargs))
+        ))
     # If it doesn't implement locate() or __call__(), we're in trouble so
     # let the error bubble up.
 
 
 @elements.method(basestring)
 def _s(s, **kwargs):
-    """Assume string is an xpath locator.
+    """Detect string and process it into locator.
+
+    If the string starts with # or ., it is considered as CSS selector.
+    If the string is in format tag#id.class2 it is considered as CSS selector format too.
+    No other forms of CSS selectors are supported (use tuples if you really want to)
+    Otherwise it is assumed it is an XPATH selector.
 
     If the root element is actually multiple elements, then the locator is resolved for each
     of root nodes.
 
     Result: Flat list of elements
     """
-    return elements((By.XPATH, s), **kwargs)
+    s = s.strip()
+    css = class_selector.match(s)
+    if css is not None:
+        return elements((By.CSS_SELECTOR, css.group()), **kwargs)
+    else:
+        return elements((By.XPATH, s), **kwargs)
 
 
 @elements.method(WebElement)
@@ -107,6 +123,22 @@ def _t(t, root=None):
     result = []
     for root_element in (elements(root) if root is not None else [browser()]):
         result += root_element.find_elements(*t)
+    return result
+
+
+@elements.method(list)
+@elements.method(set)
+def _l(l, **kwargs):
+    """If we pass an iterable (non-tuple), just find everything relevant from it by all locators."""
+    found = reduce(lambda a, b: a + b, map(lambda loc: elements(loc, **kwargs), l))
+    seen = set([])
+    result = []
+    # Multiple locators can find the same elements, so let's filter
+    for item in found:
+        if item in seen:
+            continue
+        result.append(item)
+        seen.add(item)
     return result
 
 

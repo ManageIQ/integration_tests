@@ -475,8 +475,8 @@ class BaseCondition(Updateable):
 
     form = Form(
         fields=[
-            ("description", "//input[@id='description']"),
-            ("notes", "//textarea[@id='notes']"),
+            ("description", "input#description"),
+            ("notes", "textarea#notes"),
             ("scope", editor.Expression(
                 lambda: click_if_displayed(
                     "//img[@alt='Edit this Scope']"))),
@@ -562,10 +562,10 @@ class BasePolicy(Updateable):
 
     form = Form(
         fields=[
-            ("description", "//input[@id='description']"),
-            ("active", "//input[@id='active']"),
+            ("description", "input#description"),
+            ("active", "input#active"),
             ("scope", editor.Expression()),
-            ("notes", "//textarea[@id='notes']"),
+            ("notes", "textarea#notes"),
         ]
     )
 
@@ -577,8 +577,8 @@ class BasePolicy(Updateable):
             (
                 "true",
                 MultiBoxSelect(
-                    "//select[@id='choices_chosen_true']",
-                    "//select[@id='members_chosen_true']",
+                    "select#choices_chosen_true",
+                    "select#members_chosen_true",
                     "//a[contains(@href, 'true')]/img[contains(@alt, 'Remove selected')]",
                     "//a[contains(@href, 'true')]/img[contains(@alt, 'Move selected')]",
                     "//a[contains(@href, 'true')]/img[contains(@alt, 'Remove all')]",
@@ -587,8 +587,8 @@ class BasePolicy(Updateable):
             (
                 "false",
                 MultiBoxSelect(
-                    "//select[@id='choices_chosen_false']",
-                    "//select[@id='members_chosen_false']",
+                    "select#choices_chosen_false",
+                    "select#members_chosen_false",
                     "//a[contains(@href, 'false')]/img[contains(@alt, 'Remove selected')]",
                     "//a[contains(@href, 'false')]/img[contains(@alt, 'Move selected')]",
                     "//a[contains(@href, 'false')]/img[contains(@alt, 'Remove all')]",
@@ -879,7 +879,7 @@ class Alert(Updateable):
     """
     manual_email = Region(
         locators=dict(
-            field="//input[@id='email']",
+            field="input#email",
             add="//img[@alt='Add'][contains(@onclick, 'add_email')]",
             present_emails="//a[contains(@href, 'remove_email')]"
         )
@@ -887,48 +887,48 @@ class Alert(Updateable):
 
     form = Form(
         fields=[
-            ("description", "//input[@id='description']"),
-            ("active", "//input[@id='enabled_cb']"),
-            ("based_on", Select("//select[@id='miq_alert_db']")),
-            ("evaluate", Select("//select[@id='exp_name']")),
-            ("driving_event", Select("//select[@id='exp_event']")),
-            ("based_on", Select("//select[@id='miq_alert_db']")),
-            ("notification_frequency", Select("//select[@id='repeat_time']")),
+            ("description", "input#description"),
+            ("active", "input#enabled_cb"),
+            ("based_on", Select("select#miq_alert_db")),
+            ("evaluate", Select("select#exp_name")),
+            ("driving_event", Select("select#exp_event")),
+            ("based_on", Select("select#miq_alert_db")),
+            ("notification_frequency", Select("select#repeat_time")),
             # Different evaluations begin
             # Event log threshold
             ("event_log_message_type",
-                Select("//select[@id='select_event_log_message_filter_type']")),
-            ("event_log_message_value", "//input[@id='event_log_message_filter_value']"),
-            ("event_log_name", "//input[@id='event_log_name']"),
-            ("event_log_level", "//input[@id='event_log_level']"),
-            ("event_log_event_id", "//input[@id='event_log_event_id']"),
-            ("event_log_source", "//input[@id='event_log_source']"),
-            ("event_time_threshold", Select("//select[@id='time_threshold']")),  # shared
-            ("event_count_threshold", "//input[@id='freq_threshold']"),  # shared
+                Select("select#select_event_log_message_filter_type")),
+            ("event_log_message_value", "input#event_log_message_filter_value"),
+            ("event_log_name", "input#event_log_name"),
+            ("event_log_level", "input#event_log_level"),
+            ("event_log_event_id", "input#event_log_event_id"),
+            ("event_log_source", "input#event_log_source"),
+            ("event_time_threshold", Select("select#time_threshold")),  # shared
+            ("event_count_threshold", "input#freq_threshold"),  # shared
             # Event threshold (uses the shared fields from preceeding section)
-            ("event_type", Select("//select[@id='event_types']")),
+            ("event_type", Select("select#event_types")),
             # HW reconfigured + VM Value Changed
-            ("hw_attribute", Select("//select[@id='select_hdw_attr']")),
-            ("hw_attribute_operator", "//select[@id='select_operator']"),
+            ("hw_attribute", Select("select#select_hdw_attr")),
+            ("hw_attribute_operator", "select#select_operator"),
             # Normal operating range
-            ("performance_field", Select("//select[@id='perf_column']")),
-            ("performance_field_operator", Select("//select[@id='select_operator']")),
-            ("performance_time_threshold", Select("//select[@id='rt_time_threshold']")),
+            ("performance_field", Select("select#perf_column")),
+            ("performance_field_operator", Select("select#select_operator")),
+            ("performance_time_threshold", Select("select#rt_time_threshold")),
             # Real Time Performance (uses fields from previous)
-            ("performance_field_value", "//input[@id='value_threshold']"),
-            ("performance_trend", Select("//select[@id='trend_direction']")),
-            ("performance_debug_trace", Select("//select[@id='debug_trace']")),
+            ("performance_field_value", "input#value_threshold"),
+            ("performance_trend", Select("select#trend_direction")),
+            ("performance_debug_trace", Select("select#debug_trace")),
             # VMWare alarm
-            ("vmware_alarm_provider", Select("//select[@id='select_ems_id']")),
-            ("vmware_alarm_type", Select("//select[@id='select_ems_alarm_mor']")),
+            ("vmware_alarm_provider", Select("select#select_ems_id")),
+            ("vmware_alarm_type", Select("select#select_ems_alarm_mor")),
             # Different evaluations end
-            ("send_email", "//input[@id='send_email_cb']"),
+            ("send_email", "input#send_email_cb"),
             ("emails", EmailSelectForm()),
-            ("snmp_trap_send", "//input[@id='send_snmp_cb']"),
+            ("snmp_trap_send", "input#send_snmp_cb"),
             ("snmp_trap", SNMPForm()),
-            ("timeline_event", "//input[@id='send_evm_event_cb']"),
-            ("mgmt_event_send", "//input[@id='send_event_cb']"),
-            ("mgmt_event", "//input[@id='event_name']"),
+            ("timeline_event", "input#send_evm_event_cb"),
+            ("mgmt_event_send", "input#send_event_cb"),
+            ("mgmt_event", "input#event_name"),
         ]
     )
 
@@ -1087,8 +1087,8 @@ class Action(Updateable):
     """
     form = Form(
         fields=[
-            ("description", "//input[@id='description']"),
-            ("action_type", Select("//select[@id='miq_action_type']")),
+            ("description", "input#description"),
+            ("action_type", Select("select#miq_action_type")),
             # Evaluate Alerts (TODO)
         ]
     )
@@ -1097,28 +1097,28 @@ class Action(Updateable):
         "Assign Profile to Analysis Tasks":
         Form(
             fields=[
-                ("analysis_profile", Select("//select[@id='analysis_profile']")),
+                ("analysis_profile", Select("select#analysis_profile")),
             ]
         ),
 
         "Create a Snapshot":
         Form(
             fields=[
-                ("snapshot_name", "//input[@id='snapshot_name']"),
+                ("snapshot_name", "input#snapshot_name"),
             ]
         ),
 
         "Delete Snapshots by Age":
         Form(
             fields=[
-                ("snapshot_age", Select("//select[@id='snapshot_age']")),
+                ("snapshot_age", Select("select#snapshot_age")),
             ]
         ),
 
         "Inherit Parent Tags":
         Form(
             fields=[
-                ("parent_type", Select("//select[@id='parent_type']")),
+                ("parent_type", Select("select#parent_type")),
                 ("tags", CheckboxSelect(
                     "//*[@id='action_options_div']/fieldset/table/tbody/tr[2]/td[2]/table")),
             ]
@@ -1127,32 +1127,32 @@ class Action(Updateable):
         "Invoke a Custom Automation":
         Form(
             fields=[
-                ("message", "//input[@id='object_message']"),
-                ("request", "//input[@id='object_request']"),
-                ("attribute_1", "//input[@id='attribute_1']"),
-                ("value_1", "//input[@id='value_1']"),
-                ("attribute_2", "//input[@id='attribute_2']"),
-                ("value_2", "//input[@id='value_2']"),
-                ("attribute_3", "//input[@id='attribute_3']"),
-                ("value_3", "//input[@id='value_3']"),
-                ("attribute_4", "//input[@id='attribute_4']"),
-                ("value_4", "//input[@id='value_4']"),
-                ("attribute_5", "//input[@id='attribute_5']"),
-                ("value_5", "//input[@id='value_5']"),
+                ("message", "input#object_message"),
+                ("request", "input#object_request"),
+                ("attribute_1", "input#attribute_1"),
+                ("value_1", "input#value_1"),
+                ("attribute_2", "input#attribute_2"),
+                ("value_2", "input#value_2"),
+                ("attribute_3", "input#attribute_3"),
+                ("value_3", "input#value_3"),
+                ("attribute_4", "input#attribute_4"),
+                ("value_4", "input#value_4"),
+                ("attribute_5", "input#attribute_5"),
+                ("value_5", "input#value_5"),
             ]
         ),
 
         "Reconfigure CPUs":
         Form(
             fields=[
-                ("num_cpus", Select("//select[@id='cpu_value']")),
+                ("num_cpus", Select("select#cpu_value")),
             ]
         ),
 
         "Reconfigure Memory":
         Form(
             fields=[
-                ("memory_size", Select("//select[@id='memory_value']")),
+                ("memory_size", Select("select#memory_value")),
             ]
         ),
 
@@ -1165,16 +1165,16 @@ class Action(Updateable):
         "Send an E-mail":
         Form(
             fields=[
-                ("from", "//input[@id='from']"),
-                ("to", "//input[@id='to']"),
+                ("from", "input#from"),
+                ("to", "input#to"),
             ]
         ),
 
         "Set a Custom Attribute in vCenter":
         Form(
             fields=[
-                ("attribute", "//input[@id='attribute']"),
-                ("value", "//input[@id='value']"),
+                ("attribute", "input#attribute"),
+                ("value", "input#value"),
             ]
         ),
 
@@ -1309,8 +1309,8 @@ class PolicyProfile(Updateable):
     """
     form = Form(
         fields=[
-            ("description", "//input[@id='description']"),
-            ("notes", "//textarea[@id='notes']"),
+            ("description", "input#description"),
+            ("notes", "textarea#notes"),
             ("policies", MultiBoxSelect.default())
         ]
     )
@@ -1425,8 +1425,8 @@ class BaseAlertProfile(Updateable):
 
     form = Form(
         fields=[
-            ("description", "//input[@id='description']"),
-            ("notes", "//textarea[@id='notes']"),
+            ("description", "input#description"),
+            ("notes", "textarea#notes"),
             ("alerts", MultiBoxSelect.default())
         ]
     )
@@ -1448,7 +1448,7 @@ class BaseAlertProfile(Updateable):
 
     assignments = Form(
         fields=[
-            ("assign", Select("//select[@id='chosen_assign_to']")),
+            ("assign", Select("select#chosen_assign_to")),
         ]
     )
 
