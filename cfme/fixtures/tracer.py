@@ -1,6 +1,9 @@
 import function_trace
 import itertools
 
+# disable traceback of the tracer functions
+function_trace.__tracebackhide__ = True
+
 # import everything we want to trace
 
 import cfme.automate.explorer
