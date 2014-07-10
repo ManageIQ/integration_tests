@@ -443,6 +443,18 @@ def _fill_credential(form, cred, validate=None):
         flash.assert_no_errors()
 
 
+def get_all_providers(do_not_navigate=False):
+    """Returns list of all providers"""
+    if not do_not_navigate:
+        sel.force_navigate('infrastructure_providers')
+    providers = set([])
+    for page in paginator.pages():
+        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
+                "'ext_management_system/show')]"):
+            providers.add(sel.get_attribute(title, "title"))
+    return providers
+
+
 def get_credentials_from_config(credential_config_name):
     creds = conf.credentials[credential_config_name]
     return Provider.Credential(principal=creds['username'],

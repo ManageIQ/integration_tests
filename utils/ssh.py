@@ -165,3 +165,37 @@ def scp_getter(client, remote_file, local_path, **kwargs):
     with client as ctx:
         transport = ctx.get_transport()
         SCPClient(transport).get(remote_file, local_path, **kwargs)
+
+
+class SSHTail(SSHClient):
+
+    def __init__(self, remote_filename, **connect_kwargs):
+        super(SSHTail, self).__init__(stream_output=False, **connect_kwargs)
+        self._remote_filename = remote_filename
+        self._sftp_client = None
+        self._remote_file_size = None
+
+    def __iter__(self):
+        with self as sshtail:
+            fstat = sshtail._sftp_client.stat(self._remote_filename)
+            if self._remote_file_size is not None:
+                if self._remote_file_size < fstat.st_size:
+                    remote_file = self._sftp_client.open(self._remote_filename, 'r')
+                    remote_file.seek(self._remote_file_size, 0)
+                    while (remote_file.tell() < fstat.st_size):
+                        line = remote_file.readline().rstrip()
+                        yield line
+            self._remote_file_size = fstat.st_size
+
+    def __enter__(self):
+        self.connect(**self._connect_kwargs)
+        self._sftp_client = self.open_sftp()
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self._sftp_client.close()
+
+    def set_initial_file_end(self):
+        with self as sshtail:
+            fstat = sshtail._sftp_client.stat(self._remote_filename)
+            self._remote_file_size = fstat.st_size  # Seed initial size of file
