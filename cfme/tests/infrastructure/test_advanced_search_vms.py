@@ -170,11 +170,13 @@ def test_filter_save_and_load_cancel(request, vms, subset_of_vms):
     assert_no_cfme_exception()
 
 
-def test_quick_search_without_filter(vms, subset_of_vms):
+def test_quick_search_without_filter(request, vms, subset_of_vms):
     sel.force_navigate("infra_vms")
     search.ensure_no_filter_applied()
     assert_no_cfme_exception()
     vm = pick(subset_of_vms, 1)[0]
+    # Make sure that we empty the regular search field after the test
+    request.addfinalizer(search.ensure_normal_search_empty)
     # Filter this host only
     search.normal_search(vm)
     assert_no_cfme_exception()
@@ -184,10 +186,12 @@ def test_quick_search_without_filter(vms, subset_of_vms):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-def test_quick_search_with_filter(vms, subset_of_vms, expression_for_vms_subset):
+def test_quick_search_with_filter(request, vms, subset_of_vms, expression_for_vms_subset):
     sel.force_navigate("infra_vms")
     search.fill_and_apply_filter(expression_for_vms_subset)
     assert_no_cfme_exception()
+    # Make sure that we empty the regular search field after the test
+    request.addfinalizer(search.ensure_normal_search_empty)
     # Filter this host only
     chosen_vm = pick(subset_of_vms, 1)[0]
     search.normal_search(chosen_vm)

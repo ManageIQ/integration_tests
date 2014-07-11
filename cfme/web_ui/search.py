@@ -161,6 +161,11 @@ def normal_search(search_term):
     sel.click(search_box.search_icon)
 
 
+def ensure_normal_search_empty():
+    """Makes sure that the normal search field is empty."""
+    normal_search('')
+
+
 def fill_expression(expression_program):
     """Wrapper to open the box and fill the expression
 
