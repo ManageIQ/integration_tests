@@ -128,13 +128,19 @@ to_trace = default_to_trace
 depths = default_depths
 
 
+def pytest_addoption(parser):
+    parser.addoption("--no-tracer", dest="tracer", action="store_false", default=True,
+                     help="Disable the function tracer")
+
+
 def pytest_runtest_call(__multicall__, item):
     """hook to run each test with traced function calls"""
-    with function_trace.trace_on(to_trace,
-                                 depths=depths,
-                                 tracer=function_trace.PerThreadFileTracer(
-                                     './tracelogs/' + item.name.replace("/", "_"))):
-        __multicall__.execute()
+    if item.config.getvalue('tracer'):
+        with function_trace.trace_on(to_trace,
+                                     depths=depths,
+                                     tracer=function_trace.PerThreadFileTracer(
+                                         './tracelogs/' + item.name.replace("/", "_"))):
+            __multicall__.execute()
 
 
 # fix the representation of various classes to not suck
