@@ -83,7 +83,7 @@ gh_repo: cfme_tests
 Running DockerBot
 -----------------
 
-`$ scripts/dockerbot/docker_bot.py --appliance-name Downstream --pytest '-k test_bad_password' --watch --browser 'firefox'`
+`$ scripts/dockerbot/docker_bot.py --appliance-name Downstream --pytest 'py.test -k test_bad_password' --watch --browser 'firefox'`
 
 This spawns two containers a "selenium" one and a "pytest" one. The `watch` option fires up a
 VNC viewer. This would run the test against the current master branch as defined in the
