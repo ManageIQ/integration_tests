@@ -4,6 +4,10 @@
 import pytest
 from random import choice
 
+from utils import testgen
+from utils.miq_soap import MiqVM, set_client
+from utils.randomness import generate_random_string
+
 
 @pytest.mark.usefixtures("setup_infrastructure_providers")
 class TestSoapBasicInteraction(object):
@@ -385,3 +389,37 @@ class TestSoapBasicInteraction(object):
 
     def test_GetAutomationTask(self, soap_client):
         pytest.skip("Not tested yet")
+
+
+pytest_generate_tests = testgen.generate(
+    testgen.infra_providers,
+    "small_template",
+    scope="module"
+)
+
+
+@pytest.mark.bugzilla(
+    1118831, unskip={1118831: lambda appliance_version: appliance_version < "5.3"})
+@pytest.mark.fixtureconf(server_roles="+automate")
+@pytest.mark.usefixtures("setup_infrastructure_providers", "server_roles")
+def test_provision_via_soap(
+        request, soap_client, provider_key, provider_data, provider_mgmt, small_template):
+    vm_name = "test_soap_provision_{}".format(generate_random_string())
+    vlan = provider_data.get("provisioning", {}).get("vlan", None)
+
+    def _cleanup():
+        try:
+            if provider_mgmt.does_vm_exist(vm_name):
+                provider_mgmt.delete_vm(vm_name)
+        except:
+            pass
+
+    request.addfinalizer(_cleanup)
+    set_client(soap_client)
+    vm = MiqVM.provision_from_template(small_template, vm_name, vlan=vlan, wait_min=10,)
+    if vm.is_powered_on:
+        vm.power_off()
+    vm.power_on()
+    assert vm.is_powered_on
+    vm.power_off()
+    assert vm.is_powered_off
