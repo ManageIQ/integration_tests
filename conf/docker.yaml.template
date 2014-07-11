@@ -1,5 +1,6 @@
-upstream_appliance: https://xx.xx.xx.xx
-downstream_appliance: https://xx.xx.xx.xx
+appliances:
+    Downstream: https://xx.xx.xx.xx
+    Upstream: https://xx.xx.xx.xx
 cfme_cred_repo: https://repo
 cfme_cred_repo_dir: /cfme-qe-yamls
 cfme_repo: https://github.com/RedHatQE/cfme_tests
@@ -11,3 +12,6 @@ pytest_con: py_test_base
 artifactor_dir: /log_report
 log_depot: /home/username/log_depot/
 banner: True
+gh_token: AAAAAAA
+gh_owner: RedHatQE
+gh_repo: cfme_tests
