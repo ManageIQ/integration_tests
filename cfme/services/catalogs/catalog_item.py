@@ -3,11 +3,11 @@ from functools import partial
 from collections import OrderedDict
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Radio, Select, Table, accordion, fill, flash, menu, tabstrip
+from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
+    flash, menu, tabstrip, DHTMLSelect
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
-
 
 cfg_btn = partial(tb.select, "Configuration")
 accordion_tree = partial(accordion.tree, "Catalog Items")
@@ -95,6 +95,23 @@ resources_form = Form(
         ('save_button', "//img[@alt='Save Changes']")
     ])
 
+button_group_form = Form(
+    fields=[
+        ('btn_group_text', "//input[@id='name']"),
+        ('btn_group_hvr_text', "//input[@id='description']"),
+        ('add_button', "//img[@alt='Add']")
+    ])
+
+button_form = Form(
+    fields=[
+        ('btn_text', "//input[@id='name']"),
+        ('btn_hvr_text', "//input[@id='description']"),
+        ('select_dialog', Select("//select[@id='dialog_id']")),
+        ('system_process', Select("//select[@id='instance_name']")),
+        ('request', "//input[@id='object_request']"),
+        ('add_button', "//img[@alt='Add']")
+    ])
+
 
 def _all_catalogitems_add_new(context):
     accordion_tree('All Catalog Items')
@@ -162,7 +179,8 @@ class CatalogItem(Updateable, Pretty):
         self.provisioning_data = prov_data
 
     def create(self):
-        sel.force_navigate('catalog_item_new', context={'provider_type': self.item_type})
+        sel.force_navigate('catalog_item_new',
+                           context={'provider_type': self.item_type})
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
@@ -177,21 +195,53 @@ class CatalogItem(Updateable, Pretty):
             sel.click(template)
             request_form.fill(self.provisioning_data)
         sel.click(template_select_form.add_button)
-        flash.assert_success_message('Service Catalog Item "%s" was added' % self.name)
+        flash.assert_success_message('Service Catalog Item "%s" was added' %
+                                     self.name)
 
     def update(self, updates):
         sel.force_navigate('catalog_item_edit',
-            context={'catalog': self.catalog, 'catalog_item': self})
+                           context={'catalog': self.catalog,
+                                    'catalog_item': self})
         fill(basic_info_form, {'name_text': updates.get('name', None),
-                               'description_text': updates.get('description', None)},
-            action=basic_info_form.edit_button)
-        flash.assert_success_message('Service Catalog Item "%s" was saved' % self.name)
+                               'description_text':
+                               updates.get('description', None)},
+             action=basic_info_form.edit_button)
+        flash.assert_success_message('Service Catalog Item "%s" was saved' %
+                                     self.name)
 
     def delete(self):
-        sel.force_navigate('catalog_item', context={'catalog': self.catalog, 'catalog_item': self})
+        sel.force_navigate('catalog_item', context={'catalog': self.catalog,
+                                                    'catalog_item': self})
         cfg_btn("Remove Item from the VMDB", invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('The selected Catalog Item was deleted')
+
+    def add_button_group(self):
+        sel.force_navigate('catalog_item', context={'catalog': self.catalog,
+                                                    'catalog_item': self})
+        cfg_btn("Add a new Button Group", invokes_alert=True)
+        sel.wait_for_element(button_group_form.btn_group_text)
+        fill(button_group_form, {'btn_group_text': "group_text",
+                                 'btn_group_hvr_text': "descr"})
+        select = DHTMLSelect("div#button_div")
+        select.select_by_value(1)
+        sel.click(button_group_form.add_button)
+        flash.assert_success_message('Buttons Group "descr" was added')
+
+    def add_button(self):
+        sel.force_navigate('catalog_item', context={'catalog': self.catalog,
+                                                    'catalog_item': self})
+        cfg_btn('Add a new Button', invokes_alert=True)
+        sel.wait_for_element(button_form.btn_text)
+        fill(button_form, {'btn_text': "btn_text",
+                           'btn_hvr_text': "btn_descr"})
+        select = DHTMLSelect("div#button_div")
+        select.select_by_value(2)
+        fill(button_form, {'select_dialog': self.dialog,
+                           'system_process': "Request",
+                           'request': "InspectMe"})
+        sel.click(button_form.add_button)
+        flash.assert_success_message('Button "btn_descr" was added')
 
 
 class CatalogBundle(Updateable, Pretty):
@@ -215,15 +265,20 @@ class CatalogBundle(Updateable, Pretty):
                                'select_dialog': self.dialog})
         tabstrip.select_tab("Resources")
         fill(resources_form, {'choose_resource': self.cat_item},
-            action=resources_form.add_button)
-        flash.assert_success_message('Catalog Bundle "%s" was added' % self.name)
+             action=resources_form.add_button)
+        flash.assert_success_message('Catalog Bundle "%s" was added' %
+                                     self.name)
 
     def update(self, updates):
         sel.force_navigate('catalog_bundle_edit',
-            context={'catalog': self.catalog, 'catalog_bundle': self})
+                           context={'catalog': self.catalog,
+                                    'catalog_bundle': self})
         fill(basic_info_form, {'name_text': updates.get('name', None),
-                               'description_text': updates.get('description', None)})
+                               'description_text':
+                               updates.get('description', None)})
         tabstrip.select_tab("Resources")
-        fill(resources_form, {'choose_resource': updates.get('cat_item', None)},
-            action=resources_form.save_button)
-        flash.assert_success_message('Catalog Bundle "%s" was saved' % self.name)
+        fill(resources_form, {'choose_resource':
+                              updates.get('cat_item', None)},
+             action=resources_form.save_button)
+        flash.assert_success_message('Catalog Bundle "%s" was saved' %
+                                     self.name)
