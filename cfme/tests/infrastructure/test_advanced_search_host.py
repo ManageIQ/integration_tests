@@ -175,11 +175,13 @@ def test_filter_save_and_load_cancel(request, hosts, hosts_with_vm_count, host_w
     assert_no_cfme_exception()
 
 
-def test_quick_search_without_filter(hosts, hosts_with_vm_count, host_with_median_vm):
+def test_quick_search_without_filter(request, hosts, hosts_with_vm_count, host_with_median_vm):
     sel.force_navigate("infrastructure_hosts")
     search.ensure_no_filter_applied()
     assert_no_cfme_exception()
     median_host, median_vm_count = host_with_median_vm
+    # Make sure that we empty the regular search field after the test
+    request.addfinalizer(search.ensure_normal_search_empty)
     # Filter this host only
     search.normal_search(median_host)
     assert_no_cfme_exception()
@@ -188,13 +190,15 @@ def test_quick_search_without_filter(hosts, hosts_with_vm_count, host_with_media
     assert len(all_hosts_visible) == 1 and median_host in all_hosts_visible
 
 
-def test_quick_search_with_filter(hosts, hosts_with_vm_count, host_with_median_vm):
+def test_quick_search_with_filter(request, hosts, hosts_with_vm_count, host_with_median_vm):
     sel.force_navigate("infrastructure_hosts")
     median_host, median_vm_count = host_with_median_vm
     search.fill_and_apply_filter(
         "fill_count(Host.VMs, >=, %d)" % median_vm_count
     )
     assert_no_cfme_exception()
+    # Make sure that we empty the regular search field after the test
+    request.addfinalizer(search.ensure_normal_search_empty)
     # Filter this host only
     search.normal_search(median_host)
     assert_no_cfme_exception()
