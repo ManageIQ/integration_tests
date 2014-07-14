@@ -86,6 +86,8 @@ class Reporter(ArtifactorBasePlugin):
                 overall_status = "passed"
                 if self.only_failed:
                     continue
+            if overall_status == 'skipped' and self.only_failed:
+                continue
             test['statuses']['overall'] = overall_status
             test_data = {'name': test_name, 'outcomes': test['statuses']}
             if test.get('start_time', None):
