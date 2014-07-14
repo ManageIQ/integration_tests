@@ -20,7 +20,8 @@ from utils import conf
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
-     InvalidElementStateException, MoveTargetOutOfBoundsException, WebDriverException)
+     InvalidElementStateException, MoveTargetOutOfBoundsException, WebDriverException,
+     StaleElementReferenceException)
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions
@@ -187,7 +188,7 @@ def wait_for_ajax():
         num_sec=30, delay=0.1, message="wait for ajax", quiet=True)
 
 
-def is_displayed(loc):
+def is_displayed(loc, _deep=0):
     """
     Checks if a particular locator is displayed
 
@@ -203,6 +204,18 @@ def is_displayed(loc):
         return element(loc).is_displayed()
     except NoSuchElementException:
         return False
+    except StaleElementReferenceException:
+        # It can happen sometimes that the change will happen between element lookup and visibility
+        # check. Then StaleElementReferenceException happens. We give it two additional tries.
+        # One regular. And one if something really bad happens. We don't check WebElements as it has
+        # no point.
+        if _deep >= 2 or isinstance(loc, WebElement):
+            # Too deep, or WebElement, which has no effect in repeating
+            raise
+        else:
+            # So try it again after a little bit of sleep
+            sleep(0.05)
+            return is_displayed(loc, _deep + 1)
 
 
 def wait_for_element(*locs, **kwargs):
@@ -735,10 +748,13 @@ def detect_observed_field(loc):
     If found, that interval will be used instead of the default.
 
     """
-    if is_displayed(loc):
-        el = element(loc)
-    else:
-        # Element not visible, sort out
+    try:
+        if is_displayed(loc):
+            el = element(loc)
+        else:
+            # Element not visible, sort out
+            return
+    except StaleElementReferenceException:
         return
 
     # Default wait period, based on the default UI wait (700ms)
