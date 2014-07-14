@@ -299,6 +299,23 @@ def click(loc, wait_ajax=True, no_custom_handler=False):
         wait_for_ajax()
 
 
+def double_click(loc, wait_ajax=True):
+    """Double-clicks on an element.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
+            handy to not do that. (some toolbar clicks)
+    """
+    # Move mouse cursor to element
+    move_to_element(loc)
+    # and then click on current mouse position
+    ActionChains(browser()).double_click().perform()
+    # -> using this approach, we don't check if we clicked a specific element
+    if wait_ajax:
+        wait_for_ajax()
+
+
 def move_to_element(loc, **kwargs):
     """
     Moves to an element.

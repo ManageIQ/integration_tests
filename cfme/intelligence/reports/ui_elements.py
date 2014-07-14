@@ -3,12 +3,14 @@ from collections import Sequence, Mapping, Callable
 from contextlib import contextmanager
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.remote.webelement import WebElement
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Calendar, Form, Region, Table, Select, fill
 from utils import lazycache
 from utils.log import logger
+from utils.wait import wait_for, TimedOutError
 
 
 class NotDisplayedException(Exception):
@@ -488,3 +490,147 @@ def _fill_dws_seq(dws, seq):
 @fill.method((DashboardWidgetSelector, basestring))
 def _fill_dws_str(dws, s):
     fill(dws, [s])
+
+
+class FolderManager(object):
+    """Class used in Reports/Edit Reports menus."""
+    _fields = ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr/td"
+    _field = ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr/td[.='{}']"
+
+    class _BailOut(Exception):
+        pass
+
+    def __init__(self, root):
+        self.root = lambda: sel.element(root)
+
+    def __repr__(self):
+        return "{}({})".format(self.__class__.__name__, str(repr(self.root)))
+
+    @classmethod
+    def bail_out(cls):
+        """If something gets wrong, you can use this method to cancel editing of the items in
+        the context manager.
+
+        Raises: :py:class:`FolderManager._BailOut` exception
+        """
+        raise cls._BailOut()
+
+    def _click_button(self, alt):
+        sel.click(sel.element(".//img[@alt='{}']".format(alt), root=self.root))
+
+    # Button clicking functions
+    def move_top(self):
+        self._click_button("Move selected folder top")
+
+    def move_bottom(self):
+        self._click_button("Move selected folder to bottom")
+
+    def move_up(self):
+        self._click_button("Move selected folder up")
+
+    def move_down(self):
+        self._click_button("Move selected folder down")
+
+    def delete_folder(self):
+        self._click_button("Delete selected folder and its contents")
+
+    def add_subfolder(self):
+        self._click_button("Add subfolder to selected folder")
+
+    def commit(self):
+        self._click_button("Commit expression element changes")
+
+    def discard(self):
+        self._click_button("Discard expression element changes")
+
+    @property
+    def _all_fields(self):
+        return sel.elements(self._fields, root=self.root)
+
+    @property
+    def fields(self):
+        """Returns all fields' text values"""
+        return map(lambda el: sel.text(el).encode("utf-8"), self._all_fields)
+
+    @property
+    def selected_field_element(self):
+        """Return selected field's element.
+
+        Returns: :py:class:`WebElement` if field is selected, else `None`
+        """
+        selected_fields = filter(lambda el: "cellselected" in sel.get_attribute(el, "class"),
+                                 self._all_fields)
+        if len(selected_fields) == 0:
+            return None
+        else:
+            return selected_fields[0]
+
+    @property
+    def selected_field(self):
+        """Return selected field's text.
+
+        Returns: :py:class:`str` if field is selected, else `None`
+        """
+        sf = self.selected_field_element
+        return None if sf is None else sel.text(sf).encode("utf-8").strip()
+
+    def add(self, subfolder):
+        self.add_subfolder()
+        wait_for(lambda: self.selected_field_element is not None, num_sec=5, delay=0.1)
+        sel.double_click(self.selected_field_element)
+        input = wait_for(
+            lambda: sel.elements("./input", root=self.selected_field_element),
+            num_sec=5, delay=0.1, fail_condition=[])[0][0]
+        sel.set_text(input, subfolder)
+        sel.send_keys(input, Keys.RETURN)
+
+    def select_field(self, field):
+        """Select field by text.
+
+        Args:
+            field: Field text.
+        """
+        sel.click(sel.element(self._field.format(field), root=self.root))
+        wait_for(lambda: self.selected_field is not None, num_sec=5, delay=0.1)
+
+    def has_field(self, field):
+        """Returns if the field is present.
+
+        Args:
+            field: Field to check.
+        """
+        try:
+            self.select_field(field)
+            return True
+        except (NoSuchElementException, TimedOutError):
+            return False
+
+    def delete_field(self, field):
+        self.select_field(field)
+        self.delete_folder()
+
+    def move_first(self, field):
+        self.select_field(field)
+        self.move_top()
+
+    def move_last(self, field):
+        self.select_field(field)
+        self.move_bottom()
+
+    def clear(self):
+        for field in self.fields:
+            self.delete_field(field)
+
+
+@fill.method((FolderManager, basestring))
+def _fill_fm_str(fm, s):
+    if not fm.has_field(s):
+        fm.add(s)
+
+
+@fill.method((FolderManager, Sequence))
+def _fill_fm_seq(fm, i):
+    if isinstance(i, tuple):  # Let's consider tuple as "deleter"
+        fm.clear()
+    for item in i:
+        fill(fm, item)

@@ -1409,6 +1409,24 @@ class Tree(Pretty):
                 raise Exception("Could not find node {}".format(step))
         return current
 
+    @classmethod
+    def flatten_level(cls, tree):
+        """Extracts just node names from current tree (top).
+
+        It makes:
+
+        .. code-block:: python
+            ["asd", "fgh", ("ijk", [...]), ("lmn", [...])]
+
+        to
+
+        .. code-block:: python
+            ["asd", "fgh", "ijk", "lmn"]
+
+        Useful for checking of contents of current tree level
+        """
+        return map(lambda item: item[0] if isinstance(item, tuple) else item, tree)
+
 
 class CheckboxTree(Tree):
     '''Tree that has a checkbox on each node, adds methods to check/uncheck them'''
