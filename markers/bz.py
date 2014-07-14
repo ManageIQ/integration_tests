@@ -190,7 +190,8 @@ def pytest_collection_modifyitems(session, config, items):
     bugz = _bz.Bugzilla(
         url=config.getvalue("bugzilla_url"),
         user=config.getvalue("bugzilla_user"),
-        password=config.getvalue("bugzilla_password"))
+        password=config.getvalue("bugzilla_password"),
+        cookiefile=None, tokenfile=None)
     progress = ("-", "\\", "|", "/")  # Very simple eye-candy to not pollute tests output
     progressbar = 0
     last_line_length = 0
