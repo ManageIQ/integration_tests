@@ -1,14 +1,13 @@
+# -*- coding: utf-8 -*-
 import functools
 
-import ui_navigate as nav
 from cfme.web_ui import menu
-assert menu
 
-import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, fill, form_buttons, Select, accordion, flash, Tree
-from utils.update import Updateable
+from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import toolbar as tb
+from cfme.web_ui import Form, Select, SplitTable, accordion, fill, flash, form_buttons
 from utils import version
+from utils.update import Updateable
 
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
@@ -38,23 +37,34 @@ element_form = Form(fields=[
     ('default_text_box', "//input[@id='field_default_value']")
 ])
 
-service_dialog_tree = Tree(version.pick({
-    version.LOWEST: "//div[@id='dialogs_tree_div']//table",
-    '5.3': "//div[@id='dialogs_tree_div']//ul"
-}))
+dialogs_table = SplitTable(
+    header_data=("//div[@id='records_div']//table[contains(@class, 'hdr')]", 1),
+    body_data=("//div[@id='records_div']//div[contains(@class, 'objbox')]/table", 1))
 
 
 def _all_servicedialogs_add_new(context):
-    service_dialog_tree.click_path('All Dialogs')
     cfg_btn('Add a new Dialog')
     sel.wait_for_element(label_form.label)
 
-nav.add_branch(
+menu.nav.add_branch(
     'automate_customization',
-    {'service_dialogs': [nav.partial(accordion.click, 'Service Dialogs'),
-        {'service_dialog_new': _all_servicedialogs_add_new,
-         'service_dialog': [lambda ctx: accordion.tree('Service Dialogs', ctx['dialog'].label),
-            {'service_dialog_edit': nav.partial(cfg_btn, "Edit this Dialog")}]}]})
+    {
+        'service_dialogs':
+        [
+            lambda _: accordion.tree("Service Dialogs", "All Dialogs"),
+            {
+                'service_dialog_new': _all_servicedialogs_add_new
+            }
+        ],
+        'service_dialog':
+        [
+            lambda ctx: accordion.tree('Service Dialogs', ctx['dialog'].label),
+            {
+                'service_dialog_edit': menu.nav.partial(cfg_btn, "Edit this Dialog")
+            }
+        ]
+    }
+)
 
 
 class ServiceDialog(Updateable):
@@ -85,7 +95,8 @@ class ServiceDialog(Updateable):
                           'description_text': self.description,
                           'submit_button': self.submit,
                           'cancel_button': self.cancel})
-        if(self.tab_label is not None):
+
+        if self.tab_label is not None:
             btn_marker = version.pick({
                 version.LOWEST: "Add a New Tab to this Dialog",
                 '5.3': "Add a new Tab to this Dialog"
@@ -94,7 +105,8 @@ class ServiceDialog(Updateable):
             sel.wait_for_element(tab_form.tab_label)
             fill(tab_form, {'tab_label': self.tab_label,
                             'tab_desc': self.tab_desc})
-        if(self.box_label is not None):
+
+        if self.box_label is not None:
             btn_marker = version.pick({
                 version.LOWEST: "Add a New Box to this Tab",
                 '5.3': "Add a new Box to this Tab"
@@ -103,7 +115,8 @@ class ServiceDialog(Updateable):
             sel.wait_for_element(box_form.box_label)
             fill(box_form, {'box_label': self.box_label,
                             'box_desc': self.box_desc})
-        if(self.ele_label is not None):
+
+        if self.ele_label is not None:
             btn_marker = version.pick({
                 version.LOWEST: "Add a New Element to this Box",
                 '5.3': "Add a new Element to this Box"
@@ -115,19 +128,18 @@ class ServiceDialog(Updateable):
                                 'ele_desc': self.ele_desc,
                                 'choose_type': self.choose_type,
                                 'default_text_box': self.default_text_box})
-        form_buttons.add()
+        sel.click(form_buttons.add)
         flash.assert_no_errors()
 
     def update(self, updates):
-        sel.force_navigate('service_dialog_edit',
-            context={'dialog': self})
+        sel.force_navigate('service_dialog_edit', context={'dialog': self})
         fill(label_form, {'name_text': updates.get('name', None),
                           'description_text': updates.get('description', None)})
-        form_buttons.save()
+        sel.click(form_buttons.save)
         flash.assert_no_errors()
 
-    def delete(self):
+    def delete(self, cancel=False):
         sel.force_navigate('service_dialog', context={'dialog': self})
         cfg_btn("Remove from the VMDB", invokes_alert=True)
-        sel.handle_alert()
+        sel.handle_alert(cancel)
         flash.assert_no_errors()
