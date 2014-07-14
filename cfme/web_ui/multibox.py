@@ -1,6 +1,20 @@
+import re
+from collections import Sequence, namedtuple
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Select, fill, flash
+from utils.category import CategoryBase, categorize
 from utils.log import logger
+
+SelectItem = namedtuple("SelectItem", ["sync", "value", "text"])
+
+
+class Sync(CategoryBase):
+    pass
+
+
+class Async(CategoryBase):
+    pass
 
 
 class MultiBoxSelect(object):
@@ -16,12 +30,17 @@ class MultiBoxSelect(object):
         remove_all: If present, locator for a button which unselects all items (Default None)
 
     """
-    def __init__(self, unselected, selected, to_unselected, to_selected, remove_all=None):
+    def __init__(self, unselected, selected, to_unselected, to_selected, remove_all=None,
+                 sync=None, async=None):
         self._unselected = Select(unselected, multi=True)
         self._selected = Select(selected, multi=True)
         self._to_unselected = to_unselected
         self._to_selected = to_selected
         self._remove_all = remove_all
+        if bool(sync) ^ bool(async):
+            raise TypeError("You have to specify either both or none of (a)sync!")
+        self._async = async
+        self._sync = sync
 
     def _move_to_unselected(self):
         """ Clicks the button for moving items from selected to unselected.
@@ -113,6 +132,48 @@ class MultiBoxSelect(object):
         else:
             return True
 
+    @property
+    def all_selected(self):
+        result = []
+        for item in self._selected.options:
+            sync = None
+            desc = sel.text(item).encode("utf-8").lstrip()
+            value = sel.get_attribute(item, "value")
+            if self._sync:  # Or _async, this does not matter, protected in constructor
+                # Extract
+                sync_res, desc = re.match(r"^\(([AS])\) (.*?)$", desc).groups()
+                sync = sync_res == "S"
+            result.append(SelectItem(sync=sync, value=value, text=desc))
+        return result
+
+    def _set_sync_state(self, state, *values):
+        assert self._async and self._sync, "You must set async= and sync=!"
+        for value in values:
+            self._clear_selection()
+            try:
+                self._unselected.select_by_visible_text(value)
+                self._move_to_selected()
+            except sel.NoSuchElementException:
+                # Already selected
+                pass
+            try:
+                item = filter(lambda i: i.text == value, self.all_selected)[0]
+            except IndexError:
+                raise NameError("Could not find {}!".format(value))
+            if item.sync != state:
+                self._clear_selection()
+                self._selected.select_by_value(item.value)
+                if state:
+                    sel.click(self._sync)
+                else:
+                    sel.click(self._async)
+
+    def set_sync(self, *values):
+        return self._set_sync_state(True, *values)
+
+    def set_async(self, *values):
+        return self._set_sync_state(False, *values)
+
     @classmethod
     def default(cls):
         """ The most common type of the MultiBoxSelect
@@ -127,10 +188,24 @@ class MultiBoxSelect(object):
             "//a/img[contains(@alt, 'Remove all')]",
         )
 
+    @classmethod
+    def categorize(cls, values, sync_l, async_l, dont_care_l):
+        """Does categorization of values based on their Sync/Async status.
 
-@fill.method((MultiBoxSelect, list))
-@fill.method((MultiBoxSelect, tuple))
-@fill.method((MultiBoxSelect, set))
+        Args:
+            values: Values to be categorized.
+            sync_l: List that will be used for appending the Sync values.
+            async_l: List that will be used for appending the Async values.
+            dont_care_l: List that will be used for appending all the other values.
+        """
+        categorize(values, {
+            lambda item: isinstance(item, Async): lambda item: async_l.append(str(item)),
+            lambda item: isinstance(item, Sync): lambda item: sync_l.append(str(item)),
+            "default": lambda item: dont_care_l.append(str(item))
+        })
+
+
+@fill.method((MultiBoxSelect, Sequence))
 def _fill_multibox_list(multi, values):
     """ Filler function for MultiBoxSelect
 
@@ -144,9 +219,14 @@ def _fill_multibox_list(multi, values):
     Returns: :py:class:`bool` with success.
     """
     stype = type(multi)
-    fill_values = tuple([str(value) for value in values])
-    logger.debug('  Filling in %s with values %s' % (str(stype), str(fill_values)))
-    return multi.add(*fill_values, flush=True)
+    sync = []
+    async = []
+    dont_care = []
+    MultiBoxSelect.categorize(values, sync, async, dont_care)
+    logger.debug('  Filling in %s with values %s' % (str(stype), str(values)))
+    multi.add(*dont_care, flush=True)
+    multi.set_async(*async)
+    multi.set_sync(*sync)
 
 
 @fill.method((MultiBoxSelect, basestring))
@@ -185,9 +265,14 @@ def _fill_multibox_dict(multi, d):
     enable_list, disable_list = [], []
     for key, value in d.iteritems():
         if value:
-            enable_list.append(str(key))
+            enable_list.append(key)
         else:
-            disable_list.append(str(key))
+            disable_list.append(key)
     logger.debug('  Disabling values %s in %s' % (str(disable_list), str(stype)))
     logger.debug('  Enabling values %s in %s' % (str(enable_list), str(stype)))
-    return all((multi.remove(disable_list), multi.add(enable_list)))
+    multi.remove(*disable_list)
+    sync, async, dont_care = [], [], []
+    MultiBoxSelect.categorize(enable_list, sync, async, dont_care)
+    multi.add(*dont_care)
+    multi.set_async(*async)
+    multi.set_sync(*sync)
