@@ -9,8 +9,9 @@ from utils.conf import env
 from utils.path import log_path
 
 
-def run(run_id=None):
+def run(port, run_id=None):
     art_config = env.get('artifactor', {})
+    art_config['server_port'] = int(port)
     art = artifactor.artifactor
 
     if 'log_dir' not in art_config:
@@ -41,5 +42,6 @@ def run(run_id=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--run-id', default=None)
+    parser.add_argument('--port')
     args = parser.parse_args()
-    run(args.run_id)
+    run(args.port, args.run_id)
