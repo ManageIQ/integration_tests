@@ -28,7 +28,7 @@ artifactor:
         reporter:
             enabled: True
             plugin: reporter
-            only_failed: False
+            only_failed: True
 
 mail_collector:
     ports:

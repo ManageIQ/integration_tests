@@ -402,7 +402,7 @@ class MultiLogger(object):
     def _art(self):
         if not self._art_instance:
             from fixtures.artifactor_plugin import art_client, SLAVEID
-            self._slaveid = SLAVEID
+            self._slaveid = SLAVEID or ""
             self._art_instance = art_client
         return self._art_instance
 
@@ -415,7 +415,7 @@ class MultiLogger(object):
                 extra_info['source_file'] = extra_info['source_file'].strpath
         log_record = {'level': name,
                       'message': str(args[0]),
-                      'extra': extra_info}
+                      'extra': extra_info or ""}
         self._art.fire_hook('log_message', log_record=log_record, slaveid=self._slaveid)
 
 
