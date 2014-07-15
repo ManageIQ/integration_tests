@@ -181,6 +181,8 @@ class DockerBot(object):
             print "You chose to use Auto Test Gen, without supplying GitHub details"
             ec += 1
 
+        self.args['capture'] = self.args.get('capture', False)
+
         if ec:
             sys.exit(127)
 
@@ -216,6 +218,8 @@ class DockerBot(object):
                 print
                 print "Exiting..."
                 sys.exit(127)
+        if not self.args['capture']:
+            self.args['pytest'] += ' --capture=no'
         print "  PYTEST Command: {}".format(self.args['pytest'])
 
     def create_pytest_envvars(self):
@@ -358,6 +362,9 @@ if __name__ == "__main__":
     pytest.add_argument('--log_depot',
                         help="The log_depot",
                         default=docker_conf.get('log_depot', None))
+    pytest.add_argument('--capture',
+                        help="Capture output in pytest", action="store_true",
+                        default=docker_conf.get('capture', False))
     args = parser.parse_args()
 
     if args.appliance_name and not args.appliance:
