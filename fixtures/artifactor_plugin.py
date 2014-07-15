@@ -61,10 +61,12 @@ def pytest_addoption(parser):
 @pytest.mark.tryfirst
 def pytest_configure(config):
     global proc
-    if not SLAVEID and not proc:
+    if not SLAVEID and not proc and isinstance(art_client, ArtifactorClient):
         import subprocess
         path = project_path.join('utils', 'artifactor_start.py')
         cmd = [path.strpath]
+        cmd.append('--port')
+        cmd.append(str(art_client.port))
         if config.getvalue('run_id'):
             cmd.append('--run-id')
             cmd.append(str(config.getvalue('run_id')))
