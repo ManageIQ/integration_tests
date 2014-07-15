@@ -219,14 +219,17 @@ def _fill_multibox_list(multi, values):
     Returns: :py:class:`bool` with success.
     """
     stype = type(multi)
-    sync = []
-    async = []
-    dont_care = []
-    MultiBoxSelect.categorize(values, sync, async, dont_care)
     logger.debug('  Filling in %s with values %s' % (str(stype), str(values)))
-    multi.add(*dont_care, flush=True)
-    multi.set_async(*async)
-    multi.set_sync(*sync)
+    if multi._async:
+        sync = []
+        async = []
+        dont_care = []
+        MultiBoxSelect.categorize(values, sync, async, dont_care)
+        multi.add(*dont_care, flush=True)
+        multi.set_async(*async)
+        multi.set_sync(*sync)
+    else:
+        multi.add(*map(str, values), flush=True)
 
 
 @fill.method((MultiBoxSelect, basestring))
@@ -271,8 +274,11 @@ def _fill_multibox_dict(multi, d):
     logger.debug('  Disabling values %s in %s' % (str(disable_list), str(stype)))
     logger.debug('  Enabling values %s in %s' % (str(enable_list), str(stype)))
     multi.remove(*disable_list)
-    sync, async, dont_care = [], [], []
-    MultiBoxSelect.categorize(enable_list, sync, async, dont_care)
-    multi.add(*dont_care)
-    multi.set_async(*async)
-    multi.set_sync(*sync)
+    if multi._async:
+        sync, async, dont_care = [], [], []
+        MultiBoxSelect.categorize(enable_list, sync, async, dont_care)
+        multi.add(*dont_care)
+        multi.set_async(*async)
+        multi.set_sync(*sync)
+    else:
+        multi.add(*map(str, enable_list))
