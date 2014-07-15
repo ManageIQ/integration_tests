@@ -21,11 +21,9 @@ already been used, it will die
 
 from artifactor import ArtifactorClient
 import pytest
-from urlparse import urlparse
-from utils import log
 from utils.conf import env
 from utils.net import random_port
-from utils.path import log_path
+from utils.path import project_path
 import atexit
 
 
@@ -36,6 +34,8 @@ class DummyClient(object):
     def __nonzero__(self):
         # DummyClient is always False, so it's easy to see if we have an artiactor client
         return False
+
+proc = None
 
 art_config = env.get('artifactor', {})
 
@@ -48,7 +48,7 @@ if art_config:
 else:
     art_client = DummyClient()
 
-SLAVEID = None
+SLAVEID = ""
 if env.get('slaveid', None):
     SLAVEID = env['slaveid']
 
@@ -60,43 +60,16 @@ def pytest_addoption(parser):
 
 @pytest.mark.tryfirst
 def pytest_configure(config):
-    if not art_client:
-        return
-
-    if SLAVEID:
-        art_client.port = config.option.artifactor_port
-    else:
-        import artifactor
-        from artifactor.plugins import merkyl, logger, video, filedump, reporter
-        from artifactor import parse_setup_dir
-
-        art = artifactor.artifactor
-
-        if 'log_dir' not in art_config:
-            art_config['log_dir'] = log_path.join('artifacts').strpath
-        art.set_config(art_config)
-
-        art.register_plugin(merkyl.Merkyl, "merkyl")
-        art.register_plugin(logger.Logger, "logger")
-        art.register_plugin(video.Video, "video")
-        art.register_plugin(filedump.Filedump, "filedump")
-        art.register_plugin(reporter.Reporter, "reporter")
-        art.register_hook_callback('filedump', 'pre', parse_setup_dir,
-                                   name="filedump_dir_setup")
-
-        artifactor.initialize()
-        ip = urlparse(env['base_url']).hostname
-
-        art.configure_plugin('merkyl', ip=ip)
-        art.configure_plugin('logger')
-        art.configure_plugin('video')
-        art.configure_plugin('filedump')
-        art.configure_plugin('reporter')
-        art.fire_hook('start_session', run_id=config.getvalue('run_id'))
-
-        # Stash this where slaves can find it
+    global proc
+    if not SLAVEID and not proc:
+        import subprocess
+        path = project_path.join('utils', 'artifactor_start.py')
+        cmd = [path.strpath]
+        if config.getvalue('run_id'):
+            cmd.append('--run-id')
+            cmd.append(str(config.getvalue('run_id')))
+        proc = subprocess.Popen(cmd)
         config.option.artifactor_port = art_client.port
-        log.logger.info('artifactor listening on port %d', art_client.port)
 
 
 def pytest_runtest_protocol(item):
@@ -122,7 +95,11 @@ def pytest_runtest_logreport(report):
 
 @pytest.mark.trylast
 def pytest_unconfigure():
+    global proc
     if not SLAVEID:
         art_client.fire_hook('finish_session')
+        art_client.fire_hook('terminate')
 
-atexit.register(art_client.fire_hook, 'finish_session')
+if not SLAVEID:
+    atexit.register(art_client.fire_hook, 'finish_session')
+    atexit.register(art_client.fire_hook, 'terminate')

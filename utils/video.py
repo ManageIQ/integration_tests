@@ -18,7 +18,7 @@ import subprocess
 from signal import SIGINT
 
 from utils.conf import env
-from utils.log import logger
+# from utils.log import logger
 
 vid_options = env.get('logging', {}).get('video')
 
@@ -70,17 +70,22 @@ class Recorder(object):
             proc = subprocess.Popen(cmd_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.pid = proc.pid
         except OSError:
-            logger.exception("Couldn't initialize videoer! Make sure recordmydesktop is installed!")
+            # Had to disable for artifactor
+            # logger.exception("Couldn't initialize videoer! Is recordmydesktop installed?")
+            pass
 
     def stop(self):
         if self.pid is not None:
             if process_running(self.pid):
                 os.kill(self.pid, SIGINT)
                 os.waitpid(self.pid, 0)
-                logger.info("Recording finished")
+                # Had to disable for artifactor
+                # logger.info("Recording finished")
                 self.pid = None
             else:
-                logger.exception("Could not find recordmydesktop process #%d" % self.pid)
+                # Had to disable for artifactor
+                # logger.exception("Could not find recordmydesktop process #%d" % self.pid)
+                pass
 
     def __enter__(self):
         self.start()
