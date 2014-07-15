@@ -664,6 +664,89 @@ class SplitTable(Table):
         return sel.move_to_element(self._header_loc)
 
 
+class SortTable(Table):
+    """This table is the same as :py:class:`Table`, but with added sorting functionality."""
+    @property
+    def _sort_by_cell(self):
+        try:
+            return sel.element(
+                version.pick({
+                    "default": "./th/a/img[contains(@src, 'sort')]/..",
+                    "5.3.0.0": "./th[contains(@class, 'sorting_')]"
+                }),
+                root=self.header_row
+            )
+        except NoSuchElementException:
+            return None
+
+    @property
+    def sorted_by(self):
+        """Return column name what is used for sorting now.
+        """
+        cell = self._sort_by_cell
+        if cell is None:
+            return None
+        return sel.text("./a", root=cell).encode("utf-8")
+
+    @property
+    def sort_order(self):
+        """Return order.
+
+        Returns: 'ascending' or 'descending'
+        """
+        cell = self._sort_by_cell
+        if cell is None:
+            return None
+
+        def _downstream():
+            src = sel.get_attribute(sel.element("./img", root=cell), "src")
+            if "sort_up" in src:
+                return "ascending"
+            elif "sort_down" in src:
+                return "descending"
+            else:
+                return None
+
+        def _upstream():
+            cls = sel.get_attribute(cell, "class")
+            if "sorting_asc" in cls:
+                return "ascending"
+            elif "sorting_desc" in cls:
+                return "descending"
+            else:
+                return None
+
+        return version.pick({
+            "default": _downstream,
+            "5.3.0.0": _upstream
+        })()
+
+    def click_header_cell(self, text):
+        """Clicks on the header to change sorting conditions.
+
+        Args:
+            text: Header cell text.
+        """
+        sel.click(sel.element("./th/a[.='{}']".format(text), root=self.header_row))
+
+    def sort_by(self, header, order):
+        """Sorts the table by given conditions
+
+        Args:
+            header: Text of the header cell to use for sorting.
+            order: ascending or descending
+        """
+        order = order.lower().strip()
+        if header != self.sorted_by:
+            # Change column to order by
+            self.click_header_cell(header)
+            assert self.sorted_by == header, "Detected malfunction in table ordering"
+        if order != self.sort_order:
+            # Change direction
+            self.click_header_cell(header)
+            assert self.sort_order == order, "Detected malfunction in table ordering"
+
+
 class CheckboxTable(Table):
     """:py:class:`Table` with support for checkboxes
 
