@@ -21,7 +21,7 @@ python-dateutil
 python-novaclient
 PyYAML
 requests
-riggerlib==1.1.3
+riggerlib
 scp
 selenium
 multimethods.py
