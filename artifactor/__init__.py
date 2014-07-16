@@ -165,10 +165,8 @@ class Artifactor(Rigger):
     def log_message(self, message):
         self.logger.debug(message)
 
-artifactor = Artifactor(None)
 
-
-def initialize():
+def initialize(artifactor):
     artifactor.parse_config()
     artifactor.register_hook_callback('start_test', 'pre', parse_setup_dir,
                                       name="default_start_test")
