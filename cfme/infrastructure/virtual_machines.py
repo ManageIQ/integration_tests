@@ -16,6 +16,7 @@ from selenium.common.exceptions import NoSuchElementException
 from utils.log import logger
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
+from utils.mgmt_system import ActionNotSupported
 from utils import version
 
 QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
@@ -293,6 +294,7 @@ class Vm(object):
         Returns: :py:class:`cfme.web_ui.Quadicon` instance
         Raises: VmNotFound
         """
+        quadicon = Quadicon(self.name, "vm")
         if not do_not_navigate:
             self.provider_crud.load_all_provider_vms()
             toolbar.set_vms_grid_view()
@@ -303,7 +305,6 @@ class Vm(object):
 
         paginator.results_per_page(1000)
         for page in paginator.pages():
-            quadicon = Quadicon(self.name, "vm")
             if sel.is_displayed(quadicon):
                 if mark:
                     sel.check(quadicon.checkbox())
@@ -347,10 +348,14 @@ class Vm(object):
     def delete_from_provider(self):
         provider_mgmt = self.provider_crud.get_mgmt_system()
         if provider_mgmt.does_vm_exist(self.name):
-            if provider_mgmt.is_vm_suspended(self.name):
-                logger.debug("Powering up VM %s to shut it down correctly on %s." %
-                    (self.name, self.provider_crud.key))
-                provider_mgmt.start_vm(self.name)
+            try:
+                if provider_mgmt.is_vm_suspended(self.name):
+                    logger.debug("Powering up VM %s to shut it down correctly on %s." %
+                        (self.name, self.provider_crud.key))
+                    provider_mgmt.start_vm(self.name)
+            except ActionNotSupported:
+                # Action is not supported on mgmt system. Simply continue
+                pass
             return self.provider_crud.get_mgmt_system().delete_vm(self.name)
         else:
             return True

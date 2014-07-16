@@ -39,11 +39,11 @@ def test_vm_discovery(request, provider_crud, provider_init, provider_mgmt, vm_n
     try:
         vm.wait_for_vm_to_appear(timeout=600, load_details=False)
     except TimedOutError:
-        return False
+        pytest.fail("VM was not found in CFME")
     vm.delete_from_provider()
     virtual_machines.load_archived_vms()
     try:
         wait_for(lambda: vm.find_quadicon(True, False, False),
-                num_secs=800, delay=30, handle_exception=True)
+                num_sec=800, delay=30, handle_exception=True)
     except TimedOutError:
-        return False
+        pytest.fail("VM was not found in Archives")

@@ -272,6 +272,10 @@ class Provider(Updateable, Pretty):
         else:
             return provider_factory(self.key)
 
+    def _load_details(self):
+        if not self._on_detail_page():
+            sel.force_navigate('cloud_provider', context={'provider': self})
+
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
 
