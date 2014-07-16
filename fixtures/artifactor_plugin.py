@@ -72,6 +72,8 @@ def pytest_configure(config):
             cmd.append(str(config.getvalue('run_id')))
         proc = subprocess.Popen(cmd)
         config.option.artifactor_port = art_client.port
+    else:
+        art_client.port = config.option.artifactor_port
 
 
 def pytest_runtest_protocol(item):
