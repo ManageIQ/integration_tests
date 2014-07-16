@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import artifactor
+from artifactor import Artifactor, initialize
 import argparse
 from artifactor.plugins import merkyl, logger, video, filedump, reporter
 from artifactor import parse_setup_dir
@@ -12,7 +12,7 @@ from utils.path import log_path
 def run(port, run_id=None):
     art_config = env.get('artifactor', {})
     art_config['server_port'] = int(port)
-    art = artifactor.artifactor
+    art = Artifactor(None)
 
     if 'log_dir' not in art_config:
         art_config['log_dir'] = log_path.join('artifacts').strpath
@@ -26,7 +26,7 @@ def run(port, run_id=None):
     art.register_hook_callback('filedump', 'pre', parse_setup_dir,
                                name="filedump_dir_setup")
 
-    artifactor.initialize()
+    initialize(art)
     ip = urlparse(env['base_url']).hostname
 
     art.configure_plugin('merkyl', ip=ip)
