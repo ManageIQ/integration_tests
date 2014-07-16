@@ -21,6 +21,11 @@ class ToolbarOptionGreyed(CFMEException):
     pass
 
 
+class ToolbarOptionUnavailable(CFMEException):
+    """Raised when requested item is not found in the toolbar"""
+    pass
+
+
 class AddProviderError(CFMEException):
     pass
 
