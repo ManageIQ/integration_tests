@@ -2097,6 +2097,62 @@ def fill_multiselect(ms, items):
     sel.select(ms, items)
 
 
+class UpDownSelect(Region):
+    """Multiselect with two arrows (up/down) next to it. Eg. in AE/Domain priority selection.
+
+    Args:
+        select_loc: Locator for the select box (without Select element wrapping)
+        up_loc: Locator of the Move Up arrow.
+        down_loc: Locator with Move Down arrow.
+    """
+    def __init__(self, select_loc, up_loc, down_loc):
+        super(UpDownSelect, self).__init__(locators=dict(
+            select=Select(select_loc, multi=True),
+            up=up_loc,
+            down=down_loc,
+        ))
+
+    def get_items(self):
+        return map(lambda el: el.text.encode("utf-8"), self.select.options)
+
+    def move_up(self, item):
+        item = str(item)
+        assert item in self.get_items()
+        self.select.deselect_all()
+        sel.select(self.select, item)
+        sel.click(self.up)
+
+    def move_down(self, item):
+        item = str(item)
+        assert item in self.get_items()
+        self.select.deselect_all()
+        sel.select(self.select, item)
+        sel.click(self.down)
+
+    def move_top(self, item):
+        item = str(item)
+        assert item in self.get_items()
+        self.select.deselect_all()
+        while item != self.get_items()[0]:
+            sel.select(self.select, item)
+            sel.click(self.up)
+
+    def move_bottom(self, item):
+        item = str(item)
+        assert item in self.get_items()
+        self.select.deselect_all()
+        while item != self.get_items()[-1]:
+            sel.select(self.select, item)
+            sel.click(self.down)
+
+
+@fill.method((UpDownSelect, Sequence))
+def _fill_uds_seq(uds, seq):
+    seq = map(str, seq)
+    for item in reversed(seq):  # reversed because every new item at top pushes others down
+        uds.move_top(item)
+
+
 class ScriptBox(Pretty):
     """Represents a script box as is present on the customization templates pages.
     This box has to be activated before keys can be sent. Since this can't be done
@@ -2108,8 +2164,9 @@ class ScriptBox(Pretty):
 
     pretty_attrs = ['locator']
 
-    def __init__(self, name="miqEditor"):
+    def __init__(self, name="miqEditor", ta_locator="//textarea[contains(@id, 'method_data')]"):
         self.name = name
+        self.ta_loc = ta_locator
 
 
 @fill.method((ScriptBox, Anything))
@@ -2119,6 +2176,7 @@ def fill_scriptbox(sb, script):
     script = script.replace('"', '\\"').replace("\n", "\\n")
     js_script = '{}.setValue("{}")'.format(sb.name, script)
     sel.execute_script(js_script)
+    sel.execute_script('arguments[0].innerHTML = "{}";'.format(script), sel.element(sb.ta_loc))
 
 
 class EmailSelectForm(Pretty):

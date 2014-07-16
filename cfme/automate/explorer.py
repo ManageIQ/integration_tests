@@ -1,3 +1,4 @@
+from copy import copy
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
@@ -5,8 +6,8 @@ from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
-from cfme.web_ui import Form, Table, Tree, fill, Select, ScriptBox, DHTMLSelect, Region,\
-    form_buttons, accordion
+from cfme.web_ui import Form, Table, Tree, UpDownSelect, fill, Select, ScriptBox, DHTMLSelect,\
+    Region, form_buttons, accordion
 import cfme.exceptions as exceptions
 from utils.update import Updateable
 from utils import error, version
@@ -55,6 +56,11 @@ def tree_item_not_found_is_leaf(e):
     data = e.args[0]  # the data mapping
     return isinstance(e, exceptions.CandidateNotFound) and data['index'] == len(data['path']) - 1
 
+
+def open_order_dialog_func(_):
+    accordion.tree("Datastore", "Datastore")
+    cfg_btn("Edit Priority Order of Domains")
+
 nav.add_branch(
     'automate_explorer',
     {
@@ -96,7 +102,8 @@ nav.add_branch(
             {
                 "automate_explorer_domain_edit": lambda _: cfg_btn("Edit this Domain")
             }
-        ]
+        ],
+        "automate_explorer_domain_order": open_order_dialog_func,
     })
 
 
@@ -117,6 +124,77 @@ class TreeNode(pretty.Pretty):
             sel.force_navigate('automate_explorer_tree_path', context={'tree_item': self})
             return True
         return False
+
+
+class CopiableTreeNode(TreeNode):
+    copy_form = Form(fields=[
+        ("domain", Select("select#domain")),
+        ("override", "input#override_source")
+    ])
+
+    copy_button = form_buttons.FormButton("Copy")
+
+    @property
+    def class_name(self):
+        """Used for gathering the object name from the class name. If the name is not same,
+        you can set it manually. This exploits the fact that the classes are named exactly as it
+        appears in the UI, so it will work unless someone changes ui/class name. Then you can set it
+        manually, as it contains setter."""
+        try:
+            return self._class_name
+        except AttributeError:
+            return self.__class__.__name__
+
+    @class_name.setter
+    def class_name(self, value):
+        self._class_name = value
+
+    def _open_copy_dialog(self):
+        sel.force_navigate("automate_explorer_tree_path", context={"tree_item": self})
+        cfg_btn("Copy this {}".format(self.class_name))
+
+    # TODO: Make possible change `override` (did not do that because of pop-up tree)
+    def copy_to(self, domain=None):
+        self._open_copy_dialog()
+        if isinstance(domain, Domain):
+            domain_name = domain.name
+        else:
+            domain_name = str(domain)
+        fill(self.copy_form, {"domain": domain_name, "override": True}, action=self.copy_button)
+        flash.assert_message_match("Copy selected Automate {} was saved".format(self.class_name))
+
+        # Bunch'o functions that copy the chain to the domain and change domain's name
+        def _change_path_in_namespace(o, new_domain_name):
+            if isinstance(o, Domain):
+                if isinstance(new_domain_name, Domain):
+                    return new_domain_name
+                new_domain = copy(o)
+                new_domain.name = new_domain_name
+                return new_domain
+            else:
+                new_obj = copy(o)
+                if new_obj.parent is None:
+                    # This should happen in the domain part of this func so Error here
+                    raise Exception(
+                        "It is not expected that {} has no parent!".format(type(new_obj).__name__))
+                new_obj.parent = _change_path_in_namespace(
+                    new_obj.parent, new_domain_name)
+                return new_obj
+
+        def _change_parent_path_until_namespace(obj, new_domain_name):
+            if isinstance(obj, Namespace):
+                return _change_path_in_namespace(obj, new_domain_name)
+            else:
+                new_obj = copy(obj)
+                if new_obj.parent is None:
+                    # This should happen in the namespace func so Error here
+                    raise Exception(
+                        "It is not expected that {} has no parent!".format(type(new_obj).__name__))
+                new_obj.parent = _change_parent_path_until_namespace(
+                    new_obj.parent, new_domain_name)
+                return new_obj
+
+        return _change_parent_path_until_namespace(self, domain)
 
 
 class Domain(TreeNode, Updateable):
@@ -142,6 +220,12 @@ class Domain(TreeNode, Updateable):
         fill(self.form, updates, action=form_buttons.save)
         flash.assert_no_errors()
 
+    def delete(self, cancel=False):
+        sel.force_navigate("automate_explorer_tree_path", context={"tree_item": self})
+        cfg_btn("Remove this Domain", invokes_alert=True)
+        sel.handle_alert(cancel)
+        flash.assert_message_match('Automate Domain "{}": Delete successful'.format(self.name))
+
     @property
     def is_enabled(self):
         sel.force_navigate("automate_explorer_domain_edit", context={"domain": self})
@@ -151,6 +235,26 @@ class Domain(TreeNode, Updateable):
 
 def_domain = version.pick({version.LOWEST: None,
                            '5.3': Domain('Default')})
+
+domain_order_selector = UpDownSelect(
+    "select#seq_fields",
+    "//img[@alt='Move selected fields up']",
+    "//img[@alt='Move selected fields down']")
+
+
+def get_domain_order():
+    sel.force_navigate("automate_explorer_domain_order")
+    return domain_order_selector.get_items()
+
+
+def set_domain_order(items):
+    original_order = get_domain_order()
+    # We pick only the same amount of items for comparing
+    original_order = original_order[:len(items)]
+    if items == original_order:
+        return  # Ignore that, would cause error on Save click
+    fill(domain_order_selector, items)
+    sel.click(form_buttons.save)
 
 
 class Namespace(TreeNode, Updateable):
@@ -193,6 +297,8 @@ class Namespace(TreeNode, Updateable):
         self.parent = parent or domain
 
     def create(self, cancel=False):
+        if self.parent is not None and not self.parent.exists():
+            self.parent.create()
         sel.force_navigate('automate_explorer_namespace_new', context={'tree_item': self.parent})
         form_data = {'name': self.name,
                      'description': self.description}
@@ -234,7 +340,7 @@ class Namespace(TreeNode, Updateable):
                                              self.name, self.path)
 
 
-class Class(TreeNode, Updateable):
+class Class(CopiableTreeNode, Updateable):
     """Represents a Class in the CFME ui.  `Display Name` is not supported
        (it causes the name to be displayed differently in different
        places in the UI)."""
@@ -256,11 +362,17 @@ class Class(TreeNode, Updateable):
     def parent(self):
         return self.namespace
 
+    @parent.setter
+    def parent(self, p):
+        self.namespace = p
+
     def path_str(self):
         """Returns string path to this class, eg ns1/ns2/ThisClass"""
         return "/".join(self.path)
 
     def create(self, cancel=False):
+        if self.parent is not None and not self.parent.exists():
+            self.parent.create()
         sel.force_navigate("automate_explorer_class_new", context={"tree_item": self.namespace})
         fill(self.form, {'name_text': self.name,
                          'description_text': self.description,
@@ -379,7 +491,7 @@ class Class(TreeNode, Updateable):
         flash.assert_success_message('Schema for Automate Class "%s" was saved' % self.name)
 
 
-class Method(TreeNode, Updateable):
+class Method(CopiableTreeNode, Updateable):
     """Represents a Method in the CFME ui.  `Display Name` is not
        supported (it causes the name to be displayed differently in
        different places in the UI). """
@@ -387,7 +499,9 @@ class Method(TreeNode, Updateable):
     form = Form(
         fields=[('name_text', "//input[contains(@name,'method_name')]"),
                 ('display_name_text', "//input[contains(@name,'method_display_name')]"),
-                ('data_text', ScriptBox("miqEditor"))])
+                ('data_text', ScriptBox(
+                    name="miqEditor",
+                    ta_locator="//textarea[@id='method_data' or @id='cls_method_data']"))])
 
     def __init__(self, name=None, display_name=None, location=None, data=None, cls=None):
         self.name = name
@@ -400,7 +514,13 @@ class Method(TreeNode, Updateable):
     def parent(self):
         return self.cls
 
+    @parent.setter
+    def parent(self, p):
+        self.cls = p
+
     def create(self, cancel=False):
+        if self.parent is not None and not self.parent.exists():
+            self.parent.create()
         sel.force_navigate("automate_explorer_method_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,
                          # 'display_name_text': self.display_name,
@@ -502,7 +622,7 @@ def _fill_ifr_str(ifr, s):
     return fill(ifr, {"value": s})
 
 
-class Instance(TreeNode, Updateable):
+class Instance(CopiableTreeNode, Updateable):
     """Represents a Instance in the CFME ui.  `Display Name` is not
        supported (it causes the name to be displayed differently in
        different places in the UI). """
@@ -524,7 +644,13 @@ class Instance(TreeNode, Updateable):
     def parent(self):
         return self.cls
 
+    @parent.setter
+    def parent(self, p):
+        self.cls = p
+
     def create(self, cancel=False):
+        if self.parent is not None and not self.parent.exists():
+            self.parent.create()
         sel.force_navigate("automate_explorer_instance_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,
                          # 'display_name_text': self.display_name,
