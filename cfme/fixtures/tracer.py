@@ -38,7 +38,7 @@ import cfme.login
 import cfme.services.requests
 import cfme.services.catalogs.catalog_item
 import cfme.services.catalogs.catalog
-import cfme.services.catalogs.ec2_catalog_item
+import cfme.services.catalogs.cloud_catalog_item
 import cfme.services.catalogs.service_catalogs
 import cfme.web_ui
 import cfme.web_ui.accordion
@@ -90,7 +90,7 @@ default_to_trace = list(itertools.chain.from_iterable(
             cfme.services.requests,
             cfme.services.catalogs.catalog_item,
             cfme.services.catalogs.catalog,
-            cfme.services.catalogs.ec2_catalog_item,
+            cfme.services.catalogs.cloud_catalog_item,
             cfme.services.catalogs.service_catalogs,
             cfme.web_ui,
             cfme.web_ui.accordion,
