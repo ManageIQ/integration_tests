@@ -2,7 +2,7 @@ xpath = """
 return document.evaluate(path, document, null, 9, null).singleNodeValue;
 """
 
-nothing_in_flight = """
+in_flight = """
 function isHidden(el) {
     if(el === null) return true;
     return el.offsetParent === null;
@@ -14,6 +14,11 @@ function miqActive() { return window.miqAjaxTimers > 0; }
 function spinnerDisplayed() { return (!isHidden(document.getElementById("spinner_div")))
  && isHidden(document.getElementById("lightbox_div")); }
 function documentComplete() { return document.readyState == "complete"; }
-return !(jqueryActive() || prototypeActive() || miqActive() || spinnerDisplayed()
- || !(documentComplete()));
+return {
+    jquery: jqueryActive(),
+    prototype: prototypeActive(),
+    miq: miqActive(),
+    spinner: spinnerDisplayed(),
+    document: !documentComplete()
+};
 """
