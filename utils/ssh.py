@@ -5,6 +5,7 @@ import paramiko
 from scp import SCPClient
 
 from utils import conf
+from utils.log import logger
 from utils.net import net_check
 from utils.timeutil import parsetime
 
@@ -65,18 +66,23 @@ class SSHClient(paramiko.SSHClient):
         super(SSHClient, self).connect(hostname, *args, **kwargs)
 
     def run_command(self, command):
+        logger.info("Running command `{}`".format(command))
         return command_runner(self, command, self._streaming)
 
     def run_rails_command(self, command):
+        logger.info("Running rails command `{}`".format(command))
         return rails_runner(self, command, self._streaming)
 
     def run_rake_command(self, command):
+        logger.info("Running rake command `{}`".format(command))
         return rake_runner(self, command, self._streaming)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
+        logger.info("Transferring local file {} to remote {}".format(local_file, remote_file))
         return scp_putter(self, local_file, remote_file, **kwargs)
 
     def get_file(self, remote_file, local_path='', **kwargs):
+        logger.info("Transferring remote file {} to local {}".format(remote_file, local_path))
         return scp_getter(self, remote_file, local_path, **kwargs)
 
     def get_version(self):

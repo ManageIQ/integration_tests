@@ -1,0 +1,503 @@
+---
+QECliTesting:
+  __domain__.yaml:
+    object_type: domain
+    version: 1.0
+    object:
+      attributes:
+        name: QECliTesting
+        description: 
+        display_name: 
+        system: 
+        priority: 3
+        enabled: true
+  System:
+    __namespace__.yaml:
+      object_type: namespace
+      version: 1.0
+      object:
+        attributes:
+          name: System
+          description: 
+          display_name: 
+          system: 
+          priority: 
+          enabled: 
+    Request.class:
+      __class__.yaml:
+        object_type: class
+        version: 1.0
+        object:
+          attributes:
+            description: Automation Requests
+            display_name: 
+            name: Request
+            type: 
+            inherits: 
+            visibility: 
+            owner: 
+          schema:
+          - field:
+              aetype: assertion
+              name: guard
+              display_name: 
+              datatype: 
+              priority: 1
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: on_entry
+              display_name: 
+              datatype: 
+              priority: 2
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: relationship
+              name: rel1
+              display_name: 
+              datatype: 
+              priority: 3
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: meth1
+              display_name: 
+              datatype: 
+              priority: 4
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: relationship
+              name: rel2
+              display_name: 
+              datatype: 
+              priority: 5
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: meth2
+              display_name: 
+              datatype: 
+              priority: 6
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: relationship
+              name: rel3
+              display_name: 
+              datatype: 
+              priority: 7
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: meth3
+              display_name: 
+              datatype: 
+              priority: 8
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: relationship
+              name: rel4
+              display_name: 
+              datatype: 
+              priority: 9
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: meth4
+              display_name: 
+              datatype: 
+              priority: 10
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: relationship
+              name: rel5
+              display_name: 
+              datatype: 
+              priority: 11
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: meth5
+              display_name: 
+              datatype: 
+              priority: 12
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: relationship
+              name: rel6
+              display_name: 
+              datatype: 
+              priority: 13
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: meth6
+              display_name: 
+              datatype: 
+              priority: 14
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: relationship
+              name: rel7
+              display_name: 
+              datatype: 
+              priority: 15
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: meth7
+              display_name: 
+              datatype: 
+              priority: 16
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: relationship
+              name: rel8
+              display_name: 
+              datatype: 
+              priority: 17
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: meth8
+              display_name: 
+              datatype: 
+              priority: 18
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: relationship
+              name: rel9
+              display_name: 
+              datatype: 
+              priority: 19
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+          - field:
+              aetype: method
+              name: on_exit
+              display_name: 
+              datatype: 
+              priority: 20
+              owner: 
+              default_value: 
+              substitute: true
+              message: create
+              visibility: 
+              collect: 
+              scope: 
+              description: 
+              condition: 
+              on_entry: 
+              on_exit: 
+              on_error: 
+              max_retries: 
+              max_time: 
+      touch.yaml:
+        object_type: instance
+        version: 1.0
+        object:
+          attributes:
+            display_name: touch
+            name: touch
+            inherits: 
+            description: touch
+          fields:
+          - meth5:
+              value: touch
+      __methods__:
+        touch.rb: ! "#\n#            Automate Method\n#\n$evm.log(\"info\", \"Automate
+          Method Started\")\n#\n#            Method Code Goes here\n#\nFile.open(\"/var/www/miq/vmdb/check_file\",
+          \"w\") do |file|\n  file.write \"check content\"\nend\n#\n#\n#\n$evm.log(\"info\",
+          \"Automate Method Ended\")\nexit MIQ_OK\n"
+        touch.yaml:
+          object_type: method
+          version: 1.0
+          object:
+            attributes:
+              name: touch
+              display_name: touch
+              description: 
+              scope: instance
+              language: ruby
+              location: inline
+            inputs: []
+  .manifest.yaml:
+    __domain__.yaml:
+      classes: 1
+      instances: 1
+      method_files: 1
+      method_instances: 1
+      created_on: 2014-07-17 08:57:36.817250000 Z
+      updated_on: 2014-07-17 08:57:36.817250000 Z
+      size: 166
+      sha1: R1CzPRcjmxAPcN+xce4frIBF2L0=
+    System/__namespace__.yaml:
+      created_on: 2014-07-17 08:57:47.558377000 Z
+      updated_on: 2014-07-17 08:57:47.558377000 Z
+      size: 158
+      sha1: zkGwbz6m10Hqlqwr3s7lki+Xe+E=
+    System/Request.class/__class__.yaml:
+      created_on: 2014-07-17 08:57:47.641042000 Z
+      updated_on: 2014-07-17 08:57:47.641042000 Z
+      size: 7481
+      sha1: UeYRmK6LXqIVwZlOXlv2h1sBjGE=
+    System/Request.class/touch.yaml:
+      created_on: 2014-07-17 08:57:47.728553000 Z
+      updated_on: 2014-07-17 08:57:47.728553000 Z
+      size: 179
+      sha1: txwWHR3+Y2EmaM+sNIREkSCVStA=
+    System/Request.class/__methods__/touch.rb:
+      created_on: 2014-07-17 08:57:58.632248000 Z
+      updated_on: 2014-07-17 08:57:58.632248000 Z
+      size: 264
+      sha1: NlZPbLCCMh+GQQ3NFy3sYKUsTFg=
+    System/Request.class/__methods__/touch.yaml:
+      created_on: 2014-07-17 08:57:58.632248000 Z
+      updated_on: 2014-07-17 08:57:58.632248000 Z
+      size: 190
+      sha1: NG94aOPPf/tD7Bx9HVkR5H/Yswg=
