@@ -37,6 +37,9 @@ from utils.log import logger
 from utils.wait import wait_for
 from utils.pretty import Pretty
 
+from threading import local
+_thread_local = local()
+
 class_selector = re.compile(r"^(?:[a-zA-Z][a-zA-Z0-9]*)?(?:[#.][a-zA-Z0-9_-]+)+$")
 
 
@@ -175,7 +178,21 @@ def _nothing_in_flight():
     The element visibility check is complex because lightbox_div invokes visibility of spinner_div
     although it is not visible.
     """
-    return execute_script(js.nothing_in_flight)
+    in_flight = execute_script(js.in_flight)
+    anything_in_flight = any(v for v in in_flight.itervalues())
+    prev_log_msg = getattr(_thread_local, 'ajax_log_msg', '')
+
+    if anything_in_flight:
+        log_msg = ', '.join([k for k, v in in_flight.iteritems() if v])
+        # Log the message only if it's different from the last one
+        if prev_log_msg != log_msg:
+            _thread_local.ajax_log_msg = log_msg
+            logger.debug('Ajax running: {}'.format(log_msg))
+    elif prev_log_msg:
+        _thread_local.ajax_log_msg = ''
+        logger.debug('Ajax done')
+
+    return not anything_in_flight
 
 
 def wait_for_ajax():
