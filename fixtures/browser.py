@@ -6,10 +6,8 @@ import utils.browser
 from fixtures.artifactor_plugin import art_client
 from utils.datafile import template_env
 from utils.path import log_path
-from fixtures import navigation
 
-nav_fixture_names = filter(lambda x: x.endswith('_pg'), dir(navigation))
-browser_fixtures = set(['browser'] + nav_fixture_names)
+browser_fixtures = {'browser'}
 
 failed_test_tracking = {
     'tests': list(),
