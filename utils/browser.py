@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from shutil import rmtree
 from string import Template
 from tempfile import mkdtemp
+from threading import Timer
 
 import requests
 from selenium import webdriver
@@ -68,7 +69,8 @@ def ensure_browser_open():
     except:
         # If we couldn't poke the browser for any other reason, start a new one
         start()
-
+    if thread_locals.wharf:
+        thread_locals.wharf.renew()
     return browser()
 
 
@@ -241,11 +243,14 @@ class Wharf(object):
     def __init__(self, wharf_url):
         self.wharf_url = wharf_url
         self.docker_id = None
+        self.renew_timer = None
 
     def checkout(self):
-        checkout = json.loads(requests.get(os.path.join(self.wharf_url, 'checkout')).content)
+        response = requests.get(os.path.join(self.wharf_url, 'checkout'))
+        checkout = json.loads(response.content)
         self.docker_id = checkout.keys()[0]
         self.config = checkout[self.docker_id]
+        self._reset_renewal_timer()
         logger.info('Checked out webdriver container %s' % self.docker_id)
         return self.docker_id
 
@@ -254,6 +259,26 @@ class Wharf(object):
             requests.get(os.path.join(self.wharf_url, 'checkin', self.docker_id))
             logger.info('Checked in webdriver container %s' % self.docker_id)
             self.docker_id = None
+
+    def renew(self):
+        # If we have a docker id, renew_timer shouldn't still be None
+        if self.docker_id and not self.renew_timer.is_alive():
+            # You can call renew as frequently as desired, but it'll only run if
+            # the renewal timer has stopped or failed to renew
+            response = requests.get(os.path.join(self.wharf_url, 'renew', self.docker_id))
+            expiry_info = json.loads(response.content)
+            self.config.update(expiry_info)
+            self._reset_renewal_timer()
+            logger.info('Renewed webdriver container %s' % self.docker_id)
+
+    def _reset_renewal_timer(self):
+        if self.docker_id:
+            if self.renew_timer:
+                self.renew_timer.cancel()
+            self.renew_timer = Timer(self.config['expire_interval'], self.renew)
+            # mark as daemon so the timer is rudely destroyed on shutdown
+            self.renew_timer.daemon = True
+            self.renew_timer.start()
 
     def __nonzero__(self):
         return bool(self.docker_id)
