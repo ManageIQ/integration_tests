@@ -72,7 +72,7 @@ def pytest_configure(config):
             cmd.append(str(config.getvalue('run_id')))
         proc = subprocess.Popen(cmd)
         config.option.artifactor_port = art_client.port
-    else:
+    elif isinstance(art_client, ArtifactorClient):
         art_client.port = config.option.artifactor_port
 
 
