@@ -1,31 +1,19 @@
 import pytest
-from cfme.automate.explorer import Namespace, Class
+from cfme.automate.explorer import Class
 from utils.randomness import generate_random_string
 from utils.update import update
 import utils.error as error
+import cfme.tests.automate as ta
 
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
-
-def _make_namespace():
-    name = generate_random_string(8)
-    description = generate_random_string(32)
-    ns = Namespace(name=name, description=description)
-    ns.create()
-    return ns
-
-
-@pytest.fixture(scope='module')
-def a_namespace():
-    return _make_namespace()
+make_namespace = pytest.fixture(scope='module')(ta.make_namespace)
 
 
 @pytest.fixture
-def a_class(a_namespace):
-    return Class(name=generate_random_string(8),
-                 description=generate_random_string(32),
-                 namespace=a_namespace)
+def a_class(make_namespace):
+    return ta.a_class(make_namespace)
 
 
 def test_class_crud(a_class):
@@ -63,10 +51,10 @@ def test_duplicate_class_disallowed(a_class):
         a_class.create()
 
 
-def test_same_class_name_different_namespace(a_namespace):
-    other_namespace = _make_namespace()
+def test_same_class_name_different_namespace(make_namespace):
+    other_namespace = ta.make_namespace()
     name = generate_random_string(8)
-    cls1 = Class(name=name, namespace=a_namespace)
+    cls1 = Class(name=name, namespace=make_namespace)
     cls2 = Class(name=name, namespace=other_namespace)
     cls1.create()
     cls2.create()

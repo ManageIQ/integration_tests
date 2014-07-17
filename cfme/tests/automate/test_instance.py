@@ -1,39 +1,20 @@
 import pytest
-from cfme.automate.explorer import Namespace, Class, Instance
 from utils.randomness import generate_random_string
 from utils.update import update
 import utils.error as error
-
+import cfme.tests.automate as ta
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
-def _make_namespace():
-    name = generate_random_string(8)
-    description = generate_random_string(32)
-    ns = Namespace(name=name, description=description)
-    ns.create()
-    return ns
-
-
-def _make_class():
-    name = generate_random_string(8)
-    description = generate_random_string(32)
-    cls = Class(name=name, description=description, namespace=_make_namespace())
-    cls.create()
-    return cls
-
-
 @pytest.fixture(scope='module')
-def a_class():
-    return _make_class()
+def make_class():
+    return ta.make_class()
 
 
 @pytest.fixture
-def an_instance(a_class):
-    return Instance(name=generate_random_string(8),
-                    description=generate_random_string(32),
-                    cls=a_class)
+def an_instance(make_class):
+    return ta.an_instance(make_class)
 
 
 def test_instance_crud(an_instance):

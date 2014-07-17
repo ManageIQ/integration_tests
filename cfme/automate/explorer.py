@@ -5,7 +5,8 @@ from cfme.web_ui.menu import nav
 import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
-from cfme.web_ui import Form, Table, Tree, fill, Select, ScriptBox, DHTMLSelect, Region
+from cfme.web_ui import Form, Table, Tree, fill, Select, ScriptBox, DHTMLSelect, Region,\
+    form_buttons, accordion
 import cfme.exceptions as exceptions
 from utils.update import Updateable
 from utils import error, version
@@ -15,11 +16,8 @@ from utils.log import logger
 
 tree = Tree(version.pick({version.LOWEST: '//table//tr[@title="Datastore"]/../..',
                          '5.3': '//ul//a[@title="Datastore"]/../../..'}))
+datastore_tree = partial(accordion.tree, "Datastore", "Datastore")
 cfg_btn = partial(tb.select, 'Configuration')
-
-submit_and_cancel_buttons = [('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']"),
-                           ('save_btn', "//ul[@id='form_buttons']/li/img[@alt='Save Changes']"),
-                           ('cancel_btn', "//ul[@id='form_buttons']/li/img[@alt='Cancel']")]
 
 
 def datastore_checkbox(name):
@@ -40,7 +38,8 @@ def nav_edit(path):
     if len(path) > dp_length:
         cfg_btn('Edit Selected Item')
     else:
-        cfg_btn('Edit Selected Namespaces')
+        cfg_btn(version.pick({version.LOWEST: 'Edit Selected Namespaces',
+                              '5.3': 'Edit Selected Namespace'}))
 
 
 def get_path(o):
@@ -70,6 +69,7 @@ nav.add_branch(
                   lambda _: cfg_btn('Remove selected Items', invokes_alert=True)}],
 
              'automate_explorer_namespace_new': lambda _: cfg_btn('Add a New Namespace'),
+             'automate_explorer_domain_new': lambda _: cfg_btn('Add a New Domain'),
              'automate_explorer_class_new': lambda _: cfg_btn('Add a New Class'),
              'automate_explorer_method_edit': lambda _: cfg_btn('Edit this Method'),
              'automate_explorer_instance_edit': lambda _: cfg_btn('Edit this Instance'),
@@ -88,7 +88,14 @@ nav.add_branch(
              'automate_explorer_schema': [lambda _: select_tab("Schema"),
              {
                  'automate_explorer_schema_edit': lambda _: cfg_btn("Edit selected Schema")
-             }]}]
+             }]}],
+        "automate_explorer_domain":
+        [
+            lambda ctx: datastore_tree(ctx["domain"].name),
+            {
+                "automate_explorer_domain_edit": lambda _: cfg_btn("Edit this Domain")
+            }
+        ]
     })
 
 
@@ -112,10 +119,34 @@ class TreeNode(object):
         return "<%s name=%s>" % (self.__class__.__name__, self.name)
 
 
-class Domain(TreeNode):
-    def __init__(self, name=None):
+class Domain(TreeNode, Updateable):
+    form = Form(fields=[('name', "//input[@id='ns_name']"),
+                        ('description', "//input[@id='ns_description']"),
+                        ('enabled', "//input[@id='ns_enabled']")])
+
+    def __init__(self, name=None, description=None, enabled=False):
         self.name = name
         self.parent = None
+        self.description = description
+        self.enabled = enabled
+
+    def create(self, cancel=False):
+        sel.force_navigate('automate_explorer_domain_new', context={'tree_item': self.parent})
+        fill(self.form, {'name': self.name,
+                         'description': self.description,
+                         'enabled': self.enabled},
+             action=form_buttons.cancel if cancel else form_buttons.add)
+
+    def update(self, updates):
+        sel.force_navigate("automate_explorer_domain_edit", context={"domain": self})
+        fill(self.form, updates, action=form_buttons.save)
+        flash.assert_no_errors()
+
+    @property
+    def is_enabled(self):
+        sel.force_navigate("automate_explorer_domain_edit", context={"domain": self})
+        self.enabled = sel.element(self.form.enabled).is_selected()
+        return self.enabled
 
 
 def_domain = version.pick({version.LOWEST: None,
@@ -125,11 +156,9 @@ def_domain = version.pick({version.LOWEST: None,
 class Namespace(TreeNode, Updateable):
     form = Form(fields=[('name', "//*[@id='ns_name']"),
                         ('description', "//*[@id='ns_description']"),
-                        ('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']")]
-                + submit_and_cancel_buttons)
 
-    create_btn_map = {True: form.cancel_btn, False: form.add_btn}
-    update_btn_map = {True: form.cancel_btn, False: form.save_btn}
+                        # Can't use generic form_buttons here, get multiple matches
+                        ('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']")])
 
     @staticmethod
     def make_path(*names, **kwargs):
@@ -143,7 +172,7 @@ class Namespace(TreeNode, Updateable):
                 n = Namespace(name="bar", parent=Namespace(name="foo"))
         """
 
-        domain = kwargs.get('domain', def_domain)
+        domain = kwargs.get('domain', None)
 
         if len(names) == 1 and domain:
             names = list(names)
@@ -161,35 +190,32 @@ class Namespace(TreeNode, Updateable):
     def __init__(self, name=None, description=None, parent=None, domain=def_domain):
         self.name = name
         self.description = description
-        if domain and not parent:
-            self.parent = domain
-        else:
-            self.parent = parent
+        self.parent = parent or domain
 
     def create(self, cancel=False):
         sel.force_navigate('automate_explorer_namespace_new', context={'tree_item': self.parent})
         form_data = {'name': self.name,
                      'description': self.description}
         try:
-            fill(self.form, form_data, action=self.create_btn_map[cancel])
+            fill(self.form, form_data, action=form_buttons.cancel if cancel else self.form.add_btn)
             flash.assert_success_message('Automate Namespace "%s" was added' % self.name)
         finally:
             # if there was a validation error we need to cancel out
-            if sel.is_displayed(self.form.cancel_btn):
-                sel.click(self.form.cancel_btn)
+            if sel.is_displayed(form_buttons.cancel):
+                sel.click(form_buttons.cancel)
 
     def update(self, updates, cancel=False):
         sel.force_navigate('automate_explorer_edit', context={'tree_item': self.parent,
-                                                     'table_item': self})
+                                                              'table_item': self})
         form_data = {'name': updates.get('name') or None,
                      'description': updates.get('description') or None}
-        fill(self.form, form_data, action=self.update_btn_map[cancel])
+        fill(self.form, form_data, action=form_buttons.cancel if cancel else form_buttons.save)
         flash.assert_success_message('Automate Namespace "%s" was saved' %
                                      updates.get('name', self.name))
 
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_table_select", context={'tree_item': self.parent,
-                                                             'table_item': self})
+                                                                      'table_item': self})
         dp_length = version.pick({version.LOWEST: 1,
                                   '5.3': 2})
         if len(self.path) > dp_length:
@@ -216,8 +242,7 @@ class Class(TreeNode, Updateable):
     form = Form(fields=[('name_text', "//input[@name='name']"),
                         ('display_name_text', "//input[@name='display_name']"),
                         ('description_text', "//input[@name='description']"),
-                        ('inherits_from_select', Select("//select[@name='inherits_from']"))]
-                + submit_and_cancel_buttons)
+                        ('inherits_from_select', Select("//select[@name='inherits_from']"))])
 
     def __init__(self, name=None, display_name=None, description=None, inherits_from=None,
                  namespace=None):
@@ -242,13 +267,7 @@ class Class(TreeNode, Updateable):
                          # 'display_name_text': self.display_name,
                          'inherits_from_select':
                          self.inherits_from and self.inherits_from.path_str()},
-             action={True: self.form.cancel_btn, False: self.form.add_btn}[cancel])
-        try:
-            flash.assert_success_message('Automate Class "%s" was added' % self.path_str())
-        except Exception as e:
-            if error.match("Name has already been taken", e):
-                sel.click(self.form.cancel_btn)
-            raise
+             action=form_buttons.cancel if cancel else form_buttons.add)
 
     def update(self, updates, cancel=False):
         sel.force_navigate("automate_explorer_edit", context={"tree_item": self.parent,
@@ -258,7 +277,7 @@ class Class(TreeNode, Updateable):
                          # 'display_name_text': updates.get('display_name'),
                          'inherits_from_select':
                          updates.get('inherits_from') and updates.get('inherits_from').path_str()},
-             action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
+             action=form_buttons.cancel if cancel else form_buttons.save)
 
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_delete", context={'tree_item': self.parent,
@@ -329,9 +348,7 @@ class Class(TreeNode, Updateable):
                          remove("//a[contains(@title, 'delete this') "
                                 "and contains(@href, 'arr_id=%s')]/img" % idx))])
 
-    schema_edit_page = Region(
-        locators=dict({'add_field_btn': "//img[@alt='Equal-green']"}.items() +
-                      submit_and_cancel_buttons))
+    schema_edit_page = Region(locators={'add_field_btn': "//img[@alt='Equal-green']"})
 
     def edit_schema(self, add_fields=None, remove_fields=None):
         sel.force_navigate("automate_explorer_schema_edit", context={'tree_item': self})
@@ -357,7 +374,7 @@ class Class(TreeNode, Updateable):
                      'max_time_text': add_field.max_time},
                  action=f.add_entry_button)
 
-        sel.click(self.schema_edit_page.save_btn)
+        sel.click(form_buttons.save)
         flash.assert_success_message('Schema for Automate Class "%s" was saved' % self.name)
 
 
@@ -369,8 +386,7 @@ class Method(TreeNode, Updateable):
     form = Form(
         fields=[('name_text', "//input[contains(@name,'method_name')]"),
                 ('display_name_text', "//input[contains(@name,'method_display_name')]"),
-                ('data_text', ScriptBox("miqEditor"))]
-        + submit_and_cancel_buttons)
+                ('data_text', ScriptBox("miqEditor"))])
 
     def __init__(self, name=None, display_name=None, location=None, data=None, cls=None):
         self.name = name
@@ -388,12 +404,12 @@ class Method(TreeNode, Updateable):
         fill(self.form, {'name_text': self.name,
                          # 'display_name_text': self.display_name,
                          'data_text': self.data},
-             action={True: self.form.cancel_btn, False: self.form.add_btn}[cancel])
+             action=form_buttons.cancel if cancel else form_buttons.add)
         try:
             flash.assert_success_message('Automate Method "%s" was added' % self.name)
         except Exception as e:
             if error.match("Name has already been taken", e):
-                sel.click(self.form.cancel_btn)
+                sel.click(form_buttons.cancel)
             raise
 
     def update(self, updates, cancel=False):
@@ -401,7 +417,7 @@ class Method(TreeNode, Updateable):
         fill(self.form, {'name_text': updates.get('name'),
                          'description_text': updates.get('description'),
                          'data_text': updates.get('data')},
-             action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
+             action=form_buttons.cancel if cancel else form_buttons.save)
 
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})
@@ -493,8 +509,7 @@ class Instance(TreeNode, Updateable):
         fields=[('name_text', "//input[contains(@name,'inst_name')]"),
                 ('display_name_text', "//input[contains(@name,'inst_display_name')]"),
                 ('description_text', "//input[contains(@name,'inst_description')]"),
-                ('values', InstanceFields())]
-        + submit_and_cancel_buttons)
+                ('values', InstanceFields())])
 
     def __init__(self, name=None, display_name=None, description=None, values=None, cls=None):
         self.name = name
@@ -513,12 +528,12 @@ class Instance(TreeNode, Updateable):
                          # 'display_name_text': self.display_name,
                          'description_text': self.description,
                          'values': self.values},
-             action={True: self.form.cancel_btn, False: self.form.add_btn}[cancel])
+             action=form_buttons.cancel if cancel else form_buttons.add)
         try:
             flash.assert_success_message('Automate Instance "%s" was added' % self.name)
         except Exception as e:
             if error.match("Name has already been taken", e):
-                sel.click(self.form.cancel_btn)
+                sel.click(form_buttons.cancel)
             raise
 
     def update(self, updates, cancel=False):
@@ -527,7 +542,7 @@ class Instance(TreeNode, Updateable):
                          # 'display_name_text': updates.get('display_name'),
                          'description_text': updates.get('description'),
                          'values': updates.get('values')},
-             action={True: self.form.cancel_btn, False: self.form.save_btn}[cancel])
+             action=form_buttons.cancel if cancel else form_buttons.save)
 
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})
