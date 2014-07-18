@@ -109,7 +109,7 @@ def test_certificates_present(ssh_client, filename, given_md5):
     From wiki:
     `Ships with /etc/pki/product/<id>.pem where RHEL is "69" and CF is "167"`
     """
-    file_exists = bool(ssh_client.run_command("ls '%s'" % filename)[0]) == 0
+    file_exists = ssh_client.run_command("test -f '%s'" % filename)[0] == 0
     assert file_exists, "File %s does not exist!" % filename
     if given_md5:
         md5_of_file = ssh_client.run_command("md5sum '%s'" % filename)[1].strip()
@@ -127,3 +127,11 @@ def test_db_connection(db):
     """
     databases = db.session.query(db['miq_databases']).all()
     assert len(databases) > 0
+
+
+@pytest.mark.bugzilla(1121202)
+def test_asset_precompiled(ssh_client):
+    version = ssh_client.get_version()
+    if not version.startswith('5.2'):
+        file_exists = ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets")[0] == 0
+        assert file_exists, "Assets not precompiled"
