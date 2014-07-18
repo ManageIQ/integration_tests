@@ -42,9 +42,9 @@ class Logger(ArtifactorBasePlugin):
         test_ident = "{}/{}".format(test_location, test_name)
         if slaveid in self.tests:
             if self.tests[slaveid].in_progress:
-                print "Test already running, can't start another"
+                print "Test already running, can't start another, logger"
                 return None
-        self.tests[slaveid] = self.Test(slaveid)
+        self.tests[slaveid] = self.Test(test_ident)
         self.tests[slaveid].in_progress = True
         artifacts = []
         os_filename = self.ident + "-" + "cfme.log"
