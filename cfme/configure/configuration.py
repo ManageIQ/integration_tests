@@ -16,9 +16,7 @@ from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
-from utils import version
-from utils.pretty import Pretty
-
+from utils import version, conf
 
 access_tree = partial(accordion.tree, "Access Control")
 database_tree = partial(accordion.tree, "Database")
@@ -31,7 +29,7 @@ replication_worker = Form(
         ('port', "//input[@id='replication_worker_port']"),
         ('username', "//input[@id='replication_worker_username']"),
         ('password', "//input[@id='replication_worker_password']"),
-        ('password_verify', "//input[@id='replication_worker_username']"),
+        ('password_verify', "//input[@id='replication_worker_verify']"),
         ('host', "//input[@id='replication_worker_host']"),
     ]
 )
@@ -1714,7 +1712,10 @@ def set_replication_worker_host(host):
     sel.force_navigate("cfg_settings_currentserver_workers")
     fill(
         replication_worker,
-        dict(host=host),
+        dict(host=host,
+             username=conf.credentials['database']['username'],
+             password=conf.credentials['database']['password'],
+             password_verify=conf.credentials['database']['password']),
         action=form_buttons.save
     )
 

@@ -1,4 +1,5 @@
 import pytest
+import random
 
 import cfme.web_ui.flash as flash
 from cfme.configure import configuration as conf
@@ -11,7 +12,36 @@ from utils.wait import wait_for
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
 
+random_provider = []
 
+
+def pytest_generate_tests(metafunc):
+    # Filter out providers without provisioning data or hosts defined
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
+    if not idlist:
+        return
+    new_idlist = []
+    new_argvalues = []
+    if 'random_provider' in metafunc.fixturenames:
+        if random_provider:
+            argnames, new_argvalues, new_idlist = random_provider
+        else:
+            single_index = random.choice(range(len(idlist)))
+            new_idlist = ['random_provider']
+            new_argvalues = argvalues[single_index]
+            argnames.append('random_provider')
+            new_argvalues.append('')
+            new_argvalues = [new_argvalues]
+            random_provider.append(argnames)
+            random_provider.append(new_argvalues)
+            random_provider.append(new_idlist)
+    else:
+        new_idlist = idlist
+        new_argvalues = argvalues
+    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+
+
+@pytest.mark.usefixtures("random_provider")
 @pytest.mark.downstream
 def test_appliance_replicate_between_regions(request, provider_crud):
     """Tests that a provider added to an appliance in one region
@@ -30,14 +60,16 @@ def test_appliance_replicate_between_regions(request, provider_crud):
     with appl1.browser_session():
         conf.set_replication_worker_host(appl2.address)
         flash.assert_message_contain("Configuration settings saved for CFME Server")
-        conf.set_server_role('database_synchronization')
+        conf.set_server_roles(database_synchronization=True)
+        sel.force_navigate("cfg_diagnostics_region_replication")
+        wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
+                 num_sec=360, delay=10, fail_func=sel.refresh)
+        assert conf.get_replication_status()
+        wait_for(lambda: conf.get_replication_backlog(navigate=False) == 0, fail_condition=False,
+                 num_sec=120, delay=10, fail_func=sel.refresh)
         provider_crud.create()
         wait_for_a_provider()
-        sel.force_navigate("cfg_diagnostics_region_replication")
-        wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=None,
-                 num_sec=120, delay=10, fail_func=sel.refresh)
-        assert conf.get_replication_status()
-        wait_for(lambda: conf.get_replication_backlog(navigate=False) == 0, fail_condition=None,
-                 num_sec=120, delay=10, fail_func=sel.refresh)
+
     with appl2.browser_session():
+        wait_for_a_provider()
         assert provider_crud.exists
