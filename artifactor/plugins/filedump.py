@@ -39,4 +39,3 @@ class Filedump(ArtifactorBasePlugin):
             f.write(contents)
         test_ident = "{}/{}".format(test_location, test_name)
         return None, {'artifacts': {test_ident: {'files': {fd_ident: artifacts}}}}
-
