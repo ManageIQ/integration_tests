@@ -16,6 +16,7 @@ from artifactor.utils import ArtifactorBasePlugin
 from jinja2 import Environment, FileSystemLoader
 from utils.path import template_path
 import os
+import shutil
 import time
 
 
@@ -84,10 +85,7 @@ class Reporter(ArtifactorBasePlugin):
             else:
                 counts['passed'] += 1
                 overall_status = "passed"
-                if self.only_failed:
-                    continue
-            if overall_status == 'skipped' and self.only_failed:
-                continue
+
             test['statuses']['overall'] = overall_status
             test_data = {'name': test_name, 'outcomes': test['statuses']}
             if test.get('start_time', None):
@@ -114,6 +112,75 @@ class Reporter(ArtifactorBasePlugin):
                                            for f in test['files']['merkyl']]
             template_data['tests'].append(test_data)
         template_data['counts'] = counts
-        data = template_env.get_template('test_report.html').render(**template_data)
+
+        tests = {'_sub': {'root': {'_sub': {}, '_stats': {
+            'passed': 0, 'failed': 0, 'skipped': 0,
+            'error': 0, 'xpassed': 0, 'xfailed': 0}}},
+            '_stats': {'passed': 0, 'failed': 0, 'skipped': 0,
+                       'error': 0, 'xpassed': 0, 'xfailed': 0}}
+        for test in template_data['tests']:
+            self.build_dict("root/" + test['name'], tests, test)
+
+        template_data['ndata'] = self.build_li(tests)
+
+        template_data['tests'] = [x for x in template_data['tests']
+                                  if x['outcomes']['overall'] not in ['skipped', 'passed']]
+
+        data = template_env.get_template('test_report2.html').render(**template_data)
         with open(os.path.join(log_dir, 'report.html'), "w") as f:
             f.write(data)
+        try:
+            shutil.copytree(template_path.join('dist').strpath, os.path.join(log_dir, 'dist'))
+        except OSError:
+            pass
+
+    def build_dict(self, path, container, contents):
+        segs = path.split('/')
+        head = segs[0]
+        end = segs[1:]
+        if not end:
+            container['_sub'][head] = contents
+            container['_stats'][contents['outcomes']['overall']] += 1
+        else:
+            if head not in container['_sub']:
+                container['_sub'][head] = {'_stats':
+                                           {'passed': 0, 'failed': 0, 'skipped': 0,
+                                            'error': 0, 'xpassed': 0, 'xfailed': 0}, '_sub': {}}
+            self.build_dict('/'.join(end), container['_sub'][head], contents)
+            container['_stats'][contents['outcomes']['overall']] += 1
+
+    def build_li(self, lev):
+        bimdict = {'passed': 'success',
+                   'failed': 'warning',
+                   'error': 'danger',
+                   'skipped': 'primary',
+                   'xpassed': 'danger',
+                   'xfailed': 'success'}
+        list_string = '<ul>\n'
+        for k, v in lev['_sub'].iteritems():
+            if 'name' in v:
+                label = '<span class="label label-{}">{}</span>'.format(
+                    bimdict[v['outcomes']['overall']], v['outcomes']['overall'].upper())
+                link = '<a href="#{}">{} {}</a>'.format(
+                    v['name'], os.path.split(v['name'])[1], label)
+                list_string += '<li>{}</li>\n'.format(link)
+            elif '_sub' in v:
+                percenstring = ""
+                bmax = 0
+                for kek, val in v['_stats'].iteritems():
+                    if kek != 'skipped':
+                        bmax += val
+                if bmax:
+                    percen = "{:.2f}".format(float(v['_stats']['passed']) / float(bmax) * 100)
+                    if float(percen) == 100.0:
+                        level = 'passed'
+                    elif float(percen) > 80.0:
+                        level = 'failed'
+                    else:
+                        level = 'error'
+                    percenstring = '<span name="blab" class="label label-{}">{}%</span>'.format(
+                        bimdict[level], percen)
+
+                list_string += '<li>{} {}{}</li>\n'.format(k, str(percenstring), self.build_li(v))
+        list_string += '</ul>\n'
+        return list_string
