@@ -26,7 +26,6 @@ from utils.net import random_port, net_check
 from utils.path import project_path
 from utils.wait import wait_for
 import atexit
-import time
 
 
 class DummyClient(object):
