@@ -22,9 +22,11 @@ already been used, it will die
 from artifactor import ArtifactorClient
 import pytest
 from utils.conf import env
-from utils.net import random_port
+from utils.net import random_port, net_check
 from utils.path import project_path
+from utils.wait import wait_for
 import atexit
+import time
 
 
 class DummyClient(object):
@@ -71,6 +73,8 @@ def pytest_configure(config):
             cmd.append('--run-id')
             cmd.append(str(config.getvalue('run_id')))
         proc = subprocess.Popen(cmd)
+        wait_for(net_check, func_args=[art_client.port, '127.0.0.1'], func_kwargs={'force': True},
+                 num_sec=10, message="wait for artifactor to start")
         config.option.artifactor_port = art_client.port
     else:
         art_client.port = config.option.artifactor_port
