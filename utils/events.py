@@ -251,7 +251,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
         flash.assert_no_errors()
 
     # ENABLE THE DOMAIN IF UPSTREAM
-    if not version.appliance_is_downstream():
+    if version.current_version() >= "5.3":
         if not def_domain.is_enabled:
             logger.info("Enabling the {} domain to enable our automation.".format(def_domain.name))
             with update(def_domain):
