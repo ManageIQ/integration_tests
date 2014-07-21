@@ -1499,11 +1499,13 @@ class Tree(Pretty):
         It makes:
 
         .. code-block:: python
+
             ["asd", "fgh", ("ijk", [...]), ("lmn", [...])]
 
         to
 
         .. code-block:: python
+
             ["asd", "fgh", "ijk", "lmn"]
 
         Useful for checking of contents of current tree level
