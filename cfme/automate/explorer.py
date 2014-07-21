@@ -268,6 +268,7 @@ class Class(TreeNode, Updateable):
                          'inherits_from_select':
                          self.inherits_from and self.inherits_from.path_str()},
              action=form_buttons.cancel if cancel else form_buttons.add)
+        flash.assert_success_message('Automate Class "%s" was added' % self.path_str())
 
     def update(self, updates, cancel=False):
         sel.force_navigate("automate_explorer_edit", context={"tree_item": self.parent,
