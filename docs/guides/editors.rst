@@ -212,6 +212,13 @@ and the colouring depends on the context so one has better view on the situation
 To install, simply install ``Neon Color Scheme`` package. Then open ``Preferences -> Settings - User``
 and add this entry ``"color_scheme": "Packages/Neon Color Scheme/Neon.tmTheme"`` to the conf dict.
 
+Python Improved
+"""""""""""""""""
+Together with Neon, this package makes python source code better readable. Install with package
+manager ``C-P -> Install Package -> Python Improved``. Then after installation, open whatever
+python source file you like, click ``View -> Syntax -> Open all with current extension as ...`` and
+select PythonImproved.
+
 
 emacs
 -----
