@@ -126,7 +126,7 @@ class Reporter(ArtifactorBasePlugin):
         template_data['tests'] = [x for x in template_data['tests']
                                   if x['outcomes']['overall'] not in ['skipped', 'passed']]
 
-        data = template_env.get_template('test_report2.html').render(**template_data)
+        data = template_env.get_template('test_report.html').render(**template_data)
         with open(os.path.join(log_dir, 'report.html'), "w") as f:
             f.write(data)
         try:

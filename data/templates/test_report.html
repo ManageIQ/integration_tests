@@ -4,6 +4,55 @@
 {% block title %}{{title}}{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="dist/themes/default/style.min.css" />
+<script>
+//bigjson = $.parseJSON('{{big_data}}');
+
+//var build_li = function ting(lev, next_lev) {
+//  this_lev = $('<ul></ul>').appendTo(next_lev)
+//    $.each( lev, function( key, value ) {
+//      if (value['name']) {
+//        $('<li>'+value['name']+'</li>').appendTo(this_lev)
+//      } else {
+//       new_lev = $('<li>'+key+'</li>').appendTo(this_lev)
+//        ting(value, new_lev)
+//      }
+//    });
+//}
+
+$().ready(function(){
+
+$(function() {
+  $('#container').jstree({
+    "plugins" : [ "search" ],
+    "search" : {
+        "show_only_matches": true,
+        "search_leaves_only": true,
+    }
+  })
+  .bind("ready.jstree", function (event, data) {
+    // you get two params - event & data - check the core docs for a detailed description
+    $(this).jstree("open_all");
+  }).bind('select_node.jstree', function(e,data) {
+    window.location.href = data.node.a_attr.href;
+});
+  var to = false;
+  $('#plugins4_q').keyup(function () {
+    if(to) { clearTimeout(to); }
+    to = setTimeout(function () {
+      var v = $('#plugins4_q').val();
+      $('#container').jstree(true).search(v);
+      if (v == ""){
+        $.each(document.getElementsByName('blab'), function(k,v){v.style.display='Inline'})
+      }
+      else {
+        $.each(document.getElementsByName('blab'), function(k,v){v.style.display='None'})
+      }
+    }, 250);
+  });
+});
+})
+</script>
 <header class="navbar navbar-static-top" role="banner">
     <div class="container">
         <div class="navbar-header">
@@ -20,6 +69,21 @@
     </div>
 </header>
 <div class="container" id="content">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <div class="row">
+                <div class="col-md-10">
+		  Test Navigation<input id="plugins4_q" value="" class="input" style="margin:0em auto 1em auto; display:block; padding:4px; border-radius:4px; border:1px solid silver;" type="text">
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+	  <div id="container">
+	    {{ndata}}
+	  </div>
+	</div>
+    </div>
+
 {% for test in tests %}
     <div class="panel panel-info">
         <div class="panel-heading">
@@ -124,3 +188,7 @@
 {% endfor %}
 </div>
 {% endblock content %}
+
+{% block scripts %}
+<script src="dist/jstree.min.js"></script>
+{% endblock scripts %}
