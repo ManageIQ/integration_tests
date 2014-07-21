@@ -37,6 +37,7 @@ xfailing has precedence over skipping.
 Example:
 
 .. code-block:: python
+
    @pytest.mark.parametrize("something_parametrized", [1,2,3])
    @pytest.mark.bugzilla(
        1234, 2345, 3456,
@@ -438,6 +439,7 @@ def bug(request):
     Usage:
 
     .. code-block:: python
+
         @pytest.mark.bugzilla(1234)
         # or just @pytest.mark.bugzilla if you want no generic skipping and so
         def test_something(bug):
