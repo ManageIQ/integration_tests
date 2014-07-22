@@ -81,11 +81,11 @@ class TestControlOnQuadicons(object):
         soft_assert(
             test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm not running")
 
-    def test_power_off(self, test_vm, verify_vm_running, soft_assert):
+    def test_power_off(self, test_vm, verify_vm_running, soft_assert, register_event):
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_ON, timeout_in_minutes=12)
-        # register_event(
-        #     test_vm.provider_crud.get_yaml_data()['type'],
-        #     "vm", vm_name, ["vm_power_on_req", "vm_power_on"])
+        register_event(
+            test_vm.provider_crud.get_yaml_data()['type'],
+            "vm", test_vm.name, ["vm_power_off_req", "vm_power_off"])
         test_vm.power_control_from_cfme(option=Vm.POWER_OFF, cancel=False)
         flash.assert_message_contain("Stop initiated")
         pytest.sel.force_navigate(
@@ -103,11 +103,11 @@ class TestControlOnQuadicons(object):
         soft_assert(
             not test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm running")
 
-    def test_power_on(self, test_vm, verify_vm_stopped, soft_assert):
+    def test_power_on(self, test_vm, verify_vm_stopped, soft_assert, register_event):
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, timeout_in_minutes=12)
-        # register_event(
-        #     test_vm.provider_crud.get_yaml_data()['type'],
-        #     "vm", vm_name, ["vm_power_on_req", "vm_power_on"])
+        register_event(
+            test_vm.provider_crud.get_yaml_data()['type'],
+            "vm", test_vm.name, ["vm_power_on_req", "vm_power_on"])
         test_vm.power_control_from_cfme(option=Vm.POWER_ON, cancel=False)
         flash.assert_message_contain("Start initiated")
         pytest.sel.force_navigate(
@@ -173,13 +173,14 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(
             not vm.is_pwr_option_available_in_cfme(option=Vm.RESET, from_details=from_details))
 
-    def test_power_off(self, provider_init, test_vm, verify_vm_running, soft_assert):
+    def test_power_off(
+            self, provider_init, test_vm, verify_vm_running, soft_assert, register_event):
         test_vm.wait_for_vm_state_change(
             desired_state=Vm.STATE_ON, timeout_in_minutes=12, from_details=True)
         last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
-        # register_event(
-        #     test_vm.provider_crud.get_yaml_data()['type'],
-        #     "vm", vm_name, ["vm_power_on_req", "vm_power_on"])
+        register_event(
+            test_vm.provider_crud.get_yaml_data()['type'],
+            "vm", test_vm.name, ["vm_power_off_req", "vm_power_off"])
         self._check_power_options_when_on(soft_assert, test_vm, from_details=True)
         test_vm.power_control_from_cfme(option=Vm.POWER_OFF, cancel=False, from_details=True)
         flash.assert_message_contain("Stop initiated")
@@ -196,12 +197,12 @@ class TestVmDetailsPowerControlPerProvider(object):
             soft_assert(new_last_boot_time == last_boot_time,
                 "ui: " + new_last_boot_time + " should ==  orig: " + last_boot_time)
 
-    def test_power_on(self, provider_init, test_vm, verify_vm_stopped, soft_assert):
+    def test_power_on(self, provider_init, test_vm, verify_vm_stopped, soft_assert, register_event):
         test_vm.wait_for_vm_state_change(
             desired_state='off', timeout_in_minutes=12, from_details=True)
-        # register_event(
-        #     test_vm.provider_crud.get_yaml_data()['type'],
-        #     "vm", vm_name, ["vm_power_on_req", "vm_power_on"])
+        register_event(
+            test_vm.provider_crud.get_yaml_data()['type'],
+            "vm", test_vm.name, ["vm_power_on_req", "vm_power_on"])
         last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
         state_chg_time = test_vm.get_detail(properties=("Power Management", "State Changed On"))
         self._check_power_options_when_off(soft_assert, test_vm, from_details=True)
@@ -221,13 +222,13 @@ class TestVmDetailsPowerControlPerProvider(object):
         soft_assert(new_last_boot_time != last_boot_time,
             "ui: " + new_last_boot_time + " ==  orig: " + last_boot_time)
 
-    def test_suspend(self, provider_init, test_vm, verify_vm_running, soft_assert):
+    def test_suspend(self, provider_init, test_vm, verify_vm_running, soft_assert, register_event):
         test_vm.wait_for_vm_state_change(
             desired_state=Vm.STATE_ON, timeout_in_minutes=12, from_details=True)
         last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
-        # register_event(
-        #     test_vm.provider_crud.get_yaml_data()['type'],
-        #     "vm", vm_name, ["vm_power_on_req", "vm_power_on"])
+        register_event(
+            test_vm.provider_crud.get_yaml_data()['type'],
+            "vm", test_vm.name, ["vm_suspend_req", "vm_suspend"])
         test_vm.power_control_from_cfme(option=Vm.SUSPEND, cancel=False, from_details=True)
         flash.assert_message_contain("Suspend initiated")
         pytest.sel.force_navigate(
@@ -250,12 +251,13 @@ class TestVmDetailsPowerControlPerProvider(object):
             soft_assert(new_last_boot_time == last_boot_time,
                 "ui: " + new_last_boot_time + " should ==  orig: " + last_boot_time)
 
-    def test_start_from_suspend(self, provider_init, test_vm, verify_vm_suspended, soft_assert):
+    def test_start_from_suspend(
+            self, provider_init, test_vm, verify_vm_suspended, soft_assert, register_event):
         test_vm.wait_for_vm_state_change(
             desired_state=Vm.STATE_SUSPENDED, timeout_in_minutes=12, from_details=True)
-        # register_event(
-        #     test_vm.provider_crud.get_yaml_data()['type'],
-        #     "vm", vm_name, ["vm_power_on_req", "vm_power_on"])
+        register_event(
+            test_vm.provider_crud.get_yaml_data()['type'],
+            "vm", test_vm.name, ["vm_power_on_req", "vm_power_on"])
         last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
         state_chg_time = test_vm.get_detail(properties=("Power Management", "State Changed On"))
         self._check_power_options_when_off(soft_assert, test_vm, from_details=True)
