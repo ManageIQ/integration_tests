@@ -600,8 +600,8 @@ class BasicInformation(Updateable):
     )
 
     def __init__(self, company_name=None, appliance_name=None, appliance_zone=None, time_zone=None):
-        assert (company_name or appliance_name or appliance_zone or time_zone,
-                "You must provide at least one param!")
+        assert (company_name or appliance_name or appliance_zone or time_zone), \
+            "You must provide at least one param!"
         self.details = dict(
             company_name=company_name,
             appliance_name=appliance_name,
