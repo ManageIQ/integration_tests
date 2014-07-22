@@ -45,8 +45,8 @@ def test_zone_change_appliance_zone(request):
     zone = conf.Zone(
         name=generate_random_string(size=5),
         description=generate_random_string(size=8))
-    zone.create()
     request.addfinalizer(zone.delete)
+    zone.create()
     basic_info = conf.BasicInformation(appliance_zone=zone.name)
     basic_info.update()
     assert zone.description == conf.server_zone_description()
