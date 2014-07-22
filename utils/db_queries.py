@@ -12,7 +12,7 @@ def get_configuration_details(ip_address=None):
 
     Returns:
         If the data weren't found in the DB, :py:class:`NoneType`
-        If the data were found, it returns tuple `(region, server name, server id)`
+        If the data were found, it returns tuple `(region, server name, server id, server zone id)`
     """
     if ip_address is None:
         ip_address = cfmedb.hostname
@@ -31,9 +31,9 @@ def get_configuration_details(ip_address=None):
                 )
             )
             if servers:
-                return region.region, servers[0].name, servers[0].id
+                return region.region, servers[0].name, servers[0].id, servers[0].zone_id
             else:
-                return None, None, None
+                return None, None, None, None
         else:
             return None
 
@@ -57,3 +57,26 @@ def get_server_name(ip_address=None):
         return get_configuration_details(ip_address)[1]
     except TypeError:
         return None
+
+
+def get_server_zone_id(ip_address=None):
+    try:
+        return get_configuration_details(ip_address)[3]
+    except TypeError:
+        return None
+
+
+def get_zone_description(zone_id, ip_address=None):
+    if ip_address is None:
+        ip_address = cfmedb.hostname
+
+    with database_on_server(ip_address) as db:
+        zones = list(
+            db.session.query(db["zones"]).filter(
+                db["zones"].id == zone_id
+            )
+        )
+        if zones:
+            return zones[0].description
+        else:
+            return None

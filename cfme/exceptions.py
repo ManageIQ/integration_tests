@@ -205,3 +205,11 @@ class ListAccordionLinkNotFound(CFMEException):
     expended :py:mod:`cfme.web_ui.listaccordion` content section.
     """
     pass
+
+
+class ZoneNotFound(CFMEException):
+    """
+    Raised when a specific Zone cannot be found in the method
+    :py:mod:`cfme.configure.configuration`.
+    """
+    pass

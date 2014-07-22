@@ -5,16 +5,18 @@ from urlparse import urlparse
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound, AuthModeUnknown
+from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound
 from cfme.web_ui import Calendar, Form, Region, Select, Table, accordion, fill, flash, form_buttons
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
-from utils.db_queries import get_server_id, get_server_name, get_server_region
+from utils.db_queries import (get_server_id, get_server_name, get_server_region, get_server_zone_id,
+                              get_zone_description)
 from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
 from utils import version
+
 
 access_tree = partial(accordion.tree, "Access Control")
 database_tree = partial(accordion.tree, "Database")
@@ -83,9 +85,25 @@ tag_form = Form(
                               '5.3': "//span[@class='glyphicon glyphicon-plus']"}))
     ])
 
+zone_form = Form(
+    fields=[
+        ("name", "//input[@id='name']"),
+        ("description", "//input[@id='description']"),
+        ("smartproxy_ip", "//input[@id='proxy_server_ip']"),
+        ("ntp_server_1", "//input[@id='ntp_server_1']"),
+        ("ntp_server_2", "//input[@id='ntp_server_2']"),
+        ("ntp_server_3", "//input[@id='ntp_server_3']"),
+        ("max_scans", Select("//*[@id='max_scans']")),
+        ("user", "//input[@id='userid']"),
+        ("password", "//input[@id='password']"),
+        ("verify", "//input[@id='verify']"),
+    ])
+
+
 records_table = Table("//div[@id='records_div']/table[@class='style3']")
 category_table = Table("//div[@id='settings_co_categories']//table[@class='style3']")
 classification_table = Table("//div[@id='classification_entries_div']//table[@class='style3']")
+zones_table = Table("//div[@id='settings_list']/table[@class='style3']")
 
 
 def get_ip_address():
@@ -119,6 +137,10 @@ def add_tag(cat_name):
 def edit_tag(cat_name, tag_name):
     fill(tag_form, {'category': cat_name})
     classification_table.click_cell('name', tag_name)
+
+
+def server_zone_description():
+    return get_zone_description(get_server_zone_id())
 
 nav.add_branch("configuration",
     {
@@ -185,6 +207,26 @@ nav.add_branch("configuration",
             }),
         ),
 
+        "cfg_settings_zones":
+        [
+            lambda _: settings_tree(
+                version.pick({
+                    "default": "Region: Region %d [%d]" % server_region_pair(),
+                    "5.3 ": "CFME Region: Region %d [%d]" % server_region_pair(),
+                }),
+                "Zones"),
+            {
+                "cfg_settings_zone":
+                [
+                    lambda ctx: zones_table.click_cell("name", ctx["zone_name"]),
+                    {
+                        "cfg_settings_zone_edit":
+                        lambda _: tb.select("Configuration", "Edit this Zone")
+                    }
+                ]
+            }
+        ],
+
         "cfg_settings_schedules":
         [
             lambda _: settings_tree(
@@ -214,8 +256,8 @@ nav.add_branch("configuration",
                 }),
                 "Zones",
                 version.pick({
-                    version.LOWEST: "Zone: Default Zone",
-                    "5.3": "Zone: Default Zone (current)"
+                    version.LOWEST: "Zone: %s" % server_zone_description(),
+                    "5.3": "Zone: %s (current)" % server_zone_description()
                 }),
                 "Server: %s [%d] (current)" % (server_name(), server_id())
             ),
@@ -539,6 +581,7 @@ class BasicInformation(Updateable):
     Args:
         company_name: Company name.
         appliance_name: Appliance name.
+        appliance_zone: Appliance Zone.
         time_zone: Time Zone.
 
     Usage:
@@ -551,15 +594,18 @@ class BasicInformation(Updateable):
         fields=[
             ('company_name', "//input[@id='server_company']"),
             ('appliance_name', "//input[@id='server_name']"),
+            ('appliance_zone', Select("//select[@id='server_zone']")),
             ('time_zone', Select("//select[@id='server_timezone']")),
         ]
     )
 
-    def __init__(self, company_name=None, appliance_name=None, time_zone=None):
-        assert company_name or appliance_name or time_zone, "You must provide at least one param!"
+    def __init__(self, company_name=None, appliance_name=None, appliance_zone=None, time_zone=None):
+        assert (company_name or appliance_name or appliance_zone or time_zone), \
+            "You must provide at least one param!"
         self.details = dict(
             company_name=company_name,
             appliance_name=appliance_name,
+            appliance_zone=appliance_zone,
             time_zone=time_zone
         )
 
@@ -568,7 +614,13 @@ class BasicInformation(Updateable):
 
         """
         sel.force_navigate("cfg_settings_currentserver_server")
-        fill(self.basic_information, self.details, action=form_buttons.save)
+        fill(self.basic_information, self.details)
+        # Workaround for issue with form_button staying dimmed.
+        if self.details["appliance_zone"] is not None:
+            sel.browser().execute_script(
+                "$j.ajax({type: 'POST', url: '/ops/settings_form_field_changed/server',"
+                " data: {'server_zone':'%s'}})" % (self.details["appliance_zone"]))
+        sel.click(form_buttons.save)
 
 
 class SMTPSettings(Updateable):
@@ -1234,6 +1286,136 @@ class DatabaseBackupSchedule(Schedule):
             form_buttons.cancel()
         else:
             form_buttons.save()
+
+
+class Zone(object):
+    """ Configure/Configuration/Region/Zones functionality
+
+    Create/Read/Update/Delete functionality.
+    """
+    def __init__(self,
+                 name=None,
+                 description=None,
+                 smartproxy_ip=None,
+                 ntp_server_1=None,
+                 ntp_server_2=None,
+                 ntp_server_3=None,
+                 max_scans=None,
+                 user=None,
+                 password=None,
+                 verify=None):
+        self.name = name
+        self.description = description
+        self.smartproxy_ip = smartproxy_ip
+        self.ntp_server_1 = ntp_server_1
+        self.ntp_server_2 = ntp_server_2
+        self.ntp_server_3 = ntp_server_3
+        self.max_scans = sel.ByValue(max_scans)
+        self.user = user
+        self.password = password
+        self.verify = verify
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {
+            'name': create and kwargs.get('name'),
+            'description': kwargs.get('description'),
+            'smartproxy_ip': kwargs.get('smartproxy_ip'),
+            'ntp_server_1': kwargs.get('ntp_server_1'),
+            'ntp_server_2': kwargs.get('ntp_server_2'),
+            'ntp_server_3': kwargs.get('ntp_server_3'),
+            'max_scans': kwargs.get('max_scans'),
+            'user': kwargs.get('user'),
+            'password': kwargs.get('password'),
+            'verify': kwargs.get('verify')
+        }
+
+    def create(self, cancel=False):
+        """ Create a new Zone from the information stored in the object.
+
+        Args:
+            cancel: Whether to click on the cancel button to interrupt the creation.
+        """
+        sel.force_navigate("cfg_settings_zones")
+        tb.select("Configuration", "Add a new Zone")
+        if self.name is not None:
+            sel.browser().execute_script(
+                "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?name=%s',"
+                " data: {'name':'%s'}})" % (self.name, self.name))
+        if self.description is not None:
+            sel.browser().execute_script(
+                "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?description=%s',"
+                " data: {'description':'%s'}})" % (self.description,
+                self.description))
+        fill(
+            zone_form,
+            self._form_mapping(True, **self.__dict__))
+        if cancel:
+            form_buttons.cancel()
+        else:
+            form_buttons.add()
+            flash.assert_message_match('Zone "%s" was added' % self.name)
+
+    def update(self, updates, cancel=False):
+        """ Modify an existing zone with information from this instance.
+
+        Args:
+            updates: Dict with fields to be updated
+            cancel: Whether to click on the cancel button to interrupt the edit.
+
+        """
+        # sel.force_navigate("cfg_settings_zone_edit",
+        #    context={"zone_name": self.name})
+        self.go_to_by_description(self.description)
+        tb.select("Configuration", "Edit this Zone")
+        fill(zone_form, self._form_mapping(**updates))
+        if cancel:
+            form_buttons.cancel()
+        else:
+            form_buttons.save()
+            flash.assert_message_match('Zone "%s" was saved' % self.name)
+
+    def delete(self, cancel=False):
+        """ Delete the Zone represented by this object.
+
+        Args:
+            cancel: Whether to click on the cancel button in the pop-up.
+        """
+        self.go_to_by_description(self.description)
+        tb.select("Configuration", "Delete this Zone", invokes_alert=True)
+        sel.handle_alert(cancel)
+        if not cancel:
+            flash.assert_message_match('Zone "%s": Delete successful' % self.name)
+
+    @classmethod
+    def go_to_by_description(cls, description):
+        """ Finds and navigates to a particular Zone by its description.
+
+        This method looks for a Zone with the provided description. If it
+        finds one (and only one) Zone with that description, it navigates to it.
+        Otherwise, it raises an Exception.
+
+        Args:
+            description: description of the Zone.
+
+        Raises:
+            ZoneNotFound: If no single Zone is found with the specified description.
+        """
+        # TODO Stop using this method as a workaround once Zones can be located by name in the UI.
+        sel.force_navigate("cfg_settings_zones")
+        links = sel.elements("//table[@class='style3']//td[contains(text(), '%s')]" % description)
+        if len(links) == 1:
+            sel.click(links.pop())
+        else:
+            raise ZoneNotFound("No unique Zones with the description '%s'" % description)
+
+    @property
+    def exists(self):
+        sel.force_navigate("cfg_settings_zones")
+        table = Table(zones_table)
+        if table.find_cell(1, "Zone: %s" % self.description):
+            return True
+        else:
+            return False
 
 
 class Category(object):
