@@ -275,7 +275,10 @@ class Wharf(object):
         if self.docker_id:
             if self.renew_timer:
                 self.renew_timer.cancel()
-            self.renew_timer = Timer(self.config['expire_interval'], self.renew)
+
+            # Floor div by 2 and add a second to renew roughly halfway before expiration
+            cautious_expire_interval = (self.config['expire_interval'] >> 1) + 1
+            self.renew_timer = Timer(cautious_expire_interval, self.renew)
             # mark as daemon so the timer is rudely destroyed on shutdown
             self.renew_timer.daemon = True
             self.renew_timer.start()
