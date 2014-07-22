@@ -25,7 +25,8 @@ from urllib2 import urlopen
 from utils.conf import cfme_data
 
 
-MIQ_ACTUAL_VERSION = '31'
+NIGHTLY_CFME_ID = "cfme"
+NIGHTLY_MIQ_ID = "manageiq"
 
 
 def parse_cmd_line():
@@ -43,45 +44,42 @@ def parse_cmd_line():
     return args
 
 
-def template_name(image_name, version=None):
+def template_name(image_link, version=None):
+    pattern = re.compile(r'.*/(.*)')
+    image_name = pattern.findall(image_link)[0]
     image_name = image_name.lower()
-    # nightly builds
-    if "nightly" in image_name:
-        pattern = re.compile(r'[^\d]*-(\d*).\w*')
-        result = pattern.findall(image_name)
-        # downstream
-        if "cloudforms" in image_name:
-            # use version file
-            if version:
-                # cloudforms-nightly-xxxx*-yyyymmddhhmm.ova => cfme-nightly-vvvv*-mmdd
-                return "cfme-nightly-%s-%s" % (version, result[0][4:8])
-            # without version file
-            else:
-                # cloudforms-nightly-xxxx*-yyyymmddhhmm.ova => cfme-nightly-yyyymmddhhmm
-                return "cfme-nightly-%s" % result[0]
-        # upstream
-        elif "manageiq" in image_name:
-            # use version file
-            if version:
-                # manageiq-nightly-xxxx*--yyyymmddhhmm.ova => miq-nightly-vvvv*-mmdd
-                return "miq-nightly-%s-%s" % (version, result[0][4:8])
-            else:
-                # manageiq-nightly-xxxx*--yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
-                return "miq-nightly-%s" % result[0]
+    # nightly builds CFME
+    if NIGHTLY_CFME_ID in image_name:
+        # version now contains for example "cfme-5.3.0.0-16.el6cf.alpha8"
+        # so we return that as the name of template
+        if version:
+            return version
+        else:
+            pattern = re.compile(r'[^\d]*?-(\d).(\d)-(\d).*')
+            result = pattern.findall(image_name)
+            # cfme-pppp-x.y-z.arch.[pppp].ova => cfme-nightly-x.y-z
+            return "cfme-nightly-%s.%s-%s" % (result[0][0], result[0][1], result[0][2])
+    # nightly builds MIQ
+    elif NIGHTLY_MIQ_ID in image_name:
+        # assuming version will be in similar format as cfme
+        if version:
+            return version
+        else:
+            pattern = re.compile(r'[^\d]*?-master-(\d*)-*')
+            result = pattern.findall(image_name)
+            # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
+            return "miq-nightly-%s" % result[0]
     # z-stream
     else:
-        if "cloudforms" in image_name:
-            pattern = re.compile(r'[.-](\d+(?:\d+)?)')
-            result = pattern.findall(image_name)
-            # use version file
-            if version:
-                # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-vvvv-mmdd
-                return "cfme-%s-%s%s" % (version, result[3], result[4])
-            # without version file
-            else:
-                # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-xy-yyyymmddi
-                str_res = ''.join(result)
-                return "cfme-%s-%s" % (str_res[0:2], str_res[2:])
+        pattern = re.compile(r'[.-](\d+(?:\d+)?)')
+        result = pattern.findall(image_name)
+        if version:
+            # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-vvvv-mmdd
+            return "cfme-%s-%s%s" % (version, result[3], result[4])
+        else:
+            # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-xy-yyyymmddi
+            str_res = ''.join(result)
+            return "cfme-%s-%s" % (str_res[0:2], str_res[2:])
 
 
 def get_version(dir_url):
