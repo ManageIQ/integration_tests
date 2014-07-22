@@ -96,7 +96,7 @@ class Region(Pretty):
     pretty_attrs = ['title']
 
     def __getattr__(self, name):
-        if hasattr(self, 'locators'):
+        if hasattr(self, 'locators') and name in self.locators:
             return self.locators[name]
         else:
             raise AttributeError("Region has no attribute named " + name)

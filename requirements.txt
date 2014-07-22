@@ -6,7 +6,7 @@ docker-py
 execnet
 flake8
 functools32
-function_trace<1.1.0
+function_trace
 ipython
 Jinja2
 ovirt-engine-sdk-python
