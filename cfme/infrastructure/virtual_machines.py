@@ -280,6 +280,16 @@ class Vm(object):
         self.load_details(refresh=True)
         return details_page.infoblock.text(*properties)
 
+    def get_tags(self):
+        """Returns all tags that are associated with this VM"""
+        self.load_details(refresh=True)
+        # TODO: Make it count with different "My Company"
+        table = details_page.infoblock.element("Smart Management", "My Company Tags")
+        tags = []
+        for row in sel.elements("./tbody/tr/td", root=table):
+            tags.append(row.text.encode("utf-8").strip())
+        return tags
+
     def power_control_from_provider(self, option):
         """Power control a vm from the provider
 
