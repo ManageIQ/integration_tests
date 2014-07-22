@@ -19,7 +19,7 @@ pytestmark = [
 
 
 def pytest_generate_tests(metafunc):
-    #Filter out providers without host provisioning data defined
+    # Filter out providers without host provisioning data defined
     argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'host_provisioning')
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
