@@ -107,6 +107,8 @@ class Reporter(ArtifactorBasePlugin):
                         test_data['video'] = filename.replace(log_dir, "")
                     elif "cfme.log" in filename:
                         test_data['cfme'] = filename.replace(log_dir, "")
+                    elif "function" in filename:
+                        test_data['function'] = filename.replace(log_dir, "")
                 if "merkyl" in ident:
                     test_data['merkyl'] = [f.replace(log_dir, "")
                                            for f in test['files']['merkyl']]
@@ -123,7 +125,8 @@ class Reporter(ArtifactorBasePlugin):
 
         template_data['ndata'] = self.build_li(tests)
 
-        template_data['tests'] = [x for x in template_data['tests']
+        if self.only_failed:
+            template_data['tests'] = [x for x in template_data['tests']
                                   if x['outcomes']['overall'] not in ['skipped', 'passed']]
 
         data = template_env.get_template('test_report.html').render(**template_data)
