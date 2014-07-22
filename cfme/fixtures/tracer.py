@@ -1,3 +1,4 @@
+import os.path
 import function_trace
 # disable traceback of the tracer functions
 function_trace.__tracebackhide__ = True
@@ -51,6 +52,7 @@ import cfme.web_ui.paginator
 import cfme.web_ui.search
 import cfme.web_ui.tabstrip
 import cfme.web_ui.toolbar
+from fixtures.artifactor_plugin import art_client
 
 
 default_to_trace = function_trace.mapcat(
@@ -134,11 +136,15 @@ def pytest_addoption(parser):
 def pytest_runtest_call(__multicall__, item):
     """hook to run each test with traced function calls"""
     if item.config.getvalue('tracer'):
+        out = art_client.fire_hook('filedump', grab_result=True,
+                                   test_name=item.name, test_location=item.parent.name,
+                                   filename="function_trace.txt", contents="",
+                                   fd_ident="func_trace")
         with function_trace.trace_on(
                 tracer=function_trace.PerThreadFileTracer(
                     to_trace,
                     depths=depths,
-                    filename='./tracelogs/' + item.name.replace("/", "_"))):
+                    filename=os.path.join(out['artifact_path'], 'filedump-function_trace.txt'))):
             __multicall__.execute()
 
 
