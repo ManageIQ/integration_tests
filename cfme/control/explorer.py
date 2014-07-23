@@ -951,10 +951,16 @@ class Alert(Updateable):
                  emails=None,
                  timeline_event=None,
                  mgmt_event=None):
-        for key, value in locals().iteritems():
-            if key == "self":
-                continue
-            setattr(self, key, value)
+        self.description = description
+        self.active = active
+        self.based_on = based_on
+        self.evaluate = evaluate
+        self.driving_event = driving_event
+        self.notification_frequency = notification_frequency
+        self.snmp_trap = snmp_trap
+        self.emails = emails
+        self.timeline_event = timeline_event
+        self.mgmt_event = mgmt_event
 
     def __str__(self):
         """Conversion to string used when assigning in multibox selector."""
