@@ -117,6 +117,14 @@ to pytest when using the `--auto-gen-test` option.
 Currently DockerBot needs to be told if you want to update the pip. This can be done with the
 `--update-pip` option.
 
+Firewalling
+-----------
+
+If you run with a firewall and wish to do either event or smtp testing, you will need to open up the
+required ports on your local machine. Bear in mind also that your DockerBot container will also try
+to access these ports, so it may be that you also need to allow connections from the DockerBot
+internal subnet to your device network. 
+
 Full DockerBot example
 ----------------------
 
