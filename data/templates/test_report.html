@@ -32,7 +32,9 @@ $(function() {
   })
   .bind("ready.jstree", function (event, data) {
     // you get two params - event & data - check the core docs for a detailed description
-    $(this).jstree("open_all");
+  $("span[name=mod_lev]").parents(".jstree-closed").each(function () {
+    $("#container").jstree("open_node", this, false);
+  });
   }).bind('select_node.jstree', function(e,data) {
     window.location.href = data.node.a_attr.href;
 });
