@@ -115,13 +115,13 @@ class Reporter(ArtifactorBasePlugin):
             template_data['tests'].append(test_data)
         template_data['counts'] = counts
 
-        tests = {'_sub': {'root': {'_sub': {}, '_stats': {
+        tests = {'_sub': {'tests': {'_sub': {}, '_stats': {
             'passed': 0, 'failed': 0, 'skipped': 0,
             'error': 0, 'xpassed': 0, 'xfailed': 0}}},
             '_stats': {'passed': 0, 'failed': 0, 'skipped': 0,
                        'error': 0, 'xpassed': 0, 'xfailed': 0}}
         for test in template_data['tests']:
-            self.build_dict("root/" + test['name'], tests, test)
+            self.build_dict(test['name'].replace('cfme/', ''), tests, test)
 
         template_data['ndata'] = self.build_li(tests)
 
@@ -162,10 +162,11 @@ class Reporter(ArtifactorBasePlugin):
         list_string = '<ul>\n'
         for k, v in lev['_sub'].iteritems():
             if 'name' in v:
+                teststring = '<span name="mod_lev" class="label label-primary">T</span>'
                 label = '<span class="label label-{}">{}</span>'.format(
                     bimdict[v['outcomes']['overall']], v['outcomes']['overall'].upper())
-                link = '<a href="#{}">{} {}</a>'.format(
-                    v['name'], os.path.split(v['name'])[1], label)
+                link = '<a href="#{}">{} {} {}</a>'.format(
+                    v['name'], os.path.split(v['name'])[1], teststring, label)
                 list_string += '<li>{}</li>\n'.format(link)
             elif '_sub' in v:
                 percenstring = ""
@@ -183,7 +184,8 @@ class Reporter(ArtifactorBasePlugin):
                         level = 'error'
                     percenstring = '<span name="blab" class="label label-{}">{}%</span>'.format(
                         bimdict[level], percen)
-
-                list_string += '<li>{} {}{}</li>\n'.format(k, str(percenstring), self.build_li(v))
+                    modstring = '<span name="mod_lev" class="label label-primary">M</span>'
+                list_string += '<li>{} {}<span>&nbsp;</span>{}{}</li>\n'.format(k, modstring,
+                                                              str(percenstring), self.build_li(v))
         list_string += '</ul>\n'
         return list_string
