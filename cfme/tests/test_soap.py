@@ -42,6 +42,7 @@ class TestSoapBasicInteraction(object):
             assert get_host.guid == host.guid
             assert get_host.name == host.name
 
+    @pytest.mark.bugzilla(1096768)
     def test_get_clusters_from_ems(self, soap_client):
         for ems in soap_client.service.GetEmsList():
             assert isinstance(soap_client.service.EVMGetClusters(ems.guid), list)
