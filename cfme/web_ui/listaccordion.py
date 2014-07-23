@@ -97,6 +97,18 @@ def select(name, link_title):
     link.click()
 
 
+def get_active_links(name):
+    """ Returns all active links in a section specified by name
+
+    Args:
+        name: Name of the section
+    """
+    link_root = _content_element(name)
+    link_loc = './/div[@class="panecontent"]//a[@title]/img/..'
+    active_els = sel.elements(link_loc, root=link_root)
+    return [ListAccordionLink(el.get_attribute("title"), link_root) for el in active_els]
+
+
 class ListAccordionLink(object):
     """ Active link in an accordion section
 
