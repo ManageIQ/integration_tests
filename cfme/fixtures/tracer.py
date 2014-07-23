@@ -140,11 +140,15 @@ def pytest_runtest_call(__multicall__, item):
                                    test_name=item.name, test_location=item.parent.name,
                                    filename="function_trace.txt", contents="",
                                    fd_ident="func_trace")
+        if out:
+            filename = os.path.join(out['artifact_path'], 'filedump-function_trace.txt')
+        else:
+            filename = './tracelogs/' + item.name.replace("/", "_")
         with function_trace.trace_on(
                 tracer=function_trace.PerThreadFileTracer(
                     to_trace,
                     depths=depths,
-                    filename=os.path.join(out['artifact_path'], 'filedump-function_trace.txt'))):
+                    filename=filename)):
             __multicall__.execute()
 
 
