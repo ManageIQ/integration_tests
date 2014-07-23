@@ -172,34 +172,49 @@ def wait_until(f, msg="Webdriver wait timed out"):
     return WebDriverWait(browser(), 120.0).until(f, msg) and time() - t
 
 
-def _nothing_in_flight():
-    """Check remaining requests.
+def in_flight():
+    """Check remaining (running) ajax requests
 
-    The element visibility check is complex because lightbox_div invokes visibility of spinner_div
-    although it is not visible.
+    The element visibility check is complex because lightbox_div invokes visibility
+    of spinner_div although it is not visible.
+
+    Returns:
+        Dictionary of js-related keys and booleans as its values, depending on status.
+        The keys are: ``jquery, prototype, miq, spinner and document``.
+        The values are: ``True`` if running, ``False`` otherwise.
     """
-    in_flight = execute_script(js.in_flight)
-    anything_in_flight = any(v for v in in_flight.itervalues())
-    prev_log_msg = getattr(_thread_local, 'ajax_log_msg', '')
-
-    if anything_in_flight:
-        log_msg = ', '.join([k for k, v in in_flight.iteritems() if v])
-        # Log the message only if it's different from the last one
-        if prev_log_msg != log_msg:
-            _thread_local.ajax_log_msg = log_msg
-            logger.debug('Ajax running: {}'.format(log_msg))
-    elif prev_log_msg:
-        _thread_local.ajax_log_msg = ''
-        logger.debug('Ajax done')
-
-    return not anything_in_flight
+    return execute_script(js.in_flight)
 
 
 def wait_for_ajax():
     """
-    Waits unti lall ajax timers are complete, in other words, waits until there are no
+    Waits until all ajax timers are complete, in other words, waits until there are no
     more pending ajax requests, page load should be finished completely.
+
+    Raises:
+        TimedOutError: when ajax did not load in time
     """
+
+    _thread_local.ajax_log_msg = ''
+
+    def _nothing_in_flight():
+        """Checks if there is no ajax in flight and also logs current status
+        """
+        prev_log_msg = _thread_local.ajax_log_msg
+
+        currently_in_flight = in_flight()
+        anything_in_flight = any(v for v in currently_in_flight.itervalues())
+        if anything_in_flight:
+            log_msg = ', '.join([k for k, v in currently_in_flight.iteritems() if v])
+            # Log the message only if it's different from the last one
+            if prev_log_msg != log_msg:
+                _thread_local.ajax_log_msg = log_msg
+                logger.debug('Ajax running: {}'.format(log_msg))
+        elif prev_log_msg:
+            logger.debug('Ajax done')
+
+        return not anything_in_flight
+
     wait_for(
         _nothing_in_flight,
         num_sec=30, delay=0.1, message="wait for ajax", quiet=True)
