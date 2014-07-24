@@ -14,6 +14,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 from time import sleep, time
 from collections import Iterable
 from textwrap import dedent
+import cgi
 import json
 import re
 from utils import conf
@@ -352,6 +353,7 @@ def double_click(loc, wait_ajax=True):
         wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
             handy to not do that. (some toolbar clicks)
     """
+    log("Clicking on {}.".format(elfmt(loc)))
     # Move mouse cursor to element
     move_to_element(loc)
     # and then click on current mouse position
@@ -370,6 +372,7 @@ def move_to_element(loc, **kwargs):
     Returns: It passes `loc` through to make it possible to use in case we want to immediately use
         the element that it is being moved to.
     """
+    log("Moving to element {}.".format(elfmt(loc)))
     brand = "//div[@id='page_header_div']//div[contains(@class, 'brand')]"
     wait_for_ajax()
     el = element(loc, **kwargs)
@@ -476,6 +479,7 @@ def send_keys(loc, text):
         text: The text to inject into the element.
     """
     if text is not None:
+        log("Sending keys '{}' to {}.".format(text.strip(), elfmt(loc)))
         move_to_element(loc).send_keys(text)
         wait_for_ajax()
 
@@ -493,6 +497,7 @@ def checkbox(loc, set_to=False):
     Returns: None
     """
     if set_to is not None:
+        log("Setting checkbox {} to {}.".format(elfmt(loc), str(set_to)))
         el = move_to_element(loc)
         if el.is_selected() is not set_to:
             logger.debug("Setting checkbox %s to %s" % (str(loc), str(set_to)))
@@ -683,6 +688,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     # browser fixture should do this, but it's needed for subsequent calls
     ensure_browser_open()
+    log("force_navigate to {}, try {}".format(page_name, _tries))
 
     # Clear any running "spinnies"
     try:
@@ -834,6 +840,7 @@ def set_text(loc, text):
         text: The text to inject into the element.
     """
     if text is not None:
+        log("Setting text on {} to '{}'.".format(elfmt(loc), text.strip()))
         el = move_to_element(loc)
         el.clear()
         send_keys(el, text)
@@ -882,12 +889,14 @@ def select(loc, o):
 
 @select.method((object, ByValue))
 def _select_tuple(loc, val):
+    log("Selecting {} from {} by value.".format(val.value, elfmt(loc)))
     select_by_value(Select(loc), val.value)
 
 
 @select.method((object, basestring))
 @select.method((object, ByText))
 def _select_str(loc, s):
+    log("Selecting {} from {} by text.".format(str(s), elfmt(loc)))
     select_by_text(Select(loc), str(s))
 
 
@@ -956,12 +965,14 @@ def deselect(loc, o):
 
 @deselect.method((object, ByValue))
 def _deselect_val(loc, val):
+    log("Delecting {} from {} by value.".format(val.value, elfmt(loc)))
     deselect_by_value(Select(loc), val.value)
 
 
 @deselect.method((object, basestring))
 @deselect.method((object, ByText))
 def _deselect_text(loc, s):
+    log("Selecting {} from {} by text.".format(str(s), elfmt(loc)))
     deselect_by_text(Select(loc), str(s))
 
 
@@ -977,3 +988,67 @@ def execute_script(script, *args, **kwargs):
     It also provides our library which is stored in data/lib.js file.
     """
     return browser().execute_script(dedent(script), *args, **kwargs)
+
+logger_id = "cfme_qe_logger_span"
+
+make_logger_span_script = """
+var toWrite = arguments[0];
+var logger_span_id = "%s";
+var getElementByXpath = function (path) {
+    return document.evaluate(path, document, null, 9, null).singleNodeValue;
+};
+var createSpan = function(){
+    var predecessor = getElementByXpath(
+        "//div[@id='page_header_div']"+
+        "/div[contains(@class, 'header')]/div[contains(@class, 'brand')]");
+    var logger_span = document.createElement("span");
+    logger_span.id = logger_span_id;
+    logger_span.style.color = "white";
+    logger_span.style.fontSize = "1em";
+    predecessor.parentNode.insertBefore(logger_span, predecessor.nextSibling);
+    return logger_span;
+}
+
+var log_span = document.getElementById(logger_span_id);
+if(log_span == null){
+    log_span = createSpan();
+}
+if(log_span != null){
+    log_span.innerHTML = toWrite;
+    return true;
+} else {
+    return false;
+}
+""" % logger_id
+
+
+def log(text_to_log):
+    if not is_displayed("//div[@id='page_header_div']/div[contains(@class, 'header')]"
+            "/div[contains(@class, 'brand')]"):
+        return True
+
+    if not execute_script(make_logger_span_script, text_to_log):
+        logger.warning("Could not create logging span!")
+        return False
+    else:
+        return True
+
+
+def elfmt(el):
+    """Makes nicer output for a locator."""
+    if isinstance(el, basestring):
+        return el
+    elif isinstance(el, tuple):
+        return "{} {}".format(el[0], el[1])
+    elif isinstance(el, WebElement):
+        el_id = el.get_attribute("id")
+        if el_id is not None and len(el_id.strip()) > 0:
+            return "{}#{}".format(el.tag_name, el.get_attribute("id"))
+        else:
+            return "{}[{}]".format(el.tag_name, cgi.escape(el.text.strip()))
+    elif hasattr(el, "locate"):
+        return "{} {}".format(type(el).__name__, el.locate())
+    elif callable(el):
+        return elfmt(el())
+    else:
+        return str(repr(el))
