@@ -1,11 +1,10 @@
 # These tests don't work at the moment, due to the security_groups multi select not working
 # in selenium (the group is selected then immediately reset)
 import pytest
+from cfme.cloud.instance import instance_factory
 from utils import testgen
 from utils.providers import setup_cloud_providers
 from utils.randomness import generate_random_string
-from utils.log import logger
-from cfme.cloud import provisioning as prov
 
 pytestmark = [pytest.mark.fixtureconf(server_roles="+automate"),
               pytest.mark.usefixtures('server_roles', 'setup_providers')]
@@ -40,16 +39,22 @@ def setup_providers():
     setup_cloud_providers()
 
 
-@pytest.yield_fixture(scope="function")
-def instance(setup_providers, provider_key, provider_mgmt, provisioning, provider_crud):
-    # tries to delete the VM that gets created here
+@pytest.fixture(scope="function")
+def vm_name(request, provider_mgmt):
     vm_name = 'test_image_prov_%s' % generate_random_string()
+    return vm_name
+
+
+def test_provision_from_template(request, setup_providers, provider_crud, provisioning, vm_name):
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
         (image, vm_name, provider_crud.key))
 
-    instance = prov.Instance(
-        name=vm_name,
+    instance = instance_factory(vm_name, provider_crud, image)
+
+    request.addfinalizer(instance.delete_from_provider)
+
+    instance.create(
         email='image_provisioner@example.com',
         first_name='Image',
         last_name='Provisioner',
@@ -57,32 +62,5 @@ def instance(setup_providers, provider_key, provider_mgmt, provisioning, provide
         instance_type=provisioning['instance_type'],
         availability_zone=provisioning['availability_zone'],
         security_groups=[provisioning['security_group']],
-        provider_mgmt=provider_mgmt,
-        provider=provider_crud,
-        guest_keypair="shared",
-        template=prov.Template(image))
-    instance.create()
-    yield instance
-    try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name)
-    except:
-        # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
-
-
-def test_provision_from_template(setup_providers, provider_mgmt, instance):
-    assert(provider_mgmt.is_vm_running(instance.name))
-
-
-def test_stop_start(provider_mgmt, instance):
-    instance.stop()
-    assert(provider_mgmt.is_vm_stopped(instance.name))
-    instance.start()
-    assert(provider_mgmt.is_vm_running(instance.name))
-
-
-def test_terminate(provider_mgmt, instance):
-    instance.terminate()
-    assert(provider_mgmt.is_vm_state(instance.name,
-                                     provider_mgmt.states['deleted']))
+        guest_keypair=provisioning['guest_keypair']
+    )

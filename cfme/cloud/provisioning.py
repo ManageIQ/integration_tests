@@ -1,21 +1,19 @@
 """Provisioning-related forms and domain classes.
 
 """
-from collections import OrderedDict
-from cfme.services import requests
 from cfme.fixtures import pytest_selenium as sel
 from cfme import web_ui as ui
+from cfme.web_ui import form_buttons, tabstrip, toolbar
 from cfme.web_ui.menu import nav
-from cfme.web_ui import accordion, tabstrip, toolbar, paginator
-from utils.update import Updateable
-from utils.wait import wait_for
-from utils.pretty import Pretty
+from collections import OrderedDict
+
+submit_button = form_buttons.FormButton("Submit")
 
 template_select_form = ui.Form(
     fields=[
         ('template_table', ui.Table('//div[@id="pre_prov_div"]/fieldset/table')),
-        ('continue_button', '//img[@title="Continue"]'),
-        ('cancel_button', '//img[@title="Continue"]')
+        ('continue_button', submit_button),
+        ('cancel_button', form_buttons.cancel)
     ]
 )
 
@@ -36,11 +34,12 @@ def select_security_group(sg):
     sel.wait_for_ajax()
     sel.sleep(1)
 
+instances_by_provider_tree = ui.Tree("//ul[@class='dynatree-container']")
 
 provisioning_form = tabstrip.TabStripForm(
     fields=[
-        ('submit_button', '//*[@id="form_buttons"]/li[1]/img'),
-        ('cancel_button', '//*[@id="form_buttons"]/li[2]/img')
+        ('submit_button', submit_button),
+        ('cancel_button', form_buttons.cancel)
     ],
     tab_fields=OrderedDict([
         ('Request', [
@@ -63,8 +62,11 @@ provisioning_form = tabstrip.TabStripForm(
             ('automatic_placement', '//input[@id="environment__placement_auto"]'),
             ('availability_zone',
                 ui.Select('//select[@id="environment__placement_availability_zone"]')),
+            ('virtual_private_cloud', ui.Select('//select[@id="environment__cloud_network"]')),
+            ('cloud_subnet', ui.Select('//select[@id="environment__cloud_subnet"]')),
+            ('cloud_network', ui.Select('//select[@id="environment__cloud_network"]')),
             ('security_groups', select_security_group),
-            ('public_ip_address', ui.Select('//select[@id="environment__floating_ip_address"]')),
+            ('public_ip_address', ui.Select('//select[@id="environment__floating_ip_address"]'))
         ]),
         ('Properties', [
             ('instance_type', ui.Select('//select[@id="hardware__instance_type"]')),
@@ -91,14 +93,12 @@ provisioning_form = tabstrip.TabStripForm(
     ])
 )
 
-instances_by_provider_tree = ui.Tree("//ul[@class='dynatree-container']")
-
 
 # Nav targets and helpers
 def _nav_to_provision_form(context):
     toolbar.select('Lifecycle', 'Provision Instances')
     provider = context['provider']
-    template_name = context['template'].name
+    template_name = context['template_name']
 
     template = template_select_form.template_table.find_row_by_cells({
         'Name': template_name,
@@ -112,99 +112,6 @@ def _nav_to_provision_form(context):
         raise ValueError('Navigation failed: Unable to find template "%s" for provider "%s"' %
             (template_name, provider.name))
 
-nav.add_branch(
-    'clouds_instances',
-    {
-        'clouds_instances_by_provider':
-        [nav.partial(accordion.click, 'Instances by Provider'),
-         {'clouds_all_instances':
-          [lambda _: instances_by_provider_tree.click_path('Instances by Provider'),  # select root
-           {'clouds_provision_instances': lambda c: _nav_to_provision_form(c),
-            'clouds_instance':
-            lambda ctx: paginator.click_element(ui.Quadicon(ctx['instance'].name, 'instance'))}]}]})
-
-
-class Template(Pretty):
-    pretty_attrs = ['name']
-
-    def __init__(self, name):
-        self.name = name
-
-
-class Instance(Updateable, Pretty):
-    '''Represents an instance (or vm) in CFME.
-
-       * provider_mgmt should be those returned by utils.mgmt_system.provider_factory
-       * security_groups should be a list (currently only one is supported)
-       * provider should be an instance of cfme.cloud.provider.Provider
-       * template should be an instance of Template
-    '''
-    pretty_attrs = ['name', 'provider', 'availability_zone', 'instance_type']
-
-    def __init__(self, email=None, first_name=None, last_name=None, notes=None, name=None,
-                 instance_type=None, availability_zone=None, security_groups=None,
-                 provider=None, template=None, provider_mgmt=None, guest_keypair=None):
-        self.email = email
-        self.first_name = first_name
-        self.last_name = last_name
-        self.notes = notes
-        self.name = name
-        self.instance_type = instance_type
-        self.availability_zone = availability_zone
-        self.security_groups = security_groups
-        self.provider = provider
-        self.template = template
-        self.provider_mgmt = provider_mgmt
-        self.guest_keypair = guest_keypair
-
-    def create(self):
-        '''Creates an instance with the given properties'''
-        sel.force_navigate('clouds_provision_instances', context={
-            'provider': self.provider,
-            'template': self.template,
-        })
-        ui.fill(provisioning_form, {
-            'email': self.email,
-            'first_name': self.first_name,
-            'last_name': self.last_name,
-            'notes': self.notes,
-            'instance_name': self.name,
-            'instance_type': self.instance_type,
-            'guest_keypair': self.guest_keypair,
-            'availability_zone': self.availability_zone,
-            'security_groups': self.security_groups[0],  # not supporting multiselect now,
-                                                         # just take first value
-        }, action=provisioning_form.submit_button)
-
-        row_description = 'Provision from [%s] to [%s]' % (self.template.name, self.name)
-        cells = {'Description': row_description}
-        row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=600, delay=20)
-        assert row.last_message.text == 'VM Provisioned Successfully'
-
-    def power(self, on=True, cancel=False):
-        sel.force_navigate('clouds_instance', context={'instance': self})
-        toolbar.select("Power", "Start" if on else "Stop", invokes_alert=True)
-        sel.handle_alert(cancel)
-        if not cancel:
-            wait_for(self.provider_mgmt.is_vm_state,
-                 [self.name, self.provider_mgmt.states['running' if on else 'stopped']])
-
-    def start(self):
-        self.power(on=True)
-
-    def stop(self):
-        self.power(on=False)
-
-    def terminate(self, cancel=False):
-        sel.force_navigate('clouds_instance', context={'instance': self})
-        toolbar.select("Power", "Terminate", invokes_alert=True)
-        sel.handle_alert(cancel)
-        if not cancel:
-            wait_for(self.provider_mgmt.is_vm_state,
-                     [self.name, self.provider_mgmt.states['deleted']])
-
-    def delete(self, cancel=False):
-        sel.force_navigate('clouds_instance', context={'instance': self})
-        toolbar.select("Configuration", "Remove from the VMDB", invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+nav.add_branch('clouds_instances', {
+    'clouds_provision_instances': _nav_to_provision_form
+})
