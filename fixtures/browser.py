@@ -64,6 +64,9 @@ def pytest_exception_interact(node, call, report):
         # See comments utils.browser.ensure_browser_open for why these two exceptions
         template_data['screenshot'] = None
         template_data['screenshot_error'] = 'browser error'
+        art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+            filename="screenshot.txt", fd_ident="screenshot", mode="w", contents_base64=False,
+            contents=template_data['screenshot_error'])
     except Exception as ex:
         # If this fails for any other reason,
         # leave out the screenshot but record the reason
@@ -72,6 +75,9 @@ def pytest_exception_interact(node, call, report):
             screenshot_error = '%s: %s' % (type(ex).__name__, ex.message)
         else:
             screenshot_error = type(ex).__name__
+        art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+            filename="screenshot.txt", fd_ident="screenshot", mode="w", contents_base64=False,
+            contents=template_data['screenshot_error'])
         template_data['screenshot_error'] = screenshot_error
 
     failed_test_tracking['tests'].append(template_data)
