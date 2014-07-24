@@ -184,7 +184,7 @@ class Reporter(ArtifactorBasePlugin):
                         level = 'error'
                     percenstring = '<span name="blab" class="label label-{}">{}%</span>'.format(
                         bimdict[level], percen)
-                    modstring = '<span name="mod_lev" class="label label-primary">M</span>'
+                modstring = '<span name="mod_lev" class="label label-primary">M</span>'
                 list_string += '<li>{} {}<span>&nbsp;</span>{}{}</li>\n'.format(k, modstring,
                                                               str(percenstring), self.build_li(v))
         list_string += '</ul>\n'
