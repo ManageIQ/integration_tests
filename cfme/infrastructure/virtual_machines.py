@@ -4,7 +4,7 @@ quadicon lists, and VM details page.
 
 
 import ui_navigate as nav
-from cfme.exceptions import NoVmFound, NoOptionAvailable, ParmRequired
+from cfme.exceptions import VmNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Region, Quadicon, CheckboxTree, Tree, paginator, accordion, toolbar
 from functools import partial
@@ -168,7 +168,7 @@ class Vm():
             refresh: Refreshes the vm page if already there
 
         Raises:
-            NoVmFound:
+            VmNotFound:
                 When unable to find the VM passed
         """
         if not self.on_details():
@@ -216,6 +216,7 @@ class Vm():
         Args:
             vm: Host name as displayed at the quadicon
         Returns: :py:class:`cfme.web_ui.Quadicon` instance
+        Raises: VmNotFound
         """
         if not do_not_navigate:
             self.provider_crud.load_all_provider_vms()
@@ -229,7 +230,7 @@ class Vm():
                     sel.click(quadicon.checkbox())
                 return quadicon
         else:
-            raise NoVmFound("VM '{}' not found in UI!".format(self.name))
+            raise VmNotFound("VM '{}' not found in UI!".format(self.name))
 
     def does_vm_exist_on_provider(self):
         """Check if VM exists on provider itself"""
@@ -241,7 +242,7 @@ class Vm():
         try:
             self.find_quadicon()
             return True
-        except NoVmFound:
+        except VmNotFound:
             return False
 
     def _method_helper(self, from_details=False):
@@ -257,7 +258,7 @@ class Vm():
             cancel: Whether to cancel the deletion, defaults to True
             from_details: whether to delete from the details page (vm_names length must be one)
         """
-        self._method_helper(self, from_details)
+        self._method_helper(from_details)
         if from_details:
             cfg_btn('Remove from the VMDB', invokes_alert=True)
         else:
@@ -289,17 +290,15 @@ class Vm():
         self.load_details(refresh=True)
         return details_page.infoblock.text(*properties)
 
-    def power_control_from_provider(self, option=None):
+    def power_control_from_provider(self, option):
         """Power control a vm from the provider
 
         Args:
             option: power control action to take against vm
 
         Raises:
-            NoOptionAvailable: option parm must have proper value
-            ParmRequired: option parm is required
+            OptionNotAvailable: option parm must have proper value
         """
-        self._power_helper(option=option)
         if option == Vm.POWER_ON:
             self.provider_crud.get_mgmt_system().start_vm(self.name)
         elif option == Vm.POWER_OFF:
@@ -309,20 +308,15 @@ class Vm():
         # elif reset:
         # elif shutdown:
         else:
-            raise NoOptionAvailable(option + " is not a supported action")
+            raise OptionNotAvailable(option + " is not a supported action")
 
-    def _power_helper(self, option=None, from_details=False):
-        if option is None:
-            raise ParmRequired("option is a required parm")
-        self._method_helper(from_details=from_details)
-
-    def power_control_from_cfme(self, cancel=True, from_details=False, option=None):
+    def power_control_from_cfme(self, option, cancel=True, from_details=False):
         """Power controls a VM from within CFME
 
         Args:
-            from_details: Whether or not to perform action from vm details page
             option: corresponds to option values under the power button
             cancel: Whether or not to cancel the power operation on confirmation
+            from_details: Whether or not to perform action from vm details page
         """
         if (self.is_pwr_option_available_in_cfme(option=option, from_details=from_details)):
                 pwr_btn(option, invokes_alert=True)
@@ -331,17 +325,17 @@ class Vm():
                     "Power control action of vm %s, option %s, cancel %s exectuted" %
                     (self.name, option, str(cancel)))
         else:
-            raise NoOptionAvailable(option + " is not a visible or enabled")
+            raise OptionNotAvailable(option + " is not visible or enabled")
 
-    def is_pwr_option_available_in_cfme(self, from_details=False, option=None):
+    def is_pwr_option_available_in_cfme(self, option, from_details=False):
         """Checks to see if a power option is available on the VM
 
         Args:
-            from_details: Whether or not to perform action from vm details page
             option: corresponds to option values under the power button, preferred approach
                 is to use Vm option constansts
+            from_details: Whether or not to perform action from vm details page
         """
-        self._power_helper(option=option, from_details=from_details)
+        self._method_helper(from_details=from_details)
         try:
             return not toolbar.is_greyed('Power', option)
         except NoSuchElementException:
@@ -362,8 +356,9 @@ class Vm():
         sel.handle_alert(cancel=cancel)
 
     # def smartstate_scan(self, cancel=True, from_details=False):
-    #     self._method_helper(self, from_details)
+    #     self._method_helper(from_details)
     #     cfg_btn('Perform SmartState Analysis', invokes_alert=True)
+    #     sel.handle_alert(cancel=cancel)
 
     # def edit_tags(self, cancel=True, from_details=False):
     #     raise NotImplementedError('edit tags is not implemented.')
@@ -464,7 +459,7 @@ def find_quadicon(vm_name, do_not_navigate=False):
         if sel.is_displayed(quadicon):
             return quadicon
     else:
-        raise NoVmFound("VM '{}' not found in UI!".format(vm_name))
+        raise VmNotFound("VM '{}' not found in UI!".format(vm_name))
 
 
 def remove(vm_names, cancel=True, provider_crud=None):
@@ -499,21 +494,15 @@ def wait_for_vm_state_change(vm_name, desired_state, timeout_in_minutes=300, pro
     return wait_for(_looking_for_state_change, num_sec=timeout_in_minutes * 60)
 
 
-def is_pwr_option_visible(vm_names, provider_crud=None, option=None):
+def is_pwr_option_visible(vm_names, option, provider_crud=None):
     """Returns whether a particular power option is visible.
 
     Args:
         vm_names: List of VMs to interact with, if from_details=True is passed, only one VM can
             be passed in the list.
-        provider_crud: provider object where vm resides on (optional)
         option: Power option param.
-
-    Raises:
-        ParmRequired:
-            When no power option is passed
+        provider_crud: provider object where vm resides on (optional)
     """
-    if option is None:
-        raise ParmRequired("power option parm is required")
     _method_setup(vm_names, provider_crud)
     try:
         toolbar.is_greyed('Power', option)
@@ -522,7 +511,7 @@ def is_pwr_option_visible(vm_names, provider_crud=None, option=None):
         return False
 
 
-def is_pwr_option_enabled(vm_names, provider_crud=None, option=None):
+def is_pwr_option_enabled(vm_names, option, provider_crud=None):
     """Returns whether a particular power option is enabled.
 
     Args:
@@ -533,34 +522,23 @@ def is_pwr_option_enabled(vm_names, provider_crud=None, option=None):
     Raises:
         NoOptionAvailable:
             When unable to find the power option passed
-        ParmRequired:
-            When no power option is passed
     """
-    if option is None:
-        raise ParmRequired("power option parm is required")
     _method_setup(vm_names, provider_crud)
     try:
         return not toolbar.is_greyed('Power', option)
     except NoSuchElementException:
-        raise NoOptionAvailable("No such power option (" + str(option) + ") is available")
+        raise OptionNotAvailable("No such power option (" + str(option) + ") is available")
 
 
-def do_power_control(vm_names, provider_crud=None, option=None, cancel=True):
+def do_power_control(vm_names, option, provider_crud=None, cancel=True):
     """Executes a power option against a list of VMs.
 
     Args:
         vm_names: List of VMs to interact with
+        option: Power option param.
         provider_crud: provider object where vm resides on (optional)
         cancel: Whether or not to cancel the power control action
-        option: Power option param.
-
-    Raises:
-        ParmRequired:
-            When no power option is passed
     """
-
-    if option is None:
-        raise ParmRequired("power option parm is required")
     _method_setup(vm_names, provider_crud)
 
     if (is_pwr_option_visible(vm_names, provider_crud=provider_crud, option=option) and

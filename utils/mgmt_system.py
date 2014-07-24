@@ -1467,7 +1467,7 @@ class NetworkNameNotFound(Exception):
 
 
 class VMInstanceNotCloned(Exception):
-    """Raised if a VM is not found."""
+    """Raised if a VM or instance is not found."""
     def __init__(self, template):
         self.template = template
 
@@ -1476,16 +1476,16 @@ class VMInstanceNotCloned(Exception):
 
 
 class VMInstanceNotFound(Exception):
-    """Raised if a VM is not found."""
+    """Raised if a VM or instance is not found."""
     def __init__(self, vm_name):
         self.vm_name = vm_name
 
     def __str__(self):
-        return 'Could not find a VM named %s.' % self.vm_name
+        return 'Could not find a VM/instance named %s.' % self.vm_name
 
 
 class VMInstanceNotSuspended(Exception):
-    """Raised if a VM is not able to be suspended."""
+    """Raised if a VM or instance is not able to be suspended."""
     def __init__(self, vm_name):
         self.vm_name = vm_name
 

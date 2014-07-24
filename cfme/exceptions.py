@@ -141,6 +141,7 @@ class ScheduleNotFound(CFMEException):
     Raised if a schedule was not found in
     :py:meth:`cfme.configure.configuration.Schedule.delete_by_name`
     """
+    pass
 
 
 class RequestException(CFMEException):
@@ -148,6 +149,7 @@ class RequestException(CFMEException):
     Raised if a request was not found or multiple rows matched during _request functions in
     :py:mod:`cfme.services.requests`
     """
+    pass
 
 
 class TreeTypeUnknown(CFMEException):
@@ -165,9 +167,16 @@ class UnidentifiableTagType(CFMEException):
     pass
 
 
-class NoVmFound(CFMEException):
+class VmNotFound(CFMEException):
     """
     Raised if a specific VM cannot be found.
+    """
+    pass
+
+
+class InstanceNotFound(CFMEException):
+    """
+    Raised if a specific instance cannot be found.
     """
     pass
 
@@ -177,24 +186,9 @@ class HostNotFound(CFMEException):
     pass
 
 
-class NoOptionAvailable(CFMEException):
+class OptionNotAvailable(CFMEException):
     """
-    Raised if required option is not specified.
-    """
-    pass
-
-
-class ParmRequired(CFMEException):
-    """
-    Raised if a required parameter is not passed to a particular method.
-    """
-    pass
-
-
-class ParmConfusion(CFMEException):
-    """
-    Raised when two exclusive function parameters for a particular method are passed in
-    at the same time.
+    Raised if a specified option is not available.
     """
     pass
 
@@ -211,5 +205,14 @@ class ZoneNotFound(CFMEException):
     """
     Raised when a specific Zone cannot be found in the method
     :py:mod:`cfme.configure.configuration`.
+    """
+    pass
+
+
+class UnknownProviderType(CFMEException):
+    """
+    Raised when the passed provider or provider type is not known or usable in given context
+    e.g. when getting a provider from yaml and the provider type doesn't match any of known types
+         or when an infra provider is passed to the cloud's instance_factory method
     """
     pass

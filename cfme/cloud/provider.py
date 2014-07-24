@@ -19,7 +19,9 @@ import cfme.web_ui.flash as flash
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
-from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
+from cfme.exceptions import (
+    HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
+)
 from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
 from utils.log import logger
 from utils.providers import provider_factory
@@ -462,13 +464,14 @@ def get_from_config(provider_config_name):
 
     prov_config = conf.cfme_data['management_systems'][provider_config_name]
     credentials = get_credentials_from_config(prov_config['credentials'])
-    if prov_config.get('type') == 'ec2':
+    prov_type = prov_config.get('type')
+    if prov_type == 'ec2':
         return EC2Provider(name=prov_config['name'],
                            region=prov_config['region'],
                            credentials=credentials,
                            zone=prov_config['server_zone'],
                            key=provider_config_name)
-    else:
+    elif prov_type == 'openstack':
         return OpenStackProvider(name=prov_config['name'],
                                  hostname=prov_config['hostname'],
                                  ip_address=prov_config['ipaddress'],
@@ -476,6 +479,8 @@ def get_from_config(provider_config_name):
                                  credentials=credentials,
                                  zone=prov_config['server_zone'],
                                  key=provider_config_name)
+    else:
+        raise UnknownProviderType('{} is not a known cloud provider type'.format(prov_type))
 
 
 def discover(credential, cancel=False):
