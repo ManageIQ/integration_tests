@@ -65,7 +65,7 @@ def test_vm(request, provider_crud, provider_mgmt, vm_name):
     request.addfinalizer(vm.delete_from_provider)
 
     if not provider_mgmt.does_vm_exist(vm_name):
-        vm.create(timeout_in_minutes=15)
+        vm.create_on_provider()
     return vm
 
 

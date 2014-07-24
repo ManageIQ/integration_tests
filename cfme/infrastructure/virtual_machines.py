@@ -3,10 +3,12 @@ quadicon lists, and VM details page.
 """
 
 
-import ui_navigate as nav
 from cfme.exceptions import VmNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Region, Quadicon, CheckboxTree, Tree, paginator, accordion, toolbar
+from cfme.web_ui import (
+    CheckboxTree, Form, Region, Quadicon, Tree, accordion, form_buttons, paginator, toolbar
+)
+from cfme.web_ui.menu import nav
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.log import logger
@@ -34,11 +36,6 @@ manage_policies_tree = CheckboxTree(
     })
 )
 
-manage_policies_page = Region(
-    locators={
-        'save_button': "//div[@id='buttons_on']//img[@alt='Save Changes']",
-    })
-
 snapshot_form = Form(
     fields=[
         ('name', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
@@ -49,19 +46,12 @@ snapshot_form = Form(
     ])
 
 
-def accordion_fn(acc, tree):
-    def f(_):
-        accordion.click(acc)
-        visible_tree.click_path(tree)
-    return f
-
-
 nav.add_branch(
     'infrastructure_virtual_machines',
     {
         "infra_vm_and_templates":
         [
-            accordion_fn("VMs & Templates", "All VMs & Templates"),
+            lambda _: accordion.tree("VMs & Templates", "All VMs & Templates"),
             {
                 "vm_templates_provider_branch":
                 [
@@ -79,11 +69,7 @@ nav.add_branch(
 
                 "vm_templates_archived_branch":
                 [
-                    lambda ctx: visible_tree.click_path(version.pick({
-                                                        version.LOWEST: "Archived",
-                                                        "5.3": "<Archived>"
-                                                        })
-                                                        ),
+                    lambda ctx: visible_tree.click_path("<Archived>"),
                     {
                         "infra_archive_obj":
                         lambda ctx: visible_tree.click_path(ctx["archive_name"]),
@@ -92,7 +78,7 @@ nav.add_branch(
 
                 "vm_templates_orphaned_branch":
                 [
-                    lambda ctx: visible_tree.click_path('Orphaned'),
+                    lambda ctx: visible_tree.click_path('<Orphaned>'),
                     {
                         "infra_orphan_obj": lambda ctx: visible_tree.click_path(ctx["orphan_name"]),
                     }
@@ -102,7 +88,7 @@ nav.add_branch(
 
         "infra_vms":
         [
-            lambda _: accordion.click("VMs"),
+            lambda _: accordion.tree("VMs", "All VMs"),
             {
                 "infra_vms_filter_folder":
                 [
@@ -116,7 +102,7 @@ nav.add_branch(
 
         "infra_templates":
         [
-            lambda _: accordion.click("Templates"),
+            lambda _: accordion.tree("Templates", "All Templates"),
             {
                 "infra_templates_filter_folder":
                 [
@@ -132,7 +118,14 @@ nav.add_branch(
 )
 
 
-class Vm():
+class Vm(object):
+    """Represents a VM in CFME
+
+    Args:
+        name: Name of the VM
+        provider_crud: :py:class:`cfme.cloud.provider.Provider` object
+        template_name: Name of the template to use for provisioning
+    """
 
     # POWER CONTROL OPTIONS
     SUSPEND = "Suspend"
@@ -151,15 +144,17 @@ class Vm():
         self.template_name = template_name
         self.provider_crud = provider_crud
 
-    def create_on_provider(self):
-        """Create the VM on the provider"""
-        deploy_template(self.provider_crud, self.name, self.template_name)
+    def create_on_provider(self, timeout_in_minutes=15):
+        """Create the VM on the provider
 
-    def create(self, timeout_in_minutes=15):
-        """Create on the provider but get CFME to qucikly find it"""
-        self.create_on_provider()
-        self.provider_crud.refresh_provider_relationships()
-        self.wait_for_vm_to_appear(timeout_in_minutes=timeout_in_minutes, load_details=False)
+        Args:
+            timeout_in_minutes: Number of minutes to wait for the VM to appear in CFME
+                                Will not wait at all, if set to 0 (Defaults to ``15``)
+        """
+        deploy_template(self.provider_crud.key, self.name, self.template_name)
+        if timeout_in_minutes:
+            self.provider_crud.refresh_provider_relationships()
+            self.wait_for_vm_to_appear(timeout_in_minutes=timeout_in_minutes, load_details=False)
 
     def load_details(self, refresh=False):
         """Navigates to a VM's details page.
@@ -180,13 +175,6 @@ class Vm():
 
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper vm details page.
-
-        Args:
-            vm_name: VM name that you are looking for.
-            force: If its not on the right page, load it.
-            provider_name: name of provider the vm resides on.
-            datacenter_name: When passed with provider_name, allows navigation through tree
-                when navigating to the vm
         """
         locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'VM and Instance \"%s\"')]" %
             self.name)
@@ -206,28 +194,30 @@ class Vm():
             return self.name == m.group().replace('"', '')
         else:
             if self.name != m.group().replace('"', ''):
-                self.load_vm_details()
+                self.load_details()
             else:
                 return False
 
     def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
         """Find and return a quadicon belonging to a specific vm
 
-        Args:
-            vm: Host name as displayed at the quadicon
         Returns: :py:class:`cfme.web_ui.Quadicon` instance
         Raises: VmNotFound
         """
         if not do_not_navigate:
             self.provider_crud.load_all_provider_vms()
             toolbar.set_vms_grid_view()
-        if refresh:
+        elif refresh:
             sel.refresh()
+        if not paginator.page_controls_exist():
+            raise VmNotFound("VM '{}' not found in UI!".format(self.name))
+
+        paginator.results_per_page(1000)
         for page in paginator.pages():
             quadicon = Quadicon(self.name, "vm")
             if sel.is_displayed(quadicon):
                 if mark:
-                    sel.click(quadicon.checkbox())
+                    sel.check(quadicon.checkbox())
                 return quadicon
         else:
             raise VmNotFound("VM '{}' not found in UI!".format(self.name))
@@ -256,7 +246,7 @@ class Vm():
 
         Args:
             cancel: Whether to cancel the deletion, defaults to True
-            from_details: whether to delete from the details page (vm_names length must be one)
+            from_details: whether to delete from the details page
         """
         self._method_helper(from_details)
         if from_details:
@@ -322,7 +312,7 @@ class Vm():
                 pwr_btn(option, invokes_alert=True)
                 sel.handle_alert(cancel=cancel)
                 logger.info(
-                    "Power control action of vm %s, option %s, cancel %s exectuted" %
+                    "Power control action of vm %s, option %s, cancel %s executed" %
                     (self.name, option, str(cancel)))
         else:
             raise OptionNotAvailable(option + " is not visible or enabled")
@@ -413,7 +403,7 @@ class Vm():
         def _looking_for_state_change():
             if from_details:
                 self.load_details(refresh=True)
-                detail_t = "Power Management", "Power State"
+                detail_t = ("Power Management", "Power State")
                 return self.get_detail(properties=detail_t) == desired_state
             else:
                 return self.find_quadicon().state == 'currentstate-' + desired_state
@@ -440,9 +430,10 @@ def _method_setup(vm_names, provider_crud=None):
         provider_crud.load_all_provider_vms()
     else:
         sel.force_navigate('infra_vms')
-    # TODO: add a paginator call to display 1000
+    if paginator.page_controls_exist():
+        paginator.results_per_page(1000)
     for vm_name in vm_names:
-        sel.click(Quadicon(vm_name, 'vm').checkbox())
+        sel.check(Quadicon(vm_name, 'vm').checkbox())
 
 
 def find_quadicon(vm_name, do_not_navigate=False):
@@ -454,6 +445,10 @@ def find_quadicon(vm_name, do_not_navigate=False):
     """
     if not do_not_navigate:
         sel.force_navigate('infra_vms')
+    if not paginator.page_controls_exist():
+        raise VmNotFound("VM '{}' not found in UI!".format(vm_name))
+
+    paginator.results_per_page(1000)
     for page in paginator.pages():
         quadicon = Quadicon(vm_name, "vm")
         if sel.is_displayed(quadicon):
@@ -475,7 +470,7 @@ def remove(vm_names, cancel=True, provider_crud=None):
     sel.handle_alert(cancel=cancel)
 
 
-def wait_for_vm_state_change(vm_name, desired_state, timeout_in_minutes=300, provider_crud=None):
+def wait_for_vm_state_change(vm_name, desired_state, timeout_in_minutes=5, provider_crud=None):
     """Wait for VM to come to desired state.
 
     This function waits just the needed amount of time thanks to wait_for.
@@ -578,15 +573,19 @@ def get_all_vms(do_not_navigate=False):
     if not do_not_navigate:
         sel.force_navigate('infra_vms')
     vms = set([])
-    try:
-        for page in paginator.pages():
+    if not paginator.page_controls_exist():
+        return vms
+
+    paginator.results_per_page(1000)
+    for page in paginator.pages():
+        try:
             for title in sel.elements(
-                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')" +
+                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
                     " or contains(@href, '/show/')]"):  # for provider specific vm/template page
                 vms.add(sel.get_attribute(title, "title"))
-        return vms
-    except NoSuchElementException:
-        return set([])
+        except sel.NoSuchElementException:
+            pass
+    return vms
 
 
 def _assign_unassign_policy_profiles(vm_name, assign, *policy_profile_names, **kwargs):
@@ -606,7 +605,7 @@ def _assign_unassign_policy_profiles(vm_name, assign, *policy_profile_names, **k
             manage_policies_tree.check_node(policy_profile)
         else:
             manage_policies_tree.uncheck_node(policy_profile)
-    sel.click(manage_policies_page.save_button)
+    sel.click(form_buttons.save)
 
 
 def assign_policy_profiles(vm_name, *policy_profile_names, **kwargs):
