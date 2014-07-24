@@ -68,7 +68,7 @@ class Logger(ArtifactorBasePlugin):
     def log_message(self, log_record, slaveid):
         if not slaveid:
             slaveid = "Master"
-        if self.tests[slaveid]:
+        if slaveid in self.tests:
             if self.tests[slaveid].logger:
                 fn = getattr(self.tests[slaveid].logger, log_record['level'])
                 fn(log_record['message'], extra=log_record['extra'])
