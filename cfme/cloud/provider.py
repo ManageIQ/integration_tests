@@ -102,13 +102,13 @@ cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
 
 nav.add_branch('clouds_providers',
-               {'cloud_provider_new': lambda _: cfg_btn('Add a New Cloud Provider'),
-                'cloud_provider_discover': lambda _: cfg_btn('Discover Cloud Providers'),
-                'cloud_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
+               {'clouds_provider_new': lambda _: cfg_btn('Add a New Cloud Provider'),
+                'clouds_provider_discover': lambda _: cfg_btn('Discover Cloud Providers'),
+                'clouds_provider': [lambda ctx: sel.click(Quadicon(ctx['provider'].name,
                                                                   'cloud_prov')),
-                                   {'cloud_provider_edit':
+                                   {'clouds_provider_edit':
                                     lambda _: cfg_btn('Edit this Cloud Provider'),
-                                    'cloud_provider_policy_assignment':
+                                    'clouds_provider_policy_assignment':
                                     lambda _: pol_btn('Manage Policies')}]})
 
 
@@ -169,7 +169,7 @@ class Provider(Updateable, Pretty):
            validate_credentials (boolean): Whether to validate credentials - if True and the
                credentials are invalid, an error will be raised.
         """
-        sel.force_navigate('cloud_provider_new')
+        sel.force_navigate('clouds_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, add_page.add_submit)
@@ -186,7 +186,7 @@ class Provider(Updateable, Pretty):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        sel.force_navigate('cloud_provider_edit', context={'provider': self})
+        sel.force_navigate('clouds_provider_edit', context={'provider': self})
         fill(properties_form, self._form_mapping(**updates))
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
         self._submit(cancel, edit_page.save_button)
@@ -202,7 +202,7 @@ class Provider(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('cloud_provider', context={'provider': self})
+        sel.force_navigate('clouds_provider', context={'provider': self})
         cfg_btn('Remove this Cloud Provider from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         if not cancel:
@@ -218,7 +218,7 @@ class Provider(Updateable, Pretty):
         if the match is not complete within a certain defined time period.
         """
         if not self._on_detail_page():
-            sel.force_navigate('cloud_provider', context={'provider': self})
+            sel.force_navigate('clouds_provider', context={'provider': self})
 
         stats_to_match = ['num_template', 'num_vm']
         client = self.get_mgmt_system()
@@ -240,6 +240,30 @@ class Provider(Updateable, Pretty):
                           delay=10)
         client.disconnect()
 
+    def load_all_provider_instances(self):
+        """ Loads the list of instances that are running under the provider. """
+        sel.force_navigate('clouds_provider', context={'provider': self})
+        sel.click(details_page.infoblock.element("Relationships", "Instances"))
+
+    def load_all_provider_images(self):
+        """ Loads the list of images that are available under the provider. """
+        sel.force_navigate('clouds_provider', context={'provider': self})
+        sel.click(details_page.infoblock.element("Relationships", "Images"))
+
+    def refresh_provider_relationships(self):
+        """Clicks on Refresh relationships button in provider"""
+        sel.force_navigate('clouds_provider', context={"provider": self})
+        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
+        sel.handle_alert(cancel=False)
+
+    def get_yaml_data(self):
+        """ Returns yaml data for this provider.
+        """
+        if not self.key:
+            raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data')
+        else:
+            return conf.cfme_data['management_systems'][self.key]
+
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
         """
@@ -258,7 +282,7 @@ class Provider(Updateable, Pretty):
         Returns: A string representing the contents of the InfoBlock's value.
         """
         if not self._on_detail_page():
-            sel.force_navigate('cloud_provider', context={'provider': self})
+            sel.force_navigate('clouds_provider', context={'provider': self})
         return details_page.infoblock.text(*ident)
 
     def _do_stats_match(self, client, stats_to_match=None):
@@ -339,7 +363,7 @@ class Provider(Updateable, Pretty):
 
         Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
         """
-        sel.force_navigate('cloud_provider_policy_assignment', context={'provider': self})
+        sel.force_navigate('clouds_provider_policy_assignment', context={'provider': self})
         return self._assigned_policy_profiles
 
     @property
@@ -355,7 +379,7 @@ class Provider(Updateable, Pretty):
 
         Returns: :py:class:`set` of :py:class:`str` of Policy Profile names
         """
-        sel.force_navigate('cloud_provider_policy_assignment', context={'provider': self})
+        sel.force_navigate('clouds_provider_policy_assignment', context={'provider': self})
         return self._unassigned_policy_profiles
 
     def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
@@ -366,7 +390,7 @@ class Provider(Updateable, Pretty):
             policy_profile_names: :py:class:`str` with Policy Profile's name. After Control/Explorer
                 coverage goes in, PolicyProfile object will be also passable.
         """
-        sel.force_navigate('cloud_provider_policy_assignment', context={'provider': self})
+        sel.force_navigate('clouds_provider_policy_assignment', context={'provider': self})
         policy_profiles = set([str(pp) for pp in policy_profile_names])
         if assign:
             do_not_process = self._assigned_policy_profiles
@@ -492,7 +516,7 @@ def discover(credential, cancel=False):
       credential (cfme.Credential):  Amazon discovery credentials.
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
-    sel.force_navigate('cloud_provider_discover')
+    sel.force_navigate('clouds_provider_discover')
     if cancel:  # normalize so that the form filler only clicks either start or cancel
         cancel = True
     else:

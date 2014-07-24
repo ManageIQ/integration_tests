@@ -240,7 +240,7 @@ class Provider(Updateable, Pretty):
         sel.handle_alert(cancel=False)
 
     def get_yaml_data(self):
-        """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
+        """ Returns yaml data for this provider.
         """
         if not self.key:
             raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data')
