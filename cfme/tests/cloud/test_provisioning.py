@@ -59,7 +59,7 @@ def instance(setup_providers, provider_key, provider_mgmt, provisioning, provide
         security_groups=[provisioning['security_group']],
         provider_mgmt=provider_mgmt,
         provider=provider_crud,
-        guest_keypair="shared",
+        guest_keypair=provisioning['guest_keypair'],
         template=prov.Template(image))
     instance.create()
     yield instance
