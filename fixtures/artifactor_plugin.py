@@ -21,7 +21,7 @@ already been used, it will die
 
 from artifactor import ArtifactorClient
 import pytest
-from utils.conf import env
+from utils.conf import env, credentials
 from utils.net import random_port, net_check
 from utils.path import project_path
 from utils.wait import wait_for
@@ -85,8 +85,13 @@ def pytest_runtest_protocol(item):
 
 
 def pytest_runtest_teardown(item, nextitem):
+    words = []
+    for cred in credentials:
+        words.append(credentials[cred]['password'])
     art_client.fire_hook('finish_test', test_location=item.location[0], test_name=item.location[2],
                          slaveid=SLAVEID)
+    art_client.fire_hook('sanitize', test_location=item.location[0], test_name=item.location[2],
+                         fd_idents=['func_trace'], words=words)
 
 
 def pytest_runtest_logreport(report):

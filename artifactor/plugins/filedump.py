@@ -20,6 +20,7 @@ class Filedump(ArtifactorBasePlugin):
 
     def plugin_initialize(self):
         self.register_plugin_hook('filedump', self.filedump)
+        self.register_plugin_hook('sanitize', self.sanitize)
 
     def configure(self):
         self.configured = True
@@ -39,3 +40,20 @@ class Filedump(ArtifactorBasePlugin):
             f.write(contents)
         test_ident = "{}/{}".format(test_location, test_name)
         return None, {'artifacts': {test_ident: {'files': {fd_ident: artifacts}}}}
+
+    @ArtifactorBasePlugin.check_configured
+    def sanitize(self, test_location, test_name, artifacts, fd_idents, words):
+        test_ident = "{}/{}".format(test_location, test_name)
+        filename = None
+        try:
+            for fd_ident in fd_idents:
+                filenames = artifacts[test_ident]['files'][fd_ident]
+                for filename in filenames:
+                    with open(filename) as f:
+                        data = f.read()
+                    for word in words:
+                        data = data.replace(word, "*" * len(word))
+                    with open(filename, "w") as f:
+                        f.write(data)
+        except KeyError:
+            pass
