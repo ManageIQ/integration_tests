@@ -104,6 +104,9 @@ class SSHClient(paramiko.SSHClient):
 
         return 0
 
+    def appliance_has_netapp(self):
+        return appliance_has_netapp(self)
+
 
 def command_runner(client, command, stream_output=False):
     template = '%s\n'
@@ -161,6 +164,12 @@ def build_datetime_getter(client):
 
 def is_downstream_getter(client):
     command = "stat /var/www/miq/vmdb/BUILD"
+    result = command_runner(client, command, stream_output=False)[0]
+    return result == 0
+
+
+def appliance_has_netapp(client):
+    command = "stat /var/www/miq/vmdb/HAS_NETAPP"
     result = command_runner(client, command, stream_output=False)[0]
     return result == 0
 

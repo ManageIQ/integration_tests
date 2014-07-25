@@ -442,6 +442,17 @@ def text(loc, **kwargs):
     return element(loc, **kwargs).text
 
 
+def text_sane(loc, **kwargs):
+    """Returns text decoded from UTF-8 and stripped
+
+    Args:
+        loc: A locator, expects eithera  string, WebElement, tuple.
+
+    Returns: A string containing the text of the element, decoded and stripped.
+    """
+    return text(loc).encode("utf-8").strip()
+
+
 def value(loc):
     """
     Returns the value of an input element.

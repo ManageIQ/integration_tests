@@ -229,3 +229,8 @@ class AccordionItemNotFound(CFMEException):
 
 class CannotScrollException(CFMEException):
     """Raised when even during the heaviest workarounds for scrolling failure comes."""
+
+
+class StorageManagerNotFound(CFMEException):
+    """Raised when a Storage Manager is not found"""
+    pass

@@ -1,6 +1,7 @@
 import pytest
 
 from cfme.web_ui import menu
+from utils.version import appliance_has_netapp
 
 
 def pytest_generate_tests(metafunc):
@@ -14,4 +15,8 @@ def pytest_generate_tests(metafunc):
 
 
 def test_nav_destination(nav_dest):
+    if nav_dest in {
+            "storage", "filers", "volumes", "luns", "file_shares", "storage_managers"}\
+            and not appliance_has_netapp():
+        pytest.skip("Appliance is not configured for netapp")
     pytest.sel.force_navigate(nav_dest)

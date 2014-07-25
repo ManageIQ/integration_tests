@@ -97,6 +97,13 @@ sections = {
         ('infrastructure_pxe', 'PXE'),
         ('infrastructure_requests', 'Requests')
     ),
+    ('storage', 'Storage'): (
+        ('filers', 'Filers'),
+        ('volumes', 'Volumes'),
+        ('luns', 'LUNs'),
+        ('file_shares', 'File Shares'),
+        ('storage_managers', 'Storage Managers')
+    ),
     ('control', 'Control'): (
         ('control_explorer', 'Explorer'),
         ('control_simulation', 'Simulation'),

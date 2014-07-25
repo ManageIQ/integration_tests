@@ -52,7 +52,13 @@ server_roles = Form(
         ('notifier', "//input[@id='server_roles_notifier']"),
         ('automate', "//input[@id='server_roles_automate']"),
         ('rhn_mirror', "//input[@id='server_roles_rhn_mirror']"),
-        ('database_synchronization', "//input[@id='server_roles_database_synchronization']")
+        ('database_synchronization', "//input[@id='server_roles_database_synchronization']"),
+        # STORAGE OPTIONS
+        ("storage_metrics_processor", "input#server_roles_storage_metrics_processor"),
+        ("storage_metrics_collector", "input#server_roles_storage_metrics_collector"),
+        ("storage_metrics_coordinator", "input#server_roles_storage_metrics_coordinator"),
+        ("storage_inventory", "input#server_roles_storage_inventory"),
+
     ]
 )
 
