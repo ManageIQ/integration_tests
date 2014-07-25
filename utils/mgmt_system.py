@@ -46,11 +46,12 @@ class MgmtSystemAPIBase(object):
         raise NotImplementedError('start_vm not implemented.')
 
     @abstractmethod
-    def wait_vm_running(self, vm_name):
+    def wait_vm_running(self, vm_name, num_sec):
         """Waits for a VM to be running.
 
         Args:
             vm_name: name of the vm to be running
+            num_sec: number of seconds before timeout
         """
         raise NotImplementedError('wait_vm_running not implemented.')
 
@@ -65,11 +66,12 @@ class MgmtSystemAPIBase(object):
         raise NotImplementedError('stop_vm not implemented.')
 
     @abstractmethod
-    def wait_vm_stopped(self, vm_name):
+    def wait_vm_stopped(self, vm_name, num_sec):
         """Waits for a VM to be stopped.
 
         Args:
             vm_name: name of the vm to be stopped
+            num_sec: number of seconds before timeout
         """
         raise NotImplementedError('wait_vm_stopped not implemented.')
 
@@ -202,11 +204,12 @@ class MgmtSystemAPIBase(object):
         raise NotImplementedError('restart_vm not implemented.')
 
     @abstractmethod
-    def wait_vm_suspended(self, vm_name):
+    def wait_vm_suspended(self, vm_name, num_sec):
         """Waits for a VM to be suspended.
 
         Args:
             vm_name: name of the vm to be suspended
+            num_sec: number of seconds before timeout
         """
         raise NotImplementedError('wait_vm_suspended not implemented.')
 
@@ -555,23 +558,23 @@ class VMWareSystem(MgmtSystemAPIBase):
     def is_vm_running(self, vm_name):
         return self.vm_status(vm_name) == "POWERED ON"
 
-    def wait_vm_running(self, vm_name):
+    def wait_vm_running(self, vm_name, num_sec=240):
         logger.info(" Waiting for vSphere VM %s to change status to ON" % vm_name)
-        wait_for(self.is_vm_running, [vm_name], num_sec=240)
+        wait_for(self.is_vm_running, [vm_name], num_sec=num_sec)
 
     def is_vm_stopped(self, vm_name):
         return self.vm_status(vm_name) == "POWERED OFF"
 
-    def wait_vm_stopped(self, vm_name):
+    def wait_vm_stopped(self, vm_name, num_sec=240):
         logger.info(" Waiting for vSphere VM %s to change status to OFF" % vm_name)
-        wait_for(self.is_vm_stopped, [vm_name], num_sec=240)
+        wait_for(self.is_vm_stopped, [vm_name], num_sec=num_sec)
 
     def is_vm_suspended(self, vm_name):
         return self.vm_status(vm_name) == "SUSPENDED"
 
-    def wait_vm_suspended(self, vm_name):
+    def wait_vm_suspended(self, vm_name, num_sec=360):
         logger.info(" Waiting for vSphere VM %s to change status to SUSPENDED" % vm_name)
-        wait_for(self.is_vm_suspended, [vm_name], num_sec=360)
+        wait_for(self.is_vm_suspended, [vm_name], num_sec=num_sec)
 
     def suspend_vm(self, vm_name):
         self.wait_vm_steady(vm_name)
@@ -589,16 +592,14 @@ class VMWareSystem(MgmtSystemAPIBase):
 
     def deploy_template(self, template, *args, **kwargs):
         logger.info(" Deploying vSphere template %s to VM %s" % (template, kwargs["vm_name"]))
-        timeout_in_minutes = kwargs.pop('timeout_in_minutes', 5)
+        timeout = kwargs.pop('timeout', 300)
         if 'resourcepool' not in kwargs:
             kwargs['resourcepool'] = None
         vm = self._get_vm(template)
         if vm:
             vm.clone(kwargs['vm_name'], sync_run=True,
                 resourcepool=self._get_resource_pool(kwargs['resourcepool']))
-            wait_for(lambda: self.is_vm_running(kwargs['vm_name']),
-                     num_sec=timeout_in_minutes * 60,
-                     message="VMWare instance %s running after provision" % kwargs['vm_name'])
+            self.wait_vm_running(kwargs['vm_name'], num_sec=timeout)
             return kwargs['vm_name']
         else:
             raise VMInstanceNotCloned(template)
@@ -878,23 +879,23 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def is_vm_running(self, vm_name):
         return self.vm_status(vm_name) == "up"
 
-    def wait_vm_running(self, vm_name):
+    def wait_vm_running(self, vm_name, num_sec=360):
         logger.info(" Waiting for RHEV-M VM %s to change status to ON" % vm_name)
-        wait_for(self.is_vm_running, [vm_name], num_sec=360)
+        wait_for(self.is_vm_running, [vm_name], num_sec=num_sec)
 
     def is_vm_stopped(self, vm_name):
         return self.vm_status(vm_name) == "down"
 
-    def wait_vm_stopped(self, vm_name):
+    def wait_vm_stopped(self, vm_name, num_sec=360):
         logger.info(" Waiting for RHEV-M VM %s to change status to OFF" % vm_name)
-        wait_for(self.is_vm_stopped, [vm_name], num_sec=360)
+        wait_for(self.is_vm_stopped, [vm_name], num_sec=num_sec)
 
     def is_vm_suspended(self, vm_name):
         return self.vm_status(vm_name) == "suspended"
 
-    def wait_vm_suspended(self, vm_name):
+    def wait_vm_suspended(self, vm_name, num_sec=720):
         logger.info(" Waiting for RHEV-M VM %s to change status to SUSPENDED" % vm_name)
-        wait_for(self.is_vm_suspended, [vm_name], num_sec=720)
+        wait_for(self.is_vm_suspended, [vm_name], num_sec=num_sec)
 
     def suspend_vm(self, vm_name):
         self.wait_vm_steady(vm_name, num_sec=300)
@@ -915,7 +916,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
     def deploy_template(self, template, *args, **kwargs):
         logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
-        timeout_in_minutes = kwargs.pop('timeout_in_minutes', 5)
+        timeout = kwargs.pop('timeout', 300)
         vm_placement_policy = None
         if 'placement_policy_host' in kwargs and 'placement_policy_affinity' in kwargs:
             vm_host = params.Host(name=kwargs['placement_policy_host'])
@@ -926,9 +927,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             cluster=self.api.clusters.get(kwargs['cluster_name']),
             placement_policy=vm_placement_policy,
             template=self.api.templates.get(template)))
-        wait_for(lambda: self.is_vm_stopped(kwargs['vm_name']),
-                 num_sec=timeout_in_minutes * 60,
-                 message="RHEV instance %s exists (stopped) after provision" % kwargs['vm_name'])
+        self.wait_vm_stopped(kwargs['vm_name'], num_sec=timeout)
         self.start_vm(kwargs['vm_name'])
         return kwargs['vm_name']
 
@@ -1102,9 +1101,9 @@ class EC2System(MgmtSystemAPIBase):
         """
         return self.vm_status(instance_id) in self.states['running']
 
-    def wait_vm_running(self, instance_id):
+    def wait_vm_running(self, instance_id, num_sec=360):
         logger.info(" Waiting for EC2 instance %s to change status to running" % instance_id)
-        wait_for(self.is_vm_running, [instance_id], num_sec=360)
+        wait_for(self.is_vm_running, [instance_id], num_sec=num_sec)
 
     def is_vm_stopped(self, instance_id):
         """Is the VM stopped?
@@ -1115,11 +1114,11 @@ class EC2System(MgmtSystemAPIBase):
         """
         return self.vm_status(instance_id) in self.states['stopped']
 
-    def wait_vm_stopped(self, instance_id):
+    def wait_vm_stopped(self, instance_id, num_sec=360):
         logger.info(
             " Waiting for EC2 instance %s to change status to stopped or terminated" % instance_id
         )
-        wait_for(self.is_vm_stopped, [instance_id], num_sec=360)
+        wait_for(self.is_vm_stopped, [instance_id], num_sec=num_sec)
 
     def suspend_vm(self, instance_id):
         """Suspend a VM: Unsupported by EC2
@@ -1141,7 +1140,7 @@ class EC2System(MgmtSystemAPIBase):
         """
         raise ActionNotSupported()
 
-    def wait_vm_suspended(self, instance_id):
+    def wait_vm_suspended(self, instance_id, num_sec):
         """We would wait forever - EC2 doesn't support this.
 
         Args:
@@ -1175,7 +1174,7 @@ class EC2System(MgmtSystemAPIBase):
         """
         # Enforce create_vm only creating one VM
         logger.info(" Deploying EC2 template %s" % template)
-        timeout_in_minutes = kwargs.pop('timeout_in_minutes', 5)
+        timeout = kwargs.pop('timeout', 300)
         kwargs.update({
             'min_count': 1,
             'max_count': 1,
@@ -1186,9 +1185,7 @@ class EC2System(MgmtSystemAPIBase):
         reservation = self.api.run_instances(template, *args, **kwargs)
         instances = self._get_instances_from_reservations([reservation])
         # Should have only made one VM; return its ID for use in other methods
-        wait_for(lambda: self.is_vm_running(instances[0].id),
-                 num_sec=timeout_in_minutes * 60,
-                 message="EC2 instance %s running after provision" % vm_name or instances[0].id)
+        self.wait_vm_running(instances[0].id, num_sec=timeout)
         if vm_name:
             self.set_name(instances[0].id, vm_name)
         return instances[0].id
@@ -1372,17 +1369,17 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def is_vm_suspended(self, vm_name):
         return self.vm_status(vm_name) == 'SUSPENDED'
 
-    def wait_vm_running(self, vm_name):
+    def wait_vm_running(self, vm_name, num_sec=360):
         logger.info(" Waiting for OS instance %s to change status to ACTIVE" % vm_name)
-        wait_for(self.is_vm_running, [vm_name], num_sec=360)
+        wait_for(self.is_vm_running, [vm_name], num_sec=num_sec)
 
-    def wait_vm_stopped(self, vm_name):
+    def wait_vm_stopped(self, vm_name, num_sec=360):
         logger.info(" Waiting for OS instance %s to change status to SHUTOFF" % vm_name)
-        wait_for(self.is_vm_stopped, [vm_name], num_sec=360)
+        wait_for(self.is_vm_stopped, [vm_name], num_sec=num_sec)
 
-    def wait_vm_suspended(self, vm_name):
+    def wait_vm_suspended(self, vm_name, num_sec=720):
         logger.info(" Waiting for OS instance %s to change status to SUSPENDED" % vm_name)
-        wait_for(self.is_vm_suspended, [vm_name], num_sec=720)
+        wait_for(self.is_vm_suspended, [vm_name], num_sec=num_sec)
 
     def suspend_vm(self, instance_name):
         logger.info(" Suspending OpenStack instance %s" % instance_name)
@@ -1414,7 +1411,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
             attempt to register a floating IP address from the pool specified in the arg.
         """
         nics = []
-        timeout_in_minutes = kwargs.pop('timeout_in_minutes', 5)
+        timeout = kwargs.pop('timeout', 300)
         if 'flavour_name' not in kwargs:
             kwargs['flavour_name'] = 'm1.tiny'
         if 'vm_name' not in kwargs:
@@ -1432,10 +1429,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
         flavour = self.api.flavors.find(name=kwargs['flavour_name'])
         instance = self.api.servers.create(kwargs['vm_name'], image, flavour, nics=nics,
                                            *args, **kwargs)
-        wait_for(lambda: self.is_vm_running(kwargs["vm_name"]),
-                 num_sec=timeout_in_minutes * 60,
-                 message="OpenStack instance %s running after provision" % kwargs['vm_name'])
-
+        self.wait_vm_running(kwargs['vm_name'], num_sec=timeout)
         if kwargs.get('assign_floating_ip', None) is not None:
             ip = self.api.floating_ips.create(kwargs['assign_floating_ip'])
             instance.add_floating_ip(ip)

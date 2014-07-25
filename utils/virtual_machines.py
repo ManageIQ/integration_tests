@@ -8,8 +8,7 @@ from utils.log import logger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSystem
 
 
-def deploy_template(provider_key, vm_name, template_name=None, timeout_in_minutes=15,
-                    **deploy_args):
+def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
     try:
         provider_crud = get_infra_from_config(provider_key)
     except UnknownProviderType:
@@ -38,8 +37,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout_in_minute
         (vm_name, template_name, data['name']))
     try:
         logger.debug("Deploy args: " + str(deploy_args))
-        vm_name = mgmt.deploy_template(template_name, timeout_in_minutes=timeout_in_minutes,
-                                       **deploy_args)
+        vm_name = mgmt.deploy_template(template_name, timeout=timeout, **deploy_args)
         logger.info("Provisioned VM/instance %s" % vm_name)  # instance ID in case of EC2
     except Exception as e:
         logger.error('Could not provisioning VM/instance %s (%s)', vm_name, e)

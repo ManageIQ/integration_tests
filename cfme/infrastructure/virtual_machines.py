@@ -144,17 +144,17 @@ class Vm(object):
         self.template_name = template_name
         self.provider_crud = provider_crud
 
-    def create_on_provider(self, timeout_in_minutes=15):
+    def create_on_provider(self, timeout=900):
         """Create the VM on the provider
 
         Args:
-            timeout_in_minutes: Number of minutes to wait for the VM to appear in CFME
-                                Will not wait at all, if set to 0 (Defaults to ``15``)
+            timeout: Number of seconds to wait for the VM to appear in CFME
+                     Will not wait at all, if set to 0 (Defaults to ``900``)
         """
         deploy_template(self.provider_crud.key, self.name, self.template_name)
-        if timeout_in_minutes:
+        if timeout:
             self.provider_crud.refresh_provider_relationships()
-            self.wait_for_vm_to_appear(timeout_in_minutes=timeout_in_minutes, load_details=False)
+            self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
 
     def load_details(self, refresh=False):
         """Navigates to a VM's details page.
@@ -385,7 +385,7 @@ class Vm(object):
     #     raise NotImplementedError('snapshot mgmt is not implemented.')
 
     def wait_for_vm_state_change(
-            self, desired_state=None, timeout_in_minutes=5, from_details=False):
+            self, desired_state=None, timeout=300, from_details=False):
         """Wait for VM to come to desired state.
 
         This function waits just the needed amount of time thanks to wait_for.
@@ -393,7 +393,7 @@ class Vm(object):
         Args:
             desired_state: on, off, suspended... corresponds to values in cfme, preferred approach
                 is to use Vm.STATE_* constansts
-            timeout_in_minutes: Specify amount of time to wait
+            timeout: Specify amount of time (in seconds) to wait
         Raises:
             TimedOutError:
                 When VM does not come up to desired state in specified period of time.
@@ -407,16 +407,16 @@ class Vm(object):
                 return self.get_detail(properties=detail_t) == desired_state
             else:
                 return self.find_quadicon().state == 'currentstate-' + desired_state
-        return wait_for(_looking_for_state_change, num_sec=timeout_in_minutes * 60, delay=30)
+        return wait_for(_looking_for_state_change, num_sec=timeout, delay=30)
 
-    def wait_for_vm_to_appear(self, timeout_in_minutes=10, load_details=True):
+    def wait_for_vm_to_appear(self, timeout=600, load_details=True):
         """Wait for a VM to appear within CFME
 
         Args:
-            timeout_in_minutes: time to wait for it to appear
+            timeout: time (in seconds) to wait for it to appear
             from_details: when found, should it load the vm details
         """
-        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout_in_minutes * 60, delay=30)
+        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30)
         if load_details:
             self.load_details()
 
@@ -470,7 +470,7 @@ def remove(vm_names, cancel=True, provider_crud=None):
     sel.handle_alert(cancel=cancel)
 
 
-def wait_for_vm_state_change(vm_name, desired_state, timeout_in_minutes=5, provider_crud=None):
+def wait_for_vm_state_change(vm_name, desired_state, timeout=300, provider_crud=None):
     """Wait for VM to come to desired state.
 
     This function waits just the needed amount of time thanks to wait_for.
@@ -478,7 +478,7 @@ def wait_for_vm_state_change(vm_name, desired_state, timeout_in_minutes=5, provi
     Args:
         vm_name: Displayed name of the VM
         desired_state: 'on' or 'off'
-        timeout_in_minutes: Specify amount of time to wait until TimedOutError is raised in minutes.
+        timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
         provider_crud: provider object where vm resides on (optional)
     """
     def _looking_for_state_change():
@@ -486,7 +486,7 @@ def wait_for_vm_state_change(vm_name, desired_state, timeout_in_minutes=5, provi
         find_quadicon(vm_name, do_not_navigate=False).state == 'currentstate-' + desired_state
 
     _method_setup(vm_name, provider_crud)
-    return wait_for(_looking_for_state_change, num_sec=timeout_in_minutes * 60)
+    return wait_for(_looking_for_state_change, num_sec=timeout)
 
 
 def is_pwr_option_visible(vm_names, option, provider_crud=None):

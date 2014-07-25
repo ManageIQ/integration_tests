@@ -204,19 +204,17 @@ class Instance(Updateable, Pretty):
         """
         raise NotImplementedError('create is not implemented.')
 
-    def create_on_provider(self, timeout_in_minutes=15):
+    def create_on_provider(self, timeout=900):
         """Create the instance on the provider
 
         Args:
-            timeout_in_minutes: Number of minutes to wait for the instance to appear in CFME
-                                Will not wait at all, if set to 0 (Defaults to ``15``)
+            timeout: Number of seconds to wait for the instance to appear in CFME
+                     Will not wait at all, if set to 0 (Defaults to ``900``)
         """
         deploy_template(self.provider_crud.key, self.name, self.template_name)
-        if timeout_in_minutes:
+        if timeout:
             self.provider_crud.refresh_provider_relationships()
-            self.wait_for_vm_to_appear(
-                timeout_in_minutes=timeout_in_minutes, load_details=False
-            )
+            self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
 
     def delete(self, cancel=False):
         sel.force_navigate('clouds_instance', context={'instance': self})
@@ -402,8 +400,8 @@ class Instance(Updateable, Pretty):
         except sel.NoSuchElementException:
             return False
 
-    def wait_for_vm_state_change(self, desired_state=None, timeout_in_minutes=5,
-                                 from_details=False, with_relationship_refresh=True):
+    def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
+                                 with_relationship_refresh=True):
         """Wait for instance to come to desired state.
 
         This function waits just the needed amount of time thanks to wait_for.
@@ -411,7 +409,7 @@ class Instance(Updateable, Pretty):
         Args:
             desired_state: on, off, suspended... for available states, see
                            :py:class:`EC2Instance` and :py:class:`OpenStackInstance`
-            timeout_in_minutes: Specify amount of time to wait
+            timeout: Specify amount of time (in seconds) to wait
         Raises:
             TimedOutError:
                 When instance does not come up to desired state in specified period of time.
@@ -428,18 +426,18 @@ class Instance(Updateable, Pretty):
 
         return wait_for(
             _looking_for_state_change,
-            num_sec=timeout_in_minutes * 60,
+            num_sec=timeout,
             delay=30,
             fail_func=self.refresh_relationships if with_relationship_refresh else None)
 
-    def wait_for_vm_to_appear(self, timeout_in_minutes=10, load_details=True):
+    def wait_for_vm_to_appear(self, timeout=600, load_details=True):
         """Wait for an instance to appear within CFME
 
         Args:
-            timeout_in_minutes: time to wait for it to appear
+            timeout: time (in seconds) to wait for it to appear
             from_details: when found, should it load the instance details
         """
-        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout_in_minutes * 60, delay=30)
+        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30)
         if load_details:
             self.load_details()
 
@@ -711,8 +709,7 @@ def remove(instance_names, cancel=True, provider_crud=None):
     sel.handle_alert(cancel=cancel)
 
 
-def wait_for_instance_state_change(vm_name, desired_state, timeout_in_minutes=5,
-                                   provider_crud=None):
+def wait_for_instance_state_change(vm_name, desired_state, timeout=300, provider_crud=None):
     """Wait for an instance to come to desired state.
 
     This function waits just the needed amount of time thanks to wait_for.
@@ -720,7 +717,7 @@ def wait_for_instance_state_change(vm_name, desired_state, timeout_in_minutes=5,
     Args:
         vm_name: Displayed name of the instance
         desired_state: 'on' or 'off'
-        timeout_in_minutes: Specify amount of time to wait until TimedOutError is raised in minutes.
+        timeout: Specify amount of time (in seconds) to wait until TimedOutError is raised
         provider_crud: provider object where instance resides (optional)
     """
     def _looking_for_state_change():
@@ -728,7 +725,7 @@ def wait_for_instance_state_change(vm_name, desired_state, timeout_in_minutes=5,
         find_quadicon(vm_name, do_not_navigate=False).state == 'currentstate-' + desired_state
 
     _method_setup(vm_name, provider_crud)
-    return wait_for(_looking_for_state_change, num_sec=timeout_in_minutes * 60)
+    return wait_for(_looking_for_state_change, num_sec=timeout)
 
 
 def is_pwr_option_visible(vm_names, option, provider_crud=None):
