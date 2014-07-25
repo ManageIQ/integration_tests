@@ -6,6 +6,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Region, Table, tabstrip, toolbar
 from utils.timeutil import parsetime
 from utils.wait import wait_for
+from utils.pretty import Pretty
 
 page = Region(
     title="Dashboard",
@@ -38,7 +39,7 @@ def dashboards():
         yield dashboard_name
 
 
-class Widget(object):
+class Widget(Pretty):
     _name = "//div[@id='{}']//span[contains(@class, 'modtitle_text')]"
     _remove = "//div[@id='{}']//a[@title='Remove from Dashboard']"
     _minimize = "//div[@id='{}']//a[@title='Minimize']"
@@ -49,6 +50,8 @@ class Widget(object):
     _zoomed_close = "//div[@id='lightbox_div']//a[@title='Close']"
     _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
     _content = "//div[@id='{}']//div[contains(@class, 'modboxin')]"
+
+    pretty_attrs = ['div_id']
 
     def __init__(self, div_id):
         self._div_id = div_id
@@ -163,7 +166,9 @@ class Widget(object):
             raise NameError("Could not find widget with name {} on current dashboard!".format(name))
 
 
-class BaseWidgetContent(object):
+class BaseWidgetContent(Pretty):
+    pretty_attrs = ['widget_box_id']
+
     def __init__(self, widget_box_id):
         self.root = lambda: sel.element(
             "//div[@id='{}']//div[contains(@class, 'modboxin')]".format(widget_box_id))

@@ -11,12 +11,12 @@ from utils import conf
 from utils import randomness
 from utils.ssh import SSHClient
 from utils.wait import wait_for
-
+from utils.pretty import Pretty
 
 PROTOCOL_TYPES = ('smb', 'nfs')
 
 
-class DbBackupData(object):
+class DbBackupData(Pretty):
     """ Container for test data
 
     Contains data from cfme_data and credentials conf files used in tests
@@ -34,6 +34,7 @@ class DbBackupData(object):
         'smb': ('hostname', 'path_on_host'),
         'nfs': ('hostname',)
     }
+    pretty_attrs = ['machine_id', 'machine_data', 'protocol_type']
 
     def __init__(self, machine_id, machine_data, protocol_type):
         self.machine_id = machine_id

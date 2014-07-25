@@ -1,6 +1,3 @@
-from functools import partial
-
-
 def _name(o):
     cls = o.__class__
     return "%s.%s" % (getattr(cls, '__module__', "module"),
@@ -13,10 +10,9 @@ def attr_repr(o, attr):
 
 
 def pretty_repr(attrs, o):
-    attr_repr_o = partial(attr_repr, o)
-    pairs = zip(attrs, map(attr_repr_o, attrs))
+    pairs = zip(attrs, [attr_repr(o, attr) for attr in attrs])
     return "<%s %s>" % (_name(o),
-                        ", ".join(map(lambda i: "%s=%s" % (i[0], i[1]), pairs)))
+                        ", ".join(["%s=%s" % (i[0], i[1]) for i in pairs]))
 
 
 def pr_obj(attrs):

@@ -17,6 +17,7 @@ from cfme.web_ui.multibox import MultiBoxSelect
 from utils import db, lazycache
 from utils.update import Updateable
 from utils.wait import wait_for
+from utils.pretty import Pretty
 
 
 def get_report_name(o):
@@ -275,7 +276,7 @@ class CustomReport(Updateable):
             )
 
 
-class CustomSavedReport(Updateable):
+class CustomSavedReport(Updateable, Pretty):
     """Custom Saved Report. Enables us to retrieve data from the table.
 
     Args:
@@ -284,6 +285,8 @@ class CustomSavedReport(Updateable):
             returns.
     """
     _table_loc = "//div[@id='report_html_div']/table[@class='style3']"
+
+    pretty_attrs = ['report', 'datetime']
 
     def __init__(self, report, datetime):
         self.report = report
@@ -358,13 +361,15 @@ class CannedSavedReport(CustomSavedReport):
         )
 
 
-class SavedReportData(object):
+class SavedReportData(Pretty):
     """This class stores data retrieved from saved report.
 
     Args:
         headers: Tuple with header columns.
         body: List of tuples with body rows.
     """
+    pretty_attrs = ['headers', 'body']
+
     def __init__(self, headers, body):
         self.headers = headers
         self.body = body

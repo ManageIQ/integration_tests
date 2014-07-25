@@ -522,7 +522,7 @@ class Table(Pretty):
         else:
             return False
 
-    class Row(object):
+    class Row(Pretty):
         """An object representing a row in a Table.
 
         The Row object returns a dymanically addressable attribute space so that
@@ -537,6 +537,8 @@ class Table(Pretty):
             than the attr accessor, as it can operate on int indices and header names.
 
         """
+        pretty_attrs = ['row_element', 'parent_table']
+
         def __init__(self, row_element, parent_table):
             self.table = parent_table
             self.row_element = row_element
@@ -2114,7 +2116,7 @@ def fill_scriptbox(sb, script):
     sel.execute_script(js_script)
 
 
-class EmailSelectForm(object):
+class EmailSelectForm(Pretty):
     """Class encapsulating the e-mail selector, eg. in Control/Alarms editing."""
     fields = Region(locators=dict(
         from_address="//input[@id='from']",
@@ -2312,7 +2314,7 @@ def fill_cb_select_string(select, cb):
     return fill(select, {cb})
 
 
-class ShowingInputs(object):
+class ShowingInputs(Pretty):
     """This class abstracts out as a container of inputs, that appear after preceeding was filled.
 
     Args:
@@ -2320,6 +2322,7 @@ class ShowingInputs(object):
     Keywords:
         min_values: How many values are required (Default: 0)
     """
+    pretty_attrs = ['locators', 'min_values']
 
     def __init__(self, *locators, **kwargs):
         self._locators = locators
@@ -2350,7 +2353,7 @@ def _fill_showing_inputs_str(si, s):
     fill(si, [s])
 
 
-class Timelines(object):
+class Timelines(Pretty):
     """
     A Timelines object represents the Timelines widget in CFME
 
@@ -2358,14 +2361,17 @@ class Timelines(object):
         loc: A locator for the Timelines element, usually the div with
             id miq_timeline.
     """
+    pretty_attrs = ['element']
 
-    class Object(object):
+    class Object(Pretty):
         """
         A generic timelines object.
 
         Args:
             element: A WebElement for the event.
         """
+        pretty_attrs = ['element']
+
         def __init__(self, element):
             self.element = element
             self.pos = self.element.value_of_css_property('left')

@@ -26,6 +26,7 @@ from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils import version
+from utils.pretty import Pretty
 
 
 # Page specific locators
@@ -85,7 +86,7 @@ nav.add_branch('infrastructure_hosts',
                                     lambda _: lif_btn('Provision this Host')}]})
 
 
-class Host(Updateable):
+class Host(Updateable, Pretty):
     """
     Model of an infrastructure host in cfme.
 
@@ -107,6 +108,7 @@ class Host(Updateable):
         myhost.create()
 
     """
+    pretty_attrs = ['name', 'hostname', 'ip_address', 'custom_ident']
 
     def __init__(self, name=None, hostname=None, ip_address=None, custom_ident=None,
                  host_platform=None, ipmi_address=None, mac_address=None, credentials=None,

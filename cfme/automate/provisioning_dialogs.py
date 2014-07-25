@@ -7,6 +7,7 @@ from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Select, SortTable, accordion, fill, flash, form_buttons, toolbar
 from utils.update import Updateable
+from utils.pretty import Pretty
 
 
 acc_tree = partial(accordion.tree, "Provisioning Dialogs")
@@ -60,7 +61,9 @@ nav.add_branch(
 )
 
 
-class DialogTypeSelect(object):
+class DialogTypeSelect(Pretty):
+    pretty_attrs = ['loc']
+
     def __init__(self, loc):
         self._loc = loc
 
@@ -75,7 +78,7 @@ def _fill_dts_o(dts, tup):
     return fill(dts.select, tup[-1])
 
 
-class ProvisioningDialog(Updateable):
+class ProvisioningDialog(Updateable, Pretty):
     form = Form(fields=[
         ("name", "//input[@id='name']"),
         ("description", "//input[@id='description']"),
@@ -87,6 +90,8 @@ class ProvisioningDialog(Updateable):
     VM_MIGRATE = ("vm_migrate", "VM Migrate")
     VM_PROVISION = ("vm_provision", "VM Provision")
     ALLOWED_TYPES = {HOST_PROVISION, VM_MIGRATE, VM_PROVISION}
+
+    pretty_attrs = ['name', 'description', 'content']
 
     def __init__(self, type, name=None, description=None, content=None):
         self.name = name

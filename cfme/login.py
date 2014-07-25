@@ -23,7 +23,7 @@ thread_locals.current_user = None
 
 
 class User(Pretty):
-    pretty_attrs = ['usrename', 'full_name', 'password']
+    pretty_attrs = ['username', 'full_name', 'password']
 
     def __init__(self, username=None, password=None, full_name=None):
         self.full_name = full_name

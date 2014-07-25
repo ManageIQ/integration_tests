@@ -1,4 +1,7 @@
-class Credential(object):
+from utils.pretty import Pretty
+
+
+class Credential(Pretty):
     """
     A class to fill in credentials
 
@@ -7,6 +10,7 @@ class Credential(object):
         secret: Something
         verify_secret: Something
     """
+    pretty_attrs = ['principal', 'secret']
 
     def __init__(self, principal=None, secret=None, verify_secret=None):
         self.principal = principal

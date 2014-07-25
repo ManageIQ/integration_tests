@@ -9,6 +9,7 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui import accordion, tabstrip, toolbar, paginator
 from utils.update import Updateable
 from utils.wait import wait_for
+from utils.pretty import Pretty
 
 template_select_form = ui.Form(
     fields=[
@@ -123,12 +124,14 @@ nav.add_branch(
             lambda ctx: paginator.click_element(ui.Quadicon(ctx['instance'].name, 'instance'))}]}]})
 
 
-class Template(object):
+class Template(Pretty):
+    pretty_attrs = ['name']
+
     def __init__(self, name):
         self.name = name
 
 
-class Instance(Updateable):
+class Instance(Updateable, Pretty):
     '''Represents an instance (or vm) in CFME.
 
        * provider_mgmt should be those returned by utils.mgmt_system.provider_factory
@@ -136,6 +139,7 @@ class Instance(Updateable):
        * provider should be an instance of cfme.cloud.provider.Provider
        * template should be an instance of Template
     '''
+    pretty_attrs = ['name', 'provider', 'availability_zone', 'instance_type']
 
     def __init__(self, email=None, first_name=None, last_name=None, notes=None, name=None,
                  instance_type=None, availability_zone=None, security_groups=None,

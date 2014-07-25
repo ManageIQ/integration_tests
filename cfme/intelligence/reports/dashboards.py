@@ -7,6 +7,7 @@ from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar
 from cfme.web_ui.menu import nav
 from utils import version
 from utils.update import Updateable
+from utils.pretty import Pretty
 
 
 def go_to_default_func(_):
@@ -60,13 +61,14 @@ nav.add_branch(
 )
 
 
-class Dashboard(Updateable):
+class Dashboard(Updateable, Pretty):
     form = Form(fields=[
         ("name", "//input[@id='name']"),
         ("title", "//input[@id='description']"),
         ("locked", "//input[@id='locked']"),
         ("widgets", DashboardWidgetSelector("//div[@id='form_widgets_div']")),
     ])
+    pretty_attrs = ['name', 'group', 'title', 'widgets']
 
     def __init__(self, name, group, title=None, locked=None, widgets=None):
         self.name = name
@@ -101,12 +103,13 @@ class Dashboard(Updateable):
         flash.assert_no_errors()
 
 
-class DefaultDashboard(Updateable):
+class DefaultDashboard(Updateable, Pretty):
     form = Form(fields=[
         ("title", "//input[@id='description']"),
         ("locked", "//input[@id='locked']"),
         ("widgets", DashboardWidgetSelector("//div[@id='form_widgets_div']")),
     ])
+    pretty_attrs = ['title', 'widgets']
 
     def __init__(self, title=None, locked=None, widgets=None):
         self.locked = locked

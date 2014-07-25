@@ -25,6 +25,7 @@ from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
+from utils.pretty import Pretty
 
 
 # Common locators
@@ -109,7 +110,7 @@ nav.add_branch('clouds_providers',
                                     lambda _: pol_btn('Manage Policies')}]})
 
 
-class Provider(Updateable):
+class Provider(Updateable, Pretty):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
 
@@ -127,6 +128,7 @@ class Provider(Updateable):
         myprov.create()
 
     """
+    pretty_attrs = ['name', 'credentials', 'zone', 'key']
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
         self.name = name

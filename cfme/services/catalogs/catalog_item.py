@@ -6,6 +6,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Radio, Select, Table, accordion, fill, flash, menu, tabstrip
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
+from utils.pretty import Pretty
 
 
 cfg_btn = partial(tb.select, "Configuration")
@@ -144,7 +145,8 @@ menu.nav.add_branch(
 )
 
 
-class CatalogItem(Updateable):
+class CatalogItem(Updateable, Pretty):
+    pretty_attrs = ['name', 'item_type', 'catalog', 'catalog_name', 'provider']
 
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None,
@@ -192,7 +194,8 @@ class CatalogItem(Updateable):
         flash.assert_success_message('The selected Catalog Item was deleted')
 
 
-class CatalogBundle(Updateable):
+class CatalogBundle(Updateable, Pretty):
+    pretty_attrs = ['name', 'catalog', 'dialog', 'cat_item']
 
     def __init__(self, name=None, description=None,
                  display_in=False, catalog=None, dialog=None, cat_item=None):

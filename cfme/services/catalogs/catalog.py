@@ -6,6 +6,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, flash, menu
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
+from utils.pretty import Pretty
 
 cfg_btn = partial(tb.select, "Configuration")
 catalog_tree = partial(accordion.tree, "Catalogs")
@@ -58,8 +59,9 @@ menu.nav.add_branch(
 )
 
 
-class Catalog(Updateable):
+class Catalog(Updateable, Pretty):
     """Represents a Catalog"""
+    pretty_attrs = ['name', 'items']
 
     def __init__(self, name=None, description=None, items=None):
         self.name = name

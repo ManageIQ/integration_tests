@@ -13,6 +13,7 @@ from collections import OrderedDict
 from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash, form_buttons
 from utils.update import Updateable
 from utils import version
+from utils.pretty import Pretty
 
 
 tb_select = functools.partial(tb.select, "Configuration")
@@ -112,12 +113,15 @@ nav.add_branch(
                                                             "Edit this Item")}]}]})
 
 
-class Template(object):
+class Template(Pretty):
+    pretty_attrs = ['name']
+
     def __init__(self, name):
         self.name = name
 
 
-class Instance(Updateable):
+class Instance(Updateable, Pretty):
+    pretty_attrs = ['name', 'item_type', 'catalog', 'vm_name', 'instance_type', 'availability_zone']
 
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None, vm_name=None, catalog_name=None,

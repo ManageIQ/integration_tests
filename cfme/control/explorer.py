@@ -19,6 +19,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.expression_editor as editor
 import cfme.web_ui.toolbar as tb
+from utils.pretty import Pretty
 
 
 events_table = Table(
@@ -451,7 +452,7 @@ def click_if_displayed(loc):
         pass
 
 
-class BaseCondition(Updateable):
+class BaseCondition(Updateable, Pretty):
     """Base class for conditions.
 
     They differ just with the navigation prefix, so that is the self.PREFIX which gets changed.
@@ -485,6 +486,7 @@ class BaseCondition(Updateable):
                     "//img[@alt='Edit this Expression']"))),
         ]
     )
+    pretty_attrs = ['description', 'expression', 'scope']
 
     def __init__(self,
                  description,
@@ -549,7 +551,7 @@ class HostCondition(BaseCondition, HostObject):
     PREFIX = "host_"
 
 
-class BasePolicy(Updateable):
+class BasePolicy(Updateable, Pretty):
     PREFIX = None
 
     assigned_conditions = Table(
@@ -604,6 +606,7 @@ class BasePolicy(Updateable):
             ),
         ]
     )
+    pretty_attrs = ['description', 'scope']
 
     def __init__(self,
                  description,
@@ -844,7 +847,7 @@ class VMControlPolicy(BaseControlPolicy, VMObject):
         return "VM and Instance Control: %s" % self.description
 
 
-class Alert(Updateable):
+class Alert(Updateable, Pretty):
     """Alert representation object.
 
     Example:
@@ -939,6 +942,8 @@ class Alert(Updateable):
             ("mgmt_event", "input#event_name"),
         ]
     )
+
+    pretty_attrs = ['description', 'evaluate']
 
     def __init__(self,
                  description,
@@ -1079,7 +1084,7 @@ class Alert(Updateable):
         form_func()     # Fill the expression if present
 
 
-class Action(Updateable):
+class Action(Updateable, Pretty):
     """This class represents one Action.
 
     Example:
@@ -1212,6 +1217,8 @@ class Action(Updateable):
         "Evaluate Alerts": MultiBoxSelect.default()
     }
 
+    pretty_attrs = ['description', 'action_type', 'action_values']
+
     def __init__(self, description, action_type, action_values=None):
         assert action_type in self.sub_forms.keys(), "Unrecognized Action Type (%s)" % action_type
         self.description = description
@@ -1299,7 +1306,7 @@ class Action(Updateable):
         flash.assert_no_errors()
 
 
-class PolicyProfile(Updateable):
+class PolicyProfile(Updateable, Pretty):
     """This class represents a Policy Profile.
 
     Policies can be assigned to Policy Profile and also the Policy Profile.
@@ -1328,6 +1335,8 @@ class PolicyProfile(Updateable):
             ("policies", MultiBoxSelect.default())
         ]
     )
+
+    pretty_attrs = ['description', 'policies']
 
     def __init__(self, description, policies=None, notes=None):
         self.policies = policies
@@ -1411,7 +1420,7 @@ class PolicyProfile(Updateable):
         flash.assert_no_errors()
 
 
-class BaseAlertProfile(Updateable):
+class BaseAlertProfile(Updateable, Pretty):
     """This class represents an Alert Profile.
 
     Alerts can be assigned to Alert Profile and also the Alert Profile can be assigned to various
@@ -1483,6 +1492,8 @@ class BaseAlertProfile(Updateable):
         "Tagged Resource Pools": selected_form,
         "Tagged VMs and Instances": selected_form
     }
+
+    pretty_attrs = ['description', 'alerts']
 
     def __init__(self, description, alerts=None, notes=None):
         assert self.PREFIX, "You must use inherited class of this!"

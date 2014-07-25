@@ -22,11 +22,13 @@ from utils.miq_soap import MiqVM
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
+from utils.pretty import Pretty
 
 
-class VMWrapper(object):
+class VMWrapper(Pretty):
     """This class binds a provider_mgmt object with VM name. Useful for on/off operation"""
     __slots__ = ("_mgmt", "_vm", "soap")
+    pretty_attrs = ['vm_name', 'provider_mgmt']
 
     def __init__(self, provider_mgmt, vm_name, soap):
         self._mgmt = provider_mgmt

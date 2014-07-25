@@ -4,6 +4,7 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, accordion, fill, flash, menu
 from utils.update import Updateable
+from utils.pretty import Pretty
 
 order_button = "//img[@title='Order this Service']"
 
@@ -34,7 +35,8 @@ menu.nav.add_branch(
 )
 
 
-class ServiceCatalogs(Updateable):
+class ServiceCatalogs(Updateable, Pretty):
+    pretty_attrs = ['service_name']
 
     def __init__(self, service_name=None):
         self.service_name = service_name

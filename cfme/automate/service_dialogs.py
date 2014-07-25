@@ -8,6 +8,7 @@ from cfme.web_ui import toolbar as tb
 from cfme.web_ui import Form, Select, SplitTable, accordion, fill, flash, form_buttons
 from utils import version
 from utils.update import Updateable
+from utils.pretty import Pretty
 
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
@@ -67,7 +68,8 @@ menu.nav.add_branch(
 )
 
 
-class ServiceDialog(Updateable):
+class ServiceDialog(Updateable, Pretty):
+    pretty_attrs = ['label', 'description']
 
     def __init__(self, label=None, description=None,
                  submit=False, cancel=False,

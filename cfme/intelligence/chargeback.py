@@ -83,7 +83,9 @@ def _fill_rateform(rf, value):
     fill(rf.unit_select_loc, sel.ByValue(value[1]))
 
 
-class ComputeRate(Updateable):
+class ComputeRate(Updateable, Pretty):
+    pretty_attrs = ['description']
+
     def __init__(self, description=None,
                  cpu_alloc=None,
                  cpu_used=None,
@@ -141,7 +143,9 @@ class ComputeRate(Updateable):
         flash.assert_no_errors()
 
 
-class StorageRate(Updateable):
+class StorageRate(Updateable, Pretty):
+    pretty_attrs = ['description']
+
     def __init__(self, description=None,
                  storage_fixed_1=None,
                  storage_fixed_2=None,

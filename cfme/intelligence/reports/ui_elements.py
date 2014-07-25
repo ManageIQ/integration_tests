@@ -11,19 +11,21 @@ from cfme.web_ui import Calendar, Form, Region, Table, Select, fill
 from utils import lazycache
 from utils.log import logger
 from utils.wait import wait_for, TimedOutError
+from utils.pretty import Pretty
 
 
 class NotDisplayedException(Exception):
     pass
 
 
-class PivotCalcSelect(object):
+class PivotCalcSelect(Pretty):
     """This class encapsulates those JS pseudo-selects in Edit Report/Consolidation"""
     _entry = "//div[@class='dhx_combo_box']"
     _arrow = "//img[@class='dhx_combo_img']"
     _box = "//div[contains(@class, 'dhx_combo_list')]"
     _box_items = ".//div/div"
     _box_checkbox = ".//div/div[text()='{}']/preceding-sibling::*[1][@type='checkbox']"
+    pretty_attrs = ['root_el_id']
 
     def __init__(self, root_el_id):
         self._id = root_el_id
@@ -163,8 +165,10 @@ def _fill_pcs_map(o, m):
     o.close_all_boxes()
 
 
-class RecordGrouper(object):
+class RecordGrouper(Pretty):
     """This class encapsulates the grouping editing in Edit Report/Consolidation"""
+    pretty_attrs = ['table_loc']
+
     def __init__(self, table_loc):
         self._table_loc = table_loc
         self.table = Table(table_loc)
@@ -181,13 +185,15 @@ def _fill_recordgrouper(rg, d):
         fill(PivotCalcSelect(sel.get_attribute(row.calculations, "id")), content)
 
 
-class ColumnStyleTable(object):
+class ColumnStyleTable(Pretty):
     """We cannot inherit Table because it does too much WebElement chaining. This avoids that
     with using xpath-only locating making it much more reliable.
 
     Args:
         div_id: `id` of `div` where the table is located in.
     """
+    pretty_attrs = ['div_id']
+
     def __init__(self, div_id):
         self._div_id = div_id
 
@@ -287,12 +293,14 @@ def __fill_chft_map(chft, d):
         fill(Select(sel.element(".//select", root=row.format)), format)
 
 
-class MenuShortcuts(object):
+class MenuShortcuts(Pretty):
     """This class operates the web ui object that handles adding new menus and shortcuts.
 
     Args:
         select_loc: Locator pointing to the selector.
     """
+    pretty_attrs = ['select_loc']
+
     def __init__(self, select_loc):
         self._select_loc = select_loc
 
@@ -419,13 +427,14 @@ def _fill_rss_str(erf, s):
         sel.send_keys(erf.form.txt_url, s)
 
 
-class DashboardWidgetSelector(object):
+class DashboardWidgetSelector(Pretty):
     _button_open_close = ".//img[contains(@src, 'combo_select.gif')]"
     _combo_list = "//div[contains(@class, 'dhx_combo_list') and div/div[.='Add a Widget']]"
     _selected = (".//div[@id='modules']//div[contains(@id, 'w_')]/div/h2/div"
         "/span[contains(@class, 'modtitle_text')]")
     _remove_button = ".//div[@id='modules']//div[contains(@id, 'w_')]/div"\
         "/h2[div/span[contains(@class, 'modtitle_text') and .='{}']]/a[@title='Remove this widget']"
+    pretty_attrs = ['root_loc']
 
     def __init__(self, root_loc="//div[@id='form_widgets_div']"):
         self._root_loc = root_loc
@@ -492,10 +501,11 @@ def _fill_dws_str(dws, s):
     fill(dws, [s])
 
 
-class FolderManager(object):
+class FolderManager(Pretty):
     """Class used in Reports/Edit Reports menus."""
     _fields = ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr/td"
     _field = ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr/td[.='{}']"
+    pretty_attrs = ['root']
 
     class _BailOut(Exception):
         pass
