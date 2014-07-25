@@ -12,23 +12,22 @@ def get_version(obj):
        version)
 
     '''
-    try:
-        if isinstance(obj, Version):
-            return obj
-        if obj.startswith('master'):
-            return LooseVersion(latest=True)
-        return LooseVersion(obj)
-    except:
-        return None
+    if isinstance(obj, Version):
+        return obj
+    if obj.startswith('master'):
+        return LooseVersion(latest=True)
+    return LooseVersion(obj)
 
 
 @lru_cache(maxsize=32)
 def current_version():
-    """ A lazy cached method to return the appliance version. """
-    try:
-        return get_version(SSHClient().get_version())
-    except:
-        return None
+    """A lazy cached method to return the appliance version.
+
+       Do not catch errors, since generally we cannot proceed with
+       testing, without knowing the server version.
+
+    """
+    return get_version(SSHClient().get_version())
 
 
 @lru_cache(maxsize=32)
@@ -41,10 +40,7 @@ def appliance_build_datetime():
 
 @lru_cache(maxsize=32)
 def appliance_is_downstream():
-    try:
-        return SSHClient().is_appliance_downstream()
-    except:
-        return None
+    SSHClient().is_appliance_downstream()
 
 
 def product_version_dispatch(*_args, **_kwargs):
