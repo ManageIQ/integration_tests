@@ -1,9 +1,7 @@
 #!/usr/bin/env python2
 from IPython import embed
 
-from fixtures import navigation as nav
-from utils.browser import browser_session, testsetup
+import cfme.fixtures.pytest_selenium as sel
 
-with browser_session() as browser:
-    pg = nav.home_page_logged_in(testsetup)
-    embed()
+sel.force_navigate('dashboard')
+embed()
