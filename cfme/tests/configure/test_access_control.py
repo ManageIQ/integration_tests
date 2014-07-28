@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
 import pytest
+import traceback
 import cfme.configure.access_control as ac
-from utils.update import update
 import utils.error as error
 import utils.randomness as random
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme import login
+from cfme.exceptions import OptionNotAvailable
+from cfme.infrastructure import virtual_machines
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
 from utils import version
+from utils.log import logger
+from utils.providers import setup_infrastructure_providers
+from utils.update import update
 
 usergrp = ac.Group(description='EvmGroup-user')
 
@@ -151,6 +156,64 @@ def test_assign_user_to_new_group():
     user.create()
 
 
+def _test_vm_provision():
+    logger.info("Checking for provision access")
+    sel.force_navigate("infra_vms")
+    virtual_machines.lcl_btn("Provision VMs")
+
+
+def _test_vm_power_on():
+    '''Ensures power button is shown for a VM'''
+    logger.info("Checking for power button")
+    vm_name = virtual_machines.get_first_vm_title()
+    logger.debug("VM " + vm_name + " selected")
+    if not virtual_machines.is_pwr_option_visible(vm_name, option=virtual_machines.Vm.POWER_ON):
+        raise OptionNotAvailable("Power button does not exist")
+
+
+def _test_vm_removal():
+    logger.info("Testing for VM removal permission")
+    vm_name = virtual_machines.get_first_vm()
+    logger.debug("VM " + vm_name + " selected")
+    virtual_machines.remove(vm_name, cancel=True)
+
+
+@pytest.mark.parametrize('product_features, action',
+                        [([['Infrastructure', 'Virtual Machines', 'Accordions'],
+                          ['Infrastructure', 'Virtual Machines', 'VM Access Rules',
+                            'Modify', 'Provision VMs']],
+                        _test_vm_provision)])
+def test_permission_edit(product_features, action):
+    '''
+    Ensures that changes in permissions are enforced on next login
+    '''
+    role_name = random.generate_random_string()
+    role = ac.Role(name=role_name,
+                  vm_restriction=None,
+                  product_features=[(['Everything'], False)] +    # role_features
+                                   [(k, True) for k in product_features])
+    role.create()
+    group = new_group(role=role.name)
+    group.create()
+    user = new_user(group=group)
+    user.create()
+    login.login(user.credential.principal, user.credential.secret)
+    try:
+        action()
+    except Exception:
+        pytest.fail('Incorrect permissions set')
+    login.login_admin()
+    role.update({'product_features': [(['Everything'], True)] +
+                                     [(k, False) for k in product_features]
+                 })
+    login.login(user.credential.principal, user.credential.secret)
+    try:
+        with error.expected(Exception):
+            action()
+    except error.UnexpectedSuccessException:
+        pytest.Fails('Permissions have not been updated')
+
+
 def _mk_role(name=None, vm_restriction=None, product_features=None):
     '''Create a thunk that returns a Role object to be used for perm
        testing.  name=None will generate a random name
@@ -207,16 +270,19 @@ def test_permissions(role, allowed_actions, disallowed_actions):
         for name, action_thunk in allowed_actions.items():
             try:
                 action_thunk()
-            except Exception as e:
-                fails[name] = e
+            except Exception:
+                fails[name] = "%s: %s" % (name, traceback.format_exc())
         for name, action_thunk in disallowed_actions.items():
             try:
                 with error.expected(Exception):
                     action_thunk()
-            except error.UnexpectedSuccessException as e:
-                fails[name] = e
+            except error.UnexpectedSuccessException:
+                fails[name] = "%s: %s" % (name, traceback.format_exc())
         if fails:
-            raise Exception(fails)
+            message = ''
+            for failure in fails.values():
+                message = "%s\n\n%s" % (message, failure)
+            raise Exception(message)
     finally:
         login.login_admin()
 
@@ -240,3 +306,43 @@ def test_permissions_role_crud():
     single_task_permission_test([[cat_name, 'Configuration'],
                                  ['Services', 'Catalogs Explorer']],
                                 {'Role CRUD': test_role_crud})
+
+
+def test_permissions_vm_provisioning():
+    single_task_permission_test(
+        [
+            ['Infrastructure', 'Virtual Machines', 'Accordions'],
+            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify', 'Provision VMs']
+        ],
+        {'Provision VM': _test_vm_provision}
+    )
+
+
+def test_permissions_vm_power_on_access():
+    # Ensure VMs exist
+    if not virtual_machines.get_number_of_vms():
+        logger.debug("Setting up providers")
+        setup_infrastructure_providers()
+        logger.debug("Providers setup")
+    single_task_permission_test(
+        [
+            ['Infrastructure', 'Virtual Machines', 'Accordions'],
+            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Operate', 'Power On']
+        ],
+        {'VM Power On': _test_vm_power_on}
+    )
+
+
+def test_permissions_vm_remove():
+    # Ensure VMs exist
+    if not virtual_machines.get_number_of_vms():
+        logger.debug("Setting up providers")
+        setup_infrastructure_providers()
+        logger.debug("Providers setup")
+    single_task_permission_test(
+        [
+            ['Infrastructure', 'Virtual Machines', 'Accordions'],
+            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify', 'Remove']
+        ],
+        {'Remove VM': _test_vm_removal}
+    )
