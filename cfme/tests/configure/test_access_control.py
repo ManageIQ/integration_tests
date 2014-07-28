@@ -235,6 +235,6 @@ def single_task_permission_test(product_features, actions):
 
 
 def test_permissions_role_crud():
-    single_task_permission_test([['Settings & Operations', 'Configuration'],
+    single_task_permission_test([[cat_name, 'Configuration'],
                                  ['Services', 'Catalogs Explorer']],
                                 {'Role CRUD': test_role_crud})
