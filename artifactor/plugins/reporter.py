@@ -172,7 +172,7 @@ class Reporter(ArtifactorBasePlugin):
                 percenstring = ""
                 bmax = 0
                 for kek, val in v['_stats'].iteritems():
-                    if kek != 'skipped':
+                    if kek not in ('skipped', 'xfailed'):
                         bmax += val
                 if bmax:
                     percen = "{:.2f}".format(float(v['_stats']['passed']) / float(bmax) * 100)
