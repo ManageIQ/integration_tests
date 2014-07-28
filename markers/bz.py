@@ -312,7 +312,7 @@ def pytest_runtest_setup(item):
     # xfailing takes precedence over skipping (xfail is via custom function)
     if xfailers:
         item.add_marker(
-            pytest.mark.xfail(
+            pytest.mark.xfail(reason=
                 "Xfailing due to these bugs: {}".format(", ".join(map(str, xfailers)))))
     elif skippers:
         bz_url = urlparse(item._bugzilla.url)

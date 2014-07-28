@@ -13,6 +13,7 @@ ovirt-engine-sdk-python
 paramiko
 psphere
 py
+PyGithub
 PyPDF2
 pysphere
 pytest
