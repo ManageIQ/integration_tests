@@ -8,6 +8,7 @@ from cfme.web_ui import CheckboxSelect, Form, Select, ShowingInputs, accordion, 
 from cfme.web_ui import flash, form_buttons
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
+from utils.pretty import Pretty
 
 
 nav.add_branch(
@@ -112,7 +113,7 @@ visibility_obj = ShowingInputs(
 )
 
 
-class MenuWidget(Updateable):
+class MenuWidget(Updateable, Pretty):
     form = Form(fields=[
         ("title", "//input[@id='title']"),
         ("description", "//input[@id='description']"),
@@ -120,6 +121,7 @@ class MenuWidget(Updateable):
         ("shortcuts", MenuShortcuts("//select[@id='add_shortcut']")),
         ("visibility", visibility_obj),
     ])
+    pretty_attrs = ['description', 'shortcuts', 'visibility']
 
     def __init__(self, title, description=None, active=None, shortcuts=None, visibility=None):
         self.title = title
@@ -167,6 +169,7 @@ class ReportWidget(Updateable):
         ("timer", Timer()),
         ("visibility", visibility_obj),
     ])
+    pretty_attrs = ['description', 'filter', 'visibility']
 
     def __init__(self,
             title, description=None, active=None, filter=None, columns=None, rows=None, timer=None,
@@ -197,7 +200,7 @@ class ReportWidget(Updateable):
         flash.assert_no_errors()
 
 
-class ChartWidget(Updateable):
+class ChartWidget(Updateable, Pretty):
     form = Form(fields=[
         ("title", "//input[@id='title']"),
         ("description", "//input[@id='description']"),
@@ -206,6 +209,7 @@ class ChartWidget(Updateable):
         ("timer", Timer()),
         ("visibility", visibility_obj),
     ])
+    pretty_attrs = ['title', 'description', 'filter', 'visibility']
 
     def __init__(self,
             title, description=None, active=None, filter=None, timer=None, visibility=None):
@@ -233,7 +237,7 @@ class ChartWidget(Updateable):
         flash.assert_no_errors()
 
 
-class RSSFeedWidget(Updateable):
+class RSSFeedWidget(Updateable, Pretty):
     form = Form(fields=[
         ("title", "//input[@id='title']"),
         ("description", "//input[@id='description']"),
@@ -245,6 +249,7 @@ class RSSFeedWidget(Updateable):
         ("timer", Timer()),
         ("visibility", visibility_obj),
     ])
+    pretty_attrs = ['title', 'description', 'type', 'feed', 'visibility']
 
     def __init__(self,
             title, description=None, active=None, type=None, feed=None, external=None, rows=None,

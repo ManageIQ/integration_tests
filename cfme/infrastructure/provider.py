@@ -28,6 +28,7 @@ from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils import version
+from utils.pretty import Pretty
 
 add_infra_provider = FormButton("Add this Infrastructure Provider")
 
@@ -98,7 +99,7 @@ nav.add_branch('infrastructure_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
-class Provider(Updateable):
+class Provider(Updateable, Pretty):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -117,6 +118,7 @@ class Provider(Updateable):
         myprov.create()
 
     """
+    pretty_attr = ['name', 'key', 'zone']
 
     def __init__(self, name=None, credentials=None, key=None, zone=None):
         self.name = name

@@ -19,6 +19,7 @@ from utils.path import project_path
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils import version
+from utils.pretty import Pretty
 
 cfg_btn = partial(tb.select, 'Configuration')
 
@@ -122,7 +123,7 @@ nav.add_branch('infrastructure_pxe',
                  lambda ctx: iso_tree(ctx.provider)}]})
 
 
-class PXEServer(Updateable):
+class PXEServer(Updateable, Pretty):
     """Model of a PXE Server object in CFME
 
     Args:
@@ -137,6 +138,7 @@ class PXEServer(Updateable):
         customize_dir: Customization directory for templates.
         menu_filename: Menu filename for iPXE/syslinux menu.
     """
+    pretty_attrs = ['name', 'uri', 'access_url']
 
     def __init__(self, name=None, depot_type=None, uri=None, userid=None, password=None,
                  access_url=None, pxe_dir=None, windows_dir=None, customize_dir=None,
@@ -269,7 +271,7 @@ class PXEServer(Updateable):
             fill(pxe_image_type_form, {'image_type': image_type}, action=form_buttons.save)
 
 
-class CustomizationTemplate(Updateable):
+class CustomizationTemplate(Updateable, Pretty):
     """ Model of a Customization Template in CFME
 
     Args:
@@ -279,6 +281,7 @@ class CustomizationTemplate(Updateable):
         script_type: Script type, either Kickstart, Cloudinit or Sysprep.
         script_data: The scripts data.
     """
+    pretty_attrs = ['name', 'image_type']
 
     def __init__(self, name=None, description=None, image_type=None, script_type=None,
                  script_data=None):
@@ -372,13 +375,14 @@ class CustomizationTemplate(Updateable):
             'Customization Template "{}": Delete successful'.format(self.description))
 
 
-class SystemImageType(Updateable):
+class SystemImageType(Updateable, Pretty):
     """Model of a System Image Type in CFME.
 
     Args:
         name: The name of the System Image Type.
         provision_type: The provision type, either Vm or Host.
     """
+    pretty_attrs = ['name', 'provision_type']
 
     def __init__(self, name=None, provision_type=None):
         self.name = name
@@ -442,12 +446,13 @@ class SystemImageType(Updateable):
         flash.assert_message_match('System Image Type "{}": Delete successful'.format(self.name))
 
 
-class ISODatastore(Updateable):
+class ISODatastore(Updateable, Pretty):
     """Model of a PXE Server object in CFME
 
     Args:
         provider: Provider name.
     """
+    pretty_attrs = ['provider']
 
     def __init__(self, provider=None):
         self.provider = provider

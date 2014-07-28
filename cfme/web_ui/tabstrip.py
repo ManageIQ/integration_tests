@@ -15,6 +15,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme import web_ui
 from utils.log import logger
 from utils import version
+from utils.pretty import Pretty
 
 _entry_div = "//div[contains(@class, 'ui-tabs')]"  # Entry point
 _entry_ul = version.pick({
@@ -101,8 +102,11 @@ def select_tab(ident_string):
         return sel.click(get_clickable_tab(ident_string))
 
 
-class _TabStripField(object):
+class _TabStripField(Pretty):
     """A form field type for use in TabStripForms"""
+
+    pretty_attrs = ['ident_string', 'arg']
+
     def __init__(self, ident_string, arg):
         self.ident_string = ident_string
         self.arg = arg

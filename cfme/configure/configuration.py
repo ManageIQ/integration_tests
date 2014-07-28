@@ -16,6 +16,7 @@ from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
 from utils import version
+from utils.pretty import Pretty
 
 
 access_tree = partial(accordion.tree, "Access Control")
@@ -390,7 +391,7 @@ nav.add_branch("configuration",
 )
 
 
-class ServerLogDepot(object):
+class ServerLogDepot(Pretty):
     """ This class represents the 'Collect logs' for the server.
 
     Usage:
@@ -406,7 +407,7 @@ class ServerLogDepot(object):
         infoblock_type="form"
     )
 
-    class Credentials(Updateable):
+    class Credentials(Updateable, Pretty):
         """ This class represents the credentials for log depots.
 
         Args:
@@ -428,6 +429,8 @@ class ServerLogDepot(object):
             log_credentials.update()
 
         """
+        pretty_attrs = ['p_type', 'uri', 'username', 'password']
+
         p_types = dict(
             ftp="File Transfer Protocol",
             nfs="Network File System",
@@ -575,7 +578,7 @@ class ServerLogDepot(object):
         cls._collect("Collect current logs")
 
 
-class BasicInformation(Updateable):
+class BasicInformation(Updateable, Pretty):
     """ This class represents the "Basic Info" section of the Configuration page.
 
     Args:
@@ -598,6 +601,7 @@ class BasicInformation(Updateable):
             ('time_zone', Select("//select[@id='server_timezone']")),
         ]
     )
+    pretty_attrs = ['company_name', 'appliance_name', 'appliance_zone', 'time_zone']
 
     def __init__(self, company_name=None, appliance_name=None, appliance_zone=None, time_zone=None):
         assert (company_name or appliance_name or appliance_zone or time_zone), \
@@ -713,7 +717,7 @@ class SMTPSettings(Updateable):
         fill(self.smtp_settings, dict(to_email=to_address), action=self.buttons.test)
 
 
-class DatabaseAuthSetting(object):
+class DatabaseAuthSetting(Pretty):
     """ Authentication settings for DB internal database.
 
     Args:
@@ -732,6 +736,7 @@ class DatabaseAuthSetting(object):
         ("timeout_m", Select("//select[@id='session_timeout_mins']")),
         ("auth_mode", Select("//select[@id='authentication_mode']"))
     ])
+    pretty_attrs = ['timeout_h', 'timeout_m']
 
     def __init__(self, timeout_h=None, timeout_m=None):
         self.details = dict(
@@ -745,7 +750,7 @@ class DatabaseAuthSetting(object):
         fill(self.form, self.details, action=form_buttons.save)
 
 
-class AmazonAuthSetting(object):
+class AmazonAuthSetting(Pretty):
     """ Authentication settings via Amazon.
 
     Args:
@@ -770,6 +775,7 @@ class AmazonAuthSetting(object):
         ("secret_key", "//input[@id='authentication_amazon_secret']"),
         ("get_groups", "//input[@id='amazon_role']"),
     ])
+    pretty_attrs = ['access_key', 'secret_key', 'get_groups', 'timeout_h', 'timeout_m']
 
     def __init__(self, access_key, secret_key, get_groups=False, timeout_h=None, timeout_m=None):
         self.details = dict(
@@ -786,7 +792,7 @@ class AmazonAuthSetting(object):
         fill(self.form, self.details, action=form_buttons.save)
 
 
-class LDAPAuthSetting(object):
+class LDAPAuthSetting(Pretty):
     """ Authentication via LDAP
 
     Args:
@@ -832,6 +838,7 @@ class LDAPAuthSetting(object):
     ])
 
     AUTH_MODE = "LDAP"
+    pretty_attrs = ['hosts', 'user_type', 'user_suffix', 'base_dn', 'bind_dn', 'bind_password']
 
     def __init__(self,
                  hosts,
@@ -900,7 +907,7 @@ class LDAPSAuthSetting(LDAPAuthSetting):
     AUTH_MODE = "LDAPS"
 
 
-class Schedule(object):
+class Schedule(Pretty):
     """ Configure/Configuration/Region/Schedules functionality
 
     CReate, Update, Delete functionality.
@@ -963,6 +970,9 @@ class Schedule(object):
         ("start_hour", Select("//select[@id='start_hour']")),
         ("start_min", Select("//select[@id='start_min']")),
     ])
+
+    pretty_attrs = ['name', 'description', 'run_type', 'run_every',
+                    'start_date', 'start_hour', 'start_min']
 
     def __init__(self,
                  name,
@@ -1288,11 +1298,14 @@ class DatabaseBackupSchedule(Schedule):
             form_buttons.save()
 
 
-class Zone(object):
+class Zone(Pretty):
     """ Configure/Configuration/Region/Zones functionality
 
     Create/Read/Update/Delete functionality.
     """
+    pretty_attrs = ['name', 'description', 'smartproxy_ip', 'ntp_server_1',
+                    'ntp_server_2', 'ntp_server_3', 'max_scans', 'user', 'password', 'verify']
+
     def __init__(self,
                  name=None,
                  description=None,
@@ -1418,7 +1431,10 @@ class Zone(object):
             return False
 
 
-class Category(object):
+class Category(Pretty):
+    pretty_attrs = ['name', 'display_name', 'description', 'show_in_console',
+                    'single_value', 'capture_candu']
+
     def __init__(self, name=None, display_name=None, description=None, show_in_console=True,
                  single_value=True, capture_candu=False):
         self.name = name
@@ -1468,7 +1484,9 @@ class Category(object):
             flash.assert_success_message('Category "{}": Delete successful'.format(self.name))
 
 
-class Tag(object):
+class Tag(Pretty):
+    pretty_attrs = ['name', 'display_name', 'category']
+
     def __init__(self, name=None, display_name=None, category=None):
         self.name = name
         self.display_name = display_name

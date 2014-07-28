@@ -16,6 +16,7 @@ Note:
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import ListAccordionLinkNotFound
+from utils.pretty import Pretty
 
 DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
 DHX_LABEL = '*[contains(@data-remote, "true") and .="%s"]'
@@ -109,12 +110,14 @@ def get_active_links(name):
     return [ListAccordionLink(el.get_attribute("title"), link_root) for el in active_els]
 
 
-class ListAccordionLink(object):
+class ListAccordionLink(Pretty):
     """ Active link in an accordion section
 
     Args:
         title: The title of the link.
     """
+    pretty_attrs = ['title', 'root']
+
     def __init__(self, title, root=None):
         self.root = root
         self.title = title

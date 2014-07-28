@@ -7,9 +7,10 @@ from collections import Mapping
 from cfme.web_ui import Select, Form, fill
 from cfme.fixtures import pytest_selenium as sel
 from utils.log import logger
+from utils.pretty import Pretty
 
 
-class SNMPTrap(object):
+class SNMPTrap(Pretty):
     """Nicer representation of the single SNMP trap
 
     Args:
@@ -17,6 +18,8 @@ class SNMPTrap(object):
         type: SNMP type
         value: Value (default: `None`)
     """
+    pretty_attrs = ['oid', 'type', 'value']
+
     def __init__(self, oid, type, value=None):
         self.oid = oid
         self.type = type
@@ -28,12 +31,14 @@ class SNMPTrap(object):
         return (self.oid, self.type, self.value)
 
 
-class SNMPTrapField(object):
+class SNMPTrapField(Pretty):
     """Class representing SNMP trap field consisting of 3 elements - oid, type and value
 
     Args:
         seq_id: Sequential id of the field. Usually in range 1-10
     """
+    pretty_attrs = ['seq_id']
+
     def __init__(self, seq_id):
         self.seq_id = seq_id
 
@@ -93,12 +98,14 @@ def fill_snmp_trap_field_dict(field, val):
     return fill(field, (val["oid"], val["type"], val.get("value", None)))
 
 
-class SNMPTrapsField(object):
+class SNMPTrapsField(Pretty):
     """Encapsulates all trap fields to simplify form filling
 
     Args:
         num_fields: How many SNMPTrapField to generate
     """
+    pretty_attrs = ['num_fields']
+
     def __init__(self, num_fields):
         assert num_fields > 0, "You must have at least one field!"
         self.traps = [SNMPTrapField(i + 1) for i in range(num_fields)]

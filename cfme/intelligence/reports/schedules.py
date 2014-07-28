@@ -10,6 +10,7 @@ from cfme.web_ui.menu import nav
 from utils.db import cfmedb
 from utils.update import Updateable
 from utils.wait import wait_for
+from utils.pretty import Pretty
 
 
 cfg_btn = partial(toolbar.select, "Configuration")
@@ -49,7 +50,7 @@ nav.add_branch(
 )
 
 
-class Schedule(Updateable):
+class Schedule(Updateable, Pretty):
     """Represents a schedule in Intelligence/Reports/Schedules.
 
     Args:
@@ -88,6 +89,7 @@ class Schedule(Updateable):
     }
 
     info_block = InfoBlock("detail")
+    pretty_attrs = ['name', 'filter']
 
     def __init__(
             self,

@@ -13,7 +13,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import provider
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, paginator, toolbar as tb
 from functools import partial
-
+from utils.pretty import Pretty
 
 details_page = Region(infoblock_type='detail')
 
@@ -36,7 +36,7 @@ nav.add_branch(
 )
 
 
-class Datastore(object):
+class Datastore(Pretty):
     """ Model of an infrastructure datastore in cfme
 
     Args:
@@ -47,6 +47,7 @@ class Datastore(object):
         If given a provider_key, it will navigate through ``Infrastructure/Providers`` instead
         of the direct path through ``Infrastructure/Datastores``.
     """
+    pretty_attrs = ['name', 'provider_key']
 
     def __init__(self, name=None, provider_key=None):
         self.name = name

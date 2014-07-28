@@ -13,6 +13,7 @@ from utils import error, version
 from collections import Mapping
 import re
 from utils.log import logger
+from utils import pretty
 
 tree = Tree(version.pick({version.LOWEST: '//table//tr[@title="Datastore"]/../..',
                          '5.3': '//ul//a[@title="Datastore"]/../../..'}))
@@ -99,7 +100,9 @@ nav.add_branch(
     })
 
 
-class TreeNode(object):
+class TreeNode(pretty.Pretty):
+    pretty_attrs = ['name']
+
     @property
     def path(self):
         """Returns the path to this object as a list starting from the root"""
@@ -114,9 +117,6 @@ class TreeNode(object):
             sel.force_navigate('automate_explorer_tree_path', context={'tree_item': self})
             return True
         return False
-
-    def __repr__(self):
-        return "<%s name=%s>" % (self.__class__.__name__, self.name)
 
 
 class Domain(TreeNode, Updateable):
@@ -427,7 +427,7 @@ class Method(TreeNode, Updateable):
         return flash.assert_no_errors()
 
 
-class InstanceFieldsRow(object):
+class InstanceFieldsRow(pretty.Pretty):
     """Represents one row of instance fields.
 
     Args:
@@ -439,6 +439,7 @@ class InstanceFieldsRow(object):
         "inst_value_{}", "inst_on_entry_{}", "inst_on_exit_{}",
         "inst_on_error_{}", "inst_collect_{}"
     )
+    pretty_attrs = ['row_id']
 
     def __init__(self, row_id):
         self._row_id = row_id

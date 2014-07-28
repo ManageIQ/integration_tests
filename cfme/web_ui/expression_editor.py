@@ -11,6 +11,7 @@ import cfme.web_ui as web_ui
 import re
 import sys
 import types
+from utils.pretty import Pretty
 
 
 def _make_button(title):
@@ -487,12 +488,14 @@ def _create_program_from_none(none):
     return lambda: none
 
 
-class Expression(object):
+class Expression(Pretty):
     """This class enables to embed the expression in a Form.
 
     Args:
         show_func: Function to call to show the expression if there are more of them.
     """
+    pretty_attrs = ['show_func']
+
     def __init__(self, show_func=lambda: None):
         self.show_func = show_func
 

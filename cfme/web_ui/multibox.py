@@ -5,6 +5,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Select, fill, flash
 from utils.category import CategoryBase, categorize
 from utils.log import logger
+from utils.pretty import Pretty
 
 SelectItem = namedtuple("SelectItem", ["sync", "value", "text"])
 
@@ -17,7 +18,7 @@ class Async(CategoryBase):
     pass
 
 
-class MultiBoxSelect(object):
+class MultiBoxSelect(Pretty):
     """ Common UI element for selecting multiple items.
 
     Presence in eg. Control/Explorer/New Policy Profile (for selecting policies)
@@ -30,6 +31,8 @@ class MultiBoxSelect(object):
         remove_all: If present, locator for a button which unselects all items (Default None)
 
     """
+    pretty_attrs = ['unselected', 'selected']
+
     def __init__(self, unselected, selected, to_unselected, to_selected, remove_all=None,
                  sync=None, async=None):
         self._unselected = Select(unselected, multi=True)

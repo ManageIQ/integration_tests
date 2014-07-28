@@ -8,14 +8,17 @@ from selenium.common.exceptions import NoSuchElementException
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill
 from utils.log import logger
+from utils.pretty import Pretty
 
 
-class FormButton(object):
+class FormButton(Pretty):
     """This class reresents the small black button usually located in forms or CRUD.
 
     Args:
         alt: The text from `alt` field of the image
     """
+    pretty_attrs = ['alt', 'dimmed_alt']
+
     def __init__(self, alt, dimmed_alt=None):
         self._alt = alt
         self._dimmed_alt = dimmed_alt
