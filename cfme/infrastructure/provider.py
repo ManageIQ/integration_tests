@@ -19,7 +19,9 @@ import cfme.web_ui.flash as flash
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
-from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey
+from cfme.exceptions import (
+    HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
+)
 from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator
 from cfme.web_ui import Timelines
 from cfme.web_ui.form_buttons import FormButton
@@ -238,7 +240,7 @@ class Provider(Updateable, Pretty):
         sel.handle_alert(cancel=False)
 
     def get_yaml_data(self):
-        """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
+        """ Returns yaml data for this provider.
         """
         if not self.key:
             raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data')
@@ -463,7 +465,8 @@ def get_from_config(provider_config_name):
 
     prov_config = conf.cfme_data['management_systems'][provider_config_name]
     credentials = get_credentials_from_config(prov_config['credentials'])
-    if prov_config.get('type') == 'virtualcenter':
+    prov_type = prov_config.get('type')
+    if prov_type == 'virtualcenter':
         return VMwareProvider(name=prov_config['name'],
                               hostname=prov_config['hostname'],
                               ip_address=prov_config['ipaddress'],
@@ -472,7 +475,7 @@ def get_from_config(provider_config_name):
                               key=provider_config_name,
                               start_ip=prov_config['discovery_range']['start'],
                               end_ip=prov_config['discovery_range']['end'])
-    else:
+    elif prov_type == 'rhevm':
         if prov_config.get('candu_credentials', None):
             candu_credentials = get_credentials_from_config(prov_config['candu_credentials'])
             candu_credentials.candu = True
@@ -488,6 +491,8 @@ def get_from_config(provider_config_name):
                              key=provider_config_name,
                              start_ip=prov_config['discovery_range']['start'],
                              end_ip=prov_config['discovery_range']['end'])
+    else:
+        raise UnknownProviderType('{} is not a known infra provider type'.format(prov_type))
 
 
 def discover_from_provider(provider_data):

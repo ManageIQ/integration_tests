@@ -4,7 +4,6 @@
 Used to communicate with providers without using CFME facilities
 """
 import re
-import time
 import boto
 from abc import ABCMeta, abstractmethod
 from boto.ec2 import EC2Connection, get_region
@@ -47,11 +46,12 @@ class MgmtSystemAPIBase(object):
         raise NotImplementedError('start_vm not implemented.')
 
     @abstractmethod
-    def wait_vm_running(self, vm_name):
+    def wait_vm_running(self, vm_name, num_sec):
         """Waits for a VM to be running.
 
         Args:
             vm_name: name of the vm to be running
+            num_sec: number of seconds before timeout
         """
         raise NotImplementedError('wait_vm_running not implemented.')
 
@@ -66,11 +66,12 @@ class MgmtSystemAPIBase(object):
         raise NotImplementedError('stop_vm not implemented.')
 
     @abstractmethod
-    def wait_vm_stopped(self, vm_name):
+    def wait_vm_stopped(self, vm_name, num_sec):
         """Waits for a VM to be stopped.
 
         Args:
             vm_name: name of the vm to be stopped
+            num_sec: number of seconds before timeout
         """
         raise NotImplementedError('wait_vm_stopped not implemented.')
 
@@ -203,11 +204,12 @@ class MgmtSystemAPIBase(object):
         raise NotImplementedError('restart_vm not implemented.')
 
     @abstractmethod
-    def wait_vm_suspended(self, vm_name):
+    def wait_vm_suspended(self, vm_name, num_sec):
         """Waits for a VM to be suspended.
 
         Args:
             vm_name: name of the vm to be suspended
+            num_sec: number of seconds before timeout
         """
         raise NotImplementedError('wait_vm_suspended not implemented.')
 
@@ -556,23 +558,23 @@ class VMWareSystem(MgmtSystemAPIBase):
     def is_vm_running(self, vm_name):
         return self.vm_status(vm_name) == "POWERED ON"
 
-    def wait_vm_running(self, vm_name):
+    def wait_vm_running(self, vm_name, num_sec=240):
         logger.info(" Waiting for vSphere VM %s to change status to ON" % vm_name)
-        wait_for(self.is_vm_running, [vm_name], num_sec=240)
+        wait_for(self.is_vm_running, [vm_name], num_sec=num_sec)
 
     def is_vm_stopped(self, vm_name):
         return self.vm_status(vm_name) == "POWERED OFF"
 
-    def wait_vm_stopped(self, vm_name):
+    def wait_vm_stopped(self, vm_name, num_sec=240):
         logger.info(" Waiting for vSphere VM %s to change status to OFF" % vm_name)
-        wait_for(self.is_vm_stopped, [vm_name], num_sec=240)
+        wait_for(self.is_vm_stopped, [vm_name], num_sec=num_sec)
 
     def is_vm_suspended(self, vm_name):
         return self.vm_status(vm_name) == "SUSPENDED"
 
-    def wait_vm_suspended(self, vm_name):
+    def wait_vm_suspended(self, vm_name, num_sec=360):
         logger.info(" Waiting for vSphere VM %s to change status to SUSPENDED" % vm_name)
-        wait_for(self.is_vm_suspended, [vm_name], num_sec=360)
+        wait_for(self.is_vm_suspended, [vm_name], num_sec=num_sec)
 
     def suspend_vm(self, vm_name):
         self.wait_vm_steady(vm_name)
@@ -590,12 +592,14 @@ class VMWareSystem(MgmtSystemAPIBase):
 
     def deploy_template(self, template, *args, **kwargs):
         logger.info(" Deploying vSphere template %s to VM %s" % (template, kwargs["vm_name"]))
+        timeout = kwargs.pop('timeout', 300)
         if 'resourcepool' not in kwargs:
             kwargs['resourcepool'] = None
         vm = self._get_vm(template)
         if vm:
             vm.clone(kwargs['vm_name'], sync_run=True,
                 resourcepool=self._get_resource_pool(kwargs['resourcepool']))
+            self.wait_vm_running(kwargs['vm_name'], num_sec=timeout)
             return kwargs['vm_name']
         else:
             raise VMInstanceNotCloned(template)
@@ -875,23 +879,23 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def is_vm_running(self, vm_name):
         return self.vm_status(vm_name) == "up"
 
-    def wait_vm_running(self, vm_name):
+    def wait_vm_running(self, vm_name, num_sec=360):
         logger.info(" Waiting for RHEV-M VM %s to change status to ON" % vm_name)
-        wait_for(self.is_vm_running, [vm_name], num_sec=360)
+        wait_for(self.is_vm_running, [vm_name], num_sec=num_sec)
 
     def is_vm_stopped(self, vm_name):
         return self.vm_status(vm_name) == "down"
 
-    def wait_vm_stopped(self, vm_name):
+    def wait_vm_stopped(self, vm_name, num_sec=360):
         logger.info(" Waiting for RHEV-M VM %s to change status to OFF" % vm_name)
-        wait_for(self.is_vm_stopped, [vm_name], num_sec=360)
+        wait_for(self.is_vm_stopped, [vm_name], num_sec=num_sec)
 
     def is_vm_suspended(self, vm_name):
         return self.vm_status(vm_name) == "suspended"
 
-    def wait_vm_suspended(self, vm_name):
+    def wait_vm_suspended(self, vm_name, num_sec=720):
         logger.info(" Waiting for RHEV-M VM %s to change status to SUSPENDED" % vm_name)
-        wait_for(self.is_vm_suspended, [vm_name], num_sec=720)
+        wait_for(self.is_vm_suspended, [vm_name], num_sec=num_sec)
 
     def suspend_vm(self, vm_name):
         self.wait_vm_steady(vm_name, num_sec=300)
@@ -912,6 +916,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
     def deploy_template(self, template, *args, **kwargs):
         logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
+        timeout = kwargs.pop('timeout', 300)
         vm_placement_policy = None
         if 'placement_policy_host' in kwargs and 'placement_policy_affinity' in kwargs:
             vm_host = params.Host(name=kwargs['placement_policy_host'])
@@ -922,7 +927,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             cluster=self.api.clusters.get(kwargs['cluster_name']),
             placement_policy=vm_placement_policy,
             template=self.api.templates.get(template)))
-        self.wait_vm_stopped(kwargs['vm_name'])
+        self.wait_vm_stopped(kwargs['vm_name'], num_sec=timeout)
         self.start_vm(kwargs['vm_name'])
         return kwargs['vm_name']
 
@@ -1096,6 +1101,10 @@ class EC2System(MgmtSystemAPIBase):
         """
         return self.vm_status(instance_id) in self.states['running']
 
+    def wait_vm_running(self, instance_id, num_sec=360):
+        logger.info(" Waiting for EC2 instance %s to change status to running" % instance_id)
+        wait_for(self.is_vm_running, [instance_id], num_sec=num_sec)
+
     def is_vm_stopped(self, instance_id):
         """Is the VM stopped?
 
@@ -1104,6 +1113,12 @@ class EC2System(MgmtSystemAPIBase):
         Returns: Whether or not the requested instance is stopped
         """
         return self.vm_status(instance_id) in self.states['stopped']
+
+    def wait_vm_stopped(self, instance_id, num_sec=360):
+        logger.info(
+            " Waiting for EC2 instance %s to change status to stopped or terminated" % instance_id
+        )
+        wait_for(self.is_vm_stopped, [instance_id], num_sec=num_sec)
 
     def suspend_vm(self, instance_id):
         """Suspend a VM: Unsupported by EC2
@@ -1125,44 +1140,65 @@ class EC2System(MgmtSystemAPIBase):
         """
         raise ActionNotSupported()
 
-    # To be completed, needed for mgmt_system to work properly now
-    def wait_vm_suspended(self, instance_id):
-        pass
+    def wait_vm_suspended(self, instance_id, num_sec):
+        """We would wait forever - EC2 doesn't support this.
 
-    def wait_vm_running(self, instance_id):
-        pass
-
-    def wait_vm_stopped(self, instance_id):
-        pass
+        Args:
+            instance_id: ID of the instance to wait for
+        Raises:
+            ActionNotSupported: The action is not supported on the system
+        """
+        raise ActionNotSupported()
 
     def clone_vm(self, source_name, vm_name):
         raise NotImplementedError('This function has not yet been implemented.')
 
     def deploy_template(self, template, *args, **kwargs):
-        """Instantiate the requested template image
+        """Instantiate the requested template image (ami id)
+
+        For all available args, see
+        http://boto.readthedocs.org/en/latest/ref/ec2.html#boto.ec2.connection.EC2Connection.run_instances
+
+        Most important args are listed below.
 
         Args:
-            ami_id: AMI ID to instantiate
+            template: Template name (AMI ID) to instantiate
+            vm_name: Name of the instance (Name tag to set)
+            instance_type: Type (flavor) of the instance
+
         Returns: Instance ID of the created instance
 
-        Packed arguments are passed along to boto's run_instances method.
-
-        Note: min_count and max_count will be forced to '1'; if you're trying to do
-            anything fancier than that, you might be in the wrong place
+        Note: min_count and max_count args will be forced to '1'; if you're trying to do
+              anything fancier than that, you might be in the wrong place
 
         """
         # Enforce create_vm only creating one VM
         logger.info(" Deploying EC2 template %s" % template)
+        timeout = kwargs.pop('timeout', 300)
         kwargs.update({
             'min_count': 1,
             'max_count': 1,
         })
+        if 'instance_type' not in kwargs:
+            kwargs['instance_type'] = 'm1.small'
+        vm_name = kwargs.pop('vm_name', None)
         reservation = self.api.run_instances(template, *args, **kwargs)
         instances = self._get_instances_from_reservations([reservation])
         # Should have only made one VM; return its ID for use in other methods
-        while not self.is_vm_running(instances[0].id):
-            time.sleep(5)
+        self.wait_vm_running(instances[0].id, num_sec=timeout)
+        if vm_name:
+            self.set_name(instances[0].id, vm_name)
         return instances[0].id
+
+    def set_name(self, instance_id, new_name):
+        logger.info("Setting name of EC2 instance %s to %s" % (instance_id, new_name))
+        instance = self._get_instance_by_id(instance_id)
+        instance.add_tag('Name', new_name)
+        return new_name
+
+    def get_name(self, instance_id):
+        instance_id = self._get_instance_id_by_name(instance_id)
+        return self._get_instance_by_id(instance_id).tags.get('Name', instance_id)
 
     def _get_instance_by_id(self, instance_id):
         inst_list = self._get_all_instances()
@@ -1170,8 +1206,9 @@ class EC2System(MgmtSystemAPIBase):
             if instance.id == instance_id:
                 return instance
 
-    def get_ip_address(self, id):
-        return str(self._get_instance_by_id(id).ip_address)
+    def get_ip_address(self, instance_id):
+        instance_id = self._get_instance_id_by_name(instance_id)
+        return str(self._get_instance_by_id(instance_id).ip_address)
 
     def _get_instance_id_by_name(self, instance_name):
         # Quick validation that the instance name isn't actually an ID
@@ -1218,18 +1255,12 @@ class EC2System(MgmtSystemAPIBase):
         instances = self._get_instances_from_reservations(reservations)
         return instances
 
-    # Prime candidate for a wait_for
     def _block_until(self, instance_id, expected, timeout=90):
         """Blocks until the given instance is in one of the expected states
 
-        Takes an optional timeout value; set this to None to disable the timeout
-        (probably a bad idea). The timeout has a sane default.
+        Takes an optional timeout value.
         """
-        start = time.time()
-        while self.vm_status(instance_id) not in expected:
-            if timeout is not None and time.time() - start > timeout:
-                raise ActionTimedOutError
-            time.sleep(3)
+        wait_for(lambda: self.vm_status(instance_id) in expected, num_sec=timeout)
 
     def remove_host_from_cluster(self, hostname):
         raise NotImplementedError('remove_host_from_cluster not implemented')
@@ -1274,7 +1305,10 @@ class OpenstackSystem(MgmtSystemAPIBase):
             return True
 
         instance = self._find_instance_by_name(instance_name)
-        instance.start()
+        if self.is_vm_suspended(instance_name):
+            instance.resume()
+        else:
+            instance.start()
         wait_for(lambda: self.is_vm_running(instance_name), message="start %s" % instance_name)
         return True
 
@@ -1335,15 +1369,17 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def is_vm_suspended(self, vm_name):
         return self.vm_status(vm_name) == 'SUSPENDED'
 
-    # To be completed, needed for mgmt_system to work properly now
-    def wait_vm_suspended(self, instance_id):
-        pass
+    def wait_vm_running(self, vm_name, num_sec=360):
+        logger.info(" Waiting for OS instance %s to change status to ACTIVE" % vm_name)
+        wait_for(self.is_vm_running, [vm_name], num_sec=num_sec)
 
-    def wait_vm_running(self, instance_id):
-        pass
+    def wait_vm_stopped(self, vm_name, num_sec=360):
+        logger.info(" Waiting for OS instance %s to change status to SHUTOFF" % vm_name)
+        wait_for(self.is_vm_stopped, [vm_name], num_sec=num_sec)
 
-    def wait_vm_stopped(self, instance_id):
-        pass
+    def wait_vm_suspended(self, vm_name, num_sec=720):
+        logger.info(" Waiting for OS instance %s to change status to SUSPENDED" % vm_name)
+        wait_for(self.is_vm_suspended, [vm_name], num_sec=num_sec)
 
     def suspend_vm(self, instance_name):
         logger.info(" Suspending OpenStack instance %s" % instance_name)
@@ -1354,20 +1390,16 @@ class OpenstackSystem(MgmtSystemAPIBase):
         instance.suspend()
         wait_for(lambda: self.is_vm_suspended(instance_name), message="suspend %s" % instance_name)
 
-    def resume_vm(self, instance_name):
-        logger.info(" Resuming OpenStack instance %s" % instance_name)
-        if self.is_vm_running(instance_name):
-            return True
-
-        instance = self._find_instance_by_name(instance_name)
-        instance.resume()
-        wait_for(lambda: self.is_vm_running(instance_name), message="%s resumed" % instance_name)
-
     def clone_vm(self, source_name, vm_name):
         raise NotImplementedError('clone_vm not implemented.')
 
     def deploy_template(self, template, *args, **kwargs):
-        """ Deploys a vm from a template.
+        """ Deploys an OpenStack instance from a template.
+
+        For all available args, see ``create`` method found here:
+        http://docs.openstack.org/developer/python-novaclient/ref/v1_1/servers.html
+
+        Most important args are listed below.
 
         Args:
             template: The name of the template to use.
@@ -1379,7 +1411,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
             attempt to register a floating IP address from the pool specified in the arg.
         """
         nics = []
-        # defaults
+        timeout = kwargs.pop('timeout', 300)
         if 'flavour_name' not in kwargs:
             kwargs['flavour_name'] = 'm1.tiny'
         if 'vm_name' not in kwargs:
@@ -1397,9 +1429,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
         flavour = self.api.flavors.find(name=kwargs['flavour_name'])
         instance = self.api.servers.create(kwargs['vm_name'], image, flavour, nics=nics,
                                            *args, **kwargs)
-        wait_for(lambda: self.is_vm_running(kwargs["vm_name"]),
-            message="OS instance %s running after provision" % kwargs['vm_name'])
-
+        self.wait_vm_running(kwargs['vm_name'], num_sec=timeout)
         if kwargs.get('assign_floating_ip', None) is not None:
             ip = self.api.floating_ips.create(kwargs['assign_floating_ip'])
             instance.add_floating_ip(ip)
@@ -1467,7 +1497,7 @@ class NetworkNameNotFound(Exception):
 
 
 class VMInstanceNotCloned(Exception):
-    """Raised if a VM is not found."""
+    """Raised if a VM or instance is not found."""
     def __init__(self, template):
         self.template = template
 
@@ -1476,16 +1506,16 @@ class VMInstanceNotCloned(Exception):
 
 
 class VMInstanceNotFound(Exception):
-    """Raised if a VM is not found."""
+    """Raised if a VM or instance is not found."""
     def __init__(self, vm_name):
         self.vm_name = vm_name
 
     def __str__(self):
-        return 'Could not find a VM named %s.' % self.vm_name
+        return 'Could not find a VM/instance named %s.' % self.vm_name
 
 
 class VMInstanceNotSuspended(Exception):
-    """Raised if a VM is not able to be suspended."""
+    """Raised if a VM or instance is not able to be suspended."""
     def __init__(self, vm_name):
         self.vm_name = vm_name
 

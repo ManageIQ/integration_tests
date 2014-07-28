@@ -37,7 +37,7 @@ def test_vm_discovery(request, provider_crud, provider_init, provider_mgmt, vm_n
     if not provider_mgmt.does_vm_exist(vm_name):
         vm.create_on_provider()
     try:
-        vm.wait_for_vm_to_appear(timeout_in_minutes=10, load_details=False)
+        vm.wait_for_vm_to_appear(timeout=600, load_details=False)
     except TimedOutError:
         return False
     vm.delete_from_provider()
