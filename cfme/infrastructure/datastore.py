@@ -133,3 +133,15 @@ class Datastore(Pretty):
             if Quadicon(self.name, 'datastore').locate() in e.msg:
                 return False
             raise
+
+
+def get_all_datastores(do_not_navigate=False):
+    """Returns list of all datastores"""
+    if not do_not_navigate:
+        sel.force_navigate('infrastructure_datastores')
+    datastores = set([])
+    for page in paginator.pages():
+        for title in sel.elements(
+                "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'storage/show')]"):
+            datastores.add(sel.get_attribute(title, "title"))
+    return datastores
