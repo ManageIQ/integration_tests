@@ -17,6 +17,7 @@ from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
 from utils import version, conf
+from utils.pretty import Pretty
 
 access_tree = partial(accordion.tree, "Access Control")
 database_tree = partial(accordion.tree, "Database")
