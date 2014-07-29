@@ -99,8 +99,8 @@ def pytest_runtest_setup(item):
                 "\n".join(reasons)))
         elif action == "xfail":
             item.add_marker(
-                pytest.mark.xfail(reason=
-                    "Xfailing due to these GH reasons: {}".format(
+                pytest.mark.xfail(
+                    reason="Xfailing due to these GH reasons: {}".format(
                         ", ".join(reasons))))
         else:
             raise ValueError("github parameter action= must be 'xfail' or 'skip'")

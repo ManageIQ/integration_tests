@@ -50,7 +50,7 @@ def navigate_every_quadicon(qnames, qtype, num_repeat, page_name, soft_assert, a
                                 # Every click makes the previous list of links invalid
                                 links = list_acc.get_active_links(topbar)
                                 if link <= len(links):
-                                    if not 'parent' in links[link].title:
+                                    if 'parent' not in links[link].title:
                                         links[link].click()
                         except NoSuchElementException:
                             logger.warning('NoSuchElementException - page_name:{}, Quadicon:{},'
