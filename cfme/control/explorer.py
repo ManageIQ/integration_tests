@@ -103,10 +103,10 @@ def _ap_multi_branch(ugly, nice):
     """Generates branch for listing and adding the profiles"""
     return [
         accordion_func(
-            "Alert Profiles", "All Alert Profiles", "%s Alert Profiles" % nice),
+            "Alert Profiles", "All Alert Profiles", "{} Alert Profiles".format(nice)),
         {
-            "%s_alert_profile_new" % ugly:
-            lambda _: cfg_btn("Add a New")
+            "{}_alert_profile_new".format(ugly):
+            lambda _: cfg_btn("Add a New {} Profile".format(nice))
         }
     ]
 
@@ -164,7 +164,7 @@ nav.add_branch(
                 lambda _: cfg_btn("Condition assignments"),
 
                 "host_compliance_policy_condition_new":
-                lambda _: cfg_btn("new Condition"),
+                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
 
                 "host_compliance_policy_event":
                 [
@@ -197,7 +197,7 @@ nav.add_branch(
                 lambda _: cfg_btn("Condition assignments"),
 
                 "vm_compliance_policy_condition_new":
-                lambda _: cfg_btn("new Condition"),
+                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
 
                 "vm_compliance_policy_event":
                 [
@@ -252,7 +252,7 @@ nav.add_branch(
                 lambda _: cfg_btn("Condition assignments"),
 
                 "host_control_policy_condition_new":
-                lambda _: cfg_btn("new Condition"),
+                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
 
                 "host_control_policy_event":
                 [
@@ -285,7 +285,7 @@ nav.add_branch(
                 lambda _: cfg_btn("Condition assignments"),
 
                 "vm_control_policy_condition_new":
-                lambda _: cfg_btn("new Condition"),
+                lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
 
                 "vm_control_policy_event":
                 [
@@ -473,6 +473,7 @@ class BaseCondition(Updateable, Pretty):
         expression: Program, setting the Scope of the Expression.
     """
     PREFIX = None
+    DELETE_STRING = None
 
     form = Form(
         fields=[
@@ -538,21 +539,24 @@ class BaseCondition(Updateable, Pretty):
         """
         sel.force_navigate(self.PREFIX + "condition",
                            context=dict(condition_name=self.description))
-        cfg_btn("Delete this", invokes_alert=True)
+        cfg_btn(self.DELETE_STRING, invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
 
 class VMCondition(BaseCondition, VMObject):
     PREFIX = "vm_"
+    DELETE_STRING = "Delete this VM and Instance Condition"
 
 
 class HostCondition(BaseCondition, HostObject):
     PREFIX = "host_"
+    DELETE_STRING = "Delete this Host Condition"
 
 
 class BasePolicy(Updateable, Pretty):
     PREFIX = None
+    DELETE_STRING = None
 
     assigned_conditions = Table(
         table_locator=table_in_object("Conditions")
@@ -664,7 +668,7 @@ class BasePolicy(Updateable, Pretty):
             cancel: Whether to cancel the process instead of saving.
         """
         sel.force_navigate(self.PREFIX + "policy", context=dict(policy_name=self.description))
-        cfg_btn("Delete this", invokes_alert=True)
+        cfg_btn(self.DELETE_STRING, invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
@@ -821,6 +825,7 @@ class BaseControlPolicy(BasePolicy):
 
 class HostCompliancePolicy(BasePolicy, HostObject):
     PREFIX = "host_compliance_"
+    DELETE_STRING = "Delete this Host Policy"
 
     def __str__(self):
         return "Host Compliance: %s" % self.description
@@ -828,6 +833,7 @@ class HostCompliancePolicy(BasePolicy, HostObject):
 
 class VMCompliancePolicy(BasePolicy, VMObject):
     PREFIX = "vm_compliance_"
+    DELETE_STRING = "Delete this VM and Instance Policy"
 
     def __str__(self):
         return "VM and Instance Compliance: %s" % self.description
@@ -835,6 +841,7 @@ class VMCompliancePolicy(BasePolicy, VMObject):
 
 class HostControlPolicy(BaseControlPolicy, HostObject):
     PREFIX = "host_control_"
+    DELETE_STRING = "Delete this Host Policy"
 
     def __str__(self):
         return "Host Control: %s" % self.description
@@ -842,6 +849,7 @@ class HostControlPolicy(BaseControlPolicy, HostObject):
 
 class VMControlPolicy(BaseControlPolicy, VMObject):
     PREFIX = "vm_control_"
+    DELETE_STRING = "Delete this VM and Instance Policy"
 
     def __str__(self):
         return "VM and Instance Control: %s" % self.description

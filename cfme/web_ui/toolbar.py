@@ -43,7 +43,7 @@ def sub_loc(sub):
     Returns: A locator for the sub button.
     """
     return (By.XPATH,
-            "//div[contains(@class, 'btn_sel_text')][contains(., %s)]/../.." % quoteattr(sub))
+            "//div[contains(@class, 'btn_sel_text')][text() = %s]/../.." % quoteattr(sub))
 
 
 def select_n_move(el):
