@@ -463,9 +463,13 @@ def get_all_providers(do_not_navigate=False):
     if not do_not_navigate:
         sel.force_navigate('infrastructure_providers')
     providers = set([])
+    link_marker = version.pick({
+        version.LOWEST: "ext_management_system",
+        "5.2.5": "ems_infra"
+    })
     for page in paginator.pages():
         for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
-                "'ext_management_system/show')]"):
+                "'{}/show')]".format(link_marker)):
             providers.add(sel.get_attribute(title, "title"))
     return providers
 

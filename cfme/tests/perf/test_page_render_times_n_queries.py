@@ -22,20 +22,24 @@ import re
 def analyze_page_stat(pages, soft_assert):
     for page in pages:
         logger.info(page)
-        if page.completedin > ui_bench_tests['page_render_threshold']:
+        if page.completedin > ui_bench_tests['threshold']['page_render']:
             soft_assert(False, 'Page Render Threshold ({} ms) exceeded: {}'.format(
-                ui_bench_tests['page_render_threshold'], page))
+                ui_bench_tests['threshold']['page_render'], page))
             logger.warning('Slow Page, Slow Query(>1s) Count: %d' % len(page.slowselects))
             for slow in page.slowselects:
                 logger.warning('Slow Query Log Line: ' + slow)
-        if page.selectcount > ui_bench_tests['query_count_threshold']:
+        if page.selectcount > ui_bench_tests['threshold']['query_count']:
             soft_assert(False, 'Query Cnt Threshold ({}) exceeded:    {}'.format(
-                ui_bench_tests['query_count_threshold'], page))
+                ui_bench_tests['threshold']['query_count'], page))
     return pages
 
 
-def navigate_every_quadicon(qnames, qtype, num_repeat, page_name, soft_assert, acc_topbars=[]):
-    for i in range(num_repeat):
+def navigate_every_quadicon(qnames, qtype, page_name, soft_assert, acc_topbars=[], num_q_nav=0):
+    count = 0
+    if num_q_nav == 0:
+        count = -1
+    assert len(qnames) > 0
+    while (count < num_q_nav):
         for q in qnames:
             for page in paginator.pages():
                 quadicon = Quadicon(str(q), qtype)
@@ -50,8 +54,14 @@ def navigate_every_quadicon(qnames, qtype, num_repeat, page_name, soft_assert, a
                                 # Every click makes the previous list of links invalid
                                 links = list_acc.get_active_links(topbar)
                                 if link <= len(links):
-                                    if 'parent' not in links[link].title:
-                                        links[link].click()
+                                    # Do not navigate outside of actual page
+                                    if 'parent' in links[link].title:
+                                        break
+                                    # Do not navigate to C&U Charts as chart generation process
+                                    # waits on backend messaging and chart creation
+                                    if 'Capacity & Utilization' in links[link].title:
+                                        break
+                                    links[link].click()
                         except NoSuchElementException:
                             logger.warning('NoSuchElementException - page_name:{}, Quadicon:{},'
                                 ' topbar:{}, link title:{}'.format(page_name, q, topbar,
@@ -60,8 +70,11 @@ def navigate_every_quadicon(qnames, qtype, num_repeat, page_name, soft_assert, a
                                 ' topbar:{}, link title:{}'.format(page_name, q, topbar,
                                 links[link].title))
                             break
+                    count += 1
                     break
             sel.force_navigate(page_name)
+            if not num_q_nav == 0 and count == num_q_nav:
+                break
 
 
 def navigate_tree_vms(tree_contents, path, paths):
@@ -126,7 +139,7 @@ def parse_production_log(miq_uiworker_pid, tailer):
                 pgstat.selectcount += 1
                 selecttime = select_query_time_re.search(line)
                 if selecttime:
-                    if float(selecttime.group(1)) > ui_bench_tests['query_time_threshold']:
+                    if float(selecttime.group(1)) > ui_bench_tests['threshold']['query_time']:
                         pgstat.slowselects.append(line)
             if 'CACHE' in line:
                 pgstat.cachecount += 1
@@ -157,15 +170,18 @@ def parse_production_log(miq_uiworker_pid, tailer):
 
     endtime = datetime.datetime.utcnow()
     timediff = endtime - starttime
-    logger.info('Parsed ({}) lines in {}'.format(line_count, timediff))
+    logger.debug('Parsed ({}) lines in {}'.format(line_count, timediff))
     return pgstats
 
 
 def test_ems_infra_render_times_n_queries(ssh_client, soft_assert):
     miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
-    navigate_every_quadicon(get_all_providers(), 'infra_prov',
-        ui_bench_tests['num_repeat_provider'], 'infrastructure_providers', soft_assert)
+    if 'num_ems_infra_check' not in ui_bench_tests['page_check']:
+        ui_bench_tests['page_check']['num_ems_infra_check'] = 0
+
+    navigate_every_quadicon(get_all_providers(), 'infra_prov', 'infrastructure_providers',
+        soft_assert, [], ui_bench_tests['page_check']['num_ems_infra_check'])
 
     pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
 
@@ -175,10 +191,13 @@ def test_ems_infra_render_times_n_queries(ssh_client, soft_assert):
 def test_host_render_times_n_queries(ssh_client, soft_assert):
     miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
+    if 'num_host_infra_check' not in ui_bench_tests['page_check']:
+        ui_bench_tests['page_check']['num_host_infra_check'] = 0
+
     acc_bars = ['Properties', 'Relationships', 'Security', 'Configuration']
 
-    navigate_every_quadicon(get_all_hosts(), 'host', ui_bench_tests['num_repeat_host'],
-        'infrastructure_hosts', soft_assert, acc_bars)
+    navigate_every_quadicon(get_all_hosts(), 'host', 'infrastructure_hosts', soft_assert, acc_bars,
+        ui_bench_tests['page_check']['num_host_infra_check'])
 
     pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
 
@@ -216,7 +235,7 @@ def test_vm_infra_render_times_n_queries(ssh_client, soft_assert):
         except CandidateNotFound:
             logger.info('Could not navigate to: '.format(vm[-1]))
 
-        if count >= ui_bench_tests['num_vm_check']:
+        if count >= ui_bench_tests['page_check']['num_vm_infra_check']:
             break
 
     pages_to_csv(pages, 'page_renders_n_queries_vm_infra.csv')
@@ -225,10 +244,13 @@ def test_vm_infra_render_times_n_queries(ssh_client, soft_assert):
 def test_storage_render_times_n_queries(ssh_client, soft_assert):
     miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
+    if 'num_storage_check' not in ui_bench_tests['page_check']:
+        ui_bench_tests['page_check']['num_storage_check'] = 0
+
     acc_bars = ['Properties', 'Relationships', 'Content']
 
-    navigate_every_quadicon(get_all_datastores(), 'datastore',
-        ui_bench_tests['num_repeat_datastore'], 'infrastructure_datastores', soft_assert, acc_bars)
+    navigate_every_quadicon(get_all_datastores(), 'datastore', 'infrastructure_datastores',
+        soft_assert, acc_bars, ui_bench_tests['page_check']['num_storage_check'])
 
     pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
 
