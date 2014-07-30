@@ -213,6 +213,6 @@ class UnknownProviderType(CFMEException):
     """
     Raised when the passed provider or provider type is not known or usable in given context
     e.g. when getting a provider from yaml and the provider type doesn't match any of known types
-         or when an infra provider is passed to the cloud's instance_factory method
+    or when an infra provider is passed to the cloud's instance_factory method
     """
     pass

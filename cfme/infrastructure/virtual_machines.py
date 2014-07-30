@@ -511,7 +511,7 @@ def is_pwr_option_enabled(vm_names, option, provider_crud=None):
 
     Args:
         vm_names: List of VMs to interact with
-        provider_crud:
+        provider_crud: provider object where vm resides on (optional)
         option: Power option param.
 
     Raises:

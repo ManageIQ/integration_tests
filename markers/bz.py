@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""bugzilla(*bugs, skip_when=None, xfail_when=None, unskip={}): Marker for bugzilla integration
+"""bugzilla(\*bugs, skip_when=None, xfail_when=None, unskip={}): Marker for bugzilla integration
 
 Intelligent bugzilla integration py.test plugin. Specifically tuned for cfme_tests.
 You can specify possibly unlimited amount of bugs. Each bug is then examined by machinery, that
@@ -437,8 +437,6 @@ def bug(request):
     """Fixture, that when called provides specific bug. No machinery that changes the ID is involved
 
     Usage:
-
-    .. code-block:: python
 
         @pytest.mark.bugzilla(1234)
         # or just @pytest.mark.bugzilla if you want no generic skipping and so

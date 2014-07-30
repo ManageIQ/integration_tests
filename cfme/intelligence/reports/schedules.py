@@ -264,8 +264,7 @@ class Schedule(Updateable, Pretty):
 
         Args:
             *schedules: Schedules to delete. Can be objects or strings.
-        Keywords:
-            cancel: Whether to cancel the deletion (Default: False)
+            cancel: (kwarg) Whether to cancel the deletion (Default: False)
         Raises: :py:class:`NameError` when some of the schedules were not found.
         """
         return cls._action_on_schedules(
