@@ -5,6 +5,7 @@ function_trace.__tracebackhide__ = True
 
 # import everything we want to trace
 
+import cfme.automate.buttons
 import cfme.automate.explorer
 import cfme.automate.service_dialogs
 import cfme.cloud.instance
@@ -58,6 +59,7 @@ from fixtures.artifactor_plugin import art_client
 default_to_trace = function_trace.mapcat(
     function_trace.all,
     [
+        cfme.automate.buttons,
         cfme.automate.explorer,
         cfme.automate.service_dialogs,
         cfme.cloud.instance,
