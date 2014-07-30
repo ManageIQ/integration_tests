@@ -1521,8 +1521,9 @@ class Tree(Pretty):
         Expands whole tree during the execution.
 
         Args:
-            target: Item searched for. Can be regexp made by :py:function:`re.compile`, otherwise
-                it is taken as a string for `in` matching.
+            target: Item searched for. Can be regexp made by
+                :py:func:`re.compile <python:re.compile>`,
+                otherwise it is taken as a string for `in` matching.
         Returns: :py:class:`list` with path to that item.
         """
         if not isinstance(target, re._pattern_type):

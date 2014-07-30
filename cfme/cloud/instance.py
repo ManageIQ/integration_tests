@@ -750,7 +750,7 @@ def is_pwr_option_enabled(vm_names, option, provider_crud=None):
 
     Args:
         vm_names: List of instances to interact with
-        provider_crud:
+        provider_crud: provider object where vm resides on (optional)
         option: Power option param; for available power option, see
                 :py:class:`EC2Instance` and :py:class:`OpenStackInstance`
 
