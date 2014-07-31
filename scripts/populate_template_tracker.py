@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Populate template tracker with information based on cfme_data"""
 import sys
 from collections import defaultdict
@@ -9,8 +10,8 @@ from utils.providers import list_all_providers, provider_factory
 from utils import trackerbot
 
 
-def main(trackerbot_url, username, api_key, mark_usable=None):
-    api = trackerbot.api(trackerbot_url, username, api_key)
+def main(trackerbot_url, mark_usable=None):
+    api = trackerbot.api(trackerbot_url)
 
     thread_q = []
     thread_lock = Lock()
@@ -35,24 +36,19 @@ def main(trackerbot_url, username, api_key, mark_usable=None):
         except ValueError:
             # No matches
             continue
-        try:
-            group = trackerbot.Group(stream)
-            api.group.post(group)
+        group = trackerbot.Group(stream)
+        template = trackerbot.Template(template_name, group, datestamp)
 
-            template = trackerbot.Template(template_name, group, datestamp)
-            api.template.post(template)
+        for provider_key in providers:
+            provider = trackerbot.Provider(provider_key)
 
-            for provider_key in providers:
-                provider = trackerbot.Provider(provider_key)
-                api.provider.post(provider)
-
-                providertemplate = trackerbot.ProviderTemplate(provider, template,
+            try:
+                trackerbot.mark_provider_template(api, provider, template,
                     usable=mark_usable, tested=False)
-                api.providertemplate.post(providertemplate)
                 print 'template %s updated -- %s %s %r, marked usable: %s' % (
                     template, stream, datestamp, providers, bool(mark_usable))
-        except SlumberHttpBaseException as ex:
-            print ex.response.status_code, ex.content
+            except SlumberHttpBaseException as ex:
+                print ex.response.status_code, ex.content
 
 
 def get_provider_templates(provider_key, templates_providers, thread_lock):

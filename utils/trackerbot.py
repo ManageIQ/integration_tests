@@ -17,17 +17,7 @@ stream_matchers = (
     # Nightly builds are currently in the 5.3.z stream
     ('downstream-53z', r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
 )
-
-
-class ApiKeyAuth(object):
-    """Auth type for using tastypie API keys in slumber"""
-    def __init__(self, username, apikey):
-        self.username = username.encode('ascii')
-        self.apikey = apikey.encode('ascii')
-
-    def __call__(self, request):
-        request.headers['Authorization'] = 'ApiKey %s:%s' % (self.username, self.apikey)
-        return request
+trackerbot_conf = env.get('trackerbot', {})
 
 
 def cmdline_parser():
@@ -43,30 +33,20 @@ def cmdline_parser():
 
     """
     # Set up defaults from env, if they're set, otherwise require them on the commandline
-    trackerbot_conf = env.get('trackerbot', {})
-    url = trackerbot_conf.get('url')
-    def_url = {'default': url, 'nargs': '?'} if url else {}
-
-    username = trackerbot_conf.get('username')
-    def_username = {'default': username, 'nargs': '?'} if username else {}
-
-    apikey = trackerbot_conf.get('apikey')
-    def_apikey = {'default': apikey, 'nargs': '?'} if apikey else {}
+    def_url = {'default': None, 'nargs': '?'} if 'url' in trackerbot_conf else {}
 
     parser = argparse.ArgumentParser()
     parser.add_argument('trackerbot_url',
         help='URL to the base of the tracker API, e.g. http://hostname/api/', **def_url)
-    parser.add_argument('username',
-        help='API username for authentication', **def_username)
-    parser.add_argument('api_key',
-        help='API key for authentication', **def_apikey)
     return parser
 
 
-def api(trackerbot_url, username, api_key):
+def api(trackerbot_url=None):
     """Return an API object authenticated to the given trackerbot api"""
-    auth = ApiKeyAuth(username, api_key)
-    return slumber.API(trackerbot_url, auth=auth)
+    if trackerbot_url is None:
+        trackerbot_url = trackerbot_conf['url']
+
+    return slumber.API(trackerbot_url)
 
 
 def futurecheck(check_date):
@@ -103,6 +83,46 @@ def parse_template(template_name):
             return stream, template_date
 
     raise ValueError('No streams matched template %s' % template_name)
+
+
+def mark_provider_template(api, provider, template, tested=None, usable=None):
+    """Mark a provider template as tested and/or usable
+
+    Args:
+        api: The trackerbot API to act on
+        provider: The provider's key in cfme_data or a :py:class:`Provider` instance
+        template: The name of the template to mark on this provider or a :py:class:`Template`
+        tested: Whether or not this template has been tested on this provider
+        usable: Whether or not this template is usable on this provider
+
+    Returns the response of the API request
+
+    """
+    if not isinstance(provider, Provider):
+        provider = Provider(str(provider))
+    if not isinstance(template, Template):
+        template = Template(str(template))
+
+    provider_template = ProviderTemplate(provider, template)
+
+    if tested is not None:
+        provider_template['tested'] = bool(tested)
+
+    if usable is not None:
+        provider_template['usable'] = bool(usable)
+
+    return api.providertemplate.post(provider_template)
+
+
+def latest_template(api, group):
+    if not isinstance(group, Group):
+        group = Group(str(group))
+
+    response = api.group(group['name']).get()
+    return {
+        'latest_template': response['latest_template'],
+        'latest_template_providers': response['latest_template_providers'],
+    }
 
 
 # Dict subclasses to help with JSON serialization
