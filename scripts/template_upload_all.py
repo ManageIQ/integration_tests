@@ -20,7 +20,7 @@ import argparse
 import re
 
 from contextlib import closing
-from urllib2 import urlopen
+from urllib2 import urlopen, HTTPError
 
 from utils.conf import cfme_data
 
@@ -174,8 +174,13 @@ def make_kwargs_vsphere(cfme_data, provider):
 
 def browse_directory(dir_url):
     name_dict = {}
-    with closing(urlopen(dir_url)) as urlpath:
-        string_from_url = urlpath.read()
+    try:
+        with closing(urlopen(dir_url)) as urlpath:
+            string_from_url = urlpath.read()
+    except HTTPError as e:
+        print str(e)
+        print "Skipping: %s" % dir_url
+        return None
 
     rhevm_pattern = re.compile(r'<a href="?\'?([^"\']*(?:rhevm|ovirt)[^"\'>]*)')
     rhevm_image_name = rhevm_pattern.findall(string_from_url)
@@ -215,6 +220,8 @@ if __name__ == "__main__":
             if key != stream:
                 continue
         dir_files = browse_directory(url)
+        if not dir_files:
+            continue
         kwargs = {}
 
         for provider in mgmt_sys:
