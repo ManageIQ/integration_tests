@@ -1,11 +1,10 @@
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
-
-
 import re
-from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable
+from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable, TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
+from cfme.services import requests
 from cfme.web_ui import (
     CheckboxTree, Form, Region, Quadicon, Tree, accordion, fill, flash, form_buttons, paginator,
     toolbar, Calendar, Select
@@ -13,7 +12,9 @@ from cfme.web_ui import (
 from cfme.web_ui.menu import nav
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
+from utils.conf import cfme_data
 from utils.log import logger
+from utils.randomness import generate_random_string
 from utils.timeutil import parsetime
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
@@ -149,6 +150,47 @@ nav.add_branch(
 )
 
 
+class Template(object):
+    """Simple class representing Template.
+
+    Not much done here, because it should be refactored better together with the Vm class.
+    """
+    def __init__(self, name, provider_crud):
+        self.name = name
+        self.provider_crud = provider_crud
+
+    def load_details(self, **kwargs):
+        sel.click(self.find_quadicon(**kwargs))
+
+    def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
+        """Find and return a quadicon belonging to a specific template
+
+        Returns: :py:class:`cfme.web_ui.Quadicon` instance
+        Raises: TemplateNotFound
+        """
+        if not do_not_navigate:
+            self.provider_crud.load_all_provider_templates()
+            toolbar.set_vms_grid_view()
+        elif refresh:
+            sel.refresh()
+        if not paginator.page_controls_exist():
+            raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
+
+        paginator.results_per_page(1000)
+        for page in paginator.pages():
+            quadicon = Quadicon(self.name, "vm")
+            if sel.is_displayed(quadicon):
+                if mark:
+                    sel.check(quadicon.checkbox())
+                return quadicon
+        else:
+            raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
+
+    @property
+    def genealogy(self):
+        return Genealogy(self)
+
+
 class Vm(object):
     """Represents a VM in CFME
 
@@ -263,6 +305,31 @@ class Vm(object):
             self.provider_crud.refresh_provider_relationships()
             self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
 
+    def publish_to_template(self, template_name, email=None, first_name=None, last_name=None):
+        self.load_details()
+        lcl_btn("Publish this VM to a Template")
+        first_name = first_name or generate_random_string()
+        last_name = last_name or generate_random_string()
+        email = email or "{}@{}.test".format(first_name, last_name)
+        try:
+            prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]
+        except (KeyError, IndexError):
+            raise ValueError("You have to specify the correct options in cfme_data.yaml")
+        from cfme.infrastructure.provisioning import provisioning_form, submit_button
+        provisioning_data = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "vm_name": template_name,
+            "host_name": {"name": prov_data.get("host")},
+            "datastore_name": {"name": prov_data.get("datastore")},
+        }
+        fill(provisioning_form, provisioning_data, action=submit_button)
+        cells = {'Description': 'Publish from [%s] to [%s]' % (self.name, template_name)}
+        row, __ = wait_for(
+            requests.wait_for_request, [cells], fail_func=requests.reload, num_sec=900, delay=20)
+        return Template(template_name, self.provider_crud)
+
     def load_details(self, refresh=False):
         """Navigates to a VM's details page.
 
@@ -294,7 +361,6 @@ class Vm(object):
 
         text = sel.text(locator).encode("utf-8")
         pattern = r'("[A-Za-z0-9_\./\\-]*")'
-        import re
         m = re.search(pattern, text)
 
         if not force:
@@ -587,6 +653,95 @@ class Vm(object):
             if warn is not None:
                 fill(retire_form.warn, warn)
             sel.click(form_buttons.save)
+
+    @property
+    def genealogy(self):
+        return Genealogy(self)
+
+
+class Genealogy(object):
+    """Class, representing genealogy of an infra object with possibility of data retrieval
+    and comparison.
+
+    Args:
+        o: The :py:class:`Vm` or :py:class:`Template` object.
+    """
+    genealogy_tree = CheckboxTree(version.pick({
+        version.LOWEST: "//div[@id='treebox']/div/table",
+        "5.3": "//div[@id='genealogy_treebox']/ul",
+    }))
+
+    section_comparison_tree = CheckboxTree("//div[@id='all_sections_treebox']/div/table")
+    apply_button = form_buttons.FormButton("Apply sections")
+
+    mode_mapping = {
+        "exists": "Exists Mode",
+        "details": "Details Mode",
+    }
+
+    attr_mapping = {
+        "all": "All Attributes",
+        "different": "Attributes with different values",
+        "same": "Attributes with same values",
+    }
+
+    def __init__(self, o):
+        self.o = o
+
+    def navigate(self):
+        self.o.load_details()
+        sel.click(details_page.infoblock.element("Relationships", "Genealogy"))
+
+    def compare(self, *objects, **kwargs):
+        """Compares two or more objects in the genealogy.
+
+        Args:
+            *objects: :py:class:`Vm` or :py:class:`Template` or :py:class:`str` with name.
+
+        Keywords:
+            sections: Which sections to compare.
+            attributes: `all`, `different` or `same`. Default: `all`.
+            mode: `exists` or `details`. Default: `exists`."""
+        sections = kwargs.get("sections", None)
+        attributes = kwargs.get("attributes", "all").lower()
+        mode = kwargs.get("mode", "exists").lower()
+        assert len(objects) >= 2, "You must specify at least two objects"
+        objects = map(lambda o: o.name if isinstance(o, (Vm, Template)) else o, objects)
+        self.navigate()
+        for obj in objects:
+            if not isinstance(obj, list):
+                path = self.genealogy_tree.find_path_to(obj)
+            self.genealogy_tree.check_node(*path)
+        toolbar.select("Compare selected VMs")
+        # COMPARE PAGE
+        flash.assert_no_errors()
+        if sections is not None:
+            map(lambda path: self.section_comparison_tree.check_node(*path), sections)
+            sel.click(self.apply_button)
+            flash.assert_no_errors()
+        # Set requested attributes sets
+        toolbar.select(self.attr_mapping[attributes])
+        # Set the requested mode
+        toolbar.select(self.mode_mapping[mode])
+
+    @property
+    def tree(self):
+        """Returns contents of the tree with genealogy"""
+        self.navigate()
+        return self.genealogy_tree.read_contents()
+
+    @property
+    def ancestors(self):
+        """Returns list of ancestors of the represented object."""
+        self.navigate()
+        path = self.genealogy_tree.find_path_to(re.compile(r"^.*?\(Selected\)$"))
+        if not path:
+            raise ValueError("Something wrong happened, path not found!")
+        processed_path = []
+        for step in path[:-1]:
+            # We will remove the (parent) and (Selected) suffixes
+            processed_path.append(re.sub(r"\s*(?:\(Current\)|\(Parent\))$", "", step))
+        return processed_path
 
 
 def _method_setup(vm_names, provider_crud=None):

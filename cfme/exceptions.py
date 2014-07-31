@@ -179,6 +179,13 @@ class VmNotFound(CFMEException):
     pass
 
 
+class TemplateNotFound(CFMEException):
+    """
+    Raised if a specific Template cannot be found.
+    """
+    pass
+
+
 class InstanceNotFound(CFMEException):
     """
     Raised if a specific instance cannot be found.
