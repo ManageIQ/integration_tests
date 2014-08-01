@@ -20,12 +20,12 @@ list by the context manager. Because the store is a :py:func:`list <python:list>
 will be reported in the order that they failed.
 
 """
-import inspect
 from contextlib import contextmanager
 from threading import local
 
 import pytest
 
+from utils.log import nth_frame_info
 from utils.path import get_rel_path
 
 # Use a thread-local store for failed soft asserts, making it thread-safe
@@ -97,7 +97,7 @@ def _catch_assert_cm():
     try:
         yield
     except AssertionError as ex:
-        caught_assert = _annote_failure(str(ex))
+        caught_assert = _annotate_failure(str(ex))
         _thread_locals.caught_asserts.append(caught_assert)
 
 
@@ -111,11 +111,13 @@ def _clear_caught_asserts():
     del _thread_locals.caught_asserts[:]
 
 
-def _annote_failure(fail_message=''):
-    # Inspect the stack with 1 line of context, looking at the 2nd frame
-    # before this one, assuming the first frame is whatever called this function,
-    # and the second frame is where the assertion failure took place
-    frameinfo = inspect.getframeinfo(inspect.stack(1)[2][0])
+def _annotate_failure(fail_message=''):
+    # frames
+    # 0: call to nth_frame_info
+    # 1: _annotate_failure (this function)
+    # 2: _annotate_failure caller (soft assert func or CM)
+    # 3: failed assertion
+    frameinfo = nth_frame_info(3)
     if not fail_message:
         fail_message = str(frameinfo.code_context[0]).strip()
 
@@ -156,7 +158,7 @@ def soft_assert():
     """
     def soft_assert_func(expr, fail_message=''):
         if not expr:
-            caught_assert = _annote_failure(fail_message)
+            caught_assert = _annotate_failure(fail_message)
             _thread_locals.caught_asserts.append(caught_assert)
     # stash helper functions on soft_assert for easy access
     soft_assert_func.catch_assert = _catch_assert_cm
