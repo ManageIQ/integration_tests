@@ -144,7 +144,7 @@ nav.add_branch(
             lambda ctx: accordion_func(
                 "Policy Profiles", "All Policy Profiles", ctx["policy_profile_name"])(None),
             {   # None because it normally takes a dummy context and returns a function, therefore()
-                "policy_profile_edit": lambda _: cfg_btn("Edit this")
+                "policy_profile_edit": lambda _: cfg_btn("Edit this Policy Profile")
             }
         ],
 
@@ -155,13 +155,13 @@ nav.add_branch(
                 "Host Compliance Policies", ctx["policy_name"])(None),
             {
                 "host_compliance_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info"),
+                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
 
                 "host_compliance_policy_events":
-                lambda _: cfg_btn("Event assignments"),
+                lambda _: cfg_btn("Edit this Policy's Event assignments"),
 
                 "host_compliance_policy_conditions":
-                lambda _: cfg_btn("Condition assignments"),
+                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
 
                 "host_compliance_policy_condition_new":
                 lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
@@ -188,13 +188,13 @@ nav.add_branch(
                 "Vm Compliance Policies", ctx["policy_name"])(None),
             {
                 "vm_compliance_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info"),
+                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
 
                 "vm_compliance_policy_events":
-                lambda _: cfg_btn("Event assignments"),
+                lambda _: cfg_btn("Edit this Policy's Event assignments"),
 
                 "vm_compliance_policy_conditions":
-                lambda _: cfg_btn("Condition assignments"),
+                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
 
                 "vm_compliance_policy_condition_new":
                 lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
@@ -243,13 +243,13 @@ nav.add_branch(
                 "Host Control Policies", ctx["policy_name"])(None),
             {
                 "host_control_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info"),
+                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
 
                 "host_control_policy_events":
-                lambda _: cfg_btn("Event assignments"),
+                lambda _: cfg_btn("Edit this Policy's Event assignments"),
 
                 "host_control_policy_conditions":
-                lambda _: cfg_btn("Condition assignments"),
+                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
 
                 "host_control_policy_condition_new":
                 lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
@@ -276,13 +276,13 @@ nav.add_branch(
                 "Vm Control Policies", ctx["policy_name"])(None),
             {
                 "vm_control_policy_edit":
-                lambda _: cfg_btn("Edit Basic Info"),
+                lambda _: cfg_btn("Edit Basic Info, Scope, and Notes"),
 
                 "vm_control_policy_events":
-                lambda _: cfg_btn("Event assignments"),
+                lambda _: cfg_btn("Edit this Policy's Event assignments"),
 
                 "vm_control_policy_conditions":
-                lambda _: cfg_btn("Condition assignments"),
+                lambda _: cfg_btn("Edit this Policy's Condition assignments"),
 
                 "vm_control_policy_condition_new":
                 lambda _: cfg_btn("Create a new Condition assigned to this Policy"),
