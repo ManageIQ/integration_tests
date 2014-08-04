@@ -437,7 +437,11 @@ class Instance(Updateable, Pretty):
             timeout: time (in seconds) to wait for it to appear
             from_details: when found, should it load the instance details
         """
-        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30)
+        wait_for(
+            self.does_vm_exist_in_cfme,
+            num_sec=timeout,
+            delay=30,
+            fail_func=self.provider_crud.refresh_provider_relationships)
         if load_details:
             self.load_details()
 
