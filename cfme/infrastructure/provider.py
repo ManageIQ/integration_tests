@@ -26,7 +26,7 @@ from cfme.web_ui.form_buttons import FormButton
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
-from utils.wait import wait_for
+from utils.wait import wait_for, RefreshTimer
 from utils import version
 
 add_infra_provider = FormButton("Add this Infrastructure Provider")
@@ -206,6 +206,7 @@ class Provider(Updateable):
         continuously until the matching of all items is complete. A error will be raised
         if the match is not complete within a certain defined time period.
         """
+
         if not self._on_detail_page():
             sel.force_navigate('infrastructure_provider', context={'provider': self})
 
@@ -217,12 +218,14 @@ class Provider(Updateable):
             client.disconnect()
             return
 
+        refresh_timer = RefreshTimer()
+
         # Otherwise refresh relationships and hand off to wait_for
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
         sel.handle_alert()
 
         ec, tc = wait_for(self._do_stats_match,
-                          [client, stats_to_match],
+                          [client, stats_to_match, refresh_timer],
                           message="do_stats_match",
                           fail_func=sel.refresh,
                           num_sec=1000,
@@ -267,7 +270,7 @@ class Provider(Updateable):
         self._load_details()
         return details_page.infoblock.text(*ident)
 
-    def _do_stats_match(self, client, stats_to_match=None):
+    def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None):
         """ A private function to match a set of statistics, with a Provider.
 
         This function checks if the list of stats match, if not, the page is refreshed.
@@ -284,6 +287,14 @@ class Provider(Updateable):
             ProviderHasNoProperty: If the provider does not have the property defined.
         """
         host_stats = client.stats(*stats_to_match)
+
+        if refresh_timer:
+            if refresh_timer.is_it_time():
+                logger.info(' Time for a refresh!')
+                tb.select("Configuration", "Refresh Relationships and Power States",
+                          invokes_alert=True)
+                sel.handle_alert(cancel=False)
+                refresh_timer.reset()
 
         for stat in stats_to_match:
             try:
