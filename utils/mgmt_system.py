@@ -397,7 +397,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         except Exception:
             return False
 
-    def _get_resource_pool(self, resource_pool_name=None):
+    def _get_resource_pool(self, resource_pool_name=''):
         """ Returns a resource pool MOR for a specified name.
 
         Args:
@@ -406,10 +406,11 @@ class VMWareSystem(MgmtSystemAPIBase):
         """
         rps = self.api.get_resource_pools()
         for mor, path in rps.iteritems():
-            if re.match('.*%s' % resource_pool_name, path):
+            if re.match('/Resources/?%s$' % resource_pool_name, path):
                 return mor
         # Just pick the first
-        return rps.keys()[0]
+        keys = sorted(rps.keys())
+        return keys[0]
 
     def get_ip_address(self, vm_name):
         """ Returns the first IP address for the selected VM.
