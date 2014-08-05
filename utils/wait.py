@@ -1,6 +1,7 @@
 import time
 from utils.log import logger
 from functools import partial
+from threading import Timer
 
 
 def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
@@ -89,3 +90,39 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
 
 class TimedOutError(Exception):
     pass
+
+
+class RefreshTimer(object):
+    """
+    Simple Timer class using threads.
+
+    Initialized with a refresh period, a callback and args. Very similar to the
+    actual threading.Timer class, when no callback function is passed, reverts to
+    even simpler usage of just telling if a certain amount of time has passed.
+
+    Can be resued.
+    """
+
+    def __init__(self, time_for_refresh=300, callback=None, *args, **kwargs):
+        self.callback = callback or self.it_is_time
+        self.time_for_refresh = time_for_refresh
+        self.args = args
+        self.kwargs = kwargs
+        self._is_it_time = False
+        self.start()
+
+    def start(self):
+        t = Timer(self.time_for_refresh, self.callback, self.args, self.kwargs)
+        t.start()
+
+    def it_is_time(self):
+        self._is_it_time = True
+
+    def reset(self):
+        self._is_it_time = False
+
+    def is_it_time(self):
+        if self._is_it_time:
+            return True
+        else:
+            return False
