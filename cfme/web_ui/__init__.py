@@ -103,12 +103,11 @@ class Region(Pretty):
         else:
             raise AttributeError("Region has no attribute named " + name)
 
-    def __init__(self, locators=None, title=None, identifying_loc=None, infoblock_type=None):
+    def __init__(self, locators=None, title=None, identifying_loc=None, **kwargs):
         self.locators = locators
         self.identifying_loc = identifying_loc
         self.title = title
-        if infoblock_type:
-            self.infoblock = InfoBlock(infoblock_type)
+        self.infoblock = InfoBlock  # Legacy support
 
     def is_displayed(self):
         """
@@ -1688,133 +1687,160 @@ def _select_chkboxtree_seq(cbtree, values):
 
 
 class InfoBlock(Pretty):
-    """ A helper class for information blocks on pages
+    DETAIL = "detail"
+    FORM = "form"
+    _TITLE_CACHE = {}
 
-    This class is able to work with both ``detail`` type information blocks and
-    ``form`` style information blocks. It is invoked with a single argument describing
-    the type of blocks to be addressed and adjusts the html elements accordingly.
+    pretty_attrs = ["title"]
 
-    Args:
-        itype: The type of information blocks to address, either ``detail`` or ``form``.
-
-    Returns: Either a string if the element contains just text, or the element.
-
-    Raises:
-        exceptions.BlockTypeUnknown: If the Block type requested by itype is unknown.
-        exceptions.ElementOrBlockNotFound: If the Block or Key requested is not found.
-        exceptions.NoElementsInsideValue: If the Key contains no elements.
-
-    An InfoBlock only needs to know the **type** of InfoBlocks you are trying to address.
-    You can then return either text, the first element inside the value or all elements.
-
-    Usage:
-
-        block = web_ui.InfoBlock("form")
-
-        block.text('Basic Information', 'Hostname')
-        block.element('Basic Information', 'Company Name')
-        block.elements('NTP Servers', 'Servers')
-
-    These will return a string, a webelement and a List of webelements respectively.
-
-    """
-    def __init__(self, itype):
-        self._itype = itype
-        if itype == "detail":
-            self._pair_locator = 'table/tbody/tr/td[1][@class="label"][.="%s"]/..'
-            self._value_locator = 'td[2]'
-        elif itype == "form":
-            self._pair_locator = 'table/tbody/tr/td[1][@class="key"][.="%s"]/..'
-            self._value_locator = 'td[2]'
+    def __new__(cls, title, detail=None):
+        # Caching
+        created_new = False
+        if title not in cls._TITLE_CACHE:
+            cls._TITLE_CACHE[title] = super(InfoBlock, cls).__new__(cls, title)
+            created_new = True
+        instance = cls._TITLE_CACHE[title]
+        if detail is None:
+            return instance
         else:
-            raise exceptions.BlockTypeUnknown("The block type requested is unknown")
+            if created_new:
+                instance.__init__(title)
+            return instance.member(detail)
+
+    def __init__(self, title):
+        if all(map(lambda a: hasattr(self, a), ["title", "_type", "_member_cache"])):
+            return
+        self.title = title
+        self._type = None
+        self._member_cache = {}
 
     @property
-    def _box_locator(self):
-        if self._itype == "detail":
-            # We have to collapse the locator singularity early here, hence the .locate()
-            return version.pick({
-                '5.3': '//table//th[contains(., "%s")]/../../../..',
-                version.LOWEST: '//div[@class="modbox"]/h2[@class="modtitle"]'
-                '[contains(., "%s")]/..'})
+    def type(self):
+        if self._type is None:
+            self.root  # To retrieve it
+        return self._type
+
+    @property
+    def root(self):
+        possible_locators = [
+            # Detail type
+            version.pick({
+                '5.3': '//table//th[contains(., "{}")]/../../../..'.format(self.title),
+                version.LOWEST:
+                '//div[@class="modbox"]/h2[@class="modtitle"][contains(., "{}")]/..'.format(
+                    self.title)
+            }),
+            # Form type
+            '//fieldset/p[@class="legend"][contains(., "{}")]/..'.format(self.title)
+        ]
+        found = sel.elements("|".join(possible_locators))
+        if not found:
+            raise exceptions.BlockTypeUnknown("The block type requested is unknown")
+        root_el = found[0]
+        tag = sel.tag(root_el)
+        if tag == "fieldset":
+            self._type = self.FORM
         else:
-            return '//p[@class="legend"][contains(., "%s")]/..'
+            self._type = self.DETAIL
+        return root_el
 
-    def get_el_or_els(self, ident, all_els=False):
-        """ Returns either a single element or a list of elements from a Value.
+    def member(self, name):
+        if name not in self._member_cache:
+            self._member_cache[name] = self.Member(self, name)
+        return self._member_cache[name]
 
-        Args:
-            ident: A List of identifiers.
-            all_els: A Boolean describing if the function should return a single element
-                or a list of elements.
-        Returns: Either a single element or a List of elements.
-        """
+    def __call__(self, member):
+        """A present for @smyers"""
+        return self.member(member)
+
+    ##
+    #
+    # Shortcuts for old-style access
+    #
+    @classmethod
+    def text(cls, *args, **kwargs):
+        return cls(*args, **kwargs).text
+
+    @classmethod
+    def element(cls, *args, **kwargs):
+        return cls(*args, **kwargs).element
+
+    @classmethod
+    def elements(cls, *args, **kwargs):
+        return cls(*args, **kwargs).elements
+
+    @classmethod
+    def icon_href(cls, *args, **kwargs):
+        return cls(*args, **kwargs).icon_href
+
+    @classmethod
+    def container(cls, args, **kwargs):
         try:
-            els = sel.elements("*", root=self.container(ident))
-        except sel_exceptions.NoSuchElementException:
-            raise exceptions.NoElementsInsideValue("No Elements are found inside the value")
-        if els == []:
-            return None
-        if all_els:
-            return els
-        else:
-            return els[0]
-
-    def elements(self, *ident):
-        """ A Convenience wrapper for :py:meth:get_el_or_els
-
-        Args:
-            *indent: Identifiers in the form of strings.
-        Returns: Either a single element or a List of elements.
-        """
-        return self.get_el_or_els(ident, all_els=True)
-
-    def element(self, *ident):
-        """ A Convenience wrapper for :py:meth:get_el_or_els
-
-        Args:
-            *indent: Identifiers in the form of strings.
-        Returns: Either a single element or a List of elements.
-        """
-        return self.get_el_or_els(ident, all_els=False)
-
-    def text(self, *ident):
-        """ Returns the textual component of a Value
-
-        Args:
-            *indent: Identifiers in the form of strings.
-        Returns: A string of the elements in the Value.
-        """
-        return self.container(ident).text
-
-    def icon_href(self, *ident):
-        """ Returns the src url of a associated icon
-
-        Args:
-            *indent: Identifiers in the form of strings.
-        Returns: A string of the src href of the element.
-        """
-        xpath_core = "%s/%s/%s" % (self._box_locator,
-                                   self._pair_locator, self._value_locator)
-        xpath = xpath_core % (ident[0], ident[1])
-        return str(sel.element(xpath + "/img").get_attribute("src"))
-
-    def container(self, ident):
-        """ Searches for a key/value pair inside a header/block arrangement.
-
-        Args:
-            indent: Identifiers in the form of a list of strings.
-        Returns: The Value as a WebElement
-        """
-        xpath_core = "%s/%s/%s" % (self._box_locator,
-                                   self._pair_locator, self._value_locator)
-        xpath = xpath_core % (ident[0], ident[1])
-        try:
-            el = sel.element(xpath)
+            return sel.element(cls(*args, **kwargs).container)
         except sel_exceptions.NoSuchElementException:
             raise exceptions.ElementOrBlockNotFound(
                 "Either the element of the block could not be found")
-        return el
+
+    class Member(Pretty):
+        pretty_attrs = "name", "ib"
+
+        def __init__(self, ib, name):
+            self.ib = ib
+            self.name = name
+
+        @property
+        def pair_locator(self):
+            if self.ib.type == InfoBlock.DETAIL:
+                return 'table/tbody/tr/td[1][@class="label"][.="{}"]/..'.format(self.name)
+            elif self.ib.type == InfoBlock.FORM:
+                return 'table/tbody/tr/td[1][@class="key"][.="{}"]/..'.format(self.name)
+
+        @property
+        def pair(self):
+            return lambda: sel.element(self.pair_locator, root=lambda: self.ib.root)
+
+        @property
+        def container(self):
+            return lambda: sel.element("./td[2]", root=self.pair)
+
+        def locate(self):
+            return self.container
+
+        @property
+        def elements(self):
+            return sel.elements("./*", root=self.container)
+
+        @property
+        def element(self):
+            return self.elements[0]
+
+        @property
+        def text(self):
+            return sel.text(self.container).encode("utf-8").strip()
+
+        @property
+        def icon_href(self):
+            try:
+                return sel.get_attribute(sel.element("./img", root=self.container), "href")
+            except sel_exceptions.NoSuchElementException:
+                return None
+
+
+@fill.method((InfoBlock, Sequence))
+def _ib_seq(ib, i):
+    for item in i:
+        sel.click(ib.member(item))
+
+
+@fill.method((InfoBlock, basestring))
+def _ib_str(ib, s):
+    fill([s])
+
+
+@fill.method((InfoBlock.Member, bool))
+def _ib_m_seq(member, b):
+    if b:
+        sel.click(member)
 
 
 class Quadicon(Pretty):

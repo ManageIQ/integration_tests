@@ -42,6 +42,11 @@ replication_worker = Form(
     ]
 )
 
+replication_process = Region(locators={
+    "status": InfoBlock("Replication Process", "Status"),
+    "current_backlog": InfoBlock("Replication Process", "Current Backlog"),
+})
+
 server_roles = Form(
     fields=[
         ('ems_metrics_coordinator', "//input[@id='server_roles_ems_metrics_coordinator']"),
@@ -423,8 +428,10 @@ class ServerLogDepot(Pretty):
 
     """
     elements = Region(
-        locators={},
-        infoblock_type="form"
+        locators={
+            "last_message": InfoBlock("Basic Info", "Last Message"),
+            "last_log_collection": InfoBlock("Basic Info", "Last Log Collection"),
+        },
     )
 
     class Credentials(Updateable, Pretty):
@@ -531,7 +538,7 @@ class ServerLogDepot(Pretty):
         """ Returns the Last Message that is displayed in the InfoBlock.
 
         """
-        return cls.elements.infoblock.text("Basic Info", "Last Message")
+        return cls.elements.last_message.text
 
     @classmethod
     def get_last_collection(cls):
@@ -539,7 +546,7 @@ class ServerLogDepot(Pretty):
 
         Returns: If it is Never, returns `None`, otherwise :py:class:`utils.timeutil.parsetime`.
         """
-        d = cls.elements.infoblock.text("Basic Info", "Last Log Collection")
+        d = cls.elements.last_log_collection.text
         return None if d.strip().lower() == "never" else parsetime.from_american_with_utc(d.strip())
 
     @classmethod
@@ -1849,8 +1856,7 @@ def get_replication_status(navigate=True):
     """
     if navigate:
         sel.force_navigate("cfg_diagnostics_region_replication")
-    block = InfoBlock("form")
-    return block.text("Replication Process", "Status") == "Active"
+    return replication_process.status.text == "Active"
 
 
 def get_replication_backlog(navigate=True):
@@ -1860,5 +1866,4 @@ def get_replication_backlog(navigate=True):
     """
     if navigate:
         sel.force_navigate("cfg_diagnostics_region_replication")
-    block = InfoBlock("form")
-    return int(block.text("Replication Process", "Current Backlog"))
+    return int(replication_process.current_backlog.text)
