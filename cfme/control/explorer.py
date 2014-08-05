@@ -87,13 +87,13 @@ def _ap_single_branch(ugly, nice):
     """generates branch for specific Alert Profile"""
     return [
         lambda ctx: accordion_func(
-            "Alert Profiles", "All Alert Profiles", "%s Alert Profiles" % nice,
+            "Alert Profiles", "All Alert Profiles", "{} Alert Profiles".format(nice),
             ctx["alert_profile_name"])(None),
         {
-            "%s_alert_profile_edit" % ugly:
+            "{}_alert_profile_edit".format(ugly):
             lambda _: cfg_btn("Edit this Alert Profile"),
 
-            "%s_alert_profile_assignments" % ugly:
+            "{}_alert_profile_assignments".format(ugly):
             lambda _: cfg_btn("Edit assignments for this Alert Profile"),
         }
     ]
@@ -106,7 +106,7 @@ def _ap_multi_branch(ugly, nice):
             "Alert Profiles", "All Alert Profiles", "{} Alert Profiles".format(nice)),
         {
             "{}_alert_profile_new".format(ugly):
-            lambda _: cfg_btn("Add a New {} Profile".format(nice))
+            lambda _: cfg_btn("Add a New {} Alert Profile".format(nice))
         }
     ]
 
