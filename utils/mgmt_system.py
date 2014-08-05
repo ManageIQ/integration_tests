@@ -1191,6 +1191,7 @@ class EC2System(MgmtSystemAPIBase):
         return instances[0].id
 
     def set_name(self, instance_id, new_name):
+        instance_id = self._get_instance_id_by_name(instance_id)
         logger.info("Setting name of EC2 instance %s to %s" % (instance_id, new_name))
         instance = self._get_instance_by_id(instance_id)
         instance.add_tag('Name', new_name)
