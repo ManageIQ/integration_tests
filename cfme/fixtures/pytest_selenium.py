@@ -11,7 +11,9 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 :var ajax_wait_js: A Javascript function for ajax wait checking
 :var class_selector: Regular expression to detect simple CSS locators
 """
+
 from time import sleep, time
+from xml.sax.saxutils import quoteattr
 from collections import Iterable
 from textwrap import dedent
 import json
@@ -248,6 +250,18 @@ def is_displayed(loc, _deep=0):
             # So try it again after a little bit of sleep
             sleep(0.05)
             return is_displayed(loc, _deep + 1)
+
+
+def is_displayed_text(text):
+    """
+    Checks if a particular text is displayed
+
+    Args:
+        text: A string.
+
+    Returns: A string containing the text
+    """
+    return is_displayed("//*[text()={}]".format(quoteattr(text)))
 
 
 def wait_for_element(*locs, **kwargs):
