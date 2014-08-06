@@ -114,15 +114,23 @@ def mark_provider_template(api, provider, template, tested=None, usable=None):
     return api.providertemplate.post(provider_template)
 
 
-def latest_template(api, group):
+def latest_template(api, group, provider_key=None):
     if not isinstance(group, Group):
         group = Group(str(group))
 
-    response = api.group(group['name']).get()
-    return {
-        'latest_template': response['latest_template'],
-        'latest_template_providers': response['latest_template_providers'],
-    }
+    if provider_key is None:
+        # Just get the latest template for a given group, as well as its providers
+        response = api.group(group['name']).get()
+        return {
+            'latest_template': response['latest_template'],
+            'latest_template_providers': response['latest_template_providers'],
+        }
+    else:
+        # Given a provider, use the provider API to get the latest
+        # template for that provider, as well as the additional usable
+        # providers for that template
+        response = api.provider(provider_key).get()
+        return response['latest_templates'][group['name']]
 
 
 # Dict subclasses to help with JSON serialization
