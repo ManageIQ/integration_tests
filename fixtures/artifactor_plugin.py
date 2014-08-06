@@ -87,7 +87,9 @@ def pytest_runtest_protocol(item):
 def pytest_runtest_teardown(item, nextitem):
     words = []
     for cred in credentials:
-        words.append(credentials[cred]['password'])
+        word = credentials[cred].get('password', None)
+        if word:
+            words.append(word)
     art_client.fire_hook('finish_test', test_location=item.location[0], test_name=item.location[2],
                          slaveid=SLAVEID)
     art_client.fire_hook('sanitize', test_location=item.location[0], test_name=item.location[2],
