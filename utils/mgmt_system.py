@@ -1157,8 +1157,8 @@ class EC2System(MgmtSystemAPIBase):
     def deploy_template(self, template, *args, **kwargs):
         """Instantiate the requested template image (ami id)
 
-        For all available args, see
-        http://boto.readthedocs.org/en/latest/ref/ec2.html#boto.ec2.connection.EC2Connection.run_instances
+        Accepts args/kwargs from boto's
+        :py:meth:`run_instances<boto:boto.ec2.connection.EC2Connection.run_instances>` method
 
         Most important args are listed below.
 

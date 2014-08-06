@@ -52,6 +52,7 @@ extensions = [
 ]
 
 intersphinx_mapping = {
+    'boto': ('http://boto.readthedocs.org/en/latest/', None),
     'python': ('http://docs.python.org/2.7', None),
     'pytest': ('http://pytest.org/latest/', None),
     'selenium': ('http://selenium-python.readthedocs.org/en/latest/', None),
