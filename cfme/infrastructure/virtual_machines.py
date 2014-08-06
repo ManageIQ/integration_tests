@@ -18,6 +18,9 @@ from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 from utils import version
 
+QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
+                         " or contains(@href, '/show/')]")  # for provider specific vm/template page
+
 details_page = Region(infoblock_type='detail')
 
 cfg_btn = partial(toolbar.select, 'Configuration')
@@ -654,6 +657,12 @@ def perform_smartstate_analysis(vm_names, provider_crud=None, cancel=True):
     sel.handle_alert(cancel=cancel)
 
 
+def get_first_vm_title(do_not_navigate=False):
+    if not do_not_navigate:
+        sel.force_navigate('infra_vms')
+    return Quadicon.get_first_quad_title()
+
+
 def get_all_vms(do_not_navigate=False):
     """Returns list of all vms"""
     if not do_not_navigate:
@@ -665,13 +674,28 @@ def get_all_vms(do_not_navigate=False):
     paginator.results_per_page(1000)
     for page in paginator.pages():
         try:
-            for title in sel.elements(
-                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
-                    " or contains(@href, '/show/')]"):  # for provider specific vm/template page
-                vms.add(sel.get_attribute(title, "title"))
+            for page in paginator.pages():
+                for title in sel.elements(QUADICON_TITLE_LOCATOR):
+                    vms.add(sel.get_attribute(title, "title"))
         except sel.NoSuchElementException:
             pass
     return vms
+
+
+def get_number_of_vms(do_not_navigate=False):
+    """
+    Returns the total number of VMs visible to the user,
+    including those archived or orphaned
+    """
+    logger.info("Getting number of vms")
+    if not do_not_navigate:
+        sel.force_navigate('infra_vms')
+    if not paginator.page_controls_exist():
+        logger.debug("No page controls")
+        return 0
+    total = paginator.rec_total()
+    logger.debug("Number of VMs: {}".format(total))
+    return int(total)
 
 
 def _assign_unassign_policy_profiles(vm_name, assign, *policy_profile_names, **kwargs):

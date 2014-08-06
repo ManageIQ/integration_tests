@@ -1914,6 +1914,10 @@ class Quadicon(Pretty):
         elem = sel.element("//div[@id='quadicon']").find_element_by_xpath('./../..//input')
         fill(elem, True)
 
+    @staticmethod
+    def get_first_quad_title():
+        return sel.get_attribute(sel.element("//div[@id='quadicon']/../../../tr/td/a"), "title")
+
 
 class DHTMLSelect(Select):
     """
