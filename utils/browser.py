@@ -171,7 +171,7 @@ def browser_session(*args, **kwargs):
         # Browser will be closed here
 
     """
-    conf.env['base_url'] = kwargs['base_url']
+    conf.runtime['env']['base_url'] = kwargs['base_url']
     reset_cache = kwargs.pop('reset_cache', False)
 
     if reset_cache:
@@ -182,9 +182,8 @@ def browser_session(*args, **kwargs):
         yield browser
     finally:
         quit()
-        conf.clear()
-        if reset_cache:
-            cache_reset()
+        del(conf.runtime['env']['base_url'])
+        cache_reset()
 
 
 def _load_firefox_profile():
