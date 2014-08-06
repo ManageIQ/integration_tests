@@ -155,7 +155,7 @@ class Appliance(object):
 
         return SSHClient(**connect_kwargs)
 
-    def browser_session(self):
+    def browser_session(self, reset_cache=False):
         """Creates browser session connected to this appliance
 
         Returns: Browser session connected to this appliance.
@@ -164,7 +164,7 @@ class Appliance(object):
             with appliance.browser_session() as browser:
                 browser.do_stuff(TM)
         """
-        return browser_session(base_url='https://' + self.address)
+        return browser_session(base_url='https://' + self.address, reset_cache=reset_cache)
 
     def enable_internal_db(self):
         """Enables internal database
