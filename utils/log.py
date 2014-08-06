@@ -130,18 +130,18 @@ Members
 ^^^^^^^
 
 """
+import inspect
 import logging
 import sys
 import warnings
 import datetime as dt
 
-from functools import partial
 from logging import LoggerAdapter
 from logging.handlers import RotatingFileHandler, SysLogHandler
 from time import time
 from traceback import extract_tb
 
-from utils import conf
+from utils import conf, lazycache
 from utils.path import get_rel_path, log_path
 from utils.randomness import generate_random_string
 
@@ -387,42 +387,99 @@ if '_original_excepthook' not in globals():
     _original_excepthook = sys.excepthook
 
 
-class MultiLogger(object):
-    def __init__(self):
-        self.loggers = []
-        self._art_instance = None
+def nth_frame_info(n):
+    """
+    Inspect the stack to determine the filename and lineno of the code running at the "n"th frame
 
-    def add_logger(self, logger):
-        self.loggers.append(logger)
+    Args:
+        n: Number of the stack frame to inspect
 
-    def __getattr__(self, name):
-        return partial(self.log_me, name)
+    Raises IndexError if the stack doesn't contain the nth frame (the caller should know this)
 
-    @property
-    def _art(self):
-        if not self._art_instance:
-            from fixtures.artifactor_plugin import art_client, SLAVEID
-            self._slaveid = SLAVEID or ""
-            self._art_instance = art_client
-        return self._art_instance
+    Returns a frameinfo namedtuple as described in :py:func:`inspect <python:inspect.getframeinfo>`
 
-    def log_me(self, name, *args, **kwargs):
-        for logger in self.loggers:
-            getattr(logger, name)(*args, **kwargs)
-        extra_info = kwargs.get('extra', None)
-        if extra_info:
-            if not isinstance(extra_info['source_file'], basestring):
-                extra_info['source_file'] = extra_info['source_file'].strpath
-        log_record = {'level': name,
-                      'message': str(args[0]),
-                      'extra': extra_info or ""}
-        self._art.fire_hook('log_message', log_record=log_record, slaveid=self._slaveid)
+    """
+    # Inspect the stack with 1 line of context, looking at the "n"th frame to determine
+    # the filename and line number of that frame
+    return inspect.getframeinfo(inspect.stack(1)[n][0])
+
+
+class ArtifactorLoggerAdapter(logging.LoggerAdapter):
+    """Logger Adapter that hands messages off to the artifactor before logging"""
+    @lazycache
+    def artifactor(self):
+        from fixtures.artifactor_plugin import art_client
+        return art_client
+
+    @lazycache
+    def slaveid(self):
+        from fixtures.artifactor_plugin import SLAVEID
+        return SLAVEID or ""
+
+    def art_log(self, level_name, message, kwargs):
+        art_log_record = {
+            'level': level_name,
+            'message': str(message),
+            'extra': kwargs.get('extra', '')
+        }
+        self.artifactor.fire_hook('log_message', log_record=art_log_record, slaveid=self.slaveid)
+
+    def log(self, lvl, msg, *args, **kwargs):
+        level_name = logging.getLevelName(lvl).lower()
+        msg, kwargs = self.process(msg, kwargs)
+        self.art_log(level_name, msg, kwargs)
+        return self.logger.log(lvl, msg, *args, **kwargs)
+
+    def debug(self, msg, *args, **kwargs):
+        msg, kwargs = self.process(msg, kwargs)
+        self.art_log('debug', msg, kwargs)
+        return self.logger.debug(msg, *args, **kwargs)
+
+    def info(self, msg, *args, **kwargs):
+        msg, kwargs = self.process(msg, kwargs)
+        self.art_log('info', msg, kwargs)
+        return self.logger.info(msg, *args, **kwargs)
+
+    def warning(self, msg, *args, **kwargs):
+        msg, kwargs = self.process(msg, kwargs)
+        self.art_log('warning', msg, kwargs)
+        return self.logger.warning(msg, *args, **kwargs)
+
+    def error(self, msg, *args, **kwargs):
+        msg, kwargs = self.process(msg, kwargs)
+        self.art_log('error', msg, kwargs)
+        return self.logger.error(msg, *args, **kwargs)
+
+    def critical(self, msg, *args, **kwargs):
+        msg, kwargs = self.process(msg, kwargs)
+        self.art_log('critical', msg, kwargs)
+        return self.logger.critical(msg, *args, **kwargs)
+
+    def exception(self, msg, *args, **kwargs):
+        kwargs['exc_info'] = 1
+        msg, kwargs = self.process(msg, kwargs)
+        self.art_log('error', msg, kwargs)
+        return self.logger.error(msg, *args, **kwargs)
+
+    def process(self, msg, kwargs):
+        # frames
+        # 0: call to nth_frame_info
+        # 1: adapter process method (this method)
+        # 2: adapter logging method
+        # 3: original logging call
+        frameinfo = nth_frame_info(3)
+        extra = kwargs.get('extra', {})
+        extra.update({
+            'source_file': get_rel_path(frameinfo.filename) or frameinfo.filename,
+            'source_lineno': frameinfo.lineno
+        })
+        kwargs['extra'] = extra
+        return msg, kwargs
 
 
 cfme_logger = create_logger('cfme')
 
-logger = MultiLogger()
-logger.add_logger(cfme_logger)
+logger = ArtifactorLoggerAdapter(cfme_logger, {})
 
 perflog = Perflog()
 
