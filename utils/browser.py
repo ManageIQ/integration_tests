@@ -15,6 +15,7 @@ from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 from utils import conf
+from utils.cache_reset import cache_reset
 from utils.log import logger
 from utils.path import data_path
 
@@ -171,12 +172,19 @@ def browser_session(*args, **kwargs):
 
     """
     conf.env['base_url'] = kwargs['base_url']
+    reset_cache = kwargs.pop('reset_cache', False)
+
+    if reset_cache:
+        cache_reset()
+
     browser = start(*args, **kwargs)
     try:
         yield browser
     finally:
         quit()
         conf.clear()
+        if reset_cache:
+            cache_reset()
 
 
 def _load_firefox_profile():
