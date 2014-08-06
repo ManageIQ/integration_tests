@@ -102,6 +102,8 @@ def test_user_password_required_error_validation():
         user.create()
 
 
+@pytest.mark.bugzilla(
+    1118040, unskip={1118040: lambda appliance_version: appliance_version < "5.3"})
 def test_user_group_error_validation():
     user = ac.User(
         name='user' + random.generate_random_string(),
