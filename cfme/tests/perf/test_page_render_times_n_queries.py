@@ -34,6 +34,10 @@ def analyze_page_stat(pages, soft_assert):
     return pages
 
 
+def any_in(items, thing):
+    return any(item in thing for item in items)
+
+
 def navigate_every_quadicon(qnames, qtype, page_name, soft_assert, acc_topbars=[], num_q_nav=0):
     count = 0
     if num_q_nav == 0:
@@ -47,21 +51,21 @@ def navigate_every_quadicon(qnames, qtype, page_name, soft_assert, acc_topbars=[
                     sel.click(quadicon)
                     for topbar in acc_topbars:
                         try:
-                            links = list_acc.get_active_links(topbar)
                             if not list_acc.is_active(topbar):
                                 list_acc.click(topbar)
+                            links = list_acc.get_active_links(topbar)
                             for link in range(len(links)):
                                 # Every click makes the previous list of links invalid
                                 links = list_acc.get_active_links(topbar)
                                 if link <= len(links):
-                                    # Do not navigate outside of actual page
-                                    if 'parent' in links[link].title:
-                                        break
-                                    # Do not navigate to C&U Charts as chart generation process
-                                    # waits on backend messaging and chart creation
-                                    if 'Capacity & Utilization' in links[link].title:
-                                        break
-                                    links[link].click()
+                                    # Do not navigate to any link containing:
+                                    dnn = ['parent', 'Capacity & Utilization', 'Timelines',
+                                        'Show tree of all VMs by Resource Pool in this Cluster',
+                                        'Show host drift history', 'Show VMs']
+                                    if any_in(dnn, links[link].title):
+                                        logger.debug('DNN Skipping: {}'.format(links[link].title))
+                                    else:
+                                        links[link].click()
                         except NoSuchElementException:
                             logger.warning('NoSuchElementException - page_name:{}, Quadicon:{},'
                                 ' topbar:{}, link title:{}'.format(page_name, q, topbar,
@@ -188,6 +192,29 @@ def test_ems_infra_render_times_n_queries(ssh_client, soft_assert):
     pages_to_csv(pages, 'page_renders_n_queries_ems_infra.csv')
 
 
+def test_ems_cluster_render_times_n_queries(ssh_client, soft_assert):
+    miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+
+    if 'num_ems_cluster_check' not in ui_bench_tests['page_check']:
+        ui_bench_tests['page_check']['num_ems_cluster_check'] = 0
+
+    sel.force_navigate('infrastructure_clusters')
+    clusters = set([])
+    for page in paginator.pages():
+        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
+                "'ems_cluster/show')]"):
+            clusters.add(sel.get_attribute(title, "title"))
+
+    acc_bars = ['Properties', 'Relationships']
+
+    navigate_every_quadicon(clusters, 'cluster', 'infrastructure_clusters',
+        soft_assert, acc_bars, ui_bench_tests['page_check']['num_ems_cluster_check'])
+
+    pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
+
+    pages_to_csv(pages, 'page_renders_n_queries_ems_clusters.csv')
+
+
 def test_host_render_times_n_queries(ssh_client, soft_assert):
     miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
@@ -239,6 +266,29 @@ def test_vm_infra_render_times_n_queries(ssh_client, soft_assert):
             break
 
     pages_to_csv(pages, 'page_renders_n_queries_vm_infra.csv')
+
+
+def test_resource_pool_render_times_n_queries(ssh_client, soft_assert):
+    miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+
+    if 'num_ems_resource_pool_check' not in ui_bench_tests['page_check']:
+        ui_bench_tests['page_check']['num_ems_resource_pool_check'] = 0
+
+    sel.force_navigate('infrastructure_resource_pools')
+    resource_pools = set([])
+    for page in paginator.pages():
+        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
+                "'resource_pool/show')]"):
+            resource_pools.add(sel.get_attribute(title, "title"))
+
+    acc_bars = ['Properties', 'Relationships']
+
+    navigate_every_quadicon(resource_pools, 'resource_pool', 'infrastructure_resource_pools',
+        soft_assert, acc_bars, ui_bench_tests['page_check']['num_ems_resource_pool_check'])
+
+    pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
+
+    pages_to_csv(pages, 'page_renders_n_queries_resource_pool.csv')
 
 
 def test_storage_render_times_n_queries(ssh_client, soft_assert):
