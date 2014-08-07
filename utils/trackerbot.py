@@ -36,7 +36,7 @@ def cmdline_parser():
     def_url = {'default': None, 'nargs': '?'} if 'url' in trackerbot_conf else {}
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('trackerbot_url',
+    parser.add_argument('--trackerbot-url',
         help='URL to the base of the tracker API, e.g. http://hostname/api/', **def_url)
     return parser
 
@@ -131,6 +131,22 @@ def latest_template(api, group, provider_key=None):
         # providers for that template
         response = api.provider(provider_key).get()
         return response['latest_templates'][group['name']]
+
+
+def templates_to_test(api, limit=20):
+    """get untested templates to pass to jenkins
+
+    Args:
+        limit - max number of templates to pull per request
+
+    """
+    templates = []
+    for pt in api.providertemplate.get(limit=limit, tested=False).get('objects', []):
+        name = pt['template']['name']
+        group = pt['template']['group']['name']
+        provider = pt['provider']['key']
+        templates.append([name, provider, group])
+    return templates
 
 
 # Dict subclasses to help with JSON serialization
