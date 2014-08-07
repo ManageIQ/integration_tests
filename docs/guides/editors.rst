@@ -223,16 +223,40 @@ select PythonImproved.
 emacs
 -----
 
-So far the best emacs setup I've found is iPython notebook, combined with the
-`ein <http://tkf.github.io/emacs-ipython-notebook/>`_ emacs package (emacs iPython notebook).
+So far the best emacs setup I've (``jweiss``) found is iPython notebook, combined with the `ein
+<http://tkf.github.io/emacs-ipython-notebook/>`_ emacs package (emacs iPython notebook).
 
-Installing iPython is covered on its `homepage <http://ipython.org/install.html>`_.
+Installing iPython and its Emacs client
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can run ``M-x package-install``, ``ein`` in emacs to install ein (if you have the right
-repositories set up - check out `Melpa <http://melpa.milkbox.net/#/>`_)
+iPython 
+"""""""
 
-Then in a shell somewhere, you can start up iPython notebook process.  This is the python
-process that will intepret all the code you will be sending it.
+See the install `docs <http://ipython.org/install.html>`_.
+
+ein
+"""
+
+`Emacs iPython Notebook <http://tkf.github.io/emacs-ipython-notebook/>`_ is the emacs client for
+iPython.
+
+The official ein package does not work with the latest ipython. I built a package from the `fork
+<https://github.com/millejoh/emacs-ipython-notebook>`_ of ein that does work.  You can get the
+package from the internal repository listed below.  You should also add the `Melpa
+<http://melpa.milkbox.net/#/>`_ repository.
+
+
+.. code-block:: cl
+
+ (add-to-list 'package-archives
+   '("melpa" . "http://melpa.milkbox.net/packages/") t)
+ (add-to-list 'package-archives
+   '("jweiss" . "http://qeblade5.rhq.lab.eng.bos/isos/emacs-package-archive/") t)
+
+You can then run ``M-x package-install``, ``ein`` in emacs to install ein.
+
+Then in a shell somewhere, you can start up iPython notebook process.  This is the python process
+that will intepret all the code you will be sending it.
 
 .. code-block:: bash
 
@@ -242,18 +266,23 @@ process that will intepret all the code you will be sending it.
 
 Then in emacs, run ``M-x ein:notebooklist-open``.  It will prompt you for a port (default 8888).
 This will bring up the EIN environment, where you can evaluate python snippets (and edit them and
-evaluate them again).  You can also save the notebook to use your snippets again later.  The
-outputs are also saved.
+evaluate them again).  You can also save the notebook to use your snippets again later.  The outputs
+are also saved.
 
-I wrote a little bit of elisp to start a iPython notebook process for you from within emacs.
-It's a little rough but easier than having to type shell commands every time.  It requires
-the ``magit`` package, which I highly recommend (it is a git client for emacs).
+Starting iPython from within Emacs
+""""""""""""""""""""""""""""""""""
+
+I wrote a little bit of elisp to start a iPython notebook process for you from within emacs.  It's
+easier than having to type shell commands every time.  It requires the ``magit`` package, which I
+highly recommend (it is a git client for emacs).
 
 .. code-block:: cl
 
    (autoload 'magit-get-top-dir "magit" nil t)
+
    (defun magit-project-dir ()
      (magit-get-top-dir (file-name-directory (or (buffer-file-name) default-directory))))
+
    (defun start-ipython-current-project (virtualenv-dir)
      (interactive
       (let ((d (read-directory-name "VirtualEnv dir: " "~/.virtualenvs/" nil t)))
@@ -275,6 +304,20 @@ To use the above snippet,
 
 It will start ipython in emacs' shell buffer.
 
+Autosave Notebooks
+""""""""""""""""""
+
+Unlike the iPython web interface, ein does not autosave notebooks by default.  Here is a snippet
+that will enable autosave (notebooks are saved every time you execute a cell)
+
+.. code-block:: cl
+
+  ;; ein save worksheet after running cell
+  (eval-after-load 'ein-multilang
+    '(defadvice ein:cell-execute (after ein:save-worksheet-after-execute activate)
+       (ein:notebook-save-notebook-command)))
+
+
 Flake8 Lint
 ^^^^^^^^^^^
 
@@ -289,3 +332,43 @@ You can use the global mode as described on the homepage, or to just enable flym
   (autoload 'flycheck "flycheck-mode")
   (eval-after-load 'python
     '(add-hook 'python-mode-hook 'flycheck-mode))
+
+Recommended
+^^^^^^^^^^^
+
+:Magit:
+
+   Emacs client for git and a huge time saver.  All git commands are a single keypress, pretty views
+   of diffs, branches, remotes, etc.  Package is ``magit``.
+
+:Ido and Smex:
+
+   ``ido`` package (now built into emacs) for filename and buffer name completion, ``smex`` for
+   ``M-x`` command completion.
+
+:Smartparens: 
+
+   Inserts parens, brackets, quotes, etc in pairs.  Keeps parens balanced, allows you to edit
+   paren-delimited structures logically instead of as plain text (designed for lisp but also works
+   on html, xml, json, etc).  Replaces paredit, an older and more well-known tool that does the same
+   thing.  Package ``smartparens``.
+
+:Autocomplete: 
+
+   Code completion for emacs.  Package is called ``autocomplete``, see ``ein`` docs for how to enable in
+   python buffers.
+
+:Undo Tree:
+
+   Edit with confidence! Keeps track of all your buffer changes, even stuff you undid and re-did on
+   top of.  Package is called ``undo-tree``.
+
+:yagist:
+   
+   Create a github gist (paste) from a region or buffer with a single keypress, and the link to the
+   gist is automatically inserted into the clipboard so you can easily paste it into IRC.
+
+:Multiple cursors:
+
+   Extremely powerful editing tool, best described with `this
+   video. <http://emacsrocks.com/e13.html>`_ Package is ``multiple-cursors``.
