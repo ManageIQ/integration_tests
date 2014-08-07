@@ -13,12 +13,14 @@ unsupported, hilarity may ensue.
 
 import argparse
 import os
+import socket
 import sys
 
 from utils import datafile
 from utils.conf import credentials
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
+from utils.wait import wait_for
 
 
 def main():
@@ -28,8 +30,15 @@ def main():
         help='hostname or ip address of target appliance')
     parser.add_argument('--region', default=0, type=int,
         help='region to assign to the new DB')
-
     args = parser.parse_args()
+
+    def is_ssh_running():
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        result = s.connect_ex((args.address, 22))
+        return result == 0
+
+    # make sure ssh is up before trying to talk to it
+    wait_for(func=is_ssh_running, delay=10, num_sec=600)
 
     ssh_kwargs = {
         'username': credentials['ssh']['username'],
