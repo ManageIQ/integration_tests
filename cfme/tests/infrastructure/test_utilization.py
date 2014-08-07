@@ -3,7 +3,7 @@ from utils import db
 from utils import providers
 from utils import conf
 import time
-
+from cfme.configure.configuration import candu
 
 pytestmark = [
     pytest.mark.fixtureconf(server_roles="+ems_metrics_coordinator +ems_metrics_collector"
@@ -16,10 +16,11 @@ pytestmark = [
 def setup_providers():
     providers.setup_cloud_providers()
     providers.setup_infrastructure_providers()
+    # also enable collection for the region
+    candu.enable_all()
 
 
-@pytest.mark.parametrize("provider",
-                         providers.list_all_providers())
+@pytest.mark.parametrize("provider", providers.list_all_providers())
 def test_metrics_collection(provider):
     '''check the db is gathering collection data for the given provider'''
 
