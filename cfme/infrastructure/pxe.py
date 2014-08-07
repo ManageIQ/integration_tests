@@ -531,7 +531,12 @@ class ISODatastore(Updateable, Pretty):
         sel.force_navigate('infrastructure_iso_datastores')
         iso_tree(self.provider, 'ISO Images', image_name)
         cfg_btn('Edit this ISO Image')
-        fill(iso_image_type_form, {'image_type': image_type}, action=form_buttons.save)
+        fill(iso_image_type_form, {'image_type': image_type})
+        #Click save if enabled else click Cancel
+        try:
+            sel.click(form_buttons.save)
+        except:
+            sel.click(form_buttons.cancel)
 
 
 def get_template_from_config(template_config_name):
