@@ -1,7 +1,9 @@
-num_vm_check: 50
-num_repeat_provider: 10
-num_repeat_host: 10
-num_repeat_datastore: 10
-page_render_threshold: 5000
-query_time_threshold: 1000
-query_count_threshold: 1000
+page_check:
+    num_ems_infra_check: 20
+    num_host_infra_check: 20
+    num_vm_infra_check: 50
+    num_storage_check: 20
+threshold:
+    page_render: 5000
+    query_time: 1000
+    query_count: 1000
