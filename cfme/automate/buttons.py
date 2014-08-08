@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 from functools import partial
+from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Select, accordion, fill, flash, form_buttons, menu, DHTMLSelect
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 
 cfg_btn = partial(tb.select, "Configuration")
-buttons_tree = partial(accordion.tree, "Buttons")
+buttons_tree = partial(accordion.tree, "Buttons", "Object Types")
 
 button_group_form = Form(
     fields=[
@@ -40,46 +42,35 @@ def _new_button(context):
 menu.nav.add_branch(
     'automate_customization',
     {
-        'button_groups':
+        'button_group_category':
         [
-            lambda _: buttons_tree('Object Types'),
+            lambda ctx: buttons_tree(ctx['buttongroup'].type),
             {
-                'button_group_new':
-                [
-                    lambda _: buttons_tree("Service"),
-                    {
-                        'new_button_group': _new_button_group
-                    }
-                ],
-                'button_group':
-                [
-                    lambda ctx: buttons_tree("Service", ctx['buttongroup']),
-                    {
-                        'group_button_edit': menu.nav.partial(cfg_btn, "Edit this Button Group")
-                    }
-                ]
+                'new_button_group': _new_button_group
             }
         ],
-        'buttons':
+        'button_group':
         [
-            lambda _: buttons_tree('Object Types'),
+            lambda ctx: buttons_tree(ctx['buttongroup'].type, ctx['buttongroup'].text),
             {
-                'button_new':
-                [
-                    lambda ctx: buttons_tree("Service", ctx['buttongroup']),
-                    {
-                        'new_button': _new_button
-                    }
-                ],
-                'button':
-                [
-                    lambda ctx: buttons_tree("Service", ctx['buttongroup'], ctx['button']),
-                    {
-                        'button_edit': menu.nav.partial(cfg_btn, "Edit this Button")
-                    }
-                ]
+                'group_button_edit': menu.nav.partial(cfg_btn, "Edit this Button Group")
             }
-        ]
+        ],
+        'button_new':
+        [
+            lambda ctx: buttons_tree(ctx['buttongroup'].type, ctx['buttongroup'].text),
+            {
+                'new_button': _new_button
+            }
+        ],
+        'button':
+        [
+            lambda ctx: buttons_tree(
+                ctx['button'].group.type, ctx['button'].group.text, ctx['button'].text),
+            {
+                'button_edit': menu.nav.partial(cfg_btn, "Edit this Button")
+            }
+        ],
     }
 )
 
@@ -88,90 +79,112 @@ class ButtonGroup(Updateable):
     """Create,Edit and Delete Button Groups
 
     Args:
-        group_text: The button Group name.
-        group_hover_text: The button group hover text.
-        add: A function to submit the input and create button group.
+        text: The button Group name.
+        hover: The button group hover text.
+        type: The object type.
     """
+    CLUSTER = "Cluster"
+    DATASTORE = "Datastore"
+    HOST = "Host"
+    PROVIDER = "Provider"
+    SERVICE = "Service"
+    TEMPLATE = "VM Template and Image"
+    VM_INSTANCE = "VM and Instance"
 
-    def __init__(self, group_text=None, group_hover_text=None):
-        self.group_text = group_text
-        self.group_hover_text = group_hover_text
+    def __init__(self, text=None, hover=None, type=None):
+        self.text = text
+        self.hover = hover
+        self.type = type
 
     def create(self):
-        sel.force_navigate('new_button_group')
-        fill(button_group_form, {'btn_group_text': self.group_text,
-                                 'btn_group_hvr_text': self.group_hover_text})
+        sel.force_navigate('new_button_group', context={"buttongroup": self})
+        fill(button_group_form, {'btn_group_text': self.text,
+                                 'btn_group_hvr_text': self.hover})
         select = DHTMLSelect("div#button_div")
         select.select_by_value(1)
         sel.click(button_group_form.add_button)
-        flash.assert_success_message('Buttons Group "%s" was added'
-                                     % self.group_hover_text)
+        flash.assert_success_message('Buttons Group "{}" was added'.format(self.hover))
 
     def update(self, updates):
-        sel.force_navigate('group_button_edit',
-                           context={'buttongroup': self.group_text})
-        edited_hvr_text = updates.get('group_hover_text', None)
+        sel.force_navigate('group_button_edit', context={"buttongroup": self})
+        edited_hvr_text = updates.get('hover', None)
         fill(button_group_form, {'btn_group_hvr_text': edited_hvr_text})
         sel.click(button_group_form.save_button)
-        flash.assert_success_message('Buttons Group "%s" was saved'
-                                     % edited_hvr_text)
+        flash.assert_success_message('Buttons Group "{}" was saved'.format(edited_hvr_text))
 
     def delete(self):
-        sel.force_navigate('button_group',
-                           context={'buttongroup': self.group_text})
+        sel.force_navigate('button_group', context={"buttongroup": self})
         cfg_btn("Remove this Button Group", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Buttons Group "%s": Delete successful'
-                                     % self.group_hover_text)
+        flash.assert_success_message('Buttons Group "{}": Delete successful'.format(self.hover))
+
+    @property
+    def exists(self):
+        try:
+            sel.force_navigate('button_group', context={"buttongroup": self})
+            return True
+        except CandidateNotFound:
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()
 
 
-class Buttons(Updateable):
+class Button(Updateable):
     """Create,Edit and Delete buttons under a Button
 
     Args:
-        btn_text: The button name.
-        btn_hvr_text: The button hover text.
+        group: Group where this button belongs.
+        text: The button name.
+        hover: The button hover text.
         dialog: The dialog to be selected for a button.
         system: System or Processes , DropDown to choose Automation/Request.
-        add: A function to submit the input and create button.
     """
 
-    def __init__(self, buttongroup=None, btn_text=None,
-                 btn_hvr_text=None, dialog=None,
+    def __init__(self, group=None, text=None,
+                 hover=None, dialog=None,
                  system=None, request=None):
-        self.btngrp = buttongroup
-        self.btn_text = btn_text
-        self.btn_hvr_text = btn_hvr_text
+        self.group = group
+        self.text = text
+        self.hover = hover
         self.dialog = dialog
         self.system = system
         self.request = request
 
     def create(self):
-        sel.force_navigate('new_button', context={'buttongroup': self.btngrp})
-        fill(button_form, {'btn_text': self.btn_text,
-                           'btn_hvr_text': self.btn_hvr_text})
+        sel.force_navigate('new_button', context={'buttongroup': self.group})
+        fill(button_form, {'btn_text': self.text,
+                           'btn_hvr_text': self.hover})
         select = DHTMLSelect("div#button_div")
         select.select_by_value(2)
-        fill(button_form, {'select_dialog': self.dialog,
+        fill(button_form, {'select_dialog': self.dialog.label if self.dialog is not None else None,
                            'system_process': self.system,
                            'request': self.request})
         sel.click(button_form.add_button)
-        flash.assert_success_message('Button "%s" was added'
-                                     % self.btn_hvr_text)
+        flash.assert_success_message('Button "{}" was added'.format(self.hover))
 
     def update(self, updates):
-        sel.force_navigate('button_edit', context={'buttongroup': self.btngrp,
-                                                   'button': self.btn_text})
-        edited_btn_hvr_text = updates.get('btn_hvr_text', None)
-        fill(button_form, {'btn_hvr_text': edited_btn_hvr_text})
+        sel.force_navigate('button_edit', context={'button': self})
+        edited_hover = updates.get('hover', None)
+        fill(button_form, {'btn_hvr_text': edited_hover})
         sel.click(button_form.save_button)
-        flash.assert_success_message('Button "%s" was saved'
-                                     % edited_btn_hvr_text)
+        flash.assert_success_message('Button "{}" was saved'.format(edited_hover))
 
     def delete(self):
-        sel.force_navigate('button', context={'buttongroup': self.btngrp,
-                                              'button': self.btn_text})
+        sel.force_navigate('button', context={'button': self})
         cfg_btn("Remove this Button", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Button "%s": Delete successful'
-                                     % self.btn_hvr_text)
+        flash.assert_success_message('Button "{}": Delete successful'.format(self.hover))
+
+    @property
+    def exists(self):
+        try:
+            sel.force_navigate('button', context={"button": self})
+            return True
+        except CandidateNotFound:
+            return False
+
+    def delete_if_exists(self):
+        if self.exists:
+            self.delete()

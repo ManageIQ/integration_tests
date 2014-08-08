@@ -1,6 +1,6 @@
 import pytest
 from cfme.web_ui import flash
-from cfme.automate.buttons import Buttons
+from cfme.automate.buttons import Button
 from cfme.automate.buttons import ButtonGroup
 from cfme.automate.service_dialogs import ServiceDialog
 from utils.randomness import generate_random_string
@@ -10,73 +10,40 @@ from utils.update import update
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
-@pytest.fixture(scope="function")
+@pytest.yield_fixture(scope="function")
 def dialog():
-    dialog = "dialog_" + generate_random_string()
-    service_dialog = ServiceDialog(label=dialog, description="my dialog",
+    dialog_name = "dialog_" + generate_random_string()
+    service_dialog = ServiceDialog(label=dialog_name, description="my dialog",
                                    submit=True, cancel=True)
     service_dialog.create()
-    flash.assert_success_message('Dialog "%s" was added' % dialog)
-    return dialog
+    flash.assert_success_message('Dialog "%s" was added' % dialog_name)
+    yield service_dialog
+    service_dialog.delete()
 
 
-def test_add_button_group():
-    buttongroup = ButtonGroup(group_text=generate_random_string(),
-                              group_hover_text="btn_hvr")
-    buttongroup.create()
-
-
-def test_edit_button_group():
-    buttongroup = ButtonGroup(group_text=generate_random_string(),
-                              group_hover_text="btn_hvr_" +
-                              generate_random_string())
+def test_button_group_crud(request):
+    buttongroup = ButtonGroup(
+        text=generate_random_string(), hover="btn_hvr", type=ButtonGroup.SERVICE)
+    request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
     with update(buttongroup):
-        buttongroup.group_hover_text = "edit_desc_" + generate_random_string()
-
-
-def test_delete_button_group():
-    buttongroup = ButtonGroup(group_text=generate_random_string(),
-                              group_hover_text="btn_hvr_" +
-                              generate_random_string())
-    buttongroup.create()
+        buttongroup.hover = "edit_desc_{}".format(generate_random_string())
     buttongroup.delete()
 
 
-def test_add_button(dialog):
-    buttongroup = ButtonGroup(group_text=generate_random_string(),
-                              group_hover_text="btn_desc_" +
-                              generate_random_string())
+def test_button_crud(dialog, request):
+    buttongroup = ButtonGroup(
+        text=generate_random_string(),
+        hover="btn_desc_{}".format(generate_random_string()),
+        type=ButtonGroup.SERVICE)
+    request.addfinalizer(buttongroup.delete_if_exists)
     buttongroup.create()
-    button = Buttons(buttongroup=buttongroup.group_text,
-                     btn_text=generate_random_string(),
-                     btn_hvr_text="btn_hvr_" + generate_random_string(),
-                     dialog=dialog, system="Request", request="InspectMe")
-    button.create()
-
-
-def test_edit_button(dialog):
-    buttongroup = ButtonGroup(group_text=generate_random_string(),
-                              group_hover_text="btn_desc_" +
-                              generate_random_string())
-    buttongroup.create()
-    button = Buttons(buttongroup=buttongroup.group_text,
-                     btn_text=generate_random_string(),
-                     btn_hvr_text="btn_hvr_" + generate_random_string(),
-                     dialog=dialog, system="Request", request="InspectMe")
+    button = Button(group=buttongroup,
+                    text=generate_random_string(),
+                    hover="btn_hvr_{}".format(generate_random_string()),
+                    dialog=dialog, system="Request", request="InspectMe")
+    request.addfinalizer(button.delete_if_exists)
     button.create()
     with update(button):
-        button.btn_hvr_text = "edit_desc_" + generate_random_string()
-
-
-def test_delete_button(dialog):
-    buttongroup = ButtonGroup(group_text=generate_random_string(),
-                              group_hover_text="btn_desc_" +
-                              generate_random_string())
-    buttongroup.create()
-    button = Buttons(buttongroup=buttongroup.group_text,
-                     btn_text=generate_random_string(),
-                     btn_hvr_text="btn_hvr_" + generate_random_string(),
-                     dialog=dialog, system="Request", request="InspectMe")
-    button.create()
+        button.hover = "edit_desc_{}".format(generate_random_string())
     button.delete()
