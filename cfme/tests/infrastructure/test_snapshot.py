@@ -1,6 +1,5 @@
 
 import pytest
-import random
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
 from utils import testgen
@@ -11,35 +10,23 @@ from utils.log import logger
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
-# GLOBAL vars
-random_vm_test = []    # use the same values(provider/vm) for all the quadicon tests
-
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
     argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provider_key')
+
+    new_idlist = []
+    new_argvalues = []
+
     for i, argvalue_tuple in enumerate(argvalues):
         provider_data = cfme_data['management_systems'][
             argvalue_tuple[argnames.index('provider_key')]]
         if provider_data.get('type', False) != 'virtualcenter':
             continue
 
-    if 'random_snpsht_mgt_vm' in metafunc.fixturenames:
-        if random_vm_test:
-            argnames, new_argvalues, new_idlist = random_vm_test
-        else:
-            single_index = random.choice(range(len(idlist)))
-            new_idlist = ['random_snapshot_vm']
-            new_argvalues = argvalues[single_index]
-            argnames.append('random_snpsht_mgt_vm')
-            new_argvalues.append('')
-            new_argvalues = [new_argvalues]
-            random_vm_test.append(argnames)
-            random_vm_test.append(new_argvalues)
-            random_vm_test.append(new_idlist)
-    else:
-        new_idlist = idlist
-        new_argvalues = argvalues
+        new_idlist.append(idlist[i])
+        new_argvalues.append(argvalues[i])
+
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
@@ -73,7 +60,6 @@ def new_snapshot(test_vm):
     return new_snapshot
 
 
-@pytest.mark.usefixtures("random_snpsht_mgt_vm")
 def test_snapshot_crud(test_vm, provider_key):
         snapshot = new_snapshot(test_vm)
         snapshot.create()
