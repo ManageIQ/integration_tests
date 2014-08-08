@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import subprocess as sub
-from fixtures import navigation as nav
+import time
 from utils.appliance import provision_appliance
 from utils.conf import cfme_data, migration_tests
 from utils.log import logger
 from utils.providers import setup_provider
+from cfme.configure.configuration import set_server_roles, get_server_roles
+from cfme.infrastructure.provider import get_from_config as get_infra_provider
+from cfme.infrastructure.virtual_machines import Vm
 
 
 """ This test suite focuses on running through restoring databases from older versions of EVM/CFME
@@ -36,52 +38,52 @@ pointers to the scripts involved with restoring.
 """
 
 
-def nav_to_roles():
-    """ Helper nav function to get to server settings """
-    # Nav to the settings tab
-    settings_pg = nav.cnf_configuration_pg().click_on_settings()
-    # Workaround to rudely bypass a popup that sometimes appears for
-    # unknown reasons.
-    # See also: https://github.com/RedHatQE/cfme_tests/issues/168
-    from pages.configuration_subpages.settings_subpages.server_settings import ServerSettings
-    server_settings_pg = ServerSettings(settings_pg.testsetup)
-    # sst is a configuration_subpages.settings_subpages.server_settings_subpages.
-    #   server_settings_tab.ServerSettingsTab
-    return server_settings_pg.click_on_server_tab()
-
-
 def pytest_generate_tests(metafunc):
     """ Test generator """
     global test_list
     argnames = ['backups', 'backup_test']
     tests = []
-    for backup_test in migration_tests.get('backup_tests', []):
+    new_idlist = []
+    for backup_test in migration_tests.get('backup_tests'):
         tests.append(['', backup_test])
-    metafunc.parametrize(argnames, tests, scope="module")
+        new_idlist.append(backup_test)
+    metafunc.parametrize(argnames, tests, ids=new_idlist, scope="module")
+
+
+@pytest.yield_fixture()
+def this_appliance(backup_test):
+    vm_name = "test_migration_" + backup_test
+    provider = cfme_data["basic_info"]["appliances_provider"]
+    template = cfme_data['basic_info']['appliance_template_big_db_disk']
+
+    # provision appliance and configure
+    appliance = provision_appliance(
+        vm_name_prefix=vm_name, template=template, provider_name=provider)
+    logger.info("appliance IP address: " + str(appliance.address))
+    appliance.enable_internal_db()
+    appliance.wait_for_web_ui(timeout=900)
+
+    yield appliance
+
+    # delete appliance
+    logger.info("Delete provisioned appliance: " + appliance.address)
+    appliance.destroy()
 
 
 @pytest.mark.usefixtures("backups")
 @pytest.mark.long_running
 class TestSingleApplianceMigration():
 
-    def test_app_migration(self, backup_test, soft_assert):
-        vm_name = "migtest_" + backup_test
-        provider = cfme_data["basic_info"]["appliances_provider"]
-        test_data = migration_tests["backup_tests"][backup_test]
-        template = cfme_data['basic_info']['appliance_template_big_db_disk']
+    def test_app_migration(self, backup_test, this_appliance, soft_assert):
 
-        # provision appliance and configure
-        appliance = provision_appliance(
-            vm_name_prefix=vm_name, template=template, provider_name=provider)
-        logger.info("appliance IP address: " + str(appliance.address))
-        appliance.enable_internal_db()
-        appliance.wait_for_web_ui()
+        test_data = migration_tests["backup_tests"][backup_test]
+        provider = cfme_data["basic_info"]["appliances_provider"]
 
         # start restore and migration
-        appliance_ssh = appliance.ssh_client()
+        appliance_ssh = this_appliance.ssh_client()
         appliance_ssh.put_file("./scripts/restore.py", "/root")
         appliance_ssh.run_command("curl -o restore_scripts.gz " +
-            cfme_data["basic_info"]["restore_scripts_url"])
+                                  cfme_data["basic_info"]["restore_scripts_url"])
         if "restore_fixes_url" in cfme_data["basic_info"].keys():
             appliance_ssh.run_command("curl -o fix_scripts.gz " +
                 cfme_data["basic_info"]["restore_fixes_url"])
@@ -93,18 +95,19 @@ class TestSingleApplianceMigration():
 
         # re-init the connection, times out over long migrations
         appliance_ssh.close()
-        appliance_ssh = appliance.ssh_client()
-        appliance_ssh.get_file("/root/output.log", ".")
+        appliance_ssh = this_appliance.ssh_client()
+        appliance_ssh.get_file("/tmp/restore.out", ".")
+        appliance_ssh.get_file("/tmp/migrate.out", ".")
 
         # Log the restore/migration output
-        process = sub.Popen("cat ./output.log; rm -rf ./output.log",
-            shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
-        output, error = process.communicate()
-        logger.info("Running cmd:   cat ./output.log; rm -rf ./output.log")
-        logger.info("Output: \n" + output)
+        for log in ['./restore.out', './migrate.out']:
+            logger.info("Contents of %s" % log)
+            with open(log, 'r') as f:
+                for line in f:
+                    logger.info(line)
 
         # get database table counts
-        this_db = appliance.db
+        this_db = this_appliance.db
         session = this_db.session
         logger.info("Checking db table counts after migration...")
         db_counts = {}
@@ -113,16 +116,19 @@ class TestSingleApplianceMigration():
 
         # start up evmserverd and poke ui
         appliance_ssh.run_command("service evmserverd start")
-        appliance.wait_for_web_ui()
-        with appliance.browser_session():
-            nav.home_page_logged_in()
-            nav_to_roles().edit_current_role_list("ems_inventory ems_operations")
+        this_appliance.wait_for_web_ui()
+        time.sleep(120)   # seeing some flakiness when adjusting roles too quick
+        with this_appliance.browser_session():
+            pytest.sel.force_navigate('dashboard')
+            roles = get_server_roles()
+            roles["ems_inventory"] = True
+            roles["ems_operations"] = True
+            set_server_roles(**roles)
+            provider_crud = get_infra_provider(provider)
             setup_provider(provider)
-            provider_details = nav.infra_providers_pg().load_provider_details(
-                cfme_data["management_systems"][provider]["name"])
-            vm_details = provider_details.all_vms().find_vm_page(
-                appliance.vm_name, None, False, True, 6)
-            soft_assert(vm_details.on_vm_details(appliance.vm_name))
+            vm = Vm(this_appliance.vm_name, provider_crud, None)
+            vm.load_details()
+            soft_assert(vm.on_details())
 
         # check table counts vs what we are expecting
         for table_name in sorted(test_data['counts'].keys()):
@@ -130,7 +136,3 @@ class TestSingleApplianceMigration():
             actual_count = db_counts[table_name]
             soft_assert(actual_count == expected_count, 'Table ' + table_name + '(' +
                 str(actual_count) + ') not matching expected(' + str(expected_count) + ')')
-
-        # delete appliance
-        logger.info("Delete provisioned appliance: " + appliance.address)
-        appliance.destroy()
