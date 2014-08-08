@@ -593,7 +593,7 @@ class VMWareSystem(MgmtSystemAPIBase):
 
     def deploy_template(self, template, *args, **kwargs):
         logger.info(" Deploying vSphere template %s to VM %s" % (template, kwargs["vm_name"]))
-        timeout = kwargs.pop('timeout', 300)
+        timeout = kwargs.pop('timeout', 900)
         if 'resourcepool' not in kwargs:
             kwargs['resourcepool'] = None
         vm = self._get_vm(template)
