@@ -94,6 +94,7 @@ def pytest_runtest_teardown(item, nextitem):
                          slaveid=SLAVEID)
     art_client.fire_hook('sanitize', test_location=item.location[0], test_name=item.location[2],
                          fd_idents=['func_trace'], words=words)
+    art_client.fire_hook('encode', test_location=item.location[0], test_name=item.location[2])
 
 
 def pytest_runtest_logreport(report):

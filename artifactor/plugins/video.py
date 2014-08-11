@@ -29,6 +29,7 @@ class Video(ArtifactorBasePlugin):
     def plugin_initialize(self):
         self.register_plugin_hook('start_test', self.start_test)
         self.register_plugin_hook('finish_test', self.finish_test)
+        self.register_plugin_hook('encode', self.encode, bg=True)
         self.register_plugin_hook('finish_session', self.finish_session)
 
     def configure(self):
@@ -36,6 +37,8 @@ class Video(ArtifactorBasePlugin):
         self.tests = {}
         self.quality = self.data.get('quality', '10')
         self.display = self.data.get('display', ':0')
+        self.encoder = self.data.get('encoder')
+        self.rtype = self.data.get('type', 'xfb')
 
     @ArtifactorBasePlugin.check_configured
     def start_test(self, artifact_path, test_name, test_location):
@@ -55,7 +58,8 @@ class Video(ArtifactorBasePlugin):
         artifacts.append(os_filename)
         try:
             self.tests[test_ident].recorder = Recorder(os_filename, display=self.display,
-                                                       quality=self.quality)
+                                                       quality=self.quality, rtype=self.rtype,
+                                                       encoder=self.encoder)
             self.tests[test_ident].recorder.start()
         except:
             pass
@@ -70,7 +74,18 @@ class Video(ArtifactorBasePlugin):
             self.tests[test_ident].recorder.stop()
         except:
             pass
-        del self.tests[test_ident]
+        if self.rtype == 'xfb':
+            del self.tests[test_ident]
+
+    @ArtifactorBasePlugin.check_configured
+    def encode(self, test_name, test_location):
+        test_ident = "{}/{}".format(test_location, test_name)
+        if self.rtype == 'vnc':
+            try:
+                self.tests[test_ident].recorder.encode()
+            except:
+                raise
+            del self.tests[test_ident]
 
     def finish_session(self):
         try:
