@@ -54,7 +54,9 @@ import cfme.web_ui.search
 import cfme.web_ui.tabstrip
 import cfme.web_ui.toolbar
 from fixtures.artifactor_plugin import art_client
-
+import utils.log
+import inspect
+import multimethods
 
 default_to_trace = function_trace.mapcat(
     function_trace.all,
@@ -109,23 +111,27 @@ default_to_trace = function_trace.mapcat(
         cfme.web_ui.toolbar
     ])
 # 0 = do not trace into
-default_depths = {cfme.fixtures.pytest_selenium.wait_until: 0,
-                  cfme.fixtures.pytest_selenium.wait_for_ajax: 0,
-                  cfme.fixtures.pytest_selenium.elements: 0,
-                  cfme.fixtures.pytest_selenium.element: 0,
-                  cfme.fixtures.pytest_selenium.browser: 0,
-                  cfme.fixtures.pytest_selenium.move_to_element: 0,
-                  cfme.fixtures.pytest_selenium.wait_for_element: 0,
-                  cfme.fixtures.pytest_selenium.click: 1,
-                  cfme.fixtures.pytest_selenium.set_text: 1,
-                  cfme.fixtures.pytest_selenium.detect_observed_field: 0,
-                  cfme.fixtures.pytest_selenium.select: 1,
-                  cfme.fixtures.pytest_selenium.check: 1,
-                  cfme.web_ui.toolbar.is_greyed: 1,
-                  cfme.web_ui.flash.message: 1,
-                  cfme.web_ui.fill_tag: 0
-                  }
 
+manual_depths = {cfme.fixtures.pytest_selenium.wait_until: 0,
+                 cfme.fixtures.pytest_selenium.wait_for_ajax: 0,
+                 cfme.fixtures.pytest_selenium.elements: 0,
+                 cfme.fixtures.pytest_selenium.element: 0,
+                 cfme.fixtures.pytest_selenium.browser: 0,
+                 cfme.fixtures.pytest_selenium.move_to_element: 0,
+                 cfme.fixtures.pytest_selenium.wait_for_element: 0,
+                 cfme.fixtures.pytest_selenium.click: 1,
+                 cfme.fixtures.pytest_selenium.set_text: 1,
+                 cfme.fixtures.pytest_selenium.detect_observed_field: 0,
+                 cfme.fixtures.pytest_selenium.select: 1,
+                 cfme.fixtures.pytest_selenium.check: 1,
+                 cfme.web_ui.toolbar.is_greyed: 1,
+                 cfme.web_ui.flash.message: 1,
+                 cfme.web_ui.fill_tag: 0,
+                 utils.log.ArtifactorLoggerAdapter.process: 0,
+                 multimethods.MultiMethod.get_method: 0
+                 }
+
+default_depths = function_trace.add_all_at_depth(manual_depths, inspect, 0)
 to_trace = default_to_trace
 depths = default_depths
 
