@@ -39,7 +39,7 @@ def report():
 
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
 @pytest.sel.go_to('dashboard')
-def test_download_report_firefox(needs_firefox, report, filetype):
+def test_download_report_firefox(needs_firefox, report, filetype, setup_infrastructure_providers):
     """ Download the report as a file and check whether it was downloaded.
 
     This test skips for PDF as there are some issues with it.
