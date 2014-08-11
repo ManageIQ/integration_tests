@@ -40,7 +40,7 @@ def appliance_build_datetime():
 
 @lru_cache(maxsize=32)
 def appliance_is_downstream():
-    SSHClient().is_appliance_downstream()
+    return SSHClient().is_appliance_downstream()
 
 
 def product_version_dispatch(*_args, **_kwargs):
