@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 from collections import OrderedDict
-
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
     flash, menu, tabstrip, DHTMLSelect
@@ -253,7 +252,8 @@ class CatalogBundle(Updateable, Pretty):
     pretty_attrs = ['name', 'catalog', 'dialog', 'cat_item']
 
     def __init__(self, name=None, description=None,
-                 display_in=False, catalog=None, dialog=None, cat_item=None):
+                 display_in=False, catalog=None,
+                 dialog=None, cat_item=None):
         self.name = name
         self.description = description
         self.display_in = display_in
