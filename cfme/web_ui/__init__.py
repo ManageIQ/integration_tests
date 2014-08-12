@@ -537,7 +537,7 @@ class Table(Pretty):
             than the attr accessor, as it can operate on int indices and header names.
 
         """
-        pretty_attrs = ['row_element', 'parent_table']
+        pretty_attrs = ['row_element', 'table']
 
         def __init__(self, row_element, parent_table):
             self.table = parent_table

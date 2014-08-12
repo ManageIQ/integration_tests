@@ -6,7 +6,10 @@ def _name(o):
 
 def attr_repr(o, attr):
     '''Return the string repr of the attribute attr on the object o'''
-    return repr(getattr(o, attr, None))
+    try:
+        return repr(getattr(o, attr, None))
+    except BaseException:
+        return None
 
 
 def pretty_repr(attrs, o):
