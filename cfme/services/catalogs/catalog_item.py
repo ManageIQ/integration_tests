@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import partial
 from collections import OrderedDict
-
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
     flash, menu, tabstrip, DHTMLSelect
@@ -45,6 +44,8 @@ request_form = tabstrip.TabStripForm(
             ('vm_name', '//input[@name="service__vm_name"]'),
             ('provision_type', Select('//select[@id="service__provision_type"]')),
             ('linked_clone', '//input[@id="service__linked_clone"]'),
+            ('pxe_server', Select('//select[@id="service__pxe_server_id"]')),
+            ('pxe_image', Table('//div[@id="prov_pxe_img_div"]/table')),
             ('iso_file', Table('//div[@id="prov_iso_img_div"]/table')),
         ]),
         ('Environment', [
@@ -79,6 +80,9 @@ request_form = tabstrip.TabStripForm(
             ('linux_domain_name', '//input[@id="customize__linux_domain_name"]'),
             ('dns_servers', '//input[@id="customize__dns_servers"]'),
             ('dns_suffixes', '//input[@id="customize__dns_suffixes"]'),
+            ('custom_template', Table('//div[@id="prov_template_div"]/table')),
+            ('root_password', '//input[@id="customize__root_password"]'),
+            ('vm_host_name', '//input[@id="customize__hostname"]'),
         ]),
         ('Schedule', [
             ('power_on_vm', "//input[@id='schedule__vm_auto_start']"),
@@ -248,7 +252,8 @@ class CatalogBundle(Updateable, Pretty):
     pretty_attrs = ['name', 'catalog', 'dialog', 'cat_item']
 
     def __init__(self, name=None, description=None,
-                 display_in=False, catalog=None, dialog=None, cat_item=None):
+                 display_in=False, catalog=None,
+                 dialog=None, cat_item=None):
         self.name = name
         self.description = description
         self.display_in = display_in
