@@ -301,6 +301,26 @@ def clear_providers():
     perflog.stop('utils.providers.clear_providers')
 
 
+def destroy_vm(provider_mgmt, vm_name):
+    """Given a provider backend and VM name, destroy an instance with logging and error guards
+
+    Returns ``True`` if the VM is deleted, ``False`` if the backend reports that it did not delete
+        the VM, and ``None`` if an error occurred (the error will be logged)
+
+    """
+    try:
+        if provider_mgmt.does_vm_exist(vm_name):
+            logger.info('Destroying VM %s', vm_name)
+            vm_deleted = provider_mgmt.delete_vm(vm_name)
+            if vm_deleted:
+                logger.info('VM %s destroyed', vm_name)
+            else:
+                logger.error('Destroying VM %s failed for unknown reasons', vm_name)
+            return vm_deleted
+    except Exception as e:
+        logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, e.message)
+
+
 class UnknownProvider(Exception):
     def __init__(self, provider_key, *args, **kwargs):
         super(UnknownProvider, self).__init__(provider_key, *args, **kwargs)

@@ -918,16 +918,18 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def deploy_template(self, template, *args, **kwargs):
         logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
         timeout = kwargs.pop('timeout', 300)
-        vm_placement_policy = None
+        vm_kwargs = {
+            'name': kwargs['vm_name'],
+            'cluster': self.api.clusters.get(kwargs['cluster']),
+            'template': self.api.templates.get(template)
+        }
         if 'placement_policy_host' in kwargs and 'placement_policy_affinity' in kwargs:
-            vm_host = params.Host(name=kwargs['placement_policy_host'])
-            vm_placement_policy = params.VmPlacementPolicy(host=vm_host,
+            host = params.Host(name=kwargs['placement_policy_host'])
+            policy = params.VmPlacementPolicy(host=host,
                 affinity=kwargs['placement_policy_affinity'])
-        self.api.vms.add(params.VM(
-            name=kwargs['vm_name'],
-            cluster=self.api.clusters.get(kwargs['cluster_name']),
-            placement_policy=vm_placement_policy,
-            template=self.api.templates.get(template)))
+            vm_kwargs['placement_policy'] = policy
+        vm = params.VM(**vm_kwargs)
+        self.api.vms.add(vm)
         self.wait_vm_stopped(kwargs['vm_name'], num_sec=timeout)
         self.start_vm(kwargs['vm_name'])
         return kwargs['vm_name']
@@ -998,7 +1000,8 @@ class EC2System(MgmtSystemAPIBase):
         shared_images = self.api.get_all_images(executable_by=['self'],
                                                 filters={'image-type': 'machine'})
         combined_images = list(set(private_images) | set(shared_images))
-        return combined_images
+        # Try to pull the image name (might not exist), falling back on ID (must exist)
+        return map(lambda i: i.name or i.id, combined_images)
 
     def list_flavor(self):
         raise NotImplementedError('This function is not supported on this platform.')
@@ -1175,18 +1178,27 @@ class EC2System(MgmtSystemAPIBase):
         """
         # Enforce create_vm only creating one VM
         logger.info(" Deploying EC2 template %s" % template)
+
+        # strip out kwargs that ec2 doesn't understand
         timeout = kwargs.pop('timeout', 300)
-        kwargs.update({
-            'min_count': 1,
-            'max_count': 1,
-        })
+        vm_name = kwargs.pop('vm_name', None)
+
+        # Make sure we only provision one VM
+        kwargs.update({'min_count': 1, 'max_count': 1})
+
+        # sanity-check inputs
         if 'instance_type' not in kwargs:
             kwargs['instance_type'] = 'm1.small'
-        vm_name = kwargs.pop('vm_name', None)
+        if not template.startswith('ami'):
+            # assume this is a lookup by name, get the ami id
+            template = self._get_ami_id_by_name(template)
+
+        # clone!
         reservation = self.api.run_instances(template, *args, **kwargs)
         instances = self._get_instances_from_reservations([reservation])
         # Should have only made one VM; return its ID for use in other methods
         self.wait_vm_running(instances[0].id, num_sec=timeout)
+
         if vm_name:
             self.set_name(instances[0].id, vm_name)
         return instances[0].id
@@ -1230,9 +1242,19 @@ class EC2System(MgmtSystemAPIBase):
             raise VMInstanceNotFound(instance_name)
         elif len(instances) > 1:
             raise MultipleInstancesError('Instance name "%s" is not unique' % instance_name)
-        else:
-            # We have an instance! return its ID
-            return instances[0].id
+
+        # We have an instance! return its ID
+        return instances[0].id
+
+    def _get_ami_id_by_name(self, image_name):
+        matches = self.api.get_all_images(filters={'name': image_name})
+        if not matches:
+            raise ImageNotFoundError(image_name)
+        elif len(matches) > 1:
+            raise MultipleImagesError('Template name %s returned more than one image_name. '
+                'Use the ami-ID or remove duplicates from EC2' % image_name)
+
+        return matches[0].id
 
     def does_vm_exist(self, name):
         try:
@@ -1432,8 +1454,8 @@ class OpenstackSystem(MgmtSystemAPIBase):
         instance = self.api.servers.create(kwargs['vm_name'], image, flavour, nics=nics,
                                            *args, **kwargs)
         self.wait_vm_running(kwargs['vm_name'], num_sec=timeout)
-        if kwargs.get('assign_floating_ip', None) is not None:
-            ip = self.api.floating_ips.create(kwargs['assign_floating_ip'])
+        if kwargs.get('floating_ip_pool', None):
+            ip = self.api.floating_ips.create(kwargs['floating_ip_pool'])
             instance.add_floating_ip(ip)
 
         return kwargs['vm_name']
@@ -1483,6 +1505,14 @@ class ActionNotSupported(Exception):
 
 
 class ActionTimedOutError(Exception):
+    pass
+
+
+class ImageNotFoundError(Exception):
+    pass
+
+
+class MultipleImagesError(Exception):
     pass
 
 
