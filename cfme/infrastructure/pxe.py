@@ -245,14 +245,20 @@ class PXEServer(Updateable, Pretty):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
         sel.force_navigate('infrastructure_pxe_server', context=self)
-        last_time = pxe_details_page.infoblock.text('Basic Information', 'Last Refreshed On')
+        # FIXME: When the UI has been altered GH1070
+        ref_time = version.pick({
+            version.LOWEST: lambda: pxe_details_page.infoblock.text(
+                'Basic Information', 'Last Refreshed On'),
+            '5.3': lambda: sel.text(sel.element(
+                '//td[contains(text(),"Last Refreshed On")]/../td[2]'))
+        })
+        last_time = ref_time()
         cfg_btn('Refresh Relationships', invokes_alert=True)
         sel.handle_alert()
         flash.assert_message_match(
             'PXE Server "{}": Refresh Relationships successfully initiated'.format(self.name))
         if wait:
-            wait_for(lambda lt: lt != pxe_details_page.infoblock.text
-                     ('Basic Information', 'Last Refreshed On'),
+            wait_for(lambda lt: lt != ref_time(),
                      func_args=[last_time], fail_func=sel.refresh, num_sec=120)
 
     def get_pxe_image_type(self, image_name):
@@ -513,15 +519,21 @@ class ISODatastore(Updateable, Pretty):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
         sel.force_navigate('infrastructure_iso_datastore', context=self)
-        last_time = iso_details_page.infoblock.text('Basic Information', 'Last Refreshed On')
+        # GH1070 see above
+        ref_time = version.pick({
+            version.LOWEST: lambda: pxe_details_page.infoblock.text(
+                'Basic Information', 'Last Refreshed On'),
+            '5.3': lambda: sel.text(sel.element(
+                '//td[contains(text(),"Last Refreshed On")]/../td[2]'))
+        })
+        last_time = ref_time()
         cfg_btn('Refresh Relationships', invokes_alert=True)
         sel.handle_alert()
         flash.assert_message_match(
             'ISO Datastore "{}": Refresh Relationships successfully initiated'
             .format(self.provider))
         if wait:
-            wait_for(lambda lt: lt != pxe_details_page.infoblock.text
-                     ('Basic Information', 'Last Refreshed On'),
+            wait_for(lambda lt: lt != ref_time(),
                      func_args=[last_time], fail_func=sel.refresh, num_sec=120)
 
     def set_iso_image_type(self, image_name, image_type):
