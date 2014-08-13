@@ -138,7 +138,7 @@ def templates_to_test(api, limit=20):
     """get untested templates to pass to jenkins
 
     Args:
-        limit - max number of templates to pull per request
+        limit: max number of templates to pull per request
 
     """
     templates = []

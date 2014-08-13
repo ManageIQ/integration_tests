@@ -23,6 +23,12 @@ below.
 
 Some help for setting up the remote selenium server can be found in the :ref:`vnc_selenium` document.
 
+WebDriver Wharf
+---------------
+
+A variant of the Remote webdriver, WebDriver Wharf will spawn docker containers running the selenium
+standalone server on request.
+
 Remote desired_capabilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -93,6 +99,18 @@ Remote
             desired_capabilities:
                 browserName: firefox
 
+WebDriver Wharf
+^^^^^^^^^^^^^^^
+
+.. code-block:: yaml
+
+    browser:
+        webdriver: Remote
+        webdriver_options:
+            desired_capabilities:
+                browserName: firefox
+        webdriver_wharf: http://wharf.host:4899/
+
 Chrome
 ------
 
@@ -121,6 +139,18 @@ Remote
         webdriver_options:
             desired_capabilities:
                 browserName: chrome
+
+WebDriver Wharf
+^^^^^^^^^^^^^^^
+
+.. code-block:: yaml
+
+    browser:
+        webdriver: Remote
+        webdriver_options:
+            desired_capabilities:
+                browserName: chrome
+        webdriver_wharf: http://wharf.host:4899/
 
 Safari
 ------
