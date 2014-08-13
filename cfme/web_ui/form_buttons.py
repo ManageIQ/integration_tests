@@ -25,19 +25,22 @@ class FormButton(Pretty):
 
     def locate(self):
         """This hairy locator ensures that the button is not dimmed and not hidden."""
-        return ("//img[@alt='{}' and not(contains(@class, 'dimmed'))"
-            " and (contains(@class, 'button') or contains(@src, 'button'))"
-            " and not(ancestor::*[contains(@style, 'display:none')"
-            " or contains(@style, 'display: none')])]".format(self._alt))
+        return ("(//button | //img)[@alt='{}' and not(contains(@class, 'dimmed'))"
+                " and (contains(@class, 'button') or contains(@class, 'btn')"
+                " or contains(@src, 'button'))"
+                " and not(ancestor::*[contains(@style, 'display:none')"
+                " or contains(@style, 'display: none')])]".format(self._alt))
 
     @property
     def is_dimmed(self):
-        return sel.is_displayed("//img[@alt='{}' and contains(@class, 'dimmed')"
-            " and (contains(@class, 'button') or contains(@src, 'button'))"
+        return sel.is_displayed("(//button | //img)[@alt='{}' and contains(@class, 'dimmed')"
+            " and (contains(@class, 'button') or contains(@class, 'btn')"
+            " or contains(@src, 'button'))"
             " and not(ancestor::*[contains(@style, 'display:none')"
-            " or contains(@style, 'display: none')])]|//button[.='{}' and @disabled='true'"
+            " or contains(@style, 'display: none')])]|//button[.='{}' and"
+            " (@disabled='true' or contains(@class, 'btn-disabled'))"
             " and not(ancestor::*[contains(@style, 'display:none')"
-            " or contains(@style, 'display: none')])]|".format(
+            " or contains(@style, 'display: none')])]".format(
                 self._dimmed_alt or self._alt, self._dimmed_alt or self._alt
             ))
 
