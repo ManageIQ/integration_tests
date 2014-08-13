@@ -36,3 +36,15 @@ def soap_client():
     client = MiqClient(url, transport=transport, doctor=doc)
 
     return client
+
+
+class SoapClient(object):
+    def __init__(self):
+        self._soap_client = None
+        pass
+
+    def __getattr__(self, name):
+        if not self._soap_client:
+            self._soap_client = soap_client()
+        return getattr(self._soap_client, name)
+
