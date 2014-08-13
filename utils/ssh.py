@@ -102,7 +102,7 @@ class SSHClient(paramiko.SSHClient):
         if match:
             return float(match[0])
 
-        return False
+        return 0
 
 
 def command_runner(client, command, stream_output=False):
