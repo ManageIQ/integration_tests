@@ -18,8 +18,6 @@ def main(trackerbot_url, mark_usable=None):
     template_providers = defaultdict(list)
     # Queue up list_template calls
     for provider_key in list_all_providers():
-        if provider_key.startswith('ec2') or provider_key.startswith('rhevm'):
-            continue
         thread = Thread(target=get_provider_templates,
             args=(provider_key, template_providers, thread_lock))
         thread_q.append(thread)
@@ -33,8 +31,8 @@ def main(trackerbot_url, mark_usable=None):
     for template_name, providers in template_providers.items():
         try:
             stream, datestamp = trackerbot.parse_template(template_name)
-        except ValueError:
-            # No matches
+        except (TypeError, ValueError):
+            # No matches or template name was somehow not a string
             continue
         group = trackerbot.Group(stream)
         template = trackerbot.Template(template_name, group, datestamp)
