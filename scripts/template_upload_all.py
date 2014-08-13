@@ -50,10 +50,9 @@ def template_name(image_link, version=None):
     image_name = image_name.lower()
     # nightly builds CFME
     if NIGHTLY_CFME_ID in image_name:
-        # version now contains for example "cfme-5.3.0.0-16.el6cf.alpha8"
-        # so we return that as the name of template
         if version:
-            return version
+            # cfme-pppp-x.y-z.arch.[pppp].ova => cfme-nightly-vvvv
+            return "cfme-nightly-%s" % version
         else:
             pattern = re.compile(r'[^\d]*?-(\d).(\d)-(\d).*')
             result = pattern.findall(image_name)
@@ -61,12 +60,12 @@ def template_name(image_link, version=None):
             return "cfme-nightly-%s.%s-%s" % (result[0][0], result[0][1], result[0][2])
     # nightly builds MIQ
     elif NIGHTLY_MIQ_ID in image_name:
-        # assuming version will be in similar format as cfme
+        pattern = re.compile(r'[^\d]*?-master-(\d*)-*')
+        result = pattern.findall(image_name)
         if version:
-            return version
+            # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-vvvv-yyyymmddhhmm
+            return "miq-nightly-%s-%s" % (version, result[0])
         else:
-            pattern = re.compile(r'[^\d]*?-master-(\d*)-*')
-            result = pattern.findall(image_name)
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
             return "miq-nightly-%s" % result[0]
     # z-stream
