@@ -6,8 +6,8 @@ from threading import Lock, Thread
 
 from slumber.exceptions import SlumberHttpBaseException
 
-from utils.providers import list_all_providers, provider_factory
 from utils import trackerbot
+from utils.providers import list_all_providers, provider_factory
 
 
 def main(trackerbot_url, mark_usable=None):
