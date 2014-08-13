@@ -98,12 +98,7 @@ def mark_provider_template(api, provider, template, tested=None, usable=None):
     Returns the response of the API request
 
     """
-    if not isinstance(provider, Provider):
-        provider = Provider(str(provider))
-    if not isinstance(template, Template):
-        template = Template(str(template))
-
-    provider_template = ProviderTemplate(provider, template)
+    provider_template = _as_providertemplate(provider, template)
 
     if tested is not None:
         provider_template['tested'] = bool(tested)
@@ -112,6 +107,12 @@ def mark_provider_template(api, provider, template, tested=None, usable=None):
         provider_template['usable'] = bool(usable)
 
     return api.providertemplate.post(provider_template)
+
+
+def delete_provider_template(api, provider, template):
+    """Delete a provider/template relationship, used when a template is removed from one provider"""
+    provider_template = _as_providertemplate(provider, template)
+    return api.providertemplate(provider_template.concat_id).delete()
 
 
 def latest_template(api, group, provider_key=None):
@@ -149,6 +150,15 @@ def templates_to_test(api, limit=20):
     return templates
 
 
+def _as_providertemplate(provider, template):
+    if not isinstance(provider, Provider):
+        provider = Provider(str(provider))
+    if not isinstance(template, Template):
+        template = Template(str(template))
+
+    return ProviderTemplate(provider, template)
+
+
 # Dict subclasses to help with JSON serialization
 class Group(dict):
     """dict subclass to help serialize groups as JSON"""
@@ -164,10 +174,12 @@ class Provider(dict):
 
 class Template(dict):
     """dict subclass to help serialize templates as JSON"""
-    def __init__(self, name, group, datestamp):
+    def __init__(self, name, group=None, datestamp=None):
         self['name'] = name
-        self['group'] = group
-        self['datestamp'] = datestamp.strftime('%Y-%m-%d')
+        if group is not None:
+            self['group'] = group
+        if datestamp is not None:
+            self['datestamp'] = datestamp.strftime('%Y-%m-%d')
 
 
 class ProviderTemplate(dict):
@@ -181,3 +193,7 @@ class ProviderTemplate(dict):
 
         if tested is not None:
             self['tested'] = bool(tested)
+
+    @property
+    def concat_id(self):
+        return '_'.join([self['template']['name'], self['provider']['key']])

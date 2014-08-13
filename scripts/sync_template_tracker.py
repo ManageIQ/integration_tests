@@ -27,6 +27,8 @@ def main(trackerbot_url, mark_usable=None):
     for thread in thread_q:
         thread.join()
 
+    seen_templates = set()
+
     # Find some templates and update the API
     for template_name, providers in template_providers.items():
         try:
@@ -34,6 +36,7 @@ def main(trackerbot_url, mark_usable=None):
         except (TypeError, ValueError):
             # No matches or template name was somehow not a string
             continue
+        seen_templates.add(template_name)
         group = trackerbot.Group(stream)
         template = trackerbot.Template(template_name, group, datestamp)
 
@@ -43,10 +46,23 @@ def main(trackerbot_url, mark_usable=None):
             try:
                 trackerbot.mark_provider_template(api, provider, template,
                     usable=mark_usable, tested=False)
-                print 'template %s updated -- %s %s %r, marked usable: %s' % (
-                    template, stream, datestamp, providers, bool(mark_usable))
+                print 'Marked %s template %s on provider %s (Usable: %s, datestamp: %s)' % (
+                    stream, template_name, provider_key, bool(mark_usable), datestamp)
             except SlumberHttpBaseException as ex:
                 print ex.response.status_code, ex.content
+
+    # Remove templates that aren't on any providers anymore
+    for template in api.template.get()['objects']:
+        if template['name'] not in seen_templates:
+            print "Cleaning up template %s on all providers" % template['name']
+            api.template(template['name']).delete()
+
+    # Remove provider relationships where they no longer exist
+    for pt in api.providertemplate.get()['objects']:
+        provider_key, template_name = pt['provider']['key'], pt['template']['name']
+        if provider_key not in template_providers[template_name]:
+            print "Cleaning up template %s on %s" % (template_name, provider_key)
+            trackerbot.delete_provider_template(api, provider_key, template_name)
 
 
 def get_provider_templates(provider_key, templates_providers, thread_lock):
