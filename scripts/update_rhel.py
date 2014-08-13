@@ -7,6 +7,7 @@ import argparse
 import sys
 from utils.conf import credentials
 from utils.ssh import SSHClient
+from utils.wait import wait_for
 
 
 def main():
@@ -47,7 +48,10 @@ def main():
     # reboot
     if args.reboot:
         print 'Appliance reboot'
+        old_uptime = client.uptime()
         status, out = client.run_command('reboot')
+        wait_for(lambda: client.uptime() < old_uptime, handle_exception=True, num_sec=300,
+                 message='appliance to reboot', delay=10)
     else:
         print 'A reboot is recommended.'
 

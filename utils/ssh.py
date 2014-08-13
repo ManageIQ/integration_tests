@@ -1,3 +1,4 @@
+import re
 import sys
 from urlparse import urlparse
 
@@ -93,6 +94,15 @@ class SSHClient(paramiko.SSHClient):
 
     def is_appliance_downstream(self):
         return is_downstream_getter(self)
+
+    def uptime(self):
+        out = self.run_command('cat /proc/uptime')[1]
+        match = re.findall('\d+\.\d+', out)
+
+        if match:
+            return float(match[0])
+
+        return False
 
 
 def command_runner(client, command, stream_output=False):
