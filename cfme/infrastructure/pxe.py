@@ -264,7 +264,13 @@ class PXEServer(Updateable, Pretty):
     def get_pxe_image_type(self, image_name):
         sel.force_navigate('infrastructure_pxe_servers')
         pxe_tree(self.name, 'PXE Images', image_name)
-        return InfoBlock('form').text('Basic Information', 'Type')
+        # GH1070
+        itype = version.pick({
+            version.LOWEST: lambda: InfoBlock('form').text('Basic Information', 'Type'),
+            '5.3': lambda: sel.text(sel.element(
+                '//td[contains(text(),"Type")]/../td[2]'))
+        })
+        return itype()
 
     def set_pxe_image_type(self, image_name, image_type):
         """
