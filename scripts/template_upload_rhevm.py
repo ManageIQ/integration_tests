@@ -247,11 +247,13 @@ def cleanup(api, edomain, ssh_client, ovaname):
         api: API to chosen RHEVM provider.
         edomain: Export domain of chosen RHEVM provider.
     """
+    command = 'rm %s' % ovaname
+    exit_status, output = ssh_client.run_command(command)
+
     temporary_vm = api.vms.get(TEMP_VM_NAME)
     if temporary_vm is not None:
         temporary_vm.delete()
-    # wait to make sure the vm is deleted
-    # wait_for(lambda: api.vms.get(TEMP_VM_NAME) != '', fail_condition=True, delay=5)
+
     temporary_template = api.templates.get(TEMP_TMP_NAME)
     if temporary_template is not None:
         temporary_template.delete()
@@ -262,13 +264,6 @@ def cleanup(api, edomain, ssh_client, ovaname):
     unimported_template = api.storagedomains.get(edomain).templates.get(TEMP_TMP_NAME)
     if unimported_template is not None:
         unimported_template.delete()
-
-    command = 'rm %s' % ovaname
-    exit_status, output = ssh_client.run_command(command)
-    if exit_status != 0:
-        print "RHEVM: There was an error while removing ova file:"
-        print output
-        sys.exit(127)
 
 
 def api_params_resolution(item_list, item_name, item_param):
@@ -435,23 +430,25 @@ def run(**kwargs):
     else:
         print "RHEVM: Downloading .ova file..."
         download_ova(ssh_client, kwargs.get('image_url'))
-        print "RHEVM: Templatizing .ova file..."
-        template_from_ova(api, username, password, rhevip, kwargs.get('edomain'),
-                          ovaname, ssh_client)
-        print "RHEVM: Importing new template..."
-        import_template(api, kwargs.get('edomain'), kwargs.get('sdomain'), kwargs.get('cluster'))
-        print "RHEVM: Making a temporary VM from new template..."
-        make_vm_from_template(api, kwargs.get('cluster'))
-        print "RHEVM: Adding disk to created VM..."
-        add_disk_to_vm(api, kwargs.get('sdomain'), kwargs.get('disk_size'),
-                       kwargs.get('disk_format'), kwargs.get('disk_interface'))
-        print "RHEVM: Templatizing VM..."
-        templatize_vm(api, template_name, kwargs.get('cluster'))
-        print "RHEVM: Cleaning up..."
-        cleanup(api, kwargs.get('edomain'), ssh_client, ovaname)
+        try:
+            print "RHEVM: Templatizing .ova file..."
+            template_from_ova(api, username, password, rhevip, kwargs.get('edomain'),
+                              ovaname, ssh_client)
+            print "RHEVM: Importing new template..."
+            import_template(api, kwargs.get('edomain'), kwargs.get('sdomain'),
+                            kwargs.get('cluster'))
+            print "RHEVM: Making a temporary VM from new template..."
+            make_vm_from_template(api, kwargs.get('cluster'))
+            print "RHEVM: Adding disk to created VM..."
+            add_disk_to_vm(api, kwargs.get('sdomain'), kwargs.get('disk_size'),
+                           kwargs.get('disk_format'), kwargs.get('disk_interface'))
+            print "RHEVM: Templatizing VM..."
+            templatize_vm(api, template_name, kwargs.get('cluster'))
+        finally:
+            cleanup(api, kwargs.get('edomain'), ssh_client, ovaname)
+            ssh_client.close()
+            api.disconnect()
 
-    ssh_client.close()
-    api.disconnect()
     print "RHEVM: Done."
 
 
