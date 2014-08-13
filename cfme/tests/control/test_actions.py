@@ -84,7 +84,7 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
             provider_mgmt.deploy_template(
                 small_template,
                 vm_name=vm_name,
-                cluster_name=provider_data["default_cluster"]
+                cluster=provider_data["default_cluster"]
             )
         except TimedOutError:
             try:
