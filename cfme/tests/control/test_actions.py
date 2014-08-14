@@ -376,7 +376,7 @@ def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testi
     snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
     # Power off to invoke snapshot creation
     vm.stop_vm()
-    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=500,
+    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=800,
         message="wait for snapshot appear", delay=5)
     assert vm.soap.ws_attributes["v_snapshot_newest_description"] == "Created by EVM Policy Action"
     assert vm.soap.ws_attributes["v_snapshot_newest_name"] == snapshot_name
@@ -384,7 +384,7 @@ def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testi
     snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
     # Power on to invoke last snapshot deletion
     vm.start_vm()
-    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] < snapshots_before, num_sec=500,
+    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] < snapshots_before, num_sec=800,
         message="wait for snapshot deleted", delay=5)
 
 
@@ -419,7 +419,7 @@ def test_action_create_snapshots_and_delete_them(request, assign_policy_for_test
         # Power off to invoke snapshot creation
         snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
         vm.stop_vm()
-        wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=500,
+        wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=800,
             message="wait for snapshot %d to appear" % (n + 1), delay=5)
         assert vm.soap.ws_attributes["v_snapshot_newest_name"] == snapshot_name
         vm.start_vm()
@@ -431,7 +431,7 @@ def test_action_create_snapshots_and_delete_them(request, assign_policy_for_test
     assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Delete all Snapshots"])
     # Power on to invoke all snapshots deletion
     vm.start_vm()
-    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] == 0, num_sec=500,
+    wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] == 0, num_sec=800,
         message="wait for snapshots to be deleted", delay=5)
 
 
