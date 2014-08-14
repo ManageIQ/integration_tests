@@ -19,7 +19,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     deploy_args.update(vm_name=vm_name)
     if isinstance(mgmt, RHEVMSystem):
         if 'default_cluster' not in deploy_args:
-            deploy_args.update(cluster_name=data['default_cluster'])
+            deploy_args.update(cluster=data['default_cluster'])
     elif isinstance(mgmt, VMWareSystem):
         pass
     elif isinstance(mgmt, EC2System):
