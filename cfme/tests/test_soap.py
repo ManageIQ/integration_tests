@@ -417,9 +417,11 @@ def test_provision_via_soap(
     request.addfinalizer(_cleanup)
     set_client(soap_client)
     vm = MiqVM.provision_from_template(small_template, vm_name, vlan=vlan, wait_min=10,)
+    request.addfinalizer(lambda: vm.delete() if vm.exists else None)
     if vm.is_powered_on:
         vm.power_off()
+        vm.wait_powered_off()
     vm.power_on()
-    assert vm.is_powered_on
+    vm.wait_powered_on()
     vm.power_off()
-    assert vm.is_powered_off
+    vm.wait_powered_off()
