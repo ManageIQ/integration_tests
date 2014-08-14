@@ -10,7 +10,7 @@ Usage:
 """
 import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
-from cfme.exceptions import ToolbarOptionGreyed
+from cfme.exceptions import ToolbarOptionGreyed, ToolbarOptionUnavailable
 from cfme.web_ui import Region
 from xml.sax.saxutils import quoteattr
 
@@ -58,7 +58,7 @@ def select_n_move(el):
     """
     # .. if we don't move the "mouse" the button stays active
     sel.click(el)
-    sel.move_to_element((By.XPATH, '//div[@class="brand"]'))
+    sel.move_to_element((By.XPATH, '//span[@id="tP"]'))
 
 
 def select(root, sub=None, invokes_alert=False):
@@ -74,20 +74,27 @@ def select(root, sub=None, invokes_alert=False):
     Raises: :py:class:`cfme.exceptions.ToolbarOptionGreyed`
     """
     if not is_greyed(root):
-        if sub is None and invokes_alert:
-            # We arrived into a place where alert will pop up so no moving and no ajax
-            sel.click(root_loc(root), wait_ajax=False)
-        else:
-            select_n_move(root_loc(root))
+        try:
+            if sub is None and invokes_alert:
+                # We arrived into a place where alert will pop up so no moving and no ajax
+                sel.click(root_loc(root), wait_ajax=False)
+            else:
+                select_n_move(root_loc(root))
+        except sel.NoSuchElementException:
+            raise ToolbarOptionUnavailable("Toolbar button '{}' was not found.".format(root))
     else:
         raise ToolbarOptionGreyed("Toolbar button {} is greyed!".format(root))
     if sub:
         if not is_greyed(root, sub):
-            if invokes_alert:
-                # We arrived into a place where alert will pop up so no moving and no ajax
-                sel.click(sub_loc(sub), wait_ajax=False)
-            else:
-                select_n_move(sub_loc(sub))
+            try:
+                if invokes_alert:
+                    # We arrived into a place where alert will pop up so no moving and no ajax
+                    sel.click(sub_loc(sub), wait_ajax=False)
+                else:
+                    select_n_move(sub_loc(sub))
+            except sel.NoSuchElementException:
+                raise ToolbarOptionUnavailable("Toolbar button '{}/{}' was not found.".format(
+                    root, sub))
         else:
             raise ToolbarOptionGreyed("Toolbar option {}/{} is greyed!".format(root, sub))
     return True
