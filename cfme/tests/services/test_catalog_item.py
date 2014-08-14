@@ -6,7 +6,7 @@ from cfme.services.catalogs.catalog import Catalog
 from utils.randomness import generate_random_string
 from utils import error
 from utils.update import update
-
+import cfme.tests.configure.test_access_control as tac
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
@@ -70,3 +70,10 @@ def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):
         catalog_item.create()
+
+
+@pytest.mark.bugzilla(1130301)
+def test_permissions_catalog_item_add(setup_cloud_providers, catalog_item):
+    """ Tests that a catalog can be added only with the right permissions"""
+    tac.single_task_permission_test([['Services', 'Catalogs Explorer', 'Catalog Items']],
+                                    {'Add Catalog Item': lambda: catalog_item.create()})
