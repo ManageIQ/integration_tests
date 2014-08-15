@@ -19,6 +19,8 @@
 already been used, it will die
 """
 
+from urlparse import urlparse
+
 from artifactor import ArtifactorClient
 import pytest
 from utils.conf import env, credentials
@@ -54,6 +56,9 @@ if env.get('slaveid', None):
     SLAVEID = env['slaveid']
 
 
+appliance_ip_address = urlparse(env['base_url']).netloc
+
+
 def pytest_addoption(parser):
     parser.addoption("--run-id", action="store", default=None,
                      help="A run id to assist in logging")
@@ -77,11 +82,12 @@ def pytest_configure(config):
         config.option.artifactor_port = art_client.port
     elif isinstance(art_client, ArtifactorClient):
         art_client.port = config.option.artifactor_port
+    art_client.fire_hook('setup_merkyl', ip=appliance_ip_address)
 
 
 def pytest_runtest_protocol(item):
     art_client.fire_hook('start_test', test_location=item.location[0], test_name=item.location[2],
-                         slaveid=SLAVEID)
+                         slaveid=SLAVEID, ip=appliance_ip_address)
 
 
 def pytest_runtest_teardown(item, nextitem):
@@ -91,7 +97,7 @@ def pytest_runtest_teardown(item, nextitem):
         if word:
             words.append(word)
     art_client.fire_hook('finish_test', test_location=item.location[0], test_name=item.location[2],
-                         slaveid=SLAVEID)
+                         slaveid=SLAVEID, ip=appliance_ip_address)
     art_client.fire_hook('sanitize', test_location=item.location[0], test_name=item.location[2],
                          fd_idents=['func_trace'], words=words)
 
@@ -113,6 +119,7 @@ def pytest_unconfigure():
     if not SLAVEID:
         art_client.fire_hook('finish_session')
         art_client.fire_hook('terminate')
+    art_client.fire_hook('teardown_merkyl', ip=appliance_ip_address)
 
 if not SLAVEID:
     atexit.register(art_client.fire_hook, 'finish_session')

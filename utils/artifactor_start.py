@@ -4,7 +4,6 @@ from artifactor import Artifactor, initialize
 import argparse
 from artifactor.plugins import merkyl, logger, video, filedump, reporter
 from artifactor import parse_setup_dir
-from urlparse import urlparse
 from utils.conf import env
 from utils.path import log_path
 
@@ -27,9 +26,8 @@ def run(port, run_id=None):
                                name="filedump_dir_setup")
 
     initialize(art)
-    ip = urlparse(env['base_url']).hostname
 
-    art.configure_plugin('merkyl', ip=ip)
+    art.configure_plugin('merkyl')
     art.configure_plugin('logger')
     art.configure_plugin('video')
     art.configure_plugin('filedump')
