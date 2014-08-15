@@ -43,6 +43,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.mark.usefixtures("random_provider")
 @pytest.mark.downstream
+@pytest.mark.long_running
 def test_appliance_replicate_between_regions(request, provider_crud):
     """Tests that a provider added to an appliance in one region
         is replicated to the parent appliance in another region.

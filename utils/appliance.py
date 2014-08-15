@@ -223,7 +223,7 @@ class Appliance(object):
                 raise ApplianceException('Failed to restart evmserverd service on {}\nError: {}'
                                          .format(self.address, msg))
 
-    def wait_for_web_ui(self, timeout=600, running=True):
+    def wait_for_web_ui(self, timeout=900, running=True):
         """Waits for the web UI to be running / to not be running
 
         Args:
