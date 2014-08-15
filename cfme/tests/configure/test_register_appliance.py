@@ -89,7 +89,7 @@ def is_registration_complete(used_repo_or_channel):
 
 
 # Currently fails on 5.3 (0528) when using proxy BZ#1102724
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.bugzilla(1102724, 1048997)
 def test_appliance_registration(request, unset_org_id,
                                 reg_method, reg_data, proxy_url, proxy_creds):
