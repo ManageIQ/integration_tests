@@ -16,11 +16,16 @@ Setup
   * To activate the virtualenv later: ``source <name>/bin/activate``
 
 * Fork and Clone this repository into the new virtualenv
-* Set the ``PYTHONPATH`` to include ``cfme_tests``. Edit your virtualenv's ``bin/activate script``,
+* Set the ``PYTHONPATH`` to include ``cfme_tests``. Edit your virtualenv's ``bin/activate`` script,
   created with the virtualenv. At the end of the file, export a PYTHONPATH variable with the path to
   the repository clone by adding this line (altered to match your repository locations):
 
   * ``export PYTHONPATH='/path/to/virtualenv/cfme_tests'``
+
+* Also add this line at the end of your virtualenv to prevent .pyc files polluting your folders:
+
+  * ``export PYTHONDONTWRITEBYTECODE="yes"``
+
 
 * Ensure the following devel packages are installed (for building python dependencies):
 
