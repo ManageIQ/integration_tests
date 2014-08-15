@@ -82,6 +82,33 @@ class Version(object):
     def __repr__(self):
         return "%s ('%s')" % (self.__class__.__name__, str(self))
 
+    def __contains__(self, ver):
+        """Enables to use ``in`` expression for :py:meth:`Version.is_in_series`.
+
+        Example:
+            ``"5.2.5.2" in LooseVersion("5.2") returns ``True``
+
+        Args:
+            ver: Version that should be checked if it is in series of this version. If
+                :py:class:`str` provided, it will be converted to :py:class:`LooseVersion`.
+        """
+        if isinstance(ver, basestring):
+            ver = LooseVersion(ver)
+        return ver.is_in_series(self)
+
+    def is_in_series(self, series):
+        """This method checks wheter the version belongs to another version's series.
+
+        Eg.: ``LooseVersion("5.2.5.2").is_in_series("5.2")`` returns ``True``
+
+        Args:
+            series: Another :py:class:`Version` to check against. If string provided, will be
+                converted to :py:class:`LooseVersion`
+        """
+        if isinstance(series, basestring):
+            series = LooseVersion(series)
+        return series.version == self.version[:len(series.version)]
+
 # Taken from stdlib, just change classes to new-style and clean up
 # Interface for version-number classes -- must be implemented
 # by the following classes (the concrete ones -- Version should
