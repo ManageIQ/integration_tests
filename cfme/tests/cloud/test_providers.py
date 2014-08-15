@@ -12,18 +12,8 @@ from cfme.cloud import provider
 from utils import testgen
 from utils.randomness import generate_random_string
 from utils.update import update
-import cfme.tests.configure.test_access_control as tac
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
-
-
-@pytest.mark.usefixtures('has_no_cloud_providers')
-def test_permissions_provider_add(provider_crud):
-    """ Tests that a provider can be added only with the right permissions"""
-    def add():
-        provider_crud.create()
-        provider_crud.validate()
-    tac.single_task_permission_test([['Clouds', 'Cloud Providers']], {'Add Provider': add})
 
 
 def test_empty_discovery_form_validation():
