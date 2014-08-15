@@ -36,16 +36,30 @@ def pytest_configure(config):
 
 @pytest.mark.trylast
 def pytest_collection_modifyitems(session, config, items):
+    # XXX: This also handles moving long_running tests to the front of the test module
+    # There are a few different ways to handle this batter, but rather than building in logic
+    # for both smoke and long_running marks to make sure each one reorders tests with respect to
+    # the other, it made sense to just combine this here for now and organize these marks better
+    # later on.
+
     # Split marked and unmarked tests
     split_tests = defaultdict(list)
     for item in items:
-        key = 'smoke' if 'smoke' in item.keywords else 'non_smoke'
+        for mark in ('smoke', 'long_running'):
+            if mark in item.keywords:
+                key = mark
+                break
+        else:
+            key = None
+
         split_tests[key].append(item)
 
-    # Now rebuild the items list with the smoke tests first
-    session.items = split_tests['smoke'] + split_tests['non_smoke']
+    # Now rebuild the items list with the smoke tests first, followed by long_running
+    # with unmarked tests at the end
+    session.items = split_tests['smoke'] + split_tests['long_running'] + split_tests[None]
 
     if split_tests['smoke']:
+        # If there are smoke tests, use the fancy smoke test reporter
         smoke_tests = config.pluginmanager.getplugin('smoke_tests')
         reporter(config).write_sep('=', 'Running smoke tests')
         smoke_tests.start_time = time()

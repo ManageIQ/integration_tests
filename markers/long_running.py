@@ -8,7 +8,13 @@ print that tests that are deselected in its own output, e.g.::
 
     1 tests deselected by "-m 'not long_running'"
 
+Long-running tests are run as early as possible in the test run to prevent parallelized
+test runs from running a long-running test toward the end of the suite, when the other
+test nodes have shut down
+
 """
+
+# XXX: Test reordering takes place in markers.smoke
 
 
 def pytest_addoption(parser):
