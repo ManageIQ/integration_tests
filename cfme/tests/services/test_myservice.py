@@ -1,23 +1,22 @@
 import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
-from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.catalogs.myservice import MyService
 from cfme.services import requests
 from cfme.web_ui import flash
+from datetime import datetime
 from utils import testgen
-from utils.providers import setup_infrastructure_providers
 from utils.randomness import generate_random_string
+from utils.providers import setup_infrastructure_providers
 from utils.log import logger
 from utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.usefixtures("logged_in"),
     pytest.mark.usefixtures("vm_name"),
-    pytest.mark.fixtureconf(server_roles="+automate"),
-    pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
+    pytest.mark.fixtureconf(server_roles="+automate")
 ]
 
 
@@ -50,36 +49,28 @@ def setup_providers():
     setup_infrastructure_providers()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def dialog():
     dialog = "dialog_" + generate_random_string()
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                     submit=True, cancel=True)
+                                   submit=True, cancel=True)
     service_dialog.create()
     flash.assert_success_message('Dialog "%s" was added' % dialog)
-    yield dialog
+    return service_dialog
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog():
     catalog = "cat_" + generate_random_string()
     cat = Catalog(name=catalog,
                   description="my catalog")
     cat.create()
-    yield catalog
+    return cat
 
 
-def cleanup_vm(vm_name, provider_key, provider_mgmt):
-    try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name + "_0001")
-    except:
-        # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
-
-
-@pytest.yield_fixture(scope="function")
-def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
+@pytest.fixture(scope="function")
+def catalog_item(provider_crud, provider_type,
+                 provisioning, vm_name, dialog, catalog):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
 
@@ -96,42 +87,44 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
         provisioning_data['provision_type'] = 'VMware'
     item_name = generate_random_string()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
-                  description="my catalog", display_in=True, catalog=catalog,
-                  dialog=dialog, catalog_name=template,
-                  provider=provider_crud.name, prov_data=provisioning_data)
-    yield catalog_item
+                               description="my catalog", display_in=True,
+                               catalog=catalog.name, dialog=dialog.label,
+                               catalog_name=template,
+                               provider=provider_crud.name,
+                               prov_data=provisioning_data)
+    return catalog_item
 
 
-def test_order_catalog_item(provider_key, provider_mgmt, setup_providers, catalog_item, request):
+def test_retire_service(catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
-    flash.assert_no_errors()
-    logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
+    logger.info('Waiting for cfme provision request for service {}'
+                .format(catalog_item.name))
+    row_description = "Provisioning [{}] for Service [{}]"\
+                      .format(catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
+                       fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'Request complete'
+    myservice = MyService(catalog_item.name, vm_name)
+    myservice.retire()
 
 
-def test_order_catalog_bundle(provider_key, provider_mgmt, setup_providers, catalog_item, request):
+def test_retire_service_on_date(catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     catalog_item.create()
-    bundle_name = generate_random_string()
-    catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog,
-                   dialog=catalog_item.dialog, cat_item=catalog_item.name)
-    catalog_bundle.create()
     service_catalogs = ServiceCatalogs("service_name")
-    service_catalogs.order(catalog_item.catalog, catalog_bundle)
-    flash.assert_no_errors()
-    logger.info('Waiting for cfme provision request for service %s' % bundle_name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (bundle_name, bundle_name)
+    service_catalogs.order(catalog_item.catalog, catalog_item)
+    logger.info('Waiting for cfme provision request for service {}'
+                .format(catalog_item.name))
+    row_description = "Provisioning [{}] for Service [{}]"\
+                      .format(catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
+                       fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'Request complete'
+    dt = datetime.utcnow()
+    myservice = MyService(catalog_item.name, vm_name)
+    myservice.retire_on_date(dt)
