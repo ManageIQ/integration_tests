@@ -333,16 +333,17 @@ def test_permissions_vm_power_on_access():
     )
 
 
-def test_permissions_vm_remove():
-    # Ensure VMs exist
-    if not virtual_machines.get_number_of_vms():
-        logger.debug("Setting up providers")
-        setup_infrastructure_providers()
-        logger.debug("Providers setup")
-    single_task_permission_test(
-        [
-            ['Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify', 'Remove']
-        ],
-        {'Remove VM': _test_vm_removal}
-    )
+# This test is disabled until it has been rewritten
+# def test_permissions_vm_remove():
+#    # Ensure VMs exist
+#    if not virtual_machines.get_number_of_vms():
+#        logger.debug("Setting up providers")
+#        setup_infrastructure_providers()
+#        logger.debug("Providers setup")
+#    single_task_permission_test(
+#        [
+#            ['Infrastructure', 'Virtual Machines', 'Accordions'],
+#            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify', 'Remove']
+#        ],
+#        {'Remove VM': _test_vm_removal}
+#    )
