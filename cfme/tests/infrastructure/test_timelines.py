@@ -8,6 +8,8 @@ from utils.log import logger
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 
+pytestmark = [pytest.mark.ignore_stream("upstream")]
+
 
 @pytest.fixture(scope="module")
 def delete_fx_provider_event(db, provider_crud):
@@ -63,7 +65,6 @@ def gen_events(delete_fx_provider_event, provider_crud, test_vm):
     mgmt.start_vm(test_vm.name)
 
 
-@pytest.mark.downstream
 def test_provider_event(provider_crud, gen_events, test_vm):
     pytest.sel.force_navigate('infrastructure_provider_timelines',
                               context={'provider': provider_crud})
@@ -74,7 +75,6 @@ def test_provider_event(provider_crud, gen_events, test_vm):
     assert(len(events) > 0)
 
 
-@pytest.mark.downstream
 def test_host_event(provider_crud, gen_events, test_vm):
     test_vm.load_details()
     pytest.sel.click(details_page.infoblock.element('Relationships', 'Host'))
@@ -86,7 +86,6 @@ def test_host_event(provider_crud, gen_events, test_vm):
     assert(len(events) > 0)
 
 
-@pytest.mark.downstream
 def test_vm_event(provider_crud, gen_events, test_vm):
     test_vm.load_details()
     toolbar.select('Monitoring', 'Timelines')
@@ -97,7 +96,6 @@ def test_vm_event(provider_crud, gen_events, test_vm):
     assert(len(events) > 0)
 
 
-@pytest.mark.downstream
 def test_cluster_event(provider_crud, gen_events, test_vm):
     test_vm.load_details()
     pytest.sel.click(details_page.infoblock.element('Relationships', 'Cluster'))

@@ -2,9 +2,8 @@
 import pytest
 
 from utils.randomness import generate_random_string
-from utils.version import current_version
 
-pytestmark = [pytest.mark.skipif(current_version() >= "5.3", reason="'Legacy' tests.")]
+pytestmark = [pytest.mark.ignore_stream("upstream", "5.3")]
 
 
 @pytest.fixture(scope="module")

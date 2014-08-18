@@ -7,7 +7,7 @@ import re
 pytestmark = pytest.mark.smoke
 
 
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.parametrize(('package'), [
     'cfme',
     'cfme-appliance',
@@ -67,7 +67,7 @@ def test_chkconfig_on(ssh_client, service):
     assert '5:on' in stdout
 
 
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.parametrize(('rule'), [
     'ACCEPT     tcp  --  anywhere             anywhere            state NEW tcp dpt:ssh',
     'ACCEPT     tcp  --  anywhere             anywhere            state NEW tcp dpt:http',
@@ -95,7 +95,7 @@ def test_cpu_total(ssh_client):
     assert stdout >= 4
 
 
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.parametrize(("filename", "given_md5"), [
     ("/etc/pki/product/69.pem", None),
     ("/etc/pki/product/167.pem", None)
@@ -118,7 +118,7 @@ def test_certificates_present(ssh_client, filename, given_md5):
         assert given_md5 == md5_of_file
 
 
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 def test_db_connection(db):
     """Test that the pgsql db is listening externally
 
