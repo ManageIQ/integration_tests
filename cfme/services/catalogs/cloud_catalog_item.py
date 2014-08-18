@@ -38,7 +38,7 @@ basic_info_form = Form(
         ('display_checkbox', "//input[@id='display']"),
         ('select_catalog', Select("//select[@id='catalog_id']")),
         ('select_dialog', Select("//select[@id='dialog_id']")),
-        ('edit_button', "//img[@alt='Save Changes']")
+        ('edit_button', form_buttons.save)
     ])
 
 

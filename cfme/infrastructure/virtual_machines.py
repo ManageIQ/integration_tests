@@ -29,6 +29,8 @@ lcl_btn = partial(toolbar.select, 'Lifecycle')
 mon_btn = partial(toolbar.select, 'Monitoring')
 pwr_btn = partial(toolbar.select, 'Power')
 
+create_button = form_buttons.FormButton("Create")
+
 visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
                     "[not(contains(@style, 'display: none'))]/div/div/div"
                     "/ul[@class='dynatree-container']")
@@ -43,7 +45,7 @@ manage_policies_tree = CheckboxTree(
 
 manage_policies_page = Region(
     locators={
-        'save_button': "//div[@id='buttons_on']//img[@alt='Save Changes']",
+        'save_button': form_buttons.save,
     })
 
 
@@ -59,8 +61,8 @@ snapshot_form = Form(
         ('name', "//*[@id='name']"),
         ('descrition', "//*[@id='description']"),
         ('snapshot_memory', "//input[@id='snap_memory']"),
-        ('create_button', "//img[@title='Create']"),
-        ('cancel_button', "//img[@title='Cancel']")
+        ('create_button', create_button),
+        ('cancel_button', form_buttons.cancel)
     ])
 
 

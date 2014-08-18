@@ -3,7 +3,7 @@ from functools import partial
 
 from cfme import web_ui
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import accordion, flash, menu
+from cfme.web_ui import accordion, flash, form_buttons, menu
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -21,16 +21,16 @@ form = web_ui.Form(
     fields=[('name_text', "//input[@id='name']"),
             ('description_text', "//input[@id='description']"),
             ('button_multiselect', item_multiselect),
-            ('add_button', "//img[@title='Add']"),
-            ('save_button', "//img[@title='Save Changes']"),
-            ('cancel_button', "//img[@title='Cancel']")])
+            ('add_button', form_buttons.add),
+            ('save_button', form_buttons.save),
+            ('cancel_button', form_buttons.cancel)])
 
 item_form = web_ui.Form(
     fields=[('type_select', "//select[@id='st_prov_type']"),
             ('name_text', "//input[@id='name']"),
             ('description_text', "//input[@id='description']"),
             ('display_checkbox', "//input[@id='display']"),
-            ('add_button', "//img[@title='Add']")])
+            ('add_button', form_buttons.add)])
 
 
 def _all_catalogs_add_new(_):

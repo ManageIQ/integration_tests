@@ -1,6 +1,6 @@
 from functools import partial
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Select, accordion, fill, flash, menu, DHTMLSelect
+from cfme.web_ui import Form, Select, accordion, fill, flash, form_buttons, menu, DHTMLSelect
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 
@@ -11,8 +11,8 @@ button_group_form = Form(
     fields=[
         ('btn_group_text', "input#name"),
         ('btn_group_hvr_text', "input#description"),
-        ('add_button', "//img[@alt='Add']"),
-        ('save_button', "//img[@alt='Save Changes']")
+        ('add_button', form_buttons.add),
+        ('save_button', form_buttons.save)
     ])
 
 button_form = Form(
@@ -22,8 +22,8 @@ button_form = Form(
         ('select_dialog', Select("select#dialog_id")),
         ('system_process', Select("select#instance_name")),
         ('request', "input#object_request"),
-        ('add_button', "//img[@alt='Add']"),
-        ('save_button', "//img[@alt='Save Changes']")
+        ('add_button', form_buttons.add),
+        ('save_button', form_buttons.save)
     ])
 
 
