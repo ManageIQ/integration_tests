@@ -5,11 +5,10 @@ from cfme.automate.explorer import Domain
 from utils.log import logger
 from utils.path import data_path
 from utils.update import update
-from utils.version import current_version
 
 cli_path = data_path.join("cli")
 
-pytestmark = [pytest.mark.skipif(current_version() < "5.3", reason="<5.3 does not support domains")]
+pytestmark = [pytest.mark.ignore_stream("5.2")]
 
 
 @pytest.yield_fixture(scope="module")
