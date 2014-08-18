@@ -7,6 +7,9 @@ from artifactor import parse_setup_dir
 from utils.conf import env
 from utils.path import log_path
 
+import bottle
+bottle.BaseRequest.MEMFILE_MAX = 1073741824
+
 
 def run(port, run_id=None):
     art_config = env.get('artifactor', {})
