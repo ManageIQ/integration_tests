@@ -3,7 +3,7 @@ from functools import partial
 from collections import OrderedDict
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
-    flash, menu, tabstrip, DHTMLSelect
+    flash, form_buttons, menu, tabstrip, DHTMLSelect
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -14,8 +14,8 @@ accordion_tree = partial(accordion.tree, "Catalog Items")
 template_select_form = Form(
     fields=[
         ('template_table', Table('//div[@id="prov_vm_div"]//table[@class="style3"]')),
-        ('add_button', "//img[@title='Add']"),
-        ('cancel_button', '//*[@id="form_buttons"]/li[2]/img')
+        ('add_button', form_buttons.add),
+        ('cancel_button', form_buttons.cancel)
     ]
 )
 
@@ -27,7 +27,7 @@ basic_info_form = Form(
         ('display_checkbox', "//input[@id='display']"),
         ('select_catalog', Select("//select[@id='catalog_id']")),
         ('select_dialog', Select("//select[@id='dialog_id']")),
-        ('edit_button', "//img[@alt='Save Changes']")
+        ('edit_button', form_buttons.save)
     ])
 
 
@@ -95,15 +95,15 @@ request_form = tabstrip.TabStripForm(
 resources_form = Form(
     fields=[
         ('choose_resource', Select("//select[@id='resource_id']")),
-        ('add_button', "//img[@alt='Add']"),
-        ('save_button', "//img[@alt='Save Changes']")
+        ('add_button', form_buttons.add),
+        ('save_button', form_buttons.save)
     ])
 
 button_group_form = Form(
     fields=[
         ('btn_group_text', "//input[@id='name']"),
         ('btn_group_hvr_text', "//input[@id='description']"),
-        ('add_button', "//img[@alt='Add']")
+        ('add_button', form_buttons.add)
     ])
 
 button_form = Form(
@@ -113,7 +113,7 @@ button_form = Form(
         ('select_dialog', Select("//select[@id='dialog_id']")),
         ('system_process', Select("//select[@id='instance_name']")),
         ('request', "//input[@id='object_request']"),
-        ('add_button', "//img[@alt='Add']")
+        ('add_button', form_buttons.add)
     ])
 
 

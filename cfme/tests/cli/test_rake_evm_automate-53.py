@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme.automate.explorer import Domain
 from utils.log import logger
 from utils.path import data_path
+from utils.update import update
 from utils.version import current_version
 
 cli_path = data_path.join("cli")
@@ -40,6 +42,11 @@ def qe_ae_data(ssh_client, rake):
     rc, stdout = rake(
         "evm:automate:import DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml PREVIEW=false")
     assert rc == 0, stdout
+    # Now we have to enable the domain to make it work.
+    qe_cli_testing = Domain(name="QECliTesting")
+    if not qe_cli_testing.is_enabled:
+        with update(qe_cli_testing):
+            qe_cli_testing.enabled = True
 
 
 @pytest.mark.smoke

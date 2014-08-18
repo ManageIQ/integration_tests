@@ -1470,10 +1470,10 @@ class BaseAlertProfile(Updateable, Pretty):
 
     buttons = Region(
         locators=dict(
-            add="//div[@id='buttons_on']//img[@alt='Add']",
-            cancel="//div[@id='buttons_on']//img[@alt='Cancel']",
-            save="//div[@id='buttons_on']//img[@alt='Save Changes']",
-            reset="//div[@id='buttons_on']//img[@alt='Reset Changes']",
+            add=form_buttons.add,
+            cancel=form_buttons.cancel,
+            save=form_buttons.save,
+            reset=form_buttons.reset,
         )
     )
 

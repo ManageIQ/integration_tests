@@ -420,8 +420,8 @@ def test_provision_via_soap(
     request.addfinalizer(lambda: vm.delete() if vm.exists else None)
     if vm.is_powered_on:
         vm.power_off()
-        vm.wait_powered_off()
+        vm.wait_powered_off(wait_time=300)
     vm.power_on()
-    vm.wait_powered_on()
+    vm.wait_powered_on(wait_time=300)
     vm.power_off()
-    vm.wait_powered_off()
+    vm.wait_powered_off(wait_time=300)

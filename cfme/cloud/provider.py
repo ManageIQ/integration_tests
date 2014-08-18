@@ -16,6 +16,7 @@ import ui_navigate as nav
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
+import cfme.web_ui.form_buttons as form_buttons
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
@@ -33,7 +34,7 @@ from utils.pretty import Pretty
 # Common locators
 page_specific_locators = Region(
     locators={
-        'cancel_button': "//img[@title='Cancel']",
+        'cancel_button': form_buttons.cancel,
         'creds_validate_btn': "//div[@id='default_validate_buttons_on']"
                               "/ul[@id='form_buttons']/li/a/img",
         'creds_verify_disabled_btn': "//div[@id='default_validate_buttons_off']"
@@ -41,21 +42,23 @@ page_specific_locators = Region(
     }
 )
 
+add_provider_button = form_buttons.FormButton("Add this Cloud Provider")
+
 # Page specific locators
 add_page = Region(
     locators={
-        'add_submit': "//img[@alt='Add this Cloud Provider']",
+        'add_submit': add_provider_button,
     },
     title='Cloud Providers')
 
 edit_page = Region(
     locators={
-        'save_button': "//img[@title='Save Changes']",
+        'save_button': form_buttons.save,
     })
 
 manage_policies_page = Region(
     locators={
-        'save_button': "//div[@id='buttons_on']//img[@alt='Save Changes']",
+        'save_button': form_buttons.save,
     })
 
 details_page = Region(infoblock_type='detail')
