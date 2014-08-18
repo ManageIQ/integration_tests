@@ -23,9 +23,14 @@ parameters, test machinery injects them. These are available:
 * appliance_downstream
 * bug (current bug)
 
-Also fixtures (funcargs) for the test are injected into the parameters
+Also fixtures (funcargs) for the test are injected into the parameters (if present). Sometimes it is
+not possible to retrieve them, when you face such thing just ping me and I will investigate further.
 
 The order of function parameters does not matter.
+
+The ``bug`` objects have the specified version fields (as in cfme_data.yaml) converted to
+:py:class:`LooseVersion`. If those fields are specified as "---" or "unspecified", they return None
+instead of :py:class:`LooseVersion`.
 
 The ``unskip`` hook is a little bit different. It is a dict of ``bug_id: function``, where if a bug
 is marked to be skipped by any of the machinery that marks it as skipped, it will look in the dict
@@ -238,8 +243,20 @@ def pytest_runtest_setup(item):
     # Generic status-based skipping
     for bug in filter(lambda o: o is not None,
                       map(lambda bug: item._bugzilla_bugs.get_bug(bug.id), item._bugzilla_bugs)):
-        if bug.status in {"NEW", "ASSIGNED", "ON_DEV"}:
+        target_release = bug.target_release
+        version = bug.version
+        # Skipping checks
+        if version is not None and current_version() < version:
+            # Something reported in a newer version of the appliance, just ignore it
+            continue
+        elif bug.status in {"NEW", "ASSIGNED", "ON_DEV"}:
+            # The bug is open and it 'should' be for our version, so skip it
             skippers.add(bug.id)
+        elif target_release is not None and version is not None:
+            if current_version() >= version and current_version() < target_release:
+                # If it is something reported in this series but will be included in later version
+                # then skip it
+                skippers.add(bug.id)
 
     # POST/MODIFIED for upstream
     states = {"POST", "MODIFIED"}
@@ -365,7 +382,8 @@ class BugWrapper(object):
         """This proxies the attribute queries to the Bug object and modifies its result.
 
         If the field looked up is specified as loose field, it will be converted to LooseVersion.
-        If the field is string and it has zero length, it will return None.
+        If the field is string and it has zero length, or the value is specified as "not specified",
+        it will return None.
         """
         value = getattr(self._bug, attr)
         if attr in self._loose:
@@ -373,6 +391,8 @@ class BugWrapper(object):
                 value = value[0]
             value = value.strip()
             if not value:
+                return None
+            if value.lower() in {"---", "undefined"}:
                 return None
             # We have to strip any leading non-number characters to correctly match
             return LooseVersion(re.sub(r"^[^0-9]+", "", value))
