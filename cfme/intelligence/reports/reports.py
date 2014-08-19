@@ -248,6 +248,7 @@ class CustomReport(Updateable):
         results = []
         try:
             for page in paginator.pages():
+                sel.wait_for_element(records_table)
                 for row in records_table.rows():
                     results.append(
                         CustomSavedReport(self, sel.text(row.run_at).encode("utf-8"))
@@ -359,6 +360,10 @@ class CannedSavedReport(CustomSavedReport):
         return sel.force_navigate(
             "saved_report_canned", context={"path": self.path, "datetime": self.datetime}
         )
+
+    @classmethod
+    def new(cls, path):
+        return cls(path, queue_canned_report(*path))
 
 
 class SavedReportData(Pretty):

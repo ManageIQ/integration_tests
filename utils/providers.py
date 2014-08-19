@@ -59,12 +59,12 @@ list_cloud_providers = partial(list_providers, cloud_provider_type_map.keys())
 list_all_providers = partial(list_providers, provider_type_map.keys())
 
 
-def provider_factory(provider_name, providers=None, credentials=None):
+def provider_factory(provider_key, providers=None, credentials=None):
     """
     Provides a :py:mod:`utils.mgmt_system` object, based on the request.
 
     Args:
-        provider_name: The name of a provider, as supplied in the yaml configuration files
+        provider_key: The name of a provider, as supplied in the yaml configuration files
         providers: A set of data in the same format as the ``management_systems`` section in the
             configuration yamls. If ``None`` then the configuration is loaded from the default
             locations. Expects a dict.
@@ -76,7 +76,7 @@ def provider_factory(provider_name, providers=None, credentials=None):
     if providers is None:
         providers = conf.cfme_data['management_systems']
 
-    provider = providers[provider_name]
+    provider = providers[provider_key]
 
     if credentials is None:
         credentials = conf.credentials[provider['credentials']]
@@ -87,6 +87,28 @@ def provider_factory(provider_name, providers=None, credentials=None):
     provider_kwargs.update(credentials)
     provider_instance = provider_type_map[provider['type']](**provider_kwargs)
     return provider_instance
+
+
+def get_provider_key(provider_name):
+    for provider_key, provider_data in conf.cfme_data.get("management_systems", {}).iteritems():
+        if provider_data.get("name") == provider_name:
+            return provider_key
+    else:
+        raise NameError("Could not find provider {}".format(provider_name))
+
+
+def provider_factory_by_name(provider_name, *args, **kwargs):
+    """Provides a :py:mod:`utils.mgmt_system` object, based on the request.
+
+    For detailed parameter description, refer to the :py:function:`provider_factory` (except its
+    `provider_key` parameter)
+
+    Args:
+        provider_name: 'Nice' provider name (name field from provider's YAML entry)
+    Return: A provider instance of the appropriate :py:class:`utils.mgmt_system.MgmtSystemAPIBase`
+        subclass
+    """
+    return provider_factory(get_provider_key(provider_name), *args, **kwargs)
 
 
 def setup_provider(provider_key, validate=True, check_existing=True):
