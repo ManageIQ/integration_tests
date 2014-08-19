@@ -991,8 +991,8 @@ class EC2System(MgmtSystemAPIBase):
         return '%s %s' % (boto.UserAgent, self.api.APIVersion)
 
     def list_vm(self):
-        """Returns a list from instance IDs currently known to EC2"""
-        return [instance.id for instance in self._get_all_instances()]
+        """Returns a list from instance IDs currently active on EC2 (not terminated)"""
+        return [inst.id for inst in self._get_all_instances() if inst.state != 'terminated']
 
     def list_template(self):
         private_images = self.api.get_all_images(owners=['self'],
