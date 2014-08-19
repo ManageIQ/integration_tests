@@ -118,7 +118,7 @@ class _TabStripField(Pretty):
 
 @web_ui.fill.method((_TabStripField, object))
 def _fill_tabstrip(tabstrip_field, value):
-    logger.debug(' Navigating to tabstrip %s' % value)
+    logger.debug(' Navigating to tabstrip "{}"'.format(tabstrip_field.ident_string))
     web_ui.fill(tabstrip_field.locate(), value)
 
 
