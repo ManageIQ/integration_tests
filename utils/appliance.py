@@ -356,7 +356,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         template_name = template
 
     if provider_name is None:
-        provider_name = conf.cfme_data['appliance_provisioning']['provider']
+        provider_name = conf.cfme_data['appliance_provisioning']['default_provider']
     prov_data = conf.cfme_data['management_systems'][provider_name]
 
     provider = provider_factory(provider_name)
@@ -366,7 +366,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     deploy_args['vm_name'] = vm_name
 
     if prov_data['type'] == 'rhevm':
-        deploy_args['cluster_name'] = prov_data['default_cluster']
+        deploy_args['cluster'] = prov_data['default_cluster']
 
     provider.deploy_template(template_name, **deploy_args)
 
