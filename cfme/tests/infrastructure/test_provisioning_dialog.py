@@ -9,6 +9,7 @@ from cfme.services import requests
 from cfme.web_ui import fill, flash
 from utils import testgen
 from utils.log import logger
+from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
@@ -77,6 +78,8 @@ def template_name(provisioning):
 
 @pytest.fixture(scope="function")
 def provisioner(request, provider_key, provider_mgmt, provider_crud):
+    if not provider_crud.exists:
+        setup_provider(provider_key)
 
     def _provisioner(template, provisioning_data, delayed=None):
         pytest.sel.force_navigate('infrastructure_provision_vms', context={
