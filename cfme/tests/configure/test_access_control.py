@@ -181,7 +181,7 @@ def _test_vm_removal():
 @pytest.mark.parametrize('product_features, action',
                         [([['Infrastructure', 'Virtual Machines', 'Accordions'],
                           ['Infrastructure', 'Virtual Machines', 'VM Access Rules',
-                            'Modify', 'Provision VMs']],
+                           'Modify', 'Provision VMs']],
                         _test_vm_provision)])
 def test_permission_edit(product_features, action):
     '''
