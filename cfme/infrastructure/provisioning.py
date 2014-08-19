@@ -4,8 +4,13 @@
 from collections import OrderedDict
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Calendar, Form, Radio, Select, Table, Tree, form_buttons, tabstrip, toolbar
+from cfme.web_ui import Calendar, CheckboxTree, Form, Radio, Select, Table, Tree, form_buttons,\
+    tabstrip, toolbar
 from cfme.web_ui.menu import nav
+from utils import version
+
+import cfme.infrastructure.virtual_machines  # To ensure the infra_vm_and_templates is available
+assert cfme  # To prevent flake8 compalining
 
 
 submit_button = form_buttons.FormButton("Submit")
@@ -34,7 +39,10 @@ provisioning_form = tabstrip.TabStripForm(
             ('manager_name', '//input[@id="requester__owner_manager"]'),
         ]),
         ('Purpose', [
-            ('apply_tags', Tree('//div[@id="all_tags_treebox"]//table')),
+            ('apply_tags', version.pick({
+                version.LOWEST: Tree('//div[@id="all_tags_treebox"]//table'),
+                "5.3": CheckboxTree('//div[@id="all_tags_treebox"]//ul')
+            }))
         ]),
         ('Catalog', [
             ('vm_filter', Select('//select[@id="service__vm_filter"]')),
@@ -97,6 +105,7 @@ provisioning_form = tabstrip.TabStripForm(
             ('stateless', '//input[@id="schedule__stateless"]'),
             ('retirement', Select('//select[@id="schedule__retirement"]')),
             ('retirement_warning', Select('//select[@id="schedule__retirement_warn"]')),
+            ('power_on', '//input[@id="schedule__vm_auto_start"]')
         ])
     ])
 )
@@ -121,6 +130,6 @@ def _nav_to_provision_form(context):
         raise ValueError('Navigation failed: Unable to find template "%s" for provider "%s"' %
             (template_name, provider.key))
 
-nav.add_branch('infrastructure_virtual_machines', {
+nav.add_branch('infra_vm_and_templates', {
     'infrastructure_provision_vms': _nav_to_provision_form
 })
