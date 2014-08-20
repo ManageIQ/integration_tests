@@ -29,6 +29,11 @@ def main(trackerbot_url, mark_usable=None):
 
     seen_templates = set()
 
+    if mark_usable is None:
+        usable = {}
+    else:
+        usable = {'usable': mark_usable}
+
     # Find some templates and update the API
     for template_name, providers in template_providers.items():
         try:
@@ -44,10 +49,9 @@ def main(trackerbot_url, mark_usable=None):
             provider = trackerbot.Provider(provider_key)
 
             try:
-                trackerbot.mark_provider_template(api, provider, template,
-                    usable=mark_usable, tested=False)
+                trackerbot.mark_provider_template(api, provider, template, **usable)
                 print 'Marked %s template %s on provider %s (Usable: %s, datestamp: %s)' % (
-                    stream, template_name, provider_key, bool(mark_usable), datestamp)
+                    stream, template_name, provider_key, mark_usable, datestamp)
             except SlumberHttpBaseException as ex:
                 print ex.response.status_code, ex.content
 

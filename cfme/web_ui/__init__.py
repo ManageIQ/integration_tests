@@ -1857,6 +1857,8 @@ class Quadicon(Pretty):
             "no_host": ("c", 'txt'),
             "avail_space": ("d", 'img'),
         },
+        "cluster": {},
+        "resource_pool": {},
     }
 
     def __init__(self, name, qtype):
