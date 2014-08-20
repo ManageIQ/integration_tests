@@ -1539,7 +1539,8 @@ def set_server_roles(**roles):
     if get_server_roles(navigate=False) == roles:
         logger.debug(' Roles already match, returning...')
         return
-    fill(server_roles, roles, action=form_buttons.save)
+    else:
+        fill(server_roles, roles, action=form_buttons.save)
 
 
 def get_server_roles(navigate=True):
