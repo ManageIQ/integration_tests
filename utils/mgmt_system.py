@@ -8,6 +8,7 @@ import boto
 from abc import ABCMeta, abstractmethod
 from boto.ec2 import EC2Connection, get_region
 from ovirtsdk.api import API
+from ovirtsdk.infrastructure.errors import DisconnectedError
 from ovirtsdk.xml import params
 from pysphere import VIServer, MORTypes, VITask, VIMor
 from pysphere.resources import VimService_services as VI
@@ -719,7 +720,12 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
     @property
     def api(self):
-        if self._api is None:
+        # test() will return false if the connection timeouts, catch it and force it to re-init
+        try:
+            if self._api is None or (self._api is not None and not self._api.test()):
+                self._api = API(**self._api_kwargs)
+        # if the connection was disconnected, force it to re-init
+        except DisconnectedError:
             self._api = API(**self._api_kwargs)
         return self._api
 
