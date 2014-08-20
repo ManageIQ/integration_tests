@@ -4,7 +4,7 @@
 from collections import OrderedDict
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Calendar, CheckboxTree, Form, Radio, Select, Table, Tree, form_buttons,\
+from cfme.web_ui import Calendar, CheckboxTree, Form, Radio, Select, Table, form_buttons,\
     tabstrip, toolbar
 from cfme.web_ui.menu import nav
 from utils import version
@@ -40,7 +40,7 @@ provisioning_form = tabstrip.TabStripForm(
         ]),
         ('Purpose', [
             ('apply_tags', version.pick({
-                version.LOWEST: Tree('//div[@id="all_tags_treebox"]//table'),
+                version.LOWEST: CheckboxTree('//div[@id="all_tags_treebox"]//table'),
                 "5.3": CheckboxTree('//div[@id="all_tags_treebox"]//ul')
             }))
         ]),

@@ -7,7 +7,7 @@ from cfme.infrastructure.provisioning import provisioning_form
 from cfme.infrastructure.virtual_machines import Vm, details_page
 from cfme.services import requests
 from cfme.web_ui import fill, flash
-from utils import testgen
+from utils import testgen, version
 from utils.log import logger
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
@@ -170,7 +170,8 @@ def test_power_on_or_off_after_provision(
 
 def test_tag(provisioner, prov_data, template_name):
     prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
-    prov_data["apply_tags"] = [(["Service Level *", "Gold"], True)]
+    prov_data["apply_tags"] = [
+        ([version.pick({version.LOWEST: "Service Level", "5.3": "Service Level *"}), "Gold"], True)]
 
     vm = provisioner(template_name, prov_data)
 
