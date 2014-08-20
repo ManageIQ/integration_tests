@@ -358,6 +358,18 @@ def click(loc, wait_ajax=True, no_custom_handler=False):
         wait_for_ajax()
 
 
+def raw_click(loc, wait_ajax=True):
+    """Does raw selenium's .click() call on element. Circumvents mouse move.
+
+    Args:
+        loc: Locator to click on.
+        wait_ajax: Whether to wait for ajax.
+    """
+    element(loc).click()
+    if wait_ajax:
+        wait_for_ajax()
+
+
 def double_click(loc, wait_ajax=True):
     """Double-clicks on an element.
 
