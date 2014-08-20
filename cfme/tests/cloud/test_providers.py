@@ -61,7 +61,6 @@ def test_provider_add_with_bad_credentials(provider_crud):
         provider_crud.create(validate_credentials=True)
 
 
-@pytest.mark.smoke
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_crud(provider_crud):
     """ Tests that a provider can be added """
