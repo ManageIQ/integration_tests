@@ -6,6 +6,7 @@ page_check:
     num_ems_resource_pool_check: 5
     num_storage_check: 20
 threshold:
+    transaction: 7000
     page_render: 5000
     query_time: 1000
     query_count: 1000
