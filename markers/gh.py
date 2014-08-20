@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
-"""github(\*issues, action="skip"|"xfail"): Marker for GH issues integration.
+"""github(\*issues, action="skip"|"xfail"|callable): Marker for GH issues integration.
 
 List of issues can be specified either as integers (when default_repo is specified), or strings
 in format ``<owner>/<repo>:<issue>``. If any of the issues is not closed, ``action`` will be done.
+If the action is callable, it will be called, otherwise a string with either ``skip`` or ``xfail``
+is expected. The calling will take place in context of ``pytest_runtest_setup``.
 
-Be advised that if you don't provide your credentials, you are limited to 60 requests per hour.
+Be advised that if you don't provide your token, you are limited to 60 requests per hour.
 
-cfme_data.yaml:
+env.yaml:
 
 github:
-    enabled: true|false
-    default_repository: foo/bar
-    credentials: some_credentials
+    default_repo: foo/bar
+    token: aefe676fef
 
 
-None of those options is required.
-
-Credentials are handled as usual.
+None of those options is required. These YAML options basically override defaults in py.test command
+line options.
 
 Maintainer and responsible person: mfalesni
 """
@@ -25,7 +25,7 @@ import pytest
 import re
 from github import Github
 
-from utils.conf import cfme_data, credentials
+from utils.conf import env
 
 _issue_cache = {}
 
@@ -38,37 +38,30 @@ def pytest_addoption(parser):
     group = parser.getgroup('GitHub Issues integration')
     group.addoption('--github',
                     action='store_true',
-                    default=cfme_data.get("github", {}).get("enabled", False),
+                    default=False,
                     dest='github',
                     help='Enable GitHub Issue blockers integration.')
     group.addoption('--github-default-repo',
                     action='store',
-                    default=cfme_data.get("github", {}).get("default_repo", None),
+                    default=env.get("github", {}).get("default_repo", None),
                     dest='github_default_repo',
                     help='Default repo for GitHub queries')
-    cr_root = cfme_data.get("github", {}).get("credentials", None)
-    group.addoption('--github-user',
+    group.addoption('--github-token',
                     action='store',
-                    default=credentials.get(cr_root, {}).get("username", None),
-                    dest='github_user',
-                    help='GH Username.')
-    group.addoption('--github-password',
-                    action='store',
-                    default=credentials.get(cr_root, {}).get("password", None),
-                    dest='github_password',
-                    help='GH Password.')
+                    default=env.get("github", {}).get("token", None),
+                    dest='github_token',
+                    help='GH Token.')
 
 
 def pytest_runtest_setup(item):
-    if not item.get_marker("github"):
+    if not item.config.getvalue("github"):
         return
     marker = item.get_marker("github")
     if marker is None:
         return
     action = marker.kwargs.get("action", "skip").lower()
-    if item.config.getvalue("github_user") is not None and\
-            item.config.getvalue("github_password") is not None:
-        gh = Github(item.config.getvalue("github_user"), item.config.getvalue("github_password"))
+    if item.config.getvalue("github_token") is not None:
+        gh = Github(item.config.getvalue("github_token"))
     else:
         gh = Github()  # Without auth max 60 req/hr
     blockers = []
@@ -82,8 +75,12 @@ def pytest_runtest_setup(item):
                     "To use plain integers, default repo must be specified"
                 _issue_cache[issue] = default_repository.get_issue(issue)
             else:
-                owner, repo, issue_num = re.match(r"^([^/]+)/([^/:]+):([0-9]+)$",
-                                                  str(issue).strip()).groups()
+                try:
+                    owner, repo, issue_num = re.match(r"^([^/]+)/([^/:]+):([0-9]+)$",
+                                                      str(issue).strip()).groups()
+                except AttributeError:
+                    raise ValueError(
+                        "Could not parse '{}' as a proper GH issue anchor!".format(str(issue)))
                 _issue_cache[issue] = gh.get_repo("{}/{}".format(owner, repo))\
                                         .get_issue(int(issue_num))
         blockers.append(_issue_cache[issue])
@@ -94,7 +91,9 @@ def pytest_runtest_setup(item):
                 blocker.repository.owner.html_url, blocker.repository.name,
                 blocker.number, blocker.state))
     if reasons:
-        if action == "skip":
+        if callable(action):
+            action()
+        elif action == "skip":
             pytest.skip("Skipping due to these GH reasons:\n{}".format(
                 "\n".join(reasons)))
         elif action == "xfail":
@@ -103,4 +102,4 @@ def pytest_runtest_setup(item):
                     reason="Xfailing due to these GH reasons: {}".format(
                         ", ".join(reasons))))
         else:
-            raise ValueError("github parameter action= must be 'xfail' or 'skip'")
+            raise ValueError("github parameter action= must be 'xfail' or 'skip' or callable")
