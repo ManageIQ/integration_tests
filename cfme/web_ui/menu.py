@@ -89,19 +89,20 @@ def nav_to_fn(toplevel, secondlevel=None):
                 return  # no menu at all, assume single permission
 
         if secondlevel is None:
-            sel.click(toplevel_elem)
+            sel.raw_click(toplevel_elem)
         else:
             sel.move_to_element(toplevel_elem)
             for (toplevel_dest, toplv), secondlevels in sections.items():
                 if toplv == toplevel:
+
                     try:
                         sel.move_to_element(sel.element(secondlevel_first_item_loc % toplevel))
                     except NoSuchElementException:
                         # Target menu is missing
-                        sel.click(toplevel_elem)
+                        sel.raw_click(toplevel_elem)
                         return  # no 2nd lvl menu, assume single permission
                     break
-            sel.click(sel.element(secondlevel_loc % (toplevel, secondlevel)))
+            sel.raw_click(secondlevel_loc % (toplevel, secondlevel))
     return f
 
 
