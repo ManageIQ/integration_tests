@@ -47,9 +47,9 @@ def test_custom_vm_report(soft_assert, report_vms):
             "5.3": "Cloud/Infrastructure Provider Name",
         })]
         provider = provider_factory_by_name(provider_name)
-        provider_hosts = provider.list_host().values()
-        provider_datastores = provider.list_datastore().values()
-        provider_clusters = provider.list_cluster().values()
+        provider_hosts = provider.list_host()
+        provider_datastores = provider.list_datastore()
+        provider_clusters = provider.list_cluster()
         soft_assert(provider.does_vm_exist(row["Name"]), "VM {} does not exist in {}!".format(
             row["Name"], provider_name
         ))
