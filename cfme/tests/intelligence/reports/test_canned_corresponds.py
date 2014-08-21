@@ -17,6 +17,8 @@ def test_providers_summary(soft_assert):
     path = ["Configuration Management", "Providers", "Providers Summary"]
     report = CannedSavedReport.new(path)
     for provider in report.data.rows:
+        if any(ptype in provider["MS Type"] for ptype in {"ec2", "openstack"}):  # Skip cloud
+            continue
         provider_fake_obj = Provider(name=provider["Name"])
         sel.force_navigate("infrastructure_provider", context={"provider": provider_fake_obj})
         soft_assert(
