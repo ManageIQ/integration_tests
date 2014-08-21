@@ -31,7 +31,6 @@ sphinx-rtd-theme
 sqlalchemy
 suds
 tornado
-UnittestZero
 ui-navigate
 
 ###
