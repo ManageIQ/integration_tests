@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+import re
 import requests
 try:
     # Faster, C-ext
@@ -53,8 +54,13 @@ def test_contents(guides, soft_assert):
         pdf = PdfFileReader(StringIO(data.content))
         pdf_info = pdf.getDocumentInfo()
         soft_assert("CloudForms" in pdf_info["/Title"], "CloudForms is not in the title!")
-        soft_assert(pytest.sel.text(locator) in pdf_info["/Title"], "{} not in {}".format(
-            pytest.sel.text(locator), pdf_info["/Title"]))
+
+        # don't include the word 'guide'
+        p = re.compile("(.*) Guide")
+        title_text = p.search(pytest.sel.text(locator)).group(1).lower()
+        pdf_title = pdf_info["/Title"].lower()
+        soft_assert(title_text in pdf_title, "{} not in {}".format(
+            title_text, pdf_title))
 
 
 @pytest.mark.bugzilla(1026939)
