@@ -45,6 +45,7 @@ def vm_name(request, provider_mgmt):
     return vm_name
 
 
+@pytest.mark.bugzilla(1131330)
 def test_provision_from_template(request, setup_providers, provider_crud, provisioning, vm_name):
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
