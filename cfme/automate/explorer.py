@@ -259,10 +259,7 @@ def set_domain_order(items):
 
 class Namespace(TreeNode, Updateable):
     form = Form(fields=[('name', "//*[@id='ns_name']"),
-                        ('description', "//*[@id='ns_description']"),
-
-                        # Can't use generic form_buttons here, get multiple matches
-                        ('add_btn', "//ul[@id='form_buttons']/li/img[@alt='Add']")])
+                        ('description', "//*[@id='ns_description']")])
 
     @staticmethod
     def make_path(*names, **kwargs):
@@ -303,7 +300,7 @@ class Namespace(TreeNode, Updateable):
         form_data = {'name': self.name,
                      'description': self.description}
         try:
-            fill(self.form, form_data, action=form_buttons.cancel if cancel else self.form.add_btn)
+            fill(self.form, form_data, action=form_buttons.cancel if cancel else form_buttons.add)
             flash.assert_success_message('Automate Namespace "%s" was added' % self.name)
         finally:
             # if there was a validation error we need to cancel out
