@@ -15,6 +15,28 @@ secondlevel_links_loc = toplevel_loc + '/../ul'
 secondlevel_loc = secondlevel_links_loc + '/li/a[normalize-space(.)="%s"]'
 secondlevel_first_item_loc = secondlevel_links_loc + '/li[1]/a'
 
+
+def get_top_level_element(title):
+    """Returns the ``li`` element representing the menu item in top-level menu."""
+    return sel.element("//div[@class='navbar']/ul/li/a[normalize-space(.)='{}']/..".format(title))
+
+
+def open_top_level(title):
+    """Opens the section."""
+    sel.raw_click(sel.element("./a", root=get_top_level_element(title)))
+
+
+def get_second_level_element(top_level_el, title):
+    """Returns the ``li`` element representing the menu item in second-level menu."""
+    return sel.element("./ul/li/a[normalize-space(.)='{}']/..".format(title), root=top_level_el)
+
+
+def open_second_level(top_level_element, title):
+    """Click on second-level menu."""
+    second = get_second_level_element(top_level_element, title)
+    sel.raw_click(sel.element("./a", root=second))
+
+
 # Dictionary of (nav destination name, section title) section tuples
 # Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel sections
 sections = {
@@ -81,28 +103,16 @@ sections = {
 def nav_to_fn(toplevel, secondlevel=None):
     def f(_):
         try:
-            toplevel_elem = sel.element(toplevel_loc % toplevel)
+            # Click always if not specified, otherwise just if it is not selected
+            open_top_level(toplevel)
         except NoSuchElementException:
             if visible_toplevel_tabs():  # Target menu is missing
                 raise
             else:
                 return  # no menu at all, assume single permission
 
-        if secondlevel is None:
-            sel.raw_click(toplevel_elem)
-        else:
-            sel.move_to_element(toplevel_elem)
-            for (toplevel_dest, toplv), secondlevels in sections.items():
-                if toplv == toplevel:
-
-                    try:
-                        sel.move_to_element(sel.element(secondlevel_first_item_loc % toplevel))
-                    except NoSuchElementException:
-                        # Target menu is missing
-                        sel.raw_click(toplevel_elem)
-                        return  # no 2nd lvl menu, assume single permission
-                    break
-            sel.raw_click(secondlevel_loc % (toplevel, secondlevel))
+        if secondlevel is not None:
+            open_second_level(get_top_level_element(toplevel), secondlevel)
     return f
 
 
