@@ -7,15 +7,16 @@ import re
 from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    CheckboxTree, Form, Region, Quadicon, Tree, accordion, fill, flash, form_buttons, paginator,
-    toolbar
+    Calendar, CheckboxTree, Form, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
+    paginator, toolbar
 )
 from cfme.web_ui.menu import nav
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.log import logger
+from utils.timeutil import parsetime
 from utils.virtual_machines import deploy_template
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
 from utils import version
 
 QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
@@ -65,6 +66,13 @@ snapshot_form = Form(
         ('cancel_button', form_buttons.cancel)
     ])
 
+
+retire_form = Form(fields=[
+    ('date_retire', Calendar("miq_date_1")),
+    ('warn', sel.Select("select#retirement_warn"))
+])
+
+retire_remove_button = "//span[@id='remove_button']/a/img"
 
 nav.add_branch(
     'infrastructure_virtual_machines',
@@ -520,6 +528,50 @@ class Vm(object):
         wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30)
         if load_details:
             self.load_details()
+
+    @property
+    def retirement_date(self):
+        """Returns the retirement date of the selected machine.
+
+        Returns:
+            :py:class:`NoneType` if there is none, or :py:class:`utils.timeutil.parsetime`
+        """
+        date_str = self.get_detail(properties=("Lifecycle", "Retirement Date")).strip()
+        if date_str.lower() == "never":
+            return None
+        return parsetime.from_american_date_only(date_str)
+
+    def set_retirement_date(self, when, warn=None):
+        """Sets the retirement date for this Vm object.
+
+        It incorporates some magic to make it work reliably since the retirement form is not very
+        pretty and it can't be just "done".
+
+        Args:
+            when: When to retire. :py:class:`str` in format mm/dd/yy of
+                :py:class:`datetime.datetime` or :py:class:`utils.timeutil.parsetime`.
+            warn: When to warn, fills the select in the form in case the ``when`` is specified.
+        """
+        self.load_details()
+        lcl_btn("Set Retirement Date")
+        sel.wait_for_element("#miq_date_1")
+        if when is None:
+            try:
+                wait_for(lambda: sel.is_displayed(retire_remove_button), num_sec=5, delay=0.2)
+                sel.click(retire_remove_button)
+                wait_for(lambda: not sel.is_displayed(retire_remove_button), num_sec=10, delay=0.2)
+                sel.click(form_buttons.save)
+            except TimedOutError:
+                pass
+        else:
+            if len(sel.value(retire_form.date_retire).strip()) > 0:
+                sel.click(retire_remove_button)
+                wait_for(lambda: not sel.is_displayed(retire_remove_button), num_sec=15, delay=0.2)
+            fill(retire_form.date_retire, when)
+            wait_for(lambda: sel.is_displayed(retire_remove_button), num_sec=15, delay=0.2)
+            if warn is not None:
+                fill(retire_form.warn, warn)
+            sel.click(form_buttons.save)
 
 
 def _method_setup(vm_names, provider_crud=None):
