@@ -536,13 +536,13 @@ class VMWareSystem(MgmtSystemAPIBase):
         raise NotImplementedError('This function is not supported on this platform.')
 
     def list_host(self):
-        return self.api.get_hosts()
+        return self.api.get_hosts().values()
 
     def list_datastore(self):
-        return self.api.get_datastores()
+        return self.api.get_datastores().values()
 
     def list_cluster(self):
-        return self.api.get_clusters()
+        return self.api.get_clusters().values()
 
     def info(self):
         return '%s %s' % (self.api.get_server_type(), self.api.get_api_version())
