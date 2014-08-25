@@ -55,6 +55,8 @@ pytest_generate_tests = testgen.generate(
     scope="module"
 )
 
+pytestmark = [pytest.mark.long_running]
+
 
 def get_vm_object(vm_name):
     """Looks up the CFME database for the VM.
