@@ -399,7 +399,8 @@ pytest_generate_tests = testgen.generate(
 
 
 @pytest.mark.bugzilla(
-    1118831, unskip={1118831: lambda appliance_version: appliance_version < "5.3"})
+    1118831, 1131480, 1132578,
+    unskip={1118831: lambda appliance_version: appliance_version < "5.3"})
 @pytest.mark.fixtureconf(server_roles="+automate")
 @pytest.mark.usefixtures("setup_infrastructure_providers", "server_roles")
 def test_provision_via_soap(
