@@ -5,29 +5,35 @@ from cfme.infrastructure.host import get_all_hosts
 from cfme.infrastructure.provider import get_all_providers
 from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
+from cfme.login import login_admin
 from cfme.web_ui import listaccordion as list_acc
 from cfme.web_ui import paginator
 from cfme.web_ui import Quadicon
+from utils.browser import ensure_browser_open
 from utils.conf import ui_bench_tests
 from utils.log import logger
 from utils.pagestats import PageStat
 from utils.path import log_path
 from utils.ssh import SSHTail
 from selenium.common.exceptions import NoSuchElementException
+from time import time
 import csv
-import datetime
 import re
 
 
 def analyze_page_stat(pages, soft_assert):
     for page in pages:
         logger.info(page)
-        if page.completedin > ui_bench_tests['threshold']['page_render']:
+        if page.completedintime > ui_bench_tests['threshold']['page_render']:
             soft_assert(False, 'Page Render Threshold ({} ms) exceeded: {}'.format(
                 ui_bench_tests['threshold']['page_render'], page))
             logger.warning('Slow Page, Slow Query(>1s) Count: %d' % len(page.slowselects))
             for slow in page.slowselects:
-                logger.warning('Slow Query Log Line: ' + slow)
+                logger.warning('Slow Query Log Line: {}'.format(slow))
+        if page.transactiontime > ui_bench_tests['threshold']['transaction']:
+            soft_assert(False, 'Page Transaction Threshold ({} ms) exceeded: {}'.format(
+                ui_bench_tests['threshold']['transaction'], page))
+            logger.warning('Slow Page Transaction Time')
         if page.selectcount > ui_bench_tests['threshold']['query_count']:
             soft_assert(False, 'Query Cnt Threshold ({}) exceeded:    {}'.format(
                 ui_bench_tests['threshold']['query_count'], page))
@@ -38,7 +44,9 @@ def any_in(items, thing):
     return any(item in thing for item in items)
 
 
-def navigate_every_quadicon(qnames, qtype, page_name, soft_assert, acc_topbars=[], num_q_nav=0):
+def navigate_every_quadicon(qnames, qtype, page_name, num_q_nav, ui_worker_pid, prod_tail,
+        soft_assert, acc_topbars=[]):
+    pages = []
     count = 0
     if num_q_nav == 0:
         count = -1
@@ -48,7 +56,10 @@ def navigate_every_quadicon(qnames, qtype, page_name, soft_assert, acc_topbars=[
             for page in paginator.pages():
                 quadicon = Quadicon(str(q), qtype)
                 if sel.is_displayed(quadicon):
-                    sel.click(quadicon)
+
+                    pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, sel.click,
+                        quadicon), soft_assert))
+
                     for topbar in acc_topbars:
                         try:
                             if not list_acc.is_active(topbar):
@@ -65,7 +76,9 @@ def navigate_every_quadicon(qnames, qtype, page_name, soft_assert, acc_topbars=[
                                     if any_in(dnn, links[link].title):
                                         logger.debug('DNN Skipping: {}'.format(links[link].title))
                                     else:
-                                        links[link].click()
+                                        pages.extend(analyze_page_stat(perf_click(ui_worker_pid,
+                                            prod_tail, links[link].click), soft_assert))
+
                         except NoSuchElementException:
                             logger.warning('NoSuchElementException - page_name:{}, Quadicon:{},'
                                 ' topbar:{}, link title:{}'.format(page_name, q, topbar,
@@ -76,9 +89,13 @@ def navigate_every_quadicon(qnames, qtype, page_name, soft_assert, acc_topbars=[
                             break
                     count += 1
                     break
-            sel.force_navigate(page_name)
+
+            pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, sel.force_navigate,
+                page_name), soft_assert))
+
             if not num_q_nav == 0 and count == num_q_nav:
                 break
+    return pages
 
 
 def navigate_tree_vms(tree_contents, path, paths):
@@ -101,9 +118,9 @@ def standup_page_renders_n_queries(ssh_client):
         ' | awk \'{print $7}\'')
     assert exit_status == 0
 
-    miq_uiworker_pid = str(out).strip()
+    ui_worker_pid = str(out).strip()
     if out:
-        logger.info('Obtained MiqUiWorker PID: {}'.format(miq_uiworker_pid))
+        logger.info('Obtained MiqUiWorker PID: {}'.format(ui_worker_pid))
     else:
         logger.error('Could not obtain MiqUiWorker PID, check evmserverd running...')
         assert out
@@ -112,7 +129,7 @@ def standup_page_renders_n_queries(ssh_client):
     prod_tail = SSHTail('/var/www/miq/vmdb/log/production.log')
     prod_tail.set_initial_file_end()
 
-    return miq_uiworker_pid, prod_tail
+    return ui_worker_pid, prod_tail
 
 
 def pages_to_csv(pages, file_name):
@@ -125,16 +142,23 @@ def pages_to_csv(pages, file_name):
         csvwriter.writerow(dict(page))
 
 
-def parse_production_log(miq_uiworker_pid, tailer):
+def perf_click(uiworker_pid, tailer, clickable, *args):
     # Regular Expressions to find the ruby production completed time and select query time
     status_re = re.compile(r'Completed\s([0-9]*\s[a-zA-Z]*)\sin\s([0-9]*)ms')
     select_query_time_re = re.compile(r'\s\(([0-9\.]*)ms\)')
-    worker_pid = '#' + miq_uiworker_pid
+    worker_pid = '#' + uiworker_pid
+
+    # Time the UI transaction from "click"
+    transactiontime = 0
+    if clickable:
+        starttime = time()
+        clickable(*args)
+        transactiontime = int((time() - starttime) * 1000)
 
     pgstats = []
     pgstat = PageStat()
     line_count = 0
-    starttime = datetime.datetime.utcnow()
+    starttime = time()
 
     for line in tailer:
         line_count += 1
@@ -156,7 +180,7 @@ def parse_production_log(miq_uiworker_pid, tailer):
                 status_result = status_re.search(line)
                 if status_result:
                     pgstat.status = status_result.group(1)
-                    pgstat.completedin = int(status_result.group(2))
+                    pgstat.completedintime = int(status_result.group(2))
 
                 # Redirects don't always have a view timing
                 try:
@@ -171,34 +195,39 @@ def parse_production_log(miq_uiworker_pid, tailer):
                     pass
                 pgstats.append(pgstat)
                 pgstat = PageStat()
-
-    endtime = datetime.datetime.utcnow()
-    timediff = endtime - starttime
+    if pgstats:
+        pgstats[-1].transactiontime = transactiontime
+    timediff = time() - starttime
     logger.debug('Parsed ({}) lines in {}'.format(line_count, timediff))
     return pgstats
 
 
 def test_ems_infra_render_times_n_queries(ssh_client, soft_assert):
-    miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+    ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
     if 'num_ems_infra_check' not in ui_bench_tests['page_check']:
         ui_bench_tests['page_check']['num_ems_infra_check'] = 0
 
-    navigate_every_quadicon(get_all_providers(), 'infra_prov', 'infrastructure_providers',
-        soft_assert, [], ui_bench_tests['page_check']['num_ems_infra_check'])
-
-    pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
+    pages = navigate_every_quadicon(get_all_providers(), 'infra_prov', 'infrastructure_providers',
+        ui_bench_tests['page_check']['num_ems_infra_check'], ui_worker_pid, prod_tail, soft_assert)
 
     pages_to_csv(pages, 'page_renders_n_queries_ems_infra.csv')
 
 
 def test_ems_cluster_render_times_n_queries(ssh_client, soft_assert):
-    miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+    ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
     if 'num_ems_cluster_check' not in ui_bench_tests['page_check']:
         ui_bench_tests['page_check']['num_ems_cluster_check'] = 0
 
-    sel.force_navigate('infrastructure_clusters')
+    pages = []
+
+    ensure_browser_open()
+    pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, login_admin), soft_assert))
+
+    pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, sel.force_navigate,
+        'infrastructure_clusters'), soft_assert))
+
     clusters = set([])
     for page in paginator.pages():
         for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
@@ -207,40 +236,41 @@ def test_ems_cluster_render_times_n_queries(ssh_client, soft_assert):
 
     acc_bars = ['Properties', 'Relationships']
 
-    navigate_every_quadicon(clusters, 'cluster', 'infrastructure_clusters',
-        soft_assert, acc_bars, ui_bench_tests['page_check']['num_ems_cluster_check'])
-
-    pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
+    pages.extend(navigate_every_quadicon(clusters, 'cluster', 'infrastructure_clusters',
+        ui_bench_tests['page_check']['num_ems_cluster_check'], ui_worker_pid, prod_tail,
+        soft_assert, acc_bars))
 
     pages_to_csv(pages, 'page_renders_n_queries_ems_clusters.csv')
 
 
 def test_host_render_times_n_queries(ssh_client, soft_assert):
-    miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+    ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
     if 'num_host_infra_check' not in ui_bench_tests['page_check']:
         ui_bench_tests['page_check']['num_host_infra_check'] = 0
 
     acc_bars = ['Properties', 'Relationships', 'Security', 'Configuration']
 
-    navigate_every_quadicon(get_all_hosts(), 'host', 'infrastructure_hosts', soft_assert, acc_bars,
-        ui_bench_tests['page_check']['num_host_infra_check'])
-
-    pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
+    pages = navigate_every_quadicon(get_all_hosts(), 'host', 'infrastructure_hosts',
+        ui_bench_tests['page_check']['num_host_infra_check'], ui_worker_pid, prod_tail, soft_assert,
+        acc_bars)
 
     pages_to_csv(pages, 'page_renders_n_queries_host_infra.csv')
 
 
 def test_vm_infra_render_times_n_queries(ssh_client, soft_assert):
-    miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+    ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
-    sel.force_navigate('infrastructure_virtual_machines')
-    pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
+    ensure_browser_open()
+    pages = analyze_page_stat(perf_click(ui_worker_pid, prod_tail, login_admin), soft_assert)
+
+    pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, sel.force_navigate,
+        'infrastructure_virtual_machines'), soft_assert))
 
     # Read the infrastructure tree in by expanding each folder
     logger.info('Starting to read the tree...')
     tree_contents = virtual_machines.visible_tree.read_contents()
-    pages.extend(analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert))
+    pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, None), soft_assert))
 
     logger.info('Creating Navigation path to every VM/Template...')
     vmpaths = []
@@ -251,14 +281,15 @@ def test_vm_infra_render_times_n_queries(ssh_client, soft_assert):
     for vm in vmpaths:
         logger.info('Navigating to VM/Template: {}'.format(vm[-1]))
         try:
-            virtual_machines.visible_tree.click_path(*vm)
-            pages.extend(analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail),
-                soft_assert))
+            pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail,
+                virtual_machines.visible_tree.click_path, *vm), soft_assert))
             count += 1
             # Navigate out of the vm infrastructure page every 4th vm
             if (count % 4) == 3:
-                sel.force_navigate('dashboard')
-                sel.force_navigate('infrastructure_virtual_machines')
+                pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail,
+                    sel.force_navigate, 'dashboard'), soft_assert))
+                pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail,
+                    sel.force_navigate, 'infrastructure_virtual_machines'), soft_assert))
         except CandidateNotFound:
             logger.info('Could not navigate to: '.format(vm[-1]))
 
@@ -269,12 +300,17 @@ def test_vm_infra_render_times_n_queries(ssh_client, soft_assert):
 
 
 def test_resource_pool_render_times_n_queries(ssh_client, soft_assert):
-    miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+    ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
     if 'num_ems_resource_pool_check' not in ui_bench_tests['page_check']:
         ui_bench_tests['page_check']['num_ems_resource_pool_check'] = 0
 
-    sel.force_navigate('infrastructure_resource_pools')
+    ensure_browser_open()
+    pages = analyze_page_stat(perf_click(ui_worker_pid, prod_tail, login_admin), soft_assert)
+
+    pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, sel.force_navigate,
+        'infrastructure_resource_pools'), soft_assert))
+
     resource_pools = set([])
     for page in paginator.pages():
         for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
@@ -283,25 +319,24 @@ def test_resource_pool_render_times_n_queries(ssh_client, soft_assert):
 
     acc_bars = ['Properties', 'Relationships']
 
-    navigate_every_quadicon(resource_pools, 'resource_pool', 'infrastructure_resource_pools',
-        soft_assert, acc_bars, ui_bench_tests['page_check']['num_ems_resource_pool_check'])
-
-    pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
+    pages.extend(navigate_every_quadicon(resource_pools, 'resource_pool',
+        'infrastructure_resource_pools',
+        ui_bench_tests['page_check']['num_ems_resource_pool_check'], ui_worker_pid, prod_tail,
+        soft_assert, acc_bars))
 
     pages_to_csv(pages, 'page_renders_n_queries_resource_pool.csv')
 
 
 def test_storage_render_times_n_queries(ssh_client, soft_assert):
-    miq_uiworker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+    ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
     if 'num_storage_check' not in ui_bench_tests['page_check']:
         ui_bench_tests['page_check']['num_storage_check'] = 0
 
     acc_bars = ['Properties', 'Relationships', 'Content']
 
-    navigate_every_quadicon(get_all_datastores(), 'datastore', 'infrastructure_datastores',
-        soft_assert, acc_bars, ui_bench_tests['page_check']['num_storage_check'])
-
-    pages = analyze_page_stat(parse_production_log(miq_uiworker_pid, prod_tail), soft_assert)
+    pages = navigate_every_quadicon(get_all_datastores(), 'datastore', 'infrastructure_datastores',
+        ui_bench_tests['page_check']['num_storage_check'], ui_worker_pid, prod_tail, soft_assert,
+        acc_bars)
 
     pages_to_csv(pages, 'page_renders_n_queries_storage.csv')
