@@ -14,7 +14,7 @@ def main():
     parser = argparse.ArgumentParser(epilog=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('address', help='hostname or ip address of target appliance')
-    parser.add_argument('repo_url', help='updates base url')
+    parser.add_argument("-u", "--url", action="append", help="url(s) to use for update")
     parser.add_argument('--reboot', help='reboot after installation ' +
         '(required for proper operation)', action="store_true")
 
@@ -30,12 +30,15 @@ def main():
     client = SSHClient(**ssh_kwargs)
 
     # create repo file
-    repo_file = "[rhel-updates]\nname=rhel6-updates\nbaseurl=" + \
-                args.repo_url + "\nenabled=1\ngpgcheck=0"
+    repo_file_contents = ""
+    for i, url in enumerate(args.url):
+        repo_file_contents += "[update-" + str(i) + "]\nname=update-url-" + str(i) + \
+            "\nbaseurl=" + url + "\nenabled=1\ngpgcheck=0\n\n"
 
     # create repo file on appliance
     print 'Create update repo file'
-    status, out = client.run_command('echo "%s" >/etc/yum.repos.d/rhel_updates.repo' % repo_file)
+    status, out = client.run_command(
+        'echo "%s" >/etc/yum.repos.d/updates.repo' % repo_file_contents)
 
     # update
     print 'Running rhel updates...'
