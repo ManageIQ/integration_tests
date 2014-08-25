@@ -221,3 +221,11 @@ class UnknownProviderType(CFMEException):
     or when an infra provider is passed to the cloud's instance_factory method
     """
     pass
+
+
+class AccordionItemNotFound(CFMEException):
+    """Raised when it's not possible to locate and accordion item."""
+
+
+class CannotScrollException(CFMEException):
+    """Raised when even during the heaviest workarounds for scrolling failure comes."""
