@@ -54,7 +54,7 @@ def provider_init(provider_key):
 def dialog():
     dialog = "dialog_" + generate_random_string()
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                     submit=True, cancel=True)
+                                   submit=True, cancel=True)
     service_dialog.create()
     flash.assert_success_message('Dialog "%s" was added' % dialog)
     yield dialog
@@ -63,8 +63,7 @@ def dialog():
 @pytest.yield_fixture(scope="function")
 def catalog():
     cat_name = "cat_" + generate_random_string()
-    catalog = Catalog(name=cat_name,
-                  description="my catalog")
+    catalog = Catalog(name=cat_name, description="my catalog")
     catalog.create()
     yield catalog
 
@@ -81,9 +80,9 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 @pytest.mark.bugzilla(1131330)
 @pytest.mark.usefixtures('setup_providers')
 def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud,
-                          provider_type, provisioning, dialog, catalog, request):
-    # tries to delete the VM that gets created here
+                            provider_type, provisioning, dialog, catalog, request):
     vm_name = 'test_servicecatalog-%s' % generate_random_string()
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     image = provisioning['image']['name']
     item_name = generate_random_string()
 
@@ -108,9 +107,9 @@ def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider
     service_catalogs.order(catalog.name, cloud_catalog_item)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s' % item_name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (item_name, item_name)
+    row_description = 'Provisioning [%s] for Service [%s]' %\
+        (item_name, item_name)
     cells = {'Description': row_description}
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
+                       fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'Request complete'
