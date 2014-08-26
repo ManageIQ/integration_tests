@@ -97,15 +97,8 @@ class TestSingleApplianceMigration():
         # re-init the connection, times out over long migrations
         appliance_ssh.close()
         appliance_ssh = this_appliance.ssh_client()
-        appliance_ssh.get_file("/tmp/restore.out", ".")
-        appliance_ssh.get_file("/tmp/migrate.out", ".")
-
-        # Log the restore/migration output
-        for log in ['./restore.out', './migrate.out']:
-            process = sub.Popen("cat " + log + "; rm -rf " + log,
-                                shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
-            output, error = process.communicate()
-            logger.info(log + " output: \n" + output)
+        rc, output = appliance_ssh.run_command("gzip -c /root/output.log > /root/" + backup_test + "_output.gz")
+        appliance_ssh.get_file("/root/" + backup_test + "_output.gz", ".")
 
         # get database table counts
         this_db = this_appliance.db
