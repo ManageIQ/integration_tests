@@ -2,6 +2,7 @@
 
 import pytest
 import time
+import subprocess as sub
 from utils.appliance import provision_appliance
 from utils.conf import cfme_data, migration_tests
 from utils.log import logger
@@ -52,7 +53,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.yield_fixture()
 def this_appliance(backup_test):
-    vm_name = "test_migration_" + backup_test
+    vm_name = "tst_migration_" + backup_test
     provider = cfme_data["basic_info"]["appliances_provider"]
     template = cfme_data['basic_info']['appliance_template_big_db_disk']
 
@@ -67,7 +68,7 @@ def this_appliance(backup_test):
 
     # delete appliance
     logger.info("Delete provisioned appliance: " + appliance.address)
-    appliance.destroy()
+    #appliance.destroy()
 
 
 @pytest.mark.usefixtures("backups")
@@ -101,10 +102,10 @@ class TestSingleApplianceMigration():
 
         # Log the restore/migration output
         for log in ['./restore.out', './migrate.out']:
-            logger.info("Contents of %s" % log)
-            with open(log, 'r') as f:
-                for line in f:
-                    logger.info(line)
+            process = sub.Popen("cat " + log + "; rm -rf " + log,
+                                shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
+            output, error = process.communicate()
+            logger.info(log + " output: \n" + output)
 
         # get database table counts
         this_db = this_appliance.db
