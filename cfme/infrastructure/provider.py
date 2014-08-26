@@ -121,12 +121,12 @@ class Provider(Updateable, Pretty):
     """
     pretty_attr = ['name', 'key', 'zone']
 
-    def __init__(self, name=None, credentials=None, key=None, zone=None):
+    def __init__(self, name=None, credentials=None, key=None, zone=None, candu=None):
         self.name = name
         self.credentials = credentials
         self.key = key
         self.zone = zone
-        self.candu = None
+        self.candu = candu
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}

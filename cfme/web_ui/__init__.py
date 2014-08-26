@@ -973,11 +973,14 @@ def fill(loc, content):
         fill(myform, [ ... data to fill ...])
         fill(radio, "choice to select")
 
+    Returns: True if any UI action was taken, False otherwise
+
     """
     action, logval = fill_tag(loc, content)
     logger.debug('  Filling in [%s], with value "%s"' % (loc, logval))
-    action(loc, content)
+    prev_state = action(loc, content)
     sel.detect_observed_field(loc)
+    return prev_state
 
 
 @fill.method((Table, Mapping))
@@ -988,6 +991,7 @@ def _sd_fill_table(table, cells):
     table._update_cache()
     logger.debug('  Clicking Table cell')
     table.click_cells(cells)
+    return bool(cells)
 
 
 @fill.method((CheckboxTable, object))
@@ -998,20 +1002,22 @@ def _sd_fill_checkboxtable(table, cells):
     table._update_cache()
     logger.debug('  Selecting CheckboxTable row')
     table.select_rows(cells)
+    return bool(cells)
 
 
 @fill.method((Callable, object))
 def fill_callable(f, val):
     """Fill in a Callable by just calling it with the value, allow for arbitrary actions"""
-    f(val)
+    return f(val)
 
 
 @fill.method((Select, object))
 def fill_select(slist, val):
     stype = type(slist)
     logger.debug('  Filling in %s with value %s' % (stype, val))
-    sel.select(slist, val)
+    prev_sel = sel.select(slist, val)
     slist.observer_wait()
+    return prev_sel
 
 
 class Calendar(Pretty):
@@ -1049,6 +1055,7 @@ def _sd_fill_date(calendar, value):
 
     # need to write to a readonly field: resort to evil
     sel.set_attribute(input, "value", date_str)
+    return True
 
 
 @fill.method((object, types.NoneType))
@@ -1114,9 +1121,8 @@ class Form(Region):
 
 
 @fill.method((Form, Sequence))
-def _fill_form_list(form, values, action=None):
-    """
-    Fills in field elements on forms
+def _fill_form_list(form, values, action=None, action_always=False):
+    """Fills in field elements on forms
 
     Takes a set of values in dict or supertuple format and locates form elements,
     in the correct order, and fills them in.
@@ -1132,26 +1138,36 @@ def _fill_form_list(form, values, action=None):
             multiple values to be clicked on in a single call.
         action: a locator which will be clicked when the form filling is complete
 
+        action_always: if True, perform the action even if none of the
+                       values to be filled in required any UI
+                       interaction (eg, text boxes already had the
+                       text to be filled in, checkbox already checked,
+                       etc)
+
     """
     logger.info('Beginning to fill in form...')
     values = list(val for key in form.fields for val in values if val[0] == key[0])
-
+    res = []
     for field, value in values:
         if value is not None:
             loc = form.locators[field]
             logger.debug(' Dispatching fill for "%s"' % field)
-            fill(loc, value)  # re-dispatch to fill for each item
+            fill_prev = fill(loc, value)  # re-dispatch to fill for each item
+            res.append(fill_prev != value)  # note whether anything changed
+        else:
+            res.append(False)
 
-    if action:
+    if action and (any(res) or action_always):  # only perform action if something changed
         logger.debug(' Invoking end of form action')
         fill(action, True)  # re-dispatch with truthy value
     logger.debug('Finished filling in form')
+    return any(res) or action_always
 
 
 @fill.method((object, Mapping))
 def _fill_form_dict(form, values, action=None):
     """Fill in a dict by converting it to a list"""
-    fill(form, values.items(), action=action)
+    return fill(form, values.items(), action=action)
 
 
 class Radio(Pretty):

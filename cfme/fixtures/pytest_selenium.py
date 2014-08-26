@@ -51,6 +51,9 @@ class ByValue(Pretty):
     def __init__(self, value):
         self.value = value
 
+    def __eq__(self, other):
+        return self.value == other.value
+
 
 class ByText(Pretty):
     pretty_attrs = ['text']
@@ -60,6 +63,9 @@ class ByText(Pretty):
 
     def __str__(self):
         return str(self.text)
+
+    def __eq__(self, other):
+        return self.text == other.text
 
 
 @singledispatch
@@ -356,6 +362,7 @@ def click(loc, wait_ajax=True, no_custom_handler=False):
     # -> using this approach, we don't check if we clicked a specific element
     if wait_ajax:
         wait_for_ajax()
+    return True
 
 
 def raw_click(loc, wait_ajax=True):
@@ -385,6 +392,7 @@ def double_click(loc, wait_ajax=True):
     # -> using this approach, we don't check if we clicked a specific element
     if wait_ajax:
         wait_for_ajax()
+    return True
 
 
 def move_to_element(loc, **kwargs):
@@ -516,13 +524,15 @@ def checkbox(loc, set_to=False):
         loc: The locator of the element
         value: The value the checkbox should represent as a bool (or None to do nothing)
 
-    Returns: None
+    Returns: Previous state of the checkbox
     """
     if set_to is not None:
         el = move_to_element(loc)
-        if el.is_selected() is not set_to:
+        selected = el.is_selected()
+        if selected is not set_to:
             logger.debug("Setting checkbox %s to %s" % (str(loc), str(set_to)))
             click(el)
+        return selected
 
 
 def check(loc):
@@ -532,7 +542,7 @@ def check(loc):
     Args:
         loc: The locator of the element
     """
-    checkbox(loc, True)
+    return checkbox(loc, True)
 
 
 def uncheck(loc):
@@ -542,7 +552,7 @@ def uncheck(loc):
     Args:
         loc: The locator of the element
     """
-    checkbox(loc, False)
+    return checkbox(loc, False)
 
 
 def multi_check(locators):
@@ -551,9 +561,11 @@ def multi_check(locators):
     Args:
         locators: :py:class:`dict` or :py:class:`list` or whatever iterable of tuples.
             Key is the locator, value bool with check status.
+
+    Returns: list of booleans indicating for each locator, whether any action was taken.
+
     """
-    for locator, checked in dict(locators).iteritems():
-        checkbox(locator, checked)
+    return [checkbox(locator, checked) for locator, checked in dict(locators).iteritems()]
 
 
 def current_url():
@@ -858,11 +870,17 @@ def set_text(loc, text):
     Args:
         loc: A locator, expects either a string, WebElement, tuple.
         text: The text to inject into the element.
+
+    Returns:
+        Any text that might have been in the textbox element already
     """
     if text is not None:
         el = move_to_element(loc)
-        el.clear()
-        send_keys(el, text)
+        old_text = el.get_attribute('value')
+        if text != old_text:
+            el.clear()
+            send_keys(el, text)
+        return old_text
 
 
 class Select(SeleniumSelect, Pretty):
@@ -908,35 +926,44 @@ def select(loc, o):
 
 @select.method((object, ByValue))
 def _select_tuple(loc, val):
-    select_by_value(Select(loc), val.value)
+    return select_by_value(Select(loc), val.value)
 
 
 @select.method((object, basestring))
 @select.method((object, ByText))
 def _select_str(loc, s):
-    select_by_text(Select(loc), str(s))
+    return select_by_text(Select(loc), str(s))
 
 
 @select.method((object, Iterable))
 def _select_iter(loc, items):
-    for item in items:
-        select(loc, item)
+    return [select(loc, item) for item in items]
 
 
-def select_by_text(select_element, text):
+def _sel_desel(el, getter_fn, setter_attr, item):
+    if item is not None:
+        old_item = getter_fn(el)
+        if old_item != item:
+            getattr(el, setter_attr)(item)
+            wait_for_ajax()
+        return old_item
+
+
+def select_by_text(select_element, txt):
     """
     Works on a select element and selects an option by the visible text.
 
     Args:
         loc: A locator, expects either a string, WebElement, tuple.
         text: The select element option's visible text.
+
+    Returns: previously selected text
     """
-    if text is not None:
-        select_element.select_by_visible_text(text)
-        wait_for_ajax()
+    return _sel_desel(select_element, lambda s: s.first_selected_option.text,
+                      'select_by_visible_text', txt)
 
 
-def select_by_value(select_element, value):
+def select_by_value(select_element, val):
     """
     Works on a select element and selects an option by the value attribute.
 
@@ -944,12 +971,10 @@ def select_by_value(select_element, value):
         loc: A locator, expects either a string, WebElement, tuple.
         value: The select element's option value.
     """
-    if value is not None:
-        select_element.select_by_value(value)
-        wait_for_ajax()
+    return _sel_desel(select_element, lambda s: ByValue(value(s)), 'select_by_value', val)
 
 
-def deselect_by_text(select_element, text):
+def deselect_by_text(select_element, txt):
     """
     Works on a select element and deselects an option by the visible text.
 
@@ -957,12 +982,11 @@ def deselect_by_text(select_element, text):
         loc: A locator, expects either a string, WebElement, tuple.
         text: The select element option's visible text.
     """
-    if text is not None:
-        select_element.deselect_by_visible_text(text)
-        wait_for_ajax()
+    return _sel_desel(select_element, lambda s: s.first_selected_option.text,
+                      'deselect_by_visible_text', txt)
 
 
-def deselect_by_value(select_element, value):
+def deselect_by_value(select_element, val):
     """
     Works on a select element and deselects an option by the value attribute.
 
@@ -970,9 +994,7 @@ def deselect_by_value(select_element, value):
         loc: A locator, expects either a string, WebElement, tuple.
         value: The select element's option value.
     """
-    if value is not None:
-        select_element.deselect_by_value(value)
-        wait_for_ajax()
+    return _sel_desel(select_element, lambda s: ByValue(value(s)), 'deselect_by_value', val)
 
 
 @multidispatch
@@ -982,19 +1004,18 @@ def deselect(loc, o):
 
 @deselect.method((object, ByValue))
 def _deselect_val(loc, val):
-    deselect_by_value(Select(loc), val.value)
+    return deselect_by_value(Select(loc), val.value)
 
 
 @deselect.method((object, basestring))
 @deselect.method((object, ByText))
 def _deselect_text(loc, s):
-    deselect_by_text(Select(loc), str(s))
+    return deselect_by_text(Select(loc), str(s))
 
 
 @deselect.method((object, Iterable))
 def _deselect_iter(loc, items):
-    for item in items:
-        deselect(loc, item)
+    return [deselect(loc, item) for item in items]
 
 
 def execute_script(script, *args, **kwargs):

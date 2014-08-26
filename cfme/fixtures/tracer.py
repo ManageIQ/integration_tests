@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import os.path
 import function_trace
 # disable traceback of the tracer functions
@@ -159,6 +160,14 @@ def pytest_runtest_call(__multicall__, item):
                     filename=filename)):
             __multicall__.execute()
 
+
+@contextmanager
+def trace_on():
+    with function_trace.trace_on(
+            tracer=function_trace.StdoutTracer(
+                to_trace,
+                depths=depths)):
+        yield
 
 # fix the representation of various classes to not suck
 
