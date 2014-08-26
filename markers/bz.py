@@ -427,6 +427,16 @@ class BugWrapper(object):
                 result.append(bug)
         return result
 
+    @property
+    def qa_whiteboard(self):
+        """Returns a set of QA Whiteboard markers.
+
+        It relies on the fact, that our QA Whiteboard uses format foo:bar:baz.
+
+        Should be able to handle cases like 'foo::bar', or 'abc:'.
+        """
+        return set([x.strip() for x in self._bug.qa_whiteboard.strip().split(":") if x.strip()])
+
     def __repr__(self):
         return repr(self._bug)
 
