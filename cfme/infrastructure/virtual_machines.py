@@ -7,8 +7,8 @@ import re
 from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
-    Calendar, CheckboxTree, Form, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
-    paginator, toolbar
+    CheckboxTree, Form, Region, Quadicon, Tree, accordion, fill, flash, form_buttons, paginator,
+    toolbar, Calendar, Select
 )
 from cfme.web_ui.menu import nav
 from functools import partial
@@ -125,6 +125,9 @@ nav.add_branch(
                         "infra_vms_filter": lambda ctx: visible_tree.click_path(ctx["filter_name"]),
                     }
                 ],
+
+                "infra_vm_by_name": lambda ctx: sel.click(ctx['vm'].find_quadicon(
+                    do_not_navigate=True))
             }
         ],
 
@@ -237,6 +240,11 @@ class Vm(object):
     STATE_ON = "on"
     STATE_OFF = "off"
     STATE_SUSPENDED = "suspended"
+
+    retirement_date_form = Form(fields=[
+        ('retirement_date_text', Calendar("miq_date_1")),
+        ('retirement_warning_select', Select("//select[@id='retirement_warn']"))
+    ])
 
     def __init__(self, name, provider_crud, template_name=None):
         self.name = name
@@ -528,6 +536,13 @@ class Vm(object):
         wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30)
         if load_details:
             self.load_details()
+
+    def retire(self):
+        sel.force_navigate("infra_vm_by_name", context={'vm': self})
+        lcl_btn("Retire this VM", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_success_message(
+            "Retire initiated for 1 VM and Instance from the CFME Database")
 
     @property
     def retirement_date(self):
