@@ -15,15 +15,15 @@ import ui_navigate as nav
 
 import cfme
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui.flash as flash
-import cfme.web_ui.form_buttons as form_buttons
+from cfme.web_ui import flash
+from cfme.web_ui import form_buttons
+from cfme.web_ui import toolbar as tb
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-import cfme.web_ui.toolbar as tb
-import utils.conf as conf
 from cfme.exceptions import (
     HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
 )
 from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
+from utils import conf
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
@@ -69,8 +69,7 @@ discover_form = Form(
         ('username', "//*[@id='userid']"),
         ('password', "//*[@id='password']"),
         ('password_verify', "//*[@id='verify']"),
-        ('start_button', "//input[@name='start']"),
-        ('cancel_button', "//input[@name='cancel']"),
+        ('start_button', form_buttons.FormButton("Start the Host Discovery"))
     ])
 
 properties_form = Form(
@@ -520,17 +519,13 @@ def discover(credential, cancel=False):
       cancel (boolean):  Whether to cancel out of the discover UI.
     """
     sel.force_navigate('clouds_provider_discover')
-    if cancel:  # normalize so that the form filler only clicks either start or cancel
-        cancel = True
-    else:
-        cancel = None
-    form_data = {'start_button': not cancel,
-                 'cancel_button': cancel}
+    form_data = {}
     if credential:
         form_data.update({'username': credential.principal,
                           'password': credential.secret,
                           'password_verify': credential.verify_secret})
-    fill(discover_form, form_data)
+    fill(discover_form, form_data,
+         action=form_buttons.cancel if cancel else discover_form.start_button)
 
 
 def wait_for_a_provider():
