@@ -944,6 +944,7 @@ def fill_password(pwbox, password):
 @fill_tag.method(('a', Anything))
 @fill_tag.method(('img', Anything))
 @fill_tag.method((Anything, 'image'))
+@fill_tag.method((Anything, 'submit'))
 def fill_click(el, val):
     """Click only when given a truthy value"""
     def click_if(e, v):

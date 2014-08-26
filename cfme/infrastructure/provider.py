@@ -48,8 +48,7 @@ discover_form = Form(
         ('from_2', "//*[@id='from_third']"),
         ('from_3', "//*[@id='from_fourth']"),
         ('to_3', "//*[@id='to_fourth']"),
-        ('start_button', "//input[@name='start']"),
-        ('cancel_button', "//input[@name='cancel']"),
+        ('start_button', FormButton("Start the Host Discovery"))
     ])
 
 properties_form = Form(
@@ -546,12 +545,7 @@ def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None
         cancel:  Whether to cancel out of the discover UI.
     """
     sel.force_navigate('infrastructure_provider_discover')
-    if cancel:  # normalize so that the form filler only clicks either start or cancel
-        cancel = True
-    else:
-        cancel = None
-    form_data = {'start_button': not cancel,
-                 'cancel_button': cancel}
+    form_data = {}
     if rhevm:
         form_data.update({'rhevm_chk': True})
     if vmware:
@@ -565,7 +559,8 @@ def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None
         end_octet = end_ip.split('.')[-1]
         form_data.update({'to_3': end_octet})
 
-    fill(discover_form, form_data)
+    fill(discover_form, form_data,
+         action=form_buttons.cancel if cancel else discover_form.start_button)
 
 
 def wait_for_a_provider():
