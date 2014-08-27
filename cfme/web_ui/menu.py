@@ -2,6 +2,9 @@ import ui_navigate as nav
 
 from cfme.fixtures import pytest_selenium as sel
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
+from utils.wait import wait_for
+
 #: Locator for the unordered list that holds the top-level nav tabs.
 toplevel_tabs_loc = '//div[@class="navbar"]/ul'
 #: Locator for a specific top-level navigation tab.
@@ -14,6 +17,17 @@ secondlevel_links_loc = toplevel_loc + '/../ul'
 #: Needs a top-level tab name and second-level link name to be %-interpolated.
 secondlevel_loc = secondlevel_links_loc + '/li/a[normalize-space(.)="%s"]'
 secondlevel_first_item_loc = secondlevel_links_loc + '/li[1]/a'
+
+inactive_box_loc = "//ul[@id='maintab']//ul[contains(@class, 'inactive')]"
+
+
+def any_box_displayed():
+    """Checks whether any of the not-currently-selected toplevel items is hovered (active).
+
+    First part of the condition is for the 5.3+ pop-up, second is for 5.2.
+    """
+    return any(map(sel.is_displayed, sel.elements(inactive_box_loc)))\
+        or sel.is_displayed("//a[contains(@class, 'maintab_active')]")
 
 
 def get_top_level_element(title):
@@ -103,7 +117,7 @@ sections = {
 def nav_to_fn(toplevel, secondlevel=None):
     def f(_):
         try:
-            # Click always if not specified, otherwise just if it is not selected
+            # TODO: Now with the workaround few lines lower, it may be possible to spare clicks here
             open_top_level(toplevel)
         except NoSuchElementException:
             if visible_toplevel_tabs():  # Target menu is missing
@@ -112,6 +126,15 @@ def nav_to_fn(toplevel, secondlevel=None):
                 return  # no menu at all, assume single permission
 
         if secondlevel is not None:
+            # Move to the bottom-right (timedate)
+            # It is needed to go down there so we cannot accdentally hit the top menu in the next
+            # step. Slight performance hit on FF, almost none on Chrome.
+            ActionChains(sel.browser()).move_to_element(sel.element("#tP")).perform()
+            # Wait for the box going away. Required for 5.2 since there is a few secs timeout on it.
+            # Here is the thing. 5.3 does the popup which goes away immediately when moved away
+            # 5.2 does not do the popup, but instead of it the seond level menu changes.
+            # There is a few seconds timeout after which the second level menu restores its contents
+            wait_for(lambda: not any_box_displayed(), num_sec=10, delay=0.1, message="menu box")
             open_second_level(get_top_level_element(toplevel), secondlevel)
     return f
 
