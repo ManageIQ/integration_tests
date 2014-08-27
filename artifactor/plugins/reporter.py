@@ -13,11 +13,28 @@ artifactor:
 """
 
 from artifactor.utils import ArtifactorBasePlugin
+from copy import deepcopy
 from jinja2 import Environment, FileSystemLoader
 from utils.path import template_path
+import math
 import os
 import shutil
 import time
+import datetime
+
+
+_tests_tpl = {
+    '_sub': {},
+    '_stats': {
+        'passed': 0,
+        'failed': 0,
+        'skipped': 0,
+        'error': 0,
+        'xpassed': 0,
+        'xfailed': 0
+    },
+    '_duration': 0
+}
 
 
 class Reporter(ArtifactorBasePlugin):
@@ -115,11 +132,9 @@ class Reporter(ArtifactorBasePlugin):
             template_data['tests'].append(test_data)
         template_data['counts'] = counts
 
-        tests = {'_sub': {'tests': {'_sub': {}, '_stats': {
-            'passed': 0, 'failed': 0, 'skipped': 0,
-            'error': 0, 'xpassed': 0, 'xfailed': 0}}},
-            '_stats': {'passed': 0, 'failed': 0, 'skipped': 0,
-                       'error': 0, 'xpassed': 0, 'xfailed': 0}}
+        tests = deepcopy(_tests_tpl)
+        tests['_sub']['tests'] = deepcopy(_tests_tpl)
+
         for test in template_data['tests']:
             self.build_dict(test['name'].replace('cfme/', ''), tests, test)
 
@@ -138,21 +153,32 @@ class Reporter(ArtifactorBasePlugin):
             pass
 
     def build_dict(self, path, container, contents):
+        """
+        Build a hierarchical dictionary including information about the stats at each level
+        and the duration.
+        """
         segs = path.split('/')
         head = segs[0]
         end = segs[1:]
+
+        # If we are at the end node, ie a test.
         if not end:
             container['_sub'][head] = contents
             container['_stats'][contents['outcomes']['overall']] += 1
+            container['_duration'] += contents['duration']
+        # If we are in a module.
         else:
             if head not in container['_sub']:
-                container['_sub'][head] = {'_stats':
-                                           {'passed': 0, 'failed': 0, 'skipped': 0,
-                                            'error': 0, 'xpassed': 0, 'xfailed': 0}, '_sub': {}}
+                container['_sub'][head] = deepcopy(_tests_tpl)
+            # Call again to recurse down the tree.
             self.build_dict('/'.join(end), container['_sub'][head], contents)
             container['_stats'][contents['outcomes']['overall']] += 1
+            container['_duration'] += contents['duration']
 
     def build_li(self, lev):
+        """
+        Build up the actual HTML tree from the dict from build_dict
+        """
         bimdict = {'passed': 'success',
                    'failed': 'warning',
                    'error': 'danger',
@@ -161,19 +187,27 @@ class Reporter(ArtifactorBasePlugin):
                    'xfailed': 'success'}
         list_string = '<ul>\n'
         for k, v in lev['_sub'].iteritems():
+
+            # If 'name' is an attribute then we are looking at a test (leaf).
             if 'name' in v:
+                pretty_time = str(datetime.timedelta(seconds=math.ceil(v['duration'])))
                 teststring = '<span name="mod_lev" class="label label-primary">T</span>'
                 label = '<span class="label label-{}">{}</span>'.format(
                     bimdict[v['outcomes']['overall']], v['outcomes']['overall'].upper())
-                link = '<a href="#{}">{} {} {}</a>'.format(
-                    v['name'], os.path.split(v['name'])[1], teststring, label)
+                link = ('<a href="#{}">{} {} {} '
+                        '<span style="color:#888888"><em>[{}]</em></span></a>').format(
+                    v['name'], os.path.split(v['name'])[1], teststring, label, pretty_time)
                 list_string += '<li>{}</li>\n'.format(link)
+
+            # If there is a '_sub' attribute then we know we have other modules to go.
             elif '_sub' in v:
                 percenstring = ""
                 bmax = 0
                 for kek, val in v['_stats'].iteritems():
                     if kek not in ('skipped', 'xfailed'):
                         bmax += val
+                # If there were any NON skipped tests, we now calculate the percentage which
+                # passed.
                 if bmax:
                     percen = "{:.2f}".format(float(v['_stats']['passed']) / float(bmax) * 100)
                     if float(percen) == 100.0:
@@ -185,7 +219,13 @@ class Reporter(ArtifactorBasePlugin):
                     percenstring = '<span name="blab" class="label label-{}">{}%</span>'.format(
                         bimdict[level], percen)
                 modstring = '<span name="mod_lev" class="label label-primary">M</span>'
-                list_string += '<li>{} {}<span>&nbsp;</span>{}{}</li>\n'.format(k, modstring,
-                                                              str(percenstring), self.build_li(v))
+                pretty_time = str(datetime.timedelta(seconds=math.ceil(v['_duration'])))
+                list_string += ('<li>{} {}<span>&nbsp;</span>'
+                                '{}{}<span style="color:#888888">&nbsp;<em>[{}]'
+                                '</em></span></li>\n').format(k,
+                                                              modstring,
+                                                              str(percenstring),
+                                                              self.build_li(v),
+                                                              pretty_time)
         list_string += '</ul>\n'
         return list_string
