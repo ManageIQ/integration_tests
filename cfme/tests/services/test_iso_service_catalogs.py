@@ -136,6 +136,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
 @pytest.mark.usefixtures('setup_iso_providers', 'setup_iso_datastore')
 def test_rhev_iso_servicecatalog(provider_key, provider_mgmt, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
@@ -143,8 +144,6 @@ def test_rhev_iso_servicecatalog(provider_key, provider_mgmt, catalog_item, requ
     logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
     row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
-
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'Request complete'
