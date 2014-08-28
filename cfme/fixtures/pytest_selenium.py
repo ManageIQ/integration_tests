@@ -909,6 +909,36 @@ class Select(SeleniumSelect, Pretty):
     def _el(self):
         return move_to_element(self)
 
+    @property
+    def all_selected_options(self):
+        """Fast variant of the original all_selected_options.
+
+        Selenium's all_selected_options iterates over ALL of the options, this directly returns
+        only those that are selected.
+        """
+        return execute_script("return arguments[0].selectedOptions;", element(self))
+
+    @property
+    def first_selected_option(self):
+        """Fast variant of the original first_selected_option.
+
+        Uses all_selected_options, mimics selenium's exception behaviour.
+        """
+        try:
+            return self.all_selected_options[0]
+        except IndexError:
+            raise NoSuchElementException("No options are selected")
+
+    def deselect_all(self):
+        """Fast variant of the original deselect_all.
+
+        Uses all_selected_options, mimics selenium's exception behaviour.
+        """
+        if not self.is_multiple:
+            raise NotImplementedError("You may only deselect all options of a multi-select")
+        for opt in self.all_selected_options:
+            raw_click(opt)
+
     def locate(self):
         return move_to_element(self._loc)
 
@@ -959,7 +989,12 @@ def select_by_text(select_element, txt):
 
     Returns: previously selected text
     """
-    return _sel_desel(select_element, lambda s: s.first_selected_option.text,
+    def _getter(s):
+        try:
+            return s.first_selected_option.text
+        except NoSuchElementException:
+            return None
+    return _sel_desel(select_element, _getter,
                       'select_by_visible_text', txt)
 
 
