@@ -17,6 +17,7 @@ from copy import deepcopy
 from jinja2 import Environment, FileSystemLoader
 from utils.path import template_path
 import math
+from operator import itemgetter
 import os
 import shutil
 import time
@@ -74,10 +75,14 @@ class Reporter(ArtifactorBasePlugin):
         template_data = {'tests': []}
         log_dir += "/"
         counts = {'passed': 0, 'failed': 0, 'skipped': 0, 'error': 0, 'xfailed': 0, 'xpassed': 0}
+
+        # Iterate through the tests and process the counts and durations
         for test_name, test in artifacts.iteritems():
             if not test.get('statuses', None):
                 continue
             overall_status = None
+
+            # Handle some logic for when to count certain tests as which state
             for when, status in test['statuses'].iteritems():
                 if when == "call" and status[1] and status[0] == "skipped":
                     counts['xfailed'] += 1
@@ -103,6 +108,7 @@ class Reporter(ArtifactorBasePlugin):
                 counts['passed'] += 1
                 overall_status = "passed"
 
+            # Set the overall status and then process duration
             test['statuses']['overall'] = overall_status
             test_data = {'name': test_name, 'outcomes': test['statuses']}
             if test.get('start_time', None):
@@ -112,6 +118,8 @@ class Reporter(ArtifactorBasePlugin):
                 else:
                     test_data['duration'] = time.time() - test['start_time']
                     test_data['in_progress'] = True
+
+            # Set up destinations for the files
             for ident in test.get('files', []):
                 for filename in test['files'].get(ident, []):
                     if "screenshot" in filename:
@@ -132,6 +140,8 @@ class Reporter(ArtifactorBasePlugin):
             template_data['tests'].append(test_data)
         template_data['counts'] = counts
 
+        # Create the tree dict that is used for js tree
+        # Note template_data['tests'] != tests
         tests = deepcopy(_tests_tpl)
         tests['_sub']['tests'] = deepcopy(_tests_tpl)
 
@@ -140,10 +150,13 @@ class Reporter(ArtifactorBasePlugin):
 
         template_data['ndata'] = self.build_li(tests)
 
+        # Sort the test output and if necessary discard tests that have passed
+        template_data['tests'] = sorted(template_data['tests'], key=itemgetter('name'))
         if self.only_failed:
             template_data['tests'] = [x for x in template_data['tests']
                                   if x['outcomes']['overall'] not in ['skipped', 'passed']]
 
+        # Render the report
         data = template_env.get_template('test_report.html').render(**template_data)
         with open(os.path.join(log_dir, 'report.html'), "w") as f:
             f.write(data)
