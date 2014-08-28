@@ -4,6 +4,8 @@
 import pytest
 import re
 
+from utils import version
+
 pytestmark = pytest.mark.smoke
 
 
@@ -96,11 +98,7 @@ def test_cpu_total(ssh_client):
 
 
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.parametrize(("filename", "given_md5"), [
-    ("/etc/pki/product/69.pem", None),
-    ("/etc/pki/product/167.pem", None)
-])
-def test_certificates_present(ssh_client, filename, given_md5):
+def test_certificates_present(ssh_client, soft_assert):
     """Test whether the required product certificates are present.
 
     This test is parametrized with the given file and its MD5 hash.
@@ -109,13 +107,25 @@ def test_certificates_present(ssh_client, filename, given_md5):
     From wiki:
     `Ships with /etc/pki/product/<id>.pem where RHEL is "69" and CF is "167"`
     """
-    file_exists = ssh_client.run_command("test -f '%s'" % filename)[0] == 0
-    assert file_exists, "File %s does not exist!" % filename
-    if given_md5:
-        md5_of_file = ssh_client.run_command("md5sum '%s'" % filename)[1].strip()
-        # Format `abcdef0123456789<whitespace>filename
-        md5_of_file = re.split(r"\s+", md5_of_file, 1)[0]
-        assert given_md5 == md5_of_file
+    filenames_md5s = version.pick({
+        version.LOWEST: [
+            ("/etc/pki/product/69.pem", None),
+            ("/etc/pki/product/167.pem", None)
+        ],
+        '5.3': [
+            ("/etc/pki/product/69.pem", None),
+            ("/etc/pki/product/167.pem", None),
+            ("/etc/pki/product/201.pem", None)
+        ]
+    })
+    for filename, given_md5 in filenames_md5s:
+        file_exists = ssh_client.run_command("test -f '%s'" % filename)[0] == 0
+        soft_assert(file_exists, "File %s does not exist!" % filename)
+        if given_md5:
+            md5_of_file = ssh_client.run_command("md5sum '%s'" % filename)[1].strip()
+            # Format `abcdef0123456789<whitespace>filename
+            md5_of_file = re.split(r"\s+", md5_of_file, 1)[0]
+            soft_assert(given_md5 == md5_of_file, "md5 of file %s differs" % filename)
 
 
 @pytest.mark.ignore_stream("upstream")
