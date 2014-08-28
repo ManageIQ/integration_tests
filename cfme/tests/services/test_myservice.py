@@ -16,7 +16,8 @@ from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name"),
-    pytest.mark.fixtureconf(server_roles="+automate")
+    pytest.mark.fixtureconf(server_roles="+automate"),
+    pytest.mark.long_running
 ]
 
 

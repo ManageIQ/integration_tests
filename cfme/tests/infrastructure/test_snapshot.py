@@ -11,6 +11,9 @@ from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 
+pytestmark = [pytest.mark.long_running]
+
+
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
     argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provider_key')

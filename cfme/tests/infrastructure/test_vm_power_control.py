@@ -13,6 +13,9 @@ from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
 
+pytestmark = [pytest.mark.long_running]
+
+
 # GLOBAL vars
 random_vm_test = []    # use the same values(provider/vm) for all the quadicon tests
 
