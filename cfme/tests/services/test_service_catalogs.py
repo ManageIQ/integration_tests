@@ -17,7 +17,8 @@ pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.usefixtures("vm_name"),
     pytest.mark.fixtureconf(server_roles="+automate"),
-    pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
+    pytest.mark.usefixtures('server_roles', 'uses_infra_providers'),
+    pytest.mark.long_running
 ]
 
 

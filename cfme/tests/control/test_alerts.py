@@ -11,6 +11,9 @@ from utils.providers import setup_provider
 from utils.wait import wait_for
 
 
+pytestmark = [pytest.mark.long_running]
+
+
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.infra_providers(metafunc, "test_vm_power_control")
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
