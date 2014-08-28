@@ -76,6 +76,8 @@ save = FormButton("Save Changes", dimmed_alt="Save")
 cancel = FormButton("Cancel")
 submit = FormButton("Submit")
 reset = FormButton("Reset Changes", dimmed_alt="Reset")
+validate = FormButton("Validate the credentials by logging into the Server", dimmed_alt="Validate")
+validate_short = FormButton("Validate the credentials")
 host_provision_submit = FormButton("Submit this provisioning request")
 host_provision_cancel = FormButton("Cancel this provisioning request")
 

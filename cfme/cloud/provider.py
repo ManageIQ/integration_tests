@@ -30,38 +30,8 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils.pretty import Pretty
 
-
-# Common locators
-page_specific_locators = Region(
-    locators={
-        'cancel_button': form_buttons.cancel,
-        'creds_validate_btn': "//div[@id='default_validate_buttons_on']"
-                              "/ul[@id='form_buttons']/li/a/img",
-        'creds_verify_disabled_btn': "//div[@id='default_validate_buttons_off']"
-                                     "/ul[@id='form_buttons']/li/a/img",
-    }
-)
-
+# Specific Add button
 add_provider_button = form_buttons.FormButton("Add this Cloud Provider")
-
-# Page specific locators
-add_page = Region(
-    locators={
-        'add_submit': add_provider_button,
-    },
-    title='Cloud Providers')
-
-edit_page = Region(
-    locators={
-        'save_button': form_buttons.save,
-    })
-
-manage_policies_page = Region(
-    locators={
-        'save_button': form_buttons.save,
-    })
-
-details_page = Region(infoblock_type='detail')
 
 # Forms
 discover_form = Form(
@@ -92,13 +62,15 @@ credential_form = Form(
         ('amqp_principal', "//*[@id='amqp_userid']"),
         ('amqp_secret', "//*[@id='amqp_password']"),
         ('amqp_verify_secret', "//*[@id='amqp_verify']"),
-        ('validate_btn', page_specific_locators.creds_validate_btn)
+        ('validate_btn', form_buttons.validate)
     ])
 
 manage_policies_form = Form(
     fields=[
         ('policy_select', Tree("//div[@id='treebox']/div/table")),
     ])
+
+details_page = Region(infoblock_type='detail')
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
@@ -155,7 +127,7 @@ class Provider(Updateable, Pretty):
 
     def _submit(self, cancel, submit_button):
         if cancel:
-            sel.click(page_specific_locators.cancel_button)
+            sel.click(form_buttons.cancel)
             # sel.wait_for_element(page.configuration_btn)
         else:
             sel.click(submit_button)
@@ -174,7 +146,7 @@ class Provider(Updateable, Pretty):
         sel.force_navigate('clouds_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
-        self._submit(cancel, add_page.add_submit)
+        self._submit(cancel, add_provider_button)
         if not cancel:
             flash.assert_message_match('Cloud Providers "%s" was saved' % self.name)
 
@@ -191,7 +163,7 @@ class Provider(Updateable, Pretty):
         sel.force_navigate('clouds_provider_edit', context={'provider': self})
         fill(properties_form, self._form_mapping(**updates))
         fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
-        self._submit(cancel, edit_page.save_button)
+        self._submit(cancel, form_buttons.save)
         name = updates['name'] or self.name
         if not cancel:
             flash.assert_message_match('Cloud Provider "%s" was saved' % name)
@@ -401,7 +373,7 @@ class Provider(Updateable, Pretty):
         fill(
             manage_policies_form,
             dict(policy_select=[(x,) for x in list(policy_profiles - do_not_process)]),
-            action=manage_policies_page.save_button
+            action=form_buttons.save
         )
 
     def assign_policy_profiles(self, *policy_profile_names):

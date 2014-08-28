@@ -70,8 +70,7 @@ credential_form = Form(
         ('candu_principal', "//*[@id='metrics_userid']"),
         ('candu_secret', "//*[@id='metrics_password']"),
         ('candu_verify_secret', "//*[@id='metrics_verify']"),
-        ('validate_btn', FormButton("Validate the credentials by logging into the Server",
-                                    dimmed_alt="Validate"))
+        ('validate_btn', form_buttons.validate)
     ])
 
 manage_policies_tree = CheckboxTree(

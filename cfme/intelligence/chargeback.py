@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 import cfme.web_ui.accordion as accordion
 import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import Form, Select, Tree, fill, flash
+from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -45,11 +45,10 @@ rate_form = Form(
         ('storage_fixed_2', _mkitem(1)),
         ('storage_alloc', _mkitem(2)),
         ('storage_used', _mkitem(3)),
-        ('add_button', (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Add']")),
-        ('save_button', (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Save Changes']")),
-        ('reset_button', (By.CSS_SELECTOR, "ul#form_buttons > li > img[title='Reset Changes']")),
-        ('cancel_button', (By.CSS_SELECTOR,
-                           "div#buttons_off > ul#form_buttons > li > img[title='Cancel']"))])
+        ('add_button', form_buttons.add),
+        ('save_button', form_buttons.save),
+        ('reset_button', form_buttons.reset),
+        ('cancel_button', form_buttons.cancel)])
 
 
 nav.add_branch('chargeback',

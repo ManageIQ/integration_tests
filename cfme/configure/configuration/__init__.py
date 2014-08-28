@@ -8,7 +8,6 @@ import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound
 from cfme.web_ui import \
     (Calendar, Form, InfoBlock, Region, Select, Table, accordion, fill, flash, form_buttons)
-from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.menu import nav
 from utils.db_queries import (get_server_id, get_server_name, get_server_region, get_server_zone_id,
                               get_zone_description)
@@ -456,13 +455,6 @@ class ServerLogDepot(Pretty):
                 ("password", "//input[@id='log_password']"),
                 ("password_verify", "//input[@id='log_verify']"),
             ]
-        )
-
-        collect_logs_misc = Region(
-            locators=dict(
-                validate_button="//div[@id='log_validate_buttons_on']/ul/li/a[@id='val']/img"
-            ),
-            infoblock_type="form"
         )
 
         def __init__(self, p_type, uri, username=None, password=None):
@@ -1211,8 +1203,6 @@ class DatabaseBackupSchedule(Schedule):
         ("start_min", Select("//select[@id='start_min']"))
     ])
 
-    validate = FormButton("Validate the credentials by logging into the Server")
-
     def __init__(self,
                  name,
                  description,
@@ -1281,7 +1271,7 @@ class DatabaseBackupSchedule(Schedule):
 
         fill(self.form, self.details)
         if samba_validate:
-            self.validate()
+            sel.click(form_buttons.validate)
         if cancel:
             form_buttons.cancel()
         else:
@@ -1302,7 +1292,7 @@ class DatabaseBackupSchedule(Schedule):
         self.details.update(updates)
         fill(self.form, self.details)
         if samba_validate:
-            self.validate()
+            sel.click(form_buttons.validate)
         if cancel:
             form_buttons.cancel()
         else:
