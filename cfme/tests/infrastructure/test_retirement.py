@@ -1,6 +1,7 @@
 import pytest
+from utils.log import logger
 from utils import testgen
-from utils.providers import setup_infrastructure_providers
+from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from cfme.infrastructure import virtual_machines as vms
 from utils.wait import wait_for
@@ -31,16 +32,21 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
+@pytest.fixture
+def provider_init(provider_key):
+    """cfme/infrastructure/provider.py provider object."""
+    try:
+        setup_provider(provider_key)
+    except Exception as e:
+        logger.info("Exception detected on provider setup: " + str(e))
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 @pytest.fixture(scope="function")
-def vm(setup_providers, provider_crud, provisioning):
+def vm(request, provider_init, provider_crud, provisioning):
     vm_name = 'test_retire_prov_%s' % generate_random_string()
     myvm = vms.Vm(name=vm_name, provider_crud=provider_crud, template_name=provisioning['template'])
+    request.addfinalizer(myvm.delete_from_provider)
     myvm.create_on_provider()
     return myvm
 
