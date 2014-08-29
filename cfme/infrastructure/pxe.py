@@ -50,11 +50,6 @@ pxe_image_type_form = Form(
 
 template_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
 
-template_add_button = version.pick({
-    version.LOWEST: form_buttons.add,
-    '5.3': form_buttons.save
-})
-
 template_properties_form = Form(
     fields=[
         ('name_text', "//input[@id='name']"),
@@ -328,7 +323,7 @@ class CustomizationTemplate(Updateable, Pretty):
         """
         sel.force_navigate('infrastructure_pxe_template_new')
         fill(template_properties_form, self._form_mapping(True, **self.__dict__))
-        self._submit(cancel, template_add_button)
+        self._submit(cancel, form_buttons.add)
         if not cancel:
             flash.assert_message_match(
                 version.pick({
