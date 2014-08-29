@@ -7,6 +7,7 @@ import cfme.web_ui.flash as flash
 import utils.error as error
 from cfme.infrastructure import provider
 from utils import testgen
+from utils import providers
 from utils.randomness import generate_random_string
 from utils.update import update
 
@@ -123,9 +124,10 @@ def test_api_port_max_character_validation():
 
 @bz1087476
 @pytest.mark.usefixtures('has_no_infra_providers')
-def test_providers_discovery(provider_crud):
+def test_providers_discovery(request, provider_crud):
     provider.discover_from_provider(provider_crud)
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
+    request.addfinalizer(providers.clear_infra_providers)
     provider.wait_for_a_provider()
 
 
