@@ -3,22 +3,14 @@ return document.evaluate(path, document, null, 9, null).singleNodeValue;
 """
 
 in_flight = """
-function isHidden(el) {
-    if(el === null) return true;
-    return el.offsetParent === null;
-}
+function isHidden(el) {if(el === null) return true; return el.offsetParent === null;}
 
-function jqueryActive() { return jQuery.active > 0; }
-function prototypeActive() { return Ajax.activeRequestCount > 0; }
-function miqActive() { return window.miqAjaxTimers > 0; }
-function spinnerDisplayed() { return (!isHidden(document.getElementById("spinner_div")))
- && isHidden(document.getElementById("lightbox_div")); }
-function documentComplete() { return document.readyState == "complete"; }
 return {
-    jquery: jqueryActive(),
-    prototype: prototypeActive(),
-    miq: miqActive(),
-    spinner: spinnerDisplayed(),
-    document: !documentComplete()
+    jquery: jQuery.active,
+    prototype: Ajax.activeRequestCount,
+    miq: window.miqAjaxTimers,
+    spinner: (!isHidden(document.getElementById("spinner_div")))
+        && isHidden(document.getElementById("lightbox_div")),
+    document: document.readyState
 };
 """

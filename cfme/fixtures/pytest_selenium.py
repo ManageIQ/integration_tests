@@ -210,15 +210,18 @@ def wait_for_ajax():
         """
         prev_log_msg = _thread_local.ajax_log_msg
 
-        currently_in_flight = in_flight()
-        anything_in_flight = any(v for v in currently_in_flight.itervalues())
-        if anything_in_flight:
-            log_msg = ', '.join([k for k, v in currently_in_flight.iteritems() if v])
-            # Log the message only if it's different from the last one
-            if prev_log_msg != log_msg:
-                _thread_local.ajax_log_msg = log_msg
-                logger.debug('Ajax running: {}'.format(log_msg))
-        elif prev_log_msg:
+        running = in_flight()
+        anything_in_flight = False
+        anything_in_flight |= running["jquery"] > 0
+        anything_in_flight |= running["prototype"] > 0
+        anything_in_flight |= running["spinner"]
+        anything_in_flight |= running["document"] != "complete"
+        log_msg = ', '.join(["{}: {}".format(k, str(v)) for k, v in running.iteritems()])
+        # Log the message only if it's different from the last one
+        if prev_log_msg != log_msg:
+            _thread_local.ajax_log_msg = log_msg
+            logger.debug('Ajax running: {}'.format(log_msg))
+        if (not anything_in_flight) and prev_log_msg:
             logger.debug('Ajax done')
 
         return not anything_in_flight
