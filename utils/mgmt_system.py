@@ -19,8 +19,9 @@ from ovirtsdk.infrastructure.errors import DisconnectedError
 from ovirtsdk.xml import params
 from psphere import managedobjects as mobs
 from psphere.client import Client
-from psphere.soap import VimFault
+from psphere.errors import ObjectNotFoundError
 
+from cfme import exceptions as cfme_exc
 from utils.log import logger
 from utils.version import LooseVersion
 from utils.wait import wait_for, TimedOutError
@@ -345,10 +346,15 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.password = password
         self.api = Client(hostname, username, password)
         self._vm_cache = {}
+        self.kwargs = kwargs
 
     @property
     def version(self):
         return LooseVersion(self.api.si.content.about.version)
+
+    @property
+    def default_resource_pool(self):
+        return self.kwargs.get("default_resource_pool", None)
 
     def _get_vm(self, vm_name):
         """ Returns a vm from the VI object.
@@ -366,14 +372,19 @@ class VMWareSystem(MgmtSystemAPIBase):
             self._vm_cache[vm_name] = vm
         return vm
 
-    def _get_resource_pool(self, resource_pool_name):
+    def _get_resource_pool(self, resource_pool_name=None):
         """ Returns a resource pool MOR for a specified name.
 
         Args:
-            resource_pool_name: The name of the resource pool.
+            resource_pool_name: The name of the resource pool. If None, first one will be picked.
         Returns: The MOR of the resource pool.
         """
-        return mobs.ResourcePool.get(self.api, name=resource_pool_name)
+        if resource_pool_name is not None:
+            return mobs.ResourcePool.get(self.api, name=resource_pool_name)
+        elif self.default_resource_pool is not None:
+            return mobs.ResourcePool.get(self.api, name=self.default_resource_pool)
+        else:
+            return mobs.ResourcePool.get(self.api)[0]
 
     @staticmethod
     def _task_wait(task):
@@ -504,13 +515,16 @@ class VMWareSystem(MgmtSystemAPIBase):
         raise NotImplementedError('This function is not supported on this platform.')
 
     def list_host(self):
-        return [h.name for h in mobs.HostSystem.all(self.api)]
+        return [str(h.name) for h in mobs.HostSystem.all(self.api)]
 
     def list_datastore(self):
-        return [h.name for h in mobs.Datastore.all(self.api)]
+        return [str(h.name) for h in mobs.Datastore.all(self.api)]
 
     def list_cluster(self):
-        return [h.name for h in mobs.ClusterComputeResource.all(self.api)]
+        return [str(h.name) for h in mobs.ClusterComputeResource.all(self.api)]
+
+    def list_resource_pools(self):
+        return [str(h.name) for h in mobs.ResourcePool.all(self.api)]
 
     def info(self):
         return '%s %s' % (self.api.get_server_type(), self.api.get_api_version())
@@ -560,106 +574,73 @@ class VMWareSystem(MgmtSystemAPIBase):
             self.wait_vm_suspended(vm_name)
             return True
 
-    def clone_vm(self, src_name, dst_name, *args, **kwargs):
-        # modified version of psphere's example/clone_vm.py script
-        # allows for modifying the clone and relocate specs via kwargs
+    def clone_vm(self, source, destination, resourcepool=None, datastore=None, power_on=True,
+                 sparse=False, template=False, provision_timeout=300):
+        try:
+            if mobs.VirtualMachine.get(self.api, name=destination).name == destination:
+                raise Exception("VM already present!")
+        except ObjectNotFoundError:
+            pass
 
-        # vSphere supports cloning vms/templates to vms/templates
-        # usually, src is a template and dst is a vm
-        src = self._get_vm(src_name)
+        source_template = mobs.VirtualMachine.get(self.api, name=source)
 
-        # By default, don't relocate the destination vm relative to the
-        # source. datastore and pool stay the same, host and transform
-        # are left alone unless kwargs are passed in
-        datastore = kwargs.get('datastore', None)
+        vm_clone_spec = self.api.create("VirtualMachineCloneSpec")
+        vm_reloc_spec = self.api.create("VirtualMachineRelocateSpec")
+        # DATASTORE
         if isinstance(datastore, basestring):
-            datastore = mobs.Datastore.get(self.api, name=datastore)
+            vm_reloc_spec.datastore = mobs.Datastore.get(self.api, name=datastore)
+        elif isinstance(datastore, mobs.Datastore):
+            vm_reloc_spec.datastore = datastore
         elif datastore is None:
-            try:
-                datastore = src.datastore
-            except AttributeError:
-                datastore = None
-        resourcepool = kwargs.get('resourcepool', None)
-        print resourcepool, kwargs
-        if isinstance(resourcepool, basestring):
-            resourcepool = mobs.ResourcePool.get(self.api, name=resourcepool)
-        elif resourcepool is None:
-            try:
-                resourcepool = src.resourcePool
-            except AttributeError:
-                if src.config.template:
-                    # src is a template, templates don't have resourcepools
-                    # TODO: Raise a ResourcePoolRequired or something
-                    raise Exception('Source is a template, destination resourcepool'
-                        'must be named')
-                else:
-                    resourcepool = None
-
-        # Create flat disks by default, we can make this fancier later
-        # if we want
-        transform = self.api.create('VirtualMachineRelocateTransformation').flat
-
-        reloc_spec_conf = {
-            'datasore': datastore,
-            'host': None,
-            'transform': transform,
-            'pool': resourcepool,
-        }
-        clone_spec_conf = {
-            'snapshot': None
-        }
-        # bring in options from kwargs
-        reloc_spec_conf.update(kwargs.pop('reloc_spec', {}))
-        clone_spec_conf.update(kwargs.pop('clone_spec', {}))
-
-        # Marshal the relocate spec as a type vsphere wants
-        reloc_spec = self.api.create('VirtualMachineRelocateSpec')
-        for key, value in kwargs.get('reloc_spec', {}).items():
-            print 'reloc', key
-            setattr(reloc_spec, key, value)
-
-        # Marshal the clone spec as a type vsphere wants
-        clone_spec = self.api.create('VirtualMachineCloneSpec')
-        for key, value in kwargs.get('clone_spec', {'powerOn': True}).items():
-            print 'clone', key
-            setattr(clone_spec, key, value)
-
-        # now attach the relocate spec to the clone spec if it isn't
-        # already set
-        if 'location' not in clone_spec_conf:
-            clone_spec.location = reloc_spec
-
-        # Try to pull a folder from the vm/templates's datastore, otherwise just
-        # use the vm/template's folder
-        try:
-            folder = src.parent.parent.vmParent
-        except AttributeError:
-            folder = src.parent
-
-        # Finally, trigger the clone task
-        try:
-            task = src.CloneVM_Task(
-                folder=folder,
-                name=dst_name,
-                spec=clone_spec
-            )
-            state, t = wait_for(self._task_wait, [task])
-
-            if state != 'success':
-                logger.error('Clone VM failed: %s', task.info.error.localizedMessage)
-                raise VMInstanceNotCloned(src_name)
+            datastores = source_template.datastore
+            if isinstance(datastores, (list, tuple)):
+                vm_reloc_spec.datastore = datastores[0]
             else:
-                return dst_name
-        except VimFault as ex:
-            logger.exception(ex)
-            raise
+                vm_reloc_spec.datastore = datastores
+        else:
+            raise NotImplementedError("{} not supported for datastore".format(datastore))
 
-    def deploy_template(self, template_name, vm_name, *args, **kwargs):
-        timeout = kwargs.pop('timeout', 600)
-        clone_spec_conf = {'powerOn': True, 'template': False}
-        self.clone_vm(template_name, vm_name, clone_spec=clone_spec_conf, *args, **kwargs)
-        self.wait_vm_running(vm_name, num_sec=timeout)
-        return vm_name
+        # RESOURCE POOL
+        if isinstance(resourcepool, mobs.ResourcePool):
+            vm_reloc_spec.pool = resourcepool
+        else:
+            vm_reloc_spec.pool = self._get_resource_pool(resourcepool)
+
+        vm_reloc_spec.host = None
+        if sparse:
+            vm_reloc_spec.transform = self.api.create('VirtualMachineRelocateTransformation').sparse
+        else:
+            vm_reloc_spec.transform = self.api.create('VirtualMachineRelocateTransformation').flat
+
+        vm_clone_spec.powerOn = power_on
+        vm_clone_spec.template = template
+        vm_clone_spec.location = vm_reloc_spec
+        vm_clone_spec.snapshot = None
+
+        try:
+            folder = source_template.parent.parent.vmParent
+        except AttributeError:
+            folder = source_template.parent
+
+        task = source_template.CloneVM_Task(folder=folder, name=destination, spec=vm_clone_spec)
+        wait_for(
+            lambda: task.info.state not in {"queued", "running"},
+            fail_func=task.update, num_sec=provision_timeout, delay=4
+        )
+        if task.info.state != 'success':
+            logger.error('Clone VM failed: {}'.format(task.info.error.localizedMessage))
+            raise VMInstanceNotCloned(source)
+        else:
+            return destination
+
+    def deploy_template(self, template, **kwargs):
+        kwargs["power_on"] = True
+        kwargs["template"] = False
+        destination = kwargs.pop("vm_name")
+        start_timeout = kwargs.pop("timeout", 300)
+        self.clone_vm(template, destination, **kwargs)
+        self.wait_vm_running(destination, num_sec=start_timeout)
+        return destination
 
     def remove_host_from_cluster(self, host_name):
         host = mobs.HostSystem.get(self.api, name=host_name)
@@ -667,8 +648,8 @@ class VMWareSystem(MgmtSystemAPIBase):
         status, t = wait_for(self._task_wait, [task])
 
         if status != 'success':
-            # TODO: Raise a thingy
-            pass
+            raise cfme_exc.HostNotRemoved("Host {} not removed: {}".format(
+                host_name, task.info.error.localizedMessage))
 
         task = host.Destroy_Task()
         status, t = wait_for(self._task_wait, [task])
@@ -763,6 +744,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             'password': password,
             'insecure': True
         }
+        self.kwargs = kwargs
 
     @property
     def api(self):
@@ -1030,6 +1012,7 @@ class EC2System(MgmtSystemAPIBase):
 
         region = get_region(kwargs.get('region'))
         self.api = EC2Connection(username, password, region=region)
+        self.kwargs = kwargs
 
     def disconnect(self):
         """Disconnect from the EC2 API -- NOOP
