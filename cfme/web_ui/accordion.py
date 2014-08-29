@@ -11,6 +11,7 @@ Usage:
       acc.is_active('Diagnostics')
 """
 import cfme.fixtures.pytest_selenium as sel
+from cfme.exceptions import AccordionItemNotFound
 from cfme.web_ui import Tree
 
 DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
@@ -37,9 +38,11 @@ def click(name):
         name: The name of the accordion.
     Returns: A web element of the clicked accordion.
     """
-    xpath = locate(name)
-    el = sel.element(xpath)
-    return sel.click(el)
+    try:
+        el = sel.element(locate(name))
+        return sel.click(el)
+    except sel.NoSuchElementException:
+        raise AccordionItemNotFound("Accordion item '{}' not found!".format(name))
 
 
 def is_active(name):
@@ -51,15 +54,16 @@ def is_active(name):
         name: The name of the accordion.
     Returns: ``True`` if the button is depressed, ``False`` if not.
     """
-
-    xpath = locate(name)
-    root = sel.element(xpath)
-    el = sel.element('./%s/%s' % (DHX_LABEL, DHX_ARROW), root=root)
-    class_att = sel.get_attribute(el, 'class').split(" ")
-    if "item_opened" in class_att:
-        return True
-    else:
-        return False
+    try:
+        root = sel.element(locate(name))
+        el = sel.element('./%s/%s' % (DHX_LABEL, DHX_ARROW), root=root)
+        class_att = sel.get_attribute(el, 'class').split(" ")
+        if "item_opened" in class_att:
+            return True
+        else:
+            return False
+    except sel.NoSuchElementException:
+        raise AccordionItemNotFound("Accordion item '{}' not found!".format(name))
 
 
 def tree(name, *path):

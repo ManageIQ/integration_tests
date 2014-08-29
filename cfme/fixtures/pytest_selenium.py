@@ -419,7 +419,11 @@ def move_to_element(loc, **kwargs):
                 execute_script("arguments[0].scrollIntoView();", element(brand))
             except MoveTargetOutOfBoundsException:
                 pass
-        move_to.perform()
+        try:
+            move_to.perform()
+        except MoveTargetOutOfBoundsException:  # This has become desperate now.
+            raise exceptions.CannotScrollException(
+                "Despite all the workarounds, scrolling to `{}` was unsuccessful.".format(loc))
     return el
 
 
