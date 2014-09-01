@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% set title = 'Test Report' %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block content %}
+
+<table class="table table-striped">
+<tr><td>Name</td>
+        {% for run in runs %}
+            <td>{{run[1]}}</td>
+	{% endfor %}
+</tr>
+{% for test in test_index %}
+    <tr>
+        <td>{{test}}</td>
+
+        {% for run in runs %}
+            <td>
+                      {% if tests[test][run[1]] %}
+		          {% if tests[test][run[1]]['status'] == "PASSED" %}
+                              <span class="label label-success">PASSED</span>
+                          {% elif tests[test][run[1]]['status'] == "FIXED" %}
+                              <span class="label label-success">FIXED</span>
+                          {% elif tests[test][run[1]]['status'] == "FAILED" %}
+                              <span class="label label-danger">FAILED ({{tests[test][run[1]]['age']}})</span>
+                          {% elif tests[test][run[1]]['status'] == "REGRESSION" %}
+                              <span class="label label-danger">REGRESSION</span>
+                          {% elif tests[test][run[1]]['status'] == "SKIPPED" %}
+                              <span class="label label-primary">SKIPPED</span>
+                          {% endif %}
+                      {% else %}
+                      <span class="label label-default">N/A</span>
+                      {% endif %}
+
+        {% endfor %}
+            </td>
+    </tr>
+{% endfor %}
+</table>
+</div>
+{% endblock content %}
