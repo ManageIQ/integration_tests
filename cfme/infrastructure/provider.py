@@ -560,7 +560,8 @@ def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None
         form_data.update({'to_3': end_octet})
 
     fill(discover_form, form_data,
-         action=form_buttons.cancel if cancel else discover_form.start_button)
+         action=form_buttons.cancel if cancel else discover_form.start_button,
+         action_always=True)
 
 
 def wait_for_a_provider():
