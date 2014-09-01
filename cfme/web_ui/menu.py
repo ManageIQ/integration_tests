@@ -3,21 +3,16 @@ import ui_navigate as nav
 from cfme.fixtures import pytest_selenium as sel
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
+from utils import version
 from utils.wait import wait_for
 
-#: Locator for the unordered list that holds the top-level nav tabs.
+# All top-level menu items
 toplevel_tabs_loc = '//div[@class="navbar"]/ul'
-#: Locator for a specific top-level navigation tab.
-#: Needs a tab name to be %-interpolated.
-toplevel_loc = toplevel_tabs_loc + '/li/a[normalize-space(.)="%s"]'
-#: Locator for the unordered list that holds second-level nav links.
-#: Needs a top-level tab name to be %-interpolated.
-secondlevel_links_loc = toplevel_loc + '/../ul'
-#: Locator for a specific second-level nav link
-#: Needs a top-level tab name and second-level link name to be %-interpolated.
-secondlevel_loc = secondlevel_links_loc + '/li/a[normalize-space(.)="%s"]'
-secondlevel_first_item_loc = secondlevel_links_loc + '/li[1]/a'
-
+# Specific top-level menu item (toplevel_loc.format(tl_item_text))
+toplevel_loc = '//div[@class="navbar"]/ul/li/a[normalize-space(.)="{}"]'
+# Locator targeting the first item of the specific top-level menu item
+secondlevel_first_item_loc = '//div[@class="navbar"]/ul/li/a[normalize-space(.)="{}"]/../ul/li[1]/a'
+# All submenus that are not currently active (but can be hovered)
 inactive_box_loc = "//ul[@id='maintab']//ul[contains(@class, 'inactive')]"
 
 
@@ -26,8 +21,10 @@ def any_box_displayed():
 
     First part of the condition is for the 5.3+ pop-up, second is for 5.2.
     """
-    return any(map(sel.is_displayed, sel.elements(inactive_box_loc)))\
-        or sel.is_displayed("//a[contains(@class, 'maintab_active')]")
+    return version.pick({
+        version.LOWEST: lambda: sel.is_displayed("//a[contains(@class, 'maintab_active')]"),
+        "5.3": lambda: any(map(sel.is_displayed, sel.elements(inactive_box_loc)))
+    })()
 
 
 def get_top_level_element(title):
@@ -50,6 +47,21 @@ def open_second_level(top_level_element, title):
     second = get_second_level_element(top_level_element, title)
     sel.raw_click(sel.element("./a", root=second))
 
+
+def get_current_toplevel_name():
+    """Returns text of the currently selected top level menu item."""
+    get_rid_of_the_menu_box()
+    return sel.text(
+        version.pick({
+            "5.3": "//ul[@id='maintab']/li[not(contains(@class, 'in'))]/a",
+            version.LOWEST: "//ul[@id='maintab']/li/ul[not(contains(@style, 'none'))]/../a"
+        })).encode("utf-8").strip()
+
+
+def get_rid_of_the_menu_box():
+    """Moves the mouse pointer away from the menu location and waits for the popups to hide."""
+    ActionChains(sel.browser()).move_to_element(sel.element("#tP")).perform()
+    wait_for(lambda: not any_box_displayed(), num_sec=10, delay=0.1, message="menu box")
 
 # Dictionary of (nav destination name, section title) section tuples
 # Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel sections
@@ -117,8 +129,24 @@ sections = {
 def nav_to_fn(toplevel, secondlevel=None):
     def f(_):
         try:
-            # TODO: Now with the workaround few lines lower, it may be possible to spare clicks here
+            # Try to circumvent the issue on fir
+            get_rid_of_the_menu_box()
             open_top_level(toplevel)
+            get_rid_of_the_menu_box()
+            if get_current_toplevel_name() != toplevel:
+                # Infrastructure / Requests workaround
+                sel.move_to_element(get_top_level_element(toplevel))
+                # Using pure move_to_element to not move the mouse anywhere else
+                # So in this case, we move the mouse to the first item of the second level
+                ActionChains(sel.browser())\
+                    .move_to_element(sel.element(secondlevel_first_item_loc.format(toplevel)))\
+                    .click()\
+                    .perform()
+                get_rid_of_the_menu_box()
+                # Now when we went directly to the first item, everything should just work
+                tl = get_current_toplevel_name()
+                if tl != toplevel:
+                    raise Exception("Navigation screwed! (wanted {}, got {}".format(toplevel, tl))
         except NoSuchElementException:
             if visible_toplevel_tabs():  # Target menu is missing
                 raise
@@ -126,16 +154,9 @@ def nav_to_fn(toplevel, secondlevel=None):
                 return  # no menu at all, assume single permission
 
         if secondlevel is not None:
-            # Move to the bottom-right (timedate)
-            # It is needed to go down there so we cannot accdentally hit the top menu in the next
-            # step. Slight performance hit on FF, almost none on Chrome.
-            ActionChains(sel.browser()).move_to_element(sel.element("#tP")).perform()
-            # Wait for the box going away. Required for 5.2 since there is a few secs timeout on it.
-            # Here is the thing. 5.3 does the popup which goes away immediately when moved away
-            # 5.2 does not do the popup, but instead of it the seond level menu changes.
-            # There is a few seconds timeout after which the second level menu restores its contents
-            wait_for(lambda: not any_box_displayed(), num_sec=10, delay=0.1, message="menu box")
+            get_rid_of_the_menu_box()
             open_second_level(get_top_level_element(toplevel), secondlevel)
+            get_rid_of_the_menu_box()
     return f
 
 
@@ -177,8 +198,7 @@ def reverse_lookup(toplevel_path, secondlevel_path=None):
 
 def visible_toplevel_tabs():
     menu_names = []
-    toplevel_links = sel.element(toplevel_tabs_loc)
-    for menu_elem in sel.elements('li/a', root=toplevel_links):
+    for menu_elem in sel.elements('li/a', root=toplevel_tabs_loc):
         menu_names.append(sel.text(menu_elem))
     return menu_names
 
@@ -195,7 +215,7 @@ def visible_pages():
     # Now go from tab to tab and pull the secondlevel names from the visible links
     displayed_menus = []
     for menu_name in menu_names:
-        menu_elem = sel.element(toplevel_loc % menu_name)
+        menu_elem = sel.element(toplevel_loc.format(menu_name))
         sel.move_to_element(menu_elem)
         for submenu_elem in sel.elements('../ul/li/a', root=menu_elem):
             displayed_menus.append((menu_name, sel.text(submenu_elem)))
