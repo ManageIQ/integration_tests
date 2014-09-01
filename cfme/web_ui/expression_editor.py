@@ -296,7 +296,8 @@ def fill_field(field=None, key=None, value=None):
         if isinstance(value, basestring) and not re.match(r"^[0-9]{2}/[0-9]{2}/[0-9]{4}$", value):
             if not sel.is_displayed(field_date_form.dropdown_select):
                 sel.click(date_switch_buttons.to_relative)
-            web_ui.fill(field_date_form, {"dropdown_select": value}, action=buttons.commit)
+            web_ui.fill(field_date_form, {"dropdown_select": value})
+            sel.click(buttons.commit)
         else:
             # Specific selection
             if not sel.is_displayed(field_date_form.input_select_date):

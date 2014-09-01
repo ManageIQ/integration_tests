@@ -525,7 +525,8 @@ def discover(credential, cancel=False):
                           'password': credential.secret,
                           'password_verify': credential.verify_secret})
     fill(discover_form, form_data,
-         action=form_buttons.cancel if cancel else discover_form.start_button)
+         action=form_buttons.cancel if cancel else discover_form.start_button,
+         action_always=True)
 
 
 def wait_for_a_provider():
