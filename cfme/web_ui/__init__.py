@@ -1165,9 +1165,9 @@ def _fill_form_list(form, values, action=None, action_always=False):
 
 
 @fill.method((object, Mapping))
-def _fill_form_dict(form, values, action=None, action_always=False):
+def _fill_form_dict(form, values, **kwargs):
     """Fill in a dict by converting it to a list"""
-    return fill(form, values.items(), action=action, action_always=action_always)
+    return fill(form, values.items(), **kwargs)
 
 
 class Radio(Pretty):

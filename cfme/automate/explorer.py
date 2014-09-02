@@ -464,7 +464,7 @@ class Class(CopiableTreeNode, Updateable):
         sel.force_navigate("automate_explorer_schema_edit", context={'tree_item': self})
         for remove_field in remove_fields or []:
             f = remove_field.get_form()
-            fill(f, {}, action=f.remove_entry_button)
+            fill(f, {}, action=f.remove_entry_button, action_always=True)
             sel.handle_alert()
 
         for add_field in add_fields or []:
