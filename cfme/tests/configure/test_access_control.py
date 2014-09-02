@@ -11,7 +11,6 @@ from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
-from utils import version
 from utils.log import logger
 from utils.providers import setup_infrastructure_providers
 from utils.update import update
@@ -230,8 +229,7 @@ def _go_to(dest):
     return lambda: nav.go_to(dest)
 
 
-cat_name = version.pick({version.LOWEST: "Settings & Operations",
-                         "5.3": "Configure"})
+cat_name = "Configure"
 
 
 @pytest.mark.parametrize(
@@ -302,6 +300,7 @@ def single_task_permission_test(product_features, actions):
                      actions)
 
 
+@pytest.mark.bugzilla(1136112)
 def test_permissions_role_crud():
     single_task_permission_test([[cat_name, 'Configuration'],
                                  ['Services', 'Catalogs Explorer']],
