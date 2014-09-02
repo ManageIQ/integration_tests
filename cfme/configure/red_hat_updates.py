@@ -72,7 +72,6 @@ registration_buttons = Region(
     locators={
         'url_default': "//button[@id='rhn_default_button']",
         'repo_default': "//button[@id='repo_default_name']",
-        'validate': "//img[@title='Validate the credentials']"
     },
     identifying_loc="url_default"
 )
@@ -152,7 +151,7 @@ def update_registration(service,
         sel.click(registration_buttons.repo_default)
 
     if validate:
-        sel.click(registration_buttons.validate)
+        sel.click(form_buttons.validate_short)
         flash.assert_no_errors()
         flash.dismiss()
 

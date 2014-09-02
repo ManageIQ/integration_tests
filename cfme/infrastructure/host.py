@@ -53,8 +53,7 @@ credential_form = Form(
         ('ipmi_principal', "//*[@id='ipmi_userid']"),
         ('ipmi_secret', "//*[@id='ipmi_password']"),
         ('ipmi_verify_secret', "//*[@id='ipmi_verify']"),
-        ('validate_btn', FormButton('Validate the credentials by logging into the Server',
-                                    dimmed_alt="Validate"))
+        ('validate_btn', form_buttons.validate)
     ])
 
 manage_policies_tree = CheckboxTree(
