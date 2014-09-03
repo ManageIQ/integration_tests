@@ -126,7 +126,13 @@ class Appliance(object):
 
         Args:
             undo: Will undo the ajax wait code patch if set to ``True``
+
+        Note:
+            Does nothing for versions above 5.3
         """
+        if self.version >= '5.3':
+            return
+
         script = scripts_path.join('patch_ajax_wait.py')
         args = [str(script), self.address]
         if undo:
@@ -171,6 +177,7 @@ class Appliance(object):
     def enable_internal_db(self, region=0):
         """Enables internal database
         """
+        logger.info('Enabling internal DB (region {}) on {}.'.format(region, self.address))
         self.db_address = self.address
         del(self.db)
         script = scripts_path.join('enable_internal_db.py')
@@ -188,6 +195,8 @@ class Appliance(object):
             db_address: Address of the external database
             region: Number of region to join
         """
+        logger.info('Enabling external DB (db_address {}, region {}) on {}.'
+                    .format(db_address, region, self.address))
         # reset the db address and clear the cached db object if we have one
         self.db_address = db_address
         del(self.db)
@@ -274,7 +283,7 @@ class Appliance(object):
         for try_num in range(num_of_tries):
             try:
                 resp = requests.get("https://" + self.address, verify=False, timeout=15)
-                if resp.status_code == 200 and 'CloudForms' in resp.content:
+                if resp.status_code == 200 and 'Dashboard' in resp.content:
                     was_running_count += 1
             except (requests.Timeout, requests.ConnectionError):
                 # wasn't running
