@@ -63,3 +63,4 @@ def simulate(**data):
         data["attribute"] = [t, selection]
     fill(sim_form, data, action=sim_btn)
     flash.assert_message_match("Automation Simulation has been run")
+    flash.assert_no_errors()

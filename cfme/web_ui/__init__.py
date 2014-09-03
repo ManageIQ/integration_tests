@@ -2193,9 +2193,10 @@ def fill_scriptbox(sb, script):
     """This function now clears and sets the ScriptBox.
     """
     script = script.replace('"', '\\"').replace("\n", "\\n")
-    js_script = '{}.setValue("{}")'.format(sb.name, script)
-    sel.execute_script(js_script)
-    sel.execute_script('arguments[0].innerHTML = "{}";'.format(script), sel.element(sb.ta_loc))
+    sel.execute_script('{}.setValue("{}");'.format(sb.name, script))
+    sel.wait_for_ajax()
+    sel.execute_script('{}.save();'.format(sb.name))
+    sel.wait_for_ajax()
 
 
 class EmailSelectForm(Pretty):

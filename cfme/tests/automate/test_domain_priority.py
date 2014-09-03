@@ -162,3 +162,51 @@ def test_priority(
     assert stdout.strip() == original_method_write_data
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     # END OF LAST SIMULATION
+
+
+@pytest.mark.bugzilla(1134500)
+def test_override_method_across_domains(
+        request, ssh_client, original_method, original_instance, copy_domain,
+        original_method_write_data, copy_method_write_data):
+    instance = original_instance
+    ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
+    request.addfinalizer(lambda: ssh_client.run_command("rm -f {}".format(FILE_LOCATION)))
+    set_domain_order([def_domain.name])  # Default first
+    simulate(
+        instance="Request",
+        message="create",
+        request=instance.name,
+        attribute=None,  # Random selection, does not matter
+        execute_methods=True
+    )
+    wait_for(
+        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION))[0] == 0,
+        num_sec=120, delay=0.5, message="wait for file to appear"
+    )
+    rc, stdout = ssh_client.run_command("cat {}".format(FILE_LOCATION))
+    assert stdout.strip() == original_method_write_data
+    ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
+    copied_method = original_method.copy_to(copy_domain)
+    request.addfinalizer(lambda: copied_method.delete())
+    # Set up a different thing to write to the file
+    with update(copied_method):
+        copied_method.data = METHOD_TORSO.format(copy_method_write_data)
+    # Set it as the first one
+    set_domain_order([copy_domain.name])
+    # And verify
+    #
+    # SECOND SIMULATION
+    #
+    simulate(
+        instance="Request",
+        message="create",
+        request=instance.name,
+        attribute=None,  # Random selection, does not matter
+        execute_methods=True
+    )
+    wait_for(
+        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION))[0] == 0,
+        num_sec=120, delay=0.5, message="wait for file to appear"
+    )
+    rc, stdout = ssh_client.run_command("cat {}".format(FILE_LOCATION))
+    assert stdout.strip() == copy_method_write_data
