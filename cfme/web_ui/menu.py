@@ -128,8 +128,8 @@ sections = {
 
 def is_page_active(toplevel, secondlevel=None):
     try:
-        sel.element("//div[@class='navbar']/ul/li[@class='active']"
-                    "/a[normalize-space(.)='{}']/..".format(toplevel))
+        if get_current_toplevel_name() != toplevel:
+            return False
     except NoSuchElementException:
         return False
     if secondlevel:
