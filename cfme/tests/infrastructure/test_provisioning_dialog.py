@@ -99,7 +99,7 @@ def provisioner(request, provider_key, provider_mgmt, provider_crud):
             cells = {'Description': row_description}
             try:
                 row, __ = wait_for(requests.wait_for_request, [cells],
-                    fail_func=requests.reload, num_sec=total_seconds, delay=5)
+                                   fail_func=requests.reload, num_sec=total_seconds, delay=5)
                 pytest.fail("The provisioning was not postponed")
             except TimedOutError:
                 pass
@@ -111,8 +111,10 @@ def provisioner(request, provider_key, provider_mgmt, provider_crud):
         row_description = 'Provision from [%s] to [%s]' % (template, vm_name)
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
-            fail_func=requests.reload, num_sec=900, delay=20)
-        assert row.last_message.text == 'VM Provisioned Successfully'
+                           fail_func=requests.reload, num_sec=900, delay=20)
+        assert row.last_message.text == version.pick(
+            {version.LOWEST: 'VM Provisioned Successfully',
+             "5.3": 'Vm Provisioned Successfully', })
         return Vm(vm_name, provider_crud)
 
     return _provisioner

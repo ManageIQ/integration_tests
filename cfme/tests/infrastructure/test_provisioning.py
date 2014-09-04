@@ -3,7 +3,7 @@ import pytest
 from cfme.infrastructure.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill
-from utils import testgen
+from utils import testgen, version
 from utils.providers import setup_infrastructure_providers
 from utils.randomness import generate_random_string
 from utils.log import logger
@@ -107,8 +107,10 @@ def test_provision_from_template(setup_providers, provider_key,
     row_description = 'Provision from [%s] to [%s]' % (template, vm_name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=900, delay=20)
-    assert row.last_message.text == 'VM Provisioned Successfully'
+                       fail_func=requests.reload, num_sec=900, delay=20)
+    assert row.last_message.text == version.pick(
+        {version.LOWEST: 'VM Provisioned Successfully',
+         "5.3": 'Vm Provisioned Successfully', })
 
     # Wait for e-mails to appear
     def verify():
