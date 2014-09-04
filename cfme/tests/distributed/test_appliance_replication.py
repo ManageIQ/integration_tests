@@ -4,6 +4,7 @@ import random
 import cfme.web_ui.flash as flash
 from cfme.configure import configuration as conf
 from cfme.infrastructure.provider import wait_for_a_provider
+from cfme.infrastructure.virtual_machines import Vm
 import cfme.fixtures.pytest_selenium as sel
 from time import sleep
 from urlparse import urlparse
@@ -11,6 +12,8 @@ from utils import testgen, version
 from utils.appliance import provision_appliance
 from utils.conf import credentials
 from utils.ssh import SSHClient
+from utils.providers import setup_provider
+from utils.randomness import generate_random_string
 from utils.wait import wait_for
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
@@ -96,6 +99,32 @@ def configure_db_replication(db_address):
     assert conf.get_replication_status()
     wait_for(lambda: conf.get_replication_backlog(navigate=False) == 0, fail_condition=False,
         num_sec=120, delay=10, fail_func=sel.refresh)
+
+
+@pytest.fixture
+def provider_init(provider_key):
+    """cfme/infrastructure/provider.py provider object."""
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
+
+
+@pytest.fixture(scope="class")
+def vm_name():
+    return "test_pwrctl_" + generate_random_string()
+
+
+@pytest.fixture(scope="class")
+def test_vm(request, provider_crud, provider_mgmt, vm_name):
+    '''Fixture to provision appliance to the provider being tested if necessary'''
+    vm = Vm(vm_name, provider_crud)
+
+    request.addfinalizer(vm.delete_from_provider)
+
+    if not provider_mgmt.does_vm_exist(vm_name):
+        vm.create_on_provider()
+    return vm
 
 
 @pytest.mark.usefixtures("random_provider")
@@ -235,3 +264,37 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, provid
     with appl2.browser_session():
         wait_for_a_provider()
         assert provider_crud.exists
+
+
+@pytest.mark.usefixtures("random_provider")
+class TestDistributedVMPowerControl(object):
+
+    def test_distributed_vm_power_control(request, test_vm, provider_crud,
+                                          verify_vm_running, register_event, soft_assert):
+        """Tests that a replication parent appliance can control the power state of a
+        VM being managed by a replication child appliance.
+        """
+        appl1, appl2 = get_replication_appliances()
+
+        def finalize():
+            appl1.destroy()
+            appl2.destroy()
+        request.addfinalizer(finalize)
+        with appl1.browser_session():
+            configure_db_replication(appl2.address)
+            provider_crud.create()
+            wait_for_a_provider()
+
+        with appl2.browser_session():
+            register_event(
+                test_vm.provider_crud.get_yaml_data()['type'],
+                "vm", test_vm.name, ["vm_power_off_req", "vm_power_off"])
+            test_vm.power_control_from_cfme(option=Vm.POWER_OFF, cancel=False)
+            flash.assert_message_contain("Stop initiated")
+            pytest.sel.force_navigate(
+                'infrastructure_provider', context={'provider': test_vm.provider_crud})
+            test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, timeout=900)
+            soft_assert(test_vm.find_quadicon().state == 'currentstate-off')
+            soft_assert(
+                not test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name),
+                "vm running")
