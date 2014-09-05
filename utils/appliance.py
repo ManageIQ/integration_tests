@@ -1,8 +1,7 @@
 import os
 import subprocess
-
 import requests
-
+from requests.packages.urllib3.exceptions import ProtocolError
 from time import sleep
 from utils import conf, db, lazycache
 from utils.browser import browser_session
@@ -285,7 +284,7 @@ class Appliance(object):
                 resp = requests.get("https://" + self.address, verify=False, timeout=15)
                 if resp.status_code == 200 and 'Dashboard' in resp.content:
                     was_running_count += 1
-            except (requests.Timeout, requests.ConnectionError):
+            except (requests.Timeout, requests.ConnectionError, ProtocolError):
                 # wasn't running
                 pass
             if try_num < (num_of_tries - 1):
