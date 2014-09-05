@@ -609,7 +609,9 @@ class EC2Instance(Instance, Updateable):
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
                            fail_func=requests.reload, num_sec=600, delay=20)
-        assert row.last_message.text == 'VM Provisioned Successfully'
+        assert row.last_message.text == version.pick(
+            {version.LOWEST: 'VM Provisioned Successfully',
+             "5.3": 'Vm Provisioned Successfully', })
 
     def power_control_from_provider(self, option):
         """Power control the instance from the provider
