@@ -12,6 +12,15 @@ import sys
 
 from utils.conf import credentials
 from utils.ssh import SSHClient
+from utils.wait import wait_for
+
+
+def is_database_ready(client):
+    ec, out = client.run_command('psql -U postgres -t  -c "select now()" postgres')
+    if ec == 0:
+        return True
+    else:
+        return False
 
 
 def main():
@@ -38,6 +47,9 @@ def main():
         ssh_kwargs['hostname'] = args.hostname
 
     client = SSHClient(stream_output=True, **ssh_kwargs)
+
+    # Make sure the database is ready
+    wait_for(is_database_ready, func_args=[client])
 
     # Make sure the working dir exists
     client.run_command('mkdir -p /tmp/miq')
