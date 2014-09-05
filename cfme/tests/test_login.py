@@ -5,6 +5,7 @@ from utils import conf, error
 pytestmark = pytest.mark.usefixtures('browser')
 
 
+@pytest.mark.sauce
 @pytest.mark.smoke
 def test_login():
     """ Tests that the appliance can be logged into and shows dashboard page. """

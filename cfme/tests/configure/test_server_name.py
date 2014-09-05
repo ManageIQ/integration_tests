@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import pytest
 
 from cfme.configure.configuration import BasicInformation
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import flash, InfoBlock
 
 
+@pytest.mark.sauce
 def test_server_name():
     """Tests that changing the server name updates the about page"""
     form_infoblocks = InfoBlock('form')
