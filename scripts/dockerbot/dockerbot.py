@@ -132,6 +132,8 @@ class DockerBot(object):
                 for filen in r.json():
                     if filen['filename'].startswith('cfme/tests') and filen['status'] != "deleted":
                         files.append(filen['filename'])
+                    if filen['filename'] == 'requirements.txt':
+                        self.args['update_pip'] = True
                 return files
             except:
                 return None
