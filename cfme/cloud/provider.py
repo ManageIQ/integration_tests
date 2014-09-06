@@ -23,6 +23,7 @@ from cfme.exceptions import (
     HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
 )
 from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
+from cfme.web_ui import Timelines
 from utils import conf
 from utils.log import logger
 from utils.providers import provider_factory
@@ -78,8 +79,11 @@ manage_policies_form = Form(
 
 details_page = Region(infoblock_type='detail')
 
+prov_timeline = Timelines('//div[@id="miq_timeline"]')
+
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')
+mon_btn = partial(tb.select, 'Monitoring')
 
 nav.add_branch('clouds_providers',
                {'clouds_provider_new': lambda _: cfg_btn('Add a New Cloud Provider'),
@@ -89,7 +93,9 @@ nav.add_branch('clouds_providers',
                                    {'clouds_provider_edit':
                                     lambda _: cfg_btn('Edit this Cloud Provider'),
                                     'clouds_provider_policy_assignment':
-                                    lambda _: pol_btn('Manage Policies')}]})
+                                    lambda _: pol_btn('Manage Policies'),
+                                    'cloud_provider_timelines':
+                                    lambda _: mon_btn('Timelines')}]})
 
 
 class Provider(Updateable, Pretty):
