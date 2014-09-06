@@ -68,6 +68,7 @@ def upload_ova(hostname, username, password, name, datastore,
     cmd_args.append("--datastore=%s" % datastore)
     cmd_args.append("--name=%s" % name)
     cmd_args.append("--vCloudTemplate=True")
+    cmd_args.append("--overwrite")  # require when failures happen and it retries
     if proxy:
         cmd_args.append("--proxy=%s" % proxy)
     cmd_args.append(url)
