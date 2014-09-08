@@ -82,7 +82,8 @@ class Appliance(object):
                   name_to_set=None,
                   region=0,
                   fix_ntp_clock=True,
-                  patch_ajax_wait=True):
+                  patch_ajax_wait=True,
+                  loosen_pgssl=True):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
 
         Utility method to make things easier.
@@ -94,6 +95,7 @@ class Appliance(object):
             region: Number to assign to region (default ``0``)
             fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
             patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
+            loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
 
         """
         if fix_ntp_clock is True:
@@ -104,7 +106,9 @@ class Appliance(object):
             self.enable_internal_db(region)
         else:
             self.enable_external_db(db_address, region)
-        self.wait_for_web_ui()
+        self.wait_for_db()
+        if loosen_pgssl is True:
+            self.loosen_pgssl()
 
         if name_to_set is not None and name_to_set != self.name:
             self.rename(name_to_set)
@@ -127,7 +131,7 @@ class Appliance(object):
             undo: Will undo the ajax wait code patch if set to ``True``
 
         Note:
-            Does nothing for versions above 5.3
+            Does nothing for versions including and above 5.3
         """
         if self.version >= '5.3':
             return
@@ -136,6 +140,20 @@ class Appliance(object):
         args = [str(script), self.address]
         if undo:
             args.append('-R')
+        with open(os.devnull, 'w') as f_devnull:
+            subprocess.call(args, stdout=f_devnull)
+
+    def loosen_pgssl(self):
+        """Loosens postgres connections
+
+        Note:
+            Does nothing for versions below 5.3
+        """
+        if self.version < '5.3':
+            return
+
+        script = scripts_path.join('loosen_pgssl_connections.py')
+        args = [str(script), self.address]
         with open(os.devnull, 'w') as f_devnull:
             subprocess.call(args, stdout=f_devnull)
 
@@ -246,6 +264,17 @@ class Appliance(object):
                  fail_condition=not running,
                  num_sec=timeout)
 
+    def wait_for_db(self, timeout=180):
+        """Waits for appliance database to be ready
+
+        Args:
+            timeout: Number of seconds to wait until timeout (default ``180``)
+        """
+        wait_for(func=lambda: self.is_db_ready,
+                 message='appliance.is_db_ready',
+                 delay=20,
+                 numsec=timeout)
+
     def destroy(self):
         """Destroys the VM this appliance is running as
         """
@@ -262,6 +291,18 @@ class Appliance(object):
         if self.db_address == self.address:
             return True
         return False
+
+    @property
+    def is_db_ready(self):
+        if self.is_db_internal:
+            ssh_cl = self.ssh_client()
+        else:
+            ssh_cl = SSHClient(hostname=self.db_address)
+        ec, out = ssh_cl.run_command('psql -U postgres -t  -c "select now()" postgres')
+        if ec == 0:
+            return True
+        else:
+            return False
 
     @property
     def is_running(self):
