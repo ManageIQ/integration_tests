@@ -25,7 +25,7 @@ from urllib2 import urlopen, HTTPError
 from utils.conf import cfme_data
 
 
-NIGHTLY_CFME_ID = "cfme"
+CFME_BREW_ID = "cfme"
 NIGHTLY_MIQ_ID = "manageiq"
 
 
@@ -44,15 +44,14 @@ def parse_cmd_line():
     return args
 
 
-def template_name(image_link, version=None):
+def template_name(image_link, image_ts, version=None):
     pattern = re.compile(r'.*/(.*)')
     image_name = pattern.findall(image_link)[0]
     image_name = image_name.lower()
-    # nightly builds CFME
-    if NIGHTLY_CFME_ID in image_name:
+    # CFME brew builds
+    if CFME_BREW_ID in image_name:
         if version:
-            # cfme-pppp-x.y-z.arch.[pppp].ova => cfme-nightly-vvvv
-            return "cfme-nightly-%s" % version
+            return "cfme-%s-%s" % (version, image_ts)
         else:
             pattern = re.compile(r'[^\d]*?-(\d).(\d)-(\d).*')
             result = pattern.findall(image_name)
@@ -201,6 +200,10 @@ def browse_directory(dir_url):
     for key, val in name_dict.iteritems():
         name_dict[key] = dir_url + val
 
+    for key in name_dict.keys():
+        date = urlopen(name_dict[key]).info().getdate('last-modified')
+        name_dict[key + "_date"] = "%02d" % date[1] + "%02d" % date[2]
+
     return name_dict
 
 
@@ -251,7 +254,7 @@ if __name__ == "__main__":
                     kwargs['image_url'] = dir_files[module]
 
                     if cfme_data['template_upload']['automatic_name_strategy']:
-                        kwargs['template_name'] = template_name(dir_files[module],
+                        kwargs['template_name'] = template_name(dir_files[module], dir_files[module + "_date"],
                                                                 get_version(url))
 
                     print "---Start of %s: %s---" % (module, provider)
