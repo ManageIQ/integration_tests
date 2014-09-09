@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*
+from cfme.cloud.provider import get_all_providers as get_all_cloud_provs
+from cfme.cloud import instance
 from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import virtual_machines
@@ -18,6 +20,7 @@ from utils.ssh import SSHTail
 from selenium.common.exceptions import NoSuchElementException
 from time import time
 import csv
+import pytest
 import re
 
 
@@ -202,6 +205,68 @@ def perf_click(uiworker_pid, tailer, clickable, *args):
     return pgstats
 
 
+@pytest.mark.perf_ui_cloud
+@pytest.mark.usefixtures("setup_cloud_providers")
+def test_ems_cloud_render_times_n_queries(ssh_client, soft_assert):
+    ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+
+    if 'num_ems_cloud_check' not in ui_bench_tests['page_check']:
+        ui_bench_tests['page_check']['num_ems_cloud_check'] = 0
+
+    pages = navigate_every_quadicon(get_all_cloud_provs(), 'cloud_prov', 'clouds_providers',
+        ui_bench_tests['page_check']['num_ems_cloud_check'], ui_worker_pid, prod_tail, soft_assert)
+
+    pages_to_csv(pages, 'page_renders_n_queries_ems_cloud.csv')
+
+
+@pytest.mark.perf_ui_cloud
+@pytest.mark.usefixtures("setup_cloud_providers")
+def test_vm_cloud_render_times_n_queries(ssh_client, soft_assert):
+    ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
+
+    if 'num_vm_cloud_check' not in ui_bench_tests['page_check']:
+        ui_bench_tests['page_check']['num_vm_cloud_check'] = 0
+
+    ensure_browser_open()
+    pages = analyze_page_stat(perf_click(ui_worker_pid, prod_tail, login_admin), soft_assert)
+
+    pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, sel.force_navigate,
+        'clouds_instances'), soft_assert))
+
+    # Read the tree in by expanding each folder
+    logger.info('Starting to read the tree...')
+    tree_contents = instance.visible_tree.read_contents()
+    pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, None), soft_assert))
+
+    logger.info('Creating Navigation path to every Instance...')
+    vmpaths = []
+    navigate_tree_contents(tree_contents, [], vmpaths)
+
+    logger.info('Found {} Instances'.format(len(vmpaths)))
+    count = 0
+    for vm in vmpaths:
+        logger.info('Navigating to Instance: {}'.format(vm[-1]))
+        try:
+            pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail,
+                virtual_machines.visible_tree.click_path, *vm), soft_assert))
+            count += 1
+            # Navigate out of the vm cloud page every 4th vm
+            if (count % 4) == 3:
+                pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail,
+                    sel.force_navigate, 'dashboard'), soft_assert))
+                pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail,
+                    sel.force_navigate, 'clouds_instances'), soft_assert))
+        except CandidateNotFound:
+            logger.info('Could not navigate to: '.format(vm[-1]))
+
+        if count >= ui_bench_tests['page_check']['num_vm_cloud_check']:
+            break
+
+    pages_to_csv(pages, 'page_renders_n_queries_vm_cloud.csv')
+
+
+@pytest.mark.perf_ui_infrastructure
+@pytest.mark.usefixtures("setup_infrastructure_providers")
 def test_ems_infra_render_times_n_queries(ssh_client, soft_assert):
     ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
@@ -214,6 +279,8 @@ def test_ems_infra_render_times_n_queries(ssh_client, soft_assert):
     pages_to_csv(pages, 'page_renders_n_queries_ems_infra.csv')
 
 
+@pytest.mark.perf_ui_infrastructure
+@pytest.mark.usefixtures("setup_infrastructure_providers")
 def test_ems_cluster_render_times_n_queries(ssh_client, soft_assert):
     ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
@@ -243,6 +310,8 @@ def test_ems_cluster_render_times_n_queries(ssh_client, soft_assert):
     pages_to_csv(pages, 'page_renders_n_queries_ems_clusters.csv')
 
 
+@pytest.mark.perf_ui_infrastructure
+@pytest.mark.usefixtures("setup_infrastructure_providers")
 def test_host_render_times_n_queries(ssh_client, soft_assert):
     ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
@@ -258,6 +327,8 @@ def test_host_render_times_n_queries(ssh_client, soft_assert):
     pages_to_csv(pages, 'page_renders_n_queries_host_infra.csv')
 
 
+@pytest.mark.perf_ui_infrastructure
+@pytest.mark.usefixtures("setup_infrastructure_providers")
 def test_vm_infra_render_times_n_queries(ssh_client, soft_assert):
     ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
@@ -299,6 +370,8 @@ def test_vm_infra_render_times_n_queries(ssh_client, soft_assert):
     pages_to_csv(pages, 'page_renders_n_queries_vm_infra.csv')
 
 
+@pytest.mark.perf_ui_infrastructure
+@pytest.mark.usefixtures("setup_infrastructure_providers")
 def test_resource_pool_render_times_n_queries(ssh_client, soft_assert):
     ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
@@ -327,6 +400,8 @@ def test_resource_pool_render_times_n_queries(ssh_client, soft_assert):
     pages_to_csv(pages, 'page_renders_n_queries_resource_pool.csv')
 
 
+@pytest.mark.perf_ui_infrastructure
+@pytest.mark.usefixtures("setup_infrastructure_providers")
 def test_storage_render_times_n_queries(ssh_client, soft_assert):
     ui_worker_pid, prod_tail = standup_page_renders_n_queries(ssh_client)
 
