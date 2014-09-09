@@ -159,6 +159,10 @@ def _as_providertemplate(provider, template):
     return ProviderTemplate(provider, template)
 
 
+def post_task_result(tid, result):
+    api().task(tid).put({'result': result})
+
+
 # Dict subclasses to help with JSON serialization
 class Group(dict):
     """dict subclass to help serialize groups as JSON"""
