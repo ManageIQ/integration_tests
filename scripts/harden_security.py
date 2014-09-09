@@ -80,7 +80,7 @@ def main():
             status, out = client.run_command(
                 'ruby /var/www/miq/vmdb/tools/fix_auth.rb --hostname localhost --password smartvm')
             if status != 0:
-                print 'Updating DB passowrd failed on %s' % address
+                print 'Updating DB password failed on %s' % address
                 print out
                 sys.exit(1)
             else:
