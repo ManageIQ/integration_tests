@@ -75,6 +75,17 @@ def main():
                     client.get_file('/var/www/miq/vmdb/certs/v2_key',
                                     local_key_name)
 
+    def update_password(address):
+        with SSHClient(hostname=address, **ssh_creds) as client:
+            status, out = client.run_command(
+                'ruby /var/www/miq/vmdb/tools/fix_auth.rb --hostname localhost --password smartvm')
+            if status != 0:
+                print 'Updating DB passowrd failed on %s' % address
+                print out
+                sys.exit(1)
+            else:
+                print 'DB password updated on %s' % address
+
     def put_key(address):
         print 'copying key to %s' % address
         with SSHClient(hostname=address, **ssh_creds) as client:
@@ -103,6 +114,13 @@ def main():
         for child in args.children:
             restart_appliance(child)
     print "Appliance(s) restarted with new key in place."
+
+    # update encrypted passwords in each database-owning appliance.
+
+    update_password(args.appliance)
+    if args.children:
+        for child in args.children:
+            update_password(child)
 
 if __name__ == '__main__':
     sys.exit(main())
