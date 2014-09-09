@@ -1,12 +1,14 @@
 page_check:
-    num_ems_infra_check: 20
+    num_ems_cloud_check: 10
+    num_vm_cloud_check: 50
+    num_ems_infra_check: 10
     num_ems_cluster_check: 5
-    num_host_infra_check: 20
+    num_host_infra_check: 10
     num_vm_infra_check: 50
     num_ems_resource_pool_check: 5
-    num_storage_check: 20
+    num_storage_check: 10
 threshold:
-    transaction: 7000
+    transaction: 10000
     page_render: 5000
     query_time: 1000
     query_count: 1000
