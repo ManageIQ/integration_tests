@@ -46,11 +46,13 @@ def pytest_generate_tests(metafunc):
 
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
+        logger.info('Cleaning up VM %s on provider %s' %
+                    (vm_name, provider_key))
         provider_mgmt.delete_vm(vm_name + "_0001")
     except:
         # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
+        logger.warning('Failed to clean up VM %s on provider %s' %
+                      (vm_name, provider_key))
 
 
 @pytest.fixture(scope="module")
@@ -107,7 +109,8 @@ def catalog_item(provider_crud, provider_type,
 
 def test_retire_service(provider_key, provider_mgmt, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key,
+                                            provider_mgmt))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
@@ -123,9 +126,11 @@ def test_retire_service(provider_key, provider_mgmt, catalog_item, request):
     myservice.retire()
 
 
-def test_retire_service_on_date(provider_key, provider_mgmt, catalog_item, request):
+def test_retire_service_on_date(provider_key, provider_mgmt,
+                                catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key,
+                                            provider_mgmt))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)

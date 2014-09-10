@@ -59,7 +59,8 @@ class MyService(Updateable):
                            context={'service_name': self.service_name})
         lifecycle_btn("Retire this Service", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Retirement initiated for 1 Service from the CFME Database')
+        flash.assert_success_message('Retirement initiated for 1 Service\
+            from the CFME Database')
         retirement_t = ("Lifecycle", "Retirement Date")
 
         wait_time_min = 1
@@ -83,8 +84,8 @@ class MyService(Updateable):
     def retire_on_date(self, retirement_date):
         sel.force_navigate('retire_service_on_date',
                            context={'service_name': self.service_name})
-        fill(retirement_form, {'retirement_date': retirement_date},
-             action=form_buttons.save)
+        fill(retirement_form, {'retirement_date': retirement_date})
+        sel.click(form_buttons.save)
         flash.assert_message_contain('Retirement date set to')
         wait_time_min = 1
         quadicon = Quadicon(self.vm_name + "_0001", "vm")
