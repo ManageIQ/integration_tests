@@ -42,8 +42,7 @@ def test_add_delete_namespace_nested(namespace):
     assert not nested_ns.exists()
 
 
-@pytest.mark.bugzilla(1136518, unskip={1136518:
-                                       lambda appliance_version: appliance_version > "5.3.0.5"})
+@pytest.mark.bugzilla(1136518)
 def test_duplicate_namespace_disallowed(namespace):
     namespace.create()
     with error.expected("Name has already been taken"):
