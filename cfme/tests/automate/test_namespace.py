@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 # pylint: disable=E1101
 # pylint: disable=W0621
@@ -50,6 +51,7 @@ def test_duplicate_namespace_disallowed(namespace):
 
 
 # provider needed as workaround for bz1035399
+@pytest.mark.bugzilla(1140331)
 def test_permissions_namespace_crud(setup_cloud_providers):
     """ Tests that a namespace can be manipulated only with the right permissions"""
     tac.single_task_permission_test([['Automate', 'Explorer']],
