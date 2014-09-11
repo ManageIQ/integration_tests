@@ -16,7 +16,7 @@ def test_login():
 
 
 def test_bad_password():
-    """ Tests logging in with a bad password.        """
+    """ Tests logging in with a bad password.         """
     pytest.sel.get(pytest.sel.base_url())
     with error.expected('Sorry, the username or password you entered is incorrect.'):
         login.login(conf.credentials['default']['username'], "badpassword@#$")
