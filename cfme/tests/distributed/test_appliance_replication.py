@@ -58,13 +58,13 @@ def get_ssh_client(hostname):
 
 def stop_db_process(address):
     with get_ssh_client(address) as ssh:
-        assert ssh.run_command('service postgresql92-postgresql stop') == 0,\
+        assert ssh.run_command('service postgresql92-postgresql stop')[0] == 0,\
             "Could not stop postgres process on {}".format(address)
 
 
 def start_db_process(address):
     with get_ssh_client(address) as ssh:
-        assert ssh.run_command('service postgresql92-postgresql start') == 0,\
+        assert ssh.run_command('service postgresql92-postgresql start')[0] == 0,\
             "Could not start postgres process on {}".format(address)
 
 
