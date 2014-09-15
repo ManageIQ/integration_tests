@@ -4,6 +4,9 @@
 get:
     Export bash vars to be eval'd for template testing with the jenkins runner
 
+latest:
+    Export bash vars to be eval'd for getting the latest usable template
+
 mark:
     Mark a template as tested and, if it passes, usable.
 
@@ -11,11 +14,6 @@ mark:
 import sys
 
 from utils import trackerbot
-
-
-def export(**env_vars):
-    for varname, value in env_vars.items():
-        print 'export %s="%s"' % (varname, value)
 
 
 def get(api):
@@ -34,6 +32,24 @@ def get(api):
     )
 
 
+def latest(api, stream):
+    try:
+        res = api.group(stream).get()
+    except IndexError:
+        # No templates in stream
+        return 1
+
+    export(
+        appliance_template=res['latest_template'],
+        provider_keys=' '.join(res['latest_template_providers'])
+    )
+
+
+def export(**env_vars):
+    for varname, value in env_vars.items():
+        print 'export %s="%s"' % (varname, value)
+
+
 def mark(api, provider_key, template, usable):
     trackerbot.mark_provider_template(api, provider_key, template, tested=True, usable=usable)
 
@@ -44,6 +60,10 @@ if __name__ == '__main__':
 
     parse_get = subs.add_parser('get', help='get a template to test')
     parse_get.set_defaults(func=get)
+
+    parse_latest = subs.add_parser('latest', help='get the latest usable template for a provider')
+    parse_latest.set_defaults(func=latest)
+    parse_latest.add_argument('stream', help='template stream (e.g. upstream, downstream-52z')
 
     parse_mark = subs.add_parser('mark', help='mark a tested template')
     parse_mark.set_defaults(func=mark)
@@ -56,6 +76,7 @@ if __name__ == '__main__':
     api = trackerbot.api(args.trackerbot_url)
     func_map = {
         get: lambda: get(api),
+        latest: lambda: latest(api, args.stream),
         mark: lambda: mark(api, args.provider_key, args.template, args.usable)
     }
     sys.exit(func_map[args.func]())

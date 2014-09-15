@@ -6,6 +6,7 @@ import slumber
 
 from utils.conf import env
 
+
 # regexen to match templates to streams and pull out the date
 # stream names must be slugified (alphanumeric, dashes, underscores only)
 # regex must include month and day, may include year
