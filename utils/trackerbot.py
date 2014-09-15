@@ -160,8 +160,10 @@ def _as_providertemplate(provider, template):
     return ProviderTemplate(provider, template)
 
 
-def post_task_result(tid, result):
-    api().task(tid).put({'result': result})
+def post_task_result(tid, result, output=None):
+    if not output:
+        output = "No output capture"
+    api().task(tid).put({'result': result, 'output': output})
 
 
 # Dict subclasses to help with JSON serialization
