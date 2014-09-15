@@ -254,8 +254,10 @@ if __name__ == "__main__":
                     kwargs['image_url'] = dir_files[module]
 
                     if cfme_data['template_upload']['automatic_name_strategy']:
-                        kwargs['template_name'] = template_name(dir_files[module], dir_files[module + "_date"],
-                                                                get_version(url))
+                        kwargs['template_name'] = template_name(
+                            dir_files[module],
+                            dir_files[module + "_date"],
+                            get_version(url))
 
                     print "---Start of %s: %s---" % (module, provider)
 
