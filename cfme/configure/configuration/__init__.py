@@ -677,7 +677,7 @@ class SMTPSettings(Updateable):
 
     buttons = Region(
         locators=dict(
-            test="//img[@alt='Send test email']"
+            test="//img[@alt='Send test email']|//button[@alt='Send test email']"
         )
     )
 

@@ -4,17 +4,12 @@ from selenium.common.exceptions import NoSuchElementException
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Region, Select, fill, flash
 from cfme.web_ui.form_buttons import FormButton
-from utils import version
 
 
 import_form = Form(
     fields=[
         ("file_select", "#upload_file"),
-        ("upload_button",
-            version.pick({
-                version.LOWEST: "#upload_atags",
-                "5.3": "#upload_tags"
-            }))
+        ("upload_button", "//input[@id='upload_atags' or @id='upload_tags']")
     ]
 )
 
