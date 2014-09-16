@@ -81,7 +81,7 @@ More information on ``parametrize`` can be found in pytest's documentation:
 
 """
 import pytest
-
+import random
 from cfme.cloud.provider import get_from_config as get_cloud_provider
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
@@ -166,13 +166,16 @@ def fixture_filter(metafunc, argnames, argvalues):
     return argnames, argvalues
 
 
-def provider_by_type(metafunc, provider_types, *fields):
+def provider_by_type(metafunc, provider_types, *fields, **options):
     """Get the values of the named field keys from ``cfme_data['management_systems']``
 
     Args:
         provider_types: A list of provider types to include. If None, all providers are considered
         *fields: Names of keys in an individual provider dict whose values will be returned when
             used as test function arguments
+        **options: two options...
+                required_fields: when fields passed are not present, skip them
+                choose_random: choose a single provider from the list
 
     The following test function arguments are special:
 
@@ -226,6 +229,7 @@ def provider_by_type(metafunc, provider_types, *fields):
             argnames.append(argname)
 
     for provider, data in cfme_data['management_systems'].iteritems():
+        skip = False
         prov_type = data['type']
         if provider_types is not None and prov_type not in provider_types:
             # Skip unwanted types
@@ -243,11 +247,20 @@ def provider_by_type(metafunc, provider_types, *fields):
 
         # Go through the values and handle the special 'data' name
         # report the undefined fields to the log
-        for key, value in data_values.iteritems():
-            if value is None:
-                logger.warning('Field "%s" not defined for provider "%s", defaulting to None' %
-                    (key, provider)
-                )
+        for key in data_values.keys():
+            if data_values[key] is None:
+                if 'require_fields' not in options:
+                    options['require_fields'] = False
+                if options['require_fields']:
+                    skip = True
+                    idlist.remove(provider)
+                    logger.warning('Field "%s" not defined for provider "%s", skipping' %
+                        (key, provider)
+                    )
+                else:
+                    logger.warning('Field "%s" not defined for provider "%s", defaulting to None' %
+                        (key, provider)
+                    )
 
         if prov_type in cloud_provider_type_map:
             crud = get_cloud_provider(provider)
@@ -264,7 +277,20 @@ def provider_by_type(metafunc, provider_types, *fields):
                 values.append(special_args_map[arg])
             elif arg in data_values:
                 values.append(data_values[arg])
-        argvalues.append(values)
+
+        # skip when required field is not present and option['require_field'] == True
+        if not skip:
+            argvalues.append(values)
+
+    # pick a single provider if option['choose_random'] == True
+    if 'choose_random' not in options:
+        options['choose_random'] = False
+    if options['choose_random']:
+        single_index = random.choice(range(len(idlist)))
+        new_idlist = ['random_provider']
+        new_argvalues = [argvalues[single_index]]
+        logger.warning('Choosing random provider, "%s" selected, ' % (provider))
+        return argnames, new_argvalues, new_idlist
 
     return argnames, argvalues, idlist
 
@@ -277,12 +303,12 @@ def cloud_providers(metafunc, *fields):
     return provider_by_type(metafunc, cloud_provider_type_map, *fields)
 
 
-def infra_providers(metafunc, *fields):
+def infra_providers(metafunc, *fields, **options):
     """Wrapper for :py:func:`provider_by_type` that pulls types from
     :py:attr:`utils.providers.infra_provider_type_map`
 
     """
-    return provider_by_type(metafunc, infra_provider_type_map, *fields)
+    return provider_by_type(metafunc, infra_provider_type_map, *fields, **options)
 
 
 def auth_groups(metafunc, auth_mode):
