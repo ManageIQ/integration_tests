@@ -2,8 +2,8 @@ import collections
 
 import pytest
 
-from utils.log import logger as cfme_logger
-from utils.log import format_marker
+from utils import log
+
 
 #: A dict of tests, and their state at various test phases
 test_tracking = collections.defaultdict(dict)
@@ -12,21 +12,21 @@ test_tracking = collections.defaultdict(dict)
 # Expose the cfme logger as a fixture for convenience
 @pytest.fixture(scope='session')
 def logger():
-    return cfme_logger
+    return log.logger
 
 
 @pytest.mark.tryfirst
 def pytest_runtest_setup(item):
     path, lineno, domaininfo = item.location
-    cfme_logger.info(format_marker(_format_nodeid(item.nodeid), mark="-"),
+    logger().info(log.format_marker(_format_nodeid(item.nodeid), mark="-"),
         extra={'source_file': path, 'source_lineno': lineno})
 
 
 def pytest_collection_modifyitems(session, config, items):
-    cfme_logger.info(format_marker('Starting new test run', mark="="))
+    logger().info(log.format_marker('Starting new test run', mark="="))
     expression = config.getvalue('keyword') or False
     expr_string = ', will filter with "%s"' % expression if expression else ''
-    cfme_logger.info('Collected %i items%s' % (len(items), expr_string))
+    logger().info('Collected %i items%s' % (len(items), expr_string))
 
 
 @pytest.mark.trylast
@@ -37,7 +37,7 @@ def pytest_runtest_logreport(report):
     test_tracking[_format_nodeid(report.nodeid, False)][report.when] = report.outcome
     if report.when == 'teardown':
         path, lineno, domaininfo = report.location
-        cfme_logger.info(format_marker('%s result: %s' % (_format_nodeid(report.nodeid),
+        logger().info(log.format_marker('%s result: %s' % (_format_nodeid(report.nodeid),
                 _test_status(_format_nodeid(report.nodeid, False)))),
             extra={'source_file': path, 'source_lineno': lineno})
 
@@ -49,7 +49,7 @@ def pytest_exception_interact(node, call, report):
     # This is the same code that powers py.test's output, so we gain py.test's magical ability
     # to get useful AssertionError output by doing it this way, which makes the voodoo worth it.
     entry = call.excinfo.traceback.getcrashentry()
-    cfme_logger.error(call.excinfo.exconly(),
+    logger().error(call.excinfo.exconly(),
         extra={'source_file': entry.path, 'source_lineno': entry.lineno + 1})
 
 
@@ -61,8 +61,8 @@ def pytest_sessionfinish(session, exitstatus):
     results = ['total: %d' % sum(c.values())] + map(lambda n: '%s: %d' % (n[0], n[1]), c.items())
     # Then join it with commas
     summary = ', '.join(results)
-    cfme_logger.info(format_marker('Finished test run', mark='='))
-    cfme_logger.info(format_marker(str(summary), mark='='))
+    logger().info(log.format_marker('Finished test run', mark='='))
+    logger().info(log.format_marker(str(summary), mark='='))
 
 
 def _test_status(test_name):
