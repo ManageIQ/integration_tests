@@ -13,6 +13,5 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize(argnames, sorted(argvalues))
 
 
-@pytest.mark.smoke
 def test_nav_destination(nav_dest):
     pytest.sel.force_navigate(nav_dest)
