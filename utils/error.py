@@ -27,47 +27,47 @@ from collections import Callable
 
 @singledispatch
 def match(o, e):
-    '''Returns true if the object matches the exception.'''
+    """Returns true if the object matches the exception."""
     raise NotImplemented("Don't know how to match {} to an error".format(o))
 
 
 @match.method(type)
 def _exception(cls_e, e):
-    '''Simulates normal except: clauses by matching the exception type'''
+    """Simulates normal except: clauses by matching the exception type"""
     return isinstance(e, cls_e)
 
 
 @match.method(Callable)
 def _callable(f, e):
-    '''Pass the exception to the callable, if the callable returns truthy,
-    then it's a match.'''
+    """Pass the exception to the callable, if the callable returns truthy,
+    then it's a match."""
     return f(e)
 
 
 def regex(expr, e):
-    '''Search the message of the exception using the regex expr'''
+    """Search the message of the exception using the regex expr"""
     p = re.compile(expr)
     return p.search(str(e.message))
 
 
 @match.method(str)
 def _str(s, e):
-    '''Treat string as a regex and match it against the Exception's
-    message.'''
+    """Treat string as a regex and match it against the Exception's
+    message."""
     return regex(s, e)
 
 
 class UnexpectedSuccessException(Exception):
-    '''An error that is thrown when something we expected to fail didn't
-    fail.'''
+    """An error that is thrown when something we expected to fail didn't
+    fail."""
     pass
 
 
 @contextmanager
 def handler(f):
-    '''Handles errors based on more than just their type.  Any matching
+    """Handles errors based on more than just their type.  Any matching
     error will be caught, the rest will be allowed to propagate up the
-    stack.'''
+    stack."""
     try:
         yield
     except Exception as e:
@@ -77,12 +77,12 @@ def handler(f):
 
 @contextmanager
 def expected(f):
-    '''Inverts error handling.  If the enclosed block doesn't raise an
+    """Inverts error handling.  If the enclosed block doesn't raise an
     error, it will raise one.  If it raises a matching error, it will
     return normally.  If it raises a non-matching error, that error
     will be allowed to propagate up the stack.
 
-    '''
+    """
     try:
         yield
         raise UnexpectedSuccessException(

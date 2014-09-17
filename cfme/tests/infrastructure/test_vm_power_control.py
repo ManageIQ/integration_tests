@@ -62,7 +62,7 @@ def vm_name():
 
 @pytest.fixture(scope="class")
 def test_vm(request, provider_crud, provider_mgmt, vm_name):
-    '''Fixture to provision appliance to the provider being tested if necessary'''
+    """Fixture to provision appliance to the provider being tested if necessary"""
     vm = Vm(vm_name, provider_crud)
 
     request.addfinalizer(vm.delete_from_provider)

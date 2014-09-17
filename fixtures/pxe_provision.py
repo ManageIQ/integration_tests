@@ -34,7 +34,7 @@ def setup_pxe_server(db, provisioning_setup_data):
         server_name.append(row.name)
     if not provisioning_setup_data['pxe_server_name'] in server_name:
 
-        '''Add a PXE Server'''
+        """Add a PXE Server"""
         new_pxe_server = db['pxe_servers'](
             access_url=provisioning_setup_data['access_url'],
             pxe_directory=provisioning_setup_data['pxe_directory'],
@@ -57,7 +57,7 @@ def setup_pxe_server(db, provisioning_setup_data):
 
 
 def setup_pxe_menu(db, provisioning_setup_data, server_last_id):
-    ''' Add PXE Menu'''
+    """ Add PXE Menu"""
     pxe_menu = db['pxe_menus']
     doc = requests.get(provisioning_setup_data['pxe_menu_file'], verify=False)
     content = StringIO.StringIO(doc.content).read()
@@ -79,7 +79,7 @@ def setup_pxe_menu(db, provisioning_setup_data, server_last_id):
 
 def setup_pxe_image(db, provisioning_setup_data, server_last_id,
         menu_last_id, row_val):
-    '''Add PXE Image'''
+    """Add PXE Image"""
     new_pxe_image = db['pxe_images'](
         default_for_windows=None,
         description=provisioning_setup_data['image_description'],
@@ -110,7 +110,7 @@ def setup_customization_template(db, provisioning_setup_data, row_val,
         customization_template.append(row.name)
     if not provisioning_setup_data['ct_name'] in customization_template:
 
-        '''Add a Customization Template'''
+        """Add a Customization Template"""
         if ks_file_handle is None:
             f_ks = open(provisioning_setup_data['ks_file'], 'r+')
         else:
@@ -130,14 +130,14 @@ def setup_customization_template(db, provisioning_setup_data, row_val,
 
 @pytest.fixture
 def setup_pxe_provision(uses_pxe, db, provisioning_setup_data):
-    '''Sets up Infrastructure PXE for provisioning'''
+    """Sets up Infrastructure PXE for provisioning"""
     row_val, server_last_id = setup_pxe_server(db, provisioning_setup_data)
     if server_last_id is not False:
         menu_last_id = setup_pxe_menu(db, provisioning_setup_data, server_last_id)
         setup_pxe_image(db, provisioning_setup_data, server_last_id, menu_last_id, row_val)
     setup_customization_template(db, provisioning_setup_data, row_val)
 
-    '''Edit System Image Type'''
+    """Edit System Image Type"""
     rhel_type = db.session.query(db['pxe_image_types']).get(row_val)
     with db.transaction:
         rhel_type.provision_type = 'vm'

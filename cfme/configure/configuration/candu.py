@@ -11,7 +11,7 @@ form = ui.Form(
 
 
 def enable_all():
-    '''Enable all C&U metric collection for this region'''
+    """Enable all C&U metric collection for this region"""
     sel.force_navigate("cfg_settings_region_cu_collection")
     ui.fill(form, {'all_clusters_cb': True,
                    'all_datastores_cb': True},

@@ -7,11 +7,11 @@ import multimethods as mm
 
 
 def get_version(obj):
-    '''Return a LooseVersion based on obj.  For CFME, 'master' version
+    """Return a LooseVersion based on obj.  For CFME, 'master' version
        means always the latest (compares as greater than any other
        version)
 
-    '''
+    """
     if isinstance(obj, Version):
         return obj
     if obj.startswith('master'):
@@ -44,8 +44,8 @@ def appliance_is_downstream():
 
 
 def product_version_dispatch(*_args, **_kwargs):
-    '''Dispatch function for use in multimethods that just ignores
-       arguments and dispatches on the current product version.'''
+    """Dispatch function for use in multimethods that just ignores
+       arguments and dispatches on the current product version."""
     return current_version()
 
 

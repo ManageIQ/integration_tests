@@ -162,7 +162,7 @@ def _test_vm_provision():
 
 
 def _test_vm_power_on():
-    '''Ensures power button is shown for a VM'''
+    """Ensures power button is shown for a VM"""
     logger.info("Checking for power button")
     vm_name = virtual_machines.get_first_vm_title()
     logger.debug("VM " + vm_name + " selected")
@@ -183,9 +183,9 @@ def _test_vm_removal():
                            'Modify', 'Provision VMs']],
                         _test_vm_provision)])
 def test_permission_edit(product_features, action):
-    '''
+    """
     Ensures that changes in permissions are enforced on next login
-    '''
+    """
     role_name = random.generate_random_string()
     role = ac.Role(name=role_name,
                   vm_restriction=None,
@@ -214,10 +214,10 @@ def test_permission_edit(product_features, action):
 
 
 def _mk_role(name=None, vm_restriction=None, product_features=None):
-    '''Create a thunk that returns a Role object to be used for perm
+    """Create a thunk that returns a Role object to be used for perm
        testing.  name=None will generate a random name
 
-    '''
+    """
     name = name or random.generate_random_string()
     return lambda: ac.Role(name=name,
                            vm_restriction=vm_restriction,
@@ -225,7 +225,7 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
 
 
 def _go_to(dest):
-    '''Create a thunk that navigates to the given destination'''
+    """Create a thunk that navigates to the given destination"""
     return lambda: nav.go_to(dest)
 
 
@@ -286,8 +286,8 @@ def test_permissions(role, allowed_actions, disallowed_actions):
 
 
 def single_task_permission_test(product_features, actions):
-    '''Tests that action succeeds when product_features are enabled, and
-       fail when everything but product_features are enabled'''
+    """Tests that action succeeds when product_features are enabled, and
+       fail when everything but product_features are enabled"""
     test_permissions(_mk_role(name=random.generate_random_string(),
                               product_features=[(['Everything'], False)] +
                               [(f, True) for f in product_features]),
