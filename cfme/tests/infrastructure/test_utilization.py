@@ -22,7 +22,7 @@
 
 # @pytest.mark.parametrize("provider", providers.list_all_providers())
 # def test_metrics_collection(provider):
-#     '''check the db is gathering collection data for the given provider'''
+#     """check the db is gathering collection data for the given provider"""
 #
 #     metrics_tbl = db.cfmedb['metrics']
 #     mgmt_systems_tbl = db.cfmedb['ext_management_systems']

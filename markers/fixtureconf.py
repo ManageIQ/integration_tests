@@ -1,11 +1,11 @@
-'''fixtureconf: Marker for passing args and kwargs to test fixtures
+"""fixtureconf: Marker for passing args and kwargs to test fixtures
 
 Positional and keyword arguments to this marker will be stored on test items
 in the _fixtureconf attribute (dict). kwargs will be stored as-is, the args
 tuple will be packed into the dict under the 'args' key.
 
 Use the "fixtureconf" fixture in tests to easily access the fixtureconf dict
-'''
+"""
 
 
 def pytest_configure(config):

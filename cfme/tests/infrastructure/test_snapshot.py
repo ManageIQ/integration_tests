@@ -49,7 +49,7 @@ def vm_name():
 
 @pytest.fixture(scope="module")
 def test_vm(request, provider_init, provider_crud, provider_mgmt, vm_name):
-    '''Fixture to provision appliance to the provider being tested if necessary'''
+    """Fixture to provision appliance to the provider being tested if necessary"""
     vm = Vm(vm_name, provider_crud)
 
     if not provider_mgmt.does_vm_exist(vm_name):

@@ -5,7 +5,7 @@ def _name(o):
 
 
 def attr_repr(o, attr):
-    '''Return the string repr of the attribute attr on the object o'''
+    """Return the string repr of the attribute attr on the object o"""
     try:
         return repr(getattr(o, attr, None))
     except BaseException:
@@ -25,11 +25,11 @@ def pr_obj(attrs):
 
 
 class Pretty(object):
-    '''A mixin that prints repr as <MyClass field1=..., field2=...>. The
+    """A mixin that prints repr as <MyClass field1=..., field2=...>. The
        fields that will be printed should be stored in the class's
        pretty_attrs attribute (none by default).
 
-    '''
+    """
     pretty_attrs = []
 
     def __repr__(self):

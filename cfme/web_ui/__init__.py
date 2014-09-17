@@ -1571,7 +1571,7 @@ class Tree(Pretty):
 
 
 class CheckboxTree(Tree):
-    '''Tree that has a checkbox on each node, adds methods to check/uncheck them'''
+    """Tree that has a checkbox on each node, adds methods to check/uncheck them"""
 
     def _is_legacy_checked(self, leaf):
         checkbox = sel.element(self.node_checkbox, root=leaf)
@@ -1636,14 +1636,14 @@ def _fill_tree_seq(tree, values):
 @sel.select.method((CheckboxTree, Sequence))
 @fill.method((CheckboxTree, Sequence))
 def _select_chkboxtree_seq(cbtree, values):
-    '''values should be a list of tuple pairs, where the first item is the
+    """values should be a list of tuple pairs, where the first item is the
        path to select, and the second is whether to check or uncheck.
 
        Usage:
 
          select(cbtree, [(['Foo', 'Bar'], False),
                          (['Baz'], True)])
-    '''
+    """
     for (path, to_select) in values:
         if to_select:
             cbtree.check_node(*path)

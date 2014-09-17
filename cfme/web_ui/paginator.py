@@ -134,11 +134,11 @@ def find(pred):
 
 
 def find_element(el):
-    '''Advance the pages until the given element is displayed'''
+    """Advance the pages until the given element is displayed"""
     find(partial(sel.is_displayed, el))
 
 
 def click_element(el):
-    '''Advance the page until the given element is displayed, and click it'''
+    """Advance the page until the given element is displayed, and click it"""
     find_element(el)
     sel.click(el)

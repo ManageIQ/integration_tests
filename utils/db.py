@@ -36,7 +36,7 @@ def ping_connection(dbapi_connection, connection_record, connection_proxy):
 
 
 class Db(Mapping):
-    '''Helper class for interacting with a CFME database using SQLAlchemy
+    """Helper class for interacting with a CFME database using SQLAlchemy
 
     Args:
         hostname: base url to be used (default ``conf.env['base_url']``)
@@ -71,7 +71,7 @@ class Db(Mapping):
         a latent connection, this can be extremely slow, which will affect methods that return
         tables, like the mapping interface or :py:meth:`values`.
 
-    '''
+    """
     _table_cache = dict()
 
     def __init__(self, hostname=None, credentials=None):
