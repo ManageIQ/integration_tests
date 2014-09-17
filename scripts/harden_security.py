@@ -25,6 +25,7 @@ Example usage:
 """
 
 import argparse
+import re
 import socket
 import sys
 
@@ -42,10 +43,10 @@ def main():
     parser.add_argument('-c', action='append', dest='children',
         help='hostname or ip address of child appliance')
     args = parser.parse_args()
-    print "appliance: " + args.appliance
+    print "Appliance: " + args.appliance
     if args.children:
         for child in args.children:
-            print "child: " + child
+            print "Child: " + child
 
     local_key_name = "v2_key_" + generate_random_string()
 
@@ -75,6 +76,27 @@ def main():
                     client.get_file('/var/www/miq/vmdb/certs/v2_key',
                                     local_key_name)
 
+    def update_db_yaml(address):
+        with SSHClient(hostname=address, **ssh_creds) as client:
+            client.run_command('cd /var/www/miq/vmdb')
+            status, out = client.run_rails_command(
+                '\'puts MiqPassword.encrypt("database password");\'')
+            if status != 0:
+                print 'Retrieving encrypted db password failed on %s' % address
+                sys.exit(1)
+            else:
+                encrypted_pass = out
+                status, out = client.run_command(
+                    ('cd /var/www/miq/vmdb; '
+                     'sed -i.`date +%m-%d-%Y` "s/password:'
+                     ' .*/password: {}/g" config/database.yml'.format(re.escape(encrypted_pass))))
+                if status != 0:
+                    print 'Updating database.yml failed on %s' % address
+                    print out
+                    sys.exit(1)
+                else:
+                    print 'Updating database.yml succeeded on %s' % address
+
     def update_password(address):
         with SSHClient(hostname=address, **ssh_creds) as client:
             status, out = client.run_command(
@@ -101,12 +123,14 @@ def main():
 
     # generate key on master appliance
     generate_key(args.appliance)
+    update_db_yaml(args.appliance)
 
     # copy to other appliances
     if args.children:
         for child in args.children:
             wait_for(func=is_ssh_running, func_args=[child], delay=10, num_sec=600)
             put_key(child)
+            update_db_yaml(child)
 
     # restart master appliance (and children, if provided)
     restart_appliance(args.appliance)
