@@ -50,8 +50,10 @@ def main():
 
     if client.run_command('ls -l /bin/appliance_console_cli')[0] == 0:
         # broken in 5.3.0.2
-        # status, out = client.run_command('appliance_console_cli --ca --region 1 --internal')
-        status, out = client.run_command('appliance_console_cli --region 1 --internal -k')
+        # status, out = client.run_command('appliance_console_cli --ca --region {} --internal -k')
+        #                                  .format(args.region))
+        status, out = client.run_command('appliance_console_cli --region {} --internal -k'
+                                         .format(args.region))
         if status != 0:
             print 'Enabling DB failed with error:'
             print out
