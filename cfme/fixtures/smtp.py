@@ -22,7 +22,7 @@ from utils.smtp_collector_client import SMTPCollectorClient
 logger = create_logger('emails')
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def _smtp_test_session(request):
     """Fixture, which prepares the appliance for e-mail capturing tests
 
@@ -46,7 +46,25 @@ def _smtp_test_session(request):
         mail_query_port
     )
     logger.info("Starting mail collector %s" % server_command)
+    collector = None
+
+    def _finalize():
+        if collector is None:
+            return
+        logger.info("Sending KeyboardInterrupt to collector")
+        collector.send_signal(signal.SIGINT)
+        time.sleep(2)
+        if collector.poll() is None:
+            logger.info("Sending SIGTERM to collector")
+            collector.send_signal(signal.SIGTERM)
+            time.sleep(5)
+            if collector.poll() is None:
+                logger.info("Sending SIGKILL to collector")
+                collector.send_signal(signal.SIGKILL)
+        collector.wait()
+        logger.info("Collector finished")
     collector = subprocess.Popen(server_command, shell=True)
+    request.addfinalizer(_finalize)
     logger.info("Collector pid %d" % collector.pid)
     logger.info("Waiting for collector to become alive.")
     time.sleep(3)
@@ -62,11 +80,7 @@ def _smtp_test_session(request):
         my_ip,
         mail_query_port
     )
-    yield client
-    logger.info("Sending KeyboardInterrupt to collector")
-    collector.send_signal(signal.SIGINT)
-    collector.wait()
-    logger.info("Collector finished")
+    return client
 
 
 @pytest.yield_fixture(scope="module")
