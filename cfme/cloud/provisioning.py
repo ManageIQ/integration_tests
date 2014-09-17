@@ -19,12 +19,12 @@ template_select_form = ui.Form(
 
 
 def select_security_group(sg):
-    '''Workaround for select box that is immediately replaced by the same
+    """Workaround for select box that is immediately replaced by the same
        select box no matter what selenium clicks on (but works fine
        manually).  For now only selects one item even though it's a
        multiselect.
 
-    '''
+    """
     val = sel.get_attribute("//select[@id='environment__security_groups']/option[.='%s']" %
                             sg, 'value')
     sel.browser().execute_script(
