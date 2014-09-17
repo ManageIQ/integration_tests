@@ -126,33 +126,53 @@ sections = {
 }
 
 
+def is_page_active(toplevel, secondlevel=None):
+    try:
+        if get_current_toplevel_name() != toplevel:
+            return False
+    except NoSuchElementException:
+        return False
+    if secondlevel:
+        try:
+            sel.element("//div[@class='navbar']//ul/li[@class='active']"
+                        "/a[normalize-space(.)='{}']/..".format(secondlevel))
+        except NoSuchElementException:
+            return False
+    return True
+
+
 def nav_to_fn(toplevel, secondlevel=None):
     def f(_):
-        try:
-            # Try to circumvent the issue on fir
-            get_rid_of_the_menu_box()
-            open_top_level(toplevel)
-            get_rid_of_the_menu_box()
-            if get_current_toplevel_name() != toplevel:
-                # Infrastructure / Requests workaround
-                sel.move_to_element(get_top_level_element(toplevel))
-                # Using pure move_to_element to not move the mouse anywhere else
-                # So in this case, we move the mouse to the first item of the second level
-                ActionChains(sel.browser())\
-                    .move_to_element(sel.element(secondlevel_first_item_loc.format(toplevel)))\
-                    .click()\
-                    .perform()
+        if not is_page_active(toplevel):
+            try:
+                # Try to circumvent the issue on fir
                 get_rid_of_the_menu_box()
-                # Now when we went directly to the first item, everything should just work
-                tl = get_current_toplevel_name()
-                if tl != toplevel:
-                    raise Exception("Navigation screwed! (wanted {}, got {}".format(toplevel, tl))
-        except NoSuchElementException:
-            if visible_toplevel_tabs():  # Target menu is missing
-                raise
-            else:
-                return  # no menu at all, assume single permission
+                open_top_level(toplevel)
+                get_rid_of_the_menu_box()
+                if get_current_toplevel_name() != toplevel:
+                    # Infrastructure / Requests workaround
+                    sel.move_to_element(get_top_level_element(toplevel))
+                    # Using pure move_to_element to not move the mouse anywhere else
+                    # So in this case, we move the mouse to the first item of the second level
+                    ActionChains(sel.browser())\
+                        .move_to_element(sel.element(secondlevel_first_item_loc.format(toplevel)))\
+                        .click()\
+                        .perform()
+                    get_rid_of_the_menu_box()
+                    # Now when we went directly to the first item, everything should just work
+                    tl = get_current_toplevel_name()
+                    if tl != toplevel:
+                        raise Exception("Navigation screwed! (wanted {}, got {}".format(toplevel,
+                                                                                        tl))
+            except NoSuchElementException:
+                if visible_toplevel_tabs():  # Target menu is missing
+                    raise
+                else:
+                    return  # no menu at all, assume single permission
 
+        # Can't do this currently because silly menu traps us
+        # if is_page_active(toplevel, secondlevel):
+        #     return
         if secondlevel is not None:
             get_rid_of_the_menu_box()
             open_second_level(get_top_level_element(toplevel), secondlevel)
