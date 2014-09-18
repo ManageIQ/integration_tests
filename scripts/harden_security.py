@@ -80,7 +80,7 @@ def main():
         with SSHClient(hostname=address, **ssh_creds) as client:
             client.run_command('cd /var/www/miq/vmdb')
             status, out = client.run_rails_command(
-                '\'puts MiqPassword.encrypt("database password");\'')
+                '\'puts MiqPassword.encrypt("smartvm");\'')
             if status != 0:
                 print 'Retrieving encrypted db password failed on %s' % address
                 sys.exit(1)
@@ -116,7 +116,12 @@ def main():
     def restart_appliance(address):
         print 'Restarting evmserverd on %s' % address
         with SSHClient(hostname=address, **ssh_creds) as client:
-            client.run_command('service evmserverd restart')
+            status, out = client.run_command('service evmserverd restart')
+            if status != 0:
+                print "Restarting evmserverd failed on %s" % address
+                sys.exit(1)
+            else:
+                print "Restarting succeeded on %s" % address
 
     # make sure ssh is ready on each appliance
     wait_for(func=is_ssh_running, func_args=[args.appliance], delay=10, num_sec=600)
@@ -145,6 +150,15 @@ def main():
     if args.children:
         for child in args.children:
             update_password(child)
+
+    # Restart again!
+    restart_appliance(args.appliance)
+    if args.children:
+        for child in args.children:
+            restart_appliance(child)
+
+    print "Done!"
+
 
 if __name__ == '__main__':
     sys.exit(main())
