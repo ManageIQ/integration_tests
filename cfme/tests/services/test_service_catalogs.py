@@ -103,6 +103,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
+@pytest.mark.bugzilla(1144207)
 def test_order_catalog_item(provider_key, provider_mgmt, setup_providers, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
@@ -118,6 +119,7 @@ def test_order_catalog_item(provider_key, provider_mgmt, setup_providers, catalo
     assert row.last_message.text == 'Request complete'
 
 
+@pytest.mark.bugzilla(1144207)
 def test_order_catalog_bundle(provider_key, provider_mgmt, setup_providers, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))

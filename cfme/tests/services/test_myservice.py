@@ -9,8 +9,8 @@ from cfme.services import requests
 from cfme.web_ui import flash
 from datetime import datetime
 from utils import testgen
+from utils.providers import setup_provider
 from utils.randomness import generate_random_string
-from utils.providers import setup_infrastructure_providers
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -53,10 +53,13 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
-@pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
+@pytest.fixture
+def provider_init(provider_key):
+    """cfme/infrastructure/provider.py provider object."""
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 @pytest.fixture(scope="function")
@@ -105,7 +108,8 @@ def catalog_item(provider_crud, provider_type,
     return catalog_item
 
 
-def test_retire_service(provider_key, provider_mgmt, catalog_item, request):
+@pytest.mark.bugzilla(1144207)
+def test_retire_service(provider_init, provider_key, provider_mgmt, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
@@ -113,8 +117,8 @@ def test_retire_service(provider_key, provider_mgmt, catalog_item, request):
     service_catalogs.order(catalog_item.catalog, catalog_item)
     logger.info('Waiting for cfme provision request for service {}'
                 .format(catalog_item.name))
-    row_description = "Provisioning [{}] for Service [{}]"\
-                      .format(catalog_item.name, catalog_item.name)
+    row_description = "Provision from [{}}] to [{}]"\
+                      .format(catalog_item.catalog_name, catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
                        fail_func=requests.reload, num_sec=600, delay=20)
@@ -123,7 +127,9 @@ def test_retire_service(provider_key, provider_mgmt, catalog_item, request):
     myservice.retire()
 
 
-def test_retire_service_on_date(provider_key, provider_mgmt, catalog_item, request):
+@pytest.mark.bugzilla(1144207)
+def test_retire_service_on_date(provider_init, provider_key, provider_mgmt,
+                                catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
@@ -131,8 +137,8 @@ def test_retire_service_on_date(provider_key, provider_mgmt, catalog_item, reque
     service_catalogs.order(catalog_item.catalog, catalog_item)
     logger.info('Waiting for cfme provision request for service {}'
                 .format(catalog_item.name))
-    row_description = "Provisioning [{}] for Service [{}]"\
-                      .format(catalog_item.name, catalog_item.name)
+    row_description = "Provision from [{}] to [{}]"\
+                      .format(catalog_item.catalog_name, catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
                        fail_func=requests.reload, num_sec=600, delay=20)
