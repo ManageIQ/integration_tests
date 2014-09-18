@@ -9,6 +9,11 @@ def generate_random_int(max=sys.maxint):
     return random.randint(0, max)
 
 
+def generate_random_local_ip():
+    return "10.{}.{}.{}".format(
+        generate_random_int(255), generate_random_int(255), generate_random_int(255))
+
+
 def generate_random_string(size=8):
     size = int(size)
 

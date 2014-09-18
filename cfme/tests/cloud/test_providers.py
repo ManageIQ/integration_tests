@@ -10,7 +10,7 @@ import utils.error as error
 from cfme import Credential
 from cfme.cloud import provider
 from utils import testgen
-from utils.randomness import generate_random_string
+from utils.randomness import generate_random_local_ip, generate_random_string
 from utils.update import update
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
@@ -115,7 +115,7 @@ def test_host_name_required_validation(request):
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=None,
-        ip_address='10.10.10.10')
+        ip_address=generate_random_local_ip())
 
     request.addfinalizer(prov.delete_if_exists)
     with error.expected("Host Name can't be blank"):
@@ -139,7 +139,7 @@ def test_api_port_blank_validation(request):
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=5),
-        ip_address='10.10.10.10',
+        ip_address=generate_random_local_ip(),
         api_port='')
 
     request.addfinalizer(prov.delete_if_exists)
@@ -175,7 +175,7 @@ def test_hostname_max_character_validation(request):
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=255),
-        ip_address='10.10.10.10')
+        ip_address=generate_random_local_ip())
 
     request.addfinalizer(prov.delete_if_exists)
     prov.create()
@@ -186,7 +186,7 @@ def test_ip_max_valid_character_validation(request):
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=5),
-        ip_address='255.255.255.254')
+        ip_address=generate_random_local_ip())
 
     request.addfinalizer(prov.delete_if_exists)
     prov.create()
@@ -208,7 +208,7 @@ def test_api_port_max_character_validation(request):
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=5),
-        ip_address='10.10.10.10',
+        ip_address=generate_random_local_ip(),
         api_port=generate_random_string(size=15))
 
     request.addfinalizer(prov.delete_if_exists)
