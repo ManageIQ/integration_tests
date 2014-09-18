@@ -15,7 +15,6 @@ psphere
 py
 PyGithub
 PyPDF2
-pysphere
 pytest
 python-bugzilla>=1.1.0
 python-dateutil

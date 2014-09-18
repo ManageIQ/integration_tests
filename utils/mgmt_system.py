@@ -4,16 +4,19 @@
 Used to communicate with providers without using CFME facilities
 """
 import re
-import boto
 from abc import ABCMeta, abstractmethod
+
+import boto
 from boto.ec2 import EC2Connection, get_region
+from novaclient.v1_1 import client as osclient
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import DisconnectedError
 from ovirtsdk.xml import params
-from pysphere import VIServer, MORTypes, VITask, VIMor
-from pysphere.resources import VimService_services as VI
-from pysphere.resources.vi_exception import VIException
-from novaclient.v1_1 import client as osclient
+from psphere import managedobjects as mobs
+from psphere.client import Client
+from psphere.errors import ObjectNotFoundError
+
+from cfme import exceptions as cfme_exc
 from utils.log import logger
 from utils.version import LooseVersion
 from utils.wait import wait_for, TimedOutError
@@ -308,19 +311,16 @@ class MgmtSystemAPIBase(object):
 class VMWareSystem(MgmtSystemAPIBase):
     """Client to Vsphere API
 
-    This class piggy backs off pysphere.
-
-    Benefits of pysphere:
-      - Don't need intimate knowledge w/ vsphere api itself.
-    Detriments of pysphere:
-      - Response often are not detailed enough.
-
     Args:
         hostname: The hostname of the system.
         username: The username to connect with.
         password: The password to connect with.
 
-    Returns: A :py:class:`VMWareSystem` object.
+    See also:
+
+        vSphere Management SDK API docs
+        https://developercenter.vmware.com/web/dp/doc/preview?id=155
+
     """
     _api = None
 
@@ -331,59 +331,61 @@ class VMWareSystem(MgmtSystemAPIBase):
         'num_template': lambda self: len(self.list_template()),
         'num_datastore': lambda self: len(self.list_datastore()),
     }
+    POWERED_ON = 'poweredOn'
+    POWERED_OFF = 'poweredOff'
+    SUSPENDED = 'suspended'
 
     def __init__(self, hostname, username, password, **kwargs):
         self.hostname = hostname
         self.username = username
         self.password = password
-        self.api = VIServer()
-
-    @property
-    def api(self):
-        # wrap calls to the API with a keepalive check, reconnect if needed
-        try:
-            keepalive = self._api.keep_session_alive()
-            if not keepalive:
-                logger.debug('The connection to %s "%s" timed out' %
-                    (type(self).__name__, self.hostname))
-        except VIException as ex:
-            if ex.fault == "Not Connected":
-                # set this to trigger a connection below
-                keepalive = None
-            else:
-                raise
-
-        if not keepalive:
-            self._connect()
-        return self._api
-
-    @api.setter
-    def api(self, api):
-        # Allow for changing the api object via public setter
-        self._api = api
+        self.api = Client(hostname, username, password)
+        self._vm_cache = {}
+        self.kwargs = kwargs
 
     @property
     def version(self):
-        return LooseVersion(self.api.get_api_version())
+        return LooseVersion(self.api.si.content.about.version)
 
-    def _connect(self):
-        # Since self.api calls _connect, connect via self._api to prevent implosion
-        logger.debug('Connecting to %s "%s"' % (type(self).__name__, self.hostname))
-        self._api.connect(self.hostname, self.username, self.password)
+    @property
+    def default_resource_pool(self):
+        return self.kwargs.get("default_resource_pool", None)
 
-    def _get_vm(self, vm_name=None):
+    def _get_vm(self, vm_name):
         """ Returns a vm from the VI object.
 
         Args:
             vm_name: The name of the VM.
 
-        Returns: a pysphere object.
+        Returns: a psphere object.
         """
-        if vm_name is None:
-            raise VMInstanceNotFound('Could not find a VM named %s.' % vm_name)
+        if vm_name in self._vm_cache:
+            vm = self._vm_cache[vm_name]
+            vm.update()
         else:
-            vm = self.api.get_vm_by_name(vm_name)
-            return vm
+            vm = mobs.VirtualMachine.get(self.api, name=vm_name)
+            self._vm_cache[vm_name] = vm
+        return vm
+
+    def _get_resource_pool(self, resource_pool_name=None):
+        """ Returns a resource pool MOR for a specified name.
+
+        Args:
+            resource_pool_name: The name of the resource pool. If None, first one will be picked.
+        Returns: The MOR of the resource pool.
+        """
+        if resource_pool_name is not None:
+            return mobs.ResourcePool.get(self.api, name=resource_pool_name)
+        elif self.default_resource_pool is not None:
+            return mobs.ResourcePool.get(self.api, name=self.default_resource_pool)
+        else:
+            return mobs.ResourcePool.get(self.api)[0]
+
+    @staticmethod
+    def _task_wait(task):
+        task.update()
+        if task.info.state not in ['queued', 'running']:
+            return task.info.state
 
     def does_vm_exist(self, name):
         """ Checks if a vm exists or not.
@@ -398,21 +400,6 @@ class VMWareSystem(MgmtSystemAPIBase):
         except Exception:
             return False
 
-    def _get_resource_pool(self, resource_pool_name=''):
-        """ Returns a resource pool MOR for a specified name.
-
-        Args:
-            resource_pool_name: The name of the resource pool.
-        Returns: The MOR of the resource pool.
-        """
-        rps = self.api.get_resource_pools()
-        for mor, path in rps.iteritems():
-            if re.match('/Resources/?%s$' % resource_pool_name, path):
-                return mor
-        # Just pick the first
-        keys = sorted(rps.keys())
-        return keys[0]
-
     def get_ip_address(self, vm_name):
         """ Returns the first IP address for the selected VM.
 
@@ -422,18 +409,17 @@ class VMWareSystem(MgmtSystemAPIBase):
         """
         vm = self._get_vm(vm_name)
         try:
-            net_info, tc = wait_for(vm.get_property, ['net', False],
-                                    fail_condition=None, delay=5, num_sec=600,
-                                    message="get_ip_address from vsphere")
+            ip_address, tc = wait_for(lambda: vm.summary.guest.ipAddress,
+                fail_condition=None, delay=5, num_sec=600,
+                message="get_ip_address from vsphere")
         except TimedOutError:
-            net_info = None
+            ip_address = None
 
-        if net_info:
+        if ip_address is not None:
             ipv4_re = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-            for ip in net_info[0]['ip_addresses']:
-                if re.match(ipv4_re, ip) and ip != '127.0.0.1':
-                    return ip
-        return None
+            if not re.match(ipv4_re, ip_address) or ip_address == '127.0.0.1':
+                ip_address = None
+        return ip_address
 
     def _get_list_vms(self, get_template=False):
         """ Obtains a list of all VMs on the system.
@@ -444,58 +430,56 @@ class VMWareSystem(MgmtSystemAPIBase):
             get_template: A boolean describing if it should return template names also.
         Returns: A list of VMs.
         """
-        template_or_vm_list = []
+        # Ensure get_template is one of True of False
+        get_template = bool(get_template)
 
-        props = self.api._retrieve_properties_traversal(property_names=['name', 'config.template',
-                                                                        'runtime.connectionState'],
-                                                        from_node=None,
-                                                        obj_type=MORTypes.VirtualMachine)
-        for prop in props:
-            vm = None
-            template = None
-            connectionState = None
-            for elem in prop.PropSet:
-                if elem.Name == "name":
-                    vm = elem.Val
-                elif elem.Name == "config.template":
-                    template = elem.Val
-                if elem.Name == "runtime.connectionState":
-                    connectionState = elem.Val
-            if vm is None or template is None:
-                continue
-            if connectionState == "inaccessible":
-                continue
-            if template == bool(get_template):
-                template_or_vm_list.append(vm)
-        return template_or_vm_list
+        obj_list = []
+        vms = mobs.VirtualMachine.all(self.api,
+            properties=['name', 'config.template', 'runtime.connectionState'])
+        for vm in vms:
+            # Nested property lookups work, but the attr lookup on the
+            # vm object still triggers a request even though the vm
+            # object already "knows" the answer in its cached object
+            # content. So we just pull the value straight out of the cache.
+            cached_props = {}
+            for prop in vm._object_content.propSet:
+                cached_props[prop.name] = prop.val
+            try:
+                if cached_props['runtime.connectionState'] == 'inccessible':
+                    continue
+                if cached_props['config.template'] == get_template:
+                    obj_list.append(cached_props['name'])
+            except KeyError:
+                pass
+        return obj_list
 
     def start_vm(self, vm_name):
         self.wait_vm_steady(vm_name)
-        logger.info(" Starting vSphere VM %s" % vm_name)
-        vm = self._get_vm(vm_name)
-        if vm.is_powered_on():
+        if self.is_vm_running(vm_name):
             logger.info(" vSphere VM %s is already running" % vm_name)
             return True
         else:
-            vm.power_on()
+            logger.info(" Starting vSphere VM %s" % vm_name)
+            vm = self._get_vm(vm_name)
+            vm.PowerOnVM_Task()
             self.wait_vm_running(vm_name)
             return True
 
     def stop_vm(self, vm_name):
         self.wait_vm_steady(vm_name)
-        logger.info(" Stopping vSphere VM %s" % vm_name)
-        vm = self._get_vm(vm_name)
-        if vm.is_powered_off():
+        if self.is_vm_stopped(vm_name):
             logger.info(" vSphere VM %s is already stopped" % vm_name)
             return True
         else:
+            logger.info(" Stopping vSphere VM %s" % vm_name)
+            vm = self._get_vm(vm_name)
             if self.is_vm_suspended(vm_name):
                 logger.info(
-                    " Circumventing issues with poweroff suspended machine by starting it."
+                    " Resuming suspended VM %s before stopping." % vm_name
                 )
-                vm.power_on()
+                vm.PowerOnVM_Task()
                 self.wait_vm_running(vm_name)
-            vm.power_off()
+            vm.PowerOffVM_Task()
             self.wait_vm_stopped(vm_name)
             return True
 
@@ -503,21 +487,11 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.wait_vm_steady(vm_name)
         logger.info(" Deleting vSphere VM %s" % vm_name)
         vm = self._get_vm(vm_name)
+        self.stop_vm(vm_name)
 
-        if vm.is_powered_on():
-            self.stop_vm(vm_name)
-
-        # When pysphere moves up to 0.1.8, we can just do:
-        # vm.destroy()
-        request = VI.Destroy_TaskRequestMsg()
-        _this = request.new__this(vm._mor)
-        _this.set_attribute_type(vm._mor.get_attribute_type())
-        request.set_element__this(_this)
-        rtn = self.api._proxy.Destroy_Task(request)._returnval
-
-        task = VITask(rtn, self.api)
-        status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
-        return status == task.STATE_SUCCESS
+        task = vm.Destroy_Task()
+        status, t = wait_for(self._task_wait, [task])
+        return status == 'success'
 
     def create_vm(self, vm_name):
         raise NotImplementedError('This function has not yet been implemented.')
@@ -536,43 +510,49 @@ class VMWareSystem(MgmtSystemAPIBase):
         raise NotImplementedError('This function is not supported on this platform.')
 
     def list_host(self):
-        return self.api.get_hosts().values()
+        return [str(h.name) for h in mobs.HostSystem.all(self.api)]
 
     def list_datastore(self):
-        return self.api.get_datastores().values()
+        return [str(h.name) for h in mobs.Datastore.all(self.api)]
 
     def list_cluster(self):
-        return self.api.get_clusters().values()
+        return [str(h.name) for h in mobs.ClusterComputeResource.all(self.api)]
+
+    def list_resource_pools(self):
+        return [str(h.name) for h in mobs.ResourcePool.all(self.api)]
 
     def info(self):
         return '%s %s' % (self.api.get_server_type(), self.api.get_api_version())
 
+    def connect(self):
+        pass
+
     def disconnect(self):
-        self.api.disconnect()
+        pass
 
     def vm_status(self, vm_name):
-        state = self._get_vm(vm_name).get_status()
+        state = self._get_vm(vm_name).runtime.powerState
         return state
 
     def in_steady_state(self, vm_name):
-        return self.vm_status(vm_name) in {"POWERED ON", "POWERED OFF", "SUSPENDED"}
+        return self.vm_status(vm_name) in {self.POWERED_ON, self.POWERED_OFF, self.SUSPENDED}
 
     def is_vm_running(self, vm_name):
-        return self.vm_status(vm_name) == "POWERED ON"
+        return self.vm_status(vm_name) == self.POWERED_ON
 
     def wait_vm_running(self, vm_name, num_sec=240):
         logger.info(" Waiting for vSphere VM %s to change status to ON" % vm_name)
         wait_for(self.is_vm_running, [vm_name], num_sec=num_sec)
 
     def is_vm_stopped(self, vm_name):
-        return self.vm_status(vm_name) == "POWERED OFF"
+        return self.vm_status(vm_name) == self.POWERED_OFF
 
     def wait_vm_stopped(self, vm_name, num_sec=240):
         logger.info(" Waiting for vSphere VM %s to change status to OFF" % vm_name)
         wait_for(self.is_vm_stopped, [vm_name], num_sec=num_sec)
 
     def is_vm_suspended(self, vm_name):
-        return self.vm_status(vm_name) == "SUSPENDED"
+        return self.vm_status(vm_name) == self.SUSPENDED
 
     def wait_vm_suspended(self, vm_name, num_sec=360):
         logger.info(" Waiting for vSphere VM %s to change status to SUSPENDED" % vm_name)
@@ -582,52 +562,94 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.wait_vm_steady(vm_name)
         logger.info(" Suspending vSphere VM %s" % vm_name)
         vm = self._get_vm(vm_name)
-        if vm.is_powered_off():
+        if self.is_vm_stopped(vm_name):
             raise VMInstanceNotSuspended(vm_name)
         else:
-            vm.suspend()
+            vm.SuspendVM_Task()
             self.wait_vm_suspended(vm_name)
             return True
 
-    def clone_vm(self):
-        raise NotImplementedError('clone_vm not implemented.')
+    def clone_vm(self, source, destination, resourcepool=None, datastore=None, power_on=True,
+                 sparse=False, template=False, provision_timeout=300):
+        try:
+            if mobs.VirtualMachine.get(self.api, name=destination).name == destination:
+                raise Exception("VM already present!")
+        except ObjectNotFoundError:
+            pass
 
-    def deploy_template(self, template, *args, **kwargs):
-        logger.info(" Deploying vSphere template %s to VM %s" % (template, kwargs["vm_name"]))
-        timeout = kwargs.pop('timeout', 300)
-        if 'resourcepool' not in kwargs:
-            kwargs['resourcepool'] = None
-        vm = self._get_vm(template)
-        if vm:
-            vm.clone(kwargs['vm_name'], sync_run=True,
-                resourcepool=self._get_resource_pool(kwargs['resourcepool']))
-            self.wait_vm_running(kwargs['vm_name'], num_sec=timeout)
-            return kwargs['vm_name']
+        source_template = mobs.VirtualMachine.get(self.api, name=source)
+
+        vm_clone_spec = self.api.create("VirtualMachineCloneSpec")
+        vm_reloc_spec = self.api.create("VirtualMachineRelocateSpec")
+        # DATASTORE
+        if isinstance(datastore, basestring):
+            vm_reloc_spec.datastore = mobs.Datastore.get(self.api, name=datastore)
+        elif isinstance(datastore, mobs.Datastore):
+            vm_reloc_spec.datastore = datastore
+        elif datastore is None:
+            datastores = source_template.datastore
+            if isinstance(datastores, (list, tuple)):
+                vm_reloc_spec.datastore = datastores[0]
+            else:
+                vm_reloc_spec.datastore = datastores
         else:
-            raise VMInstanceNotCloned(template)
+            raise NotImplementedError("{} not supported for datastore".format(datastore))
 
-    def remove_host_from_cluster(self, hostname):
-        req = VI.DisconnectHost_TaskRequestMsg()
-        mor = (key for key, value in self.api.get_hosts().items() if value == hostname).next()
-        sys = VIMor(mor, 'HostSystem')
-        _this = req.new__this(sys)
-        _this.set_attribute_type(sys.get_attribute_type())
-        req.set_element__this(_this)
-        task_mor = self.api._proxy.DisconnectHost_Task(req)._returnval
-        t = VITask(task_mor, self.api)
-        wait_for(lambda: 'success' in t.get_state())
-        self._destroy_host(hostname)
+        # RESOURCE POOL
+        if isinstance(resourcepool, mobs.ResourcePool):
+            vm_reloc_spec.pool = resourcepool
+        else:
+            vm_reloc_spec.pool = self._get_resource_pool(resourcepool)
 
-    def _destroy_host(self, hostname):
-        req = VI.Destroy_TaskRequestMsg()
-        mor = (key for key, value in self.api.get_hosts().items() if value == hostname).next()
-        sys = VIMor(mor, 'HostSystem')
-        _this = req.new__this(sys)
-        _this.set_attribute_type(sys.get_attribute_type())
-        req.set_element__this(_this)
-        task_mor = self.api._proxy.Destroy_Task(req)._returnval
-        t = VITask(task_mor, self.api)
-        wait_for(lambda: 'success' in t.get_state())
+        vm_reloc_spec.host = None
+        if sparse:
+            vm_reloc_spec.transform = self.api.create('VirtualMachineRelocateTransformation').sparse
+        else:
+            vm_reloc_spec.transform = self.api.create('VirtualMachineRelocateTransformation').flat
+
+        vm_clone_spec.powerOn = power_on
+        vm_clone_spec.template = template
+        vm_clone_spec.location = vm_reloc_spec
+        vm_clone_spec.snapshot = None
+
+        try:
+            folder = source_template.parent.parent.vmParent
+        except AttributeError:
+            folder = source_template.parent
+
+        task = source_template.CloneVM_Task(folder=folder, name=destination, spec=vm_clone_spec)
+        wait_for(
+            lambda: task.info.state not in {"queued", "running"},
+            fail_func=task.update, num_sec=provision_timeout, delay=4
+        )
+        if task.info.state != 'success':
+            logger.error('Clone VM failed: {}'.format(task.info.error.localizedMessage))
+            raise VMInstanceNotCloned(source)
+        else:
+            return destination
+
+    def deploy_template(self, template, **kwargs):
+        kwargs["power_on"] = True
+        kwargs["template"] = False
+        destination = kwargs.pop("vm_name")
+        start_timeout = kwargs.pop("timeout", 300)
+        self.clone_vm(template, destination, **kwargs)
+        self.wait_vm_running(destination, num_sec=start_timeout)
+        return destination
+
+    def remove_host_from_cluster(self, host_name):
+        host = mobs.HostSystem.get(self.api, name=host_name)
+        task = host.DisconnectHost_Task()
+        status, t = wait_for(self._task_wait, [task])
+
+        if status != 'success':
+            raise cfme_exc.HostNotRemoved("Host {} not removed: {}".format(
+                host_name, task.info.error.localizedMessage))
+
+        task = host.Destroy_Task()
+        status, t = wait_for(self._task_wait, [task])
+
+        return status == 'success'
 
 
 class RHEVMSystem(MgmtSystemAPIBase):
@@ -717,6 +739,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             'password': password,
             'insecure': True
         }
+        self.kwargs = kwargs
 
     @property
     def api(self):
@@ -984,6 +1007,7 @@ class EC2System(MgmtSystemAPIBase):
 
         region = get_region(kwargs.get('region'))
         self.api = EC2Connection(username, password, region=region)
+        self.kwargs = kwargs
 
     def disconnect(self):
         """Disconnect from the EC2 API -- NOOP
@@ -1328,6 +1352,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
         password = kwargs['password']
         auth_url = kwargs['auth_url']
         self.api = osclient.Client(username, password, tenant, auth_url, service_type="compute")
+        self.kwargs = kwargs
 
     def start_vm(self, instance_name):
         logger.info(" Starting OpenStack instance %s" % instance_name)

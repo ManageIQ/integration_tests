@@ -191,6 +191,10 @@ class HostNotFound(CFMEException):
     pass
 
 
+class HostNotRemoved(CFMEException):
+    """Raised when :py:mod:`utils.mgmt_system` fails to remove host from cluster"""
+
+
 class OptionNotAvailable(CFMEException):
     """
     Raised if a specified option is not available.
