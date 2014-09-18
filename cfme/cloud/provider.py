@@ -183,6 +183,11 @@ class Provider(Updateable, Pretty):
             flash.assert_message_match(
                 'Delete initiated for 1 Cloud Provider from the CFME Database')
 
+    def delete_if_exists(self, *args, **kwargs):
+        """Combines ``.exists`` and ``.delete()`` as a shortcut for ``request.addfinalizer``"""
+        if self.exists:
+            self.delete(*args, **kwargs)
+
     def validate(self):
         """ Validates that the detail page matches the Providers information.
 

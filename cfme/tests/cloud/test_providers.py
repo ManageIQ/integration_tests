@@ -28,9 +28,10 @@ def test_discovery_cancelled_validation():
     flash.assert_message_match('Amazon Cloud Providers Discovery was cancelled by the user')
 
 
-def test_add_cancelled_validation():
+def test_add_cancelled_validation(request):
     """Tests that the flash message is correct when add is cancelled."""
     prov = provider.EC2Provider()
+    request.addfinalizer(prov.delete_if_exists)
     prov.create(cancel=True)
     flash.assert_message_match('Add of new Cloud Provider was cancelled by the user')
 
@@ -78,57 +79,62 @@ def test_provider_crud(provider_crud):
     provider.wait_for_provider_delete(provider_crud)
 
 
-def test_type_required_validation():
+def test_type_required_validation(request):
     """Test to validate type while adding a provider"""
     prov = provider.Provider()
 
+    request.addfinalizer(prov.delete_if_exists)
     with error.expected('Type is required'):
         prov.create()
 
 
-def test_name_required_validation():
+def test_name_required_validation(request):
     """Tests to validate the name while adding a provider"""
     prov = provider.EC2Provider(
         name=None,
         region='us-east-1')
 
+    request.addfinalizer(prov.delete_if_exists)
     with error.expected("Name can't be blank"):
         prov.create()
 
 
-def test_region_required_validation():
+def test_region_required_validation(request):
     """Tests to validate the region while adding a provider"""
     prov = provider.EC2Provider(
         name=generate_random_string(size=5),
         region=None)
 
+    request.addfinalizer(prov.delete_if_exists)
     with error.expected('Region is not included in the list'):
         prov.create()
 
 
-def test_host_name_required_validation():
+def test_host_name_required_validation(request):
     """Test to validate the hostname while adding a provider"""
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=None,
         ip_address='10.10.10.10')
 
+    request.addfinalizer(prov.delete_if_exists)
     with error.expected("Host Name can't be blank"):
         prov.create()
 
 
-def test_ip_address_required_validation():
+def test_ip_address_required_validation(request):
     """Test to validate the ip address while adding a provider"""
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=5),
         ip_address=None)
 
+    request.addfinalizer(prov.delete_if_exists)
     with error.expected("IP Address can't be blank"):
         prov.create()
 
 
-def test_api_port_blank_validation():
+def test_api_port_blank_validation(request):
     """Test to validate blank api port while adding a provider"""
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
@@ -136,8 +142,8 @@ def test_api_port_blank_validation():
         ip_address='10.10.10.10',
         api_port='')
 
+    request.addfinalizer(prov.delete_if_exists)
     prov.create()
-    prov.delete(cancel=False)
 
 
 def test_user_id_max_character_validation():
@@ -154,50 +160,50 @@ def test_password_max_character_validation():
     provider.discover(cred)
 
 
-def test_name_max_character_validation():
+def test_name_max_character_validation(request):
     """Test to validate max character for name field"""
     prov = provider.EC2Provider(
         name=generate_random_string(size=255),
         region='us-east-1')
 
+    request.addfinalizer(prov.delete_if_exists)
     prov.create()
-    prov.delete(cancel=False)
 
 
-def test_hostname_max_character_validation():
+def test_hostname_max_character_validation(request):
     """Test to validate max character for hostname field"""
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=255),
         ip_address='10.10.10.10')
 
+    request.addfinalizer(prov.delete_if_exists)
     prov.create()
-    prov.delete(cancel=False)
 
 
-def test_ip_max_valid_character_validation():
+def test_ip_max_valid_character_validation(request):
     """Test to validate max character for ip address field with valid ip address"""
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=5),
         ip_address='255.255.255.254')
 
+    request.addfinalizer(prov.delete_if_exists)
     prov.create()
-    prov.delete(cancel=False)
 
 
-def test_ip_max_invalid_character_validation():
+def test_ip_max_invalid_character_validation(request):
     """Test to validate max character for ip address field using random string"""
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=5),
         ip_address=generate_random_string(size=15))
 
+    request.addfinalizer(prov.delete_if_exists)
     prov.create()
-    prov.delete(cancel=False)
 
 
-def test_api_port_max_character_validation():
+def test_api_port_max_character_validation(request):
     """Test to validate max character for api port field"""
     prov = provider.OpenStackProvider(
         name=generate_random_string(size=5),
@@ -205,5 +211,5 @@ def test_api_port_max_character_validation():
         ip_address='10.10.10.10',
         api_port=generate_random_string(size=15))
 
+    request.addfinalizer(prov.delete_if_exists)
     prov.create()
-    prov.delete(cancel=False)
