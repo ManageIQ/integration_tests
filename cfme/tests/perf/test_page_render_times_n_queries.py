@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*
+from cfme.exceptions import CandidateNotFound
+from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import virtual_machines
 from cfme.infrastructure.datastore import get_all_datastores
 from cfme.infrastructure.host import get_all_hosts
 from cfme.infrastructure.provider import get_all_providers
-from cfme.exceptions import CandidateNotFound
-from cfme.fixtures import pytest_selenium as sel
 from cfme.login import login_admin
 from cfme.web_ui import listaccordion as list_acc
 from cfme.web_ui import paginator
@@ -98,13 +98,13 @@ def navigate_every_quadicon(qnames, qtype, page_name, num_q_nav, ui_worker_pid, 
     return pages
 
 
-def navigate_tree_vms(tree_contents, path, paths):
+def navigate_tree_contents(tree_contents, path, paths):
     if type(tree_contents) is list:
         for item in tree_contents:
-            navigate_tree_vms(item, path, paths)
+            navigate_tree_contents(item, path, paths)
     elif type(tree_contents) is tuple:
         path.append(tree_contents[0])
-        navigate_tree_vms(tree_contents[1], path, paths)
+        navigate_tree_contents(tree_contents[1], path, paths)
         path.pop()
     else:
         path.append(tree_contents)
@@ -114,8 +114,8 @@ def navigate_tree_vms(tree_contents, path, paths):
 
 def standup_page_renders_n_queries(ssh_client):
     # Use evmserverd status to determine MiqUiWorker Pid (assuming 1 worker)
-    exit_status, out = ssh_client.run_command('service evmserverd status | grep \'MiqUiWorker\'' +
-        ' | awk \'{print $7}\'')
+    exit_status, out = ssh_client.run_command('service evmserverd status 2> /dev/null | grep '
+        '\'MiqUiWorker\' | awk \'{print $7}\'')
     assert exit_status == 0
 
     ui_worker_pid = str(out).strip()
@@ -144,7 +144,7 @@ def pages_to_csv(pages, file_name):
 
 def perf_click(uiworker_pid, tailer, clickable, *args):
     # Regular Expressions to find the ruby production completed time and select query time
-    status_re = re.compile(r'Completed\s([0-9]*\s[a-zA-Z]*)\sin\s([0-9]*)ms')
+    status_re = re.compile(r'Completed\s([0-9]*\s[a-zA-Z]*)\sin\s([0-9\.]*)ms')
     select_query_time_re = re.compile(r'\s\(([0-9\.]*)ms\)')
     worker_pid = '#' + uiworker_pid
 
@@ -180,7 +180,7 @@ def perf_click(uiworker_pid, tailer, clickable, *args):
                 status_result = status_re.search(line)
                 if status_result:
                     pgstat.status = status_result.group(1)
-                    pgstat.completedintime = int(status_result.group(2))
+                    pgstat.completedintime = float(status_result.group(2))
 
                 # Redirects don't always have a view timing
                 try:
@@ -274,7 +274,7 @@ def test_vm_infra_render_times_n_queries(ssh_client, soft_assert):
 
     logger.info('Creating Navigation path to every VM/Template...')
     vmpaths = []
-    navigate_tree_vms(tree_contents, [], vmpaths)
+    navigate_tree_contents(tree_contents, [], vmpaths)
 
     logger.info('Found {} VMs/Templates'.format(len(vmpaths)))
     count = 0

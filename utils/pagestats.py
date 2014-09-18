@@ -23,8 +23,8 @@ class PageStat(object):
             yield header, getattr(self, header)
 
     def __str__(self):
-        return 'Transaction/Completed/Views/ActiveRecord: ' + str(self.transactiontime).rjust(6) + \
-            ':' + str(self.completedintime).rjust(6) + ':' + str(self.viewstime).rjust(8) + ':' + \
+        return 'Transaction/Completed/Views/ActiveRecord:' + str(self.transactiontime).rjust(6) + \
+            ':' + str(self.completedintime).rjust(8) + ':' + str(self.viewstime).rjust(8) + ':' + \
             str(self.activerecordtime).rjust(8) + ' Select/Cached: ' + \
             str(self.selectcount).rjust(5) + ':' + str(self.cachecount).rjust(5) + ', Request: ' + \
             self.request + ', Status: ' + self.status
