@@ -105,8 +105,14 @@ class Version(object):
             series: Another :py:class:`Version` to check against. If string provided, will be
                 converted to :py:class:`LooseVersion`
         """
+
         if isinstance(series, basestring):
-            series = LooseVersion(series)
+            series = get_version(series)
+        if self == LATEST or series == LATEST:
+            if series == self:
+                return True
+            else:
+                return False
         return series.version == self.version[:len(series.version)]
 
 # Taken from stdlib, just change classes to new-style and clean up

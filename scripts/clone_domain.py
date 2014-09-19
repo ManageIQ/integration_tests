@@ -53,19 +53,25 @@ def main():
 
     # Make sure the working dir exists
     client.run_command('mkdir -p /tmp/miq')
+
     print 'Exporting domain...'
     export_opts = 'DOMAIN={} EXPORT_DIR=/tmp/miq PREVIEW=false OVERWRITE=true'.format(args.source)
     export_cmd = 'evm:automate:export {}'.format(export_opts)
     print export_cmd
-    client.run_rake_command(export_cmd)
+    status, output = client.run_rake_command(export_cmd)
+    if status != 0:
+        return 127
     ro_fix_cmd = "sed -i 's/system: true/system: false/g' /tmp/miq/ManageIQ/__domain__.yaml"
-    client.run_command(ro_fix_cmd)
+    status, output = client.run_command(ro_fix_cmd)
+    if status != 0:
+        return 127
     import_opts = 'DOMAIN={} IMPORT_DIR=/tmp/miq PREVIEW=false'.format(args.source)
     import_opts += ' OVERWRITE=true IMPORT_AS={}'.format(args.dest)
     import_cmd = 'evm:automate:import {}'.format(import_opts)
     print import_cmd
-    client.run_rake_command(import_cmd)
-
+    status, output = client.run_rake_command(import_cmd)
+    if status != 0:
+        return 127
 
 if __name__ == '__main__':
     sys.exit(main())
