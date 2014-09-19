@@ -61,8 +61,8 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
-def test_provision_from_template(setup_providers, provider_key,
-        provider_crud, provider_type, provider_mgmt, provisioning, vm_name, smtp_test, request):
+def test_provision_from_template(provider_init, provider_key, provider_crud, provider_type,
+                                 provider_mgmt, provisioning, vm_name, smtp_test, request):
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
     pytest.sel.force_navigate('infrastructure_provision_vms', context={
@@ -71,7 +71,7 @@ def test_provision_from_template(setup_providers, provider_key,
     })
 
     note = ('template %s to vm %s on provider %s' %
-        (template, vm_name, provider_crud.key))
+            (template, vm_name, provider_crud.key))
     provisioning_data = {
         'email': 'template_provisioner@example.com',
         'first_name': 'Template',

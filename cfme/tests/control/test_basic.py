@@ -294,7 +294,7 @@ def test_modify_vm_condition_expression(
     flash.assert_no_errors()
     if verify is not None:
         sel.force_navigate("vm_condition_edit",
-            context={"condition_name": vm_condition_for_expressions.description})
+                           context={"condition_name": vm_condition_for_expressions.description})
         vm_condition_for_expressions.form.expression.show_func()
         soft_assert(expression_editor.get_expression_as_text() == verify)
 

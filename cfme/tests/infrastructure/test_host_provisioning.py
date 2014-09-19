@@ -70,7 +70,7 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
     if not pxe_server.exists():
         pxe_server.create()
         pxe_server.set_pxe_image_type(host_provisioning['pxe_image'],
-            host_provisioning['pxe_image_type'])
+                                      host_provisioning['pxe_image_type'])
     if not pxe_cust_template.exists():
         pxe_cust_template.create()
 
@@ -122,7 +122,7 @@ def test_host_provisioning(provider_init, cfme_data, host_provisioning, server_r
         except:
             # The mgmt_sys classes raise Exception :\
             logger.warning('Failed to clean up host %s on provider %s' %
-                (prov_host_name, provider_crud.key))
+                           (prov_host_name, provider_crud.key))
 
     request.addfinalizer(cleanup_host)
 
@@ -157,7 +157,7 @@ def test_host_provisioning(provider_init, cfme_data, host_provisioning, server_r
     cells = {'Description': row_description}
 
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=1500, delay=20)
+                       fail_func=requests.reload, num_sec=1500, delay=20)
     assert row.last_message.text == 'Host Provisioned Successfully'
     assert row.status.text != 'Error'
 
