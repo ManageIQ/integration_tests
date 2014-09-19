@@ -11,6 +11,7 @@ from utils.providers import provider_factory
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.wait import wait_for
+from utils.version import get_version, LATEST
 
 
 class ApplianceException(Exception):
@@ -36,8 +37,12 @@ class Appliance(object):
         self._provider_name = provider_name
         self.vmname = vm_name
 
-    @property
-    def _provider(self):
+    @lazycache
+    def ipapp(self):
+        return IPAppliance(self.address)
+
+    @lazycache
+    def provider(self):
         """
         Note:
             Cannot be cached because provider object is unpickable.
@@ -53,7 +58,7 @@ class Appliance(object):
     def address(self):
         def is_ip_available():
             try:
-                return self._provider.get_ip_address(self.vm_name)
+                return self.provider.get_ip_address(self.vm_name)
             except AttributeError:
                 return False
 
@@ -66,24 +71,61 @@ class Appliance(object):
     def db_address(self):
         # returns the appliance address by default, methods that set up the internal
         # db should set db_address to something else when they do that
-        return self.address
+        return self.ipapp.address
 
     @lazycache
     def db(self):
         # slightly crappy: anything that changes self.db_address should also del(self.db)
-        return db.Db(self.db_address)
+        return self.ipapp.db
 
     @lazycache
     def version(self):
-        return self.ssh_client().get_version()
+        return self.ipapp.version
 
-    def configure(self,
-                  db_address=None,
-                  name_to_set=None,
-                  region=0,
-                  fix_ntp_clock=True,
-                  patch_ajax_wait=True,
-                  loosen_pgssl=True):
+    def _custom_configure(self, **kwargs):
+        region = kwargs.get('region', 0)
+        db_address = kwargs.get('db_address', None)
+        if kwargs.get('fix_ntp_clock', True) is True:
+            self.ipapp.fix_ntp_clock()
+        if kwargs.get('patch_ajax_wait', True) is True:
+            self.ipapp.patch_ajax_wait()
+        if kwargs.get('db_address', None) is None:
+            self.ipapp.enable_internal_db(region)
+        else:
+            self.ipapp.enable_external_db(db_address, region)
+        self.ipapp.wait_for_db()
+        if kwargs.get('loosen_pgssl', True) is True:
+            self.ipapp.loosen_pgssl()
+
+        name_to_set = kwargs.get('name_to_set', None)
+        if name_to_set is not None and name_to_set != self.name:
+            self.rename(name_to_set)
+            self.ipapp.restart_evm_service()
+            self.ipapp.wait_for_web_ui()
+
+    def _configure_5_2(self):
+        self.ipapp.update_rhel()
+        self.ipapp.enable_internal_db()
+        self.ipapp.wait_for_web_ui()
+        self.ipapp.fix_ntp_clock()
+        self.ipapp.deploy_merkyl()
+
+    def _configure_5_3(self):
+        self.ipapp.update_rhel()
+        self.ipapp.enable_internal_db()
+        self.ipapp.wait_for_web_ui()
+        self.ipapp.precompile_assets()
+        self.ipapp.loosen_pgssl()
+        self.ipapp.clone_domain()
+        self.ipapp.deploy_merkyl()
+
+    def _configure_upstream(self):
+        self.ipapp.wait_for_web_ui()
+        self.ipapp.loosen_pgssl()
+        self.ipapp.clone_domain()
+        self.ipapp.deploy_merkyl()
+
+    def configure(self, **kwargs):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
 
         Utility method to make things easier.
@@ -98,31 +140,158 @@ class Appliance(object):
             loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
 
         """
-        if fix_ntp_clock is True:
-            self.fix_ntp_clock()
-        if patch_ajax_wait is True:
-            self.patch_ajax_wait()
-        if db_address is None:
-            self.enable_internal_db(region)
+        if kwargs:
+            self._custom_configure(**kwargs)
         else:
-            self.enable_external_db(db_address, region)
-        self.wait_for_db()
-        if loosen_pgssl is True:
-            self.loosen_pgssl()
+            if self.version.is_in_series("5.2"):
+                self._configure_5_2()
+            elif self.version.is_in_series("5.3"):
+                self._configure_5_3()
+            elif self.version == LATEST:
+                self._configure_upstream()
 
-        if name_to_set is not None and name_to_set != self.name:
-            self.rename(name_to_set)
-            self.restart_evm_service()
-            self.wait_for_web_ui()
+    def does_vm_exist(self):
+        return self.provider.does_vm_exist(self.vm_name)
+
+    def rename(self, new_name):
+        """Changes appliance name
+
+        Args:
+            new_name: Name to set
+
+        Note:
+            Database must be up and running and evm service must be (re)started afterwards
+            for the name change to take effect.
+        """
+        vmdb_config = db.get_yaml_config('vmdb', self.db)
+        vmdb_config['server']['name'] = new_name
+        db.set_yaml_config('vmdb', vmdb_config, self.address)
+        self.name = new_name
+
+    def destroy(self):
+        """Destroys the VM this appliance is running as
+        """
+        self.provider.delete_vm(self.vm_name)
+
+    @property
+    def is_running(self):
+        return self.provider.is_vm_running(self.vm_name)
+
+
+class IPAppliance(object):
+    """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
+    but who has an IP address. This has a lot of core functionality that Appliance uses, since
+    it knows both the provider, vm_name and can there for derive the IP address.
+
+    Args:
+        ipaddress: The IP address of the provider
+    """
+
+    def __init__(self, ipaddress):
+        self.address = ipaddress
+
+    @lazycache
+    def version(self):
+        return get_version(self.ssh_client().get_version())
+
+    def ssh_client(self, **connect_kwargs):
+        """Creates ssh client (connected to this appliance by default)
+
+        Args:
+            **connect_kwargs: Keyword arguments accepted by the SSH client, including
+                              ``username``, ``password``, and ``hostname``.
+
+
+        Returns: A configured :py:class:`utils.ssh.SSHClient` instance.
+
+        Usage:
+
+            with appliance.ssh_client() as ssh:
+                status, output = ssh.run_command('...')
+
+        Note:
+
+            The credentials default to those found under ``ssh`` key in ``credentials.yaml``.
+        """
+        connect_kwargs['hostname'] = connect_kwargs.get('hostname', self.address)
+
+        return SSHClient(**connect_kwargs)
 
     def fix_ntp_clock(self):
         """Fixes appliance time using NTP sync
         """
-        with self.ssh_client() as ssh:
-            status, msg = ssh.run_command('ntpd -gq')
-            if status != 0:
-                raise ApplianceException('Failed to sync time (NTP) on {}\nError: {}'
-                                         .format(self.address, msg))
+        script = scripts_path.join('ntp_clock_set.py')
+        args = [str(script), self.address]
+        with open(os.devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
+        if status != 0:
+            raise ApplianceException('Appliance {} failed to set_clock'
+                                     .format(self.address))
+
+    def precompile_assets(self):
+        """Precompile the assets"""
+        script = scripts_path.join('precompile_assets.py')
+        args = [str(script), self.address]
+        with open(os.devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
+        if status != 0:
+            raise ApplianceException('Appliance {} failed to precompile assets'
+                                     .format(self.address))
+
+    def clone_domain(self, src="ManageIQ", dst="Default"):
+        """Clones Automate domain
+
+        Args:
+            src: Source domain name.
+            dst: Destination domain name.
+
+        Note:
+            Does nothing for versions below 5.3
+        """
+        if self.version < '5.3':
+            return
+        script = scripts_path.join('clone_domain.py')
+        args = [str(script), self.address, src, dst]
+        with open(os.devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
+        if status != 0:
+            raise ApplianceException('Appliance {} failed to clone the domain'
+                                     .format(self.address))
+
+    def deploy_merkyl(self):
+        """Deploys Merkyl"""
+        script = scripts_path.join('merkyl_deploy.py')
+        args = [str(script), self.address]
+        with open(os.devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
+        if status != 0:
+            raise ApplianceException('Appliance {} failed to deploy merkyl'
+                                     .format(self.address))
+
+    def update_rhel(self, url_or_urls=None, reboot=True):
+        """Update RHEL on appliance"""
+        script = scripts_path.join('update_rhel.py')
+        args = [str(script), self.address]
+
+        if reboot:
+            args.append('--reboot')
+
+        if not url_or_urls:
+            url_or_urls = [conf.cfme_data['basic_info']['rhel_updates_url']]
+            if self.version.is_in_series("5.3"):
+                url_or_urls.append(conf.cfme_data['basic_info']['rhscl_updates_url'])
+
+        if isinstance(url_or_urls, basestring):
+            args += ['--url', url_or_urls]
+        elif isinstance(url_or_urls, list):
+            for url in url_or_urls:
+                args += ['--url', url]
+
+        with open(os.devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
+        if status != 0:
+            raise ApplianceException('Appliance {} failed to update RHEL'
+                                     .format(self.address))
 
     def patch_ajax_wait(self, undo=False):
         """Patches ajax wait code
@@ -156,29 +325,6 @@ class Appliance(object):
         args = [str(script), self.address]
         with open(os.devnull, 'w') as f_devnull:
             subprocess.call(args, stdout=f_devnull)
-
-    def ssh_client(self, **connect_kwargs):
-        """Creates ssh client (connected to this appliance by default)
-
-        Args:
-            **connect_kwargs: Keyword arguments accepted by the SSH client, including
-                              ``username``, ``password``, and ``hostname``.
-
-
-        Returns: A configured :py:class:`utils.ssh.SSHClient` instance.
-
-        Usage:
-
-            with appliance.ssh_client() as ssh:
-                status, output = ssh.run_command('...')
-
-        Note:
-
-            The credentials default to those found under ``ssh`` key in ``credentials.yaml``.
-        """
-        connect_kwargs['hostname'] = connect_kwargs.get('hostname', self.address)
-
-        return SSHClient(**connect_kwargs)
 
     def browser_session(self, reset_cache=False):
         """Creates browser session connected to this appliance
@@ -225,20 +371,35 @@ class Appliance(object):
             raise ApplianceException('Appliance {} failed to enable external DB running on {}'
                                      .format(self.address, db_address))
 
-    def rename(self, new_name):
-        """Changes appliance name
+    def is_web_ui_running(self, unsure=False):
+        """Triple checks if web UI is up and running
 
         Args:
-            new_name: Name to set
+            unsure: Variable to return when not sure if web UI is running or not
+                    (default ``False``)
 
         Note:
-            Database must be up and running and evm service must be (re)started afterwards
-            for the name change to take effect.
+            Waits/sleeps for 3 seconds inbetween checks.
         """
-        vmdb_config = db.get_yaml_config('vmdb', self.db)
-        vmdb_config['server']['name'] = new_name
-        db.set_yaml_config('vmdb', vmdb_config, self.address)
-        self.name = new_name
+        num_of_tries = 3
+        was_running_count = 0
+        for try_num in range(num_of_tries):
+            try:
+                resp = requests.get("https://" + self.address, verify=False, timeout=15)
+                if resp.status_code == 200 and 'Dashboard' in resp.content:
+                    was_running_count += 1
+            except (requests.Timeout, requests.ConnectionError, ProtocolError):
+                # wasn't running
+                pass
+            if try_num < (num_of_tries - 1):
+                sleep(3)
+
+        if was_running_count == 0:
+            return False
+        elif was_running_count == num_of_tries:
+            return True
+        else:
+            return unsure
 
     def restart_evm_service(self):
         """Restarts the ``evmserverd`` service on this appliance
@@ -275,10 +436,16 @@ class Appliance(object):
                  delay=20,
                  numsec=timeout)
 
-    def destroy(self):
-        """Destroys the VM this appliance is running as
-        """
-        self._provider.delete_vm(self.vm_name)
+    @lazycache
+    def db_address(self):
+        # returns the appliance address by default, methods that set up the internal
+        # db should set db_address to something else when they do that
+        return self.address
+
+    @lazycache
+    def db(self):
+        # slightly crappy: anything that changes self.db_address should also del(self.db)
+        return db.Db(self.db_address)
 
     @property
     def is_db_enabled(self):
@@ -303,40 +470,6 @@ class Appliance(object):
             return True
         else:
             return False
-
-    @property
-    def is_running(self):
-        return self._provider.is_vm_running(self.vm_name)
-
-    def is_web_ui_running(self, unsure=False):
-        """Triple checks if web UI is up and running
-
-        Args:
-            unsure: Variable to return when not sure if web UI is running or not
-                    (default ``False``)
-
-        Note:
-            Waits/sleeps for 3 seconds inbetween checks.
-        """
-        num_of_tries = 3
-        was_running_count = 0
-        for try_num in range(num_of_tries):
-            try:
-                resp = requests.get("https://" + self.address, verify=False, timeout=15)
-                if resp.status_code == 200 and 'Dashboard' in resp.content:
-                    was_running_count += 1
-            except (requests.Timeout, requests.ConnectionError, ProtocolError):
-                # wasn't running
-                pass
-            if try_num < (num_of_tries - 1):
-                sleep(3)
-
-        if was_running_count == 0:
-            return False
-        elif was_running_count == num_of_tries:
-            return True
-        else:
-            return unsure
 
 
 class ApplianceSet(object):
@@ -363,7 +496,8 @@ class ApplianceSet(object):
         return None
 
 
-def provision_appliance(version=None, vm_name_prefix='cfme', template=None, provider_name=None):
+def provision_appliance(version=None, vm_name_prefix='cfme', template=None, provider_name=None,
+                        vm_name=None):
     """Provisions fresh, unconfigured appliance of a specific version
 
     Note:
@@ -409,7 +543,8 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     prov_data = conf.cfme_data['management_systems'][provider_name]
 
     provider = provider_factory(provider_name)
-    vm_name = _generate_vm_name()
+    if not vm_name:
+        vm_name = _generate_vm_name()
 
     deploy_args = {}
     deploy_args['vm_name'] = vm_name
