@@ -384,7 +384,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         elif self.default_resource_pool is not None:
             return mobs.ResourcePool.get(self.api, name=self.default_resource_pool)
         else:
-            return mobs.ResourcePool.get(self.api)[0]
+            return mobs.ResourcePool.all(self.api)[0]
 
     @staticmethod
     def _task_wait(task):
@@ -412,18 +412,27 @@ class VMWareSystem(MgmtSystemAPIBase):
             vm_name: The name of the vm to obtain the IP for.
         Returns: A string containing the first found IP that isn't the loopback device.
         """
+        def wait_for_address(vm):
+            ipv4_re = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+            try:
+                vm.update()
+                ip_address = vm.summary.guest.ipAddress
+                if not re.match(ipv4_re, ip_address) or ip_address == '127.0.0.1':
+                    ip_address = None
+                return ip_address
+            except (AttributeError, TypeError):
+                # AttributeError: vm doesn't have an ip address yet
+                # TypeError: ip address wasn't a string
+                return None
+
         vm = self._get_vm(vm_name)
+
         try:
-            ip_address, tc = wait_for(lambda: vm.summary.guest.ipAddress,
+            ip_address, tc = wait_for(wait_for_address, [vm],
                 fail_condition=None, delay=5, num_sec=600,
                 message="get_ip_address from vsphere")
         except TimedOutError:
             ip_address = None
-
-        if ip_address is not None:
-            ipv4_re = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-            if not re.match(ipv4_re, ip_address) or ip_address == '127.0.0.1':
-                ip_address = None
         return ip_address
 
     def _get_list_vms(self, get_template=False):
@@ -435,27 +444,29 @@ class VMWareSystem(MgmtSystemAPIBase):
             get_template: A boolean describing if it should return template names also.
         Returns: A list of VMs.
         """
-        # Ensure get_template is one of True of False
+        # Use some psphere internals to get vm propsets back directly with requested properties,
+        # so we skip the network overhead of returning full managed objects
+        property_spec = self.api.create('PropertySpec')
+        property_spec.all = False
+        property_spec.pathSet = ['name', 'config.template']
+        property_spec.type = 'VirtualMachine'
+        pfs = self.api.get_search_filter_spec(self.api.si.content.rootFolder, property_spec)
+        object_contents = self.api.si.content.propertyCollector.RetrieveProperties(specSet=[pfs])
+
+        # Ensure get_template is either True or False to match the config.template property
         get_template = bool(get_template)
 
+        # Select the vms or templates based on get_template and the returned properties
         obj_list = []
-        vms = mobs.VirtualMachine.all(self.api,
-            properties=['name', 'config.template', 'runtime.connectionState'])
-        for vm in vms:
+        for object_content in object_contents:
             # Nested property lookups work, but the attr lookup on the
             # vm object still triggers a request even though the vm
             # object already "knows" the answer in its cached object
             # content. So we just pull the value straight out of the cache.
-            cached_props = {}
-            for prop in vm._object_content.propSet:
-                cached_props[prop.name] = prop.val
-            try:
-                if cached_props['runtime.connectionState'] == 'inccessible':
-                    continue
-                if cached_props['config.template'] == get_template:
-                    obj_list.append(cached_props['name'])
-            except KeyError:
-                pass
+            vm_props = {p.name: p.val for p in object_content.propSet}
+
+            if vm_props['config.template'] == get_template:
+                obj_list.append(vm_props['name'])
         return obj_list
 
     def start_vm(self, vm_name):
