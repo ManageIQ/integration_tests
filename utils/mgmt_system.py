@@ -453,18 +453,18 @@ class VMWareSystem(MgmtSystemAPIBase):
         for prop in props:
             vm = None
             template = None
-            connectionState = None
+            # connectionState = None
             for elem in prop.PropSet:
                 if elem.Name == "name":
                     vm = elem.Val
                 elif elem.Name == "config.template":
                     template = elem.Val
-                if elem.Name == "runtime.connectionState":
-                    connectionState = elem.Val
+            #    if elem.Name == "runtime.connectionState":
+            #        connectionState = elem.Val
             if vm is None or template is None:
                 continue
-            if connectionState == "inaccessible":
-                continue
+            # if connectionState == "inaccessible":
+            #    continue
             if template == bool(get_template):
                 template_or_vm_list.append(vm)
         return template_or_vm_list
