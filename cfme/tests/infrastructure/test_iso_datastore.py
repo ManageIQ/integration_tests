@@ -2,6 +2,7 @@ import pytest
 
 from cfme.infrastructure import pxe
 from utils import testgen
+from utils.providers import setup_provider
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
@@ -27,8 +28,15 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.mark.usefixtures('setup_infrastructure_providers')
-def test_iso_datastore_crud(provider_crud, iso_datastore):
+@pytest.fixture()
+def provider_init(provider_key):
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
+
+
+def test_iso_datastore_crud(provider_init, provider_crud, iso_datastore):
     """
     Basic CRUD test for ISO datastores.
 

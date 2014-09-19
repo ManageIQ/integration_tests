@@ -4,7 +4,7 @@ from cfme.infrastructure.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill
 from utils import testgen, version
-from utils.providers import setup_infrastructure_providers
+from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
@@ -38,10 +38,12 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
+@pytest.fixture()
+def provider_init(provider_key):
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 @pytest.fixture(scope="function")

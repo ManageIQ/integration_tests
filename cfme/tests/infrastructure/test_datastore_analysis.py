@@ -5,6 +5,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
 from cfme.web_ui import flash, tabstrip as tabs, toolbar as tb
 from utils import conf, testgen
+from utils.providers import setup_provider
 from utils.wait import wait_for
 import pytest
 
@@ -23,8 +24,6 @@ CONTENT_ROWS_TO_CHECK = (
     'Other VM Files',
     'Non-VM Files'
 )
-
-pytestmark = [pytest.mark.usefixtures("setup_infrastructure_providers")]
 
 
 def pytest_generate_tests(metafunc):
@@ -50,6 +49,14 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize(argnames, argvalues, ids=idlist, scope="module")
 
 
+@pytest.fixture()
+def provider_init(provider_key):
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
+
+
 def get_host_data_by_name(provider_key, host_name):
     for host_obj in conf.cfme_data['management_systems'][provider_key].get('hosts', []):
         if host_name == host_obj['name']:
@@ -58,7 +65,8 @@ def get_host_data_by_name(provider_key, host_name):
 
 
 # TODO add support for events
-def test_run_datastore_analysis(request, provider_key, datastore_type, datastore_name):
+def test_run_datastore_analysis(request, provider_init, provider_key,
+                                datastore_type, datastore_name):
     """ Run host SmartState analysis
     """
     test_datastore = datastore.Datastore(datastore_name, provider_key)
