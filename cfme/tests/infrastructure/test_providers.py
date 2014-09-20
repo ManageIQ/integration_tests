@@ -62,7 +62,7 @@ def test_host_name_required_validation():
     prov = provider.VMwareProvider(
         name=generate_random_string(size=5),
         hostname=None,
-        ip_address='10.10.10.10')
+        ip_address='10.10.10.11')
 
     with error.expected("Host Name can't be blank"):
         prov.create()
@@ -86,7 +86,7 @@ def test_name_max_character_validation():
     prov = provider.VMwareProvider(
         name=generate_random_string(size=256),
         hostname=generate_random_string(size=5),
-        ip_address='10.10.10.10')
+        ip_address='10.10.10.12')
     prov.create()
     prov.delete(cancel=False)
 
@@ -96,7 +96,7 @@ def test_host_name_max_character_validation():
     prov = provider.VMwareProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=256),
-        ip_address='10.10.10.11')
+        ip_address='10.10.10.13')
     prov.create()
     prov.delete(cancel=False)
 
@@ -106,7 +106,7 @@ def test_ip_max_character_validation():
     prov = provider.VMwareProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=5),
-        ip_address='10.10.10.12')
+        ip_address='10.10.10.14')
     prov.create()
     prov.delete(cancel=False)
 
@@ -116,7 +116,7 @@ def test_api_port_max_character_validation():
     prov = provider.RHEVMProvider(
         name=generate_random_string(size=5),
         hostname=generate_random_string(size=5),
-        ip_address='10.10.10.13',
+        ip_address='10.10.10.15',
         api_port=generate_random_string(size=15))
     prov.create()
     prov.delete(cancel=False)

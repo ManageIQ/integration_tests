@@ -191,7 +191,11 @@ def in_flight():
         The keys are: ``jquery, prototype, miq, spinner and document``.
         The values are: ``True`` if running, ``False`` otherwise.
     """
-    return execute_script(js.in_flight)
+    try:
+        return execute_script(js.in_flight)
+    except:
+        sleep(0.5)
+        return execute_script(js.in_flight)
 
 
 def wait_for_ajax():

@@ -55,7 +55,8 @@ pytest_generate_tests = testgen.generate(
     scope="module"
 )
 
-pytestmark = [pytest.mark.long_running]
+pytestmark = [pytest.mark.long_running,
+              pytest.mark.bugzilla(1142875)]
 
 
 def get_vm_object(vm_name):
@@ -263,6 +264,7 @@ def test_action_suspend_virtual_machine_after_starting(request,
         pytest.fail("CFME did not suspend the VM %s" % vm.name)
 
 
+@pytest.mark.bugzilla(1142875)
 def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off):
     """ This test tests action 'Prevent current event from proceeding'
 
@@ -273,7 +275,7 @@ def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off):
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On Request",
-                                               ["Prevent current event from proceeding"])
+                                                      ["Prevent current event from proceeding"])
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Request VM's start
     vm.soap.power_on()   # THROUGH SOAP, because through mgmt_sys would not generate req event.
@@ -379,7 +381,7 @@ def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testi
     # Power off to invoke snapshot creation
     vm.stop_vm()
     wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=800,
-        message="wait for snapshot appear", delay=5)
+             message="wait for snapshot appear", delay=5)
     assert vm.soap.ws_attributes["v_snapshot_newest_description"] == "Created by EVM Policy Action"
     assert vm.soap.ws_attributes["v_snapshot_newest_name"] == snapshot_name
     # Snapshot created and validated, so let's delete it
@@ -387,7 +389,7 @@ def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testi
     # Power on to invoke last snapshot deletion
     vm.start_vm()
     wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] < snapshots_before, num_sec=800,
-        message="wait for snapshot deleted", delay=5)
+             message="wait for snapshot deleted", delay=5)
 
 
 def test_action_create_snapshots_and_delete_them(request, assign_policy_for_testing, vm, vm_on):
@@ -422,7 +424,7 @@ def test_action_create_snapshots_and_delete_them(request, assign_policy_for_test
         snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
         vm.stop_vm()
         wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=800,
-            message="wait for snapshot %d to appear" % (n + 1), delay=5)
+                 message="wait for snapshot %d to appear" % (n + 1), delay=5)
         assert vm.soap.ws_attributes["v_snapshot_newest_name"] == snapshot_name
         vm.start_vm()
 
@@ -434,7 +436,7 @@ def test_action_create_snapshots_and_delete_them(request, assign_policy_for_test
     # Power on to invoke all snapshots deletion
     vm.start_vm()
     wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] == 0, num_sec=800,
-        message="wait for snapshots to be deleted", delay=5)
+             message="wait for snapshots to be deleted", delay=5)
 
 
 @pytest.mark.skipif("True")
@@ -446,7 +448,7 @@ def test_action_initiate_smartstate_analysis(request, assign_policy_for_testing,
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On",
-                                               ["Initiate SmartState Analysis for VM"])
+                                                      ["Initiate SmartState Analysis for VM"])
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Remember the time
     switched_on = datetime.now()

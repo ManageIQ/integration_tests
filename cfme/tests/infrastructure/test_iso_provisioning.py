@@ -6,9 +6,9 @@ from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services import requests
 from cfme.web_ui import flash, fill
 from utils import testgen, version
-from utils.providers import setup_infrastructure_providers
 from utils.randomness import generate_random_string
 from utils.log import logger
+from utils.providers import setup_provider
 from utils.wait import wait_for
 
 pytestmark = [
@@ -55,14 +55,13 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
-def setup_iso_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
+@pytest.fixture
+def provider_init(provider_key, iso_cust_template, provisioning, iso_datastore):
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
-
-@pytest.fixture(scope="module")
-def setup_iso_datastore(iso_cust_template, provisioning, iso_datastore):
     if not iso_datastore.exists():
         iso_datastore.create()
     # Fails on upstream, BZ1109256
@@ -87,9 +86,8 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 
 
 @pytest.mark.bugzilla(1109256, 1130417)
-@pytest.mark.usefixtures('setup_iso_providers', 'setup_iso_datastore')
 def test_iso_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt,
-                                     provisioning, vm_name, smtp_test, request):
+                                     provisioning, vm_name, smtp_test, provider_init, request):
 
     # generate_tests makes sure these have values
     iso_template, host, datastore, iso_file, iso_kickstart,\

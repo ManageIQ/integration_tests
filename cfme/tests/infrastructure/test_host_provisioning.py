@@ -7,7 +7,7 @@ from cfme.services import requests
 from cfme.web_ui import flash, fill
 from cfme.infrastructure.provisioning import provisioning_form
 from utils.conf import cfme_data
-from utils.providers import setup_infrastructure_providers
+from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen
@@ -57,10 +57,12 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
+@pytest.fixture()
+def provider_init(provider_key):
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 @pytest.fixture(scope="module")
@@ -68,14 +70,14 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
     if not pxe_server.exists():
         pxe_server.create()
         pxe_server.set_pxe_image_type(host_provisioning['pxe_image'],
-            host_provisioning['pxe_image_type'])
+                                      host_provisioning['pxe_image_type'])
     if not pxe_cust_template.exists():
         pxe_cust_template.create()
 
 
 @pytest.mark.usefixtures('setup_pxe_servers_host_prov')
-def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server_roles,
-        provider_crud, smtp_test, request):
+def test_host_provisioning(provider_init, cfme_data, host_provisioning, server_roles,
+                           provider_crud, smtp_test, request):
 
     # Add host before provisioning
     test_host = host.get_from_config('esx')
@@ -120,7 +122,7 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
         except:
             # The mgmt_sys classes raise Exception :\
             logger.warning('Failed to clean up host %s on provider %s' %
-                (prov_host_name, provider_crud.key))
+                           (prov_host_name, provider_crud.key))
 
     request.addfinalizer(cleanup_host)
 
@@ -155,7 +157,7 @@ def test_host_provisioning(setup_providers, cfme_data, host_provisioning, server
     cells = {'Description': row_description}
 
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=1500, delay=20)
+                       fail_func=requests.reload, num_sec=1500, delay=20)
     assert row.last_message.text == 'Host Provisioned Successfully'
     assert row.status.text != 'Error'
 
