@@ -134,7 +134,11 @@ def _t(t, root=None):
     are processed and all results are put in the same list."""
     result = []
     for root_element in (elements(root) if root is not None else [browser()]):
-        result += root_element.find_elements(*t)
+        try:
+            result += root_element.find_elements(*t)
+        except:
+            sleep(0.5)
+            result += root_element.find_elements(*t)
     return result
 
 
