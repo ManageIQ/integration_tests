@@ -36,7 +36,14 @@ def provider_init(provider_key):
         pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
-def test_iso_datastore_crud(provider_init, provider_crud, iso_datastore):
+@pytest.fixture()
+def no_iso_dss(provider_crud):
+    template_crud = pxe.ISODatastore(provider_crud.name)
+    if template_crud.exists():
+        template_crud.delete(cancel=False)
+
+
+def test_iso_datastore_crud(provider_init, no_iso_dss, provider_crud, iso_datastore):
     """
     Basic CRUD test for ISO datastores.
 
