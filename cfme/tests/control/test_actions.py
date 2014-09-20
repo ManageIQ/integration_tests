@@ -55,7 +55,8 @@ pytest_generate_tests = testgen.generate(
     scope="module"
 )
 
-pytestmark = [pytest.mark.long_running]
+pytestmark = [pytest.mark.long_running,
+              pytest.mark.bugzilla(1142875)]
 
 
 def get_vm_object(vm_name):
@@ -263,6 +264,7 @@ def test_action_suspend_virtual_machine_after_starting(request,
         pytest.fail("CFME did not suspend the VM %s" % vm.name)
 
 
+@pytest.mark.bugzilla(1142875)
 def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off):
     """ This test tests action 'Prevent current event from proceeding'
 

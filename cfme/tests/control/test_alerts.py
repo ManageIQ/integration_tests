@@ -11,7 +11,8 @@ from utils.providers import setup_provider
 from utils.wait import wait_for
 
 
-pytestmark = [pytest.mark.long_running]
+pytestmark = [pytest.mark.long_running,
+              pytest.mark.bugzilla(1142875)]
 
 
 def pytest_generate_tests(metafunc):
