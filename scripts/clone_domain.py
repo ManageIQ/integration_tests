@@ -10,17 +10,7 @@ This can take several minutes to run.
 import argparse
 import sys
 
-from utils.conf import credentials
-from utils.ssh import SSHClient
-from utils.wait import wait_for
-
-
-def is_database_ready(client):
-    ec, out = client.run_command('psql -U postgres -t  -c "select now()" postgres')
-    if ec == 0:
-        return True
-    else:
-        return False
+from utils.appliance import IPAppliance
 
 
 def main():
@@ -32,46 +22,12 @@ def main():
         help='Source Domain name')
     parser.add_argument('dest', nargs='?', default='Default',
         help='Destination Domain name')
-    parser.add_argument('username', nargs='?', default=credentials['ssh']['username'],
-        help='SSH username for target appliance')
-    parser.add_argument('password', nargs='?', default=credentials['ssh']['password'],
-        help='SSH password for target appliance')
-
     args = parser.parse_args()
 
-    ssh_kwargs = {
-        'username': args.username,
-        'password': args.password
-    }
-    if args.hostname is not None:
-        ssh_kwargs['hostname'] = args.hostname
+    ip_a = IPAppliance(args.hostname)
+    status, out = ip_a.clone_domain(args.source, args.dest)
+    return status
 
-    client = SSHClient(stream_output=True, **ssh_kwargs)
-
-    # Make sure the database is ready
-    wait_for(is_database_ready, func_args=[client])
-
-    # Make sure the working dir exists
-    client.run_command('mkdir -p /tmp/miq')
-
-    print 'Exporting domain...'
-    export_opts = 'DOMAIN={} EXPORT_DIR=/tmp/miq PREVIEW=false OVERWRITE=true'.format(args.source)
-    export_cmd = 'evm:automate:export {}'.format(export_opts)
-    print export_cmd
-    status, output = client.run_rake_command(export_cmd)
-    if status != 0:
-        return 127
-    ro_fix_cmd = "sed -i 's/system: true/system: false/g' /tmp/miq/ManageIQ/__domain__.yaml"
-    status, output = client.run_command(ro_fix_cmd)
-    if status != 0:
-        return 127
-    import_opts = 'DOMAIN={} IMPORT_DIR=/tmp/miq PREVIEW=false'.format(args.source)
-    import_opts += ' OVERWRITE=true IMPORT_AS={}'.format(args.dest)
-    import_cmd = 'evm:automate:import {}'.format(import_opts)
-    print import_cmd
-    status, output = client.run_rake_command(import_cmd)
-    if status != 0:
-        return 127
 
 if __name__ == '__main__':
     sys.exit(main())

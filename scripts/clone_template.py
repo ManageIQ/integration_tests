@@ -129,6 +129,7 @@ def main():
                               fail_condition=None)
     logger.info("VM %s is running" % args.vm_name)
     logger.info('IP Address returned is %s', ip)
+
     if args.outfile:
         with open(args.outfile, 'w') as outfile:
             outfile.write("appliance_ip_address=%s\n" % ip)
