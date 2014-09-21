@@ -134,11 +134,18 @@ def _t(t, root=None):
     are processed and all results are put in the same list."""
     result = []
     for root_element in (elements(root) if root is not None else [browser()]):
-        try:
-            result += root_element.find_elements(*t)
-        except:
-            sleep(0.5)
-            result += root_element.find_elements(*t)
+        # 20140920 - dajo - hack to get around selenium e is null bs
+        count = 0
+        while count < 8:
+            count += 1
+            try:
+                result += root_element.find_elements(*t)
+                break
+            except Exception as e:
+                logger.info('Exception detected: ' + str(e))
+                sleep(0.25)
+                if count == 8:
+                    result += root_element.find_elements(*t)
     return result
 
 
