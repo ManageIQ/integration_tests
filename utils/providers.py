@@ -111,6 +111,45 @@ def provider_factory_by_name(provider_name, *args, **kwargs):
     return provider_factory(get_provider_key(provider_name), *args, **kwargs)
 
 
+def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=False):
+    """Sets up a random provider
+
+    Args:
+        prov_type: "infra" or "cloud"
+
+    """
+    providers_data = conf.cfme_data['management_systems']
+    if prov_class == "infra":
+        potential_providers = list_infra_providers()
+        if prov_type:
+            providers = []
+            for provider in potential_providers:
+                if providers_data[provider]['type'] == prov_type:
+                    providers.append(provider)
+        else:
+            providers = potential_providers
+    elif prov_class == "cloud":
+        potential_providers = list_cloud_providers()
+        if prov_type:
+            providers = []
+            for provider in potential_providers:
+                if providers_data[provider]['type'] == prov_type:
+                    providers.append(provider)
+        else:
+            providers = potential_providers
+    else:
+        providers = list_infra_providers()
+
+    for provider in providers:
+        try:
+            setup_provider(provider, validate=validate, check_existing=check_existing)
+            break
+        except:
+            continue
+    else:
+        raise Exception("No providers could be set up matching the params")
+
+
 def setup_provider(provider_key, validate=True, check_existing=True):
     """Add the named provider to CFME
 

@@ -2,7 +2,13 @@ import pytest
 
 from cfme.web_ui import Quadicon, mixins
 from cfme.configure.configuration import Category, Tag
+from utils.providers import setup_a_provider
 from utils.randomness import generate_lowercase_random_string, generate_random_string
+
+
+@pytest.fixture(scope="module")
+def setup_first_cloud_provider():
+    setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
 
 
 @pytest.yield_fixture(scope="module")
@@ -25,7 +31,7 @@ def tag(category):
     tag.delete()
 
 
-def test_tag_provider(setup_cloud_providers, tag):
+def test_tag_provider(setup_first_cloud_provider, tag):
     """Add a tag to a provider
     """
     pytest.sel.force_navigate('clouds_providers')
@@ -33,7 +39,7 @@ def test_tag_provider(setup_cloud_providers, tag):
     mixins.add_tag(tag)
 
 
-def test_tag_vm(setup_cloud_providers, tag):
+def test_tag_vm(setup_first_cloud_provider, tag):
     """Add a tag to a vm
     """
     pytest.sel.force_navigate('clouds_instances')
