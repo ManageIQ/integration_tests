@@ -35,88 +35,124 @@ class DockerInstance(object):
             self.ports.append(bindings[bind][1])
 
     def wait(self):
-        dc.wait(self.container_id)
+        if not self.dry_run:
+            dc.wait(self.container_id)
+        else:
+            print "Waiting for container"
 
     def stop(self):
-        dc.stop(self.container_id)
+        if not self.dry_run:
+            dc.stop(self.container_id)
+        else:
+            print "Stopping container"
 
     def remove(self):
-        dc.remove_container(self.container_id, v=True)
+        if not self.dry_run:
+            dc.remove_container(self.container_id, v=True)
+        else:
+            print "Removing container"
 
     def kill(self):
-        dc.kill(self.container_id)
+        if not self.dry_run:
+            dc.kill(self.container_id)
+        else:
+            print "Killing container"
 
 
 class SeleniumDocker(DockerInstance):
-    def __init__(self, bindings, image):
+    def __init__(self, bindings, image, dry_run=False):
+        self.dry_run = dry_run
         sel_name = generate_random_string(size=8)
-        sel_create_info = dc.create_container(image, tty=True, name=sel_name)
-        self.container_id = _dgci(sel_create_info, 'id')
-        sel_container_info = dc.inspect_container(self.container_id)
-        self.sel_name = _name(sel_container_info)
+        if not self.dry_run:
+            sel_create_info = dc.create_container(image, tty=True, name=sel_name)
+            self.container_id = _dgci(sel_create_info, 'id')
+            sel_container_info = dc.inspect_container(self.container_id)
+            self.sel_name = _name(sel_container_info)
+        else:
+            self.sel_name = "SEL_FF_CHROME_TEST"
         self.process_bindings(bindings)
 
     def run(self):
-        dc.start(self.container_id, privileged=True, port_bindings=self.port_bindings)
+        if not self.dry_run:
+            dc.start(self.container_id, privileged=True, port_bindings=self.port_bindings)
+        else:
+            print "Dry run running sel_ff_chrome"
 
 
 class PytestDocker(DockerInstance):
-    def __init__(self, name, bindings, env, log_path, links, pytest_con, artifactor_dir):
+    def __init__(self, name, bindings, env, log_path, links, pytest_con, artifactor_dir,
+                 dry_run=False):
+        self.dry_run = dry_run
         self.links = links
         self.log_path = log_path
         self.artifactor_dir = artifactor_dir
         self.process_bindings(bindings)
 
-        pt_name = name
-        pt_create_info = dc.create_container(pytest_con, tty=True,
-                                             name=pt_name, environment=env,
-                                             command='sh /setup.sh',
-                                             volumes=[artifactor_dir],
-                                             ports=self.ports)
-        self.container_id = _dgci(pt_create_info, 'id')
-        pt_container_info = dc.inspect_container(self.container_id)
-        pt_name = _name(pt_container_info)
+        if not self.dry_run:
+            pt_name = name
+            pt_create_info = dc.create_container(pytest_con, tty=True,
+                                                 name=pt_name, environment=env,
+                                                 command='sh /setup.sh',
+                                                 volumes=[artifactor_dir],
+                                                 ports=self.ports)
+            self.container_id = _dgci(pt_create_info, 'id')
+            pt_container_info = dc.inspect_container(self.container_id)
+            pt_name = _name(pt_container_info)
 
     def run(self):
-        dc.start(self.container_id, privileged=True, links=self.links,
-                 binds={self.log_path: {'bind': self.artifactor_dir, 'ro': False}},
-                 port_bindings=self.port_bindings)
+        if not self.dry_run:
+            dc.start(self.container_id, privileged=True, links=self.links,
+                     binds={self.log_path: {'bind': self.artifactor_dir, 'ro': False}},
+                     port_bindings=self.port_bindings)
+        else:
+            print "Dry run running pytest"
 
 
 class DockerBot(object):
     def __init__(self, **args):
+        links = []
         self.args = args
         self.validate_args()
         self.display_banner()
         self.process_appliance()
         self.create_pytest_command()
-        self.sel_vnc_port = random_port()
-        sel = SeleniumDocker(bindings={'VNC_PORT': (5999, self.sel_vnc_port)},
-                             image=self.args['selff'])
-        sel.run()
-        sel_container_name = sel.sel_name
+        if not self.args['use_wharf']:
+            self.sel_vnc_port = random_port()
+            sel = SeleniumDocker(bindings={'VNC_PORT': (5999, self.sel_vnc_port)},
+                                 image=self.args['selff'], dry_run=self.args['dry_run'])
+            sel.run()
+            sel_container_name = sel.sel_name
+            links = [(sel_container_name, 'selff')]
+        self.pytest_name = self.args['test_id']
         self.create_pytest_envvars()
         self.handle_pr()
-        self.pytest_name = generate_random_string(size=8)
         self.log_path = self.create_log_path()
         self.pytest_bindings = self.create_pytest_bindings()
         pytest = PytestDocker(name=self.pytest_name, bindings=self.pytest_bindings,
                               env=self.env_details, log_path=self.log_path,
-                              links=[(sel_container_name, 'selff')],
+                              links=links,
                               pytest_con=self.args['pytest_con'],
-                              artifactor_dir=self.args['artifactor_dir'])
+                              artifactor_dir=self.args['artifactor_dir'],
+                              dry_run=self.args['dry_run'])
         pytest.run()
-        self.handle_watch()
-        try:
-            pytest.wait()
-        except KeyboardInterrupt:
-            print "  TEST INTERRUPTED....KILLING ALL THE THINGS"
-            pass
-        pytest.kill()
-        pytest.remove()
-        sel.kill()
-        sel.remove()
-        self.handle_output()
+
+        if not self.args['nowait']:
+            self.handle_watch()
+            if self.args['dry_run']:
+                with open(os.path.join(self.log_path, 'setup.txt'), "w") as f:
+                    f.write("finshed")
+
+            try:
+                pytest.wait()
+            except KeyboardInterrupt:
+                print "  TEST INTERRUPTED....KILLING ALL THE THINGS"
+                pass
+            pytest.kill()
+            pytest.remove()
+            if not self.args['use_wharf']:
+                sel.kill()
+                sel.remove()
+            self.handle_output()
 
     def find_files_by_pr(self, pr=None):
         files = []
@@ -138,43 +174,66 @@ class DockerBot(object):
             except:
                 return None
 
+    def check_arg(self, name, default):
+        self.args[name] = self.args.get(name, docker_conf.get(name, default))
+
     def validate_args(self):
         ec = 0
-        self.args['banner'] = self.args.get('banner', True)
-        self.args['watch'] = self.args.get('watch', True)
-        self.args['output'] = self.args.get('output', True)
 
-        self.args['appliance_name'] = self.args.get('appliance_name', None)
-        self.args['appliance'] = self.args.get('appliance', None)
+        appliance = self.args.get('appliance', None)
+        if self.args.get('appliance_name', None) and not appliance:
+            self.args['appliance'] = docker_conf['appliances'][self.args['appliance_name']]
+
+        self.check_arg('nowait', False)
+
+        self.check_arg('banner', True)
+        self.check_arg('watch', True)
+        self.check_arg('output', True)
+        self.check_arg('dry_run', False)
+
+        self.check_arg('appliance_name', None)
+        self.check_arg('appliance', None)
 
         if not self.args['appliance_name'] != self.args['appliance']:
             print "You must supply either an appliance OR an appliance name from config"
             ec += 1
 
-        self.args['branch'] = self.args.get('branch', 'master')
-        self.args['pr'] = self.args.get('pr', None)
+        self.check_arg('branch', 'master')
+        self.check_arg('pr', None)
 
-        if not self.args.get('cfme_repo', None):
+        self.check_arg('cfme_repo', None)
+        self.check_arg('cfme_repo_dir', '/cfme_tests_te')
+        self.check_arg('cfme_cred_repo', None)
+        self.check_arg('cfme_cred_repo_dir', '/cfme-qe-yamls')
+
+        if not self.args['cfme_repo']:
             print "You must supply a CFME REPO"
             ec += 1
-        self.args['cfme_repo_dir'] = self.args.get('cfme_repo_dir', '/cfme_tests_te')
-        if not self.args.get('cfme_cred_repo'):
+
+        if not self.args['cfme_cred_repo']:
             print "You must supply a CFME Credentials REPO"
             ec += 1
-        self.args['cfme_cred_repo_dir'] = self.args.get('cfme_cred_repo_dir', '/cfme-qe-yamls')
 
-        self.args['gh_token'] = self.args.get('gh_token', None)
-        self.args['gh_owner'] = self.args.get('gh_owner', None)
-        self.args['gh_repo'] = self.args.get('gh_repo', None)
+        self.check_arg('gh_token', None)
+        self.check_arg('gh_owner', None)
+        self.check_arg('gh_repo', None)
 
-        self.args['browser'] = self.args.get('browser', 'firefox')
-        if not self.args.get('pytest', None):
+        self.check_arg('browser', 'firefox')
+
+        self.check_arg('pytest', None)
+        self.check_arg('pytest_con', None)
+
+        if not self.args['pytest']:
             print "You must specify a py.test command"
             ec += 1
-        self.args['update_pip'] = self.args.get('update_pip', False)
-        self.args['auto_gen_test'] = self.args.get('auto_gen_test', False)
-        self.args['artifactor_dir'] = self.args.get('artifactor_dir', '/log_depot')
-        if not self.args.get('log_depot', None):
+
+        self.check_arg('update_pip', False)
+        self.check_arg('auto_gen_test', False)
+        self.check_arg('artifactor_dir', '/log_depot')
+
+        self.check_arg('log_depot', None)
+
+        if not self.args['log_depot']:
             print "You must specify a log_depot"
             ec += 1
 
@@ -183,7 +242,12 @@ class DockerBot(object):
             print "You chose to use Auto Test Gen, without supplying GitHub details"
             ec += 1
 
-        self.args['capture'] = self.args.get('capture', False)
+        self.check_arg('capture', False)
+        self.check_arg('test_id', generate_random_string(size=8))
+
+        self.check_arg('prtester', False)
+        self.check_arg('trackerbot', None)
+        self.check_arg('wharf', False)
 
         if ec:
             sys.exit(127)
@@ -213,13 +277,7 @@ class DockerBot(object):
                 self.args['pytest'] = "py.test {} --use-provider default". \
                                       format(" ".join(files))
             else:
-                print "  Could not autogenerate test, the following files were "
-                print "  modified but included no tests..."
-                print
-                print files
-                print
-                print "Exiting..."
-                sys.exit(127)
+                self.args['pytest'] = "py.test --use-provider default -m smoke"
         if not self.args['capture']:
             self.args['pytest'] += ' --capture=no'
         print "  PYTEST Command: {}".format(self.args['pytest'])
@@ -235,6 +293,13 @@ class DockerBot(object):
                             'PYTEST': self.args['pytest'],
                             'BRANCH': self.args['branch'],
                             'ARTIFACTOR_DIR': self.args['artifactor_dir']}
+        if self.args['use_wharf']:
+            self.env_details['WHARF'] = self.args['wharf']
+        if self.args['prtester']:
+            print "  PRTESTING: Enabled"
+            self.env_details['TRACKERBOT'] = self.args['trackerbot']
+            print "  TRACKERBOT: {}".format(self.env_details['TRACKERBOT'])
+            self.env_details['POST_TASK'] = self.pytest_name
         print "  REPO: {}".format(self.args['cfme_repo'])
         print "  BROWSER: {}".format(self.args['browser'])
         if self.args['update_pip']:
@@ -250,7 +315,10 @@ class DockerBot(object):
 
     def create_log_path(self):
         log_path = os.path.join(self.args['log_depot'], self.pytest_name)
-        os.mkdir(log_path)
+        try:
+            os.mkdir(log_path)
+        except OSError:
+            pass
         print "  LOG_ID: {}".format(self.pytest_name)
         return log_path
 
@@ -263,7 +331,7 @@ class DockerBot(object):
         return bindings
 
     def handle_watch(self):
-        if self.args['watch']:
+        if self.args['watch'] and not self.args['dry_run']:
             print
             print "  Waiting for container for 10 seconds..."
             import time
@@ -296,12 +364,15 @@ if __name__ == "__main__":
     interaction.add_argument('--output', action='store_true',
                              help="Output the console?",
                              default=None)
+    interaction.add_argument('--dry-run', action='store_true',
+                             help="Just run the options but don't start any containers",
+                             default=None)
 
     appliance = parser.add_argument_group('Appliance Options')
     appliance.add_argument('--appliance-name',
                            help=('Chooses an appliance from the config by name'
                                  'or sets a name if used with --appliance'),
-                           default='CLI Speficied')
+                           default=None)
     appliance.add_argument('--appliance',
                            help='Chooses an appliance address',
                            default=None)
@@ -344,6 +415,12 @@ if __name__ == "__main__":
     dkr.add_argument('--pytest_con',
                      help="The pytest container image",
                      default=docker_conf.get('pytest_con', 'py_test_base'))
+    dkr.add_argument('--wharf',
+                     help="Choose to use WebDriver Wharf instead of local sel_ff_chrome container",
+                     default=docker_conf.get('wharf', None))
+    dkr.add_argument('--use-wharf', action="store_true",
+                     help="Use Wharf or no?",
+                     default=docker_conf.get('use_wharf', False))
 
     pytest = parser.add_argument_group('PyTest Options')
     pytest.add_argument('--browser',
@@ -367,9 +444,17 @@ if __name__ == "__main__":
     pytest.add_argument('--capture',
                         help="Capture output in pytest", action="store_true",
                         default=docker_conf.get('capture', False))
-    args = parser.parse_args()
+    pytest.add_argument('--test-id',
+                        help="A test id",
+                        default=generate_random_string(size=8))
 
-    if args.appliance_name and not args.appliance:
-        args.appliance = docker_conf['appliances'][args.appliance_name]
+    pytester = parser.add_argument_group('PR Tester Options')
+    pytester.add_argument('--prtester', action="store_true",
+                          help="The Task name to update the status",
+                          default=None)
+    pytester.add_argument('--trackerbot',
+                          help="The url for trackerbot",
+                          default=docker_conf.get('trackerbot', None))
+    args = parser.parse_args()
 
     ab = DockerBot(**vars(args))
