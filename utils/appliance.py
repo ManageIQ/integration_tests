@@ -177,6 +177,9 @@ class Appliance(object):
     def is_running(self):
         return self.provider.is_vm_running(self.vm_name)
 
+    def browser_session(self, reset_cache=False):
+        return self.ipapp.browser_session(reset_cache=reset_cache)
+
 
 class IPAppliance(object):
     """IPAppliance represents an already provisioned cfme appliance whos provider is unknown
