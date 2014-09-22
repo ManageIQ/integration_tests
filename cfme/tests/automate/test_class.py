@@ -36,13 +36,16 @@ def test_schema_crud(a_class):
     a_class.edit_schema(remove_fields=(f1,), add_fields=(f3,))
 
 
-def test_add_class_inherited(a_class):
-    subclass = Class(name=generate_random_string(8),
-                     namespace=a_class.namespace,
-                     description="subclass",
-                     inherits_from=a_class)
-    a_class.create()
-    subclass.create()
+# The inheritance box has been removed from the UI until it is implemented properly,
+# see 1138859
+#
+# def test_add_class_inherited(a_class):
+#     subclass = Class(name=generate_random_string(8),
+#                      namespace=a_class.namespace,
+#                      description="subclass",
+#                      inherits_from=a_class)
+#     a_class.create()
+#     subclass.create()
 
 
 def test_duplicate_class_disallowed(a_class):
