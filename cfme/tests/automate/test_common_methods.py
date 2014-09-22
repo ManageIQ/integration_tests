@@ -97,7 +97,7 @@ def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button
     testing_vm.set_retirement_date(retirement_date)
     wait_for(lambda: testing_vm.retirement_date is not None, message="retirement date be set")
     soft_assert(testing_vm.retirement_date is not None, "The retirement date is None!")
-    #current_retirement_date = testing_vm.retirement_date
+    # current_retirement_date = testing_vm.retirement_date
 
     # Now run the extend stuff
     retire_extend_button()
