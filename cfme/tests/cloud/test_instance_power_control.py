@@ -169,9 +169,9 @@ def test_quadicon_terminate(
     test_instance.power_control_from_cfme(option=test_instance.TERMINATE, cancel=False)
     wait_for(test_instance.does_vm_exist_in_cfme, fail_condition=True, num_sec=300, delay=30,
         fail_func=test_instance.provider_crud.refresh_provider_relationships,
-        message="instance no longer exists in cfme UI")
+        message="instance still exists in cfme UI")
     if provider_type == 'openstack':
-        soft_assert(provider_mgmt.does_vm_exist(test_instance.name), "instance still exists")
+        soft_assert(not provider_mgmt.does_vm_exist(test_instance.name), "instance still exists")
     else:
         soft_assert(
             provider_mgmt.is_vm_state(test_instance.name, provider_mgmt.states['deleted']),
