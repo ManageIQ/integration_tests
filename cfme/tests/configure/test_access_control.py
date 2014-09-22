@@ -12,15 +12,19 @@ from cfme.infrastructure import virtual_machines
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
 from utils.log import logger
-from utils.providers import setup_infrastructure_providers
+from utils.providers import setup_a_provider
 from utils.update import update
 
 usergrp = ac.Group(description='EvmGroup-user')
 
 
+@pytest.fixture(scope="module")
+def setup_first_provider():
+    setup_a_provider(validate=True, check_existing=True)
+
 # due to pytest.mark.bugzilla(1035399), non admin users can't login
 # with no providers added
-pytestmark = [pytest.mark.usefixtures("setup_cloud_providers")]
+pytestmark = [pytest.mark.usefixtures("setup_first_provider")]
 
 
 def new_credential():
@@ -317,19 +321,20 @@ def test_permissions_vm_provisioning():
     )
 
 
-def test_permissions_vm_power_on_access():
-    # Ensure VMs exist
-    if not virtual_machines.get_number_of_vms():
-        logger.debug("Setting up providers")
-        setup_infrastructure_providers()
-        logger.debug("Providers setup")
-    single_task_permission_test(
-        [
-            ['Infrastructure', 'Virtual Machines', 'Accordions'],
-            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Operate', 'Power On']
-        ],
-        {'VM Power On': _test_vm_power_on}
-    )
+# This test is disabled until it has been rewritten
+# def test_permissions_vm_power_on_access():
+#    # Ensure VMs exist
+#    if not virtual_machines.get_number_of_vms():
+#        logger.debug("Setting up providers")
+#        setup_first_provider()
+#        logger.debug("Providers setup")
+#    single_task_permission_test(
+#        [
+#            ['Infrastructure', 'Virtual Machines', 'Accordions'],
+#            ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Operate', 'Power On']
+#        ],
+#        {'VM Power On': _test_vm_power_on}
+#    )
 
 
 # This test is disabled until it has been rewritten
