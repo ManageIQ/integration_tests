@@ -28,6 +28,7 @@ from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for
+from utils import version
 from utils.pretty import Pretty
 
 # Specific Add button
@@ -447,6 +448,22 @@ def _fill_credential(form, cred, validate=None):
                                'validate_btn': validate})
     if validate:
         flash.assert_no_errors()
+
+
+def get_all_providers(do_not_navigate=False):
+    """Returns list of all providers"""
+    if not do_not_navigate:
+        sel.force_navigate('clouds_providers')
+    providers = set([])
+    link_marker = version.pick({
+        version.LOWEST: "ext_management_system",
+        "5.2.5": "ems_cloud"
+    })
+    for page in paginator.pages():
+        for title in sel.elements("//div[@id='quadicon']/../../../tr/td/a[contains(@href,"
+                "'{}/show')]".format(link_marker)):
+            providers.add(sel.get_attribute(title, "title"))
+    return providers
 
 
 def get_credentials_from_config(credential_config_name):
