@@ -29,6 +29,13 @@ from utils.path import project_path
 from utils.wait import wait_for
 import atexit
 
+a_session = None
+
+
+def pytest_sessionstart(session):
+    global a_session
+    a_session = session
+
 
 class DummyClient(object):
     def fire_hook(self, *args, **kwargs):
