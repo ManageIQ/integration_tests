@@ -5,13 +5,16 @@ from cfme.web_ui import menu
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
-from cfme.web_ui import Form, Select, SplitTable, accordion, fill, flash, form_buttons
+from cfme.web_ui import Form, Select, SplitTable, accordion,\
+    fill, flash, form_buttons, Table
 from utils import version
 from utils.update import Updateable
 from utils.pretty import Pretty
 
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
+entry_table = Table("//div[@id='field_values_div']/form/fieldset/table[@class='style3']")
+text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table[@class='style1']")
 
 label_form = Form(fields=[
     ('label', "//input[@id='label']"),
@@ -35,7 +38,15 @@ element_form = Form(fields=[
     ('ele_name', "//input[@id='field_name']"),
     ('ele_desc', "//input[@id='field_description']"),
     ('choose_type', Select("//select[@id='field_typ']")),
-    ('default_text_box', "//input[@id='field_default_value']")
+    ('default_text_box', "//input[@id='field_default_value']"),
+    ('field_required', "//input[@id='field_required']"),
+    ('field_past_dates', "//input[@id='field_past_dates']"),
+    ('field_entry_point', "//input[@id='field_entry_point']"),
+    ('field_show_refresh_button', "//input[@id='field_show_refresh_button']"),
+    ('entry_value', "//input[@id='entry_value']"),
+    ('entry_description', "//input[@id='entry_description']"),
+    ('field_category', Select("//select[@id='field_category']")),
+    ('text_area', "//input[@id='field_default_value']"),
 ])
 
 dialogs_table = SplitTable(
@@ -76,7 +87,10 @@ class ServiceDialog(Updateable, Pretty):
                  tab_label=None, tab_desc=None,
                  box_label=None, box_desc=None,
                  ele_label=None, ele_name=None,
-                 ele_desc=None, choose_type=None, default_text_box=None):
+                 ele_desc=None, choose_type=None, default_text_box=None,
+                 field_required=None, field_past_dates=None, field_entry_point=None,
+                 field_show_refresh_button=None, entry_value=None,
+                 entry_desc=None, field_category=None, text_area=None):
         self.label = label
         self.description = description
         self.submit = submit
@@ -90,6 +104,14 @@ class ServiceDialog(Updateable, Pretty):
         self.ele_desc = ele_desc
         self.choose_type = choose_type
         self.default_text_box = default_text_box
+        self.field_required = field_required
+        self.field_past_dates = field_past_dates
+        self.field_entry_point = field_entry_point
+        self.field_show_refresh_button = field_show_refresh_button
+        self.entry_value = entry_value
+        self.entry_desc = entry_desc
+        self.field_category = field_category
+        self.text_area = text_area
 
     def create(self):
         sel.force_navigate('service_dialog_new')
@@ -129,7 +151,13 @@ class ServiceDialog(Updateable, Pretty):
                                 'ele_name': self.ele_name,
                                 'ele_desc': self.ele_desc,
                                 'choose_type': self.choose_type,
-                                'default_text_box': self.default_text_box})
+                                'field_category': self.field_category,
+                                'default_text_box': self.default_text_box,
+                                'field_required': self.field_required,
+                                'field_past_dates': self.field_past_dates,
+                                'field_entry_point': self.field_entry_point,
+                                'field_show_refresh_button': self.field_show_refresh_button})
+            self.element_type()
         sel.click(form_buttons.add)
         flash.assert_no_errors()
 
@@ -145,3 +173,11 @@ class ServiceDialog(Updateable, Pretty):
         cfg_btn("Remove from the VMDB", invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
+
+    def element_type(self):
+        if self.choose_type == "Drop Down List" or self.choose_type == "Radio Button":
+            entry_table.click_cell(header='value', value='<New Entry>')
+            fill(element_form, {'entry_value': self.entry_value,
+                                'entry_description': self.entry_desc})
+        if self.choose_type == "Text Area Box":
+            text_area_table.click_cell(1, value=self.text_area)
