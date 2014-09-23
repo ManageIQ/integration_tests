@@ -134,7 +134,7 @@ def run_tasks():
                 cont_count += 1
                 tapi.task(task['tid']).put({'result': 'running', 'vm_name': appliance.vm_name})
             except Exception:
-                output = traceback.print_exc()
+                output = traceback.format_exc()
                 tapi.task(task['tid']).put({'result': 'failed', 'output': output})
         else:
             # No tasks to process - Happy Days!
