@@ -11,7 +11,7 @@ from utils import providers
 from utils.randomness import generate_random_string
 from utils.update import update
 
-pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
+pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
 
 # To avoid issues with deleting and re-adding provider, this bugzilla is targeted at that problem
 # We create shortcut for it here, so we can then simply mark the tests that use
