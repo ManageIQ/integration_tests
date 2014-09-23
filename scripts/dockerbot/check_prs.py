@@ -110,7 +110,11 @@ def run_tasks():
             try:
                 # Get the latest available template and provision/configure an appliance
                 template_obj = tapi.group(stream).get()
-                provider = template_obj['latest_template_providers'][0]
+                providers = template_obj['latest_template_providers']
+                if providers:
+                    provider = providers[0]
+                else:
+                    raise Exception('No template for stream')
                 template = template_obj['latest_template']
                 tapi.task(task['tid']).put({'result': 'provisioning', 'provider': provider,
                                             'template': template})
