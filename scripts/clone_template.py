@@ -5,6 +5,7 @@ Where possible, defaults will come from cfme_data"""
 import argparse
 import sys
 
+from utils.appliance import Appliance
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.providers import destroy_vm, provider_factory
@@ -19,6 +20,8 @@ def main():
     parser.add_argument('--provider', help='provider key in cfme_data')
     parser.add_argument('--template', help='the name of the template to clone')
     parser.add_argument('--vm_name', help='the name of the VM to create')
+    parser.add_argument('--configure', default=False, action='store_true',
+        help='configure the VM after provisioning')
 
     # generic options
     parser.add_argument('--destroy', dest='destroy', action='store_true',
@@ -129,6 +132,11 @@ def main():
                               fail_condition=None)
     logger.info("VM %s is running" % args.vm_name)
     logger.info('IP Address returned is %s', ip)
+
+    if args.configure:
+        logger.info('Configuring appliance, this can take a while.')
+        app = Appliance(args.provider, args.vm_name)
+        app.configure()
 
     if args.outfile:
         with open(args.outfile, 'w') as outfile:
