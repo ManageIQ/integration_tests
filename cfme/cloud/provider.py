@@ -37,32 +37,37 @@ add_provider_button = form_buttons.FormButton("Add this Cloud Provider")
 # Forms
 discover_form = Form(
     fields=[
-        ('username', "//*[@id='userid']"),
-        ('password', "//*[@id='password']"),
-        ('password_verify', "//*[@id='verify']"),
+        ('username', "#userid"),
+        ('password', "#password"),
+        ('password_verify', "#verify"),
         ('start_button', form_buttons.FormButton("Start the Host Discovery"))
     ])
 
 properties_form = Form(
     fields=[
-        ('type_select', Select("//*[@id='server_emstype']")),
-        ('name_text', "//*[@id='name']"),
-        ('hostname_text', "//*[@id='hostname']"),
-        ('ipaddress_text', "//*[@id='ipaddress']"),
-        ('amazon_region_select', Select("//*[@id='hostname']")),
-        ('api_port', "//*[@id='port']"),
+        ('type_select', Select("select#server_emstype")),
+        ('name_text', "#name"),
+        ('hostname_text', "#hostname"),
+        ('ipaddress_text', "#ipaddress"),
+        ('amazon_region_select', Select(
+            version.pick({
+                version.LOWEST: "select#hostname",
+                "5.4": "select#provider_region",  # TODO: Change introduced at 0918, watch for DS.
+            })
+        )),
+        ('api_port', "#port"),
     ])
 
 credential_form = Form(
     fields=[
         ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('default_principal', "//*[@id='default_userid']"),
-        ('default_secret', "//*[@id='default_password']"),
-        ('default_verify_secret', "//*[@id='default_verify']"),
+        ('default_principal', "#default_userid"),
+        ('default_secret', "#default_password"),
+        ('default_verify_secret', "#default_verify"),
         ('amqp_button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
-        ('amqp_principal', "//*[@id='amqp_userid']"),
-        ('amqp_secret', "//*[@id='amqp_password']"),
-        ('amqp_verify_secret', "//*[@id='amqp_verify']"),
+        ('amqp_principal', "#amqp_userid"),
+        ('amqp_secret', "#amqp_password"),
+        ('amqp_verify_secret', "#amqp_verify"),
         ('validate_btn', form_buttons.validate)
     ])
 
