@@ -49,7 +49,12 @@ properties_form = Form(
         ('name_text', "//*[@id='name']"),
         ('hostname_text', "//*[@id='hostname']"),
         ('ipaddress_text', "//*[@id='ipaddress']"),
-        ('amazon_region_select', Select("//*[@id='hostname']")),
+        ('amazon_region_select', Select(
+            version.pick({
+                version.LOWEST: "select#hostname",
+                "5.4": "select#provider_region",  # TODO: Change introduced at 0918, watch for DS.
+            })
+        )),
         ('api_port', "//*[@id='port']"),
     ])
 
