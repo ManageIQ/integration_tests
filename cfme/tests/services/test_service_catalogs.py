@@ -8,7 +8,7 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils import testgen
-from utils.providers import setup_infrastructure_providers
+from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
@@ -45,10 +45,12 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
+@pytest.fixture()
+def provider_init(provider_key):
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 @pytest.yield_fixture(scope="function")
@@ -104,7 +106,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
 
 
 @pytest.mark.bugzilla(1144207)
-def test_order_catalog_item(provider_key, provider_mgmt, setup_providers, catalog_item, request):
+def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
@@ -120,7 +122,7 @@ def test_order_catalog_item(provider_key, provider_mgmt, setup_providers, catalo
 
 
 @pytest.mark.bugzilla(1144207)
-def test_order_catalog_bundle(provider_key, provider_mgmt, setup_providers, catalog_item, request):
+def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
