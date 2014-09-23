@@ -56,13 +56,13 @@ def main(trackerbot_url, mark_usable=None):
                 print ex.response.status_code, ex.content
 
     # Remove templates that aren't on any providers anymore
-    for template in api.template.get()['objects']:
+    for template in api.template.get(limit=0)['objects']:
         if template['name'] not in seen_templates:
             print "Cleaning up template %s on all providers" % template['name']
             api.template(template['name']).delete()
 
     # Remove provider relationships where they no longer exist
-    for pt in api.providertemplate.get()['objects']:
+    for pt in api.providertemplate.get(limit=0)['objects']:
         provider_key, template_name = pt['provider']['key'], pt['template']['name']
         if provider_key not in template_providers[template_name]:
             print "Cleaning up template %s on %s" % (template_name, provider_key)
