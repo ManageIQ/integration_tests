@@ -110,7 +110,8 @@ DockerBot is able to make educated guesses about which tests need to be run in o
 This will not always work, but can be used as a first case approximation. DockerBot will look for
 any files in the PR which are in the cfme/tests folder and include those in the run. When this option
 is used, the `--pytest` option does not need to be. At the moment, there is no way to pass other options
-to pytest when using the `--auto-gen-test` option.
+to pytest when using the `--auto-gen-test` option. If the option is passed and no test files are updated
+then dockerbot will just run the smoke tests.
 
 ### Update Pip
 
@@ -123,7 +124,7 @@ Firewalling
 If you run with a firewall and wish to do either event or smtp testing, you will need to open up the
 required ports on your local machine. Bear in mind also that your DockerBot container will also try
 to access these ports, so it may be that you also need to allow connections from the DockerBot
-internal subnet to your device network. 
+internal subnet to your device network.
 
 Full DockerBot example
 ----------------------
