@@ -60,7 +60,7 @@ import pytest
 from py.path import local
 
 from cfme.fixtures.pytest_selenium import base_url
-from scripts.wait_for_appliance_ui import check_appliance_ui
+from utils.appliance import IPAppliance
 from utils.log import logger
 from utils.path import log_path, scripts_data_path
 from utils.ssh import SSHClient
@@ -89,7 +89,7 @@ class UiCoveragePlugin(object):
         self.install_coverage_hook()
         self.restart_evm()
         self.touch_all_the_things()
-        check_appliance_ui(base_url())
+        IPAppliance.from_url(base_url()).wait_for_web_ui()
 
     def pytest_unconfigure(self, config):
         self.reporter.write_sep('-', 'Waiting for coverage to finish and collecting reports')
