@@ -89,6 +89,8 @@ from fixtures.prov_filter import filtered
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.providers import cloud_provider_type_map, infra_provider_type_map, provider_factory
+from fixtures.artifactor_plugin import a_session
+from _pytest.python import FixtureDef
 
 
 def generate(gen_func, *args, **kwargs):
@@ -269,6 +271,14 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         # else: wat? You deserve the NameError you're about to receive
 
         mgmt = provider_factory(provider)
+
+        def provider_setup():
+            logger.info('the fixture ran!')
+            return 'provider_setup222'
+        a_session._fixturemanager._arg2fixturedefs['setup_provie'] = [
+            FixtureDef(a_session._fixturemanager, '', 'setup_provie',
+                       provider_setup, 'function', '', False)
+        ]
 
         values = []
         special_args_map = dict(zip(special_args, (provider, data, crud, mgmt, prov_type)))
