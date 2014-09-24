@@ -2507,7 +2507,7 @@ class Timelines(Pretty):
                         data[kv[0]] = None
                 else:
                     data[kv[0]] = kv[1].strip()
-                    return data
+            return data
 
     class Marker(Object):
         """ A proxied object in case it needs more methods further down the line."""
