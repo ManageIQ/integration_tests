@@ -29,8 +29,8 @@ not possible to retrieve them, when you face such thing just ping me and I will 
 The order of function parameters does not matter.
 
 The ``bug`` objects have the specified version fields (as in cfme_data.yaml) converted to
-:py:class:`LooseVersion`. If those fields are specified as "---" or "unspecified", they return None
-instead of :py:class:`LooseVersion`.
+:py:class:`utils.version.LooseVersion`. If those fields are specified as "---" or "unspecified",
+they return None instead of :py:class:`utils.version.LooseVersion`.
 
 The ``unskip`` hook is a little bit different. It is a dict of ``bug_id: function``, where if a bug
 is marked to be skipped by any of the machinery that marks it as skipped, it will look in the dict
@@ -144,6 +144,14 @@ class BugContainer(set):
         bug = self._get_bug_single(bug_id)
         # If it is a dupe, return the original
         all_bugs = [bug] + bug.copies
+        # If this is a copy, resolve the original
+        bug_copy = bug
+        while bug_copy.copy_of is not None:
+            try:
+                bug_copy = self._get_bug_single(bug.copy_of)
+                all_bugs.append(bug_copy)
+            except NameError:
+                break
         # We now have all possible variants of the bug. We will now filter the relevant one
         # Sort bugs by target release
         all_bugs.sort(key=lambda e: e.target_release)
@@ -241,8 +249,8 @@ def pytest_runtest_setup(item):
     xfailers = set([])
     # We filter only bugs that are fixed in current release
     # Generic status-based skipping
-    for bug in filter(lambda o: o is not None,
-                      map(lambda bug: item._bugzilla_bugs.get_bug(bug.id), item._bugzilla_bugs)):
+    for bug in set(filter(lambda o: o is not None,
+                      map(lambda bug: item._bugzilla_bugs.get_bug(bug.id), item._bugzilla_bugs))):
         target_release = bug.target_release
         version = bug.version
         # Skipping checks
@@ -259,11 +267,13 @@ def pytest_runtest_setup(item):
                 skippers.add(bug.id)
 
     # POST/MODIFIED for upstream
-    states = {"POST", "MODIFIED"}
-    for bug in filter(lambda b: b.status in states,
+    change_states = {"POST", "MODIFIED"}
+    # With these states, the change is in upstream
+    upstream_states = {"POST", "MODIFIED", "ON_QA", "VERIFIED", "RELEASE_PENDING"}
+    for bug in set(filter(lambda b: b.status in upstream_states,
                       filter(lambda o: o is not None,
                              map(lambda bug: item._bugzilla_bugs.get_bug(bug.id),
-                                 item._bugzilla_bugs))):
+                                 item._bugzilla_bugs)))):
         history = bug.get_history()["bugs"][0]["history"]
         changes = []
         # We look for status changes in the history
@@ -271,7 +281,7 @@ def pytest_runtest_setup(item):
             for change in event["changes"]:
                 if change["field_name"].lower() != "status":
                     continue
-                if change["added"] in states:
+                if change["added"] in change_states:
                     changes.append(event["when"])
                     break
         if changes:
@@ -286,6 +296,9 @@ def pytest_runtest_setup(item):
                     "Decided to test {} on upstream, because the appliance was built "
                     "after the bug {} status was modified".format(item.nodeid, bug.id)
                 )
+                if bug.id in skippers:
+                    # It might have been marked for skipping, this ensures it does not.
+                    skippers.remove(bug.id)
             else:
                 skippers.add(bug.id)
 
