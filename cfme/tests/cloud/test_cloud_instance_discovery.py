@@ -6,11 +6,7 @@ from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
-
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc)
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
 
 
 @pytest.fixture
@@ -24,27 +20,28 @@ def instance_name():
     return "test_dscvry_" + generate_random_string()
 
 
-def _does_instance_exist_in_CFME(test_instance=None):
+def _check_instance(test_instance):
     if not isinstance(test_instance, instance.Instance):
-        raise Exception("instance must be an instance of Instance")
-    test_instance.provider_crud.refresh_provider_relationships()
+        raise Exception("test_instance must be an instance of cfme.cloud.instance.Instance")
+
+
+def _does_instance_exist_in_CFME(test_instance):
+    _check_instance(test_instance)
     pytest.sel.force_navigate('clouds_instances_by_provider',
-                              context={'provider_name': test_instance.provider_crud})
+        context={'provider_name': test_instance.provider_crud})
     pytest.sel.click(test_instance.find_quadicon(True, False, False))
     return True
 
 
-def _is_instance_archived(test_instance=None):
-    if not isinstance(test_instance, instance.Instance):
-        raise Exception("instance must be an instance of Instance")
-    test_instance.provider_crud.refresh_provider_relationships()
+def _is_instance_archived(test_instance):
+    _check_instance(test_instance)
     pytest.sel.force_navigate('clouds_instances_archived_branch')
     pytest.sel.click(test_instance.find_quadicon(True, False, False))
     return True
 
 
-def test_cloud_instance_discovery(request, provider_crud, provider_init,
-                                  provider_mgmt, instance_name):
+def test_cloud_instance_discovery(request, provider_crud, provider_init, provider_mgmt,
+        instance_name):
     """
     Tests whether cfme will successfully discover a cloud instance change
     (add/delete).
@@ -56,13 +53,15 @@ def test_cloud_instance_discovery(request, provider_crud, provider_init,
     test_instance = instance.instance_factory(instance_name, provider_crud)
     request.addfinalizer(test_instance.delete_from_provider)
     try:
-        wait_for(lambda: _does_instance_exist_in_CFME(test_instance),
-                 num_sec=800, delay=30, handle_exception=True)
+        wait_for(_does_instance_exist_in_CFME, [test_instance], num_sec=800, delay=30,
+            fail_func=test_instance.provider_crud.refresh_provider_relationships,
+            handle_exception=True)
     except TimedOutError:
         pytest.fail("Instance was not found in CFME")
     test_instance.delete_from_provider()
     try:
-        wait_for(lambda: _is_instance_archived(test_instance),
-                 num_sec=800, delay=30, handle_exception=True)
+        wait_for(_is_instance_archived, [test_instance], num_sec=800, delay=30,
+            fail_func=test_instance.provider_crud.refresh_provider_relationships,
+            handle_exception=True)
     except TimedOutError:
         pytest.fail("instance was not found in Archives")
