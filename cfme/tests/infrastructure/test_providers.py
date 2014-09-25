@@ -20,18 +20,21 @@ bz1087476 = pytest.mark.bugzilla(
     1087476, unskip={1087476: lambda appliance_version: appliance_version < "5.3"})
 
 
+@pytest.mark.sauce
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
     provider.discover(None)
     flash.assert_message_match('At least 1 item must be selected for discovery')
 
 
+@pytest.mark.sauce
 def test_discovery_cancelled_validation():
     """ Tests that the flash message is correct when discovery is cancelled."""
     provider.discover(None, cancel=True)
     flash.assert_message_match('Infrastructure Providers Discovery was cancelled by the user')
 
 
+@pytest.mark.sauce
 def test_add_cancelled_validation():
     """Tests that the flash message is correct when add is cancelled."""
     prov = provider.VMwareProvider()
@@ -39,6 +42,7 @@ def test_add_cancelled_validation():
     flash.assert_message_match('Add of new Infrastructure Provider was cancelled by the user')
 
 
+@pytest.mark.sauce
 def test_type_required_validation():
     """Test to validate type while adding a provider"""
     prov = provider.Provider()
