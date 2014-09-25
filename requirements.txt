@@ -20,6 +20,7 @@ pytest
 python-bugzilla>=1.1.0
 python-dateutil
 python-novaclient
+pywinrm
 PyYAML
 requests
 riggerlib
