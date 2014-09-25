@@ -36,8 +36,7 @@ import difflib
 import json
 import os
 import subprocess
-
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict, defaultdict, namedtuple
 
 import pytest
 import zmq
@@ -348,13 +347,34 @@ class ParallelSession(object):
                 if not module_items_cache:
                     continue
 
-                tests_len = len(module_items_cache)
-                sent_tests += tests_len
-                self.log.info('sending %d test(s), %d tests remaining to send'
-                    % (tests_len, collection_len - sent_tests))
-                yield module_items_cache
+                for tests in self._modscope_id_splitter(module_items_cache):
+                    tests_len = len(tests)
+                    sent_tests += tests_len
+                    self.log.info('%d tests remaining to send'
+                        % (collection_len - sent_tests))
+                    yield tests
+
                 # Then clear the cache in-place
                 module_items_cache[:] = []
+
+    def _modscope_id_splitter(self, module_items):
+        # given a list of item ids from one test module, break up tests into groups with the same id
+        parametrized_ids = defaultdict(list)
+        for item in module_items:
+            try:
+                # split on the leftmost bracket, then strip everything after the rightmight bracket
+                # so 'test_module.py::test_name[parametrized_id]' becomes 'parametrized_id'
+                parametrized_id = item.split('[')[1].rsplit(']')[0]
+            except IndexError:
+                # splits failed, item has no parametrized id
+                parametrized_id = None
+            parametrized_ids[parametrized_id].append(item)
+
+        for id, tests in parametrized_ids.items():
+            if id is None:
+                id = 'no params'
+            self.log.info('sent tests with param %s %r' % (id, tests))
+            yield tests
 
 
 def report_collection_diff(from_collection, to_collection, slaveid):
