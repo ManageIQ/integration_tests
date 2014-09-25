@@ -82,6 +82,7 @@ sections = {
     ('clouds', 'Clouds'): (
         ('clouds_providers', 'Providers'),
         ('clouds_availability_zones', 'Availability Zones'),
+        ('clouds_tenants', 'Tenants'),
         ('clouds_flavors', 'Flavors'),
         ('clouds_security_groups', 'Security Groups'),
         ('clouds_instances', 'Instances')
