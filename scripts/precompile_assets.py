@@ -29,9 +29,8 @@ def main():
 
     # compile assets if required (not required on 5.2)
     if not ssh_client.get_version().startswith("5.2"):
-        if ssh_client.run_command("ls /var/www/miq/vmdb/public/assets")[0] != 0:
-            ssh_client.run_rake_command("assets:precompile")
-            ssh_client.run_rake_command("evm:restart")
+        ssh_client.run_rake_command("assets:precompile")
+        ssh_client.run_rake_command("evm:restart")
 
     print "CFME UI worker restarted, UI should be available shortly"
 
