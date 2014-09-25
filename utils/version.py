@@ -43,6 +43,14 @@ def appliance_is_downstream():
     return SSHClient().is_appliance_downstream()
 
 
+@lru_cache(maxsize=32)
+def appliance_has_netapp():
+    try:
+        return SSHClient().appliance_has_netapp()
+    except:
+        return None
+
+
 def product_version_dispatch(*_args, **_kwargs):
     """Dispatch function for use in multimethods that just ignores
        arguments and dispatches on the current product version."""

@@ -16,6 +16,7 @@
   * :py:class:`Filter`
   * :py:class:`Form`
   * :py:class:`InfoBlock`
+  * :py:class:`MultiFill`
   * :py:class:`Quadicon`
   * :py:class:`Radio`
   * :py:class:`ScriptBox`
@@ -2569,3 +2570,19 @@ class Timelines(Pretty):
         """ A generator yielding all markers. """
         for el in self._list_markers():
             yield self.Marker(el)
+
+
+class MultiFill(object):
+    """Class designed to fill the same value to multiple fields
+
+    Args:
+        *fields: The fields where the value will be mirrored
+    """
+    def __init__(self, *fields):
+        self.fields = fields
+
+
+@fill.method((MultiFill, object))
+def _fill_multi_obj(mf, o):
+    for field in mf.fields:
+        fill(field, o)

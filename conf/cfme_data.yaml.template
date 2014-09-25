@@ -731,3 +731,15 @@ redhat_updates:
               - rhn_mirror
     enable_repos:
     add_channels:
+storage:
+    managers:
+        netapp-mgr-id-1:
+            name: its name
+            type: NetApp Remote Service
+            hostname: some-server.example.com
+            ip: 1.2.3.4
+            credentials: netapp-storage
+    testing:
+        file_shares:
+            - col: val
+              col2: val2
