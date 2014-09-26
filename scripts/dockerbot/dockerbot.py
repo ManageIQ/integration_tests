@@ -192,7 +192,10 @@ class DockerBot(object):
         self.check_arg('watch', True)
         self.check_arg('output', True)
         self.check_arg('dry_run', False)
-        self.check_arg('server_ip', my_ip_address())
+        self.check_arg('server_ip', None)
+
+        if not self.args['server_ip']:
+            self.args['server_ip'] = my_ip_address()
 
         self.check_arg('appliance_name', None)
         self.check_arg('appliance', None)
