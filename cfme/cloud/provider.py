@@ -52,7 +52,7 @@ properties_form = Form(
         ('amazon_region_select', Select(
             version.pick({
                 version.LOWEST: "select#hostname",
-                "5.4": "select#provider_region",  # TODO: Change introduced at 0918, watch for DS.
+                "5.3.0.14": "select#provider_region",
             })
         )),
         ('api_port', "#port"),
