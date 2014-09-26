@@ -131,6 +131,8 @@ def find(pred):
     for page in pages():
         if pred():
             break
+    else:
+        raise NoSuchElementException
 
 
 def find_element(el):
