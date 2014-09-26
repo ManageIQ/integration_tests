@@ -1552,7 +1552,7 @@ def get_server_roles(navigate=True):
         try:
             role_list[name] = sel.element(locator).is_selected()
         except:
-            logger.warn("role not found, skipping, netapp storage role?  (" + name + ")")
+            logger.warning("role not found, skipping, netapp storage role?  (" + name + ")")
     return role_list
 
 
