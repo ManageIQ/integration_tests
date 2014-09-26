@@ -190,7 +190,7 @@ class CatalogItem(Updateable, Pretty):
                                'display_checkbox': self.display_in,
                                'select_catalog': self.catalog,
                                'select_dialog': self.dialog})
-        if(self.item_type is not "Generic"):
+        if(self.catalog_name is not None):
             tabstrip.select_tab("Request Info")
             template = template_select_form.template_table.find_row_by_cells({
                 'Name': self.catalog_name,
@@ -199,8 +199,6 @@ class CatalogItem(Updateable, Pretty):
             sel.click(template)
             request_form.fill(self.provisioning_data)
         sel.click(template_select_form.add_button)
-        flash.assert_success_message('Service Catalog Item "%s" was added' %
-                                     self.name)
 
     def update(self, updates):
         sel.force_navigate('catalog_item_edit',
