@@ -175,7 +175,9 @@ class DockerBot(object):
                 return None
 
     def check_arg(self, name, default):
-        self.args[name] = self.args.get(name, docker_conf.get(name, default))
+        self.args[name] = self.args.get(name)
+        if not self.args[name]:
+            self.args[name] = docker_conf.get(name, default)
 
     def validate_args(self):
         ec = 0
@@ -186,10 +188,11 @@ class DockerBot(object):
 
         self.check_arg('nowait', False)
 
-        self.check_arg('banner', True)
+        self.check_arg('banner', False)
         self.check_arg('watch', True)
         self.check_arg('output', True)
         self.check_arg('dry_run', False)
+        self.check_arg('server_ip', my_ip_address())
 
         self.check_arg('appliance_name', None)
         self.check_arg('appliance', None)
@@ -198,7 +201,7 @@ class DockerBot(object):
             print "You must supply either an appliance OR an appliance name from config"
             ec += 1
 
-        self.check_arg('branch', 'master')
+        self.check_arg('branch', 'origin/master')
         self.check_arg('pr', None)
 
         self.check_arg('cfme_repo', None)
@@ -214,6 +217,8 @@ class DockerBot(object):
             print "You must supply a CFME Credentials REPO"
             ec += 1
 
+        self.check_arg('selff', 'cfme/sel_ff_chrome')
+
         self.check_arg('gh_token', None)
         self.check_arg('gh_owner', None)
         self.check_arg('gh_repo', None)
@@ -221,7 +226,7 @@ class DockerBot(object):
         self.check_arg('browser', 'firefox')
 
         self.check_arg('pytest', None)
-        self.check_arg('pytest_con', None)
+        self.check_arg('pytest_con', 'py_test_base')
 
         if not self.args['pytest']:
             print "You must specify a py.test command"
@@ -289,10 +294,11 @@ class DockerBot(object):
                             'CFME_CRED_REPO_DIR': self.args['cfme_cred_repo_dir'],
                             'CFME_REPO': self.args['cfme_repo'],
                             'CFME_REPO_DIR': self.args['cfme_repo_dir'],
-                            'CFME_MY_IP_ADDRESS': my_ip_address(),
+                            'CFME_MY_IP_ADDRESS': self.args['server_ip'],
                             'PYTEST': self.args['pytest'],
                             'BRANCH': self.args['branch'],
                             'ARTIFACTOR_DIR': self.args['artifactor_dir']}
+        print "  SERVER IP: {}".format(self.args['server_ip'])
         if self.args['use_wharf']:
             self.env_details['WHARF'] = self.args['wharf']
         if self.args['prtester']:
@@ -357,7 +363,7 @@ if __name__ == "__main__":
     interaction = parser.add_argument_group('Interaction')
     interaction.add_argument('--banner', action='store_true',
                              help='Chooses upstream',
-                             default=docker_conf.get('banner', False))
+                             default=None)
     interaction.add_argument('--watch', action='store_true',
                              help='Watch it via VNC',
                              default=None)
@@ -366,6 +372,9 @@ if __name__ == "__main__":
                              default=None)
     interaction.add_argument('--dry-run', action='store_true',
                              help="Just run the options but don't start any containers",
+                             default=None)
+    interaction.add_argument('--server-ip',
+                             help="Server IP address",
                              default=None)
 
     appliance = parser.add_argument_group('Appliance Options')
@@ -380,55 +389,55 @@ if __name__ == "__main__":
     repo = parser.add_argument_group('Repository Options')
     repo.add_argument('--branch',
                       help='The branch name',
-                      default=docker_conf.get('branch', 'origin/master'))
+                      default=None)
     repo.add_argument('--pr',
                       help='A PR Number (overides --branch)',
                       default=None)
     repo.add_argument('--cfme-repo',
                       help='The cfme repo',
-                      default=docker_conf.get('cfme_repo', None))
+                      default=None)
     repo.add_argument('--cfme-repo-dir',
                       help='The cfme repo dir',
-                      default=docker_conf.get('cfme_repo_dir', '/cfme_tests_te'))
+                      default=None)
     repo.add_argument('--cfme-cred-repo',
                       help='The cfme cred repo',
-                      default=docker_conf.get('cfme_cred_repo', None))
+                      default=None)
     repo.add_argument('--cfme-cred-repo-dir',
                       help='The cfme cred repo dir',
-                      default=docker_conf.get('cfme_cred_repo_dir', '/cfme-qe-yamls'))
+                      default=None)
 
     gh = parser.add_argument_group('GitHub Options')
     gh.add_argument('--gh-token',
                     help="The GitHub Token to use",
-                    default=docker_conf.get('gh_token', None))
+                    default=None)
     gh.add_argument('--gh-owner',
                     help="The GitHub Owner to use",
-                    default=docker_conf.get('gh_owner', None))
+                    default=None)
     gh.add_argument('--gh-repo',
                     help="The GitHub Repo to use",
-                    default=docker_conf.get('gh_repo', None))
+                    default=None)
 
     dkr = parser.add_argument_group('Docker Container Options')
     dkr.add_argument('--selff',
                      help="The selenium base docker image",
-                     default=docker_conf.get('selff', 'cfme/sel_ff_chrome'))
+                     default=None)
     dkr.add_argument('--pytest_con',
                      help="The pytest container image",
-                     default=docker_conf.get('pytest_con', 'py_test_base'))
+                     default=None)
     dkr.add_argument('--wharf',
                      help="Choose to use WebDriver Wharf instead of local sel_ff_chrome container",
-                     default=docker_conf.get('wharf', None))
+                     default=None)
     dkr.add_argument('--use-wharf', action="store_true",
                      help="Use Wharf or no?",
-                     default=docker_conf.get('use_wharf', False))
+                     default=None)
 
     pytest = parser.add_argument_group('PyTest Options')
     pytest.add_argument('--browser',
                         help='The browser',
-                        default=docker_conf.get('browser', 'firefox'))
+                        default=None)
     pytest.add_argument('--pytest',
                         help='The pytest command',
-                        default=docker_conf.get('pytest', None))
+                        default=None)
     pytest.add_argument('--update-pip', action='store_true',
                         help='If we should update requirements',
                         default=None)
@@ -437,16 +446,16 @@ if __name__ == "__main__":
                         default=None)
     pytest.add_argument('--artifactor-dir',
                         help="The Artifactor dir",
-                        default=docker_conf.get('artifactor_dir', '/log_depot'))
+                        default=None)
     pytest.add_argument('--log_depot',
                         help="The log_depot",
-                        default=docker_conf.get('log_depot', None))
+                        default=None)
     pytest.add_argument('--capture',
                         help="Capture output in pytest", action="store_true",
-                        default=docker_conf.get('capture', False))
+                        default=None)
     pytest.add_argument('--test-id',
                         help="A test id",
-                        default=generate_random_string(size=8))
+                        default=None)
 
     pytester = parser.add_argument_group('PR Tester Options')
     pytester.add_argument('--prtester', action="store_true",
@@ -454,7 +463,7 @@ if __name__ == "__main__":
                           default=None)
     pytester.add_argument('--trackerbot',
                           help="The url for trackerbot",
-                          default=docker_conf.get('trackerbot', None))
+                          default=None)
     args = parser.parse_args()
 
     ab = DockerBot(**vars(args))
