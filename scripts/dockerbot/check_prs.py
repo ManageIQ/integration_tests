@@ -123,6 +123,7 @@ def run_tasks():
                 appliance.configure()
                 address = appliance.address
 
+                tapi.task(task['tid']).put({'result': 'running', 'vm_name': appliance.vm_name})
                 # Create a dockerbot instance and run the PR test
                 dockerbot.DockerBot(appliance='https://{}/'.format(address),
                                     auto_gen_test=True,
