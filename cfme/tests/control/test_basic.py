@@ -18,8 +18,7 @@ from utils.update import update
 from cfme.web_ui import flash
 from cfme.web_ui import expression_editor
 
-pytestmark = [pytest.mark.long_running,
-              pytest.mark.bugzilla(1142875)]
+pytestmark = [pytest.mark.long_running]
 
 VM_EXPRESSIONS_TO_TEST = [
     (
