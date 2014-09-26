@@ -1546,7 +1546,14 @@ def get_server_roles(navigate=True):
     """
     if navigate:
         sel.force_navigate("cfg_settings_currentserver_server")
-    return {name: sel.element(locator).is_selected() for (name, locator) in server_roles.fields}
+
+    role_list = {}
+    for (name, locator) in server_roles.fields:
+        try:
+            role_list[name] = sel.element(locator).is_selected()
+        except:
+            logger.warn("role not found, skipping, netapp storage role?  (" + name + ")")
+    return role_list
 
 
 def set_ntp_servers(*servers):
