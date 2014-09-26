@@ -54,6 +54,9 @@ def mark(api, provider_key, template, usable):
     trackerbot.mark_provider_template(api, provider_key, template, tested=True, usable=usable)
 
 
+def retest(api, provider_key, template):
+    trackerbot.mark_provider_template(api, provider_key, template, tested=False)
+
 if __name__ == '__main__':
     parser = trackerbot.cmdline_parser()
     subs = parser.add_subparsers(title='commands', dest='command')
@@ -72,11 +75,17 @@ if __name__ == '__main__':
     parse_mark.add_argument('-n', '--not-usable', dest='usable', action='store_false',
         default=True, help='mark template as not usable (templates are marked usable by default')
 
+    parse_retest = subs.add_parser('retest', help='flag a tested template for retesting')
+    parse_retest.set_defaults(func=retest)
+    parse_retest.add_argument('provider_key')
+    parse_retest.add_argument('template')
+
     args = parser.parse_args()
     api = trackerbot.api(args.trackerbot_url)
     func_map = {
         get: lambda: get(api),
         latest: lambda: latest(api, args.stream),
-        mark: lambda: mark(api, args.provider_key, args.template, args.usable)
+        mark: lambda: mark(api, args.provider_key, args.template, args.usable),
+        retest: lambda: retest(api, args.provider_key, args.template),
     }
     sys.exit(func_map[args.func]())
