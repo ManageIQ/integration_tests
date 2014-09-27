@@ -243,7 +243,7 @@ def wait_for_ajax():
 
     wait_for(
         _nothing_in_flight,
-        num_sec=30, delay=0.1, message="wait for ajax", quiet=True)
+        num_sec=30, delay=0.1, message="wait for ajax", quiet=True, silent_failure=True)
 
 
 def is_displayed(loc, _deep=0):
