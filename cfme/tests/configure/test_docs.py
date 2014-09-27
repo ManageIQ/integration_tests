@@ -22,7 +22,6 @@ def guides():
 def docs_info():
     return [
         'Control',
-        'Installation',
         'Lifecycle and Automation',
         'Quick Start',
         'Settings And Operations',
