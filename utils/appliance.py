@@ -114,7 +114,7 @@ class Appliance(object):
         self.ipapp.update_rhel()
         self.ipapp.enable_internal_db()
         self.ipapp.wait_for_web_ui()
-        self.ipapp.precompile_assets()
+        #  self.ipapp.precompile_assets()
         self.ipapp.loosen_pgssl()
         self.ipapp.clone_domain()
         self.ipapp.deploy_merkyl()
