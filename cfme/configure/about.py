@@ -5,7 +5,6 @@ from utils import version
 product_assistance = Region(
     locators={
         'quick_start_guide': "//a[.='Quick Start Guide']",
-        'installation_guide': "//a[.='Installation Guide']",
         'insight_guide': "//a[.='Insight Guide']",
         'control_guide': "//a[.='Control Guide']",
         'lifecycle_and_automation_guide': "//a[.='Lifecycle and Automation Guide']",
