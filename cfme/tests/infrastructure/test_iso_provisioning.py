@@ -85,7 +85,6 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
-@pytest.mark.bugzilla(1109256, 1130417)
 def test_iso_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt,
                                      provisioning, vm_name, smtp_test, provider_init, request):
 

@@ -13,12 +13,6 @@ from utils.update import update
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
 
-# To avoid issues with deleting and re-adding provider, this bugzilla is targeted at that problem
-# We create shortcut for it here, so we can then simply mark the tests that use
-# 'has_no_infra_providers' fixture.
-bz1087476 = pytest.mark.bugzilla(
-    1087476, unskip={1087476: lambda appliance_version: appliance_version < "5.3"})
-
 
 @pytest.mark.sauce
 def test_empty_discovery_form_validation():
@@ -126,7 +120,6 @@ def test_api_port_max_character_validation():
     prov.delete(cancel=False)
 
 
-@bz1087476
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_providers_discovery(request, provider_crud):
     provider.discover_from_provider(provider_crud)
@@ -135,7 +128,6 @@ def test_providers_discovery(request, provider_crud):
     provider.wait_for_a_provider()
 
 
-@bz1087476
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_add_with_bad_credentials(provider_crud):
     provider_crud.credentials = provider.get_credentials_from_config('bad_credentials')
@@ -147,7 +139,6 @@ def test_provider_add_with_bad_credentials(provider_crud):
             provider_crud.create(validate_credentials=True)
 
 
-@bz1087476
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_crud(provider_crud):
     """ Tests that a provider can be added """

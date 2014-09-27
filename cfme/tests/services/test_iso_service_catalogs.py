@@ -132,7 +132,6 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
-@pytest.mark.bugzilla(1131326)
 @pytest.mark.usefixtures('setup_iso_providers', 'setup_iso_datastore')
 def test_rhev_iso_servicecatalog(provider_key, provider_mgmt, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
