@@ -34,6 +34,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             again.
         fail_func: A function to be run after every unsuccessful attempt to run func()
         quiet: Do not write time report to the log (default False)
+        silent_failure: Even if the entire attempt times out, don't throw a exception.
 
     Returns:
         A tuple containing the output from func() and a float detailing the total wait time.
@@ -58,6 +59,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     delay = kwargs.get('delay', 1)
     fail_func = kwargs.get('fail_func', None)
     quiet = kwargs.get("quiet", False)
+    silent_fail = kwargs.get("silent_failure", False)
 
     t_delta = 0
     logger.debug('Started {} at {}'.format(message, st_time))
@@ -84,8 +86,11 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             return out, duration
         t_delta = time.time() - st_time
     logger.debug('Finished at {}'.format(st_time + t_delta))
-    logger.error('Could not complete %s in time, took %f' % (message, t_delta))
-    raise TimedOutError("Could not do %s in time" % message)
+    if not silent_fail:
+        logger.error('Could not complete %s in time, took %f' % (message, t_delta))
+        raise TimedOutError("Could not do %s in time" % message)
+    else:
+        logger.warning("Could not do %s in time but ignoring" % message)
 
 
 class TimedOutError(Exception):
