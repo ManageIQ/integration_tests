@@ -11,7 +11,6 @@ from cfme.infrastructure import provider
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, paginator, toolbar as tb
 from functools import partial
 from utils.pretty import Pretty
-from utils.log import logger
 from utils.wait import wait_for
 
 details_page = Region(infoblock_type='detail')
@@ -72,6 +71,16 @@ class Cluster(Pretty):
         cfg_btn('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
+    def wait_for_delete(self):
+        sel.force_navigate('infrastructure_clusters')
+        wait_for(lambda: not self.exists, fail_condition=False,
+             message="Wait cluster to disappear", num_sec=1000, fail_func=sel.refresh)
+
+    def wait_for_appear(self):
+        sel.force_navigate('infrastructure_clusters')
+        wait_for(lambda: self.exists, fail_condition=False,
+             message="Wait cluster to appear", num_sec=1000, fail_func=sel.refresh)
+
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
 
@@ -96,11 +105,11 @@ class Cluster(Pretty):
     def exists(self):
         try:
             sel.force_navigate('infrastructure_cluster', context=self._get_context())
-            return True
-        except sel.NoSuchElementException, e:
-            if Quadicon(self.name, 'cluster').locate() in e.msg:
-                return False
-            raise
+            quad = Quadicon(self.name, 'cluster')
+            if sel.is_displayed(quad):
+                return True
+        except sel.NoSuchElementException:
+            return False
 
 
 def get_all_clusters(do_not_navigate=False):
@@ -113,19 +122,3 @@ def get_all_clusters(do_not_navigate=False):
                 "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'cluster/show')]"):
             clusters.add(sel.get_attribute(title, "title"))
     return clusters
-
-
-def wait_for_cluster_delete(cluster):
-    sel.force_navigate('infrastructure_clusters')
-    quad = Quadicon(cluster.name, 'cluster')
-    logger.info('Waiting for a cluster to delete...')
-    wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-             message="Wait cluster to disappear", num_sec=1000, fail_func=sel.refresh)
-
-
-def wait_for_cluster_to_appear(cluster):
-    sel.force_navigate('infrastructure_clusters')
-    quad = Quadicon(cluster.name, 'cluster')
-    logger.info('Waiting for a cluster to appear...')
-    wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
-             message="Wait cluster to appear", num_sec=1000, fail_func=sel.refresh)
