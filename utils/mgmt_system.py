@@ -14,6 +14,7 @@ from pysphere import VIServer, MORTypes, VITask, VIMor
 from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
 from novaclient.v1_1 import client as osclient
+from keystoneclient.v2_0 import client as oskclient
 from utils.log import logger
 from utils.version import LooseVersion
 from utils.wait import wait_for, TimedOutError
@@ -1328,6 +1329,35 @@ class OpenstackSystem(MgmtSystemAPIBase):
         password = kwargs['password']
         auth_url = kwargs['auth_url']
         self.api = osclient.Client(username, password, tenant, auth_url, service_type="compute")
+        self.kapi = oskclient.Client(username=username, password=password,
+                                     tenant_name=tenant, auth_url=auth_url)
+
+    def _get_tenant(self, **kwargs):
+        return self.kapi.tenants.find(**kwargs).id
+
+    def _get_user(self, **kwargs):
+        return self.kapi.users.find(**kwargs).id
+
+    def _get_role(self, **kwargs):
+        return self.kapi.roles.find(**kwargs).id
+
+    def add_tenant(self, tenant_name, description=None, enabled=True, user=None, roles=None):
+        tenant = self.kapi.tenants.create(tenant_name=tenant_name,
+                                          description=description,
+                                          enabled=enabled)
+        if user and roles:
+            user = self._get_user(name=user)
+            for role in roles:
+                role_id = self._get_role(name=role)
+                tenant.add_user(user, role_id)
+        return tenant.id
+
+    def list_tenant(self):
+        return [i.name for i in self.kapi.tenants.list()]
+
+    def remove_tenant(self, tenant_name):
+        tid = self._get_tenant(name=tenant_name)
+        self.kapi.tenants.delete(tid)
 
     def start_vm(self, instance_name):
         logger.info(" Starting OpenStack instance %s" % instance_name)
