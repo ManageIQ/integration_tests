@@ -100,7 +100,7 @@ def get_provider_key(provider_name):
 def provider_factory_by_name(provider_name, *args, **kwargs):
     """Provides a :py:mod:`utils.mgmt_system` object, based on the request.
 
-    For detailed parameter description, refer to the :py:function:`provider_factory` (except its
+    For detailed parameter description, refer to the :py:func:`provider_factory` (except its
     `provider_key` parameter)
 
     Args:

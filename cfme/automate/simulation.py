@@ -53,7 +53,7 @@ def simulate(**data):
     If `attribute` is not specified, will be chosen randomly.
 
     Args:
-        **data: See :py:var:`sim_form` for keyword reference
+        **data: See :py:data:`sim_form` for keyword reference
     """
     sel.force_navigate("automate_simulation")
     if data.get("attribute", None) is None:
