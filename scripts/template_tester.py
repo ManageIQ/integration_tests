@@ -19,10 +19,9 @@ from utils import trackerbot
 def get(api):
     try:
         template, provider_key, stream = trackerbot.templates_to_test(api, limit=1)[0]
-    except TypeError:
+    except (IndexError, TypeError):
         # No untested providertemplates, all is well
         return 0
-    # Let other exceptions be raised.
 
     # Print envvar exports to be eval'd
     export(
@@ -32,9 +31,13 @@ def get(api):
     )
 
 
-def latest(api, stream):
+def latest(api, stream, provider_key=None):
     try:
-        res = api.group(stream).get()
+        if provider_key:
+            prov = api.provider(provider_key).get()
+            res = prov['latest_templates'][stream]
+        else:
+            res = api.group(stream).get()
     except IndexError:
         # No templates in stream
         return 1
@@ -67,6 +70,7 @@ if __name__ == '__main__':
     parse_latest = subs.add_parser('latest', help='get the latest usable template for a provider')
     parse_latest.set_defaults(func=latest)
     parse_latest.add_argument('stream', help='template stream (e.g. upstream, downstream-52z')
+    parse_latest.add_argument('provider_key', nargs='?', default=None)
 
     parse_mark = subs.add_parser('mark', help='mark a tested template')
     parse_mark.set_defaults(func=mark)
@@ -84,7 +88,7 @@ if __name__ == '__main__':
     api = trackerbot.api(args.trackerbot_url)
     func_map = {
         get: lambda: get(api),
-        latest: lambda: latest(api, args.stream),
+        latest: lambda: latest(api, args.stream, args.provider_key),
         mark: lambda: mark(api, args.provider_key, args.template, args.usable),
         retest: lambda: retest(api, args.provider_key, args.template),
     }
