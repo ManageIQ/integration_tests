@@ -148,7 +148,7 @@ class BugContainer(set):
         bug_copy = bug
         while bug_copy.copy_of is not None:
             try:
-                bug_copy = self._get_bug_single(bug.copy_of)
+                bug_copy = self._get_bug_single(bug_copy.copy_of)
                 all_bugs.append(bug_copy)
             except NameError:
                 break
