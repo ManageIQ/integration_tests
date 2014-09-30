@@ -1929,6 +1929,25 @@ class Quadicon(Pretty):
     def __str__(self):
         return self.locate()
 
+    @classmethod
+    def all(cls, qtype, this_page=False):
+        """Allows iteration over Quadicons.
+
+        Args:
+            qtype: Quadicon type. Refer to the constructor for reference.
+            this_page: Whether to look for Quadicons only on current page (do not list pages).
+        Returns: :py:class:`list` of :py:class:`Quadicon`
+        """
+        from cfme.web_ui import paginator  # Prevent circular imports
+        if this_page:
+            pages = (None, )  # Single, current page. SInce we dont care about the value, using None
+        else:
+            pages = paginator.pages()
+        for page in pages:
+            for quad in sel.elements("div#quadicon"):
+                img = sel.element("./div/a/img", root=quad)
+                yield cls(sel.get_attribute(img, "title"), qtype)
+
     @staticmethod
     def select_first_quad():
         elem = sel.element("//div[@id='quadicon']").find_element_by_xpath('./../..//input')
