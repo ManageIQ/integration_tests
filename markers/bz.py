@@ -330,6 +330,7 @@ def pytest_runtest_setup(item):
             xfailers.add(bug.id)
 
     # Separate loop for unskipping
+    discards = []
     for root_bug_id in skippers:
         resolved_bug = item._bugzilla_bugs.get_bug(root_bug_id)
         bug_id = resolved_bug.id
@@ -341,7 +342,9 @@ def pytest_runtest_setup(item):
         local_env = {"bug": resolved_bug}
         local_env.update(global_env)
         if item._unskip_dict[bug_id](**local_env):
-            skippers.discard(bug_id)
+            discards.append(bug_id)
+    for bug_id in discards:
+        skippers.discard(bug_id)
 
     # We now have to resolve what to do with this test item
     # xfailing takes precedence over skipping (xfail is via custom function)
