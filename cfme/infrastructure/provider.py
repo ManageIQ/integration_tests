@@ -472,7 +472,7 @@ def _fill_credential(form, cred, validate=None):
                                'validate_btn': validate})
     if cred.domain:
         # SCVMM expects login as domain\user
-        fill(credential_form, {'default_principal': "{}\\{}".format(cred.domain, cred.principal),
+        fill(credential_form, {'default_principal': r'{}\{}'.format(cred.domain, cred.principal),
                                'default_secret': cred.secret,
                                'default_verify_secret': cred.verify_secret,
                                'validate_btn': validate})

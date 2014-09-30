@@ -19,6 +19,7 @@ from ovirtsdk.xml import params
 from pysphere import VIServer, MORTypes, VITask, VIMor
 from pysphere.resources import VimService_services as VI
 from pysphere.resources.vi_exception import VIException
+from textwrap import dedent
 from novaclient.v1_1 import client as osclient
 from keystoneclient.v2_0 import client as oskclient
 from utils.log import logger
@@ -1547,6 +1548,11 @@ class SCVMMSystem(MgmtSystemAPIBase):
     It still has some drawback, the main one is that pywinrm does not support domains with simple
     auth mode so I have to do the connection manually in the script which seems to be VERY slow.
     """
+    STATE_RUNNING = "Running"
+    STATE_STOPPED = "Stopped"
+    STATE_PAUSED = "Paused"
+    STATES_STEADY = {STATE_RUNNING, STATE_STOPPED, STATE_PAUSED}
+
     def __init__(self, **kwargs):
         self.host = kwargs["host"]
         self.user = kwargs["username"]
@@ -1562,20 +1568,27 @@ class SCVMMSystem(MgmtSystemAPIBase):
         we need to create our own authentication object (PSCredential) which will provide the
         domain. Then it works. Big drawback is speed of this solution.
         """
-        return """
+        return dedent("""
         $secpasswd = ConvertTo-SecureString "{}" -AsPlainText -Force
         $mycreds = New-Object System.Management.Automation.PSCredential ("{}\\{}", $secpasswd)
         $scvmm_server = Get-SCVMMServer -Computername localhost -Credential $mycreds
-        """.format(self.password, self.domain, self.user)
+        """.format(self.password, self.domain, self.user))
 
     def run_script(self, script):
         """Wrapper for running powershell scripts. Ensures the ``pre_script`` is loaded."""
+        script = dedent(script)
         logger.debug(" Running PowerShell script:\n{}\n".format(script))
         result = self.api.run_ps("{}\n\n{}".format(self.pre_script, script))
         if result.status_code != 0:
-            raise PowerShellScriptError("Script returned {}!: {}"
+            raise self.PowerShellScriptError("Script returned {}!: {}"
                 .format(result.status_code, result.std_err))
         return result.std_out.strip()
+
+    def _do_vm(self, vm_name, action, params=""):
+        logger.info(" {} {} SCVMM VM `{}`".format(action, params, vm_name))
+        self.run_script(
+            "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server | {}-SCVirtualMachine {}"
+            .format(vm_name, action, params).strip())
 
     def start_vm(self, vm_name, force_start=False):
         """Start or resume virtual machine.
@@ -1586,18 +1599,10 @@ class SCVMMSystem(MgmtSystemAPIBase):
         """
         if not force_start and self.is_vm_suspended(vm_name):
             # Resume
-            logger.info(" Resuming SCVMM VM `{}`".format(vm_name))
-            self.run_script(
-                "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server | "
-                "Resume-SCVirtualMachine"
-                .format(vm_name))
+            self._do_vm(vm_name, "Resume")
         else:
             # Ordinary start
-            logger.info(" Starting SCVMM VM `{}`".format(vm_name))
-            self.run_script(
-                "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server | "
-                "Start-SCVirtualMachine"
-                .format(vm_name))
+            self._do_vm(vm_name, "Start")
 
     def wait_vm_running(self, vm_name, num_sec=300):
         wait_for(
@@ -1606,14 +1611,7 @@ class SCVMMSystem(MgmtSystemAPIBase):
             num_sec=num_sec)
 
     def stop_vm(self, vm_name, shutdown=False):
-        logger.info(" Stopping SCVMM VM `{}`".format(vm_name))
-        if shutdown:
-            force = ""
-        else:
-            force = "-Force"
-        self.run_script(
-            "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server | Stop-SCVirtualMachine {}"
-            .format(vm_name, force))
+        self._do_vm(vm_name, "Stop", "-Force" if not shutdown else "")
 
     def wait_vm_stopped(self, vm_name, num_sec=300):
         wait_for(
@@ -1625,16 +1623,10 @@ class SCVMMSystem(MgmtSystemAPIBase):
         raise NotImplementedError('create_vm not implemented.')
 
     def delete_vm(self, vm_name):
-        logger.info(" Deleting SCVMM VM `{}`".format(vm_name))
-        self.run_script(
-            "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server | Remove-SCVirtualMachine"
-            .format(vm_name))
+        self._do_vm(vm_name, "Remove")
 
     def restart_vm(self, vm_name):
-        logger.info(" Restarting SCVMM VM `{}`".format(vm_name))
-        self.run_script(
-            "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server | Reset-SCVirtualMachine"
-            .format(vm_name))
+        self._do_vm(vm_name, "Reset")
 
     def list_vm(self, **kwargs):
         data = self.run_script(
@@ -1671,22 +1663,19 @@ class SCVMMSystem(MgmtSystemAPIBase):
             "./Object/Property[@Name='StatusString']/text()")[0]
 
     def is_vm_running(self, vm_name):
-        return self.vm_status(vm_name) == "Running"
+        return self.vm_status(vm_name) == self.STATE_RUNNING
 
     def is_vm_stopped(self, vm_name):
-        return self.vm_status(vm_name) == "Stopped"
+        return self.vm_status(vm_name) == self.STATE_STOPPED
 
     def is_vm_suspended(self, vm_name):
-        return self.vm_status(vm_name) == "Paused"
+        return self.vm_status(vm_name) == self.STATE_PAUSED
 
     def in_steady_state(self, vm_name):
-        return self.vm_status(vm_name) == {"Paused", "Stopped", "Running"}
+        return self.vm_status(vm_name) in self.STATES_STEADY
 
     def suspend_vm(self, vm_name):
-        logger.info(" Suspending SCVMM VM `{}`".format(vm_name))
-        self.run_script(
-            "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server | Suspend-SCVirtualMachine"
-            .format(vm_name))
+        self._do_vm(vm_name, "Suspend")
 
     def wait_vm_suspended(self, vm_name, num_sec=300):
         wait_for(
@@ -1734,53 +1723,51 @@ class SCVMMSystem(MgmtSystemAPIBase):
         data = self.run_script(
             "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server | convertto-xml -as String"
             .format(vm_name))
-        return SCVMMDataHolderDict(etree.parse(StringIO(data)).getroot().xpath("./Object")[0])
+        return self.SCVMMDataHolderDict(etree.parse(StringIO(data)).getroot().xpath("./Object")[0])
 
+    ##
+    # Classes and functions used to access detailed SCVMM Data
+    @staticmethod
+    def parse_data(t, data):
+        if data is None:
+            return None
+        elif t == "System.Boolean":
+            return data.lower().strip() == "true"
+        elif t.startswith("System.Int"):
+            return int(data)
+        elif t == "System.String" and data.lower().strip() == "none":
+            return None
 
-##
-# Classes and functions used to access detailed SCVMM Data
-def parse_data(t, data):
-    if data is None:
-        return None
-    elif t == "System.Boolean":
-        return data.lower().strip() == "true"
-    elif t.startswith("System.Int"):
-        return int(data)
-    elif t == "System.String" and data.lower().strip() == "none":
-        return None
-
-
-class SCVMMDataHolderDict(object):
-    def __init__(self, data):
-        for prop in data.xpath("./Property"):
-            name = prop.attrib["Name"]
-            t = prop.attrib["Type"]
-            children = prop.getchildren()
-            if children:
-                if prop.xpath("./Property[@Name]"):
-                    self.__dict__[name] = SCVMMDataHolderDict(prop)
+    class SCVMMDataHolderDict(object):
+        def __init__(self, data):
+            for prop in data.xpath("./Property"):
+                name = prop.attrib["Name"]
+                t = prop.attrib["Type"]
+                children = prop.getchildren()
+                if children:
+                    if prop.xpath("./Property[@Name]"):
+                        self.__dict__[name] = self.SCVMMDataHolderDict(prop)
+                    else:
+                        self.__dict__[name] = self.SCVMMDataHolderList(prop)
                 else:
-                    self.__dict__[name] = SCVMMDataHolderList(prop)
-            else:
+                    data = prop.text
+                    result = self.parse_data(t, prop.text)
+                    self.__dict__[name] = result
+
+        def __repr__(self):
+            return repr(self.__dict__)
+
+    class SCVMMDataHolderList(list):
+        def __init__(self, data):
+            super(SCVMMSystem.SCVMMDataHolderList, self).__init__()
+            for prop in data.xpath("./Property"):
+                t = prop.attrib["Type"]
                 data = prop.text
-                result = parse_data(t, prop.text)
-                self.__dict__[name] = result
+                result = self.parse_data(t, prop.text)
+                self.append(result)
 
-    def __repr__(self):
-        return repr(self.__dict__)
-
-
-class SCVMMDataHolderList(list):
-    def __init__(self, data):
-        for prop in data.xpath("./Property"):
-            t = prop.attrib["Type"]
-            data = prop.text
-            result = parse_data(t, prop.text)
-            self.append(result)
-
-
-class PowerShellScriptError(Exception):
-    pass
+    class PowerShellScriptError(Exception):
+        pass
 
 
 class ActionNotSupported(Exception):
