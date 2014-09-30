@@ -117,7 +117,7 @@ def test_retire_service(provider_init, provider_key, provider_mgmt, catalog_item
     service_catalogs.order(catalog_item.catalog, catalog_item)
     logger.info('Waiting for cfme provision request for service {}'
                 .format(catalog_item.name))
-    row_description = "Provision from [{}}] to [{}]"\
+    row_description = "Provision from [{}] to [{}]"\
                       .format(catalog_item.catalog_name, catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
