@@ -112,7 +112,11 @@ def run_tasks():
                 template_obj = tapi.group(stream).get()
                 providers = template_obj['latest_template_providers']
                 if providers:
-                    provider = providers[0]
+                    for provider in docker_conf['provider_prio']:
+                        if provider in providers:
+                            break
+                    else:
+                        provider = providers[0]
                 else:
                     raise Exception('No template for stream')
                 template = template_obj['latest_template']
@@ -286,11 +290,13 @@ def check_pr(pr):
         check_status(pr)
 
 if __name__ == "__main__":
-    # First we check through the PRs from GitHub
-    check_prs()
+    if docker_conf['pr_enabled']:
 
-    # Next we run any tasks that are pending up to the queue limit
-    run_tasks()
+        # First we check through the PRs from GitHub
+        check_prs()
 
-    # Finally we clean up any leftover artifacts
-    vm_reaper()
+        # Next we run any tasks that are pending up to the queue limit
+        run_tasks()
+
+        # Finally we clean up any leftover artifacts
+        vm_reaper()
