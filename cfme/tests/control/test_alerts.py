@@ -8,6 +8,7 @@ from cfme.infrastructure import provider
 from utils import testgen
 from utils.log import logger
 from utils.providers import setup_provider
+from utils.update import update
 from utils.wait import wait_for
 
 
@@ -90,6 +91,9 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         pytest.skip("No power control vm specified!")
     test_vm_power_control = test_vm_power_control[0]
     alert = explorer.Alert("VM Power On > 2 in last 15 min")
+    with update(alert):
+        alert.emails = "test@test.test"
+
     setup_for_alerts(
         request, [alert], "VM Power On", test_vm_power_control, provider_data, provider_key)
 
