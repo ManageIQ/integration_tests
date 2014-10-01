@@ -19,6 +19,7 @@ from utils.wait import wait_for
 infra_provider_type_map = {
     'virtualcenter': mgmt_system.VMWareSystem,
     'rhevm': mgmt_system.RHEVMSystem,
+    'scvmm': mgmt_system.SCVMMSystem,
 }
 
 #: mapping of cloud provider type names to :py:mod:`utils.mgmt_system` classes

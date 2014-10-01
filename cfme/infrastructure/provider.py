@@ -119,6 +119,7 @@ class Provider(Updateable, Pretty):
 
     """
     pretty_attr = ['name', 'key', 'zone']
+    STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, candu=None):
         self.name = name
@@ -212,11 +213,10 @@ class Provider(Updateable, Pretty):
         if not self._on_detail_page():
             sel.force_navigate('infrastructure_provider', context={'provider': self})
 
-        stats_to_match = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
         client = self.get_mgmt_system()
 
         # Bail out here if the stats match.
-        if self._do_stats_match(client, stats_to_match):
+        if self._do_stats_match(client, self.STATS_TO_MATCH):
             client.disconnect()
             return
 
@@ -227,7 +227,7 @@ class Provider(Updateable, Pretty):
         sel.handle_alert()
 
         ec, tc = wait_for(self._do_stats_match,
-                          [client, stats_to_match, refresh_timer],
+                          [client, self.STATS_TO_MATCH, refresh_timer],
                           message="do_stats_match",
                           fail_func=sel.refresh,
                           num_sec=1000,
@@ -415,6 +415,31 @@ class VMwareProvider(Provider):
                 'ipaddress_text': kwargs.get('ip_address')}
 
 
+class SCVMMProvider(Provider):
+    STATS_TO_MATCH = ['num_template', 'num_vm']
+
+    def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
+                 ip_address=None, start_ip=None, end_ip=None):
+        super(SCVMMProvider, self).__init__(name=name, credentials=credentials, zone=zone, key=key)
+
+        self.hostname = hostname
+        self.ip_address = ip_address
+        self.start_ip = start_ip
+        self.end_ip = end_ip
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name'),
+                'type_select': create and 'Microsoft System Center VMM',
+                'hostname_text': kwargs.get('hostname'),
+                'ipaddress_text': kwargs.get('ip_address')}
+
+    class Credential(Provider.Credential):
+        # SCVMM needs to deal with domain
+        def __init__(self, **kwargs):
+            self.domain = kwargs.pop('domain', None)
+            super(SCVMMProvider.Credential, self).__init__(**kwargs)
+
+
 class RHEVMProvider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
                  ip_address=None, api_port=None, start_ip=None, end_ip=None, candu=None):
@@ -452,6 +477,21 @@ def _fill_credential(form, cred, validate=None):
                                'default_secret': cred.secret,
                                'default_verify_secret': cred.verify_secret,
                                'validate_btn': validate})
+    if validate:
+        flash.assert_no_errors()
+
+
+@fill.method((Form, SCVMMProvider.Credential))
+def _fill_scvmm_credential(form, cred, validate=None):
+    fill(
+        credential_form,
+        {
+            'default_principal': r'{}\{}'.format(cred.domain, cred.principal),
+            'default_secret': cred.secret,
+            'default_verify_secret': cred.verify_secret,
+            'validate_btn': validate
+        }
+    )
     if validate:
         flash.assert_no_errors()
 
@@ -500,6 +540,20 @@ def get_from_config(provider_config_name):
                               key=provider_config_name,
                               start_ip=prov_config['discovery_range']['start'],
                               end_ip=prov_config['discovery_range']['end'])
+    elif prov_type == 'scvmm':
+        creds = conf.credentials[prov_config['credentials']]
+        credentials = SCVMMProvider.Credential(
+            principal=creds['username'],
+            secret=creds['password'],
+            domain=creds['domain'],)
+        return SCVMMProvider(
+            name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials=credentials,
+            key=provider_config_name,
+            start_ip=prov_config['discovery_range']['start'],
+            end_ip=prov_config['discovery_range']['end'])
     elif prov_type == 'rhevm':
         if prov_config.get('candu_credentials', None):
             candu_credentials = get_credentials_from_config(prov_config['candu_credentials'])
