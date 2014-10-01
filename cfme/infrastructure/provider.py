@@ -119,6 +119,7 @@ class Provider(Updateable, Pretty):
 
     """
     pretty_attr = ['name', 'key', 'zone']
+    STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, candu=None):
         self.name = name
@@ -212,11 +213,10 @@ class Provider(Updateable, Pretty):
         if not self._on_detail_page():
             sel.force_navigate('infrastructure_provider', context={'provider': self})
 
-        stats_to_match = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
         client = self.get_mgmt_system()
 
         # Bail out here if the stats match.
-        if self._do_stats_match(client, stats_to_match):
+        if self._do_stats_match(client, self.STATS_TO_MATCH):
             client.disconnect()
             return
 
@@ -227,7 +227,7 @@ class Provider(Updateable, Pretty):
         sel.handle_alert()
 
         ec, tc = wait_for(self._do_stats_match,
-                          [client, stats_to_match, refresh_timer],
+                          [client, self.STATS_TO_MATCH, refresh_timer],
                           message="do_stats_match",
                           fail_func=sel.refresh,
                           num_sec=1000,
@@ -416,6 +416,8 @@ class VMwareProvider(Provider):
 
 
 class SCVMMProvider(Provider):
+    STATS_TO_MATCH = ['num_template', 'num_vm']
+
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None):
         super(SCVMMProvider, self).__init__(name=name, credentials=credentials, zone=zone, key=key)
@@ -470,17 +472,26 @@ def _fill_credential(form, cred, validate=None):
                                'candu_secret': cred.secret,
                                'candu_verify_secret': cred.verify_secret,
                                'validate_btn': validate})
-    if cred.domain:
-        # SCVMM expects login as domain\user
-        fill(credential_form, {'default_principal': r'{}\{}'.format(cred.domain, cred.principal),
-                               'default_secret': cred.secret,
-                               'default_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
     else:
         fill(credential_form, {'default_principal': cred.principal,
                                'default_secret': cred.secret,
                                'default_verify_secret': cred.verify_secret,
                                'validate_btn': validate})
+    if validate:
+        flash.assert_no_errors()
+
+
+@fill.method((Form, SCVMMProvider.Credential))
+def _fill_scvmm_credential(form, cred, validate=None):
+    fill(
+        credential_form,
+        {
+            'default_principal': r'{}\{}'.format(cred.domain, cred.principal),
+            'default_secret': cred.secret,
+            'default_verify_secret': cred.verify_secret,
+            'validate_btn': validate
+        }
+    )
     if validate:
         flash.assert_no_errors()
 

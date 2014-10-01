@@ -1553,8 +1553,13 @@ class SCVMMSystem(MgmtSystemAPIBase):
     STATE_PAUSED = "Paused"
     STATES_STEADY = {STATE_RUNNING, STATE_STOPPED, STATE_PAUSED}
 
+    _stats_available = {
+        'num_vm': lambda self: len(self.list_vm()),
+        'num_template': lambda self: len(self.list_template()),
+    }
+
     def __init__(self, **kwargs):
-        self.host = kwargs["host"]
+        self.host = kwargs["hostname"]
         self.user = kwargs["username"]
         self.password = kwargs["password"]
         self.domain = kwargs["domain"]
@@ -1636,8 +1641,7 @@ class SCVMMSystem(MgmtSystemAPIBase):
 
     def list_template(self):
         data = self.run_script(
-            "Get-SCVirtualMachine -All -VMMServer $scvmm_server | "
-            "where { $_.MarkedAsTemplate -eq $TRUE } | convertto-xml -as String")
+            "Get-Template -VMMServer $scvmm_server | convertto-xml -as String")
         return etree.parse(StringIO(data)).getroot().xpath("./Object/Property[@Name='Name']/text()")
 
     def list_flavor(self):
