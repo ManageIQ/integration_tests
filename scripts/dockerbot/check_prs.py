@@ -232,7 +232,7 @@ def check_status(pr):
     if not statuses:
         set_status(commit, state, db_pr['status'])
     else:
-        if statuses[0]['state'] != state:
+        if statuses[0]['state'] != state and statuses[0]['description'] != db_pr['status']:
             set_status(commit, state, db_pr['status'])
         else:
             return
