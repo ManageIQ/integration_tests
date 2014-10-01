@@ -86,8 +86,7 @@ def check_prs():
     """
     json_data = perform_request('pulls'.format(owner, repo))
     for pr in json_data:
-        if pr['number'] == 1030:
-            check_pr(pr)
+        check_pr(pr)
 
 
 def run_tasks():
