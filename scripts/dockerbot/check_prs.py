@@ -216,7 +216,10 @@ def check_status(pr):
     if db_pr['wip']:
         return
 
-    commit = pr['head']['sha']
+    if db_pr['runs']:
+        commit = db_pr['runs'][0]['commit']
+    else:
+        return
     statuses = perform_request("commits/{}/statuses".format(commit))
     state = "pending"
     if "failed" in db_pr['status']:
