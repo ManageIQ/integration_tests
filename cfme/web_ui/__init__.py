@@ -1940,13 +1940,12 @@ class Quadicon(Pretty):
         """
         from cfme.web_ui import paginator  # Prevent circular imports
         if this_page:
-            pages = (None, )  # Single, current page. SInce we dont care about the value, using None
+            pages = (None, )  # Single, current page. Since we dont care about the value, using None
         else:
             pages = paginator.pages()
         for page in pages:
-            for quad in sel.elements("div#quadicon"):
-                img = sel.element("./div/a/img", root=quad)
-                yield cls(sel.get_attribute(img, "title"), qtype)
+            for href in sel.elements("//div[@id='quadicon']/../../../tr/td/a"):
+                yield cls(sel.get_attribute(href, "title"), qtype)
 
     @staticmethod
     def select_first_quad():
