@@ -16,8 +16,8 @@ clock_servers:
 """
 
 import argparse
-from utils.conf import credentials, cfme_data
-from utils.ssh import SSHClient
+
+from utils.appliance import IPAppliance
 
 
 def main():
@@ -25,27 +25,12 @@ def main():
         epilog=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument(
-        'address',
-        help='hostname or ip address of target appliance'
-    )
+    parser.add_argument('address', nargs="?", default=None,
+        help='hostname or ip address of target appliance')
     args = parser.parse_args()
-    ssh_kwargs = {
-        'username': credentials['ssh']['username'],
-        'password': credentials['ssh']['password'],
-        'hostname': args.address
-    }
-    with SSHClient(**ssh_kwargs) as ssh:
-        print("Setting appliance's time. Please wait.")
-        servers_str = " ".join(["'%s'" % server for server in cfme_data["clock_servers"]])
-        status, out = ssh.run_command("ntpdate " + servers_str)
-        if status != 0:
-            print("Could not set the time. Check the output of the command, please:")
-            print(out.strip())
-            return 1
-
-        print("Time was set. Now it should be safe to log in and test on the appliance.")
-        return 0
+    ip_a = IPAppliance(args.address)
+    ip_a.fix_ntp_clock()
+    print "Time was set"
 
 
 if __name__ == "__main__":
