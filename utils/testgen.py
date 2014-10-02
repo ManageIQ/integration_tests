@@ -86,6 +86,7 @@ from cfme.cloud.provider import get_from_config as get_cloud_provider
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
 from fixtures.prov_filter import filtered
+from cfme.roles import group_data
 from utils import version
 from utils.conf import cfme_data
 from utils.log import logger
@@ -336,8 +337,9 @@ def auth_groups(metafunc, auth_mode):
 
     if auth_mode in cfme_data.get('auth_modes', {}):
         # If auth_modes exists, group_roles is assumed to exist as well
-        for group in cfme_data.get('group_roles', []):
-            argvalues.append([group, sorted(cfme_data['group_roles'][group])])
+        gdata = group_data()
+        for group in gdata:
+            argvalues.append([group, sorted(gdata[group])])
             idlist.append(group)
     return argnames, argvalues, idlist
 
