@@ -55,3 +55,23 @@ def lazycache(wrapped_method):
 
     lazy = property(get_lazy, set_lazy, del_lazy, doc)
     return lazy
+
+
+def property_or_none(wrapped, *args, **kwargs):
+    """property_or_none([fget[, fset[, fdel[, doc]]]])
+    Property decorator that turns AttributeErrors into None returns
+
+    Useful for chained attr lookups where some links in the chain are None
+
+    Note:
+
+        This delegates back to the :py:func:`property <python:property>` builtin and inherits
+        its signature; thus it can be used interchangeably with ``property``.
+
+    """
+    def wrapper(store):
+        try:
+            return wrapped(store)
+        except AttributeError:
+            pass
+    return property(wrapper, *args, **kwargs)

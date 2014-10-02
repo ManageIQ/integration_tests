@@ -14,6 +14,7 @@ from selenium import webdriver
 from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
+from fixtures.pytest_store import store
 from utils import conf
 from utils.cache_reset import cache_reset
 from utils.log import logger
@@ -130,8 +131,30 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         # Wharf is configured, make sure to use its command_executor
         wharf_config = thread_locals.wharf.config
         browser_kwargs['command_executor'] = wharf_config['webdriver_url']
+        view_msg = 'tests can be viewed via vnc on display %s' % wharf_config['vnc_display']
         logger.info('webdriver command executor set to %s' % wharf_config['webdriver_url'])
-        logger.info('tests can be viewed via vnc on display %s' % wharf_config['vnc_display'])
+        logger.info(view_msg)
+
+        if store.slave_manager:
+            # We're a pytest slave! Write out the vnc info through the slave manager
+            store.slave_manager.message(view_msg)
+        elif store.in_pytest_session:
+            # if we're running pytest, write out the vnc info through the terminal reporter
+            if store.capturemanager:
+                # sneak the msg past the stdout capture if it's enabled
+                store.capturemanager.suspendcapture()
+
+            # terminal reporter knows whether or not to write a newline based on currentfspath
+            # so stash it, then use rewrite to blow away the line that printed the current
+            # test name, then clear currentfspath so the test name is reprinted with the
+            # write_ensure_prefix call. shenanigans!
+            cfp = store.terminalreporter.currentfspath
+            store.terminalreporter.line('\r' + view_msg, cyan=True)
+            store.terminalreporter.currentfspath = None
+            store.terminalreporter.write_ensure_prefix(cfp)
+
+            if store.capturemanager:
+                store.capturemanager.resumecapture()
 
     browser = webdriver_class(**browser_kwargs)
     browser.maximize_window()
