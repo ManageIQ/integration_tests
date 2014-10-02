@@ -1549,9 +1549,10 @@ class SCVMMSystem(MgmtSystemAPIBase):
     auth mode so I have to do the connection manually in the script which seems to be VERY slow.
     """
     STATE_RUNNING = "Running"
-    STATE_STOPPED = "Stopped"
+    STATES_STOPPED = {"PowerOff", "Stopped"}  # TODO:  "Stopped" when using shutdown. Differ it?
     STATE_PAUSED = "Paused"
-    STATES_STEADY = {STATE_RUNNING, STATE_STOPPED, STATE_PAUSED}
+    STATES_STEADY = {STATE_RUNNING, STATE_PAUSED}
+    STATES_STEADY.update(STATES_STOPPED)
 
     _stats_available = {
         'num_vm': lambda self: len(self.list_vm()),
@@ -1670,7 +1671,7 @@ class SCVMMSystem(MgmtSystemAPIBase):
         return self.vm_status(vm_name) == self.STATE_RUNNING
 
     def is_vm_stopped(self, vm_name):
-        return self.vm_status(vm_name) == self.STATE_STOPPED
+        return self.vm_status(vm_name) in self.STATES_STOPPED
 
     def is_vm_suspended(self, vm_name):
         return self.vm_status(vm_name) == self.STATE_PAUSED
