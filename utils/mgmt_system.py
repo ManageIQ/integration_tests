@@ -16,7 +16,7 @@ from pysphere.resources.vi_exception import VIException
 from novaclient.v1_1 import client as osclient
 from keystoneclient.v2_0 import client as oskclient
 from utils.log import logger
-from utils.version import LooseVersion
+from utils.version import LooseVersion, current_version
 from utils.wait import wait_for, TimedOutError
 
 
@@ -1325,12 +1325,22 @@ class OpenstackSystem(MgmtSystemAPIBase):
 
     def __init__(self, **kwargs):
         tenant = kwargs['tenant']
-        username = kwargs['username']
+        self.username = username = kwargs['username']
         password = kwargs['password']
         auth_url = kwargs['auth_url']
         self.api = osclient.Client(username, password, tenant, auth_url, service_type="compute")
         self.kapi = oskclient.Client(username=username, password=password,
                                      tenant_name=tenant, auth_url=auth_url)
+
+    def _get_tenants(self):
+        real_tenants = []
+        tenants = self.kapi.tenants.list()
+        for tenant in tenants:
+            users = tenant.list_users()
+            user_list = [user.name for user in users]
+            if self.username in user_list:
+                real_tenants.append(tenant)
+        return real_tenants
 
     def _get_tenant(self, **kwargs):
         return self.kapi.tenants.find(**kwargs).id
@@ -1353,7 +1363,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
         return tenant.id
 
     def list_tenant(self):
-        return [i.name for i in self.kapi.tenants.list()]
+        return [i.name for i in self._get_tenants()]
 
     def remove_tenant(self, tenant_name):
         tid = self._get_tenant(name=tenant_name)
@@ -1508,8 +1518,20 @@ class OpenstackSystem(MgmtSystemAPIBase):
                     return str(nic['addr'])
 
     def _get_all_instances(self):
-        instances = self.api.servers.list(True, {'all_tenants': True})
-        return instances
+
+        if current_version() < '5.3':
+            # Old method used to list all instances, CFME now uses tenants appropriately
+            instances = self.api.servers.list(True, {'all_tenants': True})
+            return instances
+        else:
+            real_instances = []
+            tenants = self._get_tenants()
+            ids = [tenant.id for tenant in tenants]
+            instances = self.api.servers.list(True, {'all_tenants': True})
+            for instance in instances:
+                if instance.tenant_id in ids:
+                    real_instances.append(instance)
+            return real_instances
 
     def _find_instance_by_name(self, name):
         """
