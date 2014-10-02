@@ -7,8 +7,8 @@ from utils.randomness import generate_lowercase_random_string, generate_random_s
 
 
 @pytest.fixture(scope="module")
-def setup_providers(uses_infra_providers):
-    providers.setup_infrastructure_providers(validate=True, check_existing=True)
+def setup_first_provider():
+    providers.setup_a_provider(prov_class="infra", validate=True, check_existing=True)
 
 
 pytestmark = [
@@ -20,7 +20,7 @@ pytestmark = [
         "infra_vms",
         "infra_templates",
     ]),
-    pytest.mark.usefixtures("setup_providers")
+    pytest.mark.usefixtures("setup_first_provider")
 ]
 
 
@@ -50,7 +50,7 @@ def test_tag_infra_item_through_selecting(location, tag):
     pytest.sel.force_navigate(location)
     Quadicon.select_first_quad()
     mixins.add_tag(tag)
-    Quadicon.select_first_quad()
+    Quadicon.select_first_quad()  # It goes back to the list view.
     mixins.remove_tag(tag)
 
 
@@ -58,6 +58,6 @@ def test_tag_infra_item_through_details(location, tag):
     """Add a tag to a infra item
     """
     pytest.sel.force_navigate(location)
-    pytest.sel.click(Quadicon(Quadicon.get_first_quad_title()))
+    pytest.sel.click(Quadicon.first())
     mixins.add_tag(tag)
     mixins.remove_tag(tag)

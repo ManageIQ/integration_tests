@@ -984,6 +984,14 @@ def fill(loc, content):
     return prev_state
 
 
+@fill.method((basestring, object))
+@fill.method((tuple, object))
+def _fill_translate_str(s, o, **kwargs):
+    """This allows you to specify just a locator for fill"""
+    logger.debug('  Resolving {} to WebElement for filling value {}'.format(str(s), repr(str(o))))
+    fill(sel.element(s), o, **kwargs)
+
+
 @fill.method((Table, Mapping))
 def _sd_fill_table(table, cells):
     """ How to fill a table with a value (by selecting the value as cells in the table)
@@ -1838,7 +1846,7 @@ class Quadicon(Pretty):
 
     pretty_attrs = ['_name', '_qtype']
 
-    _quads = {
+    QUADS = {
         "host": {
             "no_vm": ("a", 'txt'),
             "state": ("b", 'img'),
@@ -1883,8 +1891,20 @@ class Quadicon(Pretty):
 
     def __init__(self, name, qtype=None):
         self._name = name
-        self._qtype = qtype
-        self._quad_data = self._quads[self._qtype]
+        self.qtype = qtype
+
+    @property
+    def qtype(self):
+        return self._qtype
+
+    @qtype.setter
+    def qtype(self, value):
+        assert value in self.QUADS
+        self._qtype = value
+
+    @property
+    def _quad_data(self):
+        return self.QUADS[self.qtype]
 
     def checkbox(self):
         """ Returns:  a locator for the internal checkbox for the quadicon"""
@@ -1932,7 +1952,7 @@ class Quadicon(Pretty):
         return self.locate()
 
     @classmethod
-    def all(cls, qtype, this_page=False):
+    def all(cls, qtype=None, this_page=False):
         """Allows iteration over Quadicons.
 
         Args:
@@ -1949,14 +1969,17 @@ class Quadicon(Pretty):
             for href in sel.elements("//div[@id='quadicon']/../../../tr/td/a"):
                 yield cls(sel.get_attribute(href, "title"), qtype)
 
+    @classmethod
+    def first(cls, qtype=None):
+        return cls(cls.get_first_quad_title(), qtype=qtype)
+
     @staticmethod
     def select_first_quad():
-        elem = sel.element("//div[@id='quadicon']").find_element_by_xpath('./../..//input')
-        fill(elem, True)
+        fill("//div[@id='quadicon']/../..//input", True)
 
     @staticmethod
     def get_first_quad_title():
-        return sel.get_attribute(sel.element("//div[@id='quadicon']/../../../tr/td/a"), "title")
+        return sel.get_attribute("//div[@id='quadicon']/../../../tr/td/a", "title")
 
 
 class DHTMLSelect(Select):
