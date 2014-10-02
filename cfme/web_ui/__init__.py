@@ -1778,7 +1778,8 @@ class Quadicon(Pretty):
 
     Args:
        name: The label of the icon.
-       qtype: The type of the quad icon.
+       qtype: The type of the quad icon. By default it is ``None``, therefore plain quad without any
+            retrievable data usable for selecting/clicking.
 
     Usage:
 
@@ -1877,9 +1878,10 @@ class Quadicon(Pretty):
         },
         "cluster": {},
         "resource_pool": {},
+        None: {},  # If you just want to find the quad and not mess with data
     }
 
-    def __init__(self, name, qtype):
+    def __init__(self, name, qtype=None):
         self._name = name
         self._qtype = qtype
         self._quad_data = self._quads[self._qtype]

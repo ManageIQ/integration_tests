@@ -2,7 +2,26 @@ import pytest
 
 from cfme.web_ui import Quadicon, mixins
 from cfme.configure.configuration import Category, Tag
+from utils import providers
 from utils.randomness import generate_lowercase_random_string, generate_random_string
+
+
+@pytest.fixture(scope="module")
+def setup_providers(uses_infra_providers):
+    providers.setup_infrastructure_providers(validate=True, check_existing=True)
+
+
+pytestmark = [
+    pytest.mark.parametrize("location", [
+        "infrastructure_providers",
+        "infrastructure_clusters",
+        "infrastructure_hosts",
+        "infrastructure_datastores",
+        "infra_vms",
+        "infra_templates",
+    ]),
+    pytest.mark.usefixtures("setup_providers")
+]
 
 
 @pytest.yield_fixture(scope="module")
@@ -25,41 +44,20 @@ def tag(category):
     tag.delete()
 
 
-def test_tag_provider(setup_infrastructure_providers, tag):
-    """Add a tag to a provider
+def test_tag_infra_item_through_selecting(location, tag):
+    """Add a tag to a infra item
     """
-    pytest.sel.force_navigate('infrastructure_providers')
+    pytest.sel.force_navigate(location)
     Quadicon.select_first_quad()
     mixins.add_tag(tag)
-
-
-def test_tag_cluster(setup_infrastructure_providers, tag):
-    """Add a tag to a cluster
-    """
-    pytest.sel.force_navigate('infrastructure_clusters')
     Quadicon.select_first_quad()
-    mixins.add_tag(tag)
+    mixins.remove_tag(tag)
 
 
-def test_tag_host(setup_infrastructure_providers, tag):
-    """Add a tag to a host
+def test_tag_infra_item_through_details(location, tag):
+    """Add a tag to a infra item
     """
-    pytest.sel.force_navigate('infrastructure_hosts')
-    Quadicon.select_first_quad()
+    pytest.sel.force_navigate(location)
+    pytest.sel.click(Quadicon(Quadicon.get_first_quad_title()))
     mixins.add_tag(tag)
-
-
-def test_tag_datastore(setup_infrastructure_providers, tag):
-    """Add a tag to a datastore
-    """
-    pytest.sel.force_navigate('infrastructure_datastores')
-    Quadicon.select_first_quad()
-    mixins.add_tag(tag)
-
-
-def test_tag_vm(setup_infrastructure_providers, tag):
-    """Add a tag to a vm
-    """
-    pytest.sel.force_navigate('infrastructure_virtual_machines')
-    Quadicon.select_first_quad()
-    mixins.add_tag(tag)
+    mixins.remove_tag(tag)

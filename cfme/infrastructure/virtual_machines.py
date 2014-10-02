@@ -134,7 +134,7 @@ nav.add_branch(
 
         "infra_templates":
         [
-            lambda _: accordion.tree("Templates", "All Templates"),
+            lambda _: (accordion.tree("Templates", "All Templates"), toolbar.set_vms_grid_view()),
             {
                 "infra_templates_filter_folder":
                 [
