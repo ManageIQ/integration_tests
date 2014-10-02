@@ -1,32 +1,14 @@
-import sys
-
-from _pytest.terminal import TerminalReporter
-from py.io import TerminalWriter
-
-
-class FlexibleTerminalReporter(TerminalReporter):
-    """A TerminalReporter stand-in that pretends to work even without a py.test config."""
-    def __init__(self, config=None, file=None):
-        if config:
-            # If we have a config, nothing more needs to be done
-            return TerminalReporter.__init__(self, config, file)
-
-        # Without a config, pretend to be a TerminalReporter
-        # hook-related functions (logreport, collection, etc) will be outrigt broken,
-        # but the line writers should still be usable
-        if file is None:
-            file = sys.stdout
-
-        self._tw = self.writer = TerminalWriter(file)
-        self.hasmarkup = self._tw.hasmarkup
-        self.reportchars = ''
-        self.currentfspath = None
+# FlexibleTerminalReporter is imported for backward compatibility;
+# it should be imported from pytest_store
+from fixtures.pytest_store import FlexibleTerminalReporter, store  # NOQA
 
 
 def reporter(config=None):
-    if config:
-        reporter = config.pluginmanager.getplugin('terminalreporter')
-        if reporter:
-            return reporter
+    """Return a py.test terminal reporter that will write to the console no matter what
 
-    return FlexibleTerminalReporter(config)
+    Only useful when trying to write to the console before or during a
+    :py:function:`pytest_configure <pytest:_pytest.hookspec.pytest_configure>` hook.
+
+    """
+    # config arg is accepted, but no longer needed thanks to pytest_store, so it is ignored
+    return store.terminalreporter
