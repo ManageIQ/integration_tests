@@ -3,10 +3,12 @@ import pytest
 from cfme.infrastructure.virtual_machines import Vm, details_page
 from cfme.infrastructure.provider import prov_timeline
 from cfme.web_ui import toolbar
+from cfme.exceptions import ToolbarOptionGreyed
 from utils import testgen
 from utils.log import logger
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
+from utils.wait import wait_for
 
 pytestmark = [pytest.mark.ignore_stream("upstream")]
 
@@ -65,43 +67,52 @@ def gen_events(delete_fx_provider_event, provider_crud, test_vm):
     mgmt.start_vm(test_vm.name)
 
 
-def test_provider_event(provider_crud, gen_events, test_vm):
-    pytest.sel.force_navigate('infrastructure_provider_timelines',
-                              context={'provider': provider_crud})
+def count_events(vm_name, nav_step):
+    try:
+        nav_step()
+    except ToolbarOptionGreyed:
+        return 0
     events = []
     for event in prov_timeline.events():
-        if event.text == test_vm.name:
+        if event.text == vm_name:
             events.append(event)
-    assert(len(events) > 0)
+    return len(events)
+
+
+def test_provider_event(provider_crud, gen_events, test_vm):
+    def nav_step():
+        pytest.sel.force_navigate('infrastructure_provider',
+                                  context={'provider': provider_crud})
+        toolbar.select('Monitoring', 'Timelines')
+    nav_step()
+    wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
+             message="events to appear")
 
 
 def test_host_event(provider_crud, gen_events, test_vm):
-    test_vm.load_details()
-    pytest.sel.click(details_page.infoblock.element('Relationships', 'Host'))
-    toolbar.select('Monitoring', 'Timelines')
-    events = []
-    for event in prov_timeline.events():
-        if event.text == test_vm.name:
-            events.append(event)
-    assert(len(events) > 0)
+    def nav_step():
+        test_vm.load_details()
+        pytest.sel.click(details_page.infoblock.element('Relationships', 'Host'))
+        toolbar.select('Monitoring', 'Timelines')
+    nav_step()
+    wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
+             message="events to appear")
 
 
 def test_vm_event(provider_crud, gen_events, test_vm):
-    test_vm.load_details()
-    toolbar.select('Monitoring', 'Timelines')
-    events = []
-    for event in prov_timeline.events():
-        if event.text == test_vm.name:
-            events.append(event)
-    assert(len(events) > 0)
+    def nav_step():
+        test_vm.load_details()
+        toolbar.select('Monitoring', 'Timelines')
+    nav_step()
+    wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
+             message="events to appear")
 
 
 def test_cluster_event(provider_crud, gen_events, test_vm):
-    test_vm.load_details()
-    pytest.sel.click(details_page.infoblock.element('Relationships', 'Cluster'))
-    toolbar.select('Monitoring', 'Timelines')
-    events = []
-    for event in prov_timeline.events():
-        if event.text == test_vm.name:
-            events.append(event)
-    assert(len(events) > 0)
+    def nav_step():
+        test_vm.load_details()
+        pytest.sel.click(details_page.infoblock.element('Relationships', 'Cluster'))
+        toolbar.select('Monitoring', 'Timelines')
+    nav_step()
+    wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
+             message="events to appear")
