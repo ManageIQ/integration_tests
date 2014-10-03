@@ -366,3 +366,34 @@ def test_user_add_button_should_be_disabled_without_group(soft_assert):
         "email_txt": "test@test.test"
     })
     assert not sel.is_displayed(form_buttons.add), "The Add button should not be displayed!"
+
+
+def test_user_change_password(request):
+    user = ac.User(
+        name="user {}".format(random.generate_random_string()),
+        credential=Credential(
+            principal="user_principal_{}".format(random.generate_random_string()),
+            secret="very_secret",
+            verify_secret="very_secret"
+        ),
+        email="test@test.test",
+        group=usergrp,
+    )
+    user.create()
+    request.addfinalizer(user.delete)
+    request.addfinalizer(login.login_admin)
+    login.logout()
+    assert not login.logged_in()
+    login.login(user.credential.principal, user.credential.secret)
+    assert login.current_full_name() == user.name
+    login.login_admin()
+    with update(user):
+        user.credential = Credential(
+            principal=user.credential.principal,
+            secret="another_very_secret",
+            verify_secret="another_very_secret",
+        )
+    login.logout()
+    assert not login.logged_in()
+    login.login(user.credential.principal, user.credential.secret)
+    assert login.current_full_name() == user.name
