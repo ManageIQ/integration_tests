@@ -111,6 +111,21 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
             finally:
                 # If this happened, we should skip all tests from this provider in this module
                 pytest.skip("vSphere %s is probably overloaded! Check its status!" % provider_key)
+    elif isinstance(provider_mgmt, mgmt_system.SCVMMSystem):
+        try:
+            provider_mgmt.deploy_template(
+                small_template,
+                vm_name=vm_name,
+                host_group=provider_data.get("host_group", "All Hosts")
+            )
+        except TimedOutError:
+            try:
+                provider_mgmt.delete_vm()
+            except TimedOutError:
+                pass
+            finally:
+                # If this happened, we should skip all tests from this provider in this module
+                pytest.skip("SCVMM %s is probably overloaded! Check its status!" % provider_key)
     else:
         raise Exception("Unknown provider")
 
@@ -173,14 +188,18 @@ def automate_role_set(request):
 @pytest.fixture(scope="function")
 def vm_on(vm):
     """ Ensures that the VM is on when the control goes to the test."""
-    vm.start_vm()
+    if not vm.is_vm_running():
+        vm.start_vm()
     return vm
 
 
 @pytest.fixture(scope="function")
 def vm_off(vm):
     """ Ensures that the VM is off when the control goes to the test."""
-    vm.stop_vm()
+    if vm.is_vm_suspended():
+        vm.start_vm()
+    if not vm.is_vm_stopped():
+        vm.stop_vm()
     return vm
 
 

@@ -5,7 +5,7 @@ from cfme.cloud.provider import get_from_config as get_cloud_from_config
 from cfme.exceptions import UnknownProviderType
 from cfme.infrastructure.provider import get_from_config as get_infra_from_config
 from utils.log import logger
-from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSystem
+from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSystem, SCVMMSystem
 
 
 def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
@@ -22,6 +22,9 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
             deploy_args.update(cluster=data['default_cluster'])
     elif isinstance(mgmt, VMWareSystem):
         pass
+    elif isinstance(mgmt, SCVMMSystem):
+        if 'host_group' not in deploy_args:
+            deploy_args.update(host_group=data.get("host_group", "All Hosts"))
     elif isinstance(mgmt, EC2System):
         pass
     elif isinstance(mgmt, OpenstackSystem):
