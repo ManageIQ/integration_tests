@@ -43,6 +43,7 @@ discover_form = Form(
     fields=[
         ('rhevm_chk', "//input[@id='discover_type_rhevm']"),
         ('vmware_chk', "//input[@id='discover_type_virtualcenter']"),
+        ('scvmm_chk', "//input[@id='discover_type_scvmm']"),
         ('from_0', "//*[@id='from_first']"),
         ('from_1', "//*[@id='from_second']"),
         ('from_2', "//*[@id='from_third']"),
@@ -581,13 +582,14 @@ def discover_from_provider(provider_data):
     Usage:
         discover_from_config(provider.get_from_config('rhevm'))
     """
-    vmware = True if isinstance(provider_data, VMwareProvider) else False
-    rhevm = True if isinstance(provider_data, RHEVMProvider) else False
-    discover(rhevm, vmware, cancel=False, start_ip=provider_data.start_ip,
+    vmware = isinstance(provider_data, VMwareProvider)
+    rhevm = isinstance(provider_data, RHEVMProvider)
+    scvmm = isinstance(provider_data, SCVMMProvider)
+    discover(rhevm, vmware, scvmm, cancel=False, start_ip=provider_data.start_ip,
              end_ip=provider_data.end_ip)
 
 
-def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None):
+def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None, end_ip=None):
     """
     Discover infrastructure providers. Note: only starts discovery, doesn't
     wait for it to finish.
@@ -595,6 +597,7 @@ def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None
     Args:
         rhvem: Whether to scan for RHEVM providers
         vmware: Whether to scan for VMware providers
+        scvmm: Whether to scan for SCVMM providers
         cancel:  Whether to cancel out of the discover UI.
     """
     sel.force_navigate('infrastructure_provider_discover')
@@ -603,6 +606,8 @@ def discover(rhevm=False, vmware=False, cancel=False, start_ip=None, end_ip=None
         form_data.update({'rhevm_chk': True})
     if vmware:
         form_data.update({'vmware_chk': True})
+    if scvmm:
+        form_data.update({'scvmm_chk': True})
 
     if start_ip:
         for idx, octet in enumerate(start_ip.split('.')):
