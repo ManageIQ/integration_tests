@@ -228,6 +228,14 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
         elif ptype == "emsvmware":
             from utils.mgmt_system import VMWareSystem
             return VMWareSystem(self.host_name, credentials["username"], credentials["password"])
+        elif ptype == "emsmicrosoft":
+            from utils.mgmt_system import SCVMMSystem
+            return SCVMMSystem(
+                hostname=self.host_name,
+                username=credentials["username"],
+                password=credentials["password"],
+                domain=credentials["domain"]
+            )
         elif ptype == "emsamazon":
             from utils.mgmt_system import EC2System
             return EC2System(**credentials)

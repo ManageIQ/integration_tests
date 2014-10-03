@@ -1697,7 +1697,7 @@ class SCVMMSystem(MgmtSystemAPIBase):
             .format(vm_name)).strip()
         return len(result) > 0
 
-    def deploy_template(self, template, vm_name=None, host_group=None):
+    def deploy_template(self, template, vm_name=None, host_group=None, **bogus):
         script = """
         $tpl = Get-SCVMTemplate -Name "{template}" -VMMServer $scvmm_server
         $vmhostgroup = Get-SCVMHostGroup -Name "{host_group}" -VMMServer $scvmm_server
