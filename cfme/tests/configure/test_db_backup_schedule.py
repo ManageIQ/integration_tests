@@ -108,11 +108,8 @@ def get_schedulable_datetime():
     """
     dt = datetime.utcnow()
     delta_min = 5 - (dt.minute % 5)
-    # If the schedule would be set for current minute
-    # or next minute while we have less than 40sec to set it
-    if (delta_min == 0) or (delta_min == 1 and dt.second > 20):
-        # Pad with 5 minutes
-        delta_min += 5
+    if (delta_min < 3):  # If the schedule would be set to run in less than 2mins
+        delta_min += 5   # Pad with 5 minutes
     dt += relativedelta(minutes=delta_min)
     return dt
 
@@ -182,7 +179,6 @@ def test_db_backup_schedule(request, db_backup_data):
     full_path = get_full_path_to_file(path_on_host, db_backup_data.schedule_name)
 
     sched = DatabaseBackupSchedule(**sched_args)
-    # Fails on upstream - BZ1099341
     sched.create()
     flash.assert_message_contain('Schedule "{}" was saved'.format(db_backup_data.schedule_name))
     # ----
