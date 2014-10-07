@@ -140,3 +140,15 @@ def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalo
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=600, delay=20)
     assert row.last_message.text == 'Request complete'
+
+
+@pytest.mark.usefixtures('has_no_infra_providers')
+def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
+                                  vm_name, dialog, catalog):
+    template, catalog_item_type = map(provisioning.get,
+        ('template', 'catalog_item_type'))
+    item_name = generate_random_string()
+    catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
+                  description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
+    catalog_item.create()
+    flash.assert_message_match("'Catalog/Name' is required")

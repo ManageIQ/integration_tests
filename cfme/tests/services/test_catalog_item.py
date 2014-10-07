@@ -41,6 +41,8 @@ def catalog_item(dialog, catalog):
 
 def test_create_catalog_item(catalog_item):
     catalog_item.create()
+    flash.assert_success_message('Service Catalog Item "%s" was added' %
+                                 catalog_item.name)
 
 
 def test_update_catalog_item(catalog_item):
