@@ -9,8 +9,7 @@ from utils.providers import setup_provider
 from utils.wait import wait_for
 import pytest
 
-# iscsi not supported yet: https://bugzilla.redhat.com/show_bug.cgi?id=1091033
-DATASTORE_TYPES = ('vmfs', 'nfs')
+DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
 
 # rhevm not supported
 PROVIDER_TYPES = ('virtualcenter',)
@@ -65,6 +64,12 @@ def get_host_data_by_name(provider_key, host_name):
 
 
 # TODO add support for events
+@pytest.mark.bugzilla(
+    1091033,
+    unskip={
+        1091033: lambda datastore_type: datastore_type != 'iscsi'
+    }
+)
 def test_run_datastore_analysis(request, provider_init, provider_key,
                                 datastore_type, datastore_name):
     """ Run host SmartState analysis
