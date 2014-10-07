@@ -18,6 +18,54 @@ else
 fi
 
 cat > $CFME_REPO_DIR/conf/env.local.yaml <<EOF
+base_url: https://0.0.0.0
+$BROWSER_SECTION
+
+artifactor:
+    log_dir: $ARTIFACTOR_DIR
+    per_run: test #test, run, None
+    reuse_dir: True
+    squash_exceptions: True
+    threaded: True
+    server_address: 127.0.0.1
+    server_enabled: True
+    plugins:
+        logger:
+            enabled: True
+            plugin: logger
+            level: DEBUG
+        filedump:
+            enabled: True
+            plugin: filedump
+        reporter:
+            enabled: True
+            plugin: reporter
+            only_failed: True
+
+mail_collector:
+    ports:
+        smtp: $SMTP
+        json: $JSON
+
+
+trackerbot:
+  username: admin
+  url: $TRACKERBOT
+EOF
+
+export PYTHONPATH=$CFME_REPO_DIR
+cd $CFME_REPO_DIR
+
+if [ -n "$PROVIDER" ]; then
+    echo "Provisioning appliance..." >> $ARTIFACTOR_DIR/setup.txt
+    scripts/clone_template.py --outfile /appliance_ip --provider $PROVIDER --template $TEMPLATE --vm_name $VM_NAME --configure >> $ARTIFACTOR_DIR/setup.txt 2>&1
+    cat /appliance_ip >> $ARTIFACTOR_DIR/setup.txt
+    IP_ADDRESS=$(cat /appliance_ip | cut -d= -f2)
+    APPLIANCE=https://$IP_ADDRESS
+fi
+echo $APPLIANCE >> $ARTIFACTOR_DIR/setup.txt
+
+cat > $CFME_REPO_DIR/conf/env.local.yaml <<EOF
 base_url: $APPLIANCE
 $BROWSER_SECTION
 
@@ -54,8 +102,7 @@ trackerbot:
 EOF
 
 cat $CFME_REPO_DIR/conf/env.local.yaml >> $ARTIFACTOR_DIR/setup.txt
-export PYTHONPATH=$CFME_REPO_DIR
-cd $CFME_REPO_DIR
+
 git config --global user.email "me@dockerbot"
 git config --global user.name "DockerBot"
 if [ -n "$CFME_PR" ]; then
@@ -67,7 +114,7 @@ else
 fi
 
 if [ -n "$UPDATE_PIP" ]; then
-pip install -Ur $CFME_REPO_DIR/requirements.txt >> $ARTIFACTOR_DIR/setup.txt 2>&1
+    pip install -Ur $CFME_REPO_DIR/requirements.txt >> $ARTIFACTOR_DIR/setup.txt 2>&1
 fi
 echo py.test "$PYTEST" >> $ARTIFACTOR_DIR/setup.txt
 eval $PYTEST >> $ARTIFACTOR_DIR/setup.txt 2>&1
@@ -84,6 +131,10 @@ on_exit () {
 	echo "Posting result..." >> $ARTIFACTOR_DIR/setup.txt
 	/post_result.py $POST_TASK $OUT_RESULT >> $ARTIFACTOR_DIR/setup.txt 2>&1
 	echo $? >> $ARTIFACTOR_DIR/setup.txt
+    fi
+    if [ -n "$PROVIDER" ]; then
+	echo "Destroying appliance..." >> $ARTIFACTOR_DIR/setup.txt
+	scripts/clone_template.py --provider $PROVIDER --vm_name $VM_NAME --destroy >> $ARTIFACTOR_DIR/setup.txt 2>&1
     fi
 }
 

@@ -128,6 +128,10 @@ class DockerBot(object):
         self.handle_pr()
         self.log_path = self.create_log_path()
         self.pytest_bindings = self.create_pytest_bindings()
+
+        if self.args['dry_run']:
+            print self.env_details
+
         pytest = PytestDocker(name=self.pytest_name, bindings=self.pytest_bindings,
                               env=self.env_details, log_path=self.log_path,
                               links=links,
@@ -197,10 +201,18 @@ class DockerBot(object):
         if not self.args['server_ip']:
             self.args['server_ip'] = my_ip_address()
 
+        self.check_arg('provision_appliance', False)
+        if self.args['provision_appliance']:
+            if not self.args['provision_template'] or not self.args['provision_provider'] or \
+               not self.args['provision_vm_name']:
+                print "You don't have all the required options to provision an appliance"
+                ec += 1
+
         self.check_arg('appliance_name', None)
         self.check_arg('appliance', None)
 
-        if not self.args['appliance_name'] != self.args['appliance']:
+        if not self.args['appliance_name'] != self.args['appliance'] and \
+           not self.args['provision_appliance']:
             print "You must supply either an appliance OR an appliance name from config"
             ec += 1
 
@@ -291,8 +303,7 @@ class DockerBot(object):
         print "  PYTEST Command: {}".format(self.args['pytest'])
 
     def create_pytest_envvars(self):
-        self.env_details = {'APPLIANCE': self.appliance,
-                            'BROWSER': self.args['browser'],
+        self.env_details = {'BROWSER': self.args['browser'],
                             'CFME_CRED_REPO': self.args['cfme_cred_repo'],
                             'CFME_CRED_REPO_DIR': self.args['cfme_cred_repo_dir'],
                             'CFME_REPO': self.args['cfme_repo'],
@@ -314,6 +325,14 @@ class DockerBot(object):
         if self.args['update_pip']:
             print "  PIP: will be updated!"
             self.env_details['UPDATE_PIP'] = 'True'
+
+        if self.args['provision_appliance']:
+            print "  APPLIANCE WILL BE PROVISIONED"
+            self.env_details['PROVIDER'] = self.args['provision_provider']
+            self.env_details['TEMPLATE'] = self.args['provision_template']
+            self.env_details['VM_NAME'] = self.args['provision_vm_name']
+        else:
+            self.env_details['APPLIANCE'] = self.appliance
 
     def handle_pr(self):
         if self.args['pr']:
@@ -467,6 +486,21 @@ if __name__ == "__main__":
     pytester.add_argument('--trackerbot',
                           help="The url for trackerbot",
                           default=None)
+
+    provisioning = parser.add_argument_group('Appliance Provisioning Options')
+    provisioning.add_argument('--provision-appliance', action="store_true",
+                              help="Let dockerbot provision the appliance",
+                              default=None)
+    provisioning.add_argument('--provision-provider',
+                              help="Provider key",
+                              default=None)
+    provisioning.add_argument('--provision-template',
+                              help="Template name",
+                              default=None)
+    provisioning.add_argument('--provision-vm-name',
+                              help="VM name",
+                              default=None)
+
     args = parser.parse_args()
 
     ab = DockerBot(**vars(args))
