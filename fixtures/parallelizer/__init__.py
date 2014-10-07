@@ -1,27 +1,63 @@
-import difflib
-import Queue as queue
-from collections import OrderedDict
+"""Parallel testing, supporting arbitrary collection ordering
 
-import execnet
-import py
+The Workflow
+------------
+
+- Master py.test process starts up, inspects config to decide how many slave to start, if at all
+
+  - env['parallel_base_urls'] is inspected first
+  - py.test config.option.appliances and the related --appliance cmdline flag are used
+    if env['parallel_base_urls'] isn't set
+  - if neither are set, no parallelization happens
+
+- Slaves are started
+- Master runs collection, blocks until slaves report their collections
+- Slaves each run collection and submit them to the master, then block inside their runtest loop,
+  waiting for tests to run
+- Master diffs slave collections against its own; the test ids are verified to match
+  across all nodes
+- Master enters main runtest loop, uses a generator to build lists of test groups which are then
+  sent to slaves, one group at a time
+- For each phase of each test, the slave serializes test reports, which are then unserialized on
+  the master and handed to the normal pytest reporting hooks, which is able to deal with test
+  reports arriving out of order
+- Before running the last test in a group, the slave will request more tests from the master
+
+  - If more tests are received, they are run
+  - If no tests are received, the slave will shut down after running its final test
+
+- After all slaves are shut down, the master will do its end-of-session reporting as usual, and
+  shut down
+
+"""
+
+import atexit
+import difflib
+import json
+import os
+import subprocess
+from collections import OrderedDict, defaultdict, namedtuple
+
 import pytest
+import zmq
 from _pytest import runner
 
+from fixtures.parallelizer import remote
 from fixtures.terminalreporter import reporter
-from utils.conf import env, runtime
+from utils import conf
 from utils.log import create_sublogger
 
 
 _appliance_help = '''specify appliance URLs to use for distributed testing.
 this option can be specified more than once, and must be specified at least two times'''
 
-env_base_urls = env.get('parallel_base_urls', [])
+env_base_urls = conf.env.get('parallel_base_urls', [])
 if env_base_urls:
-    runtime['env']['base_url'] = env_base_urls[0]
+    conf.runtime['env']['base_url'] = env_base_urls[0]
 
 # Initialize slaveid to None, indicating this as the master process
 # slaves will set this to a unique string when they're initialized
-runtime['env']['slaveid']
+conf.runtime['env']['slaveid'] = None
 
 
 def pytest_addoption(parser):
@@ -29,306 +65,278 @@ def pytest_addoption(parser):
     group._addoption('--appliance', dest='appliances', action='append',
         default=env_base_urls, metavar='base_url', help=_appliance_help)
 
-# -------------------------------------------------------------------------
-# distributed testing initialization
-# -------------------------------------------------------------------------
-
 
 def pytest_configure(config, __multicall__):
     __multicall__.execute()
     # TODO: Wrap in a conditional based on the number of appliances for testing
-    if len(config.option.appliances) > 1:
-        session = DSession(config)
-        config.pluginmanager.register(session, "dsession")
+    if config.option.appliances:
+        session = ParallelSession(config)
+        config.pluginmanager.register(session, "parallel_session")
 
 
-class Interrupted(KeyboardInterrupt):
-    """ signals an immediate interruption. """
+def _failsafe(kill_func):
+    # atexit hook for killing a slave
+    # slave should probably already be dead, this is just a last-ditch catchall
+    try:
+        kill_func()
+    except:
+        pass
 
 
-class DSession(object):
+class ParallelSession(object):
     def __init__(self, config):
         self.config = config
-        self.shuttingdown = False
+        self.session = None
         self.countfailures = 0
-        self.log = create_sublogger('dsession')
+        self.collection = OrderedDict()
+        self.log = create_sublogger('master')
         self.maxfail = config.getvalue("maxfail")
-        self.queue = queue.Queue()
         self._failed_collection_errors = {}
         self.terminal = reporter()
-        self.trdist = TerminalDistReporter(config)
-        config.pluginmanager.register(self.trdist, "terminaldistreporter")
+        self.trdist = None
+        self.slaves = {}
+        self.test_groups = self._test_item_generator()
 
-    def report_line(self, line):
-        if self.terminal and self.config.option.verbose >= 0:
-            self.terminal.write_line(line)
+    def send(self, slaveid, event_data):
+        """Send data to slave.
+
+        ``event_data`` will be serialized as JSON, and so must be JSON serializable
+
+        """
+        event_json = json.dumps(event_data)
+        self.sock.send_multipart([slaveid, '', event_json])
+
+    def recv(self, *expected_event_names):
+        """Receive data from a slave
+
+        Args:
+            *expected_event_names: Event names to accept from slaves. Events received that aren't
+                in this list indicate a slave in the wrong state, which is a runtime error.
+
+        Raises RuntimeError if unexpected events are received.
+
+        """
+        while True:
+            slaveid, empty, event_json = self.sock.recv_multipart()
+            event_data = json.loads(event_json)
+            event_name = event_data.pop('_event_name')
+
+            if event_name == 'message':
+                # messages are special, if they're encountered in any recv loop they get printed
+                self.print_message(event_data['message'], slaveid)
+                self.ack(slaveid, event_name)
+            elif event_name not in expected_event_names:
+                self.kill(slaveid)
+                raise RuntimeError('slave event out of order. Expected one of "%s", got %s' %
+                    (', '.join(expected_event_names), event_name)
+                )
+            else:
+                return slaveid, event_data, event_name
+
+    def print_message(self, message, prefix='master'):
+        """Print a message from a node to the py.test console
+
+        Args:
+            slaveid: Can be a slaveid or any string, e.g. ``'master'`` is also useful here.
+            message: The message to print
+
+        """
+        # differentiate master and slave messages
+        if prefix == 'master':
+            markup = {'blue': True}
+        else:
+            markup = {'cyan': True}
+        self.terminal.write_ensure_prefix('(%s) ' % prefix, message, **markup)
+
+    def ack(self, slaveid, event_name):
+        """Acknowledge a slave's message"""
+        self.send(slaveid, 'ack %s' % event_name)
+
+    def interrupt(self, slaveid):
+        """Nicely ask a slave to terminate"""
+        slave = self.slaves.pop(slaveid, None)
+        if slave:
+            slave.send_signal(subprocess.signal.SIGINT)
+
+    def kill(self, slaveid):
+        """Rudely kill a slave"""
+        slave = self.slaves.pop(slaveid, None)
+        if slave:
+            slave.kill()
+
+    def send_tests(self, slaveid):
+        """Send a slave a group of tests"""
+        try:
+            tests = self.test_groups.next()
+        except StopIteration:
+            tests = []
+        self.send(slaveid, tests)
+        if tests:
+            self.print_message('sent %d tests to %s' % (len(tests), slaveid))
+        return tests
 
     @pytest.mark.trylast
     def pytest_sessionstart(self, session):
+        """pytest sessionstart hook
+
+        - sets up distributed terminal reporter
+        - sets up zmp ipc socket for the slaves to use
+        - writes pytest options and args to slave_config.yaml
+        - starts the slaves
+        - register atexit kill hooks to destroy slaves at the end if things go terribly wrong
+
+        """
         # If reporter() gave us a fake terminal reporter in __init__, the real
         # terminal reporter is registered by now
-        self.terminal = reporter()
-        self.nodemanager = NodeManager(self.config)
-        self.nodemanager.setup_nodes(putevent=self.queue.put)
+        self.terminal = reporter(self.config)
+        self.trdist = TerminalDistReporter(self.config, self.terminal)
+        self.config.pluginmanager.register(self.trdist, "terminaldistreporter")
+        self.session = session
 
-    def pytest_sessionfinish(self, session):
-        """ teardown any resources after a test run. """
-        # if not fully initialized
-        nm = getattr(self, 'nodemanager', None)
-        if nm is not None:
-            nm.teardown_nodes()
+        # set up the ipc socket
+        zmq_endpoint = 'ipc://%s' % os.path.join(session.fspath.strpath, '.pytest-parallel.ipc')
+        ctx = zmq.Context.instance()
+        self.sock = ctx.socket(zmq.ROUTER)
+        self.sock.bind('%s' % zmq_endpoint)
 
-    def pytest_collection(self):
-        # prohibit collection of test items in master process
-        return True
+        # write out the slave config
+        # The relies on args and option being easily serializable as yaml.
+        # If that stops being the case, look at serialize_/unserialize_ report for another option
+        conf.runtime['slave_config'] = {
+            'args': self.config.args,
+            'options': self.config.option,
+            'zmq_endpoint': zmq_endpoint,
+        }
+        conf.save('slave_config')
+
+        # Fire up the workers
+        devnull = open(os.devnull, 'w')
+        for i, base_url in enumerate(self.config.option.appliances):
+            slaveid = 'slave%d' % i
+            # worker output redirected to null; useful info comes via messages and logs
+            slave = subprocess.Popen(['python', remote.__file__, slaveid, base_url],
+                stdout=devnull, stderr=devnull)
+            self.slaves[slaveid] = slave
+            atexit.register(_failsafe, slave.kill)
 
     def pytest_runtestloop(self):
-        # Should be one node per appliance
-        numnodes = len(self.nodemanager.specs)
-        self.sched = ModscopeScheduling(numnodes)
-        self.shouldstop = False
-        self.session_finished = False
-        while not self.session_finished:
-            self.loop_once()
-            if self.shouldstop:
-                raise Interrupted(str(self.shouldstop))
-        return True
+        """pytest runtest loop
 
-    def loop_once(self):
-        """ process one callback from one of the slaves. """
-        while 1:
-            try:
-                eventcall = self.queue.get(timeout=2.0)
-                break
-            except queue.Empty:
-                continue
-        callname, kwargs = eventcall
-        assert callname, kwargs
-        method = "slave_" + callname
-        call = getattr(self, method)
-        self.log.debug("calling method: %s(**%s)" % (method, kwargs))
-        call(**kwargs)
-        if self.sched.tests_finished():
-            self.triggershutdown()
+        - Disable the master terminal reporter hooks, so we can add our own handlers
+          that include the slaveid in the output
+        - Send tests to slaves when they ask
+        - Log the starting of tests and test results, including slave id
+        - Handle clean slave shutdown when they finish their runtest loops
+        - Restore the master terminal reporter after testing so we get the final report
 
-    #
-    # callbacks for processing events from slaves
-    #
-
-    def slave_slaveready(self, node, slaveinfo):
-        node.slaveinfo = slaveinfo
-        node.slaveinfo['id'] = node.gateway.id
-        node.slaveinfo['spec'] = node.gateway.spec
-        self.trdist.testnodeready(node)
-        self.sched.addnode(node)
-        if self.shuttingdown:
-            node.shutdown()
-
-    def slave_slavefinished(self, node):
-        self.trdist.testnodedown(node, None)
-        # keyboard-interrupt
-        if node.slaveoutput['exitstatus'] == 2:
-            self.shouldstop = "%s received keyboard-interrupt" % (node,)
-            self.slave_errordown(node, "keyboard-interrupt")
-            return
-        self.sched.remove_node(node)
-        # assert not crashitem, (crashitem, node)
-        if self.shuttingdown and not self.sched.hasnodes():
-            self.session_finished = True
-
-        # self.send_tests(node)
-
-    def slave_errordown(self, node, error):
-        self.trdist.testnodedown(node, error)
-        try:
-            crashitem = self.sched.remove_node(node)
-        except KeyError:
-            pass
-        else:
-            if crashitem:
-                self.handle_crashitem(crashitem, node)
-                # self.report_line("item crashed on node: %s" % crashitem)
-        if not self.sched.hasnodes():
-            self.session_finished = True
-
-    def slave_collectionfinish(self, node, ids):
-        self.sched.addnode_collection(node, ids)
-        if self.terminal:
-            self.trdist.setstatus(node.gateway.spec, "[%d]" % (len(ids)))
-
-        if self.sched.collection_is_completed:
-            if self.terminal:
-                self.trdist.ensure_show_status()
-                self.terminal.write_line("")
-                self.terminal.write_line("scheduling tests via %s" % (
-                    self.sched.__class__.__name__))
-
-            self.sched.init_distribute()
-
-    def slave_logstart(self, node, nodeid, location):
-        self.config.hook.pytest_runtest_logstart(
-            nodeid=nodeid, location=location)
-
-    def slave_testreport(self, node, rep):
-        if not (rep.passed and rep.when != "call"):
-            if rep.when in ("setup", "call"):
-                self.sched.remove_item(node, rep.item_index, rep.duration)
-        # self.report_line("testreport %s: %s" %(rep.id, rep.status))
-        rep.node = node
-        self.config.hook.pytest_runtest_logreport(report=rep)
-        self._handlefailures(rep)
-
-    def slave_collectreport(self, node, rep):
-        if rep.failed:
-            self._failed_slave_collectreport(node, rep)
-
-    def slave_needs_tests(self, node):
-        self.sched.send_tests(node)
-
-    def slave_message(self, node, message):
-        self.trdist.nodemessage(node, message)
-
-    def _failed_slave_collectreport(self, node, rep):
-        # Check we haven't already seen this report (from
-        # another slave).
-        if rep.longrepr not in self._failed_collection_errors:
-            self._failed_collection_errors[rep.longrepr] = True
-            self.config.hook.pytest_collectreport(report=rep)
-            self._handlefailures(rep)
-
-    def _handlefailures(self, rep):
-        if rep.failed:
-            self.countfailures += 1
-            if self.maxfail and self.countfailures >= self.maxfail:
-                self.shouldstop = "stopping after %d failures" % (
-                    self.countfailures)
-
-    def triggershutdown(self):
-        self.log.debug("triggering shutdown")
-        self.shuttingdown = True
-        for node in self.sched.node2pending:
-            node.shutdown()
-
-    def handle_crashitem(self, nodeid, slave):
-        # XXX get more reporting info by recording pytest_runtest_logstart?
-        my_runner = self.config.pluginmanager.getplugin("runner")
-        fspath = nodeid.split("::")[0]
-        msg = "Slave %r crashed while running %r" % (slave.gateway.id, nodeid)
-        rep = my_runner.TestReport(nodeid, (fspath, None, fspath), (),
-            "failed", msg, "???")
-        rep.node = slave
-        self.config.hook.pytest_runtest_logreport(report=rep)
-
-
-class ModscopeScheduling(object):
-    # Based on xdist's LoadScheduling, but tests are split among processes by test module
-    def __init__(self, numnodes):
-        self.numnodes = numnodes
-        self.node2pending = OrderedDict()
-        self.node2collection = OrderedDict()
-        self.log = create_sublogger('scheduler')
-        self.pending = []
-        self.collection_is_completed = False
-        self.module_testindex_gen = None
-
-    def hasnodes(self):
-        return bool(self.node2pending)
-
-    def addnode(self, node):
-        self.node2pending[node] = []
-
-    def tests_finished(self):
-        if not self.collection_is_completed or self.pending:
-            self.log.debug('pending: %r' % self.pending)
-            return False
-        # for items in self.node2pending.values():
-        #    if items:
-        #        return False
-        return True
-
-    def addnode_collection(self, node, collection):
-        self.log.debug('addnode collection: %r', collection)
-        assert not self.collection_is_completed
-        assert node in self.node2pending
-        self.node2collection[node] = list(collection)
-        if len(self.node2collection) >= self.numnodes:
-            self.collection_is_completed = True
-
-    def remove_item(self, node, item_index, duration=0):
-        node_pending = self.node2pending[node]
-        node_pending.remove(item_index)
-        # pre-load items-to-test if the node may become ready
-        self.log.debug('node2pending: %r' % node_pending)
-
-        if self.pending:
-            if duration >= 0.1 and node_pending:
-                # seems the node is doing long-running tests
-                # so let's rather wait with sending new items
-                return
-
-        self.log.info("num items waiting for node: %d", len(self.pending))
-
-    def remove_node(self, node):
-        pending = self.node2pending.pop(node)
-        if not pending:
-            return
-        # the node must have crashed on the item if there are pending ones
-        crashitem = self.collection[pending.pop(0)]
-        self.pending.extend(pending)
-        return crashitem
-
-    def init_distribute(self):
-        assert self.collection_is_completed
-        # XXX allow nodes to have different collections
-        node_collection_items = list(self.node2collection.items())
-        first_node, col = node_collection_items[0]
-        for node, collection in node_collection_items[1:]:
-            report_collection_diff(
-                col,
-                collection,
-                first_node.gateway.id,
-                node.gateway.id,
-            )
-
-        self.collection = col
-        self.pending[:] = range(len(col))
-        if not col:
-            return
-
-        for node in self.node2pending:
-            self.send_tests(node)
-
-    # f = open("/tmp/sent", "w")
-    def send_tests(self, node):
-        if self.module_testindex_gen is None:
-            self.module_testindex_gen = self._modscope_item_generator(self.pending, self.collection)
+        """
+        # Build master collection for diffing with slaves
+        for item in self.session.items:
+            self.collection[item.nodeid] = item
 
         try:
-            test_indices = self.module_testindex_gen.next()
-            node.send_runtest_some(test_indices)
-            del self.pending[:len(test_indices)]
-            self.node2pending[node].extend(test_indices)
-            self.log.debug('left to send: %d tests' % len(self.pending))
-        except StopIteration:
-            self.log.debug('ran out of tests!')
+            slave_collections = []
 
-    def _modscope_item_generator(self, indices, collection):
-        # Make local copies on instantiation
-        indices = list(indices)
-        collection = list(collection)
+            # stash this so we don't calculate it every iteration
+            # it's only need it for collection diffing
+            num_slaves = len(self.slaves)
+            self.terminal.rewrite("Waiting for slave collections", red=True)
+
+            while True:
+                if not self.slaves:
+                    # All slaves are killed or errored, we're done with tests
+                    self.session_finished = True
+                    break
+
+                slaveid, event_data, event_name = self.recv(
+                    'collectionfinish',
+                    'need_tests',
+                    'runtest_logreport',
+                    'runtest_logstart',
+                    'sessionfinish'
+                )
+
+                if event_name == 'collectionfinish':
+                    slave_collections.append(event_data['node_ids'])
+                    self.terminal.rewrite(
+                        "Received %d collections from slaves" % len(slave_collections), yellow=True)
+                    # Don't ack here, leave the slaves blocking on recv
+                    # after sending collectionfinish, then sync up when all collections are diffed
+                elif event_name == 'need_tests':
+                    self.send_tests(slaveid)
+                elif event_name == 'runtest_logstart':
+                    self.ack(slaveid, event_name)
+                    self.trdist.runtest_logstart(slaveid,
+                        event_data['nodeid'], event_data['location'])
+                elif event_name == 'runtest_logreport':
+                    self.ack(slaveid, event_name)
+                    report = unserialize_report(event_data['report'])
+                    self.trdist.runtest_logreport(slaveid, report)
+                elif event_name == 'sessionfinish':
+                    self.ack(slaveid, event_name)
+                    slave = self.slaves.pop(slaveid)
+                    slave.wait()
+
+                # wait for all slave collections to arrive, then diff collections and ack
+                if slave_collections is not None:
+                    if len(slave_collections) != num_slaves:
+                        continue
+
+                    # Turn off the terminal reporter to suppress the builtin logstart printing
+                    try:
+                        self.config.pluginmanager.unregister(self.terminal)
+                    except ValueError:
+                        # plugin already disabled
+                        pass
+
+                    # compare slave collections to the master, all test ids must be the same
+                    self.terminal.rewrite("Received all collections from slaves", green=True)
+                    self.log.debug('diffing slave collections')
+                    for slave_collection in slave_collections:
+                        report_collection_diff(self.collection.keys(), slave_collection, slaveid)
+
+                    # Clear slave collections
+                    slave_collections = None
+
+                    # let the slaves continue
+                    for slave in self.slaves:
+                        self.ack(slave, event_name)
+
+                    self.print_message('Distributing %d tests across %d slaves'
+                        % (len(self.collection), num_slaves))
+                    self.log.info('starting master test distribution')
+        except Exception as ex:
+            self.log.error('Exception in runtest loop:')
+            self.log.exception(ex)
+            raise
+        finally:
+            # Restore the terminal reporter for exit hooks
+            self.config.pluginmanager.register(self.terminal, 'terminalreporter')
+
+        # Suppress other runtestloop calls
+        return True
+
+    def _test_item_generator(self):
+        for tests in self._modscope_item_generator():
+            yield tests
+
+    def _modscope_item_generator(self):
+        # breaks out tests by module, can work just about any way we want
+        # as long as it yields lists of tests id from the master collection
         sent_tests = 0
-        module_indices_cache = []
-        for i in indices:
-            # collection is a list of nodeids
+        module_items_cache = []
+        collection_ids = self.collection.keys()
+        collection_len = len(collection_ids)
+        for i, item_id in enumerate(collection_ids):
             # everything before the first '::' is the module fspath
-            i_fspath = collection[i].split('::')[0]
+            i_fspath = item_id.split('::')[0]
             try:
-                ni_fspath = collection[i + 1].split('::')[0]
+                nextitem_id = collection_ids[i + 1]
+                ni_fspath = nextitem_id.split('::')[0]
             except IndexError:
-                # collection[i+1] didn't exist, this is the last test item
-                ni_fspath = None
+                nextitem_id = ni_fspath = None
 
-            module_indices_cache.append(i)
+            module_items_cache.append(item_id)
             if i_fspath == ni_fspath:
                 # This item and the next item are in the same module
                 # loop to the next item
@@ -336,276 +344,134 @@ class ModscopeScheduling(object):
             else:
                 # This item and the next item are in different modules,
                 # yield the indices if any items were generated
-                cache_len = len(module_indices_cache)
-                if cache_len > 0:
-                    sent_tests += cache_len
-                    self.log.info('sending %d tests for module %s, %d tests remaining to send' %
-                        (cache_len, i_fspath, len(collection) - sent_tests))
-                    yield module_indices_cache
+                if not module_items_cache:
+                    continue
 
-                    # Then clear the cache in-place
-                    module_indices_cache[:] = []
+                for tests in self._modscope_id_splitter(module_items_cache):
+                    tests_len = len(tests)
+                    sent_tests += tests_len
+                    self.log.info('%d tests remaining to send'
+                        % (collection_len - sent_tests))
+                    yield tests
+
+                # Then clear the cache in-place
+                module_items_cache[:] = []
+
+    def _modscope_id_splitter(self, module_items):
+        # given a list of item ids from one test module, break up tests into groups with the same id
+        parametrized_ids = defaultdict(list)
+        for item in module_items:
+            try:
+                # split on the leftmost bracket, then strip everything after the rightmight bracket
+                # so 'test_module.py::test_name[parametrized_id]' becomes 'parametrized_id'
+                parametrized_id = item.split('[')[1].rsplit(']')[0]
+            except IndexError:
+                # splits failed, item has no parametrized id
+                parametrized_id = None
+            parametrized_ids[parametrized_id].append(item)
+
+        for id, tests in parametrized_ids.items():
+            if id is None:
+                id = 'no params'
+            self.log.info('sent tests with param %s %r' % (id, tests))
+            yield tests
 
 
-def report_collection_diff(from_collection, to_collection, from_id, to_id):
-    """Report the collected test difference between two nodes.
+def report_collection_diff(from_collection, to_collection, slaveid):
+    """Report differences, if any exist, between master and slave collections
 
-    :returns: True if collections are equal.
+    Raises RuntimeError if collections differ
 
-    :raises: AssertionError with a detailed error message describing the
-             difference between the collections.
+    Note:
+
+        This function will sort functions before comparing them.
 
     """
+    from_collection, to_collection = sorted(from_collection), sorted(to_collection)
     if from_collection == to_collection:
+        # Well, that was easy.
         return True
 
+    # diff the two, so we get some idea of what's wrong
     diff = difflib.unified_diff(
         from_collection,
         to_collection,
-        fromfile=from_id,
-        tofile=to_id,
+        fromfile='master',
+        tofile=slaveid,
     )
-    error_message = py.builtin._totext(
-        'Different tests were collected between {from_id} and {to_id}. '
-        'The difference is:\n'
-        '{diff}'
-    ).format(from_id=from_id, to_id=to_id, diff='\n'.join(diff))
-    msg = "\n".join([x.rstrip() for x in error_message.split("\n")])
-    raise AssertionError(msg)
+    # diff is a line generator, stringify it
+    diff = '\n'.join([line.rstrip() for line in diff])
+    err = '{slaveid} has a different collection than the master\n{diff}'.format(
+        slaveid=slaveid, diff=diff)
+    raise RuntimeError(err)
 
 
 class TerminalDistReporter(object):
-    def __init__(self, config):
+    """Terminal Reporter for Distributed Testing
+
+    trdist reporter exists to make sure we get good distributed logging during the runtest loop,
+    which means the normal terminal reporter should be disabled during the loop
+
+    This class is where we make sure the terminal reporter is made aware of whatever state it
+    needs to report properly once we turn it back on after the runtest loop
+
+    It has special versions of pytest reporting hooks that, where possible, try to include a
+    slave ID. These hooks are called in :py:class:`ParallelSession`'s runtestloop hook.
+
+    """
+    def __init__(self, config, terminal):
         self.config = config
-        self.tr = reporter(config)
-        self._status = {}
-        self._lastlen = 0
+        self.tr = terminal
+        self.outcomes = {}
 
-    def write_line(self, msg):
-        self.tr.write_line(msg)
+    def runtest_logstart(self, slaveid, nodeid, location):
+        test = self.tr._locationline(str(location[0]), *location)
+        prefix = '(%s) %s' % (slaveid, test)
+        self.tr.write_ensure_prefix(prefix, 'running', blue=True)
+        self.config.hook.pytest_runtest_logstart(nodeid=nodeid, location=location)
 
-    def ensure_show_status(self):
-        if not self.tr.hasmarkup:
-            self.write_line(self.getstatus())
+    def runtest_logreport(self, slaveid, report):
+        # Run all the normal logreport hooks
+        self.config.hook.pytest_runtest_logreport(report=report)
 
-    def setstatus(self, spec, status, show=True):
-        self._status[spec.id] = status
-        if show and self.tr.hasmarkup:
-            self.rewrite(self.getstatus())
+        # Now do what the terminal reporter would normally do, but include parallelizer info
+        outcome, letter, word = self.config.hook.pytest_report_teststatus(report=report)
+        # Stash stats on the terminal reporter so it reports properly
+        # after it's reenabled at the end of runtestloop
+        self.tr.stats.setdefault(outcome, []).append(report)
+        test = self.tr._locationline(str(report.location[0]), *report.location)
 
-    def getstatus(self):
-        parts = ["%s %s" % (spec.id, self._status[spec.id]) for spec in self._specs]
-        return " / ".join(parts)
-
-    def rewrite(self, line, newline=False):
-        pline = line + " " * max(self._lastlen - len(line), 0)
-        if newline:
-            self._lastlen = 0
-            pline += "\n"
-        else:
-            self._lastlen = len(line)
-        self.tr.rewrite(pline, bold=True)
-
-    def setupnodes(self, specs):
-        self._specs = specs
-        for spec in specs:
-            self.setstatus(spec, "I", show=False)
-        self.setstatus(spec, "I", show=True)
-        self.ensure_show_status()
-
-    def newgateway(self, gateway):
-        if self.config.option.verbose > 0:
-            rinfo = gateway._rinfo()
-            version = "%s.%s.%s" % rinfo.version_info[:3]
-            self.rewrite("[%s] %s Python %s cwd: %s" % (
-                gateway.id, rinfo.platform, version, rinfo.cwd),
-                newline=True)
-        self.setstatus(gateway.spec, "C")
-
-    def testnodeready(self, node):
-        if self.config.option.verbose > 0:
-            d = node.slaveinfo
-            infoline = "[%s] Python %s" % (
-                d['id'],
-                d['version'].replace('\n', ' -- ')
-            )
-            self.rewrite(infoline, newline=True)
-        self.setstatus(node.gateway.spec, "ok")
-
-    def testnodedown(self, node, error):
-        if not error:
-            return
-        self.write_line("[%s] node down: %s" % (node.gateway.id, error))
-
-    def nodemessage(self, node, message):
-        self.write_line("[%s] %s" % (node.gateway.id, message))
-
-
-class NodeManager(object):
-    EXIT_TIMEOUT = 10
-
-    def __init__(self, config, specs=None, defaultchdir="pyexecnetcache"):
-        self.config = config
-        self._nodesready = py.std.threading.Event()
-        self.trace = self.config.trace.get("nodemanager")
-        self.log = create_sublogger('nodeman')
-        self.group = execnet.Group()
-        self.specs = self._getxspecs()
-        for spec in self.specs:
-            self.group.allocate_id(spec)
-
-    def makegateways(self):
-        assert not list(self.group)
-        trdist = self.config.pluginmanager.getplugin("terminaldistreporter")
-        trdist.setupnodes(self.specs)
-        for spec in self.specs:
-            gw = self.group.makegateway(spec)
-            trdist.newgateway(gw)
-
-    def setup_nodes(self, putevent):
-        self.makegateways()
-        self.trace("setting up nodes")
-        for i, gateway in enumerate(self.group):
-            base_url = self.config.option.appliances[i]
-            node = SlaveController(self, gateway, self.config, putevent, base_url)
-            gateway.node = node  # to keep node alive
-            node.setup()
-            self.trace("started node %r" % node)
-
-    def teardown_nodes(self):
-        self.group.terminate(self.EXIT_TIMEOUT)
-
-    def _getxspecs(self):
-        appliances = self.config.option.appliances
-        numprocesses = len(appliances)
-        gateway_spec = 'popen//dont_write_bytecode'
-        if numprocesses > 1:
-            return [execnet.XSpec(spec) for spec in [gateway_spec] * numprocesses]
-        else:
-            if appliances:
-                self.log.warning('')
-            return []
-
-
-class SlaveController(object):
-    ENDMARK = -1
-
-    def __init__(self, nodemanager, gateway, config, putevent, base_url=None):
-        self.nodemanager = nodemanager
-        self.putevent = putevent
-        self.gateway = gateway
-        self.config = config
-        self.slaveinput = {'slaveid': gateway.id, 'base_url': base_url}
-        self.log = create_sublogger('cmd-%s' % gateway.id)
-        self._down = False
-
-    def __repr__(self):
-        return "<%s %s>" % (self.__class__.__name__, self.gateway.id)
-
-    def setup(self):
-        from fixtures.parallelizer import remote
-
-        self.log.info("setting up slave session")
-        spec = self.gateway.spec
-        args = self.config.args
-        option_dict = vars(self.config.option)
-        if spec.popen:
-            name = "popen-%s" % self.gateway.id
-            basetemp = self.config._tmpdirhandler.getbasetemp()
-            option_dict['basetemp'] = str(basetemp.join(name))
-        self.channel = self.gateway.remote_exec(remote)
-        self.channel.send((self.slaveinput, args, option_dict))
-        if self.putevent:
-            self.channel.setcallback(self.process_from_remote,
-                endmarker=self.ENDMARK)
-
-    def ensure_teardown(self):
-        if hasattr(self, 'channel'):
-            if not self.channel.isclosed():
-                self.log.info("closing", self.channel)
-                self.channel.close()
-            # del self.channel
-        if hasattr(self, 'gateway'):
-            self.log.info("exiting", self.gateway)
-            self.gateway.exit()
-            # del self.gateway
-
-    def send_runtest_some(self, indices):
-        self.sendcommand("runtests", indices=indices)
-
-    def send_runtest_all(self):
-        self.sendcommand("runtests_all")
-
-    def shutdown(self):
-        if not self._down:
-            try:
-                self.sendcommand("shutdown")
-            except IOError:
-                pass
-
-    def sendcommand(self, name, **kwargs):
-        """ send a named parametrized command to the other side. """
-        self.log.debug("sending command %s(**%s)" % (name, kwargs))
-        self.channel.send((name, kwargs))
-
-    def notify_inproc(self, eventname, **kwargs):
-        self.log.debug("queuing %s(**%s)" % (eventname, kwargs))
-        self.putevent((eventname, kwargs))
-
-    def process_from_remote(self, eventcall):
-        """ this gets called for each object we receive from
-            the other side and if the channel closes.
-
-            Note that channel callbacks run in the receiver
-            thread of execnet gateways - we need to
-            avoid raising exceptions or doing heavy work.
-        """
+        prefix = '(%s) %s' % (slaveid, test)
         try:
-            if eventcall == self.ENDMARK:
-                err = self.channel._getremoteerror()
-                if not self._down:
-                    if not err or isinstance(err, EOFError):
-                        # lost connection?
-                        err = "Not properly terminated"
-                    self.notify_inproc("errordown", node=self, error=err)
-                    self._down = True
-                return
-            eventname, kwargs = eventcall
-            if eventname in ("collectionstart"):
-                self.log.debug("ignoring %s(%s)" % (eventname, kwargs))
-            elif eventname == "slaveready":
-                self.notify_inproc(eventname, node=self, **kwargs)
-            elif eventname == "slavefinished":
-                self._down = True
-                self.slaveoutput = kwargs['slaveoutput']
-                self.notify_inproc("slavefinished", node=self)
-            elif eventname == "logstart":
-                self.notify_inproc(eventname, node=self, **kwargs)
-            elif eventname in ("testreport", "collectreport", "teardownreport"):
-                item_index = kwargs.pop("item_index", None)
-                rep = unserialize_report(eventname, kwargs['data'])
-                if item_index is not None:
-                    rep.item_index = item_index
-                self.notify_inproc(eventname, node=self, rep=rep)
-            elif eventname == "collectionfinish":
-                self.notify_inproc(eventname, node=self, ids=kwargs['ids'])
-            elif eventname == "needs_tests":
-                self.notify_inproc(eventname, node=self)
-            elif eventname == "message":
-                self.notify_inproc(eventname, node=self, message=kwargs['message'])
-            else:
-                raise ValueError("unknown event: %s" % eventname)
-        except KeyboardInterrupt:
-            # should not land in receiver-thread
-            raise
-        except:
-            excinfo = py.code.ExceptionInfo()
-            py.builtin.print_("!" * 20, excinfo)
-            self.config.pluginmanager.notify_exception(excinfo)
+            # for some reason, pytest_report_teststatus returns a word, markup tuple
+            # when the word would be 'XPASS', so unpack it here if that's the case
+            word, markup = word
+        except (TypeError, ValueError):
+            # word wasn't iterable or didn't have enough values, use it as-is
+            pass
+
+        if word in ('PASSED', 'xfail'):
+            markup = {'green': True}
+        elif word in ('ERROR', 'FAILED', 'XPASS'):
+            markup = {'red': True}
+        elif word:
+            markup = {'yellow': True}
+
+        # For every stage where we can report the outcome, stash it in the outcomes dict
+        if word:
+            self.outcomes[test] = Outcome(word, markup)
+
+        # Then, when we get to the teardown report, print the last outcome
+        # This prevents reportings a test as 'PASSED' if its teardown phase fails, for example
+        if report.when == 'teardown':
+            word, markup = self.outcomes.pop(test)
+            self.tr.write_ensure_prefix(prefix, word, **markup)
+
+Outcome = namedtuple('Outcome', ['word', 'markup'])
 
 
-def unserialize_report(name, reportdict):
-    if name == "testreport":
-        return runner.TestReport(**reportdict)
-    elif name == "collectreport":
-        return runner.CollectReport(**reportdict)
+def unserialize_report(reportdict):
+    """
+    Generate a :py:class:`TestReport <pytest:_pytest.runner.TestReport>` from a serialized report
+    """
+    return runner.TestReport(**reportdict)

@@ -125,6 +125,15 @@ class Config(dict):
         global _runtime
         _runtime = ConfigTree()
 
+    def save(self, key):
+        """Write out an in-memory config to the conf dir
+
+        Warning: This will destroy any formatting or ordering that existed in the original yaml
+
+        """
+        conf_file = conf_path.join('%s.yaml' % key).open('w')
+        yaml.dump(getattr(self, key), conf_file, default_flow_style=False)
+
     runtime = property(_runtime_overrides, _set_runtime_overrides, _del_runtime_overrides)
 
     # Support for descriptor access, e.g. instance.attrname
@@ -229,7 +238,9 @@ def load_yaml(filename=None, warn_on_fail=True):
 
     if path.check():
         with path.open() as config_fh:
-            return yaml.load(config_fh, Loader=YamlConfigLoader)
+            conf = yaml.load(config_fh, Loader=YamlConfigLoader)
+            if isinstance(conf, dict):
+                return conf
 
     if warn_on_fail:
         msg = 'Unable to load configuration file at %s' % path
