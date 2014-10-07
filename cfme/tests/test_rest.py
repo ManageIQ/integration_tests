@@ -47,7 +47,7 @@ def provision_data(provider_crud, provider_key, provider_data, small_template):
 
 
 @pytest.mark.fixtureconf(server_roles="+automate")
-@pytest.mark.usefixtures("setup_infrastructure_providers", "server_roles")
+@pytest.mark.usefixtures("setup_provider", "server_roles")
 def test_provision(request, provision_data, provider_mgmt):
     vm_name = provision_data["vm_fields"]["vm_name"]
     request.addfinalizer(

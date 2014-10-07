@@ -13,8 +13,9 @@ def api():
     url = env["base_url"]
     creds = credentials["default"]["username"], credentials["default"]["password"]
     session = Session()
+    session.auth = creds
     session.verify = False
-    return slumber.API("{}/api".format(url), auth=creds, session=session)
+    return slumber.API("{}/api".format(url.rstrip('/')), session=session)
 
 
 def _result_processor(result):
