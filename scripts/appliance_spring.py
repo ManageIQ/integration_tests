@@ -48,7 +48,7 @@ class Queue(pretty.Pretty):
                 if self.shutdown_flag:
                     self.shutdown()
                     break
-                wait_for_space()
+                self.wait_for_space()
                 print("Deploying {}".format(vmdef))
                 vmdef.deploy()
         threading.Thread(target=manage).start()
@@ -65,19 +65,16 @@ class Vm(pretty.Pretty):
         self.name = name
         self.queue = queue
 
-    def deploy():
+    def deploy(self):
         self.queue.provider.deploy_template(self.queue.template_name,
                                             vm_name=self.name)
 
-    def delete():
+    def delete(self):
         self.queue.provider.delete_vm(self.name)
 
 
 def init():
     conf.clear()
-
-
-
 
 # TODO just keep one copy of the last vm list for all threads,
 # to avoid hammering the providers with refreshes
