@@ -113,7 +113,7 @@ def is_error(message):
     Args:
         message: The message object.
     """
-    return any([lev in message.level for lev in {"error"}])
+    return message.level in ('error',)
 
 
 def assert_no_errors(messages=None):
@@ -121,9 +121,9 @@ def assert_no_errors(messages=None):
     are passed in, they will be retrieved from the UI."""
 
     all_messages = messages or get_messages()
-    errors = filter(is_error, all_messages)
+    errors = [error.message for error in filter(is_error, all_messages)]
     if errors:
-        raise Exception(errors)
+        raise Exception(', '.join(errors))
     else:
         return all_messages
 
