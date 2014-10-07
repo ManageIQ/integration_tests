@@ -55,7 +55,12 @@ pytest_generate_tests = testgen.generate(
     scope="module"
 )
 
-pytestmark = [pytest.mark.long_running]
+pytestmark = [
+    pytest.mark.long_running,
+    pytest.mark.bugzilla(1149128, unskip={
+        1149128: lambda provider_mgmt: not isinstance(provider_mgmt, mgmt_system.SCVMMSystem)
+    })
+]
 
 
 def get_vm_object(vm_name):
