@@ -176,10 +176,12 @@ def setup_provider(provider_key, validate=True, check_existing=True):
 
     provider = get_from_config(provider_key)
     if check_existing and provider.exists:
-        return provider
-
-    logger.info('Setting up provider: %s' % provider.key)
-    provider.create(validate_credentials=True)
+        # no need to create provider if the provider exists
+        # pass so we don't skip the validate step
+        pass
+    else:
+        logger.info('Setting up provider: %s' % provider.key)
+        provider.create(validate_credentials=True)
 
     if validate:
         provider.validate()
