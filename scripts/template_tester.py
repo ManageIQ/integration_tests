@@ -49,8 +49,10 @@ def latest(api, stream, provider_key=None):
 
 
 def export(**env_vars):
+    print "# to import these into your bash environment:"
+    print "#  eval $(%s)" % ' '.join(sys.argv)
     for varname, value in env_vars.items():
-        print 'export %s=%s' % (varname, value)
+        print 'export %s="%s"' % (varname, value)
 
 
 def mark(api, provider_key, template, usable):
