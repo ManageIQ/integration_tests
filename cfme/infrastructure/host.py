@@ -385,6 +385,12 @@ class Host(Updateable, Pretty):
             return False
         return True
 
+    def refresh_host_relationships(self):
+        """Clicks on Refresh relationships button in host detail page"""
+        sel.force_navigate('infrastructure_hosts', context={'host': self})
+        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
+        sel.handle_alert(cancel=False)
+
 
 @fill.method((Form, Host.Credential))
 def _fill_credential(form, cred, validate=None):

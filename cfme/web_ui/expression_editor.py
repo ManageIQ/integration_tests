@@ -176,8 +176,8 @@ count_form = web_ui.Form(
 tag_form = web_ui.Form(
     fields=[
         ("type", web_ui.Select("//select[@id='chosen_typ']")),
-        ("count", web_ui.Select("//select[@id='chosen_tag']")),
-        ("value", "//*[@id='chosen_value']"),
+        ("tag", web_ui.Select("//select[@id='chosen_tag']")),
+        ("value", web_ui.Select("//*[@id='chosen_value']")),
         ("user_input", "//input[@id='user_input']"),
     ]
 )
