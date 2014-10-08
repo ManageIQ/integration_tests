@@ -984,12 +984,16 @@ def fill(loc, content):
     return prev_state
 
 
-@fill.method((basestring, object))
-@fill.method((tuple, object))
+@fill.method((basestring, Anything))
+@fill.method((tuple, Anything))
 def _fill_translate_str(s, o, **kwargs):
     """This allows you to specify just a locator for fill"""
     logger.debug('  Resolving {} to WebElement for filling value {}'.format(str(s), repr(str(o))))
     fill(sel.element(s), o, **kwargs)
+
+
+fill.prefer((object, types.NoneType), (basestring, Anything))
+fill.prefer((object, types.NoneType), (tuple, Anything))
 
 
 @fill.method((Table, Mapping))
