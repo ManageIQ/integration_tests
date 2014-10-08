@@ -133,19 +133,21 @@ class ParallelSession(object):
             else:
                 return slaveid, event_data, event_name
 
-    def print_message(self, message, prefix='master'):
+    def print_message(self, message, prefix='master', **markup):
         """Print a message from a node to the py.test console
 
         Args:
             slaveid: Can be a slaveid or any string, e.g. ``'master'`` is also useful here.
             message: The message to print
+            **markup: If set, overrides the default markup when printing the message
 
         """
-        # differentiate master and slave messages
-        if prefix == 'master':
-            markup = {'blue': True}
-        else:
-            markup = {'cyan': True}
+        # differentiate master and slave messages by default
+        if not markup:
+            if prefix == 'master':
+                markup = {'blue': True}
+            else:
+                markup = {'cyan': True}
         self.terminal.write_ensure_prefix('(%s) ' % prefix, message, **markup)
 
     def ack(self, slaveid, event_name):
@@ -236,13 +238,18 @@ class ParallelSession(object):
 
         try:
             slave_collections = []
-
-            # stash this so we don't calculate it every iteration
-            # it's only need it for collection diffing
-            num_slaves = len(self.slaves)
             self.terminal.rewrite("Waiting for slave collections", red=True)
 
             while True:
+                # Clean up dead slaves
+                for slaveid, slave in self.slaves.items():
+                    returncode = slave.poll()
+                    if returncode is not None and returncode != 0:
+                        self.print_message('slave terminated unexpectedly', slaveid, red=True)
+                        raise Exception('{} terminated unexpectedly with status {}'.format(
+                            slaveid, returncode)
+                        )
+
                 if not self.slaves:
                     # All slaves are killed or errored, we're done with tests
                     self.session_finished = True
@@ -279,6 +286,7 @@ class ParallelSession(object):
 
                 # wait for all slave collections to arrive, then diff collections and ack
                 if slave_collections is not None:
+                    num_slaves = len(self.slaves)
                     if len(slave_collections) != num_slaves:
                         continue
 
