@@ -154,7 +154,7 @@ def vm_reaper():
     """
     tasks = tapi.task().get(cleanup=False)['objects']
     for task in tasks:
-        if task['result'] == "failed" or task['result'] == "passed":
+        if task['result'] in ["failed", "passed", "invalid"]:
             vm_cleanup = False
             docker_cleanup = False
             if task['provider'] and task['vm_name']:
