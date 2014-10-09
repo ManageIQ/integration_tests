@@ -120,6 +120,8 @@ def run_tasks():
                     raise Exception('No template for stream')
                 template = template_obj['latest_template']
                 vm_name = 'dkb-{}'.format(task['tid'])
+                tapi.task(task['tid']).put({'result': 'running', 'vm_name': vm_name,
+                                            'provider': provider, 'template': template})
 
                 # Create a dockerbot instance and run the PR test
                 dockerbot.DockerBot(auto_gen_test=True,
