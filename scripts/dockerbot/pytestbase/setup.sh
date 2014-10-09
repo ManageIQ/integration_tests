@@ -58,6 +58,35 @@ EOF
 export PYTHONPATH=$CFME_REPO_DIR
 cd $CFME_REPO_DIR
 
+# Set some basic git configs so git doesn't complain
+git config --global user.email "me@dockerbot"
+git config --global user.name "DockerBot"
+
+# Get the GPG-Keys
+# It's not a mistake to run this twice ;)
+/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1
+
+# die on errors
+set -e
+/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1
+
+# If we are given a PR number, then checkout and merge the PR, if not then just check out the branch
+# note that we DO NOT merge.
+if [ -n "$CFME_PR" ]; then
+    echo "Checking out PR $CFME_PR" >> $ARTIFACTOR_DIR/setup.txt
+    git fetch origin refs/pull/$CFME_PR/head:refs/remotes/origin/pr/$CFME_PR;
+    /verify_commit.py origin/pr/$CFME_PR >> $ARTIFACTOR_DIR/setup.txt 2>&1
+    git fetch origin master; git checkout origin/master; git merge --no-ff --no-edit origin/pr/$CFME_PR >> $ARTIFACTOR_DIR/setup.txt 2>&1
+else
+    echo "Checking out branch $BRANCH" >> $ARTIFACTOR_DIR/setup.txt
+    git checkout -f $BRANCH >> $ARTIFACTOR_DIR/setup.txt 2>&1
+fi
+
+# If specified, update PIP
+if [ -n "$UPDATE_PIP" ]; then
+    pip install -Ur $CFME_REPO_DIR/requirements.txt >> $ARTIFACTOR_DIR/setup.txt 2>&1
+fi
+
 # If asked, provision the appliance, and update the APPLIANCE variable
 if [ -n "$PROVIDER" ]; then
     echo "Provisioning appliance..." >> $ARTIFACTOR_DIR/setup.txt
@@ -106,35 +135,6 @@ trackerbot:
 EOF
 
 cat $CFME_REPO_DIR/conf/env.local.yaml >> $ARTIFACTOR_DIR/setup.txt
-
-# Set some basic git configs so git doesn't complain
-git config --global user.email "me@dockerbot"
-git config --global user.name "DockerBot"
-
-# Get the GPG-Keys
-# It's not a mistake to run this twice ;)
-/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1
-
-# die on errors
-set -e
-/get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1
-
-# If we are given a PR number, then checkout and merge the PR, if not then just check out the branch
-# note that we DO NOT merge.
-if [ -n "$CFME_PR" ]; then
-    echo "Checking out PR $CFME_PR" >> $ARTIFACTOR_DIR/setup.txt
-    git fetch origin refs/pull/$CFME_PR/head:refs/remotes/origin/pr/$CFME_PR;
-    /verify_commit.py origin/pr/$CFME_PR >> $ARTIFACTOR_DIR/setup.txt 2>&1
-    git fetch origin master; git checkout origin/master; git merge --no-ff --no-edit origin/pr/$CFME_PR >> $ARTIFACTOR_DIR/setup.txt 2>&1
-else
-    echo "Checking out branch $BRANCH" >> $ARTIFACTOR_DIR/setup.txt
-    git checkout -f $BRANCH >> $ARTIFACTOR_DIR/setup.txt 2>&1
-fi
-
-# If specified, update PIP
-if [ -n "$UPDATE_PIP" ]; then
-    pip install -Ur $CFME_REPO_DIR/requirements.txt >> $ARTIFACTOR_DIR/setup.txt 2>&1
-fi
 
 # Finally, run the py.test
 echo "$PYTEST" >> $ARTIFACTOR_DIR/setup.txt
