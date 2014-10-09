@@ -136,6 +136,8 @@ EOF
 
 cat $CFME_REPO_DIR/conf/env.local.yaml >> $ARTIFACTOR_DIR/setup.txt
 
+set +e
+
 # Finally, run the py.test
 echo "$PYTEST" >> $ARTIFACTOR_DIR/setup.txt
 eval $PYTEST >> $ARTIFACTOR_DIR/setup.txt 2>&1
