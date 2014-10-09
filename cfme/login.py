@@ -64,6 +64,7 @@ def _click_on_login():
 
 
 def logged_in():
+    sel.wait_for_ajax()  # This is called almost everywhere, protects from spinner
     return sel.is_displayed(dashboard.page.user_dropdown)
 
 

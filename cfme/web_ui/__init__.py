@@ -984,18 +984,6 @@ def fill(loc, content):
     return prev_state
 
 
-@fill.method((basestring, Anything))
-@fill.method((tuple, Anything))
-def _fill_translate_str(s, o, **kwargs):
-    """This allows you to specify just a locator for fill"""
-    logger.debug('  Resolving {} to WebElement for filling value {}'.format(str(s), repr(str(o))))
-    fill(sel.element(s), o, **kwargs)
-
-
-fill.prefer((object, types.NoneType), (basestring, Anything))
-fill.prefer((object, types.NoneType), (tuple, Anything))
-
-
 @fill.method((Table, Mapping))
 def _sd_fill_table(table, cells):
     """ How to fill a table with a value (by selecting the value as cells in the table)
