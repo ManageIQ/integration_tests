@@ -6,7 +6,7 @@ import dockerbot
 import json
 import requests
 from utils.conf import docker as docker_conf
-from utils.appliance import provision_appliance, Appliance
+from utils.appliance import Appliance
 from utils.randomness import generate_random_string
 from utils.trackerbot import api
 from slumber.exceptions import HttpClientError
@@ -119,24 +119,21 @@ def run_tasks():
                 else:
                     raise Exception('No template for stream')
                 template = template_obj['latest_template']
-                tapi.task(task['tid']).put({'result': 'provisioning', 'provider': provider,
-                                            'template': template})
-                appliance = provision_appliance(template=template, provider_name=provider,
-                                                vm_name='dkb-{}'.format(task['tid']))
-                appliance.configure()
-                address = appliance.address
+                vm_name = 'dkb-{}'.format(task['tid'])
 
-                tapi.task(task['tid']).put({'result': 'running', 'vm_name': appliance.vm_name})
                 # Create a dockerbot instance and run the PR test
-                dockerbot.DockerBot(appliance='https://{}/'.format(address),
-                                    auto_gen_test=True,
+                dockerbot.DockerBot(auto_gen_test=True,
                                     use_wharf=True,
                                     prtester=True,
                                     test_id=task['tid'],
                                     nowait=True,
-                                    pr=task['pr_number'])
+                                    pr=task['pr_number'],
+                                    provision_provider=provider,
+                                    provision_template=template,
+                                    provision_vm_name=vm_name,
+                                    provision_appliance=True)
                 cont_count += 1
-                tapi.task(task['tid']).put({'result': 'running', 'vm_name': appliance.vm_name})
+                tapi.task(task['tid']).put({'result': 'running', 'vm_name': vm_name})
             except Exception:
                 output = traceback.format_exc()
                 tapi.task(task['tid']).put({'result': 'failed', 'output': output})
