@@ -294,8 +294,8 @@ class DockerBot(object):
         if self.args['auto_gen_test'] and self.args['pr']:
             files = self.find_files_by_pr(self.args['pr'])
             if files:
-                self.args['pytest'] = "py.test {} --use-provider default". \
-                                      format(" ".join(files))
+                self.args['pytest'] = ("py.test {} --use-provider default --long-running "
+                                       "--bugzilla").format(" ".join(files))
             else:
                 self.args['pytest'] = "py.test --use-provider default -m smoke"
         if not self.args['capture']:
