@@ -1,5 +1,24 @@
-# die on errors
-set -e
+# Shutdown and destroy everything
+on_exit () {
+    echo "Beginning shutdown proc..." >> $ARTIFACTOR_DIR/setup.txt
+    echo $RES > $ARTIFACTOR_DIR/result.txt
+    if [ -n "$POST_TASK" ]; then
+	if [ $RES -eq 0 ]; then
+            OUT_RESULT="passed"
+	else
+            OUT_RESULT="failed"
+	fi
+	echo "Posting result..." >> $ARTIFACTOR_DIR/setup.txt
+	/post_result.py $POST_TASK $OUT_RESULT >> $ARTIFACTOR_DIR/setup.txt 2>&1
+	echo $? >> $ARTIFACTOR_DIR/setup.txt
+    fi
+    if [ -n "$PROVIDER" ]; then
+	echo "Destroying appliance..." >> $ARTIFACTOR_DIR/setup.txt
+	scripts/clone_template.py --provider $PROVIDER --vm_name $VM_NAME --destroy >> $ARTIFACTOR_DIR/setup.txt 2>&1
+    fi
+}
+
+trap on_exit EXIT
 
 # Download the credentials and the master branch of the cfme_tests repo
 GIT_SSL_NO_VERIFY=true git clone $CFME_CRED_REPO $CFME_CRED_REPO_DIR >> $ARTIFACTOR_DIR/setup.txt 2>&1
@@ -95,6 +114,9 @@ git config --global user.name "DockerBot"
 # Get the GPG-Keys
 # It's not a mistake to run this twice ;)
 /get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1
+
+# die on errors
+set -e
 /get_keys.py >> $ARTIFACTOR_DIR/setup.txt 2>&1
 
 # If we are given a PR number, then checkout and merge the PR, if not then just check out the branch
@@ -119,23 +141,4 @@ echo "$PYTEST" >> $ARTIFACTOR_DIR/setup.txt
 eval $PYTEST >> $ARTIFACTOR_DIR/setup.txt 2>&1
 RES=$?
 
-# Shutdown and destroy everything
-on_exit () {
-    echo $RES > $ARTIFACTOR_DIR/result.txt
-    if [ -n "$POST_TASK" ]; then
-	if [ $RES -eq 0 ]; then
-            OUT_RESULT="passed"
-	else
-            OUT_RESULT="failed"
-	fi
-	echo "Posting result..." >> $ARTIFACTOR_DIR/setup.txt
-	/post_result.py $POST_TASK $OUT_RESULT >> $ARTIFACTOR_DIR/setup.txt 2>&1
-	echo $? >> $ARTIFACTOR_DIR/setup.txt
-    fi
-    if [ -n "$PROVIDER" ]; then
-	echo "Destroying appliance..." >> $ARTIFACTOR_DIR/setup.txt
-	scripts/clone_template.py --provider $PROVIDER --vm_name $VM_NAME --destroy >> $ARTIFACTOR_DIR/setup.txt 2>&1
-    fi
-}
 
-trap on_exit EXIT
