@@ -83,9 +83,7 @@ def test_run_host_analysis(request, provider_key, host_type, host_name, register
     register_event(None, "host", host_name, ["host_analysis_request", "host_analysis_complete"])
 
     # Initiate analysis
-    sel.force_navigate('infrastructure_host', context={'host': test_host})
-    tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
-    sel.handle_alert()
+    test_host.run_smartstate_analysis()
     flash.assert_message_contain('"{}": Analysis successfully initiated'.format(host_name))
 
     # Wait for the task to finish

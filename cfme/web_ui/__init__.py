@@ -804,6 +804,20 @@ class CheckboxTable(Table):
         else:
             return False
 
+    def select_rows_by_indexes(self, *indexes):
+        """Select rows specified by row indexes (starting with 0)
+        """
+        for i, row in enumerate(self.rows()):
+            if i in indexes:
+                self._set_row_checkbox(row, True)
+
+    def deselect_rows_by_indexes(self, *indexes):
+        """Deselect rows specified by row indexes (starting with 0)
+        """
+        for i, row in enumerate(self.rows()):
+            if i in indexes:
+                self._set_row_checkbox(row, False)
+
     def select_row(self, header, value):
         """Select a single row specified by column header and cell value
 
@@ -2625,3 +2639,9 @@ class MultiFill(object):
 def _fill_multi_obj(mf, o):
     for field in mf.fields:
         fill(field, o)
+
+
+class DriftGrid(Pretty):
+    """ Class representing the table specific to host drift analysis comparison page
+    """
+    pass

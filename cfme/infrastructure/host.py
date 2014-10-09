@@ -18,7 +18,9 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import HostNotFound
-from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator
+from cfme.web_ui import (
+    Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, fill, form_buttons, paginator
+)
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui import listaccordion as list_acc
 from utils.ipmi import IPMI
@@ -302,6 +304,45 @@ class Host(Updateable, Pretty):
                     "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'storage/show')]"):
                 datastores.add(sel.get_attribute(title, "title"))
         return datastores
+
+    def run_smartstate_analysis(self):
+        """ Runs smartstate analysis on this host
+
+        Note:
+            The host must have valid credentials already set up for this to work.
+        """
+        sel.force_navigate('infrastructure_host', context={'host': self})
+        tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
+        sel.handle_alert()
+
+    def are_drift_results_equal(self, *indexes):
+        """ Compares drift analysis results
+
+        Args:
+            indexes: Indexes of results to compare starting with 0 for first row (latest result).
+                     Compares all available drifts, if left empty (default).
+
+        Note:
+            There have to be at least 2 drift results available for this to work.
+
+        Returns:
+            ``True`` if equal, ``False`` otherwise.
+        """
+        # mark by indexes or mark all
+        sel.force_navigate('infrastructure_host', context={'host': self})
+        list_acc.select('Relationships', 'Show host drift history')
+        drift_table_loc = "//table[@class='style3']"
+        drift_table = CheckboxTable(drift_table_loc)
+        if indexes:
+            drift_table.select_rows_by_indexes(*indexes)
+        else:
+            if len(list(drift_table.rows())) > 10:
+                drift_table.select_rows_by_indexes(*range(0, 10))
+            else:
+                drift_table.select_all()
+        tb.select("Select up to 10 timestamps for Drift Analysis")
+        # check if there is a change anywhere
+        # TODO need DriftGrid
 
 
 @fill.method((Form, Host.Credential))
