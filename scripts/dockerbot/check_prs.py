@@ -133,7 +133,8 @@ def run_tasks():
                                     provision_vm_name=vm_name,
                                     provision_appliance=True)
                 cont_count += 1
-                tapi.task(task['tid']).put({'result': 'running', 'vm_name': vm_name})
+                tapi.task(task['tid']).put({'result': 'running', 'vm_name': vm_name,
+                                            'provider': provider, 'template': template})
             except Exception:
                 output = traceback.format_exc()
                 tapi.task(task['tid']).put({'result': 'failed', 'output': output})
