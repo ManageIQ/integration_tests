@@ -27,6 +27,41 @@ from utils.version import LooseVersion, current_version
 from utils.wait import wait_for, TimedOutError
 
 
+class _PsphereClient(Client):
+    def get_search_filter_spec(self, *args, **kwargs):
+        # A datastore traversal spec is missing from this method in psphere.
+        # psav has opened a PR to add it, but until it gets merged we'll need to come behind
+        # psphere and add it in just like his PR does
+        # https://github.com/jkinred/psphere/pull/18/files
+        pfs = super(_PsphereClient, self).get_search_filter_spec(*args, **kwargs)
+        select_sets = pfs.objectSet[0].selectSet
+        missing_ss = 'datacenter_datastore_traversal_spec'
+        ss_names = [ss.name for ss in select_sets]
+
+        if missing_ss not in ss_names:
+            logger.info('Injecting %s into psphere search filter spec', missing_ss)
+            # pull out the folder traversal spec traversal specs
+            fts_ts = pfs.objectSet[0].selectSet[0]
+            # and get the select set from the traversal spec
+            fts_ss = fts_ts.selectSet[0]
+
+            # add ds selection spec to folder traversal spec
+            dsss = self.create('SelectionSpec', name=missing_ss)
+            fts_ts.selectSet.append(dsss)
+
+            # add ds traversal spec to search filter object set select spec
+            dsts = self.create('TraversalSpec')
+            dsts.name = 'datacenter_datastore_traversal_spec'
+            dsts.type = 'Datacenter'
+            dsts.path = 'datastoreFolder'
+            dsts.selectSet = [fts_ss]
+            select_sets.append(dsts)
+        else:
+            logger.warning('%s already in psphere search filer spec, not adding it', missing_ss)
+
+        return pfs
+
+
 class MgmtSystemAPIBase(object):
     """Base interface class for Management Systems
 
@@ -351,7 +386,7 @@ class VMWareSystem(MgmtSystemAPIBase):
     @property
     def api(self):
         if not self._api:
-            self._api = Client(self.hostname, self.username, self.password)
+            self._api = _PsphereClient(self.hostname, self.username, self.password)
         return self._api
 
     @property
@@ -471,7 +506,7 @@ class VMWareSystem(MgmtSystemAPIBase):
             # content. So we just pull the value straight out of the cache.
             vm_props = {p.name: p.val for p in object_content.propSet}
 
-            if vm_props['config.template'] == get_template:
+            if vm_props.get('config.template') == get_template:
                 obj_list.append(vm_props['name'])
         return obj_list
 
