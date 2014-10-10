@@ -344,9 +344,15 @@ class VMWareSystem(MgmtSystemAPIBase):
         self.hostname = hostname
         self.username = username
         self.password = password
-        self.api = Client(hostname, username, password)
+        self._api = None
         self._vm_cache = {}
         self.kwargs = kwargs
+
+    @property
+    def api(self):
+        if not self._api:
+            self._api = Client(self.hostname, self.username, self.password)
+        return self._api
 
     @property
     def version(self):
@@ -1363,13 +1369,26 @@ class OpenstackSystem(MgmtSystemAPIBase):
     can_suspend = True
 
     def __init__(self, **kwargs):
-        tenant = kwargs['tenant']
-        self.username = username = kwargs['username']
-        password = kwargs['password']
-        auth_url = kwargs['auth_url']
-        self.api = osclient.Client(username, password, tenant, auth_url, service_type="compute")
-        self.kapi = oskclient.Client(username=username, password=password,
-                                     tenant_name=tenant, auth_url=auth_url)
+        self.tenant = kwargs['tenant']
+        self.username = kwargs['username']
+        self.password = kwargs['password']
+        self.auth_url = kwargs['auth_url']
+        self._api = None
+        self._kapi = None
+
+    @property
+    def api(self):
+        if not self._api:
+            self._api = osclient.Client(self.username, self.password, self.tenant,
+                                        self.auth_url, service_type="compute")
+        return self._api
+
+    @property
+    def kapi(self):
+        if not self._kapi:
+            self._kapi = oskclient.Client(username=self.username, password=self.password,
+                                          tenant_name=self.tenant, auth_url=self.auth_url)
+        return self._kapi
 
     def _get_tenants(self):
         real_tenants = []
