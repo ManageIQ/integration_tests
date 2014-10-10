@@ -6,18 +6,19 @@ import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import virtual_machines
 from cfme.web_ui import search
+from utils.providers import setup_a_provider
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
-from utils import providers
 from utils.randomness import generate_random_string, pick
 
 
 @pytest.fixture(scope="module")
 def vms():
     """Ensure the infra providers are set up and get list of vms"""
-    sel.force_navigate("infrastructure_providers")
-    for provider in providers.setup_infrastructure_providers():
-        provider.validate()
+    try:
+        setup_a_provider(prov_type="infra")
+    except Exception:
+        pytest.skip("It's not possible to set up any providers, therefore skipping")
     sel.force_navigate("infra_vms")
     search.ensure_no_filter_applied()
     return virtual_machines.get_all_vms()
