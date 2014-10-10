@@ -39,7 +39,7 @@ class _PsphereClient(Client):
         ss_names = [ss.name for ss in select_sets]
 
         if missing_ss not in ss_names:
-            logger.info('Injecting %s into psphere search filter spec', missing_ss)
+            logger.debug('Injecting %s into psphere search filter spec', missing_ss)
             # pull out the folder traversal spec traversal specs
             fts_ts = pfs.objectSet[0].selectSet[0]
             # and get the select set from the traversal spec
