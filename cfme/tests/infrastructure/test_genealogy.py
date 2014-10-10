@@ -3,7 +3,6 @@ import pytest
 
 from cfme.infrastructure.virtual_machines import Vm, Template
 from utils import testgen
-from utils.providers import setup_infrastructure_providers
 from utils.randomness import generate_random_string
 
 pytestmark = [
@@ -35,22 +34,15 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
-
-
 @pytest.fixture(scope="function")
 def vm_name():
     vm_name = 'test_genealogy_{}'.format(generate_random_string())
     return vm_name
 
 
-@pytest.mark.usefixtures("setup_infrastructure_providers")
 @pytest.mark.github("ManageIQ/manageiq:473")
 def test_vm_genealogy(
-        setup_providers, vm_name, provider_crud, provisioning, soft_assert, provider_mgmt, request):
+        setup_provider, vm_name, provider_crud, provisioning, soft_assert, provider_mgmt, request):
     original_template = provisioning["template"]
     original_vm = Vm(vm_name, provider_crud, template_name=original_template)
     original_vm.create_on_provider()
