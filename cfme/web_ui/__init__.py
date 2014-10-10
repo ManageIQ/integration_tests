@@ -12,6 +12,7 @@
   * :py:class:`CheckboxTable`
   * :py:class:`CheckboxSelect`
   * :py:class:`DHTMLSelect`
+  * :py:class:`DriftGrid`
   * :py:class:`EmailSelectForm`
   * :py:class:`Filter`
   * :py:class:`Form`
@@ -776,14 +777,22 @@ class CheckboxTable(Table):
             return sel.element(self._checkbox_loc, root=self.header_row)
 
     def select_all(self):
-        """Select all rows using the header checkbox"""
-        sel.uncheck(self.header_checkbox)
-        sel.check(self.header_checkbox)
+        """Select all rows using the header checkbox or one by one if not present"""
+        if self._header_checkbox_loc is None:
+            for row in self.rows():
+                self._set_row_checkbox(row, True)
+        else:
+            sel.uncheck(self.header_checkbox)
+            sel.check(self.header_checkbox)
 
     def deselect_all(self):
-        """Deselect all rows using the header checkbox"""
-        sel.check(self.header_checkbox)
-        sel.uncheck(self.header_checkbox)
+        """Deselect all rows using the header checkbox or one by one if not present"""
+        if self._header_checkbox_loc is None:
+            for row in self.rows():
+                self._set_row_checkbox(row, False)
+        else:
+            sel.check(self.header_checkbox)
+            sel.uncheck(self.header_checkbox)
 
     def _set_row_checkbox(self, row, set_to=False):
         row_checkbox = sel.element(self._checkbox_loc, root=row.locate())
@@ -2642,6 +2651,65 @@ def _fill_multi_obj(mf, o):
 
 
 class DriftGrid(Pretty):
-    """ Class representing the table specific to host drift analysis comparison page
+    """ Class representing the table (grid) specific to host drift analysis comparison page
     """
-    pass
+
+    def __init__(self, loc="//div[@id='drift_grid_div']"):
+        self.loc = loc
+
+    def get_cell(self, row_text, col_index):
+        """ Finds cell element of the grid specified by column index and row text
+
+        Args:
+            row_text: Title text of the cell's row
+            col_index: Column index of the cell, starting with 0 for 1st data-containing column
+
+        Note:
+            `col_index` of 0 is used for the 2nd actual column in the drift grid, because
+            the 1st column does not contain headers, only row descriptions.
+
+        Returns:
+            Selenium element of the cell.
+        """
+        self.expand_all_sections()
+        cell_loc = ".//div/div[1][contains(., '{}')]/../div[{}]"
+        cell = sel.element(cell_loc.format(row_text, col_index + 2), root=self.loc)
+        return cell
+
+    def cell_indicates_change(self, row_text, col_index):
+        """  Finds out if a cell, specified by column index and row text, indicates change
+
+        Args:
+            row_text: Title text of the cell's row
+            col_index: Column index of the cell
+
+        Note:
+            `col_index` of 0 is used for the 2nd actual column in the drift grid, because
+            the 1st column does not contain headers, only row descriptions.
+
+        Returns:
+            ``True`` if there is a change present, ``False`` otherwise
+        """
+        cell = self.get_cell(row_text, col_index)
+
+        # Cell either contains an image
+        try:
+            cell_img = sel.element(".//img", root=cell)
+            if sel.get_attribute(cell_img, "alt") == 'Changed from previous':
+                return True
+        # or text
+        except NoSuchElementException:
+            cell_textdiv = sel.element("./div", root=cell)
+            if 'mark' in sel.get_attribute(cell_textdiv, 'class'):
+                return True
+        return False
+
+    def expand_all_sections(self):
+        """ Expands all sections to make the row elements found therein available
+        """
+        els_to_expand = sel.elements(
+            './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
+            root=self.loc
+        )
+        for el in els_to_expand:
+            el.click()

@@ -2,9 +2,8 @@
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
-from cfme.web_ui import flash
-from utils import conf
-from utils import testgen
+from cfme.web_ui import flash, DriftGrid, toolbar as tb
+from utils import conf, error, testgen
 from utils.wait import wait_for
 import pytest
 
@@ -38,7 +37,7 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-def test_host_drift_analysis(request, provider_key, host_type, host_name):
+def test_host_drift_analysis(request, provider_key, host_type, host_name, soft_assert):
     host_data = get_host_data_by_name(provider_key, host_name)
     test_host = host.Host(name=host_name)
 
@@ -105,7 +104,17 @@ def test_host_drift_analysis(request, provider_key, host_type, host_name):
     )
 
     # check drift difference
-    assert not test_host.are_drift_results_equal(0, 1)
+    soft_assert(not test_host.are_drift_results_equal('All Sections', 0, 1),
+        "Drift analysis results are equal when they shouldn't be")
 
-    # click around the UI, do something funky
-    # TODO
+    # Test UI features that modify the drift grid
+    d_grid = DriftGrid()
+
+    # Name should not be displayed, because it was changed
+    tb.select("Attributes with same values")
+    with error.expected(sel.NoSuchElementException):
+        d_grid.get_cell('Name', 0)
+
+    # Name should be displayed now
+    tb.select("Attributes with different values")
+    d_grid.get_cell('Name', 0)
