@@ -10,7 +10,8 @@ ipython
 Jinja2
 ovirt-engine-sdk-python
 paramiko
-psphere
+git+https://github.com/psav/psphere.git@d8033ef66b5e994ec5559ffeb29a711e0b0678ab  # python-psphere
+# psphere  - after psav's PR gets merged
 py
 PyGithub
 PyPDF2
