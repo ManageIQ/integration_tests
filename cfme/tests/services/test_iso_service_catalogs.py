@@ -7,7 +7,6 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services import requests
 from utils import testgen
-from utils.providers import setup_infrastructure_providers
 from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
@@ -59,12 +58,6 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
-def setup_iso_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
-
-
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
@@ -75,7 +68,7 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 
 
 @pytest.fixture(scope="module")
-def setup_iso_datastore(iso_cust_template, provisioning, iso_datastore):
+def setup_iso_datastore(setup_provider, iso_cust_template, provisioning, iso_datastore):
     if not iso_datastore.exists():
         iso_datastore.create()
     iso_datastore.set_iso_image_type(provisioning['iso_file'], provisioning['iso_image_type'])
@@ -107,7 +100,8 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
+def catalog_item(setup_provider, provider_crud, provider_type, provisioning, vm_name, dialog,
+                 catalog):
     iso_template, host, datastore, iso_file, iso_kickstart,\
         iso_root_password, iso_image_type, vlan = map(provisioning.get, ('pxe_template', 'host',
                                 'datastore', 'iso_file', 'iso_kickstart',
@@ -132,8 +126,9 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
-@pytest.mark.usefixtures('setup_iso_providers', 'setup_iso_datastore')
-def test_rhev_iso_servicecatalog(provider_key, provider_mgmt, catalog_item, request):
+@pytest.mark.usefixtures('setup_iso_datastore')
+def test_rhev_iso_servicecatalog(setup_provider, provider_key, provider_mgmt,
+                                 catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()

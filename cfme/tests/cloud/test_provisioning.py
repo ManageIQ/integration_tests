@@ -3,11 +3,10 @@
 import pytest
 from cfme.cloud.instance import instance_factory
 from utils import testgen
-from utils.providers import setup_cloud_providers
 from utils.randomness import generate_random_string
 
 pytestmark = [pytest.mark.fixtureconf(server_roles="+automate"),
-              pytest.mark.usefixtures('server_roles', 'setup_providers')]
+              pytest.mark.usefixtures('server_roles')]
 
 
 def pytest_generate_tests(metafunc):
@@ -33,12 +32,6 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_cloud_providers()
-
-
 @pytest.fixture(scope="function")
 def vm_name(request, provider_mgmt):
     vm_name = 'test_image_prov_%s' % generate_random_string()
@@ -46,7 +39,7 @@ def vm_name(request, provider_mgmt):
 
 
 @pytest.mark.bugzilla(1131330)
-def test_provision_from_template(request, setup_providers, provider_crud, provisioning, vm_name):
+def test_provision_from_template(request, setup_provider, provider_crud, provisioning, vm_name):
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
         (image, vm_name, provider_crud.key))
