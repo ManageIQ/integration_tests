@@ -112,7 +112,7 @@ def provider_factory_by_name(provider_name, *args, **kwargs):
     return provider_factory(get_provider_key(provider_name), *args, **kwargs)
 
 
-def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=False):
+def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=True):
     """Sets up a random provider
 
     Args:
