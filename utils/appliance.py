@@ -510,7 +510,7 @@ class IPAppliance(object):
             with appliance.browser_session() as browser:
                 browser.do_stuff(TM)
         """
-        return browser_session(self.url, reset_cache=reset_cache)
+        return browser_session(base_url=self.url, reset_cache=reset_cache)
 
     def enable_internal_db(self, region=0):
         """Enables internal database"""
