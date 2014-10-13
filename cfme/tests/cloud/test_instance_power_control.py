@@ -143,7 +143,7 @@ def check_power_options(soft_assert, instance, power_state):
 
 
 @pytest.mark.long_running
-def test_quadicon_terminate_cancel(setup_provider, provider_type, provider_mgmt,
+def test_quadicon_terminate_cancel(setup_provider_funcscope, provider_type, provider_mgmt,
                                    test_instance, verify_vm_running, soft_assert):
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720)
@@ -161,7 +161,7 @@ def test_quadicon_terminate_cancel(setup_provider, provider_type, provider_mgmt,
 
 @pytest.mark.long_running
 @pytest.mark.bugzilla(1122039)
-def test_quadicon_terminate(setup_provider, provider_type, provider_mgmt,
+def test_quadicon_terminate(setup_provider_funcscope, provider_type, provider_mgmt,
                             test_instance, verify_vm_running, soft_assert):
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720)
@@ -182,7 +182,7 @@ def test_quadicon_terminate(setup_provider, provider_type, provider_mgmt,
 
 
 @pytest.mark.long_running
-def test_stop(ec2_only, setup_provider, provider_type, provider_mgmt,
+def test_stop(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
               test_instance, soft_assert, verify_vm_running):
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
@@ -200,7 +200,7 @@ def test_stop(ec2_only, setup_provider, provider_type, provider_mgmt,
 
 
 @pytest.mark.long_running
-def test_start(ec2_only, setup_provider, provider_type, provider_mgmt,
+def test_start(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
                test_instance, soft_assert, verify_vm_stopped):
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_OFF, timeout=720, from_details=True)
@@ -216,7 +216,7 @@ def test_start(ec2_only, setup_provider, provider_type, provider_mgmt,
 
 
 @pytest.mark.long_running
-def test_soft_reboot(setup_provider, provider_type, provider_mgmt,
+def test_soft_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
                      test_instance, soft_assert, verify_vm_running):
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
@@ -233,7 +233,7 @@ def test_soft_reboot(setup_provider, provider_type, provider_mgmt,
 
 
 @pytest.mark.long_running
-def test_hard_reboot(openstack_only, setup_provider, provider_type,
+def test_hard_reboot(openstack_only, setup_provider_funcscope, provider_type,
                      provider_mgmt, test_instance, soft_assert, verify_vm_running):
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
@@ -250,7 +250,7 @@ def test_hard_reboot(openstack_only, setup_provider, provider_type,
 
 
 @pytest.mark.long_running
-def test_suspend(openstack_only, setup_provider, provider_type, provider_mgmt,
+def test_suspend(openstack_only, setup_provider_funcscope, provider_type, provider_mgmt,
                  test_instance, soft_assert, verify_vm_running):
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
@@ -267,7 +267,7 @@ def test_suspend(openstack_only, setup_provider, provider_type, provider_mgmt,
 
 @pytest.mark.long_running
 @pytest.mark.bugzilla(1115546)
-def test_resume(openstack_only, setup_provider,
+def test_resume(openstack_only, setup_provider_funcscope,
         provider_type, provider_mgmt, test_instance, soft_assert, verify_vm_suspended):
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_SUSPENDED, timeout=720, from_details=True)
@@ -283,7 +283,7 @@ def test_resume(openstack_only, setup_provider,
 
 
 @pytest.mark.long_running
-def test_terminate(setup_provider,
+def test_terminate(setup_provider_funcscope,
         provider_type, provider_mgmt, test_instance, soft_assert, verify_vm_running):
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
