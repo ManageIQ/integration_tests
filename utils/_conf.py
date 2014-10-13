@@ -49,13 +49,32 @@ class Config(dict):
         from utils.conf import cfme_data
         provider = cfme_data['management_systems']['provider_name']
 
+    .. note::
+
+        Special care has been taken to ensure that all objects are mutated, rather than replaced,
+        so all names will reference the same config object.
+
+        All objects representing config files (attributes or items accessed directly from the conf
+        module) will be some type of :py:class:`dict <python:dict>`. Attempting to make such a
+        config object be anything other than a ``dict`` (or decscendant of ``dict``) will probably
+        break everything and should not be attempted::
+
+            from utils import conf
+            # Don't do this...
+            conf.cfme_data = 'not a dict'
+            # ...or this.
+            conf['env'] = ['also', 'not', 'a', 'dict']
+
+        No care whatsoever has been taken to ensure thread-safety, so if you're doing crazy threaded
+        things with the conf module you should manage your own locking when making any runtime conf
+        changes.
 
     Local Configuration Overrides
     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    In addition to loading YAML files, the `utils.conf` loader supports local override files.
-    This feature is useful for maintaining a shared set of config files for a team, while still
-    allowing for local configuration.
+    In addition to loading YAML files, the :py:mod:`utils.conf` loader supports local override
+    files. This feature is useful for maintaining a shared set of config files for a team, while
+    still allowing for local configuration.
 
     Take the following example YAML files:
 
@@ -83,24 +102,41 @@ class Config(dict):
         # conf/env.local.yaml
         base_url: https://10.9.8.7/
 
-    .. note::
+    Runtime Overrides
+    ^^^^^^^^^^^^^^^^^
 
-        This module contains dynamic attributes. As a result, its functionality can be found in
-        the source as ``utils._conf.Config``
+    Sometimes writing to the config files is an inconvenient way to ensure that runtime changes
+    persist through configuration cache clearing. As above, changing the ``base_url`` of the
+    current appliance is the most common example.
+
+    In these cases, using the runtime overrides dictionary will accomplish this. The runtime
+    overrides dictionary mimics the layout of the conf module itself, where configuration file
+    names are keys in the runtime overrides dictionary. So, for example, to update the base_url
+    in a way that will persist clearing of the cache, the following will work::
+
+        from utils import conf
+        conf.runtime['env']['base_url'] = 'https://4.3.2.1/'
+        print conf.env['base_url']
+        https://4.3.2.1
 
     Inherited methods
     ^^^^^^^^^^^^^^^^^
 
-    Being a ``dict`` subclass, the following dictionary methods can also be used to manipulate
-    ``utils.conf`` at runtime. :py:func:`clear` is particularly useful as a means to trigger
-    a reload of config files.
+    Being a :py:class:`dict <python:dict>` subclass, dictionary methods can also be used to
+    manipulate ``utils.conf`` at runtime. :py:meth:`clear <python:dict.clear>` is particularly
+    useful as a means to trigger a reload of all config files. These changes won't persist a cache
+    clear, however, so using the runtime overrides mechanism is recommended.
+
+    .. note::
+
+        This module contains dynamic attributes. As a result, its functionality can be found in
+        the source as :py:class:`utils._conf.Config`
 
     """
     def __init__(self, path):
         # stash a path to better impersonate a module
         self.path = path
-        # Abuse the runtime deleter to create the runtime property for this instance
-        del(self.runtime)
+        self._runtime = ConfigTree()
 
     @property
     def __path__(self):
@@ -108,22 +144,18 @@ class Config(dict):
         return self.path
 
     def _runtime_overrides(self):
-        # Need to NOQA this since flake8 doesn't know it gets inititalized in __init__
-        return _runtime  # NOQA
+        return self._runtime
 
     def _set_runtime_overrides(self, overrides_dict):
         # Writing to the overrides_dict clears cached conf,
         # ensuring new value on next access
-        global _runtime
-
         for key in overrides_dict:
             if key in self:
-                del(self[key])
-        _runtime = ConfigTree(overrides_dict)
+                self[key].clear()
+        self._runtime.update(overrides_dict)
 
     def _del_runtime_overrides(self):
-        global _runtime
-        _runtime = ConfigTree()
+        self._runtime.clear()
 
     def save(self, key):
         """Write out an in-memory config to the conf dir
@@ -151,7 +183,22 @@ class Config(dict):
         try:
             return super(Config, self).__getitem__(key)
         except KeyError:
-            # Cache miss, load the requested yaml
+            # Cache miss, populate this conf key
+            # Call out to dict's setitem here since this is the only place where we're allowed to
+            # create a new key and we want the default behavior instead of the override below
+            super(Config, self).__setitem__(key, RecursiveUpdateDict())
+            self._populate(key)
+            return self[key]
+
+    def __setitem__(self, key, value):
+        self[key].clear()
+        self[key].update(value)
+
+    def __delitem__(self, key):
+        self[key].clear()
+        self._populate(key)
+
+    def _populate(self, key):
             yaml_dict = load_yaml(key)
 
             # Graft in local yaml updates if they're available
@@ -163,16 +210,23 @@ class Config(dict):
 
             # Graft on the local overrides
             yaml_dict.update(self.runtime.get(key, {}))
+            self[key].update(yaml_dict)
 
-            # Returning self[key] instead of yaml_dict as a small sanity check
-            self[key] = yaml_dict
-            return self[key]
+    def clear(self):
+        # because of the 'from conf import foo' mechanism, we need to clear each key in-place,
+        # and reload the runtime overrides. Once a key is created in this dict, its value MUST NOT
+        # change to a different dict object.
+        for key in self:
+            # clear the conf dict in-place
+            self[key].clear()
+            self._populate(key)
 
 
 class ConfigTree(defaultdict):
     """A tree class that knows to clear the config when mutated
 
     This is needed to ensure runtime overrides persist though conf changes
+
     """
     def __init__(self, *args, **kwargs):
         super(ConfigTree, self).__init__(type(self), *args, **kwargs)
@@ -187,6 +241,10 @@ class ConfigTree(defaultdict):
 
     def __delitem__(self, key):
         self._sup.__delitem__(key)
+        self._clear_conf()
+
+    def update(self, other):
+        self._sup.update(other)
         self._clear_conf()
 
     def _clear_conf(self):

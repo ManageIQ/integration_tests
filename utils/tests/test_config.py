@@ -24,6 +24,7 @@ nested_test_root:
 def clear_conf():
     # Ensure the conf is cleared before every test
     conf.clear()
+    conf.runtime.clear()
 pytestmark = pytest.mark.usefixtures('clear_conf')
 
 
@@ -64,6 +65,17 @@ def test_conf_basics(test_yaml):
     assert isinstance(conf.runtime, ConfigTree)
     assert isinstance(conf[test_yaml], RecursiveUpdateDict)
     assert isinstance(conf[test_yaml]['nested_test_root'], RecursiveUpdateDict)
+
+
+def test_conf_yamls_item(test_yaml):
+    # delitem doesn't really delete, it only clears in-place
+    old_test_yaml = conf[test_yaml]
+    del(conf[test_yaml])
+    assert conf[test_yaml] is old_test_yaml
+
+    # setitem doesn't really set, it only updates in-place
+    conf[test_yaml] = {'foo': 'bar'}
+    assert conf[test_yaml] is old_test_yaml
 
 
 def test_conf_yamls_attr(test_yaml):
@@ -119,7 +131,31 @@ def test_conf_runtime_override(random_string):
     assert random_string not in conf.env
 
 
+def test_conf_runtime_set(random_string):
+    # setting runtime directly works, and doesn't change the object that runtime points to
+    old_runtime = conf.runtime
+    conf.runtime = {'env': {random_string: True}}
+    conf.runtime is old_runtime
+    assert random_string in conf.env
+
+
 def test_conf_runtime_update(random_string):
     # In addition to direct nested assignment, dict update should also work
-    conf.runtime = {'env': {random_string: True}}
+    conf.runtime.update({'env': {random_string: True}})
     assert random_string in conf.env
+
+
+def test_conf_imported_attr(test_yaml, random_string):
+    # "from utils.conf import attr" should be the same object as "conf.attr"
+    # mutating the runtime dict shouldn't change that
+    imported_test_yaml = getattr(conf, test_yaml)
+    conf.runtime[test_yaml]['test_key'] = random_string
+    assert imported_test_yaml['test_key'] == random_string
+    assert imported_test_yaml is getattr(conf, test_yaml)
+
+
+def test_conf_override_before_import(test_yaml, random_string):
+    # You should be able to create a "fake" config file by preseeding the runtime overrides
+    conf.runtime['foo']['test_key'] = random_string
+    from utils.conf import foo
+    assert foo['test_key'] == random_string
