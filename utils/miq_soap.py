@@ -12,9 +12,14 @@ from utils.log import logger
 from utils.soap import soap_client
 from utils.wait import wait_for
 
+client = None
 
-if "client" not in globals():
-    client = soap_client()  # Ugly, but easiest to use :/
+
+def get_client():
+    global client
+    if client is None:
+        client = soap_client()
+    return client
 
 
 def is_datastore_banned(datastore_name):
@@ -63,7 +68,7 @@ class MiqInfraObject(object):
         Todo:
             * cache?
         """
-        return getattr(client.service, self.GETTER_FUNC)(self.id)
+        return getattr(get_client().service, self.GETTER_FUNC)(self.id)
 
     @lazycache
     def name(self):
@@ -102,7 +107,7 @@ class MiqInfraObject(object):
             MiqTag(tag.category, tag.category_display_name, tag.tag_name, tag.tag_display_name,
                 tag.tag_path, tag.display_name)
             for tag
-            in getattr(client.service, fname)(self.id)
+            in getattr(get_client().service, fname)(self.id)
         ]
 
     def add_tag(self, tag):
@@ -113,9 +118,9 @@ class MiqInfraObject(object):
         """
         fname = "%sSetTag" % self.TAG_PREFIX
         if (isinstance(tag, tuple) or isinstance(tag, list)) and len(tag) == 2:
-            return getattr(client.service, fname)(self.id, tag[0], tag[1])
+            return getattr(get_client().service, fname)(self.id, tag[0], tag[1])
         elif isinstance(tag, MiqTag):
-            return getattr(client.service, fname)(self.id, tag.category, tag.tag_name)
+            return getattr(get_client().service, fname)(self.id, tag.category, tag.tag_name)
         else:
             raise TypeError("Wrong type passed!")
 
@@ -198,7 +203,7 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
 
     @classmethod
     def find_by_name(cls, name):
-        for ems in client.service.GetEmsList():
+        for ems in get_client().service.GetEmsList():
             if ems.name.strip().lower() == name.strip().lower():
                 return cls(ems.guid)
         else:
@@ -206,7 +211,7 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
 
     @classmethod
     def all(cls):
-        return [cls(ems.guid) for ems in client.service.GetEmsList()]
+        return [cls(ems.guid) for ems in get_client().service.GetEmsList()]
 
     @lazycache
     def direct_connection(self):
@@ -278,7 +283,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
         return self.object.power_state.strip().lower() == "suspended"
 
     def power_on(self):
-        return client.service.EVMSmartStart(self.id).result == "true"
+        return get_client().service.EVMSmartStart(self.id).result == "true"
 
     def wait_powered_on(self, wait_time=120):
         return wait_for(
@@ -286,7 +291,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
         )
 
     def power_off(self):
-        return client.service.EVMSmartStop(self.id).result == "true"
+        return get_client().service.EVMSmartStop(self.id).result == "true"
 
     def wait_powered_off(self, wait_time=120):
         return wait_for(
@@ -294,7 +299,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
         )
 
     def suspend(self):
-        return client.service.EVMSmartSuspend(self.id).result == "true"
+        return get_client().service.EVMSmartSuspend(self.id).result == "true"
 
     def wait_suspended(self, wait_time=160):
         return wait_for(
@@ -308,7 +313,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
             if not self.power_off():
                 raise Exception("Could not power off vm %s" % name)
             self.wait_powered_off()
-        if not client.service.EVMDeleteVmByName(self.name):
+        if not get_client().service.EVMDeleteVmByName(self.name):
             raise Exception("Could not delete vm %s" % name)
         wait_for(lambda: not self.exists, num_sec=60, delay=4, message="wait for VM removed")
 
@@ -370,7 +375,7 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
                 logger.info("Tagging datastore %s" % ds_name)
                 datastore.add_tag(("prov_scope", "all"))
         # Create request
-        template_fields = client.pipeoptions(dict(guid=template_guid))
+        template_fields = get_client().pipeoptions(dict(guid=template_guid))
         vm_fields = dict(
             number_of_cpu=cpus,
             vm_memory=memory,
@@ -378,14 +383,14 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
         )
         if vlan:    # RHEV-M requires this field
             vm_fields["vlan"] = vlan
-        vm_fields = client.pipeoptions(vm_fields)
-        requester = client.pipeoptions(dict(
+        vm_fields = get_client().pipeoptions(vm_fields)
+        requester = get_client().pipeoptions(dict(
             owner_first_name=first_name,
             owner_last_name=last_name,
             owner_email=email
         ))
         try:
-            req_id = client.service.VmProvisionRequest(
+            req_id = get_client().service.VmProvisionRequest(
                 "1.1", template_fields, vm_fields, requester, "", ""
             ).id
         except WebFault as e:
@@ -395,14 +400,14 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
                 raise
         logger.info("Waiting for VM provisioning request approval")
         wait_for(
-            lambda: client.service.GetVmProvisionRequest(req_id).approval_state == "approved",
+            lambda: get_client().service.GetVmProvisionRequest(req_id).approval_state == "approved",
             num_sec=180,
             delay=5,
             message="VM provision approval"
         )
 
         def check_whether_provisioning_finished():
-            request = client.service.GetVmProvisionRequest(req_id)
+            request = get_client().service.GetVmProvisionRequest(req_id)
             if request.status.lower().strip() == "error":
                 raise Exception(request.message)    # change the exception class here
             return request.status.lower().strip() == "ok" and len(request.vms) > 0
@@ -412,8 +417,8 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
             check_whether_provisioning_finished,
             num_sec=(wait_min * 60 if wait_min else 300), delay=5, message="provisioning"
         )
-        vm_guid = client.service.GetVmProvisionRequest(req_id).vms[0].guid
-        new_vm = MiqVM(client.service.FindVmByGuid(vm_guid).guid)
+        vm_guid = get_client().service.GetVmProvisionRequest(req_id).vms[0].guid
+        new_vm = MiqVM(get_client().service.FindVmByGuid(vm_guid).guid)
         # some basic sanity checks though they should always pass
         assert new_vm.name == vm_name
         assert new_vm.object.guid == vm_guid
@@ -427,7 +432,7 @@ class MiqHost(HasManyDatastores, HasManyVMs, HasManyResourcePools, BelongsToClus
 
     @classmethod
     def all(cls):
-        return [cls(host.guid) for host in client.service.EVMHostList()]
+        return [cls(host.guid) for host in get_client().service.EVMHostList()]
 
 
 class MiqDatastore(HasManyHosts, HasManyEMSs):
@@ -436,7 +441,7 @@ class MiqDatastore(HasManyHosts, HasManyEMSs):
 
     @classmethod
     def all(cls):
-        return [cls(datastore.id) for datastore in client.service.EVMDatastoreList()]
+        return [cls(datastore.id) for datastore in get_client().service.EVMDatastoreList()]
 
 
 class MiqCluster(
@@ -450,7 +455,7 @@ class MiqCluster(
 
     @classmethod
     def all(cls):
-        return [cls(cluster.id) for cluster in client.service.EVMClusterList()]
+        return [cls(cluster.id) for cluster in get_client().service.EVMClusterList()]
 
 
 class MiqResourcePool(HasManyHosts, HasManyEMSs):
@@ -463,7 +468,7 @@ class MiqResourcePool(HasManyHosts, HasManyEMSs):
 
     @classmethod
     def all(cls):
-        return [cls(rpool.id) for rpool in client.service.EVMResourcePoolList()]
+        return [cls(rpool.id) for rpool in get_client().service.EVMResourcePoolList()]
 
 
 class MiqTag(object):
