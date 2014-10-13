@@ -1972,6 +1972,11 @@ class Quadicon(Pretty):
     def get_first_quad_title():
         return sel.get_attribute("//div[@id='quadicon']/../../../tr/td/a", "title")
 
+    @property
+    def name(self):
+        """ Returns name of the quadicon."""
+        return self._name
+
 
 class DHTMLSelect(Select):
     """
