@@ -12,7 +12,6 @@ from utils.timeutil import parsetime
 from utils import conf
 from utils.ftp import FTPClient
 from cfme.configure import configuration as configure
-import cfme.web_ui.flash as flash
 
 
 def pytest_generate_tests(metafunc):
@@ -174,12 +173,13 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
         )
     # Fails on upstream - BZ1108087
     credentials.update()
-    flash.assert_no_errors()
     request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
 
 
 @pytest.mark.nondestructive
-@pytest.mark.bugzilla(1018578, 1108087)
+@pytest.mark.bugzilla(
+    1018578, 1108087, 1151173,
+    unskip={1151173: lambda depot_type: depot_type != "ftp"})
 @pytest.sel.go_to('dashboard')
 def test_collect_log_depot(depot_type,
                            depot_machine,
