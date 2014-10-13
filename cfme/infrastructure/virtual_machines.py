@@ -74,6 +74,12 @@ retire_form = Form(fields=[
     ('warn', sel.Select("select#retirement_warn"))
 ])
 
+
+retirement_date_form = Form(fields=[
+    ('retirement_date_text', Calendar("miq_date_1")),
+    ('retirement_warning_select', Select("//select[@id='retirement_warn']"))
+])
+
 retire_remove_button = "//span[@id='remove_button']/a/img"
 
 nav.add_branch(
@@ -151,48 +157,181 @@ nav.add_branch(
 )
 
 
-class Template(object):
-    """Simple class representing Template.
+class Common(object):
 
-    Not much done here, because it should be refactored better together with the Vm class.
-    """
-    def __init__(self, name, provider_crud):
-        self.name = name
-        self.provider_crud = provider_crud
+    def _load_details(self, refresh=False, is_vm=True):
+        """Navigates to a VM's details page.
 
-    def load_details(self, **kwargs):
-        sel.click(self.find_quadicon(**kwargs))
+        Args:
+            refresh: Refreshes the vm page if already there
 
-    def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
-        """Find and return a quadicon belonging to a specific template
+        Raises:
+            VmNotFound:
+                When unable to find the VM passed
+        """
+        if not self.on_details(is_vm=is_vm):
+            logger.debug("load_vm_details: not on details already")
+            sel.click(self._find_quadicon(is_vm=is_vm))
+        else:
+            if refresh:
+                toolbar.refresh()
+
+    def on_details(self, force=False, is_vm=True):
+        """A function to determine if the browser is already on the proper vm details page.
+        """
+        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'VM and Instance \"%s\"')]" %
+                   self.name)
+        if not sel.is_displayed(locator):
+            if not force:
+                return False
+            else:
+                self.load_details(is_vm=is_vm)
+                return True
+
+        text = sel.text(locator).encode("utf-8")
+        pattern = r'("[A-Za-z0-9_\./\\-]*")'
+        m = re.search(pattern, text)
+
+        if not force:
+            return self.name == m.group().replace('"', '')
+        else:
+            if self.name != m.group().replace('"', ''):
+                self._load_details(is_vm=is_vm)
+            else:
+                return False
+
+    def _find_quadicon(self, is_vm=True, do_not_navigate=False, mark=False, refresh=True):
+        """Find and return a quadicon belonging to a specific vm
 
         Returns: :py:class:`cfme.web_ui.Quadicon` instance
-        Raises: TemplateNotFound
+        Raises: VmNotFound
         """
+        quadicon = Quadicon(self.name, "vm")
         if not do_not_navigate:
-            self.provider_crud.load_all_provider_templates()
+            if is_vm:
+                self.provider_crud.load_all_provider_vms()
+            else:
+                self.provider_crud.load_all_provider_templates()
             toolbar.set_vms_grid_view()
         elif refresh:
             sel.refresh()
         if not paginator.page_controls_exist():
-            raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
+            if is_vm:
+                raise VmNotFound("VM '{}' not found in UI!".format(self.name))
+            else:
+                raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
 
         paginator.results_per_page(1000)
         for page in paginator.pages():
-            quadicon = Quadicon(self.name, "vm")
             if sel.is_displayed(quadicon):
                 if mark:
                     sel.check(quadicon.checkbox())
                 return quadicon
         else:
-            raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
+            raise VmNotFound("VM '{}' not found in UI!".format(self.name))
+
+    def does_vm_exist_on_provider(self):
+        """Check if VM exists on provider itself"""
+        return self.provider_crud.get_mgmt_system().does_vm_exist(self.name)
+
+    def _method_helper(self, from_details=False):
+        if from_details:
+            self.load_details()
+        else:
+            self.find_quadicon(mark=True)
+
+    def _remove_from_cfme(self, is_vm=True, cancel=True, from_details=False):
+        """Removes a VM from CFME VMDB
+
+        Args:
+            cancel: Whether to cancel the deletion, defaults to True
+            from_details: whether to delete from the details page
+        """
+        self._method_helper(from_details)
+        if from_details:
+            cfg_btn('Remove from the VMDB', invokes_alert=True)
+        else:
+            cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+
+    def delete_from_provider(self):
+        provider_mgmt = self.provider_crud.get_mgmt_system()
+        if provider_mgmt.does_vm_exist(self.name):
+            try:
+                if provider_mgmt.is_vm_suspended(self.name):
+                    logger.debug("Powering up VM %s to shut it down correctly on %s." %
+                                 (self.name, self.provider_crud.key))
+                    provider_mgmt.start_vm(self.name)
+            except ActionNotSupported:
+                # Action is not supported on mgmt system. Simply continue
+                pass
+            return self.provider_crud.get_mgmt_system().delete_vm(self.name)
+        else:
+            return True
+
+    def get_detail(self, properties=None, icon_href=False):
+        """Gets details from the details infoblock
+
+        The function first ensures that we are on the detail page for the specific vm.
+
+        Args:
+            properties: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+
+        Returns:
+            A string representing the contents of the InfoBlock's value.
+        """
+        self.load_details(refresh=True)
+        if icon_href:
+            return details_page.infoblock.icon_href(*properties)
+        else:
+            return details_page.infoblock.text(*properties)
+
+    def get_tags(self):
+        """Returns all tags that are associated with this VM"""
+        self.load_details(refresh=True)
+        # TODO: Make it count with different "My Company"
+        table = details_page.infoblock.element("Smart Management", "My Company Tags")
+        tags = []
+        for row in sel.elements("./tbody/tr/td", root=table):
+            tags.append(row.text.encode("utf-8").strip())
+        return tags
+
+    def refresh_relationships(self, from_details=False, cancel=False):
+        """Executes a refresh relationships action against a list of VMs.
+
+        Args:
+            from_details: Whether or not to perform action from vm details page
+            cancel: Whether or not to cancel the refresh relationships action
+        """
+        if from_details:
+            self.load_details()
+        else:
+            self.find_quadicon(mark=True)
+        cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+
+    def smartstate_scan(self, cancel=True, from_details=False):
+        self._method_helper(from_details=from_details)
+        cfg_btn('Perform SmartState Analysis', invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+
+    def wait_to_appear(self, is_vm=True, timeout=600, load_details=True):
+        """Wait for a VM to appear within CFME
+
+        Args:
+            timeout: time (in seconds) to wait for it to appear
+            from_details: when found, should it load the vm details
+        """
+        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30, fail_func=sel.refresh)
+        if load_details:
+            self.load_details()
 
     @property
     def genealogy(self):
         return Genealogy(self)
 
 
-class Vm(object):
+class Vm(Common):
     """Represents a VM in CFME
 
     Args:
@@ -210,7 +349,7 @@ class Vm(object):
 
         def _nav_to_snapshot_mgmt(self):
             locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
-                 "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
+                       "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
             if not sel.is_displayed(locator):
                 self.vm.load_details()
                 sel.click(details_page.infoblock.element("Properties", "Snapshots"))
@@ -284,17 +423,12 @@ class Vm(object):
     STATE_OFF = "off"
     STATE_SUSPENDED = "suspended"
 
-    retirement_date_form = Form(fields=[
-        ('retirement_date_text', Calendar("miq_date_1")),
-        ('retirement_warning_select', Select("//select[@id='retirement_warn']"))
-    ])
-
     def __init__(self, name, provider_crud, template_name=None):
         self.name = name
         self.template_name = template_name
         self.provider_crud = provider_crud
 
-    def create_on_provider(self, timeout=900):
+    def create_on_provider(self, timeout=900, find_in_cfme=False):
         """Create the VM on the provider
 
         Args:
@@ -302,103 +436,16 @@ class Vm(object):
                      Will not wait at all, if set to 0 (Defaults to ``900``)
         """
         deploy_template(self.provider_crud.key, self.name, self.template_name)
-        if timeout:
+        if find_in_cfme:
             self.provider_crud.refresh_provider_relationships()
             self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
 
-    def publish_to_template(self, template_name, email=None, first_name=None, last_name=None):
-        self.load_details()
-        lcl_btn("Publish this VM to a Template")
-        first_name = first_name or generate_random_string()
-        last_name = last_name or generate_random_string()
-        email = email or "{}@{}.test".format(first_name, last_name)
-        try:
-            prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]
-        except (KeyError, IndexError):
-            raise ValueError("You have to specify the correct options in cfme_data.yaml")
-        from cfme.infrastructure.provisioning import provisioning_form, submit_button
-        provisioning_data = {
-            "first_name": first_name,
-            "last_name": last_name,
-            "email": email,
-            "vm_name": template_name,
-            "host_name": {"name": prov_data.get("host")},
-            "datastore_name": {"name": prov_data.get("datastore")},
-        }
-        fill(provisioning_form, provisioning_data, action=submit_button)
-        cells = {'Description': 'Publish from [%s] to [%s]' % (self.name, template_name)}
-        row, __ = wait_for(
-            requests.wait_for_request, [cells], fail_func=requests.reload, num_sec=900, delay=20)
-        return Template(template_name, self.provider_crud)
-
     def load_details(self, refresh=False):
-        """Navigates to a VM's details page.
-
-        Args:
-            refresh: Refreshes the vm page if already there
-
-        Raises:
-            VmNotFound:
-                When unable to find the VM passed
-        """
-        if not self.on_details():
-            logger.debug("load_vm_details: not on details already")
-            sel.click(self.find_quadicon())
-        else:
-            if refresh:
-                toolbar.refresh()
-
-    def on_details(self, force=False):
-        """A function to determine if the browser is already on the proper vm details page.
-        """
-        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'VM and Instance \"%s\"')]" %
-            self.name)
-        if not sel.is_displayed(locator):
-            if not force:
-                return False
-            else:
-                self.load_details()
-                return True
-
-        text = sel.text(locator).encode("utf-8")
-        pattern = r'("[A-Za-z0-9_\./\\-]*")'
-        m = re.search(pattern, text)
-
-        if not force:
-            return self.name == m.group().replace('"', '')
-        else:
-            if self.name != m.group().replace('"', ''):
-                self.load_details()
-            else:
-                return False
+        self._load_details(is_vm=True, refresh=refresh)
 
     def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
-        """Find and return a quadicon belonging to a specific vm
-
-        Returns: :py:class:`cfme.web_ui.Quadicon` instance
-        Raises: VmNotFound
-        """
-        quadicon = Quadicon(self.name, "vm")
-        if not do_not_navigate:
-            self.provider_crud.load_all_provider_vms()
-            toolbar.set_vms_grid_view()
-        elif refresh:
-            sel.refresh()
-        if not paginator.page_controls_exist():
-            raise VmNotFound("VM '{}' not found in UI!".format(self.name))
-
-        paginator.results_per_page(1000)
-        for page in paginator.pages():
-            if sel.is_displayed(quadicon):
-                if mark:
-                    sel.check(quadicon.checkbox())
-                return quadicon
-        else:
-            raise VmNotFound("VM '{}' not found in UI!".format(self.name))
-
-    def does_vm_exist_on_provider(self):
-        """Check if VM exists on provider itself"""
-        return self.provider_crud.get_mgmt_system().does_vm_exist(self.name)
+        return self._find_quadicon(
+            is_vm=True, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh)
 
     def does_vm_exist_in_cfme(self):
         """A function to tell you if a VM exists or not.
@@ -409,64 +456,21 @@ class Vm(object):
         except VmNotFound:
             return False
 
-    def _method_helper(self, from_details=False):
-        if from_details:
-            self.load_details()
-        else:
-            self.find_quadicon(mark=True)
+    def remove_from_cfme(self, cancel=False, from_details=False):
+        """Removes a VM from CFME VMDB"""
+        self._remove_from_cfme(is_vm=True, cancel=cancel, from_details=from_details)
 
-    def remove_from_cfme(self, cancel=True, from_details=False):
-        """Removes a VM from CFME VMDB
+    # def _nav_to_cfme_relationship(self):
+    #     pass
 
-        Args:
-            cancel: Whether to cancel the deletion, defaults to True
-            from_details: whether to delete from the details page
-        """
-        self._method_helper(from_details)
-        if from_details:
-            cfg_btn('Remove from the VMDB', invokes_alert=True)
-        else:
-            cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+    # def edit_cfme_relationship(self, appliance_name):
+    #     pass
 
-    def delete_from_provider(self):
-        provider_mgmt = self.provider_crud.get_mgmt_system()
-        if provider_mgmt.does_vm_exist(self.name):
-            try:
-                if provider_mgmt.is_vm_suspended(self.name):
-                    logger.debug("Powering up VM %s to shut it down correctly on %s." %
-                        (self.name, self.provider_crud.key))
-                    provider_mgmt.start_vm(self.name)
-            except ActionNotSupported:
-                # Action is not supported on mgmt system. Simply continue
-                pass
-            return self.provider_crud.get_mgmt_system().delete_vm(self.name)
-        else:
-            return True
+    # def is_cfme_relationship_set(self):
+    #     pass
 
-    def get_detail(self, properties=None):
-        """Gets details from the details infoblock
-
-        The function first ensures that we are on the detail page for the specific vm.
-
-        Args:
-            properties: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-
-        Returns:
-            A string representing the contents of the InfoBlock's value.
-        """
-        self.load_details(refresh=True)
-        return details_page.infoblock.text(*properties)
-
-    def get_tags(self):
-        """Returns all tags that are associated with this VM"""
-        self.load_details(refresh=True)
-        # TODO: Make it count with different "My Company"
-        table = details_page.infoblock.element("Smart Management", "My Company Tags")
-        tags = []
-        for row in sel.elements("./tbody/tr/td", root=table):
-            tags.append(row.text.encode("utf-8").strip())
-        return tags
+    # def get_cfme_relationship_server(self):
+    #     pass
 
     def power_control_from_provider(self, option):
         """Power control a vm from the provider
@@ -519,95 +523,6 @@ class Vm(object):
         except NoSuchElementException:
             return False
 
-    def refresh_relationships(self, from_details=False, cancel=False):
-        """Executes a refresh relationships action against a list of VMs.
-
-        Args:
-            from_details: Whether or not to perform action from vm details page
-            cancel: Whether or not to cancel the refresh relationships action
-        """
-        if from_details:
-            self.load_details()
-        else:
-            self.find_quadicon(mark=True)
-        cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-
-    # def smartstate_scan(self, cancel=True, from_details=False):
-    #     self._method_helper(from_details)
-    #     cfg_btn('Perform SmartState Analysis', invokes_alert=True)
-    #     sel.handle_alert(cancel=cancel)
-
-    # def edit_tags(self, cancel=True, from_details=False):
-    #     raise NotImplementedError('edit tags is not implemented.')
-
-    # def _nav_to_snapshot_mgmt(self):
-    #     locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
-    #         "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
-    #     if not sel.is_displayed(locator):
-    #         self.load_details()
-    #         sel.click(details_page.infoblock.element("Properties", "Snapshots"))
-
-    # def create_snapshot(self, name, description, snapshot_memory=False):
-    #     self._nav_to_snapshot_mgmt()
-    #     raise NotImplementedError('snapshot mgmt is not implemented.')
-
-    # def remove_selected_snapshot(self, name):
-    #     self._nav_to_snapshot_mgmt()
-    #     raise NotImplementedError('snapshot mgmt is not implemented.')
-
-    # def remove_all_snapshots(self):
-    #     self._nav_to_snapshot_mgmt()
-    #     raise NotImplementedError('snapshot mgmt is not implemented.')
-
-    # def list_snapshots(self):
-    #     self._nav_to_snapshot_mgmt()
-    #     if sel.is_displayed("//strong[contains(, 'has no snapshots')"):
-    #         return 0
-    #     else:
-    #         pass
-    #     raise NotImplementedError('snapshot mgmt is not implemented.')
-
-    # def revert_to_snapshot(self, name):
-    #     self._nav_to_snapshot_mgmt()
-    #     raise NotImplementedError('snapshot mgmt is not implemented.')
-
-    def wait_for_vm_state_change(
-            self, desired_state=None, timeout=300, from_details=False):
-        """Wait for VM to come to desired state.
-
-        This function waits just the needed amount of time thanks to wait_for.
-
-        Args:
-            desired_state: on, off, suspended... corresponds to values in cfme, preferred approach
-                is to use Vm.STATE_* constansts
-            timeout: Specify amount of time (in seconds) to wait
-        Raises:
-            TimedOutError:
-                When VM does not come up to desired state in specified period of time.
-            NoVmFound:
-                When unable to find the VM passed
-        """
-        def _looking_for_state_change():
-            if from_details:
-                self.load_details(refresh=True)
-                detail_t = ("Power Management", "Power State")
-                return self.get_detail(properties=detail_t) == desired_state
-            else:
-                return self.find_quadicon().state == 'currentstate-' + desired_state
-        return wait_for(_looking_for_state_change, num_sec=timeout, delay=30)
-
-    def wait_for_vm_to_appear(self, timeout=600, load_details=True):
-        """Wait for a VM to appear within CFME
-
-        Args:
-            timeout: time (in seconds) to wait for it to appear
-            from_details: when found, should it load the vm details
-        """
-        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30)
-        if load_details:
-            self.load_details()
-
     def retire(self):
         sel.force_navigate("infra_vm_by_name", context={'vm': self})
         lcl_btn("Retire this VM", invokes_alert=True)
@@ -659,9 +574,83 @@ class Vm(object):
                 fill(retire_form.warn, warn)
             sel.click(form_buttons.save)
 
-    @property
-    def genealogy(self):
-        return Genealogy(self)
+    def publish_to_template(self, template_name, email=None, first_name=None, last_name=None):
+        self.load_details()
+        lcl_btn("Publish this VM to a Template")
+        first_name = first_name or generate_random_string()
+        last_name = last_name or generate_random_string()
+        email = email or "{}@{}.test".format(first_name, last_name)
+        try:
+            prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]
+        except (KeyError, IndexError):
+            raise ValueError("You have to specify the correct options in cfme_data.yaml")
+        from cfme.infrastructure.provisioning import provisioning_form, submit_button
+        provisioning_data = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "vm_name": template_name,
+            "host_name": {"name": prov_data.get("host")},
+            "datastore_name": {"name": prov_data.get("datastore")},
+        }
+        fill(provisioning_form, provisioning_data, action=submit_button)
+        cells = {'Description': 'Publish from [%s] to [%s]' % (self.name, template_name)}
+        row, __ = wait_for(
+            requests.wait_for_request, [cells], fail_func=requests.reload, num_sec=900, delay=20)
+        return Template(template_name, self.provider_crud)
+
+    def wait_for_vm_state_change(
+            self, desired_state=None, timeout=300, from_details=False):
+        """Wait for VM to come to desired state.
+
+        This function waits just the needed amount of time thanks to wait_for.
+
+        Args:
+            desired_state: on, off, suspended... corresponds to values in cfme, preferred approach
+                is to use Vm.STATE_* constansts
+            timeout: Specify amount of time (in seconds) to wait
+        Raises:
+            TimedOutError:
+                When VM does not come up to desired state in specified period of time.
+            NoVmFound:
+                When unable to find the VM passed
+        """
+        def _looking_for_state_change():
+            if from_details:
+                self.load_details(refresh=True)
+                detail_t = ("Power Management", "Power State")
+                return self.get_detail(properties=detail_t) == desired_state
+            else:
+                return self.find_quadicon().state == 'currentstate-' + desired_state
+        return wait_for(_looking_for_state_change, num_sec=timeout, delay=30)
+
+
+class Template(Common):
+
+    def __init__(self, name, provider_crud):
+        self.name = name
+        self.template_name = name
+        self.provider_crud = provider_crud
+
+    def load_details(self, refresh=False):
+        self._load_details(refresh=refresh, is_vm=False)
+
+    def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
+        return self._find_quadicon(
+            is_vm=False, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh)
+
+    def remove_from_cfme(self, cancel=False, from_details=False):
+        """Removes a VM from CFME VMDB"""
+        self._remove_from_cfme(is_vm=False, cancel=cancel, from_details=from_details)
+
+    def does_template_exist_in_cfme(self):
+        """A function to tell you if a VM exists or not.
+        """
+        try:
+            self.find_quadicon()
+            return True
+        except TemplateNotFound:
+            return False
 
 
 class Genealogy(object):
