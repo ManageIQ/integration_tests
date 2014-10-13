@@ -627,7 +627,7 @@ class VMWareSystem(MgmtSystemAPIBase):
             return True
 
     def clone_vm(self, source, destination, resourcepool=None, datastore=None, power_on=True,
-                 sparse=False, template=False, provision_timeout=300):
+                 sparse=False, template=False, provision_timeout=900):
         try:
             if mobs.VirtualMachine.get(self.api, name=destination).name == destination:
                 raise Exception("VM already present!")
@@ -689,7 +689,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         kwargs["power_on"] = True
         kwargs["template"] = False
         destination = kwargs.pop("vm_name")
-        start_timeout = kwargs.pop("timeout", 300)
+        start_timeout = kwargs.pop("timeout", 900)
         self.clone_vm(template, destination, **kwargs)
         self.wait_vm_running(destination, num_sec=start_timeout)
         return destination
@@ -1003,7 +1003,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
     def deploy_template(self, template, *args, **kwargs):
         logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
-        timeout = kwargs.pop('timeout', 300)
+        timeout = kwargs.pop('timeout', 900)
         vm_kwargs = {
             'name': kwargs['vm_name'],
             'cluster': self.api.clusters.get(kwargs['cluster']),
@@ -1267,7 +1267,7 @@ class EC2System(MgmtSystemAPIBase):
         logger.info(" Deploying EC2 template %s" % template)
 
         # strip out kwargs that ec2 doesn't understand
-        timeout = kwargs.pop('timeout', 300)
+        timeout = kwargs.pop('timeout', 900)
         vm_name = kwargs.pop('vm_name', None)
 
         # Make sure we only provision one VM
@@ -1574,7 +1574,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
             attempt to register a floating IP address from the pool specified in the arg.
         """
         nics = []
-        timeout = kwargs.pop('timeout', 300)
+        timeout = kwargs.pop('timeout', 900)
         if 'flavour_name' not in kwargs:
             kwargs['flavour_name'] = 'm1.tiny'
         if 'vm_name' not in kwargs:
