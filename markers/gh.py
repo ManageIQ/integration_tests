@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-``github(\*issues, action="skip"|"xfail"|callable)``: Marker for GH issues integration.
+"""github(\*issues, action="skip"|"xfail"|callable): Marker for GH issues integration.
 
 List of issues can be specified either as integers (when default_repo is specified), or strings
 in format ``<owner>/<repo>:<issue>``. If any of the issues is not closed, ``action`` will be done.
@@ -32,7 +31,7 @@ _issue_cache = {}
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", __doc__)
+    config.addinivalue_line("markers", __doc__.splitlines()[0])
 
 
 def pytest_addoption(parser):

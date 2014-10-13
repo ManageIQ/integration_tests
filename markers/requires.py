@@ -16,7 +16,7 @@ _no_mark_arg_err = '%s mark required test name or nodeid as first argument'
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", __doc__)
+    config.addinivalue_line("markers", __doc__.splitlines()[0])
 
 
 def _find_test_in_reports(test_id, reports):

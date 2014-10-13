@@ -1,4 +1,4 @@
-"""Marker for marking the test as a CRUD test (crud)
+"""crud: Marker for marking the test as a CRUD test (crud)
 
 Useful for eg. running only crud tests.
 Tests will be marked automatically if:
@@ -14,7 +14,7 @@ marker = "crud"
 
 
 def pytest_configure(config):
-    config.addinivalue_line('markers', __doc__)
+    config.addinivalue_line('markers', __doc__.splitlines()[0])
 
 
 def pytest_itemcollected(item):
