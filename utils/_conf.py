@@ -199,18 +199,18 @@ class Config(dict):
         self._populate(key)
 
     def _populate(self, key):
-            yaml_dict = load_yaml(key)
+        yaml_dict = load_yaml(key)
 
-            # Graft in local yaml updates if they're available
-            with catch_warnings():
-                local_yaml = '%s.local' % key
-                local_yaml_dict = load_yaml(local_yaml, warn_on_fail=False)
-                if local_yaml_dict:
-                    yaml_dict.update(local_yaml_dict)
+        # Graft in local yaml updates if they're available
+        with catch_warnings():
+            local_yaml = '%s.local' % key
+            local_yaml_dict = load_yaml(local_yaml, warn_on_fail=False)
+            if local_yaml_dict:
+                yaml_dict.update(local_yaml_dict)
 
-            # Graft on the local overrides
-            yaml_dict.update(self.runtime.get(key, {}))
-            self[key].update(yaml_dict)
+        # Graft on the local overrides
+        yaml_dict.update(self.runtime.get(key, {}))
+        self[key].update(yaml_dict)
 
     def clear(self):
         # because of the 'from conf import foo' mechanism, we need to clear each key in-place,
