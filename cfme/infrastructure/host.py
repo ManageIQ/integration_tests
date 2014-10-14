@@ -66,6 +66,8 @@ manage_policies_tree = CheckboxTree(
     })
 )
 
+drift_table = CheckboxTable("//table[@class='style3']")
+
 host_add_btn = FormButton('Add this Host')
 
 cfg_btn = partial(tb.select, 'Configuration')
@@ -315,8 +317,9 @@ class Host(Updateable, Pretty):
         sel.force_navigate('infrastructure_host', context={'host': self})
         tb.select('Configuration', 'Perform SmartState Analysis', invokes_alert=True)
         sel.handle_alert()
+        flash.assert_message_contain('"{}": Analysis successfully initiated'.format(self.name))
 
-    def are_drift_results_equal(self, row_text, *indexes):
+    def equal_drift_results(self, row_text, *indexes):
         """ Compares drift analysis results of a row specified by it's title text
 
         Args:
@@ -333,8 +336,6 @@ class Host(Updateable, Pretty):
         # mark by indexes or mark all
         sel.force_navigate('infrastructure_host', context={'host': self})
         list_acc.select('Relationships', 'Show host drift history')
-        drift_table_loc = "//table[@class='style3']"
-        drift_table = CheckboxTable(drift_table_loc)
         if indexes:
             drift_table.select_rows_by_indexes(*indexes)
         else:

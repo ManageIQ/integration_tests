@@ -4,7 +4,7 @@ from cfme.configure import tasks
 from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
-from cfme.web_ui import flash, listaccordion as list_acc, tabstrip as tabs, toolbar as tb
+from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as tb
 from utils import conf
 from utils import testgen
 from utils.wait import wait_for
@@ -84,7 +84,6 @@ def test_run_host_analysis(request, provider_key, host_type, host_name, register
 
     # Initiate analysis
     test_host.run_smartstate_analysis()
-    flash.assert_message_contain('"{}": Analysis successfully initiated'.format(host_name))
 
     # Wait for the task to finish
     def is_host_analysis_finished():

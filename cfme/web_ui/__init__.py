@@ -2672,8 +2672,12 @@ class DriftGrid(Pretty):
             Selenium element of the cell.
         """
         self.expand_all_sections()
-        cell_loc = ".//div/div[1][contains(., '{}')]/../div[{}]"
-        cell = sel.element(cell_loc.format(row_text, col_index + 2), root=self.loc)
+        cell_loc = {
+            '5.3': ".//div/div[1][contains(., '{}')]/../div[{}]".format(row_text, col_index + 2),
+            version.LOWEST: ".//tr/td[1][contains(., '{}')]/../td[{}]"
+                            .format(row_text, col_index + 2)
+        }
+        cell = sel.element(cell_loc, root=self.loc)
         return cell
 
     def cell_indicates_change(self, row_text, col_index):
@@ -2699,16 +2703,23 @@ class DriftGrid(Pretty):
                 return True
         # or text
         except NoSuchElementException:
-            cell_textdiv = sel.element("./div", root=cell)
-            if 'mark' in sel.get_attribute(cell_textdiv, 'class'):
-                return True
+            if version.current_version() <= '5.3':
+                cell_textdiv = sel.element("./div", root=cell)
+                if 'mark' in sel.get_attribute(cell_textdiv, 'class'):
+                    return True
+            else:  # LOWEST
+                if 'color: rgb(33, 160, 236)' in sel.get_attribute(cell, 'style'):
+                    return True
         return False
 
     def expand_all_sections(self):
         """ Expands all sections to make the row elements found therein available
         """
         els_to_expand = sel.elements(
-            './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
+            {
+                '5.3': './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
+                version.LOWEST: './/div/img[contains(@src, "plus")]'
+            },
             root=self.loc
         )
         for el in els_to_expand:

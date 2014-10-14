@@ -2,9 +2,10 @@
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
-from cfme.web_ui import flash, DriftGrid, toolbar as tb
+from cfme.web_ui import DriftGrid, toolbar as tb
 from utils import conf, error, testgen
 from utils.wait import wait_for
+from utils.update import update
 import pytest
 
 pytestmark = [pytest.mark.usefixtures("setup_infrastructure_providers")]
@@ -72,39 +73,40 @@ def test_host_drift_analysis(request, provider_key, host_type, host_name, soft_a
 
     # initiate 1st analysis
     test_host.run_smartstate_analysis()
-    flash.assert_message_contain('"{}": Analysis successfully initiated'.format(host_name))
 
     # wait for for drift history num+1
     wait_for(
         lambda: int(test_host.get_detail('Relationships', 'Drift History')) == drift_num_orig + 1,
         delay=20,
         num_sec=120,
+        message="Waiting for Drift History count to increase",
         fail_func=sel.refresh
     )
 
     # change host name + finalizer to change it back
     orig_host_name = test_host.name
-    test_host.update(
-        updates={'name': '{}_tmp_drift_rename'.format(test_host.name)}
-    )
-    request.addfinalizer(
-        lambda: test_host.update(updates={'name': orig_host_name})
-    )
+    with update(test_host):
+        test_host.name = '{}_tmp_drift_rename'.format(test_host.name)
+
+    def host_reset_name():
+        with update(test_host):
+            test_host.name = orig_host_name
+    request.addfinalizer(host_reset_name)
 
     # initiate 2nd analysis
     test_host.run_smartstate_analysis()
-    flash.assert_message_contain('"{}": Analysis successfully initiated'.format(host_name))
 
     # wait for for drift history num+2
     wait_for(
         lambda: int(test_host.get_detail('Relationships', 'Drift History')) == drift_num_orig + 2,
         delay=20,
         num_sec=120,
+        message="Waiting for Drift History count to increase",
         fail_func=sel.refresh
     )
 
     # check drift difference
-    soft_assert(not test_host.are_drift_results_equal('All Sections', 0, 1),
+    soft_assert(not test_host.equal_drift_results('All Sections', 0, 1),
         "Drift analysis results are equal when they shouldn't be")
 
     # Test UI features that modify the drift grid
