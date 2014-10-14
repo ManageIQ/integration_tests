@@ -9,12 +9,12 @@ from utils import lazycache
 from utils.conf import cfme_data
 from utils.db import cfmedb
 from utils.log import logger
-from utils.soap import soap_client
+from utils.soap import SoapClient
 from utils.wait import wait_for
 
 
 if "client" not in globals():
-    client = soap_client()  # Ugly, but easiest to use :/
+    client = SoapClient()  # Ugly, but easiest to use :/
 
 
 def is_datastore_banned(datastore_name):
