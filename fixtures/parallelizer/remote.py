@@ -36,14 +36,14 @@ class SlaveManager(object):
 
     def send_event(self, name, **kwargs):
         kwargs['_event_name'] = name
-        self.log.debug("sending %s %r", name, kwargs)
+        self.log.trace("sending %s %r", name, kwargs)
         self.sock.send_json(kwargs)
         recv = self.sock.recv_json()
         if recv == 'die':
             self.log.info('Slave instructed to die by master; shutting down')
             raise SystemExit()
         else:
-            self.log.debug('received "%r" from master', recv)
+            self.log.trace('received "%r" from master', recv)
             if recv != 'ack':
                 return recv
 

@@ -235,9 +235,9 @@ def wait_for_ajax():
         # Log the message only if it's different from the last one
         if prev_log_msg != log_msg:
             _thread_local.ajax_log_msg = log_msg
-            logger.debug('Ajax running: {}'.format(log_msg))
+            logger.trace('Ajax running: {}'.format(log_msg))
         if (not anything_in_flight) and prev_log_msg:
-            logger.debug('Ajax done')
+            logger.trace('Ajax done')
 
         return not anything_in_flight
 
