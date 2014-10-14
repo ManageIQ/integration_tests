@@ -184,6 +184,9 @@ $(function() {
 		{% if test.function %}
 		<a href="{{test.function}}" class="btn btn-success" role="button">Function Trace</a>
 		{% endif %}
+		{% if test.event_testing %}
+		<a href="{{test.event_testing}}" class="btn btn-success" role="button">Event Testing</a>
+		{% endif %}
 		{% for file in test.merkyl %}
 		   <a href="{{file}}" class="btn btn-primary" role="button">{{file[file.rfind("/")+1:]}}</a>
 		{% endfor %}
