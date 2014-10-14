@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% set title = 'Received e-mails' %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="dist/themes/default/style.min.css" />
+<div class="container" id="content">
+    <div class="panel panel-info">
+        <div class="panel-heading">
+            <div class="row">
+                <div class="col-md-10">
+                    <strong>List of all received e-mails</strong>
+                </div>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div id="container">
+                {% for email in emails %}
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <div class="row">
+                            <div class="col-md-10">
+                                <strong>{{email.subject}}</strong>
+                                <br />
+                                <em><u>From:</u>&nbsp; {{email.source}}</em>
+                                <br />
+                                <em><u>To:</u>&nbsp; {{email.destination}}</em>
+                                <br />
+                                <em><u>Received at:</u>&nbsp; {{email.received}}</em>
+                                <br />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <pre>{{email.body}}</pre>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

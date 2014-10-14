@@ -3,9 +3,11 @@
 """Script used to catch and expose e-mails from CFME"""
 
 from bottle import route, run, response, request
+from collections import namedtuple
 from datetime import datetime
+from jinja2 import Environment, FileSystemLoader
 from smtpd import SMTPServer
-from utils.path import log_path
+from utils.path import log_path, template_path
 from utils.timeutil import parsetime
 import asyncore
 import email
@@ -41,6 +43,10 @@ files_lock = threading.RLock()  # To prevent filename collisions
 test_name = None                # Name of the test which currently runs
 email_path = log_path.join("emails")
 email_folder = None             # Name of the root folder for testing
+
+template_env = Environment(
+    loader=FileSystemLoader(template_path.strpath)
+)
 
 
 def write(what, end="\n"):
@@ -161,6 +167,17 @@ def all_messages():
 
         rows = c.fetchall()
         return json.dumps([dict(zip(ROWS, row)) for row in rows])
+
+
+@route("/messages.html")
+def all_messages_in_html():
+    response.content_type = "text/html"
+    emails = []
+    Email = namedtuple("Email", ["source", "destination", "subject", "received", "body"])
+    with db_lock:
+        emails = map(Email._make, connection.cursor().execute("SELECT * FROM emails").fetchall())
+
+    return template_env.get_template("smtp_result.html").render(emails=emails)
 
 
 @route("/messages", method="DELETE")

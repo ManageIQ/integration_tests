@@ -17,14 +17,14 @@ class SMTPCollectorClient(object):
         self._port = port
 
     def _query(self, method, path, **params):
-        return method("http://%s:%d/%s" % (self._host, self._port, path), params=params).json()
+        return method("http://%s:%d/%s" % (self._host, self._port, path), params=params)
 
     def clear_database(self):
         """Clear the database in collector
 
         Returns: :py:class:`bool`
         """
-        return self._query(requests.delete, "messages")
+        return self._query(requests.delete, "messages").json()
 
     def set_test_name(self, test_name):
         """Set the test name for folder name in the collector.
@@ -33,7 +33,7 @@ class SMTPCollectorClient(object):
             test_name: Name to set
         Returns: :py:class:`bool` with result.
         """
-        return self._query(requests.get, "set_test_name", test_name=test_name)
+        return self._query(requests.get, "set_test_name", test_name=test_name).json()
 
     def get_emails(self, **filter):
         """Get emails. Eventually apply filtering on SQLite level
@@ -61,4 +61,7 @@ class SMTPCollectorClient(object):
         if filter.get("time_to", None) is not None:
             if isinstance(filter["time_to"], parsetime):
                 filter["time_to"] = filter["time_to"].to_request_format()
-        return self._query(requests.get, "messages", **filter)
+        return self._query(requests.get, "messages", **filter).json()
+
+    def get_html_report(self):
+        return self._query(requests.get, "messages.html").text.strip()
