@@ -12,6 +12,7 @@ import subprocess
 import time
 
 from cfme.configure import configuration
+from fixtures.artifactor_plugin import art_client
 from utils.conf import env
 from utils.log import create_logger
 from utils.net import random_port, my_ip_address, net_check_remote
@@ -97,3 +98,19 @@ def smtp_test(request, smtp_test_module):
     smtp_test_module.clear_database()
     yield smtp_test_module
     smtp_test_module.clear_database()
+
+
+@pytest.mark.trylast
+def pytest_runtest_call(__multicall__, item):
+    __multicall__.execute()
+    if "smtp_test" not in item.funcargs:
+        return
+
+    art_client.fire_hook(
+        "filedump",
+        test_name=item.name,
+        test_location=item.parent.name,
+        filename="emails.html",
+        contents=item.funcargs["smtp_test"].get_html_report(),
+        fd_ident="emails"
+    )

@@ -134,6 +134,8 @@ class Reporter(ArtifactorBasePlugin):
                         test_data['cfme'] = filename.replace(log_dir, "")
                     elif "function" in filename:
                         test_data['function'] = filename.replace(log_dir, "")
+                    elif "emails.html" in filename:
+                        test_data['emails'] = filename.replace(log_dir, "")
                 if "merkyl" in ident:
                     test_data['merkyl'] = [f.replace(log_dir, "")
                                            for f in test['files']['merkyl']]
