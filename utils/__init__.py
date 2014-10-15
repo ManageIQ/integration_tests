@@ -75,3 +75,25 @@ def property_or_none(wrapped, *args, **kwargs):
         except AttributeError:
             pass
     return property(wrapper, *args, **kwargs)
+
+
+class _classproperty(property):
+    """Subclass property to make classmethod properties possible"""
+    def __get__(self, cls, owner):
+        return self.fget.__get__(None, owner)()
+
+
+def classproperty(f):
+    """Enables properties for whole classes:
+
+    Usage:
+
+        >>> class Foo(object):
+        ...     @classproperty
+        ...     def bar(cls):
+        ...         return "bar"
+        ...
+        >>> print Foo.bar
+        baz
+    """
+    return _classproperty(classmethod(f))

@@ -7,7 +7,7 @@
 import re
 from lxml import etree
 from py.path import local
-from cfme.automate.explorer import Namespace, Instance, Class, def_domain
+from cfme.automate.explorer import Namespace, Instance, Class, Domain
 from cfme.control.import_export import import_file, is_imported
 from cfme.exceptions import AutomateImportError
 from cfme.infrastructure.provider import get_from_config
@@ -252,7 +252,8 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
 
     # ENABLE THE DOMAIN IF UPSTREAM
     if version.current_version() >= "5.3":
-        if not def_domain.is_enabled:
-            logger.info("Enabling the {} domain to enable our automation.".format(def_domain.name))
-            with update(def_domain):
-                def_domain.enabled = True
+        if not Domain.default.is_enabled:
+            logger.info(
+                "Enabling the {} domain to enable our automation.".format(Domain.default.name))
+            with update(Domain.default):
+                Domain.default.enabled = True

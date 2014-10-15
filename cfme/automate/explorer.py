@@ -14,7 +14,7 @@ from utils import error, version
 from collections import Mapping
 import re
 from utils.log import logger
-from utils import pretty
+from utils import classproperty, pretty
 
 tree = Tree({
     version.LOWEST: '//table//tr[@title="Datastore"]/../..',
@@ -234,9 +234,15 @@ class Domain(TreeNode, Updateable):
         self.enabled = sel.element(self.form.enabled).is_selected()
         return self.enabled
 
+    @classproperty
+    def default(cls):
+        if not hasattr(cls, "_default_domain"):
+            cls._default_domain = version.pick({
+                version.LOWEST: None,
+                '5.3': cls('Default')
+            })
+        return cls._default_domain
 
-def_domain = version.pick({version.LOWEST: None,
-                           '5.3': Domain('Default')})
 
 domain_order_selector = UpDownSelect(
     "select#seq_fields",
@@ -290,10 +296,10 @@ class Namespace(TreeNode, Updateable):
         else:
             return None
 
-    def __init__(self, name=None, description=None, parent=None, domain=def_domain):
+    def __init__(self, name=None, description=None, parent=None, domain=None):
         self.name = name
         self.description = description
-        self.parent = parent or domain
+        self.parent = parent or (domain if isinstance(domain, Domain) else Domain.default)
 
     def create(self, cancel=False):
         if self.parent is not None and not self.parent.exists():

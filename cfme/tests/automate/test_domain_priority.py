@@ -2,7 +2,7 @@
 import pytest
 
 from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
-from cfme.automate.explorer import set_domain_order, def_domain
+from cfme.automate.explorer import set_domain_order
 from cfme.automate.simulation import simulate
 from utils.randomness import generate_random_string
 from utils.update import update
@@ -52,7 +52,7 @@ def original_method(request, original_method_write_data):
             name="Request",
             namespace=Namespace(
                 name="System",
-                parent=def_domain
+                parent=Domain.default
             )
         )
     )
@@ -63,9 +63,9 @@ def original_method(request, original_method_write_data):
 
 @pytest.fixture(scope="function")
 def original_instance(request, original_method):
-    if not def_domain.is_enabled:
-        with update(def_domain):
-            def_domain.enabled = True
+    if not Domain.default.is_enabled:
+        with update(Domain.default):
+            Domain.default.enabled = True
     instance = Instance(
         name=generate_random_string(),
         values={
@@ -77,7 +77,7 @@ def original_instance(request, original_method):
             name="Request",
             namespace=Namespace(
                 name="System",
-                parent=def_domain
+                parent=Domain.default
             )
         )
     )
@@ -92,7 +92,7 @@ def test_priority(
         request, ssh_client, original_method, original_instance, copy_domain,
         original_method_write_data, copy_method_write_data):
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
-    set_domain_order([def_domain.name])  # Default first
+    set_domain_order([Domain.default.name])  # Default first
     #
     # FIRST SIMULATION
     #
@@ -142,7 +142,7 @@ def test_priority(
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     # END OF SECOND SIMULATION
     # And last shot, now again with default domain
-    set_domain_order([def_domain.name])
+    set_domain_order([Domain.default.name])
     # And verify
     #
     # LAST SIMULATION
@@ -171,7 +171,7 @@ def test_override_method_across_domains(
     instance = original_instance
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     request.addfinalizer(lambda: ssh_client.run_command("rm -f {}".format(FILE_LOCATION)))
-    set_domain_order([def_domain.name])  # Default first
+    set_domain_order([Domain.default.name])  # Default first
     simulate(
         instance="Request",
         message="create",
