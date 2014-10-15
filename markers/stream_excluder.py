@@ -11,6 +11,8 @@ import pytest
 from fixtures.terminalreporter import reporter
 from utils.version import appliance_is_downstream, current_version
 
+ssh_connection_failed = False
+
 
 def get_streams_id():
     if appliance_is_downstream():
@@ -24,7 +26,15 @@ def pytest_configure(config):
 
 
 def pytest_itemcollected(item):
-    streams_id = get_streams_id()
+    global ssh_connection_failed
+
+    if ssh_connection_failed:
+        return
+    try:
+        streams_id = get_streams_id()
+    except Exception:
+        ssh_connection_failed = True
+        return
     marker = item.get_marker("ignore_stream")
     if marker is None:
         return
@@ -36,4 +46,5 @@ def pytest_itemcollected(item):
 
 def pytest_collection_modifyitems(session, config, items):
     # Just to print out the appliance's streams
-    reporter(config).write("\nAppliance's streams: [{}]\n".format(", ".join(get_streams_id())))
+    if not ssh_connection_failed:
+        reporter(config).write("\nAppliance's streams: [{}]\n".format(", ".join(get_streams_id())))

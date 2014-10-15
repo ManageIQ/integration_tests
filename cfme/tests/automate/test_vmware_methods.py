@@ -9,14 +9,14 @@ from cfme.web_ui import fill, flash, form_buttons, toolbar
 from utils import testgen
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
-from utils.version import current_version
+from utils.version import current_version  # NOQA
 from utils.wait import wait_for
 
 submit = form_buttons.FormButton("Submit")
 pytestmark = [
     pytest.mark.usefixtures("server_roles"),
     pytest.mark.fixtureconf(server_roles="+automate"),
-    pytest.mark.skipif(current_version() >= "5.3", reason="This works only on 5.2"), ]
+    pytest.mark.skipif("current_version() >= '5.3'", reason="This works only on 5.2"), ]
 
 
 def pytest_generate_tests(metafunc):

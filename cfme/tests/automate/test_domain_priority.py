@@ -6,11 +6,11 @@ from cfme.automate.explorer import set_domain_order
 from cfme.automate.simulation import simulate
 from utils.randomness import generate_random_string
 from utils.update import update
-from utils.version import current_version
+from utils.version import current_version  # NOQA
 from utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.skipif(current_version() < "5.3", reason="New version only")
+    pytest.mark.skipif("current_version() < '5.3'", reason="New version only")
 ]
 
 FILE_LOCATION = "/var/www/miq/vmdb/test_ae_{}".format(generate_random_string(16))
