@@ -58,9 +58,9 @@ provisioning_form = tabstrip.TabStripForm(
         ]),
         ('Environment', [
             ('automatic_placement', '//input[@id="environment__placement_auto"]'),
+            ('provider_name', Select('//select[@id="environment__placement_ems_name"]')),
             ('datacenter', Select('//select[@id="environment__placement_dc_name"]')),
             ('cluster', Select('//select[@id="environment__placement_cluster_name"]')),
-            ('provider_name', Select('//select[@id="environment__placement_ems_name"]')),
             ('resource_pool', Select('//select[@id="environment__placement_rp_name"]')),
             ('folder', Select('//select[@id="environment__placement_folder_name"]')),
             ('host_filter', Select('//select[@id="environment__host_filter"]')),
