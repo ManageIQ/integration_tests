@@ -18,10 +18,10 @@ from utils import version
 from utils.pretty import Pretty
 
 _entry_div = "//div[contains(@class, 'ui-tabs')]"  # Entry point
-_entry_ul = version.pick({
+_entry_ul = {
     '5.3': '//ul[@class="tab2" or @class="tab3"]',
     version.LOWEST: '//ul[@id="tab" and @class="tab"]'
-})
+}
 
 
 def _root():

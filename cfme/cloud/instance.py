@@ -43,10 +43,10 @@ policy_page = Region(
     })
 
 manage_policies_tree = CheckboxTree(
-    version.pick({
+    {
         version.LOWEST: "//div[@id='treebox']/div/table",
         "5.3": "//div[@id='protect_treebox']/ul"
-    })
+    }
 )
 
 # Forms

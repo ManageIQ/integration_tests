@@ -16,8 +16,10 @@ import re
 from utils.log import logger
 from utils import pretty
 
-tree = Tree(version.pick({version.LOWEST: '//table//tr[@title="Datastore"]/../..',
-                         '5.3': '//ul//a[@title="Datastore"]/../../..'}))
+tree = Tree({
+    version.LOWEST: '//table//tr[@title="Datastore"]/../..',
+    '5.3': '//ul//a[@title="Datastore"]/../../..'})
+
 datastore_tree = partial(accordion.tree, "Datastore", "Datastore")
 cfg_btn = partial(tb.select, 'Configuration')
 

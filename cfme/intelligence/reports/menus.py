@@ -17,10 +17,10 @@ menu.nav.add_branch(
     }
 )
 
-reports_tree = Tree(version.pick({
+reports_tree = Tree({
     "5.3": "//div[@id='menu_roles_treebox']/ul",
-    "default": "//div[@id='treebox']//table[not(tbody/tr/td[@class='hiddenRow'])]"
-}))
+    version.LOWEST: "//div[@id='treebox']//table[not(tbody/tr/td[@class='hiddenRow'])]"
+})
 
 manager = FolderManager("//div[@id='folder_lists']/table")
 report_select = MultiBoxSelect(

@@ -99,8 +99,9 @@ tag_form = Form(
         ('name', "//input[@id='entry_name']"),
         ('display_name', "//input[@id='entry_description']"),
         ('add', "//input[@id='accept']"),
-        ('new', version.pick({version.LOWEST: "//img[@alt='New']",
-                              '5.3': "//span[@class='glyphicon glyphicon-plus']"}))
+        ('new', {
+            version.LOWEST: "//img[@alt='New']",
+            '5.3': "//span[@class='glyphicon glyphicon-plus']"})
     ])
 
 zone_form = Form(

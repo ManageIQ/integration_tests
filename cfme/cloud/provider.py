@@ -50,10 +50,10 @@ properties_form = Form(
         ('hostname_text', "#hostname"),
         ('ipaddress_text', "#ipaddress"),
         ('amazon_region_select', Select(
-            version.pick({
+            {
                 version.LOWEST: "select#hostname",
                 "5.3.0.14": "select#provider_region",
-            })
+            }
         )),
         ('api_port', "#port"),
     ])

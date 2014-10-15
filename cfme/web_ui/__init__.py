@@ -984,6 +984,11 @@ def fill(loc, content):
     return prev_state
 
 
+@fill.method((Mapping, Anything))
+def _version_pick(m, a, **kwargs):
+    return fill(version.pick(m), a, **kwargs)
+
+
 @fill.method((Table, Mapping))
 def _sd_fill_table(table, cells):
     """ How to fill a table with a value (by selecting the value as cells in the table)
