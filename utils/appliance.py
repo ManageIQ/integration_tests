@@ -1,21 +1,22 @@
 import atexit
 import os
 import random
+import requests
 import shutil
 import subprocess
-from textwrap import dedent
+from cfme.configure.configuration import set_server_roles, get_server_roles
 from tempfile import mkdtemp
-from urlparse import urlparse
-
-import requests
+from textwrap import dedent
 from time import sleep
-
+from urlparse import urlparse
 from utils import conf, datafile, db, lazycache
 from utils.browser import browser_session
+from utils.hosts import setup_providers_hosts_credentials
 from utils.log import logger, create_sublogger
+from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check
 from utils.path import data_path, scripts_path
-from utils.providers import provider_factory
+from utils.providers import provider_factory, setup_provider
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.version import get_version, LATEST
@@ -66,13 +67,17 @@ class Appliance(object):
     def address(self):
         def is_ip_available():
             try:
-                return self.provider.get_ip_address(self.vm_name)
+                ip = self.provider.get_ip_address(self.vm_name)
+                if ip is None:
+                    return False
+                else:
+                    return ip
             except AttributeError:
                 return False
 
         ec, tc = wait_for(is_ip_available,
                           delay=5,
-                          num_sec=30)
+                          num_sec=600)
         return ec
 
     @lazycache
@@ -113,6 +118,7 @@ class Appliance(object):
 
     def _configure_5_2(self):
         self.ipapp.update_rhel()
+        self.ipapp.fix_ntp_clock()
         self.ipapp.enable_internal_db()
         self.ipapp.wait_for_web_ui()
         self.ipapp.fix_ntp_clock()
@@ -120,6 +126,7 @@ class Appliance(object):
 
     def _configure_5_3(self):
         self.ipapp.update_rhel()
+        self.ipapp.fix_ntp_clock()
         self.ipapp.enable_internal_db()
         self.ipapp.wait_for_web_ui()
         self.ipapp.loosen_pgssl()
@@ -127,12 +134,13 @@ class Appliance(object):
         self.ipapp.deploy_merkyl()
 
     def _configure_upstream(self):
+        self.ipapp.fix_ntp_clock()
         self.ipapp.wait_for_web_ui()
         self.ipapp.loosen_pgssl()
         self.ipapp.clone_domain()
         self.ipapp.deploy_merkyl()
 
-    def configure(self, **kwargs):
+    def configure(self, setup_fleece=False, **kwargs):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
 
         Utility method to make things easier.
@@ -159,6 +167,36 @@ class Appliance(object):
                 self._configure_5_3()
             elif self.version == LATEST:
                 self._configure_upstream()
+        if setup_fleece:
+            self.configure_fleecing()
+
+    def configure_fleecing(self):
+        if self.is_on_vsphere:
+            self.ipapp.install_vddk(reboot=True)
+            self.ipapp.wait_for_web_ui()
+
+        with self.ipapp.browser_session():
+            logger.info('configure fleecing, enabling smart proxy role...')
+            roles = get_server_roles()
+            if not roles["smartproxy"]:
+                roles["smartproxy"] = True
+                set_server_roles(**roles)
+                ver_list = str(self.version).split(".")
+                if ver_list[0] is "5" and ver_list[1] is "2" and int(ver_list[3]) > 5:
+                    sleep(600)
+
+            # add provider
+            logger.info('configure fleecing, setting up provider...')
+            setup_provider(self._provider_name)
+
+            # credential hosts
+            logger.info('configure fleecing, credentialing hosts...')
+            setup_providers_hosts_credentials(self._provider_name)
+
+            # if self.is_on_rhev:
+            #    self.add_rhev_direct_lun_disk()
+            #    vm.load_details()
+            #    vm_details.edit_cfme_relationship_and_save()
 
     def does_vm_exist(self):
         return self.provider.does_vm_exist(self.vm_name)
@@ -181,6 +219,9 @@ class Appliance(object):
     def destroy(self):
         """Destroys the VM this appliance is running as
         """
+        if isinstance(self._provider, RHEVMSystem):
+            # if rhev, try to remove direct_lun just in case it is detach
+            self.remove_rhev_direct_lun_disk()
         self.provider.delete_vm(self.vm_name)
 
     @property
@@ -189,6 +230,41 @@ class Appliance(object):
 
     def browser_session(self, reset_cache=False):
         return self.ipapp.browser_session(reset_cache=reset_cache)
+
+    @property
+    def is_on_rhev(self):
+        return isinstance(self._provider, RHEVMSystem)
+
+    @property
+    def is_on_vsphere(self):
+        return isinstance(self._provider, VMWareSystem)
+
+    def add_rhev_direct_lun_disk(self):
+        if not isinstance(self._provider, RHEVMSystem):
+            raise ApplianceException("appliance NOT on rhev, unable to connect direct_lun")
+        logger.info('Adding RHEV direct_lun hook...')
+        self.wait_for_ssh()
+        script = scripts_path.join('connect_directlun.py')
+        args = [str(script), '--provider', self._provider_key, '--vm_name', self.vm_name]
+        with open(os.devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
+        if status != 0:
+            raise ApplianceException('Appliance {} failed to connect rhev direct lun!'
+                                     .format(self.address))
+
+    def remove_rhev_direct_lun_disk(self):
+        if not isinstance(self._provider, RHEVMSystem):
+            raise ApplianceException("appliance NOT on rhev, unable to disconnect direct_lun")
+        logger.info('Removing RHEV direct_lun hook...')
+        self.wait_for_ssh()
+        script = scripts_path.join('connect_directlun.py')
+        args = [str(script), '--remove', '--provider',
+                self._provider_key, '--vm_name', self.vm_name]
+        with open(os.devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
+        if status != 0:
+            raise ApplianceException('Appliance {} failed to disconnect rhev direct lun!'
+                                     .format(self.address))
 
 
 class IPAppliance(object):
@@ -714,6 +790,23 @@ class IPAppliance(object):
         result, wait = wait_for(self._check_appliance_ui_wait_fn, num_sec=timeout,
             fail_condition=not running, delay=10)
         return result
+
+    def install_vddk(self, reboot=True):
+        '''Install the vddk on a appliance'''
+        if int(self.ssh_client().run_command("ldconfig -p | grep vix | wc -l")[1]) < 1:
+            logger.info('Installing VDDK...')
+            script = scripts_path.join('install_vddk.py')
+            args = [str(script), self.address, conf.cfme_data['basic_info']['vddk_url']]
+            if reboot:
+                args.append('--reboot')
+            with open(os.devnull, 'w') as f_devnull:
+                status = subprocess.call(args, stdout=f_devnull)
+            if status != 0:
+                raise ApplianceException('Appliance {} failed to install VDDK!'
+                                         .format(self.address))
+            self.wait_for_web_ui()
+        else:
+            logger.warn("some version of vddk already installed")
 
     def wait_for_db(self, timeout=180):
         """Waits for appliance database to be ready
