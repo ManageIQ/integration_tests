@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Provides functions for the flash area.
 
 :var area: A :py:class:`cfme.web_ui.Region` object representing the flash region.
@@ -9,21 +10,25 @@ from utils import version
 from cfme.versions import upstream
 from utils.pretty import Pretty
 
-area = Region(locators={
-    'message': version.pick({
-        version.LOWEST: ' | '.join([
-            ('//div[starts-with(@id, "flash_") and '
-                'not(ancestor::*[contains(@style,"display: none")])]//li'),
-            '//div[@id="flash_div"]',  # login screen
-        ]),
-        '5.3': ' | '.join([
-            ('//div[starts-with(@id, "flash_") and '
-                'not(ancestor::*[contains(@style,"display: none")])]'
-                '//div[contains(@class,"alert")]'),
-            '//div[@id="flash_div"]',  # login screen
-        ])
-    })
-})
+
+area = Region(
+    locators={
+        'message': {
+            version.LOWEST: ' | '.join([
+                ('//div[starts-with(@id, "flash_") and '
+                    'not(ancestor::*[contains(@style,"display: none")])]//li'),
+                '//div[@id="flash_div"]',  # login screen
+            ]),
+            '5.3': ' | '.join([
+                ('//div[starts-with(@id, "flash_") and '
+                    'not(ancestor::*[contains(@style,"display: none")])]'
+                    '//div[contains(@class,"alert")]'),
+                '//div[@id="flash_div"]',  # login screen
+            ])
+        }
+    }
+)
+
 _mapping_new = {
     "alert-warning": "warning",
     "alert-success": "success",

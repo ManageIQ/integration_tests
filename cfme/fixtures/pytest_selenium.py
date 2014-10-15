@@ -34,6 +34,7 @@ from multimethods import singledispatch, multidispatch
 
 import pytest
 from cfme import exceptions, js
+from utils import version
 from utils.browser import browser, ensure_browser_open
 from utils.log import logger
 from utils.wait import wait_for
@@ -163,6 +164,12 @@ def _l(l, **kwargs):
         result.append(item)
         seen.add(item)
     return result
+
+
+@elements.method(dict)
+def _d(l, **kwargs):
+    """Resolve version-specific locators."""
+    return elements(version.pick(l), **kwargs)
 
 
 def element(o, **kwargs):
