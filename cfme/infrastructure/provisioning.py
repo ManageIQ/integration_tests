@@ -39,10 +39,10 @@ provisioning_form = tabstrip.TabStripForm(
             ('manager_name', '//input[@id="requester__owner_manager"]'),
         ]),
         ('Purpose', [
-            ('apply_tags', version.pick({
+            ('apply_tags', {
                 version.LOWEST: CheckboxTree('//div[@id="all_tags_treebox"]//table'),
                 "5.3": CheckboxTree('//div[@id="all_tags_treebox"]//ul')
-            }))
+            })
         ]),
         ('Catalog', [
             ('vm_filter', Select('//select[@id="service__vm_filter"]')),

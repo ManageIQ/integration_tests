@@ -14,13 +14,13 @@ def go_to_default_func(_):
     """This can change, because the title of the default dashboard is mutable. However, we can xpath
     there quite reliable, so we use it that way we extract the name from the tree directly.
     """
-    t = version.pick({
+    t = {
         "5.3": "//div[@id='db_treebox']/ul/li[@id='db_root']/ul/li/"
                "span[contains(@class, 'dynatree-node') and img[contains(@src, 'dashboard')]]/a",
         version.LOWEST: "//div[@id='db_treebox']/div/table/tbody/tr/td/table/"
                         "tbody[tr[@title='All Dashboards']]/tr/td/table/tbody/"
                         "tr[td/img[contains(@src, 'dashboard')]]/td/span",
-    })
+    }
     accordion.click("Dashboards")
     accordion.tree("Dashboards", "All Dashboards", sel.text(t).encode("utf-8"))
 

@@ -39,10 +39,10 @@ visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
                     "/ul[@class='dynatree-container']")
 
 manage_policies_tree = CheckboxTree(
-    version.pick({
+    {
         version.LOWEST: "//div[@id='treebox']/div/table",
         "5.3": "//div[@id='protect_treebox']/ul"
-    })
+    }
 )
 
 
@@ -53,10 +53,10 @@ manage_policies_page = Region(
 
 
 snapshot_tree = Tree(
-    version.pick({
+    {
         version.LOWEST: "//div[@id='treebox']/div/table",
         "5.3": "//div[@id='snapshots_treebox']/ul"
-    })
+    }
 )
 
 snapshot_form = Form(
@@ -671,10 +671,10 @@ class Genealogy(object):
     Args:
         o: The :py:class:`Vm` or :py:class:`Template` object.
     """
-    genealogy_tree = CheckboxTree(version.pick({
+    genealogy_tree = CheckboxTree({
         version.LOWEST: "//div[@id='treebox']/div/table",
         "5.3": "//div[@id='genealogy_treebox']/ul",
-    }))
+    })
 
     section_comparison_tree = CheckboxTree("//div[@id='all_sections_treebox']/div/table")
     apply_button = form_buttons.FormButton("Apply sections")

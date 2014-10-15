@@ -17,10 +17,10 @@ from utils.pretty import Pretty
 
 
 tb_select = functools.partial(tb.select, "Configuration")
-catalog_item_tree = web_ui.Tree(version.pick({
+catalog_item_tree = web_ui.Tree({
     version.LOWEST: '//div[@id="sandt_tree_box"]//table',
     '5.3': '//div[@id="sandt_treebox"]//ul'
-}))
+})
 
 template_select_form = Form(
     fields=[

@@ -237,8 +237,11 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
             # Skip unwanted types
             continue
 
-        if prov_type == "scvmm" and version.current_version() < "5.3":
-            # Ignore SCVMM on 5.2
+        try:
+            if prov_type == "scvmm" and version.current_version() < "5.3":
+                # Ignore SCVMM on 5.2
+                continue
+        except Exception:  # No SSH connection
             continue
 
         # Check provider hasn't been filtered out with --use-provider

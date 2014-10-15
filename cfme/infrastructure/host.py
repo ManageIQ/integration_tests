@@ -57,10 +57,10 @@ credential_form = Form(
     ])
 
 manage_policies_tree = CheckboxTree(
-    version.pick({
+    {
         version.LOWEST: "//div[@id='treebox']/div/table",
         "5.3": "//div[@id='protect_treebox']/ul"
-    })
+    }
 )
 
 host_add_btn = FormButton('Add this Host')
