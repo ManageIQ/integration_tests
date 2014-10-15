@@ -80,6 +80,7 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
+@pytest.mark.bugzilla(1149195)
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
                                      provider_mgmt, provisioning, vm_name, smtp_test, request):
