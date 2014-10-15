@@ -7,7 +7,8 @@ import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound
 from cfme.web_ui import \
-    (Calendar, Form, InfoBlock, Region, Select, Table, accordion, fill, flash, form_buttons)
+    (Calendar, Form, InfoBlock, MultiFill, Region, Select, Table, accordion, fill, flash,
+    form_buttons)
 from cfme.web_ui.menu import nav
 from utils.db_queries import (get_server_id, get_server_name, get_server_region, get_server_zone_id,
                               get_zone_description)
@@ -15,7 +16,7 @@ from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
-from utils import version, conf
+from utils import version, conf, lazycache
 from utils.pretty import Pretty
 
 access_tree = partial(accordion.tree, "Access Control")
@@ -447,33 +448,45 @@ class ServerLogDepot(Pretty):
         """
         pretty_attrs = ['p_type', 'uri', 'username', 'password']
 
-        p_types = dict(
-            ftp="File Transfer Protocol",
-            nfs="Network File System",
-            smb="Samba"
-        )
-
         server_collect_logs = Form(
             fields=[
-                ("type", Select("//select[@id='log_protocol']")),
-                ("uri", "//input[@id='uri']"),
-                ("user", "//input[@id='log_userid']"),
-                ("password", "//input[@id='log_password']"),
-                ("password_verify", "//input[@id='log_verify']"),
+                ("type", Select("select#log_protocol")),
+                ("uri", "input#uri"),
+                ("user", "input#log_userid"),
+                ("password", MultiFill("input#log_password", "input#log_verify")),
             ]
         )
 
+        validate = form_buttons.FormButton("Validate the credentials by logging into the Server")
+
         def __init__(self, p_type, uri, username=None, password=None):
-            assert p_type in self.p_types.keys(), "%s is not allowed as the protocol type!" % p_type
+            assert p_type in self.p_types.keys(), "{} is not allowed as the protocol type!".format(
+                p_type)
             self.p_type = p_type
             self.uri = uri
             self.username = username
             self.password = password
 
-        def update(self, cancel=False):
+        @lazycache
+        def p_types(self):
+            return version.pick({
+                version.LOWEST: dict(
+                    ftp="File Transfer Protocol",
+                    nfs="Network File System",
+                    smb="Samba"
+                ),
+                "5.3": dict(
+                    ftp="FTP",
+                    nfs="NFS",
+                    smb="Samba"
+                )
+            })
+
+        def update(self, validate=True, cancel=False):
             """ Navigate to a correct page, change details and save.
 
             Args:
+                validate: Whether validate the credentials (not for NFS)
                 cancel: If set to True, the Cancel button is clicked instead of saving.
             """
             sel.force_navigate("cfg_diagnostics_server_collect_settings")
@@ -484,17 +497,17 @@ class ServerLogDepot(Pretty):
             if self.p_type != "nfs":
                 details["user"] = self.username
                 details["password"] = self.password
-                details["password_verify"] = self.password
 
-            if cancel:
-                action = form_buttons.cancel
-            else:
-                action = form_buttons.save
             fill(
                 self.server_collect_logs,
-                details,
-                action=action
+                details
             )
+            if validate and self.p_type != "nfs":
+                sel.click(self.validate)
+                flash.assert_no_errors()
+            sel.click(form_buttons.cancel if cancel else form_buttons.save)
+            flash.assert_message_match("Log Depot Settings were saved")
+            flash.assert_no_errors()
 
         @classmethod
         def clear(cls, cancel=False):
@@ -504,15 +517,10 @@ class ServerLogDepot(Pretty):
                 cancel: If set to True, the Cancel button is clicked instead of saving.
             """
             sel.force_navigate("cfg_diagnostics_server_collect_settings")
-
-            if cancel:
-                action = form_buttons.cancel
-            else:
-                action = form_buttons.save
             fill(
                 cls.server_collect_logs,
                 {"type": "<No Depot>"},
-                action=action
+                action=form_buttons.cancel if cancel else form_buttons.save
             )
 
     @classmethod
