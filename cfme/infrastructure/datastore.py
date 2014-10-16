@@ -11,9 +11,10 @@ import cfme.web_ui.menu  # noqa
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import provider
-from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, paginator, toolbar as tb
+from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb
 from functools import partial
 from utils.pretty import Pretty
+
 
 details_page = Region(infoblock_type='detail')
 
@@ -101,27 +102,39 @@ class Datastore(Pretty):
 
         Returns: List of :py:class:`cfme.web_ui.Quadicon` objects or `[]` if no hosts found.
         """
-        quad_title_locator = ".//div[@id='quadicon']/../../../tr[2]//a"
-        quads_root_locator = "//table[@id='content']//td[@id='maincol']"
         if not self._on_hosts_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
             try:
                 list_acc.select('Relationships', 'Show all registered Hosts')
             except sel.NoSuchElementException:
                 return []
-
-        all_host_quads = []
-        for page in paginator.pages():
-            quads_root = sel.element(quads_root_locator)
-            for quad_title in sel.elements(quad_title_locator, root=quads_root):
-                all_host_quads.append(Quadicon(quad_title.get_attribute('title'), 'host'))
-        return all_host_quads
+        return [q.name for q in Quadicon.all("host")]
 
     def _on_hosts_page(self):
         """ Returns ``True`` if on the datastore hosts page, ``False`` if not."""
         return sel.is_displayed(
             '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
             % (self.name, "All Registered Hosts")
+        )
+
+    def get_vms(self):
+        """ Gets quadicons of VMs that use this datastore
+
+        Returns: List of :py:class:`cfme.web_ui.Quadicon` objects or `[]` if no vms found.
+        """
+        if not self._on_vms_page():
+            sel.force_navigate('infrastructure_datastore', context=self._get_context())
+            try:
+                list_acc.select('Relationships', 'Show registered VMs')
+            except sel.NoSuchElementException:
+                return []
+        return [q.name for q in Quadicon.all("vm")]
+
+    def _on_vms_page(self):
+        """ Returns ``True`` if on the datastore vms page, ``False`` if not."""
+        return sel.is_displayed(
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s") and contains(., "%s")]'
+            % (self.name, "All Registered vms")
         )
 
     @property
@@ -139,9 +152,4 @@ def get_all_datastores(do_not_navigate=False):
     """Returns list of all datastores"""
     if not do_not_navigate:
         sel.force_navigate('infrastructure_datastores')
-    datastores = set([])
-    for page in paginator.pages():
-        for title in sel.elements(
-                "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'storage/show')]"):
-            datastores.add(sel.get_attribute(title, "title"))
-    return datastores
+    return [q.name for q in Quadicon.all("datastore")]
