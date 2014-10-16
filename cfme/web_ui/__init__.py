@@ -1724,7 +1724,7 @@ class InfoBlock(Pretty):
 
     @property
     def _box_locator(self):
-        if self.itype == "detail":
+        if self._itype == "detail":
             # We have to collapse the locator singularity early here, hence the .locate()
             return version.pick({
                 '5.3': '//table//th[contains(., "%s")]/../../../..',
