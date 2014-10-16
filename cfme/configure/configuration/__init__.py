@@ -1647,18 +1647,17 @@ def restart_workers(name, wait_time_min=1):
     Returns: bool whether the restart succeeded.
     """
 
-    table = Table("//div[@id='records_div']/table[@class='style3']")
     sel.force_navigate("cfg_diagnostics_server_workers")
 
     def get_all_pids(worker_name):
-        return {row.pid.text for row in table.rows() if worker_name in row.name.text}
+        return {row.pid.text for row in records_table.rows() if worker_name in row.name.text}
 
     reload_func = partial(tb.select, "Reload current workers display")
 
     pids = get_all_pids(name)
     # Initiate the restart
     for pid in pids:
-        table.click_cell("pid", pid)
+        records_table.click_cell("pid", pid)
         tb.select("Configuration", "Restart selected worker", invokes_alert=True)
         sel.handle_alert(cancel=False)
         reload_func()
@@ -1666,7 +1665,7 @@ def restart_workers(name, wait_time_min=1):
     # Check they have finished
     def _check_all_workers_finished():
         for pid in pids:
-            if table.click_cell("pid", pid):    # If could not click, it is no longer present
+            if records_table.click_cell("pid", pid):    # If could not click, no longer present
                 return False                    # If clicked, it is still there so unsuccess
         return True
 
@@ -1691,6 +1690,39 @@ def restart_workers(name, wait_time_min=1):
         return True
     except TimedOutError:
         return False
+
+
+def get_workers_list(do_not_navigate=False, refresh=True):
+    """Retrieves all workers.
+
+    Returns a dictionary where keys are names of the workers and values are lists (because worker
+    can have multiple instances) which contain dictionaries with some columns.
+    """
+    if do_not_navigate:
+        if refresh:
+            tb.select("Reload current workers display")
+    else:
+        sel.force_navigate("cfg_diagnostics_server_workers")
+    workers = {}
+    for row in records_table.rows():
+        name = sel.text_sane(row.name)
+        if name not in workers:
+            workers[name] = []
+        worker = {
+            "status": sel.text_sane(row.status),
+            "pid": int(sel.text_sane(row.pid)) if len(sel.text_sane(row.pid)) > 0 else None,
+            "spid": int(sel.text_sane(row.spid)) if len(sel.text_sane(row.spid)) > 0 else None,
+            "started": parsetime.from_american_with_utc(sel.text_sane(row.started)),
+
+            "last_heartbeat": None,
+        }
+        try:
+            workers["last_heartbeat"] = parsetime.from_american_with_utc(
+                sel.text_sane(row.last_heartbeat))
+        except ValueError:
+            pass
+        workers[name].append(worker)
+    return workers
 
 
 def set_auth_mode(mode, **kwargs):
