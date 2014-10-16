@@ -136,7 +136,6 @@ import sys
 import warnings
 import datetime as dt
 
-from logging import LoggerAdapter
 from logging.handlers import RotatingFileHandler, SysLogHandler
 from time import time
 from traceback import extract_tb
@@ -157,6 +156,33 @@ _default_conf = {
     'stream_format': '[%(levelname)s] %(message)s (%(source)s)'
 }
 
+# let logging know we made a TRACE level
+logging.TRACE = 5
+logging.addLevelName(logging.TRACE, 'TRACE')
+
+
+class TraceLogger(logging.Logger):
+    """A trace-loglevel-aware :py:class:`Logger <python:logging.Logger>`"""
+    def trace(self, msg, *args, **kwargs):
+        """
+        Log 'msg % args' with severity 'TRACE'.
+
+        """
+        if self.isEnabledFor(logging.TRACE):
+            self._log(logging.TRACE, msg, args, **kwargs)
+logging._loggerClass = TraceLogger
+
+
+class TraceLoggerAdapter(logging.LoggerAdapter):
+    """A trace-loglevel-aware :py:class:`LoggerAdapter <python:logging.LoggerAdapter>`"""
+    def trace(self, msg, *args, **kwargs):
+        """
+        Delegate a trace call to the underlying logger, after adding
+        contextual information from this adapter instance.
+        """
+        msg, kwargs = self.process(msg, kwargs)
+        self.logger.trace(msg, *args, **kwargs)
+
 
 class SyslogMsecFormatter(logging.Formatter):
     """ A custom Formatter for the syslogger which changes the log timestamps to
@@ -175,7 +201,7 @@ class SyslogMsecFormatter(logging.Formatter):
         return s
 
 
-class NamedLoggerAdapter(LoggerAdapter):
+class NamedLoggerAdapter(TraceLoggerAdapter):
     """An adapter that injects a name into log messages"""
     def process(self, message, kwargs):
         return '(%s) %s' % (self.extra, message), kwargs
@@ -429,6 +455,11 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         msg, kwargs = self.process(msg, kwargs)
         self.art_log(level_name, msg, kwargs)
         return self.logger.log(lvl, msg, *args, **kwargs)
+
+    def trace(self, msg, *args, **kwargs):
+        msg, kwargs = self.process(msg, kwargs)
+        self.art_log('trace', msg, kwargs)
+        return self.logger.trace(msg, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
         msg, kwargs = self.process(msg, kwargs)

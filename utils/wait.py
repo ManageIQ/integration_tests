@@ -62,7 +62,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     silent_fail = kwargs.get("silent_failure", False)
 
     t_delta = 0
-    logger.debug('Started {} at {}'.format(message, st_time))
+    logger.trace('Started {} at {}'.format(message, st_time))
     while t_delta <= num_sec:
         try:
             out = func(*func_args, **func_kwargs)
@@ -82,10 +82,10 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             duration = time.time() - st_time
             if not quiet:
                 logger.debug('Took %f to do %s' % (duration, message))
-            logger.debug('Finished {} at {}'.format(message, st_time + t_delta))
+            logger.trace('Finished {} at {}'.format(message, st_time + t_delta))
             return out, duration
         t_delta = time.time() - st_time
-    logger.debug('Finished at {}'.format(st_time + t_delta))
+    logger.trace('Finished at {}'.format(st_time + t_delta))
     if not silent_fail:
         logger.error('Could not complete %s in time, took %f' % (message, t_delta))
         raise TimedOutError("Could not do %s in time" % message)
