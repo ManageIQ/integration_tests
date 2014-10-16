@@ -98,7 +98,11 @@ $(function() {
 		    <strong>COMPLETE</strong>
 		    {% endif %}
 		    <br>
-		    <em>{{test.duration}}</em>
+		    <strong>Duration:</strong> <em>{{test.duration}}s</em>
+		    {% if test.slaveid %}
+		    <br>
+		    <strong>SLAVE:</strong> <em>{{test.slaveid}}</em>
+		    {% endif %}
                 </div>
                 <div class="col-md-2">Setup
 		    {% if test.outcomes['setup'] %}
