@@ -57,9 +57,9 @@ class Reporter(ArtifactorBasePlugin):
         return None, {'artifacts': {test_ident: {'start_time': time.time()}}}
 
     @ArtifactorBasePlugin.check_configured
-    def finish_test(self, test_location, test_name):
+    def finish_test(self, test_location, test_name, slaveid):
         test_ident = "{}/{}".format(test_location, test_name)
-        return None, {'artifacts': {test_ident: {'finish_time': time.time()}}}
+        return None, {'artifacts': {test_ident: {'finish_time': time.time(), 'slaveid': slaveid}}}
 
     @ArtifactorBasePlugin.check_configured
     def report_test(self, test_location, test_name, test_xfail, test_when, test_outcome):
@@ -110,7 +110,9 @@ class Reporter(ArtifactorBasePlugin):
 
             # Set the overall status and then process duration
             test['statuses']['overall'] = overall_status
-            test_data = {'name': test_name, 'outcomes': test['statuses']}
+            test_data = {'name': test_name, 'outcomes': test['statuses'],
+                         'slaveid': test['slaveid']}
+
             if test.get('start_time', None):
                 if test.get('finish_time', None):
                     test_data['in_progress'] = False
