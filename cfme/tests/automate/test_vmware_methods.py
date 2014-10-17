@@ -16,7 +16,7 @@ submit = form_buttons.FormButton("Submit")
 pytestmark = [
     pytest.mark.usefixtures("server_roles"),
     pytest.mark.fixtureconf(server_roles="+automate"),
-    pytest.mark.skipif("current_version() >= '5.3'", reason="This works only on 5.2"), ]
+    pytest.mark.ignore_stream("upstream", "5.3"), ]
 
 
 def pytest_generate_tests(metafunc):
