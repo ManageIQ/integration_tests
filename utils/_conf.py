@@ -1,6 +1,7 @@
 from collections import defaultdict
 from warnings import catch_warnings, warn
 
+import copy
 import yaml
 from yaml.loader import Loader
 
@@ -198,6 +199,53 @@ class Config(dict):
         self[key].clear()
         self._populate(key)
 
+    def _inherit(self, key, obj, path, updates=None):
+        """Recurses through an object looking for 'inherit' clauses and replaces them with their
+        real counterparts. In the case of a dict, the inherit clause remains, in the case of
+        anything else, a replacement occurs such that:
+
+        sim5:
+          key: value
+          newkey: newvalue
+
+        sim6:
+          tags:
+            - tag1
+            - tag2
+        sim7:
+          inherit: management_systems/sim5
+          test:
+              tags:
+                  inherit: management_systems/sim6/tags
+
+        Will produce the following output if requesting management_systems/sim7
+
+          inherit: management_systems/sim5
+          key: value
+          newkey: newvalue
+          test:
+              tags:
+                  - tag1
+                  - tag2
+        """
+        if not updates:
+            updates = RecursiveUpdateDict()
+        if 'inherit' in obj:
+            inherited_object = copy.deepcopy(self[key].tree_get(obj['inherit'].split('/')))
+            inheritance_updates = RecursiveUpdateDict().tree_set(path, inherited_object)
+            updates.update(inheritance_updates)
+        for ob in obj:
+            npath = path + [ob]
+            if ob == 'inherit':
+                continue
+            if isinstance(obj[ob], RecursiveUpdateDict):
+                recurse_inherit = self._inherit(key, obj[ob], npath, updates)
+                updates.update(recurse_inherit)
+            else:
+                original_values = RecursiveUpdateDict().tree_set(npath, obj[ob])
+                updates.update(original_values)
+        return updates
+
     def _populate(self, key):
         yaml_dict = load_yaml(key)
 
@@ -211,6 +259,8 @@ class Config(dict):
         # Graft on the local overrides
         yaml_dict.update(self.runtime.get(key, {}))
         self[key].update(yaml_dict)
+
+        self[key].update(self._inherit(key, self[key], []))
 
     def clear(self):
         # because of the 'from conf import foo' mechanism, we need to clear each key in-place,
@@ -287,6 +337,25 @@ class RecursiveUpdateDict(dict):
                 type(self).update(self[key], value)
             else:
                 self[key] = new_data[key]
+
+    def tree_get(self, path):
+        # Given a path, and a dict objct, this function will traverse the dict using the elements
+        # in the path and return the result, thanks @benbacardi
+        return reduce(lambda x, y: x[y], path, self)
+
+    def tree_set(self, path, setter):
+        # Given a path, and a dict objct, this function will traverse the dict using the elements
+        # in the path and set the leaf to setter. If nodes do not exist, it will create them as
+        # RecursiveUpdateDict() objects
+        path = path[:]
+        worker = self
+        while len(path) > 1:
+            new_index = path.pop(0)
+            if new_index not in worker:
+                worker[new_index] = RecursiveUpdateDict()
+            worker = worker[new_index]
+        worker[path[0]] = setter
+        return self
 
 
 def load_yaml(filename=None, warn_on_fail=True):

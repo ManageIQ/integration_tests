@@ -11,6 +11,8 @@ test_key: test_value
 nested_test_root:
     nested_test_key_1: nested_test_value_1
     nested_test_key_2: nested_test_value_2
+inherit_value:
+    inherit: nested_test_root
 '''
 
 local_test_yaml_contents = '''
@@ -159,3 +161,10 @@ def test_conf_override_before_import(test_yaml, random_string):
     conf.runtime['foo']['test_key'] = random_string
     from utils.conf import foo
     assert foo['test_key'] == random_string
+
+
+def test_inheritance(request, test_yaml):
+    with create_test_yaml(request, local_test_yaml_contents, test_yaml, local=True):
+        # Check that the inheritance works
+        outer_set = set(conf[test_yaml]['inherit_value'])
+        assert set(conf[test_yaml]['nested_test_root']).issubset(outer_set)
