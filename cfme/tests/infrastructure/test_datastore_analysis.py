@@ -3,7 +3,7 @@
 from cfme.configure import tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
-from cfme.web_ui import flash, tabstrip as tabs, toolbar as tb
+from cfme.web_ui import flash, tabstrip as tabs, toolbar as tb, Quadicon
 from utils import conf, testgen
 from utils.providers import setup_provider
 from utils.wait import wait_for
@@ -77,21 +77,22 @@ def test_run_datastore_analysis(request, provider_init, provider_key,
     test_datastore = datastore.Datastore(datastore_name, provider_key)
 
     # Check if there is a host with valid credentials
-    host_qis = test_datastore.get_hosts()
-    assert len(host_qis) != 0, "No hosts attached to this datastore found"
-    for host_qi in host_qis:
+    host_names = test_datastore.get_hosts()
+    assert len(host_names) != 0, "No hosts attached to this datastore found"
+    for host_name in host_names:
+        host_qi = Quadicon(host_name, 'host')
         if host_qi.creds == 'checkmark':
             break
     else:
         # If not, get credentials for one of the present hosts
         found_host = False
-        for host_qi in host_qis:
-            host_data = get_host_data_by_name(provider_key, host_qi._name)
+        for host_name in host_names:
+            host_data = get_host_data_by_name(provider_key, host_name)
             if host_data is None:
                 continue
 
             found_host = True
-            test_host = host.Host(name=host_qi._name)
+            test_host = host.Host(name=host_name)
 
             # Add them to the host
             wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh)

@@ -98,9 +98,9 @@ class Datastore(Pretty):
         )
 
     def get_hosts(self):
-        """ Gets quadicons of hosts that use this datastore
+        """ Returns names of hosts (from quadicons) that use this datastore
 
-        Returns: List of :py:class:`cfme.web_ui.Quadicon` objects or `[]` if no hosts found.
+        Returns: List of strings with names or `[]` if no hosts found.
         """
         if not self._on_hosts_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
@@ -118,9 +118,9 @@ class Datastore(Pretty):
         )
 
     def get_vms(self):
-        """ Gets quadicons of VMs that use this datastore
+        """ Returns names of VMs (from quadicons) that use this datastore
 
-        Returns: List of :py:class:`cfme.web_ui.Quadicon` objects or `[]` if no vms found.
+        Returns: List of strings with names or `[]` if no vms found.
         """
         if not self._on_vms_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
@@ -149,7 +149,7 @@ class Datastore(Pretty):
 
 
 def get_all_datastores(do_not_navigate=False):
-    """Returns list of all datastores"""
+    """Returns names (from quadicons) of all datastores"""
     if not do_not_navigate:
         sel.force_navigate('infrastructure_datastores')
     return [q.name for q in Quadicon.all("datastore")]
