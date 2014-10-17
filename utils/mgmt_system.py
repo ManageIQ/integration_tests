@@ -7,9 +7,11 @@ import re
 import winrm
 from abc import ABCMeta, abstractmethod
 from cStringIO import StringIO
+from datetime import datetime
 from textwrap import dedent
 
 import boto
+import tzlocal
 from boto.ec2 import EC2Connection, get_region
 from keystoneclient.v2_0 import client as oskclient
 from lxml import etree
@@ -25,6 +27,8 @@ from cfme import exceptions as cfme_exc
 from utils.log import logger
 from utils.version import LooseVersion, current_version
 from utils.wait import wait_for, TimedOutError
+
+local_tz = tzlocal.get_localzone()
 
 
 class _PsphereClient(Client):
@@ -591,6 +595,11 @@ class VMWareSystem(MgmtSystemAPIBase):
         state = self._get_vm(vm_name).runtime.powerState
         return state
 
+    def vm_creation_time(self, vm_name):
+        # psphere turns date strings in datetime for us
+        vm = self._get_vm(vm_name)
+        return vm.runtime.bootTime
+
     def in_steady_state(self, vm_name):
         return self.vm_status(vm_name) in {self.POWERED_ON, self.POWERED_OFF, self.SUSPENDED}
 
@@ -960,6 +969,10 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def vm_status(self, vm_name=None):
         return self._get_vm(vm_name).get_status().get_state()
 
+    def vm_creation_time(self, vm_name):
+        vm = self._get_vm(vm_name)
+        return vm.get_creation_time().replace(tzinfo=None)
+
     def in_steady_state(self, vm_name):
         return self.vm_status(vm_name) in {"up", "down", "suspended"}
 
@@ -1104,12 +1117,15 @@ class EC2System(MgmtSystemAPIBase):
         ApiReference-ItemType-InstanceStateType.html>`_ for possible return values.
 
         """
-        instance_id = self._get_instance_id_by_name(instance_id)
-        reservations = self.api.get_all_instances([instance_id])
-        instances = self._get_instances_from_reservations(reservations)
-        for instance in instances:
-            if instance.id == instance_id:
-                return instance.state
+        instance = self._get_instance(instance_id)
+        return instance.state
+
+    def vm_creation_time(self, instance_id):
+        instance = self._get_instance(instance_id)
+        # Example instance.launch_time: 2014-08-13T22:09:40.000Z
+        launch_time = datetime.strptime(instance.launch_time[:19], '%Y-%m-%dT%H:%M:%S')
+        # launch time is UTC, localize it, make it tz-naive to work with timedelta
+        return local_tz.fromutc(launch_time).replace(tzinfo=None)
 
     def create_vm(self):
         raise NotImplementedError('create_vm not implemented.')
@@ -1291,25 +1307,28 @@ class EC2System(MgmtSystemAPIBase):
         return instances[0].id
 
     def set_name(self, instance_id, new_name):
-        instance_id = self._get_instance_id_by_name(instance_id)
         logger.info("Setting name of EC2 instance %s to %s" % (instance_id, new_name))
-        instance = self._get_instance_by_id(instance_id)
+        instance = self._get_instance(instance_id)
         instance.add_tag('Name', new_name)
         return new_name
 
     def get_name(self, instance_id):
-        instance_id = self._get_instance_id_by_name(instance_id)
-        return self._get_instance_by_id(instance_id).tags.get('Name', instance_id)
+        return self._get_instance(instance_id).tags.get('Name', instance_id)
 
-    def _get_instance_by_id(self, instance_id):
-        inst_list = self._get_all_instances()
-        for instance in inst_list:
-            if instance.id == instance_id:
-                return instance
+    def _get_instance(self, instance_id):
+        instance_id = self._get_instance_id_by_name(instance_id)
+        reservations = self.api.get_all_instances([instance_id])
+        instances = self._get_instances_from_reservations(reservations)
+        if len(instances) > 1:
+            raise MultipleInstancesError
+
+        try:
+            return instances[0]
+        except KeyError:
+            return None
 
     def get_ip_address(self, instance_id):
-        instance_id = self._get_instance_id_by_name(instance_id)
-        return str(self._get_instance_by_id(instance_id).ip_address)
+        return str(self._get_instance(instance_id).ip_address)
 
     def _get_instance_id_by_name(self, instance_name):
         # Quick validation that the instance name isn't actually an ID
@@ -1522,6 +1541,13 @@ class OpenstackSystem(MgmtSystemAPIBase):
 
     def vm_status(self, vm_name):
         return self._find_instance_by_name(vm_name).status
+
+    def vm_creation_time(self, vm_name):
+        instance = self._find_instance_by_name(vm_name)
+        # Example vm.created: 2014-08-14T23:29:30Z
+        create_time = datetime.strptime(instance.created, '%Y-%m-%dT%H:%M:%SZ')
+        # create time is UTC, localize it, strip tzinfo
+        return local_tz.fromutc(create_time).replace(tzinfo=None)
 
     def is_vm_running(self, vm_name):
         return self.vm_status(vm_name) == 'ACTIVE'

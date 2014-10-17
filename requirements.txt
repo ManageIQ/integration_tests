@@ -30,6 +30,7 @@ sphinx-rtd-theme
 sqlalchemy
 suds
 tornado
+tzlocal
 ui-navigate
 
 ###
