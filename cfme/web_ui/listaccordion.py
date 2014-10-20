@@ -105,7 +105,7 @@ def get_active_links(name):
         name: Name of the section
     """
     link_root = _content_element(name)
-    link_loc = './/div[@class="panecontent"]//a[@title]/img/..'
+    link_loc = './/div[@class="panecontent"]//a[@title and not(child::img)]'
     active_els = sel.elements(link_loc, root=link_root)
     return [ListAccordionLink(el.get_attribute("title"), link_root) for el in active_els]
 
@@ -126,7 +126,7 @@ class ListAccordionLink(Pretty):
         """ Locates an active link.
 
         Returns: An XPATH locator for the element."""
-        return './/div[@class="panecontent"]//a[@title="%s"]/img/..' % self.title
+        return './/div[@class="panecontent"]//a[@title="%s" and not(child::img)]' % self.title
 
     def _check_exists(self):
         try:
@@ -141,9 +141,9 @@ class ListAccordionLink(Pretty):
         Returns: ``True`` if the element is an internal link, ``False`` if not.
         """
         self._check_exists()
-        el = sel.element(self.locate(), root=self.root)
-        img = sel.element('./img', root=el)
-        if 'internal' in sel.get_attribute(img, 'src'):
+        img_loc = './/div[@class="panecontent"]//a[@title="%s"]/img' % self.title
+        img_el = sel.element(img_loc, root=self.root)
+        if 'internal' in sel.get_attribute(img_el, 'src'):
             return True
         else:
             return False
