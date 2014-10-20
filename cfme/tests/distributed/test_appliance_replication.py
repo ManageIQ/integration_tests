@@ -57,7 +57,8 @@ def test_appliance_replicate_between_regions(request, provider_crud):
         appl2.destroy()
     request.addfinalizer(finalize)
     appl1.configure(region=1, patch_ajax_wait=False)
-    appl2.configure(region=2, patch_ajax_wait=False)
+    appl2.configure(region=2, patch_ajax_wait=False, key_address=appl1.address)
+    appl1.ipapp.wait_for_web_ui()
     with appl1.browser_session():
         conf.set_replication_worker_host(appl2.address)
         flash.assert_message_contain("Configuration settings saved for CFME Server")

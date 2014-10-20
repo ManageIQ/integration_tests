@@ -145,6 +145,8 @@ class Appliance(object):
             fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
             patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
             loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
+            key_address: Fetch encryption key from this address if set, generate a new key if
+                         ``None`` (default ``None``)
 
         """
         if kwargs:
@@ -512,19 +514,39 @@ class IPAppliance(object):
         """
         return browser_session(base_url=self.url, reset_cache=reset_cache)
 
-    def enable_internal_db(self, region=0):
-        """Enables internal database"""
+    def enable_internal_db(self, region=0, key_address=None, db_password=None,
+                           ssh_password=None):
+        """Enables internal database
+
+        Args:
+            region: Region number of the CFME appliance.
+            key_address: Address of CFME appliance where key can be fetched.
+
+        Note:
+            If key_address is None, a new encryption key is generated for the appliance.
+        """
         self.log.info('Enabling internal DB (region {}) on {}.'.format(region, self.address))
         self.db_address = self.address
         del(self.db)
 
         client = self.ssh_client()
 
+        # Defaults
+        db_password = db_password or conf.credentials['database']['password']
+        ssh_password = ssh_password or conf.credentials['ssh']['password']
+
         if self.has_cli:
             # use the cli
-            status, out = client.run_command('appliance_console_cli --region {} --internal -k'
-                .format(region)
-            )
+            if key_address:
+                status, out = client.run_command(
+                    'appliance_console_cli --region {} --internal -f {} -p {} -a {}'
+                    .format(region, key_address, db_password, ssh_password)
+                )
+            else:
+                status, out = client.run_command(
+                    'appliance_console_cli --region {} --internal -k -p {}'
+                    .format(region, db_password)
+                )
         else:
             # no cli, use the enable internal db script
             rbt_repl = {
