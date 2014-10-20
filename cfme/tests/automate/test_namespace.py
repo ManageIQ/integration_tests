@@ -15,12 +15,14 @@ import cfme.tests.automate as ta
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(
+    scope="function",
+    params=[ta.a_namespace, ta.a_namespace_with_path])
 def namespace(request):
     # don't test with existing paths on upstream (there aren't any)
-    return version.pick({
-        version.LOWEST: [ta.a_namespace, ta.a_namespace_with_path],
-        '5.3': [ta.a_namespace]})
+    if request.param is ta.a_namespace_with_path and version.current_version() >= "5.3":
+        pytest.skip("don't test with existing paths on upstream (there aren't any)")
+    return request.param()
 
 
 def test_namespace_crud(namespace):

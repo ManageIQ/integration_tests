@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme.infrastructure.provider import RHEVMProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from utils import testgen
 from utils.randomness import generate_random_string
@@ -43,6 +44,8 @@ def vm_name():
 @pytest.mark.github("ManageIQ/manageiq:473")
 def test_vm_genealogy(
         setup_provider, vm_name, provider_crud, provisioning, soft_assert, provider_mgmt, request):
+    if isinstance(provider_crud, RHEVMProvider):
+        pytest.skip("RHEV-M does not support creating templates from VM")
     original_template = provisioning["template"]
     original_vm = Vm(vm_name, provider_crud, template_name=original_template)
     original_vm.create_on_provider()

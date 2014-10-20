@@ -353,7 +353,7 @@ def test_permissions_vm_provisioning():
 #    )
 
 
-@pytest.mark.github("ManageIQ/manageiq:266")
+@pytest.mark.bugzilla(1154112)
 def test_user_add_button_should_be_disabled_without_group(soft_assert):
     from cfme.web_ui import fill, form_buttons
     sel.force_navigate('cfg_accesscontrol_user_add')

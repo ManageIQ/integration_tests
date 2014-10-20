@@ -10,7 +10,7 @@ from utils.version import current_version  # NOQA
 from utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.skipif("current_version() < '5.3'", reason="New version only")
+    pytest.mark.ignore_stream("5.2")
 ]
 
 FILE_LOCATION = "/var/www/miq/vmdb/test_ae_{}".format(generate_random_string(16))
