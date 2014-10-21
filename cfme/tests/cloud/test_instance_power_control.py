@@ -1,14 +1,12 @@
 import cfme.web_ui.flash as flash
 import pytest
-import random
 from cfme.cloud.instance import instance_factory, get_all_instances, EC2Instance, OpenStackInstance
 from cfme.fixtures import pytest_selenium as sel
 from utils import error, testgen
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
-# Keep provider argvalues and argnames for tests; by provider type
-used_providers = {}
+pytestmark = pytest.mark.usefixtures('test_power_control')
 
 
 def pytest_generate_tests(metafunc):
@@ -21,26 +19,22 @@ def pytest_generate_tests(metafunc):
     else:
         prov_types = ['ec2', 'openstack']
 
-    # Randomly pick one provider of each type; we use saved values - by type
-    for i, prov_type in enumerate(prov_types):
-        if prov_type in used_providers:
-            argnames = used_providers[prov_type][0][:]
-            argvalues = used_providers[prov_type][1][:]
-        else:
-            argnames, argvalues, idlist = testgen.provider_by_type(metafunc,
-                                                                   provider_types=[prov_type])
-            if not idlist:
-                continue
-            rand_index = random.choice(range(len(idlist)))
-            argvalues = argvalues[rand_index]
-            used_providers[prov_type] = [argnames[:], argvalues[:]]
+    # Get all providers and pick those, that have power control test enabled
+    argnames, argvalues, idlist = testgen.provider_by_type(
+        metafunc, prov_types, 'test_power_control')
+    if not idlist:
+        return
+    for argn, argv, single_id in zip(argnames, argvalues, idlist):
+        test_pwr_ctl_i = argnames.index('test_power_control')
+        provider_key_i = argnames.index('provider_key')
         final_argn = argnames
-        final_argv.append(argvalues)
-        final_ids.append('random-{}-prov'.format(prov_type))
+        if argv[test_pwr_ctl_i] is True:
+            final_argv.append(argv)
+            final_ids.append(argv[provider_key_i])
 
     # Then append '{provider_type}_only' fixture, if necessary
     if len(prov_types) == 1:
-        final_argn.append('{}_only'.format(prov_type))
+        final_argn.append('{}_only'.format(prov_types[0]))
         for argval in final_argv:
             argval.append('')
 
