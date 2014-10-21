@@ -1,3 +1,4 @@
+from urlparse import urlparse
 from utils.appliance import IPAppliance
 from utils.conf import env
 
@@ -19,5 +20,7 @@ def test_ipappliance_from_url():
 
 def test_ipappliance_use_baseurl():
     ip_a = IPAppliance()
-    assert ip_a.url == env['base_url']
+    ip_a_parsed = urlparse(ip_a.url)
+    env_parsed = urlparse(env['base_url'])
+    assert (ip_a_parsed.scheme, ip_a_parsed.netloc) == (env_parsed.scheme, env_parsed.netloc)
     assert ip_a.address in env['base_url']
