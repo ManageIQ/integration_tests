@@ -62,6 +62,7 @@ provisioning_form = tabstrip.TabStripForm(
             ('automatic_placement', '//input[@id="environment__placement_auto"]'),
             ('availability_zone',
                 ui.Select('//select[@id="environment__placement_availability_zone"]')),
+            ('cloud_tenant', ui.Select('//select[@id="environment__cloud_tenant"]')),
             ('virtual_private_cloud', ui.Select('//select[@id="environment__cloud_network"]')),
             ('cloud_subnet', ui.Select('//select[@id="environment__cloud_subnet"]')),
             ('cloud_network', ui.Select('//select[@id="environment__cloud_network"]')),
