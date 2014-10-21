@@ -170,8 +170,10 @@ class DockerBot(object):
                 headers=headers)
             try:
                 for filen in r.json():
-                    if filen['filename'].startswith('cfme/tests') and filen['status'] != "deleted":
-                        files.append(filen['filename'])
+                    if filen['status'] != "deleted":
+                        if filen['filename'].startswith('cfme/tests') or \
+                           filen['filename'].startswith('utils/tests'):
+                            files.append(filen['filename'])
                     if filen['filename'] == 'requirements.txt':
                         self.args['update_pip'] = True
                 return files
