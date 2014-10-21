@@ -6,9 +6,6 @@ from cfme.web_ui import DriftGrid, toolbar as tb
 from utils import conf, error, testgen
 from utils.wait import wait_for
 from utils.update import update
-import pytest
-
-pytestmark = [pytest.mark.usefixtures("setup_infrastructure_providers")]
 
 
 def pytest_generate_tests(metafunc):
@@ -38,7 +35,8 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-def test_host_drift_analysis(request, provider_key, host_type, host_name, soft_assert):
+def test_host_drift_analysis(request, setup_provider, provider_key, host_type, host_name,
+                             soft_assert):
     host_data = get_host_data_by_name(provider_key, host_name)
     test_host = host.Host(name=host_name)
 

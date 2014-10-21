@@ -8,10 +8,6 @@ from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as 
 from utils import conf
 from utils import testgen
 from utils.wait import wait_for
-import pytest
-
-
-pytestmark = [pytest.mark.usefixtures("setup_infrastructure_providers")]
 
 
 HOST_TYPES = ('rhev', 'rhel', 'esx', 'esxi')
@@ -47,8 +43,8 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-def test_run_host_analysis(request, provider_key, host_type, host_name, register_event,
-                           soft_assert):
+def test_run_host_analysis(request, setup_provider, provider_key, host_type, host_name,
+                           register_event, soft_assert):
     """ Run host SmartState analysis """
     # Add credentials to host
     host_data = get_host_data_by_name(provider_key, host_name)
