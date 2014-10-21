@@ -6,10 +6,23 @@ from random import choice
 
 from utils import testgen
 from utils.miq_soap import MiqVM, set_client
+from utils.providers import setup_a_provider as _setup_a_provider
 from utils.randomness import generate_random_string
 
 
-@pytest.mark.usefixtures("setup_infrastructure_providers")
+pytest_generate_tests = testgen.generate(
+    testgen.infra_providers,
+    "small_template",
+    scope="class"
+)
+
+
+@pytest.fixture(scope="module")
+def setup_a_provider():
+    _setup_a_provider("infra")
+
+
+@pytest.mark.usefixtures("setup_a_provider")
 class TestSoapBasicInteraction(object):
     def test_connectivity(self, soap_client):
         assert soap_client.service.EVMPing(), "Could not do EVMPing()!"
@@ -266,143 +279,12 @@ class TestSoapBasicInteraction(object):
         else:
             pytest.fail("Could not find tags for vm {}".format(vm.name))
 
-    # These are here as a placeholder to know what is not tested ...
-    def test_EVM_delete_vm_by_name(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_smart_start(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_smart_stop(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_smart_suspend(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_get_policy(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_event_list(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_condition_list(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_action_list(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_policy_list(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_vm_rsop(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_assign_policy(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_unassign_policy(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_add_lifecycle_event(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_provision_request(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_provision_request_ex(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_host_provision_request(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_vm_scan_by_property(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_EVM_vm_event_by_property(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetEmsByList(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetHostsByList(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetClustersByList(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetDatastoresByList(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetResourcePoolsByList(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetVmsByList(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetVmsByTag(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetTemplatesByTag(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetClustersByTag(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetResourcePoolsByTag(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetDatastoresByTag(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_VmAddCustomAttributeByFields(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_VmAddCustomAttribute(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_VmAddCustomAttributes(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_VmDeleteCustomAttribute(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_VmDeleteCustomAttributes(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_VmProvisionRequest(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_VmSetOwner(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetVmProvisionRequest(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetVmProvisionTask(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_CreateAutomationRequest(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetAutomationRequest(self, soap_client):
-        pytest.skip("Not tested yet")
-
-    def test_GetAutomationTask(self, soap_client):
-        pytest.skip("Not tested yet")
-
-
-pytest_generate_tests = testgen.generate(
-    testgen.infra_providers,
-    "small_template",
-    scope="module"
-)
-
 
 @pytest.mark.bugzilla(
     1118831, 1131480, 1132578,
     unskip={1118831: lambda appliance_version: appliance_version < "5.3"})
 @pytest.mark.fixtureconf(server_roles="+automate")
-@pytest.mark.usefixtures("setup_infrastructure_providers", "server_roles")
+@pytest.mark.usefixtures("server_roles", "setup_provider")
 def test_provision_via_soap(
         request, soap_client, provider_key, provider_data, provider_mgmt, small_template):
     vm_name = "test_soap_provision_{}".format(generate_random_string())
