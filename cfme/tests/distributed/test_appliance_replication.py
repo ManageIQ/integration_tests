@@ -10,11 +10,13 @@ from time import sleep
 from urlparse import urlparse
 from utils import testgen, version
 from utils.appliance import provision_appliance
-from utils.conf import credentials
+from utils.conf import cfme_data, credentials
 from utils.ssh import SSHClient
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.wait import wait_for
+
+pytestmark = [pytest.mark.long_running]
 
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
 
