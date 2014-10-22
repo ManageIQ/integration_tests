@@ -1410,7 +1410,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
     """
 
     _stats_available = {
-        'num_vm': lambda self: len(self.list_vm()),
+        'num_vm': lambda self: self._num_vm_stat(),
         'num_template': lambda self: len(self.list_template()),
     }
 
@@ -1429,6 +1429,13 @@ class OpenstackSystem(MgmtSystemAPIBase):
         self.auth_url = kwargs['auth_url']
         self._api = None
         self._kapi = None
+
+    def _num_vm_stat(self):
+        if current_version() < '5.3':
+            filter_tenants = False
+        else:
+            filter_tenants = True
+        return len(self._get_all_instances(filter_tenants))
 
     @property
     def api(self):
@@ -1636,21 +1643,15 @@ class OpenstackSystem(MgmtSystemAPIBase):
                 if nic['OS-EXT-IPS:type'] == 'floating':
                     return str(nic['addr'])
 
-    def _get_all_instances(self):
-
-        if current_version() < '5.3':
-            # Old method used to list all instances, CFME now uses tenants appropriately
-            instances = self.api.servers.list(True, {'all_tenants': True})
-            return instances
-        else:
-            real_instances = []
+    def _get_all_instances(self, filter_tenants=True):
+        instances = self.api.servers.list(True, {'all_tenants': True})
+        if filter_tenants:
+            # Filter instances based on their tenant ID
+            # needed for CFME 5.3 and higher
             tenants = self._get_tenants()
             ids = [tenant.id for tenant in tenants]
-            instances = self.api.servers.list(True, {'all_tenants': True})
-            for instance in instances:
-                if instance.tenant_id in ids:
-                    real_instances.append(instance)
-            return real_instances
+            instances = filter(lambda i: i.tenant_id in ids, instances)
+        return instances
 
     def _find_instance_by_name(self, name):
         """
