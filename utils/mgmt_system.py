@@ -43,7 +43,7 @@ class _PsphereClient(Client):
         ss_names = [ss.name for ss in select_sets]
 
         if missing_ss not in ss_names:
-            logger.debug('Injecting %s into psphere search filter spec', missing_ss)
+            logger.trace('Injecting %s into psphere search filter spec', missing_ss)
             # pull out the folder traversal spec traversal specs
             fts_ts = pfs.objectSet[0].selectSet[0]
             # and get the select set from the traversal spec
@@ -401,21 +401,21 @@ class VMWareSystem(MgmtSystemAPIBase):
     def default_resource_pool(self):
         return self.kwargs.get("default_resource_pool", None)
 
-    def _get_vm(self, vm_name):
+    def _get_vm(self, vm_name, force=False):
         """ Returns a vm from the VI object.
 
         Args:
             vm_name: The name of the VM.
+            force: Ignore the cache when updating
 
         Returns: a psphere object.
         """
-        if vm_name in self._vm_cache:
-            vm = self._vm_cache[vm_name]
-            vm.update()
+        if vm_name not in self._vm_cache or force:
+            self._vm_cache[vm_name] = mobs.VirtualMachine.get(self.api, name=vm_name)
         else:
-            vm = mobs.VirtualMachine.get(self.api, name=vm_name)
-            self._vm_cache[vm_name] = vm
-        return vm
+            self._vm_cache[vm_name].update()
+
+        return self._vm_cache[vm_name]
 
     def _get_resource_pool(self, resource_pool_name=None):
         """ Returns a resource pool MOR for a specified name.
@@ -592,8 +592,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         pass
 
     def vm_status(self, vm_name):
-        state = self._get_vm(vm_name).runtime.powerState
-        return state
+        return self._get_vm(vm_name, force=True).runtime.powerState
 
     def vm_creation_time(self, vm_name):
         # psphere turns date strings in datetime for us
