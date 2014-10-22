@@ -1,12 +1,13 @@
+# -*- coding: utf-8 -*-
 import requests
 import signal
 import subprocess
 import time
-from collections import defaultdict
 from datetime import datetime
 
 import pytest
 
+from fixtures.artifactor_plugin import art_client
 from fixtures.terminalreporter import reporter
 from utils import lazycache
 from utils import providers
@@ -33,13 +34,13 @@ def get_current_time_GMT():
 
 
 class HTMLReport(object):
-    def __init__(self, events):
-        self.events = events
+    def __init__(self, test_name, registered_events):
+        self.registered_events = registered_events
+        self.test_name = test_name
 
-    def generate(self, filename):
+    def generate(self):
         template = template_env.get_template('event_testing.html')
-        with open(filename, "w") as outfile:
-            outfile.write(template.render(events=self.events))
+        return template.render(test_name=self.test_name, registered_events=self.registered_events)
 
 
 class EventExpectation(object):
@@ -101,11 +102,10 @@ class EventListener(object):
 
     def __init__(self, verbose=False):
         listener_filename = scripts_path.join('listener.py').strpath
-        self.listener_script = "%s 0.0.0.0 %d" % (listener_filename, self.listener_port)
+        self.listener_script = "{} 0.0.0.0 {}".format(listener_filename, self.listener_port)
         if not verbose:
             self.listener_script += ' --quiet'
         self.expectations = []
-        self.processed_expectations = defaultdict(list)
         self.listener = None
 
     @lazycache
@@ -302,9 +302,6 @@ class EventListener(object):
         if config.getoption("event_testing_enabled"):
             # Collect results
             try:
-                # Generate result report
-                report = HTMLReport(self.processed_expectations)
-                report.generate(config.getoption("event_testing_result"))
                 # Report to the terminal
                 termreporter = reporter(config)
                 termreporter.write_sep('-', 'Stopping event listener')
@@ -429,7 +426,14 @@ def pytest_runtest_call(__multicall__, item):
     except TimedOutError:
         pass
 
-    register_event.processed_expectations[node_id].extend(register_event.expectations)
+    art_client.fire_hook(
+        'filedump',
+        test_name=item.name,
+        test_location=item.parent.name,
+        filename="events.html",
+        contents=HTMLReport(node_id, register_event.expectations).generate(),
+        fd_ident="event_testing"
+    )
     logger.info("Clearing the database after testing ...")
     register_event._delete_database()
     soft_assert = item.funcargs["soft_assert"]

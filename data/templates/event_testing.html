@@ -7,7 +7,6 @@
 <div class="container">
     <h1>{{title}}</h1>
     <table class="zebra-striped">
-    {% for test_name, registered_events in events.iteritems() %}
         <tr>
             <th colspan="7"><em>{{ test_name }}</em></th>
         </tr>
@@ -31,7 +30,6 @@
             <td><i>{{ event.event }}</i></td>
         </tr>
         {% endfor %}
-    {% endfor %}
     </table>
     <p>
         <i>If something breaks down, go kill <a href="mailto:mfalesni@redhat.com">mfalesni@redhat.com</a></i>
