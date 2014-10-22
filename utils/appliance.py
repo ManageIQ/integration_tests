@@ -147,6 +147,7 @@ class Appliance(object):
             loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
 
         """
+        self.ipapp.wait_for_ssh()
         if kwargs:
             self._custom_configure(**kwargs)
         else:
@@ -703,6 +704,17 @@ class IPAppliance(object):
                  delay=20,
                  numsec=timeout)
 
+    def wait_for_ssh(self, timeout=300):
+        """Waits for appliance database to be ready
+
+        Args:
+            timeout: Number of seconds to wait until timeout (default ``180``)
+        """
+        wait_for(func=lambda: self.is_ssh_running,
+                 message='appliance.is_ssh_running',
+                 delay=5,
+                 numsec=timeout)
+
     @lazycache
     def db_address(self):
         # returns the appliance address by default, methods that set up the internal
@@ -739,8 +751,8 @@ class IPAppliance(object):
             return False
 
     @property
-    def is_ssh_running(self, force=False):
-        return net_check(22, self.address, force)
+    def is_ssh_running(self):
+        return net_check(22, self.address, force=True)
 
     @property
     def has_cli(self):

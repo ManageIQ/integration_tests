@@ -1763,6 +1763,10 @@ class SCVMMSystem(MgmtSystemAPIBase):
         raise NotImplementedError('create_vm not implemented.')
 
     def delete_vm(self, vm_name):
+        if not self.is_vm_stopped(vm_name):
+            # Paused VM can be stopped too, so no special treatment here
+            self.stop_vm(vm_name)
+            self.wait_vm_stopped(vm_name)
         self._do_vm(vm_name, "Remove")
 
     def restart_vm(self, vm_name):
