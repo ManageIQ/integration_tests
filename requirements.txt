@@ -45,7 +45,3 @@ psycopg2
 
 # zeromq bindings, for ipython and parallel testing, needs zeromq3-devel
 pyzmq
-
-# paramiko dependencies, for some unknown reason not being installed by default in jenkins
-ecdsa
-pycrypto
