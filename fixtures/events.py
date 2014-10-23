@@ -34,13 +34,17 @@ def get_current_time_GMT():
 
 
 class HTMLReport(object):
-    def __init__(self, test_name, registered_events):
+    def __init__(self, test_name, registered_events, all_events):
         self.registered_events = registered_events
         self.test_name = test_name
+        self.all_events = all_events
 
     def generate(self):
         template = template_env.get_template('event_testing.html')
-        return template.render(test_name=self.test_name, registered_events=self.registered_events)
+        return template.render(
+            test_name=self.test_name,
+            registered_events=self.registered_events,
+            all_events=self.all_events)
 
 
 class EventExpectation(object):
@@ -195,6 +199,9 @@ class EventListener(object):
                 logger.info("DB row found for '%s'" % req)
                 return datetime.strptime(data[0]["event_time"], "%Y-%m-%d %H:%M:%S")
         return False
+
+    def get_all_received_events(self):
+        return self._get("/events")
 
     def check_all_expectations(self):
         """ Check whether all triggered events have been captured.
@@ -431,7 +438,9 @@ def pytest_runtest_call(__multicall__, item):
         test_name=item.name,
         test_location=item.parent.name,
         filename="events.html",
-        contents=HTMLReport(node_id, register_event.expectations).generate(),
+        contents=HTMLReport(
+            node_id, register_event.expectations, register_event.get_all_received_events()
+        ).generate(),
         fd_ident="event_testing"
     )
     logger.info("Clearing the database after testing ...")

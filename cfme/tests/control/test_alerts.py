@@ -86,7 +86,7 @@ def setup_for_alerts(request, alerts, event, vm_name, provider_data, provider_ke
 @pytest.mark.usefixtures("server_roles")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         test_vm_power_control, provider_crud, provider_data, provider_mgmt, provider_type, request,
-        smtp_test, provider_key):
+        smtp_test, provider_key, register_event):
     if test_vm_power_control is None or len(test_vm_power_control) == 0:
         pytest.skip("No power control vm specified!")
     test_vm_power_control = test_vm_power_control[0]
@@ -98,6 +98,13 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         request, [alert], "VM Power On", test_vm_power_control, provider_data, provider_key)
 
     # Ok, hairy stuff done, now - hammertime!
+    register_event(
+        provider_crud.get_yaml_data()['type'],
+        "vm", test_vm_power_control, ["vm_power_off"])
+    register_event(
+        provider_crud.get_yaml_data()['type'],
+        "vm", test_vm_power_control, ["vm_power_on"])
+    # We don't check for *_req events because these happen only if the operation is issued via CFME.
     provider_mgmt.stop_vm(test_vm_power_control)
     wait_for(lambda: provider_mgmt.is_vm_stopped(test_vm_power_control), num_sec=240)
     for i in range(5):

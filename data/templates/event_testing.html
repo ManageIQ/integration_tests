@@ -31,6 +31,23 @@
         </tr>
         {% endfor %}
     </table>
+    <h3>All received events:</h3>
+    <table class="zebra-striped">
+        <tr>
+            <th>Event type</th>
+            <th>Resource name</th>
+            <th>Time arrived</th>
+            <th>Event</th>
+        </tr>
+        {% for event in all_events %}
+            <tr>
+                <td>{{ event["event_type"] }}</td>
+                <td>{{ event["resource_name"] }}</td>
+                <td>{{ event["event_time"] }}</td>
+                <td>{{ event["event"] }}</td>
+            </tr>
+        {% endfor %}
+    </table>
     <p>
         <i>If something breaks down, go kill <a href="mailto:mfalesni@redhat.com">mfalesni@redhat.com</a></i>
     </p>
