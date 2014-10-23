@@ -12,7 +12,6 @@ ovirt-engine-sdk-python
 paramiko
 psphere
 py
-pycrypto
 PyGithub
 PyPDF2
 pytest
@@ -46,3 +45,7 @@ psycopg2
 
 # zeromq bindings, for ipython and parallel testing, needs zeromq3-devel
 pyzmq
+
+# paramiko dependencies, for some unknown reason not being installed by default in jenkins
+ecdsa
+pycrypto
