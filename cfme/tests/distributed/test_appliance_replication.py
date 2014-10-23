@@ -76,7 +76,9 @@ def get_replication_appliances():
     appl1 = provision_appliance(appliance_data['version'], appliance_data['name'])
     appl2 = provision_appliance(appliance_data['version'], appliance_data['name'])
     appl1.configure(region=1, patch_ajax_wait=False)
-    appl2.configure(region=2, patch_ajax_wait=False)
+    appl2.configure(region=2, patch_ajax_wait=False, key_address=appl1.address)
+    appl1.ipapp.wait_for_web_ui()
+    appl2.ipapp.wait_for_web_ui()
     return (appl1, appl2)
 
 
