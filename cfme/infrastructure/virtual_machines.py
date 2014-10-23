@@ -936,7 +936,10 @@ def _assign_unassign_policy_profiles(vm_name, assign, *policy_profile_names, **k
         assign: Wheter to assign or unassign.
         policy_profile_names: :py:class:`str` with Policy Profile names.
     """
-    _method_setup(vm_name, **kwargs)
+    if kwargs.get("via_details", True):
+        sel.click(find_quadicon(vm_name))
+    else:
+        _method_setup(vm_name, **kwargs)
     toolbar.select("Policy", "Manage Policies")
     for policy_profile in policy_profile_names:
         if assign:
