@@ -56,5 +56,6 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
         instance_type=provisioning['instance_type'],
         availability_zone=provisioning['availability_zone'],
         security_groups=[provisioning['security_group']],
-        guest_keypair=provisioning['guest_keypair']
+        guest_keypair=provisioning['guest_keypair'],
+        cloud_network=provisioning.get('cloud_network', None)
     )
