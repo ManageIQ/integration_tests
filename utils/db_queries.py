@@ -80,3 +80,19 @@ def get_zone_description(zone_id, ip_address=None):
             return zones[0].description
         else:
             return None
+
+
+def get_host_id(hostname, ip_address=None):
+    if ip_address is None:
+        ip_address = cfmedb.hostname
+
+    with database_on_server(ip_address) as db:
+        hosts = list(
+            db.session.query(db["hosts"]).filter(
+                db["hosts"].name == hostname
+            )
+        )
+        if hosts:
+            return str(hosts[0].id)
+        else:
+            return None

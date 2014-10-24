@@ -1780,6 +1780,18 @@ class InfoBlock(Pretty):
         """
         return self.container(ident).text
 
+    def icon_href(self, *ident):
+        """ Returns the src url of a associated icon
+
+        Args:
+            *indent: Identifiers in the form of strings.
+        Returns: A string of the src href of the element.
+        """
+        xpath_core = "%s/%s/%s" % (self._box_locator,
+                                   self._pair_locator, self._value_locator)
+        xpath = xpath_core % (ident[0], ident[1])
+        return str(sel.element(xpath + "/img").get_attribute("src"))
+
     def container(self, ident):
         """ Searches for a key/value pair inside a header/block arrangement.
 
