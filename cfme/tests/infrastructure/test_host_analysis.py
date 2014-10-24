@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import pytest
 from cfme.configure import tasks
 from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
@@ -14,12 +15,12 @@ HOST_TYPES = ('rhev', 'rhel', 'esx', 'esxi')
 
 
 def pytest_generate_tests(metafunc):
-    p_argn, p_argv, p_ids = testgen.infra_providers(metafunc, 'hosts')
-    argnames = ['provider_key', 'host_type', 'host_name']
+    p_argn, p_argv, p_ids = testgen.infra_providers(metafunc, 'hosts', 'version')
+    argnames = ['provider_key', 'provider_type', 'provider_ver', 'host_type', 'host_name']
     argvalues = []
     idlist = []
     for argv in p_argv:
-        prov_hosts, prov_key = argv[0], argv[1]
+        prov_hosts, prov_ver, prov_key, prov_type = argv[:4]
         if not prov_hosts:
             continue
         for test_host in prov_hosts:
@@ -29,7 +30,8 @@ def pytest_generate_tests(metafunc):
                 'host type must be set to [{}] for smartstate analysis tests'\
                 .format('|'.join(HOST_TYPES))
 
-            argvalues.append([prov_key, test_host['type'], test_host['name']])
+            argvalues.append(
+                [prov_key, prov_type, str(prov_ver), test_host['type'], test_host['name']])
             test_id = '{}-{}-{}'.format(prov_key, test_host['type'], test_host['name'])
             idlist.append(test_id)
 
@@ -43,8 +45,17 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-def test_run_host_analysis(request, setup_provider, provider_key, host_type, host_name,
-                           register_event, soft_assert):
+@pytest.mark.bugzilla(
+    1156028, 1055657,
+    unskip={
+        1156028:
+        lambda provider_type, provider_ver: provider_type != 'rhevm' or provider_ver != '3.3',
+        1055657:
+        lambda provider_type, provider_ver: provider_type != 'virtualcenter' or provider_ver >= '5'
+    }
+)
+def test_run_host_analysis(request, setup_provider, provider_key, provider_type, provider_ver,
+                           host_type, host_name, register_event, soft_assert):
     """ Run host SmartState analysis """
     # Add credentials to host
     host_data = get_host_data_by_name(provider_key, host_name)
