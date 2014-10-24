@@ -186,10 +186,11 @@ def _test_vm_removal():
                           ['Infrastructure', 'Virtual Machines', 'VM Access Rules',
                            'Modify', 'Provision VMs']],
                         _test_vm_provision)])
-def test_permission_edit(product_features, action):
+def test_permission_edit(request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
     """
+    request.addfinalizer(login.login_admin)
     role_name = random.generate_random_string()
     role = ac.Role(name=role_name,
                   vm_restriction=None,
