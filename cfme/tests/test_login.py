@@ -10,8 +10,9 @@ pytestmark = pytest.mark.usefixtures('browser')
 def test_login():
     """ Tests that the appliance can be logged into and shows dashboard page. """
     pytest.sel.get(pytest.sel.base_url())
+    assert not pytest.sel.is_displayed(dashboard.page.user_dropdown)
     login.login_admin()
-    assert dashboard.page.is_displayed(), "Could not determine if logged in"
+    assert pytest.sel.is_displayed(dashboard.page.user_dropdown), "Could not determine if logged in"
     login.logout()
     assert login.page.is_displayed()
 
