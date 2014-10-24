@@ -84,7 +84,6 @@ def test_provider_event(provider_crud, gen_events, test_vm):
         pytest.sel.force_navigate('infrastructure_provider',
                                   context={'provider': provider_crud})
         toolbar.select('Monitoring', 'Timelines')
-    nav_step()
     wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
@@ -94,7 +93,6 @@ def test_host_event(provider_crud, gen_events, test_vm):
         test_vm.load_details()
         pytest.sel.click(details_page.infoblock.element('Relationships', 'Host'))
         toolbar.select('Monitoring', 'Timelines')
-    nav_step()
     wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
@@ -103,7 +101,6 @@ def test_vm_event(provider_crud, gen_events, test_vm):
     def nav_step():
         test_vm.load_details()
         toolbar.select('Monitoring', 'Timelines')
-    nav_step()
     wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
@@ -113,6 +110,5 @@ def test_cluster_event(provider_crud, gen_events, test_vm):
         test_vm.load_details()
         pytest.sel.click(details_page.infoblock.element('Relationships', 'Cluster'))
         toolbar.select('Monitoring', 'Timelines')
-    nav_step()
     wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
