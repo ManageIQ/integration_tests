@@ -3,6 +3,7 @@ import pytest
 import os
 import shutil
 from cfme.intelligence.reports import reports
+from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
 from utils import browser
 
@@ -19,6 +20,11 @@ def clean_temp_directory():
             os.unlink(os.path.join(root, f))
         for d in dirs:
             shutil.rmtree(os.path.join(root, d))
+
+
+@pytest.fixture(scope="module")
+def setup_a_provider():
+    _setup_a_provider("infra")
 
 
 @pytest.fixture
@@ -39,7 +45,7 @@ def report():
 
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
 @pytest.sel.go_to('dashboard')
-def test_download_report_firefox(needs_firefox, setup_infrastructure_providers, report, filetype):
+def test_download_report_firefox(needs_firefox, setup_a_provider, report, filetype):
     """ Download the report as a file and check whether it was downloaded.
 
     This test skips for PDF as there are some issues with it.
