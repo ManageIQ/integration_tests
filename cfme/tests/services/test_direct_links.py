@@ -4,6 +4,7 @@ import pytest
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui.prov_form import provisioning_form
+from cfme.login import login_admin
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils.browser import browser
@@ -81,6 +82,7 @@ def generated_request(provider, provider_data):
     }
     yield request_cells
     browser().get(env["base_url"])
+    login_admin()
     requests.delete_request(request_cells)
     flash.assert_no_errors()
 
