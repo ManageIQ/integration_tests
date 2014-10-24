@@ -12,6 +12,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Quadicon, paginator, toolbar
 from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
+from utils.db import cfmedb
 from utils.log import logger, perflog
 from utils.wait import wait_for
 
@@ -180,6 +181,13 @@ def setup_provider(provider_key, validate=True, check_existing=True):
         # pass so we don't skip the validate step
         pass
     else:
+        with cfmedb.transaction:
+            providers = cfmedb.session.query(cfmedb['ext_management_systems'])
+        for db_provider in providers:
+            if db_provider.hostname == provider.hostname or \
+               db_provider.ipaddress == provider.ip_address:
+                print "CANT SETUP"
+                raise Exception
         logger.info('Setting up provider: %s' % provider.key)
         provider.create(validate_credentials=True)
 

@@ -11,7 +11,8 @@ pytestmark = [pytest.mark.fixtureconf(server_roles="+automate"),
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
-    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
+    argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning',
+                                                          tenant_test=True)
 
     new_argvalues = []
     new_idlist = []
@@ -39,7 +40,8 @@ def vm_name(request, provider_mgmt):
 
 
 @pytest.mark.bugzilla(1131330)
-def test_provision_from_template(request, setup_provider, provider_crud, provisioning, vm_name):
+def test_provision_from_template(request, setup_provider, provider_crud, provisioning, vm_name,
+                                 provider_data):
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
         (image, vm_name, provider_crud.key))
@@ -47,6 +49,12 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
     instance = instance_factory(vm_name, provider_crud, image)
 
     request.addfinalizer(instance.delete_from_provider)
+
+    tenant = None
+    if provider_data.get('tenant_test', False):
+        tenant = provider_data['tenant_name']
+
+    import pdb; pdb.set_trace()
 
     instance.create(
         email='image_provisioner@example.com',
@@ -56,5 +64,6 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
         instance_type=provisioning['instance_type'],
         availability_zone=provisioning['availability_zone'],
         security_groups=[provisioning['security_group']],
-        guest_keypair=provisioning['guest_keypair']
+        guest_keypair=provisioning['guest_keypair'],
+        cloud_tenant=tenant
     )

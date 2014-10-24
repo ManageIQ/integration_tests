@@ -13,7 +13,8 @@ from utils import testgen
 from utils.randomness import generate_random_local_ip, generate_random_string
 from utils.update import update
 
-pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
+pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function",
+                                         tenant_test=True)
 
 
 def test_empty_discovery_form_validation():
