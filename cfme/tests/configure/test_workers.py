@@ -7,4 +7,5 @@ from cfme.configure import configuration
 @pytest.mark.nondestructive
 @pytest.sel.go_to('dashboard')
 def test_restart_workers():
-    assert configuration.restart_workers("Generic Worker"), "Could not correctly restart workers!"
+    assert (configuration.restart_workers("Generic Worker", wait_time_min=3),
+            "Could not correctly restart workers!")
