@@ -6,7 +6,9 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 
 xml_file = os.path.join(os.environ['WORKSPACE'], 'junit-report.xml')
-stream = os.environ['JOB_NAME'].replace('.', '').replace('-tests', '')
+# 'stream' environ is set by jenkins for all stream test jobs
+# It will match the group name from the template tracker
+stream = os.environ['stream']
 number = int(os.environ['BUILD_NUMBER'])
 
 date = str(datetime.now())
