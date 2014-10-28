@@ -3,6 +3,7 @@
 import pytest
 from cfme.cloud.instance import instance_factory
 from cfme.cloud.provider import OpenStackProvider
+from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.randomness import generate_random_string
 
@@ -63,4 +64,5 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
     if isinstance(provider_crud, OpenStackProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
 
+    sel.force_navigate("clouds_instances_by_provider")
     instance.create(**inst_args)
