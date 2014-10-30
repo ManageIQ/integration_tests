@@ -11,11 +11,13 @@ from utils.randomness import generate_random_string
 from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
+import utils.randomness as rand
 
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
-    pytest.mark.fixtureconf(server_roles="+automate")
+    pytest.mark.fixtureconf(server_roles="+automate"),
+    pytest.mark.ignore_stream("5.2")
 ]
 
 
@@ -54,7 +56,15 @@ def provider_init(provider_key):
 def dialog():
     dialog = "dialog_" + generate_random_string()
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                                   submit=True, cancel=True)
+                                   submit=True, cancel=True,
+                                   tab_label="tab_" + rand.generate_random_string(),
+                                   tab_desc="my tab desc",
+                                   box_label="box_" + rand.generate_random_string(),
+                                   box_desc="my box desc",
+                                   ele_label="ele_" + rand.generate_random_string(),
+                                   ele_name=rand.generate_random_string(),
+                                   ele_desc="my ele desc", choose_type="Text Box",
+                                   default_text_box="default value")
     service_dialog.create()
     flash.assert_success_message('Dialog "%s" was added' % dialog)
     yield dialog
@@ -96,6 +106,8 @@ def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider
         vm_name=vm_name,
         instance_type=provisioning['instance_type'],
         availability_zone=provisioning['availability_zone'],
+        cloud_tenant=provisioning['cloud_tenant'],
+        cloud_network=provisioning['cloud_network'],
         security_groups=[provisioning['security_group']],
         provider_mgmt=provider_mgmt,
         provider=provider_crud.name,
@@ -110,5 +122,5 @@ def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider
         (item_name, item_name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
-                       fail_func=requests.reload, num_sec=600, delay=20)
+                       fail_func=requests.reload, num_sec=1000, delay=20)
     assert row.last_message.text == 'Request complete'

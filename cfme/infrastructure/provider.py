@@ -435,18 +435,18 @@ class SCVMMProvider(Provider):
     def _form_mapping(self, create=None, **kwargs):
 
         values = version.pick({
-                                    version.LOWEST: {
-                                        'name_text': kwargs.get('name'),
-                                        'type_select': create and 'Microsoft System Center VMM',
-                                        'hostname_text': kwargs.get('hostname'),
-                                        'ipaddress_text': kwargs.get('ip_address')},
-                                    "5.3.1": {
-                                        'name_text': kwargs.get('name'),
-                                        'type_select': create and 'Microsoft System Center VMM',
-                                        'hostname_text': kwargs.get('hostname'),
-                                        'ipaddress_text': kwargs.get('ip_address'),
-                                        'sec_protocol': kwargs.get('sec_protocol')}
-                                    })
+            version.LOWEST: {
+                'name_text': kwargs.get('name'),
+                'type_select': create and 'Microsoft System Center VMM',
+                'hostname_text': kwargs.get('hostname'),
+                'ipaddress_text': kwargs.get('ip_address')},
+            "5.3.1": {
+                'name_text': kwargs.get('name'),
+                'type_select': create and 'Microsoft System Center VMM',
+                'hostname_text': kwargs.get('hostname'),
+                'ipaddress_text': kwargs.get('ip_address'),
+                'sec_protocol': kwargs.get('sec_protocol')}
+        })
 
         if 'sec_protocol' in values and values['sec_protocol'] is 'Kerberos':
             values['sec_realm'] = kwargs.get('sec_realm')
