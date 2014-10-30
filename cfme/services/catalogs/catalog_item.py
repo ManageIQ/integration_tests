@@ -247,19 +247,18 @@ class CatalogItem(Updateable, Pretty):
 
 
 class CatalogBundle(Updateable, Pretty):
-    pretty_attrs = ['name', 'catalog', 'dialog', 'cat_item']
+    pretty_attrs = ['name', 'catalog', 'dialog']
 
     def __init__(self, name=None, description=None,
                  display_in=False, catalog=None,
-                 dialog=None, cat_item=None):
+                 dialog=None):
         self.name = name
         self.description = description
         self.display_in = display_in
         self.catalog = catalog
         self.dialog = dialog
-        self.cat_item = cat_item
 
-    def create(self):
+    def create(self, cat_items):
         sel.force_navigate('catalog_bundle_new')
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
@@ -267,8 +266,9 @@ class CatalogBundle(Updateable, Pretty):
                                'select_catalog': self.catalog,
                                'select_dialog': self.dialog})
         tabstrip.select_tab("Resources")
-        fill(resources_form, {'choose_resource': self.cat_item},
-             action=resources_form.add_button)
+        for cat_item in cat_items:
+            fill(resources_form, {'choose_resource': cat_item})
+        sel.click(resources_form.add_button)
         flash.assert_success_message('Catalog Bundle "%s" was added' %
                                      self.name)
 
