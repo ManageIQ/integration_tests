@@ -18,20 +18,30 @@ def get_configuration_details(ip_address=None):
         ip_address = cfmedb.hostname
 
     with database_on_server(ip_address) as db:
-        SEQ_FACT = 1000000000000
+        SEQ_FACT = 1e12
         miq_servers = db['miq_servers']
         for region in db.session.query(db['miq_regions']):
             reg_min = region.region * SEQ_FACT
             reg_max = reg_min + SEQ_FACT
-            servers = list(
-                db.session.query(miq_servers).filter(
-                    miq_servers.id >= reg_min,
-                    miq_servers.id < reg_max,
-                    miq_servers.ipaddress == ip_address
-                )
-            )
-            if servers:
-                return region.region, servers[0].name, servers[0].id, servers[0].zone_id
+            all_servers = db.session.query(miq_servers).all()
+            server = None
+            if len(all_servers) == 1:
+                # If there's only one server, it's the one we want
+                server = all_servers[0]
+            else:
+                # Otherwise, filter based on id and ip address
+                def server_filter(server):
+                    return all([
+                        server.id >= reg_min,
+                        server.id < reg_max,
+                        # XXX: This currently fails due to public/private addresses on openstack
+                        server.ipaddress == ip_address
+                    ])
+                servers = filter(server_filter, all_servers)
+                if servers:
+                    server = servers[0]
+            if server:
+                return region.region, server.name, server.id, server.zone_id
             else:
                 return None, None, None, None
         else:

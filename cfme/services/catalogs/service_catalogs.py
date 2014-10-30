@@ -5,8 +5,12 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import accordion, flash, menu, form_buttons
 from utils.update import Updateable
 from utils.pretty import Pretty
+from utils import version
 
-order_button = "//img[@title='Order this Service']"
+order_button = version.pick({
+    version.LATEST: "//button[@title='Order this Service']",
+    '5.3': "//img[@title='Order this Service']"
+})
 accordion_tree = partial(accordion.tree, "Service Catalogs")
 
 menu.nav.add_branch(
