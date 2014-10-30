@@ -59,6 +59,8 @@ properties_form = Form(
         ('hostname_text', "//*[@id='hostname']"),
         ('ipaddress_text', "//*[@id='ipaddress']"),
         ('api_port', "//*[@id='port']"),
+        ('sec_protocol', Select("//*[@id='security_protocol']")),
+        ('sec_realm', "//*[@id='realm']"),
     ])
 
 credential_form = Form(
@@ -420,19 +422,36 @@ class SCVMMProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None):
+                 ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None):
         super(SCVMMProvider, self).__init__(name=name, credentials=credentials, zone=zone, key=key)
 
         self.hostname = hostname
         self.ip_address = ip_address
         self.start_ip = start_ip
         self.end_ip = end_ip
+        self.sec_protocol = sec_protocol
+        self.sec_realm = sec_realm
 
     def _form_mapping(self, create=None, **kwargs):
-        return {'name_text': kwargs.get('name'),
-                'type_select': create and 'Microsoft System Center VMM',
-                'hostname_text': kwargs.get('hostname'),
-                'ipaddress_text': kwargs.get('ip_address')}
+
+        values = version.pick({
+                                    version.LOWEST: {
+                                        'name_text': kwargs.get('name'),
+                                        'type_select': create and 'Microsoft System Center VMM',
+                                        'hostname_text': kwargs.get('hostname'),
+                                        'ipaddress_text': kwargs.get('ip_address')},
+                                    "5.3.1": {
+                                        'name_text': kwargs.get('name'),
+                                        'type_select': create and 'Microsoft System Center VMM',
+                                        'hostname_text': kwargs.get('hostname'),
+                                        'ipaddress_text': kwargs.get('ip_address'),
+                                        'sec_protocol': kwargs.get('sec_protocol')}
+                                    })
+
+        if 'sec_protocol' in values and values['sec_protocol'] is 'Kerberos':
+            values['sec_realm'] = kwargs.get('sec_realm')
+
+        return values
 
     class Credential(Provider.Credential):
         # SCVMM needs to deal with domain
@@ -554,7 +573,9 @@ def get_from_config(provider_config_name):
             credentials=credentials,
             key=provider_config_name,
             start_ip=prov_config['discovery_range']['start'],
-            end_ip=prov_config['discovery_range']['end'])
+            end_ip=prov_config['discovery_range']['end'],
+            sec_protocol=prov_config['sec_protocol'],
+            sec_realm=prov_config['sec_realm'])
     elif prov_type == 'rhevm':
         if prov_config.get('candu_credentials', None):
             candu_credentials = get_credentials_from_config(prov_config['candu_credentials'])
