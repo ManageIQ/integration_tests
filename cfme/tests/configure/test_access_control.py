@@ -186,10 +186,11 @@ def _test_vm_removal():
                           ['Infrastructure', 'Virtual Machines', 'VM Access Rules',
                            'Modify', 'Provision VMs']],
                         _test_vm_provision)])
-def test_permission_edit(product_features, action):
+def test_permission_edit(request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
     """
+    request.addfinalizer(login.login_admin)
     role_name = random.generate_random_string()
     role = ac.Role(name=role_name,
                   vm_restriction=None,
@@ -353,19 +354,20 @@ def test_permissions_vm_provisioning():
 #    )
 
 
-@pytest.mark.bugzilla(1154112)
-def test_user_add_button_should_be_disabled_without_group(soft_assert):
-    from cfme.web_ui import fill, form_buttons
-    sel.force_navigate('cfg_accesscontrol_user_add')
-    pw = random.generate_random_string()
-    fill(ac.User.user_form, {
-        "name_txt": random.generate_random_string(),
-        "userid_txt": random.generate_random_string(),
-        "password_txt": pw,
-        "password_verify_txt": pw,
-        "email_txt": "test@test.test"
-    })
-    assert not sel.is_displayed(form_buttons.add), "The Add button should not be displayed!"
+# commenting this out, there is validation around the 'no group selected'and we have a test for it
+# @pytest.mark.bugzilla(1154112)
+# def test_user_add_button_should_be_disabled_without_group(soft_assert):
+#     from cfme.web_ui import fill, form_buttons
+#     sel.force_navigate('cfg_accesscontrol_user_add')
+#     pw = random.generate_random_string()
+#     fill(ac.User.user_form, {
+#         "name_txt": random.generate_random_string(),
+#         "userid_txt": random.generate_random_string(),
+#         "password_txt": pw,
+#         "password_verify_txt": pw,
+#         "email_txt": "test@test.test"
+#     })
+#     assert not sel.is_displayed(form_buttons.add), "The Add button should not be displayed!"
 
 
 def test_user_change_password(request):

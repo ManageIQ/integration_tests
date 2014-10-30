@@ -2,6 +2,8 @@
 # in selenium (the group is selected then immediately reset)
 import pytest
 from cfme.cloud.instance import instance_factory
+from cfme.cloud.provider import OpenStackProvider
+from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.randomness import generate_random_string
 
@@ -42,19 +44,25 @@ def vm_name(request, provider_mgmt):
 def test_provision_from_template(request, setup_provider, provider_crud, provisioning, vm_name):
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
-        (image, vm_name, provider_crud.key))
+            (image, vm_name, provider_crud.key))
 
     instance = instance_factory(vm_name, provider_crud, image)
 
     request.addfinalizer(instance.delete_from_provider)
 
-    instance.create(
-        email='image_provisioner@example.com',
-        first_name='Image',
-        last_name='Provisioner',
-        notes=note,
-        instance_type=provisioning['instance_type'],
-        availability_zone=provisioning['availability_zone'],
-        security_groups=[provisioning['security_group']],
-        guest_keypair=provisioning['guest_keypair']
-    )
+    inst_args = {
+        'email': 'image_provisioner@example.com',
+        'first_name': 'Image',
+        'last_name': 'Provisioner',
+        'notes': note,
+        'instance_type': provisioning['instance_type'],
+        'availability_zone': provisioning['availability_zone'],
+        'security_groups': [provisioning['security_group']],
+        'guest_keypair': provisioning['guest_keypair']
+    }
+
+    if isinstance(provider_crud, OpenStackProvider):
+        inst_args['cloud_network'] = provisioning['cloud_network']
+
+    sel.force_navigate("clouds_instances_by_provider")
+    instance.create(**inst_args)

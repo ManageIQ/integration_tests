@@ -1748,7 +1748,7 @@ def set_auth_mode(mode, **kwargs):
     auth_pg.update()
 
 
-def set_replication_worker_host(host):
+def set_replication_worker_host(host, port='5432'):
     """ Set replication worker host on Configure / Configuration pages.
 
     Args:
@@ -1758,6 +1758,7 @@ def set_replication_worker_host(host):
     fill(
         replication_worker,
         dict(host=host,
+             port=port,
              username=conf.credentials['database']['username'],
              password=conf.credentials['database']['password'],
              password_verify=conf.credentials['database']['password']),

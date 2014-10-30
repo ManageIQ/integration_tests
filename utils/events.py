@@ -228,7 +228,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
             cls=Class(
                 name=version.pick({
                     version.LOWEST: "Automation Requests (Request)",
-                    "5.3.1.0": "Request"
+                    "5.3": "Request"
                     # The latest nightlies still have the old name, so having 5.3.1
                     # (even though they present themselves as 5.3.0.0)
                 }),

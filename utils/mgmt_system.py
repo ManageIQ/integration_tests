@@ -43,7 +43,7 @@ class _PsphereClient(Client):
         ss_names = [ss.name for ss in select_sets]
 
         if missing_ss not in ss_names:
-            logger.debug('Injecting %s into psphere search filter spec', missing_ss)
+            logger.trace('Injecting %s into psphere search filter spec', missing_ss)
             # pull out the folder traversal spec traversal specs
             fts_ts = pfs.objectSet[0].selectSet[0]
             # and get the select set from the traversal spec
@@ -401,21 +401,21 @@ class VMWareSystem(MgmtSystemAPIBase):
     def default_resource_pool(self):
         return self.kwargs.get("default_resource_pool", None)
 
-    def _get_vm(self, vm_name):
+    def _get_vm(self, vm_name, force=False):
         """ Returns a vm from the VI object.
 
         Args:
             vm_name: The name of the VM.
+            force: Ignore the cache when updating
 
         Returns: a psphere object.
         """
-        if vm_name in self._vm_cache:
-            vm = self._vm_cache[vm_name]
-            vm.update()
+        if vm_name not in self._vm_cache or force:
+            self._vm_cache[vm_name] = mobs.VirtualMachine.get(self.api, name=vm_name)
         else:
-            vm = mobs.VirtualMachine.get(self.api, name=vm_name)
-            self._vm_cache[vm_name] = vm
-        return vm
+            self._vm_cache[vm_name].update()
+
+        return self._vm_cache[vm_name]
 
     def _get_resource_pool(self, resource_pool_name=None):
         """ Returns a resource pool MOR for a specified name.
@@ -592,8 +592,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         pass
 
     def vm_status(self, vm_name):
-        state = self._get_vm(vm_name).runtime.powerState
-        return state
+        return self._get_vm(vm_name, force=True).runtime.powerState
 
     def vm_creation_time(self, vm_name):
         # psphere turns date strings in datetime for us
@@ -1410,7 +1409,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
     """
 
     _stats_available = {
-        'num_vm': lambda self: len(self.list_vm()),
+        'num_vm': lambda self: self._num_vm_stat(),
         'num_template': lambda self: len(self.list_template()),
     }
 
@@ -1429,6 +1428,13 @@ class OpenstackSystem(MgmtSystemAPIBase):
         self.auth_url = kwargs['auth_url']
         self._api = None
         self._kapi = None
+
+    def _num_vm_stat(self):
+        if current_version() < '5.3':
+            filter_tenants = False
+        else:
+            filter_tenants = True
+        return len(self._get_all_instances(filter_tenants))
 
     @property
     def api(self):
@@ -1636,21 +1642,15 @@ class OpenstackSystem(MgmtSystemAPIBase):
                 if nic['OS-EXT-IPS:type'] == 'floating':
                     return str(nic['addr'])
 
-    def _get_all_instances(self):
-
-        if current_version() < '5.3':
-            # Old method used to list all instances, CFME now uses tenants appropriately
-            instances = self.api.servers.list(True, {'all_tenants': True})
-            return instances
-        else:
-            real_instances = []
+    def _get_all_instances(self, filter_tenants=True):
+        instances = self.api.servers.list(True, {'all_tenants': True})
+        if filter_tenants:
+            # Filter instances based on their tenant ID
+            # needed for CFME 5.3 and higher
             tenants = self._get_tenants()
             ids = [tenant.id for tenant in tenants]
-            instances = self.api.servers.list(True, {'all_tenants': True})
-            for instance in instances:
-                if instance.tenant_id in ids:
-                    real_instances.append(instance)
-            return real_instances
+            instances = filter(lambda i: i.tenant_id in ids, instances)
+        return instances
 
     def _find_instance_by_name(self, name):
         """

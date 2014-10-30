@@ -166,6 +166,12 @@ def post_task_result(tid, result, output=None):
     api().task(tid).put({'result': result, 'output': output})
 
 
+def post_jenkins_result(number, stream, date, fails, skips, passes):
+    api().build.post({'number': number, 'stream': '/api/group/{}/'.format(stream),
+                      'datestamp': date,
+                      'fails': fails, 'skips': skips, 'passes': passes})
+
+
 # Dict subclasses to help with JSON serialization
 class Group(dict):
     """dict subclass to help serialize groups as JSON"""

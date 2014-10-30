@@ -811,7 +811,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # The some of the navigation steps cannot succeed
         logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
         recycle = True
-    except (NoSuchElementException, InvalidElementStateException, WebDriverException):
+    except (NoSuchElementException, InvalidElementStateException, WebDriverException) as e:
         from cfme.web_ui import cfme_exception as cfme_exc  # To prevent circular imports
         # If the page is blocked, then recycle...
         if is_displayed("//div[@id='blocker_div']"):
@@ -836,7 +836,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             logger.exception("Detected glitch from BZ#1112574. HEADSHOT!")
             recycle = True
         else:
-            logger.error("Could not determine the reason for failing the navigation. Reraising.")
+            logger.error("Could not determine the reason for failing the navigation. " +
+                " Reraising.  Exception: %s" % str(e))
             raise
 
     if recycle:

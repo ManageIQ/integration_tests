@@ -19,9 +19,10 @@ class FormButton(Pretty):
     """
     pretty_attrs = ['alt', 'dimmed_alt']
 
-    def __init__(self, alt, dimmed_alt=None):
+    def __init__(self, alt, dimmed_alt=None, force_click=False):
         self._alt = alt
         self._dimmed_alt = dimmed_alt
+        self._force = force_click
 
     def locate(self):
         """This hairy locator ensures that the button is not dimmed and not hidden."""
@@ -60,7 +61,7 @@ class FormButton(Pretty):
 
     def _custom_click_handler(self):
         """Handler called from pytest_selenium"""
-        if self.is_dimmed:
+        if self.is_dimmed and not self._force:
             logger.info("Not clicking {} because it is dimmed".format(str(repr(self))))
             return
         return sel.click(self, no_custom_handler=True)

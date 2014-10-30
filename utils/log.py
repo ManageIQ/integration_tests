@@ -135,10 +135,12 @@ import logging
 import sys
 import warnings
 import datetime as dt
-
 from logging.handlers import RotatingFileHandler, SysLogHandler
+from pkgutil import iter_modules
 from time import time
 from traceback import extract_tb
+
+import psphere
 
 from utils import conf, lazycache
 from utils.path import get_rel_path, log_path
@@ -520,3 +522,9 @@ warnings.simplefilter('default')
 
 # Register a custom excepthook to log unhandled exceptions
 sys.excepthook = _custom_excepthook
+
+# Suppress psphere's really annoying "No handler found" messages.
+# module[1] is the name from a (module_loader, name, ispkg) tuple
+for psphere_mod in ('psphere.%s' % module[1] for module in iter_modules(psphere.__path__)):
+    # Add a logger with a NullHandler for ever psphere module
+    logging.getLogger(psphere_mod).addHandler(logging.NullHandler())
