@@ -12,13 +12,16 @@ from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
+from utils import version
+import utils.randomness as rand
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.usefixtures("vm_name"),
     pytest.mark.fixtureconf(server_roles="+automate"),
     pytest.mark.usefixtures('server_roles', 'uses_infra_providers'),
-    pytest.mark.long_running
+    pytest.mark.long_running,
+    pytest.mark.ignore_stream("5.2")
 ]
 
 
@@ -57,7 +60,13 @@ def provider_init(provider_key):
 def dialog():
     dialog = "dialog_" + generate_random_string()
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                     submit=True, cancel=True)
+                     submit=True, cancel=True,
+                     tab_label="tab_" + rand.generate_random_string(), tab_desc="my tab desc",
+                     box_label="box_" + rand.generate_random_string(), box_desc="my box desc",
+                     ele_label="ele_" + rand.generate_random_string(),
+                     ele_name=rand.generate_random_string(),
+                     ele_desc="my ele desc", choose_type="Text Box",
+                     default_text_box="default value")
     service_dialog.create()
     flash.assert_success_message('Dialog "%s" was added' % dialog)
     yield dialog
@@ -95,6 +104,10 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     if provider_type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = provisioning['vlan']
+        catalog_item_type = version.pick({
+            version.LATEST: "RHEV",
+            '5.3': "Redhat"
+        })
     elif provider_type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
     item_name = generate_random_string()
@@ -128,9 +141,8 @@ def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalo
     catalog_item.create()
     bundle_name = generate_random_string()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
-                   display_in=True, catalog=catalog_item.catalog,
-                   dialog=catalog_item.dialog, cat_item=catalog_item.name)
-    catalog_bundle.create()
+                   display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
+    catalog_bundle.create([catalog_item.name])
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_bundle)
     flash.assert_no_errors()
@@ -147,6 +159,11 @@ def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
                                   vm_name, dialog, catalog):
     template, catalog_item_type = map(provisioning.get,
         ('template', 'catalog_item_type'))
+    if provider_type == 'rhevm':
+        catalog_item_type = version.pick({
+            version.LATEST: "RHEV",
+            '5.3': "Redhat"
+        })
     item_name = generate_random_string()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
