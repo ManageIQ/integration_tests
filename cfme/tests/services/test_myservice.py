@@ -109,7 +109,8 @@ def catalog_item(provider_crud, provider_type,
         provisioning_data['vlan'] = provisioning['vlan']
         catalog_item_type = version.pick({
             version.LATEST: "RHEV",
-            '5.3': "Redhat"
+            '5.3': "RHEV",
+            '5.2': "Redhat"
         })
     elif provider_type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'

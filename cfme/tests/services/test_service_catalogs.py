@@ -106,7 +106,8 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
         provisioning_data['vlan'] = provisioning['vlan']
         catalog_item_type = version.pick({
             version.LATEST: "RHEV",
-            '5.3': "Redhat"
+            '5.3': "RHEV",
+            '5.2': "Redhat"
         })
     elif provider_type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
@@ -162,7 +163,8 @@ def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
     if provider_type == 'rhevm':
         catalog_item_type = version.pick({
             version.LATEST: "RHEV",
-            '5.3': "Redhat"
+            '5.3': "RHEV",
+            '5.2': "Redhat"
         })
     item_name = generate_random_string()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
