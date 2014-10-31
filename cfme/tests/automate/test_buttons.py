@@ -5,6 +5,7 @@ from cfme.automate.buttons import ButtonGroup
 from cfme.automate.service_dialogs import ServiceDialog
 from utils.randomness import generate_random_string
 from utils.update import update
+import utils.randomness as rand
 
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
@@ -13,8 +14,15 @@ pytestmark = [pytest.mark.usefixtures("logged_in")]
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog_name = "dialog_" + generate_random_string()
-    service_dialog = ServiceDialog(label=dialog_name, description="my dialog",
-                                   submit=True, cancel=True)
+    service_dialog = ServiceDialog(label=dialog_name, description="my dialog", submit=True,
+                                   cancel=True, tab_label="tab_" + rand.generate_random_string(),
+                                   tab_desc="my tab desc",
+                                   box_label="box_" + rand.generate_random_string(),
+                                   box_desc="my box desc",
+                                   ele_label="ele_" + rand.generate_random_string(),
+                                   ele_name=rand.generate_random_string(),
+                                   ele_desc="my ele desc", choose_type="Text Box",
+                                   default_text_box="default value")
     service_dialog.create()
     flash.assert_success_message('Dialog "%s" was added' % dialog_name)
     yield service_dialog
