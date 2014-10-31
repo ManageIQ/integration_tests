@@ -60,9 +60,11 @@ request_form = tabstrip.TabStripForm(
             ('automatic_placement', '//input[@id="environment__placement_auto"]'),
             ('availability_zone',
                 web_ui.Select('//select[@id="environment__placement_availability_zone"]')),
+            ('virtual_private_cloud', web_ui.Select('//select[@id="environment__cloud_network"]')),
+            ('cloud_tenant', web_ui.Select('//select[@id="environment__cloud_tenant"]')),
+            ('cloud_network', web_ui.Select('//select[@id="environment__cloud_network"]')),
             ('security_groups', prov.select_security_group),
-            ('public_ip_address',
-             web_ui.Select('//select[@id="environment__floating_ip_address"]')),
+            ('public_ip_address', web_ui.Select('//select[@id="environment__floating_ip_address"]'))
         ]),
         ('Properties', [
             ('instance_type', web_ui.Select('//select[@id="hardware__instance_type"]')),
@@ -125,8 +127,8 @@ class Instance(Updateable, Pretty):
 
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None, vm_name=None, catalog_name=None,
-                 instance_type=None, availability_zone=None, security_groups=None,
-                 provider=None, provider_mgmt=None, guest_keypair=None):
+                 instance_type=None, availability_zone=None, cloud_tenant=None, cloud_network=None,
+                 security_groups=None, provider=None, provider_mgmt=None, guest_keypair=None):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -137,6 +139,8 @@ class Instance(Updateable, Pretty):
         self.catalog_name = catalog_name
         self.instance_type = instance_type
         self.availability_zone = availability_zone
+        self.cloud_tenant = cloud_tenant
+        self.cloud_network = cloud_network
         self.security_groups = security_groups
         self.provider = provider
         self.provider_mgmt = provider_mgmt
@@ -160,6 +164,8 @@ class Instance(Updateable, Pretty):
             'instance_type': self.instance_type,
             'guest_keypair': self.guest_keypair,
             'availability_zone': self.availability_zone,
+            'cloud_tenant': self.cloud_tenant,
+            'cloud_network': self.cloud_network,
             'security_groups': self.security_groups[0],  # not supporting multiselect now,
                                                          # just take first value
         })
