@@ -1,6 +1,6 @@
 import pytest
 
-from cfme.infrastructure.provisioning import provisioning_form
+from cfme.web_ui.prov_form import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill
 from utils import testgen, version

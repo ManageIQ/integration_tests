@@ -5,7 +5,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services import requests
 from cfme.web_ui import flash, fill
-from cfme.infrastructure.provisioning import provisioning_form
+from cfme.web_ui.prov_form import provisioning_form
 from utils.conf import cfme_data
 from utils.providers import setup_provider
 from utils.log import logger
