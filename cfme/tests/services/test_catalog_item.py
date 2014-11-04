@@ -9,7 +9,8 @@ from utils.update import update
 import cfme.tests.configure.test_access_control as tac
 import utils.randomness as rand
 
-pytestmark = [pytest.mark.usefixtures("logged_in")]
+pytestmark = [pytest.mark.usefixtures("logged_in"),
+              pytest.mark.ignore_stream("5.2")]
 
 
 @pytest.yield_fixture(scope="function")
@@ -73,6 +74,11 @@ def test_add_button_group(catalog_item):
 def test_add_button(catalog_item):
     catalog_item.create()
     catalog_item.add_button()
+
+
+def test_edit_tags(catalog_item):
+    catalog_item.create()
+    catalog_item.edit_tags("Cost Center 001")
 
 
 @pytest.mark.xfail(message='downstream - https://bugzilla.redhat.com/show_bug.cgi?id=996789 ;'
