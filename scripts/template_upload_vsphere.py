@@ -13,12 +13,12 @@ import argparse
 import subprocess
 import sys
 
-from psphere.client import Client
-from psphere.errors import ObjectNotFoundError
-from psphere.managedobjects import VirtualMachine
+# from psphere.client import Client
+from psphere.managedobjects import VirtualMachine, ClusterComputeResource, HostSystem, Datacenter
 
 from utils.conf import cfme_data
 from utils.conf import credentials
+from utils.mgmt_system import VMWareSystem
 from utils.wait import wait_for
 
 # ovftool sometimes refuses to cooperate. We can try it multiple times to be sure.
@@ -51,15 +51,12 @@ def parse_cmd_line():
     return args
 
 
-def check_template_exists(hostname, username, password, name):
-    client = Client(server=hostname, username=username, password=password)
-    try:
-        VirtualMachine.get(client, name=name)
+def check_template_exists(client, name):
+    if name in client.list_template():
         print "VSPHERE: A Machine with that name already exists"
-    except ObjectNotFoundError:
+        return True
+    else:
         return False
-    client.logout()
-    return True
 
 
 def upload_ova(hostname, username, password, name, datastore,
@@ -106,40 +103,40 @@ def upload_ova(hostname, username, password, name, datastore,
     else:
         print "VSPHERE: Upload did not complete"
         return -1, "\n".join([output, error])
-        # print output
-        # print error
-        # sys.exit(127)
+        print output
+        print error
+        sys.exit(127)
 
 
 def add_disk(client, name):
     print "VSPHERE: Beginning disk add..."
 
-    backing = client.create("VirtualDiskFlatVer2BackingInfo")
+    backing = client.api.create("VirtualDiskFlatVer2BackingInfo")
     backing.datastore = None
     backing.diskMode = "persistent"
     backing.thinProvisioned = True
 
-    disk = client.create("VirtualDisk")
+    disk = client.api.create("VirtualDisk")
     disk.backing = backing
     disk.controllerKey = 1000
     disk.key = 3000
     disk.unitNumber = 1
     disk.capacityInKB = 8388608
 
-    disk_spec = client.create("VirtualDeviceConfigSpec")
+    disk_spec = client.api.create("VirtualDeviceConfigSpec")
     disk_spec.device = disk
-    file_op = client.create("VirtualDeviceConfigSpecFileOperation")
+    file_op = client.api.create("VirtualDeviceConfigSpecFileOperation")
     disk_spec.fileOperation = file_op.create
-    operation = client.create("VirtualDeviceConfigSpecOperation")
+    operation = client.api.create("VirtualDeviceConfigSpecOperation")
     disk_spec.operation = operation.add
 
     devices = []
     devices.append(disk_spec)
 
-    nc = client.create("VirtualMachineConfigSpec")
+    nc = client.api.create("VirtualMachineConfigSpec")
     nc.deviceChange = devices
 
-    vm = VirtualMachine.get(client, name=name)
+    vm = VirtualMachine.get(client.api, name=name)
     task = vm.ReconfigVM_Task(spec=nc)
 
     def check_task(task):
@@ -150,18 +147,16 @@ def add_disk(client, name):
 
     if task.info.state == "success":
         print " VSPHERE: Successfully added new disk"
-        client.logout()
+        client.api.logout()
     else:
-        client.logout()
+        client.api.logout()
         print " VSPHERE: Failed to add disk"
         sys.exit(127)
 
 
-def make_template(client, name, hostname, username, password):
+def make_template(client, name):
     print "VSPHERE: Marking as Template"
-    client = Client(server=hostname, username=username, password=password)
-    vm = VirtualMachine.get(client, name=name)
-
+    vm = VirtualMachine.get(client.api, name=name)
     try:
         vm.MarkAsTemplate()
         print " VSPHERE: Successfully templatized machine"
@@ -175,58 +170,35 @@ def api_params_resolution(item_list, item_name, item_param):
         print "VSPHERE: Cannot find %s (%s) automatically." % (item_name, item_param)
         print "Please specify it by cmd-line parameter '--%s' or in cfme_data." % item_param
         return None
-    elif len(item_list) > 1:
+    elif len(item_list) > 0:
+        if len(item_list) > 1:
+            print "VSPHERE: Found multiple instances of %s." % item_name
         for item in item_list:
             if hasattr(item, 'summary'):
                 if hasattr(item.summary, 'overallStatus'):
                     if item.summary.overallStatus != 'red':
-                        print "VSPHERE: Found multiple instances of %s. \
-                               Picking '%s'." % (item_name, item.name)
+                        print "Picking %s : '%s'." % (item_name, item.name)
                         return item
                 elif hasattr(item.summary, 'accessible'):
                     if item.summary.accessible is True:
-                        print "VSPHERE: Found multiple instances of %s. \
-                               Picking '%s'." % (item_name, item.name)
+                        print "Picking %s : '%s'." % (item_name, item.name)
                         return item
             elif hasattr(item, 'overallStatus'):
                 if item.overallStatus != 'red':
-                    print "VSPHERE: Found multiple instances of %s. \
-                           Picking '%s'." % (item_name, item.name)
+                    print "Picking %s : '%s'." % (item_name, item.name)
                     return item
         print "VSPHERE: Found instances of %s, but all have status 'red'." % item_name
-        print "Please specify %s manually." % item_name
-        return None
-    else:
-        item = item_list[0]
-        if hasattr(item, 'summary'):
-            if hasattr(item.summary, 'overallStatus'):
-                if item_list[0].summary.overallStatus != 'red':
-                    print "VSPHERE: Found %s '%s'." % (item_name, item.name)
-                    return item_list[0]
-            elif hasattr(item.summary, 'accessible'):
-                if item_list[0].summary.accessible is True:
-                    print "VSPHERE: Found %s '%s'." % (item_name, item.name)
-                    return item_list[0]
-        elif hasattr(item, 'overallStatus'):
-            if item_list[0].overallStatus != 'red':
-                print "VSPHERE: Found %s '%s'." % (item_name, item.name)
-                return item_list[0]
-        print "VSPHERE: Found %s, but it has status 'red'." % item_name
         print "Please specify %s manually." % item_name
         return None
 
 
 def get_cluster(client):
-    from psphere.managedobjects import ClusterComputeResource
-    clusters = ClusterComputeResource.all(client)
-
+    clusters = ClusterComputeResource.all(client.api)
     return api_params_resolution(clusters, 'cluster', 'cluster')
 
 
 def get_host(client, name):
-    from psphere.managedobjects import HostSystem
-    hosts = HostSystem.all(client)
-
+    hosts = HostSystem.all(client.api)
     if name is None:
         return api_params_resolution(hosts, 'host', 'host')
     else:
@@ -238,14 +210,11 @@ def get_host(client, name):
 
 def get_datastore(client, host):
     datastores = host.datastore
-
     return api_params_resolution(datastores, 'datastore', 'datastore')
 
 
 def get_datacenter(client):
-    from psphere.managedobjects import Datacenter
-    datacenters = Datacenter.all(client)
-
+    datacenters = Datacenter.all(client.api)
     return api_params_resolution(datacenters, 'datacenter', 'datacenter')
 
 
@@ -307,7 +276,7 @@ def run(**kwargs):
     username = creds['username']
     password = creds['password']
 
-    client = Client(server=hostname, username=username, password=password)
+    client = VMWareSystem(hostname, username, password)
 
     kwargs = update_params_api(client, **kwargs)
 
@@ -321,7 +290,7 @@ def run(**kwargs):
 
     url = kwargs.get('image_url')
 
-    if not check_template_exists(hostname, username, password, name):
+    if not check_template_exists(client, name):
         if kwargs.get('upload'):
             # Wrapper for ovftool - sometimes it just won't work
             for i in range(0, NUM_OF_TRIES_OVFTOOL):
@@ -347,7 +316,7 @@ def run(**kwargs):
             add_disk(client, name)
         if kwargs.get('template'):
             make_template(client, name, hostname, username, password)
-        client.logout()
+        client.api.logout()
     print "VSPHERE: Completed successfully"
 
 
