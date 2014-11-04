@@ -10,6 +10,7 @@ from utils.pretty import Pretty
 
 cfg_btn = partial(tb.select, "Configuration")
 accordion_tree = partial(accordion.tree, "Catalog Items")
+policy_btn = partial(tb.select, "Policy")
 
 template_select_form = Form(
     fields=[
@@ -30,6 +31,10 @@ basic_info_form = Form(
         ('edit_button', form_buttons.save)
     ])
 
+edit_tags_form = Form(
+    fields=[
+        ("select_value", Select("select#tag_add"))
+    ])
 
 detail_form = Form(
     fields=[
@@ -244,6 +249,14 @@ class CatalogItem(Updateable, Pretty):
                            'request': "InspectMe"})
         sel.click(button_form.add_button)
         flash.assert_success_message('Button "btn_descr" was added')
+
+    def edit_tags(self, value):
+        sel.force_navigate('catalog_item', context={'catalog': self.catalog,
+                                                    'catalog_item': self})
+        policy_btn('Edit Tags', invokes_alert=True)
+        fill(edit_tags_form, {'select_value': value},
+             action=form_buttons.save)
+        flash.assert_success_message('Tag edits were successfully saved')
 
 
 class CatalogBundle(Updateable, Pretty):
