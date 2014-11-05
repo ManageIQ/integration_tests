@@ -1,7 +1,7 @@
 import pytest
 
 from utils.conf import cfme_data
-from cfme.infrastructure.provisioning import provisioning_form
+from cfme.web_ui.prov_form import provisioning_form
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services import requests
 from cfme.web_ui import flash, fill

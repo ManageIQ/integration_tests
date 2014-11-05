@@ -5,7 +5,7 @@
 """
 
 from cfme.cloud.provider import OpenStackProvider, EC2Provider
-from cfme.cloud.provisioning import provisioning_form
+from cfme.web_ui.prov_form import provisioning_form
 from cfme.exceptions import InstanceNotFound, OptionNotAvailable, UnknownProviderType
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
