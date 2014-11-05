@@ -249,7 +249,7 @@ def check_pr(pr):
 
     If tasks are already pending for this PR, then they will be set to invalid.
 
-    If WIP is in the title of the PR, then new runs are not issued and instead it is just
+    If [WIP] is in the title of the PR, then new runs are not issued and instead it is just
     stored in the DB.
 
     If the PR does not exist in the database a new PR record is created, and a new run is
@@ -267,14 +267,14 @@ def check_pr(pr):
     try:
         db_pr = tapi.pr(pr['number']).get()
         if db_pr['current_commit_head'] != commit and \
-           "WIP" not in pr['title']:
+           "[WIP]" not in pr['title']:
                 for run in db_pr['runs']:
                     if run['commit'] == commit:
                         break
                 else:
                     set_invalid_runs(db_pr)
                     create_run(db_pr, pr)
-        elif "WIP" in pr['title']:
+        elif "[WIP]" in pr['title']:
             wip = True
         tapi.pr(pr['number']).put({'current_commit_head': commit, 'wip': wip})
         check_status(pr)
@@ -284,9 +284,9 @@ def check_pr(pr):
                   'description': pr['body'],
                   'current_commit_head': commit}
         tapi.pr().post(new_pr)
-        if "WIP" not in pr['title']:
+        if "[WIP]" not in pr['title']:
             create_run(new_pr, pr)
-        elif "WIP" in pr['title']:
+        elif "[WIP]" in pr['title']:
             new_pr['wip'] = True
         tapi.pr(pr['number']).put(new_pr)
         check_status(pr)
