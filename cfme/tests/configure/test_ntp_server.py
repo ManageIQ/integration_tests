@@ -35,7 +35,10 @@ def configure_ntp_servers(*server_details):
     else:
         configuration.set_ntp_servers(*cfme_data['clock_servers'])
     flash.assert_message_match(
-        "Configuration settings saved for CFME Server \"EVM-CFME [1]\" in Zone \"default\"")
+        "Configuration settings saved for CFME Server \"%s [%s]\" in Zone \"%s\"" % (
+            configuration.server_name(),
+            configuration.server_id(),
+            configuration.server_zone_description().partition(' ')[0].lower()))
 
 
 def test_ntp_crud():

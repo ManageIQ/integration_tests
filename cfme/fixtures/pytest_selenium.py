@@ -898,7 +898,7 @@ def detect_observed_field(loc):
         # In either case, we've detected an observed text field and should wait
         interval = default_wait
 
-    logger.debug('  Observed field detected, pausing %.1f seconds' % interval)
+    logger.trace('  Observed field detected, pausing %.1f seconds' % interval)
     sleep(interval)
     wait_for_ajax()
 

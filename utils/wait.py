@@ -81,7 +81,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         else:
             duration = time.time() - st_time
             if not quiet:
-                logger.debug('Took %f to do %s' % (duration, message))
+                logger.trace('Took %f to do %s' % (duration, message))
             logger.trace('Finished {} at {}'.format(message, st_time + t_delta))
             return out, duration
         t_delta = time.time() - st_time

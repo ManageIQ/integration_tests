@@ -10,6 +10,7 @@ from utils.pretty import Pretty
 
 cfg_btn = partial(tb.select, "Configuration")
 accordion_tree = partial(accordion.tree, "Catalog Items")
+policy_btn = partial(tb.select, "Policy")
 
 template_select_form = Form(
     fields=[
@@ -30,6 +31,10 @@ basic_info_form = Form(
         ('edit_button', form_buttons.save)
     ])
 
+edit_tags_form = Form(
+    fields=[
+        ("select_value", Select("select#tag_add"))
+    ])
 
 detail_form = Form(
     fields=[
@@ -245,21 +250,28 @@ class CatalogItem(Updateable, Pretty):
         sel.click(button_form.add_button)
         flash.assert_success_message('Button "btn_descr" was added')
 
+    def edit_tags(self, value):
+        sel.force_navigate('catalog_item', context={'catalog': self.catalog,
+                                                    'catalog_item': self})
+        policy_btn('Edit Tags', invokes_alert=True)
+        fill(edit_tags_form, {'select_value': value},
+             action=form_buttons.save)
+        flash.assert_success_message('Tag edits were successfully saved')
+
 
 class CatalogBundle(Updateable, Pretty):
-    pretty_attrs = ['name', 'catalog', 'dialog', 'cat_item']
+    pretty_attrs = ['name', 'catalog', 'dialog']
 
     def __init__(self, name=None, description=None,
                  display_in=False, catalog=None,
-                 dialog=None, cat_item=None):
+                 dialog=None):
         self.name = name
         self.description = description
         self.display_in = display_in
         self.catalog = catalog
         self.dialog = dialog
-        self.cat_item = cat_item
 
-    def create(self):
+    def create(self, cat_items):
         sel.force_navigate('catalog_bundle_new')
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
@@ -267,8 +279,9 @@ class CatalogBundle(Updateable, Pretty):
                                'select_catalog': self.catalog,
                                'select_dialog': self.dialog})
         tabstrip.select_tab("Resources")
-        fill(resources_form, {'choose_resource': self.cat_item},
-             action=resources_form.add_button)
+        for cat_item in cat_items:
+            fill(resources_form, {'choose_resource': cat_item})
+        sel.click(resources_form.add_button)
         flash.assert_success_message('Catalog Bundle "%s" was added' %
                                      self.name)
 

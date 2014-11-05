@@ -1180,7 +1180,7 @@ def _fill_form_list(form, values, action=None, action_always=False):
     for field, value in values:
         if value is not None:
             loc = form.locators[field]
-            logger.debug(' Dispatching fill for "%s"' % field)
+            logger.trace(' Dispatching fill for "%s"' % field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
         else:

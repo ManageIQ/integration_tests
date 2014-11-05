@@ -18,6 +18,7 @@ The scripts for respective providers are:
 
 import argparse
 import re
+import datetime
 
 from contextlib import closing
 from urllib2 import urlopen, HTTPError
@@ -48,10 +49,13 @@ def template_name(image_link, image_ts, version=None):
     pattern = re.compile(r'.*/(.*)')
     image_name = pattern.findall(image_link)[0]
     image_name = image_name.lower()
+    image_dt = get_last_modified(image_link)
     # CFME brew builds
     if CFME_BREW_ID in image_name:
         if version:
-            return "cfme-%s-%s" % (version, image_ts)
+            if len(version) == 4:
+                version = version[:-1] + '0' + version[-1:]
+            return "cfme-%s-%s%s%s" % (version, image_ts, image_dt.hour, image_dt.minute)
         else:
             pattern = re.compile(r'[^\d]*?-(\d).(\d)-(\d).*')
             result = pattern.findall(image_name)
@@ -73,7 +77,11 @@ def template_name(image_link, image_ts, version=None):
         result = pattern.findall(image_name)
         if version:
             # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-vvvv-mmdd
-            return "cfme-%s-%s%s" % (version, result[3], result[4])
+            # If build number < 10, pad it with a 0.
+            if len(version) == 4:
+                version = version[:-1] + '0' + version[-1:]
+            return "cfme-%s-%s%s%s%s" % (version, result[3], result[4],
+                                         image_dt.hour, image_dt.minute)
         else:
             # CloudForms-x.y-yyyy-mm-dd.i-xxx*.ova => cfme-xy-yyyymmddi
             str_res = ''.join(result)
@@ -94,6 +102,18 @@ def get_version(dir_url):
     version = urlo.read()
 
     return version.rstrip().replace('.', '')
+
+
+def get_last_modified(image_url):
+    """Returns a datetime object for when the image was last modified."""
+    format = "%a, %d %b %Y %H:%M:%S %Z"
+    try:
+        urlo = urlopen(image_url)
+    except Exception:
+        return None
+
+    headers = urlo.info()
+    return datetime.datetime.strptime(headers.getheader("Last-Modified"), format)
 
 
 def make_kwargs_rhevm(cfme_data, provider):
@@ -263,8 +283,9 @@ if __name__ == "__main__":
 
                     try:
                         getattr(__import__(module), "run")(**kwargs)
-                    except:
+                    except Exception as woops:
                         print "Exception: Module '%s' with provider '%s' exitted with error." \
                             % (module, provider)
+                        print woops
 
                     print "---End of %s: %s---" % (module, provider)
