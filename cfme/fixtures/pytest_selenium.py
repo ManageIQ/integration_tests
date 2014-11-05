@@ -617,6 +617,10 @@ def current_url():
     return browser().current_url
 
 
+def title():
+    return browser().title
+
+
 def get(url):
     """
     Changes page to the spceified URL
