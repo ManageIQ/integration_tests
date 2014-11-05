@@ -7,8 +7,8 @@ import re
 from utils.log import logger
 from utils.wait import wait_for
 
-ON_REGEX = re.compile(r'up|POWERED\ ON|running|ACTIVE')
-OFF_REGEX = re.compile(r'down|POWERED\ OFF|stopped')
+ON_REGEX = re.compile(r'up|POWERED\ ON|running|ACTIVE|poweredOn')
+OFF_REGEX = re.compile(r'down|POWERED\ OFF|stopped|poweredOff')
 SUSPEND_REGEX = re.compile(r'SUSPENDED|suspended')
 
 
@@ -30,6 +30,7 @@ def verify_vm_running(provider_mgmt, vm_name):
         elif OFF_REGEX.match(state) or SUSPEND_REGEX.match(state):
             provider_mgmt.start_vm(vm_name)
         logger.debug("Sleeping 15secs...(current state: " + state + ", needed state: running)")
+        return False
 
     return wait_for(_wait_for_vm_running, num_sec=300, delay=15)
 
@@ -54,6 +55,7 @@ def verify_vm_stopped(provider_mgmt, vm_name):
         elif SUSPEND_REGEX.match(state):
             provider_mgmt.start_vm(vm_name)
         logger.debug("Sleeping 15secs...(current state: " + state + ", needed state: stopped)")
+        return False
 
     return wait_for(_wait_for_vm_stopped, num_sec=300, delay=15)
 
@@ -78,5 +80,6 @@ def verify_vm_suspended(provider_mgmt, vm_name):
         elif OFF_REGEX.match(state):
             provider_mgmt.start_vm(vm_name)
         logger.debug("Sleeping 15secs...(current state: " + state + ", needed state: suspended)")
+        return False
 
     return wait_for(_wait_for_vm_suspended, num_sec=300, delay=15)
