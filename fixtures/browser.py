@@ -30,9 +30,9 @@ def pytest_runtest_setup(item):
 def pytest_exception_interact(node, call, report):
     val = unicode(call.excinfo.value)
     short_tb = '%s\n%s' % (call.excinfo.type.__name__, val.encode('ascii', 'ignore'))
-    art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+    art_client.fire_hook('filedump', test_location=node.location[0], test_name=node.location[2],
                   filename="traceback.txt", contents=str(report.longrepr), fd_ident="tb")
-    art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+    art_client.fire_hook('filedump', test_location=node.location[0], test_name=node.location[2],
                   filename="short-traceback.txt", contents=short_tb, fd_ident="short_tb")
 
     # base64 encoded to go into a data uri, same for screenshots
@@ -57,14 +57,14 @@ def pytest_exception_interact(node, call, report):
     # exists here in commit 825ef50fd84a060b58d7e4dc316303a8b61b35d2
     try:
         template_data['screenshot'] = utils.browser.browser().get_screenshot_as_base64()
-        art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+        art_client.fire_hook('filedump', test_location=node.location[0], test_name=node.location[2],
             filename="screenshot.png", fd_ident="screenshot", mode="wb", contents_base64=True,
             contents=template_data['screenshot'])
     except (AttributeError, WebDriverException):
         # See comments utils.browser.ensure_browser_open for why these two exceptions
         template_data['screenshot'] = None
         template_data['screenshot_error'] = 'browser error'
-        art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+        art_client.fire_hook('filedump', test_location=node.location[0], test_name=node.location[2],
             filename="screenshot.txt", fd_ident="screenshot", mode="w", contents_base64=False,
             contents=template_data['screenshot_error'])
     except Exception as ex:
@@ -76,7 +76,7 @@ def pytest_exception_interact(node, call, report):
         else:
             screenshot_error = type(ex).__name__
         template_data['screenshot_error'] = screenshot_error
-        art_client.fire_hook('filedump', test_name=node.name, test_location=node.parent.name,
+        art_client.fire_hook('filedump', test_location=node.location[0], test_name=node.location[2],
             filename="screenshot.txt", fd_ident="screenshot", mode="w", contents_base64=False,
             contents=template_data['screenshot_error'])
 
