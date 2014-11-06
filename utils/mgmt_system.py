@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 from cStringIO import StringIO
 from datetime import datetime
 from textwrap import dedent
+import operator
 
 import boto
 import tzlocal
@@ -513,6 +514,35 @@ class VMWareSystem(MgmtSystemAPIBase):
             if vm_props.get('config.template') == get_template:
                 obj_list.append(vm_props['name'])
         return obj_list
+
+    def get_vm_name_from_ip(self, ip):
+        """ Gets the name of a vm from its IP.
+
+        Args:
+            ip: The ip address of the vm.
+        Returns: The vm name for the corresponding IP."""
+        vms = self.api.si.content.searchIndex.FindAllByIp(ip=ip, vmSearch=True)
+        # As vsphere remembers the last IP a vm had, when we search we get all
+        # of them. Consequently we need to store them all in a dict and then sort
+        # them to find out which one has the latest boot time. I am going out on
+        # a limb and saying that searching for several vms and querying each object
+        # is quicker than finding all machines and recording the bootTime and ip address
+        # of each, before iterating through all of them to weed out the ones we care
+        # about, but I could be wrong.
+        boot_times = {}
+        for vm in vms:
+            if vm.name not in boot_times:
+                boot_times[vm.name] = datetime.fromtimestamp(0)
+                try:
+                    boot_times[vm.name] = vm.summary.runtime.bootTime
+                except:
+                    pass
+        if boot_times:
+            newest_boot_time = sorted(boot_times.items(), key=operator.itemgetter(1),
+                                      reverse=True)[0]
+            return newest_boot_time[0]
+        else:
+            raise cfme_exc.VmNotFoundViaIP('The requested IP is not known as a VM')
 
     def start_vm(self, vm_name):
         self.wait_vm_steady(vm_name)
