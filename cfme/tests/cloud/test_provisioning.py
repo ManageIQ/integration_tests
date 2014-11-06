@@ -2,8 +2,6 @@
 # in selenium (the group is selected then immediately reset)
 import pytest
 
-import cfme.cloud.provisioning
-assert cfme.cloud.provisioning
 from cfme.cloud.instance import instance_factory
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
