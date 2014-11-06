@@ -297,9 +297,9 @@ class DockerBot(object):
             files = self.find_files_by_pr(self.args['pr'])
             if files:
                 self.args['pytest'] = ("py.test -v {} --use-provider default --long-running "
-                                       "--bugzilla").format(" ".join(files))
+                                       "--bugzilla --no-tracer").format(" ".join(files))
             else:
-                self.args['pytest'] = "py.test -v --use-provider default -m smoke"
+                self.args['pytest'] = "py.test -v --use-provider default -m smoke --no-tracer"
         if not self.args['capture']:
             self.args['pytest'] += ' --capture=no'
         print "  PYTEST Command: {}".format(self.args['pytest'])
