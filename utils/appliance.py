@@ -245,7 +245,7 @@ class Appliance(object):
         logger.info('Adding RHEV direct_lun hook...')
         self.ipapp.wait_for_ssh()
         script = scripts_path.join('connect_directlun.py')
-        args = [str(script), '--provider', self._provider_key, '--vm_name', self.vm_name]
+        args = [str(script), '--provider', self._provider_name, '--vm_name', self.vm_name]
         with open(os.devnull, 'w') as f_devnull:
             status = subprocess.call(args, stdout=f_devnull)
         if status != 0:
@@ -259,7 +259,7 @@ class Appliance(object):
         self.ipapp.wait_for_ssh()
         script = scripts_path.join('connect_directlun.py')
         args = [str(script), '--remove', '--provider',
-                self._provider_key, '--vm_name', self.vm_name]
+                self._provider_name, '--vm_name', self.vm_name]
         with open(os.devnull, 'w') as f_devnull:
             status = subprocess.call(args, stdout=f_devnull)
         if status != 0:
