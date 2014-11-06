@@ -3,6 +3,8 @@ import pytest
 import re
 from datetime import datetime, timedelta
 
+import cfme.infrastructure.provisioning
+assert cfme.infrastructure.provisioning
 from cfme.web_ui.prov_form import provisioning_form
 from cfme.infrastructure.virtual_machines import Vm, details_page
 from cfme.services import requests
