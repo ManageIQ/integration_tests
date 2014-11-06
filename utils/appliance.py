@@ -243,7 +243,7 @@ class Appliance(object):
         if not isinstance(self._provider, RHEVMSystem):
             raise ApplianceException("appliance NOT on rhev, unable to connect direct_lun")
         logger.info('Adding RHEV direct_lun hook...')
-        self.wait_for_ssh()
+        self.ipapp.wait_for_ssh()
         script = scripts_path.join('connect_directlun.py')
         args = [str(script), '--provider', self._provider_key, '--vm_name', self.vm_name]
         with open(os.devnull, 'w') as f_devnull:
@@ -256,7 +256,7 @@ class Appliance(object):
         if not isinstance(self._provider, RHEVMSystem):
             raise ApplianceException("appliance NOT on rhev, unable to disconnect direct_lun")
         logger.info('Removing RHEV direct_lun hook...')
-        self.wait_for_ssh()
+        self.ipapp.wait_for_ssh()
         script = scripts_path.join('connect_directlun.py')
         args = [str(script), '--remove', '--provider',
                 self._provider_key, '--vm_name', self.vm_name]
