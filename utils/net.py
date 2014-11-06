@@ -1,10 +1,15 @@
 from collections import defaultdict
 import os
 import socket
+import re
 import urlparse
 from utils.conf import env
 
 _ports = defaultdict(dict)
+_dns_cache = {}
+ip_address = re.compile(
+    r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}"
+    r"(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
 
 
 def random_port(tcp=True):
@@ -113,3 +118,28 @@ sys.exit(0)
             else:
                 _ports[addr][port] = False
     return _ports[addr][port]
+
+
+def resolve_hostname(hostname, force=False):
+    """Cached DNS resolver. If the hostname does not resolve to an IP, returns None."""
+    if hostname not in _dns_cache or force:
+        try:
+            _dns_cache[hostname] = socket.gethostbyname(hostname)
+        except socket.gaierror:
+            _dns_cache[hostname] = None
+    return _dns_cache[hostname]
+
+
+def resolve_ips(host_iterable, force_dns=False):
+    """Takes list of hostnames, ips and another things. If the item is not an IP, it will be tried
+    to be converted to an IP. If that succeeds, it is appended to the set together with original
+    hostname. If it can't be resolved, just the original hostname is appended.
+    """
+    result = set([])
+    for host in map(str, host_iterable):
+        result.add(host)  # It is already an  IP address
+        if ip_address.match(host) is None:
+            ip = resolve_hostname(host, force=force_dns)
+            if ip is not None:
+                result.add(ip)
+    return result
