@@ -88,7 +88,8 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 @pytest.mark.bugzilla(1149195)
 def test_iso_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt,
                                      provisioning, vm_name, smtp_test, provider_init, request):
-
+    if provider_type == "scvmm":
+        pytest.skip("SCVMM does not support provisioning yet!")  # TODO: After fixing - remove
     # generate_tests makes sure these have values
     iso_template, host, datastore, iso_file, iso_kickstart,\
         iso_root_password, iso_image_type, vlan = map(provisioning.get, ('pxe_template', 'host',
