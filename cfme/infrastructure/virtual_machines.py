@@ -439,7 +439,7 @@ class Vm(Common):
         deploy_template(self.provider_crud.key, self.name, self.template_name)
         if find_in_cfme:
             self.provider_crud.refresh_provider_relationships()
-            self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
+            self.wait_to_appear(timeout=timeout, load_details=False, is_vm=True)
 
     def load_details(self, refresh=False):
         self._load_details(is_vm=True, refresh=refresh)
