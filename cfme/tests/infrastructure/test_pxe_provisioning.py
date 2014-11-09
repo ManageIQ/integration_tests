@@ -84,7 +84,8 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
                                      provider_mgmt, provisioning, vm_name, smtp_test, request):
-
+    if provider_type == "scvmm":
+        pytest.skip("SCVMM does not support provisioning yet!")  # TODO: After fixing - remove
     setup_provider(provider_key)
 
     # generate_tests makes sure these have values
