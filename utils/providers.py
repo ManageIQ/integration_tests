@@ -311,7 +311,8 @@ def setup_infrastructure_providers(validate=True, check_existing=True):
 def clear_cloud_providers(validate=True):
     sel.force_navigate('clouds_providers')
     logger.debug('Checking for existing cloud providers...')
-    if paginator.rec_total():
+    total = paginator.rec_total()
+    if total is not None and int(total) > 0:
         logger.info(' Providers exist, so removing all cloud providers')
         paginator.results_per_page('100')
         sel.click(paginator.check_all())
@@ -325,7 +326,8 @@ def clear_cloud_providers(validate=True):
 def clear_infra_providers(validate=True):
     sel.force_navigate('infrastructure_providers')
     logger.debug('Checking for existing infrastructure providers...')
-    if paginator.rec_total():
+    total = paginator.rec_total()
+    if total is not None and int(total) > 0:
         logger.info(' Providers exist, so removing all infra providers')
         paginator.results_per_page('100')
         sel.click(paginator.check_all())
@@ -336,17 +338,25 @@ def clear_infra_providers(validate=True):
             wait_for_no_infra_providers()
 
 
+def get_paginator_value():
+    total = paginator.rec_total()
+    if total is None:
+        return 0
+    else:
+        return int(total.strip())
+
+
 def wait_for_no_cloud_providers():
     sel.force_navigate('clouds_providers')
     logger.debug('Waiting for all cloud providers to disappear...')
-    wait_for(lambda: not paginator.rec_total(), message="Delete all cloud providers",
+    wait_for(lambda: get_paginator_value() == 0, message="Delete all cloud providers",
              num_sec=1000, fail_func=sel.refresh)
 
 
 def wait_for_no_infra_providers():
     sel.force_navigate('infrastructure_providers')
     logger.debug('Waiting for all infra providers to disappear...')
-    wait_for(lambda: not paginator.rec_total(), message="Delete all infrastructure providers",
+    wait_for(lambda: get_paginator_value() == 0, message="Delete all infrastructure providers",
              num_sec=1000, fail_func=sel.refresh)
 
 
