@@ -574,7 +574,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         return [str(h.name) for h in mobs.HostSystem.all(self.api)]
 
     def list_datastore(self):
-        return [str(h.name) for h in mobs.Datastore.all(self.api)]
+        return [str(h.name) for h in mobs.Datastore.all(self.api) if h.summary.accessible]
 
     def list_cluster(self):
         return [str(h.name) for h in mobs.ClusterComputeResource.all(self.api)]
