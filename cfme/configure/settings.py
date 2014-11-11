@@ -16,24 +16,26 @@ details_page = Region(infoblock_type='detail')
 cfg_btn = partial(tb.select, 'Configuration')
 timeprofile_table = Table("//div[@id='main_div']//table[@class='style3']")
 
-nav.add_branch('my_settings',
-        {'my_settings_time_profiles':
-            [lambda _: tabs.select_tab("Time Profiles"),
-                {'timeprofile_new': lambda _: cfg_btn('Add a new Time Profile'),
+nav.add_branch(
+    'my_settings',
+    {
+        'my_settings_time_profiles':
+        [
+            lambda _: tabs.select_tab("Time Profiles"),
+            {
+                "timeprofile_new":
+                lambda _: cfg_btn('Add a new Time Profile'),
 
-                 "timeprofile_edit":
+                "timeprofile_edit":
                 lambda ctx: timeprofile_table.click_cell("description", ctx.description),
 
-                 }],
-        'my_settings_visual':
-            [lambda _: tabs.select_tab("Visual"),
-                {}],
-        'my_settings_default_filters':
-            [lambda _: tabs.select_tab("Default Filters"),
-                {}],
-        'my_settings_default_views':
-            [lambda _: tabs.select_tab("Default Views"),
-                {}], })
+            }
+        ],
+        'my_settings_visual': [lambda _: tabs.select_tab("Visual"), {}],
+        'my_settings_default_filters': [lambda _: tabs.select_tab("Default Filters"), {}],
+        'my_settings_default_views': [lambda _: tabs.select_tab("Default Views"), {}],
+    }
+)
 
 
 class Timeprofile(Updateable):
@@ -42,21 +44,28 @@ class Timeprofile(Updateable):
             ("description", "//input[@id='description']"),
             ("scope", Select("//select[@id='profile_type']")),
             ("timezone", Select("//select[@id='profile_tz']")),
+            ("days", "//input[@id='all_days']"),
+            ("hours", "//input[@id='all_hours']"),
         ]
     )
 
     save_button = form_buttons.FormButton("Add this Time Profile")
 
-    def __init__(self, description=None, scope=None, timezone=None):
+    def __init__(self, description=None, scope=None, days=None, hours=None, timezone=None):
         self.description = description
         self.scope = scope
+        self.days = days
+        self.hours = hours
         self.timezone = timezone
 
     def create(self):
         sel.force_navigate('timeprofile_new')
         fill(self.timeprofile_form, {'description': self.description,
                                      'scope': self.scope,
-                                     'timezone': self.timezone},
+                                     'days': self.days,
+                                     'hours': self.hours,
+                                     'timezone': self.timezone,
+                                     },
              action=self.save_button)
         flash.assert_success_message('Time Profile "{}" was added'.format(self.description))
 
