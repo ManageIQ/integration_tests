@@ -4,20 +4,17 @@ from cfme.cloud.provider import prov_timeline
 from cfme.web_ui import toolbar
 from utils import testgen
 from utils.log import logger
-from utils.providers import setup_provider
+from cfme.exceptions import ToolbarOptionGreyed
 from utils.randomness import generate_random_string
+from utils.wait import wait_for
 
-bz1127960 = pytest.mark.bugzilla(
-    1127960, unskip={1127960: lambda appliance_version: appliance_version >= "5.3"})
+pytestmark = [pytest.mark.ignore_stream("5.2")]
+# bz1127960 = pytest.mark.bugzilla(
+#    1127960, unskip={1127960: lambda appliance_version: appliance_version >= "5.3"})
 
-pytestmark = [pytest.mark.usefixtures('setup_providers')]
 
-
-def pytest_generate_tests(metafunc):
-    # Filter out EC2 since EC2 doesn't support timelines
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc,
-        provider_types=['openstack'])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+pytest_generate_tests = testgen.generate(testgen.provider_by_type,
+                                         provider_types=['openstack'], scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -35,14 +32,9 @@ def delete_fx_provider_event(db, provider_crud):
 
 
 @pytest.fixture(scope="module")
-def setup_providers(provider_key):
-    # Normally function-scoped
-    setup_provider(provider_key)
-
-
-@pytest.fixture(scope="module")
 def vm_name():
-    return "test_instance_timeline_{}".format(generate_random_string())
+    # We have to use "tt" here to avoid name truncating in the timelines view
+    return "test_tt_{}".format(generate_random_string())
 
 
 @pytest.fixture(scope="module")
@@ -61,7 +53,8 @@ def delete_instances_fin(request):
 
 
 @pytest.fixture(scope="module")
-def test_instance(request, delete_instances_fin, provider_crud, provider_mgmt, vm_name):
+def test_instance(setup_provider, request, delete_instances_fin, provider_crud,
+                  provider_mgmt, vm_name):
     """ Fixture to provision instance on the provider
     """
     instance = instance_factory(vm_name, provider_crud)
@@ -72,7 +65,7 @@ def test_instance(request, delete_instances_fin, provider_crud, provider_mgmt, v
 
 
 @pytest.fixture(scope="module")
-def gen_events(delete_fx_provider_event, provider_crud, test_instance):
+def gen_events(setup_provider, delete_fx_provider_event, provider_crud, test_instance):
     logger.debug('Starting, stopping VM')
     mgmt = provider_crud.get_mgmt_system()
     mgmt.stop_vm(test_instance.name)
@@ -80,41 +73,41 @@ def gen_events(delete_fx_provider_event, provider_crud, test_instance):
     provider_crud.refresh_provider_relationships()
 
 
-@pytest.mark.bugzilla(1127960)
-def test_provider_event(provider_crud, gen_events, test_instance):
-    pytest.sel.force_navigate('cloud_provider_timelines',
-                              context={'provider': provider_crud})
+def count_events(vm_name, nav_step):
+    try:
+        nav_step()
+    except ToolbarOptionGreyed:
+        return 0
     events = []
     for event in prov_timeline.events():
-        data = event.block_info()
-        if test_instance.name in data.values():
+        if event.text == vm_name:
             events.append(event)
-            assert(len(events) > 0)
-            break
+    return len(events)
 
 
-@pytest.mark.bugzilla(1127960)
-def test_azone_event(provider_crud, gen_events, test_instance):
-    test_instance.load_details()
-    pytest.sel.click(details_page.infoblock.element('Relationships', 'Availability Zone'))
-    toolbar.select('Monitoring', 'Timelines')
-    events = []
-    for event in prov_timeline.events():
-        data = event.block_info()
-        if test_instance.name in data.values():
-            events.append(event)
-            assert(len(events) > 0)
-            break
+# @bz1127960
+def test_provider_event(setup_provider, provider_crud, gen_events, test_instance):
+    def nav_step():
+        pytest.sel.force_navigate('cloud_provider_timelines',
+                                  context={'provider': provider_crud})
+    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
+             message="events to appear")
 
 
-@pytest.mark.bugzilla(1127960)
-def test_vm_event(provider_crud, gen_events, test_instance):
-    test_instance.load_details()
-    toolbar.select('Monitoring', 'Timelines')
-    events = []
-    for event in prov_timeline.events():
-        data = event.block_info()
-        if test_instance.name in data.values():
-            events.append(event)
-            assert(len(events) > 0)
-            break
+# @bz1127960
+def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
+    def nav_step():
+        test_instance.load_details()
+        pytest.sel.click(details_page.infoblock.element('Relationships', 'Availability Zone'))
+        toolbar.select('Monitoring', 'Timelines')
+    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
+             message="events to appear")
+
+
+# @bz1127960
+def test_vm_event(setup_provider, provider_crud, gen_events, test_instance):
+    def nav_step():
+        test_instance.load_details()
+        toolbar.select('Monitoring', 'Timelines')
+    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
+             message="events to appear")
