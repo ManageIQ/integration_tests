@@ -392,6 +392,7 @@ def run_platform_updates(appliance_set, appliances_to_update):
     reason='RH Update test using RHSM is not enabled'
 )
 @pytest.mark.long_running
+@pytest.mark.ignore_stream("upstream")
 def test_rhsm_direct(appliance_set, rh_updates_data,
                      appliances_to_register, appliances_to_update):
     update_registration(appliance_set, rh_updates_data, 'rhsm')
@@ -409,6 +410,7 @@ def test_rhsm_direct(appliance_set, rh_updates_data,
     reason='RH Update test using RHSM/RHN Mirror is not enabled'
 )
 @pytest.mark.long_running
+@pytest.mark.ignore_stream("upstream")
 def test_rhsm_rhn_mirror(appliance_set, rh_updates_data, appliances_to_update):
     # Use only primary to register_appliances(), download_repo_files() and enable_repos()
     target_appliances = [appliance_set.primary.name]
@@ -429,6 +431,7 @@ def test_rhsm_rhn_mirror(appliance_set, rh_updates_data, appliances_to_update):
     reason='RH Update test using Sat5 is not enabled'
 )
 @pytest.mark.long_running
+@pytest.mark.ignore_stream("upstream")
 def test_sat5_direct(appliance_set, rh_updates_data,
                      appliances_to_register, appliances_to_update):
     update_registration(appliance_set, rh_updates_data, 'sat5')
@@ -446,6 +449,7 @@ def test_sat5_direct(appliance_set, rh_updates_data,
     reason='RH Update test using Sat6 is not enabled'
 )
 @pytest.mark.long_running
+@pytest.mark.ignore_stream("upstream")
 def test_sat6_direct(appliance_set, rh_updates_data,
                      appliances_to_register, appliances_to_update):
     update_registration(appliance_set, rh_updates_data, 'sat6')
@@ -463,6 +467,7 @@ def test_sat6_direct(appliance_set, rh_updates_data,
     reason='RH Update test using Sat6/RHN Mirror is not enabled'
 )
 @pytest.mark.long_running
+@pytest.mark.ignore_stream("upstream")
 def test_sat6_rhn_mirror(appliance_set, rh_updates_data, appliances_to_update):
     # Use only primary to register_appliances(), download_repo_files() and enable_repos()
     target_appliances = [appliance_set.primary.name]
