@@ -106,7 +106,7 @@ class Appliance(object):
             self.ipapp.enable_internal_db(region)
         else:
             self.ipapp.enable_external_db(db_address, region)
-        self.ipapp.wait_for_db()
+        self.ipapp.wait_for_web_ui()
         if kwargs.get('loosen_pgssl', True) is True:
             self.ipapp.loosen_pgssl()
 
@@ -538,10 +538,11 @@ class IPAppliance(object):
         """Loosens postgres connections
 
         Note:
-            Not required (and does not do anything) on 5.2 appliances
+            Not required (and does not do anything) on 5.2 appliances or appliances with
+            external db connection
 
         """
-        if self.version.is_in_series("5.2"):
+        if self.version.is_in_series("5.2") or not self.is_db_internal:
             return
 
         self.log.info('loosening postgres permissions')
@@ -697,7 +698,7 @@ class IPAppliance(object):
             }
 
             # Find and load our rb template with replacements
-            rbt = datafile.data_path_for_filename('enable-internal-db.rbt', scripts_path.strpath)
+            rbt = datafile.data_path_for_filename('enable-external-db.rbt', scripts_path.strpath)
             rb = datafile.load_data_file(rbt, rbt_repl)
 
             # Init SSH client and sent rb file over to /tmp
