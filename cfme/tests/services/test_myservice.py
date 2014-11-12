@@ -137,7 +137,7 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
         .format(catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=900, delay=20)
+        fail_func=requests.reload, num_sec=1400, delay=20)
     assert row.last_message.text == 'Request complete'
     return MyService(catalog_item.name, vm_name)
 
