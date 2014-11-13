@@ -1431,10 +1431,9 @@ class Zone(Pretty):
         """
         # TODO Stop using this method as a workaround once Zones can be located by name in the UI.
         sel.force_navigate("cfg_settings_zones")
-        links = sel.elements("//table[@class='style3']//td[contains(text(), '%s')]" % description)
-        if len(links) == 1:
-            sel.click(links.pop())
-        else:
+        try:
+            zones_table.click_row_by_cells({1: description}, partial_check=True)
+        except:
             raise ZoneNotFound("No unique Zones with the description '%s'" % description)
 
     @property
