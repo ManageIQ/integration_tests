@@ -17,7 +17,8 @@ pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.usefixtures("vm_name"),
     pytest.mark.fixtureconf(server_roles="+automate"),
-    pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
+    pytest.mark.usefixtures('server_roles', 'uses_infra_providers'),
+    pytest.mark.ignore_stream("5.2")
 ]
 
 
@@ -150,5 +151,5 @@ def test_rhev_pxe_servicecatalog(provider_key, provider_mgmt, catalog_item, requ
     row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
+        fail_func=requests.reload, num_sec=2100, delay=20)
     assert row.last_message.text == 'Request complete'

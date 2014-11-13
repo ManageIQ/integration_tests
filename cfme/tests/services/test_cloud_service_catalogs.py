@@ -1,5 +1,5 @@
 import pytest
-
+import utils.randomness as rand
 from cfme.services.catalogs import cloud_catalog_item as cct
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
@@ -11,7 +11,6 @@ from utils.randomness import generate_random_string
 from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
-import utils.randomness as rand
 
 
 pytestmark = [
@@ -122,5 +121,5 @@ def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider
         (item_name, item_name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
-                       fail_func=requests.reload, num_sec=1000, delay=20)
+                       fail_func=requests.reload, num_sec=1400, delay=20)
     assert row.last_message.text == 'Request complete'
