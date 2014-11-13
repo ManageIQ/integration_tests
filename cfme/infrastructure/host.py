@@ -189,7 +189,7 @@ class Host(Updateable, Pretty):
 
         # Workaround for issue with form_button staying dimmed.
         try:
-            logger.debug("Trying to save update for host with id: " + self.get_db_id)
+            logger.debug("Trying to save update for host with id: " + str(self.get_db_id))
             self._submit(cancel, forced_saved)
             logger.debug("save worked, no exception")
         except Exception as e:
