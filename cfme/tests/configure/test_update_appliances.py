@@ -100,7 +100,7 @@ def appliances_to_update(rh_updates_data):
 @pytest.yield_fixture(scope='function')
 def appliance_set(cfme_data):
     appliance_set_data = cfme_data['appliance_provisioning']['appliance_set']
-    appliance_set = provision_appliance_set(appliance_set_data, 'rh_updates')
+    appliance_set = provision_appliance_set(appliance_set_data, 'test_rh_updates')
 
     yield appliance_set
 
