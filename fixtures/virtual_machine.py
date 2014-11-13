@@ -21,7 +21,8 @@ def verify_vm_running(provider_mgmt, vm_name):
     def _wait_for_vm_running():
         if provider_mgmt.is_vm_running(vm_name):
             return True
-        elif provider_mgmt.is_vm_stopped(vm_name) or provider_mgmt.is_vm_suspended(vm_name):
+        elif provider_mgmt.is_vm_stopped(vm_name) or \
+                provider_mgmt.can_suspend and provider_mgmt.is_vm_suspended(vm_name):
             provider_mgmt.start_vm(vm_name)
         logger.debug("Sleeping 15secs...(current state: {}, needed state: running)".format(
             provider_mgmt.vm_status(vm_name)
@@ -47,7 +48,7 @@ def verify_vm_stopped(provider_mgmt, vm_name):
             return True
         elif provider_mgmt.is_vm_running(vm_name):
             provider_mgmt.stop_vm(vm_name)
-        elif provider_mgmt.is_vm_suspended(vm_name):
+        elif provider_mgmt.can_suspend and provider_mgmt.is_vm_suspended(vm_name):
             provider_mgmt.start_vm(vm_name)
 
         logger.debug("Sleeping 15secs...(current state: {}, needed state: stopped)".format(
