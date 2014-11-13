@@ -16,7 +16,8 @@ pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.usefixtures("vm_name"),
     pytest.mark.fixtureconf(server_roles="+automate"),
-    pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
+    pytest.mark.usefixtures('server_roles', 'uses_infra_providers'),
+    pytest.mark.ignore_stream("5.2")
 ]
 
 
@@ -119,14 +120,14 @@ def catalog_item(setup_provider, provider_crud, provider_type, provisioning, vm_
     }
 
     item_name = generate_random_string()
-    catalog_item = CatalogItem(item_type="Redhat", name=item_name,
+    catalog_item = CatalogItem(item_type="RHEV", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=iso_template,
                   provider=provider_crud.name, prov_data=provisioning_data)
     yield catalog_item
 
 
-@pytest.mark.bugzilla(1149195)
+@pytest.mark.bugzilla(1149195, 1160486)
 @pytest.mark.usefixtures('setup_iso_datastore')
 def test_rhev_iso_servicecatalog(setup_provider, provider_key, provider_mgmt,
                                  catalog_item, request):
@@ -140,5 +141,5 @@ def test_rhev_iso_servicecatalog(setup_provider, provider_key, provider_mgmt,
     row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
+        fail_func=requests.reload, num_sec=1800, delay=20)
     assert row.last_message.text == 'Request complete'
