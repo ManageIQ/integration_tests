@@ -9,7 +9,7 @@ from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
 from urlparse import urlparse
-from utils import conf, datafile, db, lazycache
+from utils import conf, datafile, db, lazycache, trackerbot
 from utils.browser import browser_session
 from utils.hosts import setup_providers_hosts_credentials
 from utils.log import logger, create_sublogger
@@ -19,7 +19,7 @@ from utils.path import data_path, scripts_path
 from utils.providers import provider_factory, setup_provider
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
-from utils.version import get_version, LATEST
+from utils.version import get_stream, get_version, LATEST
 from utils.wait import wait_for
 
 
@@ -98,15 +98,21 @@ class Appliance(object):
     def _custom_configure(self, **kwargs):
         region = kwargs.get('region', 0)
         db_address = kwargs.get('db_address', None)
+        key_address = kwargs.get('key_address', None)
+        db_username = kwargs.get('db_username', None)
+        db_password = kwargs.get('ssh_password', None)
+        ssh_password = kwargs.get('ssh_password', None)
+        db_name = kwargs.get('db_name', None)
+
         if kwargs.get('fix_ntp_clock', True) is True:
             self.ipapp.fix_ntp_clock()
         if kwargs.get('patch_ajax_wait', True) is True:
             self.ipapp.patch_ajax_wait()
         if kwargs.get('db_address', None) is None:
-            self.ipapp.enable_internal_db(region)
+            self.ipapp.enable_internal_db(region, key_address, db_password, ssh_password)
         else:
-            self.ipapp.enable_external_db(db_address, region)
-        self.ipapp.wait_for_db()
+            self.ipapp.enable_external_db(db_address, region, db_name, db_username, db_password)
+        self.ipapp.wait_for_web_ui()
         if kwargs.get('loosen_pgssl', True) is True:
             self.ipapp.loosen_pgssl()
 
@@ -616,12 +622,12 @@ class IPAppliance(object):
             # use the cli
             if key_address:
                 status, out = client.run_command(
-                    'appliance_console_cli --region {} --internal -f {} -p {} -a {}'
+                    'appliance_console_cli --region {} --internal --fetch-key {} -p {} -a {}'
                     .format(region, key_address, db_password, ssh_password)
                 )
             else:
                 status, out = client.run_command(
-                    'appliance_console_cli --region {} --internal -k -p {}'
+                    'appliance_console_cli --region {} --internal --force-key -p {}'
                     .format(region, db_password)
                 )
         else:
@@ -908,6 +914,10 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     Note:
         Version must be mapped to template name under ``appliance_provisioning > versions``
         in ``cfme_data.yaml``.
+        If no matching template for given version is found, and trackerbot is set up,
+        the latest available template of the same stream will be used.
+        E.g.: if there is no template for 5.2.5.1 but there is 5.2.5.3, it will be used instead.
+        If both template name and version are specified, template name takes priority.
 
     Args:
         version: version of appliance to provision
@@ -933,18 +943,35 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         else:
             return '{}_{}'.format(vm_name_prefix, generate_random_string())
 
-    if version is not None:
-        templates_by_version = conf.cfme_data['appliance_provisioning']['versions']
-        try:
-            template_name = templates_by_version[version]
-        except KeyError:
-            raise ApplianceException('No template found matching version {}'.format(version))
-
-    if template is not None:
-        template_name = template
+    def _get_latest_template():
+        api = trackerbot.api()
+        stream = get_stream(version)
+        template_data = trackerbot.latest_template(api, stream, provider_name)
+        return template_data.get('latest_template', None)
 
     if provider_name is None:
         provider_name = conf.cfme_data['appliance_provisioning']['default_provider']
+
+    if template is not None:
+        template_name = template
+    elif version is not None:
+        templates_by_version = conf.cfme_data['appliance_provisioning'].get('versions', dict())
+        try:
+            template_name = templates_by_version[version]
+        except KeyError:
+            # We try to get the latest template from the same stream - if trackerbot is set up
+            if conf.env.get('trackerbot', {}):
+                template_name = _get_latest_template()
+                if not template_name:
+                    raise ApplianceException('No template found for stream {} on provider {}'
+                        .format(get_stream(version), provider_name))
+                logger.warning('No template found matching version {}, using {} instead.'
+                               .format(version, template_name))
+            else:
+                raise ApplianceException('No template found matching version {}'.format(version))
+    else:
+        raise ApplianceException('Either version or template name must be specified')
+
     prov_data = conf.cfme_data['management_systems'][provider_name]
 
     provider = provider_factory(provider_name)
