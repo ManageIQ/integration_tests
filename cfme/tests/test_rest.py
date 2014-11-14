@@ -6,7 +6,8 @@ from utils.randomness import generate_random_string
 from utils.wait import wait_for
 
 pytest_generate_tests = testgen.generate(
-    testgen.infra_providers,
+    testgen.provider_by_type,
+    ['virtualcenter', 'rhevm'],
     "small_template",
     scope="module"
 )
