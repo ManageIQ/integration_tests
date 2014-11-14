@@ -98,15 +98,21 @@ class Appliance(object):
     def _custom_configure(self, **kwargs):
         region = kwargs.get('region', 0)
         db_address = kwargs.get('db_address', None)
+        key_address = kwargs.get('key_address', None)
+        db_username = kwargs.get('db_username', None)
+        db_password = kwargs.get('ssh_password', None)
+        ssh_password = kwargs.get('ssh_password', None)
+        db_name = kwargs.get('db_name', None)
+
         if kwargs.get('fix_ntp_clock', True) is True:
             self.ipapp.fix_ntp_clock()
         if kwargs.get('patch_ajax_wait', True) is True:
             self.ipapp.patch_ajax_wait()
         if kwargs.get('db_address', None) is None:
-            self.ipapp.enable_internal_db(region)
+            self.ipapp.enable_internal_db(region, key_address, db_password, ssh_password)
         else:
-            self.ipapp.enable_external_db(db_address, region)
-        self.ipapp.wait_for_db()
+            self.ipapp.enable_external_db(db_address, region, db_name, db_username, db_password)
+        self.ipapp.wait_for_web_ui()
         if kwargs.get('loosen_pgssl', True) is True:
             self.ipapp.loosen_pgssl()
 
@@ -616,12 +622,12 @@ class IPAppliance(object):
             # use the cli
             if key_address:
                 status, out = client.run_command(
-                    'appliance_console_cli --region {} --internal -f {} -p {} -a {}'
+                    'appliance_console_cli --region {} --internal --fetch-key {} -p {} -a {}'
                     .format(region, key_address, db_password, ssh_password)
                 )
             else:
                 status, out = client.run_command(
-                    'appliance_console_cli --region {} --internal -k -p {}'
+                    'appliance_console_cli --region {} --internal --force-key -p {}'
                     .format(region, db_password)
                 )
         else:
