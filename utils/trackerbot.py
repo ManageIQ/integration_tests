@@ -5,6 +5,7 @@ from datetime import date
 import slumber
 
 from utils.conf import env
+from utils.version import get_stream
 
 
 # regexen to match templates to streams and pull out the date
@@ -12,11 +13,11 @@ from utils.conf import env
 # regex must include month and day, may include year
 # If year is unset, will be the most recent month/day (not in the future)
 stream_matchers = (
-    ('upstream', '^miq-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
-    ('downstream-52z', r'^cfme-52.*-(?P<month>\d{2})(?P<day>\d{2})'),
-    ('downstream-53z', r'^cfme-53.*-(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('master'), '^miq-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.2'), r'^cfme-52.*-(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.3'), r'^cfme-53.*-(?P<month>\d{2})(?P<day>\d{2})'),
     # Nightly builds are currently in the 5.3.z stream
-    ('downstream-53z', r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
+    (get_stream('5.3'), r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
 )
 trackerbot_conf = env.get('trackerbot', {})
 
