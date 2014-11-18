@@ -5,13 +5,17 @@ from functools import partial
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider import Provider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
-from utils.providers import provider_factory_by_name
+from utils.providers import provider_factory_by_name, setup_a_provider as _setup_a_provider
 
 provider_props = partial(details_page.infoblock.text, "Properties")
 
 
-@pytest.mark.usefixtures("setup_infrastructure_providers")
-def test_providers_summary(soft_assert):
+@pytest.fixture(scope="module")
+def setup_a_provider():
+    _setup_a_provider("infra")
+
+
+def test_providers_summary(soft_assert, setup_a_provider):
     """Checks some informations about the provider. Does not check memory/frequency as there is
     presence of units and rounding."""
     path = ["Configuration Management", "Providers", "Providers Summary"]
@@ -38,8 +42,7 @@ def test_providers_summary(soft_assert):
             "Physical CPU count does not match at {}".format(provider["Name"]))
 
 
-@pytest.mark.usefixtures("setup_infrastructure_providers")
-def test_cluster_relationships(soft_assert):
+def test_cluster_relationships(soft_assert, setup_a_provider):
     path = ["Relationships", "Virtual Machines, Folders, Clusters", "Cluster Relationships"]
     report = CannedSavedReport.new(path)
     for relation in report.data.rows:

@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 """Tests checking for link access from outside."""
 import pytest
-import random
 
 import cfme.infrastructure.provisioning
 assert cfme.infrastructure.provisioning
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui.prov_form import provisioning_form
+from cfme.login import login_admin
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils.browser import browser
-from utils.conf import cfme_data, env
-from utils.providers import list_infra_providers, setup_provider
+from utils.conf import env
+from utils.providers import setup_a_provider
 from utils.randomness import generate_random_string
 from utils.wait import TimedOutError, wait_for
 
@@ -23,23 +23,17 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def provider_id():
-    """Select provider which is not RHEV"""
-    return random.choice([p_id for p_id in list_infra_providers() if not p_id.startswith("rhev")])
+def provider():
+    return setup_a_provider("infra")
 
 
 @pytest.fixture(scope="module")
-def provider_data(provider_id):
-    return cfme_data["management_systems"][provider_id]
-
-
-@pytest.fixture(scope="module")
-def provider(provider_id):
-    return setup_provider(provider_id)
+def provider_data(provider):
+    return provider.get_yaml_data()
 
 
 @pytest.yield_fixture(scope="module")
-def generated_request(provider, provider_data, provider_id):
+def generated_request(provider, provider_data):
     """Creates a provision request, that is not automatically approved, and returns the search data.
 
     After finishing the test, request should be automatically deleted.
@@ -90,6 +84,7 @@ def generated_request(provider, provider_data, provider_id):
     }
     yield request_cells
     browser().get(env["base_url"])
+    login_admin()
     requests.delete_request(request_cells)
     flash.assert_no_errors()
 

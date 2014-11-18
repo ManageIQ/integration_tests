@@ -141,14 +141,16 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     else:
         providers = list_infra_providers()
 
+    result = None
     for provider in providers:
         try:
-            setup_provider(provider, validate=validate, check_existing=check_existing)
+            result = setup_provider(provider, validate=validate, check_existing=check_existing)
             break
         except:
             continue
     else:
         raise Exception("No providers could be set up matching the params")
+    return result
 
 
 def setup_provider(provider_key, validate=True, check_existing=True):
