@@ -16,7 +16,6 @@ from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 from fixtures.pytest_store import store
 from utils import conf
-from utils.cache_reset import cache_reset
 from utils.log import logger
 from utils.path import data_path
 
@@ -100,7 +99,7 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         webdriver_class = getattr(webdriver, webdriver_name)
 
     if base_url is None:
-        base_url = conf.env['base_url']
+        base_url = store.base_url
 
     # Pull in browser kwargs from browser yaml
     browser_kwargs = browser_conf.get('webdriver_options', {})
@@ -194,19 +193,12 @@ def browser_session(*args, **kwargs):
         # Browser will be closed here
 
     """
-    conf.runtime['env']['base_url'] = kwargs['base_url']
-    reset_cache = kwargs.pop('reset_cache', False)
-
-    if reset_cache:
-        cache_reset()
 
     browser = start(*args, **kwargs)
     try:
         yield browser
     finally:
         quit()
-        del(conf.runtime['env']['base_url'])
-        cache_reset()
 
 
 def _load_firefox_profile():

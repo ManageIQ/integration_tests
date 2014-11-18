@@ -504,8 +504,8 @@ class BaseCondition(Updateable, Pretty):
 
     @property
     def exists(self):
-        conditions = cfmedb["conditions"]
-        return cfmedb.session\
+        conditions = cfmedb()["conditions"]
+        return cfmedb().session\
             .query(conditions.description)\
             .filter(conditions.description == self.description)\
             .count() > 0
@@ -627,8 +627,8 @@ class BasePolicy(Updateable, Pretty):
 
     @property
     def exists(self):
-        policies = cfmedb["miq_policies"]
-        return cfmedb.session\
+        policies = cfmedb()["miq_policies"]
+        return cfmedb().session\
             .query(policies.description)\
             .filter(policies.description == self.description)\
             .count() > 0
@@ -981,8 +981,8 @@ class Alert(Updateable, Pretty):
 
     @property
     def exists(self):
-        alerts = cfmedb["miq_alerts"]
-        return cfmedb.session\
+        alerts = cfmedb()["miq_alerts"]
+        return cfmedb().session\
             .query(alerts.description)\
             .filter(alerts.description == self.description)\
             .count() > 0
@@ -1238,8 +1238,8 @@ class Action(Updateable, Pretty):
 
     @property
     def exists(self):
-        actions = cfmedb["miq_actions"]
-        return cfmedb.session\
+        actions = cfmedb()["miq_actions"]
+        return cfmedb().session\
             .query(actions.description)\
             .filter(actions.description == self.description)\
             .count() > 0
@@ -1357,12 +1357,11 @@ class PolicyProfile(Updateable, Pretty):
 
         Returns: :py:class:`bool` signalizing the presence of the Policy Profile in database.
         """
-        miq_sets = cfmedb["miq_sets"]
-        return cfmedb.session\
+        miq_sets = cfmedb()["miq_sets"]
+        return cfmedb().session\
             .query(miq_sets.description)\
             .filter(
-                miq_sets.description == self.description and miq_sets.set_type == "MiqPolicySet"
-            )\
+                miq_sets.description == self.description and miq_sets.set_type == "MiqPolicySet")\
             .count() > 0
 
     def create(self, cancel=False):
@@ -1515,12 +1514,11 @@ class BaseAlertProfile(Updateable, Pretty):
 
         Returns: :py:class:`bool` signalizing the presence of the Alert Profile in database.
         """
-        miq_sets = cfmedb["miq_sets"]
-        return cfmedb.session\
+        miq_sets = cfmedb()["miq_sets"]
+        return cfmedb().session\
             .query(miq_sets.description)\
             .filter(
-                miq_sets.description == self.description and miq_sets.set_type == "MiqAlertSet"
-            )\
+                miq_sets.description == self.description and miq_sets.set_type == "MiqAlertSet")\
             .count() > 0
 
     def create(self, cancel=False):

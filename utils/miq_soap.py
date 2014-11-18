@@ -337,8 +337,8 @@ class MiqVM(HasManyDatastores, BelongsToCluster):
             email: Email of the requestee
         Returns: :py:class:`MiqVM` object with freshly provisioned VM.
         """
-        vm_table = cfmedb['vms']
-        for vm in cfmedb.session.query(vm_table.name, vm_table.guid)\
+        vm_table = cfmedb()['vms']
+        for vm in cfmedb().session.query(vm_table.name, vm_table.guid)\
             .filter(vm_table.template == True):  # NOQA
             # Previous line is ok, if you change it to `is`, it won't work!
             if vm.name.strip() == template_name.strip():

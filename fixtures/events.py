@@ -356,7 +356,7 @@ def configure_appliance_for_event_testing(request, listener_info):
     if event_testing.listener is None:
         return
     return setup_for_event_testing(
-        SSHClient(), cfmedb, listener_info, providers.list_infra_providers()
+        SSHClient(), cfmedb(), listener_info, providers.list_infra_providers()
     )
 
 

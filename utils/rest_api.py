@@ -2,7 +2,8 @@
 import slumber
 from requests import Session
 
-from utils.conf import env, credentials
+from fixtures.pytest_store import store
+from utils.conf import credentials
 
 
 def APIException(Exception):
@@ -10,7 +11,7 @@ def APIException(Exception):
 
 
 def api():
-    url = env["base_url"]
+    url = store.base_url
     creds = credentials["default"]["username"], credentials["default"]["password"]
     session = Session()
     session.auth = creds
