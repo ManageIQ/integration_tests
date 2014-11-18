@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+import utils
 from cfme.intelligence.reports.reports import CustomReport
 from utils import version
-from utils.providers import provider_factory_by_name
+from utils.providers import provider_factory_by_name, setup_a_provider
 from utils.randomness import generate_random_string, pick
 
 
+@pytest.fixture(scope="module")
+def setup_first_provider():
+    setup_a_provider(validate=True, check_existing=True)
+
+
 @pytest.yield_fixture(scope="function")
-def report_vms():
+def report_vms(setup_first_provider):
     report = CustomReport(
         menu_name=generate_random_string(),
         title=generate_random_string(),
@@ -47,14 +53,12 @@ def test_custom_vm_report(soft_assert, report_vms):
             "5.3": "Cloud/Infrastructure Provider Name",
         })]
         provider = provider_factory_by_name(provider_name)
-        provider_hosts = provider.list_host()
+        provider_hosts_and_ips = utils.net.resolve_ips(provider.list_host())
         provider_datastores = provider.list_datastore()
         provider_clusters = provider.list_cluster()
         soft_assert(provider.does_vm_exist(row["Name"]), "VM {} does not exist in {}!".format(
             row["Name"], provider_name
         ))
-        # We do these `if` checks because sometimes the field is not specified
-        # TODO: Figure out if it is an error or not??
         if row["Cluster Name"]:
             soft_assert(
                 row["Cluster Name"] in provider_clusters,
@@ -68,11 +72,13 @@ def test_custom_vm_report(soft_assert, report_vms):
             )
         # Because of mixing long and short host names, we have to use both-directional `in` op.
         if row["Host Name"]:
-            for host in provider_hosts:
-                if row["Host Name"] in host or host in row["Host Name"]:
-                    break
-            else:
-                soft_assert(
-                    False,
-                    "Host {} not found in {}!".format(row["Host Name"], str(provider_hosts))
-                )
+            found = False
+            possible_ips_or_hosts = utils.net.resolve_ips((row["Host Name"], ))
+            for possible_ip_or_host in possible_ips_or_hosts:
+                for host_ip in provider_hosts_and_ips:
+                    if possible_ip_or_host in host_ip or host_ip in possible_ip_or_host:
+                        found = True
+            soft_assert(
+                found,
+                "Host {} not found in {}!".format(possible_ips_or_hosts, provider_hosts_and_ips)
+            )

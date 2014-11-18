@@ -5,6 +5,7 @@ import re
 from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable, TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
+from cfme.web_ui.prov_form import provisioning_form
 from cfme.web_ui import (
     CheckboxTree, Form, Region, Quadicon, Tree, accordion, fill, flash, form_buttons, paginator,
     toolbar, Calendar, Select
@@ -438,7 +439,7 @@ class Vm(Common):
         deploy_template(self.provider_crud.key, self.name, self.template_name)
         if find_in_cfme:
             self.provider_crud.refresh_provider_relationships()
-            self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
+            self.wait_to_appear(timeout=timeout, load_details=False, is_vm=True)
 
     def load_details(self, refresh=False):
         self._load_details(is_vm=True, refresh=refresh)
@@ -584,7 +585,7 @@ class Vm(Common):
             prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]
         except (KeyError, IndexError):
             raise ValueError("You have to specify the correct options in cfme_data.yaml")
-        from cfme.infrastructure.provisioning import provisioning_form, submit_button
+
         provisioning_data = {
             "first_name": first_name,
             "last_name": last_name,
@@ -593,7 +594,7 @@ class Vm(Common):
             "host_name": {"name": prov_data.get("host")},
             "datastore_name": {"name": prov_data.get("datastore")},
         }
-        fill(provisioning_form, provisioning_data, action=submit_button)
+        fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         cells = {'Description': 'Publish from [%s] to [%s]' % (self.name, template_name)}
         row, __ = wait_for(
             requests.wait_for_request, [cells], fail_func=requests.reload, num_sec=900, delay=20)
@@ -936,7 +937,10 @@ def _assign_unassign_policy_profiles(vm_name, assign, *policy_profile_names, **k
         assign: Wheter to assign or unassign.
         policy_profile_names: :py:class:`str` with Policy Profile names.
     """
-    _method_setup(vm_name, **kwargs)
+    if kwargs.get("via_details", True):
+        sel.click(find_quadicon(vm_name))
+    else:
+        _method_setup(vm_name, **kwargs)
     toolbar.select("Policy", "Manage Policies")
     for policy_profile in policy_profile_names:
         if assign:

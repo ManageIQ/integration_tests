@@ -24,7 +24,7 @@ class SlaveManager(object):
         conf.clear()
         self.log = utils.log.create_sublogger(self.slaveid)
         # Override the logger in utils.log
-        utils.log.logger = self.log
+        utils.log.logger = utils.log.ArtifactorLoggerAdapter(self.log, {})
 
         ctx = zmq.Context.instance()
         self.sock = ctx.socket(zmq.REQ)

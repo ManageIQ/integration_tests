@@ -23,8 +23,8 @@ from utils.smtp_collector_client import SMTPCollectorClient
 logger = create_logger('emails')
 
 
-@pytest.fixture(scope="session")
-def _smtp_test_session(request):
+@pytest.fixture(scope="function")
+def smtp_test(request):
     """Fixture, which prepares the appliance for e-mail capturing tests
 
     Returns: :py:class:`util.smtp_collector_client.SMTPCollectorClient` instance.
@@ -34,7 +34,7 @@ def _smtp_test_session(request):
     mail_server_port = ports.get("smtp", None) or random_port()
     mail_query_port = ports.get("json", None) or random_port()
     my_ip = my_ip_address()
-    logger.info("Mind that it needs ports %d and %d open" % (mail_query_port, mail_server_port))
+    logger.info("Mind that it needs ports {} and {} open".format(mail_query_port, mail_server_port))
     smtp_conf = configuration.SMTPSettings(
         host=my_ip,
         port=mail_server_port,
@@ -42,11 +42,11 @@ def _smtp_test_session(request):
     )
     smtp_conf.update()
     server_filename = scripts_path.join('smtp_collector.py').strpath
-    server_command = server_filename + " --smtp-port %d --query-port %d" % (
+    server_command = server_filename + " --smtp-port {} --query-port {}".format(
         mail_server_port,
         mail_query_port
     )
-    logger.info("Starting mail collector %s" % server_command)
+    logger.info("Starting mail collector {}".format(server_command))
     collector = None
 
     def _finalize():
@@ -66,7 +66,7 @@ def _smtp_test_session(request):
         logger.info("Collector finished")
     collector = subprocess.Popen(server_command, shell=True)
     request.addfinalizer(_finalize)
-    logger.info("Collector pid %d" % collector.pid)
+    logger.info("Collector pid {}".format(collector.pid))
     logger.info("Waiting for collector to become alive.")
     time.sleep(3)
     assert collector.poll() is None, "Collector has died. Something must be blocking selected ports"
@@ -74,30 +74,16 @@ def _smtp_test_session(request):
     query_port_open = net_check_remote(mail_query_port, my_ip, force=True)
     server_port_open = net_check_remote(mail_server_port, my_ip, force=True)
     assert query_port_open and server_port_open,\
-        'Ports %d and %d on the machine executing the tests are closed.\n'\
+        'Ports {} and {} on the machine executing the tests are closed.\n'\
         'The ports are randomly chosen -> turn firewall off.'\
-        % (mail_query_port, mail_server_port)
+        .format(mail_query_port, mail_server_port)
     client = SMTPCollectorClient(
         my_ip,
         mail_query_port
     )
+    client.set_test_name(request.node.name)
+    client.clear_database()
     return client
-
-
-@pytest.yield_fixture(scope="module")
-def smtp_test_module(request, _smtp_test_session):
-    _smtp_test_session.set_test_name(request.node.name)
-    _smtp_test_session.clear_database()
-    yield _smtp_test_session
-    _smtp_test_session.clear_database()
-
-
-@pytest.yield_fixture(scope="function")
-def smtp_test(request, smtp_test_module):
-    smtp_test_module.set_test_name(request.node.name)
-    smtp_test_module.clear_database()
-    yield smtp_test_module
-    smtp_test_module.clear_database()
 
 
 @pytest.mark.trylast

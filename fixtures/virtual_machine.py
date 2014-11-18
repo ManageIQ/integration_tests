@@ -3,13 +3,8 @@
 
 
 import pytest
-import re
 from utils.log import logger
 from utils.wait import wait_for
-
-ON_REGEX = re.compile(r'up|POWERED\ ON|running|ACTIVE')
-OFF_REGEX = re.compile(r'down|POWERED\ OFF|stopped')
-SUSPEND_REGEX = re.compile(r'SUSPENDED|suspended')
 
 
 @pytest.fixture
@@ -24,14 +19,17 @@ def verify_vm_running(provider_mgmt, vm_name):
     """
 
     def _wait_for_vm_running():
-        state = provider_mgmt.vm_status(vm_name)
-        if ON_REGEX.match(state):
+        if provider_mgmt.is_vm_running(vm_name):
             return True
-        elif OFF_REGEX.match(state) or SUSPEND_REGEX.match(state):
+        elif provider_mgmt.is_vm_stopped(vm_name) or \
+                provider_mgmt.can_suspend and provider_mgmt.is_vm_suspended(vm_name):
             provider_mgmt.start_vm(vm_name)
-        logger.debug("Sleeping 15secs...(current state: " + state + ", needed state: running)")
+        logger.debug("Sleeping 15secs...(current state: {}, needed state: running)".format(
+            provider_mgmt.vm_status(vm_name)
+        ))
+        return False
 
-    return wait_for(_wait_for_vm_running, num_sec=300, delay=15)
+    return wait_for(_wait_for_vm_running, num_sec=360, delay=15)
 
 
 @pytest.fixture
@@ -46,16 +44,19 @@ def verify_vm_stopped(provider_mgmt, vm_name):
     """
 
     def _wait_for_vm_stopped():
-        state = provider_mgmt.vm_status(vm_name)
-        if OFF_REGEX.match(state):
+        if provider_mgmt.is_vm_stopped(vm_name):
             return True
-        elif ON_REGEX.match(state):
+        elif provider_mgmt.is_vm_running(vm_name):
             provider_mgmt.stop_vm(vm_name)
-        elif SUSPEND_REGEX.match(state):
+        elif provider_mgmt.can_suspend and provider_mgmt.is_vm_suspended(vm_name):
             provider_mgmt.start_vm(vm_name)
-        logger.debug("Sleeping 15secs...(current state: " + state + ", needed state: stopped)")
 
-    return wait_for(_wait_for_vm_stopped, num_sec=300, delay=15)
+        logger.debug("Sleeping 15secs...(current state: {}, needed state: stopped)".format(
+            provider_mgmt.vm_status(vm_name)
+        ))
+        return False
+
+    return wait_for(_wait_for_vm_stopped, num_sec=360, delay=15)
 
 
 @pytest.fixture
@@ -70,13 +71,16 @@ def verify_vm_suspended(provider_mgmt, vm_name):
     """
 
     def _wait_for_vm_suspended():
-        state = provider_mgmt.vm_status(vm_name)
-        if SUSPEND_REGEX.match(state):
-            return
-        elif ON_REGEX.match(state):
+        if provider_mgmt.is_vm_suspended(vm_name):
+            return True
+        elif provider_mgmt.is_vm_running(vm_name):
             provider_mgmt.suspend_vm(vm_name)
-        elif OFF_REGEX.match(state):
+        elif provider_mgmt.is_vm_stopped(vm_name):
             provider_mgmt.start_vm(vm_name)
-        logger.debug("Sleeping 15secs...(current state: " + state + ", needed state: suspended)")
 
-    return wait_for(_wait_for_vm_suspended, num_sec=300, delay=15)
+        logger.debug("Sleeping 15secs...(current state: {}, needed state: suspended)".format(
+            provider_mgmt.vm_status(vm_name)
+        ))
+        return False
+
+    return wait_for(_wait_for_vm_suspended, num_sec=360, delay=15)

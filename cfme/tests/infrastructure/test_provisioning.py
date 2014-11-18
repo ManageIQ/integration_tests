@@ -1,6 +1,8 @@
 import pytest
 
-from cfme.infrastructure.provisioning import provisioning_form
+import cfme.infrastructure.provisioning
+assert cfme.infrastructure.provisioning
+from cfme.web_ui.prov_form import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill
 from utils import testgen, version
@@ -63,6 +65,8 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 
 def test_provision_from_template(provider_init, provider_key, provider_crud, provider_type,
                                  provider_mgmt, provisioning, vm_name, smtp_test, request):
+    if provider_type == "scvmm":
+        pytest.skip("SCVMM does not support provisioning yet!")  # TODO: After fixing - remove
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
     pytest.sel.force_navigate('infrastructure_provision_vms', context={

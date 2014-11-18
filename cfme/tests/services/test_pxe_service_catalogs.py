@@ -17,7 +17,8 @@ pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.usefixtures("vm_name"),
     pytest.mark.fixtureconf(server_roles="+automate"),
-    pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
+    pytest.mark.usefixtures('server_roles', 'uses_infra_providers'),
+    pytest.mark.ignore_stream("5.2")
 ]
 
 
@@ -138,6 +139,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
+@pytest.mark.bugzilla(1160486)
 @pytest.mark.usefixtures('setup_providers', 'setup_pxe_servers_vm_prov')
 def test_rhev_pxe_servicecatalog(provider_key, provider_mgmt, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
@@ -150,5 +152,5 @@ def test_rhev_pxe_servicecatalog(provider_key, provider_mgmt, catalog_item, requ
     row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
+        fail_func=requests.reload, num_sec=2100, delay=20)
     assert row.last_message.text == 'Request complete'

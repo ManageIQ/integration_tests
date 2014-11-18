@@ -5,7 +5,7 @@
 """
 
 from cfme.cloud.provider import OpenStackProvider, EC2Provider
-from cfme.cloud.provisioning import provisioning_form
+from cfme.web_ui.prov_form import provisioning_form
 from cfme.exceptions import InstanceNotFound, OptionNotAvailable, UnknownProviderType
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
@@ -243,7 +243,15 @@ class Instance(Updateable, Pretty):
         """
         locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Instance \"%s\"')]" %
             self.name)
+
+        # If the locator isn't on the page, or if it _is_ on the page and contains
+        # 'Timelines' we are on the wrong page and take the appropriate action
         if not sel.is_displayed(locator):
+            wrong_page = True
+        else:
+            wrong_page = 'Timelines' in sel.text(locator)
+
+        if wrong_page:
             if not force:
                 return False
             else:
@@ -260,8 +268,9 @@ class Instance(Updateable, Pretty):
         else:
             if self.name != m.group().replace('"', ''):
                 self.load_details()
+                return True
             else:
-                return False
+                return True
 
     def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
         """Find and return a quadicon belonging to a specific instance

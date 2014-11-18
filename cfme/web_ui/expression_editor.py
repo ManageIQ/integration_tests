@@ -182,6 +182,16 @@ tag_form = web_ui.Form(
     ]
 )
 
+registry_form = web_ui.Form(
+    fields=[
+        ("type", web_ui.Select("select#chosen_typ")),
+        ("key", "#chosen_regkey"),
+        ("value", "#chosen_regval"),
+        ("operation", web_ui.Select("#chosen_key")),
+        ("contents", "#chosen_value"),
+    ]
+)
+
 date_switch_buttons = web_ui.Region(
     locators=dict(
         to_relative="//img[@alt='Click to change to a relative Date/Time format']",
@@ -260,6 +270,21 @@ def fill_tag(tag=None, value=None):
         user_input = None
     web_ui.fill(field_form.user_input, user_input)
     sel.click(buttons.commit)
+
+
+def fill_registry(key=None, value=None, operation=None, contents=None):
+    """ Fills the 'Registry' type of form."""
+    return web_ui.fill(
+        registry_form,
+        dict(
+            type="Registry",
+            key=key,
+            value=value,
+            operation=operation,
+            contents=contents,
+        ),
+        action=buttons.commit
+    )
 
 
 def fill_field(field=None, key=None, value=None):

@@ -117,7 +117,7 @@ def lister():
 
 @route('/get/<name>')
 def get(name):
-    return template(Loggers[name].get())
+    return Loggers[name].get()
 
 
 @route('/reset/<name>')

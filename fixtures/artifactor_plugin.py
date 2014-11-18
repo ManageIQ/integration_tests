@@ -118,8 +118,10 @@ def pytest_unconfigure():
     global proc
     if not SLAVEID:
         art_client.fire_hook('finish_session')
-        art_client.fire_hook('terminate')
     art_client.fire_hook('teardown_merkyl', ip=appliance_ip_address)
+    if not SLAVEID:
+        art_client.fire_hook('terminate')
+
 
 if not SLAVEID:
     atexit.register(art_client.fire_hook, 'finish_session')

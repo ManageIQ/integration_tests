@@ -6,6 +6,21 @@ from utils.ssh import SSHClient
 import multimethods as mm
 
 
+def get_stream(ver):
+    """Return a stream name for given Version obj or version string
+    """
+    if isinstance(ver, basestring):
+        ver = get_version(ver)
+    if ver.is_in_series('5.2'):
+        return 'downstream-52z'
+    elif ver.is_in_series('5.3'):
+        return 'downstream-53z'
+    elif ver == LATEST:
+        return 'upstream'
+    else:
+        raise Exception("Unrecognized version '{}' - no matching stream group found".format(ver))
+
+
 def get_version(obj):
     """Return a LooseVersion based on obj.  For CFME, 'master' version
        means always the latest (compares as greater than any other

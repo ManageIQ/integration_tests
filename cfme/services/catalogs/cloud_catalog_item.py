@@ -8,8 +8,7 @@ import ui_navigate as nav
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
-from cfme.cloud import provisioning as prov
-from collections import OrderedDict
+from cfme.web_ui.prov_form import provisioning_form as request_form
 from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash, form_buttons
 from utils.update import Updateable
 from utils import version
@@ -46,50 +45,6 @@ detail_form = Form(
     fields=[
         ('long_desc', "//textarea[@id='long_description']")
     ])
-
-
-request_form = tabstrip.TabStripForm(
-    tab_fields=OrderedDict([
-        ('Catalog', [
-            ('num_instances', web_ui.Select('//select[@id="service__number_of_vms"]')),
-            ('instance_name', '//input[@name="service__vm_name"]'),
-            ('instance_description', '//textarea[@id="service__vm_description"]'),
-            ('catalog_name', web_ui.Table('//div[@id="prov_vm_div"]/table')),
-        ]),
-        ('Environment', [
-            ('automatic_placement', '//input[@id="environment__placement_auto"]'),
-            ('availability_zone',
-                web_ui.Select('//select[@id="environment__placement_availability_zone"]')),
-            ('virtual_private_cloud', web_ui.Select('//select[@id="environment__cloud_network"]')),
-            ('cloud_tenant', web_ui.Select('//select[@id="environment__cloud_tenant"]')),
-            ('cloud_network', web_ui.Select('//select[@id="environment__cloud_network"]')),
-            ('security_groups', prov.select_security_group),
-            ('public_ip_address', web_ui.Select('//select[@id="environment__floating_ip_address"]'))
-        ]),
-        ('Properties', [
-            ('instance_type', web_ui.Select('//select[@id="hardware__instance_type"]')),
-            ('guest_keypair', web_ui.Select('//select[@id="hardware__guest_access_key_pair"]')),
-            ('hardware_monitoring', web_ui.Select('//select[@id="hardware__monitoring"]')),
-        ]),
-        ('Customize', [
-            ('specification', web_ui.Select('//select[@id="customize__sysprep_enabled"]')),
-            ('specification_name', web_ui.Table('//div[@id="prov_vc_div"]/table')),
-            ('computer_name', '//input[@id="customize__linux_host_name"]'),
-            ('domain_name', '//input[@id="customize__linux_domain_name"]'),
-            ('dns_servers', '//input[@id="customize__dns_servers"]'),
-            ('dns_suffixes', '//input[@id="customize__dns_suffixes"]'),
-        ]),
-        ('Schedule', [
-            ('schedule_type', web_ui.Radio('schedule__schedule_type')),
-            ('provision_date', web_ui.Calendar('miq_date_1')),
-            ('provision_start_hour', web_ui.Select('//select[@id="start_hour"]')),
-            ('provision_start_min', web_ui.Select('//select[@id="start_min"]')),
-            ('power_on', '//input[@id="schedule__vm_auto_start"]'),
-            ('retirement', web_ui.Select('//select[@id="schedule__retirement"]')),
-            ('retirement_warning', web_ui.Select('//select[@id="schedule__retirement_warn"]')),
-        ])
-    ])
-)
 
 
 def _all_catalogitems_add_new(context):

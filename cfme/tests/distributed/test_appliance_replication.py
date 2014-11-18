@@ -7,9 +7,9 @@ from cfme.infrastructure.provider import wait_for_a_provider
 import cfme.fixtures.pytest_selenium as sel
 from time import sleep
 from urlparse import urlparse
-from utils import testgen
+from utils import testgen, version
 from utils.appliance import provision_appliance
-from utils.conf import cfme_data, credentials
+from utils.conf import credentials
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -72,9 +72,9 @@ def get_replication_appliances():
     """Returns two database-owning appliances configured
        with unique region numbers.
     """
-    appliance_data = cfme_data['appliance_provisioning']['single_appliance']
-    appl1 = provision_appliance(appliance_data['version'], appliance_data['name'])
-    appl2 = provision_appliance(appliance_data['version'], appliance_data['name'])
+    ver_to_prov = str(version.current_version())
+    appl1 = provision_appliance(ver_to_prov, 'test_repl_A')
+    appl2 = provision_appliance(ver_to_prov, 'test_repl_B')
     appl1.configure(region=1, patch_ajax_wait=False)
     appl2.configure(region=2, patch_ajax_wait=False, key_address=appl1.address)
     appl1.ipapp.wait_for_web_ui()
@@ -99,7 +99,7 @@ def configure_db_replication(db_address):
 
 
 @pytest.mark.usefixtures("random_provider")
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.long_running
 def test_appliance_replicate_between_regions(request, provider_crud):
     """Tests that a provider added to an appliance in one region
@@ -122,7 +122,7 @@ def test_appliance_replicate_between_regions(request, provider_crud):
 
 
 @pytest.mark.usefixtures("random_provider")
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.long_running
 def test_appliance_replicate_sync_role_change(request, provider_crud):
     appl1, appl2 = get_replication_appliances()
@@ -152,7 +152,7 @@ def test_appliance_replicate_sync_role_change(request, provider_crud):
 
 
 @pytest.mark.usefixtures("random_provider")
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.long_running
 def test_appliance_replicate_sync_role_change_with_backlog(request, provider_crud):
     appl1, appl2 = get_replication_appliances()
@@ -182,7 +182,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, provider_cru
 
 
 @pytest.mark.usefixtures("random_provider")
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.long_running
 def test_appliance_replicate_database_disconnection(request, provider_crud):
     appl1, appl2 = get_replication_appliances()
@@ -210,7 +210,7 @@ def test_appliance_replicate_database_disconnection(request, provider_crud):
 
 
 @pytest.mark.usefixtures("random_provider")
-@pytest.mark.downstream
+@pytest.mark.ignore_stream("upstream")
 @pytest.mark.long_running
 def test_appliance_replicate_database_disconnection_with_backlog(request, provider_crud):
     appl1, appl2 = get_replication_appliances()

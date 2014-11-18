@@ -3,7 +3,9 @@ import pytest
 import re
 from datetime import datetime, timedelta
 
-from cfme.infrastructure.provisioning import provisioning_form
+import cfme.infrastructure.provisioning
+assert cfme.infrastructure.provisioning
+from cfme.web_ui.prov_form import provisioning_form
 from cfme.infrastructure.virtual_machines import Vm, details_page
 from cfme.services import requests
 from cfme.web_ui import fill, flash
@@ -58,6 +60,9 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def prov_data(provisioning, provider_type):
+    if provider_type == "scvmm":
+        pytest.skip("SCVMM does not support provisioning yet!")  # TODO: After fixing - remove
+
     return {
         "first_name": generate_random_string(),
         "last_name": generate_random_string(),
