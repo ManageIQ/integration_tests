@@ -25,7 +25,7 @@ def db(uses_db):
     at the module level within tests.
 
     """
-    return utils.db.cfmedb.copy()
+    return utils.db.cfmedb().copy()
 
 
 @pytest.fixture(scope='session')

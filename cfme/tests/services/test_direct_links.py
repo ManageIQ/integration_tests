@@ -14,6 +14,7 @@ from utils.conf import env
 from utils.providers import setup_a_provider
 from utils.randomness import generate_random_string
 from utils.wait import TimedOutError, wait_for
+from fixtures.pytest_store import store
 
 
 pytestmark = [
@@ -83,8 +84,10 @@ def generated_request(provider, provider_data):
         "Description": "Provision from [{}] to [{}###]".format(template, vm_name),
     }
     yield request_cells
-    browser().get(env["base_url"])
+
+    browser().get(store.base_url)
     login_admin()
+
     requests.delete_request(request_cells)
     flash.assert_no_errors()
 
@@ -93,7 +96,7 @@ def test_services_request_direct_url(generated_request):
     """Go to the request page, save the url and try to access it directly."""
     assert requests.go_to_request(generated_request), "could not find the request!"
     request_url = sel.current_url()
-    sel.get(env["base_url"])    # I need to flip it with something different here
+    sel.get(sel.base_url())    # I need to flip it with something different here
     sel.get(request_url)        # Ok, direct access now.
     # This is a bit tricky. We have to wait IF the blank page appeared, because checking
     # if we are STILL IN CFME is unreliable as the transition is not guarded by JS or stuff.

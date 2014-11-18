@@ -34,11 +34,11 @@ def handle_provider(provider_key):
 
 def test_metrics_collection(handle_provider, provider_key, provider_crud, enable_candu):
     '''check the db is gathering collection data for the given provider'''
-    metrics_tbl = db.cfmedb['metrics']
-    mgmt_systems_tbl = db.cfmedb['ext_management_systems']
+    metrics_tbl = db.cfmedb()['metrics']
+    mgmt_systems_tbl = db.cfmedb()['ext_management_systems']
 
     # the id for the provider we're testing
-    mgmt_system_id = db.cfmedb.session.query(mgmt_systems_tbl).filter(
+    mgmt_system_id = db.cfmedb().session.query(mgmt_systems_tbl).filter(
         mgmt_systems_tbl.name == conf.cfme_data['management_systems'][provider_key]['name']
     ).first().id
 
@@ -50,7 +50,7 @@ def test_metrics_collection(handle_provider, provider_key, provider_crud, enable
         print "name: %s, id: %s, metrics: %s" % (provider_key,
                                                 mgmt_system_id, metric_count)
         # count all the metrics for the provider we're testing
-        metric_count = db.cfmedb.session.query(metrics_tbl).filter(
+        metric_count = db.cfmedb().session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id
         ).count()
 

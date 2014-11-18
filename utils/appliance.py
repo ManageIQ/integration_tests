@@ -5,6 +5,7 @@ import requests
 import shutil
 import subprocess
 from cfme.configure.configuration import set_server_roles, get_server_roles
+from fixtures.pytest_store import _push_appliance, _pop_appliance
 from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
@@ -234,8 +235,8 @@ class Appliance(object):
     def is_running(self):
         return self.provider.is_vm_running(self.vm_name)
 
-    def browser_session(self, reset_cache=False):
-        return self.ipapp.browser_session(reset_cache=reset_cache)
+    def browser_session(self):
+        return self.ipapp.browser_session()
 
     @property
     def is_on_rhev(self):
@@ -280,17 +281,29 @@ class IPAppliance(object):
 
     Args:
         ipaddress: The IP address of the provider
+        browser_streal: If True then then current browser is killed and the new appliance
+            is used to generate a new session.
     """
 
-    def __init__(self, address=None):
+    def __init__(self, address=None, browser_steal=False):
         if address is not None:
             self.address = address
+        self.browser_steal = browser_steal
 
     def __repr__(self):
         return '%s(%s)' % (type(self).__name__, repr(self.address))
 
+    def __enter__(self):
+        """ This method will replace the current appliance in the store """
+        _push_appliance(self)
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        _pop_appliance(self)
+
     @classmethod
     def from_url(ip_appliance_class, url):
+        # Need to think about this bit
         if url is None:
             url = conf.env['base_url']
         parsed_url = urlparse(url)
@@ -586,7 +599,7 @@ class IPAppliance(object):
         status, out = client.run_command("service postgresql92-postgresql restart")
         return status
 
-    def browser_session(self, reset_cache=False):
+    def browser_session(self):
         """Creates browser session connected to this appliance
 
         Returns: Browser session connected to this appliance.
@@ -595,7 +608,7 @@ class IPAppliance(object):
             with appliance.browser_session() as browser:
                 browser.do_stuff(TM)
         """
-        return browser_session(base_url=self.url, reset_cache=reset_cache)
+        return browser_session(base_url=self.url)
 
     def enable_internal_db(self, region=0, key_address=None, db_password=None,
                            ssh_password=None):
@@ -881,6 +894,18 @@ class IPAppliance(object):
             return True
         else:
             return False
+
+    @lazycache
+    def build_datetime(self):
+        datetime = self.ssh_client().get_build_datetime()
+        return datetime
+
+    @lazycache
+    def is_downstream(self):
+        return self.ssh_client().is_appliance_downstream()
+
+    def has_netapp(self):
+        return self.ssh_client().appliance_has_netapp()
 
 
 class ApplianceSet(object):

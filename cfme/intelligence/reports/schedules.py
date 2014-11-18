@@ -108,8 +108,8 @@ class Schedule(Updateable, Pretty):
 
     @property
     def exists(self):
-        schedules = cfmedb["miq_schedules"]
-        return cfmedb.session\
+        schedules = cfmedb()["miq_schedules"]
+        return cfmedb().session\
             .query(schedules.name)\
             .filter(schedules.name == self.name)\
             .count() > 0

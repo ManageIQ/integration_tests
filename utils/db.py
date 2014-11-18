@@ -11,6 +11,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
+from fixtures.pytest_store import store
 from utils import conf, lazycache
 from utils.datafile import load_data_file
 from utils.log import logger
@@ -76,7 +77,7 @@ class Db(Mapping):
 
     def __init__(self, hostname=None, credentials=None):
         if hostname is None:
-            self.hostname = urlparse(conf.env['base_url']).hostname
+            self.hostname = urlparse(store.base_url).hostname
         else:
             self.hostname = hostname
 
@@ -292,7 +293,7 @@ def db_yamls(db=None):
         vmdb_config = configs['vmdb']
 
     """
-    db = db or cfmedb
+    db = db or cfmedb()
     with db.transaction:
         config = db['configurations']
         configs = db.session.query(config.typ, config.settings)
@@ -349,7 +350,7 @@ def set_yaml_config(config_name, data_dict, hostname=None):
         _ssh_client = SSHClient(hostname=hostname)
     # Else, connect to the default one set up for this session
     else:
-        _ssh_client = SSHClient()
+        _ssh_client = store.current_appliance.ssh_client()
     # Build & send new config
     temp_yaml = NamedTemporaryFile()
     dest_yaml = '/tmp/conf.yaml'
@@ -376,4 +377,5 @@ def database_on_server(hostname, **kwargs):
 
 
 #: :py:class:`Db` instance configured with default settings from conf yamls
-cfmedb = Db()
+def cfmedb():
+    return store.current_appliance.db

@@ -3,7 +3,7 @@ import os
 import socket
 import re
 import urlparse
-from utils.conf import env
+from fixtures.pytest_store import store
 
 _ports = defaultdict(dict)
 _dns_cache = {}
@@ -47,7 +47,7 @@ def my_ip_address(http=False):
     if my_ip:
         return my_ip
     else:
-        address = urlparse.urlparse(env['base_url']).hostname
+        address = urlparse.urlparse(store.base_url).hostname
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((address, 22))
         ip = sock.getsockname()[0]
@@ -70,7 +70,7 @@ def net_check(port, addr=None, force=False):
     """Checks the availablility of a port"""
     port = int(port)
     if not addr:
-        addr = urlparse.urlparse(env['base_url']).hostname
+        addr = urlparse.urlparse(store.base_url).hostname
     if port not in _ports[addr] or force:
         # First try DNS resolution
         try:
@@ -95,7 +95,7 @@ def net_check_remote(port, addr=None, machine_addr=None, ssh_creds=None, force=F
         addr = my_ip_address()
     if port not in _ports[addr] or force:
         if not machine_addr:
-            machine_addr = urlparse.urlparse(env['base_url']).hostname
+            machine_addr = urlparse.urlparse(store.base_url).hostname
         if not ssh_creds:
             ssh = SSHClient(hostname=machine_addr)
         else:
