@@ -768,6 +768,44 @@ class DatabaseAuthSetting(Pretty):
         fill(self.form, self.details, action=form_buttons.save)
 
 
+class ExternalAuthSetting(Updateable, Pretty):
+    """ Authentication settings for authentication via httpd.
+
+    Args:
+        timeout_h: Timeout in hours
+        timeout_m: Timeout in minutes
+        get_groups: Get user groups from external auth source.
+
+    Usage:
+
+        dbauth = ExternalAuthSetting(get_groups=True)
+        dbauth.update()
+
+    """
+
+    form = Form(fields=[
+        ("timeout_h", Select("select#session_timeout_hours")),
+        ("timeout_m", Select("select#session_timeout_mins")),
+        ("auth_mode", Select("select#authentication_mode")),
+        ("get_groups", "input#httpd_role"),
+    ])
+    pretty_attrs = ['timeout_h', 'timeout_m', 'get_groups']
+
+    def __init__(self, get_groups=False, timeout_h="1", timeout_m="0"):
+        self.timeout_h = timeout_h,
+        self.timeout_m = timeout_m,
+        self.auth_mode = "External (httpd)"
+        self.get_groups = get_groups
+
+    def setup(self):
+        sel.force_navigate("cfg_settings_currentserver_auth")
+        fill(self.form, self, action=form_buttons.save)
+
+    def update(self, updates):
+        sel.force_navigate("cfg_settings_currentserver_auth")
+        fill(self.form, updates, action=form_buttons.save)
+
+
 class AmazonAuthSetting(Pretty):
     """ Authentication settings via Amazon.
 
@@ -1576,6 +1614,16 @@ def set_ntp_servers(*servers):
     for enum, server in enumerate(servers):
         fields["ntp_server_%d" % (enum + 1)] = server
     fill(ntp_servers, fields, action=form_buttons.save)
+
+
+def get_ntp_servers():
+    sel.force_navigate("cfg_settings_currentserver_server")
+    servers = set([])
+    for i in range(3):
+        value = sel.value("#ntp_server_{}".format(i + 1)).encode("utf-8").strip()
+        if value:
+            servers.add(value)
+    return servers
 
 
 def unset_ntp_servers():

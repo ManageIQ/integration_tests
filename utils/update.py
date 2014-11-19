@@ -75,5 +75,5 @@ def update(o, **kwargs):
 
 
 @fill.method((object, Updateable))
-def _fill_with_updateable(o, u):
-    fill(o, u.__dict__)
+def _fill_with_updateable(o, u, **kw):
+    fill(o, u.__dict__, **kw)
