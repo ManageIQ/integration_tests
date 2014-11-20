@@ -1,0 +1,83 @@
+#! /usr/bin/env python2
+from collections import defaultdict
+from utils.providers import provider_factory
+from utils.conf import cfme_data, jenkins
+from utils import appliance
+from jinja2 import Environment, FileSystemLoader
+from utils.path import template_path
+
+li = cfme_data['management_systems']
+users = jenkins['nicks']
+
+data = defaultdict(dict)
+
+
+def process_vm(vm, mgmt, user, prov):
+    print "Inspecting: {} on {}".format(vm, prov)
+    if mgmt.is_vm_stopped(vm):
+        return
+    ip = mgmt.get_ip_address(vm, timeout=1)
+    if ip:
+        with appliance.IPAppliance(ip) as app:
+            try:
+                ver = app.version
+                assert ver
+                ems = app.db['ext_management_systems']
+                with app.db.transaction:
+                    providers = (
+                        app.db.session.query(ems.ipaddress, ems.type)
+                    )
+                providers = [a[0] for a in providers if a[1] in
+                             ['EmsVmware', 'EmsOpenstack', 'EmsRedhat', 'EmsMicrosoft']]
+
+                for provider in providers:
+                    if provider in data[user]:
+                        data[user][provider].append("{} ({})".format(vm, prov))
+                    else:
+                        data[user][provider] = ["{} ({})".format(vm, prov)]
+
+            except:
+                pass
+
+
+def process_provider(mgmt, prov):
+    try:
+        vms = mgmt.list_vm()
+    except:
+        return
+
+    for vm in vms:
+        for user in users:
+            if user in vm:
+                process_vm(vm, mgmt, user, prov)
+
+prov_key_db = {}
+
+for prov in li:
+    ip = li[prov].get('ipaddress', None)
+    prov_key_db[ip] = prov
+    if li[prov]['type'] not in ['ec2', 'scvmm']:
+        mgmt = provider_factory(prov)
+        print "DOING {}".format(prov)
+        process_provider(mgmt, prov)
+
+
+string = ""
+for user in data:
+    string += ('<h2>{}</h2><table class="table table-striped">'.format(user))
+    string += ('<thead><tr><td><strong>Provider</strong></td>'
+               '<td>Count</td><td><em>VMs</em></td></tr></thead>')
+    for prov in data[user]:
+        prov_name = prov_key_db.get(prov, 'Unknown ({})'.format(prov))
+        fmt_str = ('<tbody><tr><td><strong>{}</strong></td>'
+                   '<td>{}</td><td><em>{}</em></td></tr></tbody>')
+        string += (fmt_str.format(prov_name, len(data[user][prov]), ", ".join(data[user][prov])))
+    string += ('</table>')
+
+template_data = {'data': string}
+template_env = Environment(
+    loader=FileSystemLoader(template_path.strpath)
+)
+str_data = template_env.get_template('usage_report.html').render(**template_data)
+with open('provider_usage.html', 'w') as f:
+            f.write(str_data)
