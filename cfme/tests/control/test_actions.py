@@ -71,8 +71,8 @@ def get_vm_object(vm_name):
     Returns:
         If found, :py:class:`utils.miq_soap.MiqVM`. If not, `None`
     """
-    vm_table = cfmedb['vms']
-    for vm in cfmedb.session.query(vm_table.name, vm_table.guid)\
+    vm_table = cfmedb()['vms']
+    for vm in cfmedb().session.query(vm_table.name, vm_table.guid)\
             .filter(vm_table.template == False):  # NOQA
         # Previous line is ok, if you change it to `is`, it won't work!
         if vm.name == vm_name:

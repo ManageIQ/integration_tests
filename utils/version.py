@@ -1,8 +1,7 @@
 import string
 import re
 from types import StringType
-from functools32 import lru_cache
-from utils.ssh import SSHClient
+from fixtures.pytest_store import store
 import multimethods as mm
 
 
@@ -34,7 +33,6 @@ def get_version(obj):
     return LooseVersion(obj)
 
 
-@lru_cache(maxsize=32)
 def current_version():
     """A lazy cached method to return the appliance version.
 
@@ -42,26 +40,23 @@ def current_version():
        testing, without knowing the server version.
 
     """
-    return get_version(SSHClient().get_version())
+    return get_version(store.current_appliance.version)
 
 
-@lru_cache(maxsize=32)
 def appliance_build_datetime():
     try:
-        return SSHClient().get_build_datetime()
+        return store.current_appliance.build_datetime
     except:
         return None
 
 
-@lru_cache(maxsize=32)
 def appliance_is_downstream():
-    return SSHClient().is_appliance_downstream()
+    return store.current_appliance.is_downstream
 
 
-@lru_cache(maxsize=32)
 def appliance_has_netapp():
     try:
-        return SSHClient().appliance_has_netapp()
+        return store.current_appliance.has_netapp()
     except:
         return None
 

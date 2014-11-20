@@ -15,7 +15,7 @@ def get_configuration_details(ip_address=None):
         If the data were found, it returns tuple `(region, server name, server id, server zone id)`
     """
     if ip_address is None:
-        ip_address = cfmedb.hostname
+        ip_address = cfmedb().hostname
 
     with database_on_server(ip_address) as db:
         SEQ_FACT = 1e12
@@ -78,7 +78,7 @@ def get_server_zone_id(ip_address=None):
 
 def get_zone_description(zone_id, ip_address=None):
     if ip_address is None:
-        ip_address = cfmedb.hostname
+        ip_address = cfmedb().hostname
 
     with database_on_server(ip_address) as db:
         zones = list(
@@ -94,7 +94,7 @@ def get_zone_description(zone_id, ip_address=None):
 
 def get_host_id(hostname, ip_address=None):
     if ip_address is None:
-        ip_address = cfmedb.hostname
+        ip_address = cfmedb().hostname
 
     with database_on_server(ip_address) as db:
         hosts = list(

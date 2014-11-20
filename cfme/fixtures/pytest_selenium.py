@@ -18,7 +18,6 @@ from collections import Iterable
 from textwrap import dedent
 import json
 import re
-from utils import conf
 from selenium.common.exceptions import \
     (ErrorInResponseException, InvalidSwitchToTargetException, NoSuchAttributeException,
      NoSuchElementException, NoAlertPresentException, UnexpectedAlertPresentException,
@@ -34,6 +33,7 @@ from multimethods import singledispatch, multidispatch
 
 import pytest
 from cfme import exceptions, js
+from fixtures.pytest_store import store
 from utils import version
 from utils.browser import browser, ensure_browser_open
 from utils.log import logger
@@ -698,7 +698,7 @@ def base_url():
 
     Returns: `base_url` from env config yaml
     """
-    return conf.env['base_url']
+    return store.base_url
 
 
 def go_to(page_name):

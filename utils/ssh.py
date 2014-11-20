@@ -8,6 +8,7 @@ from scp import SCPClient
 from utils import conf
 from utils.log import logger
 from utils.net import net_check
+from fixtures.pytest_store import store
 from utils.timeutil import parsetime
 
 
@@ -32,7 +33,7 @@ class SSHClient(paramiko.SSHClient):
             default_connect_kwargs['look_for_keys'] = False
 
         # Load credentials and destination from confs
-        parsed_url = urlparse(conf.env['base_url'])
+        parsed_url = urlparse(store.base_url)
         default_connect_kwargs = {
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],

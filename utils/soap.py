@@ -2,6 +2,7 @@ from suds.client import Client
 from suds.transport.https import HttpAuthenticated
 from suds.xsd.doctor import ImportDoctor, Import
 
+from fixtures.pytest_store import store
 from utils import conf
 
 
@@ -27,7 +28,7 @@ def soap_client():
     """ SoapClient to EVM based on base_url"""
     username = conf.credentials['default']['username']
     password = conf.credentials['default']['password']
-    url = '%s/vmdbws/wsdl/' % conf.env['base_url']
+    url = '%s/vmdbws/wsdl/' % store.base_url
 
     transport = HttpAuthenticated(username=username, password=password)
     imp = Import('http://schemas.xmlsoap.org/soap/encoding/')

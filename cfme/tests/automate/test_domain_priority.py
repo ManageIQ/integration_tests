@@ -4,14 +4,19 @@ import pytest
 from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
 from cfme.automate.explorer import set_domain_order
 from cfme.automate.simulation import simulate
+from utils.providers import setup_a_provider as _setup_a_provider
 from utils.randomness import generate_random_string
 from utils.update import update
-from utils.version import current_version  # NOQA
 from utils.wait import wait_for
 
 pytestmark = [
     pytest.mark.ignore_stream("5.2")
 ]
+
+
+@pytest.fixture(scope="module")
+def setup_a_provider():
+    _setup_a_provider("infra")
 
 FILE_LOCATION = "/var/www/miq/vmdb/test_ae_{}".format(generate_random_string(16))
 
@@ -87,7 +92,7 @@ def original_instance(request, original_method):
 
 
 @pytest.mark.fixtureconf(server_roles="+automate")
-@pytest.mark.usefixtures("server_roles", "setup_infrastructure_providers")
+@pytest.mark.usefixtures("server_roles", "setup_a_provider")
 def test_priority(
         request, ssh_client, original_method, original_instance, copy_domain,
         original_method_write_data, copy_method_write_data):
@@ -167,7 +172,7 @@ def test_priority(
 @pytest.mark.bugzilla(1134500)
 def test_override_method_across_domains(
         request, ssh_client, original_method, original_instance, copy_domain,
-        original_method_write_data, copy_method_write_data):
+        original_method_write_data, copy_method_write_data, setup_a_provider):
     instance = original_instance
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     request.addfinalizer(lambda: ssh_client.run_command("rm -f {}".format(FILE_LOCATION)))

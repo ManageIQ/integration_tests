@@ -28,7 +28,7 @@ def delete_fx_provider_event(db, provider_crud):
 
 
 def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
+    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter', 'rhevm'])
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 

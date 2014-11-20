@@ -14,6 +14,7 @@ from cfme.infrastructure import provider
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb
 from functools import partial
 from utils.pretty import Pretty
+from utils import version
 
 
 details_page = Region(infoblock_type='detail')
@@ -125,7 +126,10 @@ class Datastore(Pretty):
         if not self._on_vms_page():
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
             try:
-                list_acc.select('Relationships', 'Show registered VMs')
+                path = version.pick({
+                    version.LOWEST: "Show all registered VMs",
+                    "5.3": "Show registered VMs"})
+                list_acc.select('Relationships', path)
             except sel.NoSuchElementException:
                 return []
         return [q.name for q in Quadicon.all("vm")]

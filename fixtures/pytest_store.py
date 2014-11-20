@@ -13,11 +13,13 @@ all should be available in the collection and testing phases of a test run.
 
 """
 import sys
+from urlparse import urlparse
 
 from _pytest.terminal import TerminalReporter
 from py.io import TerminalWriter
 
 from utils import property_or_none
+from utils import conf
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -49,6 +51,24 @@ class Store(object):
     def __init__(self):
         self.config = None
         self.session = None
+        self._current_appliance = []
+
+    @property
+    def current_appliance(self):
+        if not self._current_appliance:
+            from utils.appliance import IPAppliance
+            self._current_appliance.append(IPAppliance(urlparse(self.base_url).netloc))
+        return self._current_appliance[-1]
+
+    @property
+    def base_url(self):
+        """ If there is a current appliance the base url of that appliance is returned
+            else, the base_url from the config is returned."""
+
+        if self._current_appliance:
+            return self._current_appliance[-1].url
+        else:
+            return conf.env['base_url']
 
     @property
     def in_pytest_session(self):
@@ -90,6 +110,20 @@ class Store(object):
 
 
 store = Store()
+
+
+def _push_appliance(app):
+    store._current_appliance.append(app)
+    if app.browser_steal:
+        from utils import browser
+        browser.start()
+
+
+def _pop_appliance(app):
+    store._current_appliance.pop()
+    if app.browser_steal:
+        from utils import browser
+        browser.start()
 
 
 def pytest_configure(config):
