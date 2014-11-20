@@ -1923,7 +1923,20 @@ class Quadicon(Pretty):
         },
         "cluster": {},
         "resource_pool": {},
+        "template": {
+            "os": ("a", 'img'),
+            "state": ("b", 'img'),
+            "vendor": ("c", 'img'),
+            "no_snapshot": ("d", 'txt'),
+        },
+        "image": {
+            "os": ("a", 'img'),
+            "state": ("b", 'img'),
+            "vendor": ("c", 'img'),
+            "no_snapshot": ("d", 'txt'),
+        },
         None: {},  # If you just want to find the quad and not mess with data
+
     }
 
     def __init__(self, name, qtype=None):

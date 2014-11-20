@@ -443,6 +443,14 @@ def wait_for_host_delete(host):
              message="Wait host to disappear", num_sec=1000, fail_func=sel.refresh)
 
 
+def wait_for_host_to_appear(host):
+    sel.force_navigate('infrastructure_hosts')
+    quad = Quadicon(host.name, 'host')
+    logger.info('Waiting for a host to appear...')
+    wait_for(lambda prov: sel.is_displayed(prov), func_args=[quad], fail_condition=False,
+             message="Wait host to appear", num_sec=1000, fail_func=sel.refresh)
+
+
 def get_all_hosts(do_not_navigate=False):
     """Returns list of all hosts"""
     if not do_not_navigate:
