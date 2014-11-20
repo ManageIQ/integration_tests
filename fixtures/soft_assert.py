@@ -22,11 +22,16 @@ will be reported in the order that they failed.
 """
 from contextlib import contextmanager
 from threading import local
+from functools import partial
 
 import pytest
 
+from fixtures.artifactor_plugin import art_client
 from utils.log import nth_frame_info
 from utils.path import get_rel_path
+import sys
+import traceback
+import utils
 
 # Use a thread-local store for failed soft asserts, making it thread-safe
 # in parallel testing and shared among the functions in this module.
@@ -87,8 +92,40 @@ def _soft_assert_cm():
         raise SoftAssertionError(_thread_locals.caught_asserts)
 
 
+def handle_assert_artifacts(request, fail_message=None):
+    test_name = request.node.location[2]
+    test_location = request.node.location[0]
+
+    if not fail_message:
+        short_tb = '%s' % (sys.exc_info()[1])
+        full_tb = "".join(traceback.format_tb(sys.exc_info()[2]))
+        full_tb = full_tb.encode('base64')
+
+    else:
+        short_tb = full_tb = fail_message.encode('base64')
+
+    try:
+        ss = utils.browser.browser().get_screenshot_as_base64()
+        ss_error = None
+    except Exception as b_ex:
+        ss = None
+        if b_ex.message:
+            ss_error = '%s: %s' % (type(b_ex).__name__, b_ex.message)
+        else:
+            ss_error = type(b_ex).__name__
+    if ss_error:
+        ss_error = ss_error.encode('base64')
+    artifacts = {'short_tb': short_tb,
+                 'full_tb': full_tb,
+                 'screenshot': ss,
+                 'screenshot_error': ss_error}
+
+    art_client.fire_hook('add_assertion', test_name=test_name, test_location=test_location,
+                         artifacts=artifacts)
+
+
 @contextmanager
-def _catch_assert_cm():
+def _catch_assert_cm(request):
     """assert catching context manager
 
     * Catches a single AssertionError, and turns it into a soft assert
@@ -97,6 +134,9 @@ def _catch_assert_cm():
     try:
         yield
     except AssertionError as ex:
+
+        handle_assert_artifacts(request)
+
         caught_assert = _annotate_failure(str(ex))
         _thread_locals.caught_asserts.append(caught_assert)
 
@@ -127,7 +167,7 @@ def _annotate_failure(fail_message=''):
 
 
 @pytest.fixture
-def soft_assert():
+def soft_assert(request):
     """soft assert fixture, used to defer AssertionError to the end of a test run
 
     Usage:
@@ -158,10 +198,11 @@ def soft_assert():
     """
     def soft_assert_func(expr, fail_message=''):
         if not expr:
+            handle_assert_artifacts(request, fail_message=fail_message)
             caught_assert = _annotate_failure(fail_message)
             _thread_locals.caught_asserts.append(caught_assert)
     # stash helper functions on soft_assert for easy access
-    soft_assert_func.catch_assert = _catch_assert_cm
+    soft_assert_func.catch_assert = partial(_catch_assert_cm, request)
     soft_assert_func.caught_asserts = _get_caught_asserts
     soft_assert_func.clear_asserts = _clear_caught_asserts
     return soft_assert_func

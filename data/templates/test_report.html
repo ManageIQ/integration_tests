@@ -176,9 +176,26 @@ $(function() {
         <div class="panel-body">
             <p>{{test.file}}</p>
             {% if test.short_tb %}
+	        <h4>Short Traceback</h4>
                 <pre class="well">{{test.short_tb}}</pre>
             {% endif %}
+	    {% if test.softassert %}
+                <div>
+		<h4>Soft Asserts</h4>
+		<table>
+                {% for assertion in test.softassert %}
+                    <tr><td><strong>{{loop.index - 1}}</strong></td>
+                    {% for file in assertion %}
+                        <td><a class="label label-success" role="button" href="{{assertion[file]}}">{{file}}</a></td>
+                    {% endfor %}
+		    </tr>
+                {% endfor %}
+		</table>
+                </div>
+		<br>
+	    {% endif %}
             <div>
+                <h3>Artifacts</h3>
                 {% if test.screenshot %}
                     <a href="{{test.screenshot}}" class="btn btn-primary" role="button">Screenshot</a>
                 {% endif %}
