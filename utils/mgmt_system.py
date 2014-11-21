@@ -450,7 +450,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         except Exception:
             return False
 
-    def get_ip_address(self, vm_name):
+    def get_ip_address(self, vm_name, timeout=600):
         """ Returns the first IP address for the selected VM.
 
         Args:
@@ -474,7 +474,7 @@ class VMWareSystem(MgmtSystemAPIBase):
 
         try:
             ip_address, tc = wait_for(wait_for_address, [vm],
-                fail_condition=None, delay=5, num_sec=600,
+                fail_condition=None, delay=5, num_sec=timeout,
                 message="get_ip_address from vsphere")
         except TimedOutError:
             ip_address = None
@@ -833,11 +833,11 @@ class RHEVMSystem(MgmtSystemAPIBase):
                 raise VMInstanceNotFound(vm_name)
             return vm
 
-    def get_ip_address(self, vm_name):
+    def get_ip_address(self, vm_name, timeout=600):
         try:
             wait_for_me = lambda: self._get_vm(vm_name).get_guest_info()
             guest_info, tc = wait_for(wait_for_me,
-                fail_condition=None, delay=5, num_sec=600,
+                fail_condition=None, delay=5, num_sec=timeout,
                 message="get_ip_address from rhevm")
             ip = guest_info.get_ips().get_ip()[0].get_address()
         except TimedOutError:
@@ -1635,7 +1635,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
         instance = self._find_instance_by_name(name)
         return instance._info['addresses']
 
-    def get_ip_address(self, name):
+    def get_ip_address(self, name, **kwargs):
         networks = self._get_instance_networks(name)
         for network_nics in networks.itervalues():
             for nic in network_nics:

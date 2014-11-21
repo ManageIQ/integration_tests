@@ -10,7 +10,6 @@ from cfme.login import login_admin
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils.browser import browser
-from utils.conf import env
 from utils.providers import setup_a_provider
 from utils.randomness import generate_random_string
 from utils.wait import TimedOutError, wait_for
