@@ -123,6 +123,14 @@ class Reporter(ArtifactorBasePlugin):
 
             # Set up destinations for the files
             for ident in test.get('files', []):
+                if "softassert" in ident:
+                    clean_files = []
+                    for assertion in test['files']['softassert']:
+                        files = {k: v.replace(log_dir, "") for k, v in assertion.iteritems()}
+                        clean_files.append(files)
+                    test_data['softassert'] = sorted(clean_files)
+                    continue
+
                 for filename in test['files'].get(ident, []):
                     if "screenshot" in filename:
                         test_data['screenshot'] = filename.replace(log_dir, "")
