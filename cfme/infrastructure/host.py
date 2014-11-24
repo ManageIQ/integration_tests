@@ -310,19 +310,8 @@ class Host(Updateable, Pretty):
     def get_datastores(self):
         """ Gets list of all datastores used by this host"""
         sel.force_navigate('infrastructure_host', context={'host': self})
-        list_acc.select('Relationships', 'Show Datastores')
-
-        datastores = set([])
-        for page in paginator.pages():
-            for title in sel.elements(
-                    "//div[@id='quadicon']/../../../tr/td/a[contains(@href,'storage/show')]"):
-                datastores.add(sel.get_attribute(title, "title"))
-        return datastores
-
-    def get_hostname(self):
-        """ Gets list of all datastores used by this host"""
-        sel.force_navigate('infrastructure_hosts', context={'host': self})
-        list_acc.select('Relationships', 'Show Datastores')
+        list_acc.select('Relationships', version.pick({version.LOWEST: 'Show Datastores',
+                                                       '5.3': 'Show all Datastores'}))
 
         datastores = set([])
         for page in paginator.pages():
