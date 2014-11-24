@@ -434,7 +434,7 @@ class VMWareSystem(MgmtSystemAPIBase):
     @staticmethod
     def _task_wait(task):
         task.update()
-        if task.info.state not in ['queued', 'running']:
+        if task.info.state not in ['queued', 'running', None]:
             return task.info.state
 
     def does_vm_exist(self, name):
@@ -553,6 +553,10 @@ class VMWareSystem(MgmtSystemAPIBase):
         task = vm.Destroy_Task()
         status, t = wait_for(self._task_wait, [task])
         return status == 'success'
+
+    def is_host_connected(self, host_name):
+        host = mobs.HostSystem.get(self.api, name=host_name)
+        return True if host.summary.runtime.connectionState == "connected" else False
 
     def create_vm(self, vm_name):
         raise NotImplementedError('This function has not yet been implemented.')
@@ -712,7 +716,7 @@ class VMWareSystem(MgmtSystemAPIBase):
                 host_name, task.info.error.localizedMessage))
 
         task = host.Destroy_Task()
-        status, t = wait_for(self._task_wait, [task])
+        status, t = wait_for(self._task_wait, [task], fail_condition=None)
 
         return status == 'success'
 
