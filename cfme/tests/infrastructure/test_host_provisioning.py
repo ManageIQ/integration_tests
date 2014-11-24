@@ -178,18 +178,11 @@ def test_host_provisioning(provider_init, cfme_data, host_provisioning, server_r
 
     # Wait for e-mails to appear
     def verify():
-        return (
-            len(
-                smtp_test.get_emails(
-                    text_like="%%Your host request was approved%%"
-                )
-            ) > 0
-            and len(
-                smtp_test.get_emails(
-                    subject_like="Your host provisioning request has Completed - Host:%%%s" %
-                    prov_host_name
-                )
-            ) > 0
-        )
+        return len(
+            smtp_test.get_emails(
+                subject_like="Your host provisioning request has Completed - Host:%%%s" %
+                prov_host_name
+            )
+        ) > 0
 
     wait_for(verify, message="email receive check", delay=5)
