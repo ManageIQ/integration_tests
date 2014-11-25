@@ -105,6 +105,10 @@ $(function() {
                     <br>
                     <strong>SLAVE:</strong> <em>{{test.slaveid}}</em>
                     {% endif %}
+                    {% if test.qa_contact %}
+                    <br>
+                    <strong>OWNER:</strong> <em>{{test.qa_contact}}</em>
+                    {% endif %}
                 </div>
                 <div class="col-md-2">
                     Setup

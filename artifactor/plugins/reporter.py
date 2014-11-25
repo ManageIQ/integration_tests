@@ -148,6 +148,9 @@ class Reporter(ArtifactorBasePlugin):
                         test_data['emails'] = filename.replace(log_dir, "")
                     elif "events.html" in filename:
                         test_data['event_testing'] = filename.replace(log_dir, "")
+                    elif "qa_contact.txt" in filename:
+                        with open(filename) as qafile:
+                            test_data['qa_contact'] = qafile.read()
                 if "merkyl" in ident:
                     test_data['merkyl'] = [f.replace(log_dir, "")
                                            for f in test['files']['merkyl']]

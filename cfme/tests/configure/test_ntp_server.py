@@ -27,37 +27,23 @@ def appliance_date():
         '%Y-%m-%dT%H')
 
 
-def configure_ntp_servers(*server_details):
-    configuration.unset_ntp_servers()
-
-    if server_details:
-        configuration.set_ntp_servers(*server_details)
-    else:
-        configuration.set_ntp_servers(*cfme_data['clock_servers'])
-    flash.assert_message_match(
-        "Configuration settings saved for CFME Server \"%s [%s]\" in Zone \"%s\"" % (
-            configuration.server_name(),
-            configuration.server_id(),
-            configuration.server_zone_description().partition(' ')[0].lower()))
-
-
 def test_ntp_crud():
     """ Insert, Update and Delete the NTP servers """
     # set from yaml file
-    configure_ntp_servers()
+    configuration.configure_ntp_servers()
 
     # set from random values
-    configure_ntp_servers(*(generate_random_string() for _ in range(3)))
+    configuration.configure_ntp_servers(*(generate_random_string() for _ in range(3)))
 
     configuration.unset_ntp_servers()
 
 
 def test_ntp_server_max_character():
-    configure_ntp_servers(*(generate_random_string(size=255) for _ in range(3)))
+    configuration.configure_ntp_servers(*(generate_random_string(size=255) for _ in range(3)))
 
 
-def test_ntp_conf_file_update_Check():
-    configure_ntp_servers()
+def test_ntp_conf_file_update_check():
+    configuration.configure_ntp_servers()
     for clock in cfme_data['clock_servers']:
         clock_entry = ssh_command_execution("cat /etc/ntp.conf | grep %s" % clock).rsplit()
         if clock_entry:
@@ -74,13 +60,13 @@ def test_ntp_server_check():
         if prev_date != orig_date:
             logger.info("Successfully modified the date in the appliance")
             # Configuring the ntp server and restarting the appliance
-            configure_ntp_servers()
+            configuration.configure_ntp_servers()
             yaml = get_yaml_config("vmdb")
             yaml["ntp"]["interval"] = '1.minute'
             set_yaml_config("vmdb", yaml)
             app = IPAppliance()
             app.restart_evm_service()
-            app.wait_for_web_ui()
+            app.wait_for_web_ui(timeout=1500)
             # Providing two hour runtime for the test run to avoid day changing problem
             # (in case if the is triggerred in the midnight)
             wait_for(lambda: (orig_date - appliance_date()).total_seconds() <= 7200)
@@ -88,7 +74,7 @@ def test_ntp_server_check():
             raise Exception("Failed modifying the system date")
 
 
-@pytest.mark.xfail(message='https://bugzilla.redhat.com/show_bug.cgi?id=1153633')
+@pytest.mark.bugzilla(1153633)
 def test_clear_ntp_settings():
     configuration.unset_ntp_servers()
     flash.assert_message_match(

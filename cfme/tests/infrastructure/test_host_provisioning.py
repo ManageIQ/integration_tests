@@ -95,7 +95,8 @@ def test_host_provisioning(provider_init, cfme_data, host_provisioning, server_r
             logger.info('Cleaning up host %s on provider %s' % (prov_host_name, provider_crud.key))
             mgmt_system = provider_crud.get_mgmt_system()
             host_list = mgmt_system.list_host()
-            if host_provisioning['ip_addr'] in host_list.values():
+            if host_provisioning['ip_addr'] in host_list:
+                wait_for(mgmt_system.is_host_connected, [host_provisioning['ip_addr']])
                 mgmt_system.remove_host_from_cluster(host_provisioning['ip_addr'])
 
             ipmi = test_host.get_ipmi()
@@ -177,18 +178,11 @@ def test_host_provisioning(provider_init, cfme_data, host_provisioning, server_r
 
     # Wait for e-mails to appear
     def verify():
-        return (
-            len(
-                smtp_test.get_emails(
-                    text_like="%%Your host request was approved%%"
-                )
-            ) > 0
-            and len(
-                smtp_test.get_emails(
-                    subject_like="Your host provisioning request has Completed - Host:%%%s" %
-                    prov_host_name
-                )
-            ) > 0
-        )
+        return len(
+            smtp_test.get_emails(
+                subject_like="Your host provisioning request has Completed - Host:%%%s" %
+                prov_host_name
+            )
+        ) > 0
 
     wait_for(verify, message="email receive check", delay=5)
