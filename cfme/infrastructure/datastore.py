@@ -9,11 +9,13 @@ import ui_navigate as nav
 # needed before grafting
 import cfme.web_ui.menu  # noqa
 
+from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import provider
-from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb
+from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg
 from functools import partial
 from utils.pretty import Pretty
+from utils.wait import wait_for
 from utils import version
 
 
@@ -78,6 +80,16 @@ class Datastore(Pretty):
         cfg_btn('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
+    def wait_for_delete(self):
+        sel.force_navigate('infrastructure_datastores')
+        wait_for(lambda: not self.exists, fail_condition=False,
+             message="Wait datastore to disappear", num_sec=1000, fail_func=sel.refresh)
+
+    def wait_for_appear(self):
+        sel.force_navigate('infrastructure_datastores')
+        wait_for(lambda: self.exists, fail_condition=False,
+             message="Wait datastore to appear", num_sec=1000, fail_func=sel.refresh)
+
     def get_detail(self, *ident):
         """ Gets details from the details infoblock
 
@@ -141,15 +153,37 @@ class Datastore(Pretty):
             % (self.name, "All Registered vms")
         )
 
+    def delete_all_attached_hosts(self):
+        sel.force_navigate('infrastructure_datastore', context=self._get_context())
+        sel.click(details_page.infoblock.element("Relationships", "Managed VMs"))
+        sel.click(pg.check_all())
+        cfg_btn("Remove selected items from the VMDB", invokes_alert=True)
+        sel.handle_alert(cancel=False)
+
+    def delete_all_attached_vms(self):
+        sel.force_navigate('infrastructure_datastore', context=self._get_context())
+        sel.click(details_page.infoblock.element("Relationships", "Hosts"))
+        sel.click(pg.check_all())
+        cfg_btn("Remove Hosts from the VMDB", invokes_alert=True)
+        sel.handle_alert(cancel=False)
+
+    def wait_for_delete_all(self):
+        try:
+            sel.refresh()
+            if sel.is_displayed_text("No Records Found"):
+                return True
+        except CandidateNotFound:
+                return False
+
     @property
     def exists(self):
         try:
             sel.force_navigate('infrastructure_datastore', context=self._get_context())
-            return True
-        except sel.NoSuchElementException, e:
-            if Quadicon(self.name, 'datastore').locate() in e.msg:
-                return False
-            raise
+            quad = Quadicon(self.name, 'datastore')
+            if sel.is_displayed(quad):
+                return True
+        except sel.NoSuchElementException:
+            return False
 
 
 def get_all_datastores(do_not_navigate=False):

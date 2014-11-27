@@ -1,0 +1,194 @@
+- cfme.fixtures.pytest_selenium.force_navigate(page_name='about', args=(), _tries=0, kwargs={})
+|   - cfme.fixtures.pytest_selenium.execute_script(script='miqSparkleOff();', args=(), kwargs={})
+|   -> None
+|   - cfme.login.current_user()
+|   -> None
+|   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc="//div[@id='blocker_div']")
+|   -> !!!<class 'selenium.common.exceptions.NoSuchElementException'>
+|   - cfme.login.login_admin(kwargs={})
+|   |   - cfme.login.current_full_name()
+|   |   |   - cfme.login.logged_in()
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc='//div[@id="page_header_div"]//li[contains(@class, "dropdown")]')
+|   |   |   |   -> !!!<class 'selenium.common.exceptions.NoSuchElementException'>
+|   |   |   -> False
+|   |   -> None
+|   |   - cfme.login.logout()
+|   |   |   - cfme.login.logged_in()
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc='//div[@id="page_header_div"]//li[contains(@class, "dropdown")]')
+|   |   |   |   -> !!!<class 'selenium.common.exceptions.NoSuchElementException'>
+|   |   |   -> False
+|   |   -> None
+|   |   - cfme.login.login(username='admin', password='smartvm', submit_method=<function _click_on_login at 0x410eb18>)
+|   |   |   - cfme.login.logged_in()
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc='//div[@id="page_header_div"]//li[contains(@class, "dropdown")]')
+|   |   |   |   -> !!!<class 'selenium.common.exceptions.NoSuchElementException'>
+|   |   |   -> False
+|   |   |   - cfme.login.logged_in()
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc='//div[@id="page_header_div"]//li[contains(@class, "dropdown")]')
+|   |   |   |   -> !!!<class 'selenium.common.exceptions.NoSuchElementException'>
+|   |   |   -> False
+|   |   |   - <MultiMethod 'cfme.web_ui.fill'>.__call__(args=(<cfme.web_ui.Form fields=[('username', '//input[@id="user_name"]'), ('user_verify_password', '//input[@id="user_verify_password"]'), ('user_new_password', '//input[@id="user_new_password"]'), ('password', '//input[@id="user_password"]')]>, {'username': 'admin', 'password': 'smartvm'}), kwds={})
+|   |   |   |   - cfme.fixtures.pytest_selenium.tag(loc='//input[@id="user_name"]')
+|   |   |   |   -> u'input'
+|   |   |   |   - cfme.fixtures.pytest_selenium.get_attribute(loc='//input[@id="user_name"]', attr='type')
+|   |   |   |   -> u'text'
+|   |   |   |   - cfme.web_ui.fill_text(val='admin', textbox='//input[@id="user_name"]')
+|   |   |   |   -> (<MultiMethod 'cfme.fixtures.pytest_selenium.set_text'>, 'admin')
+|   |   |   |   - cfme.fixtures.pytest_selenium.send_keys(text='admin', loc=<selenium.webdriver.remote.webelement.WebElement object at 0x480fd50>)
+|   |   |   |   -> None
+|   |   |   |   - cfme.fixtures.pytest_selenium.tag(loc='//input[@id="user_password"]')
+|   |   |   |   -> u'input'
+|   |   |   |   - cfme.fixtures.pytest_selenium.get_attribute(loc='//input[@id="user_password"]', attr='type')
+|   |   |   |   -> u'password'
+|   |   |   |   - cfme.web_ui.fill_password(pwbox='//input[@id="user_password"]', password='smartvm')
+|   |   |   |   -> (<MultiMethod 'cfme.fixtures.pytest_selenium.set_text'>, '********')
+|   |   |   |   - cfme.fixtures.pytest_selenium.send_keys(text='smartvm', loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48a27d0>)
+|   |   |   |   -> None
+|   |   |   -> True
+|   |   |   - cfme.fixtures.pytest_selenium.click(no_custom_handler=False, loc='//a[@id="login"]', wait_ajax=True)
+|   |   |   -> True
+|   |   |   - cfme.web_ui.flash.assert_no_errors(messages=None)
+|   |   |   |   - cfme.web_ui.flash.get_messages()
+|   |   |   |   -> []
+|   |   |   -> []
+|   |   |   - cfme.fixtures.pytest_selenium.text(loc='//div[@id="page_header_div"]//li[contains(@class, "dropdown")]', kwargs={})
+|   |   |   -> u'Administrator | EVM-CFME'
+|   |   -> None
+|   -> None
+|   - cfme.web_ui.menu.is_page_active(toplevel='Configure', secondlevel=None)
+|   |   - cfme.web_ui.menu.get_current_toplevel_name()
+|   |   |   - cfme.web_ui.menu.get_rid_of_the_menu_box()
+|   |   |   |   - cfme.web_ui.menu.any_box_displayed()
+|   |   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4750>)
+|   |   |   |   |   -> False
+|   |   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4890>)
+|   |   |   |   |   -> False
+|   |   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b48d0>)
+|   |   |   |   |   -> False
+|   |   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4910>)
+|   |   |   |   |   -> False
+|   |   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4950>)
+|   |   |   |   |   -> False
+|   |   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4990>)
+|   |   |   |   |   -> False
+|   |   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b49d0>)
+|   |   |   |   |   -> False
+|   |   |   |   -> False
+|   |   |   -> None
+|   |   |   - cfme.fixtures.pytest_selenium.text(loc="//ul[@id='maintab']/li[not(contains(@class, 'in'))]/a", kwargs={})
+|   |   |   -> u'Cloud Intelligence'
+|   |   -> 'Cloud Intelligence'
+|   -> False
+|   - cfme.web_ui.menu.get_rid_of_the_menu_box()
+|   |   - cfme.web_ui.menu.any_box_displayed()
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48a2350>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x480fdd0>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x480fb90>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x480fd90>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x487fed0>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x487f510>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x487f3d0>)
+|   |   |   -> False
+|   |   -> False
+|   -> None
+|   - cfme.web_ui.menu.open_top_level(title='Configure')
+|   |   - cfme.web_ui.menu.get_top_level_element(title='Configure')
+|   |   -> <selenium.webdriver.remote.webelement.WebElement object at 0x480fb90>
+|   |   - cfme.fixtures.pytest_selenium.raw_click(wait_ajax=True, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x487f510>)
+|   |   -> None
+|   -> None
+|   - cfme.web_ui.menu.get_rid_of_the_menu_box()
+|   |   - cfme.web_ui.menu.any_box_displayed()
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48a2350>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48a29d0>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48a20d0>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48a2250>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48a26d0>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48a2950>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x480fd50>)
+|   |   |   -> False
+|   |   -> False
+|   -> None
+|   - cfme.web_ui.menu.get_current_toplevel_name()
+|   |   - cfme.web_ui.menu.get_rid_of_the_menu_box()
+|   |   |   - cfme.web_ui.menu.any_box_displayed()
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4b10>)
+|   |   |   |   -> False
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4ed0>)
+|   |   |   |   -> False
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4e50>)
+|   |   |   |   -> False
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4790>)
+|   |   |   |   -> False
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4a10>)
+|   |   |   |   -> False
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4990>)
+|   |   |   |   -> False
+|   |   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b49d0>)
+|   |   |   |   -> False
+|   |   |   -> False
+|   |   -> None
+|   |   - cfme.fixtures.pytest_selenium.text(loc="//ul[@id='maintab']/li[not(contains(@class, 'in'))]/a", kwargs={})
+|   |   -> u'Configure'
+|   -> 'Configure'
+|   - cfme.web_ui.menu.get_rid_of_the_menu_box()
+|   |   - cfme.web_ui.menu.any_box_displayed()
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x480fd50>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4790>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4a10>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4990>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b49d0>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4910>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4950>)
+|   |   |   -> False
+|   |   -> False
+|   -> None
+|   - cfme.web_ui.menu.get_top_level_element(title='Configure')
+|   -> <selenium.webdriver.remote.webelement.WebElement object at 0x487f550>
+|   - cfme.web_ui.menu.open_second_level(top_level_element=<selenium.webdriver.remote.webelement.WebElement object at 0x487f550>, title='About')
+|   |   - cfme.web_ui.menu.get_second_level_element(top_level_el=<selenium.webdriver.remote.webelement.WebElement object at 0x487f550>, title='About')
+|   |   -> <selenium.webdriver.remote.webelement.WebElement object at 0x48a2b10>
+|   |   - cfme.fixtures.pytest_selenium.raw_click(wait_ajax=True, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48a29d0>)
+|   |   -> None
+|   -> None
+|   - cfme.web_ui.menu.get_rid_of_the_menu_box()
+|   |   - cfme.web_ui.menu.any_box_displayed()
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4990>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4890>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b48d0>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4750>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b47d0>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4d50>)
+|   |   |   -> False
+|   |   |   - cfme.fixtures.pytest_selenium.is_displayed(_deep=0, loc=<selenium.webdriver.remote.webelement.WebElement object at 0x48b4a50>)
+|   |   |   -> False
+|   |   -> False
+|   -> None
+-> None
+- <cfme.web_ui.InfoBlock >.text(ident=('Session Information', 'Version'))
+|   - <cfme.web_ui.InfoBlock >.container(ident=('Session Information', 'Version'))
+|   -> <selenium.webdriver.remote.webelement.WebElement object at 0x487fdd0>
+-> u'master.20141008033116_80d63fe'
