@@ -1,6 +1,5 @@
 import string
 import re
-from types import StringType
 from fixtures.pytest_store import store
 import multimethods as mm
 
@@ -222,7 +221,7 @@ class StrictVersion (Version):
         return vstring
 
     def __cmp__(self, other):
-        if isinstance(other, StringType):
+        if isinstance(other, basestring):
             other = StrictVersion(other)
 
         compare = cmp(self.version, other.version)
@@ -393,7 +392,7 @@ class LooseVersion (Version):
         return "LooseVersion ('%s')" % str(self)
 
     def __cmp__(self, other):
-        if isinstance(other, StringType):
+        if isinstance(other, basestring):
             other = LooseVersion(other)
         special_cmp = cmp(self._special, other._special)
         if special_cmp == 0:
