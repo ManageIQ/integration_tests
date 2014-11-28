@@ -210,7 +210,7 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 
 
 def do_vm_provisioning(template_name, provider_crud, vm_name, provisioning_data, request,
-                       provider_mgmt, provider_key, smtp_test, num_sec=1500):
+                       provider_mgmt, provider_key, smtp_test, num_sec=1500, wait=True):
     # generate_tests makes sure these have values
     sel.force_navigate('infrastructure_provision_vms', context={
         'provider': provider_crud,
@@ -229,6 +229,8 @@ def do_vm_provisioning(template_name, provider_crud, vm_name, provisioning_data,
     fill(provisioning_form, provisioning_data,
          action=provisioning_form.submit_button)
     flash.assert_no_errors()
+    if not wait:
+        return
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider_crud.key)

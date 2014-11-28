@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import atexit
+import re
 
 
 def lazycache(wrapped_method):
@@ -123,3 +124,8 @@ def diaper(f, *a, **k):
 def at_exit(f, *args, **kwargs):
     """Diaper-protected atexit handler registering. Same syntax as atexit.register()"""
     return atexit.register(lambda: diaper(f, *args, **kwargs))
+
+
+def normalize_text(text):
+    text = re.sub(r"[^a-z0-9 ]", "", text.strip().lower())
+    return re.sub(r"\s+", " ", text)

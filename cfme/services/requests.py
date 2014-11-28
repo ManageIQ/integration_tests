@@ -38,6 +38,7 @@ def approve(reason, cancel=False):
         reason: Reason for approving the request.
         cancel: Whether to cancel the approval.
     """
+    sel.wait_for_element(buttons.approve)
     sel.click(buttons.approve)
     fill(fields.reason, reason)
     sel.click(buttons.submit if not cancel else buttons.cancel)
