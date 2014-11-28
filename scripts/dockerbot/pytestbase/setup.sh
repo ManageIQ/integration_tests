@@ -27,11 +27,11 @@ creds_ret=1
 while [ "$creds_ret" -ne "0" ]; do
     if [ "$try" -lt "$max_clone_retry" ]; then
         let try+=1;
-        echo "Downloading credentials - try $try of $max_clone_retry..."
+        echo "Downloading credentials - try $try of $max_clone_retry..." >> $ARTIFACTOR_DIR/setup.txt
         GIT_SSL_NO_VERIFY=true git clone $CFME_CRED_REPO $CFME_CRED_REPO_DIR >> $ARTIFACTOR_DIR/setup.txt 2>&1
         let creds_ret="$?";
     else
-        echo "Failed to download credentials, exiting..."
+        echo "Failed to download credentials, exiting..." >> $ARTIFACTOR_DIR/setup.txt
         exit
     fi
 done
