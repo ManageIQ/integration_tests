@@ -879,6 +879,27 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
         return ip
 
+    def get_vm_name_from_ip(self, ip):
+        # unfortunately it appears you cannot query for ip address from the sdk,
+        #   unlike curling rest api which does work
+        """ Gets the name of a vm from its IP.
+
+        Args:
+            ip: The ip address of the vm.
+        Returns: The vm name for the corresponding IP."""
+
+        vms = self.api.vms.list()
+
+        for vm in vms:
+            print "Checking {}...".format(vm.name)
+            if vm.get_guest_info() is None or vm.get_guest_info().get_ips() is None:
+                continue
+            else:
+                for addr in vm.get_guest_info().get_ips().get_ip():
+                    if ip in addr.get_address():
+                        return vm.name
+        raise cfme_exc.VmNotFoundViaIP('The requested IP is not known as a VM')
+
     def does_vm_exist(self, name):
         try:
             self._get_vm(name)
@@ -1675,6 +1696,23 @@ class OpenstackSystem(MgmtSystemAPIBase):
             for nic in network_nics:
                 if nic['OS-EXT-IPS:type'] == 'floating':
                     return str(nic['addr'])
+
+    def get_vm_name_from_ip(self, ip):
+        # unfortunately it appears you cannot query for ip address from the sdk,
+        #   unlike curling rest api which does work
+        """ Gets the name of a vm from its IP.
+
+        Args:
+            ip: The ip address of the vm.
+        Returns: The vm name for the corresponding IP."""
+
+        instances = self._get_all_instances()
+
+        for instance in instances:
+            addr = self.get_ip_address(instance.name)
+            if addr is not None and ip in addr:
+                return str(instance.name)
+        raise cfme_exc.VmNotFoundViaIP('The requested IP is not known as a VM')
 
     def _get_all_instances(self, filter_tenants=True):
         instances = self.api.servers.list(True, {'all_tenants': True})
