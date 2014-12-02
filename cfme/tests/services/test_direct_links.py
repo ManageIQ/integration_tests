@@ -97,16 +97,9 @@ def test_services_request_direct_url(generated_request):
     request_url = sel.current_url()
     sel.get(sel.base_url())    # I need to flip it with something different here
     sel.get(request_url)        # Ok, direct access now.
-    # This is a bit tricky. We have to wait IF the blank page appeared, because checking
-    # if we are STILL IN CFME is unreliable as the transition is not guarded by JS or stuff.
-    # btw. when the on_cfme_page returns true because of being on login screen, it will work.
-    # After logging in, user is redirected for a correct link. Tested.
-    try:
-        wait_for(
-            lambda: not sel.on_cfme_page(),
-            num_sec=20,
-            message="wait for blank page appear"
-        )
-        pytest.fail("Blank screen appeared!")
-    except TimedOutError:
-        pass  # Success!
+    wait_for(
+        lambda: sel.is_displayed(".brand"),
+        num_sec=20,
+        message="wait for a CFME page appear",
+        delay=0.5
+    )
