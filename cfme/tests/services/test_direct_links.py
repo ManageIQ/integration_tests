@@ -12,7 +12,7 @@ from cfme.web_ui import flash
 from utils.browser import browser
 from utils.providers import setup_a_provider
 from utils.randomness import generate_random_string
-from utils.wait import TimedOutError, wait_for
+from utils.wait import wait_for
 from fixtures.pytest_store import store
 
 
