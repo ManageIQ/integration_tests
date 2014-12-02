@@ -1936,7 +1936,6 @@ class Quadicon(Pretty):
             "no_snapshot": ("d", 'txt'),
         },
         None: {},  # If you just want to find the quad and not mess with data
-
     }
 
     def __init__(self, name, qtype=None):

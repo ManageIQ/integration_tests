@@ -439,15 +439,15 @@ def wait_for_host_delete(host):
     sel.force_navigate('infrastructure_hosts')
     quad = Quadicon(host.name, 'host')
     logger.info('Waiting for a host to delete...')
-    wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
-             message="Wait host to disappear", num_sec=1000, fail_func=sel.refresh)
+    wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
+             message="Wait host to disappear", num_sec=500, fail_func=sel.refresh)
 
 
 def wait_for_host_to_appear(host):
     sel.force_navigate('infrastructure_hosts')
     quad = Quadicon(host.name, 'host')
     logger.info('Waiting for a host to appear...')
-    wait_for(lambda prov: sel.is_displayed(prov), func_args=[quad], fail_condition=False,
+    wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
              message="Wait host to appear", num_sec=1000, fail_func=sel.refresh)
 
 

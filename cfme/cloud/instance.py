@@ -161,7 +161,7 @@ nav.add_branch(
 
         "clouds_images":
         [
-            lambda _: accordion.tree("Images", "All Images"),
+            lambda _: (accordion.tree("Images", "All Images")),
             {
                 "clouds_images_filter_folder":
                 [
@@ -217,9 +217,14 @@ class Instance(Updateable, Pretty):
             self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
 
     def delete(self, cancel=False):
-        sel.force_navigate('clouds_instance', context={'instance': self})
+        sel.force_navigate('clouds_instances', context={'instance': self})
         toolbar.select("Configuration", "Remove from the VMDB", invokes_alert=True)
         sel.handle_alert(cancel=cancel)
+
+    def wait_for_delete(self):
+        quad = Quadicon(self.name, 'instance')
+        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
+             message="Wait instance to disappear", num_sec=500, fail_func=sel.refresh)
 
     def load_details(self, refresh=False):
         """Navigates to an instance's details page.
@@ -850,3 +855,31 @@ def unassign_policy_profiles(vm_name, *policy_profile_names, **kwargs):
         policy_profile_names: :py:class:`str` with Policy Profile names.
     """
     return _assign_unassign_policy_profiles(vm_name, False, *policy_profile_names, **kwargs)
+
+
+class Image(object):
+
+    def __init__(self, name, provider_crud):
+        self.name = name
+        self.image_name = name
+        self.provider_crud = provider_crud
+
+    def delete(self):
+        """Remove template from CFME VMDB"""
+        sel.force_navigate("clouds_images")
+        quad = Quadicon(self.name, 'image')
+        sel.check(quad.checkbox())
+        cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
+        sel.handle_alert()
+
+    def wait_for_delete(self):
+        sel.force_navigate("clouds_images")
+        quad = Quadicon(self.name, 'image')
+        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
+             message="Wait Image to disappear", num_sec=500, fail_func=sel.refresh)
+
+    def wait_for_appear(self):
+        sel.force_navigate("clouds_images")
+        quad = Quadicon(self.name, 'image')
+        wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
+             message="Wait Image to appear", num_sec=1000, fail_func=sel.refresh)
