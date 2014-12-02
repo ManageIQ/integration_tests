@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 from cStringIO import StringIO
 from datetime import datetime
 from textwrap import dedent
+import operator
 
 import boto
 import tzlocal
@@ -514,6 +515,35 @@ class VMWareSystem(MgmtSystemAPIBase):
                 obj_list.append(vm_props['name'])
         return obj_list
 
+    def get_vm_name_from_ip(self, ip):
+        """ Gets the name of a vm from its IP.
+
+        Args:
+            ip: The ip address of the vm.
+        Returns: The vm name for the corresponding IP."""
+        vms = self.api.si.content.searchIndex.FindAllByIp(ip=ip, vmSearch=True)
+        # As vsphere remembers the last IP a vm had, when we search we get all
+        # of them. Consequently we need to store them all in a dict and then sort
+        # them to find out which one has the latest boot time. I am going out on
+        # a limb and saying that searching for several vms and querying each object
+        # is quicker than finding all machines and recording the bootTime and ip address
+        # of each, before iterating through all of them to weed out the ones we care
+        # about, but I could be wrong.
+        boot_times = {}
+        for vm in vms:
+            if vm.name not in boot_times:
+                boot_times[vm.name] = datetime.fromtimestamp(0)
+                try:
+                    boot_times[vm.name] = vm.summary.runtime.bootTime
+                except:
+                    pass
+        if boot_times:
+            newest_boot_time = sorted(boot_times.items(), key=operator.itemgetter(1),
+                                      reverse=True)[0]
+            return newest_boot_time[0]
+        else:
+            raise cfme_exc.VmNotFoundViaIP('The requested IP is not known as a VM')
+
     def start_vm(self, vm_name):
         self.wait_vm_steady(vm_name)
         if self.is_vm_running(vm_name):
@@ -848,6 +878,27 @@ class RHEVMSystem(MgmtSystemAPIBase):
             ip = None
 
         return ip
+
+    def get_vm_name_from_ip(self, ip):
+        # unfortunately it appears you cannot query for ip address from the sdk,
+        #   unlike curling rest api which does work
+        """ Gets the name of a vm from its IP.
+
+        Args:
+            ip: The ip address of the vm.
+        Returns: The vm name for the corresponding IP."""
+
+        vms = self.api.vms.list()
+
+        for vm in vms:
+            print "Checking {}...".format(vm.name)
+            if vm.get_guest_info() is None or vm.get_guest_info().get_ips() is None:
+                continue
+            else:
+                for addr in vm.get_guest_info().get_ips().get_ip():
+                    if ip in addr.get_address():
+                        return vm.name
+        raise cfme_exc.VmNotFoundViaIP('The requested IP is not known as a VM')
 
     def does_vm_exist(self, name):
         try:
@@ -1645,6 +1696,23 @@ class OpenstackSystem(MgmtSystemAPIBase):
             for nic in network_nics:
                 if nic['OS-EXT-IPS:type'] == 'floating':
                     return str(nic['addr'])
+
+    def get_vm_name_from_ip(self, ip):
+        # unfortunately it appears you cannot query for ip address from the sdk,
+        #   unlike curling rest api which does work
+        """ Gets the name of a vm from its IP.
+
+        Args:
+            ip: The ip address of the vm.
+        Returns: The vm name for the corresponding IP."""
+
+        instances = self._get_all_instances()
+
+        for instance in instances:
+            addr = self.get_ip_address(instance.name)
+            if addr is not None and ip in addr:
+                return str(instance.name)
+        raise cfme_exc.VmNotFoundViaIP('The requested IP is not known as a VM')
 
     def _get_all_instances(self, filter_tenants=True):
         instances = self.api.servers.list(True, {'all_tenants': True})
