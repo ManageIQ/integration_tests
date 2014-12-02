@@ -198,7 +198,7 @@ class Appliance(object):
 
             # credential hosts
             logger.info('configure fleecing, credentialing hosts...')
-            setup_providers_hosts_credentials(self._provider_name)
+            setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
 
             # if self.is_on_rhev:
             #    self.add_rhev_direct_lun_disk()
