@@ -133,7 +133,7 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     service_catalogs.order(catalog_item.catalog, catalog_item)
     logger.info('Waiting for cfme provision request for service {}'
         .format(catalog_item.name))
-    row_description = "Provisioning [{}] for Service [{}]"\
+    row_description = "Provisioning VM [{}] for Service [{}]"\
         .format(catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
