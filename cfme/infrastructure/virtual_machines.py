@@ -4,6 +4,7 @@ quadicon lists, and VM details page.
 import re
 from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable, TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
+from cfme.infrastructure import provider
 from cfme.services import requests
 from cfme.web_ui.prov_form import provisioning_form
 from cfme.web_ui import (
@@ -13,14 +14,17 @@ from cfme.web_ui import (
 from cfme.web_ui.menu import nav
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
+from utils.appliance import IPAppliance
 from utils.conf import cfme_data
 from utils.log import logger
+from utils.providers import get_provider_key
 from utils.randomness import generate_random_string
 from utils.timeutil import parsetime
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.mgmt_system import ActionNotSupported
-from utils import version
+from utils.ssh import SSHClient
+from utils import classproperty, version
 
 QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
                          " or contains(@href, '/show/')]")  # for provider specific vm/template page
@@ -429,6 +433,24 @@ class Vm(Common):
         self.template_name = template_name
         self.provider_crud = provider_crud
 
+    @classproperty
+    def appliance(cls):
+        """Returns the Vm object targeted at the appliance."""
+        ssh_client = SSHClient()
+        ip = IPAppliance().address
+        appliance_name = ssh_client.run_rails_command(
+            "'Vm.vms_by_ipaddress(\"%s\"){|vm| puts vm.name}'" % ip
+        )[1].strip()
+        ems_name = ssh_client.run_rails_command(
+            "'Vm.vms_by_ipaddress(\"%s\"){|vm| puts EmsInfra.find(vm.ems_id).name}'" % ip
+        )[1].strip()
+        provider_crud = provider.get_from_config(get_provider_key(ems_name))
+        return cls(appliance_name, provider_crud)
+
+    @property
+    def provider(self):
+        return self.provider_crud
+
     def create_on_provider(self, timeout=900, find_in_cfme=False):
         """Create the VM on the provider
 
@@ -652,6 +674,48 @@ class Template(Common):
             return True
         except TemplateNotFound:
             return False
+
+    def check_compliance(self):
+        self.load_details()
+        pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
+
+    def assign_policy_profiles(self, *policy_profile_names):
+        """ Assign Policy Profiles to this VM.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(True, *policy_profile_names)
+
+    def unassign_policy_profiles(self, *policy_profile_names):
+        """ Unssign Policy Profiles to this VM.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(False, *policy_profile_names)
+
+    def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
+        """DRY function for managing policy profiles.
+
+        See :py:func:`assign_policy_profiles` and :py:func:`assign_policy_profiles`
+
+        Args:
+            assign: Wheter to assign or unassign.
+            policy_profile_names: :py:class:`str` with Policy Profile names.
+        """
+        self.load_details()
+        pol_btn("Manage Policies")
+        for policy_profile in policy_profile_names:
+            if assign:
+                manage_policies_tree.check_node(policy_profile)
+            else:
+                manage_policies_tree.uncheck_node(policy_profile)
+        form_buttons.save()
 
 
 class Genealogy(object):
