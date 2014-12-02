@@ -204,7 +204,9 @@ def browser_session(*args, **kwargs):
 def _load_firefox_profile():
     # create a firefox profile using the template in data/firefox_profile.js.template
     global firefox_profile_tmpdir
-    if firefox_profile_tmpdir is None:
+
+    # Make a new firefox profile dir if it's unset or doesn't exist for some reason
+    if firefox_profile_tmpdir is None or not os.path.exists(firefox_profile_tmpdir):
         firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
         # Clean up tempdir at exit
         atexit.register(rmtree, firefox_profile_tmpdir)
