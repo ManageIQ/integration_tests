@@ -240,11 +240,11 @@ class Appliance(object):
 
     @property
     def is_on_rhev(self):
-        return isinstance(self._provider, RHEVMSystem)
+        return isinstance(self.provider, RHEVMSystem)
 
     @property
     def is_on_vsphere(self):
-        return isinstance(self._provider, VMWareSystem)
+        return isinstance(self.provider, VMWareSystem)
 
     def add_rhev_direct_lun_disk(self):
         if not isinstance(self._provider, RHEVMSystem):
@@ -825,7 +825,7 @@ class IPAppliance(object):
                                          .format(self.address))
             self.wait_for_web_ui()
         else:
-            logger.warn("some version of vddk already installed")
+            logger.warning("some version of vddk already installed")
 
     def wait_for_db(self, timeout=180):
         """Waits for appliance database to be ready
