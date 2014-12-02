@@ -7,7 +7,7 @@ from datetime import datetime
 
 import pytest
 
-from fixtures.artifactor_plugin import art_client
+from fixtures.artifactor_plugin import art_client, get_test_idents
 from fixtures.terminalreporter import reporter
 from utils import lazycache
 from utils import providers
@@ -433,10 +433,12 @@ def pytest_runtest_call(__multicall__, item):
     except TimedOutError:
         pass
 
+    name, location = get_test_idents(item)
+
     art_client.fire_hook(
         'filedump',
-        test_name=item.name,
-        test_location=item.parent.name,
+        test_name=name,
+        test_location=location,
         filename="events.html",
         contents=HTMLReport(
             node_id, register_event.expectations, register_event.get_all_received_events()

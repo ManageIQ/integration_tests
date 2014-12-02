@@ -30,6 +30,14 @@ from utils.wait import wait_for
 import atexit
 
 
+def get_test_idents(item):
+
+    if getattr(item, 'location', None):
+        return item.location[2], item.location[0]
+    else:
+        return item.name, item.parent.name
+
+
 class DummyClient(object):
     def fire_hook(self, *args, **kwargs):
         return
@@ -86,29 +94,32 @@ def pytest_configure(config):
 
 
 def pytest_runtest_protocol(item):
-    art_client.fire_hook('start_test', test_location=item.location[0], test_name=item.location[2],
+    name, location = get_test_idents(item)
+    art_client.fire_hook('start_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
 
 
 def pytest_runtest_teardown(item, nextitem):
+    name, location = get_test_idents(item)
     words = []
     for cred in credentials:
         word = credentials[cred].get('password', None)
         if word:
             words.append(word)
-    art_client.fire_hook('finish_test', test_location=item.location[0], test_name=item.location[2],
+    art_client.fire_hook('finish_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
-    art_client.fire_hook('sanitize', test_location=item.location[0], test_name=item.location[2],
+    art_client.fire_hook('sanitize', test_location=location, test_name=name,
                          fd_idents=['func_trace'], words=words)
 
 
 def pytest_runtest_logreport(report):
+    name, location = get_test_idents(report)
     if hasattr(report, 'wasxfail'):
         xfail = True
     else:
         xfail = False
-    art_client.fire_hook('report_test', test_location=report.location[0],
-                         test_name=report.location[2], test_xfail=xfail, test_when=report.when,
+    art_client.fire_hook('report_test', test_location=location,
+                         test_name=name, test_xfail=xfail, test_when=report.when,
                          test_outcome=report.outcome)
     art_client.fire_hook('build_report')
 

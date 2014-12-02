@@ -12,7 +12,7 @@ import subprocess
 import time
 
 from cfme.configure import configuration
-from fixtures.artifactor_plugin import art_client
+from fixtures.artifactor_plugin import art_client, get_test_idents
 from utils.conf import env
 from utils.log import create_logger
 from utils.net import random_port, my_ip_address, net_check_remote
@@ -92,10 +92,12 @@ def pytest_runtest_call(__multicall__, item):
     if "smtp_test" not in item.funcargs:
         return
 
+    name, location = get_test_idents(item)
+
     art_client.fire_hook(
         "filedump",
-        test_name=item.name,
-        test_location=item.parent.name,
+        test_name=name,
+        test_location=location,
         filename="emails.html",
         contents=item.funcargs["smtp_test"].get_html_report(),
         fd_ident="emails"
