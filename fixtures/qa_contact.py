@@ -3,7 +3,7 @@ import inspect
 import subprocess
 import re
 import operator
-from fixtures.artifactor_plugin import art_client
+from fixtures.artifactor_plugin import art_client, get_test_idents
 
 
 def dig_code(node):
@@ -31,6 +31,7 @@ def dig_code(node):
 
 
 def pytest_exception_interact(node, call, report):
+    name, location = get_test_idents(node)
     try:
         qa_arr = []
         results = dig_code(node)
@@ -40,6 +41,5 @@ def pytest_exception_interact(node, call, report):
 
     except:
         qa_string = "Unknown"
-    art_client.fire_hook('filedump', test_location=node.location[0],
-                         test_name=node.location[2],
+    art_client.fire_hook('filedump', test_location=location, test_name=name,
                          filename="qa_contact.txt", contents=str(qa_string), fd_ident="qa")

@@ -1,6 +1,6 @@
 import pytest
 
-from fixtures.artifactor_plugin import appliance_ip_address, art_client
+from fixtures.artifactor_plugin import appliance_ip_address, art_client, get_test_idents
 
 
 class MerkylInspector(object):
@@ -12,8 +12,9 @@ class MerkylInspector(object):
         so during the test without this class/fixture, this is merely a convenience
         and does nothing special.
         """
-        self.test_name = request.node.location[2]
-        self.test_location = request.node.location[0]
+        name, location = get_test_idents(request.node)
+        self.test_name = name
+        self.test_location = location
         self.ip = appliance_ip_address
 
     def get_log(self, log_name):

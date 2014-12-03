@@ -56,6 +56,9 @@ def test_ntp_server_check():
         # Configuring the ntp server and restarting the appliance
         configuration.configure_ntp_servers()
         yaml = get_yaml_config("vmdb")
+        ntp = yaml.get("ntp", None)
+        if not ntp:
+            yaml["ntp"] = {}
         yaml["ntp"]["interval"] = '1.minute'
         set_yaml_config("vmdb", yaml)
         store.current_appliance.restart_evm_service()

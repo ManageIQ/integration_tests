@@ -17,6 +17,7 @@ PyPDF2
 pytest
 python-bugzilla>=1.1.0
 python-dateutil
+python-keystoneclient
 python-novaclient
 pywinrm
 PyYAML

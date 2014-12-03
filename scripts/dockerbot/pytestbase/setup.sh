@@ -20,8 +20,24 @@ on_exit () {
 
 trap on_exit EXIT
 
-# Download the credentials and the master branch of the cfme_tests repo
-GIT_SSL_NO_VERIFY=true git clone $CFME_CRED_REPO $CFME_CRED_REPO_DIR >> $ARTIFACTOR_DIR/setup.txt 2>&1
+# Download the credentials
+max_clone_retry=5
+try=0
+creds_ret=1
+while [ "$creds_ret" -ne "0" ]; do
+    if [ "$try" -lt "$max_clone_retry" ]; then
+        let try+=1;
+        echo "Downloading credentials - try $try of $max_clone_retry..." >> $ARTIFACTOR_DIR/setup.txt
+        GIT_SSL_NO_VERIFY=true git clone $CFME_CRED_REPO $CFME_CRED_REPO_DIR >> $ARTIFACTOR_DIR/setup.txt 2>&1
+        let creds_ret="$?";
+    else
+        echo "Failed to download credentials, exiting..." >> $ARTIFACTOR_DIR/setup.txt
+        exit
+    fi
+done
+
+# Download the master branch of the cfme_tests repo
+echo "Downloading cfme_tests repo..."
 git clone $CFME_REPO $CFME_REPO_DIR >> $ARTIFACTOR_DIR/setup.txt 2>&1
 
 # Copy the credentials files into the conf folder instead of bothing to make symlinks
