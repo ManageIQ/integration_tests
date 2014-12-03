@@ -100,3 +100,28 @@ class Timeprofile(Updateable):
         sel.handle_alert()
         flash.assert_success_message(
             'Time Profile "{}": Delete successful'.format(self.description))
+
+
+class Visual(Updateable):
+    item_form = Form(
+        fields=[
+            ('grid_view', Select('//select[@id="perpage_grid"]')),
+            ('tile_view', Select('//select[@id="perpage_tile"]')),
+            ('list_view', Select('//select[@id="perpage_list"]')),
+            ('reports', Select('//select[@id="perpage_reports"]')),
+        ])
+
+    save_button = form_buttons.FormButton("Add this Time Profile")
+
+    def __init__(self, grid_view=None, tile_view=None, list_view=None):
+        self.grid_view = grid_view
+        self.tile_view = tile_view
+        self.list_view = list_view
+
+    def updatesettings(self):
+        sel.force_navigate("my_settings_visual")
+        fill(self.item_form, {'grid_view': self.grid_view,
+                              'tile_view': self.tile_view,
+                              'list_view': self.list_view},
+             action=form_buttons.save)
+        flash.assert_success_message('User Interface settings saved for User Administrator')
