@@ -1042,8 +1042,7 @@ def fill_callable(f, val):
 
 @fill.method((Select, object))
 def fill_select(slist, val):
-    stype = type(slist)
-    logger.debug('  Filling in %s with value %s' % (stype, val))
+    logger.debug('  Filling in {} with value {}'.format(str(slist), val))
     prev_sel = sel.select(slist, val)
     slist.observer_wait()
     return prev_sel

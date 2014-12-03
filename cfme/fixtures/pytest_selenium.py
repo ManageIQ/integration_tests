@@ -990,8 +990,9 @@ class Select(SeleniumSelect, Pretty):
     def observer_wait(self):
         detect_observed_field(self._loc)
 
-    def __str__(self):
-        return "<%s.Select loc='%s'>" % (__name__, self._loc)
+    def __repr__(self):
+        return "{}({}, multi={})".format(
+            self.__class__.__name__, repr(self._loc), repr(self.is_multiple))
 
 
 @multidispatch
