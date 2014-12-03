@@ -5,7 +5,6 @@
 """
 
 from cfme.cloud.provider import OpenStackProvider, EC2Provider
-from cfme.web_ui.prov_form import provisioning_form
 from cfme.exceptions import InstanceNotFound, OptionNotAvailable, UnknownProviderType
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
@@ -504,6 +503,7 @@ class OpenStackInstance(Instance, Updateable):
         if security_groups:
             prov_fill_kwargs['security_groups'] = security_groups[0]
 
+        from cfme.provisioning import provisioning_form
         fill(provisioning_form, dict(
             email=email,
             first_name=first_name,
@@ -597,6 +597,7 @@ class EC2Instance(Instance, Updateable):
             'template_name': self.template_name,
         })
 
+        from cfme.provisioning import provisioning_form
         fill(provisioning_form, dict(
             email=email,
             first_name=first_name,

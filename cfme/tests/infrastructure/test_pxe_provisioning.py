@@ -2,7 +2,7 @@ import pytest
 
 from utils.conf import cfme_data
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
-from cfme.infrastructure.provisioning import do_provisioning, cleanup_vm
+from cfme.provisioning import cleanup_vm, do_vm_provisioning
 from utils import testgen
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
@@ -102,5 +102,5 @@ def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
         'vlan': pxe_vlan,
     }
 
-    do_provisioning(pxe_template, provider_crud, vm_name, provisioning_data, request,
-                    provider_mgmt, provider_key, smtp_test, num_sec=2100)
+    do_vm_provisioning(pxe_template, provider_crud, vm_name, provisioning_data, request,
+                       provider_mgmt, provider_key, smtp_test, num_sec=2100)

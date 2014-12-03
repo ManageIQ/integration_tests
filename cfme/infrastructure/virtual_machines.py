@@ -5,7 +5,6 @@ import re
 from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable, TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
-from cfme.web_ui.prov_form import provisioning_form
 from cfme.web_ui import (
     CheckboxTree, Form, Region, Quadicon, Tree, accordion, fill, flash, form_buttons, paginator,
     toolbar, Calendar, Select
@@ -605,6 +604,7 @@ class Vm(Common):
             "host_name": {"name": prov_data.get("host")},
             "datastore_name": {"name": prov_data.get("datastore")},
         }
+        from cfme.provisioning import provisioning_form
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         cells = {'Description': 'Publish from [%s] to [%s]' % (self.name, template_name)}
         row, __ = wait_for(
