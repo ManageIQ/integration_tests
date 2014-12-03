@@ -15,6 +15,7 @@ py
 PyGithub
 PyPDF2
 pytest
+pycrypto
 python-bugzilla>=1.1.0
 python-dateutil
 python-keystoneclient
