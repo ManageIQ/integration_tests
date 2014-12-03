@@ -43,6 +43,7 @@ def report():
     return reports.CannedSavedReport(path, reports.queue_canned_report(*path))
 
 
+@pytest.skip  # To be removed when we have solved the Docker issue
 @pytest.mark.parametrize("filetype", ["txt", "csv"])
 @pytest.sel.go_to('dashboard')
 def test_download_report_firefox(needs_firefox, setup_a_provider, report, filetype):
