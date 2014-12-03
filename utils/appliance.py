@@ -10,7 +10,7 @@ from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
 from urlparse import urlparse
-from utils import conf, datafile, db, lazycache, trackerbot
+from utils import conf, datafile, db, lazycache, trackerbot, db_queries
 from utils.browser import browser_session
 from utils.hosts import setup_providers_hosts_credentials
 from utils.log import logger, create_sublogger
@@ -906,6 +906,53 @@ class IPAppliance(object):
 
     def has_netapp(self):
         return self.ssh_client().appliance_has_netapp()
+
+    @lazycache
+    def configuration_details(self):
+        """Return details that are necessary to navigate through Configuration accordions.
+
+        Args:
+            ip_address: IP address of the server to match. If None, uses hostname from
+                ``conf.env['base_url']``
+
+        Returns:
+            If the data weren't found in the DB, :py:class:`NoneType`
+            If the data were found, it returns tuple `(region, server name,
+                server id, server zone id)`
+        """
+        return db_queries.get_configuration_details(self.db)
+
+    def server_id(self):
+        try:
+            return self.configuration_details[2]
+        except TypeError:
+            return None
+
+    def server_region(self):
+        try:
+            return self.configuration_details[0]
+        except TypeError:
+            return None
+
+    def server_name(self):
+        try:
+            return self.configuration_details[1]
+        except TypeError:
+            return None
+
+    def server_zone_id(self):
+        try:
+            return self.configuration_details[3]
+        except TypeError:
+            return None
+
+    @lazycache
+    def zone_description(self):
+        return db_queries.get_zone_description(self.server_zone_id(), db=self.db)
+
+    @lazycache
+    def host_id(self, hostname):
+        return db_queries.get_host_id(hostname, db=self.db)
 
 
 class ApplianceSet(object):

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from functools import partial
-from urlparse import urlparse
 
 import cfme.fixtures.pytest_selenium as sel
+from fixtures.pytest_store import store
+
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound
@@ -10,8 +11,6 @@ from cfme.web_ui import \
     (Calendar, Form, InfoBlock, MultiFill, Region, Select, Table, accordion, fill, flash,
     form_buttons)
 from cfme.web_ui.menu import nav
-from utils.db_queries import (get_server_id, get_server_name, get_server_region, get_server_zone_id,
-                              get_zone_description)
 from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
@@ -125,14 +124,8 @@ classification_table = Table("//div[@id='classification_entries_div']//table[@cl
 zones_table = Table("//div[@id='settings_list']/table[@class='style3']")
 
 
-def get_ip_address():
-    """Returns an IP address of the appliance
-    """
-    return urlparse(sel.current_url()).netloc
-
-
 def server_region():
-    return get_server_region(get_ip_address())
+    return store.current_appliance.server_region()
 
 
 def server_region_pair():
@@ -141,11 +134,11 @@ def server_region_pair():
 
 
 def server_name():
-    return get_server_name(get_ip_address())
+    return store.current_appliance.server_name()
 
 
 def server_id():
-    return get_server_id(get_ip_address())
+    return store.current_appliance.server_id()
 
 
 def add_tag(cat_name):
@@ -159,7 +152,7 @@ def edit_tag(cat_name, tag_name):
 
 
 def server_zone_description():
-    return get_zone_description(get_server_zone_id())
+    return store.current_appliance.zone_description
 
 nav.add_branch("configuration",
     {
