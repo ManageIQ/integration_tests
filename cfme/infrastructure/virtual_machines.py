@@ -461,6 +461,17 @@ class Vm(Common):
         """Removes a VM from CFME VMDB"""
         self._remove_from_cfme(is_vm=True, cancel=cancel, from_details=from_details)
 
+    def wait_for_delete(self):
+        sel.force_navigate("infrastructure_virtual_machines")
+        quad = Quadicon(self.name, 'vm')
+        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
+             message="Wait template to disappear", num_sec=500, fail_func=sel.refresh)
+
+    def wait_for_appear(self):
+        sel.force_navigate("infrastructure_virtual_machines")
+        quad = Quadicon(self.name, 'vm')
+        wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
+             message="Wait template to appear", num_sec=1000, fail_func=sel.refresh)
     # def _nav_to_cfme_relationship(self):
     #     pass
 
@@ -652,6 +663,26 @@ class Template(Common):
             return True
         except TemplateNotFound:
             return False
+
+    def delete(self):
+        """Remove template from CFME VMDB"""
+        sel.force_navigate("infra_templates")
+        quad = Quadicon(self.name, 'template')
+        sel.check(quad.checkbox())
+        cfg_btn('Remove Templates from the VMDB', invokes_alert=True)
+        sel.handle_alert()
+
+    def wait_for_delete(self):
+        sel.force_navigate("infra_templates")
+        quad = Quadicon(self.name, 'template')
+        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
+             message="Wait template to disappear", num_sec=500, fail_func=sel.refresh)
+
+    def wait_for_appear(self):
+        sel.force_navigate("infra_templates")
+        quad = Quadicon(self.name, 'template')
+        wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
+             message="Wait template to appear", num_sec=1000, fail_func=sel.refresh)
 
 
 class Genealogy(object):
