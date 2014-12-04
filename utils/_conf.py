@@ -428,7 +428,7 @@ def encrypt_yaml(filename):
         with filename_unencrypted.open("r") as unencrypted:
             with filename_encrypted.open("w") as encrypted:
                 data = unencrypted.read()
-                while len(data) % len(hash) > 0:
+                while len(data) % len(key) > 0:
                     data += " "  # Padding with spaces, will be rstripped after load
                 encrypted.write(cipher.encrypt(data))
     else:
