@@ -2,12 +2,14 @@ import argparse
 import os
 import sys
 from collections import deque
+from urlparse import urlparse
 
 import zmq
 from py.path import local
 
 import utils.log
 from utils import conf
+from utils.sprout import SproutClient, SproutException
 
 
 SLAVEID = None
@@ -15,7 +17,7 @@ SLAVEID = None
 
 class SlaveManager(object):
     """SlaveManager which coordinates with the master process for parallel testing"""
-    def __init__(self, config, slaveid, base_url, zmq_endpoint):
+    def __init__(self, config, slaveid, base_url, zmq_endpoint, under_sprout):
         self.config = config
         self.session = None
         self.collection = None
@@ -33,6 +35,10 @@ class SlaveManager(object):
         self.sock.connect(zmq_endpoint)
 
         self.messages = {}
+        if under_sprout:
+            self.sprout = SproutClient.from_config()
+        else:
+            self.sprout = None
 
     def send_event(self, name, **kwargs):
         kwargs['_event_name'] = name
@@ -113,6 +119,15 @@ class SlaveManager(object):
                 self.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
 
         self.message('no more tests, shutting down')
+        if self.sprout is not None:
+            ip = urlparse(self.base_url).netloc
+            self.message('deleting appliance {}'.format(ip))
+            try:
+                self.sprout.destroy_appliance(ip)
+            except SproutException as e:
+                self.message('already taken care of ({})'.format(str(e)))
+            else:
+                self.message('signal sent')
         return True
 
     def _test_generator(self):
@@ -208,6 +223,6 @@ if __name__ == '__main__':
     slave_options = conf.slave_config.pop('options')
     config = _init_config(slave_options, slave_args)
     slave_manager = SlaveManager(config, args.slaveid, args.base_url,
-        conf.slave_config['zmq_endpoint'])
+        conf.slave_config['zmq_endpoint'], conf.slave_config['sprout'])
     config.pluginmanager.register(slave_manager, 'slave_manager')
     config.hook.pytest_cmdline_main(config=config)

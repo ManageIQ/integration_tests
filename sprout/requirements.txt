@@ -1,0 +1,7 @@
+-r ../../requirements.txt
+Django
+celery[redis]
+honcho
+python-memcached
+flower
+gunicorn

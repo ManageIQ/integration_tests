@@ -294,8 +294,18 @@ class MgmtSystemAPIBase(object):
         raise NotImplementedError('deploy_template not implemented.')
 
     @abstractmethod
+    def current_ip_address(self, vm_name):
+        """Returns current IP address. Returns None if the address could not have been determined.
+
+        Args:
+            vm_name: The name of the VM
+        Returns: vm ip address or None
+        """
+        raise NotImplementedError('current_ip_address not implemented.')
+
+    @abstractmethod
     def get_ip_address(self, vm_name):
-        """get VM ip address
+        """get VM ip address - blocks until the waiting is finished
 
         Args:
             vm_name: The name of the VM
@@ -451,30 +461,29 @@ class VMWareSystem(MgmtSystemAPIBase):
         except Exception:
             return False
 
+    def current_ip_address(self, vm_name):
+        ipv4_re = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+        try:
+            vm = self._get_vm(vm_name)
+            ip_address = vm.summary.guest.ipAddress
+            if not re.match(ipv4_re, ip_address) or ip_address == '127.0.0.1':
+                ip_address = None
+            return ip_address
+        except (AttributeError, TypeError):
+            # AttributeError: vm doesn't have an ip address yet
+            # TypeError: ip address wasn't a string
+            return None
+
     def get_ip_address(self, vm_name, timeout=600):
         """ Returns the first IP address for the selected VM.
 
         Args:
             vm_name: The name of the vm to obtain the IP for.
+            timeout: The IP address wait timeout.
         Returns: A string containing the first found IP that isn't the loopback device.
         """
-        def wait_for_address(vm):
-            ipv4_re = r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
-            try:
-                vm.update()
-                ip_address = vm.summary.guest.ipAddress
-                if not re.match(ipv4_re, ip_address) or ip_address == '127.0.0.1':
-                    ip_address = None
-                return ip_address
-            except (AttributeError, TypeError):
-                # AttributeError: vm doesn't have an ip address yet
-                # TypeError: ip address wasn't a string
-                return None
-
-        vm = self._get_vm(vm_name)
-
         try:
-            ip_address, tc = wait_for(wait_for_address, [vm],
+            ip_address, tc = wait_for(lambda: self.current_ip_address(vm_name),
                 fail_condition=None, delay=5, num_sec=timeout,
                 message="get_ip_address from vsphere")
         except TimedOutError:
@@ -727,6 +736,9 @@ class VMWareSystem(MgmtSystemAPIBase):
         else:
             return destination
 
+    def mark_as_template(self, vm_name):
+        mobs.VirtualMachine.get(self.api, name=vm_name).MarkAsTemplate()  # Returns None
+
     def deploy_template(self, template, **kwargs):
         kwargs["power_on"] = True
         kwargs["template"] = False
@@ -867,17 +879,22 @@ class RHEVMSystem(MgmtSystemAPIBase):
                 raise VMInstanceNotFound(vm_name)
             return vm
 
+    def current_ip_address(self, vm_name):
+        info = self._get_vm(vm_name).get_guest_info()
+        if info is None:
+            return None
+        try:
+            return info.get_ips().get_ip()[0].get_address()
+        except (AttributeError, IndexError):
+            return None
+
     def get_ip_address(self, vm_name, timeout=600):
         try:
-            wait_for_me = lambda: self._get_vm(vm_name).get_guest_info()
-            guest_info, tc = wait_for(wait_for_me,
+            return wait_for(lambda: self.current_ip_address(vm_name),
                 fail_condition=None, delay=5, num_sec=timeout,
-                message="get_ip_address from rhevm")
-            ip = guest_info.get_ips().get_ip()[0].get_address()
+                message="get_ip_address from rhevm")[0]
         except TimedOutError:
-            ip = None
-
-        return ip
+            return None
 
     def get_vm_name_from_ip(self, ip):
         # unfortunately it appears you cannot query for ip address from the sdk,
@@ -1381,8 +1398,11 @@ class EC2System(MgmtSystemAPIBase):
         except KeyError:
             return None
 
-    def get_ip_address(self, instance_id):
+    def current_ip_address(self, instance_id):
         return str(self._get_instance(instance_id).ip_address)
+
+    def get_ip_address(self, instance_id, **kwargs):
+        return self.current_ip_address(instance_id)
 
     def _get_instance_id_by_name(self, instance_name):
         # Quick validation that the instance name isn't actually an ID
@@ -1690,7 +1710,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
         instance = self._find_instance_by_name(name)
         return instance._info['addresses']
 
-    def get_ip_address(self, name, **kwargs):
+    def current_ip_address(self, name):
         networks = self._get_instance_networks(name)
         for network_nics in networks.itervalues():
             for nic in network_nics:
@@ -1713,6 +1733,9 @@ class OpenstackSystem(MgmtSystemAPIBase):
             if addr is not None and ip in addr:
                 return str(instance.name)
         raise cfme_exc.VmNotFoundViaIP('The requested IP is not known as a VM')
+
+    def get_ip_address(self, name, **kwargs):
+        return self.current_ip_address(name)
 
     def _get_all_instances(self, filter_tenants=True):
         instances = self.api.servers.list(True, {'all_tenants': True})
@@ -1921,7 +1944,7 @@ class SCVMMSystem(MgmtSystemAPIBase):
         self.start_vm(vm_name)
         return vm_name
 
-    def get_ip_address(self, vm_name):
+    def current_ip_address(self, vm_name):
         data = self.run_script(
             "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server |"
             "Get-SCVirtualNetworkAdapter | "
@@ -1929,6 +1952,9 @@ class SCVMMSystem(MgmtSystemAPIBase):
         return etree.parse(StringIO(data)).getroot().xpath(
             "./Object/Property[@Name='IPv4Addresses']/text()")
         # TODO: Scavenge informations how these are formatted, I see no if-s in SCVMM
+
+    def get_ip_address(self, vm_name, **kwargs):
+        return self.current_ip_address(vm_name)
 
     def remove_host_from_cluster(self, hostname):
         """I did not notice any scriptlet that lets you do this."""

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}API Documentation{% endblock %}
+{% block body %}
+<div class="panel panel-info">
+
+</div>
+<script type="text/javascript">
+getMethods(function(data){
+    $("#content").append($("<h2>API methods listing</h2>"));
+    var avail = data.available_methods;
+    for(var method in avail){
+        method = avail[method];
+        var args = "<ul>";
+        for(var arg in method.args)
+        {
+            arg = method.args[arg];
+            args += "<li>" + arg + "</li>";
+        }
+        args += "</ul>";
+
+        var defaults = "<ul>";
+        var def = keys(method.defaults);
+        for(var param in def)
+        {
+            param = def[param];
+            value = method.defaults[param];
+            defaults += "<li><strong>" + param + "</strong> - " + value + "</li>";
+        }
+        defaults += "</ul>";
+        var panel = $("<div class='panel panel-info'>" +
+        "   <div class='panel-heading'>" +
+        "       <div class='row'>" +
+        "           <strong>" + method.name + "</strong>" +
+        "       </div>" +
+        "   </div>" +
+        "   <div class='panel-body'>" +
+        "       <div class='row'>" +
+        "           <h4>Description</h4>" +
+        "               <pre>" + method.docstring + "</pre>" +
+        "           <h4>Arguments</h4>" +
+        "               <p>" + args + "</p>" +
+        "           <h4>Default values</h4>" +
+        "               <p>" + defaults + "</p>" +
+        "       </div>" +
+        "   </div>" +
+        "</div>");
+
+        $("#content").append(panel);
+    }
+});
+</script>
+{% endblock %}
