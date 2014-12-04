@@ -2,6 +2,11 @@ from contextlib import contextmanager
 import os.path
 import function_trace
 
+import cfme
+import utils.log
+import inspect
+import multimethods
+
 from fixtures.artifactor_plugin import art_client
 # disable traceback of the tracer functions
 function_trace.__tracebackhide__ = True
@@ -12,6 +17,20 @@ default_depths = None
 to_trace = None
 depths = None
 
+# Constants (eventually move to function_trace)
+IGNORE = 0
+THIS_ONLY = 1  # Don't go deeper in this function
+
+
+def import_module(module_str):
+    """Use __import__ to import a module and then retrieve the imported submodule"""
+    root = __import__(module_str)
+    path = module_str.split(".")[1:]
+    result = root
+    for step in path:
+        result = getattr(result, step)
+    return result
+
 
 def load():
     global default_to_trace
@@ -21,129 +40,116 @@ def load():
     global depths
 
     # import everything we want to trace
-    import cfme.automate.buttons
-    import cfme.automate.explorer
-    import cfme.automate.service_dialogs
-    import cfme.cloud.instance
-    import cfme.cloud.provider
-    import cfme.cloud.provisioning
-    import cfme.cloud.security_group
-    import cfme.configure.configuration
-    import cfme.configure.red_hat_updates
-    import cfme.configure.tasks
-    import cfme.configure.access_control
-    import cfme.control.explorer
-    import cfme.control.import_export
-    import cfme.control.snmp_form
-    import cfme.fixtures.pytest_selenium
-    import cfme.infrastructure.datastore
-    import cfme.infrastructure.host
-    import cfme.infrastructure.provider
-    import cfme.infrastructure.provisioning
-    import cfme.infrastructure.pxe
-    import cfme.infrastructure.virtual_machines
-    import cfme.intelligence.chargeback
-    import cfme.intelligence.reports.dashboards
-    import cfme.intelligence.reports.import_export
-    import cfme.intelligence.reports.reports
-    import cfme.intelligence.reports.saved
-    import cfme.intelligence.reports.schedules
-    import cfme.intelligence.reports.ui_elements
-    import cfme.intelligence.reports.widgets
-    import cfme.login
-    import cfme.services.requests
-    import cfme.services.catalogs.catalog_item
-    import cfme.services.catalogs.catalog
-    import cfme.services.catalogs.cloud_catalog_item
-    import cfme.services.catalogs.service_catalogs
-    import cfme.web_ui
-    import cfme.web_ui.accordion
-    import cfme.web_ui.flash
-    import cfme.web_ui.cfme_exception
-    import cfme.web_ui.expression_editor
-    import cfme.web_ui.form_buttons
-    import cfme.web_ui.listaccordion
-    import cfme.web_ui.menu
-    import cfme.web_ui.multibox
-    import cfme.web_ui.paginator
-    import cfme.web_ui.search
-    import cfme.web_ui.tabstrip
-    import cfme.web_ui.toolbar
-    import utils.log
-    import inspect
-    import multimethods
-
     default_to_trace = function_trace.mapcat(
         function_trace.all,
-        [
-            cfme.automate.buttons,
-            cfme.automate.explorer,
-            cfme.automate.service_dialogs,
-            cfme.cloud.instance,
-            cfme.cloud.provider,
-            cfme.cloud.provisioning,
-            cfme.cloud.security_group,
-            cfme.configure.configuration,
-            cfme.configure.red_hat_updates,
-            cfme.configure.tasks,
-            cfme.configure.access_control,
-            cfme.control.explorer,
-            cfme.control.import_export,
-            cfme.control.snmp_form,
-            cfme.fixtures.pytest_selenium,
-            cfme.infrastructure.datastore,
-            cfme.infrastructure.host,
-            cfme.infrastructure.provider,
-            cfme.infrastructure.provisioning,
-            cfme.infrastructure.pxe,
-            cfme.infrastructure.virtual_machines,
-            cfme.intelligence.chargeback,
-            cfme.intelligence.reports.dashboards,
-            cfme.intelligence.reports.import_export,
-            cfme.intelligence.reports.reports,
-            cfme.intelligence.reports.saved,
-            cfme.intelligence.reports.schedules,
-            cfme.intelligence.reports.ui_elements,
-            cfme.intelligence.reports.widgets,
-            cfme.login,
-            cfme.services.requests,
-            cfme.services.catalogs.catalog_item,
-            cfme.services.catalogs.catalog,
-            cfme.services.catalogs.catalog.Catalog,
-            cfme.services.catalogs.service_catalogs,
-            cfme.web_ui,
-            cfme.web_ui.accordion,
-            cfme.web_ui.cfme_exception,
-            cfme.web_ui.expression_editor,
-            cfme.web_ui.flash,
-            cfme.web_ui.form_buttons,
-            cfme.web_ui.listaccordion,
-            cfme.web_ui.menu,
-            cfme.web_ui.multibox,
-            cfme.web_ui.paginator,
-            cfme.web_ui.search,
-            cfme.web_ui.tabstrip,
-            cfme.web_ui.toolbar
-        ])
+        map(
+            import_module,
+            [
+                "cfme.automate.buttons",
+                "cfme.automate.explorer",
+                "cfme.automate.provisioning_dialogs",
+                "cfme.automate.service_dialogs",
+                "cfme.automate.simulation",
+                "cfme.cloud.availability_zone",
+                "cfme.cloud.flavor",
+                "cfme.cloud.instance",
+                "cfme.cloud.provider",
+                "cfme.cloud.security_group",
+                "cfme.cloud.tenant",
+                "cfme.configure.configuration",
+                "cfme.configure.configuration.candu",
+                "cfme.configure.about",
+                "cfme.configure.settings",
+                "cfme.configure.red_hat_updates",
+                "cfme.configure.tasks",
+                "cfme.configure.access_control",
+                "cfme.control.explorer",
+                "cfme.control.import_export",
+                "cfme.control.snmp_form",
+                "cfme.fixtures.pytest_selenium",
+                "cfme.infrastructure.cluster",
+                "cfme.infrastructure.datastore",
+                "cfme.infrastructure.host",
+                "cfme.infrastructure.provider",
+                "cfme.infrastructure.pxe",
+                "cfme.infrastructure.resource_pool",
+                "cfme.infrastructure.virtual_machines",
+                "cfme.intelligence.chargeback",
+                "cfme.intelligence.reports.dashboards",
+                "cfme.intelligence.reports.import_export",
+                "cfme.intelligence.reports.menus",
+                "cfme.intelligence.reports.reports",
+                "cfme.intelligence.reports.saved",
+                "cfme.intelligence.reports.schedules",
+                "cfme.intelligence.reports.ui_elements",
+                "cfme.intelligence.reports.widgets",
+                "cfme.dashboard",
+                "cfme.login",
+                "cfme.provisioning",
+                "cfme.services.requests",
+                "cfme.services.catalogs.catalog_item",
+                "cfme.services.catalogs.catalog",
+                "cfme.services.catalogs.cloud_catalog_item",
+                "cfme.services.catalogs.service_catalogs",
+                "cfme.services.catalogs.myservice",
+                "cfme.storage.file_shares",
+                "cfme.storage.filers",
+                "cfme.storage.luns",
+                "cfme.storage.managers",
+                "cfme.storage.volumes",
+                "cfme.web_ui",
+                "cfme.web_ui.accordion",
+                "cfme.web_ui.cfme_exception",
+                "cfme.web_ui.expression_editor",
+                "cfme.web_ui.flash",
+                "cfme.web_ui.form_buttons",
+                "cfme.web_ui.listaccordion",
+                "cfme.web_ui.menu",
+                "cfme.web_ui.mixins",
+                "cfme.web_ui.multibox",
+                "cfme.web_ui.paginator",
+                "cfme.web_ui.search",
+                "cfme.web_ui.tabstrip",
+                "cfme.web_ui.toolbar",
+                "utils.appliance",
+                "utils.events",
+                "utils.ext_auth",
+                "utils.hosts",
+                "utils.mgmt_system",
+                "utils.randomness",
+                "utils.rest_api",
+                "utils.smtp_collector_client",
+                "utils.ssh",
+                "multimethods",
+            ]))
     # 0 = do not trace into
 
-    manual_depths = {cfme.fixtures.pytest_selenium.wait_until: 0,
-                     cfme.fixtures.pytest_selenium.wait_for_ajax: 0,
-                     cfme.fixtures.pytest_selenium.elements: 0,
-                     cfme.fixtures.pytest_selenium.element: 0,
-                     cfme.fixtures.pytest_selenium.browser: 0,
-                     cfme.fixtures.pytest_selenium.move_to_element: 0,
-                     cfme.fixtures.pytest_selenium.wait_for_element: 0,
-                     cfme.fixtures.pytest_selenium.click: 1,
-                     cfme.fixtures.pytest_selenium.set_text: 1,
-                     cfme.fixtures.pytest_selenium.detect_observed_field: 0,
-                     cfme.fixtures.pytest_selenium.select: 1,
-                     cfme.fixtures.pytest_selenium.check: 1,
-                     cfme.web_ui.toolbar.is_greyed: 1,
-                     cfme.web_ui.flash.message: 1,
-                     cfme.web_ui.fill_tag: 0,
-                     utils.log.ArtifactorLoggerAdapter.process: 0,
-                     multimethods.MultiMethod.get_method: 0
+    manual_depths = {cfme.fixtures.pytest_selenium.wait_until: IGNORE,
+                     cfme.fixtures.pytest_selenium.wait_for_ajax: IGNORE,
+                     cfme.fixtures.pytest_selenium.elements: IGNORE,
+                     cfme.fixtures.pytest_selenium.element: IGNORE,
+                     cfme.fixtures.pytest_selenium.browser: IGNORE,
+                     cfme.fixtures.pytest_selenium.move_to_element: IGNORE,
+                     cfme.fixtures.pytest_selenium.wait_for_element: IGNORE,
+                     cfme.fixtures.pytest_selenium.click: THIS_ONLY,
+                     cfme.fixtures.pytest_selenium.set_text: THIS_ONLY,
+                     cfme.fixtures.pytest_selenium.detect_observed_field: IGNORE,
+                     cfme.fixtures.pytest_selenium.select: THIS_ONLY,
+                     cfme.fixtures.pytest_selenium.check: THIS_ONLY,
+                     cfme.web_ui.toolbar.is_greyed: THIS_ONLY,
+                     cfme.web_ui.flash.message: THIS_ONLY,
+                     cfme.web_ui.fill_tag: IGNORE,
+                     utils.log.ArtifactorLoggerAdapter.process: IGNORE,
+                     multimethods.MultiMethod.get_method: IGNORE,
+                     utils.ssh.command_runner: IGNORE,
+                     utils.ssh.rake_runner: IGNORE,
+                     utils.ssh.version_getter: IGNORE,
+                     utils.ssh.build_datetime_getter: IGNORE,
+                     utils.ssh.is_downstream_getter: IGNORE,
+                     utils.ssh.appliance_has_netapp: IGNORE,
+                     utils.ssh.scp_putter: IGNORE,
+                     utils.ssh.scp_getter: IGNORE,
+                     cfme.web_ui.menu.any_box_displayed: THIS_ONLY,
                      }
 
     default_depths = function_trace.add_all_at_depth(manual_depths, inspect, 0)
