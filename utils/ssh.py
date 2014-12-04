@@ -44,6 +44,9 @@ class SSHClient(paramiko.SSHClient):
         default_connect_kwargs.update(connect_kwargs)
         self._connect_kwargs = default_connect_kwargs
 
+    def __repr__(self):
+        return "<SSHClient hostname={}>".format(repr(self._connect_kwargs.get("hostname")))
+
     def __call__(self, **connect_kwargs):
         # Update a copy of this instance's connect kwargs with passed in kwargs,
         # then return a new instance with the updated kwargs
