@@ -2,10 +2,15 @@
 # in selenium (the group is selected then immediately reset)
 import pytest
 
+import cfme.cloud.provisioning
+assert cfme.cloud.provisioning
 from cfme.cloud.instance import instance_factory
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
-from utils import testgen
+from cfme.infrastructure.pxe import get_template_from_config
+from utils.conf import cfme_data
+from utils import testgen, ssh
+from utils.wait import wait_for
 from utils.randomness import generate_random_string
 
 pytestmark = [pytest.mark.fixtureconf(server_roles="+automate"),
@@ -15,6 +20,7 @@ pytestmark = [pytest.mark.fixtureconf(server_roles="+automate"),
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
     argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
+    argnames = argnames + ['cloud_init_template']
 
     new_argvalues = []
     new_idlist = []
@@ -24,15 +30,27 @@ def pytest_generate_tests(metafunc):
             # Don't know what type of instance to provision, move on
             continue
 
-        # required keys should be a subset of the dict keys set
-        if not {'image'}.issubset(args['provisioning'].viewkeys()):
-            # Need image for image -> instance provisioning
+        if not {'ci-template', 'ci-username', 'ci-pass', 'image'}.issubset(
+                args['provisioning'].viewkeys()):
+            # Need all for template provisioning
             continue
 
+        cloud_init_template = args['provisioning']['ci-template']
+        if cloud_init_template not in cfme_data['customization_templates'].keys():
+            continue
+
+        argvalues[i].append(get_template_from_config(cloud_init_template))
+
         new_idlist.append(idlist[i])
-        new_argvalues.append([args[argname] for argname in argnames])
+        new_argvalues.append(argvalues[i])
 
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+
+
+@pytest.fixture(scope="module")
+def setup_ci_template(cloud_init_template):
+    if not cloud_init_template.exists():
+        cloud_init_template.create()
 
 
 @pytest.fixture(scope="function")
@@ -41,10 +59,13 @@ def vm_name(request, provider_mgmt):
     return vm_name
 
 
-def test_provision_from_template(request, setup_provider, provider_crud, provisioning, vm_name):
-    image = provisioning['image']['name']
+def test_provision_cloud_init(request, setup_provider, provider_crud, provisioning,
+                              setup_ci_template, vm_name):
+    image = provisioning.get('ci-image', None) or provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
             (image, vm_name, provider_crud.key))
+
+    mgmt_system = provider_crud.get_mgmt_system()
 
     instance = instance_factory(vm_name, provider_crud, image)
 
@@ -58,11 +79,24 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
         'instance_type': provisioning['instance_type'],
         'availability_zone': provisioning['availability_zone'],
         'security_groups': [provisioning['security_group']],
-        'guest_keypair': provisioning['guest_keypair']
+        'guest_keypair': provisioning['guest_keypair'],
+        'custom_template': {'name': [provisioning['ci-template']]},
     }
 
     if isinstance(provider_crud, OpenStackProvider):
+        floating_ip = mgmt_system.get_first_floating_ip()
         inst_args['cloud_network'] = provisioning['cloud_network']
+        inst_args['public_ip_address'] = floating_ip
 
     sel.force_navigate("clouds_instances_by_provider")
     instance.create(**inst_args)
+
+    connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=300,
+                              handle_exception=True)
+
+    # Check that we can at least get the uptime via ssh this should only be possible
+    # if the username and password have been set via the cloud-init script so
+    # is a valid check
+    sshclient = ssh.SSHClient(hostname=connect_ip, username=provisioning['ci-username'],
+                              password=provisioning['ci-pass'])
+    wait_for(sshclient.uptime, num_sec=200, handle_exception=True)

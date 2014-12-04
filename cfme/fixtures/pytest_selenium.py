@@ -955,6 +955,13 @@ class Select(SeleniumSelect, Pretty):
         return move_to_element(self)
 
     @property
+    def all_options(self):
+        """Returns a list of tuples of all the options in the Select"""
+
+        els = execute_script("return arguments[0].options;", element(self))
+        return [(el.text, el.get_attribute('value')) for el in els]
+
+    @property
     def all_selected_options(self):
         """Fast variant of the original all_selected_options.
 
