@@ -14,8 +14,7 @@ from utils.wait import wait_for
 
 
 pytestmark = [
-    pytest.mark.usefixtures("server_roles"),
-    pytest.mark.fixtureconf(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate"),
 ]
 
 

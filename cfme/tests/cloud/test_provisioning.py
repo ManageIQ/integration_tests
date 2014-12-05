@@ -10,8 +10,7 @@ from utils import testgen
 from utils.randomness import generate_random_string
 from utils.update import update
 
-pytestmark = [pytest.mark.fixtureconf(server_roles="+automate"),
-              pytest.mark.usefixtures('server_roles')]
+pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
 def pytest_generate_tests(metafunc):

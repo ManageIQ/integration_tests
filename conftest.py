@@ -11,6 +11,7 @@ import pytest
 import cfme.fixtures
 import fixtures
 import markers
+import metaplugins
 
 
 @pytest.mark.tryfirst
@@ -29,5 +30,5 @@ def _pytest_plugins_generator(*extension_pkgs):
         for importer, modname, is_package in iter_modules(path, prefix):
             yield modname
 
-pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers, cfme.fixtures))
+pytest_plugins = tuple(_pytest_plugins_generator(fixtures, markers, cfme.fixtures, metaplugins))
 collect_ignore = ["tests/scenarios"]

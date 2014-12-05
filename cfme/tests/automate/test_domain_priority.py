@@ -91,8 +91,8 @@ def original_instance(request, original_method):
     return instance
 
 
-@pytest.mark.fixtureconf(server_roles="+automate")
-@pytest.mark.usefixtures("server_roles", "setup_a_provider")
+@pytest.mark.meta(server_roles="+automate")
+@pytest.mark.usefixtures("setup_a_provider")
 def test_priority(
         request, ssh_client, original_method, original_instance, copy_domain,
         original_method_write_data, copy_method_write_data):

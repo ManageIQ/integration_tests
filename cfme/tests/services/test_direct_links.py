@@ -15,8 +15,7 @@ from fixtures.pytest_store import store
 
 
 pytestmark = [
-    pytest.mark.fixtureconf(server_roles="-automate"),  # To prevent the provisioning itself.
-    pytest.mark.usefixtures('server_roles')
+    pytest.mark.meta(server_roles="-automate"),  # To prevent the provisioning itself.
 ]
 
 

@@ -16,7 +16,7 @@ import utils.randomness as rand
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
-    pytest.mark.fixtureconf(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("5.2")
 ]
 

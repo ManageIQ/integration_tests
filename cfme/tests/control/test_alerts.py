@@ -84,8 +84,7 @@ def setup_for_alerts(request, alerts, event, vm_name, provider_data, provider_ke
     prov.assign_policy_profiles(policy_profile.description)
 
 
-@pytest.mark.fixtureconf(server_roles="+automate")
-@pytest.mark.usefixtures("server_roles")
+@pytest.mark.meta(server_roles="+automate")
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         test_vm_power_control, provider_crud, provider_data, provider_mgmt, provider_type, request,
         smtp_test, provider_key, register_event):

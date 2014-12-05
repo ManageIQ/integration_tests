@@ -13,8 +13,8 @@ from utils.wait import wait_for
 from utils import testgen
 
 pytestmark = [
-    pytest.mark.fixtureconf(server_roles="+automate +notifier"),
-    pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
+    pytest.mark.meta(server_roles="+automate +notifier"),
+    pytest.mark.usefixtures('uses_infra_providers')
 ]
 
 
@@ -76,7 +76,7 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
 
 
 @pytest.mark.usefixtures('setup_pxe_servers_host_prov')
-def test_host_provisioning(provider_init, cfme_data, host_provisioning, server_roles,
+def test_host_provisioning(provider_init, cfme_data, host_provisioning,
                            provider_crud, smtp_test, request):
 
     # Add host before provisioning

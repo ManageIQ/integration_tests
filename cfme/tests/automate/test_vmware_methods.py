@@ -14,8 +14,7 @@ from utils.wait import wait_for
 
 submit = form_buttons.FormButton("Submit")
 pytestmark = [
-    pytest.mark.usefixtures("server_roles"),
-    pytest.mark.fixtureconf(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate"),
     pytest.mark.ignore_stream("upstream", "5.3"), ]
 
 
