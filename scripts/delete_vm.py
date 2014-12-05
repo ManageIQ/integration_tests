@@ -9,7 +9,7 @@ import sys
 from ovirtsdk.api import API
 
 # VSPHERE
-from psphere.client import Client
+# from psphere.client import Client
 from psphere.managedobjects import VirtualMachine
 
 # RHOS
@@ -19,10 +19,12 @@ from novaclient.v1_1 import client as novaclient
 from utils.conf import cfme_data
 from utils.conf import credentials
 from utils.wait import wait_for
+from utils.mgmt_system import VMWareSystem
 
 
 TIME_NOW = datetime.datetime.now()
 SEC_IN_DAY = 86400
+MRU_NIGHTLIES = 3
 
 
 def parse_cmd_line():
@@ -60,7 +62,8 @@ def vsphere_create_api(url, username, password):
         username: username used to log in into vsphere
         password: password used to log in into vsphere
     """
-    return Client(server=url, username=username, password=password)
+    # return Client(server=url, username=username, password=password)
+    return VMWareSystem(url, username, password)
 
 
 def rhos_create_api(auth_url, username, password, project_id):
@@ -87,7 +90,7 @@ def rhevm_vm_status(api, vm_name):
 
 
 def vsphere_vm_status(api, vm_name):
-    vm = VirtualMachine.get(api, name=vm_name)
+    vm = VirtualMachine.get(api.api, name=vm_name)
     return vm.runtime.powerState
 
 
@@ -111,7 +114,7 @@ def vsphere_is_vm_up(api, vm_name):
         api: api endpoint to vsphere
         vm_name: name of the vm
     """
-    vm = VirtualMachine.get(api, name=vm_name)
+    vm = VirtualMachine.get(api.api, name=vm_name)
     if vm.runtime.powerState == 'poweredOn':
         return True
     return False
@@ -137,7 +140,7 @@ def vsphere_is_vm_down(api, vm_name):
         api: api endpoint to vsphere
         vm_name: name og the vm
     """
-    vm = VirtualMachine.get(api, name=vm_name)
+    vm = VirtualMachine.get(api.api, name=vm_name)
     if vm.runtime.powerState == 'poweredOff':
         return True
     return False
@@ -165,6 +168,21 @@ def rhevm_delete_vm(api, vm_name):
     vm.delete()
 
 
+def rhevm_delete_template(api, tmp_name):
+    """Deletes template from rhevm-typme provider.
+
+    Args:
+        api: api endpoint to rhevm
+        tmp_name: name of the template
+    """
+    tmp = api.templates.get(tmp_name)
+    if tmp.get_status().state == 'locked':
+        raise Exception("Template is locked.")
+    elif tmp.get_status().state == 'ok':
+        print "Deleting: %s" % tmp.get_name()
+        tmp.delete()
+
+
 def vsphere_delete_vm(api, vm_name):
     """Deletes VM from vsphere-type provider.
     If needed, stops the VM first, then deletes it.
@@ -173,7 +191,7 @@ def vsphere_delete_vm(api, vm_name):
         api: api endpoint to vsphere
         vm_name: name of the vm
     """
-    vm = VirtualMachine.get(api, name=vm_name)
+    vm = VirtualMachine.get(api.api, name=vm_name)
     vm_status = vsphere_vm_status(api, vm_name)
     if vm_status != 'poweredOn' and vm_status != 'poweredOff':
         # something is wrong, locked image etc
@@ -220,6 +238,16 @@ def rhevm_check_with_api(api, rhevm_use_start_time, run_time, text):
     """
     vms = api.vms.list()
     vms_to_delete = []
+    templates_to_delete = []
+
+    nightly_templates = [x for x in api.templates.list() if "miq-nightly" in x.get_name()]
+    nightly_templates.sort(key=lambda x: datetime.datetime.strptime(x.get_name()[-12:],
+                                                                    "%Y%m%d%H%M"))
+
+    if len(nightly_templates) > MRU_NIGHTLIES:
+        for template in nightly_templates[:-MRU_NIGHTLIES]:
+            templates_to_delete.append(template.get_name())
+
     for vm in vms:
         vm_name = vm.get_name()
         if not rhevm_use_start_time:
@@ -237,7 +265,7 @@ def rhevm_check_with_api(api, rhevm_use_start_time, run_time, text):
                 if runtime.days >= run_time and is_affected(vm_name, text):
                     print "To delete: %s with runtime: %s" % (vm_name, runtime.days)
                     vms_to_delete.append(vm_name)
-    return vms_to_delete
+    return (vms_to_delete, templates_to_delete)
 
 
 def vsphere_check_with_api(api, run_time, text):
@@ -248,15 +276,25 @@ def vsphere_check_with_api(api, run_time, text):
         run_time: when this run time is exceeded for the VM, it will be deleted
         text: when this string is found in the name of VM, it may be deleted
     """
-    vms = VirtualMachine.all(api)
+    vms = VirtualMachine.all(api.api)
     vms_to_delete = []
+    templates_to_delete = []
+
+    nightly_templates = [VirtualMachine.get(api.api, name=x)
+                         for x in api.list_template() if "miq-nightly" in x]
+    nightly_templates.sort(key=lambda x: datetime.datetime.strptime(x.name[-12:], "%Y%m%d%H%M"))
+
+    if len(nightly_templates) > MRU_NIGHTLIES:
+        for template in nightly_templates[:-MRU_NIGHTLIES]:
+            templates_to_delete.append(template.name)
+
     for vm in vms:
         vm_name = vm.name
         running_for = vm.summary.quickStats.uptimeSeconds / SEC_IN_DAY
         if running_for >= run_time and is_affected(vm_name, text):
             print "To delete: %s with runtime: %s" % (vm_name, running_for)
             vms_to_delete.append(vm_name)
-    return vms_to_delete
+    return (vms_to_delete, templates_to_delete)
 
 
 def rhos_check_with_api(api, run_time, text):
@@ -307,10 +345,11 @@ def main(args, providers):
                 print str(e)
                 was_exception = True
                 continue
-            # check for old vms
+            # check for old vms and templates
             try:
-                delete_vm_list = rhevm_check_with_api(rhevm_api, args.rhevm_use_start_time,
-                                                      args.run_time, args.text)
+                delete_vm_list, delete_tmp_list = rhevm_check_with_api(rhevm_api,
+                                                                       args.rhevm_use_start_time,
+                                                                       args.run_time, args.text)
             except Exception, e:
                 print "RHEVM: Failed to check for vms using api. Skipping this provider..."
                 print str(e)
@@ -321,11 +360,24 @@ def main(args, providers):
                 try:
                     pass
                     rhevm_delete_vm(rhevm_api, vm_name)
+                    print "Dryrun Delete: %s" % vm_name
                 except Exception, e:
                     print "RHEVM: Failed to delete vm. Skipping '%s'" % vm_name
                     print str(e)
                     was_exception = True
                     continue
+            # delete templates older than MRU_NIGHTLIES days.
+            for tmp_name in delete_tmp_list:
+                try:
+                    pass
+                    rhevm_delete_template(rhevm_api, tmp_name)
+                    print "Dryrun Delete: %s" % tmp_name
+                except Exception, e:
+                    print "RHEVM: Failed to delete template. Skipping '%s'" % tmp_name
+                    print str(e)
+                    was_exception = True
+                    continue
+
         if 'virtualcenter' in providers[provider]['type']:
             vsphere_url = providers[provider]['hostname']
             # establish api
@@ -338,7 +390,8 @@ def main(args, providers):
                 continue
             # check for old vms
             try:
-                delete_vm_list = vsphere_check_with_api(vsphere_api, args.run_time, args.text)
+                delete_vm_list, delete_tmp_list = vsphere_check_with_api(vsphere_api,
+                                                                         args.run_time, args.text)
             except Exception, e:
                 print "VSPHERE: Failed to check for vms using api. Skipping this provider..."
                 print str(e)
@@ -349,8 +402,19 @@ def main(args, providers):
                 try:
                     pass
                     vsphere_delete_vm(vsphere_api, vm_name)
+                    print "Dryrun Delete: %s" % vm_name
                 except Exception, e:
                     print "VSPHERE: Failed to delete vm. Skipping '%s'" % vm_name
+                    print str(e)
+                    was_exception = True
+                    continue
+            for tmp_name in delete_tmp_list:
+                try:
+                    pass
+                    vsphere_delete_vm(vsphere_api, tmp_name)
+                    print "Dryrun Delete: %s" % tmp_name
+                except Exception, e:
+                    print "VSPHERE: Failed to delete template. Skipping '%s'" % tmp_name
                     print str(e)
                     was_exception = True
                     continue
