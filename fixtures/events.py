@@ -414,40 +414,42 @@ def pytest_runtest_call(__multicall__, item):
     It uses `soft_assert` fixture.
     Before and after each test run using `register_event` fixture, database is cleared.
     """
-    __multicall__.execute()
-    if "register_event" not in item.funcargs:
-        return
-
-    node_id = item._nodeid
-    register_event = item.funcargs["register_event"]
-    # If the event testing is disabled, skip the collection and failing
-    if register_event.listener is None:
-        return
-
-    # Event testing is enabled.
     try:
-        wait_for(register_event.check_all_expectations,
-                 delay=5,
-                 num_sec=75,
-                 handle_exception=True)
-    except TimedOutError:
-        pass
+        __multicall__.execute()
+    finally:
+        if "register_event" not in item.funcargs:
+            return
 
-    name, location = get_test_idents(item)
+        node_id = item._nodeid
+        register_event = item.funcargs["register_event"]
+        # If the event testing is disabled, skip the collection and failing
+        if register_event.listener is None:
+            return
 
-    art_client.fire_hook(
-        'filedump',
-        test_name=name,
-        test_location=location,
-        filename="events.html",
-        contents=HTMLReport(
-            node_id, register_event.expectations, register_event.get_all_received_events()
-        ).generate(),
-        fd_ident="event_testing"
-    )
-    logger.info("Clearing the database after testing ...")
-    register_event._delete_database()
-    soft_assert = item.funcargs["soft_assert"]
-    for expectation in register_event.expectations:
-        soft_assert(expectation.arrived, "Event {} did not come!".format(expectation.event))
-    register_event.expectations = []
+        # Event testing is enabled.
+        try:
+            wait_for(register_event.check_all_expectations,
+                     delay=5,
+                     num_sec=75,
+                     handle_exception=True)
+        except TimedOutError:
+            pass
+
+        name, location = get_test_idents(item)
+
+        art_client.fire_hook(
+            'filedump',
+            test_name=name,
+            test_location=location,
+            filename="events.html",
+            contents=HTMLReport(
+                node_id, register_event.expectations, register_event.get_all_received_events()
+            ).generate(),
+            fd_ident="event_testing"
+        )
+        logger.info("Clearing the database after testing ...")
+        register_event._delete_database()
+        soft_assert = item.funcargs["soft_assert"]
+        for expectation in register_event.expectations:
+            soft_assert(expectation.arrived, "Event {} did not come!".format(expectation.event))
+        register_event.expectations = []
