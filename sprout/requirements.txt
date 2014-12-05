@@ -1,5 +1,6 @@
--r ../../requirements.txt
+-r ../requirements.txt
 Django
+django-object-actions
 celery[redis]
 honcho
 python-memcached

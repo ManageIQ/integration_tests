@@ -1,11 +1,126 @@
 # -*- coding: utf-8 -*-
+from functools import wraps
+from django import forms
 from django.contrib import admin
+from django.contrib.admin.helpers import ActionForm
+from django.db.models.query import QuerySet
+
+from django_object_actions import DjangoObjectActions
 
 # Register your models here.
 from appliances.models import Provider, Template, Appliance, Group, AppliancePool
+from appliances import tasks
 
-admin.site.register(Provider)
-admin.site.register(Template)
-admin.site.register(Appliance)
-admin.site.register(Group)
-admin.site.register(AppliancePool)
+
+def action(label, short_description):
+    """Shortcut for actions"""
+    def g(f):
+        @wraps(f)
+        def processed_action(self, request, objects):
+            if not isinstance(objects, QuerySet):
+                objects = [objects]
+            return f(self, request, objects)
+        processed_action.label = label
+        processed_action.short_description = short_description
+        return processed_action
+    return g
+
+
+def register_for(model):
+    def f(modeladmin):
+        admin.site.register(model, modeladmin)
+        return modeladmin
+    return f
+
+
+class Admin(DjangoObjectActions, admin.ModelAdmin):
+    pass
+
+
+@register_for(Appliance)
+class ApplianceAdmin(Admin):
+    objectactions = ["power_off", "power_on", "suspend", "kill"]
+    actions = objectactions
+    list_display = ["name", "template", "appliance_pool", "ready", "ip_address", "power_state"]
+
+    @action("Power off", "Power off selected appliance")
+    def power_off(self, request, appliances):
+        for appliance in appliances:
+            tasks.appliance_power_off.delay(appliance.id)
+            self.message_user(request, "Initiated poweroff of {}.".format(appliance.name))
+
+    @action("Power on", "Power on selected appliance")
+    def power_on(self, request, appliances):
+        for appliance in appliances:
+            tasks.appliance_power_on.delay(appliance.id)
+            self.message_user(request, "Initiated poweron of {}.".format(appliance.name))
+
+    @action("Suspend", "Suspend selected appliance")
+    def suspend(self, request, appliances):
+        for appliance in appliances:
+            tasks.appliance_suspend.delay(appliance.id)
+            self.message_user(request, "Initiated suspend of {}.".format(appliance.name))
+
+    @action("Kill", "Kill selected appliance")
+    def kill(self, request, appliances):
+        for appliance in appliances:
+            Appliance.kill(appliance)
+            self.message_user(request, "Initiated kill of {}.".format(appliance.name))
+
+
+@register_for(AppliancePool)
+class AppliancePoolAdmin(Admin):
+    objectactions = ["kill"]
+    actions = objectactions
+    list_display = [
+        "id", "group", "version", "date", "owner", "fulfilled", "appliances_ready"]
+    readonly_fields = ["fulfilled", "appliances_ready"]
+
+    @action("Kill", "Kill the appliance pool")
+    def kill(self, request, pools):
+        for pool in pools:
+            pool.kill()
+            self.message_user(request, "Initiated kill of appliance pool {}".format(pool.id))
+
+    def fulfilled(self, instance):
+        return instance.fulfilled
+    fulfilled.boolean = True
+
+    def appliances_ready(self, instance):
+        return len(instance.appliance_ips)
+
+
+class GroupProvisionAppliancePoolRequestForm(ActionForm):
+    number_appliances = forms.IntegerField(required=True, min_value=1)
+
+
+@register_for(Group)
+class GroupAdmin(Admin):
+    action_form = GroupProvisionAppliancePoolRequestForm
+    objectactions = ["request_pool"]
+    actions = objectactions
+
+    @action("Request appliances", "Request appliances pool")
+    def request_pool(self, request, groups):
+        number_appliances = int(request.POST.get('number_appliances', 1))
+        if number_appliances < 1:
+            self.message_user(request, "Number of appliances should >= 1!")
+            return
+        for group in groups:
+            pool = AppliancePool.create(request.user, group, num_appliances=number_appliances)
+            self.message_user(request, "Appliance pool {} was requested!".format(pool.id))
+
+
+@register_for(Provider)
+class ProviderAdmin(Admin):
+    readonly_fields = ["remaining_provisioning_slots"]
+    list_display = [
+        "id", "working", "num_simultaneous_provisioning", "remaining_provisioning_slots"]
+
+    def remaining_provisioning_slots(self, instance):
+        return str(instance.remaining_provisioning_slots)
+
+
+@register_for(Template)
+class TemplateAdmin(Admin):
+    list_display = ["name", "version", "original_name", "ready", "exists", "date", "template_group"]

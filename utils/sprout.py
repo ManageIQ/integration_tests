@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 import json
+import os
 import requests
 
-from utils.conf import cfme_data
+from utils.conf import cfme_data, credentials
 
 
 class SproutException(Exception):
+    pass
+
+
+class AuthException(SproutException):
     pass
 
 
@@ -19,27 +24,35 @@ class APIMethodCall(object):
 
 
 class SproutClient(object):
-    def __init__(self, protocol="http", host="localhost", port=8000, entry="appliances/api"):
+    def __init__(
+            self, protocol="http", host="localhost", port=8000, entry="appliances/api", auth=None):
         self._proto = protocol
         self._host = host
         self._port = port
         self._entry = entry
+        self._auth = auth
 
     @property
     def api_entry(self):
         return "{}://{}:{}/{}".format(self._proto, self._host, self._port, self._entry)
 
     def call_method(self, name, *args, **kwargs):
-        result = requests.post(self.api_entry, data=json.dumps({
+        req_data = {
             "method": name,
             "args": args,
             "kwargs": kwargs,
-        })).json()
+        }
+        if self._auth is not None:
+            req_data["auth"] = self._auth
+        result = requests.post(self.api_entry, data=json.dumps(req_data)).json()
         try:
             if result["status"] == "exception":
                 raise SproutException(
                     "Exception {} raised! {}".format(
                         result["result"]["class"], result["result"]["message"]))
+            elif result["status"] == "autherror":
+                raise AuthException(
+                    "Authentication failed! {}".format(result["result"]["message"]))
             else:
                 return result["result"]
         except KeyError:
@@ -49,8 +62,14 @@ class SproutClient(object):
         return APIMethodCall(self, attr)
 
     @classmethod
-    def from_config(cls):
+    def from_config(cls, **kwargs):
         host = cfme_data.get("sprout", {}).get("hostname", "localhost")
         port = cfme_data.get("sprout", {}).get("port", 8000)
-
-        return cls(host=host, port=port)
+        user = os.environ.get("SPROUT_USER", credentials.get("sprout", {}).get("username", None))
+        password = os.environ.get(
+            "SPROUT_PASSWORD", credentials.get("sprout", {}).get("password", None))
+        if user and password:
+            auth = user, password
+        else:
+            auth = None
+        return cls(host=host, port=port, auth=auth, **kwargs)

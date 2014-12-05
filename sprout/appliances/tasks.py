@@ -160,8 +160,6 @@ def kill_appliance_delete(self, appliance_id):
         except UnboundLocalError:
             return  # The appliance is not there any more
         self.retry(args=(appliance_id,), exc=e, countdown=10, max_retries=5)
-    else:
-        appliance.delete()
 
 
 @shared_task(bind=True)
@@ -181,14 +179,16 @@ def poke_trackerbot(self):
                 group_o = Group(id=name)
                 group_o.save()
             for provider in providers:
-                if provider not in settings.PROVIDER_FILTER:
-                    continue
                 try:
                     provider_o = Provider.objects.get(id=provider)
                 except ObjectDoesNotExist:
                     provider_o = Provider(id=provider)
                     provider_o.save()
                 if not provider_o.working:
+                    continue
+                if "sprout" not in provider_o.provider_data:
+                    continue
+                if not provider_o.provider_data.get("use_for_sprout", False):
                     continue
                 try:
                     Template.objects.get(
@@ -241,8 +241,9 @@ def prepare_template_deploy(self, template_id):
     try:
         if not template.is_created:
             template.set_status("Deploying the template.")
-            template.provider_api.clone_vm(
-                template.original_name, template.name, sparse=True, provision_timeout=30 * 60)
+            kwargs = template.provider.provider_data["sprout"]
+            template.provider_api.deploy_template(
+                template.original_name, vm_name=template.name, **kwargs)
         else:
             template.set_status("Waiting for deployment to be finished.")
             template.provider_api.wait_vm_running(template.name)
@@ -352,6 +353,8 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
         group=template.template_group.id,
         date=template.date.strftime("%y%m%d"),
         rnd=generate_random_string())
+    # Apply also username
+    new_appliance_name = "{}_{}".format(pool.owner.username, new_appliance_name)
     appliance = Appliance(template=template, name=new_appliance_name, appliance_pool=pool)
     appliance.save()
     clone_template_to_appliance.delay(appliance.id, time_minutes),
@@ -385,7 +388,6 @@ def clone_template_to_appliance(appliance_id, lease_time_minutes=None):
         clone_template_to_appliance__clone_template.si(appliance_id),
         clone_template_to_appliance__wait_present.si(appliance_id),
         appliance_power_on.si(appliance_id),
-        wait_appliance_ready.si(appliance_id),
     ]
     if lease_time_minutes is not None:
         tasks.append(apply_lease_times.si(appliance_id, lease_time_minutes),)
@@ -411,9 +413,12 @@ def clone_template_to_appliance__clone_template(self, appliance_id):
     try:
         if not appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Beginning template clone.")
-            appliance.provider_api.clone_vm(
-                appliance.template.name, appliance.name,
-                sparse=True, power_on=False, provision_timeout=30 * 60)
+            kwargs = appliance.template.provider.provider_data["sprout"]
+            appliance.provider_api.deploy_template(
+                appliance.template.name, vm_name=appliance.name, power_on=False,
+                progress_callback=lambda progress: appliance.set_status(
+                    "Deploy progress: {}".format(progress)),
+                **kwargs)
     except Exception as e:
         appliance.set_status("Error during template clone ({}).".format(str(e)))
         self.retry(args=(appliance_id,), exc=e, countdown=10, max_retries=5)
@@ -454,6 +459,7 @@ def appliance_power_on(self, appliance_id):
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.power_state = Appliance.Power.ON
                 appliance.save()
+            wait_appliance_ready.delay(appliance.id)
             return
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
@@ -480,6 +486,7 @@ def appliance_power_off(self, appliance_id):
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.power_state = Appliance.Power.OFF
+                appliance.ready = False
                 appliance.save()
             return
         elif appliance.provider_api.is_vm_suspended(appliance.name):
@@ -511,6 +518,7 @@ def appliance_suspend(self, appliance_id):
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.power_state = Appliance.Power.SUSPENDED
+                appliance.ready = False
                 appliance.save()
             return
         elif not appliance.provider_api.in_steady_state(appliance.name):
@@ -560,6 +568,7 @@ def retrieve_appliances_power_states(self):
 def retrieve_template_existence(self):
     """Continuously loops over all templates and checks whether they are still present in EMS."""
     try:
+        expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
         for template in Template.objects.all():
             e = template.exists_in_provider
             with transaction.atomic():
@@ -567,7 +576,8 @@ def retrieve_template_existence(self):
                 tpl.exists = e
                 tpl.save()
             if not e:
-                if len(Appliance.objects.filter(template=template).all()) == 0:
+                if len(Appliance.objects.filter(template=template).all()) == 0\
+                        and template.status_changed < expiration_time:
                     # No other appliance is made from this template so no need to keep it
                     with transaction.atomic():
                         tpl = Template.objects.get(pk=template.pk)

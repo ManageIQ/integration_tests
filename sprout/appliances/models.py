@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
 from datetime import timedelta
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.utils import timezone
 
 from utils.appliance import Appliance as CFMEAppliance
 from utils.conf import cfme_data
+from utils.log import create_logger
 from utils.providers import provider_factory
 from utils.version import LooseVersion
+
+
+def logger():
+    return create_logger("sprout")
 
 
 class Provider(models.Model):
@@ -41,6 +47,10 @@ class Provider(models.Model):
     @classmethod
     def get_available_provider_keys(cls):
         return cfme_data.get("management_systems", {}).keys()
+
+    @property
+    def provider_data(self):
+        return cfme_data.get("management_systems", {}).get(self.id, {})
 
     def __unicode__(self):
         return "{} {}".format(self.__class__.__name__, self.id)
@@ -89,6 +99,7 @@ class Template(models.Model):
             template.status = status
             template.status_changed = timezone.now()
             template.save()
+            logger().info("{}: {}".format(str(self), status))
 
     @property
     def is_created(self):
@@ -205,6 +216,7 @@ class Appliance(models.Model):
             appliance.status = status
             appliance.status_changed = timezone.now()
             appliance.save()
+            logger().info("{}: {}".format(str(self), status))
 
     def __unicode__(self):
         return "{} {} @ {}".format(self.__class__.__name__, self.name, self.template.provider.id)
@@ -225,6 +237,14 @@ class Appliance(models.Model):
                     appliance.datetime_leased = timezone.now()
                     appliance.leased_until = appliance.datetime_leased + timedelta(
                         minutes=time_minutes)
+                    if appliance.provider_api.can_rename:
+                        new_name = "{}_{}".format(pool.owner.username, appliance.name)
+                        try:
+                            appliance.provider_api.rename_vm(appliance.name, new_name)
+                        except Exception as e:
+                            logger().exception(str(e))
+                        else:
+                            appliance.name = new_name
                     appliance.save()
                     appliance_power_on.delay(appliance.id)
                     n_appliances += 1
@@ -272,15 +292,23 @@ class Appliance(models.Model):
             appliance.leased_until = timezone.now() + timedelta(minutes=time)
             appliance.save()
 
+    @property
+    def owner(self):
+        if self.appliance_pool is None:
+            return None
+        else:
+            return self.appliance_pool.owner
+
 
 class AppliancePool(models.Model):
     total_count = models.IntegerField(help_text="How many appliances should be in this pool.")
     group = models.ForeignKey(Group, help_text="Group which is used to provision appliances.")
     version = models.CharField(max_length=16, null=True, help_text="Appliance version")
     date = models.DateField(null=True, help_text="Appliance date.")
+    owner = models.ForeignKey(User, help_text="User who owns the appliance pool")
 
     @classmethod
-    def create(cls, group, version=None, date=None, num_appliances=1, time_leased=60):
+    def create(cls, owner, group, version=None, date=None, num_appliances=1, time_leased=60):
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
@@ -295,7 +323,7 @@ class AppliancePool(models.Model):
             group = Group.objects.get(id=group)
         if not (version or date):
             raise Exception("Could not find possible combination of group, date and version!")
-        req = cls(group=group, version=version, date=date, total_count=num_appliances)
+        req = cls(group=group, version=version, date=date, total_count=num_appliances, owner=owner)
         if not req.possible_templates:
             raise Exception("No possible templates!")
         req.save()

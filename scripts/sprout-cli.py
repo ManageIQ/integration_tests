@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+import os
 import sys
 from utils.conf import cfme_data
 from utils.sprout import SproutClient
@@ -9,8 +10,6 @@ def main():
     host = cfme_data.get("sprout", {}).get("hostname", "localhost")
     port = cfme_data.get("sprout", {}).get("port", 8000)
 
-    client = SproutClient(host=host, port=port)
-
     command_args = sys.argv[1:]
 
     try:
@@ -19,7 +18,7 @@ def main():
         raise Exception("You have to specify the method!")
 
     args = []
-    while command_args and "=" not in command_args[0]:
+    while command_args and "=" not in command_args[0] and ":" not in command_args[0]:
         value = command_args.pop(0)
         try:
             value = int(value)
@@ -28,14 +27,21 @@ def main():
         args.append(value)
 
     kwargs = {}
-    while command_args and "=" in command_args[0]:
+    while command_args and "=" in command_args[0] and ":" not in command_args[0]:
         param, value = command_args.pop(0).split("=", 1)
         try:
             value = int(value)
         except ValueError:
             pass
         kwargs[param] = value
-
+    additional_kwargs = {}
+    if command_args and ":" in command_args[0]:
+        additional_kwargs["auth"] = [x.strip() for x in command_args[0].split(":", 1)]
+    elif "SPROUT_USER" in os.environ and "SPROUT_PASSWORD" in os.environ:
+        additional_kwargs["auth"] = os.environ["SPROUT_USER"], os.environ["SPROUT_PASSWORD"]
+    elif "SPROUT_PASSWORD" in os.environ:
+        additional_kwargs["auth"] = os.environ["USER"], os.environ["SPROUT_PASSWORD"]
+    client = SproutClient(host=host, port=port, **additional_kwargs)
     print client.call_method(method, *args, **kwargs)
 
 
@@ -43,5 +49,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print str(e)
+        print e.__class__.__name__, "-", str(e)
         exit(1)

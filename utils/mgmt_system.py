@@ -366,6 +366,10 @@ class MgmtSystemAPIBase(object):
             message="VM %s in steady state" % vm_name
         )
 
+    @property
+    def can_rename(self):
+        return hasattr(self, "rename_vm")
+
 
 class VMWareSystem(MgmtSystemAPIBase):
     """Client to Vsphere API
@@ -681,13 +685,24 @@ class VMWareSystem(MgmtSystemAPIBase):
             self.wait_vm_suspended(vm_name)
             return True
 
+    def rename_vm(self, vm_name, new_vm_name):
+        vm = self._get_vm(vm_name)
+        task = vm.Rename_Task(newName=new_vm_name)
+        wait_for(
+            lambda: task.info.state == "success",
+            fail_func=task.update(), delay=0.5, num_sec=30)
+
     def clone_vm(self, source, destination, resourcepool=None, datastore=None, power_on=True,
-                 sparse=False, template=False, provision_timeout=900):
+                 sparse=False, template=False, provision_timeout=900, progress_callback=None):
         try:
             if mobs.VirtualMachine.get(self.api, name=destination).name == destination:
                 raise Exception("VM already present!")
         except ObjectNotFoundError:
             pass
+
+        if progress_callback is None:
+            progress_callback = lambda progress: logger.info(
+                "Provisioning progress {}->{}: {}").format(source, destination, str(progress))
 
         source_template = mobs.VirtualMachine.get(self.api, name=source)
 
@@ -730,8 +745,16 @@ class VMWareSystem(MgmtSystemAPIBase):
             folder = source_template.parent
 
         task = source_template.CloneVM_Task(folder=folder, name=destination, spec=vm_clone_spec)
+
+        def _check():
+            try:
+                progress_callback("{}/{}%".format(task.info.state, task.info.progress))
+            except AttributeError:
+                pass
+            return task.info.state not in {"queued", "running"}
+
         wait_for(
-            lambda: task.info.state not in {"queued", "running"},
+            _check,
             fail_func=task.update, num_sec=provision_timeout, delay=4
         )
         if task.info.state != 'success':
@@ -744,12 +767,15 @@ class VMWareSystem(MgmtSystemAPIBase):
         mobs.VirtualMachine.get(self.api, name=vm_name).MarkAsTemplate()  # Returns None
 
     def deploy_template(self, template, **kwargs):
-        kwargs["power_on"] = True
+        kwargs["power_on"] = kwargs.pop("power_on", True)
         kwargs["template"] = False
         destination = kwargs.pop("vm_name")
         start_timeout = kwargs.pop("timeout", 900)
         self.clone_vm(template, destination, **kwargs)
-        self.wait_vm_running(destination, num_sec=start_timeout)
+        if kwargs["power_on"]:
+            self.wait_vm_running(destination, num_sec=start_timeout)
+        else:
+            self.wait_vm_stopped(destination, num_sec=start_timeout)
         return destination
 
     def remove_host_from_cluster(self, host_name):
@@ -1893,6 +1919,39 @@ class OpenstackSystem(MgmtSystemAPIBase):
         except StopIteration:
             return None
         return first_available_ip.ip
+
+    def mark_as_template(self, instance_name):
+        """OpenStack marking as template is a little bit more complex than vSphere.
+
+        We have to rename the instance, create a snapshot of the original name and then delete the
+        instance."""
+        logger.info("Marking {} as OpenStack template".format(instance_name))
+        instance = self._find_instance_by_name(instance_name)
+        original_name = instance.name
+        copy_name = original_name + "_copytemplate"
+        instance.update(copy_name)
+        try:
+            self.wait_vm_steady(copy_name)
+            if not self.is_vm_stopped(copy_name):
+                instance.stop()
+                self.wait_vm_stopped(copy_name)
+            uuid = instance.create_image(original_name)
+            wait_for(lambda: self.api.images.get(uuid).status == "ACTIVE", num_sec=900, delay=5)
+            instance.delete()
+            wait_for(lambda: not self.does_vm_exist(copy_name), num_sec=180, delay=5)
+        except Exception as e:
+            logger.error(
+                "Could not mark {} as a OpenStack template! ({})".format(instance_name, str(e)))
+            instance.update(original_name)  # Clean up after ourselves
+            raise
+
+    def rename_vm(self, instance_name, new_name):
+        instance = self._find_instance_by_name(instance_name)
+        try:
+            instance.update(new_name)
+        except:
+            instance.update(instance_name)
+            raise
 
 
 class SCVMMSystem(MgmtSystemAPIBase):
