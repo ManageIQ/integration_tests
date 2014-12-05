@@ -88,17 +88,19 @@ def smtp_test(request):
 
 @pytest.mark.trylast
 def pytest_runtest_call(__multicall__, item):
-    __multicall__.execute()
-    if "smtp_test" not in item.funcargs:
-        return
+    try:
+        __multicall__.execute()
+    finally:
+        if "smtp_test" not in item.funcargs:
+            return
 
-    name, location = get_test_idents(item)
+        name, location = get_test_idents(item)
 
-    art_client.fire_hook(
-        "filedump",
-        test_name=name,
-        test_location=location,
-        filename="emails.html",
-        contents=item.funcargs["smtp_test"].get_html_report(),
-        fd_ident="emails"
-    )
+        art_client.fire_hook(
+            "filedump",
+            test_name=name,
+            test_location=location,
+            filename="emails.html",
+            contents=item.funcargs["smtp_test"].get_html_report(),
+            fd_ident="emails"
+        )
