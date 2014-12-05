@@ -69,6 +69,8 @@ def test_vm(request, provider_crud, provider_mgmt, vm_name):
 
     if not provider_mgmt.does_vm_exist(vm_name):
         vm.create_on_provider()
+    vm.provider_crud.refresh_provider_relationships()
+    vm.wait_for_appear()
     return vm
 
 

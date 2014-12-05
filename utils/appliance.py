@@ -889,10 +889,12 @@ class IPAppliance(object):
             fail_condition=not running, delay=10)
         return result
 
-    def install_vddk(self, reboot=True):
+    def install_vddk(self, reboot=True, log_callback=None):
         '''Install the vddk on a appliance'''
+        if log_callback is None:
+            log_callback = self.log.info
         if int(self.ssh_client().run_command("ldconfig -p | grep vix | wc -l")[1]) < 1:
-            logger.info('Installing VDDK...')
+            log_callback('Installing VDDK...')
             script = scripts_path.join('install_vddk.py')
             args = [str(script), self.address, conf.cfme_data['basic_info']['vddk_url']]
             if reboot:
