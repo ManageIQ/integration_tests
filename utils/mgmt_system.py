@@ -1770,6 +1770,11 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def remove_host_from_cluster(self, hostname):
         raise NotImplementedError('remove_host_from_cluster not implemented')
 
+    def get_first_floating_ip(self):
+        first_available_ip = (ip for ip in self.api.floating_ips.list()
+                              if ip.instance_id is None).next()
+        return first_available_ip.ip
+
 
 class SCVMMSystem(MgmtSystemAPIBase):
     """This class is used to connect to M$ SCVMM
