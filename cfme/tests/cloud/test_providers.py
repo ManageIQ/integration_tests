@@ -66,7 +66,7 @@ def test_provider_add_with_bad_credentials(provider_crud):
 def test_provider_crud(provider_crud):
     """ Tests that a provider can be added """
     provider_crud.create()
-    provider_crud.validate()
+    provider_crud.validate(db=False)
 
     old_name = provider_crud.name
     with update(provider_crud):

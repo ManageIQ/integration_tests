@@ -1035,6 +1035,13 @@ class IPAppliance(object):
     def host_id(self, hostname):
         return db_queries.get_host_id(hostname, db=self.db)
 
+    @lazycache
+    def db_yamls(self):
+        return db.db_yamls(self.db)
+
+    def get_yaml_config(self, config_name):
+        return self.db_yamls[config_name]
+
 
 class ApplianceSet(object):
     """Convenience class to ease access to appliances in appliance_set
