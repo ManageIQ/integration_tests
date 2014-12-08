@@ -18,6 +18,15 @@ from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
 from utils import version, conf, lazycache
 from utils.pretty import Pretty
+from utils import signals
+
+
+def invalidate_server_details():
+    del store.current_appliance.configuration_details
+    del store.current_appliance.zone_description
+
+
+signals.register_callback('server_details_changed', invalidate_server_details)
 
 access_tree = partial(accordion.tree, "Access Control")
 database_tree = partial(accordion.tree, "Database")
@@ -638,8 +647,7 @@ class BasicInformation(Updateable, Pretty):
                 " data: {'server_zone':'%s'}})" % (self.details["appliance_zone"]))
         sel.click(form_buttons.save)
         # TODO: Maybe make a cascaded delete on lazycache?
-        del store.current_appliance.configuration_details
-        del store.current_appliance.zone_description
+        signals.fire('server_details_changed')
 
 
 class SMTPSettings(Updateable):
