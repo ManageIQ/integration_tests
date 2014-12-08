@@ -168,8 +168,8 @@ def vm_reaper():
                             appliance.destroy()
                         vm_cleanup = True
                         tapi.task(task['tid']).put({'cleanup': True})
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print e
 
             containers = dockerbot.dc.containers(all=True)
             for container in containers:
