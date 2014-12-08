@@ -998,8 +998,8 @@ class IPAppliance(object):
 
         Returns:
             If the data weren't found in the DB, :py:class:`NoneType`
-            If the data were found, it returns tuple `(region, server name,
-                server id, server zone id)`
+            If the data were found, it returns tuple ``(region, server name,
+            server id, server zone id)``
         """
         return db_queries.get_configuration_details(self.db)
 
