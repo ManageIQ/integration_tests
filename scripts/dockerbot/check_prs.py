@@ -162,11 +162,14 @@ def vm_reaper():
                     vm_cleanup = True
                 else:
                     appliance = Appliance(task['provider'], task['vm_name'])
-                    if appliance.does_vm_exist():
-                        print "Destroying {}".format(appliance.vm_name)
-                        appliance.destroy()
-                    vm_cleanup = True
-                    tapi.task(task['tid']).put({'cleanup': True})
+                    try:
+                        if appliance.does_vm_exist():
+                            print "Destroying {}".format(appliance.vm_name)
+                            appliance.destroy()
+                        vm_cleanup = True
+                        tapi.task(task['tid']).put({'cleanup': True})
+                    except Exception:
+                        pass
 
             containers = dockerbot.dc.containers(all=True)
             for container in containers:
