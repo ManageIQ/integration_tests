@@ -636,6 +636,9 @@ class BasicInformation(Updateable, Pretty):
                 "$j.ajax({type: 'POST', url: '/ops/settings_form_field_changed/server',"
                 " data: {'server_zone':'%s'}})" % (self.details["appliance_zone"]))
         sel.click(form_buttons.save)
+        # TODO: Maybe make a cascaded delete on lazycache?
+        del store.current_appliance.configuration_details
+        del store.current_appliance.zone_description
 
 
 class SMTPSettings(Updateable):

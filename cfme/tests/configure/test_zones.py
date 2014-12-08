@@ -46,6 +46,7 @@ def test_zone_change_appliance_zone(request):
         name=generate_random_string(size=5),
         description=generate_random_string(size=8))
     request.addfinalizer(zone.delete)
+    request.addfinalizer(conf.BasicInformation(appliance_zone="default").update)
     zone.create()
     basic_info = conf.BasicInformation(appliance_zone=zone.name)
     basic_info.update()
