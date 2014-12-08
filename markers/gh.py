@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""github(\*issues, action="skip"|"xfail"|callable): Marker for GH issues integration.
+"""github(\*issues, action="skip"\|"xfail"\|callable): Marker for GH issues integration.
 
 List of issues can be specified either as integers (when default_repo is specified), or strings
 in format ``<owner>/<repo>:<issue>``. If any of the issues is not closed, ``action`` will be done.
@@ -8,11 +8,11 @@ is expected. The calling will take place in context of ``pytest_runtest_setup``.
 
 Be advised that if you don't provide your token, you are limited to 60 requests per hour.
 
-env.yaml:
+env.yaml::
 
-github:
-    default_repo: foo/bar
-    token: aefe676fef
+    github:
+        default_repo: foo/bar
+        token: aefe676fef
 
 
 None of those options is required. These YAML options basically override defaults in py.test command
