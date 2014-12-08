@@ -11,6 +11,7 @@ from cfme.web_ui import \
     (Calendar, Form, InfoBlock, MultiFill, Region, Select, Table, accordion, fill, flash,
     form_buttons)
 from cfme.web_ui.menu import nav
+from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
@@ -1570,29 +1571,54 @@ def set_server_roles(**roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
-    sel.force_navigate("cfg_settings_currentserver_server")
-    if get_server_roles(navigate=False) == roles:
+    if get_server_roles() == roles:
         logger.debug(' Roles already match, returning...')
         return
+    sel.force_navigate("cfg_settings_currentserver_server")
     fill(server_roles, roles, action=form_buttons.save)
 
 
-def get_server_roles(navigate=True):
+def get_server_roles(navigate=True, db=True):
     """ Get server roles from Configure / Configuration
 
     Returns: :py:class:`dict` with the roles in the same format as :py:func:`set_server_roles`
         accepts as kwargs.
     """
-    if navigate:
-        sel.force_navigate("cfg_settings_currentserver_server")
+    if db:
+        asr = cfmedb()['assigned_server_roles']
+        sr = cfmedb()['server_roles']
+        cfg = store.current_appliance.get_yaml_config('vmdb')
+        roles = list(cfmedb().session.query(sr.name))
+        roles_set = list(cfmedb().session.query(sr.name)
+                         .join(asr, asr.server_role_id == sr.id))
+        role_set = [role_set[0] for role_set in roles_set]
+        roles_with_bool = {role[0]: role[0] in role_set for role in roles}
 
-    role_list = {}
-    for (name, locator) in server_roles.fields:
-        try:
-            role_list[name] = sel.element(locator).is_selected()
-        except:
-            logger.warning("role not found, skipping, netapp storage role?  (" + name + ")")
-    return role_list
+        dead_keys = ['database_owner', 'vdi_inventory']
+        for key in roles_with_bool:
+            if 'storage' not in cfg.get('product', {}):
+                if key.startswith('storage'):
+                    dead_keys.append(key)
+                if key == 'vmdb_storage_bridge':
+                    dead_keys.append(key)
+
+        for key in dead_keys:
+            try:
+                del roles_with_bool[key]
+            except:
+                pass
+        return roles_with_bool
+    else:
+        if navigate:
+            sel.force_navigate("cfg_settings_currentserver_server")
+
+        role_list = {}
+        for (name, locator) in server_roles.fields:
+            try:
+                role_list[name] = sel.element(locator).is_selected()
+            except:
+                logger.warning("role not found, skipping, netapp storage role?  (" + name + ")")
+        return role_list
 
 
 def set_ntp_servers(*servers):

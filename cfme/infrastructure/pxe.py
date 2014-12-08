@@ -20,6 +20,7 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils import version
 from utils.pretty import Pretty
+from utils.db import cfmedb
 
 cfg_btn = partial(tb.select, 'Configuration')
 
@@ -189,18 +190,23 @@ class PXEServer(Updateable, Pretty):
         else:
             flash.assert_message_match('Add of new PXE Server was cancelled by the user')
 
-    def exists(self):
+    def exists(self, db=True):
         """
         Checks if the PXE server already exists
         """
-        sel.force_navigate('infrastructure_pxe_servers')
-        try:
-            pxe_tree(self.name)
-            return True
-        except CandidateNotFound:
-            return False
-        except NoSuchElementException:
-            return False
+        if db:
+            dbs = cfmedb()
+            candidates = list(dbs.session.query(dbs["pxe_servers"]))
+            return self.name in [s.name for s in candidates]
+        else:
+            sel.force_navigate('infrastructure_pxe_servers')
+            try:
+                pxe_tree(self.name)
+                return True
+            except CandidateNotFound:
+                return False
+            except NoSuchElementException:
+                return False
 
     def update(self, updates, cancel=False):
         """
@@ -256,16 +262,30 @@ class PXEServer(Updateable, Pretty):
             wait_for(lambda lt: lt != ref_time(),
                      func_args=[last_time], fail_func=sel.refresh, num_sec=120)
 
-    def get_pxe_image_type(self, image_name):
-        sel.force_navigate('infrastructure_pxe_servers')
-        pxe_tree(self.name, 'PXE Images', image_name)
-        # GH1070
-        itype = version.pick({
-            version.LOWEST: lambda: InfoBlock('form').text('Basic Information', 'Type'),
-            '5.3': lambda: sel.text(sel.element(
-                '//td[contains(text(),"Type")]/../td[2]'))
-        })
-        return itype()
+    def get_pxe_image_type(self, image_name, db=True):
+        if db:
+            pxe_i = cfmedb()["pxe_images"]
+            pxe_s = cfmedb()["pxe_servers"]
+            pxe_t = cfmedb()["pxe_image_types"]
+            hosts = list(cfmedb().session.query(pxe_t.name)
+                         .join(pxe_i, pxe_i.pxe_image_type_id == pxe_t.id)
+                         .join(pxe_s, pxe_i.pxe_server_id == pxe_s.id)
+                         .filter(pxe_s.name == self.name)
+                         .filter(pxe_i.name == image_name))
+            if hosts:
+                return hosts[0][0]
+            else:
+                return None
+        else:
+            sel.force_navigate('infrastructure_pxe_servers')
+            pxe_tree(self.name, 'PXE Images', image_name)
+            # GH1070
+            itype = version.pick({
+                version.LOWEST: lambda: InfoBlock('form').text('Basic Information', 'Type'),
+                '5.3': lambda: sel.text(sel.element(
+                    '//td[contains(text(),"Type")]/../td[2]'))
+            })
+            return itype()
 
     def set_pxe_image_type(self, image_name, image_type):
         """
@@ -334,18 +354,23 @@ class CustomizationTemplate(Updateable, Pretty):
             flash.assert_message_match(
                 'Add of new Customization Template was cancelled by the user')
 
-    def exists(self):
+    def exists(self, db=True):
         """
         Checks if the Customization template already exists
         """
-        sel.force_navigate('infrastructure_pxe_templates')
-        try:
-            template_tree(self.image_type, self.name)
-            return True
-        except CandidateNotFound:
-            return False
-        except NoSuchElementException:
-            return False
+        if db:
+            dbs = cfmedb()
+            candidates = list(dbs.session.query(dbs["customization_templates"]))
+            return self.name in [s.name for s in candidates]
+        else:
+            sel.force_navigate('infrastructure_pxe_templates')
+            try:
+                template_tree(self.image_type, self.name)
+                return True
+            except CandidateNotFound:
+                return False
+            except NoSuchElementException:
+                return False
 
     def update(self, updates, cancel=False):
         """
@@ -492,16 +517,28 @@ class ISODatastore(Updateable, Pretty):
         if refresh:
             self.refresh()
 
-    def exists(self):
+    def exists(self, db=True):
         """
         Checks if the ISO Datastore already exists
         """
-        sel.force_navigate('infrastructure_iso_datastores')
-        try:
-            iso_tree(self.provider)
-            return True
-        except CandidateNotFound:
-            return False
+        if db:
+            iso = cfmedb()['iso_datastores']
+            ems = cfmedb()['ext_management_systems']
+            name = 'RHEV 3.3'
+            iso_ds = list(cfmedb().session.query(iso.id)
+                          .join(ems, iso.ems_id == ems.id)
+                          .filter(ems.name == name))
+            if iso_ds:
+                return True
+            else:
+                return False
+        else:
+            sel.force_navigate('infrastructure_iso_datastores')
+            try:
+                iso_tree(self.provider)
+                return True
+            except CandidateNotFound:
+                return False
 
     def delete(self, cancel=True):
         """
