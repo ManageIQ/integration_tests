@@ -433,22 +433,18 @@ def move_to_element(loc, **kwargs):
     wait_for_ajax()
     el = element(loc, **kwargs)
     move_to = ActionChains(browser()).move_to_element(el)
+    execute_script("arguments[0].scrollIntoView();", el)
     try:
         move_to.perform()
-    except MoveTargetOutOfBoundsException:
-        # ff workaround
-        execute_script("arguments[0].scrollIntoView();", el)
-        if elements(brand) and not is_displayed(brand):
-            # If it does it badly that it moves whole page, this moves it back
-            try:
-                execute_script("arguments[0].scrollIntoView();", element(brand))
-            except MoveTargetOutOfBoundsException:
-                pass
+    except MoveTargetOutOfBoundsException:  # This has become desperate now.
+        raise exceptions.CannotScrollException(
+            "Despite all the workarounds, scrolling to `{}` was unsuccessful.".format(loc))
+    if elements(brand) and not is_displayed(brand):
+        # If it does it badly that it moves whole page, this moves it back
         try:
-            move_to.perform()
-        except MoveTargetOutOfBoundsException:  # This has become desperate now.
-            raise exceptions.CannotScrollException(
-                "Despite all the workarounds, scrolling to `{}` was unsuccessful.".format(loc))
+            execute_script("arguments[0].scrollIntoView();", element(brand))
+        except MoveTargetOutOfBoundsException:
+            pass
     return el
 
 
