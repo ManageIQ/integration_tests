@@ -493,6 +493,7 @@ class OpenStackInstance(Instance, Updateable):
             For more optional keyword arguments, see
             :py:data:`cfme.cloud.provisioning.provisioning_form`
         """
+        from cfme.provisioning import provisioning_form
         sel.force_navigate('clouds_provision_instances', context={
             'provider': self.provider_crud,
             'template_name': self.template_name,
@@ -503,7 +504,6 @@ class OpenStackInstance(Instance, Updateable):
         if security_groups:
             prov_fill_kwargs['security_groups'] = security_groups[0]
 
-        from cfme.provisioning import provisioning_form
         fill(provisioning_form, dict(
             email=email,
             first_name=first_name,
@@ -592,12 +592,12 @@ class EC2Instance(Instance, Updateable):
             For more optional keyword arguments, see
             :py:data:`cfme.cloud.provisioning.provisioning_form`
         """
+        from cfme.provisioning import provisioning_form
         sel.force_navigate('clouds_provision_instances', context={
             'provider': self.provider_crud,
             'template_name': self.template_name,
         })
 
-        from cfme.provisioning import provisioning_form
         fill(provisioning_form, dict(
             email=email,
             first_name=first_name,

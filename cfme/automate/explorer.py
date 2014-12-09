@@ -269,8 +269,8 @@ class Namespace(TreeNode, Updateable):
     form = Form(fields=[('name', "//*[@id='ns_name']"),
                         ('description', "//*[@id='ns_description']")])
 
-    @staticmethod
-    def make_path(*names, **kwargs):
+    @classmethod
+    def make_path(cls, *names, **kwargs):
         """
         Make a set of nested Namespace objects with the given path.
 
@@ -285,14 +285,13 @@ class Namespace(TreeNode, Updateable):
 
         if len(names) == 1 and domain:
             names = list(names)
-            return Namespace(name=names.pop(), parent=domain)
+            return cls(name=names.pop(), parent=domain)
         elif names:
             names = list(names)
             if domain:
-                return Namespace(name=names.pop(),
-                                 parent=Namespace.make_path(domain=domain, *names))
+                return cls(name=names.pop(), parent=cls.make_path(domain=domain, *names))
             else:
-                return Namespace(name=names.pop(), parent=Namespace.make_path(*names))
+                return cls(name=names.pop(), parent=cls.make_path(*names))
         else:
             return None
 

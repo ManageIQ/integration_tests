@@ -7,6 +7,7 @@ import re
 import winrm
 from abc import ABCMeta, abstractmethod
 from cStringIO import StringIO
+from contextlib import contextmanager
 from datetime import datetime
 from textwrap import dedent
 import operator
@@ -14,6 +15,8 @@ import operator
 import boto
 import tzlocal
 from boto.ec2 import EC2Connection, get_region
+from cinderclient.v2 import client as cinderclient
+from cinderclient import exceptions as cinder_exceptions
 from keystoneclient.v2_0 import client as oskclient
 from lxml import etree
 from novaclient.v1_1 import client as osclient
@@ -1504,6 +1507,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
         self.auth_url = kwargs['auth_url']
         self._api = None
         self._kapi = None
+        self._capi = None
 
     def _num_vm_stat(self):
         if current_version() < '5.3':
@@ -1525,6 +1529,13 @@ class OpenstackSystem(MgmtSystemAPIBase):
             self._kapi = oskclient.Client(username=self.username, password=self.password,
                                           tenant_name=self.tenant, auth_url=self.auth_url)
         return self._kapi
+
+    @property
+    def capi(self):
+        if not self._capi:
+            self._capi = cinderclient.Client(
+                self.username, self.password, self.tenant, self.auth_url, service_type="volume")
+        return self._capi
 
     def _get_tenants(self):
         real_tenants = []
@@ -1611,6 +1622,10 @@ class OpenstackSystem(MgmtSystemAPIBase):
         flavor_list = self.api.flavors.list()
         return [flavor.name for flavor in flavor_list]
 
+    def list_volume(self):  # TODO: maybe names? Could not get it to work via API though ...
+        volume_list = self.capi.volumes.list()
+        return [volume.id for volume in volume_list]
+
     def list_network(self):
         network_list = self.api.networks.list()
         return [network.label for network in network_list]
@@ -1623,6 +1638,103 @@ class OpenstackSystem(MgmtSystemAPIBase):
 
     def vm_status(self, vm_name):
         return self._find_instance_by_name(vm_name).status
+
+    def create_volume(self, size_gb, **kwargs):
+        volume = self.capi.volumes.create(size_gb, **kwargs).id
+        wait_for(lambda: self.capi.volumes.get(volume).status == "available", num_sec=60, delay=0.5)
+        return volume
+
+    def delete_volume(self, *ids, **kwargs):
+        wait = kwargs.get("wait", True)
+        for id in ids:
+            self.capi.volumes.find(id=id).delete()
+        if not wait:
+            return
+        # Wait for them
+        wait_for(lambda: all(map(lambda id: not self.volume_exists(id), ids)), delay=0.5)
+
+    def volume_exists(self, id):
+        try:
+            self.capi.volumes.get(id)
+            return True
+        except cinder_exceptions.NotFound:
+            return False
+
+    @contextmanager
+    def with_volume(self, *args, **kwargs):
+        """Creates a context manager that creates a single volume with parameters defined via params
+        and destroys it after exiting the context manager
+
+        For arguments description, see the :py:meth:`OpenstackSystem.create_volume`.
+        """
+        volume = self.create_volume(*args, **kwargs)
+        try:
+            yield volume
+        finally:
+            self.delete_volume(volume)
+
+    @contextmanager
+    def with_volumes(self, *configurations, **kwargs):
+        """Similar to :py:meth:`OpenstackSystem.with_volume`, but with multiple volumes.
+
+        Args:
+            *configurations: Can be either :py:class:`int` (taken as a disk size), or a tuple.
+                If it is a tuple, then first element is disk size and second element a dictionary
+                of kwargs passed to :py:meth:`OpenstackSystem.create_volume`. Can be 1-n tuple, it
+                can cope with that.
+        Keywords:
+            n: How many copies of single configuration produce? Useful when you want to create eg.
+                10 identical volumes, so you specify only one configuration and set n=10.
+
+        Example:
+
+            .. code-block:: python
+
+               with mgmt.with_volumes(1, n=10) as (d0, d1, d2, d3, d4, d5, d6, d7, d8, d9):
+                   pass  # provisions 10 identical 1G volumes
+
+               with mgmt.with_volumes(1, 2) as (d0, d1):
+                   pass  # d0 1G, d1 2G
+
+               with mgmt.with_volumes((1, {}), (2, {})) as (d0, d1):
+                   pass  # d0 1G, d1 2G same as before but you can see you can pass kwargs through
+
+        """
+        n = kwargs.pop("n", None)
+        if n is None:
+            pass  # Nothing to do
+        elif n > 1 and len(configurations) == 1:
+            configurations = n * configurations
+        elif n != len(configurations):
+            raise "n does not equal the length of configurations"
+        # now n == len(configurations)
+        volumes = []
+        try:
+            for configuration in configurations:
+                if isinstance(configuration, int):
+                    size, kwargs = configuration, {}
+                elif len(configuration) == 1:
+                    size, kwargs = configuration[0], {}
+                elif len(configuration) == 2:
+                    size, kwargs = configuration
+                else:
+                    size = configuration[0]
+                    kwargs = configuration[1]
+                volumes.append(self.create_volume(size, **kwargs))
+            yield volumes
+        finally:
+            self.delete_volume(*volumes)
+
+    def _get_instance_name(self, id):
+        return self.api.servers.get(id).name
+
+    def volume_attachments(self, volume_id):
+        """Returns a dictionary of ``{instance: device}`` relationship of the volume."""
+        volume = self.capi.volumes.get(volume_id)
+        result = {}
+        for attachment in volume.attachments:
+            result[self._get_instance_name(attachment["server_id"])] = attachment["device"]
+        return result
 
     def vm_creation_time(self, vm_name):
         instance = self._find_instance_by_name(vm_name)
