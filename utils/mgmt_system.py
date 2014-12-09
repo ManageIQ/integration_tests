@@ -17,6 +17,7 @@ from boto.ec2 import EC2Connection, get_region
 from keystoneclient.v2_0 import client as oskclient
 from lxml import etree
 from novaclient.v1_1 import client as osclient
+from novaclient import exceptions as os_exceptions
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import DisconnectedError
 from ovirtsdk.xml import params
@@ -1771,8 +1772,15 @@ class OpenstackSystem(MgmtSystemAPIBase):
         raise NotImplementedError('remove_host_from_cluster not implemented')
 
     def get_first_floating_ip(self):
-        first_available_ip = (ip for ip in self.api.floating_ips.list()
-                              if ip.instance_id is None).next()
+        try:
+            self.api.floating_ips.create()
+        except os_exceptions.NotFound:
+            logger.error('No more Floating IPs available, will attempt to grab a free one')
+        try:
+            first_available_ip = (ip for ip in self.api.floating_ips.list()
+                                  if ip.instance_id is None).next()
+        except StopIteration:
+            return None
         return first_available_ip.ip
 
 
