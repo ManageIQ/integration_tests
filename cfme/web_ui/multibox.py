@@ -45,6 +45,10 @@ class MultiBoxSelect(Pretty):
         self._async = async
         self._sync = sync
 
+    def __str__(self):
+        return "{}({}, {})".format(
+            self.__class__.__name__, str(self._unselected), str(self._selected))
+
     def _move_to_unselected(self):
         """ Clicks the button for moving items from selected to unselected.
 
@@ -221,8 +225,7 @@ def _fill_multibox_list(multi, values):
 
     Returns: :py:class:`bool` with success.
     """
-    stype = type(multi)
-    logger.debug('  Filling in %s with values %s' % (str(stype), str(values)))
+    logger.debug('  Filling in {} with values {}'.format(str(multi), str(values)))
     if multi._async:
         sync = []
         async = []
@@ -247,8 +250,7 @@ def _fill_multibox_str(multi, string):
 
     Returns: :py:class:`bool` with success.
     """
-    stype = type(multi)
-    logger.debug('  Filling in %s with value %s' % (str(stype), string))
+    logger.debug('  Filling in {} with value {}'.format(str(multi), string))
     return multi.add(string)
 
 
@@ -267,15 +269,14 @@ def _fill_multibox_dict(multi, d):
 
     Returns: :py:class:`bool` with success.
     """
-    stype = type(multi)
     enable_list, disable_list = [], []
     for key, value in d.iteritems():
         if value:
             enable_list.append(key)
         else:
             disable_list.append(key)
-    logger.debug('  Disabling values %s in %s' % (str(disable_list), str(stype)))
-    logger.debug('  Enabling values %s in %s' % (str(enable_list), str(stype)))
+    logger.debug('  Disabling values {} in {}'.format(str(disable_list), str(multi)))
+    logger.debug('  Enabling values {} in {}'.format(str(enable_list), str(multi)))
     multi.remove(*disable_list)
     if multi._async:
         sync, async, dont_care = [], [], []

@@ -32,6 +32,12 @@ def dig_code(node):
 
 def pytest_exception_interact(node, call, report):
     name, location = get_test_idents(node)
+    if hasattr(node, "_metadata") and node._metadata.owner is not None:
+        # The owner is specified in metadata
+        art_client.fire_hook(
+            'filedump', test_location=location, test_name=name, filename="qa_contact.txt",
+            contents="{} (from metadata)".format(node._metadata.owner), fd_ident="qa")
+        return
     try:
         qa_arr = []
         results = dig_code(node)

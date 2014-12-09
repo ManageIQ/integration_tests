@@ -25,6 +25,7 @@ from cfme.exceptions import (
 from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
 from cfme.web_ui import Timelines
 from utils import conf
+from utils.db import cfmedb
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
@@ -117,6 +118,7 @@ class Provider(Updateable, Pretty):
 
     """
     pretty_attrs = ['name', 'credentials', 'zone', 'key']
+    STATS_TO_MATCH = ['num_template', 'num_vm']
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
         self.name = name
@@ -200,7 +202,7 @@ class Provider(Updateable, Pretty):
         if self.exists:
             self.delete(*args, **kwargs)
 
-    def validate(self):
+    def validate(self, db=True):
         """ Validates that the detail page matches the Providers information.
 
         This method logs into the provider using the mgmt_system interface and collects
@@ -208,27 +210,35 @@ class Provider(Updateable, Pretty):
         continuously until the matching of all items is complete. A error will be raised
         if the match is not complete within a certain defined time period.
         """
-        if not self._on_detail_page():
-            sel.force_navigate('clouds_provider', context={'provider': self})
 
-        stats_to_match = ['num_template', 'num_vm']
         client = self.get_mgmt_system()
+        if db:
+            ec, tc = wait_for(self._do_stats_match,
+                              [client, self.STATS_TO_MATCH],
+                              {'db': db},
+                              message="do_stats_match_db",
+                              num_sec=1000,
+                              delay=10)
+        else:
 
-        # Bail out here if the stats match.
-        if self._do_stats_match(client, stats_to_match):
-            client.disconnect()
-            return
+            if not self._on_detail_page():
+                sel.force_navigate('clouds_provider', context={'provider': self})
 
-        # Otherwise refresh relationships and hand off to wait_for
-        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
-        sel.handle_alert()
+            # Bail out here if the stats match.
+            if self._do_stats_match(client, self.STATS_TO_MATCH):
+                client.disconnect()
+                return
 
-        ec, tc = wait_for(self._do_stats_match,
-                          [client, stats_to_match],
-                          message="do_stats_match",
-                          fail_func=sel.refresh,
-                          num_sec=1000,
-                          delay=10)
+            # Otherwise refresh relationships and hand off to wait_for
+            tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
+            sel.handle_alert()
+
+            ec, tc = wait_for(self._do_stats_match,
+                              [client, self.STATS_TO_MATCH],
+                              message="do_stats_match",
+                              fail_func=sel.refresh,
+                              num_sec=1000,
+                              delay=10)
         client.disconnect()
 
     def load_all_provider_instances(self):
@@ -280,7 +290,7 @@ class Provider(Updateable, Pretty):
             sel.force_navigate('clouds_provider', context={'provider': self})
         return details_page.infoblock.text(*ident)
 
-    def _do_stats_match(self, client, stats_to_match=None):
+    def _do_stats_match(self, client, stats_to_match=None, db=True):
         """ A private function to match a set of statistics, with a Provider.
 
         This function checks if the list of stats match, if not, the page is refreshed.
@@ -297,10 +307,9 @@ class Provider(Updateable, Pretty):
             ProviderHasNoProperty: If the provider does not have the property defined.
         """
         host_stats = client.stats(*stats_to_match)
-
         for stat in stats_to_match:
             try:
-                cfme_stat = getattr(self, stat)
+                cfme_stat = getattr(self, stat)(db=db)
                 logger.info(' Matching stat [%s], Host(%s), CFME(%s)' %
                     (stat, host_stats[stat], cfme_stat))
                 if host_stats[stat] != cfme_stat:
@@ -317,22 +326,39 @@ class Provider(Updateable, Pretty):
         return sel.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
                                 % self.name)
 
-    @property
-    def num_template(self):
+    def num_template(self, db=True):
         """ Returns the providers number of templates, as shown on the Details page."""
-        return int(self.get_detail("Relationships", "Images"))
+        if db:
+            ext_management_systems = cfmedb()["ext_management_systems"]
+            vms = cfmedb()["vms"]
+            truthy = True  # This is to prevent a lint error with ==True
+            temlist = list(cfmedb().session.query(vms.name)
+                           .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                           .filter(ext_management_systems.name == self.name)
+                           .filter(vms.template == truthy))
+            return len(temlist)
+        else:
+            return int(self.get_detail("Relationships", "Templates"))
 
-    @property
-    def num_vm(self):
+    def num_vm(self, db=True):
         """ Returns the providers number of instances, as shown on the Details page."""
-        return int(self.get_detail("Relationships", "Instances"))
+        if db:
+            ext_management_systems = cfmedb()["ext_management_systems"]
+            vms = cfmedb()["vms"]
+            falsey = False  # This is to prevent a lint error with ==False
+            vmlist = list(cfmedb().session.query(vms.name)
+                          .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                          .filter(ext_management_systems.name == self.name)
+                          .filter(vms.template == falsey))
+            return len(vmlist)
+        return int(self.get_detail("Relationships", "VMs"))
 
     @property
     def exists(self):
-        sel.force_navigate('clouds_providers')
-        for page in paginator.pages():
-            if sel.is_displayed(Quadicon(self.name, 'cloud_prov')):
-                return True
+        ems = cfmedb()['ext_management_systems']
+        provs = (prov[0] for prov in cfmedb().session.query(ems.name))
+        if self.name in provs:
+            return True
         else:
             return False
 

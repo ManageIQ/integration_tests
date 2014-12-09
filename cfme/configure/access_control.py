@@ -1,24 +1,17 @@
 from functools import partial
-from urlparse import urlparse
+from fixtures.pytest_store import store
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons
 from cfme.web_ui.menu import nav
-from utils.db_queries import get_server_region
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
 
 
-def get_ip_address():
-    """Returns an IP address of the appliance
-    """
-    return urlparse(sel.current_url()).netloc
-
-
 def server_region():
-    return get_server_region(get_ip_address())
+    return store.current_appliance.server_region()
 
 
 def server_region_pair():

@@ -28,13 +28,15 @@ def wait_for_alert(smtp, alert, delay=None):
         alert: Alert name
         delay: Optional delay to pass to wait_for
     """
-    logger.info("Waiting for informative e-mail of alert '%s' to come" % alert.description)
+    logger.info("Waiting for informative e-mail of alert '{}' to come".format(alert.description))
+
+    def _mail_arrived():
+        for mail in smtp.get_emails():
+            if "Alert Triggered: {}".format(alert.description) in mail["subject"]:
+                return True
+        return False
     wait_for(
-        lambda: len(
-            smtp.get_emails(
-                subject_like="%%Alert Triggered: %s%%" % alert.description
-            )
-        ) > 0,
+        _mail_arrived,
         num_sec=delay,
         delay=5,
         message="wait for e-mail to come!"

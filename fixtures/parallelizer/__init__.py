@@ -31,12 +31,12 @@ The Workflow
 
 """
 
-import atexit
 import difflib
 import json
 import os
 import subprocess
 from collections import OrderedDict, defaultdict, namedtuple
+from threading import Timer
 
 import pytest
 import zmq
@@ -44,8 +44,11 @@ from _pytest import runner
 
 from fixtures.parallelizer import remote
 from fixtures.terminalreporter import reporter
-from utils import conf
+from utils import at_exit, conf
+from utils.appliance import IPAppliance
 from utils.log import create_sublogger
+from utils.sprout import SproutClient
+from utils.wait import wait_for
 
 
 _appliance_help = '''specify appliance URLs to use for distributed testing.
@@ -64,23 +67,31 @@ def pytest_addoption(parser):
     group = parser.getgroup("cfme")
     group._addoption('--appliance', dest='appliances', action='append',
         default=env_base_urls, metavar='base_url', help=_appliance_help)
+    group._addoption('--use-sprout', dest='use_sprout', action='store_true',
+        default=False, help="Use Sprout for provisioning appliances.")
+    group._addoption('--sprout-appliances', dest='sprout_appliances', type=int,
+        default=1, help="How many Sprout appliances to use?.")
+    group._addoption('--sprout-timeout', dest='sprout_timeout', type=int,
+        default=60, help="How many minutes is the lease timeout.")
+    group._addoption(
+        '--sprout-group', dest='sprout_group', default=None, help="Which stream to use.")
+    group._addoption(
+        '--sprout-provider', dest='sprout_provider', default=None, help="Which provider to use.")
+    group._addoption(
+        '--sprout-version', dest='sprout_version', default=None, help="Which version to use.")
+    group._addoption(
+        '--sprout-template', dest='sprout_template', default=None, help="Which template to use.")
+    group._addoption(
+        '--sprout-date', dest='sprout_date', default=None, help="Which date to use.")
 
 
+@pytest.mark.tryfirst
 def pytest_configure(config, __multicall__):
     __multicall__.execute()
-    # TODO: Wrap in a conditional based on the number of appliances for testing
-    if config.option.appliances:
+    if config.option.appliances or (config.option.use_sprout
+            and config.option.sprout_appliances > 1):
         session = ParallelSession(config)
         config.pluginmanager.register(session, "parallel_session")
-
-
-def _failsafe(kill_func):
-    # atexit hook for killing a slave
-    # slave should probably already be dead, this is just a last-ditch catchall
-    try:
-        kill_func()
-    except:
-        pass
 
 
 class ParallelSession(object):
@@ -96,6 +107,63 @@ class ParallelSession(object):
         self.trdist = None
         self.slaves = {}
         self.test_groups = self._test_item_generator()
+        self.sprout_client = None
+        self.sprout_timer = None
+        self.sprout_pool = None
+        if not self.config.option.use_sprout:
+            # Without Sprout
+            self.appliances = self.config.option.appliances
+        else:
+            # Using sprout
+            self.sprout_client = SproutClient.from_config()
+            self.terminal.write(
+                "Requesting {} appliances from Sprout at {}\n".format(
+                    self.config.option.sprout_appliances, self.sprout_client.api_entry))
+            pool_id = self.sprout_client.request_appliances(
+                self.config.option.sprout_group,
+                provider=self.config.option.sprout_provider,
+                template=self.config.option.sprout_template,
+                count=self.config.option.sprout_appliances,
+                version=self.config.option.sprout_version,
+                date=self.config.option.sprout_date,
+                lease_time=self.config.option.sprout_timeout
+            )
+            self.terminal.write("Pool {}. Waiting for fulfillment ...\n".format(pool_id))
+            self.sprout_pool = pool_id
+            at_exit(self.sprout_client.destroy_pool, self.sprout_pool)
+            wait_for(
+                lambda: self.sprout_client.request_check(self.sprout_pool)["fulfilled"],
+                num_sec=30 * 60,  # 30 minutes
+                delay=5,
+                message="requesting appliances was fulfilled"
+            )
+            request = self.sprout_client.request_check(self.sprout_pool)
+            self.appliances = []
+            # Push an appliance to the stack to have proper reference for test collection
+            IPAppliance(address=request["appliances"][0]["ip_address"]).push()
+            for appliance in request["appliances"]:
+                url = "https://{}/".format(appliance["ip_address"])
+                self.appliances.append(url)
+            map(lambda a: "https://{}/".format(a["ip_address"]), request["appliances"])
+            self.terminal.write("Appliances were provided:\n")
+            for appliance_ip in self.appliances:
+                self.terminal.write("- {}\n".format(appliance_ip))
+            self._reset_timer()
+
+    def _reset_timer(self):
+        if not (self.sprout_client is not None and self.sprout_pool is not None):
+            return
+        if self.sprout_timer:
+            self.sprout_timer.cancel()
+        self.sprout_timer = Timer(
+            (self.config.option.sprout_timeout / 2) * 60,
+            self.sprout_ping_pool)
+        self.sprout_timer.daemon = True
+        self.sprout_timer.start()
+
+    def sprout_ping_pool(self):
+        self.sprout_client.prolong_appliance_pool_lease(self.sprout_pool)
+        self._reset_timer()
 
     def send(self, slaveid, event_data):
         """Send data to slave.
@@ -208,18 +276,20 @@ class ParallelSession(object):
             'args': self.config.args,
             'options': self.config.option,
             'zmq_endpoint': zmq_endpoint,
+            'sprout': self.sprout_client is not None and self.sprout_pool is not None,
         }
+        conf.runtime['slave_config']['options'].use_sprout = False  # Slaves should not use sprout
         conf.save('slave_config')
 
         # Fire up the workers
         devnull = open(os.devnull, 'w')
-        for i, base_url in enumerate(self.config.option.appliances):
+        for i, base_url in enumerate(self.appliances):
             slaveid = 'slave%d' % i
             # worker output redirected to null; useful info comes via messages and logs
-            slave = subprocess.Popen(['python', remote.__file__, slaveid, base_url],
-                stdout=devnull, stderr=devnull)
+            slave = subprocess.Popen(
+                ['python', remote.__file__, slaveid, base_url], stdout=devnull, stderr=devnull)
             self.slaves[slaveid] = slave
-            atexit.register(_failsafe, slave.kill)
+            at_exit(slave.kill)
 
     def pytest_runtestloop(self):
         """pytest runtest loop

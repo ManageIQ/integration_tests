@@ -8,7 +8,7 @@ import ui_navigate as nav
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui.prov_form import provisioning_form as request_form
+from cfme.provisioning import provisioning_form as request_form
 from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash, form_buttons
 from utils.update import Updateable
 from utils import version

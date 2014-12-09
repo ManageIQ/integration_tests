@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from functools import partial
-from urlparse import urlparse
 
 import cfme.fixtures.pytest_selenium as sel
+from fixtures.pytest_store import store
+
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound
@@ -11,14 +12,22 @@ from cfme.web_ui import \
     form_buttons)
 from cfme.web_ui.menu import nav
 from utils.conf import cfme_data
-from utils.db_queries import (get_server_id, get_server_name, get_server_region, get_server_zone_id,
-                              get_zone_description)
+from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
 from utils import version, conf, lazycache
 from utils.pretty import Pretty
+from utils import signals
+
+
+def invalidate_server_details():
+    del store.current_appliance.configuration_details
+    del store.current_appliance.zone_description
+
+
+signals.register_callback('server_details_changed', invalidate_server_details)
 
 access_tree = partial(accordion.tree, "Access Control")
 database_tree = partial(accordion.tree, "Database")
@@ -126,14 +135,8 @@ classification_table = Table("//div[@id='classification_entries_div']//table[@cl
 zones_table = Table("//div[@id='settings_list']/table[@class='style3']")
 
 
-def get_ip_address():
-    """Returns an IP address of the appliance
-    """
-    return urlparse(sel.current_url()).netloc
-
-
 def server_region():
-    return get_server_region(get_ip_address())
+    return store.current_appliance.server_region()
 
 
 def server_region_pair():
@@ -142,11 +145,11 @@ def server_region_pair():
 
 
 def server_name():
-    return get_server_name(get_ip_address())
+    return store.current_appliance.server_name()
 
 
 def server_id():
-    return get_server_id(get_ip_address())
+    return store.current_appliance.server_id()
 
 
 def add_tag(cat_name):
@@ -160,7 +163,7 @@ def edit_tag(cat_name, tag_name):
 
 
 def server_zone_description():
-    return get_zone_description(get_server_zone_id())
+    return store.current_appliance.zone_description
 
 nav.add_branch("configuration",
     {
@@ -644,6 +647,8 @@ class BasicInformation(Updateable, Pretty):
                 "$j.ajax({type: 'POST', url: '/ops/settings_form_field_changed/server',"
                 " data: {'server_zone':'%s'}})" % (self.details["appliance_zone"]))
         sel.click(form_buttons.save)
+        # TODO: Maybe make a cascaded delete on lazycache?
+        signals.fire('server_details_changed')
 
 
 class SMTPSettings(Updateable):
@@ -1578,29 +1583,54 @@ def set_server_roles(**roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
-    sel.force_navigate("cfg_settings_currentserver_server")
-    if get_server_roles(navigate=False) == roles:
+    if get_server_roles() == roles:
         logger.debug(' Roles already match, returning...')
         return
+    sel.force_navigate("cfg_settings_currentserver_server")
     fill(server_roles, roles, action=form_buttons.save)
 
 
-def get_server_roles(navigate=True):
+def get_server_roles(navigate=True, db=True):
     """ Get server roles from Configure / Configuration
 
     Returns: :py:class:`dict` with the roles in the same format as :py:func:`set_server_roles`
         accepts as kwargs.
     """
-    if navigate:
-        sel.force_navigate("cfg_settings_currentserver_server")
+    if db:
+        asr = cfmedb()['assigned_server_roles']
+        sr = cfmedb()['server_roles']
+        cfg = store.current_appliance.get_yaml_config('vmdb')
+        roles = list(cfmedb().session.query(sr.name))
+        roles_set = list(cfmedb().session.query(sr.name)
+                         .join(asr, asr.server_role_id == sr.id))
+        role_set = [role_set[0] for role_set in roles_set]
+        roles_with_bool = {role[0]: role[0] in role_set for role in roles}
 
-    role_list = {}
-    for (name, locator) in server_roles.fields:
-        try:
-            role_list[name] = sel.element(locator).is_selected()
-        except:
-            logger.warning("role not found, skipping, netapp storage role?  (" + name + ")")
-    return role_list
+        dead_keys = ['database_owner', 'vdi_inventory']
+        for key in roles_with_bool:
+            if 'storage' not in cfg.get('product', {}):
+                if key.startswith('storage'):
+                    dead_keys.append(key)
+                if key == 'vmdb_storage_bridge':
+                    dead_keys.append(key)
+
+        for key in dead_keys:
+            try:
+                del roles_with_bool[key]
+            except:
+                pass
+        return roles_with_bool
+    else:
+        if navigate:
+            sel.force_navigate("cfg_settings_currentserver_server")
+
+        role_list = {}
+        for (name, locator) in server_roles.fields:
+            try:
+                role_list[name] = sel.element(locator).is_selected()
+            except:
+                logger.warning("role not found, skipping, netapp storage role?  (" + name + ")")
+        return role_list
 
 
 def set_ntp_servers(*servers):

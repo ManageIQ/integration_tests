@@ -14,6 +14,7 @@ from functools import partial
 import ui_navigate as nav
 
 import cfme
+from utils.db import cfmedb
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
@@ -204,7 +205,7 @@ class Provider(Updateable, Pretty):
             flash.assert_message_match(
                 'Delete initiated for 1 Infrastructure Provider from the CFME Database')
 
-    def validate(self):
+    def validate(self, db=True):
         """ Validates that the detail page matches the Providers information.
 
         This method logs into the provider using the mgmt_system interface and collects
@@ -212,29 +213,35 @@ class Provider(Updateable, Pretty):
         continuously until the matching of all items is complete. A error will be raised
         if the match is not complete within a certain defined time period.
         """
-
-        if not self._on_detail_page():
-            sel.force_navigate('infrastructure_provider', context={'provider': self})
-
         client = self.get_mgmt_system()
+        if db:
+            ec, tc = wait_for(self._do_stats_match,
+                              [client, self.STATS_TO_MATCH],
+                              {'db': db},
+                              message="do_stats_match_db",
+                              num_sec=1000,
+                              delay=10)
+        else:
+            if not self._on_detail_page():
+                sel.force_navigate('infrastructure_provider', context={'provider': self})
 
-        # Bail out here if the stats match.
-        if self._do_stats_match(client, self.STATS_TO_MATCH):
-            client.disconnect()
-            return
+            # Bail out here if the stats match.
+            if self._do_stats_match(client, self.STATS_TO_MATCH):
+                client.disconnect()
+                return
 
-        refresh_timer = RefreshTimer()
+            refresh_timer = RefreshTimer()
 
-        # Otherwise refresh relationships and hand off to wait_for
-        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
-        sel.handle_alert()
+            # Otherwise refresh relationships and hand off to wait_for
+            tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
+            sel.handle_alert()
 
-        ec, tc = wait_for(self._do_stats_match,
-                          [client, self.STATS_TO_MATCH, refresh_timer],
-                          message="do_stats_match",
-                          fail_func=sel.refresh,
-                          num_sec=1000,
-                          delay=10)
+            ec, tc = wait_for(self._do_stats_match,
+                              [client, self.STATS_TO_MATCH, refresh_timer],
+                              message="do_stats_match",
+                              fail_func=sel.refresh,
+                              num_sec=1000,
+                              delay=10)
         client.disconnect()
 
     def refresh_provider_relationships(self):
@@ -275,7 +282,7 @@ class Provider(Updateable, Pretty):
         self._load_details()
         return details_page.infoblock.text(*ident)
 
-    def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None):
+    def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None, db=True):
         """ A private function to match a set of statistics, with a Provider.
 
         This function checks if the list of stats match, if not, the page is refreshed.
@@ -303,7 +310,7 @@ class Provider(Updateable, Pretty):
 
         for stat in stats_to_match:
             try:
-                cfme_stat = getattr(self, stat)
+                cfme_stat = getattr(self, stat)(db=db)
                 logger.info(' Matching stat [%s], Host(%s), CFME(%s)' %
                             (stat, host_stats[stat], cfme_stat))
                 if host_stats[stat] != cfme_stat:
@@ -320,37 +327,78 @@ class Provider(Updateable, Pretty):
         return sel.is_displayed(
             '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
 
-    @property
-    def num_template(self):
+    def num_template(self, db=True):
         """ Returns the providers number of templates, as shown on the Details page."""
-        return int(self.get_detail("Relationships", "Templates"))
+        if db:
+            ext_management_systems = cfmedb()["ext_management_systems"]
+            vms = cfmedb()["vms"]
+            truthy = True  # This is to prevent a lint error with ==True
+            temlist = list(cfmedb().session.query(vms.name)
+                           .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                           .filter(ext_management_systems.name == self.name)
+                           .filter(vms.template == truthy))
+            return len(temlist)
+        else:
+            return int(self.get_detail("Relationships", "Templates"))
 
-    @property
-    def num_vm(self):
+    def num_vm(self, db=True):
         """ Returns the providers number of instances, as shown on the Details page."""
+        if db:
+            ext_management_systems = cfmedb()["ext_management_systems"]
+            vms = cfmedb()["vms"]
+            falsey = False  # This is to prevent a lint error with ==False
+            vmlist = list(cfmedb().session.query(vms.name)
+                          .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
+                          .filter(ext_management_systems.name == self.name)
+                          .filter(vms.template == falsey))
+            return len(vmlist)
         return int(self.get_detail("Relationships", "VMs"))
 
-    @property
-    def num_datastore(self):
+    def num_datastore(self, db=True):
         """ Returns the providers number of templates, as shown on the Details page."""
-        return int(self.get_detail("Relationships", "Datastores"))
+        if db:
+            results = list(cfmedb().engine.execute(
+                'SELECT DISTINCT storages.name, hosts.ems_id '
+                'FROM ext_management_systems, hosts, storages, hosts_storages '
+                'WHERE hosts.id=hosts_storages.host_id AND '
+                'storages.id=hosts_storages.storage_id AND '
+                'hosts.ems_id=ext_management_systems.id AND '
+                'ext_management_systems.name=\'{}\''.format(self.name)))
+            return len(results)
+        else:
+            return int(self.get_detail("Relationships", "Datastores"))
 
-    @property
-    def num_host(self):
+    def num_host(self, db=True):
         """ Returns the providers number of instances, as shown on the Details page."""
-        return int(self.get_detail("Relationships", "Hosts"))
+        if db:
+            ext_management_systems = cfmedb()["ext_management_systems"]
+            hosts = cfmedb()["hosts"]
+            hostlist = list(cfmedb().session.query(hosts.name)
+                            .join(ext_management_systems, hosts.ems_id == ext_management_systems.id)
+                            .filter(ext_management_systems.name == self.name))
+            return len(hostlist)
+        else:
+            return int(self.get_detail("Relationships", "Hosts"))
 
-    @property
-    def num_cluster(self):
+    def num_cluster(self, db=True):
         """ Returns the providers number of templates, as shown on the Details page."""
-        return int(self.get_detail("Relationships", "Clusters"))
+        if db:
+            ext_management_systems = cfmedb()["ext_management_systems"]
+            clusters = cfmedb()["ems_clusters"]
+            clulist = list(cfmedb().session.query(clusters.name)
+                           .join(ext_management_systems,
+                                 clusters.ems_id == ext_management_systems.id)
+                           .filter(ext_management_systems.name == self.name))
+            return len(clulist)
+        else:
+            return int(self.get_detail("Relationships", "Clusters"))
 
     @property
     def exists(self):
-        sel.force_navigate('infrastructure_providers')
-        for page in paginator.pages():
-            if sel.is_displayed(Quadicon(self.name, 'infra_prov')):
-                return True
+        ems = cfmedb()['ext_management_systems']
+        provs = (prov[0] for prov in cfmedb().session.query(ems.name))
+        if self.name in provs:
+            return True
         else:
             return False
 

@@ -34,6 +34,8 @@ def main(trackerbot_url, mark_usable=None):
     else:
         usable = {'usable': mark_usable}
 
+    active_streams = trackerbot.active_streams(api)
+
     # Find some templates and update the API
     for template_name, providers in template_providers.items():
         try:
@@ -41,12 +43,19 @@ def main(trackerbot_url, mark_usable=None):
         except (TypeError, ValueError):
             # No matches or template name was somehow not a string
             continue
+
         seen_templates.add(template_name)
         group = trackerbot.Group(stream)
         template = trackerbot.Template(template_name, group, datestamp)
 
         for provider_key in providers:
             provider = trackerbot.Provider(provider_key)
+
+            if stream not in active_streams:
+                # stream isn't tracked by trackerbot, ignore
+                print 'Ignored %s template %s on provider %s (Inactive stream)' % (
+                    stream, template_name, provider_key)
+                continue
 
             try:
                 trackerbot.mark_provider_template(api, provider, template, **usable)

@@ -20,6 +20,7 @@ stream_matchers = (
     (get_stream('5.3'), r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
 )
 trackerbot_conf = env.get('trackerbot', {})
+_active_streams = None
 
 
 def cmdline_parser():
@@ -62,6 +63,13 @@ def futurecheck(check_date):
         check_date = date(check_date.year - 1, check_date.month, check_date.day)
 
     return check_date
+
+
+def active_streams(api, force=False):
+    global _active_streams
+    if _active_streams is None or force:
+        _active_streams = [stream['name'] for stream in api.group.get(stream=True)['objects']]
+    return _active_streams
 
 
 def parse_template(template_name):

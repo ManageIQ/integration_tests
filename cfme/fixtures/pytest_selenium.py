@@ -955,6 +955,13 @@ class Select(SeleniumSelect, Pretty):
         return move_to_element(self)
 
     @property
+    def all_options(self):
+        """Returns a list of tuples of all the options in the Select"""
+
+        els = execute_script("return arguments[0].options;", element(self))
+        return [(el.text, el.get_attribute('value')) for el in els]
+
+    @property
     def all_selected_options(self):
         """Fast variant of the original all_selected_options.
 
@@ -990,8 +997,9 @@ class Select(SeleniumSelect, Pretty):
     def observer_wait(self):
         detect_observed_field(self._loc)
 
-    def __str__(self):
-        return "<%s.Select loc='%s'>" % (__name__, self._loc)
+    def __repr__(self):
+        return "{}({}, multi={})".format(
+            self.__class__.__name__, repr(self._loc), repr(self.is_multiple))
 
 
 @multidispatch

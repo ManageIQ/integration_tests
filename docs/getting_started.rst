@@ -26,6 +26,11 @@ Setup
 
   * ``export PYTHONDONTWRITEBYTECODE="yes"``
 
+* Make sure you set the shared secret for the credentials files encryption. There are two ways:
+
+  * add ``export CFME_TESTS_KEY="our shared key"`` into the activate script
+  * create ``.yaml_key`` file in project root containing the key
+
 
 * Ensure the following devel packages are installed (for building python dependencies):
 

@@ -172,7 +172,6 @@ class ServiceDialog(Updateable, Pretty):
         sel.force_navigate('service_dialog', context={'dialog': self})
         cfg_btn("Remove from the VMDB", invokes_alert=True)
         sel.handle_alert(cancel)
-        flash.assert_no_errors()
 
     def element_type(self):
         if self.choose_type == "Drop Down List" or self.choose_type == "Radio Button":

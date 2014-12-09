@@ -2,11 +2,9 @@
 """Tests checking for link access from outside."""
 import pytest
 
-import cfme.infrastructure.provisioning
-assert cfme.infrastructure.provisioning
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui.prov_form import provisioning_form
 from cfme.login import login_admin
+from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils.browser import browser

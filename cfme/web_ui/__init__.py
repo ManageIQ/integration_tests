@@ -1042,8 +1042,7 @@ def fill_callable(f, val):
 
 @fill.method((Select, object))
 def fill_select(slist, val):
-    stype = type(slist)
-    logger.debug('  Filling in %s with value %s' % (stype, val))
+    logger.debug('  Filling in {} with value {}'.format(str(slist), val))
     prev_sel = sel.select(slist, val)
     slist.observer_wait()
     return prev_sel
@@ -1923,6 +1922,18 @@ class Quadicon(Pretty):
         },
         "cluster": {},
         "resource_pool": {},
+        "template": {
+            "os": ("a", 'img'),
+            "state": ("b", 'img'),
+            "vendor": ("c", 'img'),
+            "no_snapshot": ("d", 'txt'),
+        },
+        "image": {
+            "os": ("a", 'img'),
+            "state": ("b", 'img'),
+            "vendor": ("c", 'img'),
+            "no_snapshot": ("d", 'txt'),
+        },
         None: {},  # If you just want to find the quad and not mess with data
     }
 

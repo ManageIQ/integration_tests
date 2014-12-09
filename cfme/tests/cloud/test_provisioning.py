@@ -2,8 +2,6 @@
 # in selenium (the group is selected then immediately reset)
 import pytest
 
-import cfme.cloud.provisioning
-assert cfme.cloud.provisioning
 from cfme.cloud.instance import instance_factory
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
@@ -43,7 +41,6 @@ def vm_name(request, provider_mgmt):
     return vm_name
 
 
-@pytest.mark.bugzilla(1131330)
 def test_provision_from_template(request, setup_provider, provider_crud, provisioning, vm_name):
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %

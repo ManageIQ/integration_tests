@@ -74,7 +74,7 @@ class Cluster(Pretty):
     def wait_for_delete(self):
         sel.force_navigate('infrastructure_clusters')
         wait_for(lambda: not self.exists, fail_condition=False,
-             message="Wait cluster to disappear", num_sec=1000, fail_func=sel.refresh)
+             message="Wait cluster to disappear", num_sec=500, fail_func=sel.refresh)
 
     def wait_for_appear(self):
         sel.force_navigate('infrastructure_clusters')

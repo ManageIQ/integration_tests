@@ -1,8 +1,6 @@
 import pytest
 
-import cfme.infrastructure.provisioning
-assert cfme.infrastructure.provisioning
-from cfme.infrastructure.provisioning import do_provisioning, cleanup_vm
+from cfme.provisioning import cleanup_vm, do_vm_provisioning
 from utils import testgen
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
@@ -80,5 +78,5 @@ def test_provision_from_template(provider_init, provider_key, provider_crud, pro
         if provider_type == 'rhevm':
             raise pytest.fail('rhevm requires a vlan value in provisioning info')
 
-    do_provisioning(template, provider_crud, vm_name, provisioning_data, request,
-                    provider_mgmt, provider_key, smtp_test, num_sec=900)
+    do_vm_provisioning(template, provider_crud, vm_name, provisioning_data, request,
+                       provider_mgmt, provider_key, smtp_test, num_sec=900)

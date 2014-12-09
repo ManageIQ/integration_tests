@@ -2,7 +2,7 @@ import pytest
 
 from utils.conf import cfme_data
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
-from cfme.infrastructure.provisioning import do_provisioning, cleanup_vm
+from cfme.provisioning import cleanup_vm, do_vm_provisioning
 from utils import testgen
 from utils.randomness import generate_random_string
 from utils.providers import setup_provider
@@ -97,5 +97,5 @@ def test_iso_provision_from_template(provider_key, provider_crud, provider_type,
         'vlan': vlan,
     }
 
-    do_provisioning(iso_template, provider_crud, vm_name, provisioning_data, request,
-                    provider_mgmt, provider_key, smtp_test, num_sec=1500)
+    do_vm_provisioning(iso_template, provider_crud, vm_name, provisioning_data, request,
+                       provider_mgmt, provider_key, smtp_test, num_sec=1500)

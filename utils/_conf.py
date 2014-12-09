@@ -1,11 +1,15 @@
+# -*- coding: utf-8 -*-
 from collections import defaultdict
 from warnings import catch_warnings, warn
 
 import copy
+import hashlib
+import os
 import yaml
 from yaml.loader import Loader
+from Crypto.Cipher import AES
 
-from utils.path import conf_path
+from utils.path import conf_path, project_path
 
 
 class YamlConfigLoader(Loader):
@@ -358,19 +362,74 @@ class RecursiveUpdateDict(dict):
         return self
 
 
+def get_aes_key():
+    """Retrieve the AES key used for encryption/decryption.
+
+    Looks in the environment variable and if it does not find it, looks in .yaml_key file located
+    in the project root.
+    """
+    if "CFME_TESTS_KEY" in os.environ:
+        data = os.environ["CFME_TESTS_KEY"].strip()
+    else:
+        try:
+            with open(project_path.join(".yaml_key").strpath, "r") as f:
+                data = f.read().strip()
+        except IOError:
+            data = None
+    return hashlib.sha256(data).digest() if data is not None else None
+
+
 def load_yaml(filename=None, warn_on_fail=True):
     # Find the requested yaml in the config dir, relative to this file's location
     # (aiming for cfme_tests/config)
-    path = conf_path.join('%s.yaml' % filename)
+    filename_unencrypted = conf_path.join('{}.yaml'.format(filename))
+    filename_encrypted = conf_path.join('{}.eyaml'.format(filename))
 
-    if path.check():
-        with path.open() as config_fh:
+    if filename_encrypted.check() and (
+            not filename_unencrypted.check()
+            or filename_encrypted.mtime() > filename_unencrypted.mtime()):
+        # Decrypt the file if unencrypted does not exist or it exists but only if it was modified
+        # after the encrypted file's modification time (prevent everwriting)
+        key = get_aes_key()
+        if key is None and not filename_unencrypted.check():
+            raise Exception(
+                "Cannot decrypt config file {} (no key) and no unencrypted version present!".format(
+                    filename))
+
+        cipher = AES.new(key, AES.MODE_ECB)
+        with filename_encrypted.open("r") as encrypted:
+            with filename_unencrypted.open("w") as unencrypted:
+                unencrypted.write(cipher.decrypt(encrypted.read()).rstrip())
+
+    if filename_unencrypted.check():
+        with filename_unencrypted.open() as config_fh:
             conf = yaml.load(config_fh, Loader=YamlConfigLoader)
             if isinstance(conf, dict):
                 return conf
 
     if warn_on_fail:
-        msg = 'Unable to load configuration file at %s' % path
+        msg = 'Unable to load configuration file at %s' % filename_unencrypted
         warn(msg, ConfigNotFound)
 
     return {}
+
+
+def encrypt_yaml(filename):
+    filename_unencrypted = conf_path.join('{}.yaml'.format(filename))
+    filename_encrypted = conf_path.join('{}.eyaml'.format(filename))
+
+    if filename_unencrypted.check():
+        # Decrypt the file
+        key = get_aes_key()
+        if key is None:
+            raise Exception(
+                "Cannot encrypt config file {} - no key provided!".format(filename))
+        cipher = AES.new(key, AES.MODE_ECB)
+        with filename_unencrypted.open("r") as unencrypted:
+            with filename_encrypted.open("w") as encrypted:
+                data = unencrypted.read()
+                while len(data) % len(key) > 0:
+                    data += " "  # Padding with spaces, will be rstripped after load
+                encrypted.write(cipher.encrypt(data))
+    else:
+        raise Exception("No such file!")

@@ -129,3 +129,10 @@ def test_bundles_in_bundle(catalog_item):
     row, __ = wait_for(requests.wait_for_request, [cells],
         fail_func=requests.reload, num_sec=900, delay=20)
     assert row.last_message.text == 'Request complete'
+
+
+def test_delete_dialog_before_parent_item(catalog_item):
+    service_dialog = ServiceDialog(label=catalog_item.dialog)
+    service_dialog.delete()
+    flash.assert_message_match(("Dialog \"{}\": Error during 'destroy': Dialog cannot be deleted " +
+    "because it is connected to other components.").format(catalog_item.dialog))
