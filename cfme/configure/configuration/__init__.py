@@ -68,6 +68,7 @@ server_roles = Form(
         ("storage_metrics_collector", "input#server_roles_storage_metrics_collector"),
         ("storage_metrics_coordinator", "input#server_roles_storage_metrics_coordinator"),
         ("storage_inventory", "input#server_roles_storage_inventory"),
+        ("vmdb_storage_bridge", "input#server_roles_vmdb_storage_bridge"),
 
     ]
 )

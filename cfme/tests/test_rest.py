@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from utils import error, rest_api, testgen
+from utils import error, mgmt_system, rest_api, testgen
 from utils.randomness import generate_random_string
 from utils.wait import wait_for
 
@@ -16,8 +16,8 @@ pytestmark = [pytest.mark.ignore_stream("5.2")]
 
 
 @pytest.fixture(scope="module")
-def provision_data(provider_crud, provider_key, provider_data, small_template):
-    return {
+def provision_data(provider_crud, provider_key, provider_data, small_template, provider_mgmt):
+    result = {
         "version": "1.1",
         "template_fields": {
             "guid": rest_api.get_template_guid(small_template)
@@ -26,7 +26,7 @@ def provision_data(provider_crud, provider_key, provider_data, small_template):
             "number_of_cpus": 1,
             "vm_name": "test_rest_prov_{}".format(generate_random_string()),
             "vm_memory": "1024",
-            "vlan": provider_data["provisioning"]["vlan"]
+            "vlan": provider_data["provisioning"]["vlan"],
         },
         "requester": {
             "user_name": "admin",
@@ -45,6 +45,9 @@ def provision_data(provider_crud, provider_key, provider_data, small_template):
         "ems_custom_attributes": {},
         "miq_custom_attributes": {}
     }
+    if isinstance(provider_mgmt, mgmt_system.RHEVMSystem):
+        result["vm_fields"]["provision_type"] = "native_clone"
+    return result
 
 
 @pytest.mark.fixtureconf(server_roles="+automate")
@@ -62,6 +65,7 @@ def test_provision(request, provision_data, provider_mgmt):
         return q["request_state"].lower() in {"finished", "provisioned"}
 
     wait_for(_finished, num_sec=300, delay=5, message="REST provisioning finishes")
+    assert provider_mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
 def test_add_delete_service_catalog():
