@@ -1,7 +1,5 @@
 import pytest
 
-import cfme.infrastructure.provisioning
-assert cfme.infrastructure.provisioning
 from cfme.provisioning import do_vm_provisioning, cleanup_vm
 from cfme.infrastructure.pxe import get_template_from_config
 from utils.conf import cfme_data
