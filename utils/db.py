@@ -16,15 +16,13 @@ from utils import conf, lazycache
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.path import data_path
-from utils import signals
+from utils.signals import fire, on_signal
 from utils.ssh import SSHClient
 
 
+@on_signal("server_config_changed")
 def invalidate_server_config():
     del store.current_appliance.db_yamls
-
-
-signals.register_callback('server_config_changed', invalidate_server_config)
 
 
 @event.listens_for(Pool, "checkout")
@@ -376,8 +374,8 @@ def set_yaml_config(config_name, data_dict, hostname=None):
 
     # Run it
     _ssh_client.run_rails_command(dest_ruby)
-    signals.fire('server_details_changed')
-    signals.fire('server_config_changed')
+    fire('server_details_changed')
+    fire('server_config_changed')
 
 
 @contextmanager

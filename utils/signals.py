@@ -16,6 +16,18 @@ caches have become stale and need to be invalidated. The example below shows thi
 
    signals.register_callback('server_details_changed', invalidate_server_details)
 
+Or by using a decorator:
+
+.. code-block:: python
+
+   from signals import on_signal
+   from fixtures.pytest_store import store
+
+   @on_signal("server_details_changed")
+   def invalidate_server_details():
+       del store.current_appliance.configuration_details
+       del store.current_appliance.zone_description
+
 Here we create a function to do the work of invalidating the cache and register it
 to the signal name 'server_details_changed'. Now whenever something in the framework
 changes anything to do with server details it will use the fire function like so.
@@ -66,6 +78,13 @@ def register_callback(signal, cb_func, *args, **kwargs):
     cb_obj.signal = signal
     _callback_library[signal].add(cb_obj)
     return cb_obj
+
+
+def on_signal(signal, *args, **kwargs):
+    """Decorator for register_callback usage."""
+    def g(f):
+        return register_callback(signal, f, *args, **kwargs)
+    return g
 
 
 def unregister_callback(cb_obj):
