@@ -18,7 +18,7 @@ repo = docker_conf['gh_repo']
 
 tapi = api()
 
-CONT_LIMIT = 3
+CONT_LIMIT = docker_conf['workers']
 
 logger = create_logger('check_prs', 'prt.log')
 
