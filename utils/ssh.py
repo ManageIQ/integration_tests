@@ -20,7 +20,6 @@ class SSHClient(paramiko.SSHClient):
     """
     def __init__(self, stream_output=False, **connect_kwargs):
         super(SSHClient, self).__init__()
-        self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         self._streaming = stream_output
 
         # Set up some sane defaults
@@ -43,6 +42,7 @@ class SSHClient(paramiko.SSHClient):
         # Overlay defaults with any passed-in kwargs and store
         default_connect_kwargs.update(connect_kwargs)
         self._connect_kwargs = default_connect_kwargs
+        self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     def __repr__(self):
         return "<SSHClient hostname={}>".format(repr(self._connect_kwargs.get("hostname")))

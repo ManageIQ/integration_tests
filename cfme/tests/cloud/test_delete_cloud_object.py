@@ -6,7 +6,6 @@ from cfme.web_ui import Region, toolbar
 from utils import testgen
 import pytest
 
-pytestmark = [pytest.mark.usefixtures("setup_cloud_providers")]
 
 # Page specific locators
 details_page = Region(infoblock_type='detail')
@@ -40,7 +39,7 @@ def reset():
     toolbar.set_vms_list_view()
 
 
-def test_delete_instance(provider_crud, remove_test):
+def test_delete_instance(setup_provider, provider_crud, remove_test):
     instance_name = remove_test['instance']
     test_instance = instance.instance_factory(instance_name, provider_crud)
     test_instance.remove_from_cfme(cancel=False)
@@ -49,7 +48,7 @@ def test_delete_instance(provider_crud, remove_test):
     test_instance.wait_for_vm_to_appear()
 
 
-def test_delete_image(provider_crud, remove_test, set_grid, request):
+def test_delete_image(setup_provider, provider_crud, remove_test, set_grid, request):
     image_name = remove_test['image']
     test_image = instance.Image(image_name, provider_crud)
     test_image.delete()
