@@ -9,6 +9,7 @@ from utils.conf import docker as docker_conf
 from utils.appliance import Appliance
 from utils.randomness import generate_random_string
 from utils.trackerbot import api
+from utils.log import create_logger
 from slumber.exceptions import HttpClientError
 
 token = docker_conf['gh_token']
@@ -18,6 +19,8 @@ repo = docker_conf['gh_repo']
 tapi = api()
 
 CONT_LIMIT = 3
+
+logger = create_logger('check_prs', 'prt.log')
 
 
 def perform_request(url):
@@ -63,12 +66,15 @@ def create_run(db_pr, pr):
         db_pr: The database pr_object, which will be a JSON
         pr: The GitHub PR object
     """
+    logger.info(' Creating new run for {}'.format(db_pr['number']))
+
     new_run = dict(pr="/api/pr/{}/".format(db_pr['number']),
                    datestamp=str(datetime.now()),
                    commit=pr['head']['sha'])
     tasks = []
     for group in tapi.group.get(stream=True)['objects']:
         stream = group['name']
+        logger.info('  Adding task stream {}...'.format(stream))
         tasks.append(dict(output="",
                           tid=generate_random_string(size=8),
                           result="pending",
@@ -158,22 +164,24 @@ def vm_reaper():
             vm_cleanup = False
             docker_cleanup = False
             if task['provider'] and task['vm_name']:
+                logger.info('Cleaning up {} on {}'.format(task['vm_name'], task['provider']))
                 if task['vm_name'] == "None":
                     vm_cleanup = True
                 else:
                     appliance = Appliance(task['provider'], task['vm_name'])
                     try:
                         if appliance.does_vm_exist():
-                            print "Destroying {}".format(appliance.vm_name)
+                            logger.info("Destroying {}".format(appliance.vm_name))
                             appliance.destroy()
                         vm_cleanup = True
                         tapi.task(task['tid']).put({'cleanup': True})
-                    except Exception as e:
-                        print e
+                    except Exception:
+                        logger.info('Exception occured cleaning up')
 
             containers = dockerbot.dc.containers(all=True)
             for container in containers:
                 if task['tid'] in container['Names'][0]:
+                    logger.info('Cleaning up docker container {}'.format(container['Id']))
                     dockerbot.dc.remove_container(container['Id'])
                     docker_cleanup = True
                     break
@@ -266,23 +274,25 @@ def check_pr(pr):
 
     commit = pr['head']['sha']
     wip = False
-
     try:
         db_pr = tapi.pr(pr['number']).get()
-        if db_pr['current_commit_head'] != commit and \
-           "[WIP]" not in pr['title']:
-                for run in db_pr['runs']:
-                    if run['commit'] == commit:
-                        break
-                else:
-                    set_invalid_runs(db_pr)
-                    create_run(db_pr, pr)
+        last_run = tapi.run().get(pr__number=pr['number'], order_by='-datestamp',
+                                  limit=1)['objects']
+        if last_run:
+            if last_run[0]['retest'] is True and "[WIP]" not in pr['title']:
+                logger.info('Re-testing PR {}'.format(pr['number']))
+                set_invalid_runs(db_pr)
+                create_run(db_pr, pr)
+            elif last_run[0]['commit'] != commit and "[WIP]" not in pr['title']:
+                logger.info('New commit ({}) detected for PR {}'.format(commit, pr['number']))
+                set_invalid_runs(db_pr)
+                create_run(db_pr, pr)
         elif "[WIP]" in pr['title']:
             wip = True
         tapi.pr(pr['number']).put({'current_commit_head': commit, 'wip': wip})
         check_status(pr)
     except HttpClientError:
-        pass
+        logger.info('PR {} not found in database, creating...'.format(pr['number']))
         new_pr = {'number': pr['number'],
                   'description': pr['body'],
                   'current_commit_head': commit}
