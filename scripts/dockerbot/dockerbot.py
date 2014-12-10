@@ -304,6 +304,14 @@ class DockerBot(object):
             self.args['pytest'] += ' --capture=no'
         print "  PYTEST Command: {}".format(self.args['pytest'])
 
+    def enc_key(self):
+        try:
+            with open('.yaml_key') as f:
+                key = f.read()
+        except:
+            key = None
+        return key
+
     def create_pytest_envvars(self):
         self.env_details = {'BROWSER': self.args['browser'],
                             'CFME_CRED_REPO': self.args['cfme_cred_repo'],
@@ -313,7 +321,8 @@ class DockerBot(object):
                             'CFME_MY_IP_ADDRESS': self.args['server_ip'],
                             'PYTEST': self.args['pytest'],
                             'BRANCH': self.args['branch'],
-                            'ARTIFACTOR_DIR': self.args['artifactor_dir']}
+                            'ARTIFACTOR_DIR': self.args['artifactor_dir'],
+                            'CFME_TESTS_KEY': self.enc_key()}
         print "  SERVER IP: {}".format(self.args['server_ip'])
         if self.args['use_wharf']:
             self.env_details['WHARF'] = self.args['wharf']
