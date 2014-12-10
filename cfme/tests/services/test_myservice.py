@@ -153,14 +153,17 @@ def test_retire_service_on_date(myservice):
     myservice.retire_on_date(dt)
 
 
+@pytest.mark.bugzilla(1144207)
 def test_myservice_crud(myservice):
     myservice.update("edited", "edited_desc")
     myservice.delete("edited")
 
 
+@pytest.mark.bugzilla(1144207)
 def test_set_ownership(myservice):
     myservice.set_ownership("Administrator", "EvmGroup-administrator")
 
 
+@pytest.mark.bugzilla(1144207)
 def test_edit_tags(myservice):
     myservice.edit_tags("Cost Center 001")
