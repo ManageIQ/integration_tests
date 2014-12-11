@@ -1,48 +1,64 @@
 # -*- coding: utf-8 -*-
 
-
-import cfme.configure.settings as st
+import pytest
+from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator, toolbar as tb
+from utils import testgen
 from utils.conf import cfme_data
+from utils.providers import setup_provider
 
 
-def test_grid_page_per_item(soft_assert):
-    ns = st.Visual(grid_view='5',
-                   tile_view=None,
-                   list_view=None)
-    ns.updatesettings()
-    for page in cfme_data['grid_pages']:
-        sel.force_navigate(page)
-        if paginator.rec_total() >= ns.grid_view:
-            soft_assert(int(paginator.rec_end()) == int(ns.grid_view), "Gridview Failed!")
-        else:
-            continue
+def pytest_generate_tests(metafunc):
+    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter'])
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-def test_tile_page_per_item(soft_assert):
-    ns = st.Visual(grid_view=None,
-                   tile_view='5',
-                   list_view=None)
-    ns.updatesettings()
-    for page in cfme_data['grid_pages']:
-        sel.force_navigate(page)
-        tb.select('Tile View')
-        if paginator.rec_total() >= ns.tile_view:
-            soft_assert(int(paginator.rec_end()) == int(ns.tile_view), "Tileview Failed!")
-        else:
-            continue
+@pytest.fixture()
+def provider_init(provider_key):
+    try:
+        setup_provider(provider_key)
+    except Exception:
+        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
-def test_list_page_per_item(soft_assert):
-    ns = st.Visual(grid_view=None,
-                   tile_view=None,
-                   list_view='5')
-    ns.updatesettings()
-    for page in cfme_data['grid_pages']:
-        sel.force_navigate(page)
-        tb.select('List View')
-        if paginator.rec_total() >= ns.list_view:
-                soft_assert(int(paginator.rec_end()) == int(ns.list_view), "Listview Failed!")
-        else:
-            continue
+@pytest.fixture(scope="module")
+def set_grid():
+    visual.grid_view_limit = 5
+
+
+@pytest.fixture(scope="module")
+def set_tile():
+    visual.tile_view_limit = 5
+
+
+@pytest.fixture(scope="module")
+def set_list():
+    visual.list_view_limit = 5
+
+
+@pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
+def test_grid_page_per_item(provider_init, page, set_grid):
+    limit = visual.grid_view_limit
+    sel.force_navigate(page)
+    tb.select('Grid View')
+    if int(paginator.rec_total()) >= int(limit):
+        assert int(paginator.rec_end()) == int(limit), "Gridview Failed for page {}!".format(page)
+
+
+@pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
+def test_tile_page_per_item(provider_init, page, set_tile):
+    limit = visual.tile_view_limit
+    sel.force_navigate(page)
+    tb.select('Tile View')
+    if int(paginator.rec_total()) >= int(limit):
+        assert int(paginator.rec_end()) == int(limit), "Tileview Failed for page {}!".format(page)
+
+
+@pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
+def test_list_page_per_item(provider_init, page, set_list):
+    limit = visual.list_view_limit
+    sel.force_navigate(page)
+    tb.select('List View')
+    if int(paginator.rec_total()) >= int(limit):
+        assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)

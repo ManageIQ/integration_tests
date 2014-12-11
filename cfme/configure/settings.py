@@ -118,10 +118,37 @@ class Visual(Updateable):
         self.tile_view = tile_view
         self.list_view = list_view
 
-    def updatesettings(self):
+    @property
+    def grid_view_limit(self):
         sel.force_navigate("my_settings_visual")
-        fill(self.item_form, {'grid_view': self.grid_view,
-                              'tile_view': self.tile_view,
-                              'list_view': self.list_view},
-             action=form_buttons.save)
-        flash.assert_success_message('User Interface settings saved for User Administrator')
+        return int(sel.text(self.item_form.grid_view.first_selected_option))
+
+    @grid_view_limit.setter
+    def grid_view_limit(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.item_form.grid_view, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def tile_view_limit(self):
+        sel.force_navigate("my_settings_visual")
+        return int(sel.text(self.item_form.tile_view.first_selected_option))
+
+    @tile_view_limit.setter
+    def tile_view_limit(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.item_form.tile_view, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def list_view_limit(self):
+        sel.force_navigate("my_settings_visual")
+        return int(sel.text(self.item_form.list_view.first_selected_option))
+
+    @list_view_limit.setter
+    def list_view_limit(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.item_form.list_view, str(value))
+        sel.click(form_buttons.save)
+
+visual = Visual()
