@@ -11,6 +11,7 @@ from cfme.web_ui import \
     (Calendar, Form, InfoBlock, MultiFill, Region, Select, Table, accordion, fill, flash,
     form_buttons)
 from cfme.web_ui.menu import nav
+from utils.conf import cfme_data
 from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
@@ -1659,6 +1660,20 @@ def unset_ntp_servers():
 
     """
     return set_ntp_servers("", "", "")
+
+
+def configure_ntp_servers(*server_details):
+    unset_ntp_servers()
+
+    if server_details:
+        set_ntp_servers(*server_details)
+    else:
+        set_ntp_servers(*cfme_data['clock_servers'])
+    flash.assert_message_match(
+        "Configuration settings saved for CFME Server \"%s [%s]\" in Zone \"%s\"" % (
+            server_name(),
+            server_id(),
+            server_zone_description().partition(' ')[0].lower()))
 
 
 def set_database_internal():

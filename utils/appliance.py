@@ -17,6 +17,7 @@ from utils.net import net_check
 from utils.path import data_path, scripts_path
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
+from utils.signals import fire
 from utils.ssh import SSHClient
 from utils.version import get_stream, get_version, LATEST
 from utils.wait import wait_for
@@ -884,6 +885,8 @@ class IPAppliance(object):
                 msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
                 log_callback(msg)
                 raise ApplianceException(msg)
+        fire("server_config_changed")
+        fire("server_details_changed")
 
     def reboot(self, wait_for_web_ui=True, log_callback=None):
         (log_callback or self.log.info)('Rebooting appliance')
@@ -1063,6 +1066,9 @@ class IPAppliance(object):
 
     def get_yaml_config(self, config_name):
         return self.db_yamls[config_name]
+
+    def set_yaml_config(self, db_name, config_name):
+        db.set_yaml_config(db_name, config_name)
 
 
 class ApplianceSet(object):
