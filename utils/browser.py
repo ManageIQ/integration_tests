@@ -12,11 +12,11 @@ from threading import Timer
 
 import requests
 from selenium import webdriver
-from selenium.common.exceptions import UnexpectedAlertPresentException
+from selenium.common.exceptions import UnexpectedAlertPresentException, WebDriverException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
 from fixtures.pytest_store import store, write_line
-from utils import conf
+from utils import conf, tries
 from utils.log import logger
 from utils.path import data_path
 
@@ -137,7 +137,7 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         write_line(view_msg, cyan=True)
 
     try:
-        browser = webdriver_class(**browser_kwargs)
+        browser = tries(3, WebDriverException, webdriver_class, **browser_kwargs)
         browser.maximize_window()
         browser.get(base_url)
         thread_locals.browser = browser

@@ -66,12 +66,13 @@ def pytest_configure(config, __multicall__):
         appliance = IPAppliance(address=ip_address)
         # Retrieve and print the template_name for Jenkins to pick up
         template_name = request["appliances"][0]["template_name"]
-        conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
+        conf.cfme_data["basic_info"]["appliance_template"] = template_name
         terminal.write("appliance_template=\"{}\";\n".format(template_name))
         terminal.write("Single appliance Sprout setup finished.\n")
         # And set also the appliances_provider
         provider = request["appliances"][0]["provider"]
-        conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider
+        terminal.write("appliance_provider=\"{}\";\n".format(provider))
+        conf.cfme_data["basic_info"]["appliances_provider"] = provider
 
 
 @pytest.mark.tryfirst

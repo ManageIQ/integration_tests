@@ -26,6 +26,7 @@ from cfme.exceptions import (
 from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator
 from cfme.web_ui import Timelines
 from cfme.web_ui.form_buttons import FormButton
+from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
@@ -329,6 +330,7 @@ class Provider(Updateable, Pretty):
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
+        ensure_browser_open()
         return sel.is_displayed(
             '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
 

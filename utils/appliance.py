@@ -1067,25 +1067,81 @@ class IPAppliance(object):
             fail_condition=not running, delay=10)
         return result
 
-    def install_vddk(self, reboot=True, log_callback=None):
+    def install_vddk(self, reboot=True, force=False, vddk_url=None, log_callback=None):
         '''Install the vddk on a appliance'''
         if log_callback is None:
             log_callback = self.log.info
 
-        if int(self.ssh_client().run_command("ldconfig -p | grep vix | wc -l")[1]) < 1:
-            log_callback('Installing VDDK...')
-            script = scripts_path.join('install_vddk.py')
-            args = [str(script), self.address, conf.cfme_data['basic_info']['vddk_url']]
-            if reboot:
-                args.append('--reboot')
-            with open(os.devnull, 'w') as f_devnull:
-                status = subprocess.call(args, stdout=f_devnull)
-            if status != 0:
-                raise ApplianceException('Appliance {} failed to install VDDK!'
-                                         .format(self.address))
-            self.wait_for_web_ui()
-        else:
-            log_callback("[WARN] some version of vddk already installed")
+        def log_raise(exception_class, message):
+            log_callback(message)
+            raise exception_class(message)
+
+        if vddk_url is None:
+            vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", None)
+        if vddk_url is None:
+            raise Exception("vddk_url not specified!")
+
+        with self.ssh_client() as client:
+            is_already_installed = False
+            if client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64')[0] == 0:
+                is_already_installed = True
+
+            if not is_already_installed or force:
+
+                # start
+                filename = vddk_url.split('/')[-1]
+
+                # download
+                log_callback('Downloading VDDK')
+                result = client.run_command('curl {} -o {}'.format(vddk_url, filename))
+                if result.rc != 0:
+                    log_raise(Exception, "Could not download VDDK")
+
+                # extract
+                log_callback('Extracting vddk')
+                status, out = client.run_command('tar xvf {}'.format(filename))
+                if status != 0:
+                    log_raise(Exception, "Error: Unknown format of the file:\n{}".format(out))
+
+                # install
+                log_callback('Installing vddk')
+                status, out = client.run_command(
+                    'vmware-vix-disklib-distrib/vmware-install.pl --default EULA_AGREED=yes')
+                if status != 0:
+                    log_raise(
+                        Exception, 'VDDK installation failure (rc: {})\n{}'.format(out, status))
+                else:
+                    client.run_command('ldconfig')
+
+                # verify
+                log_callback('Verifying vddk')
+                status, out = client.run_command('ldconfig -p | grep vix')
+                if len(out) < 2:
+                    log_raise(
+                        Exception,
+                        "Potential installation issue, libraries not detected\n{}".format(out))
+
+                # 5.2 workaround
+                if self.version.is_in_series("5.2"):
+                    # find the vixdisk libs and add it to cfme 5.2 lib path which was hard coded for
+                    #    vddk v2.1 and v5.1
+                    log_callback('WARN: Adding 5.2 workaround')
+                    status, out = client.run_command(
+                        "find /usr/lib/vmware-vix-disklib/lib64 -maxdepth 1 -type f -exec ls"
+                        " -d {} + | grep libvixDiskLib")
+                    for file in str(out).split("\n"):
+                        client.run_command("cd /var/www/miq/lib/VixDiskLib/vddklib; ln -s " + file)
+
+                # reboot
+                if reboot:
+                    log_callback('Appliance reboot')
+                    old_uptime = client.uptime()
+                    status, out = client.run_command('reboot')
+                    wait_for(
+                        lambda: client.uptime() < old_uptime,
+                        handle_exception=True, num_sec=300, message='appliance to reboot', delay=10)
+                else:
+                    log_callback('A reboot is required before vddk will work')
 
     def wait_for_db(self, timeout=600):
         """Waits for appliance database to be ready

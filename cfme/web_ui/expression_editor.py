@@ -176,9 +176,22 @@ count_form = web_ui.Form(
 tag_form = web_ui.Form(
     fields=[
         ("type", web_ui.Select("//select[@id='chosen_typ']")),
-        ("count", web_ui.Select("//select[@id='chosen_tag']")),
-        ("value", "//*[@id='chosen_value']"),
+        ("tag", web_ui.Select("//select[@id='chosen_tag']")),
+        ("value", web_ui.Select("//*[@id='chosen_value']")),
         ("user_input", "//input[@id='user_input']"),
+    ]
+)
+
+find_form = web_ui.Form(
+    fields=[
+        ("type", web_ui.Select("select#chosen_typ")),
+        ("field", web_ui.Select("select#chosen_field")),
+        ("skey", web_ui.Select("select#chosen_skey")),
+        ("value", "#chosen_value"),
+        ("check", web_ui.Select("select#chosen_check")),
+        ("cfield", web_ui.Select("select#chosen_cfield")),
+        ("ckey", web_ui.Select("select#chosen_ckey")),
+        ("cvalue", "#chosen_cvalue"),
     ]
 )
 
@@ -285,6 +298,21 @@ def fill_registry(key=None, value=None, operation=None, contents=None):
         ),
         action=buttons.commit
     )
+
+
+def fill_find(field=None, skey=None, value=None, check=None, cfield=None, ckey=None, cvalue=None):
+    web_ui.fill(
+        find_form,
+        dict(
+            type="Find",
+            field=field,
+            skey=skey,
+            value=value,
+            check=check,
+            cfield=cfield,
+            ckey=ckey,
+            cvalue=cvalue,))
+    sel.click(buttons.commit)
 
 
 def fill_field(field=None, key=None, value=None):

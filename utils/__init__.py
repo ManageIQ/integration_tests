@@ -156,3 +156,30 @@ class kwargify(object):
     @property
     def __name__(self):
         return self._f.__name__
+
+
+def tries(num_tries, exceptions, f, *args, **kwargs):
+    """ Tries to call the function multiple times if specific exceptions occur.
+
+    Args:
+        num_tries: How many times to try if exception is raised
+        exceptions: Tuple (or just single one) of exceptions that should be treated as repeat.
+        f: Callable to be called.
+        *args: Arguments to be passed through to the callable
+        **kwargs: Keyword arguments to be passed through to the callable
+
+    Returns:
+        What ``f`` returns.
+
+    Raises:
+        What ``f`` raises if the try count is exceeded.
+    """
+    tries = 0
+    while tries < num_tries:
+        tries += 1
+        try:
+            return f(*args, **kwargs)
+        except exceptions as e:
+            pass
+    else:
+        raise e

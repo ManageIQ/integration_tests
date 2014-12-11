@@ -693,7 +693,6 @@ class BasePolicy(Updateable, Pretty):
                                                                  self.description))
                 if not condition.exists:
                     condition.create()
-                    assert condition.exists, "Could not create the condition!"
                 assign_names.append(condition.description)
             elif isinstance(condition, basestring):
                 # assign condition
