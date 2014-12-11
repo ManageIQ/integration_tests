@@ -530,17 +530,39 @@ class IPAppliance(object):
             client.run_command('service merkyl restart')
 
     def update_rhel(self, *urls, **kwargs):
-        """Update RHEL on appliance"""
+        """Update RHEL on appliance
+
+        Will pull URLs from the 'updates_urls' environment variable (whitespace-separated URLs),
+        or cfme_data.
+
+        If the env var is not set, URLs will be pulled from cfme_data.
+        If the env var is set, it is the only source for update URLs.
+
+        Generic rhel update URLs cfme_data['basic_info']['rhel_updates_urls'] (yaml list)
+        On downstream builds, an additional RH SCL updates url can be inserted at
+        cfme_data['basic_info']['rhscl_updates_urls'].
+
+
+        """
+        urls = list(urls)
         log_callback_f = kwargs.pop("log_callback", lambda msg: self.log.info)
         log_callback = lambda msg: log_callback_f("Update RHEL: {}".format(msg))
         log_callback('updating appliance')
         if not urls:
-            urls = [conf.cfme_data['basic_info']['rhel_updates_url']]
-            if self.version.is_in_series("5.3"):
-                try:
-                    urls.append(conf.cfme_data['basic_info']['rhscl_updates_url'])
-                except KeyError:
-                    pass
+            basic_info = conf.cfme_data.get('basic_info', {})
+            if os.environ.get('updates_urls'):
+                # try to pull URLs from env if var is non-empty
+                urls.extend(os.environ['update_urls'].split())
+            else:
+                # fall back to cfme_data
+                updates_url = basic_info.get('rhel_updates_url')
+                if updates_url:
+                    urls.append(updates_url)
+
+                if self.version.is_in_series("5.3"):
+                    rhscl_url = basic_info.get('rhscl_updates_url')
+                    if rhscl_url:
+                        urls.append(rhscl_url)
 
         client = self.ssh_client()
 
