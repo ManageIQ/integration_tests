@@ -176,6 +176,13 @@ def wait_for_request(cells):
         return False
 
 
+def debug_requests():
+    logger.debug('Outputting current requests')
+    for page in paginator.pages():
+        for row in request_list.rows():
+            logger.debug(' {}'.format(row))
+
+
 def go_to_request(cells):
     """Finds the request and opens the page
 
