@@ -35,6 +35,7 @@ suds
 tornado
 tzlocal
 ui-navigate
+numpy
 
 ###
 # Libraries with compiled components, and their related devel packages

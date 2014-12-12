@@ -1,14 +1,84 @@
 page_check:
-    num_ems_cloud_check: 10
-    num_vm_cloud_check: 50
-    num_ems_infra_check: 10
-    num_ems_cluster_check: 5
-    num_host_infra_check: 10
-    num_vm_infra_check: 50
-    num_ems_resource_pool_check: 5
-    num_storage_check: 10
+    intelligence:
+        reports:
+            saved_reports: 20
+            reports: 20
+            schedules: 10
+            dashboards: 10
+            dashboard_widgets: 10
+            edit_report_menus: 10
+            import_export: 10
+        chargeback:
+            reports: 5
+            rates: 5
+            assignments: 5
+    services:
+        my_services:
+            services: 10
+        catalogs:
+            catalog_items: 10
+            catalogs: 10
+            service_catalogs: 10
+        workloads:
+            vms_instances: 10
+            templates_images: 10
+    cloud:
+        providers: 20
+        availability_zones: 10
+        tenants: 10
+        flavors: 10
+        security_groups: 20
+        vm_explorer:
+            instances_by_prov: 50
+            images_by_prov: 20
+            instances: 20
+            images: 20
+    infrastructure:
+        providers: 20
+        clusters: 20
+        hosts: 20
+        vm_explorer:
+            vms_and_templates: 50
+            vms: 50
+            templates: 50
+        resource_pools: 20
+        datastores: 20
+        pxe:
+            pxe_servers: 5
+            customization_templates: 5
+            system_image_types: 5
+            iso_datastores: 5
+    control:
+        explorer:
+            policy_profiles: 10
+            policies: 10
+            events: 10
+            conditions: 10
+            actions: 10
+            alert_profiles: 10
+            alerts: 10
+    automate:
+        explorer: 
+            datastore: 20
+        customization:
+            provisioning_dialogs: 10
+            service_dialogs: 10
+            buttons: 10
+            import_export: 10
+    optimize:
+        utilization:
+            utilization: 10
+        bottlenecks:
+            bottlenecks: 10
+    configure:
+       configuration:
+           settings: 10
+           access_control: 10
+           diagnostics: 10
+           database: 10
 threshold:
     transaction: 10000
     page_render: 5000
     query_time: 1000
     query_count: 1000
+    uncached_count: 1000
