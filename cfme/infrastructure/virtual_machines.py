@@ -464,24 +464,13 @@ class Vm(Common):
         sel.force_navigate("infrastructure_virtual_machines")
         quad = Quadicon(self.name, 'vm')
         wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-             message="Wait template to disappear", num_sec=500, fail_func=sel.refresh)
+                 message="Wait template to disappear", num_sec=500, fail_func=sel.refresh)
 
     def wait_for_appear(self):
         sel.force_navigate("infrastructure_virtual_machines")
         quad = Quadicon(self.name, 'vm')
         wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
-             message="Wait template to appear", num_sec=1000, fail_func=sel.refresh)
-    # def _nav_to_cfme_relationship(self):
-    #     pass
-
-    # def edit_cfme_relationship(self, appliance_name):
-    #     pass
-
-    # def is_cfme_relationship_set(self):
-    #     pass
-
-    # def get_cfme_relationship_server(self):
-    #     pass
+                 message="Wait template to appear", num_sec=1000, fail_func=sel.refresh)
 
     def power_control_from_provider(self, option):
         """Power control a vm from the provider
@@ -636,6 +625,53 @@ class Vm(Common):
                 return self.find_quadicon().state == 'currentstate-' + desired_state
         return wait_for(_looking_for_state_change, num_sec=timeout, delay=30)
 
+    class CfmeRelationship(object):
+
+        relationship_form = Form(
+            fields=[
+                ('server_select', Select("//*[@id='server_id']")),
+                ('save_button', form_buttons.save),
+                ('reset_button', form_buttons.reset),
+                ('cancel_button', form_buttons.cancel)
+            ])
+
+        def __init__(self, o):
+            self.o = o
+
+        def navigate(self):
+            self.o.load_details()
+            cfg_btn('Edit Management Engine Relationship')
+
+        def is_relationship_set(self):
+            return "<Not a Server>" not in self.get_relationship()
+
+        def get_relationship(self):
+            self.navigate()
+            rel = str(self.relationship_form.server_select.all_selected_options[0].text)
+            form_buttons.cancel()
+            return rel
+
+        def set_relationship(self, server_name, server_id, click_cancel=False):
+            self.navigate()
+            option = "%s (%d)" % (server_name, server_id)
+
+            if click_cancel:
+                fill(self.relationship_form, {'server_select': option},
+                     action=self.relationship_form.cancel_button)
+            else:
+                fill(self.relationship_form, {'server_select': option},
+                     action=self.relationship_form.save_button)
+                # something weird going on where changing the select doesn't POST to undim save
+                sel.wait_for_ajax()
+                if self.relationship_form.save_button.is_dimmed:
+                    logger.warning("Worked around dimmed save button")
+                    sel.browser().execute_script(
+                        "$j.ajax({type: 'POST', url: '/vm_infra/evm_relationship_field_changed',"
+                        " data: {'server_id':'%s'}})" % (server_id))
+                    sel.click(form_buttons.FormButton(
+                        "Save Changes", dimmed_alt="Save", force_click=True))
+                flash.assert_success_message("Management Engine Relationship saved")
+
 
 class Template(Common):
 
@@ -676,13 +712,13 @@ class Template(Common):
         sel.force_navigate("infra_templates")
         quad = Quadicon(self.name, 'template')
         wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-             message="Wait template to disappear", num_sec=500, fail_func=sel.refresh)
+                 message="Wait template to disappear", num_sec=500, fail_func=sel.refresh)
 
     def wait_for_appear(self):
         sel.force_navigate("infra_templates")
         quad = Quadicon(self.name, 'template')
         wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
-             message="Wait template to appear", num_sec=1000, fail_func=sel.refresh)
+                 message="Wait template to appear", num_sec=1000, fail_func=sel.refresh)
 
 
 class Genealogy(object):
