@@ -50,3 +50,6 @@ notebooks/.ipynb_checkpoints
 
 #ignore .gitignore
 .gitignore
+
+# yaml key
+.yaml_key
