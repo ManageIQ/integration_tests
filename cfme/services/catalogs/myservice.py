@@ -131,12 +131,11 @@ class MyService(Updateable):
         flash.assert_success_message('Service "{}" was saved'.format(edited_name))
 
     def delete(self, name):
-        edited_service_name = self.service_name + "_" + name
         sel.force_navigate('service',
-                           context={'service_name': edited_service_name})
+                           context={'service_name': name})
         cfg_btn("Remove Service from the VMDB", invokes_alert=True)
         sel.handle_alert()
-        flash.assert_success_message('Service "{}": Delete successful'.format(edited_service_name))
+        flash.assert_success_message('Service "{}": Delete successful'.format(name))
 
     def set_ownership(self, owner, group):
         sel.force_navigate('service_set_ownership',
@@ -152,3 +151,11 @@ class MyService(Updateable):
         fill(edit_tags_form, {'select_value': value},
              action=form_buttons.save)
         flash.assert_success_message('Tag edits were successfully saved')
+
+    def check_vm_add(self, add_vm_name):
+        sel.force_navigate('service',
+                           context={'service_name': self.service_name})
+
+        quadicon = Quadicon(add_vm_name, "vm")
+        sel.click(quadicon)
+        flash.assert_no_errors()
