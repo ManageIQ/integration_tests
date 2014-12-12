@@ -909,7 +909,6 @@ class RHEVMSystem(MgmtSystemAPIBase):
         vms = self.api.vms.list()
 
         for vm in vms:
-            print "Checking {}...".format(vm.name)
             if vm.get_guest_info() is None or vm.get_guest_info().get_ips() is None:
                 continue
             else:

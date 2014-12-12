@@ -5,6 +5,7 @@ import random
 import re
 import time
 from cfme.configure import tasks
+from cfme.exceptions import CFMEException
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import flash, toolbar
 from utils import conf, testgen, version
@@ -107,12 +108,18 @@ def get_appliance(provider_crud):
             # provision appliance and configure
             ver_to_prov = str(version.current_version())
             logger.info("provisioning {} appliance on {}...".format(ver_to_prov, provider_crud.key))
-            appliance = provision_appliance(
-                vm_name_prefix=appliance_vm_prefix,
-                version=ver_to_prov,
-                provider_name=provider_crud.key)
-            logger.info("appliance IP address: " + str(appliance.address))
-            appliance.configure(setup_fleece=True)
+            appliance = None
+            try:
+                appliance = provision_appliance(
+                    vm_name_prefix=appliance_vm_prefix,
+                    version=ver_to_prov,
+                    provider_name=provider_crud.key)
+                logger.info("appliance IP address: " + str(appliance.address))
+                appliance.configure(setup_fleece=True)
+            except Exception:
+                logger.error('Appliance encountered error during initial setup, deleting...')
+                appliance.destroy()
+                raise CFMEException('Appliance encountered error during initial setup')
             appliance_list[provider_crud.key] = appliance
     return appliance_list[provider_crud.key]
 
@@ -152,8 +159,9 @@ def appliance_browser(get_appliance, provider_crud, vm_template_name, os, fs_typ
 
     test_list.remove([provider_crud.key, vm_template_name, os, fs_type])
 
-    with get_appliance.browser_session() as browser:
-        yield browser
+    with get_appliance.ipapp.db.transaction:
+        with get_appliance.browser_session() as browser:
+            yield browser
 
     # cleanup provisioned appliance if not more tests for it
     if provider_crud.key is not main_provider:
@@ -177,10 +185,6 @@ def finish_appliance_setup(get_appliance, appliance_browser, provider_crud, vm):
     provider_crud.refresh_provider_relationships()
     vm.wait_to_appear(is_vm=True)
     vm.load_details()
-
-    # if appliance_list[provider_crud.key].is_on_rhev:
-    #    vm.load_details()
-    #    vm_details.edit_cfme_relationship_and_save()
 
     # wait for vm smart state to enable
     logger.info('Waiting for smartstate option to enable...')
@@ -273,7 +277,7 @@ def verify_no_data(provider_crud, vm):
         logger.info("Analysis data already found, deleting/rediscovering vm...")
         vm.remove_from_cfme(cancel=False, from_details=True)
         wait_for(vm.does_vm_exist_in_cfme, fail_condition=True,
-                 num_sec=600, delay=30, fail_func=pytest.sel.refresh)
+                 num_sec=300, delay=15, fail_func=pytest.sel.refresh)
         provider_crud.refresh_provider_relationships()
         vm.wait_to_appear()
 
@@ -305,8 +309,14 @@ def _scan_test(provider_crud, vm, os, fs_type, soft_assert):
     wait_for(is_vm_analysis_finished, [vm.name], delay=15, num_sec=600,
              handle_exception=True, fail_func=lambda: toolbar.select('Reload'))
 
-    # Then delete the tasks
-    # tb.select('Delete Tasks', 'Delete All')
+    # make sure fleecing was successful
+    task_row = tasks.tasks_table.find_row_by_cells({
+        'task_name': "Scan from Vm %s" % vm.name,
+        'state': 'Finished'
+    })
+    icon_ele = task_row.row_element.find_elements_by_class_name("icon")
+    icon_img = icon_ele[0].find_element_by_tag_name("img")
+    assert "checkmark" in icon_img.get_attribute("src")
 
     # back to vm_details
     # give it two minutes to update the DB / seeing instances where items are not updating

@@ -5,7 +5,10 @@ import random
 import requests
 import shutil
 import subprocess
+from cfme.configure.configuration import server_name, server_id
 from fixtures.pytest_store import _push_appliance, _pop_appliance
+from cfme.infrastructure.provider import get_from_config
+from cfme.infrastructure.virtual_machines import Vm
 from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
@@ -202,7 +205,11 @@ class Appliance(object):
             self.ipapp.install_vddk(reboot=True, log_callback=log_callback)
             self.ipapp.wait_for_web_ui(log_callback=log_callback)
 
-        with self.ipapp.browser_session():
+        if self.is_on_rhev:
+            self.add_rhev_direct_lun_disk()
+
+        self.ipapp.browser_steal = True
+        with self.ipapp:
             log_callback('Enabling smart proxy role...')
             roles = get_server_roles()
             if not roles["smartproxy"]:
@@ -220,10 +227,11 @@ class Appliance(object):
             log_callback('Credentialing hosts...')
             setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
 
-            # if self.is_on_rhev:
-            #    self.add_rhev_direct_lun_disk()
-            #    vm.load_details()
-            #    vm_details.edit_cfme_relationship_and_save()
+            # if rhev, set relationship
+            if self.is_on_rhev:
+                vm = Vm(self.vm_name, get_from_config(self._provider_name))
+                cfme_rel = Vm.CfmeRelationship(vm)
+                cfme_rel.set_relationship(str(server_name()), server_id())
 
     def does_vm_exist(self):
         return self.provider.does_vm_exist(self.vm_name)
@@ -246,7 +254,7 @@ class Appliance(object):
     def destroy(self):
         """Destroys the VM this appliance is running as
         """
-        if isinstance(self._provider, RHEVMSystem):
+        if isinstance(self.provider, RHEVMSystem):
             # if rhev, try to remove direct_lun just in case it is detach
             self.remove_rhev_direct_lun_disk()
         self.provider.delete_vm(self.vm_name)
@@ -387,10 +395,10 @@ class IPAppliance(object):
             raise Exception('SSH is unavailable')
         # IPAppliance.ssh_client only connects to its address
         connect_kwargs['hostname'] = self.address
-        connect_kwargs['username'] = connect_kwargs.get('username',
-            conf.credentials['ssh']['username'])
-        connect_kwargs['password'] = connect_kwargs.get('password',
-            conf.credentials['ssh']['password'])
+        connect_kwargs['username'] = connect_kwargs.get(
+            'username', conf.credentials['ssh']['username'])
+        connect_kwargs['password'] = connect_kwargs.get(
+            'password', conf.credentials['ssh']['password'])
         return SSHClient(**connect_kwargs)
 
     def fix_ntp_clock(self, log_callback=None):
@@ -508,18 +516,18 @@ class IPAppliance(object):
 
         client.run_command('mkdir -p /root/merkyl')
         for filename in ['__init__.py', 'merkyl.tpl', ('bottle.py.dontflake', 'bottle.py'),
-                'allowed.files']:
+                         'allowed.files']:
             try:
                 src, dest = filename
             except (TypeError, ValueError):
                 # object is not iterable or too many values to unpack
                 src = dest = filename
             log_callback('Sending {} to appliance'.format(src))
-            client.put_file(data_path.join('bundles', 'merkyl', src).strpath,
-                os.path.join('/root/merkyl', dest))
+            client.put_file(data_path.join(
+                'bundles', 'merkyl', src).strpath, os.path.join('/root/merkyl', dest))
 
-        client.put_file(data_path.join('bundles', 'merkyl', 'merkyl').strpath,
-            os.path.join('/etc/init.d/merkyl'))
+        client.put_file(data_path.join(
+            'bundles', 'merkyl', 'merkyl').strpath, os.path.join('/etc/init.d/merkyl'))
         client.run_command('chmod 775 /etc/init.d/merkyl')
         client.run_command(
             '/bin/bash -c \'if ! [[ $(iptables -L -n | grep "state NEW tcp dpt:8192") ]]; then '
@@ -915,6 +923,7 @@ class IPAppliance(object):
         '''Install the vddk on a appliance'''
         if log_callback is None:
             log_callback = self.log.info
+
         if int(self.ssh_client().run_command("ldconfig -p | grep vix | wc -l")[1]) < 1:
             log_callback('Installing VDDK...')
             script = scripts_path.join('install_vddk.py')
@@ -928,7 +937,7 @@ class IPAppliance(object):
                                          .format(self.address))
             self.wait_for_web_ui()
         else:
-            logger.warning("some version of vddk already installed")
+            log_callback("[WARN] some version of vddk already installed")
 
     def wait_for_db(self, timeout=180):
         """Waits for appliance database to be ready
