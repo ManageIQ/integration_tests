@@ -100,3 +100,55 @@ class Timeprofile(Updateable):
         sel.handle_alert()
         flash.assert_success_message(
             'Time Profile "{}": Delete successful'.format(self.description))
+
+
+class Visual(Updateable):
+    item_form = Form(
+        fields=[
+            ('grid_view', Select('//select[@id="perpage_grid"]')),
+            ('tile_view', Select('//select[@id="perpage_tile"]')),
+            ('list_view', Select('//select[@id="perpage_list"]')),
+            ('reports', Select('//select[@id="perpage_reports"]')),
+        ])
+
+    save_button = form_buttons.FormButton("Add this Time Profile")
+
+    def __init__(self, grid_view=None, tile_view=None, list_view=None):
+        self.grid_view = grid_view
+        self.tile_view = tile_view
+        self.list_view = list_view
+
+    @property
+    def grid_view_limit(self):
+        sel.force_navigate("my_settings_visual")
+        return int(sel.text(self.item_form.grid_view.first_selected_option))
+
+    @grid_view_limit.setter
+    def grid_view_limit(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.item_form.grid_view, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def tile_view_limit(self):
+        sel.force_navigate("my_settings_visual")
+        return int(sel.text(self.item_form.tile_view.first_selected_option))
+
+    @tile_view_limit.setter
+    def tile_view_limit(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.item_form.tile_view, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def list_view_limit(self):
+        sel.force_navigate("my_settings_visual")
+        return int(sel.text(self.item_form.list_view.first_selected_option))
+
+    @list_view_limit.setter
+    def list_view_limit(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.item_form.list_view, str(value))
+        sel.click(form_buttons.save)
+
+visual = Visual()
