@@ -238,8 +238,12 @@ def do_vm_provisioning(template_name, provider_crud, vm_name, provisioning_data,
     logger.info('Waiting for cfme provision request for vm %s' % vm_name)
     row_description = 'Provision from [%s] to [%s]' % (template_name, vm_name)
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
-                       fail_func=requests.reload, num_sec=num_sec, delay=20)
+    try:
+        row, __ = wait_for(requests.wait_for_request, [cells],
+                           fail_func=requests.reload, num_sec=num_sec, delay=20)
+    except Exception as e:
+        requests.debug_requests()
+        raise e
     assert row.last_message.text == version.pick(
         {version.LOWEST: 'VM Provisioned Successfully',
          "5.3": 'Vm Provisioned Successfully', })
