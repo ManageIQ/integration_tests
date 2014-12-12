@@ -137,6 +137,22 @@ class Config(dict):
         This module contains dynamic attributes. As a result, its functionality can be found in
         the source as :py:class:`utils._conf.Config`
 
+    Encryption
+    ^^^^^^^^^^
+
+    Encrpyted yamls are supported. Encrypted yamls are expected to have the ``eyaml`` extension.
+
+    The conf loader will look for the encryption key in these places:
+
+    - The value of the CFME_TESTS_KEY environment variable
+    - The contents of the file specified with the CFME_TESTS_KEY_FILE environment variable
+    - The contents of ``.yaml_key`` in the project root (cfme_tests)
+
+    ..note::
+
+        If an unencrypted and an encrypted yaml of the same name exist in conf, the unencrypted
+        YAML will be loaded and a message will be printed notifying the user.
+
     """
     def __init__(self, path):
         # stash a path to better impersonate a module
@@ -260,7 +276,7 @@ class Config(dict):
             if local_yaml_dict:
                 yaml_dict.update(local_yaml_dict)
 
-        # Graft on the local overrides
+        # Graft on the runtime overrides
         yaml_dict.update(self.runtime.get(key, {}))
         self[key].update(yaml_dict)
 
@@ -371,8 +387,13 @@ def get_aes_key():
     if "CFME_TESTS_KEY" in os.environ:
         data = os.environ["CFME_TESTS_KEY"].strip()
     else:
+        if "CFME_TESTS_KEY_FILE" in os.environ:
+            key_file = os.environ["CFME_TESTS_KEY_FILE"].strip()
+        else:
+            key_file = project_path.join(".yaml_key").strpath
+
         try:
-            with open(project_path.join(".yaml_key").strpath, "r") as f:
+            with open(key_file, "r") as f:
                 data = f.read().strip()
         except IOError:
             data = None
@@ -380,38 +401,35 @@ def get_aes_key():
 
 
 def load_yaml(filename=None, warn_on_fail=True):
-    # Find the requested yaml in the config dir, relative to this file's location
-    # (aiming for cfme_tests/config)
+    conf = None
+
     filename_unencrypted = conf_path.join('{}.yaml'.format(filename))
     filename_encrypted = conf_path.join('{}.eyaml'.format(filename))
 
-    if filename_encrypted.check() and (
-            not filename_unencrypted.check()
-            or filename_encrypted.mtime() > filename_unencrypted.mtime()):
-        # Decrypt the file if unencrypted does not exist or it exists but only if it was modified
-        # after the encrypted file's modification time (prevent everwriting)
+    # Find the requested yaml in the conf dir
+    if filename_unencrypted.check():
+        # If there's an unencypted credentials.yaml, use it.
+        if filename_encrypted.check():
+            print ('Encrypted and unencrypted {} present, '
+                'using unencrypted yaml'.format(filename_unencrypted.basename))
+        with filename_unencrypted.open() as config_fh:
+            conf = yaml.load(config_fh, Loader=YamlConfigLoader)
+    elif filename_encrypted.check():
+        # If the unencrypted file didn't exist, try to use the encrypted file
         key = get_aes_key()
-        if key is None and not filename_unencrypted.check():
-            raise Exception(
-                "Cannot decrypt config file {} (no key) and no unencrypted version present!".format(
-                    filename))
+        if not key:
+            raise Exception("Cannot decrypt {} (no key)!".format(filename_encrypted.basename))
 
         cipher = AES.new(key, AES.MODE_ECB)
         with filename_encrypted.open("r") as encrypted:
-            with filename_unencrypted.open("w") as unencrypted:
-                unencrypted.write(cipher.decrypt(encrypted.read()).rstrip())
+            conf = yaml.load(cipher.decrypt(encrypted.read()).strip())
 
-    if filename_unencrypted.check():
-        with filename_unencrypted.open() as config_fh:
-            conf = yaml.load(config_fh, Loader=YamlConfigLoader)
-            if isinstance(conf, dict):
-                return conf
+    if isinstance(conf, dict):
+        return conf
 
     if warn_on_fail:
         msg = 'Unable to load configuration file at %s' % filename_unencrypted
         warn(msg, ConfigNotFound)
-
-    return {}
 
 
 def encrypt_yaml(filename):
