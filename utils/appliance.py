@@ -141,7 +141,7 @@ class Appliance(object):
         self.ipapp.enable_internal_db(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(log_callback=log_callback)
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
-        self.ipapp.deploy_merkyl(log_callback=log_callback)
+        self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
 
     def _configure_5_3(self, log_callback=None):
         self.ipapp.update_rhel(log_callback=log_callback)
@@ -150,14 +150,14 @@ class Appliance(object):
         self.ipapp.wait_for_web_ui(log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
         self.ipapp.clone_domain(log_callback=log_callback)
-        self.ipapp.deploy_merkyl(log_callback=log_callback)
+        self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
 
     def _configure_upstream(self, log_callback=None):
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
         self.ipapp.clone_domain(log_callback=log_callback)
-        self.ipapp.deploy_merkyl(log_callback=log_callback)
+        self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
 
     def configure(self, setup_fleece=False, log_callback=None, **kwargs):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
