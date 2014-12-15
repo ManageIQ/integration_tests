@@ -954,6 +954,11 @@ def fill_tag(loc, value):
     raise NotImplementedError("Don't know how to fill {} into this type: {}".format(value, loc))
 
 
+@fill_tag.method(("select", Anything))
+def fill_select_tag(select, value):
+    return (sel.select, value)
+
+
 @fill_tag.method((Anything, 'text'))
 @fill_tag.method((Anything, 'textarea'))
 def fill_text(textbox, val):
