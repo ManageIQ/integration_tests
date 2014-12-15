@@ -524,7 +524,7 @@ class ISODatastore(Updateable, Pretty):
         if db:
             iso = cfmedb()['iso_datastores']
             ems = cfmedb()['ext_management_systems']
-            name = 'RHEV 3.3'
+            name = self.provider
             iso_ds = list(cfmedb().session.query(iso.id)
                           .join(ems, iso.ems_id == ems.id)
                           .filter(ems.name == name))
