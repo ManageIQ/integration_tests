@@ -401,7 +401,7 @@ def get_aes_key():
 
 
 def load_yaml(filename=None, warn_on_fail=True):
-    conf = None
+    conf = {}
 
     filename_unencrypted = conf_path.join('{}.yaml'.format(filename))
     filename_encrypted = conf_path.join('{}.eyaml'.format(filename))
@@ -430,6 +430,7 @@ def load_yaml(filename=None, warn_on_fail=True):
     if warn_on_fail:
         msg = 'Unable to load configuration file at %s' % filename_unencrypted
         warn(msg, ConfigNotFound)
+    return {}
 
 
 def encrypt_yaml(filename):
