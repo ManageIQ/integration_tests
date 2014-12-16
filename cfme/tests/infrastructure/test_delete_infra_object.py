@@ -54,16 +54,16 @@ def test_delete_vm(provider_crud, remove_test):
     test_vm.remove_from_cfme(cancel=False)
     test_vm.wait_for_delete()
     provider_crud.refresh_provider_relationships()
-    test_vm.wait_for_appear()
+    test_vm.wait_to_appear()
 
 
 def test_delete_template(provider_crud, remove_test):
     template = remove_test['template']
     test_template = virtual_machines.Template(template, provider_crud)
-    test_template.delete()
+    test_template.remove_from_cfme(cancel=False)
     test_template.wait_for_delete()
     provider_crud.refresh_provider_relationships()
-    test_template.wait_for_appear()
+    test_template.wait_to_appear()
 
 
 def test_delete_resource_pool(provider_crud, remove_test):
