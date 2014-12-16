@@ -39,6 +39,7 @@ slumber
 sqlalchemy
 suds
 tornado
+translate-toolkit
 tzlocal
 ui-navigate
 yaycl
