@@ -250,6 +250,8 @@ class Common(object):
         self._method_helper(from_details)
         if from_details:
             cfg_btn('Remove from the VMDB', invokes_alert=True)
+        elif not is_vm:
+            cfg_btn('Remove Templates from the VMDB', invokes_alert=True)
         else:
             cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
@@ -315,7 +317,7 @@ class Common(object):
         cfg_btn('Perform SmartState Analysis', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
-    def wait_to_appear(self, is_vm=True, timeout=600, load_details=True):
+    def wait_to_appear(self, timeout=600, load_details=True):
         """Wait for a VM to appear within CFME
 
         Args:
@@ -325,6 +327,19 @@ class Common(object):
         wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30, fail_func=sel.refresh)
         if load_details:
             self.load_details()
+
+    def wait_for_delete(self, timeout=600):
+        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30, fail_func=sel.refresh,
+                 fail_condition=True)
+
+    def does_vm_exist_in_cfme(self):
+        """A function to tell you if a VM exists or not.
+        """
+        try:
+            self.find_quadicon()
+            return True
+        except VmNotFound:
+            return False
 
     @property
     def genealogy(self):
@@ -447,30 +462,9 @@ class Vm(Common):
         return self._find_quadicon(
             is_vm=True, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh)
 
-    def does_vm_exist_in_cfme(self):
-        """A function to tell you if a VM exists or not.
-        """
-        try:
-            self.find_quadicon()
-            return True
-        except VmNotFound:
-            return False
-
     def remove_from_cfme(self, cancel=False, from_details=False):
         """Removes a VM from CFME VMDB"""
         self._remove_from_cfme(is_vm=True, cancel=cancel, from_details=from_details)
-
-    def wait_for_delete(self):
-        sel.force_navigate("infrastructure_virtual_machines")
-        quad = Quadicon(self.name, 'vm')
-        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-                 message="Wait template to disappear", num_sec=500, fail_func=sel.refresh)
-
-    def wait_for_appear(self):
-        sel.force_navigate("infrastructure_virtual_machines")
-        quad = Quadicon(self.name, 'vm')
-        wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
-                 message="Wait template to appear", num_sec=1000, fail_func=sel.refresh)
 
     def power_control_from_provider(self, option):
         """Power control a vm from the provider
@@ -690,35 +684,6 @@ class Template(Common):
     def remove_from_cfme(self, cancel=False, from_details=False):
         """Removes a VM from CFME VMDB"""
         self._remove_from_cfme(is_vm=False, cancel=cancel, from_details=from_details)
-
-    def does_template_exist_in_cfme(self):
-        """A function to tell you if a VM exists or not.
-        """
-        try:
-            self.find_quadicon()
-            return True
-        except TemplateNotFound:
-            return False
-
-    def delete(self):
-        """Remove template from CFME VMDB"""
-        sel.force_navigate("infra_templates")
-        quad = Quadicon(self.name, 'template')
-        sel.check(quad.checkbox())
-        cfg_btn('Remove Templates from the VMDB', invokes_alert=True)
-        sel.handle_alert()
-
-    def wait_for_delete(self):
-        sel.force_navigate("infra_templates")
-        quad = Quadicon(self.name, 'template')
-        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-                 message="Wait template to disappear", num_sec=500, fail_func=sel.refresh)
-
-    def wait_for_appear(self):
-        sel.force_navigate("infra_templates")
-        quad = Quadicon(self.name, 'template')
-        wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
-                 message="Wait template to appear", num_sec=1000, fail_func=sel.refresh)
 
 
 class Genealogy(object):

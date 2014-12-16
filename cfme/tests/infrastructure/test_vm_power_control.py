@@ -68,9 +68,12 @@ def test_vm(request, provider_crud, provider_mgmt, vm_name):
     request.addfinalizer(vm.delete_from_provider)
 
     if not provider_mgmt.does_vm_exist(vm_name):
+        logger.info("deploying {} on provider {}".format(vm_name, provider_crud.key))
         vm.create_on_provider()
+    else:
+        logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider_crud.key))
     vm.provider_crud.refresh_provider_relationships()
-    vm.wait_for_appear()
+    vm.wait_to_appear()
     return vm
 
 
