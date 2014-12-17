@@ -14,7 +14,7 @@ from ovirtsdk.xml import params
 
 def main():
     parser = argparse.ArgumentParser(epilog=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--provider', dest='provider_name', help='provider name in cfme_data')
     parser.add_argument('--vm_name', help='the name of the VM on which to act')
     parser.add_argument('--remove', help='remove disk from vm', action="store_true")
@@ -31,19 +31,44 @@ def main():
         vm = provider.api.vms.get(args.vm_name)
         ip_addr = provider.get_ip_address(args.vm_name)
     except:
-        sys.exit(args.vm_name + " vm not found on provider " + args.providername + ", exiting...")
+        sys.exit(args.vm_name + " vm not found on provider " + args.provider_name + ", exiting...")
 
     # check for direct lun definition on provider's cfme_data.yaml
-    if 'direct_lun_name' not in cfme_data['management_systems'][args.provider_name]:
-        sys.exit("direct_lun_name key not in cfme_data.yaml under provider "
-            + args.providername + ", exiting...")
+    if 'direct_lun' not in cfme_data['management_systems'][args.provider_name]:
+        sys.exit("direct_lun key not in cfme_data.yaml under provider {}, exiting...".format(
+            args.provider_name))
 
     # does the direct lun exist
-    dlun_name = cfme_data['management_systems'][args.provider_name]['direct_lun_name']
+    prov_data = cfme_data['management_systems'][args.provider_name]
+    dlun_name = prov_data['direct_lun']['name']
     dlun = provider.api.disks.get(dlun_name)
     if dlun is None:
-        sys.exit("Direct lun disk named " + dlun_name + " is not found on provider " +
-            args.provider_name)
+
+        #    Create the iSCSI storage connection:
+        sc = params.StorageConnection()
+        sc.set_address(prov_data['direct_lun']['ip_address'])
+        sc.set_type("iscsi")
+        sc.set_port(int(prov_data['direct_lun']['port']))
+        sc.set_target(prov_data['direct_lun']['iscsi_target'])
+
+        #    Add the direct LUN disk:
+        lu = params.LogicalUnit()
+        lu.set_id(prov_data['direct_lun']['iscsi_target'])
+        lu.set_address(sc.get_address())
+        lu.set_port(sc.get_port())
+        lu.set_target(sc.get_target())
+        storage = params.Storage()
+        storage.set_type("iscsi")
+        storage.set_logical_unit([lu])
+        disk = params.Disk()
+        disk.set_name('direct_lun')
+        disk.set_interface("virtio")
+        disk.set_type("iscsi")
+        disk.set_format("raw")
+        disk.set_lun_storage(storage)
+        disk.set_shareable(True)
+        disk = provider.api.disks.add(disk)
+        dlun = provider.api.disks.get(dlun_name)
 
     # add it
     if not args.remove:
@@ -54,7 +79,7 @@ def main():
                 if vm_disk.active:
                     return
                 else:
-                    vm_disk.actvate()
+                    vm_disk.activate()
                     return
 
         # if not present, add it and activate
