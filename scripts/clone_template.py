@@ -14,39 +14,38 @@ from utils.wait import wait_for
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
 
     # required options (heh)
     parser.add_argument('--provider', help='provider key in cfme_data')
     parser.add_argument('--template', help='the name of the template to clone')
     parser.add_argument('--vm_name', help='the name of the VM to create')
     parser.add_argument('--configure', default=False, action='store_true',
-        help='configure the VM after provisioning')
+                        help='configure the VM after provisioning')
 
     # generic options
     parser.add_argument('--destroy', dest='destroy', action='store_true',
-        help='Destroy the destination VM')
+                        help='Destroy the destination VM')
     parser.add_argument('--log', dest='loglevel', default='WARNING',
-        help='Set the log level')
+                        help='Set the log level')
     parser.add_argument('--outfile', dest='outfile',
-        help='Write provisioning details to the named file', default='')
+                        help='Write provisioning details to the named file', default='')
 
     # sub options organized for provider types
     rhev_parser = parser.add_argument_group('rhev')
     rhev_parser.add_argument('--cluster', default=None,
-        help='the name of the VM on which to act')
+                             help='the name of the VM on which to act')
     rhev_parser.add_argument('--place_policy_host', default=None,
-        help='the host for the vm to start on')
+                             help='the host for the vm to start on')
     rhev_parser.add_argument('--place_policy_aff', default=None,
-        help='the affinity of the vm on a host')
+                             help='the affinity of the vm on a host')
 
     cloud_parser = parser.add_argument_group('cloud')
-    cloud_parser.add_argument('--flavor', default=None,
-        help='ec2/rhos flavor')
+    cloud_parser.add_argument('--flavor', default=None, help='ec2/rhos flavor')
 
     openstack_parser = parser.add_argument_group('openstack')
     openstack_parser.add_argument('--floating-ip-pool', default=None,
-        help='openstack floating ip pool to use')
+                                  help='openstack floating ip pool to use')
 
     args = parser.parse_args()
 
@@ -96,7 +95,7 @@ def main():
             flavor = args.flavor or flavors[0]
         except IndexError:
             raise Exception('--flavor is required for RHOS instances and '
-                'default is not set or unavailable on provider')
+                            'default is not set or unavailable on provider')
         # flavour? Thanks, psav...
         deploy_args['flavour_name'] = flavor
 
