@@ -37,8 +37,14 @@ def set_list():
     visual.list_view_limit = 5
 
 
+def go_to_grid(page):
+    sel.force_navigate(page)
+    tb.select('Grid View')
+
+
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
-def test_grid_page_per_item(provider_init, page, set_grid):
+def test_grid_page_per_item(request, provider_init, page, set_grid):
+    request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
     sel.force_navigate(page)
     tb.select('Grid View')
@@ -47,7 +53,8 @@ def test_grid_page_per_item(provider_init, page, set_grid):
 
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
-def test_tile_page_per_item(provider_init, page, set_tile):
+def test_tile_page_per_item(request, provider_init, page, set_tile):
+    request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.tile_view_limit
     sel.force_navigate(page)
     tb.select('Tile View')
@@ -56,7 +63,8 @@ def test_tile_page_per_item(provider_init, page, set_tile):
 
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
-def test_list_page_per_item(provider_init, page, set_list):
+def test_list_page_per_item(request, provider_init, page, set_list):
+    request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.list_view_limit
     sel.force_navigate(page)
     tb.select('List View')
