@@ -127,7 +127,7 @@ def main():
         logger.error("VM is not running")
         return 10
 
-    ip, time_taken = wait_for(provider.get_ip_address, [args.vm_name], num_sec=900,
+    ip, time_taken = wait_for(provider.get_ip_address, [args.vm_name], num_sec=1200,
                               fail_condition=None)
     logger.info("VM %s is running" % args.vm_name)
     logger.info('IP Address returned is %s', ip)
