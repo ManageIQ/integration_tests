@@ -3,6 +3,7 @@ import inspect
 import json
 import re
 from datetime import datetime
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse
@@ -26,6 +27,15 @@ def json_exception(e):
     })
 
 
+def json_autherror(message):
+    return json_response({
+        "status": "autherror",
+        "result": {
+            "message": str(message)
+        }
+    })
+
+
 def json_success(result):
     return json_response({
         "status": "success",
@@ -34,8 +44,9 @@ def json_success(result):
 
 
 class JSONMethod(object):
-    def __init__(self, method):
+    def __init__(self, method, auth=False):
         self._method = method
+        self.auth = auth
 
     def __call__(self, *args, **kwargs):
         return self._method(*args, **kwargs)
@@ -50,7 +61,7 @@ class JSONMethod(object):
                 defaults[key] = value
         return {
             "name": self._method.__name__,
-            "args": f_args,
+            "args": f_args if not self.auth else f_args[1:],
             "defaults": defaults,
             "docstring": self._method.__doc__ or "",
         }
@@ -62,6 +73,9 @@ class JSONApi(object):
 
     def method(self, f):
         self._methods[f.__name__] = JSONMethod(f)
+
+    def authenticated_method(self, f):
+        self._methods[f.__name__] = JSONMethod(f, auth=True)
 
     def doc(self, request):
         return render(request, 'appliances/apidoc.html', {})
@@ -76,7 +90,21 @@ class JSONApi(object):
             method_name = data["method"]
             args = data["args"]
             kwargs = data["kwargs"]
-            return json_success(self._methods[method_name](*args, **kwargs))
+            method = self._methods[method_name]
+            if method.auth:
+                if "auth" in data:
+                    username, password = data["auth"]
+                    try:
+                        user = User.objects.get(username=username)
+                    except ObjectDoesNotExist:
+                        return json_autherror("User {} does not exist!".format(username))
+                    if not user.check_password(password):
+                        return json_autherror("Wrong password for user {}!".format(username))
+                    return json_success(method(user, *args, **kwargs))
+                else:
+                    return json_autherror("Method {} needs authentication!".format(method_name))
+            else:
+                return json_success(method(*args, **kwargs))
         except Exception as e:
             return json_exception(e)
 
@@ -89,19 +117,21 @@ def apply_if_not_none(o, meth, *args, **kwargs):
     return getattr(o, meth)(*args, **kwargs)
 
 
-@jsonapi.method
+@jsonapi.authenticated_method
 def request_appliances(
-        group, count=1, lease_time=60, template=None, provider=None, version=None, date=None):
+        user, group, count=1, lease_time=60, template=None, provider=None, version=None, date=None):
     """Request a number of appliances."""
     if date:
         date = datetime.strptime(date, "%y%m%d")
-    return AppliancePool.create(group, version, date, count, lease_time).id
+    return AppliancePool.create(user, group, version, date, count, lease_time).id
 
 
-@jsonapi.method
-def request_check(request_id):
+@jsonapi.authenticated_method
+def request_check(user, request_id):
     """Return status of the appliance pool"""
     request = AppliancePool.objects.get(id=request_id)
+    if user != request.owner and not user.is_staff:
+        raise Exception("This pool belongs to a different user!")
     return {
         "fulfilled": request.fulfilled,
         "appliances": [
@@ -122,24 +152,30 @@ def request_check(request_id):
     }
 
 
-@jsonapi.method
-def prolong_appliance_lease(id, minutes=60):
+@jsonapi.authenticated_method
+def prolong_appliance_lease(user, id, minutes=60):
     """Prolongs the appliance's lease time by specified amount of minutes from current time."""
     appliance = Appliance.objects.get(id=id)
+    if appliance.owner is not None and user != appliance.owner and not user.is_staff:
+        raise Exception("This pool belongs to a different user!")
     appliance.prolong_lease(time=minutes)
 
 
-@jsonapi.method
-def prolong_appliance_pool_lease(id, minutes=60):
+@jsonapi.authenticated_method
+def prolong_appliance_pool_lease(user, id, minutes=60):
     """Prolongs the appliance pool's lease time by specified amount of minutes from current time."""
     pool = AppliancePool.objects.get(id=id)
+    if user != pool.owner and not user.is_staff:
+        raise Exception("This pool belongs to a different user!")
     pool.prolong_lease(time=minutes)
 
 
-@jsonapi.method
-def destroy_pool(id):
+@jsonapi.authenticated_method
+def destroy_pool(user, id):
     """Destroy the pool. Kills all associated appliances."""
     pool = AppliancePool.objects.get(id=id)
+    if user != pool.owner and not user.is_staff:
+        raise Exception("This pool belongs to a different user!")
     pool.kill()
 
 
@@ -161,9 +197,11 @@ def get_number_free_appliances(group):
         return g.template_pool_size
 
 
-@jsonapi.method
-def set_number_free_appliances(group, n):
+@jsonapi.authenticated_method
+def set_number_free_appliances(user, group, n):
     """Set number of available appliances to keep in the pool"""
+    if not user.is_staff:
+        raise Exception("You don't have enough rights!")
     if n < 0:
         return False
     with transaction.atomic():
@@ -188,8 +226,10 @@ def available_providers():
     return map(lambda group: group.id, Provider.objects.all())
 
 
-@jsonapi.method
-def add_provider(provider_key):
+@jsonapi.authenticated_method
+def add_provider(user, provider_key):
+    if not user.is_staff:
+        raise Exception("You don't have enough rights!")
     try:
         provider_o = Provider.objects.get(id=provider_key)
         return False
@@ -210,13 +250,19 @@ def get_appliance(appliance):
         return Appliance.objects.get(name=appliance)
 
 
-@jsonapi.method
-def destroy_appliance(appliance):
+@jsonapi.authenticated_method
+def destroy_appliance(user, appliance):
     """Destroy the appliance.
 
     You can specify appliance by IP address, id or name.
     """
-    Appliance.kill(get_appliance(appliance))
+    appliance = get_appliance(appliance)
+    if appliance.owner is None:
+        if not user.is_staff:
+            raise Exception("Only staff can operate with nonowned appliances")
+    elif appliance.owner != user:
+        raise Exception("This appliance belongs to a different user!")
+    Appliance.kill(appliance)
     return True
 
 
@@ -229,37 +275,52 @@ def power_state(appliance):
     return get_appliance(appliance).power_state
 
 
-@jsonapi.method
-def power_on(appliance):
+@jsonapi.authenticated_method
+def power_on(user, appliance):
     """Power on the appliance
 
     You can specify appliance by IP address, id or name.
     """
     appliance = get_appliance(appliance)
+    if appliance.owner is None:
+        if not user.is_staff:
+            raise Exception("Only staff can operate with nonowned appliances")
+    elif appliance.owner != user:
+        raise Exception("This appliance belongs to a different user!")
     if appliance.power_state != Appliance.Power.ON:
         appliance_power_on.delay(appliance.id)
     return True
 
 
-@jsonapi.method
-def power_off(appliance):
+@jsonapi.authenticated_method
+def power_off(user, appliance):
     """Power off the appliance
 
     You can specify appliance by IP address, id or name.
     """
     appliance = get_appliance(appliance)
+    if appliance.owner is None:
+        if not user.is_staff:
+            raise Exception("Only staff can operate with nonowned appliances")
+    elif appliance.owner != user:
+        raise Exception("This appliance belongs to a different user!")
     if appliance.power_state != Appliance.Power.OFF:
         appliance_power_off.delay(appliance.id)
     return True
 
 
-@jsonapi.method
-def suspend(appliance):
+@jsonapi.authenticated_method
+def suspend(user, appliance):
     """Suspend the appliance
 
     You can specify appliance by IP address, id or name.
     """
     appliance = get_appliance(appliance)
+    if appliance.owner is None:
+        if not user.is_staff:
+            raise Exception("Only staff can operate with nonowned appliances")
+    elif appliance.owner != user:
+        raise Exception("This appliance belongs to a different user!")
     if appliance.power_state == Appliance.Power.OFF:
         return False
     elif appliance.power_state != Appliance.Power.SUSPENDED:

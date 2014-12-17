@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'appliances',
+    'django_object_actions',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -101,7 +102,6 @@ CELERY_DISABLE_RATE_LIMITS = True
 # CELERYD_PREFETCH_MULTIPLIER = 1
 
 TRACKERBOT_URL = cfme_data["sprout"]["trackerbot_url"]
-PROVIDER_FILTER = {"vsphere55", "vsphere5"}
 # TODO: To be able to use RHEV-M (and other EMSs), the mgmt_system for it must have
 # TODO: .mark_as_template implemented. Then it can be used.
 TEMPLATE_FORMAT = "sprout_template_{group}_{date}_{rnd}"
