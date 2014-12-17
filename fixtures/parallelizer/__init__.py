@@ -76,11 +76,7 @@ def pytest_addoption(parser):
     group._addoption(
         '--sprout-group', dest='sprout_group', default=None, help="Which stream to use.")
     group._addoption(
-        '--sprout-provider', dest='sprout_provider', default=None, help="Which provider to use.")
-    group._addoption(
         '--sprout-version', dest='sprout_version', default=None, help="Which version to use.")
-    group._addoption(
-        '--sprout-template', dest='sprout_template', default=None, help="Which template to use.")
     group._addoption(
         '--sprout-date', dest='sprout_date', default=None, help="Which date to use.")
 
@@ -121,8 +117,6 @@ class ParallelSession(object):
                     self.config.option.sprout_appliances, self.sprout_client.api_entry))
             pool_id = self.sprout_client.request_appliances(
                 self.config.option.sprout_group,
-                provider=self.config.option.sprout_provider,
-                template=self.config.option.sprout_template,
                 count=self.config.option.sprout_appliances,
                 version=self.config.option.sprout_version,
                 date=self.config.option.sprout_date,
@@ -131,12 +125,13 @@ class ParallelSession(object):
             self.terminal.write("Pool {}. Waiting for fulfillment ...\n".format(pool_id))
             self.sprout_pool = pool_id
             at_exit(self.sprout_client.destroy_pool, self.sprout_pool)
-            wait_for(
+            result = wait_for(
                 lambda: self.sprout_client.request_check(self.sprout_pool)["fulfilled"],
                 num_sec=30 * 60,  # 30 minutes
                 delay=5,
                 message="requesting appliances was fulfilled"
             )
+            self.terminal.write("Provisioning took {0:.1f} seconds\n".format(result.duration))
             request = self.sprout_client.request_check(self.sprout_pool)
             self.appliances = []
             # Push an appliance to the stack to have proper reference for test collection

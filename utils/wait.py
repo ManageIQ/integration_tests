@@ -1,7 +1,11 @@
 import time
+from collections import namedtuple
 from utils.log import logger
 from functools import partial
 from threading import Timer
+
+
+WaitForResult = namedtuple("WaitForResult", ["out", "duration"])
 
 
 def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
@@ -83,7 +87,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             if not quiet:
                 logger.trace('Took %f to do %s' % (duration, message))
             logger.trace('Finished {} at {}'.format(message, st_time + t_delta))
-            return out, duration
+            return WaitForResult(out, duration)
         t_delta = time.time() - st_time
     logger.trace('Finished at {}'.format(st_time + t_delta))
     if not silent_fail:

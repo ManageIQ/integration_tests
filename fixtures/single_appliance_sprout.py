@@ -49,12 +49,13 @@ def pytest_configure(config, __multicall__):
         )
         terminal.write("Appliance pool {}. Waiting for fulfillment ...\n".format(pool_id))
         at_exit(sprout.destroy_pool, pool_id)
-        wait_for(
+        result = wait_for(
             lambda: sprout.request_check(pool_id)["fulfilled"],
             num_sec=30 * 60,  # 30 minutes
             delay=5,
             message="requesting appliance was fulfilled"
         )
+        terminal.write("Provisioning took {0:.1f} seconds\n".format(result.duration))
         request = sprout.request_check(pool_id)
         ip_address = request["appliances"][0]["ip_address"]
         terminal.write("Appliance requested at address {} ...\n".format(ip_address))

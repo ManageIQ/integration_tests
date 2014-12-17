@@ -16,6 +16,16 @@ def logger():
     return create_logger("sprout")
 
 
+class DelayedProvisionTask(models.Model):
+    pool = models.ForeignKey("AppliancePool")
+    lease_time = models.IntegerField(null=True)
+    provider_to_avoid = models.ForeignKey("Provider", null=True)
+
+    def __unicode__(self):
+        return u"Task {}: Provision on {}, lease time {}, avoid provider {}".format(
+            self.id, self.pool.id, self.lease_time, str(self.provider_to_avoid.id))
+
+
 class Provider(models.Model):
     id = models.CharField(max_length=32, primary_key=True, help_text="Provider's key in YAML.")
     working = models.BooleanField(default=False, help_text="Whether provider is available.")
@@ -30,7 +40,7 @@ class Provider(models.Model):
     def num_currently_provisioning(self):
         return len(
             Appliance.objects.filter(
-                ready=False, marked_for_deletion=False, template__provider=self))
+                ready=False, marked_for_deletion=False, template__provider=self, ip_address=None))
 
     @property
     def remaining_provisioning_slots(self):
@@ -44,6 +54,12 @@ class Provider(models.Model):
     def free(self):
         return self.remaining_provisioning_slots > 0
 
+    @property
+    def provisioning_load(self):
+        if self.num_simultaneous_provisioning == 0:
+            return 1.0  # prevent division by zero
+        return float(self.num_currently_provisioning) / float(self.num_simultaneous_provisioning)
+
     @classmethod
     def get_available_provider_keys(cls):
         return cfme_data.get("management_systems", {}).keys()
@@ -51,6 +67,10 @@ class Provider(models.Model):
     @property
     def provider_data(self):
         return cfme_data.get("management_systems", {}).get(self.id, {})
+
+    @property
+    def ip_address(self):
+        return self.provider_data.get("ipaddress")
 
     def __unicode__(self):
         return "{} {}".format(self.__class__.__name__, self.id)
@@ -261,6 +281,7 @@ class Appliance(models.Model):
                 self = Appliance.objects.get(id=appliance_or_id.id)
             else:
                 self = Appliance.objects.get(id=appliance_or_id)
+            logger().info("Killing appliance {}".format(self.id))
             if not self.marked_for_deletion:
                 self.marked_for_deletion = True
                 self.leased_until = None
@@ -270,23 +291,17 @@ class Appliance(models.Model):
     def delete(self, *args, **kwargs):
         # Intercept delete and lessen the number of appliances in the pool
         # Then if the appliance is still present in the management system, kill it
-        with transaction.atomic():
-            if self.appliance_pool is not None:
-                self.appliance_pool.total_count -= 1
-                if self.appliance_pool.total_count > 0:
-                    self.appliance_pool.save()
-                else:
-                    pool = self.appliance_pool
-                    self.appliance_pool = None
-                    self.save()
-                    pool.delete()
-
-        # if self.provider_api.does_vm_exist(self.name):
-        #     from appliances.tasks import kill_appliance
-        #     kill_appliance.delay(self.id)
-        return super(Appliance, self).delete(*args, **kwargs)
+        logger().info("Deleting appliance {}".format(self.id))
+        pool = self.appliance_pool
+        result = super(Appliance, self).delete(*args, **kwargs)
+        do_not_touch = kwargs.pop("do_not_touch_ap", False)
+        if pool is not None and not do_not_touch:
+            if pool.current_count == 0:
+                pool.delete()
+        return result
 
     def prolong_lease(self, time=60):
+        logger().info("Prolonging lease of {} by {} minutes.".format(self.id, time))
         with transaction.atomic():
             appliance = Appliance.objects.get(id=self.id)
             appliance.leased_until = timezone.now() + timedelta(minutes=time)
@@ -316,7 +331,10 @@ class AppliancePool(models.Model):
             if versions:
                 version = versions[0]
         if not date:
-            dates = Template.get_dates(template_group=group)
+            if version is not None:
+                dates = Template.get_dates(template_group=group, version=version)
+            else:
+                dates = Template.get_dates(template_group=group)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):
@@ -325,10 +343,19 @@ class AppliancePool(models.Model):
             raise Exception("Could not find possible combination of group, date and version!")
         req = cls(group=group, version=version, date=date, total_count=num_appliances, owner=owner)
         if not req.possible_templates:
-            raise Exception("No possible templates!")
+            raise Exception("No possible templates! (query: {}".format(str(req.__dict__)))
         req.save()
+        logger().info("Appliance pool {} created".format(req.id))
         request_appliance_pool.delay(req.id, time_leased)
         return req
+
+    def delete(self, *args, **kwargs):
+        logger().info("Deleting appliance pool {}".format(self.id))
+        with transaction.atomic():
+            for task in DelayedProvisionTask.objects.filter(pool=self):
+                task.delete()
+
+        return super(AppliancePool, self).delete(*args, **kwargs)
 
     @property
     def possible_templates(self):
@@ -341,8 +368,37 @@ class AppliancePool(models.Model):
             template_group=self.group, ready=True, exists=True, **filter_params).all()
 
     @property
+    def possible_provisioning_templates(self):
+        return sorted(
+            filter(lambda tpl: tpl.provider.free, self.possible_templates),
+            key=lambda tpl: tpl.date, reverse=True)
+
+    @property
     def appliances(self):
         return Appliance.objects.filter(appliance_pool=self).all()
+
+    @property
+    def current_count(self):
+        return len(self.appliances)
+
+    @property
+    def percent_finished(self):
+        if self.total_count is None:
+            return 0.0
+        total = 4 * self.total_count
+        if total == 0:
+            return 1.0
+        finished = 0
+        for appliance in self.appliances:
+            if appliance.power_state not in {Appliance.Power.UNKNOWN, Appliance.Power.ORPHANED}:
+                finished += 1
+            if appliance.power_state == Appliance.Power.ON:
+                finished += 1
+            if appliance.ip_address is not None:
+                finished += 1
+            if appliance.ready:
+                finished += 1
+        return float(finished) / float(total)
 
     @property
     def appliance_ips(self):
@@ -356,13 +412,21 @@ class AppliancePool(models.Model):
         except ObjectDoesNotExist:
             return False
 
+    @property
+    def queued_provision_tasks(self):
+        return DelayedProvisionTask.objects.filter(pool=self)
+
     def prolong_lease(self, time=60):
         for appliance in self.appliances:
             appliance.prolong_lease(time=time)
 
     def kill(self):
-        for appliance in self.appliances:
-            Appliance.kill(appliance)
+        if self.appliances:
+            for appliance in self.appliances:
+                Appliance.kill(appliance)
+        else:
+            # No appliances, so just delete it
+            self.delete()
 
     def __repr__(self):
         return "<AppliancePool id: {}, group: {}, total_count: {}>".format(

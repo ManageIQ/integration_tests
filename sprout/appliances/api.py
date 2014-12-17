@@ -119,7 +119,7 @@ def apply_if_not_none(o, meth, *args, **kwargs):
 
 @jsonapi.authenticated_method
 def request_appliances(
-        user, group, count=1, lease_time=60, template=None, provider=None, version=None, date=None):
+        user, group, count=1, lease_time=60, version=None, date=None):
     """Request a number of appliances."""
     if date:
         date = datetime.strptime(date, "%y%m%d")
@@ -134,6 +134,7 @@ def request_check(user, request_id):
         raise Exception("This pool belongs to a different user!")
     return {
         "fulfilled": request.fulfilled,
+        "progress": int(round(request.percent_finished * 100)),
         "appliances": [
             dict(
                 id=appliance.id,
