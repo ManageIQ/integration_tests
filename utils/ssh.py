@@ -1,5 +1,7 @@
+# coding: utf-8 -*-
 import re
 import sys
+from collections import namedtuple
 from urlparse import urlparse
 
 import paramiko
@@ -10,6 +12,9 @@ from utils.log import logger
 from utils.net import net_check
 from fixtures.pytest_store import store
 from utils.timeutil import parsetime
+
+
+SSHResult = namedtuple("SSHResult", ["rc", "output"])
 
 
 class SSHClient(paramiko.SSHClient):
@@ -72,32 +77,66 @@ class SSHClient(paramiko.SSHClient):
 
     def run_command(self, command):
         logger.info("Running command `{}`".format(command))
-        return command_runner(self, command, self._streaming)
+        template = '%s\n'
+        command = template % command
+        with self as context:
+            transport = context.get_transport()
+            session = transport.open_session()
+            session.exec_command(command)
+            stdout = session.makefile()
+            stderr = session.makefile_stderr()
+            output = ''
+            while True:
+                if session.recv_ready:
+                    for line in stdout:
+                        output += line
+                        if self._streaming:
+                            sys.stdout.write(line)
+
+                if session.recv_stderr_ready:
+                    for line in stderr:
+                        output += line
+                        if self._streaming:
+                            sys.stderr.write(line)
+
+                if session.exit_status_ready():
+                    break
+            exit_status = session.recv_exit_status()
+            return SSHResult(exit_status, output)
+
+        # Returning two things so tuple unpacking the return works even if the ssh client fails
+        return SSHResult(None, None)
 
     def run_rails_command(self, command):
         logger.info("Running rails command `{}`".format(command))
-        return rails_runner(self, command, self._streaming)
+        return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {}'.format(command))
 
     def run_rake_command(self, command):
         logger.info("Running rake command `{}`".format(command))
-        return rake_runner(self, command, self._streaming)
+        return self.run_command('cd /var/www/miq/vmdb; bin/rake {}'.format(command))
 
     def put_file(self, local_file, remote_file='.', **kwargs):
         logger.info("Transferring local file {} to remote {}".format(local_file, remote_file))
-        return scp_putter(self, local_file, remote_file, **kwargs)
+        with self as ctx:
+            transport = ctx.get_transport()
+            return SCPClient(transport).put(local_file, remote_file, **kwargs)
 
     def get_file(self, remote_file, local_path='', **kwargs):
         logger.info("Transferring remote file {} to local {}".format(remote_file, local_path))
-        return scp_getter(self, remote_file, local_path, **kwargs)
+        with self as ctx:
+            transport = ctx.get_transport()
+            return SCPClient(transport).get(remote_file, local_path, **kwargs)
 
     def get_version(self):
-        return version_getter(self)
+        return self.run_command(
+            'cd /var/www/miq/vmdb; cat /var/www/miq/vmdb/VERSION').output.strip()
 
     def get_build_datetime(self):
-        return build_datetime_getter(self)
+        command = "stat --printf=%Y /var/www/miq/vmdb/VERSION"
+        return parsetime.fromtimestamp(int(self.run_command(command).output.strip()))
 
     def is_appliance_downstream(self):
-        return is_downstream_getter(self)
+        return self.run_command("stat /var/www/miq/vmdb/BUILD").rc == 0
 
     def uptime(self):
         out = self.run_command('cat /proc/uptime')[1]
@@ -109,85 +148,7 @@ class SSHClient(paramiko.SSHClient):
         return 0
 
     def appliance_has_netapp(self):
-        return appliance_has_netapp(self)
-
-
-def command_runner(client, command, stream_output=False):
-    template = '%s\n'
-    command = template % command
-    with client as ctx:
-        transport = ctx.get_transport()
-        session = transport.open_session()
-        session.exec_command(command)
-        stdout = session.makefile()
-        stderr = session.makefile_stderr()
-        output = ''
-        while True:
-            if session.recv_ready:
-                for line in stdout:
-                    output += line
-                    if stream_output:
-                        sys.stdout.write(line)
-
-            if session.recv_stderr_ready:
-                for line in stderr:
-                    output += line
-                    if stream_output:
-                        sys.stderr.write(line)
-
-            if session.exit_status_ready():
-                break
-        exit_status = session.recv_exit_status()
-        return exit_status, output
-
-    # Returning two things so tuple unpacking the return works even if the ssh client fails
-    return None, None
-
-
-def rails_runner(client, command, stream_output=False):
-    template = 'cd /var/www/miq/vmdb; bin/rails runner %s'
-    return command_runner(client, template % command, stream_output)
-
-
-def rake_runner(client, command, stream_output=False):
-    template = 'cd /var/www/miq/vmdb; bin/rake %s'
-    return command_runner(client, template % command, stream_output)
-
-
-def version_getter(client):
-    command = 'cd /var/www/miq/vmdb; cat /var/www/miq/vmdb/VERSION'
-    x, version = command_runner(client, command, stream_output=False)
-    return version.strip()
-
-
-def build_datetime_getter(client):
-    command = "stat --printf=%Y /var/www/miq/vmdb/VERSION"
-    x, build_seconds = command_runner(client, command, stream_output=False)
-    return parsetime.fromtimestamp(int(build_seconds.strip()))
-
-
-def is_downstream_getter(client):
-    command = "stat /var/www/miq/vmdb/BUILD"
-    result = command_runner(client, command, stream_output=False)[0]
-    return result == 0
-
-
-def appliance_has_netapp(client):
-    command = "stat /var/www/miq/vmdb/HAS_NETAPP"
-    result = command_runner(client, command, stream_output=False)[0]
-    return result == 0
-
-
-def scp_putter(client, local_file, remote_file, **kwargs):
-    with client as ctx:
-        transport = ctx.get_transport()
-        SCPClient(transport).put(local_file, remote_file, **kwargs)
-
-
-def scp_getter(client, remote_file, local_path, **kwargs):
-    with client as ctx:
-        transport = ctx.get_transport()
-        SCPClient(transport).get(remote_file, local_path, **kwargs)
+        return self.run_command("stat /var/www/miq/vmdb/HAS_NETAPP").rc == 0
 
 
 class SSHTail(SSHClient):
