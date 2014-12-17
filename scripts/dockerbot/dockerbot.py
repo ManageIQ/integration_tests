@@ -170,7 +170,7 @@ class DockerBot(object):
                 headers=headers)
             try:
                 for filen in r.json():
-                    if filen['status'] != "deleted":
+                    if filen['status'] != "deleted" and filen['status'] != "removed":
                         if filen['filename'].startswith('cfme/tests') or \
                            filen['filename'].startswith('utils/tests'):
                             files.append(filen['filename'])
@@ -297,7 +297,7 @@ class DockerBot(object):
             files = self.find_files_by_pr(self.args['pr'])
             if files:
                 self.args['pytest'] = ("py.test -v {} --use-provider default --long-running "
-                                       "--bugzilla --no-tracer").format(" ".join(files))
+                                       "--bugzilla --no-tracer --perf").format(" ".join(files))
             else:
                 self.args['pytest'] = "py.test -v --use-provider default -m smoke --no-tracer"
         if not self.args['capture']:
