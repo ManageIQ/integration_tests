@@ -183,7 +183,7 @@ def finish_appliance_setup(get_appliance, appliance_browser, provider_crud, vm):
 
     # find the vm (needed when appliance already configured for earlier class of tests)
     provider_crud.refresh_provider_relationships()
-    vm.wait_to_appear(is_vm=True)
+    vm.wait_to_appear()
     vm.load_details()
 
     # wait for vm smart state to enable
