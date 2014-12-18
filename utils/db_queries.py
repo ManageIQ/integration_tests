@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from utils.db import cfmedb, database_on_server
+from utils.db import cfmedb, Db
 
 
 def get_configuration_details(db=None, ip_address=None):
@@ -18,7 +18,7 @@ def get_configuration_details(db=None, ip_address=None):
         ip_address = cfmedb().hostname
 
     if db is None:
-        db = database_on_server(ip_address).gen.next()
+        db = Db(hostname=ip_address)
 
     SEQ_FACT = 1e12
     miq_servers = db['miq_servers']
@@ -55,7 +55,7 @@ def get_zone_description(zone_id, ip_address=None, db=None):
         ip_address = cfmedb().hostname
 
     if db is None:
-        db = database_on_server(ip_address)
+        db = Db(hostname=ip_address)
 
     zones = list(
         db.session.query(db["zones"]).filter(
@@ -73,7 +73,7 @@ def get_host_id(hostname, ip_address=None, db=None):
         ip_address = cfmedb().hostname
 
     if db is None:
-        db = database_on_server(ip_address)
+        db = Db(hostname=ip_address)
 
     hosts = list(
         db.session.query(db["hosts"]).filter(
