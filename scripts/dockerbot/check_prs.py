@@ -91,8 +91,16 @@ def check_prs():
     Iterates over each PR and runs the check_pr functon on it.
     """
     json_data = perform_request('pulls'.format(owner, repo))
+    numbers = []
     for pr in json_data:
+        numbers.append(pr['number'])
         check_pr(pr)
+
+    prs = tapi.pr.get(closed=False)['objects']
+    for pr in prs:
+        if pr['number'] not in numbers:
+            logger.info("PR {} closed".format(pr['number']))
+            tapi.pr(pr['number']).put({'closed': True})
 
 
 def run_tasks():
@@ -289,7 +297,10 @@ def check_pr(pr):
                 create_run(db_pr, pr)
         elif "[WIP]" in pr['title']:
             wip = True
-        tapi.pr(pr['number']).put({'current_commit_head': commit, 'wip': wip})
+        tapi.pr(pr['number']).put({'current_commit_head': commit,
+                                   'wip': wip,
+                                   'title': pr['title'],
+                                   'description': pr['body']})
         check_status(pr)
     except HttpClientError:
         logger.info('PR {} not found in database, creating...'.format(pr['number']))
