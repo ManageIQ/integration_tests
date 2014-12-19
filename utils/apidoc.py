@@ -11,7 +11,7 @@ from utils.path import docs_path, project_path
 
 # When adding/removing from this list, remember to edit docs/modules.rst to match
 #: List of modules/packages to document, paths relative to the project root.
-modules_to_document = ['cfme', 'fixtures', 'markers', 'utils']
+modules_to_document = ['cfme', 'fixtures', 'markers', 'metaplugins', 'utils']
 _doc_modules_path = docs_path.join('modules')
 
 

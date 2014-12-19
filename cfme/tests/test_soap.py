@@ -283,8 +283,8 @@ class TestSoapBasicInteraction(object):
 @pytest.mark.bugzilla(
     1118831, 1131480, 1132578,
     unskip={1118831: lambda appliance_version: appliance_version < "5.3"})
-@pytest.mark.fixtureconf(server_roles="+automate")
-@pytest.mark.usefixtures("server_roles", "setup_provider")
+@pytest.mark.meta(server_roles="+automate")
+@pytest.mark.usefixtures("setup_provider")
 def test_provision_via_soap(
         request, soap_client, provider_key, provider_data, provider_mgmt, small_template):
     vm_name = "test_soap_provision_{}".format(generate_random_string())

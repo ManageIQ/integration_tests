@@ -7,8 +7,8 @@ from utils import testgen
 from utils.randomness import generate_random_string
 
 pytestmark = [
-    pytest.mark.fixtureconf(server_roles="+automate +notifier"),
-    pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
+    pytest.mark.meta(server_roles="+automate +notifier"),
+    pytest.mark.usefixtures('uses_infra_providers')
 ]
 
 

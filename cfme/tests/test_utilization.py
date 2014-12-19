@@ -7,9 +7,8 @@ import time
 from cfme.configure.configuration import candu
 
 pytestmark = [
-    pytest.mark.fixtureconf(server_roles="+ems_metrics_coordinator +ems_metrics_collector"
-                            " +ems_metrics_processor"),
-    pytest.mark.usefixtures('server_roles')
+    pytest.mark.meta(
+        server_roles="+ems_metrics_coordinator +ems_metrics_collector +ems_metrics_processor")
 ]
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, None)

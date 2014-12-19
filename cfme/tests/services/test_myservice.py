@@ -18,7 +18,7 @@ import utils.randomness as rand
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name"),
-    pytest.mark.fixtureconf(server_roles="+automate"),
+    pytest.mark.meta(server_roles="+automate"),
     pytest.mark.long_running,
     pytest.mark.ignore_stream("5.2")
 ]
