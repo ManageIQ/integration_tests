@@ -14,7 +14,7 @@ list_page = Region(
         'zone_table': SplitTable(header_data=('//div[@class="xhdr"]/table/tbody', 1),
             body_data=('//div[@class="objbox"]/table/tbody', 1))
     },
-    title='Cloud Providers')
+    title='Availability Zones')
 
 
 details_page = Region(infoblock_type='detail')
