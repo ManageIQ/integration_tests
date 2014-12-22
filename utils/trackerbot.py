@@ -175,10 +175,10 @@ def post_task_result(tid, result, output=None):
     api().task(tid).put({'result': result, 'output': output})
 
 
-def post_jenkins_result(number, stream, date, fails, skips, passes):
+def post_jenkins_result(number, stream, date, fails, skips, passes, build):
     api().build.post({'number': number, 'stream': '/api/group/{}/'.format(stream),
                       'datestamp': date,
-                      'fails': fails, 'skips': skips, 'passes': passes})
+                      'fails': fails, 'skips': skips, 'passes': passes, 'build': build})
 
 
 # Dict subclasses to help with JSON serialization
