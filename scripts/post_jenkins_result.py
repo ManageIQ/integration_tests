@@ -10,6 +10,7 @@ xml_file = os.path.join(os.environ['WORKSPACE'], 'junit-report.xml')
 # It will match the group name from the template tracker
 stream = os.environ['stream']
 number = int(os.environ['BUILD_NUMBER'])
+build = os.environ.get('appliance_template', "Unknown")
 
 date = str(datetime.now())
 
@@ -22,4 +23,4 @@ skips = int(elem.attrib['skips'])
 tests = int(elem.attrib['tests'])
 passes = tests - fails + errors
 
-post_jenkins_result(number, stream, date, fails, skips, passes)
+post_jenkins_result(number, stream, date, fails, skips, passes, build)
