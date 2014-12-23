@@ -19,6 +19,7 @@ repo = docker_conf['gh_repo']
 tapi = api()
 
 CONT_LIMIT = docker_conf['workers']
+DEBUG = docker_conf.get('debug', False)
 
 logger = create_logger('check_prs', 'prt.log')
 
@@ -138,7 +139,8 @@ def run_tasks():
                                             'provider': provider, 'template': template})
 
                 # Create a dockerbot instance and run the PR test
-                dockerbot.DockerBot(auto_gen_test=True,
+                dockerbot.DockerBot(dry_run=DEBUG,
+                                    auto_gen_test=True,
                                     use_wharf=True,
                                     prtester=True,
                                     test_id=task['tid'],
@@ -230,6 +232,9 @@ def check_status(pr):
     Args:
         pr: The PR object from GitHub (json)
     """
+    if DEBUG:
+        return
+
     db_pr = tapi.pr(pr['number']).get()
 
     if db_pr['wip']:
@@ -274,11 +279,6 @@ def check_pr(pr):
     If the PR does not exist in the database a new PR record is created, and a new run is
     prepared.
     """
-    # labels = []
-    # raw_labels = perform_request("issues/{}/labels".format(pr['number']))
-
-    # for label in raw_labels:
-    #    labels.append(label['name'])
 
     commit = pr['head']['sha']
     wip = False
@@ -301,19 +301,20 @@ def check_pr(pr):
                                    'wip': wip,
                                    'title': pr['title'],
                                    'description': pr['body']})
-        check_status(pr)
     except HttpClientError:
         logger.info('PR {} not found in database, creating...'.format(pr['number']))
         new_pr = {'number': pr['number'],
                   'description': pr['body'],
-                  'current_commit_head': commit}
+                  'current_commit_head': commit,
+                  'title': pr['title']}
         tapi.pr().post(new_pr)
         if "[WIP]" not in pr['title']:
             create_run(new_pr, pr)
         elif "[WIP]" in pr['title']:
             new_pr['wip'] = True
         tapi.pr(pr['number']).put(new_pr)
-        check_status(pr)
+
+    check_status(pr)
 
 if __name__ == "__main__":
     if docker_conf['pr_enabled']:
@@ -325,4 +326,5 @@ if __name__ == "__main__":
         run_tasks()
 
         # Finally we clean up any leftover artifacts
-        vm_reaper()
+        if not DEBUG:
+            vm_reaper()
