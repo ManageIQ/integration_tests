@@ -296,7 +296,10 @@ def check_pr(pr):
                 logger.info('New commit ({}) detected for PR {}'.format(commit, pr['number']))
                 set_invalid_runs(db_pr)
                 create_run(db_pr, pr)
-        elif "[WIP]" in pr['title']:
+        elif "[WIP]" not in pr['title']:
+            logger.info('First run ({}) for PR {}'.format(commit, pr['number']))
+            create_run(db_pr, pr)
+        else:
             wip = True
         tapi.pr(pr['number']).put({'current_commit_head': commit,
                                    'wip': wip,
