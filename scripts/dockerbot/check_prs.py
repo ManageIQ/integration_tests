@@ -195,6 +195,8 @@ def vm_reaper():
                     dockerbot.dc.remove_container(container['Id'])
                     docker_cleanup = True
                     break
+            else:
+                docker_cleanup = True
 
             if docker_cleanup and vm_cleanup:
                 tapi.task(task['tid']).put({'cleanup': True})
