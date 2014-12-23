@@ -5,6 +5,7 @@ from utils.conf import cfme_data, jenkins
 from utils import appliance
 from jinja2 import Environment, FileSystemLoader
 from utils.path import template_path
+import json
 
 li = cfme_data['management_systems']
 users = jenkins['nicks']
@@ -31,10 +32,11 @@ def process_vm(vm, mgmt, user, prov):
                              ['EmsVmware', 'EmsOpenstack', 'EmsRedhat', 'EmsMicrosoft']]
 
                 for provider in providers:
-                    if provider in data[user]:
-                        data[user][provider].append("{} ({})".format(vm, prov))
+                    prov_name = prov_key_db.get(provider, 'Unknown ({})'.format(prov))
+                    if prov_name in data[user]:
+                        data[user][prov_name].append("{} ({})".format(vm, prov))
                     else:
-                        data[user][provider] = ["{} ({})".format(vm, prov)]
+                        data[user][prov_name] = ["{} ({})".format(vm, prov)]
 
             except:
                 pass
@@ -61,6 +63,8 @@ for prov in li:
         print "DOING {}".format(prov)
         process_provider(mgmt, prov)
 
+with open('provider_usage.json', 'w') as f:
+    json.dump(data, f)
 
 string = ""
 for user in data:
@@ -68,10 +72,9 @@ for user in data:
     string += ('<thead><tr><td><strong>Provider</strong></td>'
                '<td>Count</td><td><em>VMs</em></td></tr></thead>')
     for prov in data[user]:
-        prov_name = prov_key_db.get(prov, 'Unknown ({})'.format(prov))
         fmt_str = ('<tbody><tr><td><strong>{}</strong></td>'
                    '<td>{}</td><td><em>{}</em></td></tr></tbody>')
-        string += (fmt_str.format(prov_name, len(data[user][prov]), ", ".join(data[user][prov])))
+        string += (fmt_str.format(prov, len(data[user][prov]), ", ".join(data[user][prov])))
     string += ('</table>')
 
 template_data = {'data': string}
