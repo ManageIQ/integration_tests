@@ -524,6 +524,23 @@ class Vm(Common):
         flash.assert_success_message(
             "Retire initiated for 1 VM and Instance from the CFME Database")
 
+    def migrate_vm(self, email=None, first_name=None, last_name=None,
+                   host_name=None, datastore_name=None):
+        sel.force_navigate("infra_vm_by_name", context={'vm': self})
+        lcl_btn("Migrate this VM", invokes_alert=True)
+        first_name = first_name or generate_random_string()
+        last_name = last_name or generate_random_string()
+        email = email or "{}@{}.test".format(first_name, last_name)
+        provisioning_data = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "host_name": host_name,
+            "datastore_name": datastore_name,
+        }
+        from cfme.provisioning import provisioning_form
+        fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
+
     @property
     def retirement_date(self):
         """Returns the retirement date of the selected machine.
