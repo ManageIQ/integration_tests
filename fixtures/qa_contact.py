@@ -19,7 +19,7 @@ def dig_code(node):
     lc_info = proc.stdout.readlines()
     contact_stats = defaultdict(int)
     for line in lc_info:
-        contact = re.findall('.{8} \(\<(.*)\> ', line)
+        contact = re.findall('.{8} \(\<(.*?)\> ', line)
         contact_stats[contact[0]] += 1
     sorted_x = sorted(contact_stats.items(), key=operator.itemgetter(1), reverse=True)
     results = []
