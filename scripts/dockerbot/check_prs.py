@@ -184,7 +184,6 @@ def vm_reaper():
                             logger.info("Destroying {}".format(appliance.vm_name))
                             appliance.destroy()
                         vm_cleanup = True
-                        tapi.task(task['tid']).put({'cleanup': True})
                     except Exception:
                         logger.info('Exception occured cleaning up')
 
