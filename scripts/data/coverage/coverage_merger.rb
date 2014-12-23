@@ -1,39 +1,51 @@
 # goes into the rails root
-
+# merges coverage results from multiple processes, potentially on multiple appliances
+# This expects the layout used by our coverage hook: "RAILS_ROOT/coverage/[ipaddress]/[pid]/"
+# It does the report merging manually based on that layout, and can be run at any time
+# to compile reports.
+require 'fileutils'
 require 'json'
 require 'simplecov'
+require 'simplecov/result'
 require 'simplecov-rcov'
-
-# After merging, we want the html report as well as the rcov report for jenkins
-class MergedFormatter
-  def format(result)
-     SimpleCov::Formatter::HTMLFormatter.new.format(result)
-     SimpleCov::Formatter::RcovFormatter.new.format(result)
-  end
-end
 
 results = Hash.new
 coverage_root = File.join(File.expand_path(Rails.root), "coverage")
+puts "Scanning for results in #{coverage_root}"
 json_files = Dir.glob(
-  File.join(coverage_root, "*/.resultset.json")
+  File.join(coverage_root, "*/*/.resultset.json")
 )
+merged_dir = File.join(coverage_root, 'merged')
+
+puts SimpleCov.result
 
 for json_file in json_files
   begin
     json = File.read(json_file)
     results.update(JSON.parse(json))
-  rescue JSON::ParserError
-    # Don't know/care why simplecov didn't write valid json
-  ensure
-    FileUtils.rm_rf(File.dirname(json_file))
+    puts "Merging #{json_file}"
+  rescue
+    puts "Skipping #{json_file}, no valid JSON"
   end
 end
 
-JSON.dump(
-  results, File.new(File.join(coverage_root, ".resultset.json"), "w")
-)
+if results.empty?
+  abort "No results found for merging."
+end
 
-# After merging, switch the coverage root and let simplecov's exit hook
-# generate the report
-SimpleCov.coverage_dir coverage_root
-SimpleCov.formatter = MergedFormatter
+FileUtils.mkdir_p(merged_dir)
+File.open(File.join(merged_dir, '.resultset.json'), "w") do |f|
+  JSON.dump(results, f)
+end
+
+# Set up simplecov to use the merged results, then fire off the formatters
+SimpleCov.coverage_dir merged_dir
+SimpleCov.instance_variable_set("@result", SimpleCov::Result.from_hash(results))
+SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter, SimpleCov::Formatter::RcovFormatter
+SimpleCov.use_merging true
+SimpleCov.merge_timeout 2 << 28
+SimpleCov.add_group "APIs", "app/apis"
+SimpleCov.add_group "Libraries", "vmdb/lib/"
+SimpleCov.add_group "MIQ Libraries", "(?<!vmdb)/lib/(?!util/).*$"
+SimpleCov.add_group "MIQ Utils", "(?<!vmdb)/lib/util/.*$"
+SimpleCov.result.format!

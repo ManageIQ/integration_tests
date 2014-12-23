@@ -8,6 +8,7 @@ import zmq
 from py.path import local
 
 import utils.log
+from fixtures.pytest_store import store
 from utils import conf
 from utils.sprout import SproutClient, SproutException
 
@@ -218,6 +219,7 @@ if __name__ == '__main__':
 
     conf.runtime['env']['slaveid'] = args.slaveid
     conf.runtime['env']['base_url'] = args.base_url
+    store.parallelizer_role = 'slave'
 
     slave_args = conf.slave_config.pop('args')
     slave_options = conf.slave_config.pop('options')

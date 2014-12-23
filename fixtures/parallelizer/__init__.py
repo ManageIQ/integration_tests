@@ -43,6 +43,7 @@ import zmq
 from _pytest import runner
 
 from fixtures.parallelizer import remote
+from fixtures.pytest_store import store
 from fixtures.terminalreporter import reporter
 from utils import at_exit, conf
 from utils.appliance import IPAppliance
@@ -83,11 +84,12 @@ def pytest_addoption(parser):
 
 @pytest.mark.tryfirst
 def pytest_configure(config, __multicall__):
-    __multicall__.execute()
     if config.option.appliances or (config.option.use_sprout
             and config.option.sprout_appliances > 1):
         session = ParallelSession(config)
         config.pluginmanager.register(session, "parallel_session")
+        store.parallelizer_role = 'master'
+    __multicall__.execute()
 
 
 class ParallelSession(object):
