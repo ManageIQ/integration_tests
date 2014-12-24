@@ -7,8 +7,10 @@ import requests
 import os
 import os.path
 import docker
+import re
 import subprocess
 import sys
+import yaml
 
 
 def _dgci(d, key):
@@ -158,6 +160,23 @@ class DockerBot(object):
                 sel.remove()
             self.handle_output()
 
+    def get_pr_metadata(self, pr=None):
+        token = self.args['gh_token']
+        owner = self.args['gh_owner']
+        repo = self.args['gh_repo']
+        if token:
+            headers = {'Authorization': 'token {}'.format(token)}
+            r = requests.get(
+                'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
+                headers=headers)
+            body = r.json()['body']
+            metadata = re.findall("{{(.*?)}}", body)
+            if not metadata:
+                return {}
+            else:
+                ydata = yaml.safe_load(metadata[0])
+                return ydata
+
     def find_files_by_pr(self, pr=None):
         files = []
         token = self.args['gh_token']
@@ -294,12 +313,17 @@ class DockerBot(object):
 
     def create_pytest_command(self):
         if self.args['auto_gen_test'] and self.args['pr']:
-            files = self.find_files_by_pr(self.args['pr'])
-            if files:
-                self.args['pytest'] = ("py.test -v {} --use-provider default --long-running "
-                                       "--bugzilla --no-tracer --perf").format(" ".join(files))
+            self.pr_metadata = self.get_pr_metadata(self.args['pr'])
+            pytest = self.pr_metadata.get('pytest', None)
+            if pytest:
+                self.args['pytest'] = "py.test {}".format(pytest)
             else:
-                self.args['pytest'] = "py.test -v --use-provider default -m smoke --no-tracer"
+                files = self.find_files_by_pr(self.args['pr'])
+                if files:
+                    self.args['pytest'] = ("py.test -v {} --use-provider default --long-running "
+                                           "--bugzilla --no-tracer --perf").format(" ".join(files))
+                else:
+                    self.args['pytest'] = "py.test -v --use-provider default -m smoke --no-tracer"
         if not self.args['capture']:
             self.args['pytest'] += ' --capture=no'
         print "  PYTEST Command: {}".format(self.args['pytest'])
