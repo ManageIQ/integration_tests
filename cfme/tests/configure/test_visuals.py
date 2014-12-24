@@ -22,19 +22,25 @@ def provider_init(provider_key):
         pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def set_grid():
     visual.grid_view_limit = 5
+    yield
+    visual.grid_view_limit = 20
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def set_tile():
     visual.tile_view_limit = 5
+    yield
+    visual.tile_view_limit = 20
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="module")
 def set_list():
     visual.list_view_limit = 5
+    yield
+    visual.list_view_limit = 20
 
 
 def go_to_grid(page):
