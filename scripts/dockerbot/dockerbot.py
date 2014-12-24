@@ -174,7 +174,7 @@ class DockerBot(object):
             if not metadata:
                 return {}
             else:
-                ydata = yaml.load(metadata[0])
+                ydata = yaml.safe_load(metadata[0])
                 return ydata
 
     def find_files_by_pr(self, pr=None):
