@@ -7,7 +7,6 @@ from cfme.web_ui import accordion, flash, form_buttons, menu
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
-from utils import version
 
 cfg_btn = partial(tb.select, "Configuration")
 catalog_tree = partial(accordion.tree, "Catalogs")
@@ -75,9 +74,7 @@ class Catalog(Updateable, Pretty):
                            'description_text': self.description,
                            'button_multiselect': self.items},
                     action=form.add_button)
-        flash_str = version.pick({version.LATEST: 'Catalog "{}" was saved',
-                                  version.LOWEST: 'ServiceTemplateCatalog "{}" was saved'})
-
+        flash_str = 'Catalog "{}" was saved'
         flash.assert_success_message(flash_str.format(self.name))
 
     def update(self, updates):
@@ -86,7 +83,7 @@ class Catalog(Updateable, Pretty):
                            'description_text': updates.get('description', None),
                            'button_multiselect': updates.get('items', None)},
                     action=form.save_button)
-        flash.assert_success_message('ServiceTemplateCatalog "{}" was saved'.format(self.name))
+        flash.assert_success_message('Catalog "{}" was saved'.format(self.name))
 
     def delete(self):
         sel.force_navigate('catalog', context={'catalog': self})
