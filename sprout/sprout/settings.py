@@ -93,9 +93,9 @@ STATIC_URL = '/static/'
 # CELERY SETTINGS
 BROKER_URL = 'redis://localhost:6379/{}'.format(os.environ.get("REDIS_DB_ID", 0))
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/{}'.format(os.environ.get("REDIS_RESULT_DB_ID", 1))
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'pickle'
+CELERY_RESULT_SERIALIZER = 'pickle'
 CELERY_TIMEZONE = "UTC"
 CELERY_DISABLE_RATE_LIMITS = True
 # CELERY_ACKS_LATE = True

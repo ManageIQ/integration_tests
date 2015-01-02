@@ -8,7 +8,8 @@ from django.db.models.query import QuerySet
 from django_object_actions import DjangoObjectActions
 
 # Register your models here.
-from appliances.models import Provider, Template, Appliance, Group, AppliancePool
+from appliances.models import (
+    Provider, Template, Appliance, Group, AppliancePool, DelayedProvisionTask)
 from appliances import tasks
 
 
@@ -37,11 +38,18 @@ class Admin(DjangoObjectActions, admin.ModelAdmin):
     pass
 
 
+@register_for(DelayedProvisionTask)
+class DelayedProvisionTaskAdmin(Admin):
+    pass
+
+
 @register_for(Appliance)
 class ApplianceAdmin(Admin):
     objectactions = ["power_off", "power_on", "suspend", "kill"]
     actions = objectactions
-    list_display = ["name", "template", "appliance_pool", "ready", "ip_address", "power_state"]
+    list_display = [
+        "name", "owner", "template", "appliance_pool", "ready", "show_ip_address", "power_state"]
+    readonly_fields = ["owner"]
 
     @action("Power off", "Power off selected appliance")
     def power_off(self, request, appliances):
@@ -67,14 +75,32 @@ class ApplianceAdmin(Admin):
             Appliance.kill(appliance)
             self.message_user(request, "Initiated kill of {}.".format(appliance.name))
 
+    def owner(self, instance):
+        if instance.owner is not None:
+            return instance.owner.username
+        else:
+            return "--- no owner ---"
+
+    def show_ip_address(self, instance):
+        if instance.ip_address:
+            return "<a href=\"https://{ip}/\" target=\"_blank\">{ip}</a>".format(
+                ip=instance.ip_address)
+        else:
+            return "---"
+    show_ip_address.allow_tags = True
+    show_ip_address.short_description = "IP address"
+
 
 @register_for(AppliancePool)
 class AppliancePoolAdmin(Admin):
     objectactions = ["kill"]
     actions = objectactions
     list_display = [
-        "id", "group", "version", "date", "owner", "fulfilled", "appliances_ready"]
-    readonly_fields = ["fulfilled", "appliances_ready"]
+        "id", "group", "version", "date", "owner", "fulfilled", "appliances_ready",
+        "queued_provision_tasks", "percent_finished", "total_count", "current_count"]
+    readonly_fields = [
+        "fulfilled", "appliances_ready", "queued_provision_tasks", "percent_finished",
+        "current_count"]
 
     @action("Kill", "Kill the appliance pool")
     def kill(self, request, pools):
@@ -88,6 +114,15 @@ class AppliancePoolAdmin(Admin):
 
     def appliances_ready(self, instance):
         return len(instance.appliance_ips)
+
+    def queued_provision_tasks(self, instance):
+        return len(instance.queued_provision_tasks)
+
+    def percent_finished(self, instance):
+        return "{0:.2f}%".format(round(instance.percent_finished * 100.0, 2))
+
+    def current_count(self, instance):
+        return instance.current_count
 
 
 class GroupProvisionAppliancePoolRequestForm(ActionForm):
@@ -113,12 +148,25 @@ class GroupAdmin(Admin):
 
 @register_for(Provider)
 class ProviderAdmin(Admin):
-    readonly_fields = ["remaining_provisioning_slots"]
+    readonly_fields = ["remaining_provisioning_slots", "provisioning_load", "show_ip_address"]
     list_display = [
-        "id", "working", "num_simultaneous_provisioning", "remaining_provisioning_slots"]
+        "id", "working", "num_simultaneous_provisioning", "remaining_provisioning_slots",
+        "provisioning_load", "show_ip_address"]
 
     def remaining_provisioning_slots(self, instance):
         return str(instance.remaining_provisioning_slots)
+
+    def provisioning_load(self, instance):
+        return "{0:.2f}%".format(round(instance.provisioning_load * 100.0, 2))
+
+    def show_ip_address(self, instance):
+        if instance.ip_address:
+            return "<a href=\"https://{ip}/\" target=\"_blank\">{ip}</a>".format(
+                ip=instance.ip_address)
+        else:
+            return "---"
+    show_ip_address.allow_tags = True
+    show_ip_address.short_description = "IP address"
 
 
 @register_for(Template)

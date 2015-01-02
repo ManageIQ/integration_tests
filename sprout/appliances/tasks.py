@@ -9,12 +9,16 @@ from django.utils import timezone
 from celery import chain, shared_task
 from celery.signals import celeryd_init
 from datetime import timedelta
+from functools import wraps
+from novaclient.exceptions import OverLimit as OSOverLimit
 
-from appliances.models import Provider, Group, Template, Appliance, AppliancePool
+from appliances.models import (
+    Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask)
 from sprout import settings
 from sprout.celery import app as celery_app
 
 from utils.appliance import Appliance as CFMEAppliance
+from utils.log import create_logger
 from utils.randomness import generate_random_string
 from utils.trackerbot import api, parse_template
 
@@ -51,6 +55,25 @@ def none_dict(l):
         return l
 
 
+def logger():
+    return create_logger("sprout")
+
+
+def logged_task(*args, **kwargs):
+    def f(task):
+        @wraps(task)
+        def wrapped_task(*args, **kwargs):
+            logger().info(
+                "[TASK {}] Entering with arguments: {} / {}".format(
+                    task.__name__, ", ".join(map(str, args)), str(kwargs)))
+            try:
+                return task(*args, **kwargs)
+            finally:
+                logger().info("[TASK {}] Leaving".format(task.__name__))
+        return shared_task(*args, **kwargs)(wrapped_task)
+    return f
+
+
 @celeryd_init.connect
 def start_task(sender=None, conf=None, **kwargs):
     """This task is designed to kick off self-scheduling periodical tasks at the beginning of the
@@ -59,6 +82,7 @@ def start_task(sender=None, conf=None, **kwargs):
     def schedule(t, *args, **kwargs):
         """Checks if the task is not scheduled yet. If so, it is scheduled, otherwise not. This
         should enforce that there aren't two or more instances of the same task running."""
+        logger().info("Scheduling task {}".format(t.__name__))
         info = celery_app.control.inspect()
         found = False
         # Check active
@@ -90,9 +114,10 @@ def start_task(sender=None, conf=None, **kwargs):
     schedule(poke_providers, countdown=5)
     schedule(poke_trackerbot, countdown=25)
     schedule(retrieve_template_existence, countdown=35)
+    schedule(process_delayed_provision_tasks, countdown=55)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def poke_providers(self):
     """Basic tasks that checks whether to connections to providers work."""
     try:
@@ -110,7 +135,7 @@ def poke_providers(self):
         self.apply_async(countdown=180)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def kill_unused_appliances(self):
     """This is the watchdog, that guards the appliances that were given to users. If you forget
     to prolong the lease time, this is the thing that will take the appliance off your hands
@@ -124,7 +149,7 @@ def kill_unused_appliances(self):
         self.apply_async(countdown=80)
 
 
-@shared_task
+@logged_task()
 def kill_appliance(appliance_id, replace_in_pool=False, minutes=60):
     """As-reliable-as-possible appliance deleter. Turns off, deletes the VM and deletes the object.
 
@@ -138,19 +163,21 @@ def kill_appliance(appliance_id, replace_in_pool=False, minutes=60):
         appliance = Appliance.objects.get(id=appliance_id)
         if appliance.appliance_pool is not None:
             workflow.append(
-                clone_template_to_pool.si(
-                    appliance.source_template.id, appliance.appliance_pool.id, minutes))
+                replace_clone_to_pool.si(
+                    appliance.template.version, appliance.template.date,
+                    appliance.appliance_pool.id, minutes, appliance.template.id))
     workflow = chain(*workflow)
     workflow()
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def kill_appliance_delete(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
         if appliance.provider_api.does_vm_exist(appliance.name):
-            appliance.set_status("Deleting")
+            appliance.set_status("Deleting the appliance from provider")
             appliance.provider_api.delete_vm(appliance.name)
+        appliance.delete()
     except ObjectDoesNotExist:
         # Appliance object already not there
         return
@@ -162,7 +189,7 @@ def kill_appliance_delete(self, appliance_id):
         self.retry(args=(appliance_id,), exc=e, countdown=10, max_retries=5)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def poke_trackerbot(self):
     """This beat-scheduled task periodically polls the trackerbot if there are some new templates.
     """
@@ -199,7 +226,7 @@ def poke_trackerbot(self):
         self.apply_async(countdown=600)
 
 
-@shared_task
+@logged_task()
 def create_appliance_template(provider_id, group_id, template_name):
     """This task creates a template from a fresh CFME template. In case of fatal error during the
     operation, the template object is deleted to make sure the operation will be retried next time
@@ -233,7 +260,7 @@ def create_appliance_template(provider_id, group_id, template_name):
     workflow()
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def prepare_template_deploy(self, template_id):
     template = Template.objects.get(id=template_id)
     if template.is_created:
@@ -254,7 +281,7 @@ def prepare_template_deploy(self, template_id):
         template.set_status("Template deployed.")
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def prepare_template_configure(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Customization started.")
@@ -270,7 +297,7 @@ def prepare_template_configure(self, template_id):
         template.set_status("Template configuration was done.")
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def prepare_template_network_setup(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Setting up network.")
@@ -287,7 +314,7 @@ def prepare_template_network_setup(self, template_id):
         template.set_status("Network has been set up.")
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def prepare_template_poweroff(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Powering off")
@@ -301,7 +328,7 @@ def prepare_template_poweroff(self, template_id):
         template.set_status("Powered off.")
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def prepare_template_finish(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Finishing template creation.")
@@ -310,6 +337,7 @@ def prepare_template_finish(self, template_id):
         with transaction.atomic():
             template = Template.objects.get(id=template_id)
             template.ready = True
+            template.exists = True
             template.save()
     except Exception as e:
         template.set_status("Could not mark the appliance as template. Retrying.")
@@ -318,7 +346,7 @@ def prepare_template_finish(self, template_id):
         template.set_status("Template preparation finished.")
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def prepare_template_delete_on_error(self, template_id):
     try:
         template = Template.objects.get(id=template_id)
@@ -333,7 +361,7 @@ def prepare_template_delete_on_error(self, template_id):
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
 
 
-@shared_task
+@logged_task()
 def request_appliance_pool(appliance_pool_id, time_minutes):
     """This task gives maximum possible amount of spinned-up appliances to the specified pool and
     then if there is need to spin up another appliances, it spins them up via clone_template_to_pool
@@ -341,26 +369,87 @@ def request_appliance_pool(appliance_pool_id, time_minutes):
     pool = AppliancePool.objects.get(id=appliance_pool_id)
     n = Appliance.give_to_pool(pool, time_minutes)
     for i in range(pool.total_count - n):
-        template_id = random.choice(pool.possible_templates).id
-        clone_template_to_pool.delay(template_id, pool.id, time_minutes)
+        tpls = pool.possible_provisioning_templates
+        if tpls:
+            template_id = tpls[0].id
+            clone_template_to_pool(template_id, pool.id, time_minutes)
+        else:
+            with transaction.atomic():
+                task = DelayedProvisionTask(pool=pool, lease_time=time_minutes)
+                task.save()
+    apply_lease_times_after_pool_fulfilled.delay(appliance_pool_id, time_minutes)
 
 
-@shared_task
+@logged_task(bind=True)
+def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes):
+    pool = AppliancePool.objects.get(id=appliance_pool_id)
+    if pool.fulfilled:
+        for appliance in pool.appliances:
+            apply_lease_times.delay(appliance.id, time_minutes)
+    else:
+        self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=50)
+
+
+@logged_task(bind=True)
+def process_delayed_provision_tasks(self):
+    """This picks up the provisioning tasks that were delayed due to ocncurrency limit of provision.
+
+    Goes one task by one and when some of them can be provisioned, it starts the provisioning and
+    then deletes the task.
+    """
+    try:
+        for task in DelayedProvisionTask.objects.all():
+            tpls = task.pool.possible_provisioning_templates
+            if task.provider_to_avoid is not None:
+                filtered_tpls = filter(lambda tpl: tpl.provider != task.provider_to_avoid, tpls)
+                if filtered_tpls:
+                    # There are other providers to provision on, so try one of them
+                    tpls = filtered_tpls
+                # If there is no other provider to provision on, we will use the original list.
+                # This will cause additional rejects until the provider quota is met
+            if tpls:
+                clone_template_to_pool(random.choice(tpls).id, task.pool.id, task.lease_time)
+                task.delete()
+    finally:
+        self.apply_async(countdown=30)
+
+
+@logged_task()
+def replace_clone_to_pool(
+        version, date, appliance_pool_id, time_minutes, exclude_template_id):
+    appliance_pool = AppliancePool.objects.get(id=appliance_pool_id)
+    exclude_template = Template.objects.get(id=exclude_template_id)
+    templates = Template.objects.filter(
+        ready=True, exists=True, template_group=appliance_pool.group, version=version,
+        date=date).all()
+    templates_excluded = filter(lambda tpl: tpl != exclude_template, templates)
+    if templates_excluded:
+        template = random.choice(templates_excluded)
+    else:
+        template = exclude_template  # :( no other template to use
+    clone_template_to_pool(template.id, appliance_pool_id, time_minutes)
+
+
 def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
     template = Template.objects.get(id=template_id)
-    pool = AppliancePool.objects.get(id=appliance_pool_id)
     new_appliance_name = settings.APPLIANCE_FORMAT.format(
         group=template.template_group.id,
         date=template.date.strftime("%y%m%d"),
         rnd=generate_random_string())
-    # Apply also username
-    new_appliance_name = "{}_{}".format(pool.owner.username, new_appliance_name)
-    appliance = Appliance(template=template, name=new_appliance_name, appliance_pool=pool)
-    appliance.save()
-    clone_template_to_appliance.delay(appliance.id, time_minutes),
+    with transaction.atomic():
+        pool = AppliancePool.objects.get(id=appliance_pool_id)
+        # Apply also username
+        new_appliance_name = "{}_{}".format(pool.owner.username, new_appliance_name)
+        appliance = Appliance(template=template, name=new_appliance_name, appliance_pool=pool)
+        appliance.save()
+        # Set pool to these params to keep the appliances with same versions/dates
+        pool.version = template.version
+        pool.date = template.date
+        pool.save()
+    clone_template_to_appliance.delay(appliance.id, time_minutes)
 
 
-@shared_task
+@logged_task()
 def apply_lease_times(appliance_id, time_minutes):
     with transaction.atomic():
         appliance = Appliance.objects.get(id=appliance_id)
@@ -369,7 +458,7 @@ def apply_lease_times(appliance_id, time_minutes):
         appliance.save()
 
 
-@shared_task
+@logged_task()
 def clone_template(template_id):
     template = Template.objects.get(id=template_id)
     new_appliance_name = settings.APPLIANCE_FORMAT.format(
@@ -381,16 +470,14 @@ def clone_template(template_id):
     clone_template_to_appliance.delay(appliance.id)
 
 
-@shared_task
+@logged_task()
 def clone_template_to_appliance(appliance_id, lease_time_minutes=None):
     Appliance.objects.get(id=appliance_id).set_status("Beginning deployment process")
     tasks = [
-        clone_template_to_appliance__clone_template.si(appliance_id),
+        clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
         appliance_power_on.si(appliance_id),
     ]
-    if lease_time_minutes is not None:
-        tasks.append(apply_lease_times.si(appliance_id, lease_time_minutes),)
     workflow = chain(*tasks)
     if Appliance.objects.get(id=appliance_id).appliance_pool is not None:
         # Case of the appliance pool
@@ -402,8 +489,8 @@ def clone_template_to_appliance(appliance_id, lease_time_minutes=None):
     workflow()
 
 
-@shared_task(bind=True)
-def clone_template_to_appliance__clone_template(self, appliance_id):
+@logged_task(bind=True)
+def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_minutes):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
@@ -419,14 +506,58 @@ def clone_template_to_appliance__clone_template(self, appliance_id):
                 progress_callback=lambda progress: appliance.set_status(
                     "Deploy progress: {}".format(progress)),
                 **kwargs)
+    except OSOverLimit:
+        appliance.set_status("Hit OpenStack provisioning quota, trying putting it aside ...")
+        # OpenStack quota exceeded, screw that and provision it somewhere else
+        if appliance.appliance_pool:
+            # We can put it aside for a while to wait for
+            self.request.callbacks[:] = []  # Quit this chain
+            pool = appliance.appliance_pool
+            try:
+                if appliance.provider_api.does_vm_exist(appliance.name):
+                    # Better to check it, you never know when does that fail
+                    appliance.provider_api.delete_vm(appliance.name)
+            except:
+                pass  # Diaper here
+            appliance.delete(do_not_touch_ap=True)
+            with transaction.atomic():
+                new_task = DelayedProvisionTask(
+                    pool=pool, lease_time=lease_time_minutes,
+                    provider_to_avoid=appliance.template.provider)
+                new_task.save()
+            return
+        else:
+            # We cannot put it aside, so try that again
+            raise
     except Exception as e:
-        appliance.set_status("Error during template clone ({}).".format(str(e)))
-        self.retry(args=(appliance_id,), exc=e, countdown=10, max_retries=5)
+        message = str(e)
+        appliance.set_status("Error during template clone ({}).".format(message))
+        # Try to find some generic stuff signalling that the provider has difficult times ...
+        if "quota" in message.lower() or "limit" in message.lower() and appliance.appliance_pool:
+            # We can put it aside too
+            # TODO: Deduplicate the code?
+            self.request.callbacks[:] = []  # Quit this chain
+            pool = appliance.appliance_pool
+            try:
+                if appliance.provider_api.does_vm_exist(appliance.name):
+                    # Better to check it, you never know when does that fail
+                    appliance.provider_api.delete_vm(appliance.name)
+            except:
+                pass  # Diaper here
+            appliance.delete(do_not_touch_ap=True)
+            with transaction.atomic():
+                new_task = DelayedProvisionTask(
+                    pool=pool, lease_time=lease_time_minutes,
+                    provider_to_avoid=appliance.template.provider)
+                new_task.save()
+            return
+        else:
+            self.retry(args=(appliance_id,), exc=e, countdown=10, max_retries=5)
     else:
         appliance.set_status("Template cloning finished.")
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def clone_template_to_appliance__wait_present(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -444,7 +575,7 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
         appliance.set_status("Template was successfully cloned.")
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def appliance_power_on(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -473,7 +604,7 @@ def appliance_power_on(self, appliance_id):
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def appliance_power_off(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -505,7 +636,7 @@ def appliance_power_off(self, appliance_id):
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=40)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def appliance_suspend(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -533,7 +664,7 @@ def appliance_suspend(self, appliance_id):
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def retrieve_appliance_ip(self, appliance_id):
     """Updates appliance's IP address."""
     try:
@@ -553,7 +684,7 @@ def retrieve_appliance_ip(self, appliance_id):
         appliance.set_status("IP address retrieved.")
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def retrieve_appliances_power_states(self):
     """Continuously loops over all appliances and retrieves power states. After the execution ends,
     it schedules itself for execution again after some time"""
@@ -564,7 +695,7 @@ def retrieve_appliances_power_states(self):
         self.apply_async(countdown=25)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def retrieve_template_existence(self):
     """Continuously loops over all templates and checks whether they are still present in EMS."""
     try:
@@ -586,7 +717,7 @@ def retrieve_template_existence(self):
         self.apply_async(countdown=600)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def delete_nonexistent_appliances(self):
     """Goes through orphaned appliances' objects and deletes them from the database."""
     try:
@@ -621,7 +752,7 @@ def delete_nonexistent_appliances(self):
         self.apply_async(countdown=120)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def free_appliance_shepherd(self):
     """This task takes care of having the required templates spinned into required number of
     appliances. For each template group, it keeps the last template's appliances spinned up in
@@ -693,14 +824,14 @@ def free_appliance_shepherd(self):
         self.apply_async(countdown=60)
 
 
-@shared_task(bind=True)
+@logged_task(bind=True)
 def wait_appliance_ready(self, appliance_id):
     """This task checks for appliance's readiness for use. The checking loop is designed as retrying
     the task to free up the queue."""
     try:
         appliance = Appliance.objects.get(id=appliance_id)
         if appliance.power_state == "unknown" or appliance.ip_address is None:
-            self.retry(args=(appliance_id,), countdown=60, max_retries=15)
+            self.retry(args=(appliance_id,), countdown=20, max_retries=45)
         if Appliance.objects.get(id=appliance_id).cfme.ipapp.is_web_ui_running():
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
@@ -713,7 +844,7 @@ def wait_appliance_ready(self, appliance_id):
                 appliance.ready = False
                 appliance.save()
             appliance.set_status("Waiting for UI to appear.")
-            self.retry(args=(appliance_id,), countdown=60, max_retries=15)
+            self.retry(args=(appliance_id,), countdown=20, max_retries=45)
     except ObjectDoesNotExist:
         # source object is not present, terminating
         return
