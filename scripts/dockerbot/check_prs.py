@@ -258,9 +258,11 @@ def check_status(pr):
 
     if not statuses:
         set_status(commit, state, db_pr['status'])
+        logger.info('Setting commit for pr {} to {}'.format(pr['number'], db_pr['status']))
     else:
         if statuses[0]['state'] != state or statuses[0]['description'] != db_pr['status']:
             set_status(commit, state, db_pr['status'])
+            logger.info('Setting commit for pr {} to {}'.format(pr['number'], db_pr['status']))
         else:
             return
 
