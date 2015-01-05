@@ -599,6 +599,14 @@ def get_from_config(provider_config_name):
     prov_config = conf.cfme_data['management_systems'][provider_config_name]
     credentials = get_credentials_from_config(prov_config['credentials'])
     prov_type = prov_config.get('type')
+
+    if prov_config.get('discovery_range', None):
+        start_ip = prov_config['discovery_range']['start']
+        end_ip = prov_config['discovery_range']['end']
+    else:
+        start_ip = prov_config['ipaddress']
+        end_ip = prov_config['ipaddress']
+
     if prov_type == 'virtualcenter':
         return VMwareProvider(name=prov_config['name'],
                               hostname=prov_config['hostname'],
@@ -606,8 +614,8 @@ def get_from_config(provider_config_name):
                               credentials=credentials,
                               zone=prov_config['server_zone'],
                               key=provider_config_name,
-                              start_ip=prov_config['discovery_range']['start'],
-                              end_ip=prov_config['discovery_range']['end'])
+                              start_ip=start_ip,
+                              end_ip=end_ip)
     elif prov_type == 'scvmm':
         creds = conf.credentials[prov_config['credentials']]
         credentials = SCVMMProvider.Credential(
@@ -620,8 +628,8 @@ def get_from_config(provider_config_name):
             ip_address=prov_config['ipaddress'],
             credentials=credentials,
             key=provider_config_name,
-            start_ip=prov_config['discovery_range']['start'],
-            end_ip=prov_config['discovery_range']['end'],
+            start_ip=start_ip,
+            end_ip=end_ip,
             sec_protocol=prov_config['sec_protocol'],
             sec_realm=prov_config['sec_realm'])
     elif prov_type == 'rhevm':
@@ -638,8 +646,8 @@ def get_from_config(provider_config_name):
                              candu=candu_credentials,
                              zone=prov_config['server_zone'],
                              key=provider_config_name,
-                             start_ip=prov_config['discovery_range']['start'],
-                             end_ip=prov_config['discovery_range']['end'])
+                             start_ip=start_ip,
+                             end_ip=end_ip)
     else:
         raise UnknownProviderType('{} is not a known infra provider type'.format(prov_type))
 
