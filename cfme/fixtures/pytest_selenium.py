@@ -817,6 +817,13 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         recycle = True
     except (NoSuchElementException, InvalidElementStateException, WebDriverException) as e:
         from cfme.web_ui import cfme_exception as cfme_exc  # To prevent circular imports
+        # First check - if jquery is not found, there can be also another reason why this happened
+        # so do not put the next branches in elif
+        if isinstance(e, WebDriverException) and "jQuery" in str(e):
+            # UI failed in some way, try recycling the browser
+            logger.exception(
+                "UI failed in some way, jQuery not found, (probably) recycling the browser.")
+            recycle = True
         # If the page is blocked, then recycle...
         if is_displayed("//div[@id='blocker_div']"):
             logger.warning("Page was blocked with blocker div, recycling.")
@@ -825,6 +832,13 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             logger.exception("CFME Exception before force_navigate started!: `{}`".format(
                 cfme_exc.cfme_exception_text()
             ))
+            recycle = True
+        elif is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
+            # 503 and similar sort of errors
+            title = text("//body/h1")
+            body = text("//body/p")
+            logger.exception("Application error '{}': {}".format(title, body))
+            sleep(5)  # Give it a little bit of rest
             recycle = True
         elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
             # Rails exception detection

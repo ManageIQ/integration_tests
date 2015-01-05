@@ -130,7 +130,10 @@ class Region(Pretty):
         if self.identifying_loc and sel.is_displayed(self.locators[self.identifying_loc]):
             ident_match = True
         else:
-            logger.info('Identifying locator for region not found')
+            if not self.title:
+                logger.info('Identifying locator for region not found')
+            else:
+                logger.info('Identifying locator for region {} not found'.format(self.title))
             ident_match = False
 
         if self.title is None:
