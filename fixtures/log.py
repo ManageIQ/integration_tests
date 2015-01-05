@@ -40,6 +40,8 @@ def pytest_runtest_logreport(report):
         logger().info(log.format_marker('%s result: %s' % (_format_nodeid(report.nodeid),
                 _test_status(_format_nodeid(report.nodeid, False)))),
             extra={'source_file': path, 'source_lineno': lineno})
+    if report.outcome == "skipped":
+        logger().info(log.format_marker(report.longrepr[-1]))
 
 
 def pytest_exception_interact(node, call, report):
