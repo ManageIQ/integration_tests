@@ -274,6 +274,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, provid
 
 @pytest.mark.usefixtures("random_pwr_ctl_vm")
 @pytest.mark.usefixtures("provider_init")
+@pytest.mark.ignore_stream("upstream")
 def test_distributed_vm_power_control(request, test_vm, provider_crud,
                                       verify_vm_running, register_event, soft_assert):
     """Tests that a replication parent appliance can control the power state of a
