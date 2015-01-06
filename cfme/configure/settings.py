@@ -111,6 +111,10 @@ class Visual(Updateable):
             ('reports', Select('//select[@id="perpage_reports"]')),
         ])
 
+    startpage_form = Form(
+        fields=[
+            ('login_page', Select('//select[@id="start_page"]'))])
+
     save_button = form_buttons.FormButton("Add this Time Profile")
 
     def __init__(self, grid_view=None, tile_view=None, list_view=None):
@@ -149,6 +153,17 @@ class Visual(Updateable):
     def list_view_limit(self, value):
         sel.force_navigate("my_settings_visual")
         fill(self.item_form.list_view, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def login_page(self):
+        sel.force_navigate("my_settings_visual")
+        return int(sel.text(self.startpage_form.login_page.first_selected_option))
+
+    @login_page.setter
+    def login_page(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.startpage_form.login_page, str(value))
         sel.click(form_buttons.save)
 
 visual = Visual()
