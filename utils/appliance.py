@@ -154,6 +154,7 @@ class Appliance(object):
 
     def _configure_upstream(self, log_callback=None):
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
+        self.ipapp.migrate_db(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
         self.ipapp.clone_domain(log_callback=log_callback)
@@ -446,6 +447,40 @@ class IPAppliance(object):
             self.restart_evm_service()
 
         return status
+
+    def migrate_db(self, log_callback=None):
+        """Run database migrations
+
+        Note:
+            This is a workaround put in place to get upstream appliance provisioning working again
+
+        """
+        if self.version != LATEST:
+            return
+
+        if log_callback is None:
+            log_callback = lambda msg: self.log.info("DB migration: {}".format(msg))
+        else:
+            cb = log_callback
+            log_callback = lambda msg: cb("DB migration: {}".format(msg))
+
+        client = self.ssh_client()
+
+        # Make sure the database is ready
+        log_callback('Starting migrations')
+        self.wait_for_db()
+
+        # Make sure the working dir exists
+        result = client.run_rake_command('db:migrate')
+
+        if result.rc != 0:
+            msg = 'DB Migration failed'
+            log_callback(msg)
+            raise ApplianceException(msg)
+
+        self.restart_evm_service(log_callback=log_callback)
+
+        return result
 
     def clone_domain(self, source="ManageIQ", dest="Default", log_callback=None):
         """Clones Automate domain
