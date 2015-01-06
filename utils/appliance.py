@@ -125,7 +125,7 @@ class Appliance(object):
         else:
             self.ipapp.enable_external_db(
                 db_address, region, db_name, db_username, db_password, log_callback=log_callback)
-        self.ipapp.wait_for_web_ui(log_callback=log_callback)
+        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         if kwargs.get('loosen_pgssl', True) is True:
             self.ipapp.loosen_pgssl(log_callback=log_callback)
 
@@ -139,7 +139,7 @@ class Appliance(object):
         self.ipapp.update_rhel(log_callback=log_callback)
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.enable_internal_db(log_callback=log_callback)
-        self.ipapp.wait_for_web_ui(log_callback=log_callback)
+        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
 
@@ -147,7 +147,7 @@ class Appliance(object):
         self.ipapp.update_rhel(log_callback=log_callback)
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.enable_internal_db(log_callback=log_callback)
-        self.ipapp.wait_for_web_ui(log_callback=log_callback)
+        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
         self.ipapp.clone_domain(log_callback=log_callback)
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
@@ -155,7 +155,7 @@ class Appliance(object):
     def _configure_upstream(self, log_callback=None):
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.migrate_db(log_callback=log_callback)
-        self.ipapp.wait_for_web_ui(log_callback=log_callback)
+        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
         self.ipapp.clone_domain(log_callback=log_callback)
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
