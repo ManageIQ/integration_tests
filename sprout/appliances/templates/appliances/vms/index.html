@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}VM manager - {{ current_provider }}{% endblock %}
+{% block body %}
+<div class="container-fluid">
+    <h1>Universal VM Manager</h1>
+    <h4>This module enables you to power-control or delete any VM in our environment</h4>
+    <h3>Do not overload this page (clicking through the tabs without letting the requests finish) because it might hog the Sprout! (It uses the utils.mgmt_system methods that take long time to finish so it would hog all processes of GUnicorn)</h3>
+    <ul class="nav nav-tabs">
+        {% for provider in providers %}
+            <li {% if current_provider == provider %}class="active"{% endif %}><a href="{% url 'vms_at_provider' provider %}">{{ provider }}</a></li>
+        {% endfor %}
+    </ul>
+    <div id="vm_list">
+        <p><span class="spinner spinner-xs spinner-inline"></span> Waiting for response ...</p>
+    </div>
+</div>
+<script type="text/javascript">
+$(document).ready(function() {
+    $.ajax({
+        type: "GET",
+        url: "{% url 'appliances.views.vms_table' current_provider %}",
+        dataType: "html",
+        error: function(j, t, e){
+            $("div#vm_list").html(e);
+        }
+    }).done(function(data){
+        $("div#vm_list").html(data);
+    });
+});
+</script>
+{% endblock %}

@@ -111,6 +111,10 @@ class JSONApi(object):
 jsonapi = JSONApi()
 
 
+def jsonapi_doc(*args, **kwargs):
+    return jsonapi.doc(*args, **kwargs)
+
+
 def apply_if_not_none(o, meth, *args, **kwargs):
     if o is None:
         return None

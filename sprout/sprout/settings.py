@@ -56,6 +56,18 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.contrib.messages.context_processors.messages',
+    'django.contrib.auth.context_processors.auth',
+    "django.core.context_processors.request",
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    'appliances.context_processors.hubber_url',
+)
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
 ROOT_URLCONF = 'sprout.urls'
 
 WSGI_APPLICATION = 'sprout.wsgi.application'
@@ -90,6 +102,12 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, "static"),
+)
+
+# STATIC_ROOT = os.path.join(BASE_DIR, '_static')
+
 # CELERY SETTINGS
 BROKER_URL = 'redis://localhost:6379/{}'.format(os.environ.get("REDIS_DB_ID", 0))
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/{}'.format(os.environ.get("REDIS_RESULT_DB_ID", 1))
@@ -110,6 +128,7 @@ APPLIANCE_FORMAT = "sprout_appliance_{group}_{date}_{rnd}"
 
 ATOMIC_REQUESTS = False  # Turn off after moving to postgre
 
+HUBBER_URL = None
 
 CACHES = {
     'default': {

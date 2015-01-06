@@ -1,0 +1,4 @@
+<option value="latest">{% if group %}Latest for {{ group.id }}{% else %}Latest{%endif %}</option>
+{% for date in dates %}
+<option value="{{date|date:"Y-m-d"}}">{{ date }}</option>
+{% endfor %}

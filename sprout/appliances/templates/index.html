@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block body %}
+<div class="container-fluid">
+    <h2>Welcome to Sprout</h2>
+    <p>
+    Sprout is an appliance handling tool making it easier to provision them and ensure that they don't get stale. Provides unified
+    user interface for all providers so people don't have to log in to providers to provision appliances. The provisioning is faster
+    because it is done from already pre-configured templates. This saves time because all the configuration tasks take a lot of time
+    and it is then done only once per template.
+    </p>
+    {% if user.is_authenticated %}
+        <p>
+            For appliance operation, use the <em>My Appliances</em> tab. There you can find your appliance pools, provision new
+            ones, destroy them and do power control on them.
+        </p>
+        <p>
+            You can also operate any VMs in our virtual environment. That is the <em>VM Manager</em> tab. There you can find all providers
+            and their VMs. You can retrieve the power states and operate/delete them. Please note that the actions are happening inside the
+            requests, so do not fire more than one simultaneous request to not hog the server. I know this is not a good design but the
+            database was designed around appliances and not VMs in general - I did not want to duplicate CFME.
+        </p>
+    {% else %}
+        <p><strong>If you want to continue, please log in.</strong></p>
+    {% endif %}
+</div>
+{% endblock %}

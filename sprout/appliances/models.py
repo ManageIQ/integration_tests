@@ -31,6 +31,8 @@ class Provider(models.Model):
     working = models.BooleanField(default=False, help_text="Whether provider is available.")
     num_simultaneous_provisioning = models.IntegerField(default=5,
         help_text="How many simultaneous background provisioning tasks can run on this provider.")
+    appliance_limit = models.IntegerField(
+        null=True, help_text="Hard limit of how many appliances can run on this provider")
 
     @property
     def api(self):
@@ -43,12 +45,26 @@ class Provider(models.Model):
                 ready=False, marked_for_deletion=False, template__provider=self, ip_address=None))
 
     @property
+    def num_currently_managing(self):
+        return len(Appliance.objects.filter(template__provider=self))
+
+    @property
+    def currently_managed_appliances(self):
+        return Appliance.objects.filter(template__provider=self)
+
+    @property
     def remaining_provisioning_slots(self):
         result = self.num_simultaneous_provisioning - self.num_currently_provisioning
         if result < 0:
             return 0
-        else:
+        # Take the appliance limit into account
+        if self.appliance_limit is None:
             return result
+        else:
+            free_appl_slots = self.appliance_limit - self.num_currently_managing
+            if free_appl_slots < 0:
+                free_appl_slots = 0
+            return min(free_appl_slots, result)
 
     @property
     def free(self):
@@ -59,6 +75,20 @@ class Provider(models.Model):
         if self.num_simultaneous_provisioning == 0:
             return 1.0  # prevent division by zero
         return float(self.num_currently_provisioning) / float(self.num_simultaneous_provisioning)
+
+    @property
+    def appliance_load(self):
+        if self.appliance_limit is None:
+            return 0.0
+        return float(self.num_currently_managing) / float(self.appliance_limit)
+
+    @property
+    def load(self):
+        """Load for sorting"""
+        if self.appliance_limit is None:
+            return self.provisioning_load
+        else:
+            return self.appliance_load
 
     @classmethod
     def get_available_provider_keys(cls):
@@ -178,6 +208,9 @@ class Appliance(models.Model):
         "PoweredOff": Power.OFF,
         "Stopped": Power.OFF,
         "Paused": Power.SUSPENDED,
+        # EC2 (for VM manager)
+        "stopped": Power.OFF,
+        "running": Power.ON,
     }
     template = models.ForeignKey(Template, help_text="Appliance's source template.")
     appliance_pool = models.ForeignKey("AppliancePool", null=True,
@@ -314,6 +347,38 @@ class Appliance(models.Model):
         else:
             return self.appliance_pool.owner
 
+    @property
+    def expires_in(self):
+        """Minutes"""
+        if self.leased_until is None:
+            return "never"
+        minutes = (self.leased_until - timezone.now()).total_seconds() / 60.0
+        if minutes <= 1.0 and minutes > 0.0:
+            return "Less than one minute!"
+        elif minutes <= 0.0:
+            return "Expired!"
+        else:
+            return "{} minutes.".format(int(minutes))
+
+    @property
+    def can_launch(self):
+        return self.power_state in {self.Power.OFF, self.Power.SUSPENDED}
+
+    @property
+    def can_suspend(self):
+        return self.power_state in {self.Power.ON}
+
+    @property
+    def can_stop(self):
+        return self.power_state in {self.Power.ON}
+
+    @property
+    def version(self):
+        if self.template.version is None:
+            return "---"
+        else:
+            return self.template.version
+
 
 class AppliancePool(models.Model):
     total_count = models.IntegerField(help_text="How many appliances should be in this pool.")
@@ -327,14 +392,14 @@ class AppliancePool(models.Model):
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
-            versions = Template.get_versions(template_group=group)
+            versions = Template.get_versions(template_group=group, ready=True)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
-                dates = Template.get_dates(template_group=group, version=version)
+                dates = Template.get_dates(template_group=group, version=version, ready=True)
             else:
-                dates = Template.get_dates(template_group=group)
+                dates = Template.get_dates(template_group=group, ready=True)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):
@@ -375,7 +440,7 @@ class AppliancePool(models.Model):
 
     @property
     def appliances(self):
-        return Appliance.objects.filter(appliance_pool=self).all()
+        return Appliance.objects.filter(appliance_pool=self).order_by("id").all()
 
     @property
     def current_count(self):

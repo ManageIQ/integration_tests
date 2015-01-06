@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Providers{% endblock %}
+{% block body %}
+<div class="container-fluid">
+    {% for provider in providers %}
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <strong>{{ provider.id }}</strong> - {{ provider.ip_address }}
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Appliance name</th>
+                    <th>Template</th>
+                    <th>Group</th>
+                    <th>Owner</th>
+                    <th>Expires in</th>
+                    <th>Power state</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if provider.currently_managed_appliances %}
+                {% for appliance in provider.currently_managed_appliances %}
+                    <tr>
+                        <td>{{ appliance.name }}</td>
+                        <td>{{ appliance.template.name }}</td>
+                        <td>{{ appliance.template.template_group.id }}</td>
+                        <td>{{ appliance.owner.username }}</td>
+                        <td>{{ appliance.expires_in }}</td>
+                        <td>{{ appliance.power_state }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="6"><em>No appliances managed on this provider ...</em></td></tr>
+            {% endif %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6"><em>
+                        Total: {{ provider.num_currently_managing }} |
+                        Max. appliance count limit: {{ provider.appliance_limit }} |
+                        Currently provisioning: {{ provider.num_currently_provisioning }} |
+                        Total prov. slots: {{ provider.num_simultaneous_provisioning }} |
+                        Remaining prov. slots: {{ provider.remaining_provisioning_slots }}
+                    </em></td>
+                </tr>
+                <tr>
+                    <td>Provider load:</td>
+                    <td colspan="4">{{ provider.load|progress }}</td>
+                    <td>{% widthratio provider.load 1 100 %}%</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

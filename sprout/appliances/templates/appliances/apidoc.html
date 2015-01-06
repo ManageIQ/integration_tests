@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}API Documentation{% endblock %}
 {% block body %}
-<div class="panel panel-info">
+<div class="panel-group" id="content">
 
 </div>
 <script type="text/javascript">
@@ -27,20 +27,20 @@ getMethods(function(data){
             defaults += "<li><strong>" + param + "</strong> - " + value + "</li>";
         }
         defaults += "</ul>";
-        var panel = $("<div class='panel panel-info'>" +
+        var panel = $("<div class='panel panel-default'>" +
         "   <div class='panel-heading'>" +
-        "       <div class='row'>" +
-        "           <strong>" + method.name + "</strong>" +
-        "       </div>" +
+        "       <h4 class='panel-title'><a data-toggle='collapse' data-target='#method-" + method.name +"' href='#method-" + method.name +"'>" + method.name + "</a></h4>" +
         "   </div>" +
-        "   <div class='panel-body'>" +
-        "       <div class='row'>" +
-        "           <h4>Description</h4>" +
-        "               <pre>" + method.docstring + "</pre>" +
-        "           <h4>Arguments</h4>" +
-        "               <p>" + args + "</p>" +
-        "           <h4>Default values</h4>" +
-        "               <p>" + defaults + "</p>" +
+        "   <div class='panel-collapse collapse' id='method-" + method.name +"'>" +
+        "       <div class='panel-body'>" +
+        "           <div>" +
+        "               <h4>Description</h4>" +
+        "                   <pre>" + method.docstring + "</pre>" +
+        "               <h4>Arguments</h4>" +
+        "                   <p>" + args + "</p>" +
+        "               <h4>Default values</h4>" +
+        "                   <p>" + defaults + "</p>" +
+        "           </div>" +
         "       </div>" +
         "   </div>" +
         "</div>");
