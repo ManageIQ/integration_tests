@@ -30,9 +30,9 @@ def _result_processor(result):
 
 
 def find_template_by_name(template_name):
-    return _result_processor(
-        api().templates().get(sqlfilter="name = '{}'".format(template_name), expand="resources")
-    )["resources"]
+    return filter(
+        lambda r: r["name"] == template_name,
+        _result_processor(api().templates().get(expand="resources"))["resources"])
 
 
 def get_template_guid(template):
