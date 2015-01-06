@@ -36,6 +36,9 @@ tornado
 tzlocal
 ui-navigate
 
+# temp fix: doc builds are breaking because of an old version of six
+six>=1.9
+
 ###
 # Libraries with compiled components, and their related devel packages
 ###
