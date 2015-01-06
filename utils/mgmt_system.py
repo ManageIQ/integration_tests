@@ -693,7 +693,7 @@ class VMWareSystem(MgmtSystemAPIBase):
             fail_func=task.update(), delay=0.5, num_sec=30)
 
     def clone_vm(self, source, destination, resourcepool=None, datastore=None, power_on=True,
-                 sparse=False, template=False, provision_timeout=900, progress_callback=None):
+                 sparse=False, template=False, provision_timeout=1800, progress_callback=None):
         try:
             if mobs.VirtualMachine.get(self.api, name=destination).name == destination:
                 raise Exception("VM already present!")
@@ -770,7 +770,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         kwargs["power_on"] = kwargs.pop("power_on", True)
         kwargs["template"] = False
         destination = kwargs.pop("vm_name")
-        start_timeout = kwargs.pop("timeout", 900)
+        start_timeout = kwargs.pop("timeout", 1800)
         self.clone_vm(template, destination, **kwargs)
         if kwargs["power_on"]:
             self.wait_vm_running(destination, num_sec=start_timeout)
