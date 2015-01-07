@@ -170,11 +170,11 @@ class DockerBot(object):
                 'https://api.github.com/repos/{}/{}/pulls/{}'.format(owner, repo, pr),
                 headers=headers)
             body = r.json()['body']
-            metadata = re.findall("{{(.*?)}}", body)
-            if not metadata:
+            metadata = re.search(r"```yaml\n+#\s*meta\n+(.*?)```", body, re.DOTALL | re.UNICODE)
+            if metadata is None:
                 return {}
             else:
-                ydata = yaml.safe_load(metadata[0])
+                ydata = yaml.safe_load(metadata.groups()[0])
                 return ydata
 
     def find_files_by_pr(self, pr=None):
