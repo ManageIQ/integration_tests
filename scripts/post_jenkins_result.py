@@ -14,13 +14,17 @@ build = os.environ.get('appliance_template', "Unknown")
 
 date = str(datetime.now())
 
-tree = ET.parse(xml_file)
-elem = tree.getroot()
+try:
+    tree = ET.parse(xml_file)
+    elem = tree.getroot()
 
-errors = int(elem.attrib['errors'])
-fails = int(elem.attrib['failures']) + errors
-skips = int(elem.attrib['skips'])
-tests = int(elem.attrib['tests'])
-passes = tests - fails + errors
+    errors = int(elem.attrib['errors'])
+    fails = int(elem.attrib['failures']) + errors
+    skips = int(elem.attrib['skips'])
+    tests = int(elem.attrib['tests'])
+    passes = tests - (fails + errors)
+except IOError:
+    # junit-xml didn't exist, all the values become -1
+    errors = fails = skips = tests = passes = -1
 
 post_jenkins_result(number, stream, date, fails, skips, passes, build)
