@@ -2766,3 +2766,52 @@ class DriftGrid(Pretty):
         )
         for el in els_to_expand:
             el.click()
+
+
+class ButtonGroup(object):
+    def __init__(self, key):
+        """ A ButtonGroup is a set of buttons next to each other, as is used on the DefaultViews
+        page.
+
+        Args:
+            key: The name of the key field text before the button group.
+        """
+        self.key = key
+        self.locator = '//td[@class="key" and text()="{}"]/..'.format(self.key)
+
+    def locate(self):
+        """ Moves to the element """
+        # Use the header locator as the overall table locator
+        return sel.move_to_element(self.locator)
+
+    @property
+    def active(self):
+        """ Returns the alt tag text of the active button in thr group. """
+        loc = sel.element(self.locator + '/td[2]/ul/li[@class="active"]/img')
+        return loc.get_attribute('alt')
+
+    def status(self, alt):
+        """ Returns the status of the button identified by the Alt Text of the image. """
+        active_loc = self.locator + '/td[2]/ul/li/img[@alt="{}"]'.format(alt)
+        try:
+            sel.element(active_loc)
+            return True
+        except NoSuchElementException:
+            pass
+        inactive_loc = self.locator + '/td[2]/ul/li/a/img[@alt="{}"]'.format(alt)
+        try:
+            sel.element(inactive_loc)
+            return False
+        except NoSuchElementException:
+            pass
+
+    def choose(self, alt):
+        """ Sets the ButtonGroup to select the button identified by the alt text. """
+        if not self.status(alt):
+            inactive_loc = self.locator + '/td[2]/ul/li/a/img[@alt="{}"]'.format(alt)
+            sel.click(inactive_loc)
+
+
+@fill.method((ButtonGroup, basestring))
+def _fill_showing_button_group(tb, s):
+    tb.choose(s)
