@@ -22,6 +22,14 @@
         </p>
     {% else %}
         <p><strong>If you want to continue, please log in.</strong></p>
+        <p>
+            If you need to reset your password or you believe you shall have access into Sprout, you can contact any of the superusers:
+            <ul>
+                {% for superuser in superusers %}
+                    <li>{{ superuser.first_name }} {{ superuser.last_name }} {% if superuser.email %}&lt;{{ superuser.email }}&gt;{% endif %}</li>
+                {% endfor %}
+            </ul>
+        </p>
     {% endif %}
 </div>
 {% endblock %}

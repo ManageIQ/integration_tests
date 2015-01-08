@@ -27,6 +27,7 @@ from ovirtsdk.xml import params
 from psphere import managedobjects as mobs
 from psphere.client import Client
 from psphere.errors import ObjectNotFoundError
+from suds import WebFault
 
 from cfme import exceptions as cfme_exc
 from utils.log import logger
@@ -688,9 +689,23 @@ class VMWareSystem(MgmtSystemAPIBase):
     def rename_vm(self, vm_name, new_vm_name):
         vm = self._get_vm(vm_name)
         task = vm.Rename_Task(newName=new_vm_name)
-        wait_for(
-            lambda: task.info.state == "success",
-            fail_func=task.update(), delay=0.5, num_sec=30)
+        try:
+            wait_for(
+                lambda: task.info.state == "success",
+                fail_func=task.update(), delay=0.5, num_sec=15)
+        except TimedOutError:
+            if self.does_vm_exist(new_vm_name):
+                return new_vm_name
+            else:
+                task.update()
+                if task.info.cancellable:
+                    try:
+                        task.CancelTask()
+                    except WebFault:
+                        pass
+                return vm_name
+        else:
+            return new_vm_name
 
     def clone_vm(self, source, destination, resourcepool=None, datastore=None, power_on=True,
                  sparse=False, template=False, provision_timeout=1800, progress_callback=None):

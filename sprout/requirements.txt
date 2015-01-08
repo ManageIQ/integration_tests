@@ -1,7 +1,7 @@
 -r ../requirements.txt
 Django
 django-object-actions
-celery[redis]
+celery[redis]<3.2
 honcho
 python-memcached
 flower

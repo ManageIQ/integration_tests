@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -28,6 +29,7 @@ def go_back_or_home(request):
 
 
 def index(request):
+    superusers = User.objects.filter(is_superuser=True)
     return render(request, 'index.html', locals())
 
 
@@ -53,7 +55,15 @@ def versions_for_group(request):
         except ObjectDoesNotExist:
             versions = []
         else:
-            versions = Template.get_versions(template_group=group, ready=True)
+            versions_only = Template.get_versions(template_group=group, ready=True, usable=True)
+            versions = []
+            for version in versions_only:
+                providers = []
+                for provider in Template.objects.filter(
+                        version=version, usable=True, ready=True).values("provider"):
+                    providers.append(provider.values()[0])
+                versions.append((version, ", ".join(providers)))
+
     return render(request, 'appliances/_versions.html', locals())
 
 

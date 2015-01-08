@@ -109,8 +109,10 @@ STATICFILES_DIRS = (
 # STATIC_ROOT = os.path.join(BASE_DIR, '_static')
 
 # CELERY SETTINGS
-BROKER_URL = 'redis://localhost:6379/{}'.format(os.environ.get("REDIS_DB_ID", 0))
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/{}'.format(os.environ.get("REDIS_RESULT_DB_ID", 1))
+REDIS_PORT = os.environ.get("REDIS_PORT", 6379)
+BROKER_URL = 'redis://localhost:{}/{}'.format(REDIS_PORT, os.environ.get("REDIS_DB_ID", 0))
+CELERY_RESULT_BACKEND = 'redis://localhost:{}/{}'.format(
+    REDIS_PORT, os.environ.get("REDIS_RESULT_DB_ID", 1))
 # CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'pickle'
 CELERY_RESULT_SERIALIZER = 'pickle'
@@ -124,6 +126,9 @@ TRACKERBOT_URL = cfme_data["sprout"]["trackerbot_url"]
 # TODO: .mark_as_template implemented. Then it can be used.
 TEMPLATE_FORMAT = "sprout_template_{group}_{date}_{rnd}"
 APPLIANCE_FORMAT = "sprout_appliance_{group}_{date}_{rnd}"
+
+# General redis settings
+GENERAL_REDIS = dict(host='localhost', port=REDIS_PORT, db=int(os.environ.get("REDIS_GENERAL", 2)))
 
 
 ATOMIC_REQUESTS = False  # Turn off after moving to postgre

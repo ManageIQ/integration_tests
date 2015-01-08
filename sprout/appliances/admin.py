@@ -175,4 +175,5 @@ class ProviderAdmin(Admin):
 
 @register_for(Template)
 class TemplateAdmin(Admin):
-    list_display = ["name", "version", "original_name", "ready", "exists", "date", "template_group"]
+    list_display = [
+        "name", "version", "original_name", "ready", "exists", "date", "template_group", "usable"]
