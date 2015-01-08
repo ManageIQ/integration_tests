@@ -35,6 +35,7 @@ suds
 tornado
 tzlocal
 ui-navigate
+numpy
 
 # temp fix: doc builds are breaking because of an old version of six
 six>=1.9
