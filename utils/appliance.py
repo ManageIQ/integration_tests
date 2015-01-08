@@ -402,6 +402,54 @@ class IPAppliance(object):
             'password', conf.credentials['ssh']['password'])
         return SSHClient(**connect_kwargs)
 
+    def db_ssh_client(self, **connect_kwargs):
+        if self.is_db_internal:
+            return self.ssh_client()
+        else:
+            return self.ssh_client()(hostname=self.db_address)
+
+    def diagnose_evm_failure(self):
+        """Go through various EVM processes, trying to figure out what fails
+
+        Returns: A string describing the error, or None if no errors occurred.
+
+        This is intended to be run after an appliance is configured but failed for some reason,
+        such as in the template tester.
+
+        """
+        logger.info('Diagnosing EVM failures, this can take a while...')
+
+        logger.info('Checking appliance SSH Connection')
+        if not self.is_ssh_running:
+            return 'SSH is not running on the appliance'
+
+        # Now for the DB
+        logger.info('Checking appliance database')
+        if not self.db_online:
+            # postgres isn't running, try to start it
+            result = self.db_ssh_client().run_command('service postgresql92-postgresql restart')
+            if result.rc != 0:
+                return 'postgres failed to start:\n{}'.format(result.output)
+            else:
+                return 'postgres was not running for unknown reasons'
+
+        if not self.db_has_database:
+            return 'vmdb_production database does not exist'
+
+        if not self.db_has_tables:
+            return 'vmdb_production has no tables'
+
+        # try to start EVM
+        logger.info('Checking appliance evmserverd service')
+        try:
+            self.restart_evm_service()
+        except ApplianceException as ex:
+            return 'evmserverd failed to start:\n{}'.format(ex.args[0])
+
+        # This should be pretty comprehensive, but we might add some net_checks for
+        # 3000, 4000, and 80 at this point, and waiting a reasonable amount of time
+        # before exploding if any of them don't appear in time after evm restarts.
+
     def fix_ntp_clock(self, log_callback=None):
         """Fixes appliance time using ntpdate on appliance"""
         if log_callback is None:
@@ -1021,15 +1069,29 @@ class IPAppliance(object):
 
     @property
     def is_db_ready(self):
-        if self.is_db_internal:
-            ssh_cl = self.ssh_client()
-        else:
-            ssh_cl = SSHClient(hostname=self.db_address)
-        ec, out = ssh_cl.run_command('psql -U postgres -t  -c "select now()" postgres')
-        if ec == 0:
-            return True
-        else:
-            return False
+        # Using 'and' chain instead of all(...) to
+        # prevent calling more things after a step fails
+        return self.db_online and self.db_has_database and self.db_has_tables
+
+    @property
+    def db_online(self):
+        db_check_command = ('psql -U postgres -t  -c "select now()" postgres')
+        result = self.db_ssh_client().run_command(db_check_command)
+        return result.rc == 0
+
+    @property
+    def db_has_database(self):
+        db_check_command = ('psql -U postgres -t  -c "SELECT datname FROM pg_database '
+            'WHERE datname LIKE \'vmdb_%\';" postgres | grep -q vmdb_production')
+        result = self.db_ssh_client().run_command(db_check_command)
+        return result.rc == 0
+
+    @property
+    def db_has_tables(self):
+        db_check_command = ('psql -U postgres -t  -c "SELECT * FROM information_schema.tables '
+            'WHERE table_schema = \'public\';" vmdb_production | grep -q vmdb_production')
+        result = self.db_ssh_client().run_command(db_check_command)
+        return result.rc == 0
 
     @property
     def is_ssh_running(self):

@@ -54,8 +54,16 @@ def export(**env_vars):
     print "# to import these into your bash environment: eval $(%s)" % ' '.join(sys.argv)
 
 
-def mark(api, provider_key, template, usable):
-    trackerbot.mark_provider_template(api, provider_key, template, tested=True, usable=usable)
+def mark(api, provider_key, template, usable, diagnose):
+    if not usable and diagnose:
+        # diagnose will return None on a usable appliance, so don't bother
+        from utils.appliance import IPAppliance
+        ipa = IPAppliance()
+        diagnosis = ipa.diagnose_evm_failure()
+    else:
+        diagnosis = None
+    trackerbot.mark_provider_template(api, provider_key, template, tested=True, usable=usable,
+        diagnosis=diagnosis)
 
 
 def retest(api, provider_key, template):
@@ -79,6 +87,8 @@ if __name__ == '__main__':
     parse_mark.add_argument('template')
     parse_mark.add_argument('-n', '--not-usable', dest='usable', action='store_false',
         default=True, help='mark template as not usable (templates are marked usable by default')
+    parse_mark.add_argument('-d', '--diagnose', dest='diagnose', action='store_true',
+        default=False, help='attempt to diagnose an unusable template and submit the result')
 
     parse_retest = subs.add_parser('retest', help='flag a tested template for retesting')
     parse_retest.set_defaults(func=retest)
@@ -90,7 +100,7 @@ if __name__ == '__main__':
     func_map = {
         get: lambda: get(api),
         latest: lambda: latest(api, args.stream, args.provider_key),
-        mark: lambda: mark(api, args.provider_key, args.template, args.usable),
+        mark: lambda: mark(api, args.provider_key, args.template, args.usable, args.diagnose),
         retest: lambda: retest(api, args.provider_key, args.template),
     }
     sys.exit(func_map[args.func]())
