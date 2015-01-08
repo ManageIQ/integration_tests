@@ -148,13 +148,17 @@ class GroupAdmin(Admin):
 
 @register_for(Provider)
 class ProviderAdmin(Admin):
-    readonly_fields = ["remaining_provisioning_slots", "provisioning_load", "show_ip_address"]
+    readonly_fields = [
+        "remaining_provisioning_slots", "provisioning_load", "show_ip_address", "appliance_load"]
     list_display = [
         "id", "working", "num_simultaneous_provisioning", "remaining_provisioning_slots",
-        "provisioning_load", "show_ip_address"]
+        "provisioning_load", "show_ip_address", "appliance_load"]
 
     def remaining_provisioning_slots(self, instance):
         return str(instance.remaining_provisioning_slots)
+
+    def appliance_load(self, instance):
+        return "{0:.2f}%".format(round(instance.appliance_load * 100.0, 2))
 
     def provisioning_load(self, instance):
         return "{0:.2f}%".format(round(instance.provisioning_load * 100.0, 2))

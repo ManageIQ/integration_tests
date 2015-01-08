@@ -1,0 +1,71 @@
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>VM name</th>
+            <th>Power state</th>
+            <th>VM Control</th>
+            <th>Message</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for vm in vms %}
+        <tr>
+            <td>{{ vm }}</td>
+            <td id="power--{{ vm }}"><button class="btn btn-info btn-xs retrieve-state-button" data-vmname="{{ vm }}"><span class="glyphicon glyphicon-refresh"></span> Retrieve</button></td>
+            <td id="control--{{ vm }}"></td>
+            <td id="message--{{ vm }}"></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<script type="text/javascript">
+function selector(type, id){
+    return "td[id='" + type + "--" + id + "']";
+}
+
+$(document).ready(function() {
+    $(".retrieve-state-button").click(function(e){
+        var e = $(this);
+        var vmname = e.attr("data-vmname");
+        $(selector("power", vmname)).html('<span class="spinner spinner-xs spinner-inline"></span> Retrieving ...');
+        $.ajax({
+            type: "POST",
+            url: "{% url 'appliances.views.power_state' current_provider %}",
+            dataType: "html",
+            data: {vm_name: vmname},
+            error: function(j, t, e){
+                $(selector("power", vmname)).html(e);
+            }
+        }).done(function(data){
+            $(selector("power", vmname)).html(data);
+            $.ajax({
+                type: "POST",
+                url: "{% url 'appliances.views.power_state_buttons' current_provider %}",
+                dataType: "html",
+                data: {vm_name: vmname, power_state: data},
+                error: function(j, t, e){
+                    $(selector("control", vmname)).html(e);
+                }
+            }).done(function(data){
+                $(selector("control", vmname)).html(data);
+                $("button.controlbutton").click(function(e){
+                    var e = $(this);
+                    var vmname = e.attr("data-vmname");
+                    var action = e.attr("data-action");
+                    $.ajax({
+                        type: "POST",
+                        url: "{% url 'appliances.views.vm_action' current_provider %}",
+                        dataType: "html",
+                        data: {vm_name: vmname, action: action},
+                        error: function(j, t, e){
+                            $(selector("message", vmname)).html(e);
+                        }
+                    }).done(function(data){
+                        $(selector("message", vmname)).html(data);
+                    });
+                });
+            });
+        });
+    });
+});
+</script>

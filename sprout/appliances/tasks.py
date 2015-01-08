@@ -19,6 +19,7 @@ from sprout.celery import app as celery_app
 
 from utils.appliance import Appliance as CFMEAppliance
 from utils.log import create_logger
+from utils.providers import provider_factory
 from utils.randomness import generate_random_string
 from utils.trackerbot import api, parse_template
 
@@ -29,8 +30,7 @@ VERSION_REGEXPS = [
     r"cfme-(\d)(\d)(\d)(\d)-",      # cfme-5242-    -> 5.2.4.2
     r"cfme-(\d)(\d)(\d)-(\d)-",     # cfme-520-1-   -> 5.2.0.1
     # 5 digits  (not very intelligent but no better solution so far)
-    r"cfme-(\d)(\d)(\d0)(\d)-",     # cfme-53101-   -> 5.3.10.1
-    r"cfme-(\d)(\d)(\d)(\d{2})-",   # cfme-53111-   -> 5.3.1.11
+    r"cfme-(\d)(\d)(\d)(\d{2})-",   # cfme-53111-   -> 5.3.1.11, cfme-53101 -> 5.3.1.1
 ]
 VERSION_REGEXPS = map(re.compile, VERSION_REGEXPS)
 
@@ -40,7 +40,7 @@ def retrieve_cfme_appliance_version(template_name):
     for regexp in VERSION_REGEXPS:
         match = regexp.search(template_name)
         if match is not None:
-            return ".".join(match.groups())
+            return ".".join(map(str, map(int, match.groups())))
 
 
 def trackerbot():
@@ -191,37 +191,30 @@ def kill_appliance_delete(self, appliance_id):
 
 @logged_task(bind=True)
 def poke_trackerbot(self):
-    """This beat-scheduled task periodically polls the trackerbot if there are some new templates.
+    """This beat-scheduled task periodically polls the trackerbot if there are any new templates.
     """
     try:
-        for group in trackerbot().group().get()["objects"]:
-            if not group["stream"]:
-                continue
-            providers = group["latest_template_providers"]
-            template = group["latest_template"]
-            name = group["name"]
+        for template in trackerbot().template().get()["objects"]:
             try:
-                group_o = Group.objects.get(id=name)
-            except ObjectDoesNotExist:
-                group_o = Group(id=name)
-                group_o.save()
-            for provider in providers:
-                try:
-                    provider_o = Provider.objects.get(id=provider)
-                except ObjectDoesNotExist:
-                    provider_o = Provider(id=provider)
-                    provider_o.save()
-                if not provider_o.working:
+                group = template["group"]["name"]
+            except KeyError:
+                continue
+            template_name = template["name"]
+            group, created = Group.objects.get_or_create(id=group)
+            for provider in template["usable_providers"]:
+                provider, created = Provider.objects.get_or_create(id=provider)
+                if not provider.working:
                     continue
-                if "sprout" not in provider_o.provider_data:
+                if "sprout" not in provider.provider_data:
                     continue
-                if not provider_o.provider_data.get("use_for_sprout", False):
+                if not provider.provider_data.get("use_for_sprout", False):
                     continue
                 try:
                     Template.objects.get(
-                        provider=provider_o, template_group=group_o, original_name=template)
+                        provider=provider, template_group=group, original_name=template_name)
                 except ObjectDoesNotExist:
-                    create_appliance_template.delay(provider_o.id, group_o.id, template)
+                    if provider.api.does_vm_exist(template_name):
+                        create_appliance_template.delay(provider.id, group.id, template_name)
     finally:
         self.apply_async(countdown=600)
 
@@ -501,8 +494,9 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
         if not appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Beginning template clone.")
             kwargs = appliance.template.provider.provider_data["sprout"]
+            kwargs["power_on"] = False
             appliance.provider_api.deploy_template(
-                appliance.template.name, vm_name=appliance.name, power_on=False,
+                appliance.template.name, vm_name=appliance.name,
                 progress_callback=lambda progress: appliance.set_status(
                     "Deploy progress: {}".format(progress)),
                 **kwargs)
@@ -760,8 +754,8 @@ def free_appliance_shepherd(self):
     running template's appliances and spins up new ones."""
     try:
         for grp in Group.objects.all():
-            group_versions = Template.get_versions(template_group=grp)
-            group_dates = Template.get_dates(template_group=grp)
+            group_versions = Template.get_versions(template_group=grp, ready=True)
+            group_dates = Template.get_dates(template_group=grp, ready=True)
             if group_versions:
                 # Downstream - by version (downstream releases)
                 filter_keep = {"version": group_versions[0]}
@@ -794,7 +788,6 @@ def free_appliance_shepherd(self):
                         group=template.template_group.id,
                         date=template.date.strftime("%y%m%d"),
                         rnd=generate_random_string())
-                    # We choose random template to spread the load across providers evenly.
                     with transaction.atomic():
                         # Now look for templates that are on non-busy providers
                         tpl_free = filter(
@@ -848,3 +841,27 @@ def wait_appliance_ready(self, appliance_id):
     except ObjectDoesNotExist:
         # source object is not present, terminating
         return
+
+
+@logged_task(bind=True)
+def anyvm_power_on(self, provider, vm):
+    provider = provider_factory(provider)
+    provider.start_vm(vm)
+
+
+@logged_task(bind=True)
+def anyvm_power_off(self, provider, vm):
+    provider = provider_factory(provider)
+    provider.stop_vm(vm)
+
+
+@logged_task(bind=True)
+def anyvm_suspend(self, provider, vm):
+    provider = provider_factory(provider)
+    provider.suspend_vm(vm)
+
+
+@logged_task(bind=True)
+def anyvm_delete(self, provider, vm):
+    provider = provider_factory(provider)
+    provider.delete_vm(vm)

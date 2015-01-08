@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}My appliances{% endblock %}
+{% block body %}
+<div class="container-fluid">
+    <h2>Listing and operation of your appliances</h2>
+    {% for pool in pools %}
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} {% if pool.version %}({{ pool.version }}){% endif %}</strong>
+                
+            </div>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID:</th>
+                        <th>Name:</th>
+                        <th>Provider:</th>
+                        <th>Address:</th>
+                        <th>Ready?</th>
+                        <th>Power state:</th>
+                        <th>Expires in:</th>
+                        <th>Actions:</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appliance in pool.appliances %}
+                    <tr>
+                        <td>{{ appliance.id }}</td>
+                        <td>{{ appliance.name }}</td>
+                        <td>{{ appliance.template.provider.id }}</td>
+                        <td>
+                            {% if appliance.ip_address %}
+                                <a href="https://{{ appliance.ip_address }}/" target="_blank">{{ appliance.ip_address }}</a></td>
+                            {% else %}
+                                ---
+                            {% endif %}
+                        <td>
+                            {% if appliance.ready %}
+                                <button class="btn btn-success btn-sm"><span class="glyphicon glyphicon-ok"></span> Ready!</button>
+                            {% else %}
+                                <button class="btn btn-warning btn-sm">{{ appliance.status }}</button>
+                            {% endif %}
+                        </td>
+                        <td>{{ appliance.power_state }}</td>
+                        <td>{{ appliance.expires_in }}</td>
+                        <td>
+                            <div class="btn-toolbar" role="toolbar" aria-label="Appliance operations">
+                                <div class="btn-group" role="group" aria-label="Power operations">
+                                    {% if appliance.can_launch %}
+                                        <a href="{% url 'appliances.views.start_appliance' appliance.id %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-off"></span> Launch</a>
+                                    {% endif %}
+                                    {% if appliance.can_stop %}
+                                        <a href="{% url 'appliances.views.stop_appliance' appliance.id %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                    {% endif %}
+                                    {% if appliance.can_suspend %}
+                                        <a href="{% url 'appliances.views.suspend_appliance' appliance.id %}" class="btn btn-warning btn-xs"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
+                                    {% endif %}
+                                </div>
+                                <div class="btn-group" role="group" aria-label="">
+                                    <a href="{% url 'appliances.views.kill_appliance' appliance.id %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
+                                </div>
+                                <div class="btn-group" role="group" aria-label="...">
+                                {% if appliance.leased_until %}
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +30m</a>
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +1h</a>
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +4h</a>
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +1d</a>
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +1w</a>
+                                    <em>from now.</em>
+                                {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td>Fulfillment progress:</td>
+                        <td colspan="5">{{ pool.percent_finished|progress }}</td>
+                        <td colspan="2"><em>Not relevant after provisioning finished (TODO: hide after)</em></td>
+                    </tr>
+                    <tr>
+                        <td colspan="8">
+                            {% if pool.fulfilled %}
+                                <button class="btn btn-success btn-sm"><span class="glyphicon glyphicon-ok"></span> Fulfilled</button>
+                            {% else %}
+                                <button class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-remove"></span> Not fulfilled</button>
+                            {% endif %}
+                            <a href="{% url 'appliances.views.kill_pool' pool.id %}" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    {% endfor %}
+    <h2>Requesting additional pools</h2>
+    <form action="{% url 'appliances.views.request_pool' %}" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="stream">Select stream:</label>
+          <select class="form-control" id="stream" name="stream">
+            <option value="<None>">Please select ...</option>
+            {% for group in groups %}
+            <option value="{{ group.id }}">{{ group.id }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="version">Select version (if applicable):</label>
+          <select class="form-control" id="version" name="version">
+            <option value="latest">Latest</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="date">Select build date (if you want):</label>
+          <select class="form-control" id="date" name="date">
+            <option value="latest">Latest</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="count">Number of appliances wanted:</label>
+          <input type="number" class="form-control" id="count" name="count" min="1" value="1">
+        </div>
+        <button class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
+    </form>
+</div>
+<script type="text/javascript">
+$(document).ready(function() {
+    $('select#stream').change(function(){
+        $.ajax({
+                type: "POST",
+                url: "{% url 'appliances.views.versions_for_group' %}",
+                data: {stream: $('select#stream').val()},
+                dataType: 'html'
+         }).done(function(data){
+            $('select#version').html(data);
+            $("select#version").trigger("change");
+         });
+    });
+    $('select#version').change(function(){
+        $.ajax({
+                type: "POST",
+                url: "{% url 'appliances.views.date_for_group_and_version' %}",
+                data: {stream: $('select#stream').val(), version: $('select#version').val()},
+                dataType: 'html'
+         }).done(function(data){
+            $('select#date').html(data);
+            $("select#date").trigger("change");
+         });
+    });
+});
+</script>
+{% endblock %}

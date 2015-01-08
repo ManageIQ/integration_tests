@@ -1,0 +1,14 @@
+<div class="btn-group" role="group" aria-label="...">
+    {% if can_power_on %}
+        <button class="btn btn-success btn-xs controlbutton" data-vmname="{{ vm_name }}" data-action="poweron"><span class="glyphicon glyphicon-play"></span></button>
+    {% endif %}
+    {% if can_suspend %}
+        <button class="btn btn-warning btn-xs controlbutton" data-vmname="{{ vm_name }}" data-action="suspend"><span class="glyphicon glyphicon-pause"></span></button>
+    {% endif %}
+    {% if can_power_off %}
+        <button class="btn btn-danger btn-xs controlbutton" data-vmname="{{ vm_name }}" data-action="poweroff"><span class="glyphicon glyphicon-stop"></span></button>
+    {% endif %}
+    {% if can_delete %}
+        <button class="btn btn-danger btn-xs controlbutton" data-vmname="{{ vm_name }}" data-action="delete"><span class="glyphicon glyphicon-remove"></span></button>
+    {% endif %}
+</div>

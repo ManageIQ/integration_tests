@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block body %}
+
+{% if form.errors %}
+<div class='alert alert-danger fade in'>
+            <button class="close" data-dismiss="alert">×</button>
+            Your username and password didn't match. Please try again
+        </div>
+{% endif %}
+
+<div class="container">
+    <form method="post" action="{% url 'django.contrib.auth.views.login' %}" class="form-signin">
+        {% csrf_token %}
+        <h2 class="form-signin-heading">Please sign in</h2>
+        <label for="inputUsername" class="sr-only">Email address</label>
+        <input type="text" id="inputUsername" class="form-control" placeholder="User name" required autofocus name="username">
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" id="inputPassword" class="form-control" placeholder="Password" required name="password">
+        
+        <button class="btn btn-lg btn-primary btn-block" type="submit" value="login">Sign in</button>
+        <input type="hidden" name="next" value="{{ next }}" />
+    </form>
+</div>
+
+{% endblock %}
