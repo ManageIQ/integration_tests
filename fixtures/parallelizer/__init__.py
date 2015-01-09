@@ -148,8 +148,14 @@ class ParallelSession(object):
             conf.runtime["env"]["base_url"] = self.appliances[0]
             # Retrieve and print the template_name for Jenkins to pick up
             template_name = request["appliances"][0]["template_name"]
+            conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
             self.terminal.write("appliance_template={}\n".format(template_name))
             self.terminal.write("Parallelized Sprout setup finished.\n")
+            self.slave_appliances_data = {}
+            for appliance in request["appliances"]:
+                self.slave_appliances_data[appliance["ip_address"]] = (
+                    appliance["template_name"], appliance["provider"]
+                )
 
     def _reset_timer(self):
         if not (self.sprout_client is not None and self.sprout_pool is not None):
@@ -279,6 +285,8 @@ class ParallelSession(object):
             'zmq_endpoint': zmq_endpoint,
             'sprout': self.sprout_client is not None and self.sprout_pool is not None,
         }
+        if hasattr(self, "slave_appliances_data"):
+            conf.runtime['slave_config']["appliance_data"] = self.slave_appliances_data
         conf.runtime['slave_config']['options'].use_sprout = False  # Slaves should not use sprout
         conf.save('slave_config')
 

@@ -221,6 +221,12 @@ if __name__ == '__main__':
 
     slave_args = conf.slave_config.pop('args')
     slave_options = conf.slave_config.pop('options')
+    ip_address = urlparse(args.base_url).netloc
+    appliance_data = conf.slave_config.get("appliance_data", {})
+    if ip_address in appliance_data:
+        template_name, provider_name = appliance_data[ip_address]
+        conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
+        conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider_name
     config = _init_config(slave_options, slave_args)
     slave_manager = SlaveManager(config, args.slaveid, args.base_url,
         conf.slave_config['zmq_endpoint'], conf.slave_config['sprout'])
