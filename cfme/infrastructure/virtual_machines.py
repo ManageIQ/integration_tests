@@ -541,6 +541,28 @@ class Vm(Common):
         from cfme.provisioning import provisioning_form
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
 
+    def clone_vm(self, email=None, first_name=None, last_name=None, vm_name=None):
+        sel.force_navigate("infra_vm_by_name", context={'vm': self})
+        lcl_btn("Clone this VM")
+        first_name = first_name or generate_random_string()
+        last_name = last_name or generate_random_string()
+        email = email or "{}@{}.test".format(first_name, last_name)
+        try:
+            prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]
+        except (KeyError, IndexError):
+            raise ValueError("You have to specify the correct options in cfme_data.yaml")
+        provisioning_data = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": email,
+            "vm_name": vm_name,
+            "host_name": {"name": prov_data.get("host")},
+            "datastore_name": {"name": prov_data.get("datastore")},
+            "vlan": prov_data.get("vlan")
+        }
+        from cfme.provisioning import provisioning_form
+        fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
+
     @property
     def retirement_date(self):
         """Returns the retirement date of the selected machine.
