@@ -160,8 +160,11 @@ def load():
 
 
 def pytest_addoption(parser):
-    parser.addoption("--no-tracer", dest="tracer", action="store_false", default=True,
-                     help="Disable the function tracer")
+    # Keeping due to compatibility
+    parser.addoption("--no-tracer", dest="no_tracer_deprecated", action="store_false", default=True,
+                     help="Disable the function tracer (DEPRECATED - default off!)")
+    parser.addoption("--tracer", dest="tracer", action="store_true", default=False,
+                     help="Enable the function tracer")
 
 
 def pytest_configure(config):
