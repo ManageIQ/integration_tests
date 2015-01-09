@@ -1017,8 +1017,3 @@ def unassign_policy_profiles(vm_name, *policy_profile_names, **kwargs):
         policy_profile_names: :py:class:`str` with Policy Profile names.
     """
     return _assign_unassign_policy_profiles(vm_name, False, *policy_profile_names, **kwargs)
-
-
-def load_archived_vms():
-    """ Load list of archived vms """
-    sel.force_navigate("vm_templates_archived_branch")

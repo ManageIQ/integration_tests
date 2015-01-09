@@ -40,6 +40,12 @@ def setup_provider(provider_key):
     _setup_provider(provider_key)
 
 
+@pytest.fixture(scope='class')
+def setup_provider_clsscope(provider_key):
+    """Module-scoped fixture to set up a provider"""
+    _setup_provider(provider_key)
+
+
 @pytest.fixture
 def setup_provider_funcscope(provider_key):
     """Function-scoped fixture to set up a provider
