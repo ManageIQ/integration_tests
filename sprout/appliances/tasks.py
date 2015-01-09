@@ -14,7 +14,7 @@ from novaclient.exceptions import OverLimit as OSOverLimit
 
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask)
-from sprout import settings
+from sprout import settings, redis
 from sprout.celery import app as celery_app
 
 from utils.appliance import Appliance as CFMEAppliance
@@ -194,27 +194,49 @@ def poke_trackerbot(self):
     """This beat-scheduled task periodically polls the trackerbot if there are any new templates.
     """
     try:
-        for template in trackerbot().template().get()["objects"]:
-            try:
-                group = template["group"]["name"]
-            except KeyError:
+        template_usability = []
+        for template in trackerbot().providertemplate().get(limit=10000)["objects"]:
+            template_usability.append(
+                (
+                    template["provider"]["key"],
+                    template["template"]["name"],
+                    template["tested"] and template["usable"]
+                )
+            )
+            if not template["tested"] or not template["usable"]:
                 continue
-            template_name = template["name"]
-            group, created = Group.objects.get_or_create(id=group)
-            for provider in template["usable_providers"]:
-                provider, created = Provider.objects.get_or_create(id=provider)
-                if not provider.working:
-                    continue
-                if "sprout" not in provider.provider_data:
-                    continue
-                if not provider.provider_data.get("use_for_sprout", False):
-                    continue
-                try:
-                    Template.objects.get(
-                        provider=provider, template_group=group, original_name=template_name)
-                except ObjectDoesNotExist:
-                    if provider.api.does_vm_exist(template_name):
-                        create_appliance_template.delay(provider.id, group.id, template_name)
+            group, create = Group.objects.get_or_create(id=template["template"]["group"]["name"])
+            provider, create = Provider.objects.get_or_create(id=template["provider"]["key"])
+            if not provider.working:
+                continue
+            if "sprout" not in provider.provider_data:
+                continue
+            if not provider.provider_data.get("use_for_sprout", False):
+                continue
+            template_name = template["template"]["name"]
+            try:
+                Template.objects.get(
+                    provider=provider, template_group=group, original_name=template_name)
+            except ObjectDoesNotExist:
+                if provider.api.does_vm_exist(template_name):
+                    create_appliance_template.delay(provider.id, group.id, template_name)
+        # If any of the templates becomes unusable, let sprout know about it
+        # Similarly if some of them becomes usable ...
+        for provider_id, template_name, usability in template_usability:
+            provider, create = Provider.objects.get_or_create(id=provider_id)
+            try:
+                with transaction.atomic():
+                    template = Template.objects.get(provider=provider, original_name=template_name)
+                    template.usable = usability
+                    template.save()
+                    # Kill all shepherd appliances if they were acidentally spun up
+                    if not usability:
+                        for appliance in Appliance.objects.filter(
+                                template=template, ready=True, marked_for_deletion=False,
+                                appliance_pool=None):
+                            Appliance.kill(appliance)
+            except ObjectDoesNotExist:
+                pass
     finally:
         self.apply_async(countdown=600)
 
@@ -262,6 +284,7 @@ def prepare_template_deploy(self, template_id):
         if not template.is_created:
             template.set_status("Deploying the template.")
             kwargs = template.provider.provider_data["sprout"]
+            kwargs["power_on"] = True
             template.provider_api.deploy_template(
                 template.original_name, vm_name=template.name, **kwargs)
         else:
@@ -413,7 +436,7 @@ def replace_clone_to_pool(
     appliance_pool = AppliancePool.objects.get(id=appliance_pool_id)
     exclude_template = Template.objects.get(id=exclude_template_id)
     templates = Template.objects.filter(
-        ready=True, exists=True, template_group=appliance_pool.group, version=version,
+        ready=True, exists=True, usable=True, template_group=appliance_pool.group, version=version,
         date=date).all()
     templates_excluded = filter(lambda tpl: tpl != exclude_template, templates)
     if templates_excluded:
@@ -684,7 +707,8 @@ def retrieve_appliances_power_states(self):
     it schedules itself for execution again after some time"""
     try:
         for a in Appliance.objects.all():
-            a.retrieve_power_state()
+            if a.name not in redis.renaming_appliances:
+                a.retrieve_power_state()
     finally:
         self.apply_async(countdown=25)
 
@@ -716,6 +740,8 @@ def delete_nonexistent_appliances(self):
     """Goes through orphaned appliances' objects and deletes them from the database."""
     try:
         for appliance in Appliance.objects.filter(ready=True).all():
+            if appliance.name in redis.renaming_appliances:
+                continue
             if appliance.power_state == Appliance.Power.ORPHANED:
                 try:
                     appliance.delete()
@@ -754,8 +780,8 @@ def free_appliance_shepherd(self):
     running template's appliances and spins up new ones."""
     try:
         for grp in Group.objects.all():
-            group_versions = Template.get_versions(template_group=grp, ready=True)
-            group_dates = Template.get_dates(template_group=grp, ready=True)
+            group_versions = Template.get_versions(template_group=grp, ready=True, usable=True)
+            group_dates = Template.get_dates(template_group=grp, ready=True, usable=True)
             if group_versions:
                 # Downstream - by version (downstream releases)
                 filter_keep = {"version": group_versions[0]}
@@ -771,7 +797,8 @@ def free_appliance_shepherd(self):
             # Retrieve list of all templates for given group
             # I know joins might be a bit better solution but I'll leave that for later.
             possible_templates = list(
-                Template.objects.filter(ready=True, template_group=grp, **filter_keep).all())
+                Template.objects.filter(
+                    usable=True, ready=True, template_group=grp, **filter_keep).all())
             # If it can be deployed, it must exist
             possible_templates_for_provision = filter(lambda tpl: tpl.exists, possible_templates)
             appliances = []
@@ -809,7 +836,7 @@ def free_appliance_shepherd(self):
             # Killing old appliances
             for filter_kill in filters_kill:
                 for template in Template.objects.filter(
-                        ready=True, template_group=grp, **filter_kill):
+                        ready=True, usable=True, template_group=grp, **filter_kill):
                     for a in Appliance.objects.filter(
                             template=template, appliance_pool=None, marked_for_deletion=False):
                         Appliance.kill(a)

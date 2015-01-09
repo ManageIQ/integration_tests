@@ -11,6 +11,8 @@ from utils.log import create_logger
 from utils.providers import provider_factory
 from utils.version import LooseVersion
 
+from sprout import redis
+
 
 def logger():
     return create_logger("sprout")
@@ -130,6 +132,7 @@ class Template(models.Model):
     status_changed = models.DateTimeField(auto_now_add=True)
     ready = models.BooleanField(default=False, help_text="Template is ready-to-be-used")
     exists = models.BooleanField(default=True, help_text="Template exists in the provider.")
+    usable = models.BooleanField(default=False, help_text="Template is marked as usable")
 
     @property
     def provider_api(self):
@@ -286,21 +289,22 @@ class Appliance(models.Model):
             for template in pool.possible_templates:
                 for appliance in cls.unassigned().filter(
                         template=template).all()[:pool.total_count - n_appliances]:
-                    appliance.appliance_pool = pool
-                    appliance.datetime_leased = timezone.now()
-                    appliance.leased_until = appliance.datetime_leased + timedelta(
-                        minutes=time_minutes)
-                    if appliance.provider_api.can_rename:
-                        new_name = "{}_{}".format(pool.owner.username, appliance.name)
-                        try:
-                            appliance.provider_api.rename_vm(appliance.name, new_name)
-                        except Exception as e:
-                            logger().exception(str(e))
-                        else:
-                            appliance.name = new_name
-                    appliance.save()
-                    appliance_power_on.delay(appliance.id)
-                    n_appliances += 1
+                    new_name = "{}_{}".format(pool.owner.username, appliance.name)
+                    with redis.appliances_ignored_when_renaming(appliance.name, new_name):
+                        appliance.appliance_pool = pool
+                        appliance.datetime_leased = timezone.now()
+                        appliance.leased_until = appliance.datetime_leased + timedelta(
+                            minutes=time_minutes)
+                        if appliance.provider_api.can_rename:
+                            try:
+                                appliance.name = appliance.provider_api.rename_vm(
+                                    appliance.name, new_name)
+                            except Exception as e:
+                                logger().exception(
+                                    "Exception {}: {}".format(type(e).__name__, str(e)))
+                        appliance.save()
+                        appliance_power_on.delay(appliance.id)
+                        n_appliances += 1
                 if n_appliances == pool.total_count:
                     break
         return n_appliances
@@ -392,14 +396,15 @@ class AppliancePool(models.Model):
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
-            versions = Template.get_versions(template_group=group, ready=True)
+            versions = Template.get_versions(template_group=group, ready=True, usable=True)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
-                dates = Template.get_dates(template_group=group, version=version, ready=True)
+                dates = Template.get_dates(template_group=group, version=version, ready=True,
+                    usable=True)
             else:
-                dates = Template.get_dates(template_group=group, ready=True)
+                dates = Template.get_dates(template_group=group, ready=True, usable=True)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):
@@ -430,7 +435,7 @@ class AppliancePool(models.Model):
         if self.date is not None:
             filter_params["date"] = self.date
         return Template.objects.filter(
-            template_group=self.group, ready=True, exists=True, **filter_params).all()
+            template_group=self.group, ready=True, exists=True, usable=True, **filter_params).all()
 
     @property
     def possible_provisioning_templates(self):
