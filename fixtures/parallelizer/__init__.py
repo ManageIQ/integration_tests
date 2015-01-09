@@ -144,6 +144,12 @@ class ParallelSession(object):
             for appliance_ip in self.appliances:
                 self.terminal.write("- {}\n".format(appliance_ip))
             self._reset_timer()
+            # Set the base_url for collection purposes on the first appliance
+            conf.runtime["env"]["base_url"] = self.appliances[0]
+            # Retrieve and print the template_name for Jenkins to pick up
+            template_name = request["appliances"][0]["template_name"]
+            self.terminal.write("appliance_template={}\n".format(template_name))
+            self.terminal.write("Parallelized Sprout setup finished.\n")
 
     def _reset_timer(self):
         if not (self.sprout_client is not None and self.sprout_pool is not None):
