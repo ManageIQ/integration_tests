@@ -20,6 +20,7 @@ from py.io import TerminalWriter
 
 from utils import property_or_none
 from utils import conf
+from utils.randomness import generate_random_string
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -132,3 +133,36 @@ def pytest_configure(config):
 
 def pytest_sessionstart(session):
     store.session = session
+
+
+def write_line(line, **kwargs):
+    """A write-line helper that should *always* write a line to the terminal
+
+    It knows all of py.tests dirty tricks, including ones that we made, and works around them.
+
+    Args:
+        **kwargs: Normal kwargs for pytest line formatting, stripped from slave messages
+
+    """
+    if store.slave_manager:
+        # We're a pytest slave! Write out the vnc info through the slave manager
+        store.slave_manager.message(line)
+    else:
+        # If py.test is supressing stdout/err, turn that off for a moment
+        if store.capturemanager:
+            store.capturemanager.suspendcapture()
+
+        # terminal reporter knows whether or not to write a newline based on currentfspath
+        # so stash it, then use rewrite to blow away the line that printed the current
+        # test name, then clear currentfspath so the test name is reprinted with the
+        # write_ensure_prefix call. shenanigans!
+        cfp = store.terminalreporter.currentfspath
+        # carriage return, write spaces for the whole line, carriage return, write the new line
+        store.terminalreporter.line('\r' + ' ' * store.terminalreporter._tw.fullwidth + '\r' + line,
+            **kwargs)
+        store.terminalreporter.currentfspath = generate_random_string()
+        store.terminalreporter.write_ensure_prefix(cfp)
+
+        # resume capturing
+        if store.capturemanager:
+            store.capturemanager.resumecapture()
