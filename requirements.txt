@@ -8,6 +8,7 @@ functools32
 function_trace
 ipython
 Jinja2
+numpy
 ovirt-engine-sdk-python
 paramiko
 psphere
