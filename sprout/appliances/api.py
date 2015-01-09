@@ -150,6 +150,7 @@ def request_check(user, request_id):
                 status_changed=apply_if_not_none(appliance.status_changed, "isoformat"),
                 datetime_leased=apply_if_not_none(appliance.datetime_leased, "isoformat"),
                 leased_until=apply_if_not_none(appliance.leased_until, "isoformat"),
+                template_name=appliance.template.original_name,
             )
             for appliance
             in request.appliances
