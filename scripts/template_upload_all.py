@@ -45,11 +45,11 @@ def parse_cmd_line():
     return args
 
 
-def template_name(image_link, image_ts, version=None):
+def template_name(image_link, image_ts, checksum_link, version=None):
     pattern = re.compile(r'.*/(.*)')
     image_name = pattern.findall(image_link)[0]
     image_name = image_name.lower()
-    image_dt = get_last_modified(image_link)
+    image_dt = get_last_modified(checksum_link)
     # CFME brew builds
     if CFME_BREW_ID in image_name:
         if version:
@@ -268,6 +268,8 @@ if __name__ == "__main__":
                     module = 'template_upload_vsphere'
                     if module not in dir_files.iterkeys():
                         continue
+                    if provider == "vsphere4":
+                        continue
                     kwargs = make_kwargs_vsphere(cfme_data, provider)
 
                 if kwargs:
@@ -277,7 +279,9 @@ if __name__ == "__main__":
                         kwargs['template_name'] = template_name(
                             dir_files[module],
                             dir_files[module + "_date"],
-                            get_version(url))
+                            url + "checksums",
+                            get_version(url)
+                        )
 
                     print "---Start of %s: %s---" % (module, provider)
 
