@@ -3,6 +3,7 @@ import atexit
 import json
 import os
 import threading
+import urllib2
 from contextlib import contextmanager
 from shutil import rmtree
 from string import Template
@@ -14,7 +15,7 @@ from selenium import webdriver
 from selenium.common.exceptions import UnexpectedAlertPresentException
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 
-from fixtures.pytest_store import store
+from fixtures.pytest_store import store, write_line
 from utils import conf
 from utils.log import logger
 from utils.path import data_path
@@ -133,32 +134,28 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         view_msg = 'tests can be viewed via vnc on display %s' % wharf_config['vnc_display']
         logger.info('webdriver command executor set to %s' % wharf_config['webdriver_url'])
         logger.info(view_msg)
+        write_line(view_msg, cyan=True)
 
-        if store.slave_manager:
-            # We're a pytest slave! Write out the vnc info through the slave manager
-            store.slave_manager.message(view_msg)
-        elif store.in_pytest_session:
-            # if we're running pytest, write out the vnc info through the terminal reporter
-            if store.capturemanager:
-                # sneak the msg past the stdout capture if it's enabled
-                store.capturemanager.suspendcapture()
-
-            # terminal reporter knows whether or not to write a newline based on currentfspath
-            # so stash it, then use rewrite to blow away the line that printed the current
-            # test name, then clear currentfspath so the test name is reprinted with the
-            # write_ensure_prefix call. shenanigans!
-            cfp = store.terminalreporter.currentfspath
-            store.terminalreporter.line('\r' + view_msg, cyan=True)
-            store.terminalreporter.currentfspath = None
-            store.terminalreporter.write_ensure_prefix(cfp)
-
-            if store.capturemanager:
-                store.capturemanager.resumecapture()
-
-    browser = webdriver_class(**browser_kwargs)
-    browser.maximize_window()
-    browser.get(base_url)
-    thread_locals.browser = browser
+    try:
+        browser = webdriver_class(**browser_kwargs)
+        browser.maximize_window()
+        browser.get(base_url)
+        thread_locals.browser = browser
+    except urllib2.URLError as ex:
+        # connection to selenium was refused for unknown reasons
+        if thread_locals.wharf:
+            # If we're running wharf, try again with a new container
+            logger.error('URLError connecting to selenium; recycling container. URLError:')
+            # Plus, since this is a really weird thing that we need to figure out,
+            # throw a message out to the terminal for visibility
+            write_line('URLError caused container recycle, see log for details', red=True)
+            logger.exception(ex)
+            thread_locals.wharf.checkin()
+            thread_locals.wharf = None
+            start(webdriver_name, base_url, **kwargs)
+        else:
+            # If we aren't running wharf, raise it
+            raise
 
     return thread_locals.browser
 
