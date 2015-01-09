@@ -12,6 +12,7 @@ import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
 from cfme.exceptions import ToolbarOptionGreyed, ToolbarOptionUnavailable
 from cfme.web_ui import Region
+from utils.log import logger
 from xml.sax.saxutils import quoteattr
 
 # Common locators
@@ -132,6 +133,8 @@ def is_greyed(root, sub=None):
 
     if sub:
         if "tr_btn_disabled" in class_att:
+            logger.debug("{} option greyed out, mouseover reason: {}".format(
+                sub, sel.get_attribute(el, 'title')))
             return True
     else:
         if "dis" in class_att:
