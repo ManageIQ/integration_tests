@@ -6,8 +6,15 @@
     <h4>This module enables you to power-control or delete any VM in our environment</h4>
     <h3>Do not overload this page (clicking through the tabs without letting the requests finish) because it might hog the Sprout! (It uses the utils.mgmt_system methods that take long time to finish so it would hog all processes of GUnicorn)</h3>
     <ul class="nav nav-tabs">
-        {% for provider in providers %}
-            <li {% if current_provider == provider %}class="active"{% endif %}><a href="{% url 'vms_at_provider' provider %}">{{ provider }}</a></li>
+        {% for provider, working in providers %}
+            <li {% if current_provider == provider %}class="active"{% endif %}>
+                {% if working %}
+                    <a href="{% url 'vms_at_provider' provider %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> {{ provider }}</a>
+                {% else %}
+                    <a href="{% url 'vms_at_provider' provider %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> {{ provider }}</a>
+                {% endif %}
+                }
+            </li>
         {% endfor %}
     </ul>
     <div id="vm_list">

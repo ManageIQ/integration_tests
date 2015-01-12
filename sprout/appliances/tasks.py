@@ -200,10 +200,10 @@ def poke_trackerbot(self):
                 (
                     template["provider"]["key"],
                     template["template"]["name"],
-                    template["tested"] and template["usable"]
+                    template["usable"]
                 )
             )
-            if not template["tested"] or not template["usable"]:
+            if not template["usable"]:
                 continue
             group, create = Group.objects.get_or_create(id=template["template"]["group"]["name"])
             provider, create = Provider.objects.get_or_create(id=template["provider"]["key"])
