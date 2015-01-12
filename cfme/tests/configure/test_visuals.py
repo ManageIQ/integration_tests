@@ -6,22 +6,13 @@ from cfme import login
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator, toolbar as tb, menu
-from utils import testgen
 from utils.conf import cfme_data
-from utils.providers import setup_provider
+from utils.providers import setup_a_provider
 
 
-def pytest_generate_tests(metafunc):
-    argnames, argvalues, idlist = testgen.provider_by_type(metafunc, ['virtualcenter'])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
-
-
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
+@pytest.fixture(scope="module")
+def setup_first_provider():
+    setup_a_provider(prov_class="infra", validate=True, check_existing=True)
 
 
 @pytest.yield_fixture(scope="module")
@@ -55,7 +46,7 @@ def go_to_grid(page):
 
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
-def test_grid_page_per_item(request, provider_init, page, set_grid):
+def test_grid_page_per_item(request, setup_first_provider, page, set_grid):
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
     sel.force_navigate(page)
@@ -65,7 +56,7 @@ def test_grid_page_per_item(request, provider_init, page, set_grid):
 
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
-def test_tile_page_per_item(request, provider_init, page, set_tile):
+def test_tile_page_per_item(request, setup_first_provider, page, set_tile):
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.tile_view_limit
     sel.force_navigate(page)
@@ -75,7 +66,7 @@ def test_tile_page_per_item(request, provider_init, page, set_tile):
 
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
-def test_list_page_per_item(request, provider_init, page, set_list):
+def test_list_page_per_item(request, setup_first_provider, page, set_list):
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.list_view_limit
     sel.force_navigate(page)
@@ -85,7 +76,7 @@ def test_list_page_per_item(request, provider_init, page, set_list):
 
 
 @pytest.mark.parametrize('start_page', cfme_data.get('landing_pages'), scope="module")
-def test_start_page(request, provider_init, start_page):
+def test_start_page(request, setup_first_provider, start_page):
     request.addfinalizer(set_default_page)
     visual.login_page = start_page
     login.logout()
