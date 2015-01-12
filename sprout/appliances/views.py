@@ -2,6 +2,7 @@
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from django.template.base import add_to_builtins
@@ -227,6 +228,29 @@ def request_pool(request):
     except Exception as e:
         messages.error(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
     return go_back_or_home(request)
+
+
+def transfer_pool(request):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    try:
+        pool_id = int(request.POST["pool_id"])
+        user_id = int(request.POST["user_id"])
+        with transaction.atomic():
+            pool = AppliancePool.objects.get(id=pool_id)
+            if pool.owner != request.user:
+                raise Exception("User does not have the right to change this pool's owner!")
+            user = User.objects.get(id=user_id)
+            if user == request.user:
+                raise Exception("Why changing owner back to yourself? That does not make sense!")
+            pool.owner = user
+            pool.save()
+    except Exception as e:
+        messages.error(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
+    else:
+        messages.success(request, "Success!")
+    finally:
+        return go_back_or_home(request)
 
 
 def vms(request, current_provider=None):

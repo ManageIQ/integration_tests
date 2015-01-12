@@ -65,7 +65,7 @@ def pytest_configure(config, __multicall__):
         # Retrieve and print the template_name for Jenkins to pick up
         template_name = request["appliances"][0]["template_name"]
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
-        terminal.write("appliance_template={}\n".format(template_name))
+        terminal.write("appliance_template=\"{}\";\n".format(template_name))
         terminal.write("Single appliance Sprout setup finished.\n")
         # And set also the appliances_provider
         provider = request["appliances"][0]["provider"]
