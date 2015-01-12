@@ -116,10 +116,11 @@ def get_appliance(provider_crud):
                     provider_name=provider_crud.key)
                 logger.info("appliance IP address: " + str(appliance.address))
                 appliance.configure(setup_fleece=True)
-            except Exception:
-                logger.error('Appliance encountered error during initial setup, deleting...')
-                appliance.destroy()
-                raise CFMEException('Appliance encountered error during initial setup')
+            except Exception as e:
+                if appliance is not None:
+                    appliance.destroy()
+                raise CFMEException(
+                    'Appliance encountered error during initial setup: {}'.format(str(e)))
             appliance_list[provider_crud.key] = appliance
     return appliance_list[provider_crud.key]
 
