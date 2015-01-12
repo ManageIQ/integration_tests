@@ -232,9 +232,17 @@ def request_pool(request):
 def vms(request, current_provider=None):
     if not request.user.is_authenticated():
         return go_home(request)
-    providers = sorted(Provider.get_available_provider_keys())
+    provider_keys = sorted(Provider.get_available_provider_keys())
+    providers = []
+    for provider_key in provider_keys:
+        try:
+            provider = Provider.objects.get(id=provider_key)
+        except ObjectDoesNotExist:
+            providers.append((provider_key, True))
+        else:
+            providers.append((provider_key, provider.working))
     if current_provider is None and providers:
-        return redirect("vms_at_provider", current_provider=providers[0])
+        return redirect("vms_at_provider", current_provider=provider_keys[0])
     return render(request, 'appliances/vms/index.html', locals())
 
 
