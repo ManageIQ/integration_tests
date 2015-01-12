@@ -95,7 +95,7 @@ def parse_template(template_name):
     raise ValueError('No streams matched template %s' % template_name)
 
 
-def mark_provider_template(api, provider, template, tested=None, usable=None):
+def mark_provider_template(api, provider, template, tested=None, usable=None, diagnosis=''):
     """Mark a provider template as tested and/or usable
 
     Args:
@@ -104,6 +104,7 @@ def mark_provider_template(api, provider, template, tested=None, usable=None):
         template: The name of the template to mark on this provider or a :py:class:`Template`
         tested: Whether or not this template has been tested on this provider
         usable: Whether or not this template is usable on this provider
+        diagnosis: Optional reason for marking a template
 
     Returns the response of the API request
 
@@ -115,6 +116,8 @@ def mark_provider_template(api, provider, template, tested=None, usable=None):
 
     if usable is not None:
         provider_template['usable'] = bool(usable)
+
+    provider_template['diagnosis'] = diagnosis
 
     return api.providertemplate.post(provider_template)
 
@@ -175,10 +178,19 @@ def post_task_result(tid, result, output=None):
     api().task(tid).put({'result': result, 'output': output})
 
 
-def post_jenkins_result(number, stream, date, fails, skips, passes, build):
-    api().build.post({'number': number, 'stream': '/api/group/{}/'.format(stream),
-                      'datestamp': date,
-                      'fails': fails, 'skips': skips, 'passes': passes, 'build': build})
+def post_jenkins_result(job_name, number, stream, date, fails,
+        skips, passes, template, build_status):
+    api().build.post({
+        'job_name': job_name,
+        'number': number,
+        'stream': '/api/group/{}/'.format(stream),
+        'datestamp': date,
+        'passes': passes,
+        'fails': fails,
+        'skips': skips,
+        'template': template,
+        'build_status': build_status,
+    })
 
 
 # Dict subclasses to help with JSON serialization
