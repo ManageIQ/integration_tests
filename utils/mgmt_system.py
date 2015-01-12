@@ -1544,22 +1544,33 @@ class OpenstackSystem(MgmtSystemAPIBase):
     @property
     def api(self):
         if not self._api:
-            self._api = osclient.Client(self.username, self.password, self.tenant,
-                                        self.auth_url, service_type="compute")
+            self._api = osclient.Client(self.username,
+                                        self.password,
+                                        self.tenant,
+                                        self.auth_url,
+                                        service_type="compute",
+                                        insecure=True)
         return self._api
 
     @property
     def kapi(self):
         if not self._kapi:
-            self._kapi = oskclient.Client(username=self.username, password=self.password,
-                                          tenant_name=self.tenant, auth_url=self.auth_url)
+            self._kapi = oskclient.Client(username=self.username,
+                                          password=self.password,
+                                          tenant_name=self.tenant,
+                                          auth_url=self.auth_url,
+                                          insecure=True)
         return self._kapi
 
     @property
     def capi(self):
         if not self._capi:
-            self._capi = cinderclient.Client(
-                self.username, self.password, self.tenant, self.auth_url, service_type="volume")
+            self._capi = cinderclient.Client(self.username,
+                                             self.password,
+                                             self.tenant,
+                                             self.auth_url,
+                                             service_type="volume",
+                                             insecure=True)
         return self._capi
 
     def _get_tenants(self):
