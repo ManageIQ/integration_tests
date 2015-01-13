@@ -383,7 +383,7 @@ def request_appliance_pool(appliance_pool_id, time_minutes):
     then if there is need to spin up another appliances, it spins them up via clone_template_to_pool
     task."""
     pool = AppliancePool.objects.get(id=appliance_pool_id)
-    n = Appliance.give_to_pool(pool, time_minutes)
+    n = Appliance.give_to_pool(pool)
     for i in range(pool.total_count - n):
         tpls = pool.possible_provisioning_templates
         if tpls:
@@ -402,6 +402,7 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
     if pool.fulfilled:
         for appliance in pool.appliances:
             apply_lease_times.delay(appliance.id, time_minutes)
+        pool_appliances_prefix_with_owner.delay(pool.id)
     else:
         self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=50)
 
@@ -892,3 +893,36 @@ def anyvm_suspend(self, provider, vm):
 def anyvm_delete(self, provider, vm):
     provider = provider_factory(provider)
     provider.delete_vm(vm)
+
+
+@logged_task(bind=True)
+def appliance_rename(self, appliance_id, new_name):
+    try:
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist:
+        return
+    if appliance.name == new_name:
+        return
+    with redis.appliances_ignored_when_renaming(appliance.name, new_name):
+        appliance.name = appliance.provider_api.rename_vm(appliance.name, new_name)
+        appliance.save()
+
+
+@logged_task(bind=True)
+def pool_appliances_prefix_with_owner(self, pool_id):
+    with transaction.atomic():
+        try:
+            appliance_pool = AppliancePool.objects.get(id=pool_id)
+        except ObjectDoesNotExist:
+            return
+        appliances = [
+            appliance
+            for appliance
+            in appliance_pool.appliances
+            if (not appliance.name.startswith(appliance_pool.owner.username))
+            and appliance.provider_api.can_rename
+        ]
+        for appliance in appliances:
+            appliance_rename.apply_async(
+                countdown=10,  # To prevent clogging with the transaction.atomic
+                args=(appliance.id, "{}_{}".format(appliance_pool.owner.username, appliance.name)))

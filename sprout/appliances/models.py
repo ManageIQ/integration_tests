@@ -11,8 +11,6 @@ from utils.log import create_logger
 from utils.providers import provider_factory
 from utils.version import LooseVersion
 
-from sprout import redis
-
 
 def logger():
     return create_logger("sprout")
@@ -282,32 +280,20 @@ class Appliance(models.Model):
         return cls.objects.filter(appliance_pool=None, ready=True)
 
     @classmethod
-    def give_to_pool(cls, pool, time_minutes):
+    def give_to_pool(cls, pool):
         from appliances.tasks import appliance_power_on
-        n_appliances = 0
+        appliances = []
         with transaction.atomic():
             for template in pool.possible_templates:
                 for appliance in cls.unassigned().filter(
-                        template=template).all()[:pool.total_count - n_appliances]:
-                    new_name = "{}_{}".format(pool.owner.username, appliance.name)
-                    with redis.appliances_ignored_when_renaming(appliance.name, new_name):
-                        appliance.appliance_pool = pool
-                        appliance.datetime_leased = timezone.now()
-                        appliance.leased_until = appliance.datetime_leased + timedelta(
-                            minutes=time_minutes)
-                        if appliance.provider_api.can_rename:
-                            try:
-                                appliance.name = appliance.provider_api.rename_vm(
-                                    appliance.name, new_name)
-                            except Exception as e:
-                                logger().exception(
-                                    "Exception {}: {}".format(type(e).__name__, str(e)))
-                        appliance.save()
-                        appliance_power_on.delay(appliance.id)
-                        n_appliances += 1
-                if n_appliances == pool.total_count:
+                        template=template).all()[:pool.total_count - len(appliances)]:
+                    appliance.appliance_pool = pool
+                    appliance.save()
+                    appliance_power_on.delay(appliance.id)
+                    appliances.append(appliance)
+                if len(appliances) == pool.total_count:
                     break
-        return n_appliances
+        return len(appliances)
 
     @classmethod
     def kill(cls, appliance_or_id):
@@ -497,6 +483,11 @@ class AppliancePool(models.Model):
         else:
             # No appliances, so just delete it
             self.delete()
+
+    @property
+    def possible_other_owners(self):
+        """Returns a list of User objects that can own this pool instead of original owner"""
+        return type(self.owner).objects.exclude(pk=self.owner.pk)
 
     def __repr__(self):
         return "<AppliancePool id: {}, group: {}, total_count: {}>".format(

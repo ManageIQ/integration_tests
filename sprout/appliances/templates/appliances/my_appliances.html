@@ -47,17 +47,17 @@
                             <div class="btn-toolbar" role="toolbar" aria-label="Appliance operations">
                                 <div class="btn-group" role="group" aria-label="Power operations">
                                     {% if appliance.can_launch %}
-                                        <a href="{% url 'appliances.views.start_appliance' appliance.id %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-off"></span> Launch</a>
+                                        <a href="{% url 'appliances.views.start_appliance' appliance.id %}" class="btn btn-success btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Launch</a>
                                     {% endif %}
                                     {% if appliance.can_stop %}
-                                        <a href="{% url 'appliances.views.stop_appliance' appliance.id %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                        <a href="{% url 'appliances.views.stop_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
                                     {% endif %}
                                     {% if appliance.can_suspend %}
-                                        <a href="{% url 'appliances.views.suspend_appliance' appliance.id %}" class="btn btn-warning btn-xs"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
+                                        <a href="{% url 'appliances.views.suspend_appliance' appliance.id %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
                                     {% endif %}
                                 </div>
                                 <div class="btn-group" role="group" aria-label="">
-                                    <a href="{% url 'appliances.views.kill_appliance' appliance.id %}" class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
+                                    <a href="{% url 'appliances.views.kill_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
                                 </div>
                                 <div class="btn-group" role="group" aria-label="...">
                                 {% if appliance.leased_until %}
@@ -87,7 +87,17 @@
                             {% else %}
                                 <button class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-remove"></span> Not fulfilled</button>
                             {% endif %}
-                            <a href="{% url 'appliances.views.kill_pool' pool.id %}" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
+                            <a href="{% url 'appliances.views.kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
+                            <form action="{% url 'appliances.views.transfer_pool' %}" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="pool_id" value="{{ pool.id }}">
+                                <input type="submit" class="btn btn-success btn-sm" value="Transfer ownership to:" onclick="return confirm('Are you sure?')">
+                                <select name="user_id">
+                                {% for user in pool.possible_other_owners %}
+                                    <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
+                                {% endfor %}
+                                </select>
+                            </form>
                         </td>
                     </tr>
                 </tfoot>
@@ -122,7 +132,7 @@
           <label for="count">Number of appliances wanted:</label>
           <input type="number" class="form-control" id="count" name="count" min="1" value="1">
         </div>
-        <button class="btn btn-primary btn-lg"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
+        <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
     </form>
 </div>
 <script type="text/javascript">

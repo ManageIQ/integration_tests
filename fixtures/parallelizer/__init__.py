@@ -149,7 +149,7 @@ class ParallelSession(object):
             # Retrieve and print the template_name for Jenkins to pick up
             template_name = request["appliances"][0]["template_name"]
             conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
-            self.terminal.write("appliance_template={}\n".format(template_name))
+            self.terminal.write("appliance_template=\"{}\";\n".format(template_name))
             self.terminal.write("Parallelized Sprout setup finished.\n")
             self.slave_appliances_data = {}
             for appliance in request["appliances"]:
