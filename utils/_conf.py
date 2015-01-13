@@ -424,7 +424,7 @@ def load_yaml(filename=None, warn_on_fail=True):
         with filename_encrypted.open("r") as encrypted:
             conf = yaml.load(cipher.decrypt(encrypted.read()).strip())
 
-    if isinstance(conf, dict):
+    if isinstance(conf, dict) and conf:
         return conf
 
     if warn_on_fail:
