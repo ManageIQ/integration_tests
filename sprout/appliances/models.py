@@ -9,6 +9,7 @@ from utils.appliance import Appliance as CFMEAppliance
 from utils.conf import cfme_data
 from utils.log import create_logger
 from utils.providers import provider_factory
+from utils.timeutil import nice_seconds
 from utils.version import LooseVersion
 
 
@@ -342,13 +343,11 @@ class Appliance(models.Model):
         """Minutes"""
         if self.leased_until is None:
             return "never"
-        minutes = (self.leased_until - timezone.now()).total_seconds() / 60.0
-        if minutes <= 1.0 and minutes > 0.0:
-            return "Less than one minute!"
-        elif minutes <= 0.0:
+        seconds = (self.leased_until - timezone.now()).total_seconds()
+        if seconds <= 0.0:
             return "Expired!"
         else:
-            return "{} minutes.".format(int(minutes))
+            return nice_seconds(seconds)
 
     @property
     def can_launch(self):
@@ -487,7 +486,8 @@ class AppliancePool(models.Model):
     @property
     def possible_other_owners(self):
         """Returns a list of User objects that can own this pool instead of original owner"""
-        return type(self.owner).objects.exclude(pk=self.owner.pk)
+        return type(self.owner).objects.exclude(pk=self.owner.pk).order_by("last_name",
+                                                                           "first_name")
 
     def __repr__(self):
         return "<AppliancePool id: {}, group: {}, total_count: {}>".format(

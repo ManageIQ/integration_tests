@@ -20,6 +20,7 @@
                         <th>Power state:</th>
                         <th>Expires in:</th>
                         <th>Actions:</th>
+                        <th>Lease actions:</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,12 +62,26 @@
                                 </div>
                                 <div class="btn-group" role="group" aria-label="...">
                                 {% if appliance.leased_until %}
-                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +30m</a>
-                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +1h</a>
-                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +4h</a>
-                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +1d</a>
-                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> +1w</a>
-                                    <em>from now.</em>
+                                    <em>Set lease time</em>
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
+                                    <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
+                                {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-toolbar" role="toolbar" aria-label="Appliance lease time control">
+                                <div class="btn-group" role="group" aria-label="...">
+                                <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
+                                <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
+                                <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
+                                <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
+                                <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
+                                {% if appliance.leased_until %}
+                                    <a href="{% url 'appliances.views.dont_expire_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
                                 {% endif %}
                                 </div>
                             </div>
@@ -78,10 +93,10 @@
                     <tr>
                         <td>Fulfillment progress:</td>
                         <td colspan="5">{{ pool.percent_finished|progress }}</td>
-                        <td colspan="2"><em>Not relevant after provisioning finished (TODO: hide after)</em></td>
+                        <td colspan="3"><em>Not relevant after provisioning finished (TODO: hide after)</em></td>
                     </tr>
                     <tr>
-                        <td colspan="8">
+                        <td colspan="9">
                             {% if pool.fulfilled %}
                                 <button class="btn btn-success btn-sm"><span class="glyphicon glyphicon-ok"></span> Fulfilled</button>
                             {% else %}

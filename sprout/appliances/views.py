@@ -9,7 +9,7 @@ from django.template.base import add_to_builtins
 
 from appliances.models import Provider, AppliancePool, Appliance, Group, Template
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
-    anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete)
+    anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, appliance_rename)
 
 from utils.log import create_logger
 from utils.providers import provider_factory
@@ -30,18 +30,19 @@ def go_back_or_home(request):
 
 
 def index(request):
-    superusers = User.objects.filter(is_superuser=True)
+    superusers = User.objects.filter(is_superuser=True).order_by("last_name", "first_name")
     return render(request, 'index.html', locals())
 
 
 def providers(request):
-    providers = Provider.objects.all()
+    providers = Provider.objects.order_by("id")
     return render(request, 'appliances/providers.html', locals())
 
 
 def shepherd(request):
     appliances = Appliance.objects.filter(
-        appliance_pool=None, ready=True, marked_for_deletion=False)
+        appliance_pool=None, ready=True, marked_for_deletion=False).order_by(
+            "template__template_group", "template__version", "template__date", "template__provider")
     return render(request, 'appliances/shepherd.html', locals())
 
 
@@ -61,7 +62,7 @@ def versions_for_group(request):
             for version in versions_only:
                 providers = []
                 for provider in Template.objects.filter(
-                        version=version, usable=True, ready=True).values("provider"):
+                        version=version, usable=True, ready=True).values("provider").distinct():
                     providers.append(provider.values()[0])
                 versions.append((version, ", ".join(providers)))
 
@@ -174,6 +175,24 @@ def prolong_lease_appliance(request, appliance_id, minutes):
     return go_back_or_home(request)
 
 
+def dont_expire_appliance(request, appliance_id):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    try:
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist:
+        messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
+        return go_back_or_home(request)
+    if appliance.owner is None or appliance.owner != request.user:
+        messages.error(request, 'This appliance belongs either to some other user or nobody.')
+        return go_back_or_home(request)
+    with transaction.atomic():
+        appliance.leased_until = None
+        appliance.save()
+    messages.success(request, 'Lease disabled successfully. Be careful.')
+    return go_back_or_home(request)
+
+
 def kill_appliance(request, appliance_id):
     if not request.user.is_authenticated():
         return go_home(request)
@@ -243,8 +262,15 @@ def transfer_pool(request):
             user = User.objects.get(id=user_id)
             if user == request.user:
                 raise Exception("Why changing owner back to yourself? That does not make sense!")
+            original_owner = pool.owner
             pool.owner = user
             pool.save()
+        # Rename appliances
+        for appliance in pool.appliances:
+            if appliance.name.startswith("{}_".format(original_owner.username)):
+                # Change name
+                appliance_rename.delay(
+                    appliance.id, user.username + appliance.name[len(original_owner.username):])
     except Exception as e:
         messages.error(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
     else:

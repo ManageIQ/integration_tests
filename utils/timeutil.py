@@ -155,3 +155,35 @@ class parsetime(_datetime):
         Returns: :py:class`str` object
         """
         return self.strftime(self._request_format)
+
+
+def nice_seconds(t_s):
+    """Return nicer representation of seconds"""
+    if t_s < 60.0:
+        return "{0:.2f}s".format(t_s)
+    minutes = 1
+    while t_s - (minutes * 60.0) >= 60.0:
+        minutes += 1
+    seconds = t_s - (minutes * 60)
+    if minutes < 60.0:
+        return "{0}m{1:.2f}s".format(minutes, seconds)
+    # Hours
+    hours = 1
+    while minutes - (hours * 60.0) >= 60.0:
+        hours += 1
+    minutes = minutes - (hours * 60)
+    if hours < 24.0:
+        return "{0}h{1}m{2:.2f}s".format(hours, minutes, seconds)
+    # Days
+    days = 1
+    while hours - (days * 24.0) >= 24.0:
+        days += 1
+    hours = hours - (days * 24)
+    if days < 7.0:
+        return "{0}d{1}h{2}m{3:.2f}s".format(days, hours, minutes, seconds)
+    # Weeks
+    weeks = 1
+    while days - (weeks * 7.0) >= 7.0:
+        weeks += 1
+    days = days - (weeks * 7)
+    return "{0}w{1}d{2}h{3}m{4:.2f}s".format(weeks, days, hours, minutes, seconds)
