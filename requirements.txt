@@ -1,4 +1,3 @@
-cartouche
 boto
 bottle
 bottle-sqlite
@@ -30,6 +29,7 @@ selenium
 slumber
 multimethods.py
 sphinx-rtd-theme
+Sphinx>=1.3b2
 sqlalchemy
 suds
 tornado
