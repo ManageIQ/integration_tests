@@ -70,7 +70,7 @@ infra_pxe_filters = [
 
 
 @pytest.mark.perf_ui_infrastructure
-@pytest.mark.usefixtures("setup_infrastructure_providers")
+@pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_providers(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -86,7 +86,7 @@ def test_perf_ui_infra_providers(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_infrastructure
-@pytest.mark.usefixtures("setup_infrastructure_providers")
+@pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_clusters(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -113,7 +113,7 @@ def test_perf_ui_infra_clusters(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_infrastructure
-@pytest.mark.usefixtures("setup_infrastructure_providers")
+@pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_hosts(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -131,7 +131,7 @@ def test_perf_ui_infra_hosts(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_infrastructure
-@pytest.mark.usefixtures("setup_infrastructure_providers")
+@pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_vm_explorer(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -150,7 +150,7 @@ def test_perf_ui_infra_vm_explorer(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_infrastructure
-@pytest.mark.usefixtures("setup_infrastructure_providers")
+@pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_resource_pools(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -178,7 +178,7 @@ def test_perf_ui_infra_resource_pools(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_infrastructure
-@pytest.mark.usefixtures("setup_infrastructure_providers")
+@pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_datastores(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -196,7 +196,7 @@ def test_perf_ui_infra_datastores(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_infrastructure
-@pytest.mark.usefixtures("setup_infrastructure_providers")
+@pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_pxe(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 

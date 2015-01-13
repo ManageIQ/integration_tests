@@ -19,6 +19,7 @@ chargeback_filters = [
 
 
 @pytest.mark.perf_ui_intelligence
+@pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_intelligence_reports(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -38,6 +39,7 @@ def test_perf_ui_intelligence_reports(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_intelligence
+@pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_intelligence_chargeback(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
