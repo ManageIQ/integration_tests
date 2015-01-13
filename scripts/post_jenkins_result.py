@@ -23,8 +23,9 @@ try:
     errors = int(elem.attrib['errors'])
     fails = int(elem.attrib['failures']) + errors
     skips = int(elem.attrib['skips'])
-    tests = int(elem.attrib['tests'])
-    passes = tests - (fails + errors)
+    # junit report doesn't count skips as tests
+    tests = int(elem.attrib['tests']) + skips + errors
+    passes = tests - (skips + fails)
 except IOError:
     # junit-xml didn't exist, all the values become -1
     errors = fails = skips = tests = passes = -1
