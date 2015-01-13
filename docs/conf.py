@@ -47,7 +47,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
-    'cartouche',
+    'utils.nelson',
     'utils.apidoc'
 ]
 
