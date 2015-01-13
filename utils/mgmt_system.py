@@ -13,6 +13,7 @@ from textwrap import dedent
 import operator
 
 import boto
+import time
 import tzlocal
 from boto.ec2 import EC2Connection, get_region
 from cinderclient.v2 import client as cinderclient
@@ -688,13 +689,15 @@ class VMWareSystem(MgmtSystemAPIBase):
     def rename_vm(self, vm_name, new_vm_name):
         vm = self._get_vm(vm_name)
         task = vm.Rename_Task(newName=new_vm_name)
-        try:
-            wait_for(
-                lambda: task.info.state == "success" or self.does_vm_exist(new_vm_name),
-                fail_func=task.update(), delay=0.5, num_sec=120)
-        except TimedOutError:
-            return vm_name
+        # Cycle until the new named vm is found
+        # That must happen or the error state can come up too
+        while not self.does_vm_exist(new_vm_name):
+            task.update()
+            if task.info.state == "error":
+                return vm_name  # Old vm name if error
+            time.sleep(0.5)
         else:
+            # The newly renamed VM is found
             return new_vm_name
 
     def clone_vm(self, source, destination, resourcepool=None, datastore=None, power_on=True,
