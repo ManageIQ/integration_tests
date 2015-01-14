@@ -169,6 +169,12 @@ class Reporter(ArtifactorBasePlugin):
 
         # Sort the test output and if necessary discard tests that have passed
         template_data['tests'] = sorted(template_data['tests'], key=itemgetter('name'))
+
+        for test in template_data['tests']:
+            if test.get('duration', None):
+                test['duration'] = str(datetime.timedelta(
+                    seconds=math.ceil(test['duration'])))
+
         if self.only_failed:
             template_data['tests'] = [x for x in template_data['tests']
                                   if x['outcomes']['overall'] not in ['skipped', 'passed']]

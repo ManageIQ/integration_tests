@@ -118,6 +118,12 @@ def pytest_runtest_logreport(report):
         xfail = True
     else:
         xfail = False
+
+    if hasattr(report, 'skipped'):
+        if report.longrepr:
+            art_client.fire_hook('filedump', test_location=location, test_name=name,
+                                 filename="short-traceback.txt", contents=report.longrepr[2],
+                                 fd_ident="short_tb")
     art_client.fire_hook('report_test', test_location=location,
                          test_name=name, test_xfail=xfail, test_when=report.when,
                          test_outcome=report.outcome)
