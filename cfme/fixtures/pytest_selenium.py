@@ -740,6 +740,25 @@ def go_to_fixture(fixtureconf, browser):
     force_navigate(page_name)
 
 
+class ContextWrapper(dict):
+    """Dict that provides .attribute access + dumps all keys when not found."""
+    def __getattr__(self, attr):
+        try:
+            return self[attr]
+        except KeyError:
+            raise AttributeError(
+                "No such key {} in the context! (available: {})".format(
+                    repr(attr), repr(self.keys())))
+
+    def __getitem__(self, item):
+        try:
+            return super(ContextWrapper, self).__getitem__(item)
+        except KeyError:
+            raise KeyError(
+                "No such key {} in the context! (available: {})".format(
+                    repr(item), repr(self.keys())))
+
+
 def force_navigate(page_name, _tries=0, *args, **kwargs):
     """force_navigate(page_name)
 
@@ -754,6 +773,11 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # 1: login_admin handles an alert or CannotContinueWithNavigation appears.
         # 2: Everything should work. If not, NavigationError.
         raise exceptions.NavigationError(page_name)
+
+    if "context" in kwargs:
+        if not isinstance(kwargs["context"], ContextWrapper) and isinstance(
+                kwargs["context"], dict):
+            kwargs["context"] = ContextWrapper(kwargs["context"])
 
     _tries += 1
 

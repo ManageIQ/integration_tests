@@ -84,3 +84,19 @@ def get_host_id(hostname, ip_address=None, db=None):
         return str(hosts[0].id)
     else:
         return None
+
+
+def check_domain_enabled(domain, ip_address=None, db=None):
+    if ip_address is None:
+        ip_address = cfmedb().hostname
+
+    if db is None:
+        db = Db(hostname=ip_address)
+
+    namespaces = db["miq_ae_namespaces"]
+    q = db.session.query(namespaces).filter(
+        namespaces.parent_id == None, namespaces.name == domain)  # NOQA (for is/==)
+    try:
+        return list(q)[0].enabled
+    except IndexError:
+        raise KeyError("No such Domain: {}".format(domain))
