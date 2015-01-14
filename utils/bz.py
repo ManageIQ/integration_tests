@@ -275,9 +275,10 @@ class BugWrapper(object):
     @property
     def is_opened(self):
         if self.is_upstream_bug:
-            return self._bugzilla.open_states
+            states = self._bugzilla.open_states
         else:
-            return self._bugzilla.open_states + ["POST"]
+            states = self._bugzilla.open_states + ["POST"]
+        return self.status in states
 
     @property
     def product(self):
