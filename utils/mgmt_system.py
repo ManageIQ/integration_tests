@@ -29,6 +29,7 @@ from ovirtsdk.xml import params
 from psphere import managedobjects as mobs
 from psphere.client import Client
 from psphere.errors import ObjectNotFoundError
+from suds import WebFault
 
 from cfme import exceptions as cfme_exc
 from utils.log import logger
@@ -43,6 +44,11 @@ VMInfo = namedtuple("VMInfo", ["uuid", "name", "power_state", "ip"])
 
 
 class _PsphereClient(Client):
+
+    def __init__(self, *args, **kwargs):
+        self._cached_retry = dict()
+        super(_PsphereClient, self).__init__(*args, **kwargs)
+
     def get_search_filter_spec(self, *args, **kwargs):
         # A datastore traversal spec is missing from this method in psphere.
         # psav has opened a PR to add it, but until it gets merged we'll need to come behind
@@ -75,6 +81,35 @@ class _PsphereClient(Client):
             logger.warning('%s already in psphere search filer spec, not adding it', missing_ss)
 
         return pfs
+
+    def __getattribute__(self, attr):
+        # fetch the attribute using parent class to avoid recursion
+        res = super(_PsphereClient, self).__getattribute__(attr)
+        # any callable (except 'login') is protected against unexpected logout
+        if callable(res) and attr not in ('login', '_login_retry_wrapper'):
+            if attr not in self._cached_retry:
+                self._cached_retry[attr] = self._login_retry_wrapper(res)
+            return self._cached_retry[attr]
+        # don't mess with non-callables - just return them
+        return res
+
+    def _login_retry_wrapper(self, o):
+        # tries to log in on failure
+        def f(*args, **kwargs):
+            try:
+                return o(*args, **kwargs)
+            except ObjectNotFoundError:
+                try:
+                    self.logout()
+                except WebFault:
+                    # Server raíses the following when we try to logout with an old session
+                    # WebFault: Server raised fault: 'The session is not authenticated.'
+                    pass
+                logger.warning("{} disconnected (psphere api); logging back in and trying again"
+                    .format(self.server))
+                self.login()
+                return o(*args, **kwargs)
+        return f
 
 
 class MgmtSystemAPIBase(object):
