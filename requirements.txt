@@ -28,8 +28,6 @@ scp
 selenium
 slumber
 multimethods.py
-sphinx-rtd-theme
-Sphinx>=1.3b2
 sqlalchemy
 suds
 tornado
@@ -37,7 +35,12 @@ tzlocal
 ui-navigate
 numpy
 
-# temp fix: doc builds are breaking because of an old version of six
+# docs requirements
+# When Sphinx 1.3 is released and on RTD, we can upgrade and use
+# napoleon from sphinx.ext instead of the sphinxcontrib version
+Sphinx<1.3
+sphinx-rtd-theme
+sphinxcontrib-napoleon
 six>=1.9
 
 ###
