@@ -1031,7 +1031,7 @@ class IPAppliance(object):
         wait_for(func=lambda: self.is_db_ready,
                  message='appliance.is_db_ready',
                  delay=20,
-                 numsec=timeout)
+                 num_sec=timeout)
 
     def wait_for_ssh(self, timeout=300):
         """Waits for appliance database to be ready
@@ -1042,7 +1042,7 @@ class IPAppliance(object):
         wait_for(func=lambda: self.is_ssh_running,
                  message='appliance.is_ssh_running',
                  delay=5,
-                 numsec=timeout)
+                 num_sec=timeout)
 
     @lazycache
     def db_address(self):
