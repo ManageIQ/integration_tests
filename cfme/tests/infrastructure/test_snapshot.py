@@ -16,7 +16,7 @@ pytestmark = [pytest.mark.long_running]
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provider_key')
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
 
     new_idlist = []
     new_argvalues = []
