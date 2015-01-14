@@ -1022,7 +1022,7 @@ class IPAppliance(object):
         else:
             log_callback("[WARN] some version of vddk already installed")
 
-    def wait_for_db(self, timeout=180):
+    def wait_for_db(self, timeout=600):
         """Waits for appliance database to be ready
 
         Args:
