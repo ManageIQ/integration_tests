@@ -1200,7 +1200,8 @@ class EC2System(MgmtSystemAPIBase):
 
     def list_vm(self):
         """Returns a list from instance IDs currently active on EC2 (not terminated)"""
-        return [inst.id for inst in self._get_all_instances() if inst.state != 'terminated']
+        instances = [inst for inst in self._get_all_instances() if inst.state != 'terminated']
+        return [i.tags.get('Name', i.id) for i in instances]
 
     def list_template(self):
         private_images = self.api.get_all_images(owners=['self'],
