@@ -177,7 +177,7 @@ class Reporter(ArtifactorBasePlugin):
 
         if self.only_failed:
             template_data['tests'] = [x for x in template_data['tests']
-                                  if x['outcomes']['overall'] not in ['skipped', 'passed']]
+                                  if x['outcomes']['overall'] not in ['passed']]
 
         # Render the report
         data = template_env.get_template('test_report.html').render(**template_data)
