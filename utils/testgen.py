@@ -294,7 +294,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
     # pick a single provider if option['choose_random'] == True
     if 'choose_random' not in options:
         options['choose_random'] = False
-    if options['choose_random']:
+    if idlist and options['choose_random']:
         single_index = random.choice(range(len(idlist)))
         new_idlist = ['random_provider']
         new_argvalues = [argvalues[single_index]]
