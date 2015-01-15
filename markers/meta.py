@@ -44,8 +44,10 @@ after this selection, only the action with the most matched keywords is called. 
 in your mind. If this is not enough in the future, it can be extended if you wish.
 
 """
-import pytest
 from collections import namedtuple
+from types import FunctionType
+
+import pytest
 
 from utils import kwargify
 from utils.log import logger
@@ -65,9 +67,16 @@ def pytest_configure(config):
 
 
 @pytest.mark.tryfirst
+def pytest_pycollect_makeitem(collector, name, obj):
+    # Put the meta mark on objects as soon as pytest begins to collect them
+    if isinstance(obj, FunctionType) and not hasattr(obj, 'meta'):
+        pytest.mark.meta(obj)
+
+
+@pytest.mark.tryfirst
 def pytest_collection_modifyitems(session, config, items):
     for item in items:
-        item._metadata = metadict()
+        item._metadata = metadict(item.function.meta.kwargs)
         meta = item.get_marker("meta")
         if meta is None:
             continue
