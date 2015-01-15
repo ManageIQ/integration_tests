@@ -4,15 +4,18 @@ from cfme.configure import tasks
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
 from cfme.web_ui import flash, tabstrip as tabs, toolbar as tb, Quadicon
-from utils import conf, testgen
+from utils import conf, testgen, version
 from utils.providers import setup_provider
 from utils.wait import wait_for
 import pytest
 
 DATASTORE_TYPES = ('vmfs', 'nfs', 'iscsi')
 
-# rhevm not supported
-PROVIDER_TYPES = ('virtualcenter',)
+# rhevm supported in 5.3+
+PROVIDER_TYPES = version.pick({
+    version.LOWEST: ('virtualcenter',),
+    '5.3': ('virtualcenter', 'rhevm')
+})
 
 # Rows to check in the datastore detail Content infoblock; after smartstate analysis
 CONTENT_ROWS_TO_CHECK = (
@@ -26,12 +29,12 @@ CONTENT_ROWS_TO_CHECK = (
 
 
 def pytest_generate_tests(metafunc):
-    p_argn, p_argv, p_ids = testgen.provider_by_type(metafunc, PROVIDER_TYPES, 'datastores')
-    argnames = ['provider_key', 'datastore_type', 'datastore_name']
+    p_argn, p_argv, p_ids = testgen.provider_by_type(metafunc, PROVIDER_TYPES, 'provider_type', 'datastores')
+    argnames = ['provider_key', 'provider_type', 'datastore_type', 'datastore_name']
     argvalues = []
     idlist = []
     for argv in p_argv:
-        prov_datastores, prov_key = argv[0], argv[1]
+        prov_type, prov_datastores, prov_key = argv[0], argv[1], argv[2]
         if not prov_datastores:
             continue
         for test_datastore in prov_datastores:
@@ -41,19 +44,11 @@ def pytest_generate_tests(metafunc):
                 'datastore type must be set to [{}] for smartstate analysis tests'\
                 .format('|'.join(DATASTORE_TYPES))
 
-            argvalues.append([prov_key, test_datastore['type'], test_datastore['name']])
+            argvalues.append([prov_key, prov_type, test_datastore['type'], test_datastore['name']])
             test_id = '{}-{}-{}'.format(prov_key, test_datastore['type'], test_datastore['name'])
             idlist.append(test_id)
 
     metafunc.parametrize(argnames, argvalues, ids=idlist, scope="module")
-
-
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 def get_host_data_by_name(provider_key, host_name):
@@ -65,12 +60,13 @@ def get_host_data_by_name(provider_key, host_name):
 
 # TODO add support for events
 @pytest.mark.bugzilla(
-    1091033,
+    1091033, 1180467,
     unskip={
-        1091033: lambda datastore_type: datastore_type != 'iscsi'
+        1091033: lambda datastore_type: datastore_type != 'iscsi',
+        1180467: lambda provider_type: provider_type != 'rhevm'
     }
 )
-def test_run_datastore_analysis(request, provider_init, provider_key,
+def test_run_datastore_analysis(request, setup_provider, provider_key, provider_type,
                                 datastore_type, datastore_name):
     """ Run host SmartState analysis
     """
