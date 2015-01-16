@@ -50,8 +50,8 @@ element_form = Form(fields=[
 ])
 
 dialogs_table = SplitTable(
-    header_data=("//div[@id='records_div']//table[contains(@class, 'hdr')]", 1),
-    body_data=("//div[@id='records_div']//div[contains(@class, 'objbox')]/table", 1))
+    header_data=('//div[@class="xhdr"]/table/tbody', 1),
+    body_data=('//div[@class="objbox"]/table/tbody', 1))
 
 
 def _all_servicedialogs_add_new(context):
