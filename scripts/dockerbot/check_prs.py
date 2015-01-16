@@ -123,18 +123,18 @@ def run_tasks():
             stream = task['stream']
             try:
                 # Get the latest available template and provision/configure an appliance
-                #template_obj = tapi.group(stream).get()
-                #providers = template_obj['latest_template_providers']
-                #if providers:
-                #    for provider in docker_conf['provider_prio']:
-                #        if provider in providers:
-                #            break
-                #    else:
-                #        provider = providers[0]
-                #else:
-                #    raise Exception('No template for stream')
-                #template = template_obj['latest_template']
-                #vm_name = 'dkb-{}'.format(task['tid'])
+                # template_obj = tapi.group(stream).get()
+                # providers = template_obj['latest_template_providers']
+                # if providers:
+                #     for provider in docker_conf['provider_prio']:
+                #         if provider in providers:
+                #             break
+                #     else:
+                #         provider = providers[0]
+                # else:
+                #     raise Exception('No template for stream')
+                # template = template_obj['latest_template']
+                # vm_name = 'dkb-{}'.format(task['tid'])
                 provider = "Sprout"
                 vm_name = "Sprout"
                 template = "Sprout"
