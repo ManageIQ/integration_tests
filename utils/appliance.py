@@ -360,7 +360,7 @@ class IPAppliance(object):
     def address(self):
         # If address wasn't set in __init__, use the hostname from base_url
         parsed_url = urlparse(conf.env['base_url'])
-        return parsed_url.hostname
+        return parsed_url.netloc
 
     @lazycache
     def url(self):
@@ -1046,9 +1046,21 @@ class IPAppliance(object):
 
     @lazycache
     def db_address(self):
-        # returns the appliance address by default, methods that set up the internal
+        # pulls the db address from the appliance by default, falling back to the appliance
+        # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
-        return self.address
+        result = self.ssh_client().run_rails_command(
+            "\"puts Rails.configuration.database_configuration['production']['host']\"")
+        # output can be empty, in which case the database is local
+        if result.rc == 0:
+            stripped_out = result.output.strip()
+            if stripped_out.startswith('127') or 'localhost' in stripped_out:
+                # address is localhost, use the appliance address
+                stripped_out = None
+            return stripped_out if stripped_out else self.address
+        else:
+            self.log.warning('Unable to pull database address from appliance')
+            return self.address
 
     @lazycache
     def db(self):
@@ -1117,6 +1129,11 @@ class IPAppliance(object):
         return self.ssh_client().appliance_has_netapp()
 
     @lazycache
+    def guid(self):
+        result = self.ssh_client().run_command('cat /var/www/miq/vmdb/GUID')
+        return result.output
+
+    @lazycache
     def configuration_details(self):
         """Return details that are necessary to navigate through Configuration accordions.
 
@@ -1165,7 +1182,7 @@ class IPAppliance(object):
 
     @lazycache
     def db_yamls(self):
-        return db.db_yamls(self.db)
+        return db.db_yamls(self.db, self.guid)
 
     def get_yaml_config(self, config_name):
         return self.db_yamls[config_name]

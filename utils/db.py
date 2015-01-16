@@ -1,7 +1,6 @@
 from collections import Mapping
 from contextlib import contextmanager
 from itertools import izip
-from urlparse import urlparse
 from tempfile import NamedTemporaryFile
 
 import yaml
@@ -83,7 +82,7 @@ class Db(Mapping):
 
     def __init__(self, hostname=None, credentials=None):
         if hostname is None:
-            self.hostname = urlparse(store.base_url).hostname
+            self.hostname = store.current_appliance.db_address
         else:
             self.hostname = hostname
 
@@ -284,7 +283,7 @@ class Db(Mapping):
                 return None
 
 
-def db_yamls(db=None):
+def db_yamls(db=None, guid=None):
     """Returns the yamls from the db configuration table as a dict
 
     Usage:
@@ -300,9 +299,15 @@ def db_yamls(db=None):
 
     """
     db = db or cfmedb()
+    guid = guid or store.current_appliance.guid
+
     with db.transaction:
         config = db['configurations']
-        configs = db.session.query(config.typ, config.settings)
+        servers = db['miq_servers']
+
+        configs = db.session.query(config.typ, config.settings)\
+            .join(servers, config.miq_server_id == servers.id)\
+            .filter(servers.guid == guid)
         return {name: yaml.load(settings) for name, settings in configs}
 
 
