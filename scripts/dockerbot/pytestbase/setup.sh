@@ -38,7 +38,7 @@ do_or_die () {
     if [ "$try" -lt "$max_retry" ]; then
         let try+=1;
         log "Running the command - try $try of $max_retry..."
-        eval "$cmd" 
+        eval "$cmd"
         let ret_val="$?";
     else
         log "Failed to run the command $try times - exiting now..."
@@ -51,9 +51,13 @@ trap on_exit EXIT
 
 log "Downloading the credentials..."
 do_or_die "GIT_SSL_NO_VERIFY=true git clone $CFME_CRED_REPO $CFME_CRED_REPO_DIR >> $ARTIFACTOR_DIR/setup.txt 2>&1"
-
+mkdir $CFME_REPO_DIR
+cd $CFME_REPO_DIR
 log "Downloading the master branch of cfme_tests repo..."
-do_or_die "git clone $CFME_REPO $CFME_REPO_DIR >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+do_or_die "git init >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+do_or_die "git remote add origin $CFME_REPO >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+do_or_die "git fetch >> $ARTIFACTOR_DIR/setup.txt 2>&1"
+do_or_die "git checkout -t origin/master >> $ARTIFACTOR_DIR/setup.txt 2>&1"
 
 # Copy the credentials files into the conf folder instead of bothing to make symlinks
 cp $CFME_CRED_REPO_DIR/complete/* $CFME_REPO_DIR/conf/

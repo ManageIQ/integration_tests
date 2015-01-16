@@ -123,18 +123,21 @@ def run_tasks():
             stream = task['stream']
             try:
                 # Get the latest available template and provision/configure an appliance
-                template_obj = tapi.group(stream).get()
-                providers = template_obj['latest_template_providers']
-                if providers:
-                    for provider in docker_conf['provider_prio']:
-                        if provider in providers:
-                            break
-                    else:
-                        provider = providers[0]
-                else:
-                    raise Exception('No template for stream')
-                template = template_obj['latest_template']
-                vm_name = 'dkb-{}'.format(task['tid'])
+                #template_obj = tapi.group(stream).get()
+                #providers = template_obj['latest_template_providers']
+                #if providers:
+                #    for provider in docker_conf['provider_prio']:
+                #        if provider in providers:
+                #            break
+                #    else:
+                #        provider = providers[0]
+                #else:
+                #    raise Exception('No template for stream')
+                #template = template_obj['latest_template']
+                #vm_name = 'dkb-{}'.format(task['tid'])
+                provider = "Sprout"
+                vm_name = "Sprout"
+                template = "Sprout"
                 tapi.task(task['tid']).put({'result': 'running', 'vm_name': vm_name,
                                             'provider': provider, 'template': template})
 
@@ -146,10 +149,8 @@ def run_tasks():
                                     test_id=task['tid'],
                                     nowait=True,
                                     pr=task['pr_number'],
-                                    provision_provider=provider,
-                                    provision_template=template,
-                                    provision_vm_name=vm_name,
-                                    provision_appliance=True)
+                                    sprout=True,
+                                    sprout_stream=stream)
                 cont_count += 1
                 tapi.task(task['tid']).put({'result': 'running', 'vm_name': vm_name,
                                             'provider': provider, 'template': template})
@@ -173,19 +174,23 @@ def vm_reaper():
         if task['result'] in ["failed", "passed", "invalid"]:
             vm_cleanup = False
             docker_cleanup = False
-            if task['provider'] and task['vm_name']:
-                logger.info('Cleaning up {} on {}'.format(task['vm_name'], task['provider']))
-                if task['vm_name'] == "None":
-                    vm_cleanup = True
-                else:
-                    appliance = Appliance(task['provider'], task['vm_name'])
-                    try:
-                        if appliance.does_vm_exist():
-                            logger.info("Destroying {}".format(appliance.vm_name))
-                            appliance.destroy()
+
+            if task['provider'] == "Sprout" and task['vm_name'] == "Sprout":
+                vm_cleanup = True
+            else:
+                if task['provider'] and task['vm_name']:
+                    logger.info('Cleaning up {} on {}'.format(task['vm_name'], task['provider']))
+                    if task['vm_name'] == "None":
                         vm_cleanup = True
-                    except Exception:
-                        logger.info('Exception occured cleaning up')
+                    else:
+                        appliance = Appliance(task['provider'], task['vm_name'])
+                        try:
+                            if appliance.does_vm_exist():
+                                logger.info("Destroying {}".format(appliance.vm_name))
+                                appliance.destroy()
+                            vm_cleanup = True
+                        except Exception:
+                            logger.info('Exception occured cleaning up')
 
             containers = dockerbot.dc.containers(all=True)
             for container in containers:
