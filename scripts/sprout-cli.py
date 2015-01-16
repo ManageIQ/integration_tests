@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+import json
 import os
 import sys
 from utils.conf import cfme_data
@@ -42,7 +43,7 @@ def main():
     elif "SPROUT_PASSWORD" in os.environ:
         additional_kwargs["auth"] = os.environ["USER"], os.environ["SPROUT_PASSWORD"]
     client = SproutClient(host=host, port=port, **additional_kwargs)
-    print client.call_method(method, *args, **kwargs)
+    print json.dumps(client.call_method(method, *args, **kwargs))
 
 
 if __name__ == "__main__":
