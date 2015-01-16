@@ -20,6 +20,7 @@ explorer_filters = [
 
 
 @pytest.mark.perf_ui_control
+@pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_control_explorer(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 

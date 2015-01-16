@@ -18,6 +18,7 @@ configuration_filters = [
 
 
 @pytest.mark.perf_ui_configure
+@pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_configure_configuration(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 

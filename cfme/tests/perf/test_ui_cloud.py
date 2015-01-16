@@ -36,7 +36,7 @@ vm_cloud_filters = [
 
 
 @pytest.mark.perf_ui_cloud
-@pytest.mark.usefixtures("setup_cloud_providers")
+@pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_providers(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -52,7 +52,7 @@ def test_perf_ui_cloud_providers(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_cloud
-@pytest.mark.usefixtures("setup_cloud_providers")
+@pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_availability_zones(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -70,7 +70,7 @@ def test_perf_ui_cloud_availability_zones(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_cloud
-@pytest.mark.usefixtures("setup_cloud_providers")
+@pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_tenants(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -88,7 +88,7 @@ def test_perf_ui_cloud_tenants(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_cloud
-@pytest.mark.usefixtures("setup_cloud_providers")
+@pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_flavors(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -106,7 +106,7 @@ def test_perf_ui_cloud_flavors(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_cloud
-@pytest.mark.usefixtures("setup_cloud_providers")
+@pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_security_groups(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
@@ -124,7 +124,7 @@ def test_perf_ui_cloud_security_groups(ssh_client, soft_assert):
 
 
 @pytest.mark.perf_ui_cloud
-@pytest.mark.usefixtures("setup_cloud_providers")
+@pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_vm_explorer(ssh_client, soft_assert):
     pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
 
