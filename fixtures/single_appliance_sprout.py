@@ -40,8 +40,6 @@ def pytest_configure(config, __multicall__):
         terminal.write("Requesting single appliance from sprout...\n")
         pool_id = sprout.request_appliances(
             config.option.sprout_group,
-            provider=config.option.sprout_provider,
-            template=config.option.sprout_template,
             count=config.option.sprout_appliances,
             version=config.option.sprout_version,
             date=config.option.sprout_date,
