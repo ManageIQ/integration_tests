@@ -4,6 +4,7 @@ import os
 import requests
 
 from utils.conf import cfme_data, credentials
+from utils.wait import wait_for
 
 
 class SproutException(Exception):
@@ -35,6 +36,11 @@ class SproutClient(object):
     @property
     def api_entry(self):
         return "{}://{}:{}/{}".format(self._proto, self._host, self._port, self._entry)
+
+    def wait_for_sprout_available(self, minutes=5):
+        wait_for(
+            lambda: requests.get(self.api_entry).status_code == 200,
+            num_sec=60 * minutes, delay=5, message="Sprout becomes available")
 
     def call_method(self, name, *args, **kwargs):
         req_data = {

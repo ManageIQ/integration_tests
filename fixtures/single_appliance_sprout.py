@@ -9,7 +9,7 @@ from fixtures.terminalreporter import reporter
 from utils import at_exit, conf
 from utils.appliance import IPAppliance
 from utils.sprout import SproutClient
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
 
 
 timer = None
@@ -37,6 +37,12 @@ def pytest_configure(config, __multicall__):
             and config.option.sprout_appliances == 1):
         terminal = reporter()
         sprout = SproutClient.from_config()
+        terminal.write("Waiting for Sprout to become available ...\n")
+        try:
+            sprout.wait_for_sprout_available()
+        except TimedOutError:
+            terminal.write("Sprout wait timed out. Testing failed ...\n")
+            exit(61)
         terminal.write("Requesting single appliance from sprout...\n")
         pool_id = sprout.request_appliances(
             config.option.sprout_group,

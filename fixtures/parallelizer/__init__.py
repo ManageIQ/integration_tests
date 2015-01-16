@@ -48,7 +48,7 @@ from utils import at_exit, conf
 from utils.appliance import IPAppliance
 from utils.log import create_sublogger
 from utils.sprout import SproutClient
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
 
 
 _appliance_help = '''specify appliance URLs to use for distributed testing.
@@ -112,6 +112,12 @@ class ParallelSession(object):
         else:
             # Using sprout
             self.sprout_client = SproutClient.from_config()
+            self.terminal.write("Waiting for Sprout to become available ...\n")
+            try:
+                self.sprout_client.wait_for_sprout_available()
+            except TimedOutError:
+                self.terminal.write("Sprout wait timed out. Testing failed ...\n")
+                exit(61)
             self.terminal.write(
                 "Requesting {} appliances from Sprout at {}\n".format(
                     self.config.option.sprout_appliances, self.sprout_client.api_entry))
