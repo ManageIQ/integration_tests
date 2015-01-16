@@ -214,13 +214,15 @@ class DockerBot(object):
         self.check_arg('nowait', False)
 
         self.check_arg('banner', False)
-        self.check_arg('watch', True)
+        self.check_arg('watch', False)
         self.check_arg('output', True)
         self.check_arg('dry_run', False)
         self.check_arg('server_ip', None)
 
         if not self.args['server_ip']:
             self.args['server_ip'] = my_ip_address()
+
+        self.check_arg('sprout', False)
 
         self.check_arg('provision_appliance', False)
         if self.args['provision_appliance']:
@@ -229,11 +231,16 @@ class DockerBot(object):
                 print "You don't have all the required options to provision an appliance"
                 ec += 1
 
+        self.check_arg('sprout_stream', None)
+        if self.args['sprout'] and not self.args['sprout_stream']:
+            print "You need to supply a stream for sprout"
+            ec += 1
+
         self.check_arg('appliance_name', None)
         self.check_arg('appliance', None)
 
         if not self.args['appliance_name'] != self.args['appliance'] and \
-           not self.args['provision_appliance']:
+           not self.args['provision_appliance'] and not self.args['sprout']:
             print "You must supply either an appliance OR an appliance name from config"
             ec += 1
 
@@ -324,6 +331,9 @@ class DockerBot(object):
                                            "--bugzilla --no-tracer --perf").format(" ".join(files))
                 else:
                     self.args['pytest'] = "py.test -v --use-provider default -m smoke --no-tracer"
+        if self.args['sprout']:
+            self.args['pytest'] += ' --use-sprout --sprout-appliances 1'
+            self.args['pytest'] += ' --sprout-group {}'.format(self.args['sprout_stream'])
         if not self.args['capture']:
             self.args['pytest'] += ' --capture=no'
         print "  PYTEST Command: {}".format(self.args['pytest'])
@@ -350,6 +360,7 @@ class DockerBot(object):
         print "  SERVER IP: {}".format(self.args['server_ip'])
         if self.args['use_wharf']:
             self.env_details['WHARF'] = self.args['wharf']
+            print "  WHARF: {}".format(self.args['wharf'])
         if self.args['prtester']:
             print "  PRTESTING: Enabled"
             self.env_details['TRACKERBOT'] = self.args['trackerbot']
