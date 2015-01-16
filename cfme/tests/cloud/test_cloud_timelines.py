@@ -85,29 +85,29 @@ def count_events(vm_name, nav_step):
     return len(events)
 
 
-# @bz1127960
+@pytest.mark.bugzilla(1139865)
 def test_provider_event(setup_provider, provider_crud, gen_events, test_instance):
     def nav_step():
         pytest.sel.force_navigate('cloud_provider_timelines',
                                   context={'provider': provider_crud})
-    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
+    wait_for(count_events, [provider_crud.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
 
-# @bz1127960
+@pytest.mark.bugzilla(1139865)
 def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
     def nav_step():
         test_instance.load_details()
         pytest.sel.click(details_page.infoblock.element('Relationships', 'Availability Zone'))
         toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
+    wait_for(count_events, [provider_crud.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
 
-# @bz1127960
+@pytest.mark.bugzilla(1139865)
 def test_vm_event(setup_provider, provider_crud, gen_events, test_instance):
     def nav_step():
         test_instance.load_details()
         toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
+    wait_for(count_events, [provider_crud.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
