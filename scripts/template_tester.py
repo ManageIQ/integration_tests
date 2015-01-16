@@ -11,9 +11,11 @@ mark:
     Mark a template as tested and, if it passes, usable.
 
 """
+import os
 import sys
 
 from utils import trackerbot
+from utils.log import logger
 
 
 def get(api):
@@ -60,6 +62,7 @@ def mark(api, provider_key, template, usable, diagnose):
         from utils.appliance import IPAppliance
         ipa = IPAppliance()
         diagnosis = ipa.diagnose_evm_failure()
+        logger.error('Appliance failed: {}'.format(diagnosis.split(os.linesep)[0]))
     else:
         diagnosis = None
     trackerbot.mark_provider_template(api, provider_key, template, tested=True, usable=usable,
