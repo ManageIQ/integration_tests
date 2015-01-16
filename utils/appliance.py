@@ -419,6 +419,9 @@ class IPAppliance(object):
         """
         logger.info('Diagnosing EVM failures, this can take a while...')
 
+        if not self.address:
+            return 'appliance has no IP Address; provisioning failed or networking is broken'
+
         logger.info('Checking appliance SSH Connection')
         if not self.is_ssh_running:
             return 'SSH is not running on the appliance'
