@@ -9,7 +9,7 @@ from django.template.base import add_to_builtins
 
 from appliances.models import Provider, AppliancePool, Appliance, Group, Template
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
-    anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, appliance_rename)
+    anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, )  # appliance_rename)
 
 from utils.log import create_logger
 from utils.providers import provider_factory
@@ -262,15 +262,15 @@ def transfer_pool(request):
             user = User.objects.get(id=user_id)
             if user == request.user:
                 raise Exception("Why changing owner back to yourself? That does not make sense!")
-            original_owner = pool.owner
+            # original_owner = pool.owner
             pool.owner = user
             pool.save()
         # Rename appliances
-        for appliance in pool.appliances:
-            if appliance.name.startswith("{}_".format(original_owner.username)):
-                # Change name
-                appliance_rename.delay(
-                    appliance.id, user.username + appliance.name[len(original_owner.username):])
+        # for appliance in pool.appliances:
+        #     if appliance.name.startswith("{}_".format(original_owner.username)):
+        #         # Change name
+        #         appliance_rename.delay(
+        #             appliance.id, user.username + appliance.name[len(original_owner.username):])
     except Exception as e:
         messages.error(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
     else:
