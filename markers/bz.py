@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""bugzilla(\*bugs, skip_when=None, xfail_when=None, unskip={}): Marker for bugzilla integration
+"""bugzilla(\*bugs, skip_when=None, xfail_when=None, unskip={}, ignore=[]): Marker for bugzilla
 
 Intelligent bugzilla integration py.test plugin. Specifically tuned for cfme_tests.
 You can specify possibly unlimited amount of bugs. Each bug is then examined by machinery, that
@@ -118,8 +118,11 @@ def pytest_collection_modifyitems(session, config, items):
             terminalreporter.write("\r{}: {}".format(progress[progressbar], item.name))
             progressbar = (progressbar + 1) % len(progress)
             last_line_length = 3 + len(item.name)
+            item._ignore_bugs = set(map(int, marker.kwargs.get("ignore", set([]))))
             item._bugzilla_bugs = set(
-                filter(lambda b: b is not None, map(bz.resolve_blocker, marker.args)))
+                filter(lambda b: b is not None, map(
+                    lambda bug_id: bz.resolve_blocker(
+                        bug_id, ignore_bugs=item._ignore_bugs), marker.args)))
             item._skip_func = kwargify(marker.kwargs.get("skip_when", None))
             item._xfail_func = kwargify(marker.kwargs.get("xfail_when", None))
             item._unskip_dict = {}
@@ -190,7 +193,8 @@ def pytest_runtest_setup(item):
     discards = []
     for root_bug, _ in item._bugzilla_bugs:
         # Check skippers
-        resolved_bug = root_bug.bugzilla.resolve_blocker(root_bug.id)[0]
+        resolved_bug = root_bug.bugzilla.resolve_blocker(
+            root_bug.id, ignore_bugs=item._ignore_bugs)[0]
         if resolved_bug not in skippers:
             continue
         bug_id = resolved_bug.id

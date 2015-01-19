@@ -130,7 +130,8 @@ class Bugzilla(object):
                 expanded.add(b)
         return found
 
-    def resolve_blocker(self, blocker, version=None):
+    def resolve_blocker(self, blocker, version=None, ignore_bugs=set([])):
+        # ignore_bugs is mutable but is not mutated here!
         if isinstance(id, BugWrapper):
             bug = blocker
         else:
@@ -142,6 +143,8 @@ class Bugzilla(object):
         variants = self.get_bug_variants(bug)
         filtered = set([])
         for variant in variants:
+            if variant.id in ignore_bugs:
+                continue
             if variant.version is not None and variant.version > version:
                 continue
             if variant.release_flag is not None and version.is_in_series(variant.release_flag):
@@ -159,7 +162,7 @@ class Bugzilla(object):
                     if version < variant.release_flag:
                         filtered.add((variant, True))
         if not filtered:
-            return
+            return None
         # Prefer release_flag
         for bug, forceskip in filtered:
             if bug.release_flag and version.is_in_series(bug.release_flag):
