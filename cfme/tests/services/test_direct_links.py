@@ -21,7 +21,14 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def provider():
-    return setup_a_provider("infra")
+    return setup_a_provider(
+        "infra",
+        key_fields=[
+            ("provisioning", "template"),
+            ("provisioning", "host"),
+            ("provisioning", "datastore"),
+        ]
+    )
 
 
 @pytest.fixture(scope="module")

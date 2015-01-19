@@ -5,6 +5,7 @@ To quickly add all providers::
     setup_providers(validate=False)
 
 """
+import collections
 from functools import partial
 from operator import methodcaller
 
@@ -112,11 +113,77 @@ def provider_factory_by_name(provider_name, *args, **kwargs):
     return provider_factory(get_provider_key(provider_name), *args, **kwargs)
 
 
-def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=True):
+def _retrieve_field(provider, field):
+    """ Retrieves a field from provider using a tuple.
+
+    The tuple fields are used to dig through the YAML template. You can use strings and ints to dig
+    through the mapings and sequences. Then you can use the last field for matching whether the
+    field equals - then this function returns True or False.
+
+    Args:
+        provider: Provider object.
+        field: Tuple (or just string/int instead of the 1-tuple).
+    """
+    if not isinstance(field, tuple):
+        field = [field]
+    result = provider.get_yaml_data()
+    total = len(field)
+    for i, field_step in enumerate(field, 1):
+        if isinstance(result, collections.Mapping):
+            if field_step not in result:
+                raise KeyError("Cannot find the key {}".format(str(field)))
+            result = result[field_step]
+        elif isinstance(result, collections.Sequence) and not isinstance(result, basestring):
+            if not isinstance(field_step, int):
+                raise KeyError("Cannot find the key {}".format(str(field)))
+            result = result[field_step]
+        elif i == total:  # Final step matching equals
+            if field_step != result:
+                raise KeyError(
+                    "Cannot find the key {} (final match {} vs {})".format(
+                        str(field), str(field_step), str(result)))
+        else:
+            raise KeyError("Cannot find the key {}".format(str(field)))
+    return result
+
+
+def _filter_providers(providers, filter):
+    """Filter providers depending on the YAML keys
+
+    Args:
+        providers: List of provider keys.
+        filter: List of filters. See :py:func:`_retrieve_field`
+    """
+    if isinstance(filter, dict):
+        raise Exception("dict not supported yet!")
+    result = []
+    from cfme.infrastructure.provider import get_from_config as factory_infra
+    from cfme.cloud.provider import get_from_config as factory_cloud
+    for provider in providers:
+        if provider in list_infra_providers():
+            provider = factory_infra(provider)
+        elif provider in list_cloud_providers():
+            provider = factory_cloud(provider)
+        else:
+            raise ValueError("Unknown provider {}".format(provider))
+        try:
+            for field in filter:
+                _retrieve_field(provider, field)
+        except KeyError:
+            pass
+        else:
+            result.append(provider)
+    return result
+
+
+def setup_a_provider(
+        prov_class=None, prov_type=None, validate=True, check_existing=True, key_filter=None):
     """Sets up a random provider
 
     Args:
         prov_type: "infra" or "cloud"
+        key_filter: Keys that the provider has to have in order to use it.
+            See :py:func:`_filter_providers`
 
     """
     providers_data = conf.cfme_data['management_systems']
@@ -142,6 +209,15 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         providers = list_infra_providers()
 
     result = None
+    # Filter out providers if needed
+    if key_filter is not None:
+        if not (isinstance(key_filter, (list))):
+            if not isinstance(key_filter, dict):
+                key_filter = [key_filter]
+            # dict will be supported later
+        else:
+            key_filter = list(key_filter)
+        providers = _filter_providers(providers, key_filter)
     for provider in providers:
         try:
             result = setup_provider(provider, validate=validate, check_existing=check_existing)
