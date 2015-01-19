@@ -25,7 +25,7 @@ def pytest_generate_tests(metafunc):
             test_id = '{}-{}-{}'.format(prov_key, test_host['type'], test_host['name'])
             idlist.append(test_id)
 
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope="module")
+    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 def get_host_data_by_name(provider_key, host_name):
@@ -37,6 +37,11 @@ def get_host_data_by_name(provider_key, host_name):
 
 def test_host_drift_analysis(request, setup_provider, provider_key, host_type, host_name,
                              soft_assert):
+    """Tests host drift analysis
+
+    Metadata:
+        test_flag: host_drift_analysis
+    """
     host_data = get_host_data_by_name(provider_key, host_name)
     test_host = host.Host(name=host_name)
 

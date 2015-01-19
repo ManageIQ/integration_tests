@@ -1,28 +1,57 @@
+import os
+from textwrap import dedent
+from types import FunctionType
+
 from six import iteritems
 from sphinxcontrib.napoleon import _skip_member, Config
 from sphinxcontrib.napoleon import docstring
 from sphinxcontrib.napoleon.docstring import NumpyDocstring
 import sphinx
 
+from utils.log import get_rel_path, logger
+
+config = Config(napoleon_use_param=True, napoleon_use_rtype=True)
+
+
+def pytest_pycollect_makeitem(collector, name, obj):
+    """pytest hook that adds docstring metadata (if found) to a test's meta mark"""
+    if not isinstance(obj, FunctionType) and not hasattr(obj, 'meta'):
+        # This relies on the meta mark having already been applied to
+        # all test functions before this hook is called
+        return
+
+    # __doc__ can be empty or nonexistent, make sure it's an empty string in that case
+    doc = getattr(obj, '__doc__') or ''
+    p = GoogleDocstring(stripper(doc), config)
+
+    if not hasattr(obj.meta, 'kwargs'):
+        obj.meta.kwargs = dict()
+    obj.meta.kwargs.update({
+        'from_docs': p.metadata
+    })
+    if p.metadata:
+        test_path = get_rel_path(collector.fspath)
+        logger.debug('Parsed docstring metadata on {} in {}'.format(name, test_path))
+        logger.trace('{} doc metadata: {}'.format(name, str(p.metadata)))
+
 
 def stripper(docstring):
-    lines = docstring.split("\n")
+    """Slightly smarter :func:`dedent <python:textwrap.dedent>`
 
-    indent = 100
-    for line in lines[1:]:
-        whitespace = line.lstrip()
-        if whitespace:
-            indent = min(indent, len(line) - len(whitespace))
+    It strips a docstring's first line indentation and dedents the rest
 
-    trimmed_lines = [lines[0].strip()]
-    for line in lines[1:]:
-        trimmed_line = line[indent:].rstrip()
-        trimmed_lines.append(trimmed_line)
-
-    return "\n".join(trimmed_lines)
+    """
+    if docstring:
+        lines = docstring.splitlines()
+        return os.linesep.join([
+            lines[0].strip(), dedent("\n".join(lines[1:]))
+        ])
+    else:  # If docstring is a null string, GoogleDocstring will expect an iterable type
+        return ''
 
 
 class GoogleDocstring(docstring.GoogleDocstring):
+    """Custom version of napoleon's GoogleDocstring that adds some special cases"""
     def __init__(self, *args, **kwargs):
         self.metadata = {}
         super(GoogleDocstring, self).__init__(*args, **kwargs)
@@ -60,23 +89,8 @@ class GoogleDocstring(docstring.GoogleDocstring):
 def setup(app):
     """Sphinx extension setup function.
 
-    When the extension is loaded, Sphinx imports this module and executes
-    the ``setup()`` function, which in turn notifies Sphinx of everything
-    the extension offers.
-
-    Parameters
-    ----------
-    app : sphinx.application.Sphinx
-        Application object representing the Sphinx process
-
-    See Also
-    --------
-    The Sphinx documentation on `Extensions`_, the `Extension Tutorial`_, and
-    the `Extension API`_.
-
-    .. _Extensions: http://sphinx-doc.org/extensions.html
-    .. _Extension Tutorial: http://sphinx-doc.org/ext/tutorial.html
-    .. _Extension API: http://sphinx-doc.org/ext/appapi.html
+    See Also:
+        http://sphinx-doc.org/extensions.html
 
     """
     from sphinx.application import Sphinx

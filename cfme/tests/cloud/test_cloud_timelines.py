@@ -87,6 +87,11 @@ def count_events(vm_name, nav_step):
 
 @pytest.mark.bugzilla(1139865)
 def test_provider_event(setup_provider, provider_crud, gen_events, test_instance):
+    """ Tests provider events on timelines
+
+    Metadata:
+        test_flag: timelines, provision
+    """
     def nav_step():
         pytest.sel.force_navigate('cloud_provider_timelines',
                                   context={'provider': provider_crud})
@@ -96,6 +101,11 @@ def test_provider_event(setup_provider, provider_crud, gen_events, test_instance
 
 @pytest.mark.bugzilla(1139865)
 def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
+    """ Tests availablility zone events on timelines
+
+    Metadata:
+        test_flag: timelines, provision
+    """
     def nav_step():
         test_instance.load_details()
         pytest.sel.click(details_page.infoblock.element('Relationships', 'Availability Zone'))
@@ -106,6 +116,11 @@ def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
 
 @pytest.mark.bugzilla(1139865)
 def test_vm_event(setup_provider, provider_crud, gen_events, test_instance):
+    """ Tests vm events on timelines
+
+    Metadata:
+        test_flag: timelines, provision
+    """
     def nav_step():
         test_instance.load_details()
         toolbar.select('Monitoring', 'Timelines')

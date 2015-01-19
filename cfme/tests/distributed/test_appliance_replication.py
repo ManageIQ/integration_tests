@@ -19,6 +19,8 @@ from utils.wait import wait_for
 
 pytestmark = [pytest.mark.long_running]
 
+pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
+
 random_vm_test = []
 
 
@@ -137,6 +139,9 @@ def test_vm(request, provider_crud, provider_mgmt, vm_name):
 def test_appliance_replicate_between_regions(request, provider_crud):
     """Tests that a provider added to an appliance in one region
         is replicated to the parent appliance in another region.
+
+    Metadata:
+        test_flag: replication
     """
     appl1, appl2 = get_replication_appliances()
 
@@ -158,6 +163,11 @@ def test_appliance_replicate_between_regions(request, provider_crud):
 
 @pytest.mark.ignore_stream("upstream")
 def test_appliance_replicate_sync_role_change(request, provider_crud):
+    """Tests that a role change is replicated
+
+    Metadata:
+        test_flag: replication
+    """
     appl1, appl2 = get_replication_appliances()
 
     def finalize():
@@ -188,6 +198,11 @@ def test_appliance_replicate_sync_role_change(request, provider_crud):
 
 @pytest.mark.ignore_stream("upstream")
 def test_appliance_replicate_sync_role_change_with_backlog(request, provider_crud):
+    """Tests that a role change is replicated with backlog
+
+    Metadata:
+        test_flag: replication
+    """
     appl1, appl2 = get_replication_appliances()
 
     def finalize():
@@ -218,6 +233,11 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, provider_cru
 
 @pytest.mark.ignore_stream("upstream")
 def test_appliance_replicate_database_disconnection(request, provider_crud):
+    """Tests a database disconnection
+
+    Metadata:
+        test_flag: replication
+    """
     appl1, appl2 = get_replication_appliances()
 
     def finalize():
@@ -246,6 +266,11 @@ def test_appliance_replicate_database_disconnection(request, provider_crud):
 
 @pytest.mark.ignore_stream("upstream")
 def test_appliance_replicate_database_disconnection_with_backlog(request, provider_crud):
+    """Tests a database disconnection with backlog
+
+    Metadata:
+        test_flag: replication
+    """
     appl1, appl2 = get_replication_appliances()
 
     def finalize():
@@ -279,6 +304,9 @@ def test_distributed_vm_power_control(request, test_vm, provider_crud,
                                       verify_vm_running, register_event, soft_assert):
     """Tests that a replication parent appliance can control the power state of a
     VM being managed by a replication child appliance.
+
+    Metadata:
+        test_flag: replication
     """
     appl1, appl2 = get_replication_appliances()
 

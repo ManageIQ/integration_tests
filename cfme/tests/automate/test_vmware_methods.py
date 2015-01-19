@@ -53,6 +53,11 @@ def testing_vm(request, provisioning, provider_crud, provider_key):
 
 def test_vmware_vimapi_hotadd_disk(
         request, testing_group, provider_crud, provider_mgmt, testing_vm):
+    """ Tests hot adding a disk to vmware vm
+
+    Metadata:
+        test_flag: hotdisk, provision
+    """
     # Instance that calls the method and is accessible from the button
     instance = Instance(
         name="VMware_HotAdd_Disk",

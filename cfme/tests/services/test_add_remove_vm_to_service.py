@@ -20,11 +20,11 @@ import utils.randomness as rand
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.usefixtures("vm_name"),
-    pytest.mark.fixtureconf(server_roles="+automate"),
-    pytest.mark.usefixtures('server_roles', 'uses_infra_providers'),
+    pytest.mark.usefixtures('uses_infra_providers'),
     pytest.mark.long_running,
     pytest.mark.ignore_stream("5.2"),
-    pytest.mark.ignore_stream("upstream")
+    pytest.mark.ignore_stream("upstream"),
+    pytest.mark.meta(server_roles="+automate")
 ]
 
 item_name = generate_random_string()
@@ -189,6 +189,11 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
 
 
 def test_add_vm_to_service(request, myservice, create_method):
+    """Tests adding vm to service
+
+    Metadata:
+        test_flag: provision
+    """
 
     simulate(
         instance="Request",

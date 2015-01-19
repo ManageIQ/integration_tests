@@ -53,6 +53,12 @@ def provision_data(provider_crud, provider_key, provider_data, small_template, p
 @pytest.mark.meta(server_roles="+automate")
 @pytest.mark.usefixtures("setup_provider")
 def test_provision(request, provision_data, provider_mgmt):
+    """Tests provision via rest
+
+    Metadata:
+        test_flag: rest, provision
+    """
+
     vm_name = provision_data["vm_fields"]["vm_name"]
     request.addfinalizer(
         lambda: provider_mgmt.delete_vm(vm_name) if provider_mgmt.does_vm_exist(vm_name) else None)

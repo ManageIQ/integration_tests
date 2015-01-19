@@ -15,11 +15,11 @@ should be `built locally <#building-the-docs>`_ before making a pull request.
 docstrings
 ----------
 
-The cartouche library parses our docstrings and turns them into nicely rendered API docs
-in the sphinx output. As such, we should follow cartouche's usage guidelines when writing
+The napoleon library parses our docstrings and turns them into nicely rendered API docs
+in the sphinx output. As such, we should follow napoleon's usage guidelines when writing
 docstrings:
 
-    http://cartouche.readthedocs.org/en/latest/usage.html
+    https://pypi.python.org/pypi/sphinxcontrib-napoleon
 
 According to PEP 257, docstrings should use triple double-quotes, not triple single-quotes
 (""" vs. ''').
@@ -31,6 +31,33 @@ Example:
     """This is a docstring."""
 
     '''This is not a docstring.'''
+
+Documenting Tests
+-----------------
+
+Tests are documented slightly differently to modules, in that they require certain extra
+information that isn't required for a module/class/function. If a test uses the testgen library
+it **must** also specify a test_flag in the metadata section. An example of this is shown below.
+
+.. code:: yaml
+
+    """Tests provisioning via PXE
+
+    Metadata:
+        test_flag: pxe, provision
+    """
+
+These flags are also defined in the ``cfme_data.yaml`` file, under the ``test_flags:`` key. A
+provider in the ``cfme_data.yaml`` can opt out of collection for a particular *test_flag* by
+including the flag in the list of ``excluded_test_flags:`` key in the providers stanza.
+All of the flags listings are listed in comma separated format. This was chosen to cut down on
+syntax characters and all values are whitespace stripped.
+
+For a test to be collected for a provider:
+ * the *test_flag* must be listed in the ``cfme_data.yaml`` file ``test_flags:`` key
+ * the *test_flag* must be listed in the metadata section of the test's docstring
+ * the *test_flag* must **NOT** appear in the list of ``excluded_test_flags:`` for a particular
+   provider
 
 Linking new modules
 -------------------

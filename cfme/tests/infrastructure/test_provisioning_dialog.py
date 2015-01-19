@@ -124,6 +124,11 @@ def provisioner(request, provider_key, provider_mgmt, provider_crud):
 
 
 def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
+    """ Tests change RAM and CPU
+
+    Metadata:
+        test_flag: provision
+    """
     prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
     prov_data["num_sockets"] = "4"
     prov_data["cores_per_socket"] = "1"
@@ -140,6 +145,11 @@ def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
 
 @pytest.mark.parametrize("disk_format", ["thin", "thick", "preallocated"])
 def test_disk_format_select(provisioner, prov_data, template_name, disk_format, provider_type):
+    """ Tests disk format
+
+    Metadata:
+        test_flag: provision
+    """
     if (
             (provider_type == "rhevm" and disk_format == "thick") or
             (provider_type != "rhevm" and disk_format == "preallocated")):
@@ -162,6 +172,11 @@ def test_disk_format_select(provisioner, prov_data, template_name, disk_format, 
 @pytest.mark.parametrize("started", [True, False])
 def test_power_on_or_off_after_provision(
         provisioner, prov_data, template_name, provider_mgmt, started):
+    """ Tests power cycle after provisioning
+
+    Metadata:
+        test_flag: provision
+    """
     prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
     prov_data["power_on"] = started
 
@@ -175,6 +190,11 @@ def test_power_on_or_off_after_provision(
 
 
 def test_tag(provisioner, prov_data, template_name):
+    """ Tests tagging
+
+    Metadata:
+        test_flag: provision
+    """
     prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
     prov_data["apply_tags"] = [
         ([version.pick({version.LOWEST: "Service Level", "5.3": "Service Level *"}), "Gold"], True)]
@@ -186,6 +206,11 @@ def test_tag(provisioner, prov_data, template_name):
 
 
 def test_provisioning_schedule(provisioner, prov_data, template_name):
+    """ Tests provision scheduling
+
+    Metadata:
+        test_flag: provision
+    """
     prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
     prov_data["schedule_type"] = "schedule"
     now = datetime.utcnow()

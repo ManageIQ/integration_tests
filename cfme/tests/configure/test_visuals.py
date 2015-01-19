@@ -47,6 +47,11 @@ def go_to_grid(page):
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
 def test_grid_page_per_item(request, setup_first_provider, page, set_grid):
+    """ Tests grid items per page
+
+    Metadata:
+        test_flag: visuals
+    """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.grid_view_limit
     sel.force_navigate(page)
@@ -57,6 +62,11 @@ def test_grid_page_per_item(request, setup_first_provider, page, set_grid):
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
 def test_tile_page_per_item(request, setup_first_provider, page, set_tile):
+    """ Tests tile items per page
+
+    Metadata:
+        test_flag: visuals
+    """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.tile_view_limit
     sel.force_navigate(page)
@@ -67,6 +77,11 @@ def test_tile_page_per_item(request, setup_first_provider, page, set_tile):
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
 def test_list_page_per_item(request, setup_first_provider, page, set_list):
+    """ Tests list items per page
+
+    Metadata:
+        test_flag: visuals
+    """
     request.addfinalizer(lambda: go_to_grid(page))
     limit = visual.list_view_limit
     sel.force_navigate(page)
@@ -77,6 +92,11 @@ def test_list_page_per_item(request, setup_first_provider, page, set_list):
 
 @pytest.mark.parametrize('start_page', cfme_data.get('landing_pages'), scope="module")
 def test_start_page(request, setup_first_provider, start_page):
+    """ Tests start page
+
+    Metadata:
+        test_flag: visuals
+    """
     request.addfinalizer(set_default_page)
     visual.login_page = start_page
     login.logout()

@@ -218,7 +218,16 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         before moving on to the next test. To group all tests related to single provider together,
         parametrize tests in the 'module' scope.
 
+    Note:
+
+        testgen for providers now requires the usage of test_flags for collection to work.
+        Please visit http://cfme-tests.readthedocs.org/guides/documenting.html#documenting-tests
+        for more details.
+
     """
+
+    metafunc.function = pytest.mark.uses_testgen()(metafunc.function)
+
     argnames = list(fields)
     argvalues = []
     idlist = []
@@ -236,6 +245,36 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         if provider_types is not None and prov_type not in provider_types:
             # Skip unwanted types
             continue
+
+        # Test to see the test has meta data, if it does and that metadata contains
+        # a test_flag kwarg, then check to make sure the provider contains that test_flag
+        # if not, do not collect the provider for this particular test.
+
+        # Obtain the tests flags
+        meta = getattr(metafunc.function, 'meta', None)
+
+        test_flags = getattr(meta, 'kwargs', {}) \
+            .get('from_docs', {}).get('test_flag', '').split(',')
+        if test_flags != ['']:
+            test_flags = [flag.strip() for flag in test_flags]
+
+            defined_flags = cfme_data.get('test_flags', '').split(',')
+            defined_flags = [flag.strip() for flag in defined_flags]
+
+            excluded_flags = data.get('excluded_test_flags', '').split(',')
+            excluded_flags = [flag.strip() for flag in excluded_flags]
+
+            allowed_flags = set(defined_flags) - set(excluded_flags)
+
+            if set(test_flags) - allowed_flags:
+                logger.debug("Skipping Provider {} for test {} in module {} because "
+                    "it does not have the right flags, "
+                    "{} does not contain {}".format(provider,
+                                                    metafunc.function.func_name,
+                                                    metafunc.function.__module__,
+                                                    list(allowed_flags),
+                                                    list(set(test_flags) - allowed_flags)))
+                continue
 
         try:
             if prov_type == "scvmm" and version.current_version() < "5.3":
@@ -283,6 +322,8 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         special_args_map = dict(zip(special_args, (provider, data, crud, mgmt, prov_type)))
         for arg in argnames:
             if arg in special_args_map:
+                if arg == "provider_crud":
+                    metafunc.function = pytest.mark.provider_related()(metafunc.function)
                 values.append(special_args_map[arg])
             elif arg in data_values:
                 values.append(data_values[arg])

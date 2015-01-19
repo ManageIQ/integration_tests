@@ -43,6 +43,11 @@ def vm_name(request, provider_mgmt):
 
 
 def test_provision_from_template(request, setup_provider, provider_crud, provisioning, vm_name):
+    """ Tests instance provision from template
+
+    Metadata:
+        test_flag: provision
+    """
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
             (image, vm_name, provider_crud.key))
@@ -84,6 +89,11 @@ ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, disks,
         soft_assert):
+    """ Tests provisioning from a template and attaching disks
+
+    Metadata:
+        test_flag: provision
+    """
     if not isinstance(provider_crud, OpenStackProvider):
         pytest.skip("Openstack only so far")
     image = provisioning['image']['name']

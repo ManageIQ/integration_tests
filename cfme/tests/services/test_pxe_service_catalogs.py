@@ -140,6 +140,11 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
 @pytest.mark.bugzilla(1160486)
 @pytest.mark.usefixtures('setup_providers', 'setup_pxe_servers_vm_prov')
 def test_rhev_pxe_servicecatalog(provider_key, provider_mgmt, catalog_item, request):
+    """Tests RHEV PXE service catalog
+
+    Metadata:
+        test_flag: pxe, provision
+    """
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()

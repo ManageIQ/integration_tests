@@ -90,6 +90,12 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 @pytest.mark.bugzilla(1144207)
 def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud,
                             provider_type, provisioning, dialog, catalog, request):
+    """Tests cloud catalog item
+
+    Metadata:
+        test_flag: provision
+    """
+
     vm_name = 'test_servicecatalog-%s' % generate_random_string()
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     image = provisioning['image']['name']

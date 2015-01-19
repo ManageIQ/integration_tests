@@ -236,6 +236,9 @@ def test_action_start_virtual_machine_after_stopping(request, assign_policy_for_
     This test sets the policy that it turns on the VM when it is turned off
     (https://www.youtube.com/watch?v=UOn4gxj2Dso), then turns the VM off and waits for it coming
     back alive.
+
+    Metadata:
+        test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power Off", ["Start Virtual Machine"])
@@ -255,6 +258,9 @@ def test_action_stop_virtual_machine_after_starting(request, assign_policy_for_t
     This test sets the policy that it turns off the VM when it is turned on
     (https://www.youtube.com/watch?v=UOn4gxj2Dso), then turns the VM on and waits for it coming
     back off.
+
+    Metadata:
+        test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Stop Virtual Machine"])
@@ -274,6 +280,9 @@ def test_action_suspend_virtual_machine_after_starting(request,
 
     This test sets the policy that it suspends the VM when it's turned on. Then it powers on the vm,
     waits for it becoming alive and then it waits for the VM being suspended.
+
+    Metadata:
+        test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Suspend Virtual Machine"])
@@ -295,6 +304,9 @@ def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off):
 
     This test sets the policy that it prevents powering the VM up. Then the vm is powered up
     and then it waits that VM does not come alive.
+
+    Metadata:
+        test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On Request",
@@ -315,6 +327,9 @@ def test_action_power_on_logged(request, assign_policy_for_testing, vm, vm_off, 
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
     checks whether logs contain message about that.
+
+    Metadata:
+        test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Generate log message"])
@@ -349,6 +364,9 @@ def test_action_power_on_audit(request, assign_policy_for_testing, vm, vm_off, s
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
     checks whether audit logs contain message about that.
+
+    Metadata:
+        test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Generate Audit Event"])
@@ -381,6 +399,9 @@ def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testi
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
     powered back on, it deletes the last snapshot.
+
+    Metadata:
+        test_flag: actions, provision
     """
     if isinstance(vm.provider, mgmt_system.RHEVMSystem):
         pytest.skip("No snapshots on RHEV")
@@ -421,6 +442,9 @@ def test_action_create_snapshots_and_delete_them(request, assign_policy_for_test
     This test sets the policy that it makes snapshot of VM after it's powered off and then it cycles
     several time that it generates a couple of snapshots. Then the 'Delete all Snapshots' is
     assigned to power on event, VM is powered on and it waits for all snapshots to disappear.
+
+    Metadata:
+        test_flag: actions, provision
     """
     if isinstance(vm.provider, mgmt_system.RHEVMSystem):
         pytest.skip("No snapshots on RHEV")
@@ -468,6 +492,9 @@ def test_action_initiate_smartstate_analysis(request, assign_policy_for_testing,
 
     This test sets the policy that it analyses VM after it's powered on. Then it checks whether
     that really happened.
+
+    Metadata:
+        test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power On",
@@ -502,6 +529,9 @@ def test_action_raise_automation_event(request, assign_policy_for_testing, vm, v
 
     This test sets the policy that it raises an automation event VM after it's powered on.
     Then it checks logs whether that really happened.
+
+    Metadata:
+        test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
     assign_policy_for_testing.assign_actions_to_event("VM Power Off", ["Raise Automation Event"])
@@ -529,6 +559,11 @@ def test_action_raise_automation_event(request, assign_policy_for_testing, vm, v
 
 # Purely custom actions
 def test_action_tag(request, assign_policy_for_testing, vm, vm_off):
+    """ Tests action tag
+
+    Metadata:
+        test_flag: actions, provision
+    """
     tag_assign_action = explorer.Action(
         generate_random_string(),
         action_type="Tag",
@@ -555,6 +590,11 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off):
 
 
 def test_action_untag(request, assign_policy_for_testing, vm, vm_off):
+    """ Tests action untag
+
+    Metadata:
+        test_flag: actions, provision
+    """
     tag_unassign_action = explorer.Action(
         generate_random_string(),
         action_type="Remove Tags",

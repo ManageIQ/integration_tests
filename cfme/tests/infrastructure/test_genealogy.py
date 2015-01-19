@@ -44,6 +44,11 @@ def vm_name():
 @pytest.mark.github("ManageIQ/manageiq:473")
 def test_vm_genealogy(
         setup_provider, vm_name, provider_crud, provisioning, soft_assert, provider_mgmt, request):
+    """Tests vm geneaology
+
+    Metadata:
+        test_flag: geneaology, provision
+    """
     if isinstance(provider_crud, RHEVMProvider):
         pytest.skip("RHEV-M does not support creating templates from VM")
     original_template = provisioning["template"]

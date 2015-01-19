@@ -47,6 +47,9 @@ def test_cloud_instance_discovery(request, provider_crud, provider_init, provide
     (add/delete).
     As there is currently no way to listen to AWS events,
     CFME must be refreshed manually to see the changes.
+
+    Metadata:
+        test_flag: discovery
     """
     if not provider_mgmt.does_vm_exist(instance_name):
         deploy_template(provider_crud.key, instance_name)

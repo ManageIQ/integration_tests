@@ -56,7 +56,11 @@ def get_host_data_by_name(provider_key, host_name):
 )
 def test_run_host_analysis(request, setup_provider, provider_key, provider_type, provider_ver,
                            host_type, host_name, register_event, soft_assert):
-    """ Run host SmartState analysis """
+    """ Run host SmartState analysis
+
+    Metadata:
+        test_flag: host_analysis
+    """
     # Add credentials to host
     host_data = get_host_data_by_name(provider_key, host_name)
     test_host = host.Host(name=host_name)
