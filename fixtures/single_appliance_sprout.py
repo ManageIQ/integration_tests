@@ -49,7 +49,7 @@ def pytest_configure(config, __multicall__):
         at_exit(sprout.destroy_pool, pool_id)
         result = wait_for(
             lambda: sprout.request_check(pool_id)["fulfilled"],
-            num_sec=30 * 60,  # 30 minutes
+            num_sec=config.option.sprout_provision_timeout * 60,
             delay=5,
             message="requesting appliance was fulfilled"
         )
