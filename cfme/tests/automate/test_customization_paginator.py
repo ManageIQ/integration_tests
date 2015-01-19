@@ -10,9 +10,15 @@ from utils.randomness import generate_random_string
 def some_dialogs(request):
     to_delete = []
     request.addfinalizer(lambda: map(lambda obj: obj.delete(), to_delete))
-    for i in range(15):
-        desc = "test_paginator_{}".format(generate_random_string(16))
-        dialog = ServiceDialog(label=desc, description=desc)
+    for i in range(6):
+        random_str = generate_random_string(16)
+        dialog = ServiceDialog(
+            label='test_paginator_{}'.format(random_str),
+            tab_label='tab_{}'.format(random_str),
+            box_label='box_{}'.format(random_str),
+            ele_label='ele_label_{}'.format(random_str),
+            ele_name='ele_name_{}'.format(random_str),
+            choose_type='Check Box')
         dialog.create()
         to_delete.append(dialog)
     return to_delete
@@ -49,8 +55,7 @@ def test_paginator(some_dialogs, soft_assert):
         for text in get_relevant_rows(dialogs_table):
             dialogs_found.add(text)
         current_rec_offset = paginator.rec_offset()
-    soft_assert(dialogs_found == set(map(lambda dlg: dlg.label, some_dialogs)),
-                "Could not find all dialogs by clicking the paginator!")
+    soft_assert(set([dlg.label for dlg in some_dialogs]).issubset(dialogs_found))
 
 
 # test_ordering - after it starts working somehow, otherwise cannot test it properly
