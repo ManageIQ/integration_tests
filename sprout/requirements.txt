@@ -2,7 +2,6 @@
 Django
 django-object-actions
 celery[redis]<3.2
-honcho
 python-memcached
 flower
 gunicorn

@@ -1,5 +1,0 @@
-memcached:              memcached -l localhost -p $MEMCACHED_PORT
-beat:                   PYTHONPATH="`pwd`:$PYTHONPATH" ./celery_runner beat --app=sprout.celery:app
-worker:                 PYTHONPATH="`pwd`:$PYTHONPATH" ./celery_runner worker --app=sprout.celery:app --concurrency=$CELERY_MAX_WORKERS --loglevel=INFO -Ofair
-celery_monitor:         PYTHONPATH="`pwd`:$PYTHONPATH" ./celery_runner flower --app=sprout.celery:app
-django:                 gunicorn --preload --bind localhost:$DJANGO_PORT -w 4 --access-logfile access.log --error-logfile error.log sprout.wsgi:application
