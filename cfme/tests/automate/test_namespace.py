@@ -5,6 +5,7 @@
 import pytest
 
 from cfme.automate.explorer import Namespace
+from utils.providers import setup_a_provider
 from utils.randomness import generate_random_string
 from utils.update import update
 from utils import version
@@ -20,9 +21,14 @@ pytestmark = [pytest.mark.usefixtures("logged_in")]
     params=[ta.a_namespace, ta.a_namespace_with_path])
 def namespace(request):
     # don't test with existing paths on upstream (there aren't any)
-    if request.param is ta.a_namespace_with_path and version.current_version() >= "5.3":
+    if request.param is ta.a_namespace_with_path and version.current_version() == version.LATEST:
         pytest.skip("don't test with existing paths on upstream (there aren't any)")
     return request.param()
+
+
+@pytest.fixture
+def setup_single_provider():
+    setup_a_provider()
 
 
 def test_namespace_crud(namespace):
@@ -53,7 +59,7 @@ def test_duplicate_namespace_disallowed(namespace):
 
 # provider needed as workaround for bz1035399
 @pytest.mark.bugzilla(1140331)
-def test_permissions_namespace_crud(setup_cloud_providers):
+def test_permissions_namespace_crud(setup_single_provider):
     """ Tests that a namespace can be manipulated only with the right permissions"""
     tac.single_task_permission_test([['Automate', 'Explorer']],
                                     {'Namespace CRUD':
