@@ -260,7 +260,7 @@ def test_suspend(openstack_only, setup_provider_funcscope, provider_type, provid
 
 
 @pytest.mark.long_running
-@pytest.mark.bugzilla(1115546)
+@pytest.mark.bugzilla(1183757)
 def test_resume(openstack_only, setup_provider_funcscope,
         provider_type, provider_mgmt, test_instance, soft_assert, verify_vm_suspended):
     test_instance.wait_for_vm_state_change(
