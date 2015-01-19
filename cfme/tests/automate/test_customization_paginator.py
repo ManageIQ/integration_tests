@@ -55,7 +55,8 @@ def test_paginator(some_dialogs, soft_assert):
         for text in get_relevant_rows(dialogs_table):
             dialogs_found.add(text)
         current_rec_offset = paginator.rec_offset()
-    soft_assert(set([dlg.label for dlg in some_dialogs]).issubset(dialogs_found))
+    assert set([dlg.label for dlg in some_dialogs]).issubset(dialogs_found), \
+        "Could not find all dialogs by clicking the paginator!"
 
 
 # test_ordering - after it starts working somehow, otherwise cannot test it properly
