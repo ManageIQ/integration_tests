@@ -21,7 +21,7 @@ def parse_cmd_line():
         help='Max days since the VM was created or last powered on (varies by provider, default 2)')
     parser.add_argument('--provider', dest='providers', action='append', default=None,
         help='Provider(s) to inspect, can be used multiple times', metavar='PROVIDER')
-    parser.add_argument('text_to_match', nargs='*', default=['^test_', '^jenkins'],
+    parser.add_argument('text_to_match', nargs='*', default=['^test_', '^jenkins', '^i-'],
         help='Regex in the name of vm to be affected, can be use multiple times'
         ' (Defaults to "^test_" and "^jenkins")')
     args = parser.parse_args()
