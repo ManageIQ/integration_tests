@@ -5,6 +5,7 @@ from warnings import catch_warnings, warn
 import copy
 import hashlib
 import os
+import sys
 import yaml
 from yaml.loader import Loader
 from Crypto.Cipher import AES
@@ -410,7 +411,7 @@ def load_yaml(filename=None, warn_on_fail=True):
     if filename_unencrypted.check():
         # If there's an unencypted credentials.yaml, use it.
         if filename_encrypted.check():
-            print ('Encrypted and unencrypted {} present, '
+            print >>sys.stderr, ('Encrypted and unencrypted {} present, '
                 'using unencrypted yaml'.format(filename_unencrypted.basename))
         with filename_unencrypted.open() as config_fh:
             conf = yaml.load(config_fh, Loader=YamlConfigLoader)
