@@ -73,6 +73,8 @@ def pytest_addoption(parser):
         default=1, help="How many Sprout appliances to use?.")
     group._addoption('--sprout-timeout', dest='sprout_timeout', type=int,
         default=60, help="How many minutes is the lease timeout.")
+    group._addoption('--sprout-provision-timeout', dest='sprout_provision_timeout', type=int,
+        default=40, help="How many minutes to wait for appliances provisioned.")
     group._addoption(
         '--sprout-group', dest='sprout_group', default=None, help="Which stream to use.")
     group._addoption(
@@ -127,7 +129,7 @@ class ParallelSession(object):
             at_exit(self.sprout_client.destroy_pool, self.sprout_pool)
             result = wait_for(
                 lambda: self.sprout_client.request_check(self.sprout_pool)["fulfilled"],
-                num_sec=30 * 60,  # 30 minutes
+                num_sec=self.config.option.sprout_provision_timeout * 60,
                 delay=5,
                 message="requesting appliances was fulfilled"
             )
