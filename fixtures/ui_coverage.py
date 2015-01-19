@@ -49,23 +49,26 @@ Post-testing (e.g. ci environment):
 2. Zip up and archive the entire coverage dir for review
 
 """
-# Currently, this only supports running coverage on the appliance in env['base_url'].
-# We'll want to aggregate coverage across multiple appliances at some point;
-# please keep that in mind when reviewing or altering this module.
 import json
-import traceback
-from multiprocessing import Process
+import os
+from glob import glob
 
-import pytest
+from py.error import ENOENT
 from py.path import local
 
-from cfme.fixtures.pytest_selenium import base_url
-from utils.appliance import IPAppliance
+from fixtures.pytest_store import store
 from utils.log import logger
 from utils.path import log_path, scripts_data_path
-from utils.ssh import SSHClient
 
+# paths to all of the coverage-related files
+
+# on the appliance
+#: Corresponds to Rails.root in the rails env
 rails_root = local('/var/www/miq/vmdb')
+#: coverage root, should match what's in the coverage hook and merger scripts
+appliance_coverage_root = rails_root.join('coverage')
+
+# local
 coverage_data = scripts_data_path.join('coverage')
 gemfile = coverage_data.join('Gemfile.dev.rb')
 coverage_hook = coverage_data.join('coverage_hook.rb')
@@ -74,133 +77,87 @@ thing_toucher = coverage_data.join('thing_toucher.rb')
 coverage_output_dir = log_path.join('coverage')
 
 
+def _thing_toucher_mp_handler(ssh_client):
+    # for use in a subprocess to kick off the thing toucher
+    x, out = ssh_client.run_rails_command('thing_toucher.rb')
+    return x
+
+
+def clean_coverage_dir():
+    try:
+        coverage_output_dir.remove(ignore_errors=True)
+    except ENOENT:
+        pass
+    coverage_output_dir.ensure(dir=True)
+
+
 class UiCoveragePlugin(object):
-    def __init__(self):
-        self.ssh_client = SSHClient()
-
-    # trylast so that terminalreporter's been configured before ui-coverage
-    @pytest.mark.trylast
     def pytest_configure(self, config):
-        # Eventually, the setup/teardown work for coverage should be handled by
-        # utils.appliance.Appliance to make multi-appliance support easy
-        self.reporter = config.pluginmanager.getplugin('terminalreporter')
-        self.reporter.write_sep('-', 'Setting up UI coverage reporting')
-        self.install_simplecov()
-        self.install_coverage_hook()
-        self.restart_evm()
-        self.touch_all_the_things()
-        IPAppliance.from_url(base_url()).wait_for_web_ui()
+        if store.parallelizer_role != 'master':
+            store.current_appliance.install_coverage()
 
-    def pytest_unconfigure(self, config):
-        self.reporter.write_sep('-', 'Waiting for coverage to finish and collecting reports')
-        self.stop_touching_all_the_things()
-        self.merge_reports()
-        self.collect_reports()
-        self.print_report()
+        if store.parallelizer_role != 'slave':
+            clean_coverage_dir()
 
-    def install_simplecov(self):
-        logger.info('Installing coverage gems on appliance')
-        self.ssh_client.put_file(gemfile.strpath, rails_root.strpath)
-        x, out = self.ssh_client.run_command('cd {}; bundle'.format(rails_root))
-        return x == 0
-
-    def install_coverage_hook(self):
-        logger.info('Installing coverage hook on appliance')
-        # Put the coverage hook in the miq lib path
-        self.ssh_client.put_file(
-            coverage_hook.strpath, rails_root.join('..', 'lib', coverage_hook.basename).strpath
-        )
-        replacements = {
-            'require': r"require 'coverage_hook'",
-            'config': rails_root.join('config').strpath
-        }
-        # grep/echo to try to add the require line only once
-        # This goes in preinitializer after the miq lib path is set up,
-        # which makes it so ruby can actually require the hook
-        command_template = (
-            'cd {config};'
-            'grep -q "{require}" preinitializer.rb || echo -e "\\n{require}" >> preinitializer.rb'
-        )
-        x, out = self.ssh_client.run_command(command_template.format(**replacements))
-        return x == 0
-
-    def restart_evm(self, rude=True):
-        logger.info('Restarting EVM to enable coverage reporting')
-        # This is rude by default (issuing a kill -9 on ruby procs), since the most common use-case
-        # will be to set up coverage on a freshly provisioned appliance in a jenkins run
-        if rude:
-            x, out = self.ssh_client.run_command('killall -9 ruby; service evmserverd start')
+    def pytest_sessionfinish(self, exitstatus):
+        # Now master/standalone needs to move all the reports to an appliance for the source report
+        if store.parallelizer_role != 'slave':
+            store.terminalreporter.write_sep('-', 'collecting coverage reports')
         else:
-            x, out = self.ssh_client.run_comment('service evmserverd restart')
-        return x == 0
+            store.slave_manager.message('collecting coverage reports')
 
-    def touch_all_the_things(self):
-        logger.info('Establishing baseline overage by requiring ALL THE THINGS')
-        # send over the thing toucher
-        self.ssh_client.put_file(
-            thing_toucher.strpath, rails_root.join(thing_toucher.basename).strpath
-        )
-        # start it in an async process so we can go one testing while this takes place
-        self._thing_toucher_proc = Process(target=_thing_toucher_mp_handler, args=[self.ssh_client])
-        self._thing_toucher_proc.start()
+        if store.parallelizer_role != 'master':
+            store.current_appliance.collect_coverage_reports()
 
-    def stop_touching_all_the_things(self):
-        logger.info('Waiting for baseline coverage generator to finish')
-        # block while the thing toucher is still running
-        self._thing_toucher_proc.join()
-        return self._thing_toucher_proc.exitcode == 0
+        # for slaves, everything is done at this point
+        if store.parallelizer_role == 'slave':
+            return
 
-    def merge_reports(self):
-        logger.info("Merging coverage reports on appliance")
-        # install the merger script
-        self.ssh_client.put_file(
-            coverage_merger.strpath, rails_root.join(coverage_merger.basename).strpath
-        )
-        # don't async this one since it's happening in unconfigure
-        # merge/clean up the coverage reports
-        x, out = self.ssh_client.run_rails_command('coverage_merger.rb')
-        return x == 0
+        # The rest should be only happening in the master/sandalone process
+        results_tgzs = glob(coverage_output_dir.join('*-coverage-results.tgz').strpath)
+        if not results_tgzs:
+            # Not sure if we should explode here or not.
+            logger.error('No coverage results collected')
+            store.terminalreporter.write_sep('=', 'No coverage results found', red=True)
+            return
 
-    def collect_reports(self):
-        coverage_dir = log_path.join('coverage')
-        # clean out old coverage dir if it exists
-        if coverage_dir.check():
-            coverage_dir.remove(rec=True, ignore_errors=True)
-        # Then ensure the the empty dir exists
-        coverage_dir.ensure(dir=True)
-        # then copy the remote coverage dir into it
-        logger.info("Collecting coverage reports to {}".format(coverage_dir.strpath))
-        logger.info("Report collection can take several minutes")
-        self.ssh_client.get_file(
-            rails_root.join('coverage').strpath,
-            log_path.strpath,
+        # push the results to the appliance
+        ssh_client = store.current_appliance.ssh_client()
+        for results_tgz in results_tgzs:
+            dest_file = appliance_coverage_root.join(os.path.basename(results_tgz)).strpath
+            ssh_client.put_file(results_tgz, dest_file)
+            ssh_client.run_command('tar xvaf {} -C /var/www/miq/vmdb/coverage'.format(dest_file))
+
+        # run the merger on the appliance to generate the simplecov report
+        store.terminalreporter.write_sep('-', 'merging coverage reports')
+        ssh_client.put_file(coverage_merger.strpath, rails_root.strpath)
+        ssh_client.run_rails_command(coverage_merger.basename)
+
+        # Now bring the report back and write out the info
+        # TODO: We're already using tar, might as well tar this up, too.
+        ssh_client.get_file(
+            appliance_coverage_root.join('merged').strpath,
+            coverage_output_dir.strpath,
             recursive=True
         )
 
-    def print_report(self):
+    def pytest_unconfigure(self, config):
         try:
-            last_run = json.load(log_path.join('coverage', '.last_run.json').open())
+            last_run = json.load(log_path.join('coverage', 'merged', '.last_run.json').open())
             coverage = last_run['result']['covered_percent']
-            # TODO: Make the happy vs. sad coverage color configurable, and set it to something
-            # good once we know what good is
+            # TODO: We don't currently know what a "good" coverage number is.
             style = {'bold': True}
             if coverage > 40:
                 style['green'] = True
             else:
                 style['red'] = True
-            self.reporter.line('UI Coverage Result: {}%'.format(coverage), **style)
+            store.terminalreporter.line('UI Coverage Result: {}%'.format(coverage), **style)
         except KeyboardInterrupt:
             # don't block this, so users can cancel out
             raise
-        except:
-            logger.error('Error printing coverage report to terminal, traceback follows')
-            logger.error(traceback.format_exc())
-
-
-def _thing_toucher_mp_handler(ssh_client):
-    # module-level function for use in a subprocess to kick off the thing toucher
-    x, out = ssh_client.run_rails_command('thing_toucher.rb')
-    return x
+        except Exception as ex:
+            logger.error('Error printing coverage report to terminal')
+            logger.exception(ex)
 
 
 def pytest_addoption(parser):

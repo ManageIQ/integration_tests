@@ -50,8 +50,14 @@ class Store(object):
 
     """
     def __init__(self):
+        #: The py.test config instance, None if not in py.test
         self.config = None
+
+        #: The current py.test session, None if not in a py.test session
         self.session = None
+
+        #: Parallelizer role, None if not running a parallelized session
+        self.parallelizer_role = None
         self._current_appliance = []
 
     @property
@@ -104,6 +110,10 @@ class Store(object):
             reporter = self.pluginmanager.getplugin('terminaldistreporter')
             if reporter:
                 return reporter
+
+    @property_or_none
+    def parallel_session(self):
+        return self.pluginmanager.getplugin('parallel_session')
 
     @property_or_none
     def slave_manager(self):
