@@ -391,6 +391,11 @@ class TestVmAnalysisOfVmStates():
             os,
             fs_type,
             soft_assert):  # , register_event):
+        """Tests stopped vm
+
+        Metadata:
+            test_flag: vm_analysis
+        """
         _scan_test(provider_crud, vm, os, fs_type, soft_assert)
 
     def test_suspended_vm(
@@ -402,6 +407,11 @@ class TestVmAnalysisOfVmStates():
             os,
             fs_type,
             soft_assert):  # , register_event):
+        """Tests suspended vm
+
+        Metadata:
+            test_flag: vm_analysis, provision
+        """
         _scan_test(provider_crud, vm, os, fs_type, soft_assert)
 
 
@@ -426,4 +436,9 @@ class TestVmFileSystemsAnalysis():
             os,
             fs_type,
             soft_assert):  # , register_event):
+        """Tests running vm
+
+        Metadata:
+            test_flag: vm_analysis, provision
+        """
         _scan_test(provider_crud, vm, os, fs_type, soft_assert)

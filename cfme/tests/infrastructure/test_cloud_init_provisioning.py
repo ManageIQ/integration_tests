@@ -10,8 +10,8 @@ from utils.randomness import generate_random_string
 from utils.wait import wait_for
 
 pytestmark = [
-    pytest.mark.fixtureconf(server_roles="+automate +notifier"),
-    pytest.mark.usefixtures('server_roles', 'uses_infra_providers')
+    pytest.mark.usefixtures('uses_infra_providers'),
+    pytest.mark.meta(server_roles="+automate +notifier")
 ]
 
 
@@ -71,7 +71,11 @@ def vm_name():
 def test_provision_cloud_init(provider_init, provider_key, provider_crud, provider_type,
                               setup_ci_template,
                               provider_mgmt, provisioning, vm_name, smtp_test, request):
+    """Tests cloud init provisioning
 
+    Metadata:
+        test_flag: cloud_init, provision
+    """
     # generate_tests makes sure these have values
     template = provisioning.get('ci-image', None) or provisioning['image']['name']
     host, datastore = map(provisioning.get, ('host', 'datastore'))

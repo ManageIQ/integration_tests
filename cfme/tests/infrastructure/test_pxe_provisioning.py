@@ -81,6 +81,11 @@ def vm_name():
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_pxe_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt,
                                      provisioning, vm_name, smtp_test, provider_init, request):
+    """Tests provisioning via PXE
+
+    Metadata:
+        test_flag: pxe, provision
+    """
 
     # generate_tests makes sure these have values
     pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart,\

@@ -9,7 +9,7 @@ from utils.wait import wait_for
 from utils import testgen
 
 pytestmark = [
-    pytest.mark.fixtureconf(server_roles="+automate")
+    pytest.mark.meta(server_roles="+automate")
 ]
 
 
@@ -28,6 +28,11 @@ def provider_init(provider_key):
 
 @pytest.mark.bugzilla(1174881)
 def test_vm_migrate(provider_init, provider_crud, provider_mgmt, request):
+    """Tests migration of a vm
+
+    Metadata:
+        test_flag: migrate, provision
+    """
     vm = Vm("vmtest", provider_crud)
     vm.migrate_vm("email@xyz.com", "first", "last", "host", "datstore")
     flash.assert_no_errors()

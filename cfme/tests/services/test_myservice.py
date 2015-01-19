@@ -126,6 +126,11 @@ def catalog_item(provider_crud, provider_type,
 
 @pytest.fixture
 def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request):
+    """Tests my service
+
+    Metadata:
+        test_flag: provision
+    """
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
@@ -144,17 +149,32 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
 
 @pytest.mark.bugzilla(1144207)
 def test_retire_service(myservice):
+    """Tests my service
+
+    Metadata:
+        test_flag: provision
+    """
     myservice.retire()
 
 
 @pytest.mark.bugzilla(1144207)
 def test_retire_service_on_date(myservice):
+    """Tests my service retirement
+
+    Metadata:
+        test_flag: provision
+    """
     dt = datetime.utcnow()
     myservice.retire_on_date(dt)
 
 
 @pytest.mark.bugzilla(1144207)
 def test_myservice_crud(myservice):
+    """Tests my service crud
+
+    Metadata:
+        test_flag: provision
+    """
     myservice.update("edited", "edited_desc")
     edited_name = myservice.service_name + "_" + "edited"
     myservice.delete(edited_name)
@@ -162,9 +182,19 @@ def test_myservice_crud(myservice):
 
 @pytest.mark.bugzilla(1144207)
 def test_set_ownership(myservice):
+    """Tests my service ownership
+
+    Metadata:
+        test_flag: provision
+    """
     myservice.set_ownership("Administrator", "EvmGroup-administrator")
 
 
 @pytest.mark.bugzilla(1144207)
 def test_edit_tags(myservice):
+    """Tests my service edit tags
+
+    Metadata:
+        test_flag: provision
+    """
     myservice.edit_tags("Cost Center 001")

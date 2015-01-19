@@ -47,6 +47,9 @@ def test_vm_discovery(request, setup_provider, provider_crud, provider_mgmt, vm_
     """
     Tests whether cfme will discover a vm change
     (add/delete) without being manually refreshed.
+
+    Metadata:
+        test_flag: discovery
     """
     vm = virtual_machines.Vm(vm_name, provider_crud)
 

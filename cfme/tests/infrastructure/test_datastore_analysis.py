@@ -69,7 +69,10 @@ def get_host_data_by_name(provider_key, host_name):
 )
 def test_run_datastore_analysis(request, setup_provider, provider_key, provider_type,
                                 datastore_type, datastore_name):
-    """ Run host SmartState analysis
+    """Tests smarthost analysis
+
+    Metadata:
+        test_flag: datastore_analysis
     """
     test_datastore = datastore.Datastore(datastore_name, provider_key)
 

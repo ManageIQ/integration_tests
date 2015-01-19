@@ -11,6 +11,7 @@ from utils import providers
 from utils.randomness import generate_random_string
 from utils.update import update
 
+
 pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="function")
 
 
@@ -122,6 +123,11 @@ def test_api_port_max_character_validation():
 
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_providers_discovery(request, provider_crud):
+    """Tests provider discovery
+
+    Metadata:
+        test_flag: crud
+    """
     provider.discover_from_provider(provider_crud)
     flash.assert_message_match('Infrastructure Providers: Discovery successfully initiated')
     request.addfinalizer(providers.clear_infra_providers)
@@ -130,6 +136,11 @@ def test_providers_discovery(request, provider_crud):
 
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_add_with_bad_credentials(provider_crud):
+    """Tests provider add with bad credentials
+
+    Metadata:
+        test_flag: crud
+    """
     provider_crud.credentials = provider.get_credentials_from_config('bad_credentials')
     if isinstance(provider_crud, provider.VMwareProvider):
         with error.expected('Cannot complete login due to an incorrect user name or password.'):
@@ -141,7 +152,11 @@ def test_provider_add_with_bad_credentials(provider_crud):
 
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_provider_crud(provider_crud):
-    """ Tests that a provider can be added """
+    """Tests provider add with good credentials
+
+    Metadata:
+        test_flag: crud
+    """
     provider_crud.create()
     # Fails on upstream, all provider types - BZ1087476
     provider_crud.validate(db=False)

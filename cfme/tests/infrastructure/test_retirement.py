@@ -70,16 +70,31 @@ def verify_retirement(vm):
 
 
 def test_retirement_now(vm):
+    """Tests retirement
+
+    Metadata:
+        test_flag: retire, provision
+    """
     vm.retire()
     verify_retirement(vm)
 
 
 def test_set_retirement_date(vm):
+    """Tests retirement
+
+    Metadata:
+        test_flag: retire, provision
+    """
     vm.set_retirement_date(datetime.date.today())
     verify_retirement(vm)
 
 
 def test_unset_retirement_date(vm):
+    """Tests retirement
+
+    Metadata:
+        test_flag: retire, provision
+    """
     try:
         tomorrow = datetime.date.today() + datetime.timedelta(days=1)
         vm.set_retirement_date(tomorrow)

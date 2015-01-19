@@ -11,8 +11,7 @@ from utils import testgen, ssh
 from utils.wait import wait_for
 from utils.randomness import generate_random_string
 
-pytestmark = [pytest.mark.fixtureconf(server_roles="+automate"),
-              pytest.mark.usefixtures('server_roles')]
+pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
 def pytest_generate_tests(metafunc):
@@ -59,6 +58,11 @@ def vm_name(request, provider_mgmt):
 
 def test_provision_cloud_init(request, setup_provider, provider_crud, provisioning,
                               setup_ci_template, vm_name):
+    """ Tests provisioning from a template with cloud_init
+
+    Metadata:
+        test_flag: cloud_init, provision
+    """
     image = provisioning.get('ci-image', None) or provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
             (image, vm_name, provider_crud.key))

@@ -80,6 +80,11 @@ def count_events(vm_name, nav_step):
 
 
 def test_provider_event(provider_crud, gen_events, test_vm):
+    """Tests provider event on timelines
+
+    Metadata:
+        test_flag: timelines, provision
+    """
     def nav_step():
         pytest.sel.force_navigate('infrastructure_provider',
                                   context={'provider': provider_crud})
@@ -89,6 +94,11 @@ def test_provider_event(provider_crud, gen_events, test_vm):
 
 
 def test_host_event(provider_crud, gen_events, test_vm):
+    """Tests host event on timelines
+
+    Metadata:
+        test_flag: timelines, provision
+    """
     def nav_step():
         test_vm.load_details()
         pytest.sel.click(details_page.infoblock.element('Relationships', 'Host'))
@@ -98,6 +108,11 @@ def test_host_event(provider_crud, gen_events, test_vm):
 
 
 def test_vm_event(provider_crud, gen_events, test_vm):
+    """Tests vm event on timelines
+
+    Metadata:
+        test_flag: timelines, provision
+    """
     def nav_step():
         test_vm.load_details()
         toolbar.select('Monitoring', 'Timelines')
@@ -106,6 +121,11 @@ def test_vm_event(provider_crud, gen_events, test_vm):
 
 
 def test_cluster_event(provider_crud, gen_events, test_vm):
+    """Tests cluster event on timelines
+
+    Metadata:
+        test_flag: timelines, provision
+    """
     def nav_step():
         test_vm.load_details()
         pytest.sel.click(details_page.infoblock.element('Relationships', 'Cluster'))

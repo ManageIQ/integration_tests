@@ -6,7 +6,7 @@ from utils import error, testgen
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
-pytestmark = pytest.mark.usefixtures('test_power_control')
+pytestmark = [pytest.mark.usefixtures('test_power_control')]
 
 
 def pytest_generate_tests(metafunc):
@@ -139,6 +139,11 @@ def check_power_options(soft_assert, instance, power_state):
 @pytest.mark.long_running
 def test_quadicon_terminate_cancel(setup_provider_funcscope, provider_type, provider_mgmt,
                                    test_instance, verify_vm_running, soft_assert):
+    """ Tests terminate cancel
+
+    Metadata:
+        test_flag: power_control, provision
+    """
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720)
     test_instance.power_control_from_cfme(option=test_instance.TERMINATE, cancel=True)
@@ -157,6 +162,11 @@ def test_quadicon_terminate_cancel(setup_provider_funcscope, provider_type, prov
 @pytest.mark.bugzilla(1122039)
 def test_quadicon_terminate(setup_provider_funcscope, provider_type, provider_mgmt,
                             test_instance, verify_vm_running, soft_assert):
+    """ Tests terminate instance
+
+    Metadata:
+        test_flag: power_control, provision
+    """
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720)
     test_instance.power_control_from_cfme(option=test_instance.TERMINATE, cancel=False)
@@ -178,6 +188,11 @@ def test_quadicon_terminate(setup_provider_funcscope, provider_type, provider_mg
 @pytest.mark.long_running
 def test_stop(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
               test_instance, soft_assert, verify_vm_running):
+    """ Tests instance stop
+
+    Metadata:
+        test_flag: power_control, provision
+    """
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
     check_power_options(soft_assert, test_instance, 'on')
@@ -196,6 +211,11 @@ def test_stop(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
 @pytest.mark.long_running
 def test_start(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
                test_instance, soft_assert, verify_vm_stopped):
+    """ Tests instance start
+
+    Metadata:
+        test_flag: power_control, provision
+    """
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_OFF, timeout=720, from_details=True)
     check_power_options(soft_assert, test_instance, 'off')
@@ -212,6 +232,11 @@ def test_start(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
 @pytest.mark.long_running
 def test_soft_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
                      test_instance, soft_assert, verify_vm_running):
+    """ Tests instance soft reboot
+
+    Metadata:
+        test_flag: power_control, provision
+    """
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
     state_change_time = test_instance.get_detail(('Power Management', 'State Changed On'))
@@ -229,6 +254,11 @@ def test_soft_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
 @pytest.mark.long_running
 def test_hard_reboot(openstack_only, setup_provider_funcscope, provider_type,
                      provider_mgmt, test_instance, soft_assert, verify_vm_running):
+    """ Tests instance hard reboot
+
+    Metadata:
+        test_flag: power_control, provision
+    """
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
     state_change_time = test_instance.get_detail(('Power Management', 'State Changed On'))
@@ -246,6 +276,11 @@ def test_hard_reboot(openstack_only, setup_provider_funcscope, provider_type,
 @pytest.mark.long_running
 def test_suspend(openstack_only, setup_provider_funcscope, provider_type, provider_mgmt,
                  test_instance, soft_assert, verify_vm_running):
+    """ Tests instance suspend
+
+    Metadata:
+        test_flag: power_control, provision
+    """
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
     check_power_options(soft_assert, test_instance, 'on')
@@ -263,6 +298,11 @@ def test_suspend(openstack_only, setup_provider_funcscope, provider_type, provid
 @pytest.mark.bugzilla(1183757)
 def test_resume(openstack_only, setup_provider_funcscope,
         provider_type, provider_mgmt, test_instance, soft_assert, verify_vm_suspended):
+    """ Tests instance resume
+
+    Metadata:
+        test_flag: power_control, provision
+    """
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_SUSPENDED, timeout=720, from_details=True)
     check_power_options(soft_assert, test_instance, 'off')
@@ -279,6 +319,11 @@ def test_resume(openstack_only, setup_provider_funcscope,
 @pytest.mark.long_running
 def test_terminate(setup_provider_funcscope,
         provider_type, provider_mgmt, test_instance, soft_assert, verify_vm_running):
+    """ Tests instance terminate
+
+    Metadata:
+        test_flag: power_control, provision
+    """
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
     test_instance.power_control_from_cfme(

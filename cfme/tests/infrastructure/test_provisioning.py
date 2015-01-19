@@ -56,6 +56,11 @@ def vm_name():
 
 def test_provision_from_template(provider_init, provider_key, provider_crud, provider_type,
                                  provider_mgmt, provisioning, vm_name, smtp_test, request):
+    """ Tests provisioning from a template
+
+    Metadata:
+        test_flag: provision
+    """
 
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
@@ -87,6 +92,11 @@ def test_provision_from_template(provider_init, provider_key, provider_crud, pro
 
 def test_provision_approval(provider_init, provider_key, provider_crud, provider_type,
                             provider_mgmt, provisioning, vm_name, smtp_test, request):
+    """ Tests provisioning approval
+
+    Metadata:
+        test_flag: provision
+    """
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
 

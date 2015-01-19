@@ -14,7 +14,7 @@ from utils import testgen
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
-    pytest.mark.usefixtures('uses_infra_providers')
+    pytest.mark.usefixtures('uses_infra_providers'),
 ]
 
 
@@ -78,6 +78,11 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
 @pytest.mark.usefixtures('setup_pxe_servers_host_prov')
 def test_host_provisioning(provider_init, cfme_data, host_provisioning,
                            provider_crud, smtp_test, request):
+    """Tests host provisioning
+
+    Metadata:
+        test_flag: host_provision
+    """
 
     # Add host before provisioning
     test_host = host.get_from_config('esx')

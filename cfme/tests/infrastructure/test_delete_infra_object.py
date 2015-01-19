@@ -30,6 +30,11 @@ def pytest_generate_tests(metafunc):
 
 
 def test_delete_cluster(setup_provider, provider_crud, remove_test):
+    """ Tests delete cluster
+
+    Metadata:
+        test_flag: delete_object
+    """
     cluster_name = remove_test['cluster']
     test_cluster = cluster.Cluster(name=cluster_name)
     test_cluster.delete(cancel=False)
@@ -39,6 +44,11 @@ def test_delete_cluster(setup_provider, provider_crud, remove_test):
 
 
 def test_delete_host(setup_provider, provider_crud, remove_test):
+    """ Tests delete host
+
+    Metadata:
+        test_flag: delete_object
+    """
     host_name = remove_test['host']
     test_host = host.Host(name=host_name)
     test_host.delete(cancel=False)
@@ -48,6 +58,11 @@ def test_delete_host(setup_provider, provider_crud, remove_test):
 
 
 def test_delete_vm(setup_provider, provider_crud, remove_test):
+    """ Tests delete vm
+
+    Metadata:
+        test_flag: delete_object
+    """
     vm = remove_test['vm']
     test_vm = virtual_machines.Vm(vm, provider_crud)
     test_vm.remove_from_cfme(cancel=False)
@@ -57,6 +72,11 @@ def test_delete_vm(setup_provider, provider_crud, remove_test):
 
 
 def test_delete_template(setup_provider, provider_crud, remove_test):
+    """ Tests delete template
+
+    Metadata:
+        test_flag: delete_object
+    """
     template = remove_test['template']
     test_template = virtual_machines.Template(template, provider_crud)
     test_template.remove_from_cfme(cancel=False)
@@ -66,6 +86,11 @@ def test_delete_template(setup_provider, provider_crud, remove_test):
 
 
 def test_delete_resource_pool(setup_provider, provider_crud, remove_test):
+    """ Tests delete pool
+
+    Metadata:
+        test_flag: delete_object
+    """
     resourcepool_name = remove_test['resource_pool']
     test_resourcepool = resource_pool.ResourcePool(name=resourcepool_name)
     test_resourcepool.delete(cancel=False)
@@ -75,6 +100,11 @@ def test_delete_resource_pool(setup_provider, provider_crud, remove_test):
 
 
 def test_delete_datastore(setup_provider, provider_crud, remove_test):
+    """ Tests delete datastore
+
+    Metadata:
+        test_flag: delete_object
+    """
     data_store = remove_test['datastore']
     test_datastore = datastore.Datastore(name=data_store)
     host_count = test_datastore.get_hosts()

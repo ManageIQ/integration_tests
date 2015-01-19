@@ -14,7 +14,6 @@ from utils.wait import wait_for, TimedOutError
 
 pytestmark = [pytest.mark.long_running]
 
-
 # GLOBAL vars
 random_vm_test = []    # use the same values(provider/vm) for all the quadicon tests
 
@@ -89,6 +88,11 @@ def if_scvmm_refresh_provider(provider):
 class TestControlOnQuadicons(object):
 
     def test_power_off_cancel(self, test_vm, verify_vm_running, soft_assert):
+        """Tests power off cancel
+
+        Metadata:
+            test_flag: power_control, provision
+        """
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_ON, timeout=720)
         test_vm.power_control_from_cfme(option=Vm.POWER_OFF, cancel=True)
         if_scvmm_refresh_provider(test_vm.provider_crud)
@@ -98,6 +102,11 @@ class TestControlOnQuadicons(object):
             test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm not running")
 
     def test_power_off(self, test_vm, verify_vm_running, soft_assert, register_event):
+        """Tests power off
+
+        Metadata:
+            test_flag: power_control, provision
+        """
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_ON, timeout=720)
         register_event(
             test_vm.provider_crud.get_yaml_data()['type'],
@@ -113,6 +122,11 @@ class TestControlOnQuadicons(object):
             not test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm running")
 
     def test_power_on_cancel(self, test_vm, verify_vm_stopped, soft_assert):
+        """Tests power on cancel
+
+        Metadata:
+            test_flag: power_control, provision
+        """
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, timeout=720)
         test_vm.power_control_from_cfme(option=Vm.POWER_ON, cancel=True)
         if_scvmm_refresh_provider(test_vm.provider_crud)
@@ -122,6 +136,11 @@ class TestControlOnQuadicons(object):
             not test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm running")
 
     def test_power_on(self, test_vm, verify_vm_stopped, soft_assert, register_event):
+        """Tests power on
+
+        Metadata:
+            test_flag: power_control, provision
+        """
         test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, timeout=720)
         register_event(
             test_vm.provider_crud.get_yaml_data()['type'],
@@ -201,6 +220,11 @@ class TestVmDetailsPowerControlPerProvider(object):
             not vm.is_pwr_option_available_in_cfme(option=Vm.RESET, from_details=from_details))
 
     def test_power_off(self, test_vm, verify_vm_running, soft_assert, register_event, bug):
+        """Tests power off
+
+        Metadata:
+            test_flag: power_control, provision
+        """
         test_vm.wait_for_vm_state_change(
             desired_state=Vm.STATE_ON, timeout=720, from_details=True)
         last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
@@ -225,6 +249,11 @@ class TestVmDetailsPowerControlPerProvider(object):
                         "ui: {} should ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
     def test_power_on(self, test_vm, verify_vm_stopped, soft_assert, register_event, bug):
+        """Tests power on
+
+        Metadata:
+            test_flag: power_control, provision
+        """
         test_vm.wait_for_vm_state_change(
             desired_state='off', timeout=720, from_details=True)
         register_event(
@@ -253,6 +282,11 @@ class TestVmDetailsPowerControlPerProvider(object):
                         "ui: {} ==  orig: {}".format(new_last_boot_time, last_boot_time))
 
     def test_suspend(self, test_vm, verify_vm_running, soft_assert, register_event, bug):
+        """Tests suspend
+
+        Metadata:
+            test_flag: power_control, provision
+        """
         test_vm.wait_for_vm_state_change(
             desired_state=Vm.STATE_ON, timeout=720, from_details=True)
         last_boot_time = test_vm.get_detail(properties=("Power Management", "Last Boot Time"))
@@ -284,6 +318,11 @@ class TestVmDetailsPowerControlPerProvider(object):
 
     def test_start_from_suspend(
             self, test_vm, verify_vm_suspended, soft_assert, register_event, bug):
+        """Tests start from suspend
+
+        Metadata:
+            test_flag: power_control, provision
+        """
         try:
             test_vm.provider_crud.refresh_provider_relationships()
             test_vm.wait_for_vm_state_change(
@@ -320,7 +359,7 @@ class TestVmDetailsPowerControlPerProvider(object):
 
 
 def test_no_template_power_control(provider_crud, setup_provider_funcscope):
-    """ Ensures that no power button is displayed for templates. """
+    """ Ensures that no power button is displayed for templates."""
     provider_crud.load_all_provider_templates()
     toolbar.set_vms_grid_view()
     try:

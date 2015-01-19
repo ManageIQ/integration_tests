@@ -57,6 +57,11 @@ def test_providers_discovery_amazon():
 
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_add_with_bad_credentials(provider_crud):
+    """ Tests provider add with bad credentials
+
+    Metadata:
+        test_flag: crud
+    """
     provider_crud.credentials = provider.get_credentials_from_config('bad_credentials')
     with error.expected('Login failed due to a bad username or password.'):
         provider_crud.create(validate_credentials=True)
@@ -64,7 +69,11 @@ def test_provider_add_with_bad_credentials(provider_crud):
 
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_provider_crud(provider_crud):
-    """ Tests that a provider can be added """
+    """ Tests provider add with good credentials
+
+    Metadata:
+        test_flag: crud
+    """
     provider_crud.create()
     provider_crud.validate(db=False)
 

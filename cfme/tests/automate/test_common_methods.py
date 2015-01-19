@@ -93,6 +93,11 @@ def retire_extend_button(request):
 
 
 def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button):
+    """ Tests extending a retirement
+
+    Metadata:
+        test_flag: retire, provision
+    """
     soft_assert(testing_vm.retirement_date is None, "The retirement date is not None!")
     retirement_date = parsetime.now() + timedelta(days=5)
     testing_vm.set_retirement_date(retirement_date)

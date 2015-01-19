@@ -2,6 +2,7 @@ import pytest
 
 pytestmark = pytest.mark.meta(from_pytest='yep')
 
+
 @pytest.mark.meta(from_decorator='seems to be')
 def test_metadoc(meta):
     """This test function has a docstring!

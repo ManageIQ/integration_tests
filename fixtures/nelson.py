@@ -24,6 +24,8 @@ def pytest_pycollect_makeitem(collector, name, obj):
     doc = getattr(obj, '__doc__') or ''
     p = GoogleDocstring(stripper(doc), config)
 
+    if not hasattr(obj.meta, 'kwargs'):
+        obj.meta.kwargs = dict()
     obj.meta.kwargs.update({
         'from_docs': p.metadata
     })
@@ -39,10 +41,13 @@ def stripper(docstring):
     It strips a docstring's first line indentation and dedents the rest
 
     """
-    lines = docstring.splitlines()
-    return os.linesep.join([
-        lines[0].strip(), dedent("\n".join(lines[1:]))
-    ])
+    if docstring:
+        lines = docstring.splitlines()
+        return os.linesep.join([
+            lines[0].strip(), dedent("\n".join(lines[1:]))
+        ])
+    else:  # If docstring is a null string, GoogleDocstring will expect an iterable type
+        return ''
 
 
 class GoogleDocstring(docstring.GoogleDocstring):

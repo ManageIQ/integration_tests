@@ -17,4 +17,9 @@ def tenant(provider_key):
 
 
 def test_tenant(provider_mgmt, tenant, provider_key):
+    """ Tests tenant (currently disabled)
+
+    Metadata:
+        test_flag: tenant
+    """
     print tenant.name, tenant.description, provider_key

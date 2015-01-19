@@ -6,7 +6,7 @@ from utils.providers import setup_provider
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
-    pytest.mark.usefixtures('uses_infra_providers')
+    pytest.mark.usefixtures('uses_infra_providers'),
 ]
 
 
@@ -49,6 +49,9 @@ def test_iso_datastore_crud(provider_init, no_iso_dss, provider_crud, iso_datast
 
     Note:
         An ISO datastore cannot be edited.
+
+    Metadata:
+        test_flag: iso
     """
     template_crud = pxe.ISODatastore(provider_crud.name)
     template_crud.create()

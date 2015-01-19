@@ -32,7 +32,11 @@ def handle_provider(provider_key):
 
 
 def test_metrics_collection(handle_provider, provider_key, provider_crud, enable_candu):
-    '''check the db is gathering collection data for the given provider'''
+    """check the db is gathering collection data for the given provider
+
+    Metadata:
+        test_flag: metrics_collection
+    """
     metrics_tbl = db.cfmedb()['metrics']
     mgmt_systems_tbl = db.cfmedb()['ext_management_systems']
 

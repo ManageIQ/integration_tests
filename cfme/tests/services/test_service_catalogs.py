@@ -119,6 +119,11 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
 
 @pytest.mark.bugzilla(1144207)
 def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_item, request):
+    """Tests order catalog item
+
+    Metadata:
+        test_flag: provision
+    """
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
@@ -135,6 +140,12 @@ def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_
 
 @pytest.mark.bugzilla(1144207)
 def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalog_item, request):
+    """Tests ordering a catalog bundle
+
+    Metadata:
+        test_flag: provision
+    """
+
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
@@ -153,9 +164,15 @@ def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalo
     assert row.last_message.text == 'Request complete'
 
 
+# Note here this needs to be reduced, doesn't need to test against all providers
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
                                   vm_name, dialog, catalog):
+    """Tests no template catalog item
+
+    Metadata:
+        test_flag: provision
+    """
     template, catalog_item_type = map(provisioning.get,
         ('template', 'catalog_item_type'))
     if provider_type == 'rhevm':

@@ -77,7 +77,11 @@ def vm_name():
 
 def test_iso_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt,
                                      provisioning, vm_name, smtp_test, provider_init, request):
+    """Tests ISO provisioning
 
+    Metadata:
+        test_flag: iso, provision
+    """
     # generate_tests makes sure these have values
     iso_template, host, datastore, iso_file, iso_kickstart,\
         iso_root_password, iso_image_type, vlan = map(provisioning.get, ('pxe_template', 'host',

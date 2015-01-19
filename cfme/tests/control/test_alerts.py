@@ -88,6 +88,11 @@ def setup_for_alerts(request, alerts, event, vm_name, provider_data, provider_ke
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         test_vm_power_control, provider_crud, provider_data, provider_mgmt, provider_type, request,
         smtp_test, provider_key, register_event):
+    """ Tests alerts for vm turned on more than twice in 15 minutes
+
+    Metadata:
+        test_flag: alerts, provision
+    """
     if test_vm_power_control is None or len(test_vm_power_control) == 0:
         pytest.skip("No power control vm specified!")
     test_vm_power_control = test_vm_power_control[0]

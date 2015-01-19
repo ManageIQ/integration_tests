@@ -129,6 +129,11 @@ def catalog_item(setup_provider, provider_crud, provider_type, provisioning, vm_
 @pytest.mark.usefixtures('setup_iso_datastore')
 def test_rhev_iso_servicecatalog(setup_provider, provider_key, provider_mgmt,
                                  catalog_item, request):
+    """Tests RHEV ISO service catalog
+
+    Metadata:
+        test_flag: iso, provision
+    """
     vm_name = catalog_item.provisioning_data["vm_name"]
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
