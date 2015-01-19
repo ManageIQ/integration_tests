@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+import hashlib
 import random
 import re
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils import timezone
 from celery import chain, shared_task
-from celery.signals import celeryd_init
 from datetime import timedelta
 from functools import wraps
 from novaclient.exceptions import OverLimit as OSOverLimit
@@ -15,7 +16,6 @@ from novaclient.exceptions import OverLimit as OSOverLimit
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask)
 from sprout import settings, redis
-from sprout.celery import app as celery_app
 
 from utils.appliance import Appliance as CFMEAppliance
 from utils.log import create_logger
@@ -74,86 +74,66 @@ def logged_task(*args, **kwargs):
     return f
 
 
-@celeryd_init.connect
-def start_task(sender=None, conf=None, **kwargs):
-    """This task is designed to kick off self-scheduling periodical tasks at the beginning of the
-    run. I used beat service for them before, but this solution guarantees there will be no overlap.
-    Something like singleton."""
-    def schedule(t, *args, **kwargs):
-        """Checks if the task is not scheduled yet. If so, it is scheduled, otherwise not. This
-        should enforce that there aren't two or more instances of the same task running."""
-        logger().info("Scheduling task {}".format(t.__name__))
-        info = celery_app.control.inspect()
-        found = False
-        # Check active
-        for task_list in none_dict(info.active()).values():
-            for task in task_list:
-                if task["name"] == t.name:
-                    found = True
-        # Check scheduled
-        for task_list in none_dict(info.scheduled()).values():
-            for task in task_list:
-                if task["request"]["name"] == t.name:
-                    found = True
-        # Check reserved
-        for task_list in none_dict(info.reserved()).values():
-            for task in task_list:
-                if task["request"]["name"] == t.name:
-                    found = True
+def singleton_task(*args, **kwargs):
+    kwargs["bind"] = True
 
-        # Schedule if it is not there
-        if not found:
-            return t.apply_async(*args, **kwargs)
-        else:
-            return None
+    def f(task):
+        @wraps(task)
+        def wrapped_task(self, *args, **kwargs):
+            # Create hash of all args
+            digest_base = "/".join(str(arg) for arg in args)
+            keys = sorted(kwargs.keys())
+            digest_base += "//" + "/".join("{}={}".format(key, kwargs[key]) for key in keys)
+            digest = hashlib.sha256(digest_base).hexdigest()
+            lock_id = '{0}-lock-{1}'.format(self.name, digest)
 
-    schedule(retrieve_appliances_power_states, countdown=15)
-    schedule(free_appliance_shepherd, countdown=30)
-    schedule(kill_unused_appliances, countdown=40)
-    schedule(delete_nonexistent_appliances, countdown=60)
-    schedule(poke_providers, countdown=5)
-    schedule(poke_trackerbot, countdown=25)
-    schedule(retrieve_template_existence, countdown=35)
-    schedule(process_delayed_provision_tasks, countdown=55)
+            if cache.add(lock_id, 'true', LOCK_EXPIRE):
+                logger().info(
+                    "[SINGLETON TASK {}] Entering with arguments: {} / {}".format(
+                        self.name, ", ".join(map(str, args)), str(kwargs)))
+                try:
+                    return task(self, *args, **kwargs)
+                finally:
+                    cache.delete(lock_id)
+                    logger().info("[SINGLETON TASK {}] Leaving".format(self.name))
+            else:
+                logger().info("Task {} is already running, ignoring.".format(self.name))
+
+        return shared_task(*args, **kwargs)(wrapped_task)
+    return f
 
 
-@logged_task(bind=True)
+@singleton_task()
 def poke_providers(self):
     """Basic tasks that checks whether to connections to providers work."""
-    try:
-        with transaction.atomic():
-            for provider in Provider.objects.all():
-                try:
-                    provider.api.list_vm()
-                except:
-                    provider.working = False
-                    provider.save()
-                else:
-                    provider.working = True
-                    provider.save()
-    finally:
-        self.apply_async(countdown=180)
+    with transaction.atomic():
+        for provider in Provider.objects.all():
+            try:
+                provider.api.list_vm()
+            except:
+                provider.working = False
+                provider.save()
+            else:
+                provider.working = True
+                provider.save()
 
 
-@logged_task(bind=True)
+@singleton_task()
 def kill_unused_appliances(self):
     """This is the watchdog, that guards the appliances that were given to users. If you forget
     to prolong the lease time, this is the thing that will take the appliance off your hands
     and kill it."""
-    try:
-        with transaction.atomic():
-            for appliance in Appliance.objects.filter(marked_for_deletion=False, ready=True):
-                if appliance.leased_until is not None and appliance.leased_until <= timezone.now():
-                    kill_appliance.delay(appliance.id)
-    finally:
-        self.apply_async(countdown=80)
+    with transaction.atomic():
+        for appliance in Appliance.objects.filter(marked_for_deletion=False, ready=True):
+            if appliance.leased_until is not None and appliance.leased_until <= timezone.now():
+                kill_appliance.delay(appliance.id)
 
 
-@logged_task()
-def kill_appliance(appliance_id, replace_in_pool=False, minutes=60):
+@singleton_task()
+def kill_appliance(self, appliance_id, replace_in_pool=False, minutes=60):
     """As-reliable-as-possible appliance deleter. Turns off, deletes the VM and deletes the object.
 
-    If teh appliance was assigned to pool and we want to replace it, redo the provisioning.
+    If the appliance was assigned to pool and we want to replace it, redo the provisioning.
     """
     workflow = [
         appliance_power_off.si(appliance_id),
@@ -189,56 +169,53 @@ def kill_appliance_delete(self, appliance_id):
         self.retry(args=(appliance_id,), exc=e, countdown=10, max_retries=5)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def poke_trackerbot(self):
     """This beat-scheduled task periodically polls the trackerbot if there are any new templates.
     """
-    try:
-        template_usability = []
-        for template in trackerbot().providertemplate().get(limit=10000)["objects"]:
-            template_usability.append(
-                (
-                    template["provider"]["key"],
-                    template["template"]["name"],
-                    template["usable"]
-                )
+    template_usability = []
+    for template in trackerbot().providertemplate().get(limit=10000)["objects"]:
+        template_usability.append(
+            (
+                template["provider"]["key"],
+                template["template"]["name"],
+                template["usable"]
             )
-            if not template["usable"]:
-                continue
-            group, create = Group.objects.get_or_create(id=template["template"]["group"]["name"])
-            provider, create = Provider.objects.get_or_create(id=template["provider"]["key"])
-            if not provider.working:
-                continue
-            if "sprout" not in provider.provider_data:
-                continue
-            if not provider.provider_data.get("use_for_sprout", False):
-                continue
-            template_name = template["template"]["name"]
-            try:
-                Template.objects.get(
-                    provider=provider, template_group=group, original_name=template_name)
-            except ObjectDoesNotExist:
-                if provider.api.does_vm_exist(template_name):
-                    create_appliance_template.delay(provider.id, group.id, template_name)
-        # If any of the templates becomes unusable, let sprout know about it
-        # Similarly if some of them becomes usable ...
-        for provider_id, template_name, usability in template_usability:
-            provider, create = Provider.objects.get_or_create(id=provider_id)
-            try:
-                with transaction.atomic():
-                    template = Template.objects.get(provider=provider, original_name=template_name)
-                    template.usable = usability
-                    template.save()
-                    # Kill all shepherd appliances if they were acidentally spun up
-                    if not usability:
-                        for appliance in Appliance.objects.filter(
-                                template=template, ready=True, marked_for_deletion=False,
-                                appliance_pool=None):
-                            Appliance.kill(appliance)
-            except ObjectDoesNotExist:
-                pass
-    finally:
-        self.apply_async(countdown=600)
+        )
+        if not template["usable"]:
+            continue
+        group, create = Group.objects.get_or_create(id=template["template"]["group"]["name"])
+        provider, create = Provider.objects.get_or_create(id=template["provider"]["key"])
+        if not provider.working:
+            continue
+        if "sprout" not in provider.provider_data:
+            continue
+        if not provider.provider_data.get("use_for_sprout", False):
+            continue
+        template_name = template["template"]["name"]
+        try:
+            Template.objects.get(
+                provider=provider, template_group=group, original_name=template_name)
+        except ObjectDoesNotExist:
+            if provider.api.does_vm_exist(template_name):
+                create_appliance_template.delay(provider.id, group.id, template_name)
+    # If any of the templates becomes unusable, let sprout know about it
+    # Similarly if some of them becomes usable ...
+    for provider_id, template_name, usability in template_usability:
+        provider, create = Provider.objects.get_or_create(id=provider_id)
+        try:
+            with transaction.atomic():
+                template = Template.objects.get(provider=provider, original_name=template_name)
+                template.usable = usability
+                template.save()
+                # Kill all shepherd appliances if they were acidentally spun up
+                if not usability:
+                    for appliance in Appliance.objects.filter(
+                            template=template, ready=True, marked_for_deletion=False,
+                            appliance_pool=None):
+                        Appliance.kill(appliance)
+        except ObjectDoesNotExist:
+            pass
 
 
 @logged_task()
@@ -407,28 +384,25 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
         self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=50)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def process_delayed_provision_tasks(self):
     """This picks up the provisioning tasks that were delayed due to ocncurrency limit of provision.
 
     Goes one task by one and when some of them can be provisioned, it starts the provisioning and
     then deletes the task.
     """
-    try:
-        for task in DelayedProvisionTask.objects.all():
-            tpls = task.pool.possible_provisioning_templates
-            if task.provider_to_avoid is not None:
-                filtered_tpls = filter(lambda tpl: tpl.provider != task.provider_to_avoid, tpls)
-                if filtered_tpls:
-                    # There are other providers to provision on, so try one of them
-                    tpls = filtered_tpls
-                # If there is no other provider to provision on, we will use the original list.
-                # This will cause additional rejects until the provider quota is met
-            if tpls:
-                clone_template_to_pool(random.choice(tpls).id, task.pool.id, task.lease_time)
-                task.delete()
-    finally:
-        self.apply_async(countdown=30)
+    for task in DelayedProvisionTask.objects.all():
+        tpls = task.pool.possible_provisioning_templates
+        if task.provider_to_avoid is not None:
+            filtered_tpls = filter(lambda tpl: tpl.provider != task.provider_to_avoid, tpls)
+            if filtered_tpls:
+                # There are other providers to provision on, so try one of them
+                tpls = filtered_tpls
+            # If there is no other provider to provision on, we will use the original list.
+            # This will cause additional rejects until the provider quota is met
+        if tpls:
+            clone_template_to_pool(random.choice(tpls).id, task.pool.id, task.lease_time)
+            task.delete()
 
 
 @logged_task()
@@ -593,7 +567,7 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
         appliance.set_status("Template was successfully cloned.")
 
 
-@logged_task(bind=True)
+@singleton_task()
 def appliance_power_on(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -622,7 +596,7 @@ def appliance_power_on(self, appliance_id):
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def appliance_power_off(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -654,7 +628,7 @@ def appliance_power_off(self, appliance_id):
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=40)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def appliance_suspend(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -682,7 +656,7 @@ def appliance_suspend(self, appliance_id):
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def retrieve_appliance_ip(self, appliance_id):
     """Updates appliance's IP address."""
     try:
@@ -702,150 +676,138 @@ def retrieve_appliance_ip(self, appliance_id):
         appliance.set_status("IP address retrieved.")
 
 
-@logged_task(bind=True)
+@singleton_task()
 def retrieve_appliances_power_states(self):
     """Continuously loops over all appliances and retrieves power states. After the execution ends,
     it schedules itself for execution again after some time"""
-    try:
-        for a in Appliance.objects.all():
-            if a.name not in redis.renaming_appliances:
-                a.retrieve_power_state()
-    finally:
-        self.apply_async(countdown=25)
+    for a in Appliance.objects.all():
+        if a.name not in redis.renaming_appliances:
+            a.retrieve_power_state()
 
 
-@logged_task(bind=True)
+@singleton_task()
 def retrieve_template_existence(self):
     """Continuously loops over all templates and checks whether they are still present in EMS."""
-    try:
-        expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
-        for template in Template.objects.all():
-            e = template.exists_in_provider
-            with transaction.atomic():
-                tpl = Template.objects.get(pk=template.pk)
-                tpl.exists = e
-                tpl.save()
-            if not e:
-                if len(Appliance.objects.filter(template=template).all()) == 0\
-                        and template.status_changed < expiration_time:
-                    # No other appliance is made from this template so no need to keep it
-                    with transaction.atomic():
-                        tpl = Template.objects.get(pk=template.pk)
-                        tpl.delete()
-    finally:
-        self.apply_async(countdown=600)
+    expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
+    for template in Template.objects.all():
+        e = template.exists_in_provider
+        with transaction.atomic():
+            tpl = Template.objects.get(pk=template.pk)
+            tpl.exists = e
+            tpl.save()
+        if not e:
+            if len(Appliance.objects.filter(template=template).all()) == 0\
+                    and template.status_changed < expiration_time:
+                # No other appliance is made from this template so no need to keep it
+                with transaction.atomic():
+                    tpl = Template.objects.get(pk=template.pk)
+                    tpl.delete()
 
 
-@logged_task(bind=True)
+@singleton_task()
 def delete_nonexistent_appliances(self):
     """Goes through orphaned appliances' objects and deletes them from the database."""
-    try:
-        for appliance in Appliance.objects.filter(ready=True).all():
-            if appliance.name in redis.renaming_appliances:
-                continue
-            if appliance.power_state == Appliance.Power.ORPHANED:
-                try:
+    for appliance in Appliance.objects.filter(ready=True).all():
+        if appliance.name in redis.renaming_appliances:
+            continue
+        if appliance.power_state == Appliance.Power.ORPHANED:
+            try:
+                appliance.delete()
+            except ObjectDoesNotExist as e:
+                if "AppliancePool" in str(e):
+                    # Someone managed to delete the appliance pool before
+                    appliance.appliance_pool = None
+                    appliance.save()
                     appliance.delete()
-                except ObjectDoesNotExist as e:
-                    if "AppliancePool" in str(e):
-                        # Someone managed to delete the appliance pool before
-                        appliance.appliance_pool = None
-                        appliance.save()
-                        appliance.delete()
-                    else:
-                        raise  # No diaper pattern here!
-        # If something happened to the appliance provisioning process, just delete it to remove
-        # the garbage. It will be respinned again by shepherd.
-        # Grace time is specified in BROKEN_APPLIANCE_GRACE_TIME
-        expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
-        for appliance in Appliance.objects.filter(ready=False, marked_for_deletion=False).all():
-            if appliance.status_changed < expiration_time:
-                Appliance.kill(appliance)  # Use kill because the appliance may still exist
-        # And now - if something happened during appliance deletion, call kill again
-        for appliance in Appliance.objects.filter(
-                marked_for_deletion=True, status_changed__lt=expiration_time).all():
-            with transaction.atomic():
-                appl = Appliance.objects.get(pk=appliance.pk)
-                appl.marked_for_deletion = False
-                appl.save()
-            Appliance.kill(appl)
-    finally:
-        self.apply_async(countdown=120)
+                else:
+                    raise  # No diaper pattern here!
+    # If something happened to the appliance provisioning process, just delete it to remove
+    # the garbage. It will be respinned again by shepherd.
+    # Grace time is specified in BROKEN_APPLIANCE_GRACE_TIME
+    expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
+    for appliance in Appliance.objects.filter(ready=False, marked_for_deletion=False).all():
+        if appliance.status_changed < expiration_time:
+            Appliance.kill(appliance)  # Use kill because the appliance may still exist
+    # And now - if something happened during appliance deletion, call kill again
+    for appliance in Appliance.objects.filter(
+            marked_for_deletion=True, status_changed__lt=expiration_time).all():
+        with transaction.atomic():
+            appl = Appliance.objects.get(pk=appliance.pk)
+            appl.marked_for_deletion = False
+            appl.save()
+        Appliance.kill(appl)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def free_appliance_shepherd(self):
     """This task takes care of having the required templates spinned into required number of
     appliances. For each template group, it keeps the last template's appliances spinned up in
     required quantity. If new template comes out of the door, it automatically kills the older
     running template's appliances and spins up new ones."""
-    try:
-        for grp in Group.objects.all():
-            group_versions = Template.get_versions(template_group=grp, ready=True, usable=True)
-            group_dates = Template.get_dates(template_group=grp, ready=True, usable=True)
-            if group_versions:
-                # Downstream - by version (downstream releases)
-                filter_keep = {"version": group_versions[0]}
-                filters_kill = [{"version": v} for v in group_versions[1:]]
-            elif group_dates:
-                # Upstream - by date (upstream nightlies)
-                filter_keep = {"date": group_dates[0]}
-                filters_kill = [{"date": v} for v in group_dates[1:]]
-            else:
-                continue  # Ignore this group, no templates detected yet
+    for grp in Group.objects.all():
+        group_versions = Template.get_versions(template_group=grp, ready=True, usable=True)
+        group_dates = Template.get_dates(template_group=grp, ready=True, usable=True)
+        if group_versions:
+            # Downstream - by version (downstream releases)
+            filter_keep = {"version": group_versions[0]}
+            filters_kill = [{"version": v} for v in group_versions[1:]]
+        elif group_dates:
+            # Upstream - by date (upstream nightlies)
+            filter_keep = {"date": group_dates[0]}
+            filters_kill = [{"date": v} for v in group_dates[1:]]
+        else:
+            continue  # Ignore this group, no templates detected yet
 
-            # Keeping current appliances
-            # Retrieve list of all templates for given group
-            # I know joins might be a bit better solution but I'll leave that for later.
-            possible_templates = list(
-                Template.objects.filter(
-                    usable=True, ready=True, template_group=grp, **filter_keep).all())
-            # If it can be deployed, it must exist
-            possible_templates_for_provision = filter(lambda tpl: tpl.exists, possible_templates)
-            appliances = []
-            for template in possible_templates:
-                appliances.extend(
-                    Appliance.objects.filter(template=template, appliance_pool=None))
-            # If we then want to delete some templates, better kill the eldest. status_changed
-            # says which one was provisioned when, because nothing else then touches that field.
-            appliances.sort(key=lambda appliance: appliance.status_changed)
-            if len(appliances) < grp.template_pool_size and possible_templates_for_provision:
-                # There must be some templates in order to run the provisioning
-                for i in range(grp.template_pool_size - len(appliances)):
-                    new_appliance_name = settings.APPLIANCE_FORMAT.format(
-                        group=template.template_group.id,
-                        date=template.date.strftime("%y%m%d"),
-                        rnd=generate_random_string())
-                    with transaction.atomic():
-                        # Now look for templates that are on non-busy providers
-                        tpl_free = filter(
-                            lambda t: t.provider.free,
-                            possible_templates_for_provision)
-                        if not tpl_free:
-                            # Bad luck this time, provisioning process is already full. Next time.
-                            break
-                        appliance = Appliance(
-                            template=random.choice(tpl_free),
-                            name=new_appliance_name)
-                        appliance.save()
-                    clone_template_to_appliance.delay(appliance.id)
-            elif len(appliances) > grp.template_pool_size:
-                # Too many appliances, kill the surplus
-                for appliance in appliances[:len(appliances) - grp.template_pool_size]:
-                    Appliance.kill(appliance)
+        # Keeping current appliances
+        # Retrieve list of all templates for given group
+        # I know joins might be a bit better solution but I'll leave that for later.
+        possible_templates = list(
+            Template.objects.filter(
+                usable=True, ready=True, template_group=grp, **filter_keep).all())
+        # If it can be deployed, it must exist
+        possible_templates_for_provision = filter(lambda tpl: tpl.exists, possible_templates)
+        appliances = []
+        for template in possible_templates:
+            appliances.extend(
+                Appliance.objects.filter(template=template, appliance_pool=None))
+        # If we then want to delete some templates, better kill the eldest. status_changed
+        # says which one was provisioned when, because nothing else then touches that field.
+        appliances.sort(key=lambda appliance: appliance.status_changed)
+        if len(appliances) < grp.template_pool_size and possible_templates_for_provision:
+            # There must be some templates in order to run the provisioning
+            for i in range(grp.template_pool_size - len(appliances)):
+                new_appliance_name = settings.APPLIANCE_FORMAT.format(
+                    group=template.template_group.id,
+                    date=template.date.strftime("%y%m%d"),
+                    rnd=generate_random_string())
+                with transaction.atomic():
+                    # Now look for templates that are on non-busy providers
+                    tpl_free = filter(
+                        lambda t: t.provider.free,
+                        possible_templates_for_provision)
+                    if not tpl_free:
+                        # Bad luck this time, provisioning process is already full. Next time.
+                        break
+                    appliance = Appliance(
+                        template=random.choice(tpl_free),
+                        name=new_appliance_name)
+                    appliance.save()
+                clone_template_to_appliance.delay(appliance.id)
+        elif len(appliances) > grp.template_pool_size:
+            # Too many appliances, kill the surplus
+            for appliance in appliances[:len(appliances) - grp.template_pool_size]:
+                Appliance.kill(appliance)
 
-            # Killing old appliances
-            for filter_kill in filters_kill:
-                for template in Template.objects.filter(
-                        ready=True, usable=True, template_group=grp, **filter_kill):
-                    for a in Appliance.objects.filter(
-                            template=template, appliance_pool=None, marked_for_deletion=False):
-                        Appliance.kill(a)
-    finally:
-        self.apply_async(countdown=60)
+        # Killing old appliances
+        for filter_kill in filters_kill:
+            for template in Template.objects.filter(
+                    ready=True, usable=True, template_group=grp, **filter_kill):
+                for a in Appliance.objects.filter(
+                        template=template, appliance_pool=None, marked_for_deletion=False):
+                    Appliance.kill(a)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def wait_appliance_ready(self, appliance_id):
     """This task checks for appliance's readiness for use. The checking loop is designed as retrying
     the task to free up the queue."""
@@ -871,25 +833,25 @@ def wait_appliance_ready(self, appliance_id):
         return
 
 
-@logged_task(bind=True)
+@singleton_task()
 def anyvm_power_on(self, provider, vm):
     provider = provider_factory(provider)
     provider.start_vm(vm)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def anyvm_power_off(self, provider, vm):
     provider = provider_factory(provider)
     provider.stop_vm(vm)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def anyvm_suspend(self, provider, vm):
     provider = provider_factory(provider)
     provider.suspend_vm(vm)
 
 
-@logged_task(bind=True)
+@singleton_task()
 def anyvm_delete(self, provider, vm):
     provider = provider_factory(provider)
     provider.delete_vm(vm)

@@ -31,6 +31,7 @@ from psphere.errors import ObjectNotFoundError
 
 from cfme import exceptions as cfme_exc
 from utils.log import logger
+from utils.randomness import generate_random_string
 from utils.version import LooseVersion, current_version
 from utils.wait import wait_for, TimedOutError
 
@@ -1143,6 +1144,36 @@ class RHEVMSystem(MgmtSystemAPIBase):
 
     def remove_host_from_cluster(self, hostname):
         raise NotImplementedError('remove_host_from_cluster not implemented')
+
+    def mark_as_template(self, vm_name, delete=True):
+        """Turns the VM off, creates tempalte from it and deletes the original VM.
+
+        Mimics VMware behaviour here.
+
+        Args:
+            vm_name: Name of the VM to be turned to template
+            delete: Whether to delete the VM (default: True)
+        """
+        self.stop_vm(vm_name)
+        vm = self._get_vm(vm_name)
+        actual_cluster = vm.get_cluster()
+        temp_template_name = "templatize_{}".format(generate_random_string())
+        new_template = params.Template(name=temp_template_name, vm=vm, cluster=actual_cluster)
+        self.api.templates.add(new_template)
+        # First it has to appear
+        wait_for(
+            lambda: temp_template_name in self.list_template(),
+            num_sec=15 * 60, message="template created")
+        # Then the process has to finish
+        wait_for(
+            lambda: self.api.templates.get(name=temp_template_name).get_status().state == "ok",
+            num_sec=15 * 60, message="template creation finished")
+        # Delete the original VM
+        if delete:
+            self.delete_vm(vm_name)
+        template = self.api.templates.get(name=temp_template_name)
+        template.set_name(vm_name)
+        template.update()
 
 
 class EC2System(MgmtSystemAPIBase):
