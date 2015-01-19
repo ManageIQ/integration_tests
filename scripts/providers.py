@@ -52,8 +52,9 @@ def main():
             # 'True' result becomes flipped exit 0, and vice versa for False
             exit = int(not result)
         else:
-            # Unknown type, explode
-            raise Exception('Unknown return type for "%s"' % args.action)
+            # Unknown type, print it
+            exit = 0
+            print str(result)
     except Exception as e:
         exit = 1
         exc_type = type(e).__name__
