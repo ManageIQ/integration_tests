@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 from __future__ import absolute_import
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from datetime import timedelta
 import os
 
 from utils.conf import cfme_data, credentials
@@ -118,6 +119,7 @@ CELERY_TASK_SERIALIZER = 'pickle'
 CELERY_RESULT_SERIALIZER = 'pickle'
 CELERY_TIMEZONE = "UTC"
 CELERY_DISABLE_RATE_LIMITS = True
+CELERY_TIMEZONE = 'UTC'
 # CELERY_ACKS_LATE = True
 # CELERYD_PREFETCH_MULTIPLIER = 1
 
@@ -145,6 +147,49 @@ CACHES = {
 BROKEN_APPLIANCE_GRACE_TIME = dict(
     hours=1,
 )
+
+# Celery beat
+CELERYBEAT_SCHEDULE = {
+    'retrieve-appliances-power-states': {
+        'task': 'appliances.tasks.retrieve_appliances_power_states',
+        'schedule': timedelta(seconds=25),
+    },
+
+    'free-appliance-shepherd': {
+        'task': 'appliances.tasks.free_appliance_shepherd',
+        'schedule': timedelta(seconds=300),
+    },
+
+    'kill-unused-appliances': {
+        'task': 'appliances.tasks.kill_unused_appliances',
+        'schedule': timedelta(seconds=60),
+    },
+
+    'delete-nonexistent-appliances': {
+        'task': 'appliances.tasks.delete_nonexistent_appliances',
+        'schedule': timedelta(seconds=600),
+    },
+
+    'poke-providers': {
+        'task': 'appliances.tasks.poke_providers',
+        'schedule': timedelta(seconds=45),
+    },
+
+    'poke-trackerbot': {
+        'task': 'appliances.tasks.poke_trackerbot',
+        'schedule': timedelta(minutes=10),
+    },
+
+    'retrieve-template-existence': {
+        'task': 'appliances.tasks.retrieve_template_existence',
+        'schedule': timedelta(minutes=15),
+    },
+
+    'process-delayed-provision-tasks': {
+        'task': 'appliances.tasks.process_delayed_provision_tasks',
+        'schedule': timedelta(seconds=20),
+    },
+}
 
 try:
     from sprout.local_settings import *  # NOQA

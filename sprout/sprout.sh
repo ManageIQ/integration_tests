@@ -7,17 +7,32 @@ shift 1;
 PIDFILE="./.sprout.pid"
 LOGFILE="./sprout-manager.log"
 UPDATE_LOG="./update.log"
+FOREMAN_TIMEOUT=${FOREMAN_TIMEOUT:-300}  # Some tasks can take a long time so it is not good to interrupt them
 
 hash foreman && {
-    command="foreman start -t 180"
-    flush_redis=false
+    command="foreman start -t ${FOREMAN_TIMEOUT}"
 } || {
-    command="honcho start"
-    flush_redis=true
+    echo "You have to install ruby gem 'foreman' to manage Sprout"
+    exit 2
+}
+
+function cddir() {
+    BASENAME="`basename $0`"
+    cd ${SPROUT_HOME:-$BASENAME}
+}
+
+function clearpyc() {
+    echo "Clearing pyc cache"
+    OLD=`pwd`
+    cd ..
+    find . -name \*.pyc -delete
+    find . -name __pycache__ -delete
+    cd "${OLD}"
 }
 
 
 function start_sprout() {
+    cddir
     if [ -e "${PIDFILE}" ] ;
     then
         ps -p `cat $PIDFILE` >/dev/null
@@ -37,6 +52,7 @@ function start_sprout() {
 }
 
 function stop_sprout() {
+    cddir
     if [ -e "${PIDFILE}" ] ;
     then
         PID=`cat $PIDFILE`
@@ -48,6 +64,7 @@ function stop_sprout() {
             return 1
         fi
         kill -INT $PID
+        echo "INT signal issued" >> $LOGFILE
         echo "Waiting for the Sprout to stop"
         while kill -0 "$PID" >/dev/null 2>&1 ; do
             sleep 0.5
@@ -62,6 +79,7 @@ function stop_sprout() {
 }
 
 function running_sprout() {
+    cddir
     if [ -e "${PIDFILE}" ] ;
     then
         ps -p `cat $PIDFILE` >/dev/null
@@ -85,29 +103,23 @@ function restart_sprout() {
 }
 
 function update_sprout() {
+    cddir
+    clearpyc
     echo "Running update"
-    git checkout master > $UPDATE_LOG && git pull origin master > $UPDATE_LOG && {
+    echo "--- Update begun at `date` ---" >> $UPDATE_LOG
+    git checkout master >> $UPDATE_LOG && git pull origin master >> $UPDATE_LOG && {
         echo "Checking requirements"
-        pip install -Ur requirements.txt > $UPDATE_LOG
+        pip install -Ur requirements.txt >> $UPDATE_LOG
         echo "Migrating"
-        ./manage.py migrate > $UPDATE_LOG
+        ./manage.py migrate >> $UPDATE_LOG
         echo "Collecting static files"
-        ./manage.py collectstatic --noinput > $UPDATE_LOG
+        ./manage.py collectstatic --noinput >> $UPDATE_LOG
     }
     stop_sprout
-    echo "Clearing pyc cache"
-    OLD=`pwd`
-    cd ..
-    find . -name \*.pyc -delete
-    find . -name __pycache__ -delete
-    cd "${OLD}"
-    if $flush_redis ;
-    then
-        echo "Flushing redis"
-        redis-cli -p ${REDIS_PORT:-6379} FLUSHDB
-        redis-cli -p ${REDIS_PORT:-6379} FLUSHALL
-    fi
+    # Once more
+    clearpyc
     start_sprout
+    echo "--- Update finished at `date` ---" >> $UPDATE_LOG
 }
 
 case "${ACTION}" in
