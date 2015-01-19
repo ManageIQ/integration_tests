@@ -130,6 +130,8 @@ def test_perf_ui_infra_hosts(ssh_client, soft_assert):
     pages_to_statistics_csv(pages, host_filters, 'statistics.csv')
 
 
+# Currently unskip on 1175504 since a large environment is a requirement for this bug
+@pytest.mark.bugzilla(1086386, 1175504, unskip={1175504: True})
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_vm_explorer(ssh_client, soft_assert):
@@ -149,6 +151,8 @@ def test_perf_ui_infra_vm_explorer(ssh_client, soft_assert):
     pages_to_statistics_csv(pages, vm_infra_filters, 'statistics.csv')
 
 
+# Currently unskip 1129260 since a large environment is a requirement for this bug
+@pytest.mark.bugzilla(1129260, unskip={1129260: True})
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_resource_pools(ssh_client, soft_assert):

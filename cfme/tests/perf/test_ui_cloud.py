@@ -123,6 +123,8 @@ def test_perf_ui_cloud_security_groups(ssh_client, soft_assert):
     pages_to_statistics_csv(pages, security_groups_filters, 'statistics.csv')
 
 
+# Currently unskip 1170778 since a large environment is a requirement for this bug
+@pytest.mark.bugzilla(1170778, unskip={1170778: True})
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_vm_explorer(ssh_client, soft_assert):
