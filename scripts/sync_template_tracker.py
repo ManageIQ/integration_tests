@@ -36,6 +36,7 @@ def main(trackerbot_url, mark_usable=None):
     else:
         usable = {'usable': mark_usable}
 
+    active_streams = trackerbot.active_streams(api)
     existing_provider_templates = [pt['id'] for pt in api.providertemplate.get(limit=0)['objects']]
 
     # Find some templates and update the API
@@ -52,6 +53,13 @@ def main(trackerbot_url, mark_usable=None):
 
         for provider_key in providers:
             provider = trackerbot.Provider(provider_key)
+
+            if stream not in active_streams:
+                # stream isn't tracked by trackerbot, ignore
+                print 'Ignored %s template %s on provider %s (Inactive stream)' % (
+                    stream, template_name, provider_key)
+                continue
+
             if '{}_{}'.format(template_name, provider_key) in existing_provider_templates:
                 print 'Template %s already exists on on provider %s' % (template_name, provider_key)
                 continue
