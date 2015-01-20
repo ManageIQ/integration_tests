@@ -117,7 +117,8 @@ def mark_provider_template(api, provider, template, tested=None, usable=None, di
     if usable is not None:
         provider_template['usable'] = bool(usable)
 
-    provider_template['diagnosis'] = diagnosis
+    if diagnosis:
+        provider_template['diagnosis'] = diagnosis
 
     return api.providertemplate.post(provider_template)
 
@@ -126,6 +127,17 @@ def delete_provider_template(api, provider, template):
     """Delete a provider/template relationship, used when a template is removed from one provider"""
     provider_template = _as_providertemplate(provider, template)
     return api.providertemplate(provider_template.concat_id).delete()
+
+
+def set_provider_active(api, provider, active=True):
+    """Set a provider active (or inactive)
+
+    Args:
+        api: The trackerbot API to act on
+        active: active flag to set on the provider (True or False)
+
+    """
+    api.provider[provider].patch(active=active)
 
 
 def latest_template(api, group, provider_key=None):
