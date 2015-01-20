@@ -423,6 +423,20 @@ function update_sprout() {
     rm .update-running
 }
 
+function reload_sprout() {
+    cddir
+    echo "> Starting reload"
+    clearpyc
+    stop_beat
+    reload_gunicorn
+    stop_flower
+    stop_worker
+    start_worker
+    start_flower
+    start_beat
+    echo "> Reload finished"
+}
+
 
 function sprout_needs_update() {
     if needs_update ;
@@ -451,9 +465,10 @@ case "${ACTION}" in
     start) start_sprout ;;
     stop) stop_sprout ;;
     restart) restart_sprout ;;
+    reload) reload_sprout ;;
 
     update) update_sprout ;;
     check-update) sprout_needs_update ;;
-    *) echo "Usage: ${0} start|{gunicorn,beat,worker,flower,memcached}-start|stop|{gunicorn,beat,worker,flower,memcached}-stop|restart|check-update|update" ;;
+    *) echo "Usage: ${0} start|{gunicorn,beat,worker,flower,memcached}-start|stop|{gunicorn,beat,worker,flower,memcached}-stop|restart|check-update|update|reload" ;;
 esac
 

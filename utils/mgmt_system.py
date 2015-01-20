@@ -1126,6 +1126,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def deploy_template(self, template, *args, **kwargs):
         logger.debug(' Deploying RHEV template %s to VM %s' % (template, kwargs["vm_name"]))
         timeout = kwargs.pop('timeout', 900)
+        power_on = kwargs.pop('power_on', True)
         vm_kwargs = {
             'name': kwargs['vm_name'],
             'cluster': self.api.clusters.get(kwargs['cluster']),
@@ -1139,7 +1140,8 @@ class RHEVMSystem(MgmtSystemAPIBase):
         vm = params.VM(**vm_kwargs)
         self.api.vms.add(vm)
         self.wait_vm_stopped(kwargs['vm_name'], num_sec=timeout)
-        self.start_vm(kwargs['vm_name'])
+        if power_on:
+            self.start_vm(kwargs['vm_name'])
         return kwargs['vm_name']
 
     def remove_host_from_cluster(self, hostname):
