@@ -57,6 +57,7 @@ def test_perf_ui_services_catalogs(ssh_client, soft_assert):
     pages_to_statistics_csv(pages, my_services_filters, 'statistics.csv')
 
 
+@pytest.mark.bugzilla(1179478)
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_services_workloads(ssh_client, soft_assert):

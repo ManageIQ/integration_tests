@@ -18,6 +18,7 @@ chargeback_filters = [
     re.compile(r'^POST \"\/chargeback\/tree_select\/\?id\=[A-Za-z0-9\-\_]*\"$')]
 
 
+@pytest.mark.bugzilla(1174300)
 @pytest.mark.perf_ui_intelligence
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_intelligence_reports(ssh_client, soft_assert):
