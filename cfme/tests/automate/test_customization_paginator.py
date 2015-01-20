@@ -45,7 +45,7 @@ def test_paginator(some_dialogs, soft_assert):
     soft_assert(len(list(dialogs_table.rows())) == 5, "Changing number of rows failed!")
     # try to browse
     current_rec_offset = None
-    dialogs_found = set([])
+    dialogs_found = set()
     for page in paginator.pages():
         if paginator.rec_offset() == current_rec_offset:
             soft_assert(False, "Paginator is locked, it does not advance to next page")
@@ -55,7 +55,7 @@ def test_paginator(some_dialogs, soft_assert):
         for text in get_relevant_rows(dialogs_table):
             dialogs_found.add(text)
         current_rec_offset = paginator.rec_offset()
-    assert set([dlg.label for dlg in some_dialogs]).issubset(dialogs_found), \
+    assert set([dlg.label for dlg in some_dialogs]) <= dialogs_found, \
         "Could not find all dialogs by clicking the paginator!"
 
 
