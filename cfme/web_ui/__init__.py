@@ -2042,6 +2042,16 @@ class Quadicon(Pretty):
         """ Returns name of the quadicon."""
         return self._name
 
+    @property
+    def check_for_single_quadrant_icon(self):
+        """ Checks if the quad icon is a single quadrant icon."""
+        for quadrant_name in self._quad_data.iterkeys():
+            # These quadrant will be displayed if it is a regular quad
+            quadrant_id = self._quad_data[quadrant_name][0]  # It is a tuple
+            if sel.is_displayed(self._locate_quadrant(quadrant_id)):
+                return False
+        return sel.is_displayed(self._locate_quadrant("e"))  # Image has only 'e'
+
 
 class DHTMLSelect(Select):
     """

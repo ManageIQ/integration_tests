@@ -6,7 +6,7 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, Region, Select, fill, form_buttons, flash, Table
+from cfme.web_ui import Form, Region, Select, fill, form_buttons, flash, Table, Quadicon
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
 
@@ -15,6 +15,7 @@ details_page = Region(infoblock_type='detail')
 
 cfg_btn = partial(tb.select, 'Configuration')
 timeprofile_table = Table("//div[@id='main_div']//table[@class='style3']")
+
 
 nav.add_branch(
     'my_settings',
@@ -103,6 +104,9 @@ class Timeprofile(Updateable):
 
 
 class Visual(Updateable):
+
+    pretty_attrs = ['name']
+
     item_form = Form(
         fields=[
             ('grid_view', Select('//select[@id="perpage_grid"]')),
@@ -115,12 +119,19 @@ class Visual(Updateable):
         fields=[
             ('login_page', Select('//select[@id="start_page"]'))])
 
-    save_button = form_buttons.FormButton("Add this Time Profile")
+    quadicons_form = Form(
+        fields=[
+            ('infra_provider_quad', "//input[@id='quadicons_ems']"),
+            ('cloud_provider_quad', "//input[@id='quadicons_ems_cloud']"),
+            ('host_quad', "//input[@id='quadicons_host']"),
+            ('datastore_quad', "//input[@id='quadicons_storage']"),
+            ('datastoreitem_quad', "//input[@id='quadicons_storageitem']"),
+            ('vm_quad', "//input[@id='quadicons_vm']"),
+            ('vmitem_quad', "//input[@id='quadicons_vmitem']"),
+            ('template_quad', "//input[@id='quadicons_miq_template']"),
+        ])
 
-    def __init__(self, grid_view=None, tile_view=None, list_view=None):
-        self.grid_view = grid_view
-        self.tile_view = tile_view
-        self.list_view = list_view
+    save_button = form_buttons.FormButton("Add this Time Profile")
 
     @property
     def grid_view_limit(self):
@@ -165,5 +176,65 @@ class Visual(Updateable):
         sel.force_navigate("my_settings_visual")
         fill(self.startpage_form.login_page, str(value))
         sel.click(form_buttons.save)
+
+    @property
+    def infra_provider_quad(self):
+        sel.force_navigate("my_settings_visual")
+        return self.infra_provider_quad
+
+    @infra_provider_quad.setter
+    def infra_provider_quad(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.quadicons_form.infra_provider_quad, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def host_quad(self):
+        sel.force_navigate("my_settings_visual")
+        return self.host_quad
+
+    @host_quad.setter
+    def host_quad(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.quadicons_form.host_quad, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def datastore_quad(self):
+        sel.force_navigate("my_settings_visual")
+        return self.datastore_quad
+
+    @datastore_quad.setter
+    def datastore_quad(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.quadicons_form.datastore_quad, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def vm_quad(self):
+        sel.force_navigate("my_settings_visual")
+        return self.vm_quad
+
+    @vm_quad.setter
+    def vm_quad(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.quadicons_form.vm_quad, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def template_quad(self):
+        sel.force_navigate("my_settings_visual")
+        return self.template_quad
+
+    @template_quad.setter
+    def template_quad(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.quadicons_form.template_quad, str(value))
+        sel.click(form_buttons.save)
+
+    def check_image_exists(self):
+        name = Quadicon.get_first_quad_title()
+        quad = Quadicon(name, None)
+        return quad.check_for_single_quadrant_icon
 
 visual = Visual()
