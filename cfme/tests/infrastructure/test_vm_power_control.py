@@ -27,10 +27,10 @@ def pytest_generate_tests(metafunc):
     new_argvalues = []
     if 'random_pwr_ctl_vm' in metafunc.fixturenames:
         if random_vm_test:
-            logger.info("Reusing random vm for test")
+            # Reusing random vm for test
             argnames, new_argvalues, new_idlist = random_vm_test
         else:
-            logger.info("Picking random VM for tests")
+            # Picking random VM for tests
             single_index = random.choice(range(len(idlist)))
             new_idlist = ['random_provider']
             new_argvalues = argvalues[single_index]
@@ -40,13 +40,9 @@ def pytest_generate_tests(metafunc):
             random_vm_test.append(argnames)
             random_vm_test.append(new_argvalues)
             random_vm_test.append(new_idlist)
-            logger.info("random vm test: {}".format(str(random_vm_test)))
     else:
         new_idlist = idlist
-        logger.info("new_idlist: {}".format(str(new_idlist)))
         new_argvalues = argvalues
-        logger.info("new_argvalues: {}".format(str(new_argvalues)))
-        logger.info("argnames: {}".format(str(argnames)))
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="class")
 
 

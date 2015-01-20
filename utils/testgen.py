@@ -267,7 +267,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
             allowed_flags = set(defined_flags) - set(excluded_flags)
 
             if set(test_flags) - allowed_flags:
-                logger.debug("Skipping Provider {} for test {} in module {} because "
+                logger.info("Skipping Provider {} for test {} in module {} because "
                     "it does not have the right flags, "
                     "{} does not contain {}".format(provider,
                                                     metafunc.function.func_name,
@@ -302,11 +302,11 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                 if options['require_fields']:
                     skip = True
                     idlist.remove(provider)
-                    logger.warning('Field "%s" not defined for provider "%s", skipping' %
+                    logger.debug('Field "%s" not defined for provider "%s", skipping' %
                         (key, provider)
                     )
                 else:
-                    logger.warning('Field "%s" not defined for provider "%s", defaulting to None' %
+                    logger.debug('Field "%s" not defined for provider "%s", defaulting to None' %
                         (key, provider)
                     )
 
@@ -336,10 +336,10 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
     if 'choose_random' not in options:
         options['choose_random'] = False
     if idlist and options['choose_random']:
-        single_index = random.choice(range(len(idlist)))
+        single_index = idlist.index(random.choice(idlist))
         new_idlist = ['random_provider']
         new_argvalues = [argvalues[single_index]]
-        logger.warning('Choosing random provider, "%s" selected, ' % (provider))
+        logger.debug('Choosing random provider, "%s" selected, ' % (provider))
         return argnames, new_argvalues, new_idlist
 
     return argnames, argvalues, idlist
