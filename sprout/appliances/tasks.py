@@ -197,7 +197,7 @@ def poke_trackerbot(self):
             Template.objects.get(
                 provider=provider, template_group=group, original_name=template_name)
         except ObjectDoesNotExist:
-            if provider.api.does_vm_exist(template_name):
+            if template_name in provider.api.list_template():
                 create_appliance_template.delay(provider.id, group.id, template_name)
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
@@ -255,10 +255,10 @@ def create_appliance_template(provider_id, group_id, template_name):
 @logged_task(bind=True)
 def prepare_template_deploy(self, template_id):
     template = Template.objects.get(id=template_id)
-    if template.is_created:
+    if template.exists_in_provider:
         return True
     try:
-        if not template.is_created:
+        if not template.exists_in_provider:
             template.set_status("Deploying the template.")
             kwargs = template.provider.provider_data["sprout"]
             kwargs["power_on"] = True
@@ -347,7 +347,7 @@ def prepare_template_delete_on_error(self, template_id):
         return True
     template.set_status("Template creation failed. Deleting it.")
     try:
-        if template.is_created:
+        if template.exists_in_provider:
             template.provider_api.delete_vm(template.name)
         template.delete()
     except Exception as e:
