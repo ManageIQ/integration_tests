@@ -330,8 +330,8 @@ function stop_flower() {
             rm -f $PIDFILE_FLOWER
             return 1
         fi
-        kill -INT $PID
-        echo "INT signal issued to Flower" >> $LOGFILE
+        kill -TERM $PID
+        echo "TERM signal issued to Flower" >> $LOGFILE
         echo ">> Waiting for the Flower to stop"
         while kill -0 "$PID" >/dev/null 2>&1 ; do
             sleep 0.5
