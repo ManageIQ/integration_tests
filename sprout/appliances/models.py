@@ -154,10 +154,6 @@ class Template(models.Model):
             logger().info("{}: {}".format(str(self), status))
 
     @property
-    def is_created(self):
-        return self.provider_api.does_vm_exist(self.name)
-
-    @property
     def cfme(self):
         return CFMEAppliance(self.provider_name, self.name)
 
