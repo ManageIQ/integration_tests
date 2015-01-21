@@ -110,7 +110,7 @@ def poke_providers(self):
         poke_provider.delay(provider.id)
 
 
-@singleton_task()
+@singleton_task(time_limit=60)
 def poke_provider(self, provider_id):
     provider = Provider.objects.get(id=provider_id)
     try:
@@ -690,7 +690,7 @@ def retrieve_appliances_power_states(self):
             retrieve_appliance_power_state.delay(a.id)
 
 
-@singleton_task()
+@singleton_task(time_limit=60)
 def retrieve_appliance_power_state(self, appliance_id):
     Appliance.objects.get(id=appliance_id).retrieve_power_state()
 
@@ -702,7 +702,7 @@ def retrieve_templates_existence(self):
         retrieve_template_existence.delay(template.id)
 
 
-@singleton_task()
+@singleton_task(time_limit=120)
 def retrieve_template_existence(self, template_id):
     """Continuously loops over all templates and checks whether they are still present in EMS."""
     expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
