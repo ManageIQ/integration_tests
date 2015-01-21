@@ -111,8 +111,8 @@ STATICFILES_DIRS = (
 
 # CELERY SETTINGS
 REDIS_PORT = os.environ.get("REDIS_PORT", 6379)
-BROKER_URL = 'redis://localhost:{}/{}'.format(REDIS_PORT, os.environ.get("REDIS_DB_ID", 0))
-CELERY_RESULT_BACKEND = 'redis://localhost:{}/{}'.format(
+BROKER_URL = 'redis://127.0.0.1:{}/{}'.format(REDIS_PORT, os.environ.get("REDIS_DB_ID", 0))
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:{}/{}'.format(
     REDIS_PORT, os.environ.get("REDIS_RESULT_DB_ID", 1))
 # CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'pickle'
@@ -130,7 +130,7 @@ TEMPLATE_FORMAT = "sprout_template_{group}_{date}_{rnd}"
 APPLIANCE_FORMAT = "sprout_appliance_{group}_{date}_{rnd}"
 
 # General redis settings
-GENERAL_REDIS = dict(host='localhost', port=REDIS_PORT, db=int(os.environ.get("REDIS_GENERAL", 2)))
+GENERAL_REDIS = dict(host='127.0.0.1', port=REDIS_PORT, db=int(os.environ.get("REDIS_GENERAL", 2)))
 
 
 ATOMIC_REQUESTS = False  # Turn off after moving to postgre
