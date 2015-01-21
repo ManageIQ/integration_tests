@@ -24,7 +24,7 @@ from utils.randomness import generate_random_string
 from utils.trackerbot import api, parse_template
 
 
-LOCK_EXPIRE = 60 * 10  # 10 minutes
+LOCK_EXPIRE = 60 * 15  # 15 minutes
 VERSION_REGEXPS = [
     # 4 digits
     r"cfme-(\d)(\d)(\d)(\d)-",      # cfme-5242-    -> 5.2.4.2
@@ -106,16 +106,21 @@ def singleton_task(*args, **kwargs):
 @singleton_task()
 def poke_providers(self):
     """Basic tasks that checks whether to connections to providers work."""
-    with transaction.atomic():
-        for provider in Provider.objects.all():
-            try:
-                provider.api
-            except:
-                provider.working = False
-                provider.save()
-            else:
-                provider.working = True
-                provider.save()
+    for provider in Provider.objects.all():
+        poke_provider.delay(provider.id)
+
+
+@singleton_task()
+def poke_provider(self, provider_id):
+    provider = Provider.objects.get(id=provider_id)
+    try:
+        provider.api
+    except:
+        provider.working = False
+    else:
+        provider.working = True
+    finally:
+        provider.save()
 
 
 @singleton_task()
@@ -682,26 +687,38 @@ def retrieve_appliances_power_states(self):
     it schedules itself for execution again after some time"""
     for a in Appliance.objects.all():
         if a.name not in redis.renaming_appliances:
-            a.retrieve_power_state()
+            retrieve_appliance_power_state.delay(a.id)
 
 
 @singleton_task()
-def retrieve_template_existence(self):
+def retrieve_appliance_power_state(self, appliance_id):
+    Appliance.objects.get(id=appliance_id).retrieve_power_state()
+
+
+@singleton_task()
+def retrieve_templates_existence(self):
+    """Continuously loops over all templates and checks whether they are still present in EMS."""
+    for template in Template.objects.all():
+        retrieve_template_existence.delay(template.id)
+
+
+@singleton_task()
+def retrieve_template_existence(self, template_id):
     """Continuously loops over all templates and checks whether they are still present in EMS."""
     expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
-    for template in Template.objects.all():
-        e = template.exists_in_provider
-        with transaction.atomic():
-            tpl = Template.objects.get(pk=template.pk)
-            tpl.exists = e
-            tpl.save()
-        if not e:
-            if len(Appliance.objects.filter(template=template).all()) == 0\
-                    and template.status_changed < expiration_time:
-                # No other appliance is made from this template so no need to keep it
-                with transaction.atomic():
-                    tpl = Template.objects.get(pk=template.pk)
-                    tpl.delete()
+    template = Template.objects.get(id=template_id)
+    e = template.exists_in_provider
+    with transaction.atomic():
+        tpl = Template.objects.get(pk=template.pk)
+        tpl.exists = e
+        tpl.save()
+    if not e:
+        if len(Appliance.objects.filter(template=template).all()) == 0\
+                and template.status_changed < expiration_time:
+            # No other appliance is made from this template so no need to keep it
+            with transaction.atomic():
+                tpl = Template.objects.get(pk=template.pk)
+                tpl.delete()
 
 
 @singleton_task()
