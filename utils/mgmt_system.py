@@ -85,6 +85,7 @@ class MgmtSystemAPIBase(object):
 
     """
     __metaclass__ = ABCMeta
+    STEADY_WAIT_MINS = 3
 
     # Flag to indicate whether or not this MgmtSystem can suspend,
     # default True
@@ -354,23 +355,46 @@ class MgmtSystemAPIBase(object):
             or self.is_vm_suspended(vm_name)
         )
 
-    def wait_vm_steady(self, vm_name, num_sec=120):
+    def wait_vm_steady(self, vm_name):
         """Waits 2 (or user-specified time) minutes for VM to settle in steady state
 
         Args:
             vm_name: VM name
-            num_sec: Timeout for wait_for
         """
-        return wait_for(
-            lambda: self.in_steady_state(vm_name),
-            num_sec=num_sec,
-            delay=2,
-            message="VM %s in steady state" % vm_name
-        )
+        try:
+            return wait_for(
+                lambda: self.in_steady_state(vm_name),
+                num_sec=self.STEADY_WAIT_MINS * 60,
+                delay=2,
+                message="VM %s in steady state" % vm_name
+            )
+        except TimedOutError:
+            logger.exception("VM {} got stuck in {} state when waiting for steady state.".format(
+                vm_name, self.vm_status(vm_name)))
+            raise
 
     @property
     def can_rename(self):
         return hasattr(self, "rename_vm")
+
+    @contextmanager
+    def steady_wait(self, minutes):
+        """Overrides original STEADY_WAIT_MINS variable in the object.
+
+        This is useful eg. when creating templates in RHEV as it has long Image Locked period
+
+        Args:
+            minutes: How many minutes to wait
+        """
+        original = None
+        if "STEADY_WAIT_MINS" in self.__dict__:
+            original = self.__dict__["STEADY_WAIT_MINS"]
+        self.__dict__["STEADY_WAIT_MINS"] = minutes
+        yield
+        if original is None:
+            del self.__dict__["STEADY_WAIT_MINS"]
+        else:
+            self.__dict__["STEADY_WAIT_MINS"] = original
 
 
 class VMWareSystem(MgmtSystemAPIBase):
@@ -874,6 +898,8 @@ class RHEVMSystem(MgmtSystemAPIBase):
         'num_datastore': lambda self: len(self.list_datastore()),
     }
 
+    STEADY_WAIT_MINS = 6
+
     def __init__(self, hostname, username, password, **kwargs):
         # generate URL from hostname
 
@@ -963,7 +989,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             return False
 
     def start_vm(self, vm_name=None):
-        self.wait_vm_steady(vm_name, num_sec=300)
+        self.wait_vm_steady(vm_name)
         logger.info(' Starting RHEV VM %s' % vm_name)
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'up':
@@ -975,7 +1001,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             return True
 
     def stop_vm(self, vm_name):
-        self.wait_vm_steady(vm_name, num_sec=300)
+        self.wait_vm_steady(vm_name)
         logger.info(' Stopping RHEV VM %s' % vm_name)
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'down':
@@ -987,7 +1013,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             return True
 
     def delete_vm(self, vm_name):
-        self.wait_vm_steady(vm_name, num_sec=300)
+        self.wait_vm_steady(vm_name)
         vm = self._get_vm(vm_name)
         if not self.is_vm_stopped(vm_name):
             self.stop_vm(vm_name)
@@ -1107,7 +1133,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         wait_for(self.is_vm_suspended, [vm_name], num_sec=num_sec)
 
     def suspend_vm(self, vm_name):
-        self.wait_vm_steady(vm_name, num_sec=300)
+        self.wait_vm_steady(vm_name)
         logger.debug(' Suspending RHEV VM %s' % vm_name)
         vm = self._get_vm(vm_name)
         if vm.status.get_state() == 'down':
@@ -1148,7 +1174,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
         raise NotImplementedError('remove_host_from_cluster not implemented')
 
     def mark_as_template(self, vm_name, delete=True):
-        """Turns the VM off, creates tempalte from it and deletes the original VM.
+        """Turns the VM off, creates template from it and deletes the original VM.
 
         Mimics VMware behaviour here.
 
@@ -1156,26 +1182,27 @@ class RHEVMSystem(MgmtSystemAPIBase):
             vm_name: Name of the VM to be turned to template
             delete: Whether to delete the VM (default: True)
         """
-        self.stop_vm(vm_name)
-        vm = self._get_vm(vm_name)
-        actual_cluster = vm.get_cluster()
-        temp_template_name = "templatize_{}".format(generate_random_string())
-        new_template = params.Template(name=temp_template_name, vm=vm, cluster=actual_cluster)
-        self.api.templates.add(new_template)
-        # First it has to appear
-        wait_for(
-            lambda: temp_template_name in self.list_template(),
-            num_sec=15 * 60, message="template created")
-        # Then the process has to finish
-        wait_for(
-            lambda: self.api.templates.get(name=temp_template_name).get_status().state == "ok",
-            num_sec=15 * 60, message="template creation finished")
-        # Delete the original VM
-        if delete:
-            self.delete_vm(vm_name)
-        template = self.api.templates.get(name=temp_template_name)
-        template.set_name(vm_name)
-        template.update()
+        with self.steady_wait(30):
+            self.stop_vm(vm_name)
+            vm = self._get_vm(vm_name)
+            actual_cluster = vm.get_cluster()
+            temp_template_name = "templatize_{}".format(generate_random_string())
+            new_template = params.Template(name=temp_template_name, vm=vm, cluster=actual_cluster)
+            self.api.templates.add(new_template)
+            # First it has to appear
+            wait_for(
+                lambda: temp_template_name in self.list_template(),
+                num_sec=15 * 60, message="template created")
+            # Then the process has to finish
+            wait_for(
+                lambda: self.api.templates.get(name=temp_template_name).get_status().state == "ok",
+                num_sec=15 * 60, message="template creation finished")
+            # Delete the original VM
+            if delete:
+                self.delete_vm(vm_name)
+            template = self.api.templates.get(name=temp_template_name)
+            template.set_name(vm_name)
+            template.update()
 
 
 class EC2System(MgmtSystemAPIBase):

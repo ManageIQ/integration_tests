@@ -152,7 +152,7 @@ BROKEN_APPLIANCE_GRACE_TIME = dict(
 CELERYBEAT_SCHEDULE = {
     'retrieve-appliances-power-states': {
         'task': 'appliances.tasks.retrieve_appliances_power_states',
-        'schedule': timedelta(minutes=2),
+        'schedule': timedelta(minutes=7),
     },
 
     'free-appliance-shepherd': {
@@ -172,7 +172,7 @@ CELERYBEAT_SCHEDULE = {
 
     'poke-providers': {
         'task': 'appliances.tasks.poke_providers',
-        'schedule': timedelta(minutes=10),
+        'schedule': timedelta(minutes=15),
     },
 
     'poke-trackerbot': {
@@ -180,9 +180,9 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(minutes=10),
     },
 
-    'retrieve-template-existence': {
-        'task': 'appliances.tasks.retrieve_template_existence',
-        'schedule': timedelta(minutes=15),
+    'retrieve-templates-existence': {
+        'task': 'appliances.tasks.retrieve_templates_existence',
+        'schedule': timedelta(minutes=25),
     },
 
     'process-delayed-provision-tasks': {
