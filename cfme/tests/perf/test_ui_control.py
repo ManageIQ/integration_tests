@@ -22,8 +22,8 @@ explorer_filters = [
 @pytest.mark.bugzilla(1182271)
 @pytest.mark.perf_ui_control
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_control_explorer(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_control_explorer(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'control_explorer'), soft_assert))

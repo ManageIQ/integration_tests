@@ -71,8 +71,8 @@ infra_pxe_filters = [
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_providers(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_infra_providers(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'providers' in ui_bench_tests['page_check']['infrastructure']:
@@ -87,8 +87,8 @@ def test_perf_ui_infra_providers(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_clusters(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_infra_clusters(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'clusters' in ui_bench_tests['page_check']['infrastructure']:
@@ -114,8 +114,8 @@ def test_perf_ui_infra_clusters(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_hosts(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_infra_hosts(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'hosts' in ui_bench_tests['page_check']['infrastructure']:
@@ -134,8 +134,8 @@ def test_perf_ui_infra_hosts(ssh_client, soft_assert):
 @pytest.mark.bugzilla(1086386, 1175504, unskip={1175504: True})
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_vm_explorer(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_infra_vm_explorer(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'infrastructure_virtual_machines'), soft_assert))
@@ -155,8 +155,8 @@ def test_perf_ui_infra_vm_explorer(ssh_client, soft_assert):
 @pytest.mark.bugzilla(1129260, unskip={1129260: True})
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_resource_pools(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_infra_resource_pools(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'resource_pools' in ui_bench_tests['page_check']['infrastructure']:
@@ -183,8 +183,8 @@ def test_perf_ui_infra_resource_pools(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_datastores(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_infra_datastores(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'datastores' in ui_bench_tests['page_check']['infrastructure']:
@@ -201,8 +201,8 @@ def test_perf_ui_infra_datastores(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_pxe(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_infra_pxe(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'infrastructure_pxe'), soft_assert))

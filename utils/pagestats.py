@@ -215,19 +215,7 @@ def navigate_split_table(table, page_name, nav_limit, ui_worker_pid, prod_tail, 
     return pages
 
 
-def standup_perf_ui(ssh_client, soft_assert):
-    # Use evmserverd status to determine MiqUiWorker Pid (assuming 1 worker)
-    exit_status, out = ssh_client.run_command('service evmserverd status 2> /dev/null | grep '
-        '\'MiqUiWorker\' | awk \'{print $7}\'')
-    assert exit_status == 0
-
-    ui_worker_pid = str(out).strip()
-    if out:
-        logger.info('Obtained MiqUiWorker PID: {}'.format(ui_worker_pid))
-    else:
-        logger.error('Could not obtain MiqUiWorker PID, check evmserverd running...')
-        assert out
-
+def standup_perf_ui(ui_worker_pid, ssh_client, soft_assert):
     logger.info('Opening /var/www/miq/vmdb/log/production.log for tail')
     prod_tail = SSHTail('/var/www/miq/vmdb/log/production.log')
     prod_tail.set_initial_file_end()
@@ -235,7 +223,7 @@ def standup_perf_ui(ssh_client, soft_assert):
     ensure_browser_open()
     pages = analyze_page_stat(perf_click(ui_worker_pid, prod_tail, False, login_admin), soft_assert)
 
-    return pages, ui_worker_pid, prod_tail
+    return pages, prod_tail
 
 
 def pages_to_csv(pages, file_name):

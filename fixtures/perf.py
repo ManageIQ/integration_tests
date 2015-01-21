@@ -12,6 +12,11 @@ def cfme_log_level_rails_debug():
     set_rails_loglevel('info')
 
 
+@pytest.yield_fixture(scope='module')
+def ui_worker_pid():
+    yield get_worker_pid('MiqUiWorker')
+
+
 def get_worker_pid(worker_type):
     """Obtains the pid of the first worker with the worker_type specified"""
     ssh_client = SSHClient()
