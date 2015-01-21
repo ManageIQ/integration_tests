@@ -24,7 +24,7 @@ from utils.randomness import generate_random_string
 from utils.trackerbot import api, parse_template
 
 
-LOCK_EXPIRE = 60 * 5
+LOCK_EXPIRE = 60 * 10  # 10 minutes
 VERSION_REGEXPS = [
     # 4 digits
     r"cfme-(\d)(\d)(\d)(\d)-",      # cfme-5242-    -> 5.2.4.2
@@ -109,7 +109,7 @@ def poke_providers(self):
     with transaction.atomic():
         for provider in Provider.objects.all():
             try:
-                provider.api.list_vm()
+                provider.api
             except:
                 provider.working = False
                 provider.save()
