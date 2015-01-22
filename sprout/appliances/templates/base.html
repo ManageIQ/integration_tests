@@ -151,6 +151,15 @@
         {% endif %}
         </ul>
         <ul class="nav navbar-nav navbar-utility">
+            {% if sprout_needs_update %}
+            <li>
+                <a href="#" title="Update needed" style="color: #333;">Update needed!</a>
+            </li>
+            {% else %}
+            <li>
+                <a href="#" title="Up-to-date" style="color: #00FF00;">Up-to-date</a>
+            </li>
+            {% endif %}
             {% if hubber_url %}
             <li>
                 <a href="{{ hubber_url }}" title="Go to Hubber" style="color: #333;">Go to Hubber</a>

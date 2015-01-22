@@ -12,6 +12,7 @@ from celery import chain, shared_task
 from datetime import timedelta
 from functools import wraps
 from novaclient.exceptions import OverLimit as OSOverLimit
+from Runner import Run
 
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask)
@@ -19,6 +20,7 @@ from sprout import settings, redis
 
 from utils.appliance import Appliance as CFMEAppliance
 from utils.log import create_logger
+from utils.path import project_path
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
 from utils.trackerbot import api, parse_template
@@ -915,3 +917,11 @@ def pool_appliances_prefix_with_owner(self, pool_id):
             appliance_rename.apply_async(
                 countdown=10,  # To prevent clogging with the transaction.atomic
                 args=(appliance.id, "{}_{}".format(appliance_pool.owner.username, appliance.name)))
+
+
+@singleton_task(soft_time_limit=60)
+def check_update(self):
+    sprout_sh = project_path.join("sprout").join("sprout.sh")
+    result = Run.command("{} check-update".format(sprout_sh.strpath))
+    needs_update = result.stdout.strip().lower() != "up-to-date"
+    redis.set("sprout-needs-update", needs_update)

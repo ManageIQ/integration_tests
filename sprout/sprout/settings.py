@@ -65,6 +65,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     'appliances.context_processors.hubber_url',
+    'appliances.context_processors.sprout_needs_update',
 )
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
@@ -188,6 +189,11 @@ CELERYBEAT_SCHEDULE = {
     'process-delayed-provision-tasks': {
         'task': 'appliances.tasks.process_delayed_provision_tasks',
         'schedule': timedelta(seconds=20),
+    },
+
+    'check-update': {
+        'task': 'appliances.tasks.check_update',
+        'schedule': timedelta(hours=1),
     },
 }
 

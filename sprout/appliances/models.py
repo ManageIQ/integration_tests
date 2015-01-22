@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.utils import timezone
 
-from sprout import redis
+from sprout import critical_section
 
 from utils.appliance import Appliance as CFMEAppliance
 from utils.conf import cfme_data
@@ -34,7 +34,7 @@ class MetadataMixin(models.Model):
     @property
     @contextmanager
     def metadata_lock(self):
-        with redis.lock("{}-{}".format(self.__class__.__name__, str(self.pk))):
+        with critical_section("({})[{}]".format(self.__class__.__name__, str(self.pk))):
             yield
 
     @property
