@@ -150,6 +150,11 @@ BROKEN_APPLIANCE_GRACE_TIME = dict(
 
 # Celery beat
 CELERYBEAT_SCHEDULE = {
+    'check-templates': {
+        'task': 'appliances.tasks.check_templates_in_provider',
+        'schedule': timedelta(minutes=17),
+    },
+
     'retrieve-appliances-power-states': {
         'task': 'appliances.tasks.retrieve_appliances_power_states',
         'schedule': timedelta(minutes=7),
@@ -178,11 +183,6 @@ CELERYBEAT_SCHEDULE = {
     'poke-trackerbot': {
         'task': 'appliances.tasks.poke_trackerbot',
         'schedule': timedelta(minutes=10),
-    },
-
-    'retrieve-templates-existence': {
-        'task': 'appliances.tasks.retrieve_templates_existence',
-        'schedule': timedelta(minutes=25),
     },
 
     'process-delayed-provision-tasks': {

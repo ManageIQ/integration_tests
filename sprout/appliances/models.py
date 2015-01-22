@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
+import yaml
+
+from contextlib import contextmanager
 from datetime import timedelta
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.utils import timezone
+
+from sprout import redis
 
 from utils.appliance import Appliance as CFMEAppliance
 from utils.conf import cfme_data
@@ -17,7 +22,45 @@ def logger():
     return create_logger("sprout")
 
 
-class DelayedProvisionTask(models.Model):
+class MetadataMixin(models.Model):
+    class Meta:
+        abstract = True
+    object_meta_data = models.TextField(default=yaml.dump({}))
+
+    def reload(self):
+        new_self = self.__class__.objects.get(pk=self.pk)
+        self.__dict__.update(new_self.__dict__)
+
+    @property
+    @contextmanager
+    def metadata_lock(self):
+        with redis.lock("{}-{}".format(self.__class__.__name__, str(self.pk))):
+            yield
+
+    @property
+    def metadata(self):
+        return yaml.load(self.object_meta_data)
+
+    @metadata.setter
+    def metadata(self, value):
+        if not isinstance(value, dict):
+            raise TypeError("You can store only dict in metadata!")
+        self.object_meta_data = yaml.dump(value)
+
+    @property
+    @contextmanager
+    def edit_metadata(self):
+        with transaction.atomic():
+            with self.metadata_lock:
+                o = type(self).objects.get(pk=self.pk)
+                metadata = o.metadata
+                yield metadata
+                o.metadata = metadata
+                o.save()
+        self.reload()
+
+
+class DelayedProvisionTask(MetadataMixin):
     pool = models.ForeignKey("AppliancePool")
     lease_time = models.IntegerField(null=True)
     provider_to_avoid = models.ForeignKey("Provider", null=True)
@@ -27,7 +70,7 @@ class DelayedProvisionTask(models.Model):
             self.id, self.pool.id, self.lease_time, str(self.provider_to_avoid.id))
 
 
-class Provider(models.Model):
+class Provider(MetadataMixin):
     id = models.CharField(max_length=32, primary_key=True, help_text="Provider's key in YAML.")
     working = models.BooleanField(default=False, help_text="Whether provider is available.")
     num_simultaneous_provisioning = models.IntegerField(default=5,
@@ -103,11 +146,20 @@ class Provider(models.Model):
     def ip_address(self):
         return self.provider_data.get("ipaddress")
 
+    @property
+    def templates(self):
+        return self.metadata.get("templates", [])
+
+    @templates.setter
+    def templates(self, value):
+        with self.edit_metadata:
+            self.metadata["templates"] = value
+
     def __unicode__(self):
         return "{} {}".format(self.__class__.__name__, self.id)
 
 
-class Group(models.Model):
+class Group(MetadataMixin):
     id = models.CharField(max_length=32, primary_key=True,
         help_text="Group name as trackerbot says. (eg. upstream, downstream-53z, ...)")
     template_pool_size = models.IntegerField(default=0,
@@ -118,7 +170,7 @@ class Group(models.Model):
             self.__class__.__name__, self.id, self.template_pool_size)
 
 
-class Template(models.Model):
+class Template(MetadataMixin):
     provider = models.ForeignKey(Provider, help_text="Where does this template reside")
     template_group = models.ForeignKey(Group, help_text="Which group the template belongs to.")
     version = models.CharField(max_length=16, null=True, help_text="Downstream version.")
@@ -180,7 +232,7 @@ class Template(models.Model):
             self.__class__.__name__, self.version, self.name, self.provider.id)
 
 
-class Appliance(models.Model):
+class Appliance(MetadataMixin):
     class Power(object):
         ON = "on"
         OFF = "off"
@@ -365,7 +417,7 @@ class Appliance(models.Model):
             return self.template.version
 
 
-class AppliancePool(models.Model):
+class AppliancePool(MetadataMixin):
     total_count = models.IntegerField(help_text="How many appliances should be in this pool.")
     group = models.ForeignKey(Group, help_text="Group which is used to provision appliances.")
     version = models.CharField(max_length=16, null=True, help_text="Appliance version")

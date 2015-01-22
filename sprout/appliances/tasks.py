@@ -110,7 +110,7 @@ def poke_providers(self):
         poke_provider.delay(provider.id)
 
 
-@singleton_task(time_limit=60)
+@singleton_task(soft_time_limit=60)
 def poke_provider(self, provider_id):
     provider = Provider.objects.get(id=provider_id)
     try:
@@ -202,7 +202,7 @@ def poke_trackerbot(self):
             Template.objects.get(
                 provider=provider, template_group=group, original_name=template_name)
         except ObjectDoesNotExist:
-            if template_name in provider.api.list_template():
+            if template_name in provider.templates:
                 create_appliance_template.delay(provider.id, group.id, template_name)
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
@@ -260,8 +260,6 @@ def create_appliance_template(provider_id, group_id, template_name):
 @logged_task(bind=True)
 def prepare_template_deploy(self, template_id):
     template = Template.objects.get(id=template_id)
-    if template.exists_in_provider:
-        return True
     try:
         if not template.exists_in_provider:
             template.set_status("Deploying the template.")
@@ -352,8 +350,9 @@ def prepare_template_delete_on_error(self, template_id):
         return True
     template.set_status("Template creation failed. Deleting it.")
     try:
-        if template.exists_in_provider:
+        if template.provider_api.does_vm_exist(template.name):
             template.provider_api.delete_vm(template.name)
+        # TODO: Some delete_template() ?
         template.delete()
     except Exception as e:
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
@@ -690,35 +689,46 @@ def retrieve_appliances_power_states(self):
             retrieve_appliance_power_state.delay(a.id)
 
 
-@singleton_task(time_limit=60)
+@singleton_task(soft_time_limit=60)
 def retrieve_appliance_power_state(self, appliance_id):
     Appliance.objects.get(id=appliance_id).retrieve_power_state()
 
 
 @singleton_task()
-def retrieve_templates_existence(self):
-    """Continuously loops over all templates and checks whether they are still present in EMS."""
-    for template in Template.objects.all():
-        retrieve_template_existence.delay(template.id)
+def check_templates(self):
+    for provider in Provider.objects.all():
+        check_templates_in_provider(provider.id)
 
 
-@singleton_task(time_limit=120)
-def retrieve_template_existence(self, template_id):
-    """Continuously loops over all templates and checks whether they are still present in EMS."""
+@singleton_task(soft_time_limit=180)
+def check_templates_in_provider(self, provider_id):
+    provider = Provider.objects.get(id=provider_id)
+    # Get templates and update metadata
+    try:
+        templates = map(str, provider.api.list_template())
+    except:
+        provider.working = False
+        provider.save()
+    else:
+        with provider.edit_metadata as metadata:
+            metadata["templates"] = templates
+    if not provider.working:
+        return
+    # Check Sprout template existence
     expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
-    template = Template.objects.get(id=template_id)
-    e = template.exists_in_provider
-    with transaction.atomic():
-        tpl = Template.objects.get(pk=template.pk)
-        tpl.exists = e
-        tpl.save()
-    if not e:
-        if len(Appliance.objects.filter(template=template).all()) == 0\
-                and template.status_changed < expiration_time:
-            # No other appliance is made from this template so no need to keep it
-            with transaction.atomic():
-                tpl = Template.objects.get(pk=template.pk)
-                tpl.delete()
+    for template in Template.objects.filter(provider=provider):
+        with transaction.atomic():
+            tpl = Template.objects.get(pk=template.pk)
+            exists = tpl.name in templates
+            tpl.exists = exists
+            tpl.save()
+        if not exists:
+            if len(Appliance.objects.filter(template=template).all()) == 0\
+                    and template.status_changed < expiration_time:
+                # No other appliance is made from this template so no need to keep it
+                with transaction.atomic():
+                    tpl = Template.objects.get(pk=template.pk)
+                    tpl.delete()
 
 
 @singleton_task()

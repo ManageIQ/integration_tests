@@ -32,6 +32,17 @@ class RedisWrapper(object):
         return pickle.loads(result)
 
     @contextmanager
+    def lock(self, name):
+        wait_for(
+            cache.add,
+            ["lock-{}".format(name), 'true', self.LOCK_EXPIRE],
+            delay=0.3, num_sec=2 * self.LOCK_EXPIRE)
+        try:
+            yield self
+        finally:
+            cache.delete("lock-{}".format(name))
+
+    @contextmanager
     def atomic(self):
         wait_for(
             cache.add,
