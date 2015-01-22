@@ -5,3 +5,4 @@ celery[redis]<3.2
 python-memcached
 flower
 gunicorn
+Runner

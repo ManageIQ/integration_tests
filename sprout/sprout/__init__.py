@@ -16,6 +16,21 @@ from utils.wait import wait_for
 redis_client = StrictRedis(**settings.GENERAL_REDIS)
 
 
+CRITICAL_SECTION_LOCK_TIME = 60
+
+
+@contextmanager
+def critical_section(name):
+    wait_for(
+        cache.add,
+        ["lock-{}".format(name), 'true', CRITICAL_SECTION_LOCK_TIME],
+        delay=0.3, num_sec=2 * CRITICAL_SECTION_LOCK_TIME)
+    try:
+        yield
+    finally:
+        cache.delete("lock-{}".format(name))
+
+
 class RedisWrapper(object):
     LOCK_EXPIRE = 60
 
@@ -26,9 +41,10 @@ class RedisWrapper(object):
         return self.client.set(str(key), pickle.dumps(value), *args, **kwargs)
 
     def _get(self, key, *args, **kwargs):
+        default = kwargs.pop("default", None)
         result = self.client.get(str(key), *args, **kwargs)
         if result is None:
-            return None
+            return default
         return pickle.loads(result)
 
     @contextmanager

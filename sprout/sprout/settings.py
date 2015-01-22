@@ -65,6 +65,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.i18n",
     "django.core.context_processors.media",
     'appliances.context_processors.hubber_url',
+    'appliances.context_processors.sprout_needs_update',
 )
 
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
@@ -150,6 +151,11 @@ BROKEN_APPLIANCE_GRACE_TIME = dict(
 
 # Celery beat
 CELERYBEAT_SCHEDULE = {
+    'check-templates': {
+        'task': 'appliances.tasks.check_templates_in_provider',
+        'schedule': timedelta(minutes=17),
+    },
+
     'retrieve-appliances-power-states': {
         'task': 'appliances.tasks.retrieve_appliances_power_states',
         'schedule': timedelta(minutes=7),
@@ -180,14 +186,14 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(minutes=10),
     },
 
-    'retrieve-templates-existence': {
-        'task': 'appliances.tasks.retrieve_templates_existence',
-        'schedule': timedelta(minutes=25),
-    },
-
     'process-delayed-provision-tasks': {
         'task': 'appliances.tasks.process_delayed_provision_tasks',
         'schedule': timedelta(seconds=20),
+    },
+
+    'check-update': {
+        'task': 'appliances.tasks.check_update',
+        'schedule': timedelta(hours=1),
     },
 }
 
