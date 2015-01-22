@@ -36,8 +36,8 @@ def test_server_roles_changing(request, roles):
     # Set roles
     configuration.set_server_roles(**roles)
     flash.assert_no_errors()
-    # Get roles and check
-    for role, is_enabled in configuration.get_server_roles().iteritems():
+    # Get roles and check; use UI because the changes take a while to propagate to DB
+    for role, is_enabled in configuration.get_server_roles(db=False).iteritems():
         if is_enabled:
             assert roles[role], "Role '%s' is selected but should not be" % role
         else:
