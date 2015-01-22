@@ -160,7 +160,7 @@ class Appliance(object):
 
     def _configure_upstream(self, log_callback=None):
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
-        self.ipapp.migrate_db(log_callback=log_callback)
+        self.ipapp.setup_upstream_db(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
         self.ipapp.clone_domain(log_callback=log_callback)
@@ -507,8 +507,8 @@ class IPAppliance(object):
 
         return status
 
-    def migrate_db(self, log_callback=None):
-        """Run database migrations
+    def setup_upstream_db(self, log_callback=None):
+        """Configure upstream database
 
         Note:
             This is a workaround put in place to get upstream appliance provisioning working again
@@ -518,24 +518,45 @@ class IPAppliance(object):
             return
 
         if log_callback is None:
-            log_callback = lambda msg: self.log.info("DB migration: {}".format(msg))
+            log_callback = lambda msg: self.log.info("DB setup: {}".format(msg))
         else:
             cb = log_callback
-            log_callback = lambda msg: cb("DB migration: {}".format(msg))
+            log_callback = lambda msg: cb("DB setup: {}".format(msg))
 
         client = self.ssh_client()
 
         # Make sure the database is ready
-        log_callback('Starting migrations')
+        log_callback('Starting upstream db setup')
         self.wait_for_db()
 
         # Make sure the working dir exists
-        result = client.run_rake_command('db:migrate')
+        result = client.run_rails_command(
+            dedent("""\
+            "
+            require 'trollop'
+
+            # spoof the trollop options method so region is set correctly
+            module Trollop
+              class << self
+                def options(*args)
+                  return {:region => 0}
+                end
+              end
+            end
+
+            # now load the rake tasks and invoke
+            Rails.application.load_tasks
+            Rake.application['evm:db:region'].invoke
+            "
+        """)
+        )
 
         if result.rc != 0:
-            msg = 'DB Migration failed'
+            msg = 'DB setup failed'
             log_callback(msg)
             raise ApplianceException(msg)
+        else:
+            log_callback('DB setup complete')
 
         self.restart_evm_service(log_callback=log_callback)
 
