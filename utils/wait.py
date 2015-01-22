@@ -59,6 +59,10 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         else:
             message = "function %s()" % func.func_name
     fail_condition = kwargs.get('fail_condition', False)
+    if not callable(fail_condition):
+        fail_condition_check = lambda result: result == fail_condition
+    else:
+        fail_condition_check = fail_condition
     handle_exception = kwargs.get('handle_exception', False)
     delay = kwargs.get('delay', 1)
     fail_func = kwargs.get('fail_func', None)
@@ -75,7 +79,7 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
                 out = fail_condition
             else:
                 raise
-        if out == fail_condition:
+        if out is fail_condition or fail_condition_check(out):
             time.sleep(delay)
             total_time += delay
             if expo:

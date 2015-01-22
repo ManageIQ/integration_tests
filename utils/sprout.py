@@ -4,6 +4,7 @@ import os
 import requests
 
 from utils.conf import cfme_data, credentials
+from utils.wait import wait_for
 
 
 class SproutException(Exception):
@@ -36,6 +37,19 @@ class SproutClient(object):
     def api_entry(self):
         return "{}://{}:{}/{}".format(self._proto, self._host, self._port, self._entry)
 
+    def _post(self, **data):
+        return requests.post(self.api_entry, data=json.dumps(data))
+
+    def _call_post(self, **data):
+        """Protect from the Sprout being updated (error 502,503)"""
+        result = wait_for(
+            lambda: self._post(**data),
+            num_sec=60,
+            fail_condition=lambda r: r.status_code in {502, 503},
+            delay=2,
+        )
+        return result.out.json()
+
     def call_method(self, name, *args, **kwargs):
         req_data = {
             "method": name,
@@ -44,7 +58,7 @@ class SproutClient(object):
         }
         if self._auth is not None:
             req_data["auth"] = self._auth
-        result = requests.post(self.api_entry, data=json.dumps(req_data)).json()
+        result = self._call_post(**req_data)
         try:
             if result["status"] == "exception":
                 raise SproutException(
