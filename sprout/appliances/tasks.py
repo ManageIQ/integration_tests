@@ -699,7 +699,7 @@ def retrieve_appliance_power_state(self, appliance_id):
 @singleton_task()
 def check_templates(self):
     for provider in Provider.objects.all():
-        check_templates_in_provider(provider.id)
+        check_templates_in_provider.delay(provider.id)
 
 
 @singleton_task(soft_time_limit=180)
