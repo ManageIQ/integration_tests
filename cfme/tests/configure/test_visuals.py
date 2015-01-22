@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+
 import pytest
 import re
 from cfme import login
@@ -7,12 +8,12 @@ from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.conf import cfme_data
-from utils.providers import setup_a_provider
+from utils.providers import setup_a_provider as _setup_a_provider
 
 
 @pytest.fixture(scope="module")
-def setup_first_provider():
-    setup_a_provider(prov_class="infra", validate=True, check_existing=True)
+def setup_a_provider():
+    _setup_a_provider(prov_class="infra", validate=True, check_existing=True)
 
 
 @pytest.yield_fixture(scope="module")
@@ -45,8 +46,43 @@ def go_to_grid(page):
     tb.select('Grid View')
 
 
+@pytest.yield_fixture(scope="module")
+def set_infra_provider_quad():
+    visual.infra_provider_quad = False
+    yield
+    visual.infra_provider_quad = True
+
+
+@pytest.yield_fixture(scope="module")
+def set_host_quad():
+    visual.host_quad = False
+    yield
+    visual.host_quad = True
+
+
+@pytest.yield_fixture(scope="module")
+def set_datastore_quad():
+    visual.datastore_quad = False
+    yield
+    visual.datastore_quad = True
+
+
+@pytest.yield_fixture(scope="module")
+def set_vm_quad():
+    visual.vm_quad = False
+    yield
+    visual.vm_quad = True
+
+
+@pytest.yield_fixture(scope="module")
+def set_template_quad():
+    visual.template_quad = False
+    yield
+    visual.template_quad = True
+
+
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
-def test_grid_page_per_item(request, setup_first_provider, page, set_grid):
+def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     """ Tests grid items per page
 
     Metadata:
@@ -61,7 +97,7 @@ def test_grid_page_per_item(request, setup_first_provider, page, set_grid):
 
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
-def test_tile_page_per_item(request, setup_first_provider, page, set_tile):
+def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
     """ Tests tile items per page
 
     Metadata:
@@ -76,7 +112,7 @@ def test_tile_page_per_item(request, setup_first_provider, page, set_tile):
 
 
 @pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
-def test_list_page_per_item(request, setup_first_provider, page, set_list):
+def test_list_page_per_item(request, setup_a_provider, page, set_list):
     """ Tests list items per page
 
     Metadata:
@@ -91,7 +127,7 @@ def test_list_page_per_item(request, setup_first_provider, page, set_list):
 
 
 @pytest.mark.parametrize('start_page', cfme_data.get('landing_pages'), scope="module")
-def test_start_page(request, setup_first_provider, start_page):
+def test_start_page(request, setup_a_provider, start_page):
     """ Tests start page
 
     Metadata:
@@ -103,3 +139,28 @@ def test_start_page(request, setup_first_provider, start_page):
     login.login_admin()
     level = re.split(r"\/", start_page)
     assert menu.is_page_active(level[0].strip(), level[1].strip()), "Landing Page Failed"
+
+
+def test_infraprovider_noquads(request, setup_a_provider, set_infra_provider_quad):
+    sel.force_navigate('infrastructure_providers')
+    assert visual.check_image_exists, "Image View Failed!"
+
+
+def test_host_noquads(request, setup_a_provider, set_host_quad):
+    sel.force_navigate('infrastructure_hosts')
+    assert visual.check_image_exists, "Image View Failed!"
+
+
+def test_datastore_noquads(request, setup_a_provider, set_datastore_quad):
+    sel.force_navigate('infrastructure_datastores')
+    assert visual.check_image_exists, "Image View Failed!"
+
+
+def test_vm_noquads(request, setup_a_provider, set_vm_quad):
+    sel.force_navigate('infrastructure_virtual_machines')
+    assert visual.check_image_exists, "Image View Failed!"
+
+
+def test_template_noquads(request, setup_a_provider, set_template_quad):
+    sel.force_navigate('infra_templates')
+    assert visual.check_image_exists, "Image View Failed!"
