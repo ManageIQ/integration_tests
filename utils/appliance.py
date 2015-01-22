@@ -527,7 +527,8 @@ class IPAppliance(object):
 
         # Make sure the database is ready
         log_callback('Starting upstream db setup')
-        self.wait_for_db()
+        wait_for(func=lambda: self.db_online,
+            message='appliance db online', delay=20, num_sec=120)
 
         # Make sure the working dir exists
         result = client.run_rails_command(
