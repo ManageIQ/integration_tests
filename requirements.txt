@@ -3,6 +3,7 @@ bottle
 bottle-sqlite
 docker-py
 flake8
+fauxfactory>=2.0.4
 functools32
 function_trace
 ipython
