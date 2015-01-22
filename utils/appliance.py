@@ -530,6 +530,10 @@ class IPAppliance(object):
         wait_for(func=lambda: self.db_online,
             message='appliance db online', delay=20, num_sec=120)
 
+        if self.db_has_database and self.db_has_tables:
+            log_callback('db already configured')
+            return
+
         # Make sure the working dir exists
         result = client.run_rails_command(
             dedent("""\
