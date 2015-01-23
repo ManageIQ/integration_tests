@@ -22,12 +22,15 @@ lib64
 pip-log.txt
 log/*
 
+# docs inventories
+docs/*.inv
+
 # Unit test / coverage reports
 .coverage
 .tox
 nosetests.xml
 chromedriver.log
-conf/*.yaml
+conf/*yaml
 pytest.ini
 
 # Translations
@@ -39,6 +42,7 @@ pytest.ini
 .project
 .pydevproject
 .settings
+.floo*
 
 # rendered documentation
 docs/_build
