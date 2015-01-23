@@ -1,10 +1,16 @@
-# goes in rails config dir, then require it from boot.rb
-
 # set up simplecov, broken out by process for recombining later
 require 'appliance_console/env'
 require 'fileutils'
 require 'simplecov'
 require 'yaml'
+
+class NullFormatter
+  # Takes a SimpleCov::Result and does nothing with it
+  # This ensures we only get the .resultset.json files that get manually merged later
+  def format(result)
+    ""
+  end
+end
 
 rails_root = File.expand_path(File.join(File.dirname(__FILE__), "..", "vmdb"))
 SimpleCov.start 'rails' do
@@ -16,4 +22,5 @@ SimpleCov.start 'rails' do
   root File.join(rails_root, '..')
   # This needs to be unique per simplecov runner
   command_name "%s-%s" % [ApplianceConsole::Env["IP"], Process.pid]
+  formatter NullFormatter
 end
