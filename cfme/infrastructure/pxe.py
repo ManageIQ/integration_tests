@@ -92,7 +92,7 @@ iso_tree = partial(acc.tree, "ISO Datastores", "All ISO Datastores")
 nav.add_branch('infrastructure_pxe',
                {'infrastructure_pxe_servers': [lambda _: pxe_tree(),
                 {'infrastructure_pxe_server_new': lambda _: cfg_btn('Add a New PXE Server'),
-                 'infrastructure_pxe_server': [lambda ctx: pxe_tree(ctx.name),
+                 'infrastructure_pxe_server': [lambda ctx: pxe_tree(ctx.pxe_server.name),
                                                {'infrastructure_pxe_server_edit':
                                                 lambda _: cfg_btn('Edit this PXE Server')}]}],
 
@@ -100,7 +100,7 @@ nav.add_branch('infrastructure_pxe',
                 {'infrastructure_pxe_template_new':
                  lambda _: cfg_btn('Add a New Customization Template'),
                  'infrastructure_pxe_template':
-                 [lambda ctx: template_tree(ctx.image_type, ctx.name),
+                 [lambda ctx: template_tree(ctx.pxe_template.image_type, ctx.pxe_template.name),
                   {'infrastructure_pxe_template_edit':
                    lambda _: cfg_btn('Edit this Customization Template')}]}],
 
@@ -108,7 +108,7 @@ nav.add_branch('infrastructure_pxe',
                 {'infrastructure_pxe_image_type_new':
                  lambda _: cfg_btn('Add a new System Image Type'),
                  'infrastructure_pxe_image_type':
-                 [lambda ctx: image_table.click_cell('name', ctx.name),
+                 [lambda ctx: image_table.click_cell('name', ctx.pxe_image_type.name),
                   {'infrastructure_pxe_image_type_edit':
                    lambda _: cfg_btn('Edit this System Image Type')}]}],
 
@@ -116,7 +116,7 @@ nav.add_branch('infrastructure_pxe',
                 {'infrastructure_iso_datastore_new':
                  lambda _: cfg_btn('Add a New ISO Datastore'),
                  'infrastructure_iso_datastore':
-                 lambda ctx: iso_tree(ctx.provider)}]})
+                 lambda ctx: iso_tree(ctx.pxe_iso_datastore.provider)}]})
 
 
 class PXEServer(Updateable, Pretty):
@@ -218,7 +218,7 @@ class PXEServer(Updateable, Pretty):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        sel.force_navigate('infrastructure_pxe_server_edit', context=self)
+        sel.force_navigate('infrastructure_pxe_server_edit', context={"pxe_server": self})
         fill(pxe_properties_form, self._form_mapping(**updates))
         self._submit(cancel, form_buttons.save)
         name = updates.get('name') or self.name
@@ -236,7 +236,7 @@ class PXEServer(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('infrastructure_pxe_server', context=self)
+        sel.force_navigate('infrastructure_pxe_server', context={"pxe_server": self})
         cfg_btn('Remove this PXE Server from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         if not cancel:
@@ -245,7 +245,7 @@ class PXEServer(Updateable, Pretty):
     def refresh(self, wait=True):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
-        sel.force_navigate('infrastructure_pxe_server', context=self)
+        sel.force_navigate('infrastructure_pxe_server', context={"pxe_server": self})
         # FIXME: When the UI has been altered GH1070
         ref_time = version.pick({
             version.LOWEST: lambda: pxe_details_page.infoblock.text(
@@ -382,7 +382,7 @@ class CustomizationTemplate(Updateable, Pretty):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        sel.force_navigate('infrastructure_pxe_template_edit', context=self)
+        sel.force_navigate('infrastructure_pxe_template_edit', context={"pxe_template": self})
         fill(template_properties_form, self._form_mapping(**updates))
         self._submit(cancel, form_buttons.save)
         name = updates.get('name') or self.name
@@ -400,7 +400,7 @@ class CustomizationTemplate(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('infrastructure_pxe_template', context=self)
+        sel.force_navigate('infrastructure_pxe_template', context={"pxe_template": self})
         cfg_btn('Remove this Customization Template from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match(
@@ -459,7 +459,7 @@ class SystemImageType(Updateable, Pretty):
            cancel (boolean): whether to cancel out of the update.
         """
 
-        sel.force_navigate('infrastructure_pxe_image_type_edit', context=self)
+        sel.force_navigate('infrastructure_pxe_image_type_edit', context={"pxe_image_type": self})
         fill(image_properties_form, self._form_mapping(**updates))
         self._submit(cancel, form_buttons.save)
         # No flash message
@@ -472,7 +472,7 @@ class SystemImageType(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('infrastructure_pxe_image_type', context=self)
+        sel.force_navigate('infrastructure_pxe_image_type', context={"pxe_image_type": self})
         cfg_btn('Remove this System Image Type from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match('System Image Type "{}": Delete successful'.format(self.name))
@@ -548,7 +548,7 @@ class ISODatastore(Updateable, Pretty):
             cancel: Whether to cancel the deletion, defaults to True
         """
 
-        sel.force_navigate('infrastructure_iso_datastore', context=self)
+        sel.force_navigate('infrastructure_iso_datastore', context={"pxe_iso_datastore": self})
         cfg_btn('Remove this ISO Datastore from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match('ISO Datastore "{}": Delete successful'.format(self.provider))
@@ -556,7 +556,7 @@ class ISODatastore(Updateable, Pretty):
     def refresh(self, wait=True):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
-        sel.force_navigate('infrastructure_iso_datastore', context=self)
+        sel.force_navigate('infrastructure_iso_datastore', context={"pxe_iso_datastore": self})
         # GH1070 see above
         ref_time = version.pick({
             version.LOWEST: lambda: pxe_details_page.infoblock.text(
