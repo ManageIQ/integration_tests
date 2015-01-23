@@ -87,7 +87,14 @@ def date_for_group_and_version(request):
             }
             if version != "latest":
                 filters["version"] = version
-            dates = Template.get_dates(**filters)
+            dates_only = Template.get_dates(**filters)
+            dates = []
+            for date in dates_only:
+                filters["date"] = date
+                providers = []
+                for provider in Template.objects.filter(**filters).values("provider").distinct():
+                    providers.append(provider.values()[0])
+                dates.append((date, ", ".join(providers)))
     return render(request, 'appliances/_dates.html', locals())
 
 
