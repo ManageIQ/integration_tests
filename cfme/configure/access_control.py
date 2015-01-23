@@ -1,6 +1,7 @@
+from copy import deepcopy
 from functools import partial
 from fixtures.pytest_store import store
-import cfme
+from urlparse import urlparse
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons
@@ -8,6 +9,14 @@ from cfme.web_ui.menu import nav
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
+
+from utils.smart_resource import SmartResource, InputField, SelectField, PasswordField
+
+
+def get_ip_address():
+    """Returns an IP address of the appliance
+    """
+    return urlparse(sel.current_url()).netloc
 
 
 def server_region():
@@ -54,7 +63,7 @@ nav.add_branch(
 
                 'cfg_accesscontrol_user_ed':
                 [
-                    lambda ctx: ac_tree('Users', ctx.name),
+                    lambda ctx: ac_tree('Users', ctx["user"].name),
                     {
                         'cfg_accesscontrol_user_edit':
                         lambda d: tb_select('Edit this User')
@@ -106,78 +115,47 @@ nav.add_branch(
 )
 
 
-class User(Updateable, Pretty):
-    user_form = Form(
-        fields=[
-            ('name_txt', "//*[@id='name']"),
-            ('userid_txt', "//*[@id='userid']"),
-            ('password_txt', "//*[@id='password']"),
-            ('password_verify_txt', "//*[@id='password2']"),
-            ('email_txt', "//*[@id='email']"),
-            ('user_group_select', Select("//*[@id='chosen_group']")),
-        ])
+class User(SmartResource):
+    CREATE_LOCATION = "cfg_accesscontrol_user_add"
+    EDIT_LOCATION = "cfg_accesscontrol_user_edit"
+    DETAIL_LOCATION = "cfg_accesscontrol_user_ed"
 
+    def DELETE_FUNCTION(self):
+        tb.select('Configuration', 'Delete this User', invokes_alert=True)
+        sel.handle_alert()
+
+    name = InputField(id="name", description="Full user name")
+    login = InputField(id="userid", description="Login id")
+    password = PasswordField("password", "password2", description="Password used for logging in")
+    email = InputField(id="email", description="User's e-mail")
+    user_group = SelectField(id="chosen_group", description="The group user belnogs to")
+
+    # Legacy
     user_tag_form = Form(
         fields=[
             ('cost_center_select', Select("//*[@id='tag_cat']")),
             ('value_assign_select', Select("//*[@id='tag_add']")),
         ])
 
-    pretty_attrs = ['name', 'group']
+    def post_create(self):
+        flash.assert_success_message('User "{}" was saved'.format(self.name))
 
-    def __init__(self, name=None, credential=None, email=None,
-                 group=None, cost_center=None, value_assign=None):
-        self.name = name
-        self.credential = credential
-        self.email = email
-        self.group = group
-        self.cost_center = cost_center
-        self.value_assign = value_assign
+    def post_update(self):
+        flash.assert_success_message('User "{}" was saved'.format(self.name))
 
-    def create(self):
-        sel.force_navigate('cfg_accesscontrol_user_add')
-        fill(self.user_form, {'name_txt': self.name,
-                              'userid_txt': self.credential.principal,
-                              'password_txt': self.credential.secret,
-                              'password_verify_txt': self.credential.verify_secret,
-                              'email_txt': self.email,
-                              'user_group_select': getattr(self.group,
-                                                           'description', None)},
-             action=form_buttons.add)
-        flash.assert_success_message('User "%s" was saved' % self.name)
+    def post_delete(self):
+        flash.assert_success_message('EVM User "{}": Delete successful'.format(self.name))
 
-    def update(self, updates):
-        sel.force_navigate("cfg_accesscontrol_user_edit", context=self)
-        fill(self.user_form, {'name_txt': updates.get('name'),
-                              'userid_txt': updates.get('credential').principal,
-                              'password_txt': updates.get('credential').secret,
-                              'password_verify_txt': updates.get('credential').verify_secret,
-                              'email_txt': updates.get('email'),
-                              'user_group_select': getattr(updates.get('group'),
-                                                           'description', None)},
-             action=form_buttons.save)
-        flash.assert_success_message(
-            'User "%s" was saved' % updates.get('name', self.name))
-
-    def copy(self):
-        sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
+    def copy(self, **data):
+        if self.needs_pull:
+            self._pull()
+        self.go_to_detail()
         tb.select('Configuration', 'Copy this User to a new User')
-        new_user = User(name=self.name + "copy",
-                        credential=cfme.Credential(principal='redhat', secret='redhat'))
-
-        fill(self.user_form, {'name_txt': new_user.name,
-                              'userid_txt': new_user.credential.principal,
-                              'password_txt': new_user.credential.secret,
-                              'password_verify_txt': new_user.credential.verify_secret},
-             action=form_buttons.add)
-        flash.assert_success_message('User "%s" was saved' % new_user.name)
+        new_user_data = deepcopy(self.__data__)
+        new_user_data.update(**data)
+        new_user = type(self)(**new_user_data)
+        new_user.create()
         return new_user
-
-    def delete(self):
-        sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
-        tb.select('Configuration', 'Delete this User', invokes_alert=True)
-        sel.handle_alert()
-        flash.assert_success_message('EVM User "%s": Delete successful' % self.name)
 
 
 class Group(Updateable, Pretty):
