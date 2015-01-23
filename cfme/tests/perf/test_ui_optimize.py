@@ -22,8 +22,8 @@ bottlenecks_filters = [
 
 @pytest.mark.perf_ui_optimize
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_optimize_utilization(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_optimize_utilization(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'utilization'), soft_assert))
@@ -39,8 +39,8 @@ def test_perf_ui_optimize_utilization(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_optimize
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_optimize_bottlenecks(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_optimize_bottlenecks(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'bottlenecks'), soft_assert))

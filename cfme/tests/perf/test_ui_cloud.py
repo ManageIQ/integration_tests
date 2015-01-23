@@ -37,8 +37,8 @@ vm_cloud_filters = [
 
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_cloud_providers(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_cloud_providers(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'providers' in ui_bench_tests['page_check']['cloud']:
@@ -53,8 +53,8 @@ def test_perf_ui_cloud_providers(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_cloud_availability_zones(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_cloud_availability_zones(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'availability_zones' in ui_bench_tests['page_check']['cloud']:
@@ -71,8 +71,8 @@ def test_perf_ui_cloud_availability_zones(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_cloud_tenants(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_cloud_tenants(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'tenants' in ui_bench_tests['page_check']['cloud']:
@@ -89,8 +89,8 @@ def test_perf_ui_cloud_tenants(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_cloud_flavors(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_cloud_flavors(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'flavors' in ui_bench_tests['page_check']['cloud']:
@@ -107,8 +107,8 @@ def test_perf_ui_cloud_flavors(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_cloud_security_groups(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_cloud_security_groups(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
     if 'security_groups' in ui_bench_tests['page_check']['cloud']:
@@ -127,8 +127,8 @@ def test_perf_ui_cloud_security_groups(ssh_client, soft_assert):
 @pytest.mark.bugzilla(1170778, unskip={1170778: True})
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_cloud_vm_explorer(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_cloud_vm_explorer(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'clouds_instances'), soft_assert))

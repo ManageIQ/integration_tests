@@ -21,8 +21,8 @@ chargeback_filters = [
 @pytest.mark.bugzilla(1174300)
 @pytest.mark.perf_ui_intelligence
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_intelligence_reports(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_intelligence_reports(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'reports'), soft_assert))
@@ -41,8 +41,8 @@ def test_perf_ui_intelligence_reports(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_intelligence
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_intelligence_chargeback(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_intelligence_chargeback(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'chargeback'), soft_assert))

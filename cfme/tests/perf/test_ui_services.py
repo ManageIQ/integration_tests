@@ -23,8 +23,8 @@ workloads_filters = [
 
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_services_my_services(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_services_my_services(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'my_services'), soft_assert))
@@ -40,8 +40,8 @@ def test_perf_ui_services_my_services(ssh_client, soft_assert):
 
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_services_catalogs(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_services_catalogs(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'services_catalogs'), soft_assert))
@@ -60,8 +60,8 @@ def test_perf_ui_services_catalogs(ssh_client, soft_assert):
 @pytest.mark.bugzilla(1179478)
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_services_workloads(ssh_client, soft_assert):
-    pages, ui_worker_pid, prod_tail = standup_perf_ui(ssh_client, soft_assert)
+def test_perf_ui_services_workloads(ui_worker_pid, ssh_client, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'services_workloads'), soft_assert))
