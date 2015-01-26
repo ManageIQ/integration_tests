@@ -396,6 +396,13 @@ class MgmtSystemAPIBase(object):
         else:
             self.__dict__["STEADY_WAIT_MINS"] = original
 
+    def does_template_exist(self, template_name):
+        """If system does not implement anything better, this will work """
+        return template_name in self.list_template()
+
+    def delete_template(self, template_name):
+        return self.delete_vm(template_name)  # Fall back to original vSphere behaviour
+
 
 class VMWareSystem(MgmtSystemAPIBase):
     """Client to Vsphere API
@@ -1182,27 +1189,49 @@ class RHEVMSystem(MgmtSystemAPIBase):
             vm_name: Name of the VM to be turned to template
             delete: Whether to delete the VM (default: True)
         """
-        with self.steady_wait(30):
-            self.stop_vm(vm_name)
-            vm = self._get_vm(vm_name)
-            actual_cluster = vm.get_cluster()
+        try:
             temp_template_name = "templatize_{}".format(generate_random_string())
-            new_template = params.Template(name=temp_template_name, vm=vm, cluster=actual_cluster)
-            self.api.templates.add(new_template)
-            # First it has to appear
-            wait_for(
-                lambda: temp_template_name in self.list_template(),
-                num_sec=15 * 60, message="template created")
-            # Then the process has to finish
-            wait_for(
-                lambda: self.api.templates.get(name=temp_template_name).get_status().state == "ok",
-                num_sec=15 * 60, message="template creation finished")
-            # Delete the original VM
-            if delete:
-                self.delete_vm(vm_name)
-            template = self.api.templates.get(name=temp_template_name)
-            template.set_name(vm_name)
-            template.update()
+            with self.steady_wait(30):
+                self.stop_vm(vm_name)
+                vm = self._get_vm(vm_name)
+                actual_cluster = vm.get_cluster()
+                new_template = params.Template(
+                    name=temp_template_name, vm=vm, cluster=actual_cluster)
+                self.api.templates.add(new_template)
+                # First it has to appear
+                wait_for(
+                    lambda: temp_template_name in self.list_template(),
+                    num_sec=30 * 60, message="template created", delay=20)
+                # Then the process has to finish
+                wait_for(
+                    lambda:
+                    self.api.templates.get(name=temp_template_name).get_status().state == "ok",
+                    num_sec=30 * 60, message="template creation finished", delay=45)
+                # Delete the original VM
+                if delete:
+                    self.delete_vm(vm_name)
+                template = self.api.templates.get(name=temp_template_name)
+                template.set_name(vm_name)
+                template.update()
+        except TimedOutError:
+            self.delete_template(temp_template_name)
+            raise
+
+    def does_template_exist(self, template_name):
+        return self.api.templates.get(name=template_name) is not None
+
+    def delete_template(self, template_name):
+        template = self.api.templates.get(name=template_name)
+        if template is None:
+            logger.info(
+                " Template {} is already not present on the RHEV-M provider".format(template_name))
+        wait_for(
+            lambda: self.api.templates.get(name=template_name).get_status().state == "ok",
+            num_sec=15 * 60, delay=20)
+        template.delete()
+        wait_for(
+            lambda: not self.does_template_exist(template_name),
+            num_sec=15 * 60, delay=20)
 
 
 class EC2System(MgmtSystemAPIBase):
@@ -1965,6 +1994,9 @@ class OpenstackSystem(MgmtSystemAPIBase):
             instances = filter(lambda i: i.tenant_id in ids, instances)
         return instances
 
+    def _get_all_templates(self):
+        return self.api.images.list()
+
     def _find_instance_by_name(self, name):
         """
         OpenStack Nova Client does have a find method, but it doesn't
@@ -1977,6 +2009,14 @@ class OpenstackSystem(MgmtSystemAPIBase):
                 return instance
         else:
             raise VMInstanceNotFound(name)
+
+    def _find_template_by_name(self, name):
+        templates = self._get_all_templates()
+        for template in templates:
+            if template.name == name:
+                return template
+        else:
+            raise VMInstanceNotFound("template {}".format(name))
 
     def does_vm_exist(self, name):
         try:
@@ -2032,6 +2072,11 @@ class OpenstackSystem(MgmtSystemAPIBase):
         except:
             instance.update(instance_name)
             raise
+
+    def delete_template(self, template_name):
+        template = self._find_template_by_name(template_name)
+        template.delete()
+        wait_for(lambda: not self.does_template_exist(template_name), num_sec=120, delay=10)
 
 
 class SCVMMSystem(MgmtSystemAPIBase):

@@ -89,6 +89,10 @@ class Provider(MetadataMixin):
                 ready=False, marked_for_deletion=False, template__provider=self, ip_address=None))
 
     @property
+    def num_templates_preparing(self):
+        return len(Template.objects.filter(provider=self, ready=False))
+
+    @property
     def num_currently_managing(self):
         return len(Appliance.objects.filter(template__provider=self))
 
