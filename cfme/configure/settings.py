@@ -28,7 +28,8 @@ nav.add_branch(
                 lambda _: cfg_btn('Add a new Time Profile'),
 
                 "timeprofile_edit":
-                lambda ctx: timeprofile_table.click_cell("description", ctx.description),
+                lambda ctx: timeprofile_table.click_cell(
+                    "description", ctx.timeprofile.description),
 
             }
         ],
@@ -71,7 +72,7 @@ class Timeprofile(Updateable):
         flash.assert_success_message('Time Profile "{}" was added'.format(self.description))
 
     def update(self, updates):
-        sel.force_navigate("timeprofile_edit", context=self)
+        sel.force_navigate("timeprofile_edit", context={"timeprofile": self})
         fill(self.timeprofile_form, {'description': updates.get('description'),
                                      'scope': updates.get('scope'),
                                      'timezone': updates.get('timezone')},

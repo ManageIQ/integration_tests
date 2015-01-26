@@ -28,28 +28,8 @@ def datastore_checkbox(name):
     return "//img[contains(@src, 'chk') and ../../td[.='%s']]" % name
 
 
-def nav_tree_item(path):
-    tree.click_path(*path)
-
-
 def table_select(name):
     sel.check(datastore_checkbox(name))
-
-
-def nav_edit(path):
-    dp_length = version.pick({version.LOWEST: 1,
-                              '5.3': 2})
-    if len(path) > dp_length:
-        cfg_btn('Edit Selected Item')
-    else:
-        cfg_btn(version.pick({version.LOWEST: 'Edit Selected Namespaces',
-                              '5.3': 'Edit Selected Namespace'}))
-
-
-def get_path(o):
-    # prepend the top level "Datastore"
-    p = getattr(o, 'path', [])
-    return ["Datastore"] + p
 
 
 def tree_item_not_found_is_leaf(e):
@@ -67,19 +47,20 @@ nav.add_branch(
     'automate_explorer',
     {
         'automate_explorer_tree_path':
-        [lambda ctx: nav_tree_item(get_path(ctx['tree_item'])),
+        [lambda context: context.tree_item.navigate_tree(),
          {
              'automate_explorer_table_select':
              [lambda ctx: table_select(ctx['table_item'].name),
               {
                   'automate_explorer_edit':
-                  lambda ctx: nav_edit(get_path(ctx['tree_item'])),
+                  lambda context: context.tree_item.nav_edit(),
                   'automate_explorer_delete':
                   lambda _: cfg_btn('Remove selected Items', invokes_alert=True)}],
 
              'automate_explorer_namespace_new': lambda _: cfg_btn('Add a New Namespace'),
              'automate_explorer_domain_new': lambda _: cfg_btn('Add a New Domain'),
              'automate_explorer_class_new': lambda _: cfg_btn('Add a New Class'),
+             "automate_explorer_domain_edit": lambda _: cfg_btn("Edit this Domain"),
              'automate_explorer_method_edit': lambda _: cfg_btn('Edit this Method'),
              'automate_explorer_instance_edit': lambda _: cfg_btn('Edit this Instance'),
              'automate_explorer_methods': [lambda _: select_tab('Methods'),
@@ -98,13 +79,6 @@ nav.add_branch(
              {
                  'automate_explorer_schema_edit': lambda _: cfg_btn("Edit selected Schema")
              }]}],
-        "automate_explorer_domain":
-        [
-            lambda ctx: datastore_tree(ctx["domain"].name),
-            {
-                "automate_explorer_domain_edit": lambda _: cfg_btn("Edit this Domain")
-            }
-        ],
         "automate_explorer_domain_order": open_order_dialog_func,
     })
 
@@ -126,6 +100,22 @@ class TreeNode(pretty.Pretty):
             sel.force_navigate('automate_explorer_tree_path', context={'tree_item': self})
             return True
         return False
+
+    @property
+    def nav_path(self):
+        return ["Datastore"] + self.path
+
+    def navigate_tree(self):
+        return tree.click_path(*self.nav_path)
+
+    def nav_edit(self):
+        dp_length = version.pick({version.LOWEST: 1,
+                                  '5.3': 2})
+        if len(self.nav_path) > dp_length:
+            cfg_btn('Edit Selected Item')
+        else:
+            cfg_btn(version.pick({version.LOWEST: 'Edit Selected Namespaces',
+                                  '5.3': 'Edit Selected Namespace'}))
 
 
 class CopiableTreeNode(TreeNode):
@@ -218,7 +208,7 @@ class Domain(TreeNode, Updateable):
              action=form_buttons.cancel if cancel else form_buttons.add)
 
     def update(self, updates):
-        sel.force_navigate("automate_explorer_domain_edit", context={"domain": self})
+        sel.force_navigate("automate_explorer_domain_edit", context={"tree_item": self})
         fill(self.form, updates, action=form_buttons.save)
         flash.assert_no_errors()
 
@@ -228,9 +218,36 @@ class Domain(TreeNode, Updateable):
         sel.handle_alert(cancel)
         flash.assert_message_match('Automate Domain "{}": Delete successful'.format(self.name))
 
+    def _nav_orig(self):
+        try:
+            tree.click_path(*self.nav_path)
+            return True
+        except exceptions.CandidateNotFound:
+            return False
+
+    def _nav_locked(self):
+        path = self.nav_path
+        path[-1] = path[-1] + " (Locked)"  # Try the Locked version
+        try:
+            tree.click_path(*path)
+            return True
+        except exceptions.CandidateNotFound:
+            return False
+
+    def navigate_tree(self):
+        if not self._nav_orig():
+            if not self._nav_locked():
+                raise exceptions.CandidateNotFound(
+                    "Could not navigate to {}".format(str(self.nav_path)))
+
+    @property
+    def is_locked(self):
+        sel.force_navigate("automate_explorer_tree_path", context={"tree_item": self})
+        return (not self._nav_orig()) and self._nav_locked()
+
     @property
     def is_enabled(self):
-        sel.force_navigate("automate_explorer_domain_edit", context={"domain": self})
+        sel.force_navigate("automate_explorer_domain_edit", context={"tree_item": self})
         self.enabled = sel.element(self.form.enabled).is_selected()
         return self.enabled
 

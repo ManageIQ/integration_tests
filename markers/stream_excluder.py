@@ -38,10 +38,33 @@ def pytest_itemcollected(item):
     marker = item.get_marker("ignore_stream")
     if marker is None:
         return
-    for stream_id in streams_id:
-        if stream_id in set(arg.strip().lower() for arg in marker.args):
-            item.add_marker(pytest.mark.uncollect)
-            break  # No need to go further
+    if hasattr(item, "callspec"):
+        params = item.callspec.params
+    else:
+        params = {}
+    for arg in marker.args:
+        if isinstance(arg, (tuple, list)):
+            stream, conditions = arg
+        else:
+            stream = arg
+            conditions = {}
+        stream = stream.strip().lower()
+        if stream in streams_id:
+            # Candidate for uncollection
+            if not conditions:
+                # Just uncollect it right away
+                add_mark = True
+            else:
+                add_mark = True
+                for condition_key, condition_value in conditions.iteritems():
+                    if condition_key not in params:
+                        continue
+                    if params[condition_key] == condition_value:
+                        pass  # No change
+                    else:
+                        add_mark = False
+            if add_mark:
+                item.add_marker(pytest.mark.uncollect)
 
 
 def pytest_collection_modifyitems(session, config, items):

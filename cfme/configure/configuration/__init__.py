@@ -188,7 +188,7 @@ nav.add_branch("configuration",
                         lambda _: sel.click(category_form.new_tr),
 
                         "cfg_settings_region_my_company_category_edit":
-                        lambda ctx: category_table.click_cell("name", ctx.name)
+                        lambda ctx: category_table.click_cell("name", ctx.category.name)
                     },
                 ],
 
@@ -197,10 +197,10 @@ nav.add_branch("configuration",
                     lambda _: tabs.select_tab("My Company Tags"),
                     {
                         "cfg_settings_region_my_company_tag_new":
-                        lambda ctx: add_tag(ctx.category.display_name),
+                        lambda ctx: add_tag(ctx.tag.category.display_name),
 
                         "cfg_settings_region_my_company_tag_edit":
-                        lambda ctx: edit_tag(ctx.category.display_name, ctx.name)
+                        lambda ctx: edit_tag(ctx.tag.category.display_name, ctx.tag.name)
                     },
                 ],
 
@@ -1522,7 +1522,7 @@ class Category(Pretty):
 
     def update(self, updates, cancel=False):
         sel.force_navigate("cfg_settings_region_my_company_category_edit",
-                           context=self)
+                           context={"category": self})
         fill(category_form, self._form_mapping(**updates))
         if cancel:
             form_buttons.cancel()
@@ -1556,12 +1556,12 @@ class Tag(Pretty):
         }
 
     def create(self):
-        sel.force_navigate("cfg_settings_region_my_company_tag_new", context=self)
+        sel.force_navigate("cfg_settings_region_my_company_tag_new", context={"tag": self})
         fill(tag_form, self._form_mapping(True, **self.__dict__), action=tag_form.add)
 
     def update(self, updates):
         sel.force_navigate("cfg_settings_region_my_company_tag_edit",
-                           context=self)
+                           context={"tag": self})
         fill(tag_form, self._form_mapping(**updates), action=tag_form.add)
 
     def delete(self, cancel=True):

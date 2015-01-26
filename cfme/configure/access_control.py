@@ -54,7 +54,7 @@ nav.add_branch(
 
                 'cfg_accesscontrol_user_ed':
                 [
-                    lambda ctx: ac_tree('Users', ctx.name),
+                    lambda ctx: ac_tree('Users', ctx.user.name),
                     {
                         'cfg_accesscontrol_user_edit':
                         lambda d: tb_select('Edit this User')
@@ -72,7 +72,7 @@ nav.add_branch(
 
                 'cfg_accesscontrol_group_ed':
                 [
-                    lambda ctx: ac_tree('Groups', ctx.description),
+                    lambda ctx: ac_tree('Groups', ctx.group.description),
                     {
                         'cfg_accesscontrol_group_edit':
                         lambda d: tb_select('Edit this Group')
@@ -90,7 +90,7 @@ nav.add_branch(
 
                 'cfg_accesscontrol_role_ed':
                 [
-                    lambda ctx: ac_tree('Roles', ctx.name),
+                    lambda ctx: ac_tree('Roles', ctx.role.name),
                     {
                         'cfg_accesscontrol_role_edit':
                         lambda d: tb_select('Edit this Role')
@@ -147,7 +147,7 @@ class User(Updateable, Pretty):
         flash.assert_success_message('User "%s" was saved' % self.name)
 
     def update(self, updates):
-        sel.force_navigate("cfg_accesscontrol_user_edit", context=self)
+        sel.force_navigate("cfg_accesscontrol_user_edit", context={"user": self})
         fill(self.user_form, {'name_txt': updates.get('name'),
                               'userid_txt': updates.get('credential').principal,
                               'password_txt': updates.get('credential').secret,
@@ -160,7 +160,7 @@ class User(Updateable, Pretty):
             'User "%s" was saved' % updates.get('name', self.name))
 
     def copy(self):
-        sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
+        sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
         tb.select('Configuration', 'Copy this User to a new User')
         new_user = User(name=self.name + "copy",
                         credential=cfme.Credential(principal='redhat', secret='redhat'))
@@ -174,7 +174,7 @@ class User(Updateable, Pretty):
         return new_user
 
     def delete(self):
-        sel.force_navigate("cfg_accesscontrol_user_ed", context=self)
+        sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
         tb.select('Configuration', 'Delete this User', invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('EVM User "%s": Delete successful' % self.name)
@@ -200,7 +200,7 @@ class Group(Updateable, Pretty):
         flash.assert_success_message('Group "%s" was saved' % self.description)
 
     def update(self, updates):
-        sel.force_navigate("cfg_accesscontrol_group_edit", context=self)
+        sel.force_navigate("cfg_accesscontrol_group_edit", context={"group": self})
         fill(self.group_form, {'description_txt': updates.get('description'),
                                'role_select': updates.get('role')},
              action=form_buttons.save)
@@ -208,7 +208,7 @@ class Group(Updateable, Pretty):
             'Group "%s" was saved' % updates.get('description', self.description))
 
     def delete(self):
-        sel.force_navigate("cfg_accesscontrol_group_ed", context=self)
+        sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": self})
         tb_select('Delete this Group', invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('EVM Group "%s": Delete successful' % self.description)
@@ -237,7 +237,7 @@ class Role(Updateable, Pretty):
         flash.assert_success_message('Role "%s" was saved' % self.name)
 
     def update(self, updates):
-        sel.force_navigate("cfg_accesscontrol_role_edit", context=self)
+        sel.force_navigate("cfg_accesscontrol_role_edit", context={"role": self})
         fill(self.form, {'name_txt': updates.get('name'),
                          'vm_restriction_select': updates.get('vm_restriction'),
                          'product_features_tree': updates.get('product_features')},
@@ -245,7 +245,7 @@ class Role(Updateable, Pretty):
         flash.assert_success_message('Role "%s" was saved' % updates.get('name', self.name))
 
     def delete(self):
-        sel.force_navigate("cfg_accesscontrol_role_ed", context=self)
+        sel.force_navigate("cfg_accesscontrol_role_ed", context={"role": self})
         tb_select('Delete this Role', invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('Role "%s": Delete successful' % self.name)
