@@ -47,7 +47,7 @@ def get_default_view(name):
     return default_view
 
 
-@pytest.mark.parametrize('key', cfme_data.get('defaultview_data'), scope="module")
+@pytest.mark.parametrize('key', cfme_data.get('defaultview_data', []), scope="module")
 def test_tile_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
     default_view = get_default_view(name[0])
@@ -57,7 +57,7 @@ def test_tile_defaultview(request, setup_a_provider, key):
     reset_default_view(name[0], default_view)
 
 
-@pytest.mark.parametrize('key', cfme_data.get('defaultview_data'), scope="module")
+@pytest.mark.parametrize('key', cfme_data.get('defaultview_data', []), scope="module")
 def test_list_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
     default_view = get_default_view(name[0])
@@ -67,7 +67,7 @@ def test_list_defaultview(request, setup_a_provider, key):
     reset_default_view(name[0], default_view)
 
 
-@pytest.mark.parametrize('key', cfme_data.get('defaultview_data'), scope="module")
+@pytest.mark.parametrize('key', cfme_data.get('defaultview_data', []), scope="module")
 def test_grid_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
     default_view = get_default_view(name[0])
