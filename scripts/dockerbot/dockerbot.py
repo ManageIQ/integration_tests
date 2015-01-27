@@ -546,6 +546,12 @@ if __name__ == "__main__":
     provisioning.add_argument('--provision-vm-name',
                               help="VM name",
                               default=None)
+    provisioning.add_argument('--sprout', action='store_true',
+                              help="Enable Sprout",
+                              default=None)
+    provisioning.add_argument('--sprout-stream',
+                              help="Sprout stream",
+                              default=None)
 
     args = parser.parse_args()
 
