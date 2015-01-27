@@ -75,6 +75,8 @@ class Provider(MetadataMixin):
     working = models.BooleanField(default=False, help_text="Whether provider is available.")
     num_simultaneous_provisioning = models.IntegerField(default=5,
         help_text="How many simultaneous background provisioning tasks can run on this provider.")
+    num_simultaneous_configuring = models.IntegerField(default=1,
+        help_text="How many simultaneous template configuring tasks can run on this provider.")
     appliance_limit = models.IntegerField(
         null=True, help_text="Hard limit of how many appliances can run on this provider")
 
@@ -91,6 +93,13 @@ class Provider(MetadataMixin):
     @property
     def num_templates_preparing(self):
         return len(Template.objects.filter(provider=self, ready=False))
+
+    @property
+    def remaining_configuring_slots(self):
+        result = self.num_simultaneous_configuring - self.num_templates_preparing
+        if result < 0:
+            return 0
+        return result
 
     @property
     def num_currently_managing(self):
