@@ -6,8 +6,10 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, Region, Select, fill, form_buttons, flash, Table, Quadicon
+from cfme.web_ui import ( Form, Region, Select, fill, form_buttons, flash, Table,
+    Quadicon, CheckboxTree )
 from cfme.web_ui.menu import nav
+from utils.pretty import Pretty
 from utils.update import Updateable
 
 
@@ -239,3 +241,22 @@ class Visual(Updateable):
         return quad.check_for_single_quadrant_icon
 
 visual = Visual()
+
+
+class DefaultFilter(Updateable, Pretty):
+    filter_form = Form(
+        fields=[
+            ("filter_tree", CheckboxTree("//div[@id='all_views_treebox']/ul")),
+        ]
+    )
+
+    pretty_attrs = ['name', 'filters']
+
+    def __init__(self, name=None, filters=None):
+        self.name = name
+        self.filters = filters or []
+
+    def update(self, updates):
+        sel.force_navigate("my_settings_default_filters", context=self)
+        fill(self.filter_form, {'filter_tree': updates.get('filters')},
+             action=form_buttons.save)
