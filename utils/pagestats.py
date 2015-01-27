@@ -10,7 +10,7 @@ from cfme.web_ui import listaccordion as list_acc
 from cfme.web_ui import paginator
 from cfme.web_ui import Quadicon
 from utils.browser import browser
-from utils.conf import ui_bench_tests
+from utils.conf import perf_tests
 from utils.log import logger
 from utils.path import log_path
 from utils.ssh import SSHTail
@@ -25,23 +25,23 @@ import re
 def analyze_page_stat(pages, soft_assert):
     for page in pages:
         logger.info(page)
-        if page.completedintime > ui_bench_tests['threshold']['page_render']:
+        if page.completedintime > perf_tests['ui']['threshold']['page_render']:
             soft_assert(False, 'Render Time Threshold ({} ms) exceeded: {}'.format(
-                ui_bench_tests['threshold']['page_render'], page))
+                perf_tests['ui']['threshold']['page_render'], page))
             logger.warning('Slow Render, Slow Query(>{}ms) Count: {}'.format(
-                ui_bench_tests['threshold']['query_time'], len(page.slowselects)))
+                perf_tests['ui']['threshold']['query_time'], len(page.slowselects)))
             for slow in page.slowselects:
                 logger.warning('Slow Query Log Line: {}'.format(slow))
-        if page.transactiontime > ui_bench_tests['threshold']['transaction']:
+        if page.transactiontime > perf_tests['ui']['threshold']['transaction']:
             soft_assert(False, 'Transaction Time Threshold ({} ms) exceeded: {}'.format(
-                ui_bench_tests['threshold']['transaction'], page))
+                perf_tests['ui']['threshold']['transaction'], page))
             logger.warning('Slow Page Transaction Time')
-        if page.selectcount > ui_bench_tests['threshold']['query_count']:
+        if page.selectcount > perf_tests['ui']['threshold']['query_count']:
             soft_assert(False, 'Query Count Threshold ({}) exceeded:    {}'.format(
-                ui_bench_tests['threshold']['query_count'], page))
-        if page.uncachedcount > ui_bench_tests['threshold']['uncached_count']:
+                perf_tests['ui']['threshold']['query_count'], page))
+        if page.uncachedcount > perf_tests['ui']['threshold']['uncached_count']:
             soft_assert(False, 'Uncached Query Count Threshold ({}) exceeded: {}'.format(
-                ui_bench_tests['threshold']['uncached_count'], page))
+                perf_tests['ui']['threshold']['uncached_count'], page))
     return pages
 
 
@@ -346,7 +346,7 @@ def perf_click(uiworker_pid, tailer, measure_t_time, clickable, *args):
                 pgstat.selectcount += 1
                 selecttime = select_query_time_re.search(line)
                 if selecttime:
-                    if float(selecttime.group(1)) > ui_bench_tests['threshold']['query_time']:
+                    if float(selecttime.group(1)) > perf_tests['ui']['threshold']['query_time']:
                         pgstat.slowselects.append(line)
             if 'CACHE' in line:
                 pgstat.cachedcount += 1

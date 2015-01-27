@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from cfme.fixtures import pytest_selenium as sel
-from utils.conf import ui_bench_tests
+from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
 from utils.pagestats import navigate_accordions
 from utils.pagestats import pages_to_csv
@@ -29,7 +29,7 @@ def test_perf_ui_configure_configuration(ui_worker_pid, ssh_client, soft_assert)
         ('Diagnostics', 'diagnostics')))
     #    ('Database', 'database'))) - Requires almost 17 minutes to read the database tree.
 
-    pages.extend(navigate_accordions(services_acc, 'configuration', (ui_bench_tests['page_check']
+    pages.extend(navigate_accordions(services_acc, 'configuration', (perf_tests['ui']['page_check']
         ['configure']['configuration']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_configure_configuration.csv')

@@ -4,7 +4,7 @@ from cfme.infrastructure.datastore import get_all_datastores
 from cfme.infrastructure.host import get_all_hosts
 from cfme.infrastructure.provider import get_all_providers
 from cfme.web_ui import paginator
-from utils.conf import ui_bench_tests
+from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
 from utils.pagestats import navigate_accordions
 from utils.pagestats import navigate_quadicons
@@ -75,8 +75,8 @@ def test_perf_ui_infra_providers(ui_worker_pid, ssh_client, soft_assert):
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'providers' in ui_bench_tests['page_check']['infrastructure']:
-        nav_limit = ui_bench_tests['page_check']['infrastructure']['providers']
+    if 'providers' in perf_tests['ui']['page_check']['infrastructure']:
+        nav_limit = perf_tests['ui']['page_check']['infrastructure']['providers']
 
     pages.extend(navigate_quadicons(get_all_providers(), 'infra_prov', 'infrastructure_providers',
         nav_limit, ui_worker_pid, prod_tail, soft_assert))
@@ -91,8 +91,8 @@ def test_perf_ui_infra_clusters(ui_worker_pid, ssh_client, soft_assert):
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'clusters' in ui_bench_tests['page_check']['infrastructure']:
-        nav_limit = ui_bench_tests['page_check']['infrastructure']['clusters']
+    if 'clusters' in perf_tests['ui']['page_check']['infrastructure']:
+        nav_limit = perf_tests['ui']['page_check']['infrastructure']['clusters']
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'infrastructure_clusters'), soft_assert))
@@ -118,8 +118,8 @@ def test_perf_ui_infra_hosts(ui_worker_pid, ssh_client, soft_assert):
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'hosts' in ui_bench_tests['page_check']['infrastructure']:
-        nav_limit = ui_bench_tests['page_check']['infrastructure']['hosts']
+    if 'hosts' in perf_tests['ui']['page_check']['infrastructure']:
+        nav_limit = perf_tests['ui']['page_check']['infrastructure']['hosts']
 
     acc_bars = ['Properties', 'Relationships', 'Security', 'Configuration']
 
@@ -144,7 +144,7 @@ def test_perf_ui_infra_vm_explorer(ui_worker_pid, ssh_client, soft_assert):
         ('Templates', 'templates')))
 
     pages.extend(navigate_accordions(infra_acc, 'infrastructure_virtual_machines',
-        ui_bench_tests['page_check']['infrastructure']['vm_explorer'], ui_worker_pid, prod_tail,
+        perf_tests['ui']['page_check']['infrastructure']['vm_explorer'], ui_worker_pid, prod_tail,
         soft_assert))
 
     pages_to_csv(pages, 'perf_ui_infra_vm_explorer.csv')
@@ -159,8 +159,8 @@ def test_perf_ui_infra_resource_pools(ui_worker_pid, ssh_client, soft_assert):
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'resource_pools' in ui_bench_tests['page_check']['infrastructure']:
-        nav_limit = ui_bench_tests['page_check']['infrastructure']['resource_pools']
+    if 'resource_pools' in perf_tests['ui']['page_check']['infrastructure']:
+        nav_limit = perf_tests['ui']['page_check']['infrastructure']['resource_pools']
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'infrastructure_resource_pools'), soft_assert))
@@ -187,8 +187,8 @@ def test_perf_ui_infra_datastores(ui_worker_pid, ssh_client, soft_assert):
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'datastores' in ui_bench_tests['page_check']['infrastructure']:
-        nav_limit = ui_bench_tests['page_check']['infrastructure']['datastores']
+    if 'datastores' in perf_tests['ui']['page_check']['infrastructure']:
+        nav_limit = perf_tests['ui']['page_check']['infrastructure']['datastores']
 
     acc_bars = ['Properties', 'Relationships', 'Content']
 
@@ -211,7 +211,7 @@ def test_perf_ui_infra_pxe(ui_worker_pid, ssh_client, soft_assert):
         ('Customization Templates', 'customization_templates'),
         ('System Image Types', 'system_image_types'), ('ISO Datastores', 'iso_datastores')))
 
-    pages.extend(navigate_accordions(pxe_acc, 'infrastructure_pxe', (ui_bench_tests['page_check']
+    pages.extend(navigate_accordions(pxe_acc, 'infrastructure_pxe', (perf_tests['ui']['page_check']
         ['infrastructure']['pxe']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_infra_pxe.csv')

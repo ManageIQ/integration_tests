@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from cfme.fixtures import pytest_selenium as sel
-from utils.conf import ui_bench_tests
+from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
 from utils.pagestats import navigate_accordions
 from utils.pagestats import pages_to_csv
@@ -31,7 +31,7 @@ def test_perf_ui_services_my_services(ui_worker_pid, ssh_client, soft_assert):
 
     services_acc = OrderedDict((('Services', 'services'), ))
 
-    pages.extend(navigate_accordions(services_acc, 'my_services', (ui_bench_tests['page_check']
+    pages.extend(navigate_accordions(services_acc, 'my_services', (perf_tests['ui']['page_check']
         ['services']['my_services']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_services_my_services.csv')
@@ -50,7 +50,7 @@ def test_perf_ui_services_catalogs(ui_worker_pid, ssh_client, soft_assert):
         ('Service Catalogs', 'service_catalogs')))
 
     pages.extend(navigate_accordions(catalogs_acc, 'services_catalogs',
-        ui_bench_tests['page_check']['services']['catalogs'], ui_worker_pid, prod_tail,
+        perf_tests['ui']['page_check']['services']['catalogs'], ui_worker_pid, prod_tail,
         soft_assert))
 
     pages_to_csv(pages, 'perf_ui_services_catalogs.csv')
@@ -70,7 +70,7 @@ def test_perf_ui_services_workloads(ui_worker_pid, ssh_client, soft_assert):
         ('Templates & Images', 'templates_images')))
 
     pages.extend(navigate_accordions(workloads_acc, 'services_workloads',
-        ui_bench_tests['page_check']['services']['workloads'], ui_worker_pid, prod_tail,
+        perf_tests['ui']['page_check']['services']['workloads'], ui_worker_pid, prod_tail,
         soft_assert))
 
     pages_to_csv(pages, 'perf_ui_services_workloads.csv')
