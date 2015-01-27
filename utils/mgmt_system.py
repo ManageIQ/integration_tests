@@ -803,7 +803,7 @@ class VMWareSystem(MgmtSystemAPIBase):
         else:
             return destination
 
-    def mark_as_template(self, vm_name):
+    def mark_as_template(self, vm_name, **kwargs):
         mobs.VirtualMachine.get(self.api, name=vm_name).MarkAsTemplate()  # Returns None
 
     def deploy_template(self, template, **kwargs):
@@ -1180,7 +1180,8 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def remove_host_from_cluster(self, hostname):
         raise NotImplementedError('remove_host_from_cluster not implemented')
 
-    def mark_as_template(self, vm_name, delete=True):
+    def mark_as_template(
+            self, vm_name, delete=True, temporary_name=None, delete_on_error=True, **kwargs):
         """Turns the VM off, creates template from it and deletes the original VM.
 
         Mimics VMware behaviour here.
@@ -1188,34 +1189,65 @@ class RHEVMSystem(MgmtSystemAPIBase):
         Args:
             vm_name: Name of the VM to be turned to template
             delete: Whether to delete the VM (default: True)
+            temporary_name: If you want, you can specific an exact temporary name for renaming.
         """
+        temp_template_name = temporary_name or "templatize_{}".format(generate_random_string())
         try:
-            temp_template_name = "templatize_{}".format(generate_random_string())
             with self.steady_wait(30):
-                self.stop_vm(vm_name)
-                vm = self._get_vm(vm_name)
-                actual_cluster = vm.get_cluster()
-                new_template = params.Template(
-                    name=temp_template_name, vm=vm, cluster=actual_cluster)
-                self.api.templates.add(new_template)
-                # First it has to appear
-                wait_for(
-                    lambda: temp_template_name in self.list_template(),
-                    num_sec=30 * 60, message="template created", delay=20)
-                # Then the process has to finish
-                wait_for(
-                    lambda:
-                    self.api.templates.get(name=temp_template_name).get_status().state == "ok",
-                    num_sec=30 * 60, message="template creation finished", delay=45)
-                # Delete the original VM
-                if delete:
-                    self.delete_vm(vm_name)
-                template = self.api.templates.get(name=temp_template_name)
-                template.set_name(vm_name)
-                template.update()
+                create_new_template = True
+                if self.does_template_exist(temp_template_name):
+                    try:
+                        self._wait_template_ok(temp_template_name)
+                    except VMInstanceNotFound:
+                        pass  # It got deleted.
+                    else:
+                        create_new_template = False
+                        if self.does_vm_exist(vm_name) and delete:
+                            self.delete_vm(vm_name)
+                        if delete:  # We can only rename to the original name if we delete the vm
+                            self._rename_template(temp_template_name, vm_name)
+
+                if create_new_template:
+                    self.stop_vm(vm_name)
+                    vm = self._get_vm(vm_name)
+                    actual_cluster = vm.get_cluster()
+                    new_template = params.Template(
+                        name=temp_template_name, vm=vm, cluster=actual_cluster)
+                    self.api.templates.add(new_template)
+                    # First it has to appear
+                    self._wait_template_exists()
+                    # Then the process has to finish
+                    self._wait_template_ok()
+                    # Delete the original VM
+                    if self.does_vm_exist(vm_name) and delete:
+                        self.delete_vm(vm_name)
+                    if delete:  # We can only rename to the original name if we delete the vm
+                        self._rename_template(temp_template_name, vm_name)
         except TimedOutError:
-            self.delete_template(temp_template_name)
+            if delete_on_error:
+                self.delete_template(temp_template_name)
             raise
+
+    def _rename_template(self, old_name, new_name):
+        template = self.api.templates.get(name=old_name)
+        if template is None:
+            raise VMInstanceNotFound("Template {} not found!".format(old_name))
+        template.set_name(new_name)
+        template.update()
+
+    def _wait_template_ok(self, template_name):
+        try:
+            wait_for(
+                lambda:
+                self.api.templates.get(name=template_name).get_status().state == "ok",
+                num_sec=30 * 60, message="template is OK", delay=45)
+        except AttributeError:  # .get() returns None when template not found
+            raise VMInstanceNotFound("Template {} not found!".format(template_name))
+
+    def _wait_template_exists(self, template_name):
+        wait_for(
+            lambda: self.does_template_exist(template_name),
+            num_sec=30 * 60, message="template exists", delay=45)
 
     def does_template_exist(self, template_name):
         return self.api.templates.get(name=template_name) is not None
@@ -1225,9 +1257,8 @@ class RHEVMSystem(MgmtSystemAPIBase):
         if template is None:
             logger.info(
                 " Template {} is already not present on the RHEV-M provider".format(template_name))
-        wait_for(
-            lambda: self.api.templates.get(name=template_name).get_status().state == "ok",
-            num_sec=15 * 60, delay=20)
+            return
+        self._wait_template_ok(template_name)
         template.delete()
         wait_for(
             lambda: not self.does_template_exist(template_name),
@@ -2040,7 +2071,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
             return None
         return first_available_ip.ip
 
-    def mark_as_template(self, instance_name):
+    def mark_as_template(self, instance_name, **kwargs):
         """OpenStack marking as template is a little bit more complex than vSphere.
 
         We have to rename the instance, create a snapshot of the original name and then delete the

@@ -222,6 +222,21 @@ class Template(MetadataMixin):
     def cfme(self):
         return CFMEAppliance(self.provider_name, self.name)
 
+    @property
+    def temporary_name(self):
+        return self.metadata.get("temporary_name", None)
+
+    @temporary_name.setter
+    def temporary_name(self, name):
+        with self.edit_metadata as metadata:
+            metadata["temporary_name"] = name
+
+    @temporary_name.deleter
+    def temporary_name(self):
+        with self.edit_metadata as metadata:
+            if "temporary_name" in metadata:
+                del metadata["temporary_name"]
+
     @classmethod
     def get_versions(cls, **filters):
         versions = []

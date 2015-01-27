@@ -334,12 +334,19 @@ def prepare_template_finish(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Finishing template creation.")
     try:
-        template.provider_api.mark_as_template(template.name)
+        if template.temporary_name is None:
+            tmp_name = "templatize_{}".format(generate_random_string())
+            Template.objects.get(id=template_id).temporary_name = tmp_name
+        else:
+            tmp_name = template.temporary_name
+        template.provider_api.mark_as_template(
+            template.name, temporary_name=tmp_name, delete_on_error=False)
         with transaction.atomic():
             template = Template.objects.get(id=template_id)
             template.ready = True
             template.exists = True
             template.save()
+            del template.temporary_name
     except Exception as e:
         template.set_status("Could not mark the appliance as template. Retrying.")
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
@@ -359,7 +366,9 @@ def prepare_template_delete_on_error(self, template_id):
             template.provider_api.delete_vm(template.name)
         if template.provider_api.does_template_exist(template.name):
             template.provider_api.delete_template(template.name)
-        # TODO: Some delete_template() ?
+        if (template.temporary_name is not None and
+                template.provider_api.does_template_exist(template.temporary_name)):
+            template.provider_api.delete_template(template.temporary_name)
         template.delete()
     except Exception as e:
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
