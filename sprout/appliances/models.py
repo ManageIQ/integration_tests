@@ -168,6 +168,15 @@ class Provider(MetadataMixin):
         with self.edit_metadata:
             self.metadata["templates"] = value
 
+    @property
+    def template_name_length(self):
+        return self.metadata.get("template_name_length", None)
+
+    @template_name_length.setter
+    def template_name_length(self, value):
+        with self.edit_metadata:
+            self.metadata["template_name_length"] = value
+
     def __unicode__(self):
         return "{} {}".format(self.__class__.__name__, self.id)
 

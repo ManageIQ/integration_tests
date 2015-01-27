@@ -247,6 +247,22 @@ def create_appliance_template(provider_id, group_id, template_name):
         template_version = retrieve_cfme_appliance_version(template_name)
         new_template_name = settings.TEMPLATE_FORMAT.format(
             group=group.id, date=date.strftime("%y%m%d"), rnd=generate_random_string())
+        if provider.template_name_length is not None:
+            allowed_length = provider.template_name_length
+            # There is some limit
+            if len(new_template_name) > allowed_length:
+                # Cut it down
+                randoms_length = len(new_template_name.rsplit("_", 1)[-1])
+                minimum_length = (len(new_template_name) - randoms_length) + 1  # One random must be
+                if minimum_length <= allowed_length:
+                    # Just cut it
+                    new_template_name = new_template_name[:allowed_length]
+                else:
+                    # Another solution
+                    new_template_name = settings.TEMPLATE_FORMAT.format(
+                        group=group.id[:2], date=date.strftime("%y%m%d"),  # Use only first 2 of grp
+                        rnd=generate_random_string(2))  # And just 2 chars random
+                    # TODO: If anything larger comes, do fix that!
         template = Template(
             provider=provider, template_group=group, name=new_template_name, date=date,
             version=template_version, original_name=template_name)
