@@ -204,8 +204,7 @@ def poke_trackerbot(self):
             Template.objects.get(
                 provider=provider, template_group=group, original_name=template_name)
         except ObjectDoesNotExist:
-            if template_name in provider.templates and provider.num_templates_preparing < 1:
-                # We save the provider's resources by limiting the number of appliances being set up
+            if template_name in provider.templates:
                 create_appliance_template.delay(provider.id, group.id, template_name)
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
@@ -234,6 +233,9 @@ def create_appliance_template(provider_id, group_id, template_name):
     provider = Provider.objects.get(id=provider_id)
     group = Group.objects.get(id=group_id)
     with transaction.atomic():
+        # Limit the number of concurrent template configurations
+        if provider.remaining_configuring_slots == 0:
+            return False  # It will be kicked again when trackerbot gets poked
         try:
             Template.objects.get(
                 template_group=group, provider=provider, original_name=template_name)
