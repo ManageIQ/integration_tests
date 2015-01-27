@@ -8,7 +8,6 @@ from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_fro
 from cfme.services import requests
 from utils import testgen
 from utils.randomness import generate_random_string
-from utils.providers import setup_infrastructure_providers
 from utils.log import logger
 from utils.wait import wait_for
 from utils.conf import cfme_data
@@ -22,7 +21,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning', 'provider_type')
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]
@@ -33,6 +32,9 @@ def pytest_generate_tests(metafunc):
         args = dict(zip(argnames, argvalue_tuple))
         if not args['provisioning']:
             # No provisioning data available
+            continue
+
+        if args['provider_type'] != 'rhevm':
             continue
 
         # required keys should be a subset of the dict keys set
@@ -66,12 +68,6 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
     pxe_server.set_pxe_image_type(provisioning['pxe_image'], provisioning['pxe_image_type'])
     if not pxe_cust_template.exists():
         pxe_cust_template.create()
-
-
-@pytest.fixture(scope="module")
-def setup_providers():
-    # Normally function-scoped
-    setup_infrastructure_providers()
 
 
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
@@ -138,8 +134,9 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
 
 
 @pytest.mark.bugzilla(1160486)
-@pytest.mark.usefixtures('setup_providers', 'setup_pxe_servers_vm_prov')
-def test_rhev_pxe_servicecatalog(provider_key, provider_mgmt, catalog_item, request):
+@pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
+def test_rhev_pxe_servicecatalog(setup_provider, provider_type,
+                                 provider_key, provider_mgmt, catalog_item, request):
     """Tests RHEV PXE service catalog
 
     Metadata:
