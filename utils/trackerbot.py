@@ -95,7 +95,8 @@ def parse_template(template_name):
     raise ValueError('No streams matched template %s' % template_name)
 
 
-def mark_provider_template(api, provider, template, tested=None, usable=None, diagnosis=''):
+def mark_provider_template(api, provider, template, tested=None, usable=None,
+    diagnosis='', build_number=None):
     """Mark a provider template as tested and/or usable
 
     Args:
@@ -119,6 +120,9 @@ def mark_provider_template(api, provider, template, tested=None, usable=None, di
 
     if diagnosis:
         provider_template['diagnosis'] = diagnosis
+
+    if build_number:
+        provider_template['build_number'] = int(build_number)
 
     return api.providertemplate.post(provider_template)
 

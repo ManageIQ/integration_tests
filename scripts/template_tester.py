@@ -57,16 +57,19 @@ def export(**env_vars):
 
 
 def mark(api, provider_key, template, usable, diagnose):
-    if not usable and diagnose:
-        # diagnose will return None on a usable appliance, so don't bother
-        from utils.appliance import IPAppliance
-        ipa = IPAppliance()
-        diagnosis = ipa.diagnose_evm_failure()
-        logger.error('Appliance failed: {}'.format(diagnosis.split(os.linesep)[0]))
-    else:
-        diagnosis = None
+    # set some defaults
+    diagnosis = None
+    build_number = None
+    if not usable:
+        build_number = os.environ.get('BUILD_NUMBER', None)
+        if diagnose:
+            # diagnose will return None on a usable appliance, so don't bother
+            from utils.appliance import IPAppliance
+            ipa = IPAppliance()
+            diagnosis = ipa.diagnose_evm_failure()
+            logger.error('Appliance failed: {}'.format(diagnosis.split(os.linesep)[0]))
     trackerbot.mark_provider_template(api, provider_key, template, tested=True, usable=usable,
-        diagnosis=diagnosis)
+        diagnosis=diagnosis, build_number=build_number)
 
 
 def retest(api, provider_key, template):
