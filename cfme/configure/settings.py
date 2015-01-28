@@ -6,8 +6,8 @@ from functools import partial
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import ( Form, Region, Select, fill, form_buttons, flash, Table,
-    Quadicon, CheckboxTree )
+from cfme.web_ui import (Form, Region, Select, fill, form_buttons, flash, Table,
+    Quadicon, CheckboxTree)
 from cfme.web_ui.menu import nav
 from utils.pretty import Pretty
 from utils.update import Updateable
