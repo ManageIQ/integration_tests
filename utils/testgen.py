@@ -298,11 +298,14 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         for key in data_values.keys():
             if data_values[key] is None:
                 if 'require_fields' not in options:
-                    options['require_fields'] = False
+                    options['require_fields'] = True
                 if options['require_fields']:
                     skip = True
-                    idlist.remove(provider)
-                    logger.debug('Field "%s" not defined for provider "%s", skipping' %
+                    try:
+                        idlist.remove(provider)
+                    except ValueError:
+                        pass
+                    logger.warning('Field "%s" not defined for provider "%s", skipping' %
                         (key, provider)
                     )
                 else:
@@ -345,12 +348,12 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
     return argnames, argvalues, idlist
 
 
-def cloud_providers(metafunc, *fields):
+def cloud_providers(metafunc, *fields, **options):
     """Wrapper for :py:func:`provider_by_type` that pulls types from
     :py:attr:`utils.providers.cloud_provider_type_map`
 
     """
-    return provider_by_type(metafunc, cloud_provider_type_map, *fields)
+    return provider_by_type(metafunc, cloud_provider_type_map, *fields, **options)
 
 
 def infra_providers(metafunc, *fields, **options):

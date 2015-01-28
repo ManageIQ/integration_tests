@@ -5,7 +5,6 @@ from utils import testgen
 from utils.randomness import generate_random_string
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['openstack'],
-                                         'provider_key', 'provider_mgmt', 'provider_data',
                                          scope='module')
 
 
