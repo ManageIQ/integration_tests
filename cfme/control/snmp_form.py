@@ -155,7 +155,7 @@ def fill_snmp_hosts_field_basestr(field, value):
 class SNMPForm(object):
     """Class encapsulating the most common (and hopefully single) configuration of SNMP form
 
-    Example::
+    Usage:
 
         form = SNMPForm()
         fill(form, dict(

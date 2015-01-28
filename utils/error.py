@@ -7,16 +7,18 @@ is caught.
 
 
 Usage:
-import utils.error as error
-with error.expected('foo'):
-    x = 1
-    raise Exception('oh noes foo happened!')  # this will be caught because regex matches
 
-with error.expected('foo'):
-    raise Exception('oh noes bar happened!')  # this will bubble up because it doesn't match
+    import utils.error as error
+    with error.expected('foo'):
+        x = 1
+        raise Exception('oh noes foo happened!')  # this will be caught because regex matches
 
-with error.expected('foo'):
-    pass  # an error will be thrown because we expected an error but there wasn't one.
+    with error.expected('foo'):
+        raise Exception('oh noes bar happened!')  # this will bubble up because it doesn't match
+
+    with error.expected('foo'):
+        pass  # an error will be thrown because we expected an error but there wasn't one.
+
 """
 
 from contextlib import contextmanager

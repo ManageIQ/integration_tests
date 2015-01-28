@@ -2086,7 +2086,8 @@ class DHTMLSelect(Select):
     Args:
         loc: A locator.
 
-    Returns: A :py:class:`cfme.web_ui.DHTMLSelect` object.
+    Returns a :py:class:`cfme.web_ui.DHTMLSelect` object.
+
     """
 
     @staticmethod
@@ -2110,7 +2111,9 @@ class DHTMLSelect(Select):
 
         Note: Since the DHTML select can only have one option selected at a time, we
             simple return the first element (the only element).
+
         Returns: A Web element.
+
         """
         return [self.first_selected_option]
 

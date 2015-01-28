@@ -674,9 +674,12 @@ def first_from(*locs, **kwargs):
     Args:
         *locs: Locators to pass through
         **kwargs: Keyword arguments to pass to element()
+
     Raises:
         NoSuchElementException: When none of the locator could find the element.
+
     Returns: :py:class:`WebElement`
+
     """
     assert len(locs) > 0, "You must provide at least one locator to look for!"
     for locator in locs:

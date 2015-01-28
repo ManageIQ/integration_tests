@@ -1000,7 +1000,7 @@ class Alert(Updateable, Pretty):
         """Update the object with new values and save.
 
         Args:
-        updates: Provided by update() context manager.
+            updates: Provided by update() context manager.
             cancel: Whether to cancel the update (default False).
         """
         for key, value in updates.iteritems():

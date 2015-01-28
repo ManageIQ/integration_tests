@@ -56,9 +56,10 @@ def update(o, **kwargs):
     otherwise the updated object will be returned.
 
     Usage:
-    with update(myrecord):
-       myrecord.lastname = 'Smith'
-       myrecord.address.zipcode = '27707'
+
+        with update(myrecord):
+           myrecord.lastname = 'Smith'
+           myrecord.address.zipcode = '27707'
 
     """
     cp = deepcopy(o)
