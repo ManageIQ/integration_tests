@@ -133,6 +133,7 @@ class RefreshTimer(object):
 
     def reset(self):
         self._is_it_time = False
+        self.start()
 
     def is_it_time(self):
         if self._is_it_time:

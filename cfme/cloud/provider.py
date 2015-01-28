@@ -29,7 +29,7 @@ from utils.db import cfmedb
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
-from utils.wait import wait_for
+from utils.wait import wait_for, RefreshTimer
 from utils import version
 from utils.pretty import Pretty
 
@@ -212,33 +212,29 @@ class Provider(Updateable, Pretty):
         """
 
         client = self.get_mgmt_system()
-        if db:
-            ec, tc = wait_for(self._do_stats_match,
-                              [client, self.STATS_TO_MATCH],
-                              {'db': db},
-                              message="do_stats_match_db",
-                              num_sec=1000,
-                              delay=10)
+
+        # If we're not using db, make sure we are on the provider detail page
+        if not db:
+            sel.force_navigate('clouds_provider', context={'provider': self})
+
+        # Initial bullet check
+        if self._do_stats_match(client, self.STATS_TO_MATCH, db=db):
+            client.disconnect()
+            return
         else:
-
-            if not self._on_detail_page():
-                sel.force_navigate('clouds_provider', context={'provider': self})
-
-            # Bail out here if the stats match.
-            if self._do_stats_match(client, self.STATS_TO_MATCH):
-                client.disconnect()
-                return
-
-            # Otherwise refresh relationships and hand off to wait_for
+            # Set off a Refresh Relationships
+            sel.force_navigate('clouds_provider', context={'provider': self})
             tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
             sel.handle_alert()
 
-            ec, tc = wait_for(self._do_stats_match,
-                              [client, self.STATS_TO_MATCH],
-                              message="do_stats_match",
-                              fail_func=sel.refresh,
-                              num_sec=1000,
-                              delay=10)
+            refresh_timer = RefreshTimer(time_for_refresh=300)
+            wait_for(self._do_stats_match,
+                     [client, self.STATS_TO_MATCH, refresh_timer],
+                     {'db': db},
+                     message="do_stats_match_db",
+                     num_sec=1000,
+                     delay=60)
+
         client.disconnect()
 
     def load_all_provider_instances(self):
@@ -290,7 +286,7 @@ class Provider(Updateable, Pretty):
             sel.force_navigate('clouds_provider', context={'provider': self})
         return details_page.infoblock.text(*ident)
 
-    def _do_stats_match(self, client, stats_to_match=None, db=True):
+    def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None, db=True):
         """ A private function to match a set of statistics, with a Provider.
 
         This function checks if the list of stats match, if not, the page is refreshed.
@@ -307,6 +303,16 @@ class Provider(Updateable, Pretty):
             ProviderHasNoProperty: If the provider does not have the property defined.
         """
         host_stats = client.stats(*stats_to_match)
+
+        if refresh_timer:
+            if refresh_timer.is_it_time():
+                logger.info(' Time for a refresh!')
+                sel.force_navigate('clouds_provider', context={'provider': self})
+                tb.select("Configuration", "Refresh Relationships and Power States",
+                          invokes_alert=True)
+                sel.handle_alert(cancel=False)
+                refresh_timer.reset()
+
         for stat in stats_to_match:
             try:
                 cfme_stat = getattr(self, stat)(db=db)
@@ -338,7 +344,7 @@ class Provider(Updateable, Pretty):
                            .filter(vms.template == truthy))
             return len(temlist)
         else:
-            return int(self.get_detail("Relationships", "Templates"))
+            return int(self.get_detail("Relationships", "Images"))
 
     def num_vm(self, db=True):
         """ Returns the providers number of instances, as shown on the Details page."""
@@ -351,7 +357,7 @@ class Provider(Updateable, Pretty):
                           .filter(ext_management_systems.name == self.name)
                           .filter(vms.template == falsey))
             return len(vmlist)
-        return int(self.get_detail("Relationships", "VMs"))
+        return int(self.get_detail("Relationships", "Instances"))
 
     @property
     def exists(self):
