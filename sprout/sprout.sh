@@ -369,9 +369,14 @@ function restart_sprout() {
 function backup_before_update() {
     cddir
     echo ">> Backing up"
-    FILENAME="/tmp/sprout-update-`date +%s | sha256sum | base64 | head -c 8`.tgz"
-    tar -zcvf $FILENAME ../. >/dev/null
+    BKPID="`date +%s | sha256sum | base64 | head -c 8`"
+    FILENAME="/tmp/sprout-update-${BKPID}.tgz"
+    tar -zcvf $FILENAME ../. >/dev/null 2>&1
     echo ">> Backed up to file ${FILENAME}"
+    FILENAME="/tmp/sprout-update-${BKPID}.yaml"
+    echo ">> Dumping the database"
+    ./manage.py dumpdata --format=yaml --natural -e contenttypes -e sessions.Session -e auth.Permission > "/tmp/sprout-update-${BKPID}.yaml"
+    echo ">> Database dumped to ${FILENAME}"
 }
 
 

@@ -156,8 +156,8 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(minutes=17),
     },
 
-    'retrieve-appliances-power-states': {
-        'task': 'appliances.tasks.retrieve_appliances_power_states',
+    'refresh-appliances': {
+        'task': 'appliances.tasks.refresh_appliances',
         'schedule': timedelta(minutes=7),
     },
 

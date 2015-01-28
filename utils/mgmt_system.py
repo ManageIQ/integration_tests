@@ -7,6 +7,7 @@ import re
 import winrm
 from abc import ABCMeta, abstractmethod
 from cStringIO import StringIO
+from collections import namedtuple
 from contextlib import contextmanager
 from datetime import datetime
 from textwrap import dedent
@@ -36,6 +37,9 @@ from utils.version import LooseVersion, current_version
 from utils.wait import wait_for, TimedOutError
 
 local_tz = tzlocal.get_localzone()
+
+
+VMInfo = namedtuple("VMInfo", ["uuid", "name", "power_state", "ip"])
 
 
 class _PsphereClient(Client):
@@ -565,6 +569,36 @@ class VMWareSystem(MgmtSystemAPIBase):
                 obj_list.append(vm_props['name'])
         return obj_list
 
+    def all_vms(self):
+        property_spec = self.api.create('PropertySpec')
+        property_spec.all = False
+        property_spec.pathSet = ['name', 'config.template']
+        property_spec.type = 'VirtualMachine'
+        pfs = self.api.get_search_filter_spec(self.api.si.content.rootFolder, property_spec)
+        object_contents = self.api.si.content.propertyCollector.RetrieveProperties(specSet=[pfs])
+        result = []
+        for vm in object_contents:
+            vm_props = {p.name: p.val for p in vm.propSet}
+            if vm_props.get('config.template'):
+                continue
+            try:
+                ip = str(vm.obj.summary.guest.ipAddress)
+            except AttributeError:
+                ip = None
+            try:
+                uuid = str(vm.obj.summary.config.uuid)
+            except AttributeError:
+                uuid = None
+            result.append(
+                VMInfo(
+                    uuid,
+                    str(vm.obj.summary.config.name),
+                    str(vm.obj.summary.runtime.powerState),
+                    ip,
+                )
+            )
+        return result
+
     def get_vm_name_from_ip(self, ip):
         """ Gets the name of a vm from its IP.
 
@@ -1078,6 +1112,23 @@ class RHEVMSystem(MgmtSystemAPIBase):
         # but you can return a vm w/ a matched name
         vm_list = self.api.vms.list(**kwargs)
         return [vm.name for vm in vm_list]
+
+    def all_vms(self):
+        result = []
+        for vm in self.api.vms.list():
+            try:
+                ip = vm.get_guest_info().get_ips().get_ip()[0].get_address()
+            except (AttributeError, IndexError):
+                ip = None
+            result.append(
+                VMInfo(
+                    vm.get_id(),
+                    vm.get_name(),
+                    vm.get_status().get_state(),
+                    ip,
+                )
+            )
+        return result
 
     def list_host(self, **kwargs):
         host_list = self.api.hosts.list(**kwargs)
@@ -1994,6 +2045,22 @@ class OpenstackSystem(MgmtSystemAPIBase):
             for nic in network_nics:
                 if nic['OS-EXT-IPS:type'] == 'floating':
                     return str(nic['addr'])
+
+    def all_vms(self):
+        result = []
+        for vm in self._get_all_instances():
+            ip = None
+            for network_nics in vm._info["addresses"].itervalues():
+                for nic in network_nics:
+                    if nic['OS-EXT-IPS:type'] == 'floating':
+                        ip = str(nic['addr'])
+            result.append(VMInfo(
+                vm.id,
+                vm.name,
+                vm.status,
+                ip,
+            ))
+        return result
 
     def get_vm_name_from_ip(self, ip):
         # unfortunately it appears you cannot query for ip address from the sdk,

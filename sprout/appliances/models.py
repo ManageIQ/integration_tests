@@ -165,8 +165,8 @@ class Provider(MetadataMixin):
 
     @templates.setter
     def templates(self, value):
-        with self.edit_metadata:
-            self.metadata["templates"] = value
+        with self.edit_metadata as metadata:
+            metadata["templates"] = value
 
     @property
     def template_name_length(self):
@@ -174,8 +174,8 @@ class Provider(MetadataMixin):
 
     @template_name_length.setter
     def template_name_length(self, value):
-        with self.edit_metadata:
-            self.metadata["template_name_length"] = value
+        with self.edit_metadata as metadata:
+            metadata["template_name_length"] = value
 
     def __unicode__(self):
         return "{} {}".format(self.__class__.__name__, self.id)
@@ -318,6 +318,7 @@ class Appliance(MetadataMixin):
         help_text="Appliance's power state")
     ready = models.BooleanField(default=False,
         help_text="Appliance has an IP address and web UI is online.")
+    uuid = models.CharField(max_length=36, null=True, blank=True, help_text="UUID of the machine")
 
     @property
     def provider_api(self):

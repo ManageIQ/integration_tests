@@ -713,17 +713,45 @@ def retrieve_appliance_ip(self, appliance_id):
 
 
 @singleton_task()
-def retrieve_appliances_power_states(self):
-    """Continuously loops over all appliances and retrieves power states. After the execution ends,
-    it schedules itself for execution again after some time"""
-    for a in Appliance.objects.all():
-        if a.name not in redis.renaming_appliances:
-            retrieve_appliance_power_state.delay(a.id)
+def refresh_appliances(self):
+    """Dispatches the appliance refresh process among the providers"""
+    for provider in Provider.objects.all():
+        refresh_appliances_provider.delay(provider.id)
 
 
-@singleton_task(soft_time_limit=60)
-def retrieve_appliance_power_state(self, appliance_id):
-    Appliance.objects.get(id=appliance_id).retrieve_power_state()
+@singleton_task(soft_time_limit=180)
+def refresh_appliances_provider(self, provider_id):
+    """Downloads the list of VMs from the provider, then matches them by name or UUID with
+    appliances stored in database.
+    """
+    provider = Provider.objects.get(id=provider_id)
+    vms = provider.api.all_vms()
+    dict_vms = {}
+    uuid_vms = {}
+    for vm in vms:
+        dict_vms[vm.name] = vm
+        uuid_vms[vm.uuid] = vm
+    for appliance in Appliance.objects.filter(template__provider=provider):
+        if appliance.uuid is not None and appliance.uuid in uuid_vms:
+            vm = uuid_vms[appliance.uuid]
+            # Using the UUID and change the name if it changed
+            appliance.name = vm.name
+            appliance.ip_address = vm.ip
+            appliance.power_state = Appliance.POWER_STATES_MAPPING.get(
+                vm.power_state, Appliance.Power.UNKNOWN)
+            appliance.save()
+        elif appliance.name in dict_vms:
+            vm = dict_vms[appliance.name]
+            # Using the name, and then retrieve uuid
+            appliance.uuid = vm.uuid
+            appliance.ip_address = vm.ip
+            appliance.power_state = Appliance.POWER_STATES_MAPPING.get(
+                vm.power_state, Appliance.Power.UNKNOWN)
+            appliance.save()
+        else:
+            # Orphaned :(
+            appliance.power_state = Appliance.Power.ORPHANED
+            appliance.save()
 
 
 @singleton_task()
