@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from cfme.fixtures import pytest_selenium as sel
-from utils.conf import ui_bench_tests
+from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
 from utils.pagestats import navigate_accordions
 from utils.pagestats import pages_to_csv
@@ -32,7 +32,7 @@ def test_perf_ui_intelligence_reports(ui_worker_pid, ssh_client, soft_assert):
         ('Dashboard Widgets', 'dashboard_widgets'), ('Edit Report Menus', 'edit_report_menus'),
         ('Import/Export', 'import_export')))
 
-    pages.extend(navigate_accordions(reports_acc, 'reports', (ui_bench_tests['page_check']
+    pages.extend(navigate_accordions(reports_acc, 'reports', (perf_tests['ui']['page_check']
         ['intelligence']['reports']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_intelligence_reports.csv')
@@ -50,7 +50,7 @@ def test_perf_ui_intelligence_chargeback(ui_worker_pid, ssh_client, soft_assert)
     charge_acc = OrderedDict((('Reports', 'reports'), ('Rates', 'rates'),
         ('Assignments', 'assignments')))
 
-    pages.extend(navigate_accordions(charge_acc, 'chargeback', (ui_bench_tests['page_check']
+    pages.extend(navigate_accordions(charge_acc, 'chargeback', (perf_tests['ui']['page_check']
         ['intelligence']['chargeback']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_intelligence_chargeback.csv')

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 from cfme.cloud.provider import get_all_providers as get_all_cloud_provs
 from cfme.fixtures import pytest_selenium as sel
-from utils.conf import ui_bench_tests
+from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
 from utils.pagestats import navigate_accordions
 from utils.pagestats import navigate_quadicons
@@ -41,8 +41,8 @@ def test_perf_ui_cloud_providers(ui_worker_pid, ssh_client, soft_assert):
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'providers' in ui_bench_tests['page_check']['cloud']:
-        nav_limit = ui_bench_tests['page_check']['cloud']['providers']
+    if 'providers' in perf_tests['ui']['page_check']['cloud']:
+        nav_limit = perf_tests['ui']['page_check']['cloud']['providers']
 
     pages.extend(navigate_quadicons(get_all_cloud_provs(), 'cloud_prov', 'clouds_providers',
         nav_limit, ui_worker_pid, prod_tail, soft_assert))
@@ -57,8 +57,8 @@ def test_perf_ui_cloud_availability_zones(ui_worker_pid, ssh_client, soft_assert
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'availability_zones' in ui_bench_tests['page_check']['cloud']:
-        nav_limit = ui_bench_tests['page_check']['cloud']['availability_zones']
+    if 'availability_zones' in perf_tests['ui']['page_check']['cloud']:
+        nav_limit = perf_tests['ui']['page_check']['cloud']['availability_zones']
 
     from cfme.cloud.availability_zone import list_page as lst_pg
 
@@ -75,8 +75,8 @@ def test_perf_ui_cloud_tenants(ui_worker_pid, ssh_client, soft_assert):
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'tenants' in ui_bench_tests['page_check']['cloud']:
-        nav_limit = ui_bench_tests['page_check']['cloud']['tenants']
+    if 'tenants' in perf_tests['ui']['page_check']['cloud']:
+        nav_limit = perf_tests['ui']['page_check']['cloud']['tenants']
 
     from cfme.cloud.tenant import list_page as lst_pg
 
@@ -93,8 +93,8 @@ def test_perf_ui_cloud_flavors(ui_worker_pid, ssh_client, soft_assert):
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'flavors' in ui_bench_tests['page_check']['cloud']:
-        nav_limit = ui_bench_tests['page_check']['cloud']['flavors']
+    if 'flavors' in perf_tests['ui']['page_check']['cloud']:
+        nav_limit = perf_tests['ui']['page_check']['cloud']['flavors']
 
     from cfme.cloud.flavor import list_page as lst_pg
 
@@ -111,8 +111,8 @@ def test_perf_ui_cloud_security_groups(ui_worker_pid, ssh_client, soft_assert):
     pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
 
     nav_limit = 0
-    if 'security_groups' in ui_bench_tests['page_check']['cloud']:
-        nav_limit = ui_bench_tests['page_check']['cloud']['security_groups']
+    if 'security_groups' in perf_tests['ui']['page_check']['cloud']:
+        nav_limit = perf_tests['ui']['page_check']['cloud']['security_groups']
 
     from cfme.cloud.security_group import list_page as lst_pg
 
@@ -136,7 +136,7 @@ def test_perf_ui_cloud_vm_explorer(ui_worker_pid, ssh_client, soft_assert):
     cloud_acc = OrderedDict((('Instances by Provider', 'instances_by_prov'),
         ('Images by Provider', 'images_by_prov'), ('Instances', 'instances'), ('Images', 'images')))
 
-    pages.extend(navigate_accordions(cloud_acc, 'clouds_instances', (ui_bench_tests['page_check']
+    pages.extend(navigate_accordions(cloud_acc, 'clouds_instances', (perf_tests['ui']['page_check']
         ['cloud']['vm_explorer']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_cloud_vm_explorer.csv')

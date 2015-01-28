@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from cfme.fixtures import pytest_selenium as sel
-from utils.conf import ui_bench_tests
+from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
 from utils.pagestats import navigate_accordions
 from utils.pagestats import pages_to_csv
@@ -30,7 +30,7 @@ def test_perf_ui_automate_explorer(ui_worker_pid, ssh_client, soft_assert):
     services_acc = OrderedDict((('Datastore', 'datastore'), ))
 
     pages.extend(navigate_accordions(services_acc, 'automate_explorer',
-        ui_bench_tests['page_check']['automate']['explorer'], ui_worker_pid, prod_tail,
+        perf_tests['ui']['page_check']['automate']['explorer'], ui_worker_pid, prod_tail,
         soft_assert))
 
     pages_to_csv(pages, 'perf_ui_automate_explorer.csv')
@@ -50,7 +50,7 @@ def test_perf_ui_automate_customization(ui_worker_pid, ssh_client, soft_assert):
         ('Import/Export', 'import_export')))
 
     pages.extend(navigate_accordions(services_acc, 'automate_customization',
-        ui_bench_tests['page_check']['automate']['customization'], ui_worker_pid, prod_tail,
+        perf_tests['ui']['page_check']['automate']['customization'], ui_worker_pid, prod_tail,
         soft_assert))
 
     pages_to_csv(pages, 'perf_ui_automate_customization.csv')

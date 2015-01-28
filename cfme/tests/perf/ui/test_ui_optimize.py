@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 from cfme.fixtures import pytest_selenium as sel
-from utils.conf import ui_bench_tests
+from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
 from utils.pagestats import navigate_accordions
 from utils.pagestats import pages_to_csv
@@ -30,7 +30,7 @@ def test_perf_ui_optimize_utilization(ui_worker_pid, ssh_client, soft_assert):
 
     services_acc = OrderedDict((('Utilization', 'utilization'), ))
 
-    pages.extend(navigate_accordions(services_acc, 'utilization', (ui_bench_tests['page_check']
+    pages.extend(navigate_accordions(services_acc, 'utilization', (perf_tests['ui']['page_check']
         ['optimize']['utilization']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_optimize_utilization.csv')
@@ -47,7 +47,7 @@ def test_perf_ui_optimize_bottlenecks(ui_worker_pid, ssh_client, soft_assert):
 
     services_acc = OrderedDict((('Bottlenecks', 'bottlenecks'), ))
 
-    pages.extend(navigate_accordions(services_acc, 'bottlenecks', (ui_bench_tests['page_check']
+    pages.extend(navigate_accordions(services_acc, 'bottlenecks', (perf_tests['ui']['page_check']
         ['optimize']['bottlenecks']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_optimize_bottlenecks.csv')

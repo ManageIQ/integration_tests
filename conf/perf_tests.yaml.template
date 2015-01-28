@@ -1,2 +1,87 @@
 test_queue:
     infra_time: 28800
+ui:
+    threshold:
+        transaction: 60000
+        page_render: 5000
+        query_time: 1000
+        query_count: 1000
+        uncached_count: 1000
+    page_check:
+        intelligence:
+            reports:
+                saved_reports: 20
+                reports: 20
+                schedules: 10
+                dashboards: 10
+                dashboard_widgets: 10
+                edit_report_menus: 10
+                import_export: 10
+            chargeback:
+                reports: 10
+                rates: 10
+                assignments: 10
+        services:
+            my_services:
+                services: 10
+            catalogs:
+                catalog_items: 10
+                catalogs: 10
+                service_catalogs: 10
+            workloads:
+                vms_instances: 10
+                templates_images: 10
+        cloud:
+            providers: 20
+            availability_zones: 10
+            tenants: 10
+            flavors: 10
+            security_groups: 20
+            vm_explorer:
+                instances_by_prov: 50
+                images_by_prov: 20
+                instances: 20
+                images: 20
+        infrastructure:
+            providers: 20
+            clusters: 20
+            hosts: 20
+            vm_explorer:
+                vms_and_templates: 50
+                vms: 50
+                templates: 50
+            resource_pools: 20
+            datastores: 20
+            pxe:
+                pxe_servers: 10
+                customization_templates: 10
+                system_image_types: 10
+                iso_datastores: 10
+        control:
+            explorer:
+                policy_profiles: 10
+                policies: 10
+                events: 10
+                conditions: 10
+                actions: 10
+                alert_profiles: 10
+                alerts: 10
+        automate:
+            explorer:
+                datastore: 20
+            customization:
+                provisioning_dialogs: 10
+                service_dialogs: 10
+                buttons: 10
+                import_export: 10
+        optimize:
+            utilization:
+                utilization: 10
+            bottlenecks:
+                bottlenecks: 10
+        configure:
+           configuration:
+               settings: 10
+               access_control: 10
+               diagnostics: 10
+               database: 10
