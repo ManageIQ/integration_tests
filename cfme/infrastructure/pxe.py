@@ -281,7 +281,7 @@ class PXEServer(Updateable, Pretty):
             pxe_tree(self.name, 'PXE Images', image_name)
             # GH1070
             itype = version.pick({
-                version.LOWEST: lambda: InfoBlock('form').text('Basic Information', 'Type'),
+                version.LOWEST: lambda: InfoBlock('Basic Information', 'Type'),
                 '5.3': lambda: sel.text(sel.element(
                     '//td[contains(text(),"Type")]/../td[2]'))
             })

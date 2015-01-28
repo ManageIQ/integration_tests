@@ -4,8 +4,8 @@ from functools import partial
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import Timer
-from cfme.web_ui import (EmailSelectForm, Form, CheckboxTable, InfoBlock, Select,
-    ShowingInputs, accordion, fill, flash, toolbar, form_buttons)
+from cfme.web_ui import (EmailSelectForm, Form, CheckboxTable, Select, ShowingInputs, accordion,
+    fill, flash, toolbar, form_buttons)
 from cfme.web_ui.menu import nav
 from utils.db import cfmedb
 from utils.update import Updateable
@@ -88,7 +88,6 @@ class Schedule(Updateable, Pretty):
         "Monthly": "run_months"
     }
 
-    info_block = InfoBlock("detail")
     pretty_attrs = ['name', 'filter']
 
     def __init__(
