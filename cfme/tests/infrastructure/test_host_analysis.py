@@ -8,6 +8,7 @@ from cfme.infrastructure import host
 from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as tb
 from utils import conf
 from utils import testgen
+from utils.blockers import BZ
 from utils.wait import wait_for
 
 
@@ -45,14 +46,13 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-@pytest.mark.bugzilla(
-    1156028, 1055657,
-    unskip={
-        1156028:
-        lambda provider_type, provider_ver: provider_type != 'rhevm' or provider_ver != '3.3',
-        1055657:
-        lambda provider_type, provider_ver: provider_type != 'virtualcenter' or provider_ver >= '5'
-    }
+@pytest.mark.meta(
+    blockers=[
+        BZ(1156028, unblock=lambda provider_type, provider_ver: (
+            provider_type != 'rhevm' or provider_ver != '3.3')),
+        BZ(1055657, unblock=lambda provider_type, provider_ver: (
+            provider_type != 'virtualcenter' or provider_ver >= '5'))
+    ]
 )
 def test_run_host_analysis(request, setup_provider, provider_key, provider_type, provider_ver,
                            host_type, host_name, register_event, soft_assert):

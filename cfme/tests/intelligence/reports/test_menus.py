@@ -26,7 +26,7 @@ def on_finish_default(group):
     menus.reset_to_default(group)
 
 
-@pytest.mark.bugzilla(1101250, 1132118)
+@pytest.mark.meta(blockers=[1101250, 1132118])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_top_level(group, on_finish_default):
     # Shuffle the order
@@ -41,7 +41,7 @@ def test_shuffle_top_level(group, on_finish_default):
     assert checked == order, "The order differs!"
 
 
-@pytest.mark.bugzilla(1101250, 1132118)
+@pytest.mark.meta(blockers=[1101250, 1132118])
 @pytest.mark.parametrize("group", GROUPS)
 def test_shuffle_first_level(group, on_finish_default):
     # Find a folder

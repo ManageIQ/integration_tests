@@ -85,7 +85,7 @@ def count_events(vm_name, nav_step):
     return len(events)
 
 
-@pytest.mark.bugzilla(1139865)
+@pytest.mark.meta(blockers=[1139865])
 def test_provider_event(setup_provider, provider_crud, gen_events, test_instance):
     """ Tests provider events on timelines
 
@@ -99,7 +99,7 @@ def test_provider_event(setup_provider, provider_crud, gen_events, test_instance
              message="events to appear")
 
 
-@pytest.mark.bugzilla(1139865)
+@pytest.mark.meta(blockers=[1139865])
 def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
     """ Tests availablility zone events on timelines
 
@@ -114,7 +114,7 @@ def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
              message="events to appear")
 
 
-@pytest.mark.bugzilla(1139865)
+@pytest.mark.meta(blockers=[1139865])
 def test_vm_event(setup_provider, provider_crud, gen_events, test_instance):
     """ Tests vm events on timelines
 

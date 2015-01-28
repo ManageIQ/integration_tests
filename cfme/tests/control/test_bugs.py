@@ -12,7 +12,7 @@ def setup_a_provider():
     _setup_a_provider("infra")
 
 
-@pytest.mark.bugzilla(1155284)
+@pytest.mark.meta(blockers=[1155284])
 @pytest.mark.ignore_stream("5.2")
 def test_scope_windows_registry_stuck(request, setup_a_provider):
     """If you provide Scope checking windows registry, it messes CFME up. Recoverable."""

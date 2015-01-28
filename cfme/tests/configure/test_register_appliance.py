@@ -7,6 +7,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.configure import red_hat_updates
 from cfme.web_ui import InfoBlock
 from utils import conf
+from utils.blockers import BZ
 from utils.ssh import SSHClient
 from utils.testgen import parametrize
 from utils.wait import wait_for
@@ -89,11 +90,11 @@ def is_registration_complete(used_repo_or_channel):
 
 
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.bugzilla(
-    1102724, 1132942,
-    unskip={
-        1102724: lambda proxy_url: proxy_url is None
-    }
+@pytest.mark.meta(
+    blockers=[
+        1132942,
+        BZ(1102724, unblock=lambda proxy_url: proxy_url is None),
+    ]
 )
 def test_appliance_registration(request, unset_org_id,
                                 reg_method, reg_data, proxy_url, proxy_creds):

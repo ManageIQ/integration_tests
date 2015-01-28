@@ -89,7 +89,7 @@ ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.bugzilla(1152737)
+@pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", range(1, 5))
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, disks,

@@ -42,7 +42,7 @@ def test_links(guides, soft_assert):
         )
 
 
-@pytest.mark.bugzilla(1026943)
+@pytest.mark.meta(blockers=[1026943])
 def test_contents(guides, soft_assert):
     """Test contents of each document."""
     pytest.sel.force_navigate("about")
@@ -62,7 +62,7 @@ def test_contents(guides, soft_assert):
             title_text, pdf_title))
 
 
-@pytest.mark.bugzilla(1026939)
+@pytest.mark.meta(blockers=[1026939])
 def test_info(guides, soft_assert):
     pytest.sel.force_navigate("about")
     for link in guides:
@@ -85,7 +85,7 @@ def test_info(guides, soft_assert):
         )
 
 
-@pytest.mark.bugzilla(1026946)
+@pytest.mark.meta(blockers=[1026946])
 def test_all_docs_present(guides, docs_info):
     pytest.sel.force_navigate("about")
     docs_list = list(docs_info)

@@ -43,6 +43,9 @@ correct action choice. First, all the actions are filtered by present keys in me
 after this selection, only the action with the most matched keywords is called. Bear this
 in your mind. If this is not enough in the future, it can be extended if you wish.
 
+It has a command-line option that allows you to disable certain plugins. Just specify
+``--disablemetaplugins a,b,c`` where a, b and c are the plugins that should be disabled
+
 """
 from collections import namedtuple
 from types import FunctionType
@@ -64,6 +67,15 @@ class metadict(dict):
 
 def pytest_configure(config):
     config.addinivalue_line("markers", __doc__.splitlines()[0])
+
+
+def pytest_addoption(parser):
+    group = parser.getgroup('Meta plugins')
+    group.addoption('--disablemetaplugins',
+                    action='store',
+                    default="",
+                    dest='disable_metaplugins',
+                    help='Comma-separated list of metaplugins to disable')
 
 
 @pytest.mark.tryfirst
@@ -127,7 +139,14 @@ def run_plugins(item, when):
         if plug.name not in by_names:
             by_names[plug.name] = []
         by_names[plug.name].append(plug)
+    disabled_plugins = item.config.getvalue("disable_metaplugins") or ""
+    if not disabled_plugins:
+        disabled_plugins = []
+    else:
+        disabled_plugins = [name.strip() for name in disabled_plugins.split(",")]
     for plugin_name, plugin_objects in by_names.iteritems():
+        if plugin_name in disabled_plugins:
+            logger.info("Ignoring plugin {} due to commandline option".format(plugin_name))
         plugin_objects.sort(key=lambda p: len(p.metas), reverse=True)
         plug = plugin_objects[0]
         env = {"item": item}

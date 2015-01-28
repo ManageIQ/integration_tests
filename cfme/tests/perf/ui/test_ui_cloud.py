@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 from cfme.cloud.provider import get_all_providers as get_all_cloud_provs
 from cfme.fixtures import pytest_selenium as sel
+from utils.blockers import BZ
 from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
 from utils.pagestats import navigate_accordions
@@ -124,7 +125,7 @@ def test_perf_ui_cloud_security_groups(ui_worker_pid, ssh_client, soft_assert):
 
 
 # Currently unskip 1170778 since a large environment is a requirement for this bug
-@pytest.mark.bugzilla(1170778, unskip={1170778: True})
+@pytest.mark.meta(blockers=[BZ(1170778, unblock=True)])
 @pytest.mark.perf_ui_cloud
 @pytest.mark.usefixtures("setup_cloud_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_cloud_vm_explorer(ui_worker_pid, ssh_client, soft_assert):

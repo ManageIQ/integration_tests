@@ -26,7 +26,7 @@ def test_catalog_duplicate_name():
     cat.delete()
 
 
-@pytest.mark.bugzilla(1130301)
+@pytest.mark.meta(blockers=[1130301])
 def test_permissions_catalog_add(setup_cloud_providers):
     """ Tests that a catalog can be added only with the right permissions"""
     cat = Catalog(name=rand.generate_random_string(),

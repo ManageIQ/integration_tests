@@ -33,7 +33,7 @@ def get_relevant_rows(table):
     return result
 
 
-@pytest.mark.bugzilla(1125230)
+@pytest.mark.meta(blocks=[1125230])
 def test_paginator(some_dialogs, soft_assert):
     """ Ths test currently fails as this thing is completely broken
 

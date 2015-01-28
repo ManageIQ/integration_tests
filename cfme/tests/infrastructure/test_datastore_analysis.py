@@ -5,6 +5,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import datastore, host
 from cfme.web_ui import flash, tabstrip as tabs, toolbar as tb, Quadicon
 from utils import conf, testgen, version
+from utils.blockers import BZ
 from utils.wait import wait_for
 import pytest
 
@@ -60,12 +61,11 @@ def get_host_data_by_name(provider_key, host_name):
 
 
 # TODO add support for events
-@pytest.mark.bugzilla(
-    1091033, 1180467,
-    unskip={
-        1091033: lambda datastore_type: datastore_type != 'iscsi',
-        1180467: lambda provider_type: provider_type != 'rhevm'
-    }
+@pytest.mark.meta(
+    blockers=[
+        BZ(1091033, unblock=lambda datastore_type: datastore_type != 'iscsi'),
+        BZ(1180467, unblock=lambda provider_type: provider_type != 'rhevm'),
+    ]
 )
 def test_run_datastore_analysis(request, setup_provider, provider_key, provider_type,
                                 datastore_type, datastore_name):

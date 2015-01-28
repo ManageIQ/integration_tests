@@ -117,7 +117,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
-@pytest.mark.bugzilla(1144207)
+@pytest.mark.meta(blockers=[1144207])
 def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_item, request):
     """Tests order catalog item
 
@@ -138,7 +138,7 @@ def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_
     assert row.last_message.text == 'Request complete'
 
 
-@pytest.mark.bugzilla(1144207)
+@pytest.mark.meta(blockers=[1144207])
 def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalog_item, request):
     """Tests ordering a catalog bundle
 

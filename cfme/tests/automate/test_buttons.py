@@ -39,7 +39,7 @@ def test_button_group_crud(request):
     buttongroup.delete()
 
 
-@pytest.mark.bugzilla(1143019)
+@pytest.mark.meta(blockers=[1143019])
 def test_button_crud(dialog, request):
     buttongroup = ButtonGroup(
         text=generate_random_string(),

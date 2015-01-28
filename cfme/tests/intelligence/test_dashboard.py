@@ -5,6 +5,7 @@ from cfme import dashboard
 from cfme.fixtures import pytest_selenium as sel
 from cfme.dashboard import Widget
 from cfme.intelligence.reports.dashboards import Dashboard
+from utils.blockers import BZ
 from utils.randomness import generate_random_string, pick
 
 
@@ -35,11 +36,10 @@ def test_widgets_operation(request):
         widget.content
 
 
-@pytest.mark.bugzilla(
-    1110171,
-    unskip={
-        1110171: lambda number_dashboards: number_dashboards != 1,  # Affects only when 1 dash
-    },
+@pytest.mark.meta(
+    blockers=[
+        BZ(1110171, unblock=lambda number_dashboards: number_dashboards != 1)
+    ]
 )
 @pytest.mark.parametrize("number_dashboards", range(1, 4))
 def test_custom_dashboards(request, soft_assert, number_dashboards):

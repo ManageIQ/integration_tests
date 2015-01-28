@@ -28,6 +28,7 @@ _marks_to_make = [
     'uses_pxe',
     'uses_soap',
     'uses_ssh',
+    'uses_blockers',
 ]
 
 #: List of fixtures that, when used, indicate an appliance is being tested

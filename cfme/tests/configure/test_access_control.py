@@ -11,6 +11,7 @@ from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
+from utils.blockers import BZ
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
@@ -22,7 +23,7 @@ usergrp = ac.Group(description='EvmGroup-user')
 def setup_first_provider():
     setup_a_provider(validate=True, check_existing=True)
 
-# due to pytest.mark.bugzilla(1035399), non admin users can't login
+# due to pytest.mark.meta(blockers=[1035399]), non admin users can't login
 # with no providers added
 pytestmark = [pytest.mark.usefixtures("setup_first_provider")]
 
@@ -61,7 +62,7 @@ def test_user_crud():
     user.delete()
 
 
-# @pytest.mark.bugzilla(1035399) # work around instead of skip
+# @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 def test_user_login():
     user = new_user()
     user.create()
@@ -110,8 +111,11 @@ def test_user_password_required_error_validation():
         user.create()
 
 
-@pytest.mark.bugzilla(
-    1118040, unskip={1118040: lambda appliance_version: appliance_version < "5.3"})
+@pytest.mark.meta(
+    blockers=[
+        BZ(1118040, unblock=lambda appliance_version: appliance_version < "5.3")
+    ]
+)
 def test_user_group_error_validation():
     user = ac.User(
         name='user' + random.generate_random_string(),
@@ -258,7 +262,7 @@ cat_name = "Configure"
           'control explorer': _go_to('control_explorer'),
           'automate explorer': _go_to('automate_explorer')},
       {}]])
-# @pytest.mark.bugzilla(1035399) # work around instead of skip
+# @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
 def test_permissions(role, allowed_actions, disallowed_actions):
     # create a user and role
     role = role()  # call function to get role
@@ -305,7 +309,7 @@ def single_task_permission_test(product_features, actions):
                      actions)
 
 
-@pytest.mark.bugzilla(1136112)
+@pytest.mark.meta(blockers=[1136112])
 def test_permissions_role_crud():
     single_task_permission_test([[cat_name, 'Configuration'],
                                  ['Services', 'Catalogs Explorer']],
@@ -355,7 +359,7 @@ def test_permissions_vm_provisioning():
 
 
 # commenting this out, there is validation around the 'no group selected'and we have a test for it
-# @pytest.mark.bugzilla(1154112)
+# @pytest.mark.meta(blockers=[1154112])
 # def test_user_add_button_should_be_disabled_without_group(soft_assert):
 #     from cfme.web_ui import fill, form_buttons
 #     sel.force_navigate('cfg_accesscontrol_user_add')

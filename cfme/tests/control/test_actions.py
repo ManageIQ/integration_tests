@@ -17,6 +17,7 @@ from cfme.infrastructure.provider import RHEVMProvider
 from datetime import datetime
 from functools import partial
 from utils import mgmt_system, testgen
+from utils.blockers import BZ
 from utils.db import cfmedb
 from utils.log import logger
 from utils.miq_soap import MiqVM
@@ -74,9 +75,11 @@ def pytest_generate_tests(metafunc):
 
 pytestmark = [
     pytest.mark.long_running,
-    pytest.mark.bugzilla(1149128, unskip={
-        1149128: lambda provider_mgmt: not isinstance(provider_mgmt, mgmt_system.SCVMMSystem)
-    })
+    pytest.mark.meta(blockers=[
+        BZ(
+            1149128,
+            unblock=lambda provider_mgmt: not isinstance(provider_mgmt, mgmt_system.SCVMMSystem))
+    ])
 ]
 
 
@@ -313,7 +316,7 @@ def test_action_suspend_virtual_machine_after_starting(request,
         pytest.fail("CFME did not suspend the VM %s" % vm.name)
 
 
-@pytest.mark.bugzilla(1142875)
+@pytest.mark.meta(blockers=[1142875])
 def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off):
     """ This test tests action 'Prevent current event from proceeding'
 

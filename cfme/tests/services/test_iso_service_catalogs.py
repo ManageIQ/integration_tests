@@ -125,7 +125,7 @@ def catalog_item(setup_provider, provider_crud, provider_type, provisioning, vm_
     yield catalog_item
 
 
-@pytest.mark.bugzilla(1160486)
+@pytest.mark.meta(blockers=[1160486])
 @pytest.mark.usefixtures('setup_iso_datastore')
 def test_rhev_iso_servicecatalog(setup_provider, provider_key, provider_mgmt,
                                  catalog_item, request):
