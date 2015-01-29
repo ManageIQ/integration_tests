@@ -190,8 +190,8 @@ def dont_expire_appliance(request, appliance_id):
     except ObjectDoesNotExist:
         messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
         return go_back_or_home(request)
-    if appliance.owner is None or appliance.owner != request.user:
-        messages.error(request, 'This appliance belongs either to some other user or nobody.')
+    if not request.user.is_superuser:
+        messages.error(request, 'Disabling expiration time is allowed only for superusers.')
         return go_back_or_home(request)
     with transaction.atomic():
         appliance.leased_until = None
