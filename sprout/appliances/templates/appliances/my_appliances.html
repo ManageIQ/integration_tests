@@ -134,6 +134,12 @@
           </select>
         </div>
         <div class="form-group">
+          <label for="date">Select specific provider (if you know what you do):</label>
+          <select class="form-control" id="provider" name="provider">
+            <option value="any">Any provider (recommended option!)</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label for="count">Number of appliances wanted:</label>
           <input type="number" class="form-control" id="count" name="count" min="1" value="1">
         </div>
@@ -162,6 +168,17 @@ $(document).ready(function() {
          }).done(function(data){
             $('select#date').html(data);
             $("select#date").trigger("change");
+         });
+    });
+    $('select#date').change(function(){
+        $.ajax({
+                type: "POST",
+                url: "{% url 'appliances.views.providers_for_date_group_and_version' %}",
+                data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val()},
+                dataType: 'html'
+         }).done(function(data){
+            $('select#provider').html(data);
+            $("select#provider").trigger("change");
          });
     });
 });

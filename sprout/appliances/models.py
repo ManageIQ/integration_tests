@@ -458,12 +458,16 @@ class Appliance(MetadataMixin):
 class AppliancePool(MetadataMixin):
     total_count = models.IntegerField(help_text="How many appliances should be in this pool.")
     group = models.ForeignKey(Group, help_text="Group which is used to provision appliances.")
+    provider = models.ForeignKey(
+        Provider, help_text="If requested, appliances can be on single provider.", null=True,
+        blank=True)
     version = models.CharField(max_length=16, null=True, help_text="Appliance version")
     date = models.DateField(null=True, help_text="Appliance date.")
     owner = models.ForeignKey(User, help_text="User who owns the appliance pool")
 
     @classmethod
-    def create(cls, owner, group, version=None, date=None, num_appliances=1, time_leased=60):
+    def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
+            time_leased=60):
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
@@ -482,7 +486,9 @@ class AppliancePool(MetadataMixin):
             group = Group.objects.get(id=group)
         if not (version or date):
             raise Exception("Could not find possible combination of group, date and version!")
-        req = cls(group=group, version=version, date=date, total_count=num_appliances, owner=owner)
+        req = cls(
+            group=group, version=version, date=date, total_count=num_appliances, owner=owner,
+            provider=provider)
         if not req.possible_templates:
             raise Exception("No possible templates! (query: {}".format(str(req.__dict__)))
         req.save()
@@ -505,6 +511,8 @@ class AppliancePool(MetadataMixin):
             filter_params["version"] = self.version
         if self.date is not None:
             filter_params["date"] = self.date
+        if self.provider is not None:
+            filter_params["provider"] = self.provider
         return Template.objects.filter(
             template_group=self.group, ready=True, exists=True, usable=True, **filter_params).all()
 

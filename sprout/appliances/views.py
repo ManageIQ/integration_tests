@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from dateutil import parser
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -57,14 +58,7 @@ def versions_for_group(request):
         except ObjectDoesNotExist:
             versions = []
         else:
-            versions_only = Template.get_versions(template_group=group, ready=True, usable=True)
-            versions = []
-            for version in versions_only:
-                providers = []
-                for provider in Template.objects.filter(
-                        version=version, usable=True, ready=True).values("provider").distinct():
-                    providers.append(provider.values()[0])
-                versions.append((version, ", ".join(providers)))
+            versions = Template.get_versions(template_group=group, ready=True, usable=True)
 
     return render(request, 'appliances/_versions.html', locals())
 
@@ -85,17 +79,54 @@ def date_for_group_and_version(request):
                 "ready": True,
                 "exists": True
             }
-            if version != "latest":
+            if version == "latest":
+                try:
+                    versions = Template.get_versions(**filters)
+                    filters["version"] = versions[0]
+                except IndexError:
+                    pass  # No such thing as version for this template group
+            else:
                 filters["version"] = version
-            dates_only = Template.get_dates(**filters)
-            dates = []
-            for date in dates_only:
-                filters["date"] = date
-                providers = []
-                for provider in Template.objects.filter(**filters).values("provider").distinct():
-                    providers.append(provider.values()[0])
-                dates.append((date, ", ".join(providers)))
+            dates = Template.get_dates(**filters)
     return render(request, 'appliances/_dates.html', locals())
+
+
+def providers_for_date_group_and_version(request):
+    group_id = request.POST.get("stream")
+    if group_id == "<None>":
+        providers = []
+    else:
+        try:
+            group = Group.objects.get(id=group_id)
+        except ObjectDoesNotExist:
+            providers = []
+        else:
+            version = request.POST.get("version")
+            filters = {
+                "template_group": group,
+                "ready": True,
+                "exists": True
+            }
+            if version == "latest":
+                try:
+                    versions = Template.get_versions(**filters)
+                    filters["version"] = versions[0]
+                except IndexError:
+                    pass  # No such thing as version for this template group
+            else:
+                filters["version"] = version
+            date = request.POST.get("date")
+            if date == "latest":
+                try:
+                    dates = Template.get_dates(**filters)
+                    filters["date"] = dates[0]
+                except IndexError:
+                    pass  # No such thing as date for this template group
+            else:
+                filters["date"] = parser.parse(date)
+            providers = Template.objects.filter(**filters).values("provider").distinct()
+            providers = sorted([p.values()[0] for p in providers])
+    return render(request, 'appliances/_providers.html', locals())
 
 
 def my_appliances(request):
@@ -247,9 +278,13 @@ def request_pool(request):
         date = request.POST["date"]
         if date == "latest":
             date = None
+        provider = request.POST["provider"]
+        if provider == "any":
+            provider = None
         count = int(request.POST["count"])
         lease_time = 60
-        pool_id = AppliancePool.create(request.user, group, version, date, count, lease_time).id
+        pool_id = AppliancePool.create(
+            request.user, group, version, date, provider, count, lease_time).id
         messages.success(request, "Pool requested - id {}".format(pool_id))
     except Exception as e:
         messages.error(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))
