@@ -484,6 +484,8 @@ class AppliancePool(MetadataMixin):
                 date = dates[0]
         if isinstance(group, basestring):
             group = Group.objects.get(id=group)
+        if isinstance(provider, basestring):
+            provider = Provider.objects.get(id=provider)
         if not (version or date):
             raise Exception("Could not find possible combination of group, date and version!")
         req = cls(
