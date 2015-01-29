@@ -96,7 +96,7 @@ def parse_template(template_name):
 
 
 def mark_provider_template(api, provider, template, tested=None, usable=None,
-    diagnosis='', build_number=None):
+        diagnosis='', build_number=None):
     """Mark a provider template as tested and/or usable
 
     Args:
