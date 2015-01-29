@@ -70,7 +70,7 @@
                                 <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
                                 <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
                                 <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
-                                {% if appliance.leased_until %}
+                                {% if appliance.leased_until and request.user.is_superuser %}
                                     <a href="{% url 'appliances.views.dont_expire_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
                                 {% endif %}
                                 </div>
@@ -134,6 +134,12 @@
           </select>
         </div>
         <div class="form-group">
+          <label for="date">Select specific provider (if you know what you do):</label>
+          <select class="form-control" id="provider" name="provider">
+            <option value="any">Any provider (recommended option!)</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label for="count">Number of appliances wanted:</label>
           <input type="number" class="form-control" id="count" name="count" min="1" value="1">
         </div>
@@ -162,6 +168,17 @@ $(document).ready(function() {
          }).done(function(data){
             $('select#date').html(data);
             $("select#date").trigger("change");
+         });
+    });
+    $('select#date').change(function(){
+        $.ajax({
+                type: "POST",
+                url: "{% url 'appliances.views.providers_for_date_group_and_version' %}",
+                data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val()},
+                dataType: 'html'
+         }).done(function(data){
+            $('select#provider').html(data);
+            $("select#provider").trigger("change");
          });
     });
 });
