@@ -123,11 +123,11 @@ def apply_if_not_none(o, meth, *args, **kwargs):
 
 @jsonapi.authenticated_method
 def request_appliances(
-        user, group, count=1, lease_time=60, version=None, date=None):
+        user, group, count=1, lease_time=60, version=None, date=None, provider=None):
     """Request a number of appliances."""
     if date:
         date = datetime.strptime(date, "%y%m%d")
-    return AppliancePool.create(user, group, version, date, count, lease_time).id
+    return AppliancePool.create(user, group, version, date, provider, count, lease_time).id
 
 
 @jsonapi.authenticated_method
