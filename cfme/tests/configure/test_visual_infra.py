@@ -81,7 +81,7 @@ def set_template_quad():
     visual.template_quad = True
 
 
-@pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
+@pytest.mark.parametrize('page', cfme_data.get('grid_pages').get('infra'), scope="module")
 def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     """ Tests grid items per page
 
@@ -96,7 +96,7 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
         assert int(paginator.rec_end()) == int(limit), "Gridview Failed for page {}!".format(page)
 
 
-@pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
+@pytest.mark.parametrize('page', cfme_data.get('grid_pages').get('infra'), scope="module")
 def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
     """ Tests tile items per page
 
@@ -111,7 +111,7 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
         assert int(paginator.rec_end()) == int(limit), "Tileview Failed for page {}!".format(page)
 
 
-@pytest.mark.parametrize('page', cfme_data.get('grid_pages'), scope="module")
+@pytest.mark.parametrize('page', cfme_data.get('grid_pages').get('infra'), scope="module")
 def test_list_page_per_item(request, setup_a_provider, page, set_list):
     """ Tests list items per page
 
@@ -126,7 +126,7 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
         assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)
 
 
-@pytest.mark.parametrize('start_page', cfme_data.get('landing_pages'), scope="module")
+@pytest.mark.parametrize('start_page', cfme_data.get('landing_pages').get('infra'), scope="module")
 def test_start_page(request, setup_a_provider, start_page):
     """ Tests start page
 
