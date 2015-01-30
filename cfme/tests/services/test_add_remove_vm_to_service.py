@@ -188,6 +188,7 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     return MyService(catalog_item.name, vm_name)
 
 
+@pytest.mark.bugzilla(1144207)
 def test_add_vm_to_service(request, myservice, create_method):
     """Tests adding vm to service
 
@@ -199,8 +200,8 @@ def test_add_vm_to_service(request, myservice, create_method):
         instance="Request",
         message="create",
         request=create_method.name,
-        attribute=["VM and Instance", "vmtest"],  # Random selection, does not matter
+        attribute=["VM and Instance", "auto_test_services"],  # Random selection, does not matter
         execute_methods=True
     )
-    myservice.check_vm_add("vmtest")
+    myservice.check_vm_add("auto_test_services")
     request.addfinalizer(lambda: myservice.delete(item_name))
