@@ -47,7 +47,9 @@ nav.add_branch(
     'automate_explorer',
     {
         'automate_explorer_tree_path':
-        [lambda context: context.tree_item.navigate_tree(),
+        [lambda context:
+            context.tree_item.navigate_tree() if context.tree_item is not None
+            else tree.click_path('Datastore'),
          {
              'automate_explorer_table_select':
              [lambda ctx: table_select(ctx['table_item'].name),
