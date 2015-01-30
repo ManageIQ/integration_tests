@@ -31,7 +31,7 @@ miqmsg_deq = re.compile(r'Dequeued\sin:\s\[([0-9\.]*)\]\sseconds')
 miqmsg_del = re.compile(r'Delivered\sin\s\[([0-9\.]*)\]\sseconds')
 
 
-def evm_to_messages(evmlogfile):
+def evm_to_messages(evmlogfile, filters):
     test_start = ''
     test_end = ''
     line_count = 0
@@ -56,12 +56,6 @@ def evm_to_messages(evmlogfile):
             if (miqmsg_result.group(1) == 'MiqQueue.put'):
 
                 msg_cmd = get_msg_cmd(evm_log_line)
-                if msg_cmd not in msg_cmds:
-                    msg_cmds[msg_cmd] = {}
-                    msg_cmds[msg_cmd]['total'] = []
-                    msg_cmds[msg_cmd]['queue'] = []
-                    msg_cmds[msg_cmd]['execute'] = []
-
                 msg_id = get_msg_id(evm_log_line)
                 if msg_id:
                     ts, pid = get_msg_timestamp_pid(evm_log_line)
@@ -103,12 +97,6 @@ def evm_to_messages(evmlogfile):
                         messages[msg_id].del_time = get_msg_del(evm_log_line)
                         messages[msg_id].total_time = messages[msg_id].deq_time + \
                             messages[msg_id].del_time
-                        msg_cmds[messages[msg_id].msg_cmd]['total'].append(
-                            messages[msg_id].total_time)
-                        msg_cmds[messages[msg_id].msg_cmd]['queue'].append(
-                            messages[msg_id].deq_time)
-                        msg_cmds[messages[msg_id].msg_cmd]['execute'].append(
-                            messages[msg_id].del_time)
                     else:
                         logger.error('Message ID not in dictionary: {}'.format(msg_id))
                 else:
@@ -120,6 +108,28 @@ def evm_to_messages(evmlogfile):
             logger.info('Count {} : Parsed 20000 lines in {}'.format(line_count, timediff))
 
         evm_log_line = evmlogfile.readline()
+
+    # I tried to avoid two loops but this reduced the complexity of filtering on messages.
+    # By filtering over messages, we can better display what is occuring under the covers, as a
+    # daily rollup is picked up off the queue different than a hourly rollup, etc
+    for msg in messages:
+        msg_args = messages[msg].msg_args
+        # Determine if the pattern matches and append to the command if it does
+        for p_filter in filters:
+            results = filters[p_filter].search(msg_args.strip())
+            if results:
+                messages[msg].msg_cmd = '{}{}'.format(messages[msg].msg_cmd, p_filter)
+                break
+        msg_cmd = messages[msg].msg_cmd
+        if msg_cmd not in msg_cmds:
+            msg_cmds[msg_cmd] = {}
+            msg_cmds[msg_cmd]['total'] = []
+            msg_cmds[msg_cmd]['queue'] = []
+            msg_cmds[msg_cmd]['execute'] = []
+        if messages[msg].total_time != 0:
+            msg_cmds[msg_cmd]['total'].append(messages[msg].total_time)
+            msg_cmds[msg_cmd]['queue'].append(messages[msg].deq_time)
+            msg_cmds[msg_cmd]['execute'].append(messages[msg].del_time)
 
     return messages, msg_cmds, test_start, test_end, line_count
 
@@ -328,18 +338,12 @@ def messages_to_hourly_buckets(messages, test_start, test_end):
     return hr_bkt
 
 
-def messages_to_statistics_csv(messages, filters, statistics_file_name):
+def messages_to_statistics_csv(messages, statistics_file_name):
     all_statistics = []
     for msg_id in messages:
         msg = messages[msg_id]
-        # Determine if the page matches a pattern and swap request to pattern
-        for p_filter in filters:
-            results = filters[p_filter].search(msg.msg_args.strip())
-            if results:
-                msg.msg_cmd = '{}{}'.format(msg.msg_cmd, p_filter)
-                break
-        added = False
 
+        added = False
         if len(all_statistics) > 0:
             for msg_statistics in all_statistics:
                 if msg_statistics.cmd == msg.msg_cmd:
@@ -423,13 +427,19 @@ def provision_hour_buckets(test_start, test_end, init=True):
 
 
 def perf_process_evm(evm_file):
+    msg_filters = {
+        '-hourly': re.compile(r'\"[0-9\-]*T[0-9\:]*Z\",\s\"hourly\"'),
+        '-daily': re.compile(r'\"[0-9\-]*T[0-9\:]*Z\",\s\"daily\"'),
+        '-EmsRedhat': re.compile(r'\[\[\"EmsRedhat\"\,\s[0-9]*\]\]'),
+        '-EmsVmware': re.compile(r'\[\[\"EmsVmware\"\,\s[0-9]*\]\]')
+    }
     starttime = time()
     initialtime = starttime
 
     logger.info('----------- Parsing evm log file -----------')
     evmlogfile = open(evm_file, 'r')
 
-    messages, msg_cmds, test_start, test_end, line_count = evm_to_messages(evmlogfile)
+    messages, msg_cmds, test_start, test_end, line_count = evm_to_messages(evmlogfile, msg_filters)
 
     timediff = time() - starttime
     logger.info('----------- Completed Parsing evm log file -----------')
@@ -471,11 +481,7 @@ def perf_process_evm(evm_file):
 
     logger.info('----------- Generating Message Statistics -----------')
     starttime = time()
-    filters = {
-        '-hourly': re.compile(r'\"[0-9\-]*T[0-9\:]*Z\",\s\"hourly\"'),
-        '-daily': re.compile(r'\"[0-9\-]*T[0-9\:]*Z\",\s\"daily\"')
-    }
-    messages_to_statistics_csv(messages, filters, 'messages-statistics.csv')
+    messages_to_statistics_csv(messages, 'messages-statistics.csv')
     timediff = time() - starttime
     logger.info('Generated Message Statistics in: {}'.format(timediff))
 
@@ -502,7 +508,7 @@ def perf_process_evm(evm_file):
     html_menu.write('End Time: {}<br>'.format(test_end))
     html_menu.write('Message Count: {}<br>'.format(len(messages)))
     html_menu.write('Command Count: {}<br>'.format(len(msg_cmds)))
-    html_menu.write('<a href="csv_output/messages-rawdata.csv">messages-rawdata.csv</a><br><br>')
+    html_menu.write('<a href="csv_output/messages-rawdata.csv">messages-rawdata.csv</a><br>')
     html_menu.write('<a href="csv_output/messages-statistics.csv">'
         'messages-statistics.csv</a><br><br>')
 
