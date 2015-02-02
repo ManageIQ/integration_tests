@@ -76,6 +76,8 @@ def select(root, sub=None, invokes_alert=False):
     Returns: ``True`` if everything went smoothly
     Raises: :py:class:`cfme.exceptions.ToolbarOptionGreyed`
     """
+    # wait for ajax on select to prevent pickup up a toolbar button in the middle of a page change
+    sel.wait_for_ajax()
     if not is_greyed(root):
         try:
             if sub is None and invokes_alert:
@@ -85,6 +87,9 @@ def select(root, sub=None, invokes_alert=False):
                 select_n_move(root_loc(root))
         except sel.NoSuchElementException:
             raise ToolbarOptionUnavailable("Toolbar button '{}' was not found.".format(root))
+        except sel.StaleElementReferenceException:
+            logger.debug('Stale toolbar button "{}", relocating'.format(root))
+            select(root, sub, invokes_alert)
     else:
         raise ToolbarOptionGreyed("Toolbar button {} is greyed!".format(root))
     if sub:
