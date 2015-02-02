@@ -132,9 +132,28 @@ def providers_for_date_group_and_version(request):
 def my_appliances(request):
     if not request.user.is_authenticated():
         return go_home(request)
-    pools = AppliancePool.objects.filter(owner=request.user)
+    show_user = request.GET.get("show", "my")
+    if not request.user.is_superuser:
+        if not (show_user == "my" or show_user == request.user.username):
+            messages.info(request, "You can't view others' appliances!")
+            show_user = "my"
+        if show_user == request.user.username:
+            show_user = "my"
+    if show_user == "my":
+        pools = AppliancePool.objects.filter(owner=request.user).order_by("id")
+    elif show_user == "all":
+        pools = AppliancePool.objects.order_by("id")
+    else:
+        pools = AppliancePool.objects.filter(owner__username=show_user).order_by("id")
     groups = Group.objects.all()
     return render(request, 'appliances/my_appliances.html', locals())
+
+
+def can_operate_appliance_or_pool(appliance_or_pool, user):
+    if user.is_superuser:
+        return True
+    else:
+        return appliance_or_pool.owner == user
 
 
 def start_appliance(request, appliance_id):
@@ -145,7 +164,7 @@ def start_appliance(request, appliance_id):
     except ObjectDoesNotExist:
         messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
         return go_back_or_home(request)
-    if appliance.owner is None or appliance.owner != request.user:
+    if not can_operate_appliance_or_pool(appliance, request.user):
         messages.error(request, 'This appliance belongs either to some other user or nobody.')
         return go_back_or_home(request)
     if appliance.power_state != Appliance.Power.ON:
@@ -165,7 +184,7 @@ def stop_appliance(request, appliance_id):
     except ObjectDoesNotExist:
         messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
         return go_back_or_home(request)
-    if appliance.owner is None or appliance.owner != request.user:
+    if not can_operate_appliance_or_pool(appliance, request.user):
         messages.error(request, 'This appliance belongs either to some other user or nobody.')
         return go_back_or_home(request)
     if appliance.power_state != Appliance.Power.OFF:
@@ -185,7 +204,7 @@ def suspend_appliance(request, appliance_id):
     except ObjectDoesNotExist:
         messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
         return go_back_or_home(request)
-    if appliance.owner is None or appliance.owner != request.user:
+    if not can_operate_appliance_or_pool(appliance, request.user):
         messages.error(request, 'This appliance belongs either to some other user or nobody.')
         return go_back_or_home(request)
     if appliance.power_state != Appliance.Power.SUSPENDED:
@@ -205,7 +224,7 @@ def prolong_lease_appliance(request, appliance_id, minutes):
     except ObjectDoesNotExist:
         messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
         return go_back_or_home(request)
-    if appliance.owner is None or appliance.owner != request.user:
+    if not can_operate_appliance_or_pool(appliance, request.user):
         messages.error(request, 'This appliance belongs either to some other user or nobody.')
         return go_back_or_home(request)
     appliance.prolong_lease(time=int(minutes))
@@ -239,7 +258,7 @@ def kill_appliance(request, appliance_id):
     except ObjectDoesNotExist:
         messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
         return go_back_or_home(request)
-    if appliance.owner is None or appliance.owner != request.user:
+    if not can_operate_appliance_or_pool(appliance, request.user):
         messages.error(request, 'This appliance belongs either to some other user or nobody.')
         return go_back_or_home(request)
     Appliance.kill(appliance)
@@ -255,7 +274,7 @@ def kill_pool(request, pool_id):
     except ObjectDoesNotExist:
         messages.error(request, 'Pool with ID {} does not exist!.'.format(pool_id))
         return go_back_or_home(request)
-    if pool.owner is None or pool.owner != request.user:
+    if not can_operate_appliance_or_pool(pool, request.user):
         messages.error(request, 'This pool belongs either to some other user or nobody.')
         return go_back_or_home(request)
     try:
@@ -299,8 +318,9 @@ def transfer_pool(request):
         user_id = int(request.POST["user_id"])
         with transaction.atomic():
             pool = AppliancePool.objects.get(id=pool_id)
-            if pool.owner != request.user:
-                raise Exception("User does not have the right to change this pool's owner!")
+            if not request.user.is_superuser:
+                if pool.owner != request.user:
+                    raise Exception("User does not have the right to change this pool's owner!")
             user = User.objects.get(id=user_id)
             if user == request.user:
                 raise Exception("Why changing owner back to yourself? That does not make sense!")
