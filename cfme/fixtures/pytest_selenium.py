@@ -1009,7 +1009,7 @@ class Select(SeleniumSelect, Pretty):
         Selenium's all_selected_options iterates over ALL of the options, this directly returns
         only those that are selected.
         """
-        return execute_script("return arguments[0].selectedOptions;", element(self))
+        return execute_script("return arguments[0] ? arguments[0].selectedOptions : [];", element(self))
 
     @property
     def first_selected_option(self):
