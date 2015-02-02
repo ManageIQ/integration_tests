@@ -784,20 +784,20 @@ def check_templates_in_provider(self, provider_id):
     if not provider.working:
         return
     # Check Sprout template existence
-    expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
+    # expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
     for template in Template.objects.filter(provider=provider):
         with transaction.atomic():
             tpl = Template.objects.get(pk=template.pk)
             exists = tpl.name in templates
             tpl.exists = exists
             tpl.save()
-        if not exists:
-            if len(Appliance.objects.filter(template=template).all()) == 0\
-                    and template.status_changed < expiration_time:
-                # No other appliance is made from this template so no need to keep it
-                with transaction.atomic():
-                    tpl = Template.objects.get(pk=template.pk)
-                    tpl.delete()
+        # if not exists:
+        #     if len(Appliance.objects.filter(template=template).all()) == 0\
+        #             and template.status_changed < expiration_time:
+        #         # No other appliance is made from this template so no need to keep it
+        #         with transaction.atomic():
+        #             tpl = Template.objects.get(pk=template.pk)
+        #             tpl.delete()
 
 
 @singleton_task()
