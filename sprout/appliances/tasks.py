@@ -944,6 +944,16 @@ def anyvm_delete(self, provider, vm):
     provider.delete_vm(vm)
 
 
+@singleton_task()
+def delete_template_from_provider(self, template_id):
+    template = Template.objects.get(id=template_id)
+    template.provider_api.delete_template(template.name)
+    with transaction.atomic():
+        template = Template.objects.get(pk=template.pk)
+        template.exists = False
+        template.save()
+
+
 @logged_task(bind=True)
 def appliance_rename(self, appliance_id, new_name):
     try:

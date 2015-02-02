@@ -10,7 +10,8 @@ from django.template.base import add_to_builtins
 
 from appliances.models import Provider, AppliancePool, Appliance, Group, Template
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
-    anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, )  # appliance_rename)
+    anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider, )
+# appliance_rename)
 
 from utils.log import create_logger
 from utils.providers import provider_factory
@@ -39,6 +40,11 @@ def providers(request):
     providers = Provider.objects.order_by("id")
     complete_usage = Provider.complete_user_usage()
     return render(request, 'appliances/providers.html', locals())
+
+
+def templates(request):
+    groups = Group.objects.order_by("id")
+    return render(request, 'appliances/templates.html', locals())
 
 
 def shepherd(request):
@@ -284,6 +290,22 @@ def kill_pool(request, pool_id):
         messages.error(request, "Exception {}: {}".format(type(e).__name__, str(e)))
     else:
         messages.success(request, 'Kill successfully initiated.')
+    return go_back_or_home(request)
+
+
+def delete_template_provider(request, template_id):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    try:
+        template = Template.objects.get(id=template_id)
+    except ObjectDoesNotExist:
+        messages.error(request, 'Template with ID {} does not exist!.'.format(template_id))
+        return go_back_or_home(request)
+    if not request.user.is_superuser:
+        messages.error(request, 'Tempaltes can be deleted only by superusers.')
+        return go_back_or_home(request)
+    delete_template_from_provider.delay(template.id)
+    messages.success(request, 'Delete initiated.')
     return go_back_or_home(request)
 
 

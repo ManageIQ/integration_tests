@@ -214,6 +214,10 @@ class Group(MetadataMixin):
     template_pool_size = models.IntegerField(default=0,
         help_text="How many appliances to keep spinned for quick taking.")
 
+    @property
+    def templates(self):
+        return Template.objects.filter(template_group=self).order_by("-date", "provider__id")
+
     def __unicode__(self):
         return "{} {} (pool size={})".format(
             self.__class__.__name__, self.id, self.template_pool_size)

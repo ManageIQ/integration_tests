@@ -133,6 +133,9 @@
         <li id="providers">
           <a href="{% url 'appliances.views.providers' %}">Providers</a>
         </li>
+        <li id="templates">
+          <a href="{% url 'appliances.views.templates' %}">Templates</a>
+        </li>
         {% if user.is_authenticated %}
             <li id="appliances">
               <a href="{% url 'appliances.views.my_appliances' %}">My Appliances</a>

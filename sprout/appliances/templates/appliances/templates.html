@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Providers{% endblock %}
+{% block body %}
+<div class="container-fluid">
+{% for group in groups %}
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <strong>{{ group.id }}</strong>
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <th>Name</th>
+                <th>Original name</th>
+                <th>Version</th>
+                <th>Date</th>
+                <th>Provider</th>
+                <th>Ready</th>
+                <th>Exists</th>
+                <th>Usable</th>
+                {% if request.user.is_superuser %}
+                    <th>Actions</th>
+                {% endif %}
+            </thead>
+            <tbody>
+            {% for template in group.templates %}
+            <tr>
+                <td>{{ template.name }}</td>
+                <td>{{ template.original_name }}</td>
+                <td>{{ template.version }}</td>
+                <td>{{ template.date }}</td>
+                <td>{{ template.provider.id }}</td>
+                <td>
+                {% if template.ready %}
+                        <button class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Ready</button>
+                    {% else %}
+                        <button class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> Not ready</button>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if template.exists %}
+                        <button class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Exists</button>
+                    {% else %}
+                        <button class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> Does not exist</button>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if template.usable %}
+                        <button class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Usable</button>
+                    {% else %}
+                        <button class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> Unusable</button>
+                    {% endif %}
+                </td>
+                {% if request.user.is_superuser %}
+                    <td>
+                        <div class="btn-toolbar" role="toolbar" aria-label="Template operations">
+                            <div class="btn-group" role="group" aria-label="">
+                                {% if template.exists %}
+                                    <a href="{% url 'appliances.views.delete_template_provider' template.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-trash"></span> Delete in provider</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endfor %}
+</div>
+{% endblock %}
