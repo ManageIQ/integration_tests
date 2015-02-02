@@ -2,12 +2,25 @@
 {% block title %}My appliances{% endblock %}
 {% block body %}
 <div class="container-fluid">
-    <h2>Listing and operation of your appliances</h2>
+    {% if not request.user.is_superuser %}
+        <h2>Listing and operation of your appliances</h2>
+    {% else %}
+        {% if show_user == "my" %}
+            <h2>Listing and operation of your appliances - <a href="{% url 'appliances.views.my_appliances' %}?show=all">Show all</a></h2>
+        {% elif show_user == "all" %}
+            <h2>Listing and operation of all users&apos; appliances - <a href="{% url 'appliances.views.my_appliances' %}?show=my">Show mine</a></h2>
+        {% else %}
+            <h2>Listing and operation of all {{show_user}}&apos;s appliances - <a href="{% url 'appliances.views.my_appliances' %}?show=all">Show all</a>, <a href="{% url 'appliances.views.my_appliances' %}?show=my">Show mine</a></h2>
+        {% endif %}
+    {% endif %}
     {% for pool in pools %}
         <div class="panel panel-primary">
             <div class="panel-heading">
                 <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} {% if pool.version %}({{ pool.version }}){% endif %}</strong>
-                
+                {% if show_user == "all" %}
+                    <em>Owner: {{ pool.owner.first_name }} {{ pool.owner.last_name }}
+                    <a href="{% url 'appliances.views.my_appliances' %}?show={{ pool.owner.username }}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
+                {% endif %}
             </div>
             <table class="table table-striped">
                 <thead>

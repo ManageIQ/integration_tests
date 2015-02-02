@@ -2,6 +2,26 @@
 {% block title %}Providers{% endblock %}
 {% block body %}
 <div class="container-fluid">
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <strong>Complete usage statistics</strong>
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <th>User name</th>
+                <th>Number of appliances</th>
+            </thead>
+            <tbody>
+                {% for username, count in complete_usage %}
+                <tr>
+                    <td>{% if request.user.is_superuser %}<a href="{% url 'appliances.views.my_appliances' %}?show={{username}}">{{ username }}</a>{% else %}{{ username }}{% endif %}</td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <hr>
     {% for provider in providers %}
     <div class="panel panel-primary">
         <div class="panel-heading">
@@ -50,6 +70,23 @@
                     <td>{% widthratio provider.load 1 100 %}%</td>
                 </tr>
             </tfoot>
+        </table>
+        <div class="panel-heading">
+            <strong>Provider usage (by users) statistics</strong>
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <th>User name</th>
+                <th>Number of appliances</th>
+            </thead>
+            <tbody>
+                {% for username, count in provider.user_usage %}
+                <tr>
+                    <td>{% if request.user.is_superuser %}<a href="{% url 'appliances.views.my_appliances' %}?show={{username}}">{{ username }}</a>{% else %}{{ username }}{% endif %}</td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
     {% endfor %}

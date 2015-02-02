@@ -177,6 +177,33 @@ class Provider(MetadataMixin):
         with self.edit_metadata as metadata:
             metadata["template_name_length"] = value
 
+    @property
+    def user_usage(self):
+        per_user_usage = {}
+        for appliance in Appliance.objects.filter(template__provider=self):
+            if appliance.owner is None:
+                continue
+            owner = appliance.owner.username
+            if owner not in per_user_usage:
+                per_user_usage[owner] = 1
+            else:
+                per_user_usage[owner] += 1
+        per_user_usage = per_user_usage.items()
+        per_user_usage.sort(key=lambda item: item[1], reverse=True)
+        return per_user_usage
+
+    @classmethod
+    def complete_user_usage(cls):
+        result = {}
+        for provider in cls.objects.all():
+            for username, count in provider.user_usage:
+                if username not in result:
+                    result[username] = 0
+                result[username] += count
+        result = result.items()
+        result.sort(key=lambda item: item[1], reverse=True)
+        return result
+
     def __unicode__(self):
         return "{} {}".format(self.__class__.__name__, self.id)
 
@@ -186,6 +213,10 @@ class Group(MetadataMixin):
         help_text="Group name as trackerbot says. (eg. upstream, downstream-53z, ...)")
     template_pool_size = models.IntegerField(default=0,
         help_text="How many appliances to keep spinned for quick taking.")
+
+    @property
+    def templates(self):
+        return Template.objects.filter(template_group=self).order_by("-date", "provider__id")
 
     def __unicode__(self):
         return "{} {} (pool size={})".format(
