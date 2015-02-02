@@ -10,7 +10,6 @@ from cfme.web_ui import flash, InfoBlock
 @pytest.mark.sauce
 def test_server_name():
     """Tests that changing the server name updates the about page"""
-    form_infoblocks = InfoBlock('form')
     flash_msg = 'Configuration settings saved for CFME Server "{}'
 
     sel.force_navigate('cfg_settings_currentserver_server')
@@ -21,7 +20,7 @@ def test_server_name():
     flash.assert_message_contain(flash_msg.format(new_server_name))
 
     sel.force_navigate('about')
-    assert new_server_name == form_infoblocks.text('Session Information', 'Server Name'),\
+    assert new_server_name == InfoBlock('Session Information', 'Server Name').text,\
         "Server name in About section does not match the new name"
 
     del(store.current_appliance.configuration_details)

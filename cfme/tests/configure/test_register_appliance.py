@@ -132,7 +132,7 @@ def test_appliance_registration(request, unset_org_id,
         set_default_repository=set_default_repo
     )
 
-    used_repo_or_channel = InfoBlock("form").text('Red Hat Software Updates', 'Update Repository')
+    used_repo_or_channel = InfoBlock('Red Hat Software Updates', 'Update Repository').text
 
     red_hat_updates.register_appliances()  # Register all
 

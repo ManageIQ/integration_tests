@@ -1731,14 +1731,18 @@ class InfoBlock(Pretty):
                     self.title)
             }),
             # Form type
-            '//fieldset/p[@class="legend"][contains(., "{}")]/..'.format(self.title)
+            (
+                '//*[p[@class="legend"][contains(., "{}")] and table/tbody/tr/td['
+                'contains(@class, "key")]]'.format(self.title)
+            )
+            # The root element must contain table element because listaccordions were caught by the
+            # locator. It used to be fieldset but it seems it can be really anything
         ]
         found = sel.elements("|".join(possible_locators))
         if not found:
             raise exceptions.BlockTypeUnknown("The block type requested is unknown")
         root_el = found[0]
-        tag = sel.tag(root_el)
-        if tag == "fieldset":
+        if sel.elements("./table/tbody/tr/td[contains(@class, 'key')]", root=root_el):
             self._type = self.FORM
         else:
             self._type = self.DETAIL
@@ -1821,7 +1825,7 @@ class InfoBlock(Pretty):
         @property
         def icon_href(self):
             try:
-                return sel.get_attribute(sel.element("./img", root=self.container), "href")
+                return sel.get_attribute(sel.element("./img", root=self.container), "src")
             except sel_exceptions.NoSuchElementException:
                 return None
 
