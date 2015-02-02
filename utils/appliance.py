@@ -146,7 +146,6 @@ class Appliance(object):
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.enable_internal_db(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
-        self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
 
     def _configure_5_3(self, log_callback=None):
@@ -674,6 +673,7 @@ class IPAppliance(object):
         """
         urls = list(urls)
         log_callback_f = kwargs.pop("log_callback", lambda msg: self.log.info)
+        reboot = kwargs.pop("reboot", True)
         log_callback = lambda msg: log_callback_f("Update RHEL: {}".format(msg))
         log_callback('updating appliance')
         if not urls:
@@ -721,6 +721,9 @@ class IPAppliance(object):
             msg = 'Appliance {} failed to update RHEL, error in logs'.format(self.address)
             log_callback(msg)
             raise ApplianceException(msg)
+
+        if reboot:
+            self.reboot(wait_for_web_ui=False, log_callback=log_callback)
 
         return status, out
 
