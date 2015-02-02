@@ -4,20 +4,22 @@
 from utils.log import logger
 from utils.path import log_path
 from datetime import datetime
+import dateutil.parser as du_parser
 from datetime import timedelta
 from time import time
 import csv
 import numpy
 import os
 import pygal
+import subprocess
 import re
 
 # Regular Expressions to capture relevant information from each log line:
 
 # [----] I, [2014-03-04T08:11:14.320377 #3450:b15814]  INFO -- : ....
-log_stamp = re.compile(r'\[----\]\s[IW],\s\[([0-9\-]+)T([0-9\:\.]+)\s#([0-9]+):[0-9a-z]+\]')
-# INFO -- : MIQ( * )
-miqmsg = re.compile(r'MIQ\(([a-zA-Z0-9\._]*)\)')
+log_stamp = re.compile(r'\[----\]\s[IWE],\s\[([0-9\-]+)T([0-9\:\.]+)\s#([0-9]+):[0-9a-z]+\]')
+# [----] .* MIQ( * )
+miqmsg = re.compile(r'\[----\].*MIQ\(([a-zA-Z0-9\._]*)\)')
 # Command: [ * ]
 miqmsg_cmd = re.compile(r'Command:\s\[([a-zA-Z0-9\._\:]*)\]')
 # Message id: [ * ]
@@ -29,6 +31,62 @@ miqmsg_args = re.compile(
 miqmsg_deq = re.compile(r'Dequeued\sin:\s\[([0-9\.]*)\]\sseconds')
 # Delivered in [ * ] seconds
 miqmsg_del = re.compile(r'Delivered\sin\s\[([0-9\.]*)\]\sseconds')
+
+# Worker related regular expressions:
+# MIQ(PriorityWorker) ID [15], PID [6461]
+miqwkr = re.compile(r'MIQ\(([A-Za-z]*)\)\sID\s\[([0-9]*)\],\sPID\s\[([0-9]*)\]')
+# with ID: [21]
+miqwkr_id = re.compile(r'with\sID:\s\[([0-9]*)\]')
+# For use with workers exiting, such as authentication failures:
+miqwkr_id_2 = re.compile(r'ID\s\[([0-9]*)\]')
+# PID PPID USER PR NI VIRT RES SHR S %CPU %MEM TIME+  COMMAND
+# 17526 2320 root 30 10 324m 9.8m 2444 S 0.0 0.2 0:09.38 /var/www/miq/vmdb/lib/workers/bin/worker.rb
+miq_top = re.compile(r'([0-9]+)\s+[0-9]+\s+[A-Za-z0-9]+\s+[0-9]+\s+[0-9\-]+\s+([0-9\.mg]+)\s+'
+    r'([0-9\.mg]+)\s+([0-9\.mg]+)\s+[SRD]\s+([0-9\.]+)\s+([0-9\.]+)')
+
+
+def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False):
+    log_dir = '/var/www/miq/vmdb/log/'
+
+    log_file = '{}{}.log'.format(log_dir, log_prefix)
+    dest_file = '{}{}.perf.log'.format(log_dir, log_prefix)
+    dest_file_gz = '{}{}.perf.log.gz'.format(log_dir, log_prefix)
+
+    ssh_client.run_command('rm -f {}'.format(dest_file_gz))
+
+    status, out = ssh_client.run_command('ls {}-*'.format(log_file))
+    if status == 0:
+        files = out.strip().split('\n')
+        for lfile in sorted(files):
+            ssh_client.run_command('cp {} {}-2.gz'.format(lfile, lfile))
+            ssh_client.run_command('gunzip {}-2.gz'.format(lfile))
+            if strip_whitespace:
+                ssh_client.run_command('sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
+                    '{}-2'.format(lfile))
+            ssh_client.run_command('cat {}-2 >> {}'.format(lfile, dest_file))
+            ssh_client.run_command('rm {}-2'.format(lfile))
+
+    ssh_client.run_command('cp {} {}-2'.format(log_file, log_file))
+    if strip_whitespace:
+        ssh_client.run_command('sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
+            '{}-2'.format(log_file))
+    ssh_client.run_command('cat {}-2 >> {}'.format(log_file, dest_file))
+    ssh_client.run_command('rm {}-2'.format(log_file))
+    ssh_client.run_command('gzip {}{}.perf.log'.format(log_dir, log_prefix))
+
+    ssh_client.get_file(dest_file_gz, local_file_name)
+    ssh_client.run_command('rm -f {}'.format(dest_file_gz))
+
+
+# Converts Memory Unit to MiB
+def convert_mem_to_mib(top_mem):
+    if top_mem[-1:] == 'm':
+        num = float(top_mem[:-1])
+    elif top_mem[-1:] == 'g':
+        num = float(top_mem[:-1]) * 1024
+    else:
+        num = float(top_mem) / 1024
+    return num
 
 
 def evm_to_messages(evmlogfile, filters):
@@ -102,10 +160,10 @@ def evm_to_messages(evmlogfile, filters):
                 else:
                     logger.error('Could not obtain message id, line #: {}'.format(line_count))
 
-        if (line_count % 20000) == 0:
+        if (line_count % 100000) == 0:
             timediff = time() - runningtime
             runningtime = time()
-            logger.info('Count {} : Parsed 20000 lines in {}'.format(line_count, timediff))
+            logger.info('Count {} : Parsed 100000 lines in {}'.format(line_count, timediff))
 
         evm_log_line = evmlogfile.readline()
 
@@ -134,8 +192,82 @@ def evm_to_messages(evmlogfile, filters):
     return messages, msg_cmds, test_start, test_end, line_count
 
 
+def evm_to_workers(evm_file):
+    # Use grep to reduce # of lines to sort through
+    p = subprocess.Popen(['grep', 'Interrupt\\|MIQ([A-Za-z]*) ID\\|"evm_worker_uptime_exceeded\\|'
+            '"evm_worker_memory_exceeded\\|"evm_worker_stop\\|Worker exiting.', evm_file],
+            stdout=subprocess.PIPE)
+    greppedevmlog, err = p.communicate()
+    greppedevmlog = greppedevmlog.strip()
+
+    evmlines = greppedevmlog.split('\n')
+
+    workers = {}
+    wkr_upt_exc = 0
+    wkr_mem_exc = 0
+    wkr_stp = 0
+    wkr_int = 0
+    wkr_ext = 0
+    for evm_log_line in evmlines:
+        ts, pid = get_msg_timestamp_pid(evm_log_line)
+
+        miqwkr_result = miqwkr.search(evm_log_line)
+        if miqwkr_result:
+            workerid = int(miqwkr_result.group(2))
+            if workerid not in workers:
+                workers[workerid] = MiqWorker()
+                workers[workerid].worker_type = miqwkr_result.group(1)
+                workers[workerid].pid = miqwkr_result.group(3)
+                workers[workerid].worker_id = int(workerid)
+                workers[workerid].start_ts = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S.%f')
+        elif 'evm_worker_uptime_exceeded' in evm_log_line:
+            miqwkr_id_result = miqwkr_id.search(evm_log_line)
+            if miqwkr_id_result:
+                workerid = int(miqwkr_id_result.group(1))
+                if workerid in workers:
+                    if not workers[workerid].terminated:
+                        wkr_upt_exc += 1
+                        workers[workerid].terminated = 'evm_worker_uptime_exceeded'
+                        workers[workerid].end_ts = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S.%f')
+        elif 'evm_worker_memory_exceeded' in evm_log_line:
+            miqwkr_id_result = miqwkr_id.search(evm_log_line)
+            if miqwkr_id_result:
+                workerid = int(miqwkr_id_result.group(1))
+                if workerid in workers:
+                    if not workers[workerid].terminated:
+                        wkr_mem_exc += 1
+                        workers[workerid].terminated = 'evm_worker_memory_exceeded'
+                        workers[workerid].end_ts = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S.%f')
+        elif 'evm_worker_stop' in evm_log_line:
+            miqwkr_id_result = miqwkr_id.search(evm_log_line)
+            if miqwkr_id_result:
+                workerid = int(miqwkr_id_result.group(1))
+                if workerid in workers:
+                    if not workers[workerid].terminated:
+                        wkr_stp += 1
+                        workers[workerid].terminated = 'evm_worker_stop'
+                        workers[workerid].end_ts = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S.%f')
+        elif 'Interrupt' in evm_log_line:
+            for workerid in workers:
+                if not workers[workerid].end_ts:
+                    wkr_int += 1
+                    workers[workerid].terminated = 'Interrupted'
+                    workers[workerid].end_ts = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S.%f')
+        elif 'Worker exiting.' in evm_log_line:
+            miqwkr_id_2_result = miqwkr_id_2.search(evm_log_line)
+            if miqwkr_id_2_result:
+                workerid = int(miqwkr_id_2_result.group(1))
+                if workerid in workers:
+                    if not workers[workerid].terminated:
+                        wkr_ext += 1
+                        workers[workerid].terminated = 'Worker Exited'
+                        workers[workerid].end_ts = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S.%f')
+
+    return workers, wkr_mem_exc, wkr_upt_exc, wkr_stp, wkr_int, wkr_ext, len(evmlines)
+
+
 def generate_hourly_charts_and_csvs(hourly_buckets, charts_dir):
-    for cmd in hourly_buckets:
+    for cmd in sorted(hourly_buckets):
         current_csv = 'hourly_' + cmd + '.csv'
         csv_rawdata_path = log_path.join('csv_output', current_csv)
 
@@ -195,15 +327,15 @@ def generate_hourly_charts_and_csvs(hourly_buckets, charts_dir):
         output_file.close()
 
 
-def generate_raw_data_csv(messages):
-    csv_rawdata_path = log_path.join('csv_output', 'messages-rawdata.csv')
+def generate_raw_data_csv(rawdata_dict, csv_file_name):
+    csv_rawdata_path = log_path.join('csv_output', csv_file_name)
     output_file = csv_rawdata_path.open('w', ensure=True)
-    csvwriter = csv.DictWriter(output_file, fieldnames=MiqMsgStat().headers, delimiter=',',
-        quotechar='\'', quoting=csv.QUOTE_MINIMAL)
+    csvwriter = csv.DictWriter(output_file, fieldnames=rawdata_dict[rawdata_dict.keys()[0]].headers,
+        delimiter=',', quotechar='\'', quoting=csv.QUOTE_MINIMAL)
     csvwriter.writeheader()
-    sorted_msg = sorted(messages.keys())
-    for msg in sorted_msg:
-        csvwriter.writerow(dict(messages[msg]))
+    sorted_rd_keys = sorted(rawdata_dict.keys())
+    for key in sorted_rd_keys:
+        csvwriter.writerow(dict(rawdata_dict[key]))
 
 
 def generate_statistics(the_list):
@@ -224,6 +356,26 @@ def generate_total_time_charts(msg_cmds, charts_dir):
         lines['Execute'] = msg_cmds[cmd]['execute']
         line_chart_render(cmd + ' Total Time', 'Message #', 'Time (s)', [], lines,
             charts_dir.join('/{}-total.svg'.format(cmd)))
+
+
+def generate_worker_charts(workers, top_workers, charts_dir):
+    for worker in top_workers:
+        logger.info('Generating Charts for Worker: {} Type: {}'.format(worker,
+            workers[worker].worker_type))
+        worker_name = '{}-{}'.format(worker, workers[worker].worker_type)
+
+        lines = {}
+        lines['Virt Mem'] = top_workers[worker]['virt']
+        lines['Res Mem'] = top_workers[worker]['res']
+        lines['Shared Mem'] = top_workers[worker]['share']
+        line_chart_render(worker_name, 'Date Time', 'Memory in MiB',
+            top_workers[worker]['datetimes'], lines,
+            charts_dir.join('/{}-Memory.svg'.format(worker_name)))
+
+        lines = {}
+        lines['CPU %'] = top_workers[worker]['cpu_per']
+        line_chart_render(worker_name, 'Date Time', 'CPU Usage', top_workers[worker]['datetimes'],
+            lines, charts_dir.join('/{}-CPU.svg'.format(worker_name)))
 
 
 def get_msg_args(log_line):
@@ -426,40 +578,160 @@ def provision_hour_buckets(test_start, test_end, init=True):
     return buckets
 
 
-def perf_process_evm(evm_file):
+def top_to_workers(workers, top_file):
+    # Find first miqtop log line
+    p = subprocess.Popen(['grep', '-m', '1', '^miqtop\:', top_file], stdout=subprocess.PIPE)
+    greppedtop, err = p.communicate()
+    str_start = greppedtop.index('is->')
+    miqtop_time = du_parser.parse(greppedtop[str_start:], fuzzy=True, ignoretz=True)
+    timezone_offset = int(greppedtop[str_start + 34:str_start + 37])
+    miqtop_time = miqtop_time - timedelta(hours=timezone_offset)
+    # Time zones are also difficult to deal with here
+    logger.debug('Timezone Offset: {}'.format(timezone_offset))
+    logger.debug('Starting miqtop time: {}'.format(miqtop_time))
+
+    runningtime = time()
+    grep_pids = ''
+    for wkr in workers:
+        grep_pids = '{}^{}\s\\|'.format(grep_pids, workers[wkr].pid)
+    grep_pattern = '{}^top\s\-\s\\|^miqtop\:'.format(grep_pids)
+    # Use grep to reduce # of lines to sort through
+    p = subprocess.Popen(['grep', grep_pattern, top_file], stdout=subprocess.PIPE)
+    greppedtop, err = p.communicate()
+    timediff = time() - runningtime
+    logger.info('Grepped top_output for pids & time data in {}'.format(timediff))
+
+    # This is very ugly because miqtop does include the date but top does not
+    # Also pids can be duplicated, so careful attention to detail on when a pid starts and ends
+    top_lines = greppedtop.strip().split('\n')
+    line_count = 0
+    top_workers = {}
+    cur_time = None
+    miqtop_ahead = True
+    runningtime = time()
+    for top_line in top_lines:
+        line_count += 1
+        if 'top - ' in top_line:
+            # top - 11:00:43
+            cur_hour = int(top_line[6:8])
+            cur_min = int(top_line[9:11])
+            cur_sec = int(top_line[12:14])
+            if miqtop_ahead:
+                # Have not found miqtop time yet so we must rely on miqtop time "ahead"
+                if cur_hour <= miqtop_time.hour:
+                    cur_time = miqtop_time.replace(hour=cur_hour, minute=cur_min, second=cur_sec) \
+                        - timedelta(hours=timezone_offset)
+                else:
+                    # miqtop_time is ahead by date
+                    logger.info('miqtop_time is ahead by one day')
+                    cur_time = miqtop_time - timedelta(days=1)
+                    cur_time = cur_time.replace(hour=cur_hour, minute=cur_min, second=cur_sec) \
+                        - timedelta(hours=timezone_offset)
+            else:
+                cur_time = miqtop_time.replace(hour=cur_hour, minute=cur_min, second=cur_sec) \
+                    - timedelta(hours=timezone_offset)
+
+        elif 'miqtop: ' in top_line:
+            miqtop_ahead = False
+            # miqtop which includes the date
+            # miqtop: timesync: date time is-> Mon Jan 26 11:01:01 EST 2015 -0500
+            # miqtop: start: date time is-> Mon Jan 26 08:57:39 EST 2015 -0500
+            str_start = top_line.index('is->')
+            miqtop_time = du_parser.parse(top_line[str_start:], fuzzy=True, ignoretz=True)
+            # Timezone conversion...
+            # Time logged in top is the system's time which is ahead/behind by the timezone offset
+            timezone_offset = int(top_line[str_start + 34:str_start + 37])
+            miqtop_time = miqtop_time - timedelta(hours=timezone_offset)
+        else:
+            top_results = miq_top.search(top_line)
+            if top_results:
+                top_pid = top_results.group(1)
+                top_virt = convert_mem_to_mib(top_results.group(2))
+                top_res = convert_mem_to_mib(top_results.group(3))
+                top_share = convert_mem_to_mib(top_results.group(4))
+                top_cpu_per = float(top_results.group(5))
+                top_mem_per = float(top_results.group(6))
+                for worker in workers:
+                    if workers[worker].pid == top_pid:
+                        if cur_time > workers[worker].start_ts and \
+                                (workers[worker].end_ts == '' or cur_time < workers[worker].end_ts):
+                            w_id = workers[worker].worker_id
+                            if w_id not in top_workers:
+                                top_workers[w_id] = {}
+                                top_workers[w_id]['datetimes'] = []
+                                top_workers[w_id]['virt'] = []
+                                top_workers[w_id]['res'] = []
+                                top_workers[w_id]['share'] = []
+                                top_workers[w_id]['cpu_per'] = []
+                                top_workers[w_id]['mem_per'] = []
+                            top_workers[w_id]['datetimes'].append(str(cur_time))
+                            top_workers[w_id]['virt'].append(top_virt)
+                            top_workers[w_id]['res'].append(top_res)
+                            top_workers[w_id]['share'].append(top_share)
+                            top_workers[w_id]['cpu_per'].append(top_cpu_per)
+                            top_workers[w_id]['mem_per'].append(top_mem_per)
+                            break
+            else:
+                logger.error('Issue with miq_top regex or grepping of top file:{}'.format(top_line))
+        if (line_count % 20000) == 0:
+            timediff = time() - runningtime
+            runningtime = time()
+            logger.info('Count {} : Parsed 20000 lines in {}'.format(line_count, timediff))
+    return top_workers, len(top_lines)
+
+
+def perf_process_evm(evm_file, top_file):
     msg_filters = {
         '-hourly': re.compile(r'\"[0-9\-]*T[0-9\:]*Z\",\s\"hourly\"'),
         '-daily': re.compile(r'\"[0-9\-]*T[0-9\:]*Z\",\s\"daily\"'),
         '-EmsRedhat': re.compile(r'\[\[\"EmsRedhat\"\,\s[0-9]*\]\]'),
         '-EmsVmware': re.compile(r'\[\[\"EmsVmware\"\,\s[0-9]*\]\]')
     }
+
     starttime = time()
     initialtime = starttime
 
-    logger.info('----------- Parsing evm log file -----------')
+    logger.info('----------- Parsing evm log file for messages -----------')
     evmlogfile = open(evm_file, 'r')
-
-    messages, msg_cmds, test_start, test_end, line_count = evm_to_messages(evmlogfile, msg_filters)
-
+    messages, msg_cmds, test_start, test_end, msg_lc = evm_to_messages(evmlogfile, msg_filters)
     timediff = time() - starttime
     logger.info('----------- Completed Parsing evm log file -----------')
-    logger.info('Parsed evm log file in {}'.format(timediff))
-    logger.info('Parsed a total of {} lines.'.format(line_count))
+    logger.info('Parsed {} lines of evm log file for messages in {}'.format(msg_lc, timediff))
+    logger.info('Total # of Messages: {}'.format(len(messages)))
+    logger.info('Total # of Commands: {}'.format(len(msg_cmds)))
     logger.info('Start Time: {}'.format(test_start))
     logger.info('End Time: {}'.format(test_end))
-    logger.info('Command Count: {}'.format(len(msg_cmds)))
-    logger.info('Message Count: {}'.format(len(messages)))
+
+    logger.info('----------- Parsing evm log file for workers -----------')
+    starttime = time()
+    workers, wkr_mem_exc, wkr_upt_exc, wkr_stp, wkr_int, wkr_ext, wkr_lc = evm_to_workers(evm_file)
+    timediff = time() - starttime
+    logger.info('----------- Completed Parsing evm log for workers -----------')
+    logger.info('Parsed {} lines of evm log file for workers in {}'.format(wkr_lc, timediff))
+    logger.info('Total # of Workers: {}'.format(len(workers)))
+    logger.info('# Workers Memory Exceeded: {}'.format(wkr_mem_exc))
+    logger.info('# Workers Uptime Exceeded: {}'.format(wkr_upt_exc))
+    logger.info('# Workers Exited: {}'.format(wkr_ext))
+    logger.info('# Workers Stopped: {}'.format(wkr_stp))
+    logger.info('# Workers Interrupted: {}'.format(wkr_int))
+
+    logger.info('----------- Parsing top_output log file for worker CPU/Mem -----------')
+    starttime = time()
+    top_workers, tp_lc = top_to_workers(workers, top_file)
+    timediff = time() - starttime
+    logger.info('----------- Completed Parsing top_output log -----------')
+    logger.info('Parsed {} lines of top_output file for workers in {}'.format(tp_lc, timediff))
 
     charts_dir = log_path.join('charts')
     if not os.path.exists(str(charts_dir)):
-        logger.info('Creating directory: {}'.format(charts_dir))
         os.mkdir(str(charts_dir))
 
-    logger.info('----------- Generating Raw Data csv file -----------')
+    logger.info('----------- Generating Raw Data csv files -----------')
     starttime = time()
-    generate_raw_data_csv(messages)
+    generate_raw_data_csv(messages, 'messages-rawdata.csv')
+    generate_raw_data_csv(workers, 'workers-rawdata.csv')
     timediff = time() - starttime
-    logger.info('Generated Raw Data csv file in: {}'.format(timediff))
+    logger.info('Generated Raw Data csv files in: {}'.format(timediff))
 
     logger.info('----------- Generating Hourly Buckets -----------')
     starttime = time()
@@ -479,6 +751,12 @@ def perf_process_evm(evm_file):
     timediff = time() - starttime
     logger.info('Generated Total Time Charts in: {}'.format(timediff))
 
+    logger.info('----------- Generating Worker Charts -----------')
+    starttime = time()
+    generate_worker_charts(workers, top_workers, charts_dir)
+    timediff = time() - starttime
+    logger.info('Generated Worker Charts in: {}'.format(timediff))
+
     logger.info('----------- Generating Message Statistics -----------')
     starttime = time()
     messages_to_statistics_csv(messages, 'messages-statistics.csv')
@@ -491,26 +769,35 @@ def perf_process_evm(evm_file):
     cmd = hr_bkt.keys()[0]
     html_index.write(
         '<html>\n'
-        '<title>Performance Message Metrics</title>\n'
+        '<title>Performance Worker/Message Metrics</title>\n'
         '<frameset cols="17%,83%">\n'
-        '   <frame src="menu.html" />\n'
+        '   <frame src="msg_menu.html" name="menu"/>\n'
         '   <frame src="charts/{}-{}-dequeue.svg" name="showframe" />\n'
         '</frameset>\n'
         '</html>'.format(cmd, sorted(hr_bkt[cmd].keys())[-1]))
     html_index.close()
 
     # Write the side bar menu html file
-    html_menu = log_path.join('menu.html').open('w', ensure=True)
+    html_menu = log_path.join('msg_menu.html').open('w', ensure=True)
     html_menu.write('<html>\n')
     html_menu.write('<font size="2">')
-    html_menu.write('Parsed {} log lines<br>'.format(line_count))
+    html_menu.write('<a href="worker_menu.html" target="menu">Worker CPU/Memory</a><br>')
+    html_menu.write('Parsed {} lines for messages<br>'.format(msg_lc))
     html_menu.write('Start Time: {}<br>'.format(test_start))
     html_menu.write('End Time: {}<br>'.format(test_end))
     html_menu.write('Message Count: {}<br>'.format(len(messages)))
     html_menu.write('Command Count: {}<br>'.format(len(msg_cmds)))
+    html_menu.write('Parsed {} lines for workers<br>'.format(wkr_lc, timediff))
+    html_menu.write('Total Workers: {}<br>'.format(len(workers)))
+    html_menu.write('Workers Memory Exceeded: {}<br>'.format(wkr_mem_exc))
+    html_menu.write('Workers Uptime Exceeded: {}<br>'.format(wkr_upt_exc))
+    html_menu.write('Workers Exited: {}<br>'.format(wkr_ext))
+    html_menu.write('Workers Stopped: {}<br>'.format(wkr_stp))
+    html_menu.write('Workers Interrupted: {}<br>'.format(wkr_int))
+
     html_menu.write('<a href="csv_output/messages-rawdata.csv">messages-rawdata.csv</a><br>')
-    html_menu.write('<a href="csv_output/messages-statistics.csv">'
-        'messages-statistics.csv</a><br><br>')
+    html_menu.write('<a href="csv_output/messages-statistics.csv">messages-statistics.csv</a><br>')
+    html_menu.write('<a href="csv_output/workers-rawdata.csv">workers-rawdata.csv</a><br><br>')
 
     # Sorts by the the messages which have the most, descending
     for cmd in sorted(msg_cmds, key=lambda x: len(msg_cmds[x]['total']), reverse=True):
@@ -533,6 +820,61 @@ def perf_process_evm(evm_file):
     html_menu.write('</font>')
     html_menu.write('</html>')
     html_menu.close()
+
+    html_wkr_menu = log_path.join('worker_menu.html').open('w', ensure=True)
+    html_wkr_menu.write('<html>\n')
+    html_wkr_menu.write('<font size="2">')
+    html_wkr_menu.write('<a href="msg_menu.html" target="menu">Message Latencies</a><br>')
+    html_wkr_menu.write('Parsed {} lines for messages<br>'.format(msg_lc))
+    html_wkr_menu.write('Start Time: {}<br>'.format(test_start))
+    html_wkr_menu.write('End Time: {}<br>'.format(test_end))
+    html_wkr_menu.write('Message Count: {}<br>'.format(len(messages)))
+    html_wkr_menu.write('Command Count: {}<br>'.format(len(msg_cmds)))
+
+    html_wkr_menu.write('Parsed {} lines for workers<br>'.format(wkr_lc, timediff))
+    html_wkr_menu.write('Total Workers: {}<br>'.format(len(workers)))
+    html_wkr_menu.write('Workers Memory Exceeded: {}<br>'.format(wkr_mem_exc))
+    html_wkr_menu.write('Workers Uptime Exceeded: {}<br>'.format(wkr_upt_exc))
+    html_wkr_menu.write('Workers Exited: {}<br>'.format(wkr_ext))
+    html_wkr_menu.write('Workers Stopped: {}<br>'.format(wkr_stp))
+    html_wkr_menu.write('Workers Interrupted: {}<br>'.format(wkr_int))
+
+    html_wkr_menu.write('<a href="csv_output/messages-rawdata.csv">messages-rawdata.csv</a><br>')
+    html_wkr_menu.write('<a href="csv_output/messages-statistics.csv">'
+        'messages-statistics.csv</a><br>')
+    html_wkr_menu.write('<a href="csv_output/workers-rawdata.csv">workers-rawdata.csv</a><br><br>')
+
+    html_wkr_menu.write('Running Workers:<br>')
+    w_type = ''
+    for worker_id in sorted(workers, key=lambda x: workers[x].worker_type):
+        if workers[worker_id].terminated == '':
+            if not w_type == workers[worker_id].worker_type:
+                w_type = workers[worker_id].worker_type
+                html_wkr_menu.write('{}<br>'.format(w_type))
+            worker_name = '{}-{}'.format(worker_id, workers[worker_id].worker_type)
+            html_wkr_menu.write('{} - '.format(worker_id))
+            html_wkr_menu.write('<a href="charts/{}-CPU.svg" target="showframe">CPU</a>'
+                ' | '.format(worker_name))
+            html_wkr_menu.write('<a href="charts/{}-Memory.svg" target="showframe">Memory</a><br>'
+                ''.format(worker_name))
+
+    html_wkr_menu.write('<br>Terminated Workers:<br>')
+    w_type = ''
+    for worker_id in sorted(workers, key=lambda x: workers[x].worker_type):
+        if not workers[worker_id].terminated == '':
+            if not w_type == workers[worker_id].worker_type:
+                w_type = workers[worker_id].worker_type
+                html_wkr_menu.write('<br>{}<br>'.format(w_type))
+            worker_name = '{}-{}'.format(worker_id, workers[worker_id].worker_type)
+            html_wkr_menu.write('{} - '.format(worker_id))
+            html_wkr_menu.write('<a href="charts/{}-CPU.svg" target="showframe">CPU</a>'
+                ' | '.format(worker_name))
+            html_wkr_menu.write('<a href="charts/{}-Memory.svg" target="showframe">Memory</a><br>'
+                ''.format(worker_name))
+            html_wkr_menu.write('{}<br>'.format(workers[worker_id].terminated))
+    html_wkr_menu.write('</font>')
+    html_wkr_menu.write('</html>')
+    html_wkr_menu.close()
 
     timediff = time() - initialtime
     logger.info('----------- Finished -----------')
@@ -602,3 +944,23 @@ class MiqMsgBucket(object):
             + ' : ' + str(self.total_get) + ' : ' + str(self.sum_deq) + ' : ' + str(self.min_deq) \
             + ' : ' + str(self.max_deq) + ' : ' + str(self.avg_deq) + ' : ' + str(self.sum_del) \
             + ' : ' + str(self.min_del) + ' : ' + str(self.max_del) + ' : ' + str(self.avg_del)
+
+
+class MiqWorker(object):
+
+    def __init__(self):
+        self.headers = ['worker_id', 'worker_type', 'pid', 'start_ts', 'end_ts', 'terminated']
+        self.worker_id = 0
+        self.worker_type = ''
+        self.pid = ''
+        self.start_ts = ''
+        self.end_ts = ''
+        self.terminated = ''
+
+    def __iter__(self):
+        for header in self.headers:
+            yield header, getattr(self, header)
+
+    def __str__(self):
+        return self.worker_id + ' : ' + self.worker_type + ' : ' + self.pid + ' : ' + \
+            str(self.start_ts) + ' : ' + str(self.end_ts) + ' : ' + self.terminated

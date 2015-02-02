@@ -3,10 +3,11 @@ log file aftwards and creates a bunch of graphs displaying the queued/execution 
 messages.
 """
 from cfme.configure.configuration import candu
+from utils.perf_message_stats import collect_log
 from utils.perf_message_stats import perf_process_evm
 from utils.conf import perf_tests
 from utils.log import logger
-from utils.path import log_path, scripts_path
+from utils.path import log_path
 import pytest
 import subprocess
 import time
@@ -28,36 +29,32 @@ def enable_candu():
 def test_queue_infrastructure(ssh_client, enable_candu):
     local_evm_gz = str(log_path.join('evm.perf.log.gz'))
     local_evm = str(log_path.join('evm.perf.log'))
-
-    ssh_client.put_file(str(scripts_path.join('perf_collect_logs.sh')),
-        '/root/perf_collect_logs.sh')
+    local_top_gz = str(log_path.join('top_output.perf.log.gz'))
+    local_top = str(log_path.join('top_output.perf.log'))
 
     sleep_time = perf_tests['test_queue']['infra_time']
 
     logger.info('Waiting: {}'.format(sleep_time))
     time.sleep(sleep_time)
 
-    # Collect evm log for post process
-    ssh_client.run_command('./perf_collect_logs.sh /var/www/miq/vmdb/log/ evm')
+    collect_log(ssh_client, 'evm', local_evm_gz)
+    collect_log(ssh_client, 'top_output', local_top_gz, strip_whitespace=True)
 
-    # Ensure there is not a conflicting local evm log file
-    if os.path.exists(local_evm):
-        logger.info('Cleaning up evm.perf.log before getting file: {}'.format(local_evm_gz))
-        os.remove(local_evm)
-
-    ssh_client.get_file('/var/www/miq/vmdb/log/evm.perf.log.gz', local_evm_gz)
-
-    # Clean up the evm.perf.log.gz file on the appliance
-    ssh_client.run_command('rm -f /var/www/miq/vmdb/log/evm.perf.log.gz')
-
-    # Uncompress the evm log file evm.perf.log.gz
     logger.info('Calling gunzip {}'.format(local_evm_gz))
     subprocess.call(['gunzip', local_evm_gz])
 
+    logger.info('Calling gunzip {}'.format(local_top_gz))
+    subprocess.call(['gunzip', local_top_gz])
+
     # Post process evm log for queue metrics and produce graphs, and csvs
-    perf_process_evm(local_evm)
+    perf_process_evm(local_evm, local_top)
 
     # Clean up and delete evm.perf.log as it is likely huge...
     if os.path.exists(local_evm):
         logger.info('Removing: {}'.format(local_evm))
         os.remove(local_evm)
+
+    # Clean up and delete top_output.perf.log as it is likely huge...
+    if os.path.exists(local_top):
+        logger.info('Removing: {}'.format(local_top))
+        os.remove(local_top)
