@@ -37,6 +37,7 @@ def index(request):
 
 def providers(request):
     providers = Provider.objects.order_by("id")
+    complete_usage = Provider.complete_user_usage()
     return render(request, 'appliances/providers.html', locals())
 
 
