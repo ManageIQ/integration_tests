@@ -160,7 +160,10 @@ def pytest_runtest_setup(item):
             skippers.add(bug)
         if bug.upstream_bug:
             if not appliance_is_downstream() and bug.can_test_on_upstream:
-                skippers.remove(bug)
+                try:
+                    skippers.remove(bug)
+                except KeyError:
+                    pass
 
     # Custom skip/xfail handler
     global_env = dict(

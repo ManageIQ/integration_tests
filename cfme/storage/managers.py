@@ -85,7 +85,6 @@ class StorageManager(Updateable):
 
     validate = form_buttons.FormButton("Validate the credentials by logging into the Server")
     add = form_buttons.FormButton("Add this Storage Manager")
-    infoblock = InfoBlock("detail")
 
     ##
     # Types constants. Extend if needed :)
@@ -145,7 +144,7 @@ class StorageManager(Updateable):
     def wait_until_updated(self, num_sec=300):
         def _wait_func():
             self.navigate()
-            return self.infoblock.text("Properties", "Last Update Status").strip().lower() == "ok"
+            return InfoBlock("Properties", "Last Update Status").text.strip().lower() == "ok"
         wait_for(_wait_func, num_sec=num_sec, delay=5)
 
     @property
