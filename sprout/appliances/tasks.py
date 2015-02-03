@@ -1009,7 +1009,7 @@ def scavenge_managed_providers(self):
     chord_tasks = []
     for appliance in Appliance.objects.exclude(appliance_pool=None):
         chord_tasks.append(scavenge_managed_providers_from_appliance.si(appliance.id))
-    chord(chord_tasks)(calculate_provider_management_usage.si())
+    chord(chord_tasks)(calculate_provider_management_usage.s())
 
 
 @singleton_task(soft_time_limit=180)
@@ -1017,16 +1017,22 @@ def scavenge_managed_providers_from_appliance(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
-        return False
-    managed_providers = appliance.ipapp.managed_providers
-    appliance.managed_providers = managed_providers
-    return True
+        return None
+    try:
+        managed_providers = appliance.ipapp.managed_providers
+        appliance.managed_providers = managed_providers
+    except Exception as e:
+        # To prevent single appliance messing up whole result
+        provider_error_logger().error("{}: {}".format(type(e).__name__, str(e)))
+        return None
+    return appliance.id
 
 
 @singleton_task()
-def calculate_provider_management_usage(self):
+def calculate_provider_management_usage(self, appliance_ids):
     results = {}
-    for appliance in Appliance.objects.exclude(appliance_pool=None):
+    for appliance_id in filter(lambda id: id is not None, appliance_ids):
+        appliance = Appliance.objects.get(id=appliance_id)
         for provider in appliance.managed_providers:
             if provider not in results:
                 results[provider] = []

@@ -29,6 +29,7 @@
                         <th>Name:</th>
                         <th>Provider:</th>
                         <th>Address:</th>
+                        <th>Manages:</th>
                         <th>Ready?</th>
                         <th>Power state:</th>
                         <th>Expires in:</th>
@@ -44,10 +45,20 @@
                         <td>{{ appliance.template.provider.id }}</td>
                         <td>
                             {% if appliance.ip_address %}
-                                <a href="https://{{ appliance.ip_address }}/" target="_blank">{{ appliance.ip_address }}</a></td>
+                                <a href="https://{{ appliance.ip_address }}/" target="_blank">{{ appliance.ip_address }}</a>
                             {% else %}
                                 ---
                             {% endif %}
+                        </td>
+                        <td>
+                            {% if appliance.managed_providers %}
+                                {% for provider in appliance.managed_providers %}
+                                    <a href="{% url 'appliances.views.providers' %}#provider-{{provider}}" class="btn btn-default btn-xs">{{provider}}</a>
+                                {% endfor %}
+                            {% else %}
+                                <em>Nothing! :)</em>
+                            {% endif %}
+                        </td>
                         <td>
                             {% if appliance.ready %}
                                 <button class="btn btn-success btn-sm"><span class="glyphicon glyphicon-ok"></span> Ready!</button>
