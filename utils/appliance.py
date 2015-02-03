@@ -352,6 +352,23 @@ class IPAppliance(object):
     def __exit__(self, *args, **kwargs):
         self.pop()
 
+    @property
+    def managed_providers(self):
+        """Returns a set of providers that are managed by this appliance
+
+        Returns:
+            :py:class:`set` of :py:class:`str` - provider_key-s
+        """
+        ems_table = self.db["ext_management_systems"]
+        ip_addresses = set([])
+        for ems in self.db.session.query(ems_table):
+            ip_addresses.add(ems.ipaddress)
+        provider_keys = set([])
+        for provider_key, provider_data in conf.cfme_data.get("management_systems", {}).iteritems():
+            if provider_data.get("ipaddress", None) in ip_addresses:
+                provider_keys.add(provider_key)
+        return provider_keys
+
     @classmethod
     def from_url(ip_appliance_class, url):
         # Need to think about this bit

@@ -14,7 +14,7 @@
         {% endif %}
     {% endif %}
     {% for pool in pools %}
-        <div class="panel panel-primary">
+        <div class="panel panel-primary" id="pool-{{ pool.id }}">
             <div class="panel-heading">
                 <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} {% if pool.version %}({{ pool.version }}){% endif %}</strong>
                 {% if show_user == "all" %}
@@ -38,7 +38,7 @@
                 </thead>
                 <tbody>
                     {% for appliance in pool.appliances %}
-                    <tr>
+                    <tr id="appliance-{{ appliance.id }}">
                         <td>{{ appliance.id }}</td>
                         <td>{{ appliance.name }}</td>
                         <td>{{ appliance.template.provider.id }}</td>

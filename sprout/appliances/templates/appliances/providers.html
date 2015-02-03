@@ -23,7 +23,8 @@
     </div>
     <hr>
     {% for provider in providers %}
-    <div class="panel panel-primary">
+    <div class="panel panel-primary" id="provider-{{ provider.id }}">
+        <!-- Provider data -->
         <div class="panel-heading">
             <strong>{{ provider.id }}</strong> - {{ provider.ip_address }}
         </div>
@@ -71,8 +72,9 @@
                 </tr>
             </tfoot>
         </table>
+        <!-- Provider usage -->
         <div class="panel-heading">
-            <strong>Provider usage (by users) statistics</strong>
+            <em>Provider usage (by users) statistics</em>
         </div>
         <table class="table table-striped">
             <thead>
@@ -84,6 +86,38 @@
                 <tr>
                     <td>{% if request.user.is_superuser %}<a href="{% url 'appliances.views.my_appliances' %}?show={{username}}">{{ username }}</a>{% else %}{{ username }}{% endif %}</td>
                     <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <!-- Provider managing load -->
+        <div class="panel-heading">
+            <em>Which appliances manage this provider?</em>
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <th>Appliance name</th>
+                <th>Appliance group</th>
+                <th>Appliance provider</th>
+                <th>Appliance owner</th>
+            </thead>
+            <tbody>
+                {% for appliance in provider.g_appliances_manage_this_provider %}
+                <tr>
+                    <td>{{ appliance.name }}</td>
+                    <td>{{ appliance.template.template_group.id }}</td>
+                    <td>{{ appliance.template.provider.id }}</td>
+                    <td>
+                        {% if appliance.owner %}
+                            {% if request.user.is_superuser %}
+                                <a href="{% url 'appliances.views.my_appliances' %}?show={{ appliance.owner.username }}#appliance-{{ appliance.id }}">{{ appliance.owner.username }}</a>
+                            {% else %}
+                                {{ appliance.owner }}
+                            {% endif %}
+                        {% else %}
+                            No owner
+                        {% endif %}
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

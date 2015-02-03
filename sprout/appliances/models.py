@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from sprout import critical_section
 
-from utils.appliance import Appliance as CFMEAppliance
+from utils.appliance import Appliance as CFMEAppliance, IPAppliance
 from utils.conf import cfme_data
 from utils.log import create_logger
 from utils.providers import provider_factory
@@ -176,6 +176,23 @@ class Provider(MetadataMixin):
     def template_name_length(self, value):
         with self.edit_metadata as metadata:
             metadata["template_name_length"] = value
+
+    @property
+    def appliances_manage_this_provider(self):
+        return self.metadata.get("appliances_manage_this_provider", [])
+
+    @appliances_manage_this_provider.setter
+    def appliances_manage_this_provider(self, value):
+        with self.edit_metadata as metadata:
+            metadata["appliances_manage_this_provider"] = value
+
+    @property
+    def g_appliances_manage_this_provider(self):
+        for appl_id in self.appliances_manage_this_provider:
+            try:
+                yield Appliance.objects.get(id=appl_id)
+            except ObjectDoesNotExist:
+                continue
 
     @property
     def user_usage(self):
@@ -363,6 +380,10 @@ class Appliance(MetadataMixin):
     def cfme(self):
         return CFMEAppliance(self.provider_name, self.name)
 
+    @property
+    def ipapp(self):
+        return IPAppliance(self.ip_address)
+
     def retrieve_power_state(self):
         api = self.provider_api
         exists = api.does_vm_exist(self.name)
@@ -484,6 +505,15 @@ class Appliance(MetadataMixin):
             return "---"
         else:
             return self.template.version
+
+    @property
+    def managed_providers(self):
+        return self.metadata.get("managed_providers", [])
+
+    @managed_providers.setter
+    def managed_providers(self, value):
+        with self.edit_metadata as metadata:
+            metadata["managed_providers"] = value
 
 
 class AppliancePool(MetadataMixin):

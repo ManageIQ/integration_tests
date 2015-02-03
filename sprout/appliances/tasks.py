@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.utils import timezone
-from celery import chain, shared_task
+from celery import chain, chord, shared_task
 from datetime import timedelta
 from functools import wraps
 from novaclient.exceptions import OverLimit as OSOverLimit
@@ -1002,3 +1002,34 @@ def check_update(self):
     result = Run.command("{} check-update".format(sprout_sh.strpath))
     needs_update = result.stdout.strip().lower() != "up-to-date"
     redis.set("sprout-needs-update", needs_update)
+
+
+@singleton_task()
+def scavenge_managed_providers(self):
+    chord_tasks = []
+    for appliance in Appliance.objects.exclude(appliance_pool=None):
+        chord_tasks.append(scavenge_managed_providers_from_appliance.si(appliance.id))
+    chord(chord_tasks)(calculate_provider_management_usage.si())
+
+
+@singleton_task(soft_time_limit=180)
+def scavenge_managed_providers_from_appliance(self, appliance_id):
+    try:
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist:
+        return False
+    managed_providers = appliance.ipapp.managed_providers
+    appliance.managed_providers = managed_providers
+    return True
+
+
+@singleton_task()
+def calculate_provider_management_usage(self):
+    results = {}
+    for appliance in Appliance.objects.exclude(appliance_pool=None):
+        for provider in appliance.managed_providers:
+            if provider not in results:
+                results[provider] = []
+            results[provider].append(appliance.id)
+    for provider in Provider.objects.all():
+        provider.appliances_manage_this_provider = results.get(provider.id, [])

@@ -195,6 +195,11 @@ CELERYBEAT_SCHEDULE = {
         'task': 'appliances.tasks.check_update',
         'schedule': timedelta(hours=1),
     },
+
+    'scavenge-managed-providers': {
+        'task': 'appliances.tasks.scavenge_managed_providers',
+        'schedule': timedelta(minutes=45),
+    },
 }
 
 try:
