@@ -106,7 +106,7 @@ def rdb_catch():
         except Exception as exc:
             # Set up the remote debugger when we see one of our breakpoint exceptions
             if type(exc) in _breakpoint_exceptions:
-                breakpoint = _breakpoint_exceptions[exc]
+                breakpoint = _breakpoint_exceptions[type(exc)]
             else:
                 raise
 
