@@ -563,7 +563,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             raise
     except Exception as e:
         message = str(e)
-        provider_error_logger.error("Exception {}: {}".format(type(e).__name__, message))
+        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, message))
         appliance.set_status("Error during template clone ({}).".format(message))
         # Try to find some generic stuff signalling that the provider has difficult times ...
         if "quota" in message.lower() or "limit" in message.lower() and appliance.appliance_pool:
@@ -603,7 +603,7 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
         if not appliance.provider_api.does_vm_exist(appliance.name):
             self.retry(args=(appliance_id,), countdown=20, max_retries=30)
     except Exception as e:
-        provider_error_logger.error("Exception {}: {}".format(type(e).__name__, str(e)))
+        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
     else:
         appliance.set_status("Template was successfully cloned.")
@@ -635,7 +635,7 @@ def appliance_power_on(self, appliance_id):
             appliance.provider_api.start_vm(appliance.name)
             self.retry(args=(appliance_id,), countdown=20, max_retries=30)
     except Exception as e:
-        provider_error_logger.error("Exception {}: {}".format(type(e).__name__, str(e)))
+        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
 
 
@@ -668,7 +668,7 @@ def appliance_power_off(self, appliance_id):
             appliance.provider_api.stop_vm(appliance.name)
             self.retry(args=(appliance_id,), countdown=20, max_retries=40)
     except Exception as e:
-        provider_error_logger.error("Exception {}: {}".format(type(e).__name__, str(e)))
+        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=40)
 
 
@@ -697,7 +697,7 @@ def appliance_suspend(self, appliance_id):
             appliance.provider_api.suspend_vm(appliance.name)
             self.retry(args=(appliance_id,), countdown=20, max_retries=30)
     except Exception as e:
-        provider_error_logger.error("Exception {}: {}".format(type(e).__name__, str(e)))
+        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
         self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
 
 
