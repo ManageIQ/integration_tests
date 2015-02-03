@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
+from collections import OrderedDict
+
+from cfme import web_ui as ui
+from cfme.exceptions import TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
-from cfme import web_ui as ui
 from cfme.web_ui import fill, flash, form_buttons, tabstrip, toolbar
-from collections import OrderedDict
+from cfme.web_ui.menu import nav
 from utils import version
 from utils.log import logger
 from utils.wait import wait_for
 
-from cfme.web_ui.menu import nav
-import cfme.infrastructure.virtual_machines  # To ensure the infra_vm_and_templates is available
-import cfme.cloud.instance
-assert cfme  # To prevent flake8 compalining
+
+# nav imports
+import cfme.infrastructure.virtual_machines  # NOQA
+import cfme.cloud.instance  # NOQA
 
 
 instances_by_provider_tree = ui.Tree("ul.dynatree-container")
@@ -186,9 +189,8 @@ def generate_nav_function(tb_item):
             sel.click(template)
             sel.click(template_select_form.continue_button)
         else:
-            # Better exception?
-            raise ValueError('Navigation failed: Unable to find template "%s" for provider "%s"' %
-                (template_name, provider.key))
+            raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
+                template_name, provider.key))
     return f
 
 nav.add_branch('infra_vm_and_templates', {
