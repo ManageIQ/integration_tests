@@ -30,7 +30,7 @@ from collections import Callable
 @singledispatch
 def match(o, e):
     """Returns true if the object matches the exception."""
-    raise NotImplemented("Don't know how to match {} to an error".format(o))
+    raise NotImplementedError("Don't know how to match {} to an error".format(type(o)))
 
 
 @match.method(type)
@@ -52,7 +52,7 @@ def regex(expr, e):
     return p.search(str(e.message))
 
 
-@match.method(str)
+@match.method(basestring)
 def _str(s, e):
     """Treat string as a regex and match it against the Exception's
     message."""
