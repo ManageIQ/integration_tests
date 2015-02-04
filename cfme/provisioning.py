@@ -7,7 +7,6 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import fill, flash, form_buttons, tabstrip, toolbar
 from cfme.web_ui.menu import nav
-from cfme.fixtures.rdb import rdb_catch
 from utils import version
 from utils.log import logger
 from utils.wait import wait_for
@@ -185,13 +184,12 @@ def generate_nav_function(tb_item):
             'Name': template_name,
             'Provider': provider.name
         })
-        with rdb_catch():
-            if template:
-                sel.click(template)
-                sel.click(template_select_form.continue_button)
-            else:
-                raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
-                    template_name, provider.key))
+        if template:
+            sel.click(template)
+            sel.click(template_select_form.continue_button)
+        else:
+            raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
+                template_name, provider.key))
     return f
 
 nav.add_branch('infra_vm_and_templates', {
