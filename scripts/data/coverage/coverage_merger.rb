@@ -17,8 +17,6 @@ json_files = Dir.glob(
 )
 merged_dir = File.join(coverage_root, 'merged')
 
-puts SimpleCov.result
-
 for json_file in json_files
   begin
     json = File.read(json_file)
@@ -44,8 +42,7 @@ SimpleCov.instance_variable_set("@result", SimpleCov::Result.from_hash(results))
 SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter, SimpleCov::Formatter::RcovFormatter
 SimpleCov.use_merging true
 SimpleCov.merge_timeout 2 << 28
-SimpleCov.add_group "APIs", "app/apis"
-SimpleCov.add_group "Libraries", "vmdb/lib/"
-SimpleCov.add_group "MIQ Libraries", "(?<!vmdb)/lib/(?!util/).*$"
-SimpleCov.add_group "MIQ Utils", "(?<!vmdb)/lib/util/.*$"
+SimpleCov.add_group "APIs", "vmdb/app/apis"
+SimpleCov.add_group "Presenters", "vmdb/app/presenters"
+SimpleCov.add_group "Services", "vmdb/app/services"
 SimpleCov.result.format!
