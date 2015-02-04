@@ -117,6 +117,7 @@ class DockerBot(object):
         self.validate_args()
         self.display_banner()
         self.process_appliance()
+        self.cache_files()
         self.create_pytest_command()
         if not self.args['use_wharf']:
             self.sel_vnc_port = random_port()
@@ -160,6 +161,12 @@ class DockerBot(object):
                 sel.remove()
             self.handle_output()
 
+    def cache_files(self):
+        if self.args['pr']:
+            self.modified_files = self.find_files_by_pr(self.args['pr'])
+            if self.requirements_update:
+                self.args['update_pip'] = True
+
     def get_pr_metadata(self, pr=None):
         token = self.args['gh_token']
         owner = self.args['gh_owner']
@@ -178,6 +185,7 @@ class DockerBot(object):
                 return ydata
 
     def find_files_by_pr(self, pr=None):
+        self.requirements_update = False
         files = []
         token = self.args['gh_token']
         owner = self.args['gh_owner']
@@ -199,7 +207,7 @@ class DockerBot(object):
                                filen['filename'].startswith('utils/tests'):
                                 files.append(filen['filename'])
                         if filen['filename'] == 'requirements.txt':
-                            self.args['update_pip'] = True
+                            self.requirements_update = True
                 except:
                     return None
                 page += 1
@@ -331,7 +339,7 @@ class DockerBot(object):
             if pytest:
                 self.args['pytest'] = "py.test {}".format(pytest)
             else:
-                files = self.find_files_by_pr(self.args['pr'])
+                files = self.modified_files
                 if files:
                     self.args['pytest'] = ("py.test -v {} --use-provider default --long-running "
                                            "--bugzilla --no-tracer --perf").format(" ".join(files))
