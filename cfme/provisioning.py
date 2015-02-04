@@ -177,7 +177,7 @@ def generate_nav_function(tb_item):
         toolbar.select('Lifecycle', tb_item)
         provider = context['provider']
         template_name = context['template_name']
-
+        template_select_form.template_table._update_cache()
         template = template_select_form.template_table.find_row_by_cells({
             'Name': template_name,
             'Provider': provider.name
