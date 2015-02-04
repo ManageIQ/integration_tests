@@ -184,20 +184,26 @@ class DockerBot(object):
         repo = self.args['gh_repo']
         if token:
             headers = {'Authorization': 'token {}'.format(token)}
-            r = requests.get(
-                'https://api.github.com/repos/{}/{}/pulls/{}/files'.format(owner, repo, pr),
-                headers=headers)
-            try:
-                for filen in r.json():
-                    if filen['status'] != "deleted" and filen['status'] != "removed":
-                        if filen['filename'].startswith('cfme/tests') or \
-                           filen['filename'].startswith('utils/tests'):
-                            files.append(filen['filename'])
-                    if filen['filename'] == 'requirements.txt':
-                        self.args['update_pip'] = True
-                return files
-            except:
-                return None
+            page = 1
+            while True:
+                r = requests.get(
+                    'https://api.github.com/repos/{}/{}/pulls/{}/files?page={}'.format(
+                        owner, repo, pr, page),
+                    headers=headers)
+                try:
+                    if not r.json():
+                        break
+                    for filen in r.json():
+                        if filen['status'] != "deleted" and filen['status'] != "removed":
+                            if filen['filename'].startswith('cfme/tests') or \
+                               filen['filename'].startswith('utils/tests'):
+                                files.append(filen['filename'])
+                        if filen['filename'] == 'requirements.txt':
+                            self.args['update_pip'] = True
+                except:
+                    return None
+                page += 1
+            return files
 
     def check_arg(self, name, default):
         self.args[name] = self.args.get(name)
