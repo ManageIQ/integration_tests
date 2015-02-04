@@ -538,9 +538,21 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                 progress_callback=lambda progress: appliance.set_status(
                     "Deploy progress: {}".format(progress)),
                 **kwargs)
-    except OSOverLimit:
-        appliance.set_status("Hit OpenStack provisioning quota, trying putting it aside ...")
-        # OpenStack quota exceeded, screw that and provision it somewhere else
+    except Exception as e:
+        messages = {"limit", "cannot add", "quota"}
+        if isinstance(e, OSOverLimit):
+            appliance.set_status("Hit OpenStack provisioning quota, trying putting it aside ...")
+        elif any(message in str(e).lower() for message in messages):
+            appliance.set_status("Provider has some troubles, putting it aside ... {}/{}".format(
+                type(e).__name__, str(e)
+            ))
+            provider_error_logger().exception(e)
+        else:
+            # Something got screwed really bad
+            appliance.set_status("Error happened: {}({})".format(type(e).__name__, str(e)))
+            self.retry(args=(appliance_id,), exc=e, countdown=60, max_retries=5)
+
+        # Ignore that and provision it somewhere else
         if appliance.appliance_pool:
             # We can put it aside for a while to wait for
             self.request.callbacks[:] = []  # Quit this chain
@@ -559,33 +571,8 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
                 new_task.save()
             return
         else:
-            # We cannot put it aside, so try that again
-            raise
-    except Exception as e:
-        message = str(e)
-        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, message))
-        appliance.set_status("Error during template clone ({}).".format(message))
-        # Try to find some generic stuff signalling that the provider has difficult times ...
-        if "quota" in message.lower() or "limit" in message.lower() and appliance.appliance_pool:
-            # We can put it aside too
-            # TODO: Deduplicate the code?
-            self.request.callbacks[:] = []  # Quit this chain
-            pool = appliance.appliance_pool
-            try:
-                if appliance.provider_api.does_vm_exist(appliance.name):
-                    # Better to check it, you never know when does that fail
-                    appliance.provider_api.delete_vm(appliance.name)
-            except:
-                pass  # Diaper here
-            appliance.delete(do_not_touch_ap=True)
-            with transaction.atomic():
-                new_task = DelayedProvisionTask(
-                    pool=pool, lease_time=lease_time_minutes,
-                    provider_to_avoid=appliance.template.provider)
-                new_task.save()
-            return
-        else:
-            self.retry(args=(appliance_id,), exc=e, countdown=10, max_retries=5)
+            # We cannot put it aside, so just try that again
+            self.retry(args=(appliance_id,), exc=e, countdown=60, max_retries=5)
     else:
         appliance.set_status("Template cloning finished.")
 
