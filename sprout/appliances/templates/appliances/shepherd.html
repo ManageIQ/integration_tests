@@ -1,45 +1,43 @@
 {% extends "base.html" %}
 {% block title %}Free appliance shepherd{% endblock %}
 {% block body %}
-<div class="container-fluid">
-    <div class="panel panel-primary">
-        <div class="panel-heading">
-            <strong>List of pre-provisioned appliances</strong>
-        </div>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Appliance name</th>
-                    <th>Template</th>
-                    <th>Group</th>
-                    <th>Version</th>
-                    <th>Date</th>
-                    <th>Provider</th>
-                    
-                </tr>
-            </thead>
-            <tbody>
-            {% if appliances %}
-                {% for appliance in appliances %}
-                    <tr>
-                        <td>{{ appliance.name }}</td>
-                        <td>{{ appliance.template.name }}</td>
-                        <td>{{ appliance.template.template_group.id }}</td>
-                        <td>{{ appliance.version }}</td>
-                        <td>{{ appliance.template.date }}</td>
-                        <td>{{ appliance.template.provider.id }}</td>
-                    </tr>
-                {% endfor %}
-            {% else %}
-                <tr><td colspan="6">No free appliances available :(</td></tr>
-            {% endif %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="6">The pre-provisioned appliances will be given to you when you request an appliance pool with the same parameters.</td>
-                </tr>
-            </tfoot>
-        </table>
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <strong>List of pre-provisioned appliances</strong>
     </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Appliance name</th>
+                <th>Template</th>
+                <th>Group</th>
+                <th>Version</th>
+                <th>Date</th>
+                <th>Provider</th>
+                
+            </tr>
+        </thead>
+        <tbody>
+        {% if appliances %}
+            {% for appliance in appliances %}
+                <tr>
+                    <td>{{ appliance.name }}</td>
+                    <td>{{ appliance.template.name }}</td>
+                    <td>{{ appliance.template.template_group.id }}</td>
+                    <td>{{ appliance.version }}</td>
+                    <td>{{ appliance.template.date }}</td>
+                    <td>{{ appliance.template.provider.id }}</td>
+                </tr>
+            {% endfor %}
+        {% else %}
+            <tr><td colspan="6">No free appliances available :(</td></tr>
+        {% endif %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="6">The pre-provisioned appliances will be given to you when you request an appliance pool with the same parameters.</td>
+            </tr>
+        </tfoot>
+    </table>
 </div>
 {% endblock %}
