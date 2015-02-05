@@ -140,13 +140,12 @@ class ParallelSession(object):
             self.appliances = []
             # Push an appliance to the stack to have proper reference for test collection
             IPAppliance(address=request["appliances"][0]["ip_address"]).push()
+            self.terminal.write("Appliances were provided:\n")
             for appliance in request["appliances"]:
                 url = "https://{}/".format(appliance["ip_address"])
                 self.appliances.append(url)
+                self.terminal.write("- {} is {}\n".format(url, appliance['name']))
             map(lambda a: "https://{}/".format(a["ip_address"]), request["appliances"])
-            self.terminal.write("Appliances were provided:\n")
-            for appliance_ip in self.appliances:
-                self.terminal.write("- {}\n".format(appliance_ip))
             self._reset_timer()
             # Set the base_url for collection purposes on the first appliance
             conf.runtime["env"]["base_url"] = self.appliances[0]
