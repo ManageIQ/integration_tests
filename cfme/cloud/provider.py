@@ -303,6 +303,8 @@ class Provider(Updateable, Pretty):
             ProviderHasNoProperty: If the provider does not have the property defined.
         """
         host_stats = client.stats(*stats_to_match)
+        if not db:
+            sel.refresh()
 
         if refresh_timer:
             if refresh_timer.is_it_time():
