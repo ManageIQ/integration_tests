@@ -240,6 +240,17 @@ class Visual(Updateable):
         quad = Quadicon(name, None)
         return quad.check_for_single_quadrant_icon
 
+    @property
+    def cloud_provider_quad(self):
+        sel.force_navigate("my_settings_visual")
+        return self.cloud_provider_quad
+
+    @cloud_provider_quad.setter
+    def cloud_provider_quad(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.quadicons_form.cloud_provider_quad, str(value))
+        sel.click(form_buttons.save)
+
 visual = Visual()
 
 
