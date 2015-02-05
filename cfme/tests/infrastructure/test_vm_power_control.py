@@ -10,6 +10,9 @@ from utils import testgen, error
 from utils.log import logger
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
+from utils.version import appliance_is_downstream
+
+appliance_is_downstream  # To shut up lint, will be used in string expression then
 
 
 pytestmark = [pytest.mark.long_running]
@@ -377,3 +380,48 @@ def test_no_template_power_control(provider_crud, setup_provider_funcscope):
     pytest.sel.click(quadicon)
     with error.expected(NoSuchElementException):
         toolbar.select("Power")
+
+
+@pytest.mark.usefixtures("test_vm")
+@pytest.mark.usefixtures("setup_provider_clsscope")
+@pytest.mark.meta(skip=appliance_is_downstream)
+class TestPowerControlRESTAPI(object):
+    @pytest.fixture(scope="function")
+    def vm(self, rest_api, vm_name):
+        result = rest_api.collections.vms.get(name=vm_name)
+        assert result.name == vm_name
+        return result
+
+    def test_power_off(self, verify_vm_running, vm):
+        assert "stop" in vm.action
+        vm.action.stop()
+        wait_for(lambda: vm.power_state == "off", num_sec=120, delay=5, fail_func=vm.reload)
+
+    def test_power_on(self, verify_vm_stopped, vm):
+        assert "start" in vm.action
+        vm.action.start()
+        wait_for(lambda: vm.power_state == "on", num_sec=120, delay=5, fail_func=vm.reload)
+
+    def test_suspend(self, verify_vm_running, vm):
+        assert "suspend" in vm.action
+        vm.action.suspend()
+        wait_for(lambda: vm.power_state == "suspended", num_sec=120, delay=5, fail_func=vm.reload)
+
+
+@pytest.mark.usefixtures("test_vm")
+@pytest.mark.usefixtures("setup_provider_clsscope")
+@pytest.mark.meta(skip=appliance_is_downstream)
+class TestDeleteViaREST(object):
+    # TODO: Put it somewhere else?
+    @pytest.fixture(scope="function")
+    def vm(self, rest_api, vm_name):
+        result = rest_api.collections.vms.get(name=vm_name)
+        assert result.name == vm_name
+        return result
+
+    def test_delete(self, verify_vm_stopped, vm, vm_name, rest_api):
+        assert "delete" in vm.action
+        vm.action.delete()
+        wait_for(
+            lambda: not rest_api.collections.vms.find_by(name=vm_name),
+            num_sec=240, delay=5)

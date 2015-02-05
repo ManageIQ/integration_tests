@@ -17,7 +17,7 @@ from cfme.infrastructure.provider import get_from_config
 from cfme.infrastructure.virtual_machines import Vm
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance
-from utils import conf, datafile, db, lazycache, trackerbot, db_queries
+from utils import api, conf, datafile, db, lazycache, trackerbot, db_queries
 from utils.log import logger, create_sublogger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check
@@ -63,6 +63,10 @@ class Appliance(object):
     @lazycache
     def ipapp(self):
         return IPAppliance(self.address)
+
+    @lazycache
+    def rest_api(self):
+        return self.ipapp.rest_api
 
     @lazycache
     def provider(self):
@@ -379,6 +383,10 @@ class IPAppliance(object):
         # stash the passed-in url in the lazycache to save a step
         ip_a.url = url
         return ip_a
+
+    @lazycache
+    def rest_api(self):
+        return api.API("https://{}/api".format(self.address), auth=("admin", "smartvm"))
 
     @lazycache
     def address(self):
