@@ -18,12 +18,17 @@ _failed_providers = set()
 
 
 def _setup_provider(provider_key):
-    def skip(provider_key):
-        raise pytest.skip('Provider {} failed to set up, skipping test'.format(provider_key))
+    def skip(provider_key, previous_fail=False):
+        if previous_fail:
+            raise pytest.skip('Provider {} failed to set up previously in another test, '
+                              'skipping test'.format(provider_key))
+        else:
+            raise pytest.skip('Provider {} failed to set up this time, '
+                              'skipping test'.format(provider_key))
     # This function is dynamically "fixturized" to setup up a specific provider,
     # optionally skipping the provider setup if that provider has previously failed.
     if provider_key in _failed_providers:
-        skip(provider_key)
+        skip(provider_key, previous_fail=True)
 
     try:
         providers.setup_provider(provider_key)
