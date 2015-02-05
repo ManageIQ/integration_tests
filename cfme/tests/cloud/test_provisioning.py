@@ -30,6 +30,10 @@ def pytest_generate_tests(metafunc):
             # Need image for image -> instance provisioning
             continue
 
+        if metafunc.function is test_provision_from_template_with_attached_disks \
+           and args['provider_type'] != 'openstack':
+            continue
+
         new_idlist.append(idlist[i])
         new_argvalues.append([args[argname] for argname in argnames])
 
@@ -84,18 +88,18 @@ prov.set_option(
 ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
 
 
+# Not collected for EC2 in generate_tests above
 @pytest.mark.bugzilla(1152737)
 @pytest.mark.parametrize("disks", range(1, 5))
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, disks,
-        soft_assert):
+        soft_assert, provider_type):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:
         test_flag: provision
     """
-    if not isinstance(provider_crud, OpenStackProvider):
-        pytest.skip("Openstack only so far")
+
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
             (image, vm_name, provider_crud.key))
