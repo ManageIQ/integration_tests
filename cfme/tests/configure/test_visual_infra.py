@@ -18,23 +18,26 @@ def setup_a_provider():
 
 @pytest.yield_fixture(scope="module")
 def set_grid():
+    gridlimit = visual.grid_view_limit
     visual.grid_view_limit = 5
     yield
-    visual.grid_view_limit = 20
+    visual.grid_view_limit = gridlimit
 
 
 @pytest.yield_fixture(scope="module")
 def set_tile():
+    tilelimit = visual.tile_view_limit
     visual.tile_view_limit = 5
     yield
-    visual.tile_view_limit = 20
+    visual.tile_view_limit = tilelimit
 
 
 @pytest.yield_fixture(scope="module")
 def set_list():
+    listlimit = visual.list_view_limit
     visual.list_view_limit = 5
     yield
-    visual.list_view_limit = 20
+    visual.list_view_limit = listlimit
 
 
 def set_default_page():
