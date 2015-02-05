@@ -135,7 +135,7 @@ class Provider(MetadataMixin):
 
     @property
     def appliance_load(self):
-        if self.appliance_limit is None:
+        if self.appliance_limit is None or self.appliance_limit == 0:
             return 0.0
         return float(self.num_currently_managing) / float(self.appliance_limit)
 
