@@ -486,9 +486,11 @@ class ServerLogDepot(Pretty):
                     smb="Samba"
                 ),
                 "5.3": dict(
+                    anon_ftp="Anonymous FTP",
                     ftp="FTP",
                     nfs="NFS",
-                    smb="Samba"
+                    smb="Samba",
+                    dropbox="Red Hat Dropbox",
                 )
             })
 
@@ -512,7 +514,7 @@ class ServerLogDepot(Pretty):
                 self.server_collect_logs,
                 details
             )
-            if validate and self.p_type != "nfs":
+            if validate and self.p_type not in {"nfs", "anon_ftp", "dropbox"}:
                 sel.click(self.validate)
                 flash.assert_no_errors()
             sel.click(form_buttons.cancel if cancel else form_buttons.save)
