@@ -48,6 +48,8 @@ def templates(request):
 
 
 def shepherd(request):
+    if not request.user.is_authenticated():
+        return go_home(request)
     appliances = Appliance.objects.filter(
         appliance_pool=None, ready=True, marked_for_deletion=False).order_by(
             "template__template_group", "template__version", "template__date", "template__provider")
