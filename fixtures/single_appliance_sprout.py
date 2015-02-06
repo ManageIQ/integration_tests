@@ -14,6 +14,8 @@ from utils.wait import wait_for
 
 timer = None
 appliance = None
+pool_id = None
+sprout = None
 
 
 def ping_pool(sprout, pool, timeout):
@@ -32,6 +34,8 @@ def reset_timer(sprout, pool, timeout):
 
 def pytest_configure(config, __multicall__):
     global appliance
+    global pool_id
+    global sprout
     __multicall__.execute()
     if not config.option.appliances and (config.option.use_sprout
             and config.option.sprout_appliances == 1):
@@ -46,7 +50,7 @@ def pytest_configure(config, __multicall__):
             lease_time=config.option.sprout_timeout
         )
         terminal.write("Appliance pool {}. Waiting for fulfillment ...\n".format(pool_id))
-        at_exit(sprout.destroy_pool, pool_id)
+        at_exit(destroy_the_pool)
         result = wait_for(
             lambda: sprout.request_check(pool_id)["fulfilled"],
             num_sec=config.option.sprout_provision_timeout * 60,
@@ -80,6 +84,31 @@ def pytest_sessionstart(session):
 @pytest.mark.trylast
 def pytest_sessionfinish(session, exitstatus):
     global appliance
+    global timer
+    global pool_id
+    global sprout
+    terminal = reporter()
+    if timer is not None:
+        terminal.write("Stopping timer\n")
+        timer.cancel()
+        timer = None
     if appliance is not None:
+        terminal.write("Popping out the appliance\n")
         appliance.pop()
         appliance = None
+    destroy_the_pool()
+
+
+def destroy_the_pool():
+    global sprout
+    global pool_id
+    terminal = reporter()
+    if sprout is not None and pool_id is not None and sprout.pool_exists(pool_id):
+        terminal.write("Destroying pool {}\n".format(pool_id))
+        try:
+            sprout.destroy_pool(pool_id)
+            wait_for(lambda: not sprout.pool_exists(pool_id), num_sec=300, delay=10)
+        except Exception as e:
+            terminal.write("Exception raised: {} - {}\n".format(type(e).__name__, str(e)))
+        sprout = None
+        pool_id = None

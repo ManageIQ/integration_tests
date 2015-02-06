@@ -48,7 +48,7 @@ from fixtures.terminalreporter import reporter
 from utils import at_exit, conf
 from utils.appliance import IPAppliance
 from utils.log import create_sublogger
-from utils.sprout import SproutClient
+from utils.sprout import SproutClient, SproutException
 from utils.wait import wait_for
 
 
@@ -162,6 +162,9 @@ class ParallelSession(object):
 
     def _reset_timer(self):
         if not (self.sprout_client is not None and self.sprout_pool is not None):
+            if self.sprout_timer:
+                self.sprout_timer.cancel()  # Cancel it anyway
+                self.terminal.write("Sprout timer cancelled\n")
             return
         if self.sprout_timer:
             self.sprout_timer.cancel()
@@ -172,7 +175,16 @@ class ParallelSession(object):
         self.sprout_timer.start()
 
     def sprout_ping_pool(self):
-        self.sprout_client.prolong_appliance_pool_lease(self.sprout_pool)
+        try:
+            self.sprout_client.prolong_appliance_pool_lease(self.sprout_pool)
+        except SproutException as e:
+            self.terminal.write(
+                "Pool {} does not exist any more, disabling the timer.\n".format(self.sprout_pool))
+            self.terminal.write(
+                "This can happen before the tests are shut down "
+                "(last deleted appliance deleted the pool")
+            self.terminal.write("> The exception was: {}".format(str(e)))
+            self.sprout_pool = None  # Will disable the timer in next reset call.
         self._reset_timer()
 
     def send(self, slaveid, event_data):
@@ -342,7 +354,7 @@ class ParallelSession(object):
                     'need_tests',
                     'runtest_logreport',
                     'runtest_logstart',
-                    'sessionfinish'
+                    'sessionfinish',
                 )
 
                 if event_name == 'collectionfinish':
