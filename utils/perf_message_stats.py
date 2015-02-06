@@ -89,7 +89,7 @@ def convert_mem_to_mib(top_mem):
     return num
 
 
-def evm_to_messages(evmlogfile, filters):
+def evm_to_messages(evm_file, filters):
     test_start = ''
     test_end = ''
     line_count = 0
@@ -97,6 +97,7 @@ def evm_to_messages(evmlogfile, filters):
     msg_cmds = {}
 
     runningtime = time()
+    evmlogfile = open(evm_file, 'r')
     evm_log_line = evmlogfile.readline()
     while evm_log_line:
         line_count += 1
@@ -185,9 +186,9 @@ def evm_to_messages(evmlogfile, filters):
             msg_cmds[msg_cmd]['queue'] = []
             msg_cmds[msg_cmd]['execute'] = []
         if messages[msg].total_time != 0:
-            msg_cmds[msg_cmd]['total'].append(messages[msg].total_time)
-            msg_cmds[msg_cmd]['queue'].append(messages[msg].deq_time)
-            msg_cmds[msg_cmd]['execute'].append(messages[msg].del_time)
+            msg_cmds[msg_cmd]['total'].append(round(messages[msg].total_time, 2))
+            msg_cmds[msg_cmd]['queue'].append(round(messages[msg].deq_time, 2))
+            msg_cmds[msg_cmd]['execute'].append(round(messages[msg].del_time, 2))
 
     return messages, msg_cmds, test_start, test_end, line_count
 
@@ -685,15 +686,16 @@ def perf_process_evm(evm_file, top_file):
         '-hourly': re.compile(r'\"[0-9\-]*T[0-9\:]*Z\",\s\"hourly\"'),
         '-daily': re.compile(r'\"[0-9\-]*T[0-9\:]*Z\",\s\"daily\"'),
         '-EmsRedhat': re.compile(r'\[\[\"EmsRedhat\"\,\s[0-9]*\]\]'),
-        '-EmsVmware': re.compile(r'\[\[\"EmsVmware\"\,\s[0-9]*\]\]')
+        '-EmsVmware': re.compile(r'\[\[\"EmsVmware\"\,\s[0-9]*\]\]'),
+        '-EmsAmazon': re.compile(r'\[\[\"EmsAmazon\"\,\s[0-9]*\]\]'),
+        '-EmsOpenstack': re.compile(r'\[\[\"EmsOpenstack\"\,\s[0-9]*\]\]')
     }
 
     starttime = time()
     initialtime = starttime
 
     logger.info('----------- Parsing evm log file for messages -----------')
-    evmlogfile = open(evm_file, 'r')
-    messages, msg_cmds, test_start, test_end, msg_lc = evm_to_messages(evmlogfile, msg_filters)
+    messages, msg_cmds, test_start, test_end, msg_lc = evm_to_messages(evm_file, msg_filters)
     timediff = time() - starttime
     logger.info('----------- Completed Parsing evm log file -----------')
     logger.info('Parsed {} lines of evm log file for messages in {}'.format(msg_lc, timediff))

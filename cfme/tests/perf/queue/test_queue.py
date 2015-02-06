@@ -26,11 +26,20 @@ def enable_candu():
 
 
 @pytest.mark.usefixtures("setup_infrastructure_providers")
-def test_queue_infrastructure(ssh_client, enable_candu):
+def test_queue_infrastructure(request, ssh_client, enable_candu):
     local_evm_gz = str(log_path.join('evm.perf.log.gz'))
     local_evm = str(log_path.join('evm.perf.log'))
     local_top_gz = str(log_path.join('top_output.perf.log.gz'))
     local_top = str(log_path.join('top_output.perf.log'))
+
+    def clean_up_log_files(files):
+        for clean_file in files:
+            # Clean up collected log files as they can be huge in case of exception
+            if os.path.exists(clean_file):
+                logger.info('Removing: {}'.format(clean_file))
+                os.remove(clean_file)
+    request.addfinalizer(lambda: clean_up_log_files([local_evm, local_evm_gz, local_top,
+        local_top_gz]))
 
     sleep_time = perf_tests['test_queue']['infra_time']
 
@@ -48,13 +57,3 @@ def test_queue_infrastructure(ssh_client, enable_candu):
 
     # Post process evm log for queue metrics and produce graphs, and csvs
     perf_process_evm(local_evm, local_top)
-
-    # Clean up and delete evm.perf.log as it is likely huge...
-    if os.path.exists(local_evm):
-        logger.info('Removing: {}'.format(local_evm))
-        os.remove(local_evm)
-
-    # Clean up and delete top_output.perf.log as it is likely huge...
-    if os.path.exists(local_top):
-        logger.info('Removing: {}'.format(local_top))
-        os.remove(local_top)
