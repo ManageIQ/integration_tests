@@ -146,7 +146,8 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         try:
             result = setup_provider(provider, validate=validate, check_existing=check_existing)
             break
-        except:
+        except Exception as e:
+            logger.exception(e)
             continue
     else:
         raise Exception("No providers could be set up matching the params")
