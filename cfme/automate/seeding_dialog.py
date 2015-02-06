@@ -2,7 +2,7 @@
 from cfme.web_ui import menu
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, fill, accordion
-import time
+from datetime import datetime
 
 
 def open_import_export(_):
@@ -36,8 +36,8 @@ class SeedingDialog():
             dialog: Dialog to export.
         """
         sel.force_navigate("import_export")
-        print self.dialog
         fill(export_form, {'dialog_multiselect': self.dialog})
-        time.sleep(5)
         sel.click(export_form._export_button)
-        time.sleep(5)
+        x = datetime.utcnow()
+        timestamp = x.strftime("%Y%m%d_%H%M%S")
+        return timestamp
