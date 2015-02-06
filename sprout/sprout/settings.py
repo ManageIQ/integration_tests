@@ -149,6 +149,10 @@ BROKEN_APPLIANCE_GRACE_TIME = dict(
     hours=1,
 )
 
+ORPHANED_APPLIANCE_GRACE_TIME = dict(
+    minutes=45,
+)
+
 # Celery beat
 CELERYBEAT_SCHEDULE = {
     'check-templates': {

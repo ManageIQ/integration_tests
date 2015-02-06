@@ -615,7 +615,7 @@ def appliance_power_on(self, appliance_id):
             Appliance.objects.get(id=appliance_id).set_status("Appliance was powered on.")
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
-                appliance.power_state = Appliance.Power.ON
+                appliance.set_power_state(Appliance.Power.ON)
                 appliance.save()
             wait_appliance_ready.delay(appliance.id)
             return
@@ -644,7 +644,7 @@ def appliance_power_off(self, appliance_id):
             Appliance.objects.get(id=appliance_id).set_status("Appliance was powered off.")
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
-                appliance.power_state = Appliance.Power.OFF
+                appliance.set_power_state(Appliance.Power.OFF)
                 appliance.ready = False
                 appliance.save()
             return
@@ -677,7 +677,7 @@ def appliance_suspend(self, appliance_id):
             Appliance.objects.get(id=appliance_id).set_status("Appliance was suspended.")
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
-                appliance.power_state = Appliance.Power.SUSPENDED
+                appliance.set_power_state(Appliance.Power.SUSPENDED)
                 appliance.ready = False
                 appliance.save()
             return
@@ -739,20 +739,20 @@ def refresh_appliances_provider(self, provider_id):
             # Using the UUID and change the name if it changed
             appliance.name = vm.name
             appliance.ip_address = vm.ip
-            appliance.power_state = Appliance.POWER_STATES_MAPPING.get(
-                vm.power_state, Appliance.Power.UNKNOWN)
+            appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
+                vm.power_state, Appliance.Power.UNKNOWN))
             appliance.save()
         elif appliance.name in dict_vms:
             vm = dict_vms[appliance.name]
             # Using the name, and then retrieve uuid
             appliance.uuid = vm.uuid
             appliance.ip_address = vm.ip
-            appliance.power_state = Appliance.POWER_STATES_MAPPING.get(
-                vm.power_state, Appliance.Power.UNKNOWN)
+            appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
+                vm.power_state, Appliance.Power.UNKNOWN))
             appliance.save()
         else:
             # Orphaned :(
-            appliance.power_state = Appliance.Power.ORPHANED
+            appliance.set_power_state(Appliance.Power.ORPHANED)
             appliance.save()
 
 
@@ -796,10 +796,14 @@ def check_templates_in_provider(self, provider_id):
 @singleton_task()
 def delete_nonexistent_appliances(self):
     """Goes through orphaned appliances' objects and deletes them from the database."""
+    expiration_time = (timezone.now() - timedelta(**settings.ORPHANED_APPLIANCE_GRACE_TIME))
     for appliance in Appliance.objects.filter(ready=True).all():
         if appliance.name in redis.renaming_appliances:
             continue
         if appliance.power_state == Appliance.Power.ORPHANED:
+            if appliance.power_state.changed > expiration_time:
+                # Ignore it for now
+                continue
             try:
                 appliance.delete()
             except ObjectDoesNotExist as e:
