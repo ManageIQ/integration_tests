@@ -1,5 +1,5 @@
 import pytest
-from utils.browser import ensure_browser_open
+from utils.browser import ensure_browser_open, quit
 from cfme.login import login_admin
 
 
@@ -14,5 +14,13 @@ def logged_in(browser):
     Yields: Browser object
     """
     ensure_browser_open()
-    login_admin()
+    try:
+        login_admin()
+    except pytest.sel.WebDriverException as e:
+        if "jquery" not in str(e).lower():
+            raise  # Something we don't know yet
+        quit()
+        ensure_browser_open()
+        # And try again
+        login_admin()
     yield browser()

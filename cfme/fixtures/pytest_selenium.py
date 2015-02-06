@@ -35,7 +35,7 @@ import pytest
 from cfme import exceptions, js
 from fixtures.pytest_store import store
 from utils import version
-from utils.browser import browser, ensure_browser_open
+from utils.browser import browser, ensure_browser_open, quit
 from utils.log import logger
 from utils.wait import wait_for
 from utils.pretty import Pretty
@@ -810,16 +810,30 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right here
     if is_displayed("//div[@id='blocker_div']"):
         logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
-        browser().quit()
+        quit()
         kwargs.pop("start", None)
         force_navigate("dashboard")  # Start fresh
 
-    try:
-        # What we'd like to happen...
+    def _login_func():
         if not current_user:  # default to admin user
             login.login_admin()
         else:  # we recycled and want to log back in
             login.login(current_user.username, current_user.password)
+
+    try:
+        try:
+            # What we'd like to happen...
+            _login_func()
+        except WebDriverException as e:
+            if "jquery" not in str(e).lower():
+                raise  # Something unknown happened
+            logger.info("Seems we got a non-CFME page (blank or screwed up) so killing the browser")
+            quit()
+            ensure_browser_open()
+            # And try it again
+            _login_func()
+            # If this failed, no help with that :/
+
         logger.info('Navigating to %s' % page_name)
         menu.nav.go_to(page_name, *args, **kwargs)
     except (KeyboardInterrupt, ValueError):
