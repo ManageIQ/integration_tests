@@ -20,6 +20,11 @@ def pytest_generate_tests(metafunc):
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
+
+        if metafunc.function is test_vm_genealogy \
+           and isinstance(args['provider_crud'], RHEVMProvider):
+            continue
+
         if not args['provisioning']:
             # No provisioning data available
             continue
@@ -41,6 +46,7 @@ def vm_name():
     return vm_name
 
 
+# uncollected above in pytest_generate_tests
 @pytest.mark.github("ManageIQ/manageiq:473")
 def test_vm_genealogy(
         setup_provider, vm_name, provider_crud, provisioning, soft_assert, provider_mgmt, request):
@@ -49,8 +55,6 @@ def test_vm_genealogy(
     Metadata:
         test_flag: geneaology, provision
     """
-    if isinstance(provider_crud, RHEVMProvider):
-        pytest.skip("RHEV-M does not support creating templates from VM")
     original_template = provisioning["template"]
     original_vm = Vm(vm_name, provider_crud, template_name=original_template)
     original_vm.create_on_provider()

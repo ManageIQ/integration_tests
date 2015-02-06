@@ -13,6 +13,7 @@ Required YAML keys:
 
 import pytest
 from cfme.control import explorer
+from cfme.infrastructure.provider import RHEVMProvider
 from datetime import datetime
 from functools import partial
 from utils import mgmt_system, testgen
@@ -49,11 +50,27 @@ class VMWrapper(Pretty):
         return partial(func, self._vm)
 
 
-pytest_generate_tests = testgen.generate(
-    testgen.infra_providers,
-    "small_template",
-    scope="module"
-)
+def pytest_generate_tests(metafunc):
+    # Filter out providers without provisioning data or hosts defined
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
+        'small_template', scope="module")
+
+    new_idlist = []
+    new_argvalues = []
+    for i, argvalue_tuple in enumerate(argvalues):
+        args = dict(zip(argnames, argvalue_tuple))
+
+        if ((metafunc.function is test_action_create_snapshot_and_delete_last)
+            or
+            (metafunc.function is test_action_create_snapshots_and_delete_them)) \
+                and isinstance(args['provider_crud'], RHEVMProvider):
+            continue
+
+        new_idlist.append(idlist[i])
+        new_argvalues.append(argvalues[i])
+
+    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+
 
 pytestmark = [
     pytest.mark.long_running,
@@ -403,8 +420,6 @@ def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testi
     Metadata:
         test_flag: actions, provision
     """
-    if isinstance(vm.provider, mgmt_system.RHEVMSystem):
-        pytest.skip("No snapshots on RHEV")
     # Set up the policy and prepare finalizer
     snapshot_name = generate_random_string()
     snapshot_create_action = explorer.Action(
@@ -446,8 +461,6 @@ def test_action_create_snapshots_and_delete_them(request, assign_policy_for_test
     Metadata:
         test_flag: actions, provision
     """
-    if isinstance(vm.provider, mgmt_system.RHEVMSystem):
-        pytest.skip("No snapshots on RHEV")
     # Set up the policy and prepare finalizer
     snapshot_name = generate_random_string()
     snapshot_create_action = explorer.Action(
