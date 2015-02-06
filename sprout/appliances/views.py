@@ -67,7 +67,8 @@ def versions_for_group(request):
         except ObjectDoesNotExist:
             versions = []
         else:
-            versions = Template.get_versions(template_group=group, ready=True, usable=True)
+            versions = Template.get_versions(
+                template_group=group, ready=True, usable=True, exists=True)
 
     return render(request, 'appliances/_versions.html', locals())
 
@@ -86,7 +87,8 @@ def date_for_group_and_version(request):
             filters = {
                 "template_group": group,
                 "ready": True,
-                "exists": True
+                "exists": True,
+                "usable": True,
             }
             if version == "latest":
                 try:
@@ -114,7 +116,8 @@ def providers_for_date_group_and_version(request):
             filters = {
                 "template_group": group,
                 "ready": True,
-                "exists": True
+                "exists": True,
+                "usable": True,
             }
             if version == "latest":
                 try:
