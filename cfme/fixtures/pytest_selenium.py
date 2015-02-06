@@ -211,7 +211,7 @@ def in_flight():
     """
     try:
         return execute_script(js.in_flight)
-    except:
+    except:  # This diaper is OK (mfalesni)
         sleep(0.5)
         return execute_script(js.in_flight)
 
@@ -355,7 +355,8 @@ def handle_alert(cancel=False, wait=30.0, squash=False):
         return True
     except NoAlertPresentException:
         return None
-    except:
+    except Exception as e:
+        logger.exception(e)
         if squash:
             return False
         else:
@@ -796,7 +797,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     # Clear any running "spinnies"
     try:
         execute_script('miqSparkleOff();')
-    except:
+    except:  # Diaper OK (mfalesni)
         # miqSparkleOff undefined, so it's definitely off.
         pass
 

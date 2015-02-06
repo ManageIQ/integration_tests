@@ -1480,7 +1480,8 @@ def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
         for appliance_data in all_appliances_data:
             app = provision_appliance(appliance_data['version'], vm_name_prefix)
             provisioned_appliances.append(app)
-    except:
+    except Exception as e:
+        logger.exception(e)
         raise ApplianceException(
             'Failed to provision appliance set - error in provisioning stage\n'
             'Check cfme_data yaml for errors in template names and provider setup'
