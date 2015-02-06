@@ -364,6 +364,7 @@ class Appliance(MetadataMixin):
 
     status = models.TextField(default="Appliance inserted into the system.")
     status_changed = models.DateTimeField(auto_now_add=True)
+    power_state_changed = models.DateTimeField(default=timezone.now)
 
     marked_for_deletion = models.BooleanField(default=False,
         help_text="Appliance is already being deleted.")
@@ -409,25 +410,6 @@ class Appliance(MetadataMixin):
     def ipapp(self):
         return IPAppliance(self.ip_address)
 
-    def retrieve_power_state(self):
-        api = self.provider_api
-        exists = api.does_vm_exist(self.name)
-        if not exists:
-            with transaction.atomic():
-                appliance = Appliance.objects.get(id=self.id)
-                appliance.power_state = self.Power.ORPHANED
-                appliance.save()
-                return
-        # Appliance present
-        power_state = api.vm_status(self.name)
-        with transaction.atomic():
-            appliance = Appliance.objects.get(id=self.id)
-            if power_state in appliance.POWER_STATES_MAPPING:
-                appliance.power_state = appliance.POWER_STATES_MAPPING[power_state]
-            else:
-                appliance.power_state = appliance.Power.UNKNOWN
-            appliance.save()
-
     def set_status(self, status):
         with transaction.atomic():
             appliance = Appliance.objects.get(id=self.id)
@@ -435,6 +417,12 @@ class Appliance(MetadataMixin):
             appliance.status_changed = timezone.now()
             appliance.save()
             logger().info("{}: {}".format(str(self), status))
+
+    def set_power_state(self, power_state):
+        if power_state != self.power_state:
+            logger().info("{} changed power state to {}".format(self.name, power_state))
+            self.power_state = power_state
+            self.power_state_changed = timezone.now()
 
     def __unicode__(self):
         return "{} {} @ {}".format(self.__class__.__name__, self.name, self.template.provider.id)
