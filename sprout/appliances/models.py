@@ -22,6 +22,12 @@ def logger():
     return create_logger("sprout")
 
 
+def apply_if_not_none(o, meth, *args, **kwargs):
+    if o is None:
+        return None
+    return getattr(o, meth)(*args, **kwargs)
+
+
 class MetadataMixin(models.Model):
     class Meta:
         abstract = True
@@ -367,6 +373,25 @@ class Appliance(MetadataMixin):
     ready = models.BooleanField(default=False,
         help_text="Appliance has an IP address and web UI is online.")
     uuid = models.CharField(max_length=36, null=True, blank=True, help_text="UUID of the machine")
+
+    @property
+    def serialized(self):
+        return dict(
+            id=self.id,
+            ready=self.ready,
+            name=self.name,
+            ip_address=self.ip_address,
+            status=self.status,
+            power_state=self.power_state,
+            status_changed=apply_if_not_none(self.status_changed, "isoformat"),
+            datetime_leased=apply_if_not_none(self.datetime_leased, "isoformat"),
+            leased_until=apply_if_not_none(self.leased_until, "isoformat"),
+            template_name=self.template.original_name,
+            template_id=self.template.id,
+            provider=self.template.provider.id,
+            marked_for_deletion=self.marked_for_deletion,
+            uuid=self.uuid,
+        )
 
     @property
     def provider_api(self):

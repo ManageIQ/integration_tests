@@ -146,6 +146,7 @@ def kill_appliance(self, appliance_id, replace_in_pool=False, minutes=60):
 
     If the appliance was assigned to pool and we want to replace it, redo the provisioning.
     """
+    logger().info("Initiated kill of appliance {}".format(appliance_id))
     workflow = [
         appliance_power_off.si(appliance_id),
         kill_appliance_delete.si(appliance_id),
@@ -399,6 +400,8 @@ def request_appliance_pool(appliance_pool_id, time_minutes):
     """This task gives maximum possible amount of spinned-up appliances to the specified pool and
     then if there is need to spin up another appliances, it spins them up via clone_template_to_pool
     task."""
+    logger().info(
+        "Appliance pool {} requested for {} minutes.".format(appliance_pool_id, time_minutes))
     pool = AppliancePool.objects.get(id=appliance_pool_id)
     n = Appliance.give_to_pool(pool)
     for i in range(pool.total_count - n):
@@ -482,6 +485,8 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
 
 @logged_task()
 def apply_lease_times(appliance_id, time_minutes):
+    logger().info(
+        "Applying lease time {} minutes on appliance {}".format(time_minutes, appliance_id))
     with transaction.atomic():
         appliance = Appliance.objects.get(id=appliance_id)
         appliance.datetime_leased = timezone.now()
@@ -491,6 +496,7 @@ def apply_lease_times(appliance_id, time_minutes):
 
 @logged_task()
 def clone_template(template_id):
+    logger().info("Cloning template {}".format(template_id))
     template = Template.objects.get(id=template_id)
     new_appliance_name = settings.APPLIANCE_FORMAT.format(
         group=template.template_group.id,
