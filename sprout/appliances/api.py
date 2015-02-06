@@ -11,6 +11,11 @@ from django.shortcuts import render
 
 from appliances.models import Appliance, AppliancePool, Provider, Group, Template
 from appliances.tasks import appliance_power_on, appliance_power_off, appliance_suspend
+from utils.log import create_logger
+
+
+def api_logger():
+    return create_logger("sprout_api")
 
 
 def json_response(data):
@@ -83,14 +88,22 @@ class JSONApi(object):
     def __call__(self, request):
         if request.method != 'POST':
             return json_success({
-                "available_methods": map(lambda m: m.description, self._methods.itervalues()),
+                "available_methods": sorted(
+                    map(lambda m: m.description, self._methods.itervalues()),
+                    key=lambda m: m["name"]),
             })
         try:
+            print self._methods
             data = json.loads(request.body)
             method_name = data["method"]
             args = data["args"]
             kwargs = data["kwargs"]
-            method = self._methods[method_name]
+            try:
+                method = self._methods[method_name]
+            except KeyError:
+                raise NameError("Method {} not found!".format(method_name))
+            api_logger().info(
+                "Calling method {}{}{}".format(method_name, repr(tuple(args)), repr(kwargs)))
             if method.auth:
                 if "auth" in data:
                     username, password = data["auth"]
@@ -106,7 +119,12 @@ class JSONApi(object):
             else:
                 return json_success(method(*args, **kwargs))
         except Exception as e:
+            api_logger().error(
+                "Exception raised during {} call: {}: {}".format(
+                    method_name, type(e).__name__, str(e)))
             return json_exception(e)
+        else:
+            api_logger().info("Call to {} finished".format(method_name))
 
 jsonapi = JSONApi()
 
@@ -115,10 +133,23 @@ def jsonapi_doc(*args, **kwargs):
     return jsonapi.doc(*args, **kwargs)
 
 
-def apply_if_not_none(o, meth, *args, **kwargs):
-    if o is None:
-        return None
-    return getattr(o, meth)(*args, **kwargs)
+@jsonapi.method
+def list_appliances(used=False):
+    """Returns list of appliances.
+
+    Args:
+        used: Whether to report used or unused appliances
+    """
+    query = Appliance.objects
+    if used:
+        query = query.exclude(appliance_pool__owner=None)
+    else:
+        query = query.filter(appliance_pool__owner=None)
+    result = []
+    for appliance in query:
+        result.append(appliance.serialized)
+
+    return result
 
 
 @jsonapi.authenticated_method
@@ -140,19 +171,7 @@ def request_check(user, request_id):
         "fulfilled": request.fulfilled,
         "progress": int(round(request.percent_finished * 100)),
         "appliances": [
-            dict(
-                id=appliance.id,
-                ready=appliance.ready,
-                name=appliance.name,
-                ip_address=appliance.ip_address,
-                status=appliance.status,
-                power_state=appliance.power_state,
-                status_changed=apply_if_not_none(appliance.status_changed, "isoformat"),
-                datetime_leased=apply_if_not_none(appliance.datetime_leased, "isoformat"),
-                leased_until=apply_if_not_none(appliance.leased_until, "isoformat"),
-                template_name=appliance.template.original_name,
-                provider=appliance.template.provider.id,
-            )
+            appliance.serialized
             for appliance
             in request.appliances
         ],
