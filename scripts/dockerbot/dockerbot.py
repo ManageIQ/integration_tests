@@ -342,7 +342,7 @@ class DockerBot(object):
                 files = self.modified_files
                 if files:
                     self.args['pytest'] = ("py.test -v {} --use-provider default --long-running "
-                                           "--bugzilla --no-tracer --perf").format(" ".join(files))
+                                           "--no-tracer --perf").format(" ".join(files))
                 else:
                     self.args['pytest'] = "py.test -v --use-provider default -m smoke --no-tracer"
         if self.args['sprout']:
