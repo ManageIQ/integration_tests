@@ -32,6 +32,7 @@ from utils.update import Updateable
 from utils.wait import wait_for, RefreshTimer
 from utils import version
 from utils.pretty import Pretty
+from utils.stats import tol_check
 
 # Specific Add button
 add_provider_button = form_buttons.FormButton("Add this Cloud Provider")
@@ -316,9 +317,14 @@ class Provider(Updateable, Pretty):
         for stat in stats_to_match:
             try:
                 cfme_stat = getattr(self, stat)(db=db)
-                logger.info(' Matching stat [%s], Host(%s), CFME(%s)' %
-                    (stat, host_stats[stat], cfme_stat))
-                if host_stats[stat] != cfme_stat:
+                success, value = tol_check(host_stats[stat],
+                                           cfme_stat,
+                                           min_error=0.05,
+                                           low_val_correction=2)
+                logger.info(' Matching stat [{}], Host({}), CFME({}), '
+                    'with tolerance {} is {}'.format(stat, host_stats[stat], cfme_stat,
+                                                     value, success))
+                if not success:
                     return False
             except KeyError:
                 raise HostStatsNotContains("Host stats information does not contain '%s'" % stat)
