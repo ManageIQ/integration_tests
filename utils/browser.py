@@ -268,7 +268,10 @@ class Wharf(object):
 
     def checkout(self):
         response = requests.get(os.path.join(self.wharf_url, 'checkout'))
-        checkout = json.loads(response.content)
+        try:
+            checkout = json.loads(response.content)
+        except ValueError:
+            raise ValueError("JSON could not be decoded:\n{}".format(response.content))
         self.docker_id = checkout.keys()[0]
         self.config = checkout[self.docker_id]
         self._reset_renewal_timer()
@@ -287,7 +290,10 @@ class Wharf(object):
             # You can call renew as frequently as desired, but it'll only run if
             # the renewal timer has stopped or failed to renew
             response = requests.get(os.path.join(self.wharf_url, 'renew', self.docker_id))
-            expiry_info = json.loads(response.content)
+            try:
+                expiry_info = json.loads(response.content)
+            except ValueError:
+                raise ValueError("JSON could not be decoded:\n{}".format(response.content))
             self.config.update(expiry_info)
             self._reset_renewal_timer()
             logger.info('Renewed webdriver container %s' % self.docker_id)
