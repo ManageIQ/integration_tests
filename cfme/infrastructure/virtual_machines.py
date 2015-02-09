@@ -345,6 +345,48 @@ class Common(object):
     def genealogy(self):
         return Genealogy(self)
 
+    def check_compliance(self):
+        self.load_details()
+        pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
+
+    def assign_policy_profiles(self, *policy_profile_names):
+        """ Assign Policy Profiles to this VM.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(True, *policy_profile_names)
+
+    def unassign_policy_profiles(self, *policy_profile_names):
+        """ Unssign Policy Profiles to this VM.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(False, *policy_profile_names)
+
+    def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
+        """DRY function for managing policy profiles.
+
+        See :py:func:`assign_policy_profiles` and :py:func:`assign_policy_profiles`
+
+        Args:
+            assign: Wheter to assign or unassign.
+            policy_profile_names: :py:class:`str` with Policy Profile names.
+        """
+        self.load_details()
+        pol_btn("Manage Policies")
+        for policy_profile in policy_profile_names:
+            if assign:
+                manage_policies_tree.check_node(policy_profile)
+            else:
+                manage_policies_tree.uncheck_node(policy_profile)
+        form_buttons.save()
+
 
 class Vm(Common):
     """Represents a VM in CFME

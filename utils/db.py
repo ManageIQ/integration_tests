@@ -204,7 +204,9 @@ class Db(Mapping):
     def db_url(self):
         """The connection URL for this database, including credentials"""
         template = "postgres://{username}:{password}@{host}:5432/vmdb_production"
-        return template.format(host=self.hostname, **self.credentials)
+        result = template.format(host=self.hostname, **self.credentials)
+        logger.info("[DB] db_url is {}".format(result))
+        return result
 
     @lazycache
     def table_names(self):

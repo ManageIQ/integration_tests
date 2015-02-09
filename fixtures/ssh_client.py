@@ -3,7 +3,7 @@ import pytest
 from utils.ssh import SSHClient
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def ssh_client(uses_ssh):
     """SSH Client Fixture
 
