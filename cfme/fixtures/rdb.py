@@ -47,7 +47,7 @@ smtp_conf = {
 smtp_conf.update(conf.env.get('smtp', {}))
 
 
-for breakpoint in conf.rdb.get('breakpoints', []):
+for breakpoint in (conf.rdb.get('breakpoints') or []):
     for i, exc_name in enumerate(breakpoint['exceptions']):
         split_exc = exc_name.rsplit('.', 1)
         exc = getattr(import_module(split_exc[0]), split_exc[1])
