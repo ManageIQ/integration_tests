@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from sprout import critical_section
 
+from utils import mgmt_system
 from utils.appliance import Appliance as CFMEAppliance, IPAppliance
 from utils.conf import cfme_data
 from utils.log import create_logger
@@ -227,6 +228,19 @@ class Provider(MetadataMixin):
         result.sort(key=lambda item: item[1], reverse=True)
         return result
 
+    def cleanup(self):
+        """Put any cleanup tasks that might help the application stability here"""
+        logger().info("Running cleanup on provider {}".format(self.id))
+        if isinstance(self.api, mgmt_system.OpenstackSystem):
+            # Openstack cleanup
+            # Clean up the floating IPs
+            for floating_ip in self.api.floating_ips.findall(fixed_ip=None):
+                logger().info("Cleaning up the {} floating ip {}".format(self.id, floating_ip.ip))
+                try:
+                    floating_ip.delete()
+                except Exception as e:
+                    logger().exception(e)
+
     def __unicode__(self):
         return "{} {}".format(self.__class__.__name__, self.id)
 
@@ -403,6 +417,10 @@ class Appliance(MetadataMixin):
         return self.template.provider_name
 
     @property
+    def provider(self):
+        return self.template.provider
+
+    @property
     def cfme(self):
         return CFMEAppliance(self.provider_name, self.name)
 
@@ -441,6 +459,7 @@ class Appliance(MetadataMixin):
                         template=template).all()[:pool.total_count - len(appliances)]:
                     appliance.appliance_pool = pool
                     appliance.save()
+                    appliance.set_status("Given to pool {}".format(pool.id))
                     appliance_power_on.delay(appliance.id)
                     appliances.append(appliance)
                 if len(appliances) == pool.total_count:
