@@ -165,13 +165,16 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
             provider_mgmt.delete_vm(vm_name)
     request.addfinalizer(finalize)
 
+    # Make it appear in the provider
+    provider_crud.refresh_provider_relationships()
+
+    # Get the SOAP object
     soap = wait_for(
         lambda: get_vm_object(vm_name),
         message="VM object %s appears in CFME" % vm_name,
         fail_condition=None,
-        fail_func=lambda: provider_crud.refresh_provider_relationships(),
-        num_sec=240,
-        delay=30,
+        num_sec=600,
+        delay=15,
     )[0]
 
     return VMWrapper(provider_mgmt, vm_name, soap)
