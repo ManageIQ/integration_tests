@@ -169,6 +169,10 @@ def test_disk_format_select(provisioner, prov_data, template_name, disk_format, 
     Metadata:
         test_flag: provision
     """
+    if (
+            (provider_type == "rhevm" and disk_format == "thick") or
+            (provider_type != "rhevm" and disk_format == "preallocated")):
+        pytest.skip("{}+{}".format(provider_type, disk_format))
     prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
     prov_data["disk_format"] = disk_format
 
@@ -204,8 +208,7 @@ def test_power_on_or_off_after_provision(
     )
 
 
-@pytest.mark.uncollectif(lambda: version.current_version() < '5.3')
-def test_tag(provisioner, prov_data, template_name, provider_type):
+def test_tag(provisioner, prov_data, template_name):
     """ Tests tagging
 
     Metadata:

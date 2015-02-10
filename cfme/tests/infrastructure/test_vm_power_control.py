@@ -384,7 +384,7 @@ def test_no_template_power_control(provider_crud, setup_provider_funcscope):
 
 @pytest.mark.usefixtures("test_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
-@pytest.mark.uncollectif(lambda: appliance_is_downstream())
+@pytest.mark.meta(skip=appliance_is_downstream)
 class TestPowerControlRESTAPI(object):
     @pytest.fixture(scope="function")
     def vm(self, rest_api, vm_name):
@@ -410,7 +410,7 @@ class TestPowerControlRESTAPI(object):
 
 @pytest.mark.usefixtures("test_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
-@pytest.mark.uncollectif(lambda: appliance_is_downstream())
+@pytest.mark.meta(skip=appliance_is_downstream)
 class TestDeleteViaREST(object):
     # TODO: Put it somewhere else?
     @pytest.fixture(scope="function")
