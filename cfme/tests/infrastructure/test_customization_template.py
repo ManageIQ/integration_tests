@@ -2,6 +2,7 @@ import pytest
 
 from cfme.infrastructure import pxe
 from utils import error
+from utils.blockers import BZ
 from utils.randomness import generate_random_string
 from utils.update import update
 
@@ -62,7 +63,11 @@ def test_pxe_image_type_required_error_validation():
         template_name.create()
 
 
-@pytest.mark.bugzilla(1092951, ignore=[1083198])
+@pytest.mark.meta(
+    blockers=[
+        BZ(1092951, ignore_bugs=[1083198])
+    ]
+)
 def test_duplicate_name_error_validation():
     """Test to validate duplication in customization templates."""
     template_name = pxe.CustomizationTemplate(

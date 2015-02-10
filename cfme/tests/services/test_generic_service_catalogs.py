@@ -90,7 +90,7 @@ def test_service_circular_reference(catalog_item):
                                'cat_item': sec_catalog_bundle.name})
 
 
-@pytest.mark.bugzilla(1144207)
+@pytest.mark.meta(blockers=[1144207])
 def test_service_generic_catalog_bundle(catalog_item):
     bundle_name = "generic_" + generate_random_string()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
@@ -107,7 +107,7 @@ def test_service_generic_catalog_bundle(catalog_item):
     assert row.last_message.text == 'Request complete'
 
 
-@pytest.mark.bugzilla(1144207)
+@pytest.mark.meta(blockers=[1144207])
 def test_bundles_in_bundle(catalog_item):
     bundle_name = "first_" + generate_random_string()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
@@ -132,7 +132,7 @@ def test_bundles_in_bundle(catalog_item):
     assert row.last_message.text == 'Request complete'
 
 
-@pytest.mark.bugzilla(1144207)
+@pytest.mark.meta(blockers=[1144207])
 def test_delete_dialog_before_parent_item(catalog_item):
     service_dialog = ServiceDialog(label=catalog_item.dialog)
     service_dialog.delete()

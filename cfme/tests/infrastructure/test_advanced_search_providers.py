@@ -82,7 +82,7 @@ def test_filter_with_user_input_and_cancellation(providers):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.bugzilla(1168336)
+@pytest.mark.meta(blockers=[1168336])
 def test_filter_save_cancel(request, providers, ssh_client):
     sel.force_navigate("infrastructure_providers")
     filter_name = generate_random_string()
@@ -98,7 +98,7 @@ def test_filter_save_cancel(request, providers, ssh_client):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.bugzilla(1168336)
+@pytest.mark.meta(blockers=[1168336])
 def test_filter_save_and_load(request, providers, ssh_client):
     sel.force_navigate("infrastructure_providers")
     filter_name = generate_random_string()
@@ -117,7 +117,7 @@ def test_filter_save_and_load(request, providers, ssh_client):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.bugzilla(1168336)
+@pytest.mark.meta(blockers=[1168336])
 def test_filter_save_and_cancel_load(request, providers, ssh_client):
     sel.force_navigate("infrastructure_providers")
     filter_name = generate_random_string()
@@ -141,7 +141,7 @@ def test_filter_save_and_cancel_load(request, providers, ssh_client):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
-@pytest.mark.bugzilla(1168336)
+@pytest.mark.meta(blockers=[1168336])
 def test_filter_save_and_load_cancel(request, providers, ssh_client):
     sel.force_navigate("infrastructure_providers")
     filter_name = generate_random_string()
@@ -190,7 +190,7 @@ def test_quick_search_with_filter(request, providers):
     assert_no_cfme_exception()
 
 
-@pytest.mark.bugzilla(1168336)
+@pytest.mark.meta(blockers=[1168336])
 def test_can_delete_filter():
     sel.force_navigate("infrastructure_providers")
     filter_name = generate_random_string()
@@ -205,7 +205,7 @@ def test_can_delete_filter():
     assert_no_cfme_exception()
 
 
-@pytest.mark.bugzilla(1097150, 1168336)
+@pytest.mark.meta(blockers=[1097150, 1168336])
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     sel.force_navigate("infrastructure_providers")
@@ -221,7 +221,7 @@ def test_delete_button_should_appear_after_save(request):
         pytest.fail("Could not delete filter right after saving!")
 
 
-@pytest.mark.bugzilla(1097150)
+@pytest.mark.meta(blockers=[1097150])
 def test_cannot_delete_more_than_once(request):
     """When Delete button appars, it does not want to go away"""
     sel.force_navigate("infrastructure_providers")

@@ -169,7 +169,7 @@ def test_priority(
     # END OF LAST SIMULATION
 
 
-@pytest.mark.bugzilla(1134500)
+@pytest.mark.meta(blockers=[1134500])
 def test_override_method_across_domains(
         request, ssh_client, original_method, original_instance, copy_domain,
         original_method_write_data, copy_method_write_data, setup_a_provider):

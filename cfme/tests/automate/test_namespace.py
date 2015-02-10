@@ -50,7 +50,7 @@ def test_add_delete_namespace_nested(namespace):
     assert not nested_ns.exists()
 
 
-@pytest.mark.bugzilla(1136518)
+@pytest.mark.meta(blockers=[1136518])
 def test_duplicate_namespace_disallowed(namespace):
     namespace.create()
     with error.expected("Name has already been taken"):
@@ -58,7 +58,7 @@ def test_duplicate_namespace_disallowed(namespace):
 
 
 # provider needed as workaround for bz1035399
-@pytest.mark.bugzilla(1140331)
+@pytest.mark.meta(blockers=[1140331])
 def test_permissions_namespace_crud(setup_single_provider):
     """ Tests that a namespace can be manipulated only with the right permissions"""
     tac.single_task_permission_test([['Automate', 'Explorer']],

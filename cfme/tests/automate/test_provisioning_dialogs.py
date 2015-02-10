@@ -38,7 +38,7 @@ for nav_loc, name in provisioning_dialogs.ProvisioningDialog.ALLOWED_TYPES:
     sort_by_params.append((nav_loc, "Description", "descending"))
 
 
-@pytest.mark.bugzilla(1096388)
+@pytest.mark.meta(blockers=[1096388])
 @pytest.mark.parametrize(("nav_loc", "by", "order"), sort_by_params)
 def test_provisioning_dialogs_sorting(nav_loc, by, order):
     pytest.sel.force_navigate("{}_dialogs".format(nav_loc))

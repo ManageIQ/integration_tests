@@ -137,7 +137,7 @@ def create_vm(provider_key, provider_mgmt, provider_init, catalog_item, request)
     return vm_name
 
 
-@pytest.mark.bugzilla(1144207)
+@pytest.mark.meta(blockers=[1144207])
 @pytest.mark.usefixtures("setup_provider")
 @pytest.mark.long_running
 def test_vm_clone(provisioning, provider_type, provider_crud, clone_vm_name,

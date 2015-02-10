@@ -171,12 +171,12 @@ class TestVmDetailsPowerControlPerProvider(object):
         except TimedOutError:
             return False
 
-    def _check_power_options_when_on(self, soft_asserte, vm, bug, from_details):
-        soft_asserte(
+    def _check_power_options_when_on(self, soft_assert, vm, bug, from_details):
+        soft_assert(
             vm.is_pwr_option_available_in_cfme(option=Vm.POWER_OFF, from_details=from_details))
-        soft_asserte(
+        soft_assert(
             not vm.is_pwr_option_available_in_cfme(option=Vm.POWER_ON, from_details=from_details))
-        soft_asserte(
+        soft_assert(
             vm.is_pwr_option_available_in_cfme(option=Vm.SUSPEND, from_details=from_details))
 
         # limited options for SCVMM providers
@@ -184,17 +184,17 @@ class TestVmDetailsPowerControlPerProvider(object):
 
             # RHEV VMs are slightly different in terms of options
             if isinstance(vm.provider_crud, RHEVMProvider):
-                soft_asserte(
+                soft_assert(
                     not vm.is_pwr_option_available_in_cfme(
                         option=Vm.GUEST_RESTART, from_details=from_details))
-                soft_asserte(
+                soft_assert(
                     not vm.is_pwr_option_available_in_cfme(
                         option=Vm.RESET, from_details=from_details))
             else:
-                soft_asserte(
+                soft_assert(
                     vm.is_pwr_option_available_in_cfme(
                         option=Vm.GUEST_RESTART, from_details=from_details))
-                soft_asserte(
+                soft_assert(
                     vm.is_pwr_option_available_in_cfme(option=Vm.RESET, from_details=from_details))
 
             vm.is_pwr_option_available_in_cfme(

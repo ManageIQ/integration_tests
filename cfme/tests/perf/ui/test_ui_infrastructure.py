@@ -4,6 +4,7 @@ from cfme.infrastructure.datastore import get_all_datastores
 from cfme.infrastructure.host import get_all_hosts
 from cfme.infrastructure.provider import get_all_providers
 from cfme.web_ui import paginator
+from utils.blockers import BZ
 from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
 from utils.pagestats import navigate_accordions
@@ -131,7 +132,12 @@ def test_perf_ui_infra_hosts(ui_worker_pid, ssh_client, soft_assert):
 
 
 # Currently unskip on 1175504 since a large environment is a requirement for this bug
-@pytest.mark.bugzilla(1086386, 1175504, unskip={1175504: True})
+@pytest.mark.meta(
+    blockers=[
+        1086386,
+        BZ(1175504, unblock=True)
+    ]
+)
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_vm_explorer(ui_worker_pid, ssh_client, soft_assert):
@@ -152,7 +158,7 @@ def test_perf_ui_infra_vm_explorer(ui_worker_pid, ssh_client, soft_assert):
 
 
 # Currently unskip 1129260 since a large environment is a requirement for this bug
-@pytest.mark.bugzilla(1129260, unskip={1129260: True})
+@pytest.mark.meta(blockers=[BZ(1129260, unblock=True)])
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
 def test_perf_ui_infra_resource_pools(ui_worker_pid, ssh_client, soft_assert):

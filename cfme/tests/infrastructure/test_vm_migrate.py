@@ -26,7 +26,7 @@ def provider_init(provider_key):
         pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
-@pytest.mark.bugzilla(1174881)
+@pytest.mark.meta(blockers=[1174881])
 def test_vm_migrate(provider_init, provider_crud, provider_mgmt, request):
     """Tests migration of a vm
 

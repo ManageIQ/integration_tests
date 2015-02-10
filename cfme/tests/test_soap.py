@@ -5,6 +5,7 @@ import pytest
 from random import choice
 
 from utils import testgen
+from utils.blockers import BZ
 from utils.miq_soap import MiqVM, set_client
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.randomness import generate_random_string
@@ -87,7 +88,7 @@ class TestSoapBasicInteraction(object):
         """
         assert isinstance(soap_client.service.Version(), list)
 
-    @pytest.mark.bugzilla(1096768)
+    @pytest.mark.meta(blockers=[1096768])
     def test_get_hosts_from_ems(self, soap_client):
         """Tests soap
 
@@ -108,7 +109,7 @@ class TestSoapBasicInteraction(object):
             assert get_host.guid == host.guid
             assert get_host.name == host.name
 
-    @pytest.mark.bugzilla(1096768)
+    @pytest.mark.meta(blockers=[1096768])
     def test_get_clusters_from_ems(self, soap_client):
         """Tests soap
 
@@ -118,7 +119,7 @@ class TestSoapBasicInteraction(object):
         for ems in soap_client.service.GetEmsList():
             assert isinstance(soap_client.service.EVMGetClusters(ems.guid), list)
 
-    @pytest.mark.bugzilla(1096708)
+    @pytest.mark.meta(blockers=[1096708])
     def test_get_cluster(self, soap_client):
         """Tests soap
 
@@ -130,7 +131,7 @@ class TestSoapBasicInteraction(object):
             assert get_cluster.id == cluster.id
             assert get_cluster.name == cluster.name
 
-    @pytest.mark.bugzilla(1096768)
+    @pytest.mark.meta(blockers=[1096768])
     def test_get_resource_pools_from_ems(self, soap_client):
         """Tests soap
 
@@ -140,7 +141,7 @@ class TestSoapBasicInteraction(object):
         for ems in soap_client.service.GetEmsList():
             assert isinstance(soap_client.service.EVMGetResourcePools(ems.guid), list)
 
-    @pytest.mark.bugzilla(1096708)
+    @pytest.mark.meta(blockers=[1096708])
     def test_get_resource_pool(self, soap_client):
         """Tests soap
 
@@ -152,7 +153,7 @@ class TestSoapBasicInteraction(object):
             assert get_resource_pool.id == resource_pool.id
             assert get_resource_pool.name == resource_pool.name
 
-    @pytest.mark.bugzilla(1096768)
+    @pytest.mark.meta(blockers=[1096768])
     def test_get_datastores_from_ems(self, soap_client):
         """Tests soap
 
@@ -162,7 +163,7 @@ class TestSoapBasicInteraction(object):
         for ems in soap_client.service.GetEmsList():
             assert isinstance(soap_client.service.EVMGetDatastores(ems.guid), list)
 
-    @pytest.mark.bugzilla(1096708)
+    @pytest.mark.meta(blockers=[1096708])
     def test_get_datastore(self, soap_client):
         """Tests soap
 
@@ -174,7 +175,7 @@ class TestSoapBasicInteraction(object):
             assert get_datastore.id == datastore.id
             assert get_datastore.name == datastore.name
 
-    @pytest.mark.bugzilla(1096768)
+    @pytest.mark.meta(blockers=[1096768])
     def test_get_vms_from_host(self, soap_client):
         """Tests soap
 
@@ -459,10 +460,14 @@ class TestSoapBasicInteraction(object):
             pytest.fail("Could not find tags for vm {}".format(vm.name))
 
 
-@pytest.mark.bugzilla(
-    1118831, 1131480, 1132578,
-    unskip={1118831: lambda appliance_version: appliance_version < "5.3"})
-@pytest.mark.meta(server_roles="+automate")
+@pytest.mark.meta(
+    server_roles="+automate",
+    blockers=[
+        BZ(1118831, unblock=lambda appliance_version: appliance_version < "5.3"),
+        1131480,
+        1132578
+    ]
+)
 @pytest.mark.usefixtures("setup_provider")
 def test_provision_via_soap(
         request, soap_client, provider_key, provider_data, provider_mgmt, small_template):

@@ -139,7 +139,7 @@ def test_db_connection(db):
     assert len(databases) > 0
 
 
-@pytest.mark.bugzilla(1121202)
+@pytest.mark.meta(blockers=[1121202])
 def test_asset_precompiled(ssh_client):
     version = ssh_client.get_version()
     if not version.startswith('5.2'):

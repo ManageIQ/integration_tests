@@ -19,7 +19,7 @@ explorer_filters = [
     re.compile(r'^POST \"\/miq_policy\/tree_select\/\?id\=al\-[0-9]*\"$')]
 
 
-@pytest.mark.bugzilla(1182271)
+@pytest.mark.meta(blockers=[1182271])
 @pytest.mark.perf_ui_control
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
 def test_perf_ui_control_explorer(ui_worker_pid, ssh_client, soft_assert):

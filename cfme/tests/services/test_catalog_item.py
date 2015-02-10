@@ -89,7 +89,7 @@ def test_catalog_item_duplicate_name(catalog_item):
         catalog_item.create()
 
 
-@pytest.mark.bugzilla(1130301)
+@pytest.mark.meta(blockers=[1130301])
 def test_permissions_catalog_item_add(setup_cloud_providers, catalog_item):
     """ Tests that a catalog can be added only with the right permissions"""
     tac.single_task_permission_test([['Services', 'Catalogs Explorer', 'Catalog Items']],
