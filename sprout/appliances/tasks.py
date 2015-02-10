@@ -236,6 +236,7 @@ def create_appliance_template(provider_id, group_id, template_name):
     operation, the template object is deleted to make sure the operation will be retried next time
     when poke_trackerbot runs."""
     provider = Provider.objects.get(id=provider_id)
+    provider.cleanup()  # Precaution
     group = Group.objects.get(id=group_id)
     with transaction.atomic():
         # Limit the number of concurrent template configurations
@@ -534,6 +535,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
         # source objects are not present, terminating the chain
         self.request.callbacks[:] = []
         return
+    appliance.provider.cleanup()
     try:
         if not appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Beginning template clone.")
