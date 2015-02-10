@@ -13,6 +13,8 @@ def get_stream(ver):
         return 'downstream-52z'
     elif ver.is_in_series('5.3'):
         return 'downstream-53z'
+    elif ver.is_in_series('5.4'):
+        return 'downstream-54z'
     elif ver == LATEST:
         return 'upstream'
     else:
