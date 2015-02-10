@@ -392,6 +392,10 @@ class Appliance(MetadataMixin):
             provider=self.template.provider.id,
             marked_for_deletion=self.marked_for_deletion,
             uuid=self.uuid,
+            template_version=self.template.version,
+            template_build_date=self.template.date.isoformat(),
+            template_group=self.template.template_group.id,
+            template_sprout_name=self.template.name,
         )
 
     @property

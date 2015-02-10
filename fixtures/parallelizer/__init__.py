@@ -94,6 +94,17 @@ def pytest_configure(config, __multicall__):
     __multicall__.execute()
 
 
+def dump_pool_info(printf, pool_data):
+    printf("Fulfilled: {}".format(pool_data["fulfilled"]))
+    printf("Progress: {}%".format(pool_data["progress"]))
+    printf("Appliances:")
+    for appliance in pool_data["appliances"]:
+        name = appliance.pop("name")
+        printf("\t{}:".format(name))
+        for key in sorted(appliance.keys()):
+            printf("\t\t{}: {}".format(key, appliance[key]))
+
+
 class ParallelSession(object):
     def __init__(self, config):
         self.config = config
@@ -129,12 +140,16 @@ class ParallelSession(object):
             self.terminal.write("Pool {}. Waiting for fulfillment ...\n".format(pool_id))
             self.sprout_pool = pool_id
             at_exit(self.sprout_client.destroy_pool, self.sprout_pool)
-            result = wait_for(
-                lambda: self.sprout_client.request_check(self.sprout_pool)["fulfilled"],
-                num_sec=self.config.option.sprout_provision_timeout * 60,
-                delay=5,
-                message="requesting appliances was fulfilled"
-            )
+            try:
+                result = wait_for(
+                    lambda: self.sprout_client.request_check(self.sprout_pool)["fulfilled"],
+                    num_sec=self.config.option.sprout_provision_timeout * 60,
+                    delay=5,
+                    message="requesting appliances was fulfilled"
+                )
+            finally:
+                pool = self.sprout_client.request_check(self.sprout_pool)
+                dump_pool_info(lambda x: self.terminal.write("{}\n".format(x)), pool)
             self.terminal.write("Provisioning took {0:.1f} seconds\n".format(result.duration))
             request = self.sprout_client.request_check(self.sprout_pool)
             self.appliances = []
