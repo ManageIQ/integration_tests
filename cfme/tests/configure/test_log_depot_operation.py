@@ -171,15 +171,18 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
             depot_type,
             depot_machine
         )
-    # Fails on upstream - BZ1108087
     credentials.update()
     request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
 
 
 @pytest.mark.nondestructive
 @pytest.mark.bugzilla(
-    1018578, 1108087, 1151173,
-    unskip={1151173: lambda depot_type: depot_type != "ftp"})
+    1184465, 1186336,
+    unskip={
+        1184465: lambda depot_type: depot_type != "ftp",
+        1186336: lambda depot_type: depot_type == "nfs",
+    }
+)
 @pytest.sel.go_to('dashboard')
 def test_collect_log_depot(depot_type,
                            depot_machine,
