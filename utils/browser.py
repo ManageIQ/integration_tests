@@ -97,7 +97,7 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         # If unset, look to the config for the webdriver type
         # defaults to Firefox
         webdriver_name = browser_conf.get('webdriver', 'Firefox')
-        webdriver_class = getattr(webdriver, webdriver_name)
+    webdriver_class = getattr(webdriver, webdriver_name)
 
     if base_url is None:
         base_url = store.base_url
