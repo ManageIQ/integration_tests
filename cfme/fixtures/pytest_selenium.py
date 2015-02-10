@@ -446,8 +446,7 @@ def move_to_element(loc, **kwargs):
 
     Args:
         loc: A locator, expects either a string, WebElement, tuple.
-    Returns: It passes `loc` through to make it possible to use in case we want to immediately use
-        the element that it is being moved to.
+    Returns: Returns the element it was moved to to enable chaining.
     """
     brand = "//div[@id='page_header_div']//div[contains(@class, 'brand')]"
     wait_for_ajax()
@@ -1032,7 +1031,6 @@ class Select(SeleniumSelect, Pretty):
     @property
     def all_options(self):
         """Returns a list of tuples of all the options in the Select"""
-
         els = execute_script("return arguments[0].options;", element(self))
         return [(el.text, el.get_attribute('value')) for el in els]
 
@@ -1067,7 +1065,13 @@ class Select(SeleniumSelect, Pretty):
             raw_click(opt)
 
     def locate(self):
-        return move_to_element(self._loc)
+        """Guards against passing wrong locator (not resolving to a select)."""
+        sel_el = move_to_element(self._loc)
+        sel_tag = tag(sel_el)
+        if sel_tag != "select":
+            raise exceptions.UnidentifiableTagType(
+                "{} ({}) is not a select!".format(self._loc, sel_tag))
+        return sel_el
 
     def observer_wait(self):
         detect_observed_field(self._loc)
