@@ -179,14 +179,33 @@ def element(o, **kwargs):
     Args:
         o: An object to be converted to a matching web element, expected string, WebElement, tuple.
 
+    Keywords:
+        _no_deeper: Whether this call of the function can call for something that can retrieve
+            elements too. Recursion protection.
+
     Returns: A WebElement object
 
     Raises:
         NoSuchElementException: When element is not found on page
     """
+    no_deeper = kwargs.pop("_no_deeper", False)
     matches = elements(o, **kwargs)
-    if not matches:
+
+    def _fail():
         raise NoSuchElementException("Element {} not found on page.".format(str(o)))
+
+    if not matches:
+        if (not no_deeper) and is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
+            try:
+                title = text("//body/h1", _no_deeper=True)
+                body = text("//body/p", _no_deeper=True)
+            except NoSuchElementException:  # Just in case something goes really wrong
+                _fail()  # To not disguise the locator as something else, use the original one
+            raise exceptions.CFMEExceptionOccured(
+                "Element {} not found on page because the following Rails error happened:\n{}: {}"
+                .format(str(o), title, body))
+        else:
+            _fail()
     return matches[0]
 
 
@@ -266,7 +285,7 @@ def is_displayed(loc, _deep=0):
         NoSuchElementException: If element is not found on page
     """
     try:
-        return element(loc).is_displayed()
+        return element(loc, _no_deeper=True).is_displayed()
     except NoSuchElementException:
         return False
     except StaleElementReferenceException:
