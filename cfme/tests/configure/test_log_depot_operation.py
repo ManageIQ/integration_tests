@@ -183,6 +183,7 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
         1018578,
         1108087,
         BZ(1151173, unblock=lambda depot_type: depot_type != "ftp"),
+        BZ(1184465, unblock=lambda depot_type: depot_type != "ftp"),
     ]
 )
 @pytest.sel.go_to('dashboard')
