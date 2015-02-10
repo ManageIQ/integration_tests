@@ -70,7 +70,7 @@ def test_provision(request, provision_data, provider_mgmt):
             pytest.fail("Error when provisioning: `{}`".format(q["message"]))
         return q["request_state"].lower() in {"finished", "provisioned"}
 
-    wait_for(_finished, num_sec=300, delay=5, message="REST provisioning finishes")
+    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
     assert provider_mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
