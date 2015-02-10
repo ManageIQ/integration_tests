@@ -16,7 +16,7 @@ from cfme.configure.configuration import server_name, server_id
 from cfme.infrastructure.provider import get_from_config
 from cfme.infrastructure.virtual_machines import Vm
 from fixtures import ui_coverage
-from fixtures.pytest_store import _push_appliance, _pop_appliance
+from fixtures.pytest_store import _push_appliance, _pop_appliance, store
 from utils import api, conf, datafile, db, lazycache, trackerbot, db_queries
 from utils.log import logger, create_sublogger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
@@ -391,7 +391,7 @@ class IPAppliance(object):
     @lazycache
     def address(self):
         # If address wasn't set in __init__, use the hostname from base_url
-        parsed_url = urlparse(conf.env['base_url'])
+        parsed_url = urlparse(store.base_url)
         return parsed_url.netloc
 
     @lazycache

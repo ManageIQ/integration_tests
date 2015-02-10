@@ -391,7 +391,11 @@ class Class(CopiableTreeNode, Updateable):
 
     def path_str(self):
         """Returns string path to this class, eg ns1/ns2/ThisClass"""
-        return "/".join(self.path)
+        path = "/".join(self.path)
+        if version.current_version() < "5.4":
+            return path
+        else:
+            return "/" + path  # Starts with / from 5.4 onwards because of domains
 
     def create(self, cancel=False):
         if self.parent is not None and not self.parent.exists():

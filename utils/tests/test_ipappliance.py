@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 from urlparse import urlparse
+
+from fixtures.pytest_store import store
 from utils.appliance import IPAppliance
-from utils.conf import env
 
 
 def test_ipappliance_from_address():
@@ -21,6 +23,6 @@ def test_ipappliance_from_url():
 def test_ipappliance_use_baseurl():
     ip_a = IPAppliance()
     ip_a_parsed = urlparse(ip_a.url)
-    env_parsed = urlparse(env['base_url'])
+    env_parsed = urlparse(store.base_url)
     assert (ip_a_parsed.scheme, ip_a_parsed.netloc) == (env_parsed.scheme, env_parsed.netloc)
-    assert ip_a.address in env['base_url']
+    assert ip_a.address in store.base_url
