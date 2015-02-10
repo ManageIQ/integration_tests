@@ -273,7 +273,8 @@ class CustomReport(Updateable):
                 _get_state,
                 delay=1,
                 message="wait for report generation finished",
-                fail_func=reload_view
+                fail_func=reload_view,
+                num_sec=300,
             )
 
 

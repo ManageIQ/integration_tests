@@ -48,6 +48,8 @@ def report_vms(setup_first_provider):
 
 def test_custom_vm_report(soft_assert, report_vms):
     for row in report_vms:
+        if row["Name"].startswith("test_"):
+            continue  # Might disappear meanwhile
         provider_name = row[version.pick({
             version.LOWEST: "Provider : Name",
             "5.3": "Cloud/Infrastructure Provider Name",
