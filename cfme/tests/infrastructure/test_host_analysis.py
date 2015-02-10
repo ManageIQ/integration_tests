@@ -49,7 +49,7 @@ def get_host_data_by_name(provider_key, host_name):
 @pytest.mark.meta(
     blockers=[
         BZ(1156028, unblock=lambda provider_type, provider_ver: (
-            provider_type != 'rhevm' or provider_ver != '3.3')),
+            provider_type != 'rhevm' or provider_ver < '3.3')),
         BZ(1055657, unblock=lambda provider_type, provider_ver: (
             provider_type != 'virtualcenter' or provider_ver >= '5'))
     ]
