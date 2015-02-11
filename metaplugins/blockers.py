@@ -41,6 +41,7 @@ from kwargify import kwargify as _kwargify
 from markers.meta import plugin
 from utils import version
 from utils.blockers import Blocker
+from utils.pytest_shortcuts import extract_fixtures_values
 
 
 def kwargify(f):
@@ -69,13 +70,7 @@ def resolve_blockers(item, blockers):
     # We will now extend the env with fixtures, so they can be used in the guard functions
     # We will however add only those that are not in the global_env otherwise we could overwrite
     # our own stuff.
-    if hasattr(item, "callspec"):
-        params = item.callspec.params
-    else:
-        # Some of the test items do not have this, so fall back
-        # This can cause some problems if the fixtures are used in the guards in this case, but
-        # that will tell use where is the problem and we can then find it out properly.
-        params = {}
+    params = extract_fixtures_values(item)
     for funcarg, value in params.iteritems():
         if funcarg not in global_env:
             global_env[funcarg] = value

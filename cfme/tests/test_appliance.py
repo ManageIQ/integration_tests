@@ -24,6 +24,9 @@ pytestmark = pytest.mark.smoke
     'rhn-check',
     'rhnlib',
 ])
+@pytest.mark.meta(
+    # TODO: Change to uncollecting when possible.
+    skip=lambda package: package == "mingw32-cfme-host" and version.current_version() >= "5.4")
 def test_rpms_present(ssh_client, package):
     """Verifies nfs-util rpms are in place needed for pxe & nfs operations"""
     exit, stdout = ssh_client.run_command('rpm -q %s' % package)
