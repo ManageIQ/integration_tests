@@ -56,7 +56,7 @@ def compliance_vm(request, provider_key, provider_crud):
     except VmNotFoundViaIP:
         logger.info("Provisioning a new appliance on provider {}.".format(provider_key))
         appliance = provision_appliance(
-            vm_name_prefix=PREFIX,
+            vm_name_prefix=PREFIX + "host_",
             version=str(version.current_version()),
             provider_name=provider_key)
         request.addfinalizer(lambda: diaper(appliance.destroy))
@@ -71,19 +71,16 @@ def compliance_vm(request, provider_key, provider_crud):
 
 
 @pytest.fixture(scope="module")
-def template_name(vm_analysis):
-    return random.choice(vm_analysis.keys())
-
-
-@pytest.fixture(scope="module")
-def fleecing_vm(
-        request, compliance_vm, vm_analysis, provider_mgmt, provider_key, provider_crud,
-        template_name):
+def fleecing_vm(request, compliance_vm, vm_analysis, provider_mgmt, provider_key, provider_crud):
     logger.info("Provisioning an appliance for fleecing on {}".format(provider_key))
-    vm = Vm("{}_fleece_{}".format(PREFIX, generate_random_string()), provider_crud, template_name)
-    request.addfinalizer(
-        lambda: provider_mgmt.delete_vm(vm.name) if provider_mgmt.does_vm_exist(vm.name) else None)
-    vm.create_on_provider()
+    # TODO: When we get something smaller, use it!
+    appliance = provision_appliance(
+        vm_name_prefix=PREFIX + "for_fleece_",
+        version=str(version.current_version()),
+        provider_name=provider_key)
+    request.addfinalizer(lambda: diaper(appliance.destroy))
+    logger.info("Appliance {} provisioned".format(appliance.vm_name))
+    vm = Vm(appliance.vm_name, provider_crud)
     provider_crud.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm
