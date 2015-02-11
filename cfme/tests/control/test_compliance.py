@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+import random
 import re
 
 from cfme.configure import tasks
@@ -25,7 +26,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, require_fields=True)
+        metafunc, "vm_analysis", require_fields=True)
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
@@ -69,6 +70,25 @@ def compliance_vm(request, provider_key, provider_crud):
             yield vm
 
 
+@pytest.fixture(scope="module")
+def template_name(vm_analysis):
+    return random.choice(vm_analysis.keys())
+
+
+@pytest.fixture(scope="module")
+def fleecing_vm(
+        request, compliance_vm, vm_analysis, provider_mgmt, provider_key, provider_crud,
+        template_name):
+    logger.info("Provisioning an appliance for fleecing on {}".format(provider_key))
+    vm = Vm("{}_fleece_{}".format(PREFIX, generate_random_string()), provider_crud, template_name)
+    request.addfinalizer(
+        lambda: provider_mgmt.delete_vm(vm.name) if provider_mgmt.does_vm_exist(vm.name) else None)
+    vm.create_on_provider()
+    provider_crud.refresh_provider_relationships()
+    vm.wait_to_appear()
+    return vm
+
+
 # TODO: Put it in the Vm class?
 def is_vm_analysis_finished(vm_name):
     """ Check if analysis is finished - if not, reload page
@@ -108,7 +128,7 @@ def do_scan(vm):
     logger.info("Scan finished")
 
 
-def test_check_package_presence(request, compliance_vm, ssh_client):
+def test_check_package_presence(request, fleecing_vm, ssh_client, vm_analysis):
     """This test checks compliance by presence of a certain software package."""
     condition = VMCondition(
         "Compliance testing condition {}".format(generate_random_string(size=8)),
@@ -126,14 +146,14 @@ def test_check_package_presence(request, compliance_vm, ssh_client):
     )
     request.addfinalizer(lambda: diaper(profile.delete))
     profile.create()
-    compliance_vm.assign_policy_profiles(profile.description)
-    request.addfinalizer(lambda: compliance_vm.unassign_policy_profiles(profile.description))
-    detail = lambda: compliance_vm.get_detail(properties=("Compliance", "Status")).lower()
+    fleecing_vm.assign_policy_profiles(profile.description)
+    request.addfinalizer(lambda: fleecing_vm.unassign_policy_profiles(profile.description))
+    detail = lambda: fleecing_vm.get_detail(properties=("Compliance", "Status")).lower()
 
     # Non-compliant
     ssh_client.run_command("yum remove -y mc")
-    do_scan(compliance_vm)
-    compliance_vm.check_compliance()
+    do_scan(fleecing_vm)
+    fleecing_vm.check_compliance()
 
     wait_for(
         lambda: detail() == "non-compliant as of less than a minute ago",
@@ -145,8 +165,8 @@ def test_check_package_presence(request, compliance_vm, ssh_client):
 
     # Compliant
     ssh_client.run_command("yum install -y mc")
-    do_scan(compliance_vm)
-    compliance_vm.check_compliance()
+    do_scan(fleecing_vm)
+    fleecing_vm.check_compliance()
 
     wait_for(
         lambda: detail() == "compliant as of less than a minute ago",
