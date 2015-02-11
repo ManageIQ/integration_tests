@@ -161,6 +161,11 @@ class Appliance(object):
         self.ipapp.clone_domain(log_callback=log_callback)
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
 
+    def _configure_5_4(self, log_callback=None):
+        # Patch the environment if needed
+        self.ipapp.workaround_missing_gemfile(log_callback=log_callback)
+        self._configure_5_3(log_callback=log_callback)
+
     def _configure_upstream(self, log_callback=None):
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.setup_upstream_db(log_callback=log_callback)
@@ -199,6 +204,8 @@ class Appliance(object):
                 self._configure_5_2(log_callback=log_callback)
             elif self.version.is_in_series("5.3"):
                 self._configure_5_3(log_callback=log_callback)
+            elif self.version.is_in_series("5.4"):
+                self._configure_5_4(log_callback=log_callback)
             elif self.version == LATEST:
                 self._configure_upstream(log_callback=log_callback)
         if setup_fleece:
@@ -506,6 +513,30 @@ class IPAppliance(object):
             log_callback(msg)
             raise Exception(msg)
 
+    def workaround_missing_gemfile(self, log_callback=None):
+        """Fix Gemfile issue.
+
+        Early 5.4 builds have issues with Gemfile not present (BUG 1191496). This circumvents the
+        issue with pointing the env variable that Bundler uses to get the Gemfile to the Gemfile in
+        vmdb which *should* be correct.
+
+        When this issue is resolved, this method will do nothing.
+        """
+        if log_callback is None:
+            log_callback = self.log.info
+        client = self.ssh_client()
+        status, out = client.run_command("ls /opt/rh/cfme-gemset")
+        if status != 0:
+            return  # Not needed
+        log_callback('Fixing Gemfile issue')
+        # Check if the error is there
+        status, out = client.run_rails_command("puts 1")
+        if status == 0:
+            return  # All OK!
+        client.run_command('echo "export BUNDLE_GEMFILE=/var/www/miq/vmdb/Gemfile" >> /etc/bashrc')
+        # To be 100% sure
+        self.reboot(wait_for_web_ui=False, log_callback=log_callback)
+
     def precompile_assets(self, log_callback=None):
         """Precompile the static assets (images, css, etc) on an appliance
 
@@ -680,6 +711,8 @@ class IPAppliance(object):
         if start:
             log_callback("Starting ...")
             client.run_command('service merkyl restart')
+            log_callback("Setting it to start after reboot")
+            client.run_command("chkconfig merkyl on")
 
     def update_rhel(self, *urls, **kwargs):
         """Update RHEL on appliance
