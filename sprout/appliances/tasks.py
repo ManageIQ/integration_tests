@@ -844,8 +844,20 @@ def free_appliance_shepherd(self):
         group_dates = Template.get_dates(template_group=grp, ready=True, usable=True)
         if group_versions:
             # Downstream - by version (downstream releases)
-            filter_keep = {"version": group_versions[0]}
-            filters_kill = [{"version": v} for v in group_versions[1:]]
+            version = group_versions[0]
+            # Find the latest date (one version can have new build)
+            dates = Template.get_dates(
+                template_group=grp, ready=True, usable=True, version=group_versions[0])
+            if not dates:
+                # No template yet?
+                continue
+            date = dates[0]
+            filter_keep = {"version": version, "date": date}
+            filters_kill = []
+            for kill_date in dates[1:]:
+                filters_kill.append({"version": version, "date": kill_date})
+            for kill_version in group_versions[1:]:
+                filters_kill.append({"version": kill_version})
         elif group_dates:
             # Upstream - by date (upstream nightlies)
             filter_keep = {"date": group_dates[0]}
