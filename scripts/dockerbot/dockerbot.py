@@ -370,7 +370,8 @@ class DockerBot(object):
                             'PYTEST': self.args['pytest'],
                             'BRANCH': self.args['branch'],
                             'ARTIFACTOR_DIR': self.args['artifactor_dir'],
-                            'CFME_TESTS_KEY': self.enc_key()}
+                            'CFME_TESTS_KEY': self.enc_key(),
+                            'YAYCL_CRYPT_KEY': self.enc_key()}
         print "  SERVER IP: {}".format(self.args['server_ip'])
         if self.args['use_wharf']:
             self.env_details['WHARF'] = self.args['wharf']
