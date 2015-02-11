@@ -5,17 +5,18 @@ the credentials in the cfme yamls.
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the login page
 """
+from threading import local
 
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 from cfme import dashboard
 from cfme.web_ui import Region, Form, fill
-from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException
 from utils import conf
+from utils.browser import ensure_browser_open
 from utils.log import logger
-from threading import local
 from utils.pretty import Pretty
 
 thread_locals = local()
@@ -36,7 +37,10 @@ page = Region(
     locators={
         'username': '//input[@id="user_name"]',
         'password': '//input[@id="user_password"]',
-        'submit_button': '//a[@id="login"]',
+        'submit_button': {
+            '5.3': '//a[@id="login"]',
+            '5.4': '//button[.="Login"]/..',
+        },
         # Login page has an abnormal flash div
         'flash': '//div[@id="flash_div"]',
         'logout': '//a[contains(@href, "/logout")]',
@@ -63,7 +67,15 @@ def _click_on_login():
     sel.click(page.submit_button)
 
 
+def _js_auth_fn():
+    """
+    Convenience internal function to click the login locator submit button.
+    """
+    sel.execute_script('miqAjaxAuth();')
+
+
 def logged_in():
+    ensure_browser_open()
     sel.wait_for_ajax()  # This is called almost everywhere, protects from spinner
     return sel.is_displayed(dashboard.page.user_dropdown)
 
@@ -75,7 +87,7 @@ def press_enter_after_password():
     sel.send_keys(page.password, Keys.RETURN)
 
 
-def login(username, password, submit_method=_click_on_login):
+def login(username, password, submit_method=_js_auth_fn):
     """
     Login to CFME with the given username and password.
     Optionally, submit_method can be press_enter_after_password

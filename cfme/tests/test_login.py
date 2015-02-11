@@ -23,10 +23,3 @@ def test_bad_password():
     with error.expected('Sorry, the username or password you entered is incorrect.'):
         login.login(conf.credentials['default']['username'], "badpassword@#$")
     assert login.page.is_displayed()
-
-
-@pytest.sel.go_to('dashboard')
-def test_logout(logged_in):
-    """ Tests that the provider can be logged out of. """
-    login.logout()
-    assert login.page.is_displayed()
