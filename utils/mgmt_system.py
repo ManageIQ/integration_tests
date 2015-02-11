@@ -810,8 +810,9 @@ class VMWareSystem(MgmtSystemAPIBase):
             pass
 
         if progress_callback is None:
-            progress_callback = lambda progress: logger.info(
-                "Provisioning progress {}->{}: {}".format(source, destination, str(progress)))
+            def progress_callback(progress):
+                logger.info("Provisioning progress {}->{}: {}".format(
+                    source, destination, str(progress)))
 
         source_template = mobs.VirtualMachine.get(self.api, name=source)
 

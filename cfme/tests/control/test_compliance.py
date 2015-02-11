@@ -81,7 +81,8 @@ def is_vm_analysis_finished(vm_name):
 
 
 def do_scan(vm):
-    scan = lambda: vm.get_detail(properties=("Lifecycle", "Last Analyzed")).lower()
+    def scan():
+        return vm.get_detail(properties=("Lifecycle", "Last Analyzed")).lower()
     vm.load_details()
     original = scan()
     vm.smartstate_scan(cancel=False, from_details=True)
@@ -128,7 +129,9 @@ def test_check_package_presence(request, compliance_vm, ssh_client):
     profile.create()
     compliance_vm.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: compliance_vm.unassign_policy_profiles(profile.description))
-    detail = lambda: compliance_vm.get_detail(properties=("Compliance", "Status")).lower()
+
+    def detail():
+        return compliance_vm.get_detail(properties=("Compliance", "Status")).lower()
 
     # Non-compliant
     ssh_client.run_command("yum remove -y mc")

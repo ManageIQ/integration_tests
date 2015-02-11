@@ -407,14 +407,20 @@ class Table(Pretty):
         # Only include rows where the expected values are in the right columns
         matching_rows = list()
         if partial_check:
-            matching_row_filter = lambda heading, value: value in row[heading].text
+            matching_row_filter = self._matching_row_contains
         else:
-            matching_row_filter = lambda heading, value: row[heading].text == value
+            matching_row_filter = self._matching_row_equals
         for row in rows:
-            if all(matching_row_filter(*cell) for cell in cells.items()):
+            if all(matching_row_filter(row, *cell) for cell in cells.items()):
                 matching_rows.append(row)
 
         return matching_rows
+
+    def _matching_row_contains(self, row, heading, value):
+        return value in row[heading].text
+
+    def _matchin_row_equals(self, row, heading, value):
+        return row[heading].text == value
 
     def find_row_by_cells(self, cells, partial_check=False):
         """Find the first row containing cells

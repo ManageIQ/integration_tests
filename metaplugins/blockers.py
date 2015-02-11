@@ -49,12 +49,10 @@ def kwargify(f):
     If you pass False or None, a function which always returns False is returned.
     If you pass True, a function which always returns True is returned.
     """
-    if f is None or f is False:
-        f = lambda: False
-    elif f is True:
-        f = lambda: True
+    if f is None:
+        f = False
 
-    return _kwargify(f)
+    return _kwargify(lambda: f)
 
 
 @plugin("blockers", ["blockers"])

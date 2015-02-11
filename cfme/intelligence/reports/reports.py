@@ -118,9 +118,12 @@ def tag(tag_name, **kwargs):
         return prefix
 
 input = partial(tag, "input")
-select = lambda **kwargs: Select(tag("select", **kwargs))
 img = partial(tag, "img")
 table = partial(tag, "table")
+
+
+def select(**kwargs):
+    return Select(tag("select", **kwargs))
 
 report_form = TabStripForm(
     # These are displayed always

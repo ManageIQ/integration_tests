@@ -114,9 +114,7 @@ class Appliance(object):
         return self.ipapp.version
 
     def _custom_configure(self, **kwargs):
-        log_callback = kwargs.pop(
-            "log_callback",
-            lambda msg: logger.info("Custom configure {}: {}".format(self.vmname, msg)))
+        log_callback = self.ipapp.wrap_log_callback("Custom configure", kwargs.get('log_callback'))
         region = kwargs.get('region', 0)
         db_address = kwargs.get('db_address', None)
         key_address = kwargs.get('key_address', None)
@@ -191,11 +189,9 @@ class Appliance(object):
                          ``None`` (default ``None``)
 
         """
-        if log_callback is None:
-            log_callback = lambda message: logger.info("Appliance {} configure: {}".format(
-                self.vmname,
-                message.strip()
-            ))
+        log_callback = self.ipapp.wrap_log_callback('Appliance {} configure'.format(self.vmname),
+            log_callback)
+
         self.ipapp.wait_for_ssh()
         if kwargs:
             self._custom_configure(**kwargs)
@@ -212,11 +208,7 @@ class Appliance(object):
             self.configure_fleecing(log_callback=log_callback)
 
     def configure_fleecing(self, log_callback=None):
-        if log_callback is None:
-            log_callback = lambda message: logger.info("Configure fleecing: {}".format(message))
-        else:
-            cb = log_callback
-            log_callback = lambda message: cb("Configure fleecing: {}".format(message))
+        log_callback = self.ipapp.wrap_log_callback('Configure fleecing', log_callback)
 
         if self.is_on_vsphere:
             self.ipapp.install_vddk(reboot=True, log_callback=log_callback)
@@ -292,8 +284,7 @@ class Appliance(object):
         return isinstance(self.provider, VMWareSystem)
 
     def add_rhev_direct_lun_disk(self, log_callback=None):
-        if log_callback is None:
-            log_callback = logger.info
+        log_callback = log_callback or logger.info
         if not self.is_on_rhev:
             log_callback("appliance NOT on rhev, unable to connect direct_lun")
             raise ApplianceException("appliance NOT on rhev, unable to connect direct_lun")
@@ -309,8 +300,7 @@ class Appliance(object):
             raise ApplianceException(msg)
 
     def remove_rhev_direct_lun_disk(self, log_callback=None):
-        if log_callback is None:
-            log_callback = logger.info
+        log_callback = log_callback or logger.info
         if not self.is_on_rhev:
             msg = "appliance {} NOT on rhev, unable to disconnect direct_lun".format(self.vmname)
             log_callback(msg)
@@ -362,6 +352,22 @@ class IPAppliance(object):
 
     def __exit__(self, *args, **kwargs):
         self.pop()
+
+    def wrap_log_callback(self, prefix, callback=None):
+        """Log callback wrapper
+
+        Adds a log prefix to log messages, and returns a function that will
+        log to the passed-in logger callback or logger.info if the passed-in
+        callback is None
+
+        """
+        if callback:
+            def log_callback(message):
+                callback("{}: {}".format(prefix, message.strip()))
+        else:
+            def log_callback(message):
+                self.log.info("{}: {}".format(prefix, message.strip()))
+        return log_callback
 
     @property
     def managed_providers(self):
@@ -456,17 +462,17 @@ class IPAppliance(object):
         such as in the template tester.
 
         """
-        logger.info('Diagnosing EVM failures, this can take a while...')
+        self.log.info('Diagnosing EVM failures, this can take a while...')
 
         if not self.address:
             return 'appliance has no IP Address; provisioning failed or networking is broken'
 
-        logger.info('Checking appliance SSH Connection')
+        self.log.info('Checking appliance SSH Connection')
         if not self.is_ssh_running:
             return 'SSH is not running on the appliance'
 
         # Now for the DB
-        logger.info('Checking appliance database')
+        self.log.info('Checking appliance database')
         if not self.db_online:
             # postgres isn't running, try to start it
             result = self.db_ssh_client().run_command('service postgresql92-postgresql restart')
@@ -482,7 +488,7 @@ class IPAppliance(object):
             return 'vmdb_production has no tables'
 
         # try to start EVM
-        logger.info('Checking appliance evmserverd service')
+        self.log.info('Checking appliance evmserverd service')
         try:
             self.restart_evm_service()
         except ApplianceException as ex:
@@ -494,9 +500,7 @@ class IPAppliance(object):
 
     def fix_ntp_clock(self, log_callback=None):
         """Fixes appliance time using ntpdate on appliance"""
-        if log_callback is None:
-            log_callback = self.log.info
-        log_callback('Fixing appliance clock')
+        log_callback = self.wrap_log_callback('fix ntp clock', log_callback)
         client = self.ssh_client()
         try:
             ntp_server = random.choice(conf.cfme_data['clock_servers'])
@@ -522,8 +526,7 @@ class IPAppliance(object):
 
         When this issue is resolved, this method will do nothing.
         """
-        if log_callback is None:
-            log_callback = self.log.info
+        log_callback = log_callback or self.log.info
         client = self.ssh_client()
         status, out = client.run_command("ls /opt/rh/cfme-gemset")
         if status != 0:
@@ -546,8 +549,7 @@ class IPAppliance(object):
         # compile assets if required (not required on 5.2)
         if self.version.is_in_series("5.2"):
             return
-        if log_callback is None:
-            log_callback = self.log.info
+        log_callback = log_callback or self.log.info
         log_callback('Precompiling assets')
 
         client = self.ssh_client()
@@ -572,12 +574,7 @@ class IPAppliance(object):
         if self.version != LATEST:
             return
 
-        if log_callback is None:
-            log_callback = lambda msg: self.log.info("DB setup: {}".format(msg))
-        else:
-            cb = log_callback
-            log_callback = lambda msg: cb("DB setup: {}".format(msg))
-
+        log_callback = self.wrap_log_callback("DB setup", log_callback)
         client = self.ssh_client()
 
         # Make sure the database is ready
@@ -636,12 +633,7 @@ class IPAppliance(object):
         if self.version.is_in_series("5.2"):
             return
 
-        if log_callback is None:
-            log_callback = lambda msg: self.log.info("Clone automate domain: {}".format(msg))
-        else:
-            cb = log_callback
-            log_callback = lambda msg: cb("Clone automate domain: {}".format(msg))
-
+        log_callback = self.wrap_log_callback("Clone automate domain", log_callback)
         client = self.ssh_client()
 
         # Make sure the database is ready
@@ -681,13 +673,8 @@ class IPAppliance(object):
 
     def deploy_merkyl(self, start=False, log_callback=None):
         """Deploys the Merkyl log relay service to the appliance"""
-        if log_callback is None:
-            log_callback = lambda msg: self.log.info("Deploying merkyl: {}".format(msg))
-        else:
-            cb = log_callback
-            log_callback = lambda msg: cb("Deploying merkyl: {}".format(msg))
-
         client = self.ssh_client()
+        log_callback = self.wrap_log_callback("Deploying merkyl", log_callback)
 
         client.run_command('mkdir -p /root/merkyl')
         for filename in ['__init__.py', 'merkyl.tpl', ('bottle.py.dontflake', 'bottle.py'),
@@ -730,9 +717,8 @@ class IPAppliance(object):
 
         """
         urls = list(urls)
-        log_callback_f = kwargs.pop("log_callback", lambda msg: self.log.info)
         reboot = kwargs.pop("reboot", True)
-        log_callback = lambda msg: log_callback_f("Update RHEL: {}".format(msg))
+        log_callback = self.wrap_log_callback('Update RHEL', kwargs.pop('log_callback', None))
         log_callback('updating appliance')
         if not urls:
             basic_info = conf.cfme_data.get('basic_info', {})
@@ -798,12 +784,7 @@ class IPAppliance(object):
         if self.version >= '5.3':
             return
 
-        if log_callback is None:
-            log_callback = lambda msg: self.log.info("Patch ajax wait: {}".format(msg))
-        else:
-            cb = log_callback
-            log_callback = lambda msg: cb("Patch ajax wait: {}".format(msg))
-
+        log_callback = self.wrap_log_callback("Patch ajax wait", log_callback)
         log_callback('Starting')
 
         # Find the patch file
@@ -844,7 +825,8 @@ class IPAppliance(object):
         if self.version.is_in_series("5.2"):
             return
 
-        (log_callback or self.log.info)('Loosening postgres permissions')
+        log_callback = log_callback or self.log.info
+        log_callback('Loosening postgres permissions')
 
         # Init SSH client
         client = self.ssh_client()
@@ -902,7 +884,8 @@ class IPAppliance(object):
         Note:
             If key_address is None, a new encryption key is generated for the appliance.
         """
-        (log_callback or self.log.info)(
+        log_callback = log_callback or self.log.info
+        log_callback(
             'Enabling internal DB (region {}) on {}.'.format(region, self.address))
         self.db_address = self.address
         del(self.db)
@@ -959,8 +942,7 @@ class IPAppliance(object):
 
         Returns a tuple of (exitstatus, script_output) for reporting, if desired
         """
-        if log_callback is None:
-            log_callback = self.log.info
+        log_callback = log_callback or self.log.info
         log_callback('Enabling external DB (db_address {}, region {}) on {}.'
             .format(db_address, region, self.address))
         # reset the db address and clear the cached db object if we have one
@@ -1064,8 +1046,7 @@ class IPAppliance(object):
     def restart_evm_service(self, log_callback=None):
         """Restarts the ``evmserverd`` service on this appliance
         """
-        if log_callback is None:
-            log_callback = self.log.info
+        log_callback = log_callback or self.log.info
         log_callback('restarting evm service')
         with self.ssh_client() as ssh:
             status, msg = ssh.run_command('service evmserverd restart')
@@ -1075,7 +1056,8 @@ class IPAppliance(object):
                 raise ApplianceException(msg)
 
     def reboot(self, wait_for_web_ui=True, log_callback=None):
-        (log_callback or self.log.info)('Rebooting appliance')
+        log_callback = log_callback or self.log.info
+        log_callback('Rebooting appliance')
         client = self.ssh_client()
 
         old_uptime = client.uptime()
@@ -1095,15 +1077,15 @@ class IPAppliance(object):
             running: Specifies if we wait for web UI to start or stop (default ``True``)
                      ``True`` == start, ``False`` == stop
         """
-        (log_callback or self.log.info)('Waiting for web UI to appear')
+        log_callback = log_callback or self.log.info
+        log_callback('Waiting for web UI to appear')
         result, wait = wait_for(self._check_appliance_ui_wait_fn, num_sec=timeout,
             fail_condition=not running, delay=10)
         return result
 
     def install_vddk(self, reboot=True, force=False, vddk_url=None, log_callback=None):
         '''Install the vddk on a appliance'''
-        if log_callback is None:
-            log_callback = self.log.info
+        log_callback = log_callback or self.log.info
 
         def log_raise(exception_class, message):
             log_callback(message)
