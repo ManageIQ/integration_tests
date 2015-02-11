@@ -7,7 +7,7 @@ function isHidden(el) {if(el === null) return true; return el.offsetParent === n
 
 return {
     jquery: jQuery.active,
-    prototype: Ajax.activeRequestCount,
+    prototype: (typeof Ajax === "undefined") ? 0 : Ajax.activeRequestCount,
     miq: window.miqAjaxTimers,
     spinner: (!isHidden(document.getElementById("spinner_div")))
         && isHidden(document.getElementById("lightbox_div")),
