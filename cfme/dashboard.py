@@ -5,15 +5,19 @@
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Region, Table, tabstrip, toolbar
 from utils.timeutil import parsetime
-from utils.wait import wait_for
 from utils.pretty import Pretty
+from utils.version import LOWEST
+from utils.wait import wait_for
 
 page = Region(
     title="Dashboard",
     locators={
         'reset_widgets_button': toolbar.root_loc('Reset Dashboard Widgets'),
         'csrf_token': "//meta[@name='csrf-token']",
-        'user_dropdown': '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
+        'user_dropdown': {
+            LOWEST: '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
+            '5.4': '//nav//ul[contains(@class, "navbar-utility")]/li[contains(@class, "dropdown")]'
+        }
     },
     identifying_loc='reset_widgets_button')
 
