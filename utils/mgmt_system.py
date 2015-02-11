@@ -105,7 +105,7 @@ class _PsphereClient(Client):
                     # Server raíses the following when we try to logout with an old session
                     # WebFault: Server raised fault: 'The session is not authenticated.'
                     pass
-                logger.warning("{} disconnected (psphere api); logging back in and trying again"
+                logger.debug("{} disconnected (psphere api); logging back in and trying again"
                     .format(self.server))
                 self.login()
                 return o(*args, **kwargs)
