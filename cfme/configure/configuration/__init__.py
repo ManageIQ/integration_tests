@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from contextlib import contextmanager
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
@@ -7,16 +8,16 @@ from fixtures.pytest_store import store
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound
-from cfme.web_ui import \
-    (Calendar, Form, InfoBlock, Input, MultiFill, Region, Select, Table, accordion, fill, flash,
-    form_buttons)
+from cfme.web_ui import (
+    Calendar, CheckboxSelect, DynamicTable, Form, InfoBlock, Input, MultiFill, Region, Select,
+    Table, accordion, fill, flash, form_buttons)
 from cfme.web_ui.menu import nav
 from utils.db import cfmedb
 from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
-from utils import version, conf, lazycache
+from utils import version, conf, lazycache, classproperty
 from utils.pretty import Pretty
 from utils.signals import fire, on_signal
 from utils.version import current_version
@@ -221,6 +222,24 @@ nav.add_branch("configuration",
             }
         ],
 
+        "cfg_analysis_profiles": [
+            lambda _: settings_tree("Analysis Profiles"),
+            {
+                "host_analysis_profile_add": lambda _: tb.select(
+                    "Configuration", "Add Host Analysis Profile"),
+                "vm_analysis_profile_add": lambda _: tb.select(
+                    "Configuration", "Add VM Analysis Profile"),
+            }
+        ],
+
+        "cfg_analysis_profile": [
+            lambda ctx: settings_tree("Analysis Profiles", str(ctx.analysis_profile)),
+            {
+                "analysis_profile_edit":
+                lambda _: tb.select("Configuration", "Edit this Analysis Profile"),
+            }
+        ],
+
         "cfg_settings_defaultzone":
         lambda _: settings_tree(
             version.pick({
@@ -415,6 +434,95 @@ nav.add_branch("configuration",
         "configuration_database": lambda _: accordion.click("Database"),
     }
 )
+
+
+class AnalysisProfile(Pretty, Updateable):
+    """Analysis profiles. Do not use this class but the derived one.
+
+    Example:
+
+        .. code-block:: python
+
+            p = VMAnalysisProfile(name, description)
+            p.files = [
+                "/somefile",
+                {"Name": "/some/anotherfile", "Collect Contents?": True}
+            ]
+            p.categories = ["check_system"]
+            p.create()
+            p.delete()
+
+    """
+    CREATE_LOC = "vm_analysis_profile_add"
+    pretty_attrs = "name", "description", "files", "events"
+
+    form = tabs.TabStripForm(
+        fields=[
+            ("name", "input#name"),
+            ("description", "input#description")],
+        tab_fields={
+            "Category": [
+                ("categories", CheckboxSelect("table#formtest")),
+            ],
+            "File": [
+                ("files", DynamicTable(
+                    "//div[@id='file']/fieldset/table", default_row_item="Name")),
+            ],
+            "Registry": [
+                ("registry", DynamicTable("//div[@id='registry']/fieldset/table")),
+            ],
+            "Event Log": [
+                ("events", DynamicTable("//div[@id='event_log']/fieldset/table")),
+            ],
+        })
+
+    def __init__(self, name, description, files=None, events=None, categories=None, registry=None):
+        self.name = name
+        self.description = description
+        self.files = files
+        self.events = events
+        self.categories = categories
+        self.registry = registry
+
+    def create(self):
+        sel.force_navigate(self.CREATE_LOC)
+        fill(self.form, self, action=form_buttons.add)
+        flash.assert_no_errors()
+
+    def update(self, updates=None):
+        sel.force_navigate("analysis_profile_edit", context={"analysis_profile": self})
+        if updates is None:
+            fill(self.form, self, action=form_buttons.save)
+        else:
+            fill(self.form, updates, action=form_buttons.save)
+        flash.assert_no_errors()
+
+    def delete(self):
+        sel.force_navigate("cfg_analysis_profile", context={"analysis_profile": self})
+        tb.select("Configuration", "Delete this Analysis Profile from the VMDB", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
+
+    def __str__(self):
+        return self.name
+
+    def __enter__(self):
+        self.create()
+
+    def __exit__(self, type, value, traceback):
+        self.delete()
+
+
+class HostAnalysisProfile(AnalysisProfile):
+    pass
+
+
+class VMAnalysisProfile(AnalysisProfile):
+    @classproperty
+    @contextmanager
+    def with_default(cls, **kwargs):
+        with cls("default", "default", **kwargs) as p:
+            yield p
 
 
 class ServerLogDepot(Pretty):

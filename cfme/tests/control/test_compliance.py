@@ -5,6 +5,7 @@ import diaper
 import pytest
 
 from cfme.configure import tasks
+from cfme.configure.configuration import VMAnalysisProfile
 from cfme.control.explorer import VMCompliancePolicy, VMCondition, PolicyProfile
 from cfme.exceptions import VmNotFoundViaIP
 from cfme.infrastructure.virtual_machines import Vm
@@ -158,3 +159,19 @@ def test_check_package_presence(request, compliance_vm, ssh_client):
         message="VM be non-compliant",
         fail_func=lambda: toolbar.select('Reload')
     )
+
+
+@pytest.fixture(scope="function")
+def check_file_name():
+    return "/root/{}".format(generate_random_string())
+
+
+@pytest.yield_fixture(scope="function")
+def analysis_profile(check_file_name):
+    with VMAnalysisProfile.with_default(files=[check_file_name]) as p:
+        yield p
+
+
+def test_check_files(request, compliance_vm, ssh_client, analysis_profile):
+    with VMAnalysisProfile.with_default(files=["/root/testfile"]):
+        pass
