@@ -59,7 +59,7 @@ def select_n_move(el):
     """
     # .. if we don't move the "mouse" the button stays active
     sel.click(el)
-    sel.move_to_element((By.XPATH, '//div[@id="page_footer_div"]'))
+    sel.move_to_element("#tP")
 
 
 def select(root, sub=None, invokes_alert=False):
