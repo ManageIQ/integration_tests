@@ -55,5 +55,5 @@ def test_queue_infrastructure(request, ssh_client, enable_candu):
     logger.info('Calling gunzip {}'.format(local_top_gz))
     subprocess.call(['gunzip', local_top_gz])
 
-    # Post process evm log for queue metrics and produce graphs, and csvs
+    # Post process evm log and top_output log for charts and csvs
     perf_process_evm(local_evm, local_top)

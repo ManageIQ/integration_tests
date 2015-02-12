@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*
-"""Set of functions for performance analysis/charting of the backend messages.
+"""Set of functions for performance analysis/charting of the backend messages and top_output from an
+appliance.
 """
 from utils.log import logger
 from utils.path import log_path
@@ -39,6 +40,17 @@ miqwkr = re.compile(r'MIQ\(([A-Za-z]*)\)\sID\s\[([0-9]*)\],\sPID\s\[([0-9]*)\]')
 miqwkr_id = re.compile(r'with\sID:\s\[([0-9]*)\]')
 # For use with workers exiting, such as authentication failures:
 miqwkr_id_2 = re.compile(r'ID\s\[([0-9]*)\]')
+
+# top regular expressions
+# Cpu(s): 13.7%us,  1.2%sy,  2.1%ni, 80.0%id,  1.7%wa,  0.0%hi,  0.1%si,  1.3%st
+miq_cpu = re.compile(r'Cpu\(s\)\:\s+([0-9\.]*)%us,\s+([0-9\.]*)%sy,\s+([0-9\.]*)%ni,\s+'
+    r'([0-9\.]*)%id,\s+([0-9\.]*)%wa,\s+([0-9\.]*)%hi,\s+([0-9\.]*)%si,\s+([0-9\.]*)%st')
+# Mem:   5990952k total,  4864016k used,  1126936k free,   441444k buffers
+miq_mem = re.compile(r'Mem:\s+([0-9]*)k\stotal,\s+([0-9]*)k\sused,\s+([0-9]*)k\sfree,\s+'
+    r'([0-9]*)k\sbuffers')
+# Swap:  9957368k total,        0k used,  9957368k free,  1153156k cached
+miq_swap = re.compile(r'Swap:\s+([0-9]*)k\stotal,\s+([0-9]*)k\sused,\s+([0-9]*)k\sfree,\s+'
+    r'([0-9]*)k\scached')
 # PID PPID USER PR NI VIRT RES SHR S %CPU %MEM TIME+  COMMAND
 # 17526 2320 root 30 10 324m 9.8m 2444 S 0.0 0.2 0:09.38 /var/www/miq/vmdb/lib/workers/bin/worker.rb
 miq_top = re.compile(r'([0-9]+)\s+[0-9]+\s+[A-Za-z0-9]+\s+[0-9]+\s+[0-9\-]+\s+([0-9\.mg]+)\s+'
@@ -267,6 +279,58 @@ def evm_to_workers(evm_file):
     return workers, wkr_mem_exc, wkr_upt_exc, wkr_stp, wkr_int, wkr_ext, len(evmlines)
 
 
+def split_appliance_charts(top_appliance, charts_dir):
+    # Automatically split top_output data roughly per day
+    minutes_in_a_day = 24 * 60
+    size_data = len(top_appliance['datetimes'])
+    start_hour = top_appliance['datetimes'][0][11:13]
+    start_minute = top_appliance['datetimes'][0][14:16]
+    bracket_end = minutes_in_a_day - ((int(start_hour) * 60) + int(start_minute))
+
+    if size_data > minutes_in_a_day:
+        # Greater than one day worth of data, split
+        file_names = [generate_appliance_charts(top_appliance, charts_dir, 0, bracket_end)]
+        for start_bracket in range(bracket_end, len(top_appliance['datetimes']), minutes_in_a_day):
+            if (start_bracket + minutes_in_a_day) > size_data:
+                end_index = size_data - 1
+            else:
+                end_index = start_bracket + minutes_in_a_day
+            file_names.append(generate_appliance_charts(top_appliance, charts_dir, start_bracket,
+                end_index))
+        return file_names
+    else:
+        # Less than one day worth of data, do not split
+        return [generate_appliance_charts(top_appliance, charts_dir, 0, size_data - 1)]
+
+
+def generate_appliance_charts(top_appliance, charts_dir, start_index, end_index):
+    cpu_chart_file = '/{}-app-cpu.svg'.format(top_appliance['datetimes'][start_index])
+    mem_chart_file = '/{}-app-mem.svg'.format(top_appliance['datetimes'][start_index])
+
+    lines = {}
+    lines['Idle'] = top_appliance['cpuid'][start_index:end_index]
+    lines['User'] = top_appliance['cpuus'][start_index:end_index]
+    lines['System'] = top_appliance['cpusy'][start_index:end_index]
+    lines['Nice'] = top_appliance['cpuni'][start_index:end_index]
+    lines['Wait'] = top_appliance['cpuwa'][start_index:end_index]
+    # lines['Hi'] = top_appliance['cpuhi'][start_index:end_index]  # IRQs %
+    # lines['Si'] = top_appliance['cpusi'][start_index:end_index]  # Soft IRQs %
+    # lines['St'] = top_appliance['cpust'][start_index:end_index]  # Steal CPU %
+    line_chart_render('CPU Usage', 'Date Time', 'Percent',
+        top_appliance['datetimes'][start_index:end_index], lines, charts_dir.join(cpu_chart_file),
+        True)
+
+    lines = {}
+    lines['Memory Total'] = top_appliance['memtot'][start_index:end_index]
+    lines['Memory Free'] = top_appliance['memfre'][start_index:end_index]
+    lines['Memory Used'] = top_appliance['memuse'][start_index:end_index]
+    lines['Swap Used'] = top_appliance['swause'][start_index:end_index]
+    lines['cached'] = top_appliance['cached'][start_index:end_index]
+    line_chart_render('Memory Usage', 'Date Time', 'KiB',
+        top_appliance['datetimes'][start_index:end_index], lines, charts_dir.join(mem_chart_file))
+    return cpu_chart_file, mem_chart_file
+
+
 def generate_hourly_charts_and_csvs(hourly_buckets, charts_dir):
     for cmd in sorted(hourly_buckets):
         current_csv = 'hourly_' + cmd + '.csv'
@@ -379,6 +443,17 @@ def generate_worker_charts(workers, top_workers, charts_dir):
             lines, charts_dir.join('/{}-CPU.svg'.format(worker_name)))
 
 
+def get_first_miqtop(top_log_file):
+    # Find first miqtop log line
+    p = subprocess.Popen(['grep', '-m', '1', '^miqtop\:', top_log_file], stdout=subprocess.PIPE)
+    greppedtop, err = p.communicate()
+    str_start = greppedtop.index('is->')
+    miqtop_time = du_parser.parse(greppedtop[str_start:], fuzzy=True, ignoretz=True)
+    timezone_offset = int(greppedtop[str_start + 34:str_start + 37])
+    miqtop_time = miqtop_time - timedelta(hours=timezone_offset)
+    return miqtop_time, timezone_offset
+
+
 def get_msg_args(log_line):
     miqmsg_args_result = miqmsg_args.search(log_line)
     if miqmsg_args_result:
@@ -436,8 +511,11 @@ def hour_bucket_init(init):
         return {}
 
 
-def line_chart_render(title, xtitle, ytitle, x_labels, lines, fname):
-    line_chart = pygal.Line()
+def line_chart_render(title, xtitle, ytitle, x_labels, lines, fname, stacked=False):
+    if stacked:
+        line_chart = pygal.StackedLine()
+    else:
+        line_chart = pygal.Line()
     line_chart.title = title
     line_chart.x_title = xtitle
     line_chart.y_title = ytitle
@@ -579,17 +657,101 @@ def provision_hour_buckets(test_start, test_end, init=True):
     return buckets
 
 
+def top_to_appliance(top_file):
+    # Find first miqtop log line
+    miqtop_time, timezone_offset = get_first_miqtop(top_file)
+
+    runningtime = time()
+    grep_pattern = '^top\s\-\s\\|^miqtop\:\\|^Cpu(s)\:\\|^Mem\:\\|^Swap\:'
+    # Use grep to reduce # of lines to sort through
+    p = subprocess.Popen(['grep', grep_pattern, top_file], stdout=subprocess.PIPE)
+    greppedtop, err = p.communicate()
+    timediff = time() - runningtime
+    logger.info('Grepped top_output for CPU/Mem/Swap & time data in {}'.format(timediff))
+
+    top_lines = greppedtop.strip().split('\n')
+    line_count = 0
+
+    top_keys = ['datetimes', 'cpuus', 'cpusy', 'cpuni', 'cpuid', 'cpuwa', 'cpuhi', 'cpusi', 'cpust',
+        'memtot', 'memuse', 'memfre', 'buffer', 'swatot', 'swause', 'swafre', 'cached']
+    top_app = dict((key, []) for key in top_keys)
+
+    cur_time = None
+    miqtop_ahead = True
+    runningtime = time()
+    for top_line in top_lines:
+        line_count += 1
+        if 'top - ' in top_line:
+            # top - 11:00:43
+            cur_hour = int(top_line[6:8])
+            cur_min = int(top_line[9:11])
+            cur_sec = int(top_line[12:14])
+            if miqtop_ahead:
+                # Have not found miqtop date/time yet so we must rely on miqtop date/time "ahead"
+                if cur_hour <= miqtop_time.hour:
+                    cur_time = miqtop_time.replace(hour=cur_hour, minute=cur_min, second=cur_sec) \
+                        - timedelta(hours=timezone_offset)
+                else:
+                    # miqtop_time is ahead by date
+                    logger.info('miqtop_time is ahead by one day')
+                    cur_time = miqtop_time - timedelta(days=1)
+                    cur_time = cur_time.replace(hour=cur_hour, minute=cur_min, second=cur_sec) \
+                        - timedelta(hours=timezone_offset)
+            else:
+                cur_time = miqtop_time.replace(hour=cur_hour, minute=cur_min, second=cur_sec) \
+                    - timedelta(hours=timezone_offset)
+        elif 'miqtop: ' in top_line:
+            miqtop_ahead = False
+            # miqtop: .* is-> Mon Jan 26 08:57:39 EST 2015 -0500
+            str_start = top_line.index('is->')
+            miqtop_time = du_parser.parse(top_line[str_start:], fuzzy=True, ignoretz=True)
+            # Time logged in top is the system's time which is ahead/behind by the timezone offset
+            timezone_offset = int(top_line[str_start + 34:str_start + 37])
+            miqtop_time = miqtop_time - timedelta(hours=timezone_offset)
+        elif 'Cpu(s): ' in top_line:
+            miq_cpu_result = miq_cpu.search(top_line)
+            if miq_cpu_result:
+                top_app['datetimes'].append(str(cur_time))
+                top_app['cpuus'].append(float(miq_cpu_result.group(1).strip()))
+                top_app['cpusy'].append(float(miq_cpu_result.group(2).strip()))
+                top_app['cpuni'].append(float(miq_cpu_result.group(3).strip()))
+                top_app['cpuid'].append(float(miq_cpu_result.group(4).strip()))
+                top_app['cpuwa'].append(float(miq_cpu_result.group(5).strip()))
+                top_app['cpuhi'].append(float(miq_cpu_result.group(6).strip()))
+                top_app['cpusi'].append(float(miq_cpu_result.group(7).strip()))
+                top_app['cpust'].append(float(miq_cpu_result.group(8).strip()))
+            else:
+                logger.error('Issue with miq_cpu regex: {}'.format(top_line))
+        elif 'Mem: ' in top_line:
+            miq_mem_result = miq_mem.search(top_line)
+            if miq_mem_result:
+                top_app['memtot'].append(round(float(miq_mem_result.group(1).strip()) / 1024, 2))
+                top_app['memuse'].append(round(float(miq_mem_result.group(2).strip()) / 1024, 2))
+                top_app['memfre'].append(round(float(miq_mem_result.group(3).strip()) / 1024, 2))
+                top_app['buffer'].append(round(float(miq_mem_result.group(4).strip()) / 1024, 2))
+            else:
+                logger.error('Issue with miq_mem regex: {}'.format(top_line))
+        elif 'Swap: ' in top_line:
+            miq_swap_result = miq_swap.search(top_line)
+            if miq_swap_result:
+                top_app['swatot'].append(round(float(miq_swap_result.group(1).strip()) / 1024, 2))
+                top_app['swause'].append(round(float(miq_swap_result.group(2).strip()) / 1024, 2))
+                top_app['swafre'].append(round(float(miq_swap_result.group(3).strip()) / 1024, 2))
+                top_app['cached'].append(round(float(miq_swap_result.group(4).strip()) / 1024, 2))
+            else:
+                logger.error('Issue with miq_swap regex: {}'.format(top_line))
+        else:
+            logger.error('Issue with grepping of top file:{}'.format(top_line))
+        if (line_count % 20000) == 0:
+            timediff = time() - runningtime
+            runningtime = time()
+            logger.info('Count {} : Parsed 20000 lines in {}'.format(line_count, timediff))
+    return top_app, len(top_lines)
+
+
 def top_to_workers(workers, top_file):
     # Find first miqtop log line
-    p = subprocess.Popen(['grep', '-m', '1', '^miqtop\:', top_file], stdout=subprocess.PIPE)
-    greppedtop, err = p.communicate()
-    str_start = greppedtop.index('is->')
-    miqtop_time = du_parser.parse(greppedtop[str_start:], fuzzy=True, ignoretz=True)
-    timezone_offset = int(greppedtop[str_start + 34:str_start + 37])
-    miqtop_time = miqtop_time - timedelta(hours=timezone_offset)
-    # Time zones are also difficult to deal with here
-    logger.debug('Timezone Offset: {}'.format(timezone_offset))
-    logger.debug('Starting miqtop time: {}'.format(miqtop_time))
+    miqtop_time, timezone_offset = get_first_miqtop(top_file)
 
     runningtime = time()
     grep_pids = ''
@@ -631,15 +793,11 @@ def top_to_workers(workers, top_file):
             else:
                 cur_time = miqtop_time.replace(hour=cur_hour, minute=cur_min, second=cur_sec) \
                     - timedelta(hours=timezone_offset)
-
         elif 'miqtop: ' in top_line:
             miqtop_ahead = False
-            # miqtop which includes the date
-            # miqtop: timesync: date time is-> Mon Jan 26 11:01:01 EST 2015 -0500
-            # miqtop: start: date time is-> Mon Jan 26 08:57:39 EST 2015 -0500
+            # miqtop: .* is-> Mon Jan 26 08:57:39 EST 2015 -0500
             str_start = top_line.index('is->')
             miqtop_time = du_parser.parse(top_line[str_start:], fuzzy=True, ignoretz=True)
-            # Timezone conversion...
             # Time logged in top is the system's time which is ahead/behind by the timezone offset
             timezone_offset = int(top_line[str_start + 34:str_start + 37])
             miqtop_time = miqtop_time - timedelta(hours=timezone_offset)
@@ -717,6 +875,14 @@ def perf_process_evm(evm_file, top_file):
     logger.info('# Workers Stopped: {}'.format(wkr_stp))
     logger.info('# Workers Interrupted: {}'.format(wkr_int))
 
+    logger.info('----------- Parsing top_output log file for Appliance Metrics -----------')
+    starttime = time()
+    top_appliance, tp_lc = top_to_appliance(top_file)
+    timediff = time() - starttime
+    logger.info('----------- Completed Parsing top_output log -----------')
+    logger.info('Parsed {} lines of top_output file for Appliance Metrics in {}'.format(tp_lc,
+        timediff))
+
     logger.info('----------- Parsing top_output log file for worker CPU/Mem -----------')
     starttime = time()
     top_workers, tp_lc = top_to_workers(workers, top_file)
@@ -753,6 +919,12 @@ def perf_process_evm(evm_file, top_file):
     timediff = time() - starttime
     logger.info('Generated Total Time Charts in: {}'.format(timediff))
 
+    logger.info('----------- Generating Appliance Charts -----------')
+    starttime = time()
+    app_chart_files = split_appliance_charts(top_appliance, charts_dir)
+    timediff = time() - starttime
+    logger.info('Generated Appliance Charts in: {}'.format(timediff))
+
     logger.info('----------- Generating Worker Charts -----------')
     starttime = time()
     generate_worker_charts(workers, top_workers, charts_dir)
@@ -783,12 +955,21 @@ def perf_process_evm(evm_file, top_file):
     html_menu = log_path.join('msg_menu.html').open('w', ensure=True)
     html_menu.write('<html>\n')
     html_menu.write('<font size="2">')
+
+    html_menu.write('Appliance:<BR>')
+    for cpu_mem_charts in app_chart_files:
+        html_menu.write('{}&nbsp;<a href="charts{}" target="showframe">CPU</a>&nbsp;|&nbsp;'.format(
+            cpu_mem_charts[0][1:11], cpu_mem_charts[0]))
+        html_menu.write('<a href="charts{}" target="showframe">Memory</a><br>'.format(
+            cpu_mem_charts[1]))
+
     html_menu.write('<a href="worker_menu.html" target="menu">Worker CPU/Memory</a><br>')
     html_menu.write('Parsed {} lines for messages<br>'.format(msg_lc))
     html_menu.write('Start Time: {}<br>'.format(test_start))
     html_menu.write('End Time: {}<br>'.format(test_end))
     html_menu.write('Message Count: {}<br>'.format(len(messages)))
     html_menu.write('Command Count: {}<br>'.format(len(msg_cmds)))
+
     html_menu.write('Parsed {} lines for workers<br>'.format(wkr_lc, timediff))
     html_menu.write('Total Workers: {}<br>'.format(len(workers)))
     html_menu.write('Workers Memory Exceeded: {}<br>'.format(wkr_mem_exc))
@@ -826,6 +1007,14 @@ def perf_process_evm(evm_file, top_file):
     html_wkr_menu = log_path.join('worker_menu.html').open('w', ensure=True)
     html_wkr_menu.write('<html>\n')
     html_wkr_menu.write('<font size="2">')
+
+    html_wkr_menu.write('Appliance:<BR>')
+    for cpu_mem_charts in app_chart_files:
+        html_wkr_menu.write('{}-<a href="charts{}" target="showframe">CPU</a>&nbsp;|&nbsp;'.format(
+            cpu_mem_charts[0][1:11], cpu_mem_charts[0]))
+        html_wkr_menu.write('<a href="charts{}" target="showframe">Memory</a><br>'.format(
+            cpu_mem_charts[1]))
+
     html_wkr_menu.write('<a href="msg_menu.html" target="menu">Message Latencies</a><br>')
     html_wkr_menu.write('Parsed {} lines for messages<br>'.format(msg_lc))
     html_wkr_menu.write('Start Time: {}<br>'.format(test_start))
