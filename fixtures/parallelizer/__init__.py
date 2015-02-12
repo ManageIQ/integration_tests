@@ -147,7 +147,13 @@ class ParallelSession(object):
                     delay=5,
                     message="requesting appliances was fulfilled"
                 )
-            finally:
+            except:
+                pool = self.sprout_client.request_check(self.sprout_pool)
+                dump_pool_info(lambda x: self.terminal.write("{}\n".format(x)), pool)
+                self.terminal.write("Destroying the pool on error.\n")
+                self.sprout_client.destroy_pool(pool_id)
+                raise
+            else:
                 pool = self.sprout_client.request_check(self.sprout_pool)
                 dump_pool_info(lambda x: self.terminal.write("{}\n".format(x)), pool)
             self.terminal.write("Provisioning took {0:.1f} seconds\n".format(result.duration))

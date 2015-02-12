@@ -51,12 +51,17 @@ def pytest_configure(config, __multicall__):
         )
         terminal.write("Appliance pool {}. Waiting for fulfillment ...\n".format(pool_id))
         at_exit(destroy_the_pool)
-        result = wait_for(
-            lambda: sprout.request_check(pool_id)["fulfilled"],
-            num_sec=config.option.sprout_provision_timeout * 60,
-            delay=5,
-            message="requesting appliance was fulfilled"
-        )
+        try:
+            result = wait_for(
+                lambda: sprout.request_check(pool_id)["fulfilled"],
+                num_sec=config.option.sprout_provision_timeout * 60,
+                delay=5,
+                message="requesting appliance was fulfilled"
+            )
+        except:
+            terminal.write("Destroying the pool on error.\n")
+            sprout.destroy_pool(pool_id)
+            raise
         terminal.write("Provisioning took {0:.1f} seconds\n".format(result.duration))
         request = sprout.request_check(pool_id)
         ip_address = request["appliances"][0]["ip_address"]
