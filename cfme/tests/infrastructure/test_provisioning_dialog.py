@@ -36,8 +36,6 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
     argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
-    if metafunc.function is test_disk_format_select:
-        argnames = argnames + ['disk_format']
 
     new_idlist = []
     new_argvalues = []
@@ -52,26 +50,8 @@ def pytest_generate_tests(metafunc):
             # Need all three for template provisioning
             continue
 
-        # In the case that we are generating for the test_disk_format_select function
-        if metafunc.function is test_disk_format_select:
-            # Iterate through the disk types
-            for df in ["thin", "thick", "preallocated"]:
-                # Skip if these conditions are met
-                if args['provider_type'] == "rhevm" and df == "thick":
-                    continue
-                if args['provider_type'] != "rhevm" and df == "preallocated":
-                    continue
-
-                # Make a copy of the argvalues to append to
-                narv = argvalues[i][:]
-                narv.append(df)
-
-                # Create the new id
-                new_idlist.append("{}-{}".format(idlist[i], df))
-                new_argvalues.append(narv)
-        else:
-            new_idlist.append(idlist[i])
-            new_argvalues.append(argvalues[i])
+        new_idlist.append(idlist[i])
+        new_argvalues.append(argvalues[i])
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
@@ -163,16 +143,16 @@ def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
 
 
 # Special parametrization in testgen above
+@pytest.mark.parametrize("disk_format", ["thin", "thick", "preallocated"])
+@pytest.mark.uncollectif(lambda provider_type, disk_format:
+                         (provider_type == "rhevm" and disk_format == "thick") or
+                         (provider_type != "rhevm" and disk_format == "preallocated"))
 def test_disk_format_select(provisioner, prov_data, template_name, disk_format, provider_type):
     """ Tests disk format
 
     Metadata:
         test_flag: provision
     """
-    if (
-            (provider_type == "rhevm" and disk_format == "thick") or
-            (provider_type != "rhevm" and disk_format == "preallocated")):
-        pytest.skip("{}+{}".format(provider_type, disk_format))
     prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
     prov_data["disk_format"] = disk_format
 
@@ -208,7 +188,8 @@ def test_power_on_or_off_after_provision(
     )
 
 
-def test_tag(provisioner, prov_data, template_name):
+@pytest.mark.uncollectif(lambda: version.current_version() < '5.3')
+def test_tag(provisioner, prov_data, template_name, provider_type):
     """ Tests tagging
 
     Metadata:
