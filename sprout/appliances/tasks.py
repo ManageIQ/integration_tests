@@ -292,6 +292,7 @@ def prepare_template_deploy(self, template_id):
             template.set_status("Deploying the template.")
             kwargs = template.provider.provider_data["sprout"]
             kwargs["power_on"] = True
+            logger().info("Deployment kwargs: {}".format(repr(kwargs)))
             template.provider_api.deploy_template(
                 template.original_name, vm_name=template.name, **kwargs)
         else:
@@ -541,6 +542,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             appliance.set_status("Beginning template clone.")
             kwargs = appliance.template.provider.provider_data["sprout"]
             kwargs["power_on"] = False
+            logger().info("Deployment kwargs: {}".format(repr(kwargs)))
             appliance.provider_api.deploy_template(
                 appliance.template.name, vm_name=appliance.name,
                 progress_callback=lambda progress: appliance.set_status(
