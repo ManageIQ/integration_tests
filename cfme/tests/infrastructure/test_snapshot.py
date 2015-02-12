@@ -3,7 +3,7 @@ import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
 from utils import testgen
-from utils.conf import cfme_data, credentials
+from utils.conf import credentials
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
 from utils.log import logger
@@ -14,23 +14,7 @@ from utils.wait import wait_for
 pytestmark = [pytest.mark.long_running]
 
 
-def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
-
-    new_idlist = []
-    new_argvalues = []
-
-    for i, argvalue_tuple in enumerate(argvalues):
-        provider_data = cfme_data['management_systems'][
-            argvalue_tuple[argnames.index('provider_key')]]
-        if provider_data.get('type', False) != 'virtualcenter':
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -74,7 +58,8 @@ def test_snapshot_crud(test_vm, provider_key):
     snapshot.delete()
 
 
-def test_delete_all_snapshots(test_vm, provider_key):
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'virtualcenter')
+def test_delete_all_snapshots(test_vm, provider_key, provider_type):
     """Tests snapshot removal
 
     Metadata:
@@ -87,7 +72,9 @@ def test_delete_all_snapshots(test_vm, provider_key):
     snapshot2.delete_all()
 
 
-def test_verify_revert_snapshot(test_vm, provider_key, soft_assert, register_event, request):
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'virtualcenter')
+def test_verify_revert_snapshot(test_vm, provider_key, provider_type,
+                                soft_assert, register_event, request):
     """Tests revert snapshot
 
     Metadata:
