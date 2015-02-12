@@ -69,12 +69,13 @@ class MetadataMixin(models.Model):
 
 class DelayedProvisionTask(MetadataMixin):
     pool = models.ForeignKey("AppliancePool")
-    lease_time = models.IntegerField(null=True)
-    provider_to_avoid = models.ForeignKey("Provider", null=True)
+    lease_time = models.IntegerField(null=True, blank=True)
+    provider_to_avoid = models.ForeignKey("Provider", null=True, blank=True)
 
     def __unicode__(self):
         return u"Task {}: Provision on {}, lease time {}, avoid provider {}".format(
-            self.id, self.pool.id, self.lease_time, str(self.provider_to_avoid.id))
+            self.id, self.pool.id, self.lease_time,
+            self.provider_to_avoid.id if self.provider_to_avoid is not None else "---")
 
 
 class Provider(MetadataMixin):
