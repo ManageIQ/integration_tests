@@ -2,22 +2,23 @@ boto
 bottle
 bottle-sqlite
 docker-py
-flake8
 fauxfactory>=2.0.4
-functools32
+flake8
 function_trace
+functools32
 ipython
 Jinja2
 kwargify
+multimethods.py
+numpy
 ovirt-engine-sdk-python
 paramiko
 psphere
 py
+pygal
 PyGithub
 PyPDF2
-pygal
 pytest
-pycrypto
 python-bugzilla>=1.1.0
 python-cinderclient
 python-dateutil
@@ -30,13 +31,13 @@ riggerlib
 scp
 selenium
 slumber
-multimethods.py
 sqlalchemy
 suds
 tornado
 tzlocal
 ui-navigate
-numpy
+yaycl
+yaycl-crypt
 
 # docs requirements
 # When Sphinx 1.3 is released and on RTD, we can upgrade and use

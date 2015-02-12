@@ -8,7 +8,12 @@ Usage:
    scripts/encrypt_conf.py credentials
 """
 import sys
-from utils import _conf
+
+import yaycl_crypt
+
+from utils import conf
 
 for conf_name in sys.argv[1:]:
-    _conf.encrypt_yaml(conf_name.strip())
+    conf_name = conf_name.strip()
+    yaycl_crypt.encrypt_yaml(conf, conf_name)
+    print '{} conf encrypted'.format(conf_name)
