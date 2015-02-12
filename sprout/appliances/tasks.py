@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import hashlib
 import random
 import re
+import time
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -602,6 +603,8 @@ def clone_template_to_appliance__power_off_if_rhos(self, appliance_id):
             appliance.set_status("Starting and stopping to circumvent RHOS bug.")
             appliance.provider_api.start_vm(appliance.name)
             appliance.provider_api.wait_vm_running(appliance.name)
+            appliance.set_status("VM started, waiting 60s before poweroff.")
+            time.sleep(60)  # Should be enough time
             appliance.provider_api.stop_vm(appliance.name)
             appliance.provider_api.wait_vm_stopped(appliance.name)
             appliance.set_status("Appliance was stopped.")
