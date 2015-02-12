@@ -445,7 +445,7 @@ def process_delayed_provision_tasks(self):
             # If there is no other provider to provision on, we will use the original list.
             # This will cause additional rejects until the provider quota is met
         if tpls:
-            clone_template_to_pool(random.choice(tpls).id, task.pool.id, task.lease_time)
+            clone_template_to_pool(tpls[0].id, task.pool.id, task.lease_time)
             task.delete()
 
 

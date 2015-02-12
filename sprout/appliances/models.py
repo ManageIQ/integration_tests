@@ -620,7 +620,8 @@ class AppliancePool(MetadataMixin):
     def possible_provisioning_templates(self):
         return sorted(
             filter(lambda tpl: tpl.provider.free, self.possible_templates),
-            key=lambda tpl: tpl.date, reverse=True)
+            # Sort by date and load to pick the best match (least loaded provider)
+            key=lambda tpl: (tpl.date, 1.0 - tpl.provider.appliance_load), reverse=True)
 
     @property
     def appliances(self):
