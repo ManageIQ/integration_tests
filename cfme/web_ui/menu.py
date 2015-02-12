@@ -3,17 +3,40 @@ import ui_navigate as nav
 from cfme.fixtures import pytest_selenium as sel
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
-from utils import version
+from utils import version, classproperty
 from utils.wait import wait_for
 
-# All top-level menu items
-toplevel_tabs_loc = '//div[@class="navbar"]/ul'
-# Specific top-level menu item (toplevel_loc.format(tl_item_text))
-toplevel_loc = '//div[@class="navbar"]/ul/li/a[normalize-space(.)="{}"]'
-# Locator targeting the first item of the specific top-level menu item
-secondlevel_first_item_loc = '//div[@class="navbar"]/ul/li/a[normalize-space(.)="{}"]/../ul/li[1]/a'
-# All submenus that are not currently active (but can be hovered)
-inactive_box_loc = "//ul[@id='maintab']//ul[contains(@class, 'inactive')]"
+
+class Loc(object):
+
+    @classproperty
+    def toplevel_tabs_loc(cls):
+        return version.pick({version.LOWEST: '//div[@class="navbar"]/ul',
+            '5.4': '//nav[contains(@class, "navbar")]/div/ul[@id="maintab"]'})
+
+    @classproperty
+    def toplevel_loc(cls):
+        return version.pick({version.LOWEST: ('//div[@class="navbar"]/ul/li'
+                                              '/a[normalize-space(.)="{}"]'),
+                             '5.4': cls.toplevel_tabs_loc + ('/li/a[normalize-space(.)="{}"'
+                                'and (contains(@class, "visible-lg"))]')})
+
+    @classproperty
+    def secondlevel_first_item_loc(cls):
+        return version.pick({version.LOWEST: ('//div[@class="navbar"]/ul/li'
+                                              '/a[normalize-space(.)="{}"]/../ul/li[1]/a'),
+            '5.4': cls.toplevel_tabs_loc + '/li/a[normalize-space(.)="{}"]/../ul/li[1]/a'})
+
+    @classproperty
+    def inactive_box_loc(cls):
+        return version.pick({version.LOWEST: ("//ul[@id='maintab']//"
+                                              "ul[contains(@class, 'inactive')]"),
+            '5.4': "//ul[@id='maintab']//ul[contains(@class, 'inactive')]"})
+
+    @classproperty
+    def a(cls):
+        return version.pick({version.LOWEST: "./a",
+            '5.4': "./a[contains(@class, 'visible-lg')]"})
 
 
 def any_box_displayed():
@@ -23,18 +46,20 @@ def any_box_displayed():
     """
     return version.pick({
         version.LOWEST: lambda: sel.is_displayed("//a[contains(@class, 'maintab_active')]"),
-        "5.3": lambda: any(map(sel.is_displayed, sel.elements(inactive_box_loc)))
+        "5.3": lambda: any(map(sel.is_displayed, sel.elements(Loc.inactive_box_loc))),
+        "5.4": lambda: sel.is_displayed(
+            "//li[contains(@class, 'dropdown') and contains(@class, 'open')]")
     })()
 
 
 def get_top_level_element(title):
     """Returns the ``li`` element representing the menu item in top-level menu."""
-    return sel.element("//div[@class='navbar']/ul/li/a[normalize-space(.)='{}']/..".format(title))
+    return sel.element((Loc.toplevel_loc + "/..").format(title))
 
 
 def open_top_level(title):
     """Opens the section."""
-    sel.raw_click(sel.element("./a", root=get_top_level_element(title)))
+    sel.raw_click(sel.element(Loc.a, root=get_top_level_element(title)))
 
 
 def get_second_level_element(top_level_el, title):
@@ -53,6 +78,7 @@ def get_current_toplevel_name():
     get_rid_of_the_menu_box()
     return sel.text(
         version.pick({
+            "5.4": "//ul[@id='maintab']/li[not(contains(@class, 'drop'))]/a[2]",
             "5.3": "//ul[@id='maintab']/li[not(contains(@class, 'in'))]/a",
             version.LOWEST: "//ul[@id='maintab']/li/ul[not(contains(@style, 'none'))]/../a"
         })).encode("utf-8").strip()
@@ -142,8 +168,12 @@ def is_page_active(toplevel, secondlevel=None):
         return False
     if secondlevel:
         try:
-            sel.element("//div[@class='navbar']//ul/li[@class='active']"
-                        "/a[normalize-space(.)='{}']/..".format(secondlevel))
+            sel.element(version.pick({
+                "5.4": ("//nav[contains(@class, 'navbar')]//ul/li[@class='active']"
+                        "/a[normalize-space(.)='{}']/..".format(secondlevel)),
+                version.LOWEST: ("//div[@class='navbar']//ul/li[@class='active']"
+                                 "/a[normalize-space(.)='{}']/..".format(secondlevel))
+            }))
         except NoSuchElementException:
             return False
     return True
@@ -163,7 +193,8 @@ def nav_to_fn(toplevel, secondlevel=None):
                     # Using pure move_to_element to not move the mouse anywhere else
                     # So in this case, we move the mouse to the first item of the second level
                     ActionChains(sel.browser())\
-                        .move_to_element(sel.element(secondlevel_first_item_loc.format(toplevel)))\
+                        .move_to_element(sel.element(Loc.secondlevel_first_item_loc.format(
+                            toplevel)))\
                         .click()\
                         .perform()
                     get_rid_of_the_menu_box()
@@ -226,7 +257,10 @@ def reverse_lookup(toplevel_path, secondlevel_path=None):
 
 def visible_toplevel_tabs():
     menu_names = []
-    for menu_elem in sel.elements('li/a', root=toplevel_tabs_loc):
+    ele = version.pick({
+        "5.4": 'li/a[2]',
+        version.LOWEST: 'li/a'})
+    for menu_elem in sel.elements(ele, root=Loc.toplevel_tabs_loc):
         menu_names.append(sel.text(menu_elem))
     return menu_names
 
@@ -243,7 +277,7 @@ def visible_pages():
     # Now go from tab to tab and pull the secondlevel names from the visible links
     displayed_menus = []
     for menu_name in menu_names:
-        menu_elem = sel.element(toplevel_loc.format(menu_name))
+        menu_elem = sel.element(Loc.toplevel_loc.format(menu_name))
         sel.move_to_element(menu_elem)
         for submenu_elem in sel.elements('../ul/li/a', root=menu_elem):
             displayed_menus.append((menu_name, sel.text(submenu_elem)))
