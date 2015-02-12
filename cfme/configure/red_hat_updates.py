@@ -56,14 +56,16 @@ registration_form = Form(
     fields=[
         ("service", Select("//select[@id='register_to']")),
         ("url", "//input[@id='server_url']"),
-        ("username", "//input[@id='customer_userid']"),
-        ("password", "//input[@id='customer_password']"),
         ("repo_name", "//input[@id='repo_name']"),
-        ("organization", "//input[@id='customer_org']"),
         ("use_proxy", "//input[@id='use_proxy']"),
         ("proxy_url", "//input[@id='proxy_address']"),
         ("proxy_username", "//input[@id='proxy_userid']"),
         ("proxy_password", "//input[@id='proxy_password']"),
+        ("username", "//input[@id='customer_userid']"),
+        ("password", "//input[@id='customer_password']"),
+        ("organization_sat5", "//input[@id='customer_org']"),
+        ("organization_sat6", Select("//select[@id='customer_org']")),
+
     ]
 )
 
@@ -97,7 +99,7 @@ def update_registration(service,
                         proxy_url=None,
                         proxy_username=None,
                         proxy_password=None,
-                        validate=False,
+                        validate=True,
                         cancel=False,
                         set_default_rhsm_address=False,
                         set_default_repository=False):
@@ -116,16 +118,31 @@ def update_registration(service,
         proxy_username: Username for the proxy server.
         proxy_password: Password for the proxy server.
         validate: Click the Validate button and check the
-                  flash message for errors if `True` (default `False`)
+                  flash message for errors if `True` (default `True`)
         cancel: Click the Cancel button if `True` or the Save button
                 if `False` (default `False`)
         set_default_rhsm_address: Click the Default button connected to
                                   the RHSM (only) address if `True`
         set_default_repository: Click the Default button connected to
                                 the repo/channel if `True`
+
+    Note:
+        With satellite 6, it is necessary to validate credentials to obtain
+        available organizations from the server.
+        With satellite 5, validation parameter is ignored because there is
+        no validation button available.
     """
     assert service in service_types, "Unknown service type '{}'".format(service)
     service_value = service_types[service]
+
+    # Sat6 organization can be selected only after successful validation
+    # while Sat5 organization is selected normally
+    if service == 'sat6':
+        organization_sat5 = None
+        organization_sat6 = organization
+    else:
+        organization_sat5 = organization
+        organization_sat6 = None
 
     sel.force_navigate("cfg_settings_region_red_hat_updates")
     sel.click(update_buttons.edit_registration)
@@ -135,7 +152,7 @@ def update_registration(service,
         username=username,
         password=password,
         repo_name=repo_name,
-        organization=organization,
+        organization_sat5=organization_sat5,
         use_proxy=use_proxy,
         proxy_url=proxy_url,
         proxy_username=proxy_username,
@@ -150,10 +167,13 @@ def update_registration(service,
     if set_default_repository:
         sel.click(registration_buttons.repo_default)
 
-    if validate:
+    if validate and service != 'sat5':
         sel.click(form_buttons.validate_short)
         flash.assert_no_errors()
         flash.dismiss()
+
+    if organization_sat6:
+        sel.select(registration_form.locators['organization_sat6'], organization_sat6)
 
     if cancel:
         form_buttons.cancel()
@@ -212,7 +232,7 @@ def are_registered(*appliance_names):
         appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
-        if row.update_status.text == 'Not Registered':
+        if row.update_status.text.lower() == 'not registered':
             return False
     return True
 
@@ -224,7 +244,7 @@ def are_subscribed(*appliance_names):
         appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
-        if row.update_status.text in {'Not Registered', 'Unsubscribed'}:
+        if row.update_status.text.lower() in {'not registered', 'unsubscribed'}:
             return False
     return True
 
@@ -261,7 +281,7 @@ def platform_updates_available(*appliance_names):
         appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
-        if row.platform_updates_available.text != 'Yes':
+        if row.platform_updates_available.text.lower() != 'yes':
             return False
     return True
 
