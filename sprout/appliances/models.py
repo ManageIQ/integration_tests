@@ -235,7 +235,7 @@ class Provider(MetadataMixin):
         if isinstance(self.api, mgmt_system.OpenstackSystem):
             # Openstack cleanup
             # Clean up the floating IPs
-            for floating_ip in self.api.floating_ips.findall(fixed_ip=None):
+            for floating_ip in self.api.api.floating_ips.findall(fixed_ip=None):
                 logger().info("Cleaning up the {} floating ip {}".format(self.id, floating_ip.ip))
                 try:
                     floating_ip.delete()
