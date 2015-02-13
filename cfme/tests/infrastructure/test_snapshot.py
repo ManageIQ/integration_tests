@@ -47,7 +47,8 @@ def new_snapshot(test_vm):
     return new_snapshot
 
 
-def test_snapshot_crud(test_vm, provider_key):
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'virtualcenter')
+def test_snapshot_crud(test_vm, provider_key, provider_type):
     """Tests snapshot crud
 
     Metadata:
