@@ -183,7 +183,7 @@ def evm_to_messages(evm_file, filters):
     # I tried to avoid two loops but this reduced the complexity of filtering on messages.
     # By filtering over messages, we can better display what is occuring under the covers, as a
     # daily rollup is picked up off the queue different than a hourly rollup, etc
-    for msg in messages:
+    for msg in sorted(messages.keys()):
         msg_args = messages[msg].msg_args
         # Determine if the pattern matches and append to the command if it does
         for p_filter in filters:
