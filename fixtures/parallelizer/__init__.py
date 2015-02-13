@@ -317,13 +317,13 @@ class ParallelSession(object):
         # If that stops being the case, look at serialize_/unserialize_ report for another option
         conf.runtime['slave_config'] = {
             'args': self.config.args,
-            'options': self.config.option,
+            'options': self.config.option.__dict__,
             'zmq_endpoint': zmq_endpoint,
             'sprout': self.sprout_client is not None and self.sprout_pool is not None,
         }
         if hasattr(self, "slave_appliances_data"):
             conf.runtime['slave_config']["appliance_data"] = self.slave_appliances_data
-        conf.runtime['slave_config']['options'].use_sprout = False  # Slaves should not use sprout
+        conf.runtime['slave_config']['options']['use_sprout'] = False  # Slaves don't use sprout
         conf.save('slave_config')
 
         # Fire up the workers
