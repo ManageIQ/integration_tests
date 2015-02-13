@@ -2180,6 +2180,9 @@ class DHTMLSelect(Select):
             index = browser().execute_script('return %s.getIndexByValue("%s")' % (name, value))
             self.select_by_index(index, _cascade=True)
 
+    def locate(self):
+        return sel.move_to_element(self._loc)
+
 
 @sel.select.method((DHTMLSelect, basestring))
 def select_dhtml(dhtml, s):
