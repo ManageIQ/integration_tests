@@ -46,9 +46,9 @@ def test_password_mismatch_validation():
     flash.assert_message_match('Password/Verify Password do not match')
 
 
+@pytest.mark.uncollect()
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_providers_discovery_amazon():
-    raise pytest.skip('discovery and teardown is not parallel; this routinely times out')
     amazon_creds = provider.get_credentials_from_config('cloudqe_amazon')
     provider.discover(amazon_creds)
     flash.assert_message_match('Amazon Cloud Providers: Discovery successfully initiated')

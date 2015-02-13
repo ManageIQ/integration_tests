@@ -21,10 +21,9 @@ def test_server_name(appliance_ip):
     assert store.current_appliance.server_name() == "EVM"
 
 
+@pytest.mark.uncollectif(lambda: store.current_appliance.server_region() == 0)
 def test_server_region_and_id(appliance_ip):
     """Server ID begins with region number, so check that.
     """
     region = store.current_appliance.server_region()
-    if region == 0:
-        pytest.skip("Can't check this if the region is 0")
     assert str(store.current_appliance.server_id()).startswith(str(region))

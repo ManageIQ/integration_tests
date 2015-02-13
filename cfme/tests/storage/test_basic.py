@@ -4,6 +4,7 @@ import pytest
 from cfme.storage import file_shares, filers, luns, volumes
 from utils.conf import cfme_data
 from utils.storage_managers import setup_storage_managers
+from utils.version import current_version
 
 
 @pytest.fixture(scope="module")
@@ -18,7 +19,8 @@ def get_testing_data(obj):
     return cfme_data.get("storage", {}).get("testing", {}).get(obj, [])
 
 pytestmark = [
-    pytest.mark.usefixtures("storage_managers")
+    pytest.mark.usefixtures("storage_managers"),
+    pytest.mark.uncollectif(lambda: not current_version().is_in_series("5.2"))
 ]
 
 

@@ -505,7 +505,7 @@ def test_action_create_snapshots_and_delete_them(request, assign_policy_for_test
              message="wait for snapshots to be deleted", delay=5)
 
 
-@pytest.mark.skipif("True")
+@pytest.mark.uncollect()
 def test_action_initiate_smartstate_analysis(request, assign_policy_for_testing, vm, vm_off):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
 
