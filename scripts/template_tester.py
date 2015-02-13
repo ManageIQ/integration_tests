@@ -67,7 +67,8 @@ def mark(api, provider_key, template, usable, diagnose):
             from utils.appliance import IPAppliance
             ipa = IPAppliance()
             diagnosis = ipa.diagnose_evm_failure()
-            logger.error('Appliance failed: {}'.format(diagnosis.split(os.linesep)[0]))
+            if diagnosis:
+                logger.error('Appliance failed: {}'.format(diagnosis.split(os.linesep)[0]))
     trackerbot.mark_provider_template(api, provider_key, template, tested=True, usable=usable,
         diagnosis=diagnosis, build_number=build_number)
 
