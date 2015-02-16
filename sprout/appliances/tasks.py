@@ -4,7 +4,6 @@ from __future__ import absolute_import
 import hashlib
 import random
 import re
-import time
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -19,7 +18,6 @@ from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask)
 from sprout import settings, redis
 
-from utils import mgmt_system
 from utils.appliance import Appliance as CFMEAppliance
 from utils.log import create_logger
 from utils.path import project_path
@@ -517,7 +515,6 @@ def clone_template_to_appliance(appliance_id, lease_time_minutes=None):
     tasks = [
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
-        clone_template_to_appliance__power_off_if_rhos.si(appliance_id),
         appliance_power_on.si(appliance_id),
     ]
     workflow = chain(*tasks)
@@ -588,29 +585,6 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             self.retry(args=(appliance_id,), exc=e, countdown=60, max_retries=5)
     else:
         appliance.set_status("Template cloning finished.")
-
-
-@logged_task(bind=True)
-def clone_template_to_appliance__power_off_if_rhos(self, appliance_id):
-    try:
-        appliance = Appliance.objects.get(id=appliance_id)
-    except ObjectDoesNotExist:
-        # source objects are not present, terminating the chain
-        self.request.callbacks[:] = []
-        return
-    try:
-        if isinstance(appliance.template.provider.api, mgmt_system.OpenstackSystem):
-            appliance.set_status("Starting and stopping to circumvent RHOS bug.")
-            appliance.provider_api.start_vm(appliance.name)
-            appliance.provider_api.wait_vm_running(appliance.name)
-            appliance.set_status("VM started, waiting 60s before poweroff.")
-            time.sleep(60)  # Should be enough time
-            appliance.provider_api.stop_vm(appliance.name)
-            appliance.provider_api.wait_vm_stopped(appliance.name)
-            appliance.set_status("Appliance was stopped.")
-    except Exception as e:
-        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
-        self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
 
 
 @logged_task(bind=True)
