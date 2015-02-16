@@ -12,6 +12,8 @@ hash gunicorn 2>/dev/null && hash celery 2>/dev/null || {
 
 [ -e ".env" ] && source .env
 
+YAMLS_DIR=${YAMLS_DIR:-"../../cfme-qe-yamls"}
+
 export PYTHONPATH="`pwd`:${PYTHONPATH}"
 
 ACTION="${1}"
@@ -47,6 +49,16 @@ function needs_update() {
     git diff --name-only `git rev-parse master` `git rev-parse origin/master` | grep ^sprout/
     RESULT=$?
     cd "${OLD}"
+    return $RESULT
+}
+
+function update_yamls() {
+    cddir
+    pushd $YAMLS_DIR
+    git pull origin master >/dev/null 2>&1
+    RESULT=$?
+    [ $RESULT -ne 0 ] && echo "Pull on yamls git repo failed"
+    popd
     return $RESULT
 }
 
@@ -402,6 +414,8 @@ function update_sprout() {
     clearpyc
     echo "> Collecting static files"
     ./manage.py collectstatic --noinput >> $UPDATE_LOG
+    echo "> Pulling the YAMLs"
+    update_yamls
     if migrations_needed ;
     then
         echo "> Stopping processes"
@@ -474,6 +488,7 @@ case "${ACTION}" in
 
     update) update_sprout ;;
     check-update) sprout_needs_update ;;
+    yaml-update) update_yamls ;;
     *) echo "Usage: ${0} start|{gunicorn,beat,worker,flower,memcached}-start|stop|{gunicorn,beat,worker,flower,memcached}-stop|restart|check-update|update|reload" ;;
 esac
 
