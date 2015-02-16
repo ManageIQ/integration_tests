@@ -1898,6 +1898,10 @@ class InfoBlock(Pretty):
             except sel_exceptions.NoSuchElementException:
                 return None
 
+        @property
+        def title(self):
+            return sel.get_attribute(self.pair, "title") or None
+
 
 @fill.method((InfoBlock, Sequence))
 def _ib_seq(ib, i):
@@ -3062,9 +3066,15 @@ def _fill_dt_row_map(dtr, m):
 
 @fill.method((DynamicTable.Row, Anything))
 def _fill_dt_row_other(dtr, anything):
-    if dtr.table.default_row_item is None:
-        raise Exception("Cannot fill table row with anything when we dont know the dafult field")
-    fill(dtr, {dtr.table.default_row_item: anything})
+    mapping_fields = [name for name in dtr.table.header_names if name.strip()]
+    if isinstance(anything, (list, tuple)) and len(anything) == len(mapping_fields):
+        # Create the dict and fill by dict
+        fill(dtr, dict(zip(mapping_fields, anything)))
+    else:
+        # Use the default field
+        if dtr.table.default_row_item is None:
+            raise Exception("Cannot fill table row with anything when we dont know the def. field")
+        fill(dtr, {dtr.table.default_row_item: anything})
 
 
 @fill.method((DynamicTable, list))
@@ -3081,3 +3091,4 @@ def _fill_dt_anything(dt, anything, **kwargs):
 
 
 fill.prefer((DynamicTable, Anything), (object, Mapping))
+fill.prefer((DynamicTable.Row, Anything), (object, Mapping))

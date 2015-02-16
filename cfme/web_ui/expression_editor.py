@@ -515,11 +515,11 @@ def _create_program_from_dsl(dsl_program):
         if len(args) > 0 and len(args[0]) > 0:
             if re.match(KWARG, args[0]):
                 # kwargs
-                kwargs = dict([x.split("=", 1) for x in args])
+                kwargs = dict([map(lambda x: x.strip(), x.split("=", 1)) for x in args])
                 command_list.append({fname: kwargs})
             else:
                 # Args
-                command_list.append({fname: args})
+                command_list.append({fname: [None if arg == "/None/" else arg for arg in args]})
         else:
             command_list.append(fname)
     return create_program(command_list)

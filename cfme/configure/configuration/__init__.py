@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from contextlib import contextmanager
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
@@ -17,7 +16,7 @@ from utils.log import logger
 from utils.timeutil import parsetime
 from utils.update import Updateable
 from utils.wait import wait_for, TimedOutError
-from utils import version, conf, lazycache, classproperty
+from utils import version, conf, lazycache
 from utils.pretty import Pretty
 from utils.signals import fire, on_signal
 from utils.version import current_version
@@ -453,7 +452,7 @@ class AnalysisProfile(Pretty, Updateable):
             p.delete()
 
     """
-    CREATE_LOC = "vm_analysis_profile_add"
+    CREATE_LOC = None
     pretty_attrs = "name", "description", "files", "events"
 
     form = tabs.TabStripForm(
@@ -514,15 +513,11 @@ class AnalysisProfile(Pretty, Updateable):
 
 
 class HostAnalysisProfile(AnalysisProfile):
-    pass
+    CREATE_LOC = "host_analysis_profile_add"
 
 
 class VMAnalysisProfile(AnalysisProfile):
-    @classproperty
-    @contextmanager
-    def with_default(cls, **kwargs):
-        with cls("default", "default", **kwargs) as p:
-            yield p
+    CREATE_LOC = "vm_analysis_profile_add"
 
 
 class ServerLogDepot(Pretty):
