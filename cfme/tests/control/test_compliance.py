@@ -20,6 +20,8 @@ PREFIX = "test_compliance_"
 pytestmark = [
     # TODO: Problems with fleecing configuration - revisit later
     pytest.mark.ignore_stream("upstream"),
+    pytest.mark.usefixtures("provider_type"),
+    pytest.mark.uncollectif(lambda provider_type: provider_type in {"scvmm"}),
 ]
 
 
