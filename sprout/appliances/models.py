@@ -671,9 +671,24 @@ class AppliancePool(MetadataMixin):
             appliance.prolong_lease(time=time)
 
     def kill(self):
+        save_lives = not self.fulfilled
         if self.appliances:
             for appliance in self.appliances:
-                Appliance.kill(appliance)
+                # The leased_until is reliable sign of whether the appliance was used
+                # Unless someone was messing with DB ;)
+                if save_lives and appliance.ready and appliance.leased_until is None:
+                    with transaction.atomic():
+                        appliance.appliance_pool = None
+                        appliance.datetime_leased = None
+                        appliance.save()
+                        self.total_count -= 1
+                        if self.total_count < 0:
+                            self.total_count = 0  # Protection against stupidity
+                        self.save()
+                    appliance.set_status(
+                        "The appliance was taken out of dying pool {}".format(self.id))
+                else:
+                    Appliance.kill(appliance)
         else:
             # No appliances, so just delete it
             self.delete()
