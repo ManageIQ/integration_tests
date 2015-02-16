@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
+from contextlib import contextmanager
 from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Region, SplitTable, fill, flash, paginator, toolbar
+from cfme.web_ui import Region, SplitTable, fill, flash, form_buttons, paginator, toolbar
 from utils.log import logger
 
 request_list = SplitTable(
@@ -207,3 +209,23 @@ def go_to_request(cells):
     else:
         # Request not found at all, can't continue
         return False
+
+
+@contextmanager
+def copy_request(cells):
+    """Context manager that opens the request for editing and saves or cancels depending on success.
+
+    Args:
+        cells: Search data for the requests table.
+    """
+    if not go_to_request(cells):
+        raise Exception("The requst specified by {} not found!".format(str(cells)))
+    sel.wait_for_element(buttons.copy)  # It is glitching here ...
+    sel.click(buttons.copy)
+    try:
+        yield
+    except Exception:
+        sel.click(buttons.cancel)
+        raise
+    else:
+        sel.click(form_buttons.FormButton("Submit this provisioning request"))

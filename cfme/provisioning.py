@@ -267,3 +267,20 @@ def do_vm_provisioning(template_name, provider_crud, vm_name, provisioning_data,
         )
 
     wait_for(verify, message="email receive check", delay=5)
+
+
+def copy_request(cells, modifications):
+    with requests.copy_request(cells):
+        fill(provisioning_form, modifications)
+
+
+def copy_request_by_vm_and_template_name(vm_name, template_name, modifications, multi=False):
+    multistr = "###" if multi else ""
+    row_description = "Provision from [{}] to [{}{}]".format(template_name, vm_name, multistr)
+    return copy_request({'Description': row_description}, modifications)
+
+
+def go_to_request_by_vm_and_template_name(vm_name, template_name, multi=False):
+    multistr = "###" if multi else ""
+    row_description = "Provision from [{}] to [{}{}]".format(template_name, vm_name, multistr)
+    return requests.go_to_request({'Description': row_description})
