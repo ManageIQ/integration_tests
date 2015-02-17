@@ -25,7 +25,10 @@ def main(*providers):
         for volume in api.volumes.findall(attachments=[]):
             if iso8601.parse_date(volume.created_at) < (datetime.now(tz=local_tz) - GRACE_TIME):
                 print "Deleting", volume.id
-                volume.delete()
+                try:
+                    volume.delete()
+                except Exception as e:
+                    print "Delete failed:", type(e).__name__, str(e)
 
 
 if __name__ == "__main__":
