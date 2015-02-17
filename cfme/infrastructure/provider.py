@@ -127,10 +127,12 @@ class Provider(Updateable, Pretty):
     pretty_attr = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
 
-    def __init__(self, name=None, credentials=None, key=None, zone=None, candu=None):
+    def __init__(
+            self, name=None, credentials=None, key=None, zone=None, candu=None, provider_data=None):
         self.name = name
         self.credentials = credentials
         self.key = key
+        self.provider_data = provider_data
         self.zone = zone
         self.candu = candu
 
@@ -251,7 +253,9 @@ class Provider(Updateable, Pretty):
     def get_yaml_data(self):
         """ Returns yaml data for this provider.
         """
-        if not self.key:
+        if self.provider_data is not None:
+            return self.provider_data
+        elif self.key is not None:
             raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data')
         else:
             return conf.cfme_data['management_systems'][self.key]
@@ -259,10 +263,12 @@ class Provider(Updateable, Pretty):
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
         """
-        if not self.key:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
-        else:
+        if self.provider_data is not None:
+            return provider_factory(self.provider_data)
+        elif self.key is not None:
             return provider_factory(self.key)
+        else:
+            raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
 
     def _load_details(self):
         if not self._on_detail_page():
@@ -457,9 +463,9 @@ class Provider(Updateable, Pretty):
 
 class VMwareProvider(Provider):
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None):
+                 ip_address=None, start_ip=None, end_ip=None, provider_data=None):
         super(VMwareProvider, self).__init__(name=name, credentials=credentials,
-                                             zone=zone, key=key)
+                                             zone=zone, key=key, provider_data=provider_data)
 
         self.hostname = hostname
         self.ip_address = ip_address
@@ -477,8 +483,10 @@ class SCVMMProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
 
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
-                 ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None):
-        super(SCVMMProvider, self).__init__(name=name, credentials=credentials, zone=zone, key=key)
+                 ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None,
+                 provider_data=None):
+        super(SCVMMProvider, self).__init__(name=name, credentials=credentials, zone=zone, key=key,
+            provider_data=provider_data)
 
         self.hostname = hostname
         self.ip_address = ip_address
@@ -517,9 +525,10 @@ class SCVMMProvider(Provider):
 
 class RHEVMProvider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, start_ip=None, end_ip=None, candu=None):
+                 ip_address=None, api_port=None, start_ip=None, end_ip=None, candu=None,
+                 provider_data=None):
         super(RHEVMProvider, self).__init__(name=name, credentials=credentials,
-                                            zone=zone, key=key)
+                                            zone=zone, key=key, provider_data=provider_data)
 
         self.hostname = hostname
         self.ip_address = ip_address
