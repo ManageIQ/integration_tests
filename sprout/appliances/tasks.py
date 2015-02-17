@@ -805,7 +805,7 @@ def delete_nonexistent_appliances(self):
         if appliance.name in redis.renaming_appliances:
             continue
         if appliance.power_state == Appliance.Power.ORPHANED:
-            if appliance.power_state.changed > expiration_time:
+            if appliance.power_state_changed > expiration_time:
                 # Ignore it for now
                 continue
             try:
