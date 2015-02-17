@@ -5,7 +5,6 @@ To quickly add all providers::
     setup_providers(validate=False)
 
 """
-from collections import Mapping
 from functools import partial
 from operator import methodcaller
 
@@ -66,8 +65,7 @@ def provider_factory(provider_key, providers=None, credentials=None):
     Provides a :py:mod:`utils.mgmt_system` object, based on the request.
 
     Args:
-        provider_key: The name of a provider, as supplied in the yaml configuration files.
-            You can also use the dictionary if you want to pass the provider data directly.
+        provider_key: The name of a provider, as supplied in the yaml configuration files
         providers: A set of data in the same format as the ``management_systems`` section in the
             configuration yamls. If ``None`` then the configuration is loaded from the default
             locations. Expects a dict.
@@ -78,10 +76,8 @@ def provider_factory(provider_key, providers=None, credentials=None):
     """
     if providers is None:
         providers = conf.cfme_data['management_systems']
-    if isinstance(provider_key, Mapping):
-        provider = provider_key
-    else:
-        provider = providers[provider_key]
+
+    provider = providers[provider_key]
 
     if credentials is None:
         credentials = conf.credentials[provider['credentials']]
@@ -378,7 +374,7 @@ def clear_providers():
     clear_cloud_providers(validate=False)
     clear_infra_providers(validate=False)
     wait_for_no_cloud_providers()
-    wait_for_no_infra_providers()
+    wait_for_no_cloud_providers()
     perflog.stop('utils.providers.clear_providers')
 
 
