@@ -20,12 +20,14 @@ def main():
     parser.add_argument('--provider', help='provider key in cfme_data')
     parser.add_argument('--template', help='the name of the template to clone')
     parser.add_argument('--vm_name', help='the name of the VM to create')
-    parser.add_argument('--configure', default=False, action='store_true',
-                        help='configure the VM after provisioning')
 
     # generic options
     parser.add_argument('--destroy', dest='destroy', action='store_true',
                         help='Destroy the destination VM')
+    parser.add_argument('--configure', default=False, action='store_true',
+                        help='configure the VM after provisioning')
+    parser.add_argument('--no-cleanup', default=True, action='store_false',
+                        dest='cleanup', help="don't clean up the vm on clone failure")
     parser.add_argument('--log', dest='loglevel', default='WARNING',
                         help='Set the log level')
     parser.add_argument('--outfile', dest='outfile',
@@ -117,19 +119,22 @@ def main():
     try:
         logger.info('Cloning %s to %s on %s', args.template, args.vm_name, args.provider)
         provider.deploy_template(**deploy_args)
-    except:
-        logger.exception(sys.exc_info()[0])
-        logger.info('Clone failed, attempting to destroy %s' % args.vm_name)
-        destroy_vm(provider, args.vm_name)
-        return 12
+    except Exception as e:
+        logger.exception(e)
+        logger.error('Clone failed')
+        if args.cleanup:
+            logger.info('attempting to destroy %s' % args.vm_name)
+            destroy_vm(provider, args.vm_name)
+            return 12
 
-    if not provider.is_vm_running(args.vm_name):
+    if provider.is_vm_running(args.vm_name):
+        logger.info("VM %s is running" % args.vm_name)
+    else:
         logger.error("VM is not running")
         return 10
 
     ip, time_taken = wait_for(provider.get_ip_address, [args.vm_name], num_sec=1200,
                               fail_condition=None)
-    logger.info("VM %s is running" % args.vm_name)
     logger.info('IP Address returned is %s', ip)
 
     if args.configure:
