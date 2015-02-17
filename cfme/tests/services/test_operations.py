@@ -2,6 +2,7 @@
 """Tests checking for link access from outside."""
 import pytest
 
+import cfme.provisioning
 from cfme.fixtures import pytest_selenium as sel
 from cfme.login import login_admin
 from cfme.provisioning import provisioning_form
@@ -29,24 +30,37 @@ def provider_data(provider):
     return provider.get_yaml_data()
 
 
+@pytest.fixture(scope="module")
+def provisioning(provider_data):
+    return provider_data.get("provisioning", {})
+
+
+@pytest.fixture(scope="module")
+def template_name(provisioning):
+    return provisioning.get("template")
+
+
+@pytest.fixture(scope="module")
+def vm_name():
+    return generate_random_string(size=16)
+
+
 @pytest.yield_fixture(scope="module")
-def generated_request(provider, provider_data):
+def generated_request(provider, provider_data, provisioning, template_name, vm_name):
     """Creates a provision request, that is not automatically approved, and returns the search data.
 
     After finishing the test, request should be automatically deleted.
 
     Slightly modified code from :py:module:`cfme.tests.infrastructure.test_provisioning`
     """
-    vm_name = generate_random_string()
     first_name = generate_random_string()
     last_name = generate_random_string()
     notes = generate_random_string()
     e_mail = "{}@{}.test".format(first_name, last_name)
-    provisioning = provider_data.get("provisioning", {})
-    template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
+    host, datastore = map(provisioning.get, ('host', 'datastore'))
     pytest.sel.force_navigate('infrastructure_provision_vms', context={
         'provider': provider,
-        'template_name': template,
+        'template_name': template_name,
     })
 
     provisioning_data = {
@@ -77,7 +91,7 @@ def generated_request(provider, provider_data):
     pytest.sel.click(provisioning_form.submit_button)
     flash.assert_no_errors()
     request_cells = {
-        "Description": "Provision from [{}] to [{}###]".format(template, vm_name),
+        "Description": "Provision from [{}] to [{}###]".format(template_name, vm_name),
     }
     yield request_cells
 
@@ -100,3 +114,15 @@ def test_services_request_direct_url(generated_request):
         message="wait for a CFME page appear",
         delay=0.5
     )
+
+
+def test_copy_request(request, generated_request, vm_name, template_name):
+    """Check if request gets properly copied."""
+    new_vm_name = generate_random_string(size=16)
+    cfme.provisioning.copy_request_by_vm_and_template_name(
+        vm_name, template_name, {"vm_name": new_vm_name}, multi=True)
+    request.addfinalizer(lambda: requests.delete_request({
+        "Description": "Provision from [{}] to [{}###]".format(template_name, new_vm_name),
+    }))
+    assert cfme.provisioning.go_to_request_by_vm_and_template_name(
+        new_vm_name, template_name, multi=True)
