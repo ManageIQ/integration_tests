@@ -156,7 +156,7 @@ ORPHANED_APPLIANCE_GRACE_TIME = dict(
 # Celery beat
 CELERYBEAT_SCHEDULE = {
     'check-templates': {
-        'task': 'appliances.tasks.check_templates_in_provider',
+        'task': 'appliances.tasks.check_templates',
         'schedule': timedelta(minutes=17),
     },
 
@@ -202,7 +202,7 @@ CELERYBEAT_SCHEDULE = {
 
     'scavenge-managed-providers': {
         'task': 'appliances.tasks.scavenge_managed_providers',
-        'schedule': timedelta(minutes=45),
+        'schedule': timedelta(minutes=30),
     },
 }
 
