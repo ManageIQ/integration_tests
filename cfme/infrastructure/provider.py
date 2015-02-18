@@ -256,9 +256,9 @@ class Provider(Updateable, Pretty):
         if self.provider_data is not None:
             return self.provider_data
         elif self.key is not None:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data')
-        else:
             return conf.cfme_data['management_systems'][self.key]
+        else:
+            raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data', self.name)
 
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
