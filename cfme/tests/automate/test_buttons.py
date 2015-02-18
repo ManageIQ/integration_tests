@@ -1,14 +1,15 @@
 import pytest
 from cfme.web_ui import flash
-from cfme.automate.buttons import Button
-from cfme.automate.buttons import ButtonGroup
+from cfme.automate.buttons import Button, ButtonGroup
 from cfme.automate.service_dialogs import ServiceDialog
+from cfme.infrastructure import host
 from utils.randomness import generate_random_string
 from utils.update import update
 import utils.randomness as rand
 
-
-pytestmark = [pytest.mark.usefixtures("logged_in")]
+pytestmark = [pytest.mark.usefixtures("logged_in"),
+              pytest.mark.ignore_stream("upstream"),
+              pytest.mark.usefixtures('uses_infra_providers')]
 
 
 @pytest.yield_fixture(scope="function")
@@ -26,7 +27,6 @@ def dialog():
     service_dialog.create()
     flash.assert_success_message('Dialog "%s" was added' % dialog_name)
     yield service_dialog
-    service_dialog.delete()
 
 
 def test_button_group_crud(request):
@@ -56,3 +56,23 @@ def test_button_crud(dialog, request):
     with update(button):
         button.hover = "edit_desc_{}".format(generate_random_string())
     button.delete()
+
+
+@pytest.mark.meta(blockers=[1193758])
+def test_button_on_host(dialog, request):
+    buttongroup = ButtonGroup(
+        text=generate_random_string(),
+        hover="btn_desc_{}".format(generate_random_string()),
+        type=ButtonGroup.HOST)
+    request.addfinalizer(buttongroup.delete_if_exists)
+    buttongroup.create()
+    button = Button(group=buttongroup,
+                    text=generate_random_string(),
+                    hover="btn_hvr_{}".format(generate_random_string()),
+                    dialog=dialog, system="Request", request="InspectMe")
+    request.addfinalizer(button.delete_if_exists)
+    button.create()
+    myhost = host.get_from_config('esx')
+    if not myhost.exists:
+        myhost.create()
+    myhost.execute_button(buttongroup.hover, button.text)
