@@ -221,6 +221,16 @@ class Host(Updateable, Pretty):
         cfg_btn('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
+    def execute_button(self, button_group, button, cancel=True):
+        sel.force_navigate('infrastructure_host', context={'host': self})
+        host_btn = partial(tb.select, button_group)
+        host_btn(button, invokes_alert=True)
+        sel.click(form_buttons.submit)
+        flash.assert_success_message("Order Request was Submitted")
+        host_btn(button, invokes_alert=True)
+        sel.click(form_buttons.cancel)
+        flash.assert_success_message("Service Order was cancelled by the user")
+
     def power_on(self):
         sel.force_navigate('infrastructure_host', context={'host': self})
         pow_btn('Power On')
