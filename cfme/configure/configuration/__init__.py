@@ -1418,14 +1418,20 @@ class Zone(Pretty):
         sel.force_navigate("cfg_settings_zones")
         tb.select("Configuration", "Add a new Zone")
         if self.name is not None:
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?name=%s',"
-                " data: {'name':'%s'}})" % (self.name, self.name))
+            try:
+                sel.browser().execute_script(
+                    "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?name=%s',"
+                    " data: {'name':'%s'}})" % (self.name, self.name))
+            except sel.WebDriverException:
+                logger.info("Ignoring workaround for zone description filling")
         if self.description is not None:
-            sel.browser().execute_script(
-                "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?description=%s',"
-                " data: {'description':'%s'}})" % (self.description,
-                self.description))
+            try:
+                sel.browser().execute_script(
+                    "$j.ajax({type: 'POST', url: '/ops/zone_field_changed/new?description=%s',"
+                    " data: {'description':'%s'}})" % (self.description,
+                    self.description))
+            except sel.WebDriverException:
+                logger.info("Ignoring workaround for zone description filling")
         fill(
             zone_form,
             self._form_mapping(True, **self.__dict__))
