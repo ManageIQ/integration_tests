@@ -1301,9 +1301,9 @@ class RHEVMSystem(MgmtSystemAPIBase):
                         name=temp_template_name, vm=vm, cluster=actual_cluster)
                     self.api.templates.add(new_template)
                     # First it has to appear
-                    self._wait_template_exists()
+                    self._wait_template_exists(temp_template_name)
                     # Then the process has to finish
-                    self._wait_template_ok()
+                    self._wait_template_ok(temp_template_name)
                     # Delete the original VM
                     if self.does_vm_exist(vm_name) and delete:
                         self.delete_vm(vm_name)
