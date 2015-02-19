@@ -1592,6 +1592,15 @@ def set_server_roles(**roles):
     Args:
         **roles: Roles specified as in server_roles Form in this module. Set to True or False
     """
+    cfg = store.current_appliance.get_yaml_config('vmdb')
+    # If we don't have storage enabled, ignore it.
+    if 'storage' not in cfg.get('product', {}):
+        delete_keys = set([])
+        for key in roles:
+            if key.startswith("storage"):
+                delete_keys.add(key)
+        for key in delete_keys:
+            roles.pop(key)
     if get_server_roles() == roles:
         logger.debug(' Roles already match, returning...')
         return
