@@ -1493,6 +1493,8 @@ class Zone(Pretty):
         table = Table(zones_table)
         if table.find_cell(1, "Zone: %s" % self.description):
             return True
+        elif table.find_cell(1, "Zone : %s" % self.description):  # Another possibility
+            return True
         else:
             return False
 
