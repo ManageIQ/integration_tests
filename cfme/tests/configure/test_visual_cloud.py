@@ -10,6 +10,18 @@ from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
 
+try:
+    grid_pages = cfme_data.grid_pages.cloud
+except KeyError:
+    grid_pages = []
+grid_uncollectif = pytest.mark.uncollectif(not grid_pages, reason='no grid pages configured')
+
+try:
+    landing_pages = cfme_data.landing_pages.cloud
+except KeyError:
+    landing_pages = []
+landing_uncollectif = pytest.mark.uncollectif(not grid_pages, reason='no landing pages configured')
+
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
@@ -56,7 +68,8 @@ def set_cloud_provider_quad():
     visual.cloud_provider_quad = True
 
 
-@pytest.mark.parametrize('page', cfme_data.get('grid_pages').get('cloud'), scope="module")
+@grid_uncollectif
+@pytest.mark.parametrize('page', grid_pages, scope="module")
 def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     """ Tests grid items per page
 
@@ -71,7 +84,8 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
         assert int(paginator.rec_end()) == int(limit), "Gridview Failed for page {}!".format(page)
 
 
-@pytest.mark.parametrize('page', cfme_data.get('grid_pages').get('cloud'), scope="module")
+@grid_uncollectif
+@pytest.mark.parametrize('page', grid_pages, scope="module")
 def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
     """ Tests tile items per page
 
@@ -86,7 +100,8 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
         assert int(paginator.rec_end()) == int(limit), "Tileview Failed for page {}!".format(page)
 
 
-@pytest.mark.parametrize('page', cfme_data.get('grid_pages').get('cloud'), scope="module")
+@grid_uncollectif
+@pytest.mark.parametrize('page', grid_pages, scope="module")
 def test_list_page_per_item(request, setup_a_provider, page, set_list):
     """ Tests list items per page
 
@@ -101,7 +116,8 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
         assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)
 
 
-@pytest.mark.parametrize('start_page', cfme_data.get('landing_pages').get('cloud'), scope="module")
+@landing_uncollectif
+@pytest.mark.parametrize('start_page', landing_pages, scope="module")
 def test_start_page(request, setup_a_provider, start_page):
     """ Tests start page
 

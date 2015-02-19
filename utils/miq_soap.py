@@ -247,7 +247,7 @@ class MiqEms(HasManyDatastores, HasManyHosts, HasManyVMs, HasManyResourcePools):
         elif ptype == "emsopenstack":
             from utils.mgmt_system import OpenstackSystem
             credentials.update(
-                {"auth_url": cfme_data["management_systems"][provider_id]["auth_url"]}
+                {"auth_url": cfme_data.get("management_systems", {})[provider_id]["auth_url"]}
             )
             return OpenstackSystem(**credentials)
         else:

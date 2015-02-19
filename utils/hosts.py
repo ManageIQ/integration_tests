@@ -12,7 +12,7 @@ import socket
 
 
 def get_host_data_by_name(provider_key, host_name):
-    for host_obj in conf.cfme_data['management_systems'][provider_key].get('hosts', []):
+    for host_obj in conf.cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
         if host_name == host_obj['name']:
             return host_obj
     return None
@@ -46,14 +46,14 @@ def setup_host_creds(provider_key, host_name, ignore_errors=False):
 
 
 def setup_all_provider_hosts_credentials():
-    for provider_key in conf.cfme_data['management_systems']:
-        if 'hosts' in conf.cfme_data['management_systems'][provider_key]:
-            for yamlhost in conf.cfme_data['management_systems'][provider_key]['hosts']:
+    for provider_key in conf.cfme_data.get('management_systems', {}):
+        if 'hosts' in conf.cfme_data.get('management_systems', {})[provider_key]:
+            for yamlhost in conf.cfme_data.get('management_systems', {})[provider_key]['hosts']:
                 setup_host_creds(provider_key, yamlhost['name'])
 
 
 def setup_providers_hosts_credentials(provider_key, ignore_errors=False):
-    if provider_key in conf.cfme_data['management_systems']:
-        if 'hosts' in conf.cfme_data['management_systems'][provider_key]:
-            for yamlhost in conf.cfme_data['management_systems'][provider_key]['hosts']:
+    if provider_key in conf.cfme_data.get('management_systems', {}):
+        if 'hosts' in conf.cfme_data.get('management_systems', {})[provider_key]:
+            for yamlhost in conf.cfme_data.get('management_systems', {})[provider_key]['hosts']:
                 setup_host_creds(provider_key, yamlhost['name'], ignore_errors=ignore_errors)

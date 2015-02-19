@@ -31,7 +31,7 @@ class Tenant(object):
 
     def exists(self):
         sel.force_navigate('clouds_tenants')
-        provider_name = cfme_data['management_systems'][self.provider_key]['name']
+        provider_name = cfme_data.get('management_systems', {})[self.provider_key]['name']
         res = list_page.tenant_table.find_row_by_cells({'Name': self.name,
                                                         'Cloud Provider': provider_name})
         if res:

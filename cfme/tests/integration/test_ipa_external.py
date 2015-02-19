@@ -15,7 +15,7 @@ def setup_first_provider():
 @pytest.mark.ignore_stream("5.2")  # Old version can't do IPA
 def test_external_auth_ipa(request, setup_first_provider, configure_external_auth_ipa_module):
     try:
-        data = cfme_data["ipa_test"]
+        data = cfme_data.get("ipa_test", {})
     except KeyError:
         pytest.skip("No ipa_test section in yaml")
     group = Group(description='cfme', role="EvmRole-user")

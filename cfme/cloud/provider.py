@@ -260,7 +260,7 @@ class Provider(Updateable, Pretty):
         if not self.key:
             raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data')
         else:
-            return conf.cfme_data['management_systems'][self.key]
+            return conf.cfme_data.get('management_systems', {})[self.key]
 
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
@@ -537,7 +537,7 @@ def get_from_config(provider_config_name):
     Returns: A Provider object that has methods that operate on CFME
     """
 
-    prov_config = conf.cfme_data['management_systems'][provider_config_name]
+    prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
     credentials = get_credentials_from_config(prov_config['credentials'])
     prov_type = prov_config.get('type')
     if prov_type == 'ec2':

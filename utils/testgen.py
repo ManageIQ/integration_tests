@@ -169,7 +169,7 @@ def fixture_filter(metafunc, argnames, argvalues):
 
 
 def provider_by_type(metafunc, provider_types, *fields, **options):
-    """Get the values of the named field keys from ``cfme_data['management_systems']``
+    """Get the values of the named field keys from ``cfme_data.get('management_systems', {})``
 
     Args:
         provider_types: A list of provider types to include. If None, all providers are considered
@@ -185,7 +185,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
             the entire provider data dict from cfme_data.
 
         ``provider_key``
-            the provider's key in ``cfme_data['management_systems']``
+            the provider's key in ``cfme_data.get('management_systems', {})``
 
         ``provider_crud``
             the provider's CRUD object, either a :py:class:`cfme.cloud.provider.Provider`
@@ -239,7 +239,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         if argname in metafunc.fixturenames and argname not in argnames:
             argnames.append(argname)
 
-    for provider, data in cfme_data['management_systems'].iteritems():
+    for provider, data in cfme_data.get('management_systems', {}).iteritems():
         skip = False
         prov_type = data['type']
         if provider_types is not None and prov_type not in provider_types:
@@ -375,7 +375,7 @@ def auth_groups(metafunc, auth_mode):
 
     Args:
 
-        auth_mode: One of the auth_modes specified in ``cfme_data['auth_modes']``
+        auth_mode: One of the auth_modes specified in ``cfme_data.get('auth_modes', {})``
 
     """
     argnames = ['group_name', 'group_data']

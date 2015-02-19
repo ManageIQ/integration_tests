@@ -50,7 +50,7 @@ def pytest_generate_tests(metafunc):
             continue
 
         pxe_cust_template = args['provisioning']['pxe_kickstart']
-        if pxe_cust_template not in cfme_data['customization_templates'].keys():
+        if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
         argvalues[i].append(get_pxe_server_from_config(pxe_server_name))

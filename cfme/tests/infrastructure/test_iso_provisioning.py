@@ -29,7 +29,7 @@ def pytest_generate_tests(metafunc):
         if args['provider_type'] == "scvmm":
             continue
 
-        provider_data = cfme_data['management_systems'][
+        provider_data = cfme_data.get('management_systems', {})[
             argvalue_tuple[argnames.index('provider_key')]]
         if not provider_data.get('iso_datastore', False):
             continue
@@ -43,7 +43,7 @@ def pytest_generate_tests(metafunc):
             continue
 
         iso_cust_template = args['provisioning']['iso_kickstart']
-        if iso_cust_template not in cfme_data['customization_templates'].keys():
+        if iso_cust_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
         argvalues[i].append(get_template_from_config(iso_cust_template))

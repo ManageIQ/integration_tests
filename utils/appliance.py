@@ -502,7 +502,7 @@ class IPAppliance(object):
         log_callback('Fixing appliance clock')
         client = self.ssh_client()
         try:
-            ntp_server = random.choice(conf.cfme_data['clock_servers'])
+            ntp_server = random.choice(conf.cfme_data.get('clock_servers', {}))
         except IndexError:
             msg = 'No clock servers configured in cfme_data.yaml'
             log_callback(msg)
@@ -726,9 +726,9 @@ class IPAppliance(object):
         If the env var is not set, URLs will be pulled from cfme_data.
         If the env var is set, it is the only source for update URLs.
 
-        Generic rhel update URLs cfme_data['basic_info']['rhel_updates_urls'] (yaml list)
+        Generic rhel update URLs cfme_data.get('basic_info', {})['rhel_updates_urls'] (yaml list)
         On downstream builds, an additional RH SCL updates url can be inserted at
-        cfme_data['basic_info']['rhscl_updates_urls'].
+        cfme_data.get('basic_info', {})['rhscl_updates_urls'].
 
 
         """
@@ -1500,12 +1500,12 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         return template_data.get('latest_template', None)
 
     if provider_name is None:
-        provider_name = conf.cfme_data['appliance_provisioning']['default_provider']
+        provider_name = conf.cfme_data.get('appliance_provisioning', {})['default_provider']
 
     if template is not None:
         template_name = template
     elif version is not None:
-        templates_by_version = conf.cfme_data['appliance_provisioning'].get('versions', dict())
+        templates_by_version = conf.cfme_data.get('appliance_provisioning', {}).get('versions', {})
         try:
             template_name = templates_by_version[version]
         except KeyError:
@@ -1522,7 +1522,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     else:
         raise ApplianceException('Either version or template name must be specified')
 
-    prov_data = conf.cfme_data['management_systems'][provider_name]
+    prov_data = conf.cfme_data.get('management_systems', {})[provider_name]
 
     provider = provider_factory(provider_name)
     if not vm_name:

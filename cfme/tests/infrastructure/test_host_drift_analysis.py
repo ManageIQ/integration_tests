@@ -29,7 +29,7 @@ def pytest_generate_tests(metafunc):
 
 
 def get_host_data_by_name(provider_key, host_name):
-    for host_obj in conf.cfme_data['management_systems'][provider_key].get('hosts', []):
+    for host_obj in conf.cfme_data.get('management_systems', {})[provider_key].get('hosts', []):
         if host_name == host_obj['name']:
             return host_obj
     return None

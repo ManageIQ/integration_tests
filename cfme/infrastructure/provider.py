@@ -630,7 +630,7 @@ def get_from_config(provider_config_name):
     Returns: A Provider object that has methods that operate on CFME
     """
 
-    prov_config = conf.cfme_data['management_systems'][provider_config_name]
+    prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
     credentials = get_credentials_from_config(prov_config['credentials'])
     prov_type = prov_config.get('type')
 

@@ -14,7 +14,7 @@ def available_auth_modes():
 def configure_ldap_auth_mode(browser, available_auth_modes):
     """Configure LDAP authentication mode"""
     if 'ldap' in available_auth_modes:
-        server_data = cfme_data['auth_modes']['ldap']
+        server_data = cfme_data.get('auth_modes', {})['ldap']
         configuration.set_auth_mode(**server_data)
         yield
         login_admin()
@@ -27,7 +27,7 @@ def configure_ldap_auth_mode(browser, available_auth_modes):
 def configure_openldap_auth_mode(browser, available_auth_modes):
     """Configure LDAP authentication mode"""
     if 'openldap' in available_auth_modes:
-        server_data = cfme_data['auth_modes']['openldap']
+        server_data = cfme_data.get('auth_modes', {})['openldap']
         configuration.set_auth_mode(**server_data)
         yield
         login_admin()
@@ -40,7 +40,7 @@ def configure_openldap_auth_mode(browser, available_auth_modes):
 def configure_aws_iam_auth_mode(browser, available_auth_modes):
     """Configure AWS IAM authentication mode"""
     if 'aws_iam' in available_auth_modes:
-        aws_iam_data = dict(cfme_data['auth_modes']['aws_iam'])
+        aws_iam_data = dict(cfme_data.get('auth_modes', {})['aws_iam'])
         aws_iam_creds = credentials[aws_iam_data.pop('credentials')]
         aws_iam_data['access_key'] = aws_iam_creds['username']
         aws_iam_data['secret_key'] = aws_iam_creds['password']
@@ -55,7 +55,7 @@ def configure_aws_iam_auth_mode(browser, available_auth_modes):
 def _configure_external_auth_ipa(request):
     if "ipa" not in cfme_data:
         pytest.skip("No IPA server in configuration!")
-    data = cfme_data["ipa"]
+    data = cfme_data.get("ipa", {})
     request.addfinalizer(disable_external_auth_ipa)
     setup_external_auth_ipa(**data)
 
