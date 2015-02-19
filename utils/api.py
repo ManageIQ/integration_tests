@@ -92,6 +92,11 @@ class API(object):
         return sorted(self._versions.keys(), reverse=True, key=LooseVersion)
 
     @property
+    def new_id_behaviour(self):
+        """2.0.0-pre introduced a new id/href difference."""
+        return LooseVersion(self.version) >= "2.0.0-pre"
+
+    @property
     def latest_version(self):
         return self.versions[0]
 
@@ -183,7 +188,7 @@ class Collection(object):
             self.reload()
 
     def find_by(self, **params):
-        if self._api.version == '1.1.0-pre':
+        if LooseVersion(self._api.version) >= '1.1.0-pre':
             # This one is on upstream, still does not have filter
             search_query = []
             for key, value in params.iteritems():
@@ -274,7 +279,7 @@ class Entity(object):
             kwargs = {}
         if get:
             self._data = self.collection._api.get(self._href, **kwargs)
-        self._href = self._data["id"]
+        self._href = self._data["id" if not self.collection._api.new_id_behaviour else "href"]
         self._actions = self._data.pop("actions", [])
         for key, value in self._data.iteritems():
             if key in self.TIME_FIELDS:
