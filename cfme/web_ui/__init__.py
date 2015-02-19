@@ -383,7 +383,8 @@ class Table(Pretty):
         """
         # accept dicts or supertuples
         cells = dict(cells)
-        cell_text_loc = './/td/descendant-or-self::*[contains(text(), "%s")]/ancestor::tr[1]'
+        cell_text_loc = (
+            './/td/descendant-or-self::*[contains(normalize-space(text()), "%s")]/ancestor::tr[1]')
         matching_rows_list = list()
         for value in cells.values():
             # Get a root locator ready, self._body_loc is the SplitTable body locator
