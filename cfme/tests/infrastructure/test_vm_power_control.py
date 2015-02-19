@@ -10,7 +10,7 @@ from utils import testgen, error
 from utils.log import logger
 from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
-from utils.version import appliance_is_downstream
+from utils.version import appliance_is_downstream, current_version
 
 appliance_is_downstream  # To shut up lint, will be used in string expression then
 
@@ -384,7 +384,7 @@ def test_no_template_power_control(provider_crud, setup_provider_funcscope):
 
 @pytest.mark.usefixtures("test_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
-@pytest.mark.uncollectif(lambda: appliance_is_downstream())
+@pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
 class TestPowerControlRESTAPI(object):
     @pytest.fixture(scope="function")
     def vm(self, rest_api, vm_name):
@@ -410,7 +410,7 @@ class TestPowerControlRESTAPI(object):
 
 @pytest.mark.usefixtures("test_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
-@pytest.mark.uncollectif(lambda: appliance_is_downstream())
+@pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
 class TestDeleteViaREST(object):
     # TODO: Put it somewhere else?
     @pytest.fixture(scope="function")
