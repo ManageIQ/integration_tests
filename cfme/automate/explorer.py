@@ -15,6 +15,7 @@ from collections import Mapping
 import re
 from utils.log import logger
 from utils import classproperty, pretty
+from utils.wait import wait_for
 
 tree = Tree({
     version.LOWEST: '//table//tr[@title="Datastore"]/../..',
@@ -29,6 +30,8 @@ def datastore_checkbox(name):
 
 
 def table_select(name):
+    cb = datastore_checkbox(name)
+    wait_for(sel.is_displayed, [cb], num_sec=5, delay=0.2)
     sel.check(datastore_checkbox(name))
 
 
@@ -40,7 +43,7 @@ def tree_item_not_found_is_leaf(e):
 
 
 def open_order_dialog_func(_):
-    accordion.tree("Datastore", "Datastore")
+    datastore_tree()
     cfg_btn("Edit Priority Order of Domains")
 
 nav.add_branch(
@@ -52,7 +55,7 @@ nav.add_branch(
             else tree.click_path('Datastore'),
          {
              'automate_explorer_table_select':
-             [lambda ctx: table_select(ctx['table_item'].name),
+             [lambda ctx: table_select(ctx['table_item'].name_in_table),
               {
                   'automate_explorer_edit':
                   lambda context: context.tree_item.nav_edit(),
@@ -69,13 +72,13 @@ nav.add_branch(
               {
                   'automate_explorer_method_new': lambda _: cfg_btn('Add a New Method'),
                   'automate_explorer_method_table_select':
-                  lambda ctx: table_select(ctx['table_item'].name)}],
+                  lambda ctx: table_select(ctx['table_item'].name_in_table)}],
 
              'automate_explorer_instances': [lambda _: select_tab('Instances'),
               {
                   'automate_explorer_instance_new': lambda _: cfg_btn('Add a New Instance'),
                   'automate_explorer_instance_table_select':
-                  lambda ctx: table_select(ctx['table_item'].name)}],
+                  lambda ctx: table_select(ctx['table_item'].name_in_table)}],
 
              'automate_explorer_schema': [lambda _: select_tab("Schema"),
              {
@@ -89,13 +92,21 @@ class TreeNode(pretty.Pretty):
     pretty_attrs = ['name']
 
     @property
+    def name_in_tree(self):
+        return self.name
+
+    @property
+    def name_in_table(self):
+        return self.name
+
+    @property
     def path(self):
         """Returns the path to this object as a list starting from the root"""
         # A node with no name is the root node
         if self.parent:
-            return list(self.parent.path) + [self.name]
+            return list(self.parent.path) + [self.name_in_tree]
         else:
-            return [self.name]
+            return [self.name_in_tree]
 
     def exists(self):
         with error.handler(tree_item_not_found_is_leaf):
@@ -218,7 +229,8 @@ class Domain(TreeNode, Updateable):
         sel.force_navigate("automate_explorer_tree_path", context={"tree_item": self})
         cfg_btn("Remove this Domain", invokes_alert=True)
         sel.handle_alert(cancel)
-        flash.assert_message_match('Automate Domain "{}": Delete successful'.format(self.name))
+        flash.assert_message_match('Automate Domain "{}": Delete successful'.format(
+            self.description or self.name))
 
     def _nav_orig(self):
         try:
@@ -364,9 +376,7 @@ class Namespace(TreeNode, Updateable):
 
 
 class Class(CopiableTreeNode, Updateable):
-    """Represents a Class in the CFME ui.  `Display Name` is not supported
-       (it causes the name to be displayed differently in different
-       places in the UI)."""
+    """Represents a Class in the CFME ui."""
 
     form = Form(fields=[('name_text', "//input[@name='name']"),
                         ('display_name_text', "//input[@name='display_name']"),
@@ -376,7 +386,7 @@ class Class(CopiableTreeNode, Updateable):
     def __init__(self, name=None, display_name=None, description=None, inherits_from=None,
                  namespace=None):
         self.name = name
-        # self.display_name = display_name
+        self.display_name = display_name
         self.description = description
         self.inherits_from = inherits_from
         self.namespace = namespace
@@ -389,9 +399,27 @@ class Class(CopiableTreeNode, Updateable):
     def parent(self, p):
         self.namespace = p
 
+    @property
+    def name_in_tree(self):
+        """The item is displayed differently with display_name"""
+        if self.display_name:
+            return "{} ({})".format(self.display_name, self.name)
+        else:
+            return self.name
+
+    @property
+    def name_in_table(self):
+        """The item is displayed differently with display_name"""
+        if self.display_name:
+            return self.display_name
+        else:
+            return self.name
+
     def path_str(self):
         """Returns string path to this class, eg ns1/ns2/ThisClass"""
-        path = "/".join(self.path)
+        path = self.path
+        path[-1] = self.name  # override the display_name madness
+        path = "/".join(path)
         if version.current_version() < "5.4":
             return path
         else:
@@ -403,7 +431,7 @@ class Class(CopiableTreeNode, Updateable):
         sel.force_navigate("automate_explorer_class_new", context={"tree_item": self.namespace})
         fill(self.form, {'name_text': self.name,
                          'description_text': self.description,
-                         # 'display_name_text': self.display_name,
+                         'display_name_text': self.display_name,
                          'inherits_from_select':
                          self.inherits_from and self.inherits_from.path_str()},
              action=form_buttons.cancel if cancel else form_buttons.add)
@@ -412,12 +440,17 @@ class Class(CopiableTreeNode, Updateable):
     def update(self, updates, cancel=False):
         sel.force_navigate("automate_explorer_edit", context={"tree_item": self.parent,
                                                      "table_item": self})
-        fill(self.form, {'name_text': updates.get('name'),
-                         'description_text': updates.get('description'),
-                         # 'display_name_text': updates.get('display_name'),
-                         'inherits_from_select':
-                         updates.get('inherits_from') and updates.get('inherits_from').path_str()},
-             action=form_buttons.cancel if cancel else form_buttons.save)
+        update_values = {
+            'name_text': updates.get('name'),
+            'description_text': updates.get('description'),
+            'inherits_from_select':
+            updates.get('inherits_from') and updates.get('inherits_from').path_str()}
+        if "display_name" in updates:
+            # We need to specifically override the display_name
+            update_values["display_name_text"] = updates["display_name"] or ""  # None -> emptystr
+        fill(
+            self.form, update_values,
+            action=form_buttons.cancel if cancel else form_buttons.save)
 
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_delete", context={'tree_item': self.parent,
@@ -650,9 +683,7 @@ def _fill_ifr_str(ifr, s):
 
 
 class Instance(CopiableTreeNode, Updateable):
-    """Represents a Instance in the CFME ui.  `Display Name` is not
-       supported (it causes the name to be displayed differently in
-       different places in the UI). """
+    """Represents a Instance in the CFME ui."""
 
     form = Form(
         fields=[('name_text', "//input[contains(@name,'inst_name')]"),
@@ -664,8 +695,24 @@ class Instance(CopiableTreeNode, Updateable):
         self.name = name
         self.description = description
         self.values = values
-        # self.display_name = display_name
+        self.display_name = display_name
         self.cls = cls
+
+    @property
+    def name_in_tree(self):
+        """The item is displayed differently with display_name"""
+        if self.display_name:
+            return "{} ({})".format(self.display_name, self.name)
+        else:
+            return self.name
+
+    @property
+    def name_in_table(self):
+        """The item is displayed differently with display_name"""
+        if self.display_name:
+            return self.display_name
+        else:
+            return self.name
 
     @property
     def parent(self):
@@ -680,7 +727,7 @@ class Instance(CopiableTreeNode, Updateable):
             self.parent.create()
         sel.force_navigate("automate_explorer_instance_new", context={'tree_item': self.cls})
         fill(self.form, {'name_text': self.name,
-                         # 'display_name_text': self.display_name,
+                         'display_name_text': self.display_name,
                          'description_text': self.description,
                          'values': self.values},
              action=form_buttons.cancel if cancel else form_buttons.add)
@@ -693,11 +740,16 @@ class Instance(CopiableTreeNode, Updateable):
 
     def update(self, updates, cancel=False):
         sel.force_navigate("automate_explorer_instance_edit", context={"tree_item": self})
-        fill(self.form, {'name_text': updates.get('name'),
-                         # 'display_name_text': updates.get('display_name'),
-                         'description_text': updates.get('description'),
-                         'values': updates.get('values')},
-             action=form_buttons.cancel if cancel else form_buttons.save)
+        update_values = {
+            'name_text': updates.get('name'),
+            'description_text': updates.get('description'),
+            'values': updates.get('values')}
+        if "display_name" in updates:
+            # We need to specifically override the display_name
+            update_values["display_name_text"] = updates["display_name"] or ""  # None -> emptystr
+        fill(
+            self.form, update_values,
+            action=form_buttons.cancel if cancel else form_buttons.save)
 
     def delete(self, cancel=False):
         sel.force_navigate("automate_explorer_tree_path", context={'tree_item': self})

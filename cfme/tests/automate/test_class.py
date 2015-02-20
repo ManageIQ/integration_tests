@@ -8,10 +8,13 @@ import cfme.tests.automate as ta
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
-make_namespace = pytest.fixture(scope='module')(ta.make_namespace)
+
+@pytest.fixture(scope="module")
+def make_namespace(request):
+    return ta.make_namespace(request=request)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def a_class(make_namespace):
     return ta.a_class(make_namespace)
 
@@ -64,3 +67,15 @@ def test_same_class_name_different_namespace(make_namespace):
     # delete one and check the other still exists
     cls1.delete()
     assert cls2.exists()
+
+
+@pytest.mark.meta(blockers=[1148541])
+def test_display_name_unset_from_ui(request, a_class):
+    a_class.create()
+    request.addfinalizer(a_class.delete)
+    with update(a_class):
+        a_class.display_name = generate_random_string()
+    assert a_class.exists
+    with update(a_class):
+        a_class.display_name = ""
+    assert a_class.exists
