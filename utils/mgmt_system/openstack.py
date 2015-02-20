@@ -11,6 +11,8 @@ from cinderclient import exceptions as cinder_exceptions
 from keystoneclient.v2_0 import client as oskclient
 from novaclient.v1_1 import client as osclient
 from novaclient import exceptions as os_exceptions
+from novaclient.client import HTTPClient
+from requests.exceptions import Timeout
 
 from cfme import exceptions as cfme_exc
 from utils.log import logger
@@ -21,6 +23,29 @@ from utils.mgmt_system.exceptions import (
 from utils.timeutil import local_tz
 from utils.version import current_version
 from utils.wait import wait_for
+
+
+# TODO The following monkeypatch nonsense is criminal, and would be
+# greatly simplified if openstack made it easier to specify a custom
+# client class. This is a trivial PR that they're likely to accept.
+
+# Note: This same mechanism may be required for keystone and cinder
+# clients, but hopefully won't be.
+
+# monkeypatch method to add retry support to openstack
+def _request_timeout_handler(self, url, method, retry_count=0, **kwargs):
+    try:
+        # Use the original request method to do the actual work
+        return HTTPClient.request(self, url, method, **kwargs)
+    except Timeout:
+        if retry_count >= 3:
+            logger.error('nova request timed out after {} retries'.format(retry_count))
+            raise
+        else:
+            # feed back into the replaced method that supports retry_count
+            retry_count += 1
+            logger.info('nova request timed out; retry {}'.format(retry_count))
+            return self.request(url, method, retry_count=retry_count, **kwargs)
 
 
 class OpenstackSystem(MgmtSystemAPIBase):
@@ -73,7 +98,15 @@ class OpenstackSystem(MgmtSystemAPIBase):
                                         self.tenant,
                                         self.auth_url,
                                         service_type="compute",
-                                        insecure=True)
+                                        insecure=True,
+                                        timeout=30)
+            # replace the client request method with our version that
+            # can handle timeouts; uses explicit binding (versus
+            # replacing the method directly on the HTTPClient class)
+            # so we can still call out to HTTPClient's original request
+            # method in the timeout handler method
+            self._api.client.request = _request_timeout_handler.__get__(self._api.client,
+                HTTPClient)
         return self._api
 
     @property
