@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
+import requests
 
 from cfme import dashboard
 from cfme.fixtures import pytest_selenium as sel
@@ -75,3 +76,13 @@ def test_custom_dashboards(request, soft_assert, number_dashboards):
             ", ".join(dash_dict.keys())))
     except IndexError:
         pytest.fail("No dashboard selection tabs present on dashboard!")
+
+
+def test_verify_rss_links(widgets_generated):
+    pytest.sel.force_navigate("dashboard")
+    for widget in Widget.by_type("rss_widget"):
+        for desc, date, url in widget.content.data:
+            assert url is not None, "Widget {}, line {} - no URL!".format(
+                repr(widget.name), repr(desc))
+            req = requests.get(url, verify=False)
+            assert 200 <= req.status_code < 400, "The url {} seems malformed".format(repr(url))

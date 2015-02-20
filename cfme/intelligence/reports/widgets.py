@@ -4,11 +4,13 @@
 """
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import ExternalRSSFeed, MenuShortcuts, Timer
-from cfme.web_ui import CheckboxSelect, Form, Select, ShowingInputs, accordion, fill, toolbar
+from cfme.web_ui import (
+    CheckboxSelect, Form, InfoBlock, Select, ShowingInputs, accordion, fill, toolbar)
 from cfme.web_ui import flash, form_buttons
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
 from utils.pretty import Pretty
+from utils.wait import wait_for
 
 
 nav.add_branch(
@@ -113,7 +115,44 @@ visibility_obj = ShowingInputs(
 )
 
 
-class MenuWidget(Updateable, Pretty):
+class Widget(Updateable, Pretty):
+    DETAIL_PAGE = None
+    status_info = InfoBlock("Status")
+
+    def go_to_detail(self):
+        sel.force_navigate(type(self).DETAIL_PAGE, context={"widget": self})
+
+    def generate(self, wait=True):
+        self.go_to_detail()
+        toolbar.select("Configuration", "Generate Widget content now", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
+        if wait:
+            wait_for(lambda: self.check_status() == "Complete")
+
+    def check_status(self):
+        self.go_to_detail()
+        return self.status_info("Current Status").text
+
+    @classmethod
+    def detect(cls, t, *args, **kwargs):
+        # Can't be in class because it does not see child classes
+        MAPPING = {
+            "rss_widget": RSSFeedWidget,
+            "rssbox": RSSFeedWidget,
+            "chart_widget": ChartWidget,
+            "chartbox": ChartWidget,
+            "report_widget": ReportWidget,
+            "reportbox": ReportWidget,
+            "menu_widget": MenuWidget,
+            # TODO: menubox?
+        }
+        if t not in MAPPING:
+            raise ValueError(t)
+        return MAPPING[t](*args, **kwargs)
+
+
+class MenuWidget(Widget):
     form = Form(fields=[
         ("title", "//input[@id='title']"),
         ("description", "//input[@id='description']"),
@@ -122,6 +161,7 @@ class MenuWidget(Updateable, Pretty):
         ("visibility", visibility_obj),
     ])
     pretty_attrs = ['description', 'shortcuts', 'visibility']
+    DETAIL_PAGE = "reports_widgets_menu"
 
     def __init__(self, title, description=None, active=None, shortcuts=None, visibility=None):
         self.title = title
@@ -141,13 +181,13 @@ class MenuWidget(Updateable, Pretty):
         flash.assert_no_errors()
 
     def delete(self, cancel=False):
-        sel.force_navigate("reports_widgets_menu", context={"widget": self})
+        self.go_to_detail()
         toolbar.select("Configuration", "Delete this Widget from the Database", invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
 
-class ReportWidget(Updateable):
+class ReportWidget(Widget):
     form = Form(fields=[
         ("title", "//input[@id='title']"),
         ("description", "//input[@id='description']"),
@@ -170,6 +210,7 @@ class ReportWidget(Updateable):
         ("visibility", visibility_obj),
     ])
     pretty_attrs = ['description', 'filter', 'visibility']
+    DETAIL_PAGE = "reports_widgets_report"
 
     def __init__(self,
             title, description=None, active=None, filter=None, columns=None, rows=None, timer=None,
@@ -194,13 +235,13 @@ class ReportWidget(Updateable):
         flash.assert_no_errors()
 
     def delete(self, cancel=False):
-        sel.force_navigate("reports_widgets_report", context={"widget": self})
+        self.go_to_detail()
         toolbar.select("Configuration", "Delete this Widget from the Database", invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
 
-class ChartWidget(Updateable, Pretty):
+class ChartWidget(Widget):
     form = Form(fields=[
         ("title", "//input[@id='title']"),
         ("description", "//input[@id='description']"),
@@ -210,6 +251,7 @@ class ChartWidget(Updateable, Pretty):
         ("visibility", visibility_obj),
     ])
     pretty_attrs = ['title', 'description', 'filter', 'visibility']
+    DETAIL_PAGE = "reports_widgets_chart"
 
     def __init__(self,
             title, description=None, active=None, filter=None, timer=None, visibility=None):
@@ -231,13 +273,13 @@ class ChartWidget(Updateable, Pretty):
         flash.assert_no_errors()
 
     def delete(self, cancel=False):
-        sel.force_navigate("reports_widgets_chart", context={"widget": self})
+        self.go_to_detail()
         toolbar.select("Configuration", "Delete this Widget from the Database", invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
 
-class RSSFeedWidget(Updateable, Pretty):
+class RSSFeedWidget(Widget):
     form = Form(fields=[
         ("title", "//input[@id='title']"),
         ("description", "//input[@id='description']"),
@@ -250,6 +292,7 @@ class RSSFeedWidget(Updateable, Pretty):
         ("visibility", visibility_obj),
     ])
     pretty_attrs = ['title', 'description', 'type', 'feed', 'visibility']
+    DETAIL_PAGE = "reports_widgets_rss_feed"
 
     def __init__(self,
             title, description=None, active=None, type=None, feed=None, external=None, rows=None,
@@ -275,7 +318,7 @@ class RSSFeedWidget(Updateable, Pretty):
         flash.assert_no_errors()
 
     def delete(self, cancel=False):
-        sel.force_navigate("reports_widgets_rss_feed", context={"widget": self})
+        self.go_to_detail()
         toolbar.select("Configuration", "Delete this Widget from the Database", invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
