@@ -1,17 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+
 from contextlib import contextmanager
+
+from django.core.cache import cache
+from redis import StrictRedis
+
+from sprout import settings
+from utils.wait import wait_for
+
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-from .celery import app as celery_app
-assert celery_app
 
-from django.core.cache import cache
-from sprout import settings
-from redis import StrictRedis
-from utils.wait import wait_for
+# import to initialize celery_app.app
+from .celery import app as celery_app  # NOQA
 
 redis_client = StrictRedis(**settings.GENERAL_REDIS)
 

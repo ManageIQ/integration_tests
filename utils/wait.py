@@ -60,7 +60,8 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             message = "function %s()" % func.func_name
     fail_condition = kwargs.get('fail_condition', False)
     if not callable(fail_condition):
-        fail_condition_check = lambda result: result == fail_condition
+        def fail_condition_check(result):
+            return result == fail_condition
     else:
         fail_condition_check = fail_condition
     handle_exception = kwargs.get('handle_exception', False)

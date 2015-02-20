@@ -82,13 +82,15 @@ More information on ``parametrize`` can be found in pytest's documentation:
 """
 import pytest
 import random
+from functools import partial
+
 from cfme.cloud.provider import get_from_config as get_cloud_provider
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
-from fixtures.prov_filter import filtered
 from cfme.roles import group_data
-from utils import version
+from fixtures.prov_filter import filtered
 from utils.conf import cfme_data
+from utils import version
 from utils.log import logger
 from utils.providers import cloud_provider_type_map, infra_provider_type_map, provider_factory
 
@@ -159,13 +161,16 @@ def fixture_filter(metafunc, argnames, argvalues):
     # Identify indeces of matches between argnames and fixturenames
     keep_index = [e[0] for e in enumerate(argnames) if e[1] in metafunc.fixturenames]
 
-    # Keep items at indices in keep_index
-    f = lambda l: [e[1] for e in enumerate(l) if e[0] in keep_index]
-
     # Generate the new values
-    argnames = f(argnames)
-    argvalues = map(f, argvalues)
+    sieve = partial(_fixture_filter_sieve, keep_index)
+    argnames = sieve(argnames)
+    argvalues = map(sieve, argvalues)
     return argnames, argvalues
+
+
+# Filter to keep items at indices in keep_index
+def _fixture_filter_sieve(keep_index, l):
+    return [e[1] for e in enumerate(l) if e[0] in keep_index]
 
 
 def provider_by_type(metafunc, provider_types, *fields, **options):
