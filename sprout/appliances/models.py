@@ -733,6 +733,7 @@ class AppliancePool(MetadataMixin):
 
     @property
     def fulfilled(self):
+        """Like partially_fulfilled, but also count of applinces must match the total_count."""
         try:
             return len(self.appliance_ips) == self.total_count\
                 and all(a.ready for a in self.appliances)
@@ -740,8 +741,21 @@ class AppliancePool(MetadataMixin):
             return False
 
     @property
+    def partially_fulfilled(self):
+        """All appliances that are in the pool are ready."""
+        try:
+            return all(a.ready for a in self.appliances)
+        except ObjectDoesNotExist:
+            return False
+
+    @property
     def queued_provision_tasks(self):
         return DelayedProvisionTask.objects.filter(pool=self)
+
+    def drop_remaining_provisioning_tasks(self):
+        with transaction.atomic():
+            for task in self.queued_provision_tasks:
+                task.delete()
 
     def prolong_lease(self, time=60):
         for appliance in self.appliances:
