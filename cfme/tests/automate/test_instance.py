@@ -8,13 +8,13 @@ pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
 @pytest.fixture(scope='module')
-def make_class():
-    return ta.make_class()
+def make_class(request):
+    return ta.make_class(request=request)
 
 
-@pytest.fixture
-def an_instance(make_class):
-    return ta.an_instance(make_class)
+@pytest.fixture(scope="function")
+def an_instance(request, make_class):
+    return ta.an_instance(make_class, request=request)
 
 
 def test_instance_crud(an_instance):
@@ -33,3 +33,15 @@ def test_duplicate_disallowed(an_instance):
     an_instance.create()
     with error.expected("Name has already been taken"):
         an_instance.create()
+
+
+@pytest.mark.meta(blockers=[1148541])
+def test_display_name_unset_from_ui(request, an_instance):
+    an_instance.create()
+    request.addfinalizer(an_instance.delete)
+    with update(an_instance):
+        an_instance.display_name = generate_random_string()
+    assert an_instance.exists
+    with update(an_instance):
+        an_instance.display_name = ""
+    assert an_instance.exists
