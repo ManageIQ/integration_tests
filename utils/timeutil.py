@@ -6,9 +6,12 @@
 
 from datetime import datetime as _datetime
 import time
+import tzlocal
+
+local_tz = tzlocal.get_localzone()
 
 
-class parsetime(_datetime):
+class parsetime(_datetime):  # NOQA
     """ Modified class with loaders for our datetime formats.
 
     """
@@ -20,8 +23,8 @@ class parsetime(_datetime):
     _request_format = "%Y-%m-%d-%H-%M-%S"
 
     @classmethod
-    def _parse(self, fmt, time_string):
-        return self.fromtimestamp(
+    def _parse(cls, fmt, time_string):
+        return cls.fromtimestamp(
             time.mktime(
                 time.strptime(
                     time_string,
@@ -31,7 +34,7 @@ class parsetime(_datetime):
         )
 
     @classmethod
-    def from_american_with_utc(self, time_string):
+    def from_american_with_utc(cls, time_string):
         """ Convert the string representation of the time into parsetime()
 
         CFME's format here is 'mm/dd/yy hh:mm:ss UTC'
@@ -40,7 +43,7 @@ class parsetime(_datetime):
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return self._parse(self._american_with_utc_format, time_string)
+        return cls._parse(cls._american_with_utc_format, time_string)
 
     def to_american_with_utc(self):
         """ Convert the this object to string representation in american with UTC.
@@ -52,7 +55,7 @@ class parsetime(_datetime):
         return self.strftime(self._american_with_utc_format)
 
     @classmethod
-    def from_iso_with_utc(self, time_string):
+    def from_iso_with_utc(cls, time_string):
         """ Convert the string representation of the time into parsetime()
 
         CFME's format here is 'mm-dd-yy hh:mm:ss UTC'
@@ -61,7 +64,7 @@ class parsetime(_datetime):
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return self._parse(self._iso_with_utc_format, time_string)
+        return cls._parse(cls._iso_with_utc_format, time_string)
 
     def to_iso_with_utc(self):
         """ Convert the this object to string representation in american with UTC.
@@ -73,7 +76,7 @@ class parsetime(_datetime):
         return self.strftime(self._iso_with_utc_format)
 
     @classmethod
-    def from_american_minutes(self, time_string):
+    def from_american_minutes(cls, time_string):
         """ Convert the string representation of the time into parsetime()
 
         CFME's format here is 'mm/dd/yy hh:mm'
@@ -82,7 +85,7 @@ class parsetime(_datetime):
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return self._parse(self._american_minutes, time_string)
+        return cls._parse(cls._american_minutes, time_string)
 
     def to_american_minutes(self):
         """ Convert the this object to string representation in american with just minutes.
@@ -94,7 +97,7 @@ class parsetime(_datetime):
         return self.strftime(self._american_minutes)
 
     @classmethod
-    def from_american_date_only(self, time_string):
+    def from_american_date_only(cls, time_string):
         """ Convert the string representation of the time into parsetime()
 
         CFME's format here is 'mm/dd/yy'
@@ -103,7 +106,7 @@ class parsetime(_datetime):
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return self._parse(self._american_date_only_format, time_string)
+        return cls._parse(cls._american_date_only_format, time_string)
 
     def to_american_date_only(self):
         """ Convert the this object to string representation in american date only format.
@@ -115,7 +118,7 @@ class parsetime(_datetime):
         return self.strftime(self._american_date_only_format)
 
     @classmethod
-    def from_iso_date(self, time_string):
+    def from_iso_date(cls, time_string):
         """ Convert the string representation of the time into parsetime()
 
         Format here is 'YYYY-MM-DD'
@@ -124,7 +127,7 @@ class parsetime(_datetime):
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return self._parse(self._iso_date_only_format, time_string)
+        return cls._parse(cls._iso_date_only_format, time_string)
 
     def to_iso_date(self):
         """ Convert the this object to string representation in ISO format.
@@ -136,7 +139,7 @@ class parsetime(_datetime):
         return self.strftime(self._iso_date_only_format)
 
     @classmethod
-    def from_request_format(self, time_string):
+    def from_request_format(cls, time_string):
         """ Convert the string representation of the time into parsetime()
 
         Format here is 'YYYY-MM-DD-HH-MM-SS'. Used for transmitting data over http
@@ -145,7 +148,7 @@ class parsetime(_datetime):
             time_string: String with time to parse
         Returns: :py:class`utils.timeutil.datetime()` object
         """
-        return self._parse(self._request_format, time_string)
+        return cls._parse(cls._request_format, time_string)
 
     def to_request_format(self):
         """ Convert the this object to string representation in http request.
