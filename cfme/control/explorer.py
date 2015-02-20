@@ -1184,7 +1184,7 @@ class Action(Updateable, Pretty):
 
         "Remove Tags":
         CheckboxSelect(
-            "//div[@id='action_options_div']//td[@class='key' and .='Categories']"
+            "//div[@id='action_options_div']//td[@class='key' and normalize-space(.)='Categories']"
             "/../td/table/tbody"
         ),
 

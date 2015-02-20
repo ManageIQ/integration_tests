@@ -251,7 +251,7 @@ class PXEServer(Updateable, Pretty):
             version.LOWEST: lambda: pxe_details_page.infoblock.text(
                 'Basic Information', 'Last Refreshed On'),
             '5.3': lambda: sel.text(sel.element(
-                '//td[contains(text(),"Last Refreshed On")]/../td[2]'))
+                '//td[contains(normalize-space(text()),"Last Refreshed On")]/../td[2]'))
         })
         last_time = ref_time()
         cfg_btn('Refresh Relationships', invokes_alert=True)
@@ -283,7 +283,7 @@ class PXEServer(Updateable, Pretty):
             itype = version.pick({
                 version.LOWEST: lambda: InfoBlock('Basic Information', 'Type'),
                 '5.3': lambda: sel.text(sel.element(
-                    '//td[contains(text(),"Type")]/../td[2]'))
+                    '//td[contains(normalize-space(text()),"Type")]/../td[2]'))
             })
             return itype()
 
@@ -562,7 +562,7 @@ class ISODatastore(Updateable, Pretty):
             version.LOWEST: lambda: pxe_details_page.infoblock.text(
                 'Basic Information', 'Last Refreshed On'),
             '5.3': lambda: sel.text(sel.element(
-                '//td[contains(text(),"Last Refreshed On")]/../td[2]'))
+                '//td[contains(normalize-space(text()),"Last Refreshed On")]/../td[2]'))
         })
         last_time = ref_time()
         cfg_btn('Refresh Relationships', invokes_alert=True)

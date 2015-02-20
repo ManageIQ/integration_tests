@@ -19,7 +19,7 @@ from cfme.exceptions import ListAccordionLinkNotFound
 from utils.pretty import Pretty
 
 DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
-DHX_LABEL = '*[contains(@data-remote, "true") and .="%s"]'
+DHX_LABEL = '*[contains(@data-remote, "true") and normalize-space(.)="%s"]'
 
 
 def locate(name):

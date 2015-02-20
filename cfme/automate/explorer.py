@@ -25,7 +25,7 @@ cfg_btn = partial(tb.select, 'Configuration')
 
 
 def datastore_checkbox(name):
-    return "//img[contains(@src, 'chk') and ../../td[.='%s']]" % name
+    return "//img[contains(@src, 'chk') and ../../td[normalize-space(.)='%s']]" % name
 
 
 def table_select(name):

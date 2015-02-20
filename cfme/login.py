@@ -39,7 +39,7 @@ page = Region(
         'password': '//input[@id="user_password"]',
         'submit_button': {
             '5.3': '//a[@id="login"]',
-            '5.4': '//button[.="Login"]/..',
+            '5.4': '//button[normalize-space(.)="Login"]/..',
         },
         # Login page has an abnormal flash div
         'flash': '//div[@id="flash_div"]',

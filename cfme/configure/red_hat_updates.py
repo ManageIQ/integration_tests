@@ -37,7 +37,7 @@ Note:
 
 
 def make_update_button(text):
-    return "//div[@id='settings_rhn']//button[.='{}']".format(text)
+    return "//div[@id='settings_rhn']//button[normalize-space(.)='{}']".format(text)
 
 
 update_buttons = Region(

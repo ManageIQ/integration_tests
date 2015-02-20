@@ -101,7 +101,7 @@ def select_first_expression():
 def select_expression_by_text(text):
     sel.click(
         sel.element(
-            "//a[contains(@id,'exp_')][contains(text(),'%s')]" % text,
+            "//a[contains(@id,'exp_')][contains(normalize-space(text()),'%s')]" % text,
             root=_expressions_root()
         )
     )
@@ -121,7 +121,7 @@ def any_expression_present():
 def is_editing():
     try:
         sel.element(
-            "//a[contains(@id,'exp_')][contains(text(),'???')]",
+            "//a[contains(@id,'exp_')][contains(normalize-space(text()),'???')]",
             root=_expressions_root()
         )
         return True

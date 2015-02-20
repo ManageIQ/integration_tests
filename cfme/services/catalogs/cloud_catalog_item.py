@@ -55,7 +55,7 @@ def _all_catalogitems_add_new(context):
 
 
 def _all_catalogbundle_add_new(context):
-    sel.click("//div[@id='sandt_tree_div']//td[.='All Catalog Items']")
+    sel.click("//div[@id='sandt_tree_div']//td[normalize-space(.)='All Catalog Items']")
     tb_select('Add a New Catalog Bundle')
 
 

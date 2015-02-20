@@ -35,8 +35,9 @@ def select_security_group(sg):
        multiselect.
 
     """
-    val = sel.get_attribute("//select[@id='environment__security_groups']/option[.='%s']" %
-                            sg, 'value')
+    val = sel.get_attribute(
+        "//select[@id='environment__security_groups']/option[normalize-space(.)='%s']" % sg,
+        'value')
     sel.browser().execute_script(
         "$j('#environment__security_groups').val('%s');"
         "$j.ajax({type: 'POST', url: '/miq_request/prov_field_changed/new',"

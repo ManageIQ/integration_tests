@@ -39,7 +39,7 @@ class FormButton(Pretty):
             " and (contains(@class, 'button') or contains(@class, 'btn')"
             " or contains(@src, 'button'))"
             " and not(ancestor::*[contains(@style, 'display:none')"
-            " or contains(@style, 'display: none')])]|//button[.='{}' and"
+            " or contains(@style, 'display: none')])]|//button[normalize-space(.)='{}' and"
             " (@disabled='true' or contains(@class, 'btn-disabled'))"
             " and not(ancestor::*[contains(@style, 'display:none')"
             " or contains(@style, 'display: none')])]".format(
