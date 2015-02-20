@@ -145,7 +145,9 @@ class Schedule(Updateable, Pretty):
         I think this should be incorporated into InfoBlock somehow. Currently there is the fieldset
         issue.
         """
-        return "//td[preceding-sibling::td[contains(@class, 'key') and .='{}']]".format(item)
+        return (
+            "//td[preceding-sibling::td[contains(@class, 'key')"
+            " and normalize-space(.)='{}']]").format(item)
 
     def queue(self, wait_for_finish=False):
         """Queue this schedule.

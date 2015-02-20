@@ -734,7 +734,7 @@ class SortTable(Table):
         Args:
             text: Header cell text.
         """
-        sel.click(sel.element("./th/a[.='{}']".format(text), root=self.header_row))
+        sel.click(sel.element("./th/a[normalize-space(.)='{}']".format(text), root=self.header_row))
 
     def sort_by(self, header, order):
         """Sorts the table by given conditions
@@ -946,9 +946,9 @@ def table_in_object(table_title):
     Returns: XPath locator for the desired table.
     """
     # Description     paragraph with the text       following element    which is the table
-    return "//p[@class='legend' and text()='{}']/following-sibling::*[1][@class='style3']".format(
-        table_title
-    )
+    return (
+        "//p[@class='legend' and normalize-space(text())='{}']"
+        "/following-sibling::*[1][@class='style3']").format(table_title)
 
 
 @multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))
@@ -1344,8 +1344,8 @@ class Tree(Pretty):
             # Dynatree
             self.expandable = 'span'
             self.is_expanded_condition = ('class', 'dynatree-expanded')
-            self.node_root = ".//li[span/a[.='%s']]"
-            self.node_label = ".//li/span/a[.='%s']"
+            self.node_root = ".//li[span/a[normalize-space(.)='%s']]"
+            self.node_label = ".//li/span/a[normalize-space(.)='%s']"
             self.click_expand = "span/span"
             self.leaf = "span/a"
             # Locators for reading the tree
@@ -1359,8 +1359,8 @@ class Tree(Pretty):
             # Legacy Tree
             self.expandable = 'tr/td[1]/img'
             self.is_expanded_condition = ('src', 'open.png')
-            self.node_root = ".//span[.='%s']/../../.."
-            self.node_label = ".//span[.='%s']"
+            self.node_root = ".//span[normalize-space(.)='%s']/../../.."
+            self.node_label = ".//span[normalize-space(.)='%s']"
             self.click_expand = "tr/td[1]/img"
             self.leaf = "tr/td/span"
             # Locators for reading the tree - we do not support, this kind of getting, we have cust.
@@ -1726,14 +1726,15 @@ class InfoBlock(Pretty):
         possible_locators = [
             # Detail type
             version.pick({
-                '5.3': '//table//th[contains(., "{}")]/../../../..'.format(self.title),
+                '5.3': '//table//th[contains(normalize-space(.), "{}")]/../../../..'.format(
+                    self.title),
                 version.LOWEST:
-                '//div[@class="modbox"]/h2[@class="modtitle"][contains(., "{}")]/..'.format(
-                    self.title)
+                '//div[@class="modbox"]/h2[@class="modtitle"]'
+                '[contains(normalize-space(.), "{}")]/..'.format(self.title)
             }),
             # Form type
             (
-                '//*[p[@class="legend"][contains(., "{}")] and table/tbody/tr/td['
+                '//*[p[@class="legend"][contains(normalize-space(.), "{}")] and table/tbody/tr/td['
                 'contains(@class, "key")]]'.format(self.title)
             )
             # The root element must contain table element because listaccordions were caught by the
@@ -1796,9 +1797,11 @@ class InfoBlock(Pretty):
         @property
         def pair_locator(self):
             if self.ib.type == InfoBlock.DETAIL:
-                return 'table/tbody/tr/td[1][@class="label"][.="{}"]/..'.format(self.name)
+                return 'table/tbody/tr/td[1][@class="label"][normalize-space(.)="{}"]/..'.format(
+                    self.name)
             elif self.ib.type == InfoBlock.FORM:
-                return 'table/tbody/tr/td[1][@class="key"][.="{}"]/..'.format(self.name)
+                return 'table/tbody/tr/td[1][@class="key"][normalize-space(.)="{}"]/..'.format(
+                    self.name)
 
         @property
         def pair(self):
@@ -2389,7 +2392,7 @@ class EmailSelectForm(Pretty):
             email: E-mail to remove
         """
         if email in self.to_emails:
-            sel.click("//a[contains(@href, 'remove_email')][.='%s']" % email)
+            sel.click("//a[contains(@href, 'remove_email')][normalize-space(.)='%s']" % email)
             return email not in self.to_emails
         else:
             return True
@@ -2824,7 +2827,7 @@ class ButtonGroup(object):
             key: The name of the key field text before the button group.
         """
         self.key = key
-        self.locator = '//td[@class="key" and text()="{}"]/..'.format(self.key)
+        self.locator = '//td[@class="key" and normalize-space(text())="{}"]/..'.format(self.key)
 
     def locate(self):
         """ Moves to the element """

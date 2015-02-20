@@ -311,7 +311,7 @@ def is_displayed_text(text):
 
     Returns: A string containing the text
     """
-    return is_displayed("//*[text()={}]".format(quoteattr(text)))
+    return is_displayed("//*[normalize-space(text())={}]".format(quoteattr(text)))
 
 
 def wait_for_element(*locs, **kwargs):

@@ -209,6 +209,18 @@ class Provider(Updateable, Pretty):
             flash.assert_message_match(
                 'Delete initiated for 1 Infrastructure Provider from the CFME Database')
 
+    def wait_for_creds_ok(self):
+        """Waits for provider's credentials to become O.K. (circumvents the summary rails exc.)"""
+        self.refresh_provider_relationships(from_list_view=True)
+
+        def _wait_f():
+            sel.force_navigate("infrastructure_providers")
+            q = Quadicon(self.name, "infra_prov")
+            creds = q.creds
+            return creds == "checkmark"
+
+        wait_for(_wait_f, num_sec=300, delay=5, message="credentials of {} ok!".format(self.name))
+
     def validate(self, db=True):
         """ Validates that the detail page matches the Providers information.
 
@@ -217,6 +229,8 @@ class Provider(Updateable, Pretty):
         continuously until the matching of all items is complete. A error will be raised
         if the match is not complete within a certain defined time period.
         """
+        # Wait for credentials to become OK to prevent the error in some 5.4 builds
+        self.wait_for_creds_ok()
 
         client = self.get_mgmt_system()
 
@@ -244,9 +258,13 @@ class Provider(Updateable, Pretty):
 
         client.disconnect()
 
-    def refresh_provider_relationships(self):
+    def refresh_provider_relationships(self, from_list_view=False):
         """Clicks on Refresh relationships button in provider"""
-        sel.force_navigate('infrastructure_provider', context={"provider": self})
+        if from_list_view:
+            sel.force_navigate("infrastructure_providers")
+            sel.check(Quadicon(self.name, "infra_prov").checkbox())
+        else:
+            sel.force_navigate('infrastructure_provider', context={"provider": self})
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
         sel.handle_alert(cancel=False)
 

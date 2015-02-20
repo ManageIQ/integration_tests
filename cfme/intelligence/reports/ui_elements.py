@@ -24,7 +24,8 @@ class PivotCalcSelect(Pretty):
     _arrow = "//img[@class='dhx_combo_img']"
     _box = "//div[contains(@class, 'dhx_combo_list')]"
     _box_items = ".//div/div"
-    _box_checkbox = ".//div/div[text()='{}']/preceding-sibling::*[1][@type='checkbox']"
+    _box_checkbox = (
+        ".//div/div[normalize-space(text())='{}']/preceding-sibling::*[1][@type='checkbox']")
     pretty_attrs = ['root_el_id']
 
     def __init__(self, root_el_id):
@@ -209,8 +210,8 @@ class ColumnStyleTable(Pretty):
         Returns: :py:class:`cfme.web_ui.Select`.
         """
         return Select(
-            "//div[@id='{}']//table/tbody/tr/td[contains(@class, 'key') and .=' {}']/.."
-            "/td[not(contains(@class, 'key'))]"
+            "//div[@id='{}']//table/tbody/tr/td[contains(@class, 'key')"
+            " and normalize-space(.)='{}']/../td[not(contains(@class, 'key'))]"
             "/select[@id[substring(., string-length() -1) = '_{}'] and contains(@id, 'style_')]"
             .format(self._div_id, name, id)
         )
@@ -224,8 +225,8 @@ class ColumnStyleTable(Pretty):
         Returns: :py:class:`cfme.web_ui.Select`.
         """
         return Select(
-            "//div[@id='{}']//table/tbody/tr/td[contains(@class, 'key') and .=' {}']/.."
-            "/td[not(contains(@class, 'key'))]"
+            "//div[@id='{}']//table/tbody/tr/td[contains(@class, 'key')"
+            " and normalize-space(.)='{}']/../td[not(contains(@class, 'key'))]"
             "/select[@id[substring(., string-length() -1) = '_{}'] and contains(@id, 'styleop')]"
             .format(self._div_id, name, id)
         )
@@ -239,8 +240,8 @@ class ColumnStyleTable(Pretty):
         Returns: :py:class:`str` with locator.
         """
         return (
-            "//div[@id='{}']//table/tbody/tr/td[contains(@class, 'key') and .=' {}']/.."
-            "/td[not(contains(@class, 'key'))]"
+            "//div[@id='{}']//table/tbody/tr/td[contains(@class, 'key')"
+            " and normalize-space(.)='{}']/../td[not(contains(@class, 'key'))]"
             "/input[@id[substring(., string-length() -1) = '_{}'] and contains(@id, 'styleval')]"
             .format(self._div_id, name, id)
         )
@@ -429,11 +430,13 @@ def _fill_rss_str(erf, s):
 
 class DashboardWidgetSelector(Pretty):
     _button_open_close = ".//img[contains(@src, 'combo_select.gif')]"
-    _combo_list = "//div[contains(@class, 'dhx_combo_list') and div/div[.='Add a Widget']]"
+    _combo_list = (
+        "//div[contains(@class, 'dhx_combo_list') and div/div[normalize-space(.)='Add a Widget']]")
     _selected = (".//div[@id='modules']//div[contains(@id, 'w_')]/div/h2/div"
         "/span[contains(@class, 'modtitle_text')]")
     _remove_button = ".//div[@id='modules']//div[contains(@id, 'w_')]/div"\
-        "/h2[div/span[contains(@class, 'modtitle_text') and .='{}']]/a[@title='Remove this widget']"
+        "/h2[div/span[contains(@class, 'modtitle_text') and normalize-space(.)='{}']]"\
+        "/a[@title='Remove this widget']"
     pretty_attrs = ['root_loc']
 
     def __init__(self, root_loc="//div[@id='form_widgets_div']"):
@@ -504,7 +507,9 @@ def _fill_dws_str(dws, s):
 class FolderManager(Pretty):
     """Class used in Reports/Edit Reports menus."""
     _fields = ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr/td"
-    _field = ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr/td[.='{}']"
+    _field = (
+        ".//div[@id='folder_grid']/div[contains(@class, 'objbox')]/table/tbody/tr"
+        "/td[normalize-space(.)='{}']")
     pretty_attrs = ['root']
 
     class _BailOut(Exception):

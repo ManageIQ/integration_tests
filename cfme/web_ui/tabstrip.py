@@ -91,7 +91,8 @@ def get_clickable_tab(ident_string):
     Args:
         ident_string: The text diplayed on the tab.
     """
-    return sel.element(".//li/a[contains(text(), '%s')]" % ident_string, root=_root())
+    return sel.element(
+        ".//li/a[contains(normalize-space(text()), '%s')]" % ident_string, root=_root())
 
 
 def select_tab(ident_string):
