@@ -462,7 +462,7 @@ class VMWareSystem(MgmtSystemAPIBase):
             pass
 
         if progress_callback is None:
-            progress_callback = partial(self._progress_log_callback(source, destination))
+            progress_callback = partial(self._progress_log_callback, source, destination)
 
         source_template = mobs.VirtualMachine.get(self.api, name=source)
 
