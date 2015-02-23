@@ -104,6 +104,12 @@ def pytest_sessionfinish(session, exitstatus):
         outfile.write(failed_tests_report)
 
 
+@pytest.mark.trylast
+def pytest_runtest_teardown(item, nextitem):
+    """To prevent glitches caused by session timeout spreading over tests."""
+    utils.browser.quit()
+
+
 @pytest.fixture(scope='session')
 def browser():
     return utils.browser.browser
