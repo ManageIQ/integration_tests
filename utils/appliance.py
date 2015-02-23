@@ -1112,8 +1112,12 @@ class IPAppliance(object):
             log_callback(message)
             raise exception_class(message)
 
+        log_callback('vddk_url: {}'.format(str(vddk_url)))
         if vddk_url is None:
             vddk_url = conf.cfme_data.get("basic_info", {}).get("vddk_url", None)
+            log_callback('basic_info: {}'.format(str(conf.cfme_data.get("basic_info", {}))))
+            log_callback('vddk_url: {}'.format(str(vddk_url)))
+        log_callback('vddk_url: {}'.format(str(vddk_url)))
         if vddk_url is None:
             raise Exception("vddk_url not specified!")
 
