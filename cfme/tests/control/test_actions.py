@@ -54,7 +54,7 @@ class VMWrapper(Pretty):
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
     argnames, argvalues, idlist = testgen.infra_providers(metafunc,
-        'small_template', scope="module")
+        'small_template', scope="module", template_location=["small_template"])
 
     new_idlist = []
     new_argvalues = []
