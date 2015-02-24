@@ -2,11 +2,13 @@
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the dashboard page
 """
+import re
+
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Region, Table, tabstrip, toolbar
 from utils.timeutil import parsetime
 from utils.pretty import Pretty
-from utils.version import LOWEST
+from utils.version import LOWEST, current_version
 from utils.wait import wait_for
 
 page = Region(
@@ -54,8 +56,9 @@ class Widget(Pretty):
     _zoomed_close = "//div[@id='lightbox_div']//a[@title='Close']"
     _all = "//div[@id='modules']//div[contains(@id, 'w_')]"
     _content = "//div[@id='{}']//div[contains(@class, 'modboxin')]"
+    _content_type_54 = "//div[@id='{}']//div[contains(@class, 'modboxin')]/../h2/a[1]"
 
-    pretty_attrs = ['div_id']
+    pretty_attrs = ['_div_id']
 
     def __init__(self, div_id):
         self._div_id = div_id
@@ -66,14 +69,16 @@ class Widget(Pretty):
 
     @property
     def content_type(self):
-        return sel.get_attribute(self._content.format(self._div_id), "class").rsplit(" ", 1)[-1]
+        if current_version() < "5.4":
+            return sel.get_attribute(self._content.format(self._div_id), "class").rsplit(" ", 1)[-1]
+        else:
+            return sel.get_attribute(self._content_type_54.format(self._div_id), "class").strip()
 
     @property
     def content(self):
-        print self.content_type
-        if self.content_type == "rss_widget":
+        if self.content_type in {"rss_widget", "rssbox"}:
             return RSSWidgetContent(self._div_id)
-        elif self.content_type == "report_widget":
+        elif self.content_type in {"report_widget", "reportbox"}:
             return ReportWidgetContent(self._div_id)
         else:
             return BaseWidgetContent(self._div_id)
@@ -169,6 +174,11 @@ class Widget(Pretty):
         else:
             raise NameError("Could not find widget with name {} on current dashboard!".format(name))
 
+    @classmethod
+    def by_type(cls, content_type):
+        """Returns Widget with specified content_type."""
+        return filter(lambda w: w.content_type == content_type, cls.all())
+
 
 class BaseWidgetContent(Pretty):
     pretty_attrs = ['widget_box_id']
@@ -191,7 +201,13 @@ class RSSWidgetContent(BaseWidgetContent):
             desc, date = sel.text(row).encode("utf-8").strip().rsplit("\n", 1)
             date = date.split(":", 1)[-1].strip()
             date = parsetime.from_iso_with_utc(date)
-            result.append((desc, date))
+            url_source = sel.element("./..", root=row).get_attribute("onclick")
+            getter_script = re.sub(r"^window.location\s*=\s*([^;]+;)", "return \\1", url_source)
+            try:
+                url = sel.execute_script(getter_script)
+            except sel.WebDriverException:
+                url = None
+            result.append((desc, date, url))
         return result
 
 

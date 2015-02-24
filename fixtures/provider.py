@@ -62,3 +62,8 @@ def setup_provider_funcscope(provider_key):
 
     """
     _setup_provider(provider_key)
+
+
+@pytest.fixture(scope="session")
+def any_provider_session():
+    providers.setup_a_provider(validate=True, check_existing=True)
