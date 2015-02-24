@@ -748,7 +748,22 @@ class SMTPSettings(Updateable):
         fill(self.smtp_settings, dict(to_email=to_address), action=self.buttons.test)
 
 
-class DatabaseAuthSetting(Pretty):
+class AuthSetting(Updateable, Pretty):
+    form = Form(fields=[
+        ("timeout_h", Select("//select[@id='session_timeout_hours']")),
+        ("timeout_m", Select("//select[@id='session_timeout_mins']")),
+    ])
+
+    @classmethod
+    def set_session_timeout(cls, hours=None, minutes=None):
+        """Sets the session timeout of the appliance."""
+        sel.force_navigate("cfg_settings_currentserver_auth")
+        logger.info(
+            "Setting authentication timeout to {} hours and {} minutes.".format(hours, minutes))
+        fill(cls.form, {"timeout_h": hours, "timeout_m": minutes}, action=form_buttons.save)
+
+
+class DatabaseAuthSetting(AuthSetting):
     """ Authentication settings for DB internal database.
 
     Args:
@@ -781,7 +796,7 @@ class DatabaseAuthSetting(Pretty):
         fill(self.form, self.details, action=form_buttons.save)
 
 
-class ExternalAuthSetting(Updateable, Pretty):
+class ExternalAuthSetting(AuthSetting):
     """ Authentication settings for authentication via httpd.
 
     Args:
@@ -814,12 +829,12 @@ class ExternalAuthSetting(Updateable, Pretty):
         sel.force_navigate("cfg_settings_currentserver_auth")
         fill(self.form, self, action=form_buttons.save)
 
-    def update(self, updates):
+    def update(self, updates=None):
         sel.force_navigate("cfg_settings_currentserver_auth")
-        fill(self.form, updates, action=form_buttons.save)
+        fill(self.form, updates if updates is not None else self, action=form_buttons.save)
 
 
-class AmazonAuthSetting(Pretty):
+class AmazonAuthSetting(AuthSetting):
     """ Authentication settings via Amazon.
 
     Args:
@@ -861,7 +876,7 @@ class AmazonAuthSetting(Pretty):
         fill(self.form, self.details, action=form_buttons.save)
 
 
-class LDAPAuthSetting(Pretty):
+class LDAPAuthSetting(AuthSetting):
     """ Authentication via LDAP
 
     Args:

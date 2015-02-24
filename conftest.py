@@ -8,6 +8,7 @@ from pkgutil import iter_modules
 
 import pytest
 
+from cfme.configure.configuration import AuthSetting
 import cfme.fixtures
 import fixtures
 import markers
@@ -20,6 +21,11 @@ def pytest_addoption(parser):
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
     parser.addoption("--use-provider", action="append", default=[],
         help="list of providers or tags to include in test")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def set_session_timeout():
+    AuthSetting.set_session_timeout("24")
 
 
 def _pytest_plugins_generator(*extension_pkgs):
