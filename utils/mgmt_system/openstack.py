@@ -239,12 +239,15 @@ class OpenstackSystem(MgmtSystemAPIBase):
 
     def delete_volume(self, *ids, **kwargs):
         wait = kwargs.get("wait", True)
+        timeout = kwargs.get("timeout", 180)
         for id in ids:
             self.capi.volumes.find(id=id).delete()
         if not wait:
             return
         # Wait for them
-        wait_for(lambda: all(map(lambda id: not self.volume_exists(id), ids)), delay=0.5)
+        wait_for(
+            lambda: all(map(lambda id: not self.volume_exists(id), ids)),
+            delay=0.5, num_sec=timeout)
 
     def volume_exists(self, id):
         try:

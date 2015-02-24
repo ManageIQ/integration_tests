@@ -9,6 +9,7 @@ from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
 from utils.randomness import generate_random_string
 from utils.update import update
+from utils.wait import wait_for
 
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
@@ -151,3 +152,4 @@ def test_provision_from_template_with_attached_disks(
         for volume, device in device_mapping:
             soft_assert(provider_mgmt.volume_attachments(volume)[vm_name] == device_mapping)
         instance.delete_from_provider()  # To make it possible to delete the volume
+        wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
