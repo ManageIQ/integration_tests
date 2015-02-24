@@ -785,15 +785,13 @@ class DatabaseAuthSetting(AuthSetting):
     pretty_attrs = ['timeout_h', 'timeout_m']
 
     def __init__(self, timeout_h=None, timeout_m=None):
-        self.details = dict(
-            timeout_h=timeout_h,
-            timeout_m=timeout_m,
-            auth_mode="Database"
-        )
+        self.timeout_h = timeout_h
+        self.timeout_m = timeout_m
+        self.auth_mode = "Database"
 
-    def update(self):
+    def update(self, updates=None):
         sel.force_navigate("cfg_settings_currentserver_auth")
-        fill(self.form, self.details, action=form_buttons.save)
+        fill(self.form, updates if updates is not None else self, action=form_buttons.save)
 
 
 class ExternalAuthSetting(AuthSetting):
@@ -862,18 +860,16 @@ class AmazonAuthSetting(AuthSetting):
     pretty_attrs = ['access_key', 'secret_key', 'get_groups', 'timeout_h', 'timeout_m']
 
     def __init__(self, access_key, secret_key, get_groups=False, timeout_h=None, timeout_m=None):
-        self.details = dict(
-            access_key=access_key,
-            secret_key=secret_key,
-            get_groups=get_groups,
-            timeout_h=timeout_h,
-            timeout_m=timeout_m,
-            auth_mode="Amazon"
-        )
+        self.access_key = access_key
+        self.secret_key = secret_key
+        self.get_groups = get_groups
+        self.timeout_h = timeout_h
+        self.timeout_m = timeout_m
+        self.auth_mode = "Amazon"
 
-    def update(self):
+    def update(self, updates=None):
         sel.force_navigate("cfg_settings_currentserver_auth")
-        fill(self.form, self.details, action=form_buttons.save)
+        fill(self.form, updates if updates is not None else self, action=form_buttons.save)
 
 
 class LDAPAuthSetting(AuthSetting):
@@ -938,27 +934,28 @@ class LDAPAuthSetting(AuthSetting):
                  timeout_h=None,
                  timeout_m=None,
                  ):
-        self.details = dict(
-            user_type=sel.ByValue(user_type),
-            user_suffix=user_suffix,
-            base_dn=base_dn,
-            bind_dn=bind_dn,
-            bind_password=bind_password,
-            get_groups=get_groups,
-            get_roles=get_roles,
-            follow_referrals=follow_referrals,
-            port=port,
-            timeout_m=timeout_m,
-            timeout_h=timeout_h,
-            auth_mode=self.AUTH_MODE
-        )
+        self.user_type = sel.ByValue(user_type)
+        self.user_suffix = user_suffix
+        self.base_dn = base_dn
+        self.bind_dn = bind_dn
+        self.bind_password = bind_password
+        self.get_groups = get_groups
+        self.get_roles = get_roles
+        self.follow_referrals = follow_referrals
+        self.port = port
+        self.timeout_h = timeout_h
+        self.timeout_m = timeout_m
+        self.auth_mode = self.AUTH_MODE
+        self.ldaphost_1 = None
+        self.ldaphost_2 = None
+        self.ldaphost_3 = None
         assert len(hosts) <= 3, "You can specify only 3 LDAP hosts"
         for enum, host in enumerate(hosts):
-            self.details["ldaphost_%d" % (enum + 1)] = host
+            setattr(self, "ldaphost_{}".format(enum + 1), host)
 
-    def update(self):
+    def update(self, updates=None):
         sel.force_navigate("cfg_settings_currentserver_auth")
-        fill(self.form, self.details, action=form_buttons.save)
+        fill(self.form, updates if updates is not None else self, action=form_buttons.save)
 
 
 class LDAPSAuthSetting(LDAPAuthSetting):
