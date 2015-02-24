@@ -73,19 +73,20 @@ def gen_events(setup_provider, delete_fx_provider_event, provider_crud, test_ins
     provider_crud.refresh_provider_relationships()
 
 
-def count_events(vm_name, nav_step):
+def count_events(instance_name, nav_step):
     try:
         nav_step()
     except ToolbarOptionGreyed:
         return 0
     events = []
     for event in prov_timeline.events():
-        if event.text == vm_name:
+        data = event.block_info()
+        if instance_name in data.values():
             events.append(event)
-    return len(events)
+            if len(events) > 0:
+                return len(events)
 
 
-@pytest.mark.meta(blockers=[1139865])
 def test_provider_event(setup_provider, provider_crud, gen_events, test_instance):
     """ Tests provider events on timelines
 
@@ -95,11 +96,10 @@ def test_provider_event(setup_provider, provider_crud, gen_events, test_instance
     def nav_step():
         pytest.sel.force_navigate('cloud_provider_timelines',
                                   context={'provider': provider_crud})
-    wait_for(count_events, [provider_crud.name, nav_step], timeout=60, fail_condition=0,
+    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
 
-@pytest.mark.meta(blockers=[1139865])
 def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
     """ Tests availablility zone events on timelines
 
@@ -110,11 +110,10 @@ def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
         test_instance.load_details()
         pytest.sel.click(details_page.infoblock.element('Relationships', 'Availability Zone'))
         toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [provider_crud.name, nav_step], timeout=60, fail_condition=0,
+    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
 
-@pytest.mark.meta(blockers=[1139865])
 def test_vm_event(setup_provider, provider_crud, gen_events, test_instance):
     """ Tests vm events on timelines
 
@@ -124,5 +123,5 @@ def test_vm_event(setup_provider, provider_crud, gen_events, test_instance):
     def nav_step():
         test_instance.load_details()
         toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [provider_crud.name, nav_step], timeout=60, fail_condition=0,
+    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
