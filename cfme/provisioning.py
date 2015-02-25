@@ -9,6 +9,7 @@ from cfme.web_ui import fill, flash, form_buttons, tabstrip, toolbar
 from cfme.web_ui.menu import nav
 from utils import version
 from utils.log import logger
+from utils.version import current_version
 from utils.wait import wait_for
 
 # nav imports
@@ -22,7 +23,6 @@ submit_button = form_buttons.FormButton("Submit")
 template_select_form = ui.Form(
     fields=[
         ('template_table', ui.Table('//div[@id="pre_prov_div"]/fieldset/table')),
-        ('continue_button', submit_button),
         ('cancel_button', form_buttons.cancel)
     ]
 )
@@ -38,10 +38,14 @@ def select_security_group(sg):
     val = sel.get_attribute(
         "//select[@id='environment__security_groups']/option[normalize-space(.)='%s']" % sg,
         'value')
-    sel.browser().execute_script(
-        "$j('#environment__security_groups').val('%s');"
-        "$j.ajax({type: 'POST', url: '/miq_request/prov_field_changed/new',"
-        " data: {'environment__security_groups':'%s'}})" % (val, val))
+    try:
+        sel.browser().execute_script(
+            "$j('#environment__security_groups').val('%s');"
+            "$j.ajax({type: 'POST', url: '/miq_request/prov_field_changed/new',"
+            " data: {'environment__security_groups':'%s'}})" % (val, val))
+    except sel.WebDriverException:
+        # Ignore since from newer versions it is not needed anymore
+        pass
     sel.wait_for_ajax()
     sel.sleep(1)
 
@@ -187,7 +191,11 @@ def generate_nav_function(tb_item):
         })
         if template:
             sel.click(template)
-            sel.click(template_select_form.continue_button)
+            if current_version() < "5.4":
+                sel.click(submit_button)
+            else:
+                sel.click(form_buttons.FormButton("Continue"))
+
         else:
             raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
                 template_name, provider.key))
