@@ -93,6 +93,7 @@ def select(root, sub=None, invokes_alert=False):
     else:
         raise ToolbarOptionGreyed("Toolbar button {} is greyed!".format(root))
     if sub:
+        sel.wait_for_ajax()
         if not is_greyed(root, sub):
             try:
                 if invokes_alert:

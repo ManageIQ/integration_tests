@@ -1236,7 +1236,17 @@ def _fill_form_dict(form, values, **kwargs):
     return _fill_form_list(form, values.items(), **kwargs)
 
 
-class Radio(Pretty):
+class Input(Pretty):
+    pretty_attrs = ['name']
+
+    def __init__(self, name):
+        self.name = name
+
+    def locate(self):
+        return '//input[@name="{}"]'.format(self.name)
+
+
+class Radio(Input):
     """ A class for Radio button groups
 
     Radio allows the usage of HTML radio elements without resorting to previous
@@ -1259,12 +1269,6 @@ class Radio(Pretty):
     The :py:class:`Radio` object can be reused over and over with repeated calls to
     the :py:func:`Radio.choice` method.
     """
-
-    pretty_attrs = ['name']
-
-    def __init__(self, name):
-        self.name = name
-
     def choice(self, val):
         """ Returns the locator for a choice
 
