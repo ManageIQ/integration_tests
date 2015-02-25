@@ -23,6 +23,7 @@
   * :py:class:`ScriptBox`
   * :py:class:`Select`
   * :py:class:`ShowingInputs`
+  * :py:class:`SplitCheckboxTable`
   * :py:class:`SplitTable`
   * :py:class:`Timelines`
   * :py:class:`Table`
@@ -244,7 +245,7 @@ class Table(Pretty):
 
     """
 
-    pretty_attrs = ['_lock']
+    pretty_attrs = ['_loc']
 
     def __init__(self, table_locator, header_offset=0, body_offset=0):
         self._headers = None
@@ -387,17 +388,19 @@ class Table(Pretty):
             './/td/descendant-or-self::*[contains(normalize-space(text()), "%s")]/ancestor::tr[1]')
         matching_rows_list = list()
         for value in cells.values():
-            # Get a root locator ready, self._body_loc is the SplitTable body locator
-            root = sel.move_to_element(self._root_loc)
             # Get all td elements that contain the value text
-            matching_rows_list.append(sel.elements(cell_text_loc % value, root=root))
+            matching_elements = sel.elements(cell_text_loc % value,
+                root=sel.move_to_element(self._root_loc))
+            if matching_elements:
+                matching_rows_list.append(set(matching_elements))
 
         # Now, find the common row elements that matched all the input cells
         # (though not yet matching values to headers)
-        # Why not use set intersection here? Good question!
-        # https://code.google.com/p/selenium/issues/detail?id=7011
-        rows_elements = reduce(lambda l1, l2: [item for item in l1 if item in l2],
-            matching_rows_list)
+        if not matching_rows_list:
+            # If none matched, short out
+            return []
+
+        rows_elements = list(reduce(lambda set1, set2: set1 & set2, matching_rows_list))
 
         # Convert them to rows
         # This is slow, which is why we do it after reducing the row element pile,
@@ -557,7 +560,7 @@ class Table(Pretty):
             """
             Returns Row element by header name
             """
-            return self.columns[self.table.header_indexes[name]]
+            return self.columns[self.table.header_indexes[name.lower()]]
 
         def __getitem__(self, index):
             """
@@ -761,14 +764,17 @@ class CheckboxTable(Table):
         table_locator: See :py:class:`cfme.web_ui.Table`
         header_checkbox_locator: Locator of header checkbox (default `None`)
                                  Specify in case the header checkbox is not part of the header row
+        body_checkbox_locator: Locator for checkboxes in body rows
         header_offset: See :py:class:`cfme.web_ui.Table`
         body_offset: See :py:class:`cfme.web_ui.Table`
     """
-
     _checkbox_loc = ".//input[@type='checkbox']"
 
-    def __init__(self, table_locator, header_checkbox_locator=None, header_offset=0, body_offset=0):
+    def __init__(self, table_locator, header_offset=0, body_offset=0,
+            header_checkbox_locator=None, body_checkbox_locator=None):
         super(CheckboxTable, self).__init__(table_locator, header_offset, body_offset)
+        if body_checkbox_locator:
+            self._checkbox_loc = body_checkbox_locator
         self._header_checkbox_loc = header_checkbox_locator
 
     @property
@@ -934,6 +940,30 @@ class CheckboxTable(Table):
             cells: See :py:meth:`Table.find_rows_by_cells`
         """
         self._set_rows_by_cells(cells, False)
+
+
+class SplitCheckboxTable(SplitTable, CheckboxTable):
+    """:py:class:`SplitTable` with support for checkboxes
+
+    Args:
+        header_data: See :py:class:`cfme.web_ui.SplitTable`
+        body_data: See :py:class:`cfme.web_ui.SplitTable`
+        header_checkbox_locator: See :py:class:`cfme.web_ui.CheckboxTable`
+        body_checkbox_locator: See :py:class:`cfme.web_ui.CheckboxTable`
+        header_offset: See :py:class:`cfme.web_ui.Table`
+        body_offset: See :py:class:`cfme.web_ui.Table`
+    """
+    _checkbox_loc = './/img[contains(@src, "item_chk")]'
+
+    def __init__(self, header_data, body_data,
+            header_checkbox_locator=None, body_checkbox_locator=None):
+        # To limit multiple inheritance surprises, explicitly call out to SplitTable's __init__
+        SplitTable.__init__(self, header_data, body_data)
+
+        # ...then set up CheckboxTable's locators here
+        self._header_checkbox_loc = header_checkbox_locator
+        if body_checkbox_locator:
+            self._checkbox_loc = body_checkbox_locator
 
 
 def table_in_object(table_title):
@@ -1203,10 +1233,20 @@ def _fill_form_list(form, values, action=None, action_always=False):
 @fill.method((object, Mapping))
 def _fill_form_dict(form, values, **kwargs):
     """Fill in a dict by converting it to a list"""
-    return fill(form, values.items(), **kwargs)
+    return _fill_form_list(form, values.items(), **kwargs)
 
 
-class Radio(Pretty):
+class Input(Pretty):
+    pretty_attrs = ['name']
+
+    def __init__(self, name):
+        self.name = name
+
+    def locate(self):
+        return '//input[@name="{}"]'.format(self.name)
+
+
+class Radio(Input):
     """ A class for Radio button groups
 
     Radio allows the usage of HTML radio elements without resorting to previous
@@ -1229,12 +1269,6 @@ class Radio(Pretty):
     The :py:class:`Radio` object can be reused over and over with repeated calls to
     the :py:func:`Radio.choice` method.
     """
-
-    pretty_attrs = ['name']
-
-    def __init__(self, name):
-        self.name = name
-
     def choice(self, val):
         """ Returns the locator for a choice
 

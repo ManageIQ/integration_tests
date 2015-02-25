@@ -587,7 +587,13 @@ def checkbox(loc, set_to=False):
     """
     if set_to is not None:
         el = move_to_element(loc)
-        selected = el.is_selected()
+        if el.tag_name == 'img':
+            # Yeah, CFME sometimes uses images for check boxen. *sigh*
+            # item_chk0 = unchecked, item_chk1 = checked
+            selected = 'item_chk1' in el.get_attribute('src')
+        else:
+            selected = el.is_selected()
+
         if selected is not set_to:
             logger.debug("Setting checkbox %s to %s" % (str(loc), str(set_to)))
             click(el)
