@@ -3,13 +3,13 @@
 import json
 import os
 import sys
-from utils.conf import cfme_data
+from utils.conf import env
 from utils.sprout import SproutClient
 
 
 def main():
-    host = cfme_data.get("sprout", {}).get("hostname", "localhost")
-    port = cfme_data.get("sprout", {}).get("port", 8000)
+    host = env.get("sprout", {}).get("hostname", "localhost")
+    port = env.get("sprout", {}).get("port", 8000)
 
     command_args = sys.argv[1:]
 

@@ -3,7 +3,7 @@ import json
 import os
 import requests
 
-from utils.conf import cfme_data, credentials
+from utils.conf import credentials, env
 from utils.wait import wait_for
 
 
@@ -77,8 +77,8 @@ class SproutClient(object):
 
     @classmethod
     def from_config(cls, **kwargs):
-        host = cfme_data.get("sprout", {}).get("hostname", "localhost")
-        port = cfme_data.get("sprout", {}).get("port", 8000)
+        host = env.get("sprout", {}).get("hostname", "localhost")
+        port = env.get("sprout", {}).get("port", 8000)
         user = os.environ.get("SPROUT_USER", credentials.get("sprout", {}).get("username", None))
         password = os.environ.get(
             "SPROUT_PASSWORD", credentials.get("sprout", {}).get("password", None))
