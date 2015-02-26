@@ -156,10 +156,8 @@ class Appliance(object):
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.enable_internal_db(log_callback=log_callback)
-        self.ipapp.loosen_pgssl(log_callback=log_callback)
-        # need the web_ui to come up to ensure the DB is set up
-        # before closing the automate domain
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+        self.ipapp.loosen_pgssl(log_callback=log_callback)
         self.ipapp.clone_domain(log_callback=log_callback)
         self.ipapp.update_rhel(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
