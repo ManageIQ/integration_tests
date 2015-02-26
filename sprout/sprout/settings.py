@@ -12,7 +12,7 @@ from __future__ import absolute_import
 from datetime import timedelta
 import os
 
-from utils.conf import cfme_data, credentials
+from utils.conf import credentials
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -124,7 +124,6 @@ CELERY_TIMEZONE = 'UTC'
 # CELERY_ACKS_LATE = True
 # CELERYD_PREFETCH_MULTIPLIER = 1
 
-TRACKERBOT_URL = cfme_data["sprout"]["trackerbot_url"]
 # TODO: To be able to use RHEV-M (and other EMSs), the mgmt_system for it must have
 # TODO: .mark_as_template implemented. Then it can be used.
 TEMPLATE_FORMAT = "s_tpl_{group}_{date}_{rnd}"
