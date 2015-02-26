@@ -10,7 +10,7 @@
 * **Elemental**
 
   * :py:class:`ButtonGroup`
-  * :py:class:`ColourPicker`
+  * :py:class:`ColorGroup`
   * :py:class:`CheckboxTable`
   * :py:class:`CheckboxSelect`
   * :py:class:`DHTMLSelect`
