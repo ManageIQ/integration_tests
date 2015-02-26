@@ -16,7 +16,7 @@ def pytest_generate_tests(metafunc):
     arg_names = "provider", "provider_data", "original_provider_key"
     arg_values = []
     arg_ids = []
-    for provider_key, provider in cfme_data["management_systems"].iteritems():
+    for provider_key, provider in cfme_data.get("management_systems", {}).iteritems():
         if provider["type"] != "virtualcenter":
             continue
         hosts = provider.get("hosts", [])

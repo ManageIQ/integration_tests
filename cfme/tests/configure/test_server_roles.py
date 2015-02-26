@@ -6,23 +6,32 @@ from cfme.web_ui import flash
 from utils import conf
 from functools import partial
 
+try:
+    server_roles_conf = conf.cfme_data.server_roles
+except KeyError:
+    server_roles_conf = {
+        'all': [],
+        'sets': {},
+    }
+
 
 @pytest.fixture(scope="session")
 def all_possible_roles():
-    return conf.cfme_data["server_roles"]["all"]
+    return server_roles_conf['all']
 
 
-@pytest.fixture(scope="module", params=conf.cfme_data["server_roles"]["sets"].keys())
+@pytest.fixture(scope="module", params=server_roles_conf['sets'].keys())
 def roles(request, all_possible_roles):
     result = {}
     for role in all_possible_roles:
-        result[role] = role in conf.cfme_data["server_roles"]["sets"][request.param]
+        result[role] = role in conf.cfme_data.get("server_roles", {})["sets"][request.param]
     # Hard-coded protection
     result["user_interface"] = True
     return result
 
 
 @pytest.sel.go_to('dashboard')
+@pytest.mark.uncollectif(lambda: not server_roles_conf["all"])
 def test_server_roles_changing(request, roles):
     """ Test that sets and verifies the server roles in configuration.
 

@@ -29,7 +29,12 @@ def pytest_generate_tests(metafunc):
     argnames = ['reg_method', 'reg_data', 'proxy_url', 'proxy_creds']
     argvalues = []
     idlist = []
-    all_reg_data = conf.cfme_data['redhat_updates']['registration']
+    try:
+        all_reg_data = conf.cfme_data.get('redhat_updates', {})['registration']
+    except KeyError:
+        pytest.mark.uncollect(metafunc.function)
+        return
+
     if 'reg_method' in metafunc.fixturenames:
         for reg_method in REG_METHODS:
             reg_data = all_reg_data.get(reg_method, None)

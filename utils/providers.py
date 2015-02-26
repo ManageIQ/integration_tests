@@ -42,7 +42,7 @@ def list_providers(allowed_types):
     @type allowed_types: dict, list, set, tuple
     """
     providers = []
-    for provider, data in conf.cfme_data["management_systems"].iteritems():
+    for provider, data in conf.cfme_data.get("management_systems", {}).iteritems():
         provider_type = data.get("type", None)
         if provider not in filtered:
             continue
@@ -77,7 +77,7 @@ def provider_factory(provider_key, providers=None, credentials=None):
         subclass
     """
     if providers is None:
-        providers = conf.cfme_data['management_systems']
+        providers = conf.cfme_data.get('management_systems', {})
     if isinstance(provider_key, Mapping):
         provider = provider_key
     else:
@@ -123,7 +123,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         prov_type: "infra" or "cloud"
 
     """
-    providers_data = conf.cfme_data['management_systems']
+    providers_data = conf.cfme_data.get('management_systems', {})
     if prov_class == "infra":
         potential_providers = list_infra_providers()
         if prov_type:
@@ -257,7 +257,7 @@ def _setup_providers(cloud_or_infra, validate, check_existing):
         sel.force_navigate(options_map[cloud_or_infra]['navigate'])
         add_providers = []
         for provider_key in options_map[cloud_or_infra]['list']():
-            provider_name = conf.cfme_data['management_systems'][provider_key]['name']
+            provider_name = conf.cfme_data.get('management_systems', {})[provider_key]['name']
             quad = Quadicon(provider_name, options_map[cloud_or_infra]['quad'])
             for page in paginator.pages():
                 if sel.is_displayed(quad):

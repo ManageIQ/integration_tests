@@ -42,7 +42,7 @@ def test_metrics_collection(handle_provider, provider_key, provider_crud, enable
 
     # the id for the provider we're testing
     mgmt_system_id = db.cfmedb().session.query(mgmt_systems_tbl).filter(
-        mgmt_systems_tbl.name == conf.cfme_data['management_systems'][provider_key]['name']
+        mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider_key]['name']
     ).first().id
 
     start_time = time.time()

@@ -33,7 +33,7 @@ def pytest_generate_tests(metafunc):
             continue
 
         cloud_init_template = args['provisioning']['ci-template']
-        if cloud_init_template not in cfme_data['customization_templates'].keys():
+        if cloud_init_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
         argvalues[i].append(get_template_from_config(cloud_init_template))

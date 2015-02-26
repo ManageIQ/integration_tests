@@ -14,7 +14,7 @@ def setup_first_provider():
 
 def test_openldap_auth(request, setup_first_provider, configure_openldap_auth_mode):
     try:
-        data = cfme_data["openldap_test"]
+        data = cfme_data.get("openldap_test", {})
     except KeyError:
         pytest.skip("No openldap_test section in yaml")
     group = Group(description='cfme', role="EvmRole-user")

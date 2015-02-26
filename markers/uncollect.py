@@ -51,8 +51,10 @@ Note:
     pytest and may invalidate your puppies.
 
 """
-from fixtures.pytest_store import store
 import inspect
+
+from fixtures.pytest_store import store
+from utils.log import logger
 
 
 def uncollectif(item):
@@ -64,7 +66,16 @@ def uncollectif(item):
 
     marker = item.get_marker('uncollectif')
     if marker:
-        arg_names = inspect.getargspec(marker._arglist[0][0][0]).args
+        if 'reason' in marker.kwargs:
+            log_msg = 'Uncollecting {}: {}'.format(item.name, marker.kwargs['reason'])
+        else:
+            log_msg = 'Uncollecting {}'.format(item.name)
+
+        try:
+            arg_names = inspect.getargspec(marker._arglist[0][0][0]).args
+        except TypeError:
+            logger.debug(log_msg)
+            return not bool(marker.args[0])
         try:
             args = [item.callspec.params[arg] for arg in arg_names]
         except KeyError:
@@ -76,6 +87,8 @@ def uncollectif(item):
             else:
                 raise Exception("Failed to uncollect {}, best guess a fixture wasn't "
                                 "ready".format(func_name))
+
+        logger.debug(log_msg)
         return not marker.args[0](*args)
     else:
         return True

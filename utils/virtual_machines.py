@@ -11,7 +11,7 @@ from utils.providers import infra_provider_type_map
 
 def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
 
-    provider_type = conf.cfme_data['management_systems'][provider_key]['type']
+    provider_type = conf.cfme_data.get('management_systems', {})[provider_key]['type']
     if provider_type in infra_provider_type_map:
         provider_crud = get_infra_from_config(provider_key)
     else:

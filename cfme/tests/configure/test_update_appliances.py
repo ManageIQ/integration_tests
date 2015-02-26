@@ -72,7 +72,7 @@ redhat_updates:
 
 @pytest.fixture(scope='module')
 def rh_updates_data(cfme_data):
-    return cfme_data['redhat_updates']
+    return cfme_data.get('redhat_updates', {})
 
 
 @pytest.fixture(scope='module')
@@ -99,7 +99,7 @@ def appliances_to_update(rh_updates_data):
 
 @pytest.yield_fixture(scope='function')
 def appliance_set(cfme_data):
-    appliance_set_data = cfme_data['appliance_provisioning']['appliance_set']
+    appliance_set_data = cfme_data.get('appliance_provisioning', {})['appliance_set']
     appliance_set = provision_appliance_set(appliance_set_data, 'rh_updates')
 
     yield appliance_set
@@ -386,11 +386,14 @@ def run_platform_updates(appliance_set, appliances_to_update):
                  fail_func=check_updates_and_refresh)
         logger.info("Done")
 
+try:
+    skip_rhsm_direct = not conf.cfme_data.redhat_updates.registration.rhsm.test_direct
+except KeyError:
+    skip_rhsm_direct = True
 
-@pytest.mark.skipif(
-    conf.cfme_data['redhat_updates']['registration']['rhsm']['test_direct'] is not True,
-    reason='RH Update test using RHSM is not enabled'
-)
+
+@pytest.mark.uncollectif(skip_rhsm_direct,
+    reason='RH Update test using RHSM is not enabled')
 @pytest.mark.long_running
 def test_rhsm_direct(appliance_set, rh_updates_data,
                      appliances_to_register, appliances_to_update):
@@ -403,11 +406,14 @@ def test_rhsm_direct(appliance_set, rh_updates_data,
     run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update)
     run_platform_updates(appliance_set, appliances_to_update)
 
+try:
+    skip_rhsm_rhn_mirror = not conf.cfme_data.redhat_updates.registration.rhsm.test_rhn_mirror
+except KeyError:
+    skip_rhsm_rhn_mirror = True
 
-@pytest.mark.skipif(
-    conf.cfme_data['redhat_updates']['registration']['rhsm']['test_rhn_mirror'] is not True,
-    reason='RH Update test using RHSM/RHN Mirror is not enabled'
-)
+
+@pytest.mark.uncollectif(skip_rhsm_rhn_mirror,
+    reason='RH Update test using RHSM/RHN Mirror is not enabled')
 @pytest.mark.long_running
 def test_rhsm_rhn_mirror(appliance_set, rh_updates_data, appliances_to_update):
     # Use only primary to register_appliances(), download_repo_files() and enable_repos()
@@ -423,11 +429,14 @@ def test_rhsm_rhn_mirror(appliance_set, rh_updates_data, appliances_to_update):
     run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update)
     run_platform_updates(appliance_set, appliances_to_update)
 
+try:
+    skip_sat5_direct = not conf.cfme_data.redhat_updates.registration.sat5.test_direct
+except KeyError:
+    skip_sat5_direct = True
 
-@pytest.mark.skipif(
-    conf.cfme_data['redhat_updates']['registration']['sat5']['test_direct'] is not True,
-    reason='RH Update test using Sat5 is not enabled'
-)
+
+@pytest.mark.uncollectif(skip_sat5_direct,
+    reason='RH Update test using Sat5 is not enabled')
 @pytest.mark.long_running
 def test_sat5_direct(appliance_set, rh_updates_data,
                      appliances_to_register, appliances_to_update):
@@ -440,11 +449,14 @@ def test_sat5_direct(appliance_set, rh_updates_data,
     run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update)
     run_platform_updates(appliance_set, appliances_to_update)
 
+try:
+    skip_sat6_direct = not conf.cfme_data.redhat_updates.registration.sat6.test_direct
+except KeyError:
+    skip_sat6_direct = True
 
-@pytest.mark.skipif(
-    conf.cfme_data['redhat_updates']['registration']['sat6']['test_direct'] is not True,
-    reason='RH Update test using Sat6 is not enabled'
-)
+
+@pytest.mark.uncollectif(skip_sat6_direct,
+    reason='RH Update test using Sat6 is not enabled')
 @pytest.mark.long_running
 def test_sat6_direct(appliance_set, rh_updates_data,
                      appliances_to_register, appliances_to_update):
@@ -457,11 +469,14 @@ def test_sat6_direct(appliance_set, rh_updates_data,
     run_cfme_updates(appliance_set, rh_updates_data, appliances_to_update)
     run_platform_updates(appliance_set, appliances_to_update)
 
+try:
+    skip_sat6_rhn_mirror = not conf.cfme_data.redhat_updates.registration.sat6.test_rhn_mirror
+except KeyError:
+    skip_sat6_rhn_mirror = True
 
-@pytest.mark.skipif(
-    conf.cfme_data['redhat_updates']['registration']['sat6']['test_rhn_mirror'] is not True,
-    reason='RH Update test using Sat6/RHN Mirror is not enabled'
-)
+
+@pytest.mark.uncollectif(skip_sat6_rhn_mirror,
+    reason='RH Update test using Sat6/RHN Mirror is not enabled')
 @pytest.mark.long_running
 def test_sat6_rhn_mirror(appliance_set, rh_updates_data, appliances_to_update):
     # Use only primary to register_appliances(), download_repo_files() and enable_repos()
