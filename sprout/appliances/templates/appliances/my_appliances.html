@@ -158,7 +158,7 @@
       </select>
     </div>
     <div class="form-group">
-      <label for="date">Select specific provider (if you know what you do):</label>
+      <label for="date">Select specific provider (if you know what you do) (remaining provisioning slots:remaining appliance slots):</label>
       <select class="form-control" id="provider" name="provider">
         <option value="any">Any provider (recommended option!)</option>
       </select>
@@ -169,6 +169,7 @@
     </div>
     <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
 </form>
+<p>The numbers at the provider are sort of hint how much space is left. This does not take shepherd into the account, so although the select might tell you there is no more space, shepherd might have some appliances running that you can take. This will be modified later.</p>
 <script type="text/javascript">
 $(document).ready(function() {
     $('select#stream').change(function(){

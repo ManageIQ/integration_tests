@@ -110,6 +110,13 @@ class Provider(MetadataMixin):
         return result
 
     @property
+    def remaining_appliance_slots(self):
+        result = self.appliance_limit - self.num_currently_managing
+        if result < 0:
+            return 0
+        return result
+
+    @property
     def num_currently_managing(self):
         return len(Appliance.objects.filter(template__provider=self))
 
