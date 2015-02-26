@@ -52,17 +52,9 @@ from types import FunctionType
 
 import pytest
 
+from lya import AttrDict
 from utils import kwargify
 from utils.log import logger
-
-
-class metadict(dict):
-    """A dictionary that can access items as object variables, returns None if not found"""
-    def __getattr__(self, attr):
-        try:
-            return self[attr]
-        except KeyError:
-            return None
 
 
 def pytest_configure(config):
@@ -88,7 +80,7 @@ def pytest_pycollect_makeitem(collector, name, obj):
 @pytest.mark.tryfirst
 def pytest_collection_modifyitems(session, config, items):
     for item in items:
-        item._metadata = metadict(item.function.meta.kwargs)
+        item._metadata = AttrDict(item.function.meta.kwargs)
         meta = item.get_marker("meta")
         if meta is None:
             continue
