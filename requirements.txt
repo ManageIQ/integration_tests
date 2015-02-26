@@ -10,6 +10,7 @@ ipython
 iso8601
 Jinja2
 kwargify
+layered-yaml-attrdict-config
 multimethods.py
 numpy
 ovirt-engine-sdk-python
