@@ -9,6 +9,8 @@
 
 * **Elemental**
 
+  * :py:class:`ButtonGroup`
+  * :py:class:`ColourPicker`
   * :py:class:`CheckboxTable`
   * :py:class:`CheckboxSelect`
   * :py:class:`DHTMLSelect`
@@ -2898,4 +2900,58 @@ class ButtonGroup(object):
 
 @fill.method((ButtonGroup, basestring))
 def _fill_showing_button_group(tb, s):
+    tb.choose(s)
+
+
+class ColorGroup(object):
+
+    def __init__(self, key):
+        """ A ColourGroup is a set of colour buttons next to each other, as is used on the DefaultViews
+        page.
+
+        Args:
+            key: The name of the key field text before the button group.
+        """
+        self.key = key
+        self.locator = '//td[@class="key" and text()="{}"]/..'.format(self.key)
+
+    def locate(self):
+        """ Moves to the element """
+        # Use the header locator as the overall table locator
+        return sel.move_to_element(self.locator)
+
+    @property
+    def active(self):
+        """ Returns the alt tag text of the active button in thr group. """
+        loc = sel.element(self.locator + '/td[2]/div[contains(@title, "selected")]')
+        color = re.search('The (.*?) theme', loc.get_attribute('title')).groups()[0]
+        return color
+
+    def status(self, color):
+        """ Returns the status of the color button identified by the Title Text of the image. """
+        active_loc = self.locator + '/td[2]/div[contains(@title, "{}")' \
+            'and contains(@title, "selected")]'.format(color)
+        try:
+            sel.element(active_loc)
+            return True
+        except NoSuchElementException:
+            pass
+        inactive_loc = self.locator + '/td[2]/div[contains(@title, "{}")' \
+            'and contains(@title, "Click")]'.format(color)
+        try:
+            sel.element(inactive_loc)
+            return False
+        except NoSuchElementException:
+            pass
+
+    def choose(self, color):
+        """ Sets the ColorGroup to select the button identified by the title text. """
+        if not self.status(color):
+            inactive_loc = self.locator + '/td[2]/div[contains(@title, "{}")' \
+                'and contains(@title, "Click")]'.format(color)
+            sel.click(inactive_loc)
+
+
+@fill.method((ColorGroup, basestring))
+def _fill_showing_color_group(tb, s):
     tb.choose(s)
