@@ -761,6 +761,8 @@ class AuthSetting(Updateable, Pretty):
         logger.info(
             "Setting authentication timeout to {} hours and {} minutes.".format(hours, minutes))
         fill(cls.form, {"timeout_h": hours, "timeout_m": minutes}, action=form_buttons.save)
+        flash.assert_no_errors()
+        flash.assert_message_contain("Authentication settings saved")
 
 
 class DatabaseAuthSetting(AuthSetting):
