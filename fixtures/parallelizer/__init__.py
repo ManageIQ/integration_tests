@@ -48,6 +48,7 @@ from fixtures.terminalreporter import reporter
 from utils import at_exit, conf
 from utils.appliance import IPAppliance
 from utils.log import create_sublogger
+from utils.path import project_path
 from utils.sprout import SproutClient, SproutException
 from utils.wait import wait_for
 
@@ -175,6 +176,8 @@ class ParallelSession(object):
             conf.runtime["cfme_data"]["basic_info"] = conf.cfme_data["basic_info"]
             conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
             self.terminal.write("appliance_template=\"{}\";\n".format(template_name))
+            with project_path.join('.appliance_template').open('w') as template_file:
+                template_file.write('export appliance_template="{}"'.format(template_name))
             self.terminal.write("Parallelized Sprout setup finished.\n")
             self.slave_appliances_data = {}
             for appliance in request["appliances"]:
