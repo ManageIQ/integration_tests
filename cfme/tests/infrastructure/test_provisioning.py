@@ -60,6 +60,7 @@ def test_provision_from_template(provider_init, provider_key, provider_crud, pro
 
     Metadata:
         test_flag: provision
+        suite: infra_provisioning
     """
 
     # generate_tests makes sure these have values
@@ -96,6 +97,7 @@ def test_provision_approval(provider_init, provider_key, provider_crud, provider
 
     Metadata:
         test_flag: provision
+        suite: infra_provisioning
     """
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))

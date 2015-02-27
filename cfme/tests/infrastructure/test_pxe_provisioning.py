@@ -85,6 +85,7 @@ def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
 
     Metadata:
         test_flag: pxe, provision
+        suite: infra_provisioning
     """
 
     # generate_tests makes sure these have values
