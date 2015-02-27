@@ -87,8 +87,8 @@ def pytest_addoption(parser):
 
 @pytest.mark.tryfirst
 def pytest_configure(config, __multicall__):
-    if config.option.appliances or (config.option.use_sprout
-            and config.option.sprout_appliances > 1):
+    if (config.option.appliances or (config.option.use_sprout and
+            config.option.sprout_appliances > 1)):
         session = ParallelSession(config)
         config.pluginmanager.register(session, "parallel_session")
         store.parallelizer_role = 'master'
@@ -112,6 +112,7 @@ class ParallelSession(object):
         self.session = None
         self.countfailures = 0
         self.collection = OrderedDict()
+        self.sent_tests = 0
         self.log = create_sublogger('master')
         self.maxfail = config.getvalue("maxfail")
         self._failed_collection_errors = {}
@@ -173,7 +174,6 @@ class ParallelSession(object):
             conf.runtime["env"]["base_url"] = self.appliances[0]
             # Retrieve and print the template_name for Jenkins to pick up
             template_name = request["appliances"][0]["template_name"]
-            conf.runtime["cfme_data"]["basic_info"] = conf.cfme_data["basic_info"]
             conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
             self.terminal.write("appliance_template=\"{}\";\n".format(template_name))
             with project_path.join('.appliance_template').open('w') as template_file:
@@ -288,8 +288,14 @@ class ParallelSession(object):
         except StopIteration:
             tests = []
         self.send(slaveid, tests)
+        collect_len = len(self.collection)
+        tests_len = len(tests)
+        self.sent_tests += tests_len
         if tests:
-            self.print_message('sent %d tests to %s' % (len(tests), slaveid))
+            self.print_message('sent {} tests to {} ({}/{}, {:.1f}%)'.format(
+                tests_len, slaveid, self.sent_tests, collect_len,
+                self.sent_tests * 100. / collect_len
+            ))
         return tests
 
     @pytest.mark.trylast
