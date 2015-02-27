@@ -103,6 +103,8 @@ def date_for_group_and_version(request):
 
 
 def providers_for_date_group_and_version(request):
+    total_provisioning_slots = 0
+    total_appliance_slots = 0
     group_id = request.POST.get("stream")
     if group_id == "<None>":
         providers = []
@@ -138,6 +140,10 @@ def providers_for_date_group_and_version(request):
                 filters["date"] = parser.parse(date)
             providers = Template.objects.filter(**filters).values("provider").distinct()
             providers = sorted([p.values()[0] for p in providers])
+            providers = [Provider.objects.get(id=provider) for provider in providers]
+            for provider in providers:
+                total_appliance_slots += provider.remaining_appliance_slots
+                total_provisioning_slots += provider.remaining_provisioning_slots
     return render(request, 'appliances/_providers.html', locals())
 
 

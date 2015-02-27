@@ -1,4 +1,4 @@
-<option value="any">Any provider (recommended option!)</option>
+<option value="any">Any provider (recommended option!) ({{ total_provisioning_slots }}:{{ total_appliance_slots }})</option>
 {% for provider in providers %}
-<option value="{{ provider }}">{{ provider }}</option>
+<option value="{{ provider.id }}">{{ provider.id }} ({{ provider.remaining_provisioning_slots }}:{{ provider.remaining_appliance_slots }})</option>
 {% endfor %}
