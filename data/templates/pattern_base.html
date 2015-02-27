@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="dist/css/patternfly.min.css">
+        <title>{% block title %}{% endblock %}</title>
+        <script src="dist/js/jquery.min.js"></script>
+        <script src="dist/js/bootstrap.min.js"></script>
+        <script src="dist/js/patternfly.min.js"></script>
+        {% block scripts %}{% endblock %}
+    </head>
+<body>
+  <nav class="navbar navbar-default navbar-pf" role="navigation">
+    <div class="collapse navbar-collapse navbar-collapse-21">
+      <ul class="nav navbar-nav navbar-primary">
+        <li id="tab_home">
+          <a href="#">Home</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+  <p></p>
+        {% block content %}{% endblock %}
+    </body>
+</html>

@@ -1,0 +1,95 @@
+{% extends 'pattern_base.html' %}
+{% block title %}Test Matrix{% endblock %}
+
+{% block content %}
+<style>
+.popover{
+    max-width: 100%; // Max Width of the popover (depending on the container!)
+}
+</style>
+<div class="container-fluid">
+  {% for suite in suites %}
+  <div class="panel panel-primary">
+    <div class="panel-heading">
+      <strong>{{ suite.name }}</strong>
+    </div>
+    {% if suite.description %}
+    <div class="panel-body">
+      {{ suite.description }}
+    </div>
+    {% endif %}
+    {% for group in suite.groups %}
+    <table class="table table-striped">
+      <tr>
+	<th width="20%">Case Name</th>
+	<th width="20%">Case Description</th>
+	{% for param in group.params %}
+	<th>{{param}}</th>
+	{% endfor %}
+      </tr>
+      {% for test in group.tests %}
+      <tr>
+	<td>
+	  {% if test.priority == "1" %}
+	  <a class="btn btn-danger">P{{test.priority}}</a>
+	  {% elif test.priority == "2" %}
+	  <a class="btn btn-warning">P{{test.priority}}</a>
+	  {% elif test.priority == "3" %}
+	  <a class="btn btn-success">P{{test.priority}}</a>
+	  {% endif %}
+
+	  <a  href="#{{test.link}}" title="{{test.short_name}}" data-toggle="popover" data-placement="right" data-content="{{test.docstring|e}}" data-html="true" data-trigger="focus">
+	    {{test.short_name}}
+	  </a>
+	</td>
+	<td>
+	  {{test.description}}
+	</td>
+	{% for param in group.params %}
+	<td>
+	  {% for t_param, result in test.results %}
+	  {% if param == t_param %}
+	  {% if result == "Passed" %}
+	  <span class="label label-success">
+	  <span class="fa fa-check" aria-hidden="true" style="color:#ffffff"><!--#5CB85C--></span>
+	  {% elif result == "Failed" %}
+	  <span class="label label-danger">
+	  <span class="fa fa-times" aria-hidden="true" style="color:#ffffff"><!--#C9302C--></span>
+	  {% elif result == "Error" %}
+	  <span class="label label-danger">
+	  <span class="fa fa-times" aria-hidden="true" style="color:#ffffff"><!--#C9302C--></span>
+	  {% elif result == "Skipped" %}
+	  <span class="label label-primary">
+	  <span class="fa fa-bookmark-o" aria-hidden="true" style="color:#ffffff"><!--#31B0D5--></span>
+	  {% elif result == "Not Run" %}
+	  <span class="label label-info">
+	  <span class="fa fa-minus" aria-hidden="true" style="color:#ffffff"><!--#31B0D5--></span>
+	  {% else %}
+	  {{result}}
+	  {% endif %}
+	  </span>
+	  {% endif %}
+	  {% endfor %}
+	</td>
+	{% endfor %}
+      </tr>
+      {% endfor %}
+    </table>
+    {% endfor %}
+    {% if suite.footnotes %}
+    <div class="panel-body">
+      {% for note, num in suite.footnotes %}
+      <strong>{{num}}</strong>&nbsp;&nbsp;&nbsp;{{note}}<br>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+</div> <!-- /container -->
+<script>
+$(document).ready(function() {
+    $('a').popover()
+})
+</script>
+{% endblock %}

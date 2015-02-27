@@ -1,0 +1,10 @@
+provider_keys:
+    - ec2
+    - rhos
+    - vsphere
+    - rhevm
+    - scvmm
+infra_provisioning:
+    name: Infrastructure Provisioning
+    description: |
+        This is the infra provisioning suite information
