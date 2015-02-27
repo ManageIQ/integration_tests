@@ -8,6 +8,7 @@ from threading import Timer
 from fixtures.terminalreporter import reporter
 from utils import at_exit, conf
 from utils.appliance import IPAppliance
+from utils.path import project_path
 from utils.sprout import SproutClient
 from utils.wait import wait_for
 
@@ -73,6 +74,8 @@ def pytest_configure(config, __multicall__):
         template_name = request["appliances"][0]["template_name"]
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
         terminal.write("appliance_template=\"{}\";\n".format(template_name))
+        with project_path.join('.appliance_template').open('w') as template_file:
+            template_file.write('export appliance_template="{}"'.format(template_name))
         terminal.write("Single appliance Sprout setup finished.\n")
         # And set also the appliances_provider
         provider = request["appliances"][0]["provider"]

@@ -55,5 +55,17 @@ elif runner_return:
 else:
     build_status = 'failed'
 
-post_jenkins_result(job_name, number, stream, date, fails,
-    skips, passes, template, build_status)
+result_attrs = ('job_name', 'number', 'stream', 'date', 'fails',
+    'skips', 'passes', 'template', 'build_status')
+
+# pack the result attr values into the jenkins post
+post_jenkins_result(*[eval(attr) for attr in result_attrs])
+
+# vain output padding calculation
+# get len of longest string, pad with an extra space to make the output pretty
+max_len = len(max(result_attrs, key=len)) + 1
+
+# now print all the attrs so we can see what we posted (and *that* we
+# posted) in the jenkins log
+for attr in result_attrs:
+    print '{:>{width}}: {}'.format(attr, eval(attr), width=max_len)
