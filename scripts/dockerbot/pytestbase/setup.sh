@@ -1,4 +1,4 @@
-
+RES=16
 # Append messages to setup.txt
 log () {
     echo $@ >> $ARTIFACTOR_DIR/setup.txt
