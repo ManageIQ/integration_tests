@@ -20,7 +20,8 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
+    argnames, argvalues, idlist = testgen.infra_providers(
+        metafunc, 'provisioning', template_location=["provisioning", "template"])
 
     new_idlist = []
     new_argvalues = []
@@ -56,7 +57,7 @@ def vm_name():
 
 
 @pytest.fixture(scope="function")
-def testing_vm(request, vm_name, provider_init, provider_crud, provisioning):
+def testing_vm(request, vm_name, provider_init, provider_crud, provider_mgmt, provisioning):
     vm_obj = Vm(vm_name, provider_crud, provisioning["template"])
     request.addfinalizer(
         lambda: vm_obj.delete_from_provider() if vm_obj.does_vm_exist_on_provider() else None)

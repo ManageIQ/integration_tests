@@ -35,7 +35,8 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
+    argnames, argvalues, idlist = testgen.infra_providers(
+        metafunc, 'provisioning', template_location=["provisioning", "template"])
 
     new_idlist = []
     new_argvalues = []

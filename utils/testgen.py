@@ -86,6 +86,7 @@ from cfme.cloud.provider import get_from_config as get_cloud_provider
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
 from fixtures.prov_filter import filtered
+from fixtures.templateloader import TEMPLATES
 from cfme.roles import group_data
 from utils import version
 from utils.conf import cfme_data
@@ -178,6 +179,9 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         **options: two options...
                 required_fields: when fields passed are not present, skip them
                 choose_random: choose a single provider from the list
+                template_location: Specification where a required tempalte lies in the yaml, If not
+                    found in the provider, warning is printed and the test not collected. The spec
+                    is a tuple or list where each item is a key to the next field (str or int).
 
     The following test function arguments are special:
 
@@ -231,6 +235,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
     argnames = list(fields)
     argvalues = []
     idlist = []
+    template_location = options.pop("template_location", None)
 
     special_args = ('provider_key', 'provider_data', 'provider_crud',
         'provider_mgmt', 'provider_type')
@@ -312,6 +317,26 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                     logger.debug('Field "%s" not defined for provider "%s", defaulting to None' %
                         (key, provider)
                     )
+
+        # Check the template presence if requested
+        if template_location is not None:
+            o = data
+            try:
+                for field in template_location:
+                    o = o[field]
+            except (IndexError, KeyError):
+                logger.info("Cannot apply {} to {} in the template specification, ignoring.".format(
+                    repr(field), repr(o)))
+            else:
+                if not isinstance(o, basestring):
+                    raise ValueError("{} is not a string! (for template)".format(repr(o)))
+                templates = TEMPLATES.get(provider, None)
+                if templates is not None:
+                    if o not in templates:
+                        logger.info(
+                            "Wanted template {} on {} but it is not there!\n".format(o, provider))
+                        # Skip collection of this one
+                        continue
 
         if prov_type in cloud_provider_type_map:
             crud = get_cloud_provider(provider)
