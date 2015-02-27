@@ -75,6 +75,7 @@ def test_provision_cloud_init(provider_init, provider_key, provider_crud, provid
 
     Metadata:
         test_flag: cloud_init, provision
+        suite: infra_provisioning
     """
     # generate_tests makes sure these have values
     template = provisioning.get('ci-image', None) or provisioning['image']['name']

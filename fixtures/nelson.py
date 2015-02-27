@@ -1,4 +1,6 @@
 import os
+import re
+import base64
 from textwrap import dedent
 from types import FunctionType
 
@@ -7,10 +9,40 @@ from sphinxcontrib.napoleon import _skip_member, Config
 from sphinxcontrib.napoleon import docstring
 from sphinxcontrib.napoleon.docstring import NumpyDocstring
 import sphinx
+import yaml
 
 from utils.log import get_rel_path, logger
 
 config = Config(napoleon_use_param=True, napoleon_use_rtype=True)
+
+
+def get_meta(obj):
+    doc = getattr(obj, '__doc__') or ''
+    p = GoogleDocstring(stripper(doc), config)
+    return p.metadata
+
+
+def pytest_collection_modifyitems(items):
+    output = {}
+    for item in items:
+        item_class = item.location[0]
+        item_class = item_class[:item_class.rfind('.')].replace('/', '.')
+        item_name = item.location[2]
+        item_param = re.findall('\.*(\[.*\])', item_name)
+        if item_param:
+            item_name = item_name.replace(item_param[0], '')
+        node_name = '{}.{}'.format(item_class, item_name)
+        output[node_name] = {}
+        output[node_name]['docstring'] = base64.b64encode(getattr(item.function, '__doc__') or '')
+        output[node_name]['name'] = item_name
+
+        # This is necessary to convert AttrDict in metadata, or even metadict(previously)
+        # into serializable data as builtin doesn't contain instancemethod and gives us issues.
+        doc_meta = {k: v for k, v in item._metadata.get('from_docs', {}).items()}
+        output[node_name]['metadata'] = {'from_docs': doc_meta}
+
+    with open('doc_data.yaml', 'w') as f:
+        yaml.dump(output, f)
 
 
 def pytest_pycollect_makeitem(collector, name, obj):
@@ -21,18 +53,17 @@ def pytest_pycollect_makeitem(collector, name, obj):
         return
 
     # __doc__ can be empty or nonexistent, make sure it's an empty string in that case
-    doc = getattr(obj, '__doc__') or ''
-    p = GoogleDocstring(stripper(doc), config)
+    metadata = get_meta(obj)
 
     if not hasattr(obj.meta, 'kwargs'):
         obj.meta.kwargs = dict()
     obj.meta.kwargs.update({
-        'from_docs': p.metadata
+        'from_docs': metadata
     })
-    if p.metadata:
+    if metadata:
         test_path = get_rel_path(collector.fspath)
         logger.debug('Parsed docstring metadata on {} in {}'.format(name, test_path))
-        logger.trace('{} doc metadata: {}'.format(name, str(p.metadata)))
+        logger.trace('{} doc metadata: {}'.format(name, str(metadata)))
 
 
 def stripper(docstring):
