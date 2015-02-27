@@ -28,6 +28,9 @@ from utils.trackerbot import api, parse_template
 
 LOCK_EXPIRE = 60 * 15  # 15 minutes
 VERSION_REGEXPS = [
+    # newer format
+    r"cfme-(\d)(\d)(\d)[.](\d{2})-",         # cfme-524.02-    -> 5.2.4.2
+    r"cfme-(\d)(\d)(\d)[.](\d{2})[.](\d)-",  # cfme-524.02.1-    -> 5.2.4.2.1
     # 4 digits
     r"cfme-(\d)(\d)(\d)(\d)-",      # cfme-5242-    -> 5.2.4.2
     r"cfme-(\d)(\d)(\d)-(\d)-",     # cfme-520-1-   -> 5.2.0.1
@@ -205,19 +208,35 @@ def poke_trackerbot(self):
         if not provider.provider_data.get("use_for_sprout", False):
             continue
         template_name = template["template"]["name"]
+        # Preconfigured one
         try:
             Template.objects.get(
-                provider=provider, template_group=group, original_name=template_name)
+                provider=provider, template_group=group, original_name=template_name,
+                preconfigured=True)
         except ObjectDoesNotExist:
             if template_name in provider.templates:
                 create_appliance_template.delay(provider.id, group.id, template_name)
+        # Original one
+        try:
+            Template.objects.get(
+                provider=provider, template_group=group, original_name=template_name,
+                name=template_name, preconfigured=False)
+        except ObjectDoesNotExist:
+            if template_name in provider.templates:
+                date = parse_template(template_name)[-1]
+                template_version = retrieve_cfme_appliance_version(template_name)
+                with transaction.atomic():
+                    tpl = Template(
+                        provider=provider, template_group=group, original_name=template_name,
+                        name=template_name, preconfigured=False, date=date,
+                        version=template_version, ready=True, exists=True, usable=True)
+                    tpl.save()
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
         provider, create = Provider.objects.get_or_create(id=provider_id)
-        try:
-            with transaction.atomic():
-                template = Template.objects.get(provider=provider, original_name=template_name)
+        with transaction.atomic():
+            for template in Template.objects.filter(provider=provider, original_name=template_name):
                 template.usable = usability
                 template.save()
                 # Kill all shepherd appliances if they were acidentally spun up
@@ -226,8 +245,6 @@ def poke_trackerbot(self):
                             template=template, ready=True, marked_for_deletion=False,
                             appliance_pool=None):
                         Appliance.kill(appliance)
-        except ObjectDoesNotExist:
-            pass
 
 
 @logged_task()
@@ -510,12 +527,12 @@ def clone_template(template_id):
 
 
 @logged_task()
-def clone_template_to_appliance(appliance_id, lease_time_minutes=None):
+def clone_template_to_appliance(appliance_id, lease_time_minutes=None, wait_for_ui=True):
     Appliance.objects.get(id=appliance_id).set_status("Beginning deployment process")
     tasks = [
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
-        appliance_power_on.si(appliance_id),
+        appliance_power_on.si(appliance_id, wait_for_ui=wait_for_ui),
     ]
     workflow = chain(*tasks)
     if Appliance.objects.get(id=appliance_id).appliance_pool is not None:
@@ -607,7 +624,7 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
 
 
 @singleton_task()
-def appliance_power_on(self, appliance_id):
+def appliance_power_on(self, appliance_id, wait_for_ui=True):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
@@ -621,7 +638,13 @@ def appliance_power_on(self, appliance_id):
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.set_power_state(Appliance.Power.ON)
                 appliance.save()
-            wait_appliance_ready.delay(appliance.id)
+            if wait_for_ui:
+                wait_appliance_ready.delay(appliance.id)
+            else:
+                with transaction.atomic():
+                    appliance = Appliance.objects.get(id=appliance_id)
+                    appliance.ready = True
+                    appliance.save()
             return
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
@@ -835,21 +858,23 @@ def delete_nonexistent_appliances(self):
         Appliance.kill(appl)
 
 
-@singleton_task()
-def free_appliance_shepherd(self):
+def generic_shepherd(preconfigured):
     """This task takes care of having the required templates spinned into required number of
     appliances. For each template group, it keeps the last template's appliances spinned up in
     required quantity. If new template comes out of the door, it automatically kills the older
     running template's appliances and spins up new ones."""
     for grp in Group.objects.all():
-        group_versions = Template.get_versions(template_group=grp, ready=True, usable=True)
-        group_dates = Template.get_dates(template_group=grp, ready=True, usable=True)
+        group_versions = Template.get_versions(
+            template_group=grp, ready=True, usable=True, preconfigured=preconfigured)
+        group_dates = Template.get_dates(
+            template_group=grp, ready=True, usable=True, preconfigured=preconfigured)
         if group_versions:
             # Downstream - by version (downstream releases)
             version = group_versions[0]
             # Find the latest date (one version can have new build)
             dates = Template.get_dates(
-                template_group=grp, ready=True, usable=True, version=group_versions[0])
+                template_group=grp, ready=True, usable=True, version=group_versions[0],
+                preconfigured=preconfigured)
             if not dates:
                 # No template yet?
                 continue
@@ -872,7 +897,8 @@ def free_appliance_shepherd(self):
         # I know joins might be a bit better solution but I'll leave that for later.
         possible_templates = list(
             Template.objects.filter(
-                usable=True, ready=True, template_group=grp, **filter_keep).all())
+                usable=True, ready=True, template_group=grp, preconfigured=preconfigured,
+                **filter_keep).all())
         # If it can be deployed, it must exist
         possible_templates_for_provision = filter(lambda tpl: tpl.exists, possible_templates)
         appliances = []
@@ -882,9 +908,10 @@ def free_appliance_shepherd(self):
         # If we then want to delete some templates, better kill the eldest. status_changed
         # says which one was provisioned when, because nothing else then touches that field.
         appliances.sort(key=lambda appliance: appliance.status_changed)
-        if len(appliances) < grp.template_pool_size and possible_templates_for_provision:
+        pool_size = grp.template_pool_size if preconfigured else grp.unconfigured_template_pool_size
+        if len(appliances) < pool_size and possible_templates_for_provision:
             # There must be some templates in order to run the provisioning
-            for i in range(grp.template_pool_size - len(appliances)):
+            for i in range(pool_size - len(appliances)):
                 new_appliance_name = settings.APPLIANCE_FORMAT.format(
                     group=template.template_group.id,
                     date=template.date.strftime("%y%m%d"),
@@ -902,18 +929,25 @@ def free_appliance_shepherd(self):
                         name=new_appliance_name)
                     appliance.save()
                 clone_template_to_appliance.delay(appliance.id)
-        elif len(appliances) > grp.template_pool_size:
+        elif len(appliances) > pool_size:
             # Too many appliances, kill the surplus
-            for appliance in appliances[:len(appliances) - grp.template_pool_size]:
+            for appliance in appliances[:len(appliances) - pool_size]:
                 Appliance.kill(appliance)
 
         # Killing old appliances
         for filter_kill in filters_kill:
             for template in Template.objects.filter(
-                    ready=True, usable=True, template_group=grp, **filter_kill):
+                    ready=True, usable=True, template_group=grp, preconfigured=preconfigured,
+                    **filter_kill):
                 for a in Appliance.objects.filter(
                         template=template, appliance_pool=None, marked_for_deletion=False):
                     Appliance.kill(a)
+
+
+@singleton_task()
+def free_appliance_shepherd(self):
+    generic_shepherd(True)
+    generic_shepherd(False)
 
 
 @singleton_task()
