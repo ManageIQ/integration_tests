@@ -179,11 +179,6 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(minutes=10),
     },
 
-    'poke-providers': {
-        'task': 'appliances.tasks.poke_providers',
-        'schedule': timedelta(minutes=15),
-    },
-
     'poke-trackerbot': {
         'task': 'appliances.tasks.poke_trackerbot',
         'schedule': timedelta(minutes=10),

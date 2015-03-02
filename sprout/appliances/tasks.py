@@ -113,26 +113,6 @@ def singleton_task(*args, **kwargs):
 
 
 @singleton_task()
-def poke_providers(self):
-    """Basic tasks that checks whether to connections to providers work."""
-    for provider in Provider.objects.all():
-        poke_provider.delay(provider.id)
-
-
-@singleton_task(soft_time_limit=60)
-def poke_provider(self, provider_id):
-    provider = Provider.objects.get(id=provider_id)
-    try:
-        provider.api
-    except:
-        provider.working = False
-    else:
-        provider.working = True
-    finally:
-        provider.save()
-
-
-@singleton_task()
 def kill_unused_appliances(self):
     """This is the watchdog, that guards the appliances that were given to users. If you forget
     to prolong the lease time, this is the thing that will take the appliance off your hands
@@ -799,6 +779,8 @@ def check_templates_in_provider(self, provider_id):
         provider.working = False
         provider.save()
     else:
+        provider.working = True
+        provider.save()
         with provider.edit_metadata as metadata:
             metadata["templates"] = templates
     if not provider.working:
