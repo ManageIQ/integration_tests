@@ -593,15 +593,17 @@ class AppliancePool(MetadataMixin):
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
-            versions = Template.get_versions(template_group=group, ready=True, usable=True)
+            versions = Template.get_versions(
+                template_group=group, ready=True, usable=True, preconfigured=preconfigured)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
                 dates = Template.get_dates(template_group=group, version=version, ready=True,
-                    usable=True)
+                    usable=True, preconfigured=preconfigured)
             else:
-                dates = Template.get_dates(template_group=group, ready=True, usable=True)
+                dates = Template.get_dates(
+                    template_group=group, ready=True, usable=True, preconfigured=preconfigured)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):

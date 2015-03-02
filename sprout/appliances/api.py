@@ -51,6 +51,15 @@ def json_success(result):
 class JSONMethod(object):
     def __init__(self, method, auth=False):
         self._method = method
+        if self._method.__doc__:
+            try:
+                head, body = self._method.__doc__.split("\n\n", 1)
+                head = head.strip()
+                self._doc = head
+            except ValueError:
+                self._doc = self._method.__doc__.strip()
+        else:
+            self._doc = ""
         self.auth = auth
 
     def __call__(self, *args, **kwargs):
@@ -68,7 +77,7 @@ class JSONMethod(object):
             "name": self._method.__name__,
             "args": f_args if not self.auth else f_args[1:],
             "defaults": defaults,
-            "docstring": self._method.__doc__ or "",
+            "docstring": self._doc,
         }
 
 
@@ -93,7 +102,6 @@ class JSONApi(object):
                     key=lambda m: m["name"]),
             })
         try:
-            print self._methods
             data = json.loads(request.body)
             method_name = data["method"]
             args = data["args"]
@@ -241,8 +249,9 @@ def set_number_free_appliances(user, group, n):
 
 
 @jsonapi.method
-def available_cfme_versions():
-    return Template.get_versions()
+def available_cfme_versions(preconfigured=True):
+    """Lists all versions that are available"""
+    return Template.get_versions(preconfigured=preconfigured)
 
 
 @jsonapi.method
