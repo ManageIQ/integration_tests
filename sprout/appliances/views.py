@@ -58,6 +58,7 @@ def shepherd(request):
 
 def versions_for_group(request):
     group_id = request.POST.get("stream")
+    preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     if group_id == "<None>":
         versions = []
         group = None
@@ -68,13 +69,15 @@ def versions_for_group(request):
             versions = []
         else:
             versions = Template.get_versions(
-                template_group=group, ready=True, usable=True, exists=True)
+                template_group=group, ready=True, usable=True, exists=True,
+                preconfigured=preconfigured)
 
     return render(request, 'appliances/_versions.html', locals())
 
 
 def date_for_group_and_version(request):
     group_id = request.POST.get("stream")
+    preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     if group_id == "<None>":
         dates = []
     else:
@@ -89,6 +92,7 @@ def date_for_group_and_version(request):
                 "ready": True,
                 "exists": True,
                 "usable": True,
+                "preconfigured": preconfigured,
             }
             if version == "latest":
                 try:
@@ -106,6 +110,7 @@ def providers_for_date_group_and_version(request):
     total_provisioning_slots = 0
     total_appliance_slots = 0
     group_id = request.POST.get("stream")
+    preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     if group_id == "<None>":
         providers = []
     else:
@@ -120,6 +125,7 @@ def providers_for_date_group_and_version(request):
                 "ready": True,
                 "exists": True,
                 "usable": True,
+                "preconfigured": preconfigured,
             }
             if version == "latest":
                 try:
@@ -334,10 +340,11 @@ def request_pool(request):
         provider = request.POST["provider"]
         if provider == "any":
             provider = None
+        preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
         count = int(request.POST["count"])
         lease_time = 60
         pool_id = AppliancePool.create(
-            request.user, group, version, date, provider, count, lease_time).id
+            request.user, group, version, date, provider, count, lease_time, preconfigured).id
         messages.success(request, "Pool requested - id {}".format(pool_id))
     except Exception as e:
         messages.error(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))

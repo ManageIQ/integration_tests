@@ -154,11 +154,13 @@ def list_appliances(used=False):
 
 @jsonapi.authenticated_method
 def request_appliances(
-        user, group, count=1, lease_time=60, version=None, date=None, provider=None):
+        user, group, count=1, lease_time=60, version=None, date=None, provider=None,
+        preconfigured=True):
     """Request a number of appliances."""
     if date:
         date = datetime.strptime(date, "%y%m%d")
-    return AppliancePool.create(user, group, version, date, provider, count, lease_time).id
+    return AppliancePool.create(
+        user, group, version, date, provider, count, lease_time, preconfigured).id
 
 
 @jsonapi.authenticated_method
@@ -169,6 +171,7 @@ def request_check(user, request_id):
         raise Exception("This pool belongs to a different user!")
     return {
         "fulfilled": request.fulfilled,
+        "preconfigured": request.preconfigured,
         "progress": int(round(request.percent_finished * 100)),
         "appliances": [
             appliance.serialized

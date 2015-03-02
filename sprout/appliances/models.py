@@ -258,14 +258,17 @@ class Group(MetadataMixin):
         help_text="Group name as trackerbot says. (eg. upstream, downstream-53z, ...)")
     template_pool_size = models.IntegerField(default=0,
         help_text="How many appliances to keep spinned for quick taking.")
+    unconfigured_template_pool_size = models.IntegerField(default=0,
+        help_text="How many appliances to keep spinned for quick taking - unconfigured ones.")
 
     @property
     def templates(self):
         return Template.objects.filter(template_group=self).order_by("-date", "provider__id")
 
     def __unicode__(self):
-        return "{} {} (pool size={})".format(
-            self.__class__.__name__, self.id, self.template_pool_size)
+        return "{} {} (pool size={}/{})".format(
+            self.__class__.__name__, self.id, self.template_pool_size,
+            self.unconfigured_template_pool_size)
 
 
 class Template(MetadataMixin):
@@ -282,6 +285,8 @@ class Template(MetadataMixin):
     ready = models.BooleanField(default=False, help_text="Template is ready-to-be-used")
     exists = models.BooleanField(default=True, help_text="Template exists in the provider.")
     usable = models.BooleanField(default=False, help_text="Template is marked as usable")
+
+    preconfigured = models.BooleanField(default=True, help_text="Is prepared for immediate use?")
 
     @property
     def provider_api(self):
@@ -418,6 +423,7 @@ class Appliance(MetadataMixin):
             template_build_date=self.template.date.isoformat(),
             template_group=self.template.template_group.id,
             template_sprout_name=self.template.name,
+            preconfigured=self.preconfigured,
         )
 
     @property
@@ -431,6 +437,10 @@ class Appliance(MetadataMixin):
     @property
     def provider(self):
         return self.template.provider
+
+    @property
+    def preconfigured(self):
+        return self.template.preconfigured
 
     @property
     def cfme(self):
@@ -570,9 +580,12 @@ class AppliancePool(MetadataMixin):
     date = models.DateField(null=True, help_text="Appliance date.")
     owner = models.ForeignKey(User, help_text="User who owns the appliance pool")
 
+    preconfigured = models.BooleanField(
+        default=True, help_text="Whether to provision preconfigured appliances")
+
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
-            time_leased=60):
+            time_leased=60, preconfigured=True):
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
@@ -595,7 +608,7 @@ class AppliancePool(MetadataMixin):
             raise Exception("Could not find possible combination of group, date and version!")
         req = cls(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
-            provider=provider)
+            provider=provider, preconfigured=preconfigured)
         if not req.possible_templates:
             raise Exception("No possible templates! (query: {}".format(str(req.__dict__)))
         req.save()
@@ -621,7 +634,8 @@ class AppliancePool(MetadataMixin):
         if self.provider is not None:
             filter_params["provider"] = self.provider
         return Template.objects.filter(
-            template_group=self.group, ready=True, exists=True, usable=True, **filter_params).all()
+            template_group=self.group, ready=True, exists=True, usable=True,
+            preconfigured=self.preconfigured, **filter_params).all()
 
     @property
     def possible_provisioning_templates(self):
