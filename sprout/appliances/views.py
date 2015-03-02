@@ -319,7 +319,10 @@ def delete_template_provider(request, template_id):
         messages.error(request, 'Template with ID {} does not exist!.'.format(template_id))
         return go_back_or_home(request)
     if not request.user.is_superuser:
-        messages.error(request, 'Tempaltes can be deleted only by superusers.')
+        messages.error(request, 'Templates can be deleted only by superusers.')
+        return go_back_or_home(request)
+    if not template.can_be_deleted:
+        messages.error(request, 'This template cannot be deleted from the provider.')
         return go_back_or_home(request)
     delete_template_from_provider.delay(template.id)
     messages.success(request, 'Delete initiated.')

@@ -313,6 +313,10 @@ class Template(MetadataMixin):
         return CFMEAppliance(self.provider_name, self.name)
 
     @property
+    def can_be_deleted(self):
+        return self.exists and self.preconfigured
+
+    @property
     def temporary_name(self):
         return self.metadata.get("temporary_name", None)
 
