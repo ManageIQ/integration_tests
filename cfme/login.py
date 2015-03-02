@@ -76,7 +76,8 @@ def _js_auth_fn():
 
 def logged_in():
     ensure_browser_open()
-    sel.wait_for_ajax()  # This is called almost everywhere, protects from spinner
+    with sel.ajax_timeout(90):
+        sel.wait_for_ajax()  # This is called almost everywhere, protects from spinner
     return sel.is_displayed(dashboard.page.user_dropdown)
 
 
@@ -110,7 +111,8 @@ def login(username, password, submit_method=_js_auth_fn):
 
         logger.debug('Logging in as user %s' % username)
         fill(form, {'username': username, 'password': password})
-        submit_method()
+        with sel.ajax_timeout(90):
+            submit_method()
         flash.assert_no_errors()
         thread_locals.current_user = User(username, password, _full_name())
 

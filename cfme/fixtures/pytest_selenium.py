@@ -15,6 +15,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 from time import sleep, time
 from xml.sax.saxutils import quoteattr
 from collections import Iterable
+from contextlib import contextmanager
 from textwrap import dedent
 import json
 import re
@@ -42,6 +43,7 @@ from utils.pretty import Pretty
 
 from threading import local
 _thread_local = local()
+_thread_local.ajax_timeout = 30
 
 class_selector = re.compile(r"^(?:[a-zA-Z][a-zA-Z0-9]*)?(?:[#.][a-zA-Z0-9_-]+)+$")
 
@@ -269,7 +271,21 @@ def wait_for_ajax():
 
     wait_for(
         _nothing_in_flight,
-        num_sec=30, delay=0.1, message="wait for ajax", quiet=True, silent_failure=True)
+        num_sec=_thread_local.ajax_timeout, delay=0.1, message="wait for ajax", quiet=True,
+        silent_failure=True)
+
+
+@contextmanager
+def ajax_timeout(seconds):
+    """Change the AJAX timeout in this context. Useful when something takes a long time.
+
+    Args:
+        seconds: Numebr of seconnds to wait.
+    """
+    original = _thread_local.ajax_timeout
+    _thread_local.ajax_timeout = seconds
+    yield
+    _thread_local.ajax_timeout = original
 
 
 def is_displayed(loc, _deep=0):
