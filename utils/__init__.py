@@ -2,6 +2,7 @@
 import atexit
 import inspect
 import re
+import subprocess
 
 
 def lazycache(wrapped_method):
@@ -183,3 +184,32 @@ def tries(num_tries, exceptions, f, *args, **kwargs):
             pass
     else:
         raise e
+
+
+def read_env(file):
+    """Given a py.path.Local file name, return a dict of exported shell vars and their values
+
+    Note:
+
+        This will only include shell variables that are exported from the file being parsed
+
+    Returns a dict of varname: value pairs. If the file does not exist or bash could not parse
+    the file, this dict will be empty.
+
+    """
+    env_vars = {}
+    if file.check():
+        with file.open() as f:
+            content = f.read()
+
+        # parse the file with bash, since it's pretty good at it, and dump the env
+        command = ['bash', '-c', 'source {} && env'.format(file.strpath)]
+        proc = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=1)
+
+        # filter out vars not defined
+        for line in iter(proc.stdout.readline, b''):
+            key, value = line.split("=", 1)
+            if '{}='.format(key) in content:
+                env_vars[key] = value.strip()
+        stdout, stderr = proc.communicate()
+    return env_vars

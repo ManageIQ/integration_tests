@@ -1,10 +1,12 @@
 #!/usr/bin/env python2
-from utils.trackerbot import post_jenkins_result
 import os
 import os.path
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from textwrap import dedent
+
+from utils import read_env
+from utils.path import project_path
+from utils.trackerbot import post_jenkins_result
 
 xml_file = os.path.join(os.environ['WORKSPACE'], 'junit-report.xml')
 # 'stream' environ is set by jenkins for all stream test jobs
@@ -12,7 +14,6 @@ xml_file = os.path.join(os.environ['WORKSPACE'], 'junit-report.xml')
 stream = os.environ['stream']
 job_name = os.environ['JOB_NAME']
 number = int(os.environ['BUILD_NUMBER'])
-template = os.environ.get('appliance_template', "Unknown")
 
 date = str(datetime.now())
 
@@ -30,23 +31,16 @@ except IOError:
     # junit-xml didn't exist, all the values become -1
     errors = fails = skips = tests = passes = -1
 
-try:
-    results = open('.jenkins-runner-result').read()
-except IOError:
-    # If we can't open the runner result, it probably wasn't written in
-    # the first place, which means everything failed.
-    results = dedent('''\
-    RUNNER_RETURN=1
-    TEST_RETURN=1
-    ''')
+# reduce returns to bools for easy logic
+runner_src = read_env(project_path.join('.jenkins_runner_result'))
+print runner_src
+runner_return = runner_src.get('RUNNER_RETURN', '1') == '0'
+test_return = runner_src.get('TEST_RETURN', '1') == '0'
+print runner_return, test_return
 
-runner_return = test_return = False
-for line in results.splitlines():
-    # reduce returns to bools for easy logic
-    if line.startswith('RUNNER_RETURN'):
-        runner_return = line.split('=')[1] == 0
-    elif line.startswith('TEST_RETURN'):
-        test_return = line.split('=')[1] == 0
+# try to pull out the appliance template name
+template_src = read_env(project_path.join('.appliance_template'))
+template = template_src.get('appliance_template', 'Unknown')
 
 if runner_return and test_return:
     build_status = 'success'
