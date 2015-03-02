@@ -120,7 +120,7 @@ def delete_request(cells, cancel=False):
     delete(cancel)
 
 
-def wait_for_request(cells):
+def wait_for_request(cells, partial_check=False):
     """helper function checks if a request is complete
 
     After finding the request's row using the ``cells`` argument, this will wait for a request to
@@ -155,7 +155,7 @@ def wait_for_request(cells):
          The matching :py:class:`cfme.web_ui.Table.Row` if found, ``False`` otherwise.
     """
     for page in paginator.pages():
-        results = request_list.find_rows_by_cells(cells)
+        results = request_list.find_rows_by_cells(cells, partial_check)
         if len(results) == 0:
             # row not on this page, assume it has yet to appear
             continue

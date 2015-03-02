@@ -118,7 +118,6 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
-@pytest.mark.meta(blockers=[1144207])
 def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_item, request):
     """Tests order catalog item
 
@@ -132,14 +131,13 @@ def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_
     service_catalogs.order(catalog_item.catalog, catalog_item)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
+    row_description = catalog_item.name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+        fail_func=requests.reload, num_sec=1400, delay=20)
     assert row.last_message.text == 'Request complete'
 
 
-@pytest.mark.meta(blockers=[1144207])
 def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalog_item, request):
     """Tests ordering a catalog bundle
 
@@ -158,10 +156,10 @@ def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalo
     service_catalogs.order(catalog_item.catalog, catalog_bundle)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s' % bundle_name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (bundle_name, bundle_name)
+    row_description = bundle_name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=600, delay=20)
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+        fail_func=requests.reload, num_sec=1200, delay=20)
     assert row.last_message.text == 'Request complete'
 
 

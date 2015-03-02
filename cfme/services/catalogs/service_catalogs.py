@@ -8,8 +8,8 @@ from utils.pretty import Pretty
 from utils import version
 
 order_button = {
-    version.LATEST: "//button[@title='Order this Service']",
-    '5.3': "//img[@title='Order this Service']"
+    version.LOWEST: "//img[@title='Order this Service']",
+    '5.4': "//button[@title='Order this Service']"
 }
 accordion_tree = partial(accordion.tree, "Service Catalogs")
 
