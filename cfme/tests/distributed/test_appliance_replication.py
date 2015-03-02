@@ -88,6 +88,21 @@ def get_replication_appliances():
     return (appl1, appl2)
 
 
+def get_distributed_appliances():
+    """Returns one database-owning appliance, and a second appliance
+       that connects to the database of the first.
+    """
+    ver_to_prov = str(version.current_version())
+    appl1 = provision_appliance(ver_to_prov, 'test_childDB_A')
+    appl2 = provision_appliance(ver_to_prov, 'test_childDB_B')
+    appl1.configure(region=1, patch_ajax_wait=False)
+    appl1.ipapp.wait_for_web_ui()
+    appl2.configure(region=1, patch_ajax_wait=False, key_address=appl1.address,
+                    db_address=appl1.address)
+    appl2.ipapp.wait_for_web_ui()
+    return (appl1, appl2)
+
+
 def configure_db_replication(db_address):
     """Enables the sync role and configures the appliance to replicate to
        the db_address specified. Then, it waits for the UI to show the replication
@@ -152,6 +167,31 @@ def test_appliance_replicate_between_regions(request, provider_crud):
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         configure_db_replication(appl2.address)
+        provider_crud.create()
+        wait_for_a_provider()
+
+    appl2.ipapp.browser_steal = True
+    with appl2.ipapp:
+        wait_for_a_provider()
+        assert provider_crud.exists
+
+
+@pytest.mark.ignore_stream("upstream")
+def test_external_database_appliance(request, provider_crud):
+    """Tests that one appliance can externally
+       connect to the database of another appliance.
+
+    Metadata:
+        test_flag: replication
+    """
+    appl1, appl2 = get_distributed_appliances()
+
+    def finalize():
+        appl1.destroy()
+        appl2.destroy()
+    request.addfinalizer(finalize)
+    appl1.ipapp.browser_steal = True
+    with appl1.ipapp:
         provider_crud.create()
         wait_for_a_provider()
 
