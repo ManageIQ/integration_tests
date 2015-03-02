@@ -406,6 +406,7 @@ function update_sprout() {
     backup_before_update
     clearpyc
     stop_beat
+    rm -f celerybeat-schedule
     echo "> Fetching updates"
     git checkout master  >> $UPDATE_LOG 2>&1
     git pull origin master  >> $UPDATE_LOG 2>&1
@@ -447,6 +448,7 @@ function reload_sprout() {
     echo "> Starting reload"
     clearpyc
     stop_beat
+    rm -f celerybeat-schedule
     reload_gunicorn
     stop_flower
     stop_worker
