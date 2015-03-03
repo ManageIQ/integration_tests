@@ -181,7 +181,7 @@ $(function() {
             <p>{{test.file}}</p>
             {% if test.short_tb %}
 	        <h4>Short Traceback</h4>
-                <pre class="well">{{test.short_tb}}</pre>
+                <pre class="well">{{test.short_tb|e}}</pre>
             {% endif %}
 	    {% if test.softassert %}
                 <div>
