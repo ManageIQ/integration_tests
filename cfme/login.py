@@ -88,6 +88,9 @@ def press_enter_after_password():
     sel.send_keys(page.password, Keys.RETURN)
 
 
+LOGIN_METHODS = [_click_on_login, _js_auth_fn, press_enter_after_password]
+
+
 def login(username, password, submit_method=_js_auth_fn):
     """
     Login to CFME with the given username and password.
