@@ -70,6 +70,7 @@ class Catalog(Updateable, Pretty):
 
     def create(self):
         sel.force_navigate('catalog_new')
+        sel.wait_for_element(form.name_text)
         web_ui.fill(form, {'name_text': self.name,
                            'description_text': self.description,
                            'button_multiselect': self.items},
