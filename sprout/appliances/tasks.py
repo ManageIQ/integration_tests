@@ -241,7 +241,8 @@ def create_appliance_template(provider_id, group_id, template_name):
             return False  # It will be kicked again when trackerbot gets poked
         try:
             Template.objects.get(
-                template_group=group, provider=provider, original_name=template_name)
+                template_group=group, provider=provider, original_name=template_name,
+                preconfigured=True)
             return False
         except ObjectDoesNotExist:
             pass
