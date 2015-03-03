@@ -9,9 +9,6 @@ from utils.path import project_path
 from utils.trackerbot import post_jenkins_result
 
 xml_file = os.path.join(os.environ['WORKSPACE'], 'junit-report.xml')
-# 'stream' environ is set by jenkins for all stream test jobs
-# It will match the group name from the template tracker
-stream = os.environ['stream']
 job_name = os.environ['JOB_NAME']
 number = int(os.environ['BUILD_NUMBER'])
 
@@ -38,9 +35,18 @@ runner_return = runner_src.get('RUNNER_RETURN', '1') == '0'
 test_return = runner_src.get('TEST_RETURN', '1') == '0'
 print runner_return, test_return
 
-# try to pull out the appliance template name
-template_src = read_env(project_path.join('.appliance_template'))
-template = template_src.get('appliance_template', 'Unknown')
+# 'stream' environ is set by jenkins for all stream test jobs
+# but not in the template tester
+if job_name != 'template-tester':
+    # try to pull out the appliance template name
+    template_src = read_env(project_path.join('.appliance_template'))
+    template = template_src.get('appliance_template', 'Unknown')
+    stream = os.environ['stream']
+else:
+    tester_src = read_env(project_path.join('.template_tester'))
+    stream = tester_src['stream']
+    template = tester_src['appliance_template']
+
 
 if runner_return and test_return:
     build_status = 'success'
