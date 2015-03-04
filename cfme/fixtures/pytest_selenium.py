@@ -456,6 +456,17 @@ def double_click(loc, wait_ajax=True):
     return True
 
 
+def drag_and_drop(source_element, dest_element):
+    """Drag and Drop element.
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
+            handy to not do that. (some toolbar clicks)
+    """
+    ActionChains(browser()).drag_and_drop(dest_element, source_element).perform()
+
+
 def move_to_element(loc, **kwargs):
     """
     Moves to an element.
