@@ -453,8 +453,22 @@ class VMWareSystem(MgmtSystemAPIBase):
     def _progress_log_callback(source, destination, progress):
         logger.info("Provisioning progress {}->{}: {}".format(source, destination, str(progress)))
 
+    def _pick_datastore(self, allowed_datastores):
+        # Pick a datastore by space
+        possible_datastores = [
+            ds for ds in mobs.Datastore.all(self.api)
+            if ds.name in allowed_datastores and ds.summary.accessible
+            and ds.summary.multipleHostAccess and ds.overallStatus != "red"]
+        possible_datastores.sort(
+            key=lambda ds: float(ds.summary.freeSpace) / float(ds.summary.capacity),
+            reverse=True)
+        if not possible_datastores:
+            raise Exception("No possible datastores!")
+        return possible_datastores[0]
+
     def clone_vm(self, source, destination, resourcepool=None, datastore=None, power_on=True,
-                 sparse=False, template=False, provision_timeout=1800, progress_callback=None):
+                 sparse=False, template=False, provision_timeout=1800, progress_callback=None,
+                 allowed_datastores=None):
         try:
             if mobs.VirtualMachine.get(self.api, name=destination).name == destination:
                 raise Exception("VM already present!")
@@ -474,19 +488,26 @@ class VMWareSystem(MgmtSystemAPIBase):
         elif isinstance(datastore, mobs.Datastore):
             vm_reloc_spec.datastore = datastore
         elif datastore is None:
-            datastores = source_template.datastore
-            if isinstance(datastores, (list, tuple)):
-                vm_reloc_spec.datastore = datastores[0]
+            if allowed_datastores is not None:
+                # Pick a datastore by space
+                vm_reloc_spec.datastore = self._pick_datastore(allowed_datastores)
             else:
-                vm_reloc_spec.datastore = datastores
+                # Use the same datastore
+                datastores = source_template.datastore
+                if isinstance(datastores, (list, tuple)):
+                    vm_reloc_spec.datastore = datastores[0]
+                else:
+                    vm_reloc_spec.datastore = datastores
         else:
             raise NotImplementedError("{} not supported for datastore".format(datastore))
+        progress_callback("Picked datastore `{}`".format(vm_reloc_spec.datastore.name))
 
         # RESOURCE POOL
         if isinstance(resourcepool, mobs.ResourcePool):
             vm_reloc_spec.pool = resourcepool
         else:
             vm_reloc_spec.pool = self._get_resource_pool(resourcepool)
+        progress_callback("Picked resource pool `{}`".format(vm_reloc_spec.pool.name))
 
         vm_reloc_spec.host = None
         if sparse:
@@ -503,6 +524,8 @@ class VMWareSystem(MgmtSystemAPIBase):
             folder = source_template.parent.parent.vmParent
         except AttributeError:
             folder = source_template.parent
+
+        progress_callback("Picked folder `{}`".format(folder.name))
 
         task = source_template.CloneVM_Task(folder=folder, name=destination, spec=vm_clone_spec)
 
