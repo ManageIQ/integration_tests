@@ -190,6 +190,7 @@ class CatalogItem(Updateable, Pretty):
     def create(self):
         sel.force_navigate('catalog_item_new',
                            context={'provider_type': self.item_type})
+        sel.wait_for_element(basic_info_form.name_text)
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
