@@ -38,14 +38,11 @@ def select_security_group(sg):
     val = sel.get_attribute(
         "//select[@id='environment__security_groups']/option[normalize-space(.)='%s']" % sg,
         'value')
-    try:
+    if current_version() < "5.4":
         sel.browser().execute_script(
             "$j('#environment__security_groups').val('%s');"
             "$j.ajax({type: 'POST', url: '/miq_request/prov_field_changed/new',"
             " data: {'environment__security_groups':'%s'}})" % (val, val))
-    except sel.WebDriverException:
-        # Ignore since from newer versions it is not needed anymore
-        pass
     sel.wait_for_ajax()
     sel.sleep(1)
 

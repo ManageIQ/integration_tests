@@ -175,7 +175,7 @@ def test_provision_with_boot_volume(
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
-        test_flag: provision
+        test_flag: provision, volumes
     """
 
     image = provisioning['image']['name']
