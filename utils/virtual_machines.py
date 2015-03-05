@@ -25,7 +25,8 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         if 'default_cluster' not in deploy_args:
             deploy_args.update(cluster=data['default_cluster'])
     elif isinstance(mgmt, VMWareSystem):
-        pass
+        if "allowed_datastores" not in deploy_args and "allowed_datastores" in data:
+            deploy_args.update(allowed_datastores=data['allowed_datastores'])
     elif isinstance(mgmt, SCVMMSystem):
         if 'host_group' not in deploy_args:
             deploy_args.update(host_group=data.get("host_group", "All Hosts"))

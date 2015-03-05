@@ -288,8 +288,11 @@ def prepare_template_deploy(self, template_id):
     try:
         if not template.exists_in_provider:
             template.set_status("Deploying the template.")
-            kwargs = template.provider.provider_data["sprout"]
+            provider_data = template.provider.provider_data
+            kwargs = provider_data["sprout"]
             kwargs["power_on"] = True
+            if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
+                kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
             logger().info("Deployment kwargs: {}".format(repr(kwargs)))
             template.provider_api.deploy_template(
                 template.original_name, vm_name=template.name, **kwargs)
@@ -539,8 +542,11 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
     try:
         if not appliance.provider_api.does_vm_exist(appliance.name):
             appliance.set_status("Beginning template clone.")
-            kwargs = appliance.template.provider.provider_data["sprout"]
+            provider_data = appliance.template.provider.provider_data
+            kwargs = provider_data["sprout"]
             kwargs["power_on"] = False
+            if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
+                kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
             logger().info("Deployment kwargs: {}".format(repr(kwargs)))
             appliance.provider_api.deploy_template(
                 appliance.template.name, vm_name=appliance.name,

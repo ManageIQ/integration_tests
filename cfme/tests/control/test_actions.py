@@ -23,6 +23,7 @@ from utils.log import logger
 from utils.miq_soap import MiqVM
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
+from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
 
@@ -108,9 +109,10 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
     if isinstance(provider_mgmt, mgmt_system.RHEVMSystem):
         # RHEV-M is sometimes overloaded, so a little protection here
         try:
-            provider_mgmt.deploy_template(
-                small_template,
-                vm_name=vm_name,
+            deploy_template(
+                provider_key,
+                vm_name,
+                template_name=small_template,
                 cluster=provider_data["default_cluster"]
             )
         except TimedOutError:
@@ -124,9 +126,10 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
     elif isinstance(provider_mgmt, mgmt_system.VMWareSystem):
         # VMWare behaves correctly... usually, but we have to be sure! :)
         try:
-            provider_mgmt.deploy_template(
-                small_template,
-                vm_name=vm_name,
+            deploy_template(
+                provider_key,
+                vm_name,
+                template_name=small_template,
             )
         except TimedOutError:
             try:
@@ -138,9 +141,10 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
                 pytest.skip("vSphere %s is probably overloaded! Check its status!" % provider_key)
     elif isinstance(provider_mgmt, mgmt_system.SCVMMSystem):
         try:
-            provider_mgmt.deploy_template(
-                small_template,
-                vm_name=vm_name,
+            deploy_template(
+                provider_key,
+                vm_name,
+                template_name=small_template,
                 host_group=provider_data.get("host_group", "All Hosts")
             )
         except TimedOutError:
