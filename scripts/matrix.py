@@ -113,8 +113,8 @@ for test_data in elem:
                 status = 'Skipped'
             elif element.tag == 'error':
                 status = 'Error'
-            else:
-                status = 'Passed'
+        else:
+            status = 'Passed'
 
         test = suite.cache_tests.get(node_name, None)
         if not test:
