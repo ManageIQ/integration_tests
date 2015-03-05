@@ -623,7 +623,7 @@ class EC2Instance(Instance, Updateable):
         row_description = 'Provision from [%s] to [%s]' % (self.template_name, self.name)
         cells = {'Description': row_description}
         row, __ = wait_for(requests.wait_for_request, [cells],
-                           fail_func=requests.reload, num_sec=600, delay=20)
+                           fail_func=requests.reload, num_sec=900, delay=20)
         assert row.last_message.text == version.pick(
             {version.LOWEST: 'VM Provisioned Successfully',
              "5.3": 'Vm Provisioned Successfully', })
