@@ -4,10 +4,12 @@ import pytest
 from cfme.storage.managers import StorageManager
 from utils.randomness import generate_random_string
 from utils.update import update
+from utils.version import current_version
 
 pytestmark = [pytest.mark.usefixtures("use_storage")]
 
 
+@pytest.mark.uncollectif(lambda: not current_version().is_in_series("5.2"))
 def test_storage_manager_crud(request):
     sm = StorageManager(
         name=generate_random_string(),
