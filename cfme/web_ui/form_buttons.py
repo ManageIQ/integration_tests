@@ -26,7 +26,7 @@ class FormButton(Pretty):
 
     def locate(self):
         """This hairy locator ensures that the button is not dimmed and not hidden."""
-        return ("(//button | //img | //input)[@alt='{}' and not(contains(@class, 'dimmed'))"
+        return ("(//a | //button | //img | //input)[@alt='{}' and not(contains(@class, 'dimmed'))"
                 " and (contains(@class, 'button') or contains(@class, 'btn')"
                 " or contains(@src, 'button'))"
                 " and not(ancestor::*[contains(@style, 'display:none')"
@@ -34,7 +34,7 @@ class FormButton(Pretty):
 
     @property
     def is_dimmed(self):
-        return sel.is_displayed("(//button | //img | //input)[@alt='{}'"
+        return sel.is_displayed("(//a | //button | //img | //input)[@alt='{}'"
             " and contains(@class, 'dimmed')"
             " and (contains(@class, 'button') or contains(@class, 'btn')"
             " or contains(@src, 'button'))"
