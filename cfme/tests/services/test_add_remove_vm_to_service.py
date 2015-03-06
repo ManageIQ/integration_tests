@@ -85,15 +85,20 @@ def provider_init(provider_key):
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + generate_random_string()
+
+    element_data = dict(
+        ele_label="ele_" + rand.generate_random_string(),
+        ele_name=rand.generate_random_string(),
+        ele_desc="my ele desc",
+        choose_type="Text Box",
+        default_text_box="default value"
+    )
+
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                      submit=True, cancel=True,
                      tab_label="tab_" + rand.generate_random_string(), tab_desc="my tab desc",
-                     box_label="box_" + rand.generate_random_string(), box_desc="my box desc",
-                     ele_label="ele_" + rand.generate_random_string(),
-                     ele_name=rand.generate_random_string(),
-                     ele_desc="my ele desc", choose_type="Text Box",
-                     default_text_box="default value")
-    service_dialog.create()
+                     box_label="box_" + rand.generate_random_string(), box_desc="my box desc",)
+    service_dialog.create(element_data)
     flash.assert_success_message('Dialog "%s" was added' % dialog)
     yield dialog
 

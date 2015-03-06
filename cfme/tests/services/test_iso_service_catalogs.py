@@ -78,14 +78,18 @@ def setup_iso_datastore(setup_provider, iso_cust_template, provisioning, iso_dat
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + generate_random_string()
+    element_data = dict(
+        ele_label="ele_" + generate_random_string(),
+        ele_name="service_name",
+        ele_desc="ele_desc",
+        choose_type="Text Box",
+        default_text_box="default value"
+    )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                      submit=True, cancel=True,
                      tab_label="tab_" + generate_random_string(), tab_desc="tab_desc",
-                     box_label="box_" + generate_random_string(), box_desc="box_desc",
-                     ele_label="ele_" + generate_random_string(),
-                     ele_name="service_name",
-                     ele_desc="ele_desc", choose_type="Text Box", default_text_box="default value")
-    service_dialog.create()
+                     box_label="box_" + generate_random_string(), box_desc="box_desc")
+    service_dialog.create(element_data)
     yield dialog
 
 
