@@ -179,9 +179,22 @@ class Common(object):
     def on_details(self, force=False, is_vm=True):
         """A function to determine if the browser is already on the proper vm details page.
         """
-        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'VM and Instance \"%s\"')]" %
-                   self.name)
+        locator = None
+        if is_vm:
+            locator = (("//div[@class='dhtmlxInfoBarLabel' and " +
+                       "contains(. , 'VM and Instance \"%s\"')]") % self.name)
+        else:
+            locator = (("//div[@class='dhtmlxInfoBarLabel' and " +
+                        "contains(. , 'Template and Image \"%s\"')]") % self.name)
+
+        # If the locator isn't on the page, or if it _is_ on the page and contains
+        # 'Timelines' we are on the wrong page and take the appropriate action
         if not sel.is_displayed(locator):
+            wrong_page = True
+        else:
+            wrong_page = 'Timelines' in sel.text(locator)
+
+        if wrong_page:
             if not force:
                 return False
             else:
@@ -197,6 +210,7 @@ class Common(object):
         else:
             if self.name != m.group().replace('"', ''):
                 self._load_details(is_vm=is_vm)
+                return True
             else:
                 return False
 
@@ -317,14 +331,25 @@ class Common(object):
         cfg_btn('Perform SmartState Analysis', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
 
-    def wait_to_appear(self, timeout=600, load_details=True):
-        """Wait for a VM to appear within CFME
+    def wait_to_appear(self, timeout=600, load_details=True, allow_provider_refresh=False):
+        """Wait for an instance to appear within CFME
 
         Args:
             timeout: time (in seconds) to wait for it to appear
-            from_details: when found, should it load the vm details
+            from_details: when found, should it load the instance details
         """
-        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30, fail_func=sel.refresh)
+        if allow_provider_refresh:
+            wait_for(
+                self.does_vm_exist_in_cfme,
+                num_sec=timeout,
+                delay=30,
+                fail_func=self.provider_crud.refresh_provider_relationships)
+        else:
+            wait_for(
+                self.does_vm_exist_in_cfme,
+                num_sec=timeout,
+                delay=30,
+                fail_func=sel.refresh)
         if load_details:
             self.load_details()
 

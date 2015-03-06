@@ -5,7 +5,8 @@
 """
 
 from cfme.cloud.provider import OpenStackProvider, EC2Provider
-from cfme.exceptions import InstanceNotFound, OptionNotAvailable, UnknownProviderType
+from cfme.exceptions import (
+    InstanceNotFound, OptionNotAvailable, UnknownProviderType, TemplateNotFound)
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import (
@@ -20,7 +21,7 @@ from utils.log import logger
 from utils.pretty import Pretty
 from utils.update import Updateable
 from utils.wait import wait_for
-
+import re
 
 cfg_btn = partial(toolbar.select, 'Configuration')
 pol_btn = partial(toolbar.select, 'Policy')
@@ -176,7 +177,259 @@ nav.add_branch(
 )
 
 
-class Instance(Updateable, Pretty):
+class Common(object):
+
+    def _load_details(self, refresh=False, is_vm=True):
+        """Navigates to a VM's details page.
+
+        Args:
+            refresh: Refreshes the vm page if already there
+
+        Raises:
+            VmNotFound:
+                When unable to find the VM passed
+        """
+        if not self.on_details(is_vm=is_vm):
+            logger.debug("load_vm_details: not on details already")
+            sel.click(self._find_quadicon(is_vm=is_vm))
+        else:
+            if refresh:
+                toolbar.refresh()
+
+    def on_details(self, force=False, is_vm=True):
+        """A function to determine if the browser is already on the proper instance details page.
+        """
+
+        locator = None
+        if is_vm:
+            locator = (("//div[@class='dhtmlxInfoBarLabel' and " +
+                        "contains(. , 'Instance \"%s\"')]") % self.name)
+        else:
+            locator = (("//div[@class='dhtmlxInfoBarLabel' and "
+                       "contains(. , 'Image \"%s\"')]") % self.name)
+
+        # If the locator isn't on the page, or if it _is_ on the page and contains
+        # 'Timelines' we are on the wrong page and take the appropriate action
+        if not sel.is_displayed(locator):
+            wrong_page = True
+        else:
+            wrong_page = 'Timelines' in sel.text(locator)
+
+        if wrong_page:
+            if not force:
+                return False
+            else:
+                self.load_details(is_vm=is_vm)
+                return True
+
+        text = sel.text(locator).encode("utf-8")
+        pattern = r'("[A-Za-z0-9_\./\\-]*")'
+        m = re.search(pattern, text)
+
+        if not force:
+            return self.name == m.group().replace('"', '')
+        else:
+            if self.name != m.group().replace('"', ''):
+                self._load_details(is_vm=is_vm)
+                return True
+            else:
+                return True
+
+    def _find_quadicon(self, is_vm=True, do_not_navigate=False, mark=False, refresh=True):
+        """Find and return a quadicon belonging to a specific instance
+
+        Returns: :py:class:`cfme.web_ui.Quadicon` instance
+        Raises: VmNotFound
+        """
+        quadicon = Quadicon(self.name, "instance")
+        if not do_not_navigate:
+            if is_vm:
+                self.provider_crud.load_all_provider_instances()
+            else:
+                self.provider_crud.load_all_provider_images()
+            toolbar.set_vms_grid_view()
+        elif refresh:
+            sel.refresh()
+        if not paginator.page_controls_exist():
+            if is_vm:
+                raise InstanceNotFound("VM '{}' not found in UI!".format(self.name))
+            else:
+                raise TemplateNotFound("Template '{}' not found in UI!".format(self.name))
+
+        paginator.results_per_page(1000)
+        for page in paginator.pages():
+            if sel.is_displayed(quadicon):
+                if mark:
+                    sel.check(quadicon.checkbox())
+                return quadicon
+        else:
+            raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
+
+    def does_vm_exist_on_provider(self):
+        """Check if instance exists on provider itself"""
+        return self.provider_crud.get_mgmt_system().does_vm_exist(self.name)
+
+    def _method_helper(self, from_details=False):
+        if from_details:
+            self.load_details()
+        else:
+            self.find_quadicon(mark=True)
+
+    def _remove_from_cfme(self, is_vm=True, cancel=True, from_details=False):
+        """Removes an instance from CFME VMDB
+
+        Args:
+            cancel: Whether to cancel the deletion, defaults to True
+            from_details: whether to delete from the details page
+        """
+        self._method_helper(from_details)
+        if from_details:
+            cfg_btn('Remove from the VMDB', invokes_alert=True)
+        elif not is_vm:
+            cfg_btn('Remove Images from the VMDB', invokes_alert=True)
+        else:
+            cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+
+    def delete_from_provider(self):
+        provider_mgmt = self.provider_crud.get_mgmt_system()
+        if provider_mgmt.does_vm_exist(self.name):
+            return self.provider_crud.get_mgmt_system().delete_vm(self.name)
+        else:
+            return True
+
+    def get_detail(self, properties=None, icon_href=False):
+        """Gets details from the details infoblock
+
+        The function first ensures that we are on the detail page for the specific instance.
+
+        Args:
+            properties: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+
+        Returns:
+            A string representing the contents of the InfoBlock's value.
+        """
+        self.load_details(refresh=True)
+        if icon_href:
+            return details_page.infoblock.icon_href(*properties)
+        else:
+            return details_page.infoblock.text(*properties)
+
+    def get_tags(self):
+        """Returns all tags that are associated with this VM"""
+        self.load_details(refresh=True)
+        # TODO: Make it count with different "My Company"
+        table = details_page.infoblock.element("Smart Management", "My Company Tags")
+        tags = []
+        for row in sel.elements("./tbody/tr/td", root=table):
+            tags.append(row.text.encode("utf-8").strip())
+        return tags
+
+    def refresh_relationships(self, from_details=False, cancel=False):
+        """Executes a refresh of relationships.
+
+        Args:
+            from_details: Whether or not to perform action from instance details page
+            cancel: Whether or not to cancel the refresh relationships action
+        """
+        if from_details:
+            self.load_details()
+        else:
+            self.find_quadicon(mark=True)
+        cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+
+    def smartstate_scan(self, cancel=True, from_details=False):
+        self._method_helper(from_details=from_details)
+        cfg_btn('Perform SmartState Analysis', invokes_alert=True)
+        sel.handle_alert(cancel=cancel)
+
+    def wait_to_appear(self, timeout=600, load_details=True, allow_provider_refresh=False):
+        """Wait for an instance to appear within CFME
+
+        Args:
+            timeout: time (in seconds) to wait for it to appear
+            from_details: when found, should it load the instance details
+        """
+        if allow_provider_refresh:
+            wait_for(
+                self.does_vm_exist_in_cfme,
+                num_sec=timeout,
+                delay=30,
+                fail_func=self.provider_crud.refresh_provider_relationships)
+        else:
+            wait_for(
+                self.does_vm_exist_in_cfme,
+                num_sec=timeout,
+                delay=30,
+                fail_func=sel.refresh)
+        if load_details:
+            self.load_details()
+
+    def wait_for_vm_to_appear(self, timeout=600, load_details=True, allow_provider_refresh=False):
+        logger.warning("Deprecated method, use wait_to_appear instead")
+        return self.wait_to_appear(
+            timeout=timeout,
+            load_details=load_details,
+            allow_provider_refresh=allow_provider_refresh)
+
+    def wait_for_delete(self, timeout=600):
+        wait_for(self.does_vm_exist_in_cfme, num_sec=timeout, delay=30, fail_func=sel.refresh,
+                 fail_condition=True)
+
+    def does_vm_exist_in_cfme(self):
+        """A function to tell you if a VM exists or not.
+        """
+        try:
+            self.find_quadicon()
+            return True
+        except InstanceNotFound:
+            return False
+
+    def check_compliance(self):
+        self.load_details()
+        pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_no_errors()
+
+    def assign_policy_profiles(self, *policy_profile_names):
+        """ Assign Policy Profiles to this VM.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(True, *policy_profile_names)
+
+    def unassign_policy_profiles(self, *policy_profile_names):
+        """ Unssign Policy Profiles to this VM.
+
+        Args:
+            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
+                coverage goes in, PolicyProfile objects will be also passable.
+        """
+        self._assign_unassign_policy_profiles(False, *policy_profile_names)
+
+    def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
+        """DRY function for managing policy profiles.
+
+        See :py:func:`assign_policy_profiles` and :py:func:`assign_policy_profiles`
+
+        Args:
+            assign: Wheter to assign or unassign.
+            policy_profile_names: :py:class:`str` with Policy Profile names.
+        """
+        self.load_details()
+        pol_btn("Manage Policies")
+        for policy_profile in policy_profile_names:
+            if assign:
+                manage_policies_tree.check_node(policy_profile)
+            else:
+                manage_policies_tree.uncheck_node(policy_profile)
+        form_buttons.save()
+
+
+class Instance(Common, Updateable, Pretty):
     """Represents an instance in CFME
 
     Args:
@@ -215,158 +468,16 @@ class Instance(Updateable, Pretty):
             self.provider_crud.refresh_provider_relationships()
             self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
 
-    def delete(self, cancel=False):
-        sel.force_navigate('clouds_instances', context={'instance': self})
-        toolbar.select("Configuration", "Remove from the VMDB", invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-
-    def wait_for_delete(self):
-        quad = Quadicon(self.name, 'instance')
-        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-             message="Wait instance to disappear", num_sec=500, fail_func=sel.refresh)
-
     def load_details(self, refresh=False):
-        """Navigates to an instance's details page.
-
-        Args:
-            refresh: Refreshes the instance page if already there
-
-        Raises:
-            InstanceNotFound:
-                When unable to find the instance passed
-        """
-        if not self.on_details():
-            logger.debug("load_details: not on details already")
-            sel.click(self.find_quadicon())
-        else:
-            if refresh:
-                toolbar.refresh()
-
-    def on_details(self, force=False):
-        """A function to determine if the browser is already on the proper instance details page.
-        """
-        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Instance \"%s\"')]" %
-            self.name)
-
-        # If the locator isn't on the page, or if it _is_ on the page and contains
-        # 'Timelines' we are on the wrong page and take the appropriate action
-        if not sel.is_displayed(locator):
-            wrong_page = True
-        else:
-            wrong_page = 'Timelines' in sel.text(locator)
-
-        if wrong_page:
-            if not force:
-                return False
-            else:
-                self.load_details()
-                return True
-
-        text = sel.text(locator).encode("utf-8")
-        pattern = r'("[A-Za-z0-9_\./\\-]*")'
-        import re
-        m = re.search(pattern, text)
-
-        if not force:
-            return self.name == m.group().replace('"', '')
-        else:
-            if self.name != m.group().replace('"', ''):
-                self.load_details()
-                return True
-            else:
-                return True
+        self._load_details(is_vm=True, refresh=refresh)
 
     def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
-        """Find and return a quadicon belonging to a specific instance
+        return self._find_quadicon(
+            is_vm=True, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh)
 
-        Returns: :py:class:`cfme.web_ui.Quadicon` instance
-        Raises: InstanceNotFound
-        """
-        if not do_not_navigate:
-            self.provider_crud.load_all_provider_instances()
-            toolbar.set_vms_grid_view()
-        elif refresh:
-            sel.refresh()
-        if not paginator.page_controls_exist():
-            raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
-
-        paginator.results_per_page(1000)
-        for page in paginator.pages():
-            quadicon = Quadicon(self.name, "instance")
-            if sel.is_displayed(quadicon):
-                if mark:
-                    sel.check(quadicon.checkbox())
-                return quadicon
-        else:
-            raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
-
-    def does_vm_exist_on_provider(self):
-        """Check if instance exists on provider itself"""
-        return self.provider_crud.get_mgmt_system().does_vm_exist(self.name)
-
-    def does_vm_exist_in_cfme(self):
-        """A function to tell you if an instance exists or not.
-        """
-        try:
-            self.find_quadicon()
-            return True
-        except InstanceNotFound:
-            return False
-
-    def _method_helper(self, from_details=False):
-        if from_details:
-            self.load_details()
-        else:
-            self.find_quadicon(mark=True)
-
-    def remove_from_cfme(self, cancel=True, from_details=False):
-        """Removes an instance from CFME VMDB
-
-        Args:
-            cancel: Whether to cancel the deletion, defaults to True
-            from_details: whether to delete from the details page
-        """
-        self._method_helper(from_details)
-        if from_details:
-            cfg_btn('Remove from the VMDB', invokes_alert=True)
-        else:
-            cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-
-    def delete_from_provider(self):
-        provider_mgmt = self.provider_crud.get_mgmt_system()
-        if provider_mgmt.does_vm_exist(self.name):
-            return self.provider_crud.get_mgmt_system().delete_vm(self.name)
-        else:
-            return True
-
-    def get_detail(self, properties=None):
-        """Gets details from the details infoblock
-
-        The function first ensures that we are on the detail page for the specific instance.
-
-        Args:
-            properties: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-
-        Returns:
-            A string representing the contents of the InfoBlock's value.
-        """
-        self.load_details(refresh=True)
-        return details_page.infoblock.text(*properties)
-
-    def refresh_relationships(self, from_details=False, cancel=False):
-        """Executes a refresh of relationships.
-
-        Args:
-            from_details: Whether or not to perform action from instance details page
-            cancel: Whether or not to cancel the refresh relationships action
-        """
-        if from_details:
-            self.load_details()
-        else:
-            self.find_quadicon(mark=True)
-        cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
+    def remove_from_cfme(self, cancel=False, from_details=False):
+        """Removes a VM from CFME VMDB"""
+        self._remove_from_cfme(is_vm=True, cancel=cancel, from_details=from_details)
 
     def power_control_from_provider(self, option):
         """Power control an instance from the provider
@@ -442,21 +553,6 @@ class Instance(Updateable, Pretty):
             num_sec=timeout,
             delay=30,
             fail_func=self.refresh_relationships if with_relationship_refresh else None)
-
-    def wait_for_vm_to_appear(self, timeout=600, load_details=True):
-        """Wait for an instance to appear within CFME
-
-        Args:
-            timeout: time (in seconds) to wait for it to appear
-            from_details: when found, should it load the instance details
-        """
-        wait_for(
-            self.does_vm_exist_in_cfme,
-            num_sec=timeout,
-            delay=30,
-            fail_func=self.provider_crud.refresh_provider_relationships)
-        if load_details:
-            self.load_details()
 
 
 class OpenStackInstance(Instance, Updateable):
@@ -859,29 +955,24 @@ def unassign_policy_profiles(vm_name, *policy_profile_names, **kwargs):
     return _assign_unassign_policy_profiles(vm_name, False, *policy_profile_names, **kwargs)
 
 
-class Image(object):
+class Image(Common):
 
     def __init__(self, name, provider_crud):
         self.name = name
         self.image_name = name
         self.provider_crud = provider_crud
 
-    def delete(self):
+    def delete(self, cancel=False, from_details=False):
         """Remove template from CFME VMDB"""
-        sel.force_navigate("clouds_images")
-        quad = Quadicon(self.name, 'image')
-        sel.check(quad.checkbox())
-        cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
-        sel.handle_alert()
+        self._remove_from_cfme(is_vm=False, cancel=cancel, from_details=from_details)
 
-    def wait_for_delete(self):
-        sel.force_navigate("clouds_images")
-        quad = Quadicon(self.name, 'image')
-        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-             message="Wait Image to disappear", num_sec=500, fail_func=sel.refresh)
+    def load_details(self, refresh=False):
+        self._load_details(refresh=refresh, is_vm=False)
 
-    def wait_for_appear(self):
-        sel.force_navigate("clouds_images")
-        quad = Quadicon(self.name, 'image')
-        wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
-             message="Wait Image to appear", num_sec=1000, fail_func=sel.refresh)
+    def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
+        return self._find_quadicon(
+            is_vm=False, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh)
+
+    def remove_from_cfme(self, cancel=False, from_details=False):
+        """Removes a VM from CFME VMDB"""
+        self._remove_from_cfme(is_vm=False, cancel=cancel, from_details=from_details)
