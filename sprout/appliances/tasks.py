@@ -851,8 +851,9 @@ def generic_shepherd(preconfigured):
     """This task takes care of having the required templates spinned into required number of
     appliances. For each template group, it keeps the last template's appliances spinned up in
     required quantity. If new template comes out of the door, it automatically kills the older
-    running template's appliances and spins up new ones."""
-    for grp in Group.objects.all():
+    running template's appliances and spins up new ones. Sorts the groups by the fulfillment."""
+    for grp in sorted(
+            Group.objects.all(), key=lambda g: g.get_fulfillment_percentage(preconfigured)):
         group_versions = Template.get_versions(
             template_group=grp, ready=True, usable=True, preconfigured=preconfigured)
         group_dates = Template.get_dates(
@@ -900,23 +901,23 @@ def generic_shepherd(preconfigured):
         pool_size = grp.template_pool_size if preconfigured else grp.unconfigured_template_pool_size
         if len(appliances) < pool_size and possible_templates_for_provision:
             # There must be some templates in order to run the provisioning
-            for i in range(pool_size - len(appliances)):
-                new_appliance_name = settings.APPLIANCE_FORMAT.format(
-                    group=template.template_group.id,
-                    date=template.date.strftime("%y%m%d"),
-                    rnd=generate_random_string())
-                with transaction.atomic():
-                    # Now look for templates that are on non-busy providers
-                    tpl_free = filter(
-                        lambda t: t.provider.free,
-                        possible_templates_for_provision)
-                    if not tpl_free:
-                        # Bad luck this time, provisioning process is already full. Next time.
-                        break
+            # Provision ONE appliance at time for each group, that way it is possible to maintain
+            # reasonable balancing
+            new_appliance_name = settings.APPLIANCE_FORMAT.format(
+                group=template.template_group.id,
+                date=template.date.strftime("%y%m%d"),
+                rnd=generate_random_string())
+            with transaction.atomic():
+                # Now look for templates that are on non-busy providers
+                tpl_free = filter(
+                    lambda t: t.provider.free,
+                    possible_templates_for_provision)
+                if tpl_free:
                     appliance = Appliance(
-                        template=random.choice(tpl_free),
+                        template=sorted(tpl_free, key=lambda p: p.appliance_load)[0],
                         name=new_appliance_name)
                     appliance.save()
+            if tpl_free:
                 clone_template_to_appliance.delay(appliance.id, None, preconfigured)
         elif len(appliances) > pool_size:
             # Too many appliances, kill the surplus

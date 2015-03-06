@@ -265,6 +265,19 @@ class Group(MetadataMixin):
     def templates(self):
         return Template.objects.filter(template_group=self).order_by("-date", "provider__id")
 
+    @property
+    def appliances(self):
+        return Appliance.objects.filter(template__template_group=self)
+
+    def get_fulfillment_percentage(self, preconfigured):
+        appliances_in_shepherd = len(
+            self.appliances.filter(template__preconfigured=preconfigured, appliance_pool=None))
+        wanted_pool_size = (
+            self.template_pool_size if preconfigured else self.unconfigured_template_pool_size)
+        if wanted_pool_size == 0:
+            return 100
+        return int(round((float(appliances_in_shepherd) / float(wanted_pool_size)) * 100.0))
+
     def __unicode__(self):
         return "{} {} (pool size={}/{})".format(
             self.__class__.__name__, self.id, self.template_pool_size,
