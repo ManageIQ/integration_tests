@@ -512,12 +512,13 @@ def clone_template(template_id):
 
 
 @singleton_task()
-def clone_template_to_appliance(appliance_id, lease_time_minutes=None, wait_for_ui=True):
+def clone_template_to_appliance(appliance_id, lease_time_minutes=None, **kwargs):
     Appliance.objects.get(id=appliance_id).set_status("Beginning deployment process")
+    wait_for_ui = kwargs.get("wait_for_ui", True)
     tasks = [
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
-        appliance_power_on.si(appliance_id, wait_for_ui=wait_for_ui),
+        appliance_power_on.si(appliance_id, wait_for_ui),
     ]
     workflow = chain(*tasks)
     if Appliance.objects.get(id=appliance_id).appliance_pool is not None:
@@ -612,7 +613,7 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
 
 
 @singleton_task()
-def appliance_power_on(self, appliance_id, wait_for_ui=True):
+def appliance_power_on(self, appliance_id, **kwargs):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
@@ -626,7 +627,7 @@ def appliance_power_on(self, appliance_id, wait_for_ui=True):
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.set_power_state(Appliance.Power.ON)
                 appliance.save()
-            if wait_for_ui:
+            if kwargs.get("wait_for_ui", True):
                 wait_appliance_ready.delay(appliance.id)
             else:
                 with transaction.atomic():
