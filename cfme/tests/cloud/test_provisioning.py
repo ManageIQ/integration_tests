@@ -34,7 +34,8 @@ def pytest_generate_tests(metafunc):
             continue
 
         if metafunc.function in {
-                test_provision_from_template_with_attached_disks, test_provision_with_boot_volume} \
+                test_provision_from_template_with_attached_disks, test_provision_with_boot_volume,
+                test_provision_with_additional_volume} \
                 and args['provider_type'] != 'openstack':
             continue
 
@@ -234,3 +235,88 @@ def test_provision_with_boot_volume(
         soft_assert(provider_mgmt.volume_attachments(volume)[vm_name] == "vda")
         instance.delete_from_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
+
+
+# Not collected for EC2 in generate_tests above
+@pytest.mark.meta(blockers=[1186413])
+def test_provision_with_additional_volume(
+        request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
+        provider_type, default_domain_enabled, provider_data):
+    """ Tests provisioning with setting specific image from AE and then also making it create and
+    attach an additional 3G volume.
+
+    Metadata:
+        test_flag: provision, volumes
+    """
+
+    image = provisioning['image']['name']
+    note = ('Testing provisioning from image %s to vm %s on provider %s' %
+            (image, vm_name, provider_crud.key))
+
+    # Set up automate
+    cls = automate.Class(
+        name="Methods",
+        namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines"))
+    method = automate.Method(
+        name="openstack_CustomizeRequest",
+        cls=cls)
+    try:
+        image_id = provider_mgmt.get_template_id(provider_data["small_template"])
+    except KeyError:
+        pytest.skip("No small_template in provider adta!")
+    with update(method):
+        method.data = dedent('''\
+            $evm.root["miq_provision"].set_option(
+              :clone_options, {
+                :image_ref => nil,
+                :block_device_mapping_v2 => [{
+                  :boot_index => 0,
+                  :uuid => "%s",
+                  :device_name => "vda",
+                  :source_type => "image",
+                  :destination_type => "volume",
+                  :volume_size => 3,
+                  :delete_on_termination => false
+                }]
+              }
+        )
+        ''' % (image_id, ))
+
+    def _finish_method():
+        with update(method):
+            method.data = """prov = $evm.root["miq_provision"]"""
+    request.addfinalizer(_finish_method)
+    instance = instance_factory(vm_name, provider_crud, image)
+    request.addfinalizer(instance.delete_from_provider)
+    inst_args = {
+        'email': 'image_provisioner@example.com',
+        'first_name': 'Image',
+        'last_name': 'Provisioner',
+        'notes': note,
+        'instance_type': provisioning['instance_type'],
+        'availability_zone': provisioning['availability_zone'],
+        'security_groups': [provisioning['security_group']],
+        'guest_keypair': provisioning['guest_keypair']
+    }
+
+    if isinstance(provider_crud, OpenStackProvider):
+        inst_args['cloud_network'] = provisioning['cloud_network']
+
+    sel.force_navigate("clouds_instances_by_provider")
+    instance.create(**inst_args)
+
+    prov_instance = provider_mgmt._find_instance_by_name(vm_name)
+    try:
+        assert hasattr(prov_instance, 'os-extended-volumes:volumes_attached')
+        volumes_attached = getattr(prov_instance, 'os-extended-volumes:volumes_attached')
+        assert len(volumes_attached) == 1
+        volume_id = volumes_attached[0]["id"]
+        assert provider_mgmt.volume_exists(volume_id)
+        volume = provider_mgmt.get_volume(volume_id)
+        assert volume.size == 3
+    finally:
+        instance.delete_from_provider()
+        wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
+        if volume_id in locals():
+            if provider_mgmt.volume_exists(volume_id):
+                provider_mgmt.delete_volume(volume_id)

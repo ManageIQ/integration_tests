@@ -256,6 +256,9 @@ class OpenstackSystem(MgmtSystemAPIBase):
         except cinder_exceptions.NotFound:
             return False
 
+    def get_volume(self, id):
+        return self.capi.volumes.get(id)
+
     @contextmanager
     def with_volume(self, *args, **kwargs):
         """Creates a context manager that creates a single volume with parameters defined via params
@@ -495,6 +498,9 @@ class OpenstackSystem(MgmtSystemAPIBase):
                 return template
         else:
             raise VMInstanceNotFound("template {}".format(name))
+
+    def get_template_id(self, name):
+        return self._find_template_by_name(name).id
 
     def does_vm_exist(self, name):
         try:
