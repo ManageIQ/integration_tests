@@ -483,8 +483,7 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
         pool.version = template.version
         pool.date = template.date
         pool.save()
-    clone_template_to_appliance.delay(
-        appliance.id, time_minutes, wait_for_ui=template.preconfigured)
+    clone_template_to_appliance.delay(appliance.id, time_minutes, template.preconfigured)
 
 
 @logged_task()
@@ -512,9 +511,8 @@ def clone_template(template_id):
 
 
 @singleton_task()
-def clone_template_to_appliance(appliance_id, lease_time_minutes=None, **kwargs):
+def clone_template_to_appliance(appliance_id, lease_time_minutes=None, wait_for_ui=True):
     Appliance.objects.get(id=appliance_id).set_status("Beginning deployment process")
-    wait_for_ui = kwargs.get("wait_for_ui", True)
     tasks = [
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
@@ -613,7 +611,7 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
 
 
 @singleton_task()
-def appliance_power_on(self, appliance_id, **kwargs):
+def appliance_power_on(self, appliance_id, wait_for_ui=True):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
@@ -627,7 +625,7 @@ def appliance_power_on(self, appliance_id, **kwargs):
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.set_power_state(Appliance.Power.ON)
                 appliance.save()
-            if kwargs.get("wait_for_ui", True):
+            if wait_for_ui:
                 wait_appliance_ready.delay(appliance.id)
             else:
                 with transaction.atomic():
@@ -919,7 +917,7 @@ def generic_shepherd(preconfigured):
                         template=random.choice(tpl_free),
                         name=new_appliance_name)
                     appliance.save()
-                clone_template_to_appliance.delay(appliance.id, wait_for_ui=preconfigured)
+                clone_template_to_appliance.delay(appliance.id, None, preconfigured)
         elif len(appliances) > pool_size:
             # Too many appliances, kill the surplus
             for appliance in appliances[:len(appliances) - pool_size]:
