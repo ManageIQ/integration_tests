@@ -74,6 +74,12 @@ def start_db_process(address):
             "Could not start postgres process on {}".format(address)
 
 
+def update_appliance_uuid(address):
+    with get_ssh_client(address) as ssh:
+        assert ssh.run_command('uuidgen > /var/www/miq/vmdb/GUID')[0] == 0,\
+            "Could not update appliance's uuid on {}".format(address)
+
+
 def get_replication_appliances():
     """Returns two database-owning appliances configured
        with unique region numbers.
@@ -83,6 +89,7 @@ def get_replication_appliances():
     appl2 = provision_appliance(ver_to_prov, 'test_repl_B')
     appl1.configure(region=1, patch_ajax_wait=False)
     appl1.ipapp.wait_for_web_ui()
+    update_appliance_uuid(appl2.address)
     appl2.configure(region=2, patch_ajax_wait=False, key_address=appl1.address)
     appl2.ipapp.wait_for_web_ui()
     return (appl1, appl2)
