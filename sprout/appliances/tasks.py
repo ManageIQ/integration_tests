@@ -145,7 +145,7 @@ def kill_appliance(self, appliance_id, replace_in_pool=False, minutes=60):
     workflow()
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def kill_appliance_delete(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -282,7 +282,7 @@ def create_appliance_template(provider_id, group_id, template_name):
     workflow()
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def prepare_template_deploy(self, template_id):
     template = Template.objects.get(id=template_id)
     try:
@@ -306,7 +306,7 @@ def prepare_template_deploy(self, template_id):
         template.set_status("Template deployed.")
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def prepare_template_configure(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Customization started.")
@@ -322,7 +322,7 @@ def prepare_template_configure(self, template_id):
         template.set_status("Template configuration was done.")
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def prepare_template_network_setup(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Setting up network.")
@@ -339,7 +339,7 @@ def prepare_template_network_setup(self, template_id):
         template.set_status("Network has been set up.")
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def prepare_template_poweroff(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Powering off")
@@ -353,7 +353,7 @@ def prepare_template_poweroff(self, template_id):
         template.set_status("Powered off.")
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def prepare_template_finish(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Finishing template creation.")
@@ -378,7 +378,7 @@ def prepare_template_finish(self, template_id):
         template.set_status("Template preparation finished.")
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def prepare_template_delete_on_error(self, template_id):
     try:
         template = Template.objects.get(id=template_id)
@@ -419,7 +419,7 @@ def request_appliance_pool(appliance_pool_id, time_minutes):
     apply_lease_times_after_pool_fulfilled.delay(appliance_pool_id, time_minutes)
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes):
     pool = AppliancePool.objects.get(id=appliance_pool_id)
     if pool.fulfilled:
@@ -511,7 +511,7 @@ def clone_template(template_id):
 
 
 @singleton_task()
-def clone_template_to_appliance(appliance_id, lease_time_minutes=None, wait_for_ui=True):
+def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, wait_for_ui=True):
     Appliance.objects.get(id=appliance_id).set_status("Beginning deployment process")
     tasks = [
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
@@ -529,7 +529,7 @@ def clone_template_to_appliance(appliance_id, lease_time_minutes=None, wait_for_
     workflow()
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_minutes):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -591,7 +591,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
         appliance.set_status("Template cloning finished.")
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def clone_template_to_appliance__wait_present(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -999,7 +999,7 @@ def delete_template_from_provider(self, template_id):
         template.save()
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def appliance_rename(self, appliance_id, new_name):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -1012,7 +1012,7 @@ def appliance_rename(self, appliance_id, new_name):
         appliance.save()
 
 
-@singleton_task(bind=True)
+@singleton_task()
 def pool_appliances_prefix_with_owner(self, pool_id):
     with transaction.atomic():
         try:
