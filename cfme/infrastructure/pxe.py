@@ -260,7 +260,8 @@ class PXEServer(Updateable, Pretty):
             'PXE Server "{}": Refresh Relationships successfully initiated'.format(self.name))
         if wait:
             wait_for(lambda lt: lt != ref_time(),
-                     func_args=[last_time], fail_func=sel.refresh, num_sec=120)
+                     func_args=[last_time], fail_func=sel.refresh, num_sec=120,
+                     message="pxe refresh")
 
     def get_pxe_image_type(self, image_name, db=True):
         if db:
@@ -572,7 +573,8 @@ class ISODatastore(Updateable, Pretty):
             .format(self.provider))
         if wait:
             wait_for(lambda lt: lt != ref_time(),
-                     func_args=[last_time], fail_func=sel.refresh, num_sec=120)
+                     func_args=[last_time], fail_func=sel.refresh, num_sec=120,
+                     message="iso refresh")
 
     def set_iso_image_type(self, image_name, image_type):
         """

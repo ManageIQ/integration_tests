@@ -45,7 +45,8 @@ def test_host_drift_analysis(request, setup_provider, provider_key, host_type, h
     host_data = get_host_data_by_name(provider_key, host_name)
     test_host = host.Host(name=host_name)
 
-    wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh)
+    wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh,
+             message="hosts_exists")
 
     # get drift history num
     drift_num_orig = int(test_host.get_detail('Relationships', 'Drift History'))
@@ -59,7 +60,8 @@ def test_host_drift_analysis(request, setup_provider, provider_key, host_type, h
             lambda: test_host.has_valid_credentials,
             delay=10,
             num_sec=120,
-            fail_func=sel.refresh
+            fail_func=sel.refresh,
+            message="has_valid_credentials"
         )
 
         def test_host_remove_creds():
