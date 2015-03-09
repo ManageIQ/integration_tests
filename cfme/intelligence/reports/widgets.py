@@ -5,7 +5,7 @@
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import ExternalRSSFeed, MenuShortcuts, Timer
 from cfme.web_ui import (
-    CheckboxSelect, Form, InfoBlock, Select, ShowingInputs, accordion, fill, toolbar)
+    CheckboxSelect, Form, InfoBlock, Select, ShowingInputs, accordion, fill, toolbar, Input)
 from cfme.web_ui import flash, form_buttons
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
@@ -154,9 +154,9 @@ class Widget(Updateable, Pretty):
 
 class MenuWidget(Widget):
     form = Form(fields=[
-        ("title", "//input[@id='title']"),
-        ("description", "//input[@id='description']"),
-        ("active", "//input[@id='enabled']"),
+        ("title", Input("title")),
+        ("description", Input("description")),
+        ("active", Input("enabled")),
         ("shortcuts", MenuShortcuts("//select[@id='add_shortcut']")),
         ("visibility", visibility_obj),
     ])
@@ -189,9 +189,9 @@ class MenuWidget(Widget):
 
 class ReportWidget(Widget):
     form = Form(fields=[
-        ("title", "//input[@id='title']"),
-        ("description", "//input[@id='description']"),
-        ("active", "//input[@id='enabled']"),
+        ("title", Input("title")),
+        ("description", Input("description")),
+        ("active", Input("enabled")),
         ("filter", ShowingInputs(
             Select("//select[@id='filter_typ']"),
             Select("//select[@id='subfilter_typ']"),
@@ -243,9 +243,9 @@ class ReportWidget(Widget):
 
 class ChartWidget(Widget):
     form = Form(fields=[
-        ("title", "//input[@id='title']"),
-        ("description", "//input[@id='description']"),
-        ("active", "//input[@id='enabled']"),
+        ("title", Input("title")),
+        ("description", Input("description")),
+        ("active", Input("enabled")),
         ("filter", Select("//select[@id='repfilter_typ']")),
         ("timer", Timer()),
         ("visibility", visibility_obj),
@@ -281,9 +281,9 @@ class ChartWidget(Widget):
 
 class RSSFeedWidget(Widget):
     form = Form(fields=[
-        ("title", "//input[@id='title']"),
-        ("description", "//input[@id='description']"),
-        ("active", "//input[@id='enabled']"),
+        ("title", Input("title")),
+        ("description", Input("description")),
+        ("active", Input("enabled")),
         ("type", Select("//select[@id='feed_type']")),
         ("feed", Select("//select[@id='rss_feed']")),
         ("external", ExternalRSSFeed()),
