@@ -5,7 +5,7 @@ from cfme.web_ui import menu
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import Form, Select, SplitTable, accordion,\
-    fill, flash, form_buttons, Table, Tree
+    fill, flash, form_buttons, Table, Tree, Input
 from utils.update import Updateable
 from utils.pretty import Pretty
 
@@ -16,36 +16,36 @@ entry_table = Table("//div[@id='field_values_div']/form/fieldset/table[@class='s
 text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table[@class='style1']")
 
 label_form = Form(fields=[
-    ('label', "//input[@id='label']"),
-    ('description_text', "//input[@id='description']"),
-    ('submit_button', "//input[@id='chkbx_submit']"),
-    ('cancel_button', "//input[@id='chkbx_cancel']")
+    ('label', Input("label")),
+    ('description_text', Input("description")),
+    ('submit_button', Input("chkbx_submit")),
+    ('cancel_button', Input("chkbx_cancel"))
 ])
 
 tab_form = Form(fields=[
-    ('tab_label', "//input[@id='tab_label']"),
-    ('tab_desc', "//input[@id='tab_description']")
+    ('tab_label', Input("tab_label")),
+    ('tab_desc', Input("tab_description"))
 ])
 
 box_form = Form(fields=[
-    ('box_label', "//input[@id='group_label']"),
-    ('box_desc', "//input[@id='group_description']")
+    ('box_label', Input("group_label")),
+    ('box_desc', Input("group_description"))
 ])
 
 element_form = Form(fields=[
-    ('ele_label', "//input[@id='field_label']"),
-    ('ele_name', "//input[@id='field_name']"),
-    ('ele_desc', "//input[@id='field_description']"),
+    ('ele_label', Input("field_label")),
+    ('ele_name', Input("field_name")),
+    ('ele_desc', Input("field_description")),
     ('choose_type', Select("//select[@id='field_typ']")),
-    ('default_text_box', "//input[@id='field_default_value']"),
-    ('field_required', "//input[@id='field_required']"),
-    ('field_past_dates', "//input[@id='field_past_dates']"),
-    ('field_entry_point', "//input[@id='field_entry_point']"),
-    ('field_show_refresh_button', "//input[@id='field_show_refresh_button']"),
-    ('entry_value', "//input[@id='entry_value']"),
-    ('entry_description', "//input[@id='entry_description']"),
+    ('default_text_box', Input("field_default_value")),
+    ('field_required', Input("field_required")),
+    ('field_past_dates', Input("field_past_dates")),
+    ('field_entry_point', Input("field_entry_point")),
+    ('field_show_refresh_button', Input("field_show_refresh_button")),
+    ('entry_value', Input("entry[value]")),
+    ('entry_description', Input("entry[description]")),
     ('field_category', Select("//select[@id='field_category']")),
-    ('text_area', "//textarea[@id='field_default_value']"),
+    ('text_area', Input("field_default_value")),
 ])
 
 dialogs_table = SplitTable(
