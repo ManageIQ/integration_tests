@@ -23,7 +23,9 @@ import utils.conf as conf
 from cfme.exceptions import (
     HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
 )
-from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator
+from cfme.web_ui import (
+    Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input
+)
 from cfme.web_ui import Timelines
 from cfme.web_ui.form_buttons import FormButton
 from utils.browser import ensure_browser_open
@@ -44,38 +46,38 @@ prov_timeline = Timelines('//div[@id="miq_timeline"]')
 # Forms
 discover_form = Form(
     fields=[
-        ('rhevm_chk', "//input[@id='discover_type_rhevm']"),
-        ('vmware_chk', "//input[@id='discover_type_virtualcenter']"),
-        ('scvmm_chk', "//input[@id='discover_type_scvmm']"),
-        ('from_0', "//*[@id='from_first']"),
-        ('from_1', "//*[@id='from_second']"),
-        ('from_2', "//*[@id='from_third']"),
-        ('from_3', "//*[@id='from_fourth']"),
-        ('to_3', "//*[@id='to_fourth']"),
+        ('rhevm_chk', Input("discover_type_rhevm")),
+        ('vmware_chk', Input("discover_type_virtualcenter")),
+        ('scvmm_chk', Input("discover_type_scvmm")),
+        ('from_0', Input("from_first")),
+        ('from_1', Input("from_second")),
+        ('from_2', Input("from_third")),
+        ('from_3', Input("from_fourth")),
+        ('to_3', Input("to_fourth")),
         ('start_button', FormButton("Start the Host Discovery"))
     ])
 
 properties_form = Form(
     fields=[
-        ('type_select', Select("//*[@id='server_emstype']")),
-        ('name_text', "//*[@id='name']"),
-        ('hostname_text', "//*[@id='hostname']"),
-        ('ipaddress_text', "//*[@id='ipaddress']"),
-        ('api_port', "//*[@id='port']"),
-        ('sec_protocol', Select("//*[@id='security_protocol']")),
-        ('sec_realm', "//*[@id='realm']"),
+        ('type_select', Select("select#server_emstype")),
+        ('name_text', Input("name")),
+        ('hostname_text', Input("hostname")),
+        ('ipaddress_text', Input("ipaddress")),
+        ('api_port', Input("port")),
+        ('sec_protocol', Select("select#security_protocol")),
+        ('sec_realm', Input("realm"))
     ])
 
 credential_form = Form(
     fields=[
         ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('default_principal', "//*[@id='default_userid']"),
-        ('default_secret', "//*[@id='default_password']"),
-        ('default_verify_secret', "//*[@id='default_verify']"),
+        ('default_principal', Input("default_userid")),
+        ('default_secret', Input("default_password")),
+        ('default_verify_secret', Input("default_verify")),
         ('candu_button', "//div[@id='auth_tabs']/ul/li/a[@href='#metrics']"),
-        ('candu_principal', "//*[@id='metrics_userid']"),
-        ('candu_secret', "//*[@id='metrics_password']"),
-        ('candu_verify_secret', "//*[@id='metrics_verify']"),
+        ('candu_principal', Input("metrics_userid")),
+        ('candu_secret', Input("metrics_password")),
+        ('candu_verify_secret', Input("metrics_verify")),
         ('validate_btn', form_buttons.validate)
     ])
 
