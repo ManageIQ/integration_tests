@@ -93,7 +93,6 @@ def test_service_circular_reference(catalog_item):
                                'cat_item': sec_catalog_bundle.name})
 
 
-@pytest.mark.meta(blockers=[1144207])
 def test_service_generic_catalog_bundle(catalog_item):
     bundle_name = "generic_" + generate_random_string()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
@@ -103,14 +102,13 @@ def test_service_generic_catalog_bundle(catalog_item):
     service_catalogs.order(catalog_item.catalog, catalog_bundle)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s' % bundle_name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (bundle_name, bundle_name)
+    row_description = bundle_name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=900, delay=20)
     assert row.last_message.text == 'Request complete'
 
 
-@pytest.mark.meta(blockers=[1144207])
 def test_bundles_in_bundle(catalog_item):
     bundle_name = "first_" + generate_random_string()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
@@ -128,14 +126,13 @@ def test_bundles_in_bundle(catalog_item):
     service_catalogs.order(catalog_item.catalog, third_catalog_bundle)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s' % bundle_name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (third_bundle_name, third_bundle_name)
+    row_description = third_bundle_name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=900, delay=20)
     assert row.last_message.text == 'Request complete'
 
 
-@pytest.mark.meta(blockers=[1144207])
 def test_delete_dialog_before_parent_item(catalog_item):
     service_dialog = ServiceDialog(label=catalog_item.dialog)
     service_dialog.delete()
