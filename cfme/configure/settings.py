@@ -170,6 +170,17 @@ class Visual(Updateable):
         sel.click(form_buttons.save)
 
     @property
+    def report_view_limit(self):
+        sel.force_navigate("my_settings_visual")
+        return int(sel.text(self.item_form.reports.first_selected_option))
+
+    @report_view_limit.setter
+    def report_view_limit(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.item_form.reports, str(value))
+        sel.click(form_buttons.save)
+
+    @property
     def login_page(self):
         sel.force_navigate("my_settings_visual")
         return int(sel.text(self.startpage_form.login_page.first_selected_option))

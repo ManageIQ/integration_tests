@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
-
 import pytest
 import re
 from cfme import login
 from cfme.configure.settings import visual
 from cfme.fixtures import pytest_selenium as sel
+from cfme.intelligence.reports.reports import CannedSavedReport
 from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
@@ -50,6 +50,14 @@ def set_list():
     visual.list_view_limit = 5
     yield
     visual.list_view_limit = listlimit
+
+
+@pytest.yield_fixture(scope="module")
+def set_report():
+    reportlimit = visual.report_view_limit
+    visual.report_view_limit = 5
+    yield
+    visual.report_view_limit = reportlimit
 
 
 def set_default_page():
@@ -142,6 +150,20 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
     tb.select('List View')
     if int(paginator.rec_total()) >= int(limit):
         assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)
+
+
+def test_report_page_per_item(setup_a_provider, set_report):
+    """ Tests report items per page
+
+    Metadata:
+        test_flag: visuals
+    """
+    path = ["Configuration Management", "Virtual Machines", "VMs Snapshot Summary"]
+    limit = visual.report_view_limit
+    report = CannedSavedReport.new(path)
+    report.navigate()
+    if int(paginator.rec_total()) >= int(limit):
+        assert int(paginator.rec_end()) == int(limit), "Reportview Failed!"
 
 
 @landing_uncollectif
