@@ -25,7 +25,7 @@ def provision_data(provider_crud, provider_key, provider_data, small_template, p
         "vm_fields": {
             "number_of_cpus": 1,
             "vm_name": "test_rest_prov_{}".format(generate_random_string()),
-            "vm_memory": "1024",
+            "vm_memory": "2048",
             "vlan": provider_data["provisioning"]["vlan"],
         },
         "requester": {
