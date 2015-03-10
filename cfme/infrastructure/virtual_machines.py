@@ -7,7 +7,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import (
     CheckboxTree, Form, Region, Quadicon, Tree, accordion, fill, flash, form_buttons, paginator,
-    toolbar, Calendar, Select
+    toolbar, Calendar, Select, Input
 )
 from cfme.web_ui.menu import nav
 from functools import partial
@@ -61,9 +61,9 @@ snapshot_tree = Tree(
 
 snapshot_form = Form(
     fields=[
-        ('name', "//*[@id='name']"),
-        ('descrition', "//*[@id='description']"),
-        ('snapshot_memory', "//input[@id='snap_memory']"),
+        ('name', Input('name')),
+        ('descrition', Input('description')),
+        ('snapshot_memory', Input('snap_memory')),
         ('create_button', create_button),
         ('cancel_button', form_buttons.cancel)
     ])
