@@ -3,7 +3,7 @@ from fixtures.pytest_store import store
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons
+from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons, Input
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
 from utils import version
@@ -109,11 +109,11 @@ nav.add_branch(
 class User(Updateable, Pretty):
     user_form = Form(
         fields=[
-            ('name_txt', "//*[@id='name']"),
-            ('userid_txt', "//*[@id='userid']"),
-            ('password_txt', "//*[@id='password']"),
-            ('password_verify_txt', "//*[@id='password2']"),
-            ('email_txt', "//*[@id='email']"),
+            ('name_txt', Input('name')),
+            ('userid_txt', Input('userid')),
+            ('password_txt', Input('password')),
+            ('password_verify_txt', Input('password2')),
+            ('email_txt', Input('email')),
             ('user_group_select', Select("//*[@id='chosen_group']")),
         ])
 
@@ -183,7 +183,7 @@ class User(Updateable, Pretty):
 class Group(Updateable, Pretty):
     group_form = Form(
         fields=[
-            ('description_txt', "//*[@id='description']"),
+            ('description_txt', Input('description')),
             ('role_select', Select("//*[@id='group_role']")),
         ])
     pretty_attrs = ['description', 'role']
@@ -217,7 +217,7 @@ class Group(Updateable, Pretty):
 class Role(Updateable, Pretty):
     form = Form(
         fields=[
-            ('name_txt', "//*[@id='name']"),
+            ('name_txt', Input('name')),
             ('vm_restriction_select', Select("//*[@id='vm_restriction']")),
             ('product_features_tree', CheckboxTree("//div[@id='features_treebox']/ul")),
         ])
