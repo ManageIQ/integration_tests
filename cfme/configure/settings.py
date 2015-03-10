@@ -7,7 +7,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (Form, Region, Select, fill, form_buttons, flash, Table,
-    Quadicon, CheckboxTree)
+    Quadicon, CheckboxTree, Input)
 from cfme.web_ui.menu import nav
 from utils.pretty import Pretty
 from utils.update import Updateable
@@ -45,11 +45,11 @@ nav.add_branch(
 class Timeprofile(Updateable):
     timeprofile_form = Form(
         fields=[
-            ("description", "//input[@id='description']"),
-            ("scope", Select("//select[@id='profile_type']")),
-            ("timezone", Select("//select[@id='profile_tz']")),
-            ("days", "//input[@id='all_days']"),
-            ("hours", "//input[@id='all_hours']"),
+            ("description", Input("description")),
+            ("scope", Select("select#profile_type")),
+            ("timezone", Select("select#profile_tz")),
+            ("days", Input("all_days")),
+            ("hours", Input("all_hours")),
         ]
     )
 
@@ -124,14 +124,14 @@ class Visual(Updateable):
 
     quadicons_form = Form(
         fields=[
-            ('infra_provider_quad', "//input[@id='quadicons_ems']"),
-            ('cloud_provider_quad', "//input[@id='quadicons_ems_cloud']"),
-            ('host_quad', "//input[@id='quadicons_host']"),
-            ('datastore_quad', "//input[@id='quadicons_storage']"),
-            ('datastoreitem_quad', "//input[@id='quadicons_storageitem']"),
-            ('vm_quad', "//input[@id='quadicons_vm']"),
-            ('vmitem_quad', "//input[@id='quadicons_vmitem']"),
-            ('template_quad', "//input[@id='quadicons_miq_template']"),
+            ('infra_provider_quad', Input("quadicons_ems")),
+            ('cloud_provider_quad', Input("quadicons_ems_cloud")),
+            ('host_quad', Input("quadicons_host")),
+            ('datastore_quad', Input("quadicons_storage")),
+            ('datastoreitem_quad', Input("quadicons_storageitem")),
+            ('vm_quad', Input("quadicons_vm")),
+            ('vmitem_quad', Input("quadicons_vmitem")),
+            ('template_quad', Input("quadicons_miq_template")),
         ])
 
     save_button = form_buttons.FormButton("Add this Time Profile")
