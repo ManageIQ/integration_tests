@@ -52,8 +52,10 @@ Note:
 
 """
 import inspect
+import os
 
 from fixtures.pytest_store import store
+from utils.path import log_path
 from utils.log import logger
 
 
@@ -66,10 +68,8 @@ def uncollectif(item):
 
     marker = item.get_marker('uncollectif')
     if marker:
-        if 'reason' in marker.kwargs:
-            log_msg = 'Uncollecting {}: {}'.format(item.name, marker.kwargs['reason'])
-        else:
-            log_msg = 'Uncollecting {}'.format(item.name)
+        log_msg = 'Uncollecting {}: {}'.format(item.name,
+            marker.kwargs.get('reason', 'No reason given'))
 
         try:
             arg_names = inspect.getargspec(marker._arglist[0][0][0]).args
@@ -97,11 +97,22 @@ def uncollectif(item):
 def pytest_collection_modifyitems(session, config, items):
     len_collected = len(items)
 
-    # First filter out all items who have the uncollect mark
-    items[:] = filter(lambda item: not item.get_marker('uncollect'), items)
+    new_items = []
 
-    # Second filter out all items who have an uncollectif that evals to True
-    items[:] = filter(uncollectif, items)
+    with open(os.path.join(log_path.strpath, 'uncollected.log'), 'w') as f:
+        for item in items:
+            # First filter out all items who have the uncollect mark
+            if item.get_marker('uncollect') or not uncollectif(item):
+                marker = item.get_marker('uncollectif')
+                if marker:
+                    reason = marker.kwargs.get('reason', "No reason given")
+                else:
+                    reason = None
+                f.write("{} - {}\n".format(item.name, reason))
+            else:
+                new_items.append(item)
+
+    items[:] = new_items
 
     len_filtered = len(items)
     filtered_count = len_collected - len_filtered
