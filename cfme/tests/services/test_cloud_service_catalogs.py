@@ -55,17 +55,20 @@ def provider_init(provider_key):
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + generate_random_string()
+    element_data = dict(
+        ele_label="ele_" + rand.generate_random_string(),
+        ele_name=rand.generate_random_string(),
+        ele_desc="my ele desc",
+        choose_type="Text Box",
+        default_text_box="default value"
+    )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                                    submit=True, cancel=True,
                                    tab_label="tab_" + rand.generate_random_string(),
                                    tab_desc="my tab desc",
                                    box_label="box_" + rand.generate_random_string(),
-                                   box_desc="my box desc",
-                                   ele_label="ele_" + rand.generate_random_string(),
-                                   ele_name=rand.generate_random_string(),
-                                   ele_desc="my ele desc", choose_type="Text Box",
-                                   default_text_box="default value")
-    service_dialog.create()
+                                   box_desc="my box desc")
+    service_dialog.create(element_data)
     flash.assert_success_message('Dialog "%s" was added' % dialog)
     yield dialog
 
@@ -87,7 +90,6 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
-@pytest.mark.meta(blockers=[1144207])
 def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud,
                             provider_type, provisioning, dialog, catalog, request):
     """Tests cloud catalog item
@@ -124,9 +126,8 @@ def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider
     service_catalogs.order(catalog.name, cloud_catalog_item)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s' % item_name)
-    row_description = 'Provisioning [%s] for Service [%s]' %\
-        (item_name, item_name)
+    row_description = item_name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=1000, delay=20)
     assert row.last_message.text == 'Request complete'

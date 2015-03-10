@@ -11,6 +11,7 @@ from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
 from utils.conf import cfme_data
+import utils.randomness as rand
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -82,14 +83,18 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + generate_random_string()
+    element_data = dict(
+        ele_label="ele_" + rand.generate_random_string(),
+        ele_name=rand.generate_random_string(),
+        ele_desc="my ele desc",
+        choose_type="Text Box",
+        default_text_box="default value"
+    )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                      submit=True, cancel=True,
                      tab_label="tab_" + generate_random_string(), tab_desc="tab_desc",
-                     box_label="box_" + generate_random_string(), box_desc="box_desc",
-                     ele_label="ele_" + generate_random_string(),
-                     ele_name="service_name",
-                     ele_desc="ele_desc", choose_type="Text Box", default_text_box="default value")
-    service_dialog.create()
+                     box_label="box_" + generate_random_string(), box_desc="box_desc")
+    service_dialog.create(element_data)
     yield dialog
 
 
@@ -149,8 +154,8 @@ def test_rhev_pxe_servicecatalog(setup_provider, provider_type,
     service_catalogs.order(catalog_item.catalog, catalog_item)
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
+    row_description = catalog_item.name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=2100, delay=20)
     assert row.last_message.text == 'Request complete'

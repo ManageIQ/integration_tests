@@ -51,27 +51,9 @@ add_to_service
 
 
 def pytest_generate_tests(metafunc):
-    # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, 'provisioning', template_location=["provisioning", "template"])
-
-    new_idlist = []
-    new_argvalues = []
-    for i, argvalue_tuple in enumerate(argvalues):
-        args = dict(zip(argnames, argvalue_tuple))
-        if not args['provisioning']:
-            # No provisioning data available
-            continue
-
-        # required keys should be a subset of the dict keys set
-        if not {'template', 'host', 'datastore'}.issubset(args['provisioning'].viewkeys()):
-            # Need all three for template provisioning
-            continue
-
-        new_idlist.append(idlist[i])
-        new_argvalues.append(argvalues[i])
-
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    argnames, argvalues, idlist = testgen.provider_by_type(
+        metafunc, ['virtualcenter'], 'provisioning')
+    metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
 
 
 @pytest.fixture()
@@ -85,7 +67,6 @@ def provider_init(provider_key):
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + generate_random_string()
-
     element_data = dict(
         ele_label="ele_" + rand.generate_random_string(),
         ele_name=rand.generate_random_string(),
@@ -93,11 +74,10 @@ def dialog():
         choose_type="Text Box",
         default_text_box="default value"
     )
-
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                      submit=True, cancel=True,
                      tab_label="tab_" + rand.generate_random_string(), tab_desc="my tab desc",
-                     box_label="box_" + rand.generate_random_string(), box_desc="my box desc",)
+                     box_label="box_" + rand.generate_random_string(), box_desc="my box desc")
     service_dialog.create(element_data)
     flash.assert_success_message('Dialog "%s" was added' % dialog)
     yield dialog
@@ -185,16 +165,14 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     service_catalogs.order(catalog_item.catalog, catalog_item)
     logger.info('Waiting for cfme provision request for service {}'
         .format(catalog_item.name))
-    row_description = "Provisioning [{}] for Service [{}]"\
-        .format(catalog_item.name, catalog_item.name)
+    row_description = catalog_item.name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=900, delay=20)
     assert row.last_message.text == 'Request complete'
     return MyService(catalog_item.name, vm_name)
 
 
-@pytest.mark.bugzilla(1144207)
 def test_add_vm_to_service(request, myservice, create_method):
     """Tests adding vm to service
 

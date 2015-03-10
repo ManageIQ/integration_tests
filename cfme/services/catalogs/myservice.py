@@ -108,7 +108,6 @@ class MyService(Updateable):
                            context={'service_name': self.service_name})
         fill(retirement_form, {'retirement_date': retirement_date},
              action=form_buttons.save)
-        flash.assert_message_contain('Retirement date set to')
         wait_time_min = 1
         quadicon = Quadicon(self.vm_name + "_0001", "vm")
         sel.click(quadicon)
