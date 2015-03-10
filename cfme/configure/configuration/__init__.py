@@ -8,7 +8,7 @@ import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
 from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound
 from cfme.web_ui import \
-    (Calendar, Form, InfoBlock, MultiFill, Region, Select, Table, accordion, fill, flash,
+    (Calendar, Form, InfoBlock, Input, MultiFill, Region, Select, Table, accordion, fill, flash,
     form_buttons)
 from cfme.web_ui.menu import nav
 from utils.db import cfmedb
@@ -33,12 +33,12 @@ diagnostics_tree = partial(accordion.tree, "Diagnostics")
 
 replication_worker = Form(
     fields=[
-        ('database', "//input[@id='replication_worker_dbname']"),
-        ('port', "//input[@id='replication_worker_port']"),
-        ('username', "//input[@id='replication_worker_username']"),
-        ('password', "//input[@id='replication_worker_password']"),
-        ('password_verify', "//input[@id='replication_worker_verify']"),
-        ('host', "//input[@id='replication_worker_host']"),
+        ('database', Input("replication_worker_dbname")),
+        ('port', Input("replication_worker_port")),
+        ('username', Input("replication_worker_username")),
+        ('password', Input("replication_worker_password")),
+        ('password_verify', Input("replication_worker_verify")),
+        ('host', Input("replication_worker_host")),
     ]
 )
 
@@ -49,23 +49,23 @@ replication_process = Region(locators={
 
 server_roles = Form(
     fields=[
-        ('ems_metrics_coordinator', "//input[@id='server_roles_ems_metrics_coordinator']"),
-        ('ems_operations', "//input[@id='server_roles_ems_operations']"),
-        ('ems_metrics_collector', "//input[@id='server_roles_ems_metrics_collector']"),
-        ('reporting', "//input[@id='server_roles_reporting']"),
-        ('ems_metrics_processor', "//input[@id='server_roles_ems_metrics_processor']"),
-        ('scheduler', "//input[@id='server_roles_scheduler']"),
-        ('smartproxy', "//input[@id='server_roles_smartproxy']"),
-        ('database_operations', "//input[@id='server_roles_database_operations']"),
-        ('smartstate', "//input[@id='server_roles_smartstate']"),
-        ('event', "//input[@id='server_roles_event']"),
-        ('user_interface', "//input[@id='server_roles_user_interface']"),
-        ('web_services', "//input[@id='server_roles_web_services']"),
-        ('ems_inventory', "//input[@id='server_roles_ems_inventory']"),
-        ('notifier', "//input[@id='server_roles_notifier']"),
-        ('automate', "//input[@id='server_roles_automate']"),
-        ('rhn_mirror', "//input[@id='server_roles_rhn_mirror']"),
-        ('database_synchronization', "//input[@id='server_roles_database_synchronization']"),
+        ('ems_metrics_coordinator', Input("server_roles_ems_metrics_coordinator")),
+        ('ems_operations', Input("server_roles_ems_operations")),
+        ('ems_metrics_collector', Input("server_roles_ems_metrics_collector")),
+        ('reporting', Input("server_roles_reporting")),
+        ('ems_metrics_processor', Input("server_roles_ems_metrics_processor")),
+        ('scheduler', Input("server_roles_scheduler")),
+        ('smartproxy', Input("server_roles_smartproxy")),
+        ('database_operations', Input("server_roles_database_operations")),
+        ('smartstate', Input("server_roles_smartstate")),
+        ('event', Input("server_roles_event")),
+        ('user_interface', Input("server_roles_user_interface")),
+        ('web_services', Input("server_roles_web_services")),
+        ('ems_inventory', Input("server_roles_ems_inventory")),
+        ('notifier', Input("server_roles_notifier")),
+        ('automate', Input("server_roles_automate")),
+        ('rhn_mirror', Input("server_roles_rhn_mirror")),
+        ('database_synchronization', Input("server_roles_database_synchronization")),
         # STORAGE OPTIONS
         ("storage_metrics_processor", "input#server_roles_storage_metrics_processor"),
         ("storage_metrics_collector", "input#server_roles_storage_metrics_collector"),
@@ -78,40 +78,40 @@ server_roles = Form(
 
 ntp_servers = Form(
     fields=[
-        ('ntp_server_1', "//input[@id='ntp_server_1']"),
-        ('ntp_server_2', "//input[@id='ntp_server_2']"),
-        ('ntp_server_3', "//input[@id='ntp_server_3']"),
+        ('ntp_server_1', Input("ntp_server_1")),
+        ('ntp_server_2', Input("ntp_server_2")),
+        ('ntp_server_3', Input("ntp_server_3")),
     ]
 )
 
 db_configuration = Form(
     fields=[
-        ('type', Select("//select[@id='production_dbtype']")),
-        ('hostname', "//input[@id='production_host']"),
-        ('database', "//input[@id='production_database']"),
-        ('username', "//input[@id='production_username']"),
-        ('password', "//input[@id='production_password']"),
-        ('password_verify', "//input[@id='production_verify']"),
+        ('type', Select("select#production_dbtype")),
+        ('hostname', Input("production_host")),
+        ('database', Input("production_database")),
+        ('username', Input("production_username")),
+        ('password', Input("production_password")),
+        ('password_verify', Input("production_verify")),
     ]
 )
 
 category_form = Form(
     fields=[
         ('new_tr', "//tr[@id='new_tr']"),
-        ('name', "//input[@id='name']"),
-        ('display_name', "//input[@id='description']"),
-        ('description', "//input[@id='example_text']"),
-        ('show_in_console', "//input[@id='show']"),
-        ('single_value', "//input[@id='single_value']"),
-        ('capture_candu', "//input[@id='perf_by_tag']")
+        ('name', Input("name")),
+        ('display_name', Input("description")),
+        ('description', Input("example_text")),
+        ('show_in_console', Input("show")),
+        ('single_value', Input("single_value")),
+        ('capture_candu', Input("perf_by_tag"))
     ])
 
 tag_form = Form(
     fields=[
-        ('category', Select("//select[@id='classification_name']")),
-        ('name', "//input[@id='entry_name']"),
-        ('display_name', "//input[@id='entry_description']"),
-        ('add', "//input[@id='accept']"),
+        ('category', Select("select#classification_name")),
+        ('name', Input("entry[name]")),
+        ('display_name', Input("entry[description]")),
+        ('add', Input("accept")),
         ('new', {
             version.LOWEST: "//img[@alt='New']",
             '5.3': "//span[@class='glyphicon glyphicon-plus']"})
@@ -119,16 +119,16 @@ tag_form = Form(
 
 zone_form = Form(
     fields=[
-        ("name", "//input[@id='name']"),
-        ("description", "//input[@id='description']"),
-        ("smartproxy_ip", "//input[@id='proxy_server_ip']"),
-        ("ntp_server_1", "//input[@id='ntp_server_1']"),
-        ("ntp_server_2", "//input[@id='ntp_server_2']"),
-        ("ntp_server_3", "//input[@id='ntp_server_3']"),
-        ("max_scans", Select("//*[@id='max_scans']")),
-        ("user", "//input[@id='userid']"),
-        ("password", "//input[@id='password']"),
-        ("verify", "//input[@id='verify']"),
+        ("name", Input("name")),
+        ("description", Input("description")),
+        ("smartproxy_ip", Input("proxy_server_ip")),
+        ("ntp_server_1", Input("ntp_server_1")),
+        ("ntp_server_2", Input("ntp_server_2")),
+        ("ntp_server_3", Input("ntp_server_3")),
+        ("max_scans", Select("select#max_scans")),
+        ("user", Input("userid")),
+        ("password", Input("password")),
+        ("verify", Input("verify")),
     ])
 
 
@@ -624,10 +624,10 @@ class BasicInformation(Updateable, Pretty):
     """
     basic_information = Form(
         fields=[
-            ('company_name', "//input[@id='server_company']"),
-            ('appliance_name', "//input[@id='server_name']"),
-            ('appliance_zone', Select("//select[@id='server_zone']")),
-            ('time_zone', Select("//select[@id='server_timezone']")),
+            ('company_name', Input("server_company")),
+            ('appliance_name', Input("server_name")),
+            ('appliance_zone', Select("select#server_zone")),
+            ('time_zone', Select("select#server_timezone")),
         ]
     )
     pretty_attrs = ['company_name', 'appliance_name', 'appliance_zone', 'time_zone']
@@ -690,16 +690,16 @@ class SMTPSettings(Updateable):
     """
     smtp_settings = Form(
         fields=[
-            ('host', "//input[@id='smtp_host']"),
-            ('port', "//input[@id='smtp_port']"),
-            ('domain', "//input[@id='smtp_domain']"),
-            ('start_tls', "//input[@id='smtp_enable_starttls_auto']"),
-            ('ssl_verify', Select("//select[@id='smtp_openssl_verify_mode']")),
-            ('auth', Select("//select[@id='smtp_authentication']")),
-            ('username', "//input[@id='smtp_user_name']"),
-            ('password', "//input[@id='smtp_password']"),
-            ('from_email', "//input[@id='smtp_from']"),
-            ('to_email', "//input[@id='smtp_test_to']"),
+            ('host', Input("smtp_host")),
+            ('port', Input("smtp_port")),
+            ('domain', Input("smtp_domain")),
+            ('start_tls', Input("smtp_enable_starttls_auto")),
+            ('ssl_verify', Select("select#smtp_openssl_verify_mode")),
+            ('auth', Select("select#smtp_authentication")),
+            ('username', Input("smtp_user_name")),
+            ('password', Input("smtp_password")),
+            ('from_email', Input("smtp_from")),
+            ('to_email', Input("smtp_test_to")),
         ]
     )
 
@@ -750,8 +750,8 @@ class SMTPSettings(Updateable):
 
 class AuthSetting(Updateable, Pretty):
     form = Form(fields=[
-        ("timeout_h", Select("//select[@id='session_timeout_hours']")),
-        ("timeout_m", Select("//select[@id='session_timeout_mins']")),
+        ("timeout_h", Select("select#session_timeout_hours")),
+        ("timeout_m", Select("select#session_timeout_mins")),
     ])
 
     @classmethod
@@ -780,9 +780,9 @@ class DatabaseAuthSetting(AuthSetting):
     """
 
     form = Form(fields=[
-        ("timeout_h", Select("//select[@id='session_timeout_hours']")),
-        ("timeout_m", Select("//select[@id='session_timeout_mins']")),
-        ("auth_mode", Select("//select[@id='authentication_mode']"))
+        ("timeout_h", Select("select#session_timeout_hours")),
+        ("timeout_m", Select("select#session_timeout_mins")),
+        ("auth_mode", Select("select#authentication_mode"))
     ])
     pretty_attrs = ['timeout_h', 'timeout_m']
 
@@ -852,12 +852,12 @@ class AmazonAuthSetting(AuthSetting):
     """
 
     form = Form(fields=[
-        ("timeout_h", Select("//select[@id='session_timeout_hours']")),
-        ("timeout_m", Select("//select[@id='session_timeout_mins']")),
-        ("auth_mode", Select("//select[@id='authentication_mode']")),
-        ("access_key", "//input[@id='authentication_amazon_key']"),
-        ("secret_key", "//input[@id='authentication_amazon_secret']"),
-        ("get_groups", "//input[@id='amazon_role']"),
+        ("timeout_h", Select("select#session_timeout_hours")),
+        ("timeout_m", Select("select#session_timeout_mins")),
+        ("auth_mode", Select("select#authentication_mode")),
+        ("access_key", Input("authentication_amazon_key")),
+        ("secret_key", Input("authentication_amazon_secret")),
+        ("get_groups", Input("amazon_role")),
     ])
     pretty_attrs = ['access_key', 'secret_key', 'get_groups', 'timeout_h', 'timeout_m']
 
@@ -902,21 +902,21 @@ class LDAPAuthSetting(AuthSetting):
 
     """
     form = Form(fields=[
-        ("timeout_h", Select("//select[@id='session_timeout_hours']")),
-        ("timeout_m", Select("//select[@id='session_timeout_mins']")),
-        ("auth_mode", Select("//select[@id='authentication_mode']")),
-        ("ldaphost_1", "//input[@id='authentication_ldaphost_1']"),
-        ("ldaphost_2", "//input[@id='authentication_ldaphost_2']"),
-        ("ldaphost_3", "//input[@id='authentication_ldaphost_3']"),
-        ("port", "//input[@id='authentication_ldapport']"),
-        ("user_type", Select("//select[@id='authentication_user_type']")),
-        ("user_suffix", "//input[@id='authentication_user_suffix']"),
-        ("get_groups", "//input[@id='ldap_role']"),
-        ("get_direct_groups", "//input[@id='get_direct_groups']"),
-        ("follow_referrals", "//input[@id='follow_referrals']"),
-        ("base_dn", "//input[@id='authentication_basedn']"),
-        ("bind_dn", "//input[@id='authentication_bind_dn']"),
-        ("bind_password", "//input[@id='authentication_bind_pwd']"),
+        ("timeout_h", Select("select#session_timeout_hours")),
+        ("timeout_m", Select("select#session_timeout_mins")),
+        ("auth_mode", Select("select#authentication_mode")),
+        ("ldaphost_1", Input("authentication_ldaphost_1")),
+        ("ldaphost_2", Input("authentication_ldaphost_2")),
+        ("ldaphost_3", Input("authentication_ldaphost_3")),
+        ("port", Input("authentication_ldapport")),
+        ("user_type", Select("select#authentication_user_type")),
+        ("user_suffix", Input("authentication_user_suffix")),
+        ("get_groups", Input("ldap_role")),
+        ("get_direct_groups", Input("get_direct_groups")),
+        ("follow_referrals", Input("follow_referrals")),
+        ("base_dn", Input("authentication_basedn")),
+        ("bind_dn", Input("authentication_bind_dn")),
+        ("bind_password", Input("authentication_bind_pwd")),
     ])
 
     AUTH_MODE = "LDAP"
@@ -1036,22 +1036,22 @@ class Schedule(Pretty):
            "Monthly": "timer_months"}
 
     form = Form(fields=[
-        ("name", "//input[@id='name']"),
-        ("description", "//input[@id='description']"),
-        ("active", "//input[@id='enabled']"),
-        ("name", "//input[@id='name']"),
-        ("action", Select("//select[@id='action_typ']")),
-        ("filter_type", Select("//select[@id='filter_typ']")),
-        ("filter_value", Select("//select[@id='filter_value']")),
-        ("timer_type", Select("//select[@id='timer_typ']")),
-        ("timer_hours", Select("//select[@id='timer_hours']")),
-        ("timer_days", Select("//select[@id='timer_days']")),
-        ("timer_weeks", Select("//select[@id='timer_weekss']")),    # Not a typo!
-        ("timer_months", Select("//select[@id='timer_months']")),
-        ("time_zone", Select("//select[@id='time_zone']")),
+        ("name", Input("name")),
+        ("description", Input("description")),
+        ("active", Input("enabled")),
+        ("name", Input("name")),
+        ("action", Select("select#action_typ")),
+        ("filter_type", Select("select#filter_typ")),
+        ("filter_value", Select("select#filter_value")),
+        ("timer_type", Select("select#timer_typ")),
+        ("timer_hours", Select("select#timer_hours")),
+        ("timer_days", Select("select#timer_days")),
+        ("timer_weeks", Select("select#timer_weekss")),    # Not a typo!
+        ("timer_months", Select("select#timer_months")),
+        ("time_zone", Select("select#time_zone")),
         ("start_date", Calendar("miq_date_1")),
-        ("start_hour", Select("//select[@id='start_hour']")),
-        ("start_min", Select("//select[@id='start_min']")),
+        ("start_hour", Select("select#start_hour")),
+        ("start_min", Select("select#start_min")),
     ])
 
     pretty_attrs = ['name', 'description', 'run_type', 'run_every',
@@ -1263,24 +1263,24 @@ class DatabaseBackupSchedule(Schedule):
 
     """
     form = Form(fields=[
-        ("name", "//input[@id='name']"),
-        ("description", "//input[@id='description']"),
-        ("active", "//input[@id='enabled']"),
-        ("action", Select("//select[@id='action_typ']")),
-        ("log_protocol", Select("//select[@id='log_protocol']")),
-        ("uri", "//input[@id='uri']"),
-        ("log_userid", "//input[@id='log_userid']"),
-        ("log_password", "//input[@id='log_password']"),
-        ("log_verify", "//input[@id='log_verify']"),
-        ("timer_type", Select("//select[@id='timer_typ']")),
-        ("timer_hours", Select("//select[@id='timer_hours']")),
-        ("timer_days", Select("//select[@id='timer_days']")),
-        ("timer_weeks", Select("//select[@id='timer_weekss']")),    # Not a typo!
-        ("timer_months", Select("//select[@id='timer_months']")),
-        ("time_zone", Select("//select[@id='time_zone']")),
+        ("name", Input("name")),
+        ("description", Input("description")),
+        ("active", Input("enabled")),
+        ("action", Select("select#action_typ")),
+        ("log_protocol", Select("select#log_protocol")),
+        ("uri", Input("uri")),
+        ("log_userid", Input("log_userid")),
+        ("log_password", Input("log_password")),
+        ("log_verify", Input("log_verify")),
+        ("timer_type", Select("select#timer_typ")),
+        ("timer_hours", Select("select#timer_hours")),
+        ("timer_days", Select("select#timer_days")),
+        ("timer_weeks", Select("select#timer_weekss")),    # Not a typo!
+        ("timer_months", Select("select#timer_months")),
+        ("time_zone", Select("select#time_zone")),
         ("start_date", Calendar("miq_date_1")),
-        ("start_hour", Select("//select[@id='start_hour']")),
-        ("start_min", Select("//select[@id='start_min']"))
+        ("start_hour", Select("select#start_hour")),
+        ("start_min", Select("select#start_min"))
     ])
 
     def __init__(self,
