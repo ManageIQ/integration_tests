@@ -67,11 +67,11 @@ server_roles = Form(
         ('rhn_mirror', Input("server_roles_rhn_mirror")),
         ('database_synchronization', Input("server_roles_database_synchronization")),
         # STORAGE OPTIONS
-        ("storage_metrics_processor", "input#server_roles_storage_metrics_processor"),
-        ("storage_metrics_collector", "input#server_roles_storage_metrics_collector"),
-        ("storage_metrics_coordinator", "input#server_roles_storage_metrics_coordinator"),
-        ("storage_inventory", "input#server_roles_storage_inventory"),
-        ("vmdb_storage_bridge", "input#server_roles_vmdb_storage_bridge"),
+        ("storage_metrics_processor", Input("server_roles_storage_metrics_processor")),
+        ("storage_metrics_collector", Input("server_roles_storage_metrics_collector")),
+        ("storage_metrics_coordinator", Input("server_roles_storage_metrics_coordinator")),
+        ("storage_inventory", Input("server_roles_storage_inventory")),
+        ("vmdb_storage_bridge", Input("server_roles_vmdb_storage_bridge")),
 
     ]
 )
@@ -461,9 +461,9 @@ class ServerLogDepot(Pretty):
         server_collect_logs = Form(
             fields=[
                 ("type", Select("select#log_protocol")),
-                ("uri", "input#uri"),
-                ("user", "input#log_userid"),
-                ("password", MultiFill("input#log_password", "input#log_verify")),
+                ("uri", Input("uri")),
+                ("user", Input("log_userid")),
+                ("password", MultiFill(Input("log_password"), Input("log_verify"))),
             ]
         )
 
@@ -815,7 +815,7 @@ class ExternalAuthSetting(AuthSetting):
         ("timeout_h", Select("select#session_timeout_hours")),
         ("timeout_m", Select("select#session_timeout_mins")),
         ("auth_mode", Select("select#authentication_mode")),
-        ("get_groups", "input#httpd_role"),
+        ("get_groups", Input("httpd_role")),
     ])
     pretty_attrs = ['timeout_h', 'timeout_m', 'get_groups']
 
