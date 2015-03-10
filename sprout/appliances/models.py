@@ -489,19 +489,23 @@ class Appliance(MetadataMixin):
         return cls.objects.filter(appliance_pool=None, ready=True)
 
     @classmethod
-    def give_to_pool(cls, pool):
+    def give_to_pool(cls, pool, custom_limit=None):
+        """Give appliances from shepherd to the pool where the maximum count is specified by pool
+        or you can specify a custom limit
+        """
         from appliances.tasks import appliance_power_on
+        limit = custom_limit if custom_limit is not None else pool.total_count
         appliances = []
         with transaction.atomic():
             for template in pool.possible_templates:
                 for appliance in cls.unassigned().filter(
-                        template=template).all()[:pool.total_count - len(appliances)]:
+                        template=template).all()[:limit - len(appliances)]:
                     appliance.appliance_pool = pool
                     appliance.save()
                     appliance.set_status("Given to pool {}".format(pool.id))
                     appliance_power_on.delay(appliance.id)
                     appliances.append(appliance)
-                if len(appliances) == pool.total_count:
+                if len(appliances) == limit:
                     break
         return len(appliances)
 

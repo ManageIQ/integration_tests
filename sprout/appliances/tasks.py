@@ -437,17 +437,24 @@ def process_delayed_provision_tasks(self):
     Goes one task by one and when some of them can be provisioned, it starts the provisioning and
     then deletes the task.
     """
-    for task in DelayedProvisionTask.objects.all():
-        tpls = task.pool.possible_provisioning_templates
-        if task.provider_to_avoid is not None:
-            filtered_tpls = filter(lambda tpl: tpl.provider != task.provider_to_avoid, tpls)
-            if filtered_tpls:
-                # There are other providers to provision on, so try one of them
-                tpls = filtered_tpls
-            # If there is no other provider to provision on, we will use the original list.
-            # This will cause additional rejects until the provider quota is met
-        if tpls:
-            clone_template_to_pool(tpls[0].id, task.pool.id, task.lease_time)
+    for task in DelayedProvisionTask.objects.order_by("id"):
+        # Try retrieve from shepherd
+        appliances_given = Appliance.give_to_pool(task.pool, 1)
+        if appliances_given == 0:
+            # No free appliance in shepherd, so do it on our own
+            tpls = task.pool.possible_provisioning_templates
+            if task.provider_to_avoid is not None:
+                filtered_tpls = filter(lambda tpl: tpl.provider != task.provider_to_avoid, tpls)
+                if filtered_tpls:
+                    # There are other providers to provision on, so try one of them
+                    tpls = filtered_tpls
+                # If there is no other provider to provision on, we will use the original list.
+                # This will cause additional rejects until the provider quota is met
+            if tpls:
+                clone_template_to_pool(tpls[0].id, task.pool.id, task.lease_time)
+                task.delete()
+        else:
+            # There was a free appliance in shepherd, so we took it and we don't need this task more
             task.delete()
 
 
