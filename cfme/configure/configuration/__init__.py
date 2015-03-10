@@ -1049,7 +1049,9 @@ class Schedule(Pretty):
         ("timer_weeks", Select("select#timer_weekss")),    # Not a typo!
         ("timer_months", Select("select#timer_months")),
         ("time_zone", Select("select#time_zone")),
-        ("start_date", Calendar("miq_date_1")),
+        ("start_date", {
+            "5.3": Calendar("miq_date_1"),
+            "5.4": Calendar("miq_angular_date_1")}),
         ("start_hour", Select("select#start_hour")),
         ("start_min", Select("select#start_min")),
     ])
@@ -1278,7 +1280,9 @@ class DatabaseBackupSchedule(Schedule):
         ("timer_weeks", Select("select#timer_weekss")),    # Not a typo!
         ("timer_months", Select("select#timer_months")),
         ("time_zone", Select("select#time_zone")),
-        ("start_date", Calendar("miq_date_1")),
+        ("start_date", {
+            "5.3": Calendar("miq_date_1"),
+            "5.4": Calendar("miq_angular_date_1")}),
         ("start_hour", Select("select#start_hour")),
         ("start_min", Select("select#start_min"))
     ])
