@@ -19,6 +19,7 @@ from utils.wait import wait_for, TimedOutError
 from utils import version, conf, lazycache
 from utils.pretty import Pretty
 from utils.signals import fire, on_signal
+from utils.version import current_version
 
 
 @on_signal("server_details_changed")
@@ -649,7 +650,7 @@ class BasicInformation(Updateable, Pretty):
         sel.force_navigate("cfg_settings_currentserver_server")
         fill(self.basic_information, self.details)
         # Workaround for issue with form_button staying dimmed.
-        if self.details["appliance_zone"] is not None:
+        if self.details["appliance_zone"] is not None and current_version() < "5.3":
             sel.browser().execute_script(
                 "$j.ajax({type: 'POST', url: '/ops/settings_form_field_changed/server',"
                 " data: {'server_zone':'%s'}})" % (self.details["appliance_zone"]))
