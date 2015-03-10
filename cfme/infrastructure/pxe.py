@@ -9,7 +9,7 @@ import cfme.web_ui.accordion as acc
 import cfme.web_ui.flash as flash
 from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table, form_buttons
+from cfme.web_ui import fill, InfoBlock, Region, Form, ScriptBox, Select, Table, form_buttons, Input
 from cfme.web_ui import paginator as pg
 from selenium.common.exceptions import NoSuchElementException
 import utils.conf as conf
@@ -29,18 +29,18 @@ pxe_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'de
 
 pxe_properties_form = Form(
     fields=[
-        ('name_text', "//input[@id='name']"),
+        ('name_text', Input('name')),
         ('log_protocol', Select("//select[@id='log_protocol']")),
-        ('uri_text', "//input[@id='uri']"),
-        ('userid_text', "//input[@id='log_userid']"),
-        ('password_text', "//input[@id='log_password']"),
-        ('verify_text', "//input[@id='log_verify']"),
+        ('uri_text', Input('uri')),
+        ('userid_text', Input('log_userid')),
+        ('password_text', Input('log_password')),
+        ('verify_text', Input('log_verify')),
         ('validate_btn', "//a[@id='val']"),
-        ('access_url_text', "//input[@id='access_url']"),
-        ('pxe_dir_text', "//input[@id='pxe_directory']"),
-        ('windows_dir_text', "//input[@id='windows_images_directory']"),
-        ('customize_dir_text', "//input[@id='customization_directory']"),
-        ('pxe_menu_text', "//input[@id='pxemenu_0']"),
+        ('access_url_text', Input('access_url')),
+        ('pxe_dir_text', Input('pxe_directory')),
+        ('windows_dir_text', Input('windows_images_directory')),
+        ('customize_dir_text', Input('customization_directory')),
+        ('pxe_menu_text', Input('pxemenu_0')),
     ])
 
 pxe_image_type_form = Form(
@@ -53,8 +53,8 @@ template_details_page = Region(infoblock_type='form')  # infoblock shoudl be typ
 
 template_properties_form = Form(
     fields=[
-        ('name_text', "//input[@id='name']"),
-        ('description_text', "//input[@id='description']"),
+        ('name_text', Input('name')),
+        ('description_text', Input('description')),
         ('image_type', Select('//select[@id="img_typ"]')),
         ('script_type', Select('//select[@id="typ"]')),
         ('script_data', ScriptBox("miqEditor", ta_locator="//textarea[@id='script_data']"))
@@ -65,7 +65,7 @@ image_table = Table('//div[@id="records_div"]//table')
 
 image_properties_form = Form(
     fields=[
-        ('name_text', "//input[@id='name']"),
+        ('name_text', Input('name')),
         ('provision_type', Select('//select[@id="provision_type"]'))
     ])
 
