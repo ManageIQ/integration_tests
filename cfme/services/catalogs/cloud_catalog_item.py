@@ -9,7 +9,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from cfme.provisioning import provisioning_form as request_form
-from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash, form_buttons
+from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash, form_buttons, Input
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
@@ -32,9 +32,9 @@ template_select_form = Form(
 # Forms
 basic_info_form = Form(
     fields=[
-        ('name_text', "//input[@id='name']"),
-        ('description_text', "//input[@id='description']"),
-        ('display_checkbox', "//input[@id='display']"),
+        ('name_text', Input("name")),
+        ('description_text', Input("description")),
+        ('display_checkbox', Input("display")),
         ('select_catalog', Select("//select[@id='catalog_id']")),
         ('select_dialog', Select("//select[@id='dialog_id']")),
         ('edit_button', form_buttons.save)
