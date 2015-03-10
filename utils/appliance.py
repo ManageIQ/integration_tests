@@ -1340,7 +1340,10 @@ class IPAppliance(object):
         return db.db_yamls(self.db, self.guid)
 
     def get_yaml_config(self, config_name):
-        return self.db_yamls[config_name]
+        return db.get_yaml_config(config_name, self.db)
+
+    def set_yaml_config(self, config_name, data_dict):
+        return db.set_yaml_config(config_name, data_dict, self.address)
 
     def install_coverage(self):
         self._coverage_install_simplecov()

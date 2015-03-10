@@ -26,8 +26,10 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session", autouse=True)
 def set_session_timeout():
-    if store.current_appliance.get_yaml_config("vmdb")["session"]["timeout"] < 80000:
-        AuthSetting.set_session_timeout("24")
+    vmdb_config = store.current_appliance.get_yaml_config("vmdb")
+    if vmdb_config["session"]["timeout"] < 86400:
+        vmdb_config["session"]["timeout"] = 86400
+        store.current_appliance.set_yaml_config("vmdb", vmdb_config)
 
 
 def _pytest_plugins_generator(*extension_pkgs):
