@@ -2,8 +2,9 @@
 import re
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import CheckboxTable, Form, Region, Select, fill, flash, form_buttons
+from cfme.web_ui import CheckboxTable, Form, Input, Region, Select, fill, flash, form_buttons
 from cfme.configure.configuration import nav  # noqa
+from utils import version
 
 
 """
@@ -55,15 +56,18 @@ update_buttons = Region(
 registration_form = Form(
     fields=[
         ("service", Select("//select[@id='register_to']")),
-        ("url", "//input[@id='server_url']"),
-        ("username", "//input[@id='customer_userid']"),
-        ("password", "//input[@id='customer_password']"),
-        ("repo_name", "//input[@id='repo_name']"),
-        ("organization", "//input[@id='customer_org']"),
-        ("use_proxy", "//input[@id='use_proxy']"),
-        ("proxy_url", "//input[@id='proxy_address']"),
-        ("proxy_username", "//input[@id='proxy_userid']"),
-        ("proxy_password", "//input[@id='proxy_password']"),
+        ("url", Input('server_url')),
+        ("repo_name", Input('repo_name')),
+        ("use_proxy", Input('use_proxy')),
+        ("proxy_url", Input('proxy_address')),
+        ("proxy_username", Input('proxy_userid')),
+        ("proxy_password", Input('proxy_password')),
+        ("proxy_password_verify", Input('proxy_password2')),  # 5.4+
+        ("username", Input('customer_userid')),
+        ("password", Input('customer_password')),
+        ("password_verify", Input('customer_password2')),  # 5.4+
+        ("organization_sat5", Input('customer_org')),
+        ("organization_sat6", Select("//select[@id='customer_org']"))
     ]
 )
 
@@ -84,20 +88,25 @@ service_types = {
 }
 
 
-appliances_table = CheckboxTable("//div[@id='form_div']/table[@class='style3']")
+appliances_table = version.pick({
+    version.LOWEST: CheckboxTable("//div[@id='form_div']/table[@class='style3']"),
+    '5.4': CheckboxTable("//div[@id='form_div']/table")
+})
 
 
 def update_registration(service,
                         url,
                         username,
                         password,
+                        password_verify=None,
                         repo_name=None,
                         organization=None,
                         use_proxy=False,
                         proxy_url=None,
                         proxy_username=None,
                         proxy_password=None,
-                        validate=False,
+                        proxy_password_verify=None,
+                        validate=True,
                         cancel=False,
                         set_default_rhsm_address=False,
                         set_default_repository=False):
@@ -108,6 +117,8 @@ def update_registration(service,
         url: Service server URL address.
         username: Username to use for registration.
         password: Password to use for registration.
+        password_verify: 2nd entry of password for verification.
+                         Same as 'password' if None.
         repo_or_channel: Repository/channel to enable.
         organization: Organization (sat5/sat6 only).
         use_proxy: `True` if proxy should be used, `False` otherwise
@@ -115,17 +126,46 @@ def update_registration(service,
         proxy_url: Address of the proxy server.
         proxy_username: Username for the proxy server.
         proxy_password: Password for the proxy server.
+        proxy_password_verify: 2nd entry of proxy server password for verification.
+                               Same as 'proxy_password' if None.
         validate: Click the Validate button and check the
-                  flash message for errors if `True` (default `False`)
+                  flash message for errors if `True` (default `True`)
         cancel: Click the Cancel button if `True` or the Save button
                 if `False` (default `False`)
         set_default_rhsm_address: Click the Default button connected to
                                   the RHSM (only) address if `True`
         set_default_repository: Click the Default button connected to
                                 the repo/channel if `True`
+
+    Warning:
+        'password_verify' and 'proxy_password_verify' are available in 5.4+ only.
+
+    Note:
+        With satellite 6, it is necessary to validate credentials to obtain
+        available organizations from the server.
+        With satellite 5, 'validate' parameter is ignored because there is
+        no validation button available.
     """
     assert service in service_types, "Unknown service type '{}'".format(service)
     service_value = service_types[service]
+
+    # In 5.4+, we have verification inputs as well
+    if version.current_version() >= '5.4':
+        password_verify = password_verify or password
+        proxy_password_verify = proxy_password_verify or proxy_password
+    # Otherwise, verification inputs are ignored df even if specified
+    else:
+        password_verify = None
+        proxy_password_verify = None
+
+    # Sat6 organization can be selected only after successful validation
+    # while Sat5 organization is selected normally
+    if service == 'sat6':
+        organization_sat5 = None
+        organization_sat6 = organization
+    else:
+        organization_sat5 = organization
+        organization_sat6 = None
 
     sel.force_navigate("cfg_settings_region_red_hat_updates")
     sel.click(update_buttons.edit_registration)
@@ -134,12 +174,14 @@ def update_registration(service,
         url=url,
         username=username,
         password=password,
+        password_verify=password_verify,
         repo_name=repo_name,
-        organization=organization,
+        organization_sat5=organization_sat5,
         use_proxy=use_proxy,
         proxy_url=proxy_url,
         proxy_username=proxy_username,
-        proxy_password=proxy_password
+        proxy_password=proxy_password,
+        proxy_password_verify=proxy_password_verify
     )
 
     fill(registration_form, details)
@@ -150,10 +192,13 @@ def update_registration(service,
     if set_default_repository:
         sel.click(registration_buttons.repo_default)
 
-    if validate:
+    if validate and service != 'sat5':
         sel.click(form_buttons.validate_short)
         flash.assert_no_errors()
         flash.dismiss()
+
+    if organization_sat6:
+        sel.select(registration_form.locators['organization_sat6'], organization_sat6)
 
     if cancel:
         form_buttons.cancel()
@@ -212,7 +257,7 @@ def are_registered(*appliance_names):
         appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
-        if row.update_status.text == 'Not Registered':
+        if row.update_status.text.lower() == 'not registered':
             return False
     return True
 
@@ -224,7 +269,7 @@ def are_subscribed(*appliance_names):
         appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
-        if row.update_status.text in {'Not Registered', 'Unsubscribed'}:
+        if row.update_status.text.lower() in {'not registered', 'unsubscribed'}:
             return False
     return True
 
@@ -261,7 +306,7 @@ def platform_updates_available(*appliance_names):
         appliance_names: Names of appliances to check; will check all if empty
     """
     for row in get_appliance_rows(*appliance_names):
-        if row.platform_updates_available.text != 'Yes':
+        if row.platform_updates_available.text.lower() != 'yes':
             return False
     return True
 

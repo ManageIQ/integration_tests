@@ -21,6 +21,10 @@ def get_stream(ver):
         raise Exception("Unrecognized version '{}' - no matching stream group found".format(ver))
 
 
+def current_stream():
+    return get_stream(store.current_appliance.version)
+
+
 def get_version(obj):
     """Return a LooseVersion based on obj.  For CFME, 'master' version
        means always the latest (compares as greater than any other
