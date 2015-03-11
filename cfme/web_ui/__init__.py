@@ -1772,6 +1772,11 @@ class InfoBlock(Pretty):
             (
                 '//*[p[@class="legend"][contains(normalize-space(.), "{}")] and table/tbody/tr/td['
                 'contains(@class, "key")]]'.format(self.title)
+            ),
+            # Newer Form type (master.20150311020845_547fd06 onwards)
+            (
+                '//*[h3[contains(normalize-space(.), "{}")] and table/tbody/tr/td['
+                'contains(@class, "key")]]'.format(self.title)
             )
             # The root element must contain table element because listaccordions were caught by the
             # locator. It used to be fieldset but it seems it can be really anything
