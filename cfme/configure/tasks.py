@@ -44,8 +44,10 @@ filter_form = Form(
     ]
 )
 
+# REVIEW: I expect masterToggle is already wrapped up in mfalesni's
+# Input locator PR
 tasks_table = CheckboxTable(
-    table_locator='//div[@id="records_div"]/table[@class="style3"]',
+    table_locator='//div[@id="records_div"]/table',
     header_checkbox_locator="//div[@id='records_div']//input[@id='masterToggle']"
 )
 

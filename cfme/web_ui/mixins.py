@@ -7,7 +7,7 @@ tag_form = Form(
         ('tag', Select('//select[@id="tag_add"]'))
     ])
 
-tag_table = Table("//div[@id='assignments_div']//table[@class='style3']")
+tag_table = Table("//div[@id='assignments_div']/table")
 
 
 def add_tag(tag, single_value=False):

@@ -613,7 +613,10 @@ class InstanceFieldsRow(pretty.Pretty):
     Args:
         row_id: Sequential id of the row (begins with 0)
     """
-    table = Table("//div[@id='form_div']//table[@class='style3']")
+    # REVIEW: This locator seems wrong. The instance field table in 53z and
+    # upstream appears to be a SplitTable under div#inst_grid_div
+    # On an instance's page, div#form_div doesn't seem to exist.
+    table = Table("//div[@id='form_div']//table")
     columns = ("value", "on_entry", "on_exit", "on_error", "collect")
     fields = (
         "inst_value_{}", "inst_on_entry_{}", "inst_on_exit_{}",
@@ -656,7 +659,7 @@ class InstanceFields(object):
         Requires to be on the page
         """
         names = []
-        for cell in sel.elements("//div[@id='form_div']//table[@class='style3']//td[img]"):
+        for cell in sel.elements(".//td[img]", root=InstanceFieldsRow.table):
             # The received text is something like u'  (blabla)' so we extract 'blabla'
             sel.move_to_element(cell)  # This is required in order to correctly read the content
             names.append(re.sub(r"^[^(]*\(([^)]+)\)[^)]*$", "\\1", sel.text(cell).encode("utf-8")))

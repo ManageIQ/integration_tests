@@ -977,10 +977,11 @@ def table_in_object(table_title):
         table_title: Text in `p` element preceeding the table
     Returns: XPath locator for the desired table.
     """
+    # REVIEW: What uses this? I wasn't able to test it.
     # Description     paragraph with the text       following element    which is the table
     return (
         "//p[@class='legend' and normalize-space(text())='{}']"
-        "/following-sibling::*[1][@class='style3']").format(table_title)
+        "/following-sibling::table").format(table_title)
 
 
 @multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))

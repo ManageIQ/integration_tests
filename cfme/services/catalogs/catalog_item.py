@@ -14,7 +14,7 @@ policy_btn = partial(tb.select, "Policy")
 
 template_select_form = Form(
     fields=[
-        ('template_table', Table('//div[@id="prov_vm_div"]//table[@class="style3"]')),
+        ('template_table', Table('//div[@id="prov_vm_div"]/table')),
         ('add_button', form_buttons.add),
         ('cancel_button', form_buttons.cancel)
     ]

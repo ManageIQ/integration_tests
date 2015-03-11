@@ -16,7 +16,7 @@ from utils.update import Updateable
 details_page = Region(infoblock_type='detail')
 
 cfg_btn = partial(tb.select, 'Configuration')
-timeprofile_table = Table("//div[@id='main_div']//table[@class='style3']")
+timeprofile_table = Table("//div[@id='main_div']//table")
 
 
 nav.add_branch(

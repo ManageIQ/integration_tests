@@ -67,6 +67,7 @@ manage_policies_tree = CheckboxTree(
     }
 )
 
+# REVIEW: Need to find one of these, would love to have a div#id parent
 drift_table = CheckboxTable("//table[@class='style3']")
 
 host_add_btn = FormButton('Add this Host')
