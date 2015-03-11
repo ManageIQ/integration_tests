@@ -5,7 +5,7 @@ from functools import partial
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import Timer
 from cfme.web_ui import (EmailSelectForm, Form, CheckboxTable, Select, ShowingInputs, accordion,
-    fill, flash, toolbar, form_buttons)
+    fill, flash, toolbar, form_buttons, Input)
 from cfme.web_ui.menu import nav
 from utils.db import cfmedb
 from utils.update import Updateable
@@ -66,9 +66,9 @@ class Schedule(Updateable, Pretty):
         send_email: If specifies, turns on e-mail sending. Can be string, or list or set.
     """
     form = Form(fields=[
-        ("name", "//input[@id='name']"),
-        ("description", "//input[@id='description']"),
-        ("active", "//input[@id='enabled']"),
+        ("name", Input("name")),
+        ("description", Input("description")),
+        ("active", Input("enabled")),
         ("filter", ShowingInputs(
             Select("//select[@id='filter_typ']"),
             Select("//select[@id='subfilter_typ']"),
@@ -76,7 +76,7 @@ class Schedule(Updateable, Pretty):
             min_values=3
         )),
         ("timer", Timer()),
-        ("send_email", "//input[@id='send_email_cb']"),
+        ("send_email", Input("send_email_cb")),
         ("emails", EmailSelectForm())
     ])
 

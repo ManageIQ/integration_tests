@@ -3,7 +3,7 @@
 """
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import DashboardWidgetSelector
-from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar
+from cfme.web_ui import Form, accordion, fill, flash, form_buttons, toolbar, Input
 from cfme.web_ui.menu import nav
 from utils import version
 from utils.update import Updateable
@@ -63,9 +63,9 @@ nav.add_branch(
 
 class Dashboard(Updateable, Pretty):
     form = Form(fields=[
-        ("name", "//input[@id='name']"),
-        ("title", "//input[@id='description']"),
-        ("locked", "//input[@id='locked']"),
+        ("name", Input("name")),
+        ("title", Input("description")),
+        ("locked", Input("locked")),
         ("widgets", DashboardWidgetSelector("//div[@id='form_widgets_div']")),
     ])
     pretty_attrs = ['name', 'group', 'title', 'widgets']
@@ -105,8 +105,8 @@ class Dashboard(Updateable, Pretty):
 
 class DefaultDashboard(Updateable, Pretty):
     form = Form(fields=[
-        ("title", "//input[@id='description']"),
-        ("locked", "//input[@id='locked']"),
+        ("title", Input("description")),
+        ("locked", Input("locked")),
         ("widgets", DashboardWidgetSelector("//div[@id='form_widgets_div']")),
     ])
     pretty_attrs = ['title', 'widgets']
