@@ -58,6 +58,7 @@ def shepherd(request):
 
 def versions_for_group(request):
     group_id = request.POST.get("stream")
+    latest_version = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     if group_id == "<None>":
         versions = []
@@ -71,12 +72,15 @@ def versions_for_group(request):
             versions = Template.get_versions(
                 template_group=group, ready=True, usable=True, exists=True,
                 preconfigured=preconfigured)
+            if versions:
+                latest_version = versions[0]
 
     return render(request, 'appliances/_versions.html', locals())
 
 
 def date_for_group_and_version(request):
     group_id = request.POST.get("stream")
+    latest_date = None
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     if group_id == "<None>":
         dates = []
@@ -103,6 +107,8 @@ def date_for_group_and_version(request):
             else:
                 filters["version"] = version
             dates = Template.get_dates(**filters)
+            if dates:
+                latest_date = dates[0]
     return render(request, 'appliances/_dates.html', locals())
 
 
