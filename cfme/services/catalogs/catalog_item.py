@@ -3,7 +3,7 @@ from functools import partial
 from collections import OrderedDict
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
-    flash, form_buttons, menu, tabstrip, DHTMLSelect
+    flash, form_buttons, menu, tabstrip, DHTMLSelect, Input
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -23,9 +23,9 @@ template_select_form = Form(
 # Forms
 basic_info_form = Form(
     fields=[
-        ('name_text', "//input[@id='name']"),
-        ('description_text', "//input[@id='description']"),
-        ('display_checkbox', "//input[@id='display']"),
+        ('name_text', Input("name")),
+        ('description_text', Input("description")),
+        ('display_checkbox', Input("display")),
         ('select_catalog', Select("//select[@id='catalog_id']")),
         ('select_dialog', Select("//select[@id='dialog_id']")),
         ('edit_button', form_buttons.save)
@@ -48,20 +48,20 @@ request_form = tabstrip.TabStripForm(
             ('catalog_name', Table('//div[@id="prov_vm_div"]/table')),
             ('vm_name', '//input[@name="service__vm_name"]'),
             ('provision_type', Select('//select[@id="service__provision_type"]')),
-            ('linked_clone', '//input[@id="service__linked_clone"]'),
+            ('linked_clone', Input("service__linked_clone")),
             ('pxe_server', Select('//select[@id="service__pxe_server_id"]')),
             ('pxe_image', Table('//div[@id="prov_pxe_img_div"]/table')),
             ('iso_file', Table('//div[@id="prov_iso_img_div"]/table')),
         ]),
         ('Environment', [
-            ('automatic_placement', '//input[@id="environment__placement_auto"]'),
+            ('automatic_placement', Input("environment__placement_auto")),
             ('datacenter', Select('//select[@id="environment__placement_dc_name"]')),
             ('cluster', Select('//select[@id="environment__placement_cluster_name"]')),
             ('resource_pool', Select('//select[@id="environment__placement_rp_name"]')),
             ('folder', Select('//select[@id="environment__placement_folder_name"]')),
             ('host_filter', Select('//select[@id="environment__host_filter"]')),
             ('host_name', Table('//div[@id="prov_host_div"]/table')),
-            ('datastore_create', '//*[@id="environment__new_datastore_create"]'),
+            ('datastore_create', Input("environment__new_datastore_create")),
             ('datastore_filter', Select('//select[@id="environment__ds_filter"]')),
             ('datastore_name', Table('//div[@id="prov_ds_div"]/table')),
         ]),
@@ -70,10 +70,10 @@ request_form = tabstrip.TabStripForm(
             ('cores_per_socket', Select('//select[@id="hardware__cores_per_socket"]')),
             ('memory', Select('//select[@id="hardware__vm_memory"]')),
             ('disk_format', Radio('hardware__disk_format')),
-            ('vm_limit_cpu', '//input[@id="hardware__cpu_limit"]'),
-            ('vm_limit_memory', '//input[@id="hardware__memory_limit"]'),
-            ('vm_reserve_cpu', '//input[@id="hardware__cpu_reserve"]'),
-            ('vm_reserve_memory', '//input[@id="hardware__memory_reserve"]'),
+            ('vm_limit_cpu', Input("hardware__cpu_limit")),
+            ('vm_limit_memory', Input("hardware__memory_limit")),
+            ('vm_reserve_cpu', Input("hardware__cpu_reserve")),
+            ('vm_reserve_memory', Input("hardware__memory_reserve")),
         ]),
         ('Network', [
             ('vlan', Select('//select[@id="network__vlan"]')),
@@ -81,16 +81,16 @@ request_form = tabstrip.TabStripForm(
         ('Customize', [
             ('customize_type', Select('//select[@id="customize__sysprep_enabled"]')),
             ('specification_name', Table('//div[@id="prov_vc_div"]/table')),
-            ('linux_host_name', '//input[@id="customize__linux_host_name"]'),
-            ('linux_domain_name', '//input[@id="customize__linux_domain_name"]'),
-            ('dns_servers', '//input[@id="customize__dns_servers"]'),
-            ('dns_suffixes', '//input[@id="customize__dns_suffixes"]'),
+            ('linux_host_name', Input("customize__linux_host_name")),
+            ('linux_domain_name', Input("customize__linux_domain_name")),
+            ('dns_servers', Input("customize__dns_servers")),
+            ('dns_suffixes', Input("customize__dns_suffixes")),
             ('custom_template', Table('//div[@id="prov_template_div"]/table')),
-            ('root_password', '//input[@id="customize__root_password"]'),
-            ('vm_host_name', '//input[@id="customize__hostname"]'),
+            ('root_password', Input("customize__root_password")),
+            ('vm_host_name', Input("customize__hostname")),
         ]),
         ('Schedule', [
-            ('power_on_vm', "//input[@id='schedule__vm_auto_start']"),
+            ('power_on_vm', Input("schedule__vm_auto_start")),
             ('retirement', Select('//select[@id="schedule__retirement"]')),
             ('retirement_warning', Select('//select[@id="schedule__retirement_warn"]')),
         ])
@@ -106,18 +106,18 @@ resources_form = Form(
 
 button_group_form = Form(
     fields=[
-        ('btn_group_text', "//input[@id='name']"),
-        ('btn_group_hvr_text', "//input[@id='description']"),
+        ('btn_group_text', Input("name")),
+        ('btn_group_hvr_text', Input("description")),
         ('add_button', form_buttons.add)
     ])
 
 button_form = Form(
     fields=[
-        ('btn_text', "//input[@id='name']"),
-        ('btn_hvr_text', "//input[@id='description']"),
+        ('btn_text', Input("name")),
+        ('btn_hvr_text', Input("description")),
         ('select_dialog', Select("//select[@id='dialog_id']")),
         ('system_process', Select("//select[@id='instance_name']")),
-        ('request', "//input[@id='object_request']"),
+        ('request', Input("object_request")),
         ('add_button', form_buttons.add)
     ])
 

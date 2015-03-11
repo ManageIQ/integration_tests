@@ -3,7 +3,7 @@ from functools import partial
 
 from cfme import web_ui
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import accordion, flash, form_buttons, menu
+from cfme.web_ui import accordion, flash, form_buttons, menu, Input
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
@@ -18,8 +18,8 @@ item_multiselect = web_ui.MultiSelect(
     "//div[@id='column_lists']//a[contains(@href, 'button=left')]/img")
 
 form = web_ui.Form(
-    fields=[('name_text', "//input[@id='name']"),
-            ('description_text', "//input[@id='description']"),
+    fields=[('name_text', Input("name")),
+            ('description_text', Input("description")),
             ('button_multiselect', item_multiselect),
             ('add_button', form_buttons.add),
             ('save_button', form_buttons.save),
@@ -27,9 +27,9 @@ form = web_ui.Form(
 
 item_form = web_ui.Form(
     fields=[('type_select', "//select[@id='st_prov_type']"),
-            ('name_text', "//input[@id='name']"),
-            ('description_text', "//input[@id='description']"),
-            ('display_checkbox', "//input[@id='display']"),
+            ('name_text', Input("name")),
+            ('description_text', Input("description")),
+            ('display_checkbox', Input("display")),
             ('add_button', form_buttons.add)])
 
 
