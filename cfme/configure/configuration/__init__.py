@@ -132,10 +132,10 @@ zone_form = Form(
     ])
 
 
-records_table = Table("//div[@id='records_div']/table[@class='style3']")
-category_table = Table("//div[@id='settings_co_categories']//table[@class='style3']")
-classification_table = Table("//div[@id='classification_entries_div']//table[@class='style3']")
-zones_table = Table("//div[@id='settings_list']/table[@class='style3']")
+records_table = Table("//div[@id='records_div']/table")
+category_table = Table("//div[@id='settings_co_categories']//table")
+classification_table = Table("//div[@id='classification_entries_div']//table")
+zones_table = Table("//div[@id='settings_list']/table")
 
 
 def server_region():

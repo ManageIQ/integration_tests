@@ -12,8 +12,8 @@ from utils.pretty import Pretty
 accordion_tree = functools.partial(accordion.tree, "Service Dialogs")
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
-entry_table = Table("//div[@id='field_values_div']/form/fieldset/table[@class='style3']")
-text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table[@class='style1']")
+entry_table = Table("//div[@id='field_values_div']/form/fieldset/table")
+text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table")
 
 label_form = Form(fields=[
     ('label', Input("label")),

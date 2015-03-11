@@ -13,7 +13,7 @@ from utils.pretty import Pretty
 acc_tree = partial(accordion.tree, "Provisioning Dialogs")
 cfg_btn = partial(toolbar.select, "Configuration")
 
-dialog_table = SortTable("//div[@id='records_div']//table[contains(@class, 'style3')]")
+dialog_table = SortTable("//div[@id='records_div']/table")
 
 
 def get_dialog_name(o):
