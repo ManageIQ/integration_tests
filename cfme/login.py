@@ -13,7 +13,7 @@ from selenium.common.exceptions import NoSuchElementException, ElementNotVisible
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 from cfme import dashboard
-from cfme.web_ui import Region, Form, fill
+from cfme.web_ui import Region, Form, fill, Input
 from utils import conf
 from utils.browser import ensure_browser_open
 from utils.log import logger
@@ -35,16 +35,16 @@ class User(Pretty):
 page = Region(
     title="Dashboard",
     locators={
-        'username': '//input[@id="user_name"]',
-        'password': '//input[@id="user_password"]',
+        'username': Input("user_name"),
+        'password': Input("user_password"),
         'submit_button': '//a[@id="login"]|//button[normalize-space(.)="Login"]/..',
         # Login page has an abnormal flash div
         'flash': '//div[@id="flash_div"]',
         'logout': '//a[contains(@href, "/logout")]',
         'update_password': '//a[@title="Update Password"]',
         'back': '//a[@title="Back"]',
-        'user_new_password': '//input[@id="user_new_password"]',
-        'user_verify_password': '//input[@id="user_verify_password"]'
+        'user_new_password': Input("user_new_password"),
+        'user_verify_password': Input("user_verify_password")
     },
     identifying_loc='submit_button')
 
