@@ -8,7 +8,6 @@ from pkgutil import iter_modules
 
 import pytest
 
-from cfme.configure.configuration import AuthSetting
 import cfme.fixtures
 import fixtures
 import markers
