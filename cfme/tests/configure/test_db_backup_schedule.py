@@ -155,7 +155,8 @@ def test_db_backup_schedule(request, db_backup_data):
         'time_zone': "UTC",
         'start_date': dt,
         'start_hour': hour,
-        'start_min': minute
+        'start_min': minute,
+        'depot_name': randomness.generate_random_string(),
     }
 
     if db_backup_data.protocol_type == 'smb':
