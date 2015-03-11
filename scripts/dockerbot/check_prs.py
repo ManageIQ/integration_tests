@@ -97,7 +97,7 @@ def check_prs():
         numbers.append(pr['number'])
         check_pr(pr)
 
-    prs = tapi.pr.get(closed=False)['objects']
+    prs = tapi.pr.get(closed=False, limit=0)['objects']
     for pr in prs:
         if pr['number'] not in numbers:
             logger.info("PR {} closed".format(pr['number']))
