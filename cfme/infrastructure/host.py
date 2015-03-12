@@ -20,7 +20,7 @@ import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill, form_buttons,
-    paginator
+    paginator, Input
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui import listaccordion as list_acc
@@ -38,25 +38,25 @@ details_page = Region(infoblock_type='detail')
 
 properties_form = Form(
     fields=[
-        ('name_text', "//*[@id='name']"),
-        ('hostname_text', "//*[@id='hostname']"),
-        ('ipaddress_text', "//*[@id='ipaddress']"),
-        ('custom_ident_text', "//*[@id='custom_1']"),
+        ('name_text', Input("name")),
+        ('hostname_text', Input("hostname")),
+        ('ipaddress_text', Input("ipaddress")),
+        ('custom_ident_text', Input("custom")),
         ('host_platform', Select('//select[@id="user_assigned_os"]')),
-        ('ipmi_address_text', "//*[@id='ipmi_address']"),
-        ('mac_address_text', "//*[@id='mac_address']"),
+        ('ipmi_address_text', Input("ipmi_address")),
+        ('mac_address_text', Input("mac_address")),
     ])
 
 credential_form = Form(
     fields=[
         ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('default_principal', "//*[@id='default_userid']"),
-        ('default_secret', "//*[@id='default_password']"),
-        ('default_verify_secret', "//*[@id='default_verify']"),
+        ('default_principal', Input("default_userid")),
+        ('default_secret', Input("default_password")),
+        ('default_verify_secret', Input("default_verify")),
         ('ipmi_button', "//div[@id='auth_tabs']/ul/li/a[@href='#ipmi']"),
-        ('ipmi_principal', "//*[@id='ipmi_userid']"),
-        ('ipmi_secret', "//*[@id='ipmi_password']"),
-        ('ipmi_verify_secret', "//*[@id='ipmi_verify']"),
+        ('ipmi_principal', Input("ipmi_userid")),
+        ('ipmi_secret', Input("ipmi_password")),
+        ('ipmi_verify_secret', Input("ipmi_verify")),
         ('validate_btn', form_buttons.validate)
     ])
 
