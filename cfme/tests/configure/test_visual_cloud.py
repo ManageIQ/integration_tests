@@ -25,7 +25,7 @@ landing_uncollectif = pytest.mark.uncollectif(not grid_pages, reason='no landing
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    _setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
+    _setup_a_provider(prov_class="cloud", prov_type="openstack", validate=True, check_existing=True)
 
 
 @pytest.yield_fixture(scope="module")
