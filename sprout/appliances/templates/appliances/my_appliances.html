@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load staticfiles %}
 {% block title %}My appliances{% endblock %}
 {% block body %}
 
@@ -41,7 +42,7 @@
                 {% for appliance in pool.appliances %}
                 <tr id="appliance-{{ appliance.id }}">
                     <td>{{ appliance.id }}</td>
-                    <td>{{ appliance.name }}</td>
+                    <td>{% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}{{ appliance.name }}</td>
                     <td>{{ appliance.template.provider.id }}</td>
                     <td>
                         {% if appliance.ip_address %}
