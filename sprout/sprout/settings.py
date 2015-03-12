@@ -166,7 +166,7 @@ CELERYBEAT_SCHEDULE = {
 
     'free-appliance-shepherd': {
         'task': 'appliances.tasks.free_appliance_shepherd',
-        'schedule': timedelta(minutes=5),
+        'schedule': timedelta(minutes=1),
     },
 
     'kill-unused-appliances': {

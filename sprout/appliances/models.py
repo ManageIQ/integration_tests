@@ -275,6 +275,19 @@ class Group(MetadataMixin):
     def templates(self):
         return Template.objects.filter(template_group=self).order_by("-date", "provider__id")
 
+    @property
+    def appliances(self):
+        return Appliance.objects.filter(template__template_group=self)
+
+    def get_fulfillment_percentage(self, preconfigured):
+        appliances_in_shepherd = len(
+            self.appliances.filter(template__preconfigured=preconfigured, appliance_pool=None))
+        wanted_pool_size = (
+            self.template_pool_size if preconfigured else self.unconfigured_template_pool_size)
+        if wanted_pool_size == 0:
+            return 100
+        return int(round((float(appliances_in_shepherd) / float(wanted_pool_size)) * 100.0))
+
     def __unicode__(self):
         return "{} {} (pool size={}/{})".format(
             self.__class__.__name__, self.id, self.template_pool_size,
@@ -486,19 +499,23 @@ class Appliance(MetadataMixin):
         return cls.objects.filter(appliance_pool=None, ready=True)
 
     @classmethod
-    def give_to_pool(cls, pool):
+    def give_to_pool(cls, pool, custom_limit=None):
+        """Give appliances from shepherd to the pool where the maximum count is specified by pool
+        or you can specify a custom limit
+        """
         from appliances.tasks import appliance_power_on
+        limit = custom_limit if custom_limit is not None else pool.total_count
         appliances = []
         with transaction.atomic():
             for template in pool.possible_templates:
                 for appliance in cls.unassigned().filter(
-                        template=template).all()[:pool.total_count - len(appliances)]:
+                        template=template).all()[:limit - len(appliances)]:
                     appliance.appliance_pool = pool
                     appliance.save()
                     appliance.set_status("Given to pool {}".format(pool.id))
                     appliance_power_on.delay(appliance.id)
                     appliances.append(appliance)
-                if len(appliances) == pool.total_count:
+                if len(appliances) == limit:
                     break
         return len(appliances)
 
