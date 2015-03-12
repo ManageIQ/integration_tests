@@ -61,7 +61,7 @@ def verify_retirement(vm):
     def retirement_date_present():
         return get_date() != "Never"
 
-    wait_for(retirement_date_present, delay=30, num_sec=600)
+    wait_for(retirement_date_present, delay=30, num_sec=600, message="retirement_date_present")
 
     # wait for the power state to go to 'off'
     wait_for(lambda: get_state() == "off", delay=30, num_sec=360)

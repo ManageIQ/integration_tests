@@ -59,6 +59,8 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         else:
             message = "function %s()" % func.func_name
     fail_condition = kwargs.get('fail_condition', False)
+    line_no = func.func_code.co_firstlineno
+    filename = func.func_code.co_filename
     if not callable(fail_condition):
         fail_condition_check = lambda result: result == fail_condition
     else:
@@ -95,10 +97,12 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         t_delta = time.time() - st_time
     logger.trace('Finished at {}'.format(st_time + t_delta))
     if not silent_fail:
-        logger.error('Could not complete %s in time, took %f' % (message, t_delta))
-        raise TimedOutError("Could not do %s in time" % message)
+        logger.error('Could not complete {} at {}:{} in time, took {}'.format(message,
+            filename, line_no, t_delta))
+        raise TimedOutError("Could not do {} at {}:{} in time".format(message, filename, line_no))
     else:
-        logger.warning("Could not do %s in time but ignoring" % message)
+        logger.warning("Could not do {} at {}:{} in time but ignoring".format(message,
+            filename, line_no))
 
 
 class TimedOutError(Exception):

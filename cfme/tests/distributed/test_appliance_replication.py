@@ -98,10 +98,10 @@ def configure_db_replication(db_address):
     conf.set_server_roles(database_synchronization=True)
     sel.force_navigate("cfg_diagnostics_region_replication")
     wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
-        num_sec=360, delay=10, fail_func=sel.refresh)
+             num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
     assert conf.get_replication_status()
     wait_for(lambda: conf.get_replication_backlog(navigate=False) == 0, fail_condition=False,
-        num_sec=120, delay=10, fail_func=sel.refresh)
+             num_sec=120, delay=10, fail_func=sel.refresh, message="get_replication_backlog")
 
 
 @pytest.fixture
@@ -181,11 +181,11 @@ def test_appliance_replicate_sync_role_change(request, provider_crud):
         conf.set_server_roles(database_synchronization=False)
         sel.force_navigate("cfg_diagnostics_region_replication")
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
-                 num_sec=360, delay=10, fail_func=sel.refresh)
+                 num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         conf.set_server_roles(database_synchronization=True)
         sel.force_navigate("cfg_diagnostics_region_replication")
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
-                 num_sec=360, delay=10, fail_func=sel.refresh)
+                 num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
         provider_crud.create()
         wait_for_a_provider()
@@ -217,11 +217,11 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, provider_cru
         conf.set_server_roles(database_synchronization=False)
         sel.force_navigate("cfg_diagnostics_region_replication")
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
-                 num_sec=360, delay=10, fail_func=sel.refresh)
+                 num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         conf.set_server_roles(database_synchronization=True)
         sel.force_navigate("cfg_diagnostics_region_replication")
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
-                 num_sec=360, delay=10, fail_func=sel.refresh)
+                 num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
         wait_for_a_provider()
 
@@ -253,7 +253,7 @@ def test_appliance_replicate_database_disconnection(request, provider_crud):
         start_db_process(appl2.address)
         sel.force_navigate("cfg_diagnostics_region_replication")
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
-                 num_sec=360, delay=10, fail_func=sel.refresh)
+                 num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
         provider_crud.create()
         wait_for_a_provider()
@@ -287,7 +287,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, provid
         start_db_process(appl2.address)
         sel.force_navigate("cfg_diagnostics_region_replication")
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
-                 num_sec=360, delay=10, fail_func=sel.refresh)
+                 num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
         wait_for_a_provider()
 

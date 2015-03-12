@@ -40,4 +40,5 @@ def test_lambda_wait():
 def test_lambda_long_wait():
     incman = Incrementor()
     with pytest.raises(TimedOutError):
-        wait_for(lambda self: self.i_sleep_a_lot() > 10, [incman], num_sec=1, message="this fails")
+        wait_for(lambda self: self.i_sleep_a_lot() > 10, [incman],
+                 num_sec=1, message="lambda_long_wait")
