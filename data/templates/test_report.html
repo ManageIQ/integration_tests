@@ -88,7 +88,13 @@ $(function() {
     </div>
 
 {% for test in tests %}
-    <div class="panel panel-info">
+    <div class="panel panel-{% if test.outcomes['overall'] == 'passed' %}success
+                      {% elif test.outcomes['overall'] == 'failed' %}danger
+                      {% elif test.outcomes['overall'] == 'skipped' %}info
+                      {% elif test.outcomes['overall'] == 'error' %}danger
+                      {% elif test.outcomes['overall'] == 'xpassed' %}danger
+                      {% elif test.outcomes['overall'] == 'xfailed' %}success
+                      {% endif %}">
         <div class="panel-heading">
             <div class="row">
                 <div class="col-md-10">
