@@ -19,6 +19,7 @@
   * :py:class:`Filter`
   * :py:class:`Form`
   * :py:class:`InfoBlock`
+  * :py:class:`Input`
   * :py:class:`MultiFill`
   * :py:class:`Quadicon`
   * :py:class:`Radio`
@@ -1041,7 +1042,11 @@ def fill(loc, content):
 
     """
     action, logval = fill_tag(loc, content)
-    logger.debug('  Filling in [%s], with value "%s"' % (loc, logval))
+    if hasattr(loc, 'name'):
+        ident = loc.name
+    else:
+        ident = loc
+    logger.debug('  Filling in [%s], with value "%s"' % (ident, logval))
     prev_state = action(loc, content)
     sel.detect_observed_field(loc)
     return prev_state
@@ -1110,7 +1115,7 @@ class Calendar(Pretty):
         self.name = name
 
     def locate(self):
-        return sel.move_to_element('//input[@name="%s"]' % self.name)
+        return sel.move_to_element(Input(self.name))
 
 
 @fill.method((Calendar, object))
@@ -2243,11 +2248,11 @@ class Filter(Form):
     Usage:
         f = Filter(fields=[
             ('type', Select('//select[@id="type_choice"]')),
-            ('approved', '//input[@id="state_choice__approved"]'),
-            ('denied', '//input[@id="state_choice__denied"]'),
-            ('pending_approval', '//input[@id="state_choice__pending_approval"]'),
+            ('approved', Input("state_choice__approved")),
+            ('denied', Input"state_choice__denied")),
+            ('pending_approval', Input("state_choice__pending_approval")),
             ('date', Select('//select[@id="time_period"]')),
-            ('reason', '//input[@id="reason_text"]'),
+            ('reason', Input("reason_text")),
         ])
 
         f.apply_filter(type="VM Clone", approved=False,
@@ -2398,9 +2403,9 @@ def fill_scriptbox(sb, script):
 class EmailSelectForm(Pretty):
     """Class encapsulating the e-mail selector, eg. in Control/Alarms editing."""
     fields = Region(locators=dict(
-        from_address="//input[@id='from']",
+        from_address=Input('from'),
         user_emails=Select("//select[@id='user_email']"),
-        manual_input="//input[@id='email']",
+        manual_input=Input('email'),
         add_email_manually="//img[@title='Add' and contains(@onclick, 'add_email')]"
     ))
 
