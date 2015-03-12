@@ -1247,6 +1247,12 @@ class Input(Pretty):
     def locate(self):
         return '//input[@name="{}"]'.format(self.name)
 
+    def __add__(self, string):
+        return '//input[@name="{}"]{}'.format(self.name, string)
+
+    def __radd__(self, string):
+        return '{}//input[@name="{}"]'.format(string, self.name)
+
 
 class Radio(Input):
     """ A class for Radio button groups

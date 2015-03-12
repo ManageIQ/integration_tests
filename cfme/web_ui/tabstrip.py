@@ -155,13 +155,13 @@ class TabStripForm(web_ui.Form):
         provisioning_form = web_ui.TabStripForm(
             tab_fields={
                 'Request': [
-                    ('email', '//input[@name="requester__owner_email"]'),
-                    ('first_name', '//input[@id="requester__owner_first_name"]'),
-                    ('last_name', '//input[@id="requester__owner_last_name"]'),
+                    ('email', Input("requester__owner_email")),
+                    ('first_name', Input("requester__owner_first_name")),
+                    ('last_name', Input("requester__owner_last_name")),
                     ('notes', '//textarea[@id="requester__request_notes"]'),
                 ],
                 'Catalog': [
-                    ('instance_name', '//input[@name="service__vm_name"]'),
+                    ('instance_name', Input("service__vm_name")),
                     ('instance_description', '//textarea[@id="service__vm_description"]'),
                 ]
             }
