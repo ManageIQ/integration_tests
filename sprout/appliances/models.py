@@ -249,6 +249,16 @@ class Provider(MetadataMixin):
                 except Exception as e:
                     logger().exception(e)
 
+    def vnc_console_link_for(self, appliance):
+        if appliance.uuid is None:
+            return None
+        if isinstance(self.api, mgmt_system.OpenstackSystem):
+            return "http://{}/dashboard/project/instances/{}/?tab=instance_details__console".format(
+                self.ip_address, appliance.uuid
+            )
+        else:
+            return None
+
     def __unicode__(self):
         return "{} {}".format(self.__class__.__name__, self.id)
 
@@ -572,6 +582,10 @@ class Appliance(MetadataMixin):
     def managed_providers(self, value):
         with self.edit_metadata as metadata:
             metadata["managed_providers"] = value
+
+    @property
+    def vnc_link(self):
+        return self.provider.vnc_console_link_for(self)
 
 
 class AppliancePool(MetadataMixin):
