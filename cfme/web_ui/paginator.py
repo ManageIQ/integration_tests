@@ -1,5 +1,5 @@
 """A set of functions for dealing with the paginator controls."""
-from cfme.web_ui import Select
+from cfme.web_ui import Select, Input
 import cfme.fixtures.pytest_selenium as sel
 import re
 from selenium.common.exceptions import NoSuchElementException
@@ -13,7 +13,7 @@ _last = '//img[@alt="Last"]'
 _num_results = '//select[@id="ppsetting" or @id="perpage_setting1"]'
 _sort_by = '//select[@id="sort_choice"]'
 _page_cell = '//td//td[contains(., " of ")]'
-_check_all = '//input[@id="masterToggle"]'
+_check_all = Input("masterToggle")
 
 
 def page_controls_exist():
