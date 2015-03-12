@@ -28,11 +28,16 @@ class API(object):
     def _load_data(self):
         data = self.get(self._entry_point)
         self.collections = CollectionsIndex(self, data.pop("collections", []))
+        self._version = data.pop("version", None)
         self._versions = {}
         for version in data.pop("versions", []):
             self._versions[version["name"]] = version["href"]
         for key, value in data.iteritems():
             setattr(self, key, value)
+
+    @property
+    def version(self):
+        return LooseVersion(self._version)
 
     @staticmethod
     def _result_processor(result):
@@ -93,8 +98,8 @@ class API(object):
 
     @property
     def new_id_behaviour(self):
-        """2.0.0-pre introduced a new id/href difference."""
-        return LooseVersion(self.version) >= "2.0.0-pre"
+        """2.0.0 introduced a new id/href difference."""
+        return self.version >= "2.0.0"
 
     @property
     def latest_version(self):
@@ -188,18 +193,32 @@ class Collection(object):
             self.reload()
 
     def find_by(self, **params):
-        if LooseVersion(self._api.version) >= '1.1.0-pre':
-            # This one is on upstream, still does not have filter
-            search_query = []
-            for key, value in params.iteritems():
-                search_query.append("{} = {}".format(key, repr(str(value))))
-            return SearchResult(
-                self, self._api.get(self._href, **{"sqlfilter": " AND ".join(search_query)}))
+        """Search items in collection. Filters based on keywords passed."""
+        if self._api.version == "2.0.0-pre":
+            # Special case, there can be both, so try sqlfilter first and if that does not work ...
+            try:
+                return self._find_by_sqlfilter(**params)
+            except APIException:
+                return self._find_by_filter(**params)
+        elif self._api.version.is_in_series("1.1") or self._api.version >= "2.0.0":
+            # New function
+            return self._find_by_filter(**params)
         else:
-            search_query = []
-            for key, value in params.iteritems():
-                search_query.append("{}={}".format(key, repr(str(value))))
-            return SearchResult(self, self._api.get(self._href, **{"filter[]": search_query}))
+            # Old function
+            return self._find_by_sqlfilter(**params)
+
+    def _find_by_sqlfilter(self, **params):
+        search_query = []
+        for key, value in params.iteritems():
+            search_query.append("{} = {}".format(key, repr(str(value))))
+        return SearchResult(
+            self, self._api.get(self._href, **{"sqlfilter": " AND ".join(search_query)}))
+
+    def _find_by_filter(self, **params):
+        search_query = []
+        for key, value in params.iteritems():
+            search_query.append("{}={}".format(key, repr(str(value))))
+        return SearchResult(self, self._api.get(self._href, **{"filter[]": search_query}))
 
     def get(self, **params):
         try:
