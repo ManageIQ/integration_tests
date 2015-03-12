@@ -28,7 +28,7 @@ def _atom_root():
 
 
 def _expressions_root():
-    return sel.element("./fieldset/div[@style='padding:10px']", root=_root())
+    return sel.element("./fieldset/div", root=_root())
 
 
 ###
