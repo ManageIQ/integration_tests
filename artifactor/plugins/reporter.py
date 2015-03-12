@@ -75,7 +75,12 @@ class Reporter(ArtifactorBasePlugin):
         template_data = {'tests': []}
         log_dir += "/"
         counts = {'passed': 0, 'failed': 0, 'skipped': 0, 'error': 0, 'xfailed': 0, 'xpassed': 0}
-
+        colors = {'passed': 'success',
+                  'failed': 'warning',
+                  'error': 'danger',
+                  'xpassed': 'danger',
+                  'xfailed': 'success',
+                  'skipped': 'info'}
         # Iterate through the tests and process the counts and durations
         for test_name, test in artifacts.iteritems():
             if not test.get('statuses', None):
@@ -107,11 +112,11 @@ class Reporter(ArtifactorBasePlugin):
             else:
                 counts['passed'] += 1
                 overall_status = "passed"
-
+            color = colors[overall_status]
             # Set the overall status and then process duration
             test['statuses']['overall'] = overall_status
             test_data = {'name': test_name, 'outcomes': test['statuses'],
-                         'slaveid': test.get('slaveid', "Unknown")}
+                         'slaveid': test.get('slaveid', "Unknown"), 'color': color}
 
             if test.get('start_time', None):
                 if test.get('finish_time', None):
