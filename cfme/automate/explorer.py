@@ -7,7 +7,7 @@ import cfme.web_ui.flash as flash
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui.tabstrip import select_tab
 from cfme.web_ui import Form, Table, Tree, UpDownSelect, fill, Select, ScriptBox, DHTMLSelect,\
-    Region, form_buttons, accordion
+    Region, form_buttons, accordion, Input
 import cfme.exceptions as exceptions
 from utils.update import Updateable
 from utils import error, version
@@ -134,7 +134,7 @@ class TreeNode(pretty.Pretty):
 class CopiableTreeNode(TreeNode):
     copy_form = Form(fields=[
         ("domain", Select("select#domain")),
-        ("override", "input#override_source")
+        ("override", Input("override_source"))
     ])
 
     copy_button = form_buttons.FormButton("Copy")
@@ -203,9 +203,9 @@ class CopiableTreeNode(TreeNode):
 
 
 class Domain(TreeNode, Updateable):
-    form = Form(fields=[('name', "//input[@id='ns_name']"),
-                        ('description', "//input[@id='ns_description']"),
-                        ('enabled', "//input[@id='ns_enabled']")])
+    form = Form(fields=[('name', Input('ns_name')),
+                        ('description', Input('ns_description')),
+                        ('enabled', Input('ns_enabled'))])
 
     def __init__(self, name=None, description=None, enabled=False):
         self.name = name
@@ -378,9 +378,9 @@ class Namespace(TreeNode, Updateable):
 class Class(CopiableTreeNode, Updateable):
     """Represents a Class in the CFME ui."""
 
-    form = Form(fields=[('name_text', "//input[@name='name']"),
-                        ('display_name_text', "//input[@name='display_name']"),
-                        ('description_text', "//input[@name='description']"),
+    form = Form(fields=[('name_text', Input('name')),
+                        ('display_name_text', Input('display_name')),
+                        ('description_text', Input('description')),
                         ('inherits_from_select', Select("//select[@name='inherits_from']"))])
 
     def __init__(self, name=None, display_name=None, description=None, inherits_from=None,
@@ -502,20 +502,20 @@ class Class(CopiableTreeNode, Updateable):
                 return lambda _: sel.click(loc, wait_ajax=False)
 
             return Form(
-                fields=[('name_text', loc("//input[@id='field%s_name%s']")),
+                fields=[('name_text', Input(loc('field%s_name%s'))),
                         ('type_select', DHTMLSelect(loc("//div[@id='field%s_aetype_id%s']"))),
                         ('data_type_select',
                          DHTMLSelect(loc("//div[@id='field%s_datatype_id%s']"))),
-                        ('default_value_text', loc("//input[@id='field%s_default_value%s']")),
-                        ('display_name_text', loc("//input[@id='field%s_display_name%s']")),
-                        ('description_text', loc("//input[@id='field%s_description%s']")),
-                        ('sub_cb', loc("//input[@id='field%s_substitution%s']")),
-                        ('collect_text', loc("//input[@id='field%s_collect%s']")),
-                        ('message_text', loc("//input[@id='field%s_message%s']")),
-                        ('on_entry_text', loc("//input[@id='field%s_on_entry%s']")),
-                        ('on_exit_text', loc("//input[@id='field%s_on_exit%s']")),
-                        ('max_retries_text', loc("//input[@id='field%s_max_retries%s']")),
-                        ('max_time_text', loc("//input[@id='field%s_max_time%s']")),
+                        ('default_value_text', Input(loc('field%s_default_value%s'))),
+                        ('display_name_text', Input(loc('field%s_display_name%s'))),
+                        ('description_text', Input(loc('field%s_description%s'))),
+                        ('sub_cb', Input(loc('field%s_substitution%s'))),
+                        ('collect_text', Input(loc('field%s_collect%s'))),
+                        ('message_text', Input(loc('field%s_message%s'))),
+                        ('on_entry_text', Input(loc('field%s_on_entry%s'))),
+                        ('on_exit_text', Input(loc('field%s_on_exit%s'))),
+                        ('max_retries_text', Input(loc('field%s_max_retries%s'))),
+                        ('max_time_text', Input(loc('field%s_max_time%s'))),
                         ('add_entry_button', "//img[@alt='Add this entry']"),
                         ('remove_entry_button',
                          remove("//a[contains(@title, 'delete this') "
@@ -555,6 +555,8 @@ class Method(CopiableTreeNode, Updateable):
     """Represents a Method in the CFME ui.  `Display Name` is not
        supported (it causes the name to be displayed differently in
        different places in the UI). """
+
+    # TODO These locators need updating once the multiename Input class goes in
 
     form = Form(
         fields=[('name_text', "//input[contains(@name,'method_name')]"),
