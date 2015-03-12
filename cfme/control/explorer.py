@@ -8,7 +8,7 @@ from cfme.control.snmp_form import SNMPForm
 from cfme.exceptions import CannotContinueWithNavigation
 from cfme.web_ui import fill, flash, form_buttons, table_in_object
 from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSelectForm, \
-    CheckboxSelect
+    CheckboxSelect, Input
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
 from utils.db import cfmedb
@@ -477,7 +477,7 @@ class BaseCondition(Updateable, Pretty):
 
     form = Form(
         fields=[
-            ("description", "input#description"),
+            ("description", Input("description")),
             ("notes", "textarea#notes"),
             ("scope", editor.Expression(
                 lambda: click_if_displayed(
@@ -568,8 +568,8 @@ class BasePolicy(Updateable, Pretty):
 
     form = Form(
         fields=[
-            ("description", "input#description"),
-            ("active", "input#active"),
+            ("description", Input("description")),
+            ("active", Input("active")),
             ("scope", editor.Expression()),
             ("notes", "textarea#notes"),
         ]
@@ -897,7 +897,7 @@ class Alert(Updateable, Pretty):
     """
     manual_email = Region(
         locators=dict(
-            field="input#email",
+            field=Input("email"),
             add="//img[@alt='Add'][contains(@onclick, 'add_email')]",
             present_emails="//a[contains(@href, 'remove_email')]"
         )
@@ -905,8 +905,8 @@ class Alert(Updateable, Pretty):
 
     form = Form(
         fields=[
-            ("description", "input#description"),
-            ("active", "input#enabled_cb"),
+            ("description", Input("description")),
+            ("active", Input("enabled_cb")),
             ("based_on", Select("select#miq_alert_db")),
             ("evaluate", Select("select#exp_name")),
             ("driving_event", Select("select#exp_event")),
@@ -916,13 +916,13 @@ class Alert(Updateable, Pretty):
             # Event log threshold
             ("event_log_message_type",
                 Select("select#select_event_log_message_filter_type")),
-            ("event_log_message_value", "input#event_log_message_filter_value"),
-            ("event_log_name", "input#event_log_name"),
-            ("event_log_level", "input#event_log_level"),
-            ("event_log_event_id", "input#event_log_event_id"),
-            ("event_log_source", "input#event_log_source"),
+            ("event_log_message_value", Input("event_log_message_filter_value")),
+            ("event_log_name", Input("event_log_name")),
+            ("event_log_level", Input("event_log_level")),
+            ("event_log_event_id", Input("event_log_event_id")),
+            ("event_log_source", Input("event_log_source")),
             ("event_time_threshold", Select("select#time_threshold")),  # shared
-            ("event_count_threshold", "input#freq_threshold"),  # shared
+            ("event_count_threshold", Input("freq_threshold")),  # shared
             # Event threshold (uses the shared fields from preceeding section)
             ("event_type", Select("select#event_types")),
             # HW reconfigured + VM Value Changed
@@ -933,20 +933,20 @@ class Alert(Updateable, Pretty):
             ("performance_field_operator", Select("select#select_operator")),
             ("performance_time_threshold", Select("select#rt_time_threshold")),
             # Real Time Performance (uses fields from previous)
-            ("performance_field_value", "input#value_threshold"),
+            ("performance_field_value", Input("value_threshold")),
             ("performance_trend", Select("select#trend_direction")),
             ("performance_debug_trace", Select("select#debug_trace")),
             # VMWare alarm
             ("vmware_alarm_provider", Select("select#select_ems_id")),
             ("vmware_alarm_type", Select("select#select_ems_alarm_mor")),
             # Different evaluations end
-            ("send_email", "input#send_email_cb"),
+            ("send_email", Input("send_email_cb")),
             ("emails", EmailSelectForm()),
-            ("snmp_trap_send", "input#send_snmp_cb"),
+            ("snmp_trap_send", Input("send_snmp_cb")),
             ("snmp_trap", SNMPForm()),
-            ("timeline_event", "input#send_evm_event_cb"),
-            ("mgmt_event_send", "input#send_event_cb"),
-            ("mgmt_event", "input#event_name"),
+            ("timeline_event", Input("send_evm_event_cb")),
+            ("mgmt_event_send", Input("send_event_cb")),
+            ("mgmt_event", Input("event_name")),
         ]
     )
 
@@ -1113,7 +1113,7 @@ class Action(Updateable, Pretty):
     """
     form = Form(
         fields=[
-            ("description", "input#description"),
+            ("description", Input("description")),
             ("action_type", Select("select#miq_action_type")),
             # Evaluate Alerts (TODO)
         ]
@@ -1130,7 +1130,7 @@ class Action(Updateable, Pretty):
         "Create a Snapshot":
         Form(
             fields=[
-                ("snapshot_name", "input#snapshot_name"),
+                ("snapshot_name", Input("snapshot_name")),
             ]
         ),
 
@@ -1153,18 +1153,18 @@ class Action(Updateable, Pretty):
         "Invoke a Custom Automation":
         Form(
             fields=[
-                ("message", "input#object_message"),
-                ("request", "input#object_request"),
-                ("attribute_1", "input#attribute_1"),
-                ("value_1", "input#value_1"),
-                ("attribute_2", "input#attribute_2"),
-                ("value_2", "input#value_2"),
-                ("attribute_3", "input#attribute_3"),
-                ("value_3", "input#value_3"),
-                ("attribute_4", "input#attribute_4"),
-                ("value_4", "input#value_4"),
-                ("attribute_5", "input#attribute_5"),
-                ("value_5", "input#value_5"),
+                ("message", Input("object_message")),
+                ("request", Input("object_request")),
+                ("attribute_1", Input("attribute_1")),
+                ("value_1", Input("value_1")),
+                ("attribute_2", Input("attribute_2")),
+                ("value_2", Input("value_2")),
+                ("attribute_3", Input("attribute_3")),
+                ("value_3", Input("value_3")),
+                ("attribute_4", Input("attribute_4")),
+                ("value_4", Input("value_4")),
+                ("attribute_5", Input("attribute_5")),
+                ("value_5", Input("value_5")),
             ]
         ),
 
@@ -1191,16 +1191,16 @@ class Action(Updateable, Pretty):
         "Send an E-mail":
         Form(
             fields=[
-                ("from", "input#from"),
-                ("to", "input#to"),
+                ("from", Input("from")),
+                ("to", Input("to")),
             ]
         ),
 
         "Set a Custom Attribute in vCenter":
         Form(
             fields=[
-                ("attribute", "input#attribute"),
-                ("value", "input#value"),
+                ("attribute", Input("attribute")),
+                ("value", Input("value")),
             ]
         ),
 
@@ -1337,7 +1337,7 @@ class PolicyProfile(Updateable, Pretty):
     """
     form = Form(
         fields=[
-            ("description", "input#description"),
+            ("description", Input("description")),
             ("notes", "textarea#notes"),
             ("policies", MultiBoxSelect.default())
         ]
@@ -1454,7 +1454,7 @@ class BaseAlertProfile(Updateable, Pretty):
 
     form = Form(
         fields=[
-            ("description", "input#description"),
+            ("description", Input("description")),
             ("notes", "textarea#notes"),
             ("alerts", MultiBoxSelect.default())
         ]

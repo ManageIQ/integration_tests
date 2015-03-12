@@ -4,7 +4,7 @@
 
 from collections import Mapping
 
-from cfme.web_ui import Select, Form, fill
+from cfme.web_ui import Select, Form, fill, Input
 from cfme.fixtures import pytest_selenium as sel
 from utils.log import logger
 from utils.pretty import Pretty
@@ -44,7 +44,7 @@ class SNMPTrapField(Pretty):
 
     @property
     def oid_loc(self):
-        return "//input[@id='oid__%d']" % self.seq_id
+        return Input('oid__{}'.format(self.seq_id))
 
     @property
     def oid(self):
@@ -68,7 +68,7 @@ class SNMPTrapField(Pretty):
 
     @property
     def value_loc(self):
-        return "//input[@id='value__%s']" % self.seq_id
+        return Input('value__%s'.format(self.seq_id))
 
     @property
     def value(self):
@@ -131,10 +131,10 @@ class SNMPHostsField(object):
     @property
     def host_fields(self):
         """Returns list of locators to all host fields"""
-        if sel.is_displayed("//input[@id='host']"):
-            return ["//input[@id='host']"]
+        if sel.is_displayed(Input('host')):
+            return [Input('host')]
         else:
-            return ["//input[@id='host_%d']" % (i + 1) for i in range(3)]
+            return [Input('host_{}'.format(i + 1)) for i in range(3)]
 
 
 @fill.method((SNMPHostsField, list))
@@ -175,7 +175,7 @@ class SNMPForm(object):
     fields = Form(fields=[
         ("hosts", SNMPHostsField()),
         ("version", Select("//select[@id='snmp_version']")),
-        ("id", "//input[@id='trap_id']"),
+        ("id", Input('trap_id')),
         ("traps", SNMPTrapsField(10)),
     ])
 
