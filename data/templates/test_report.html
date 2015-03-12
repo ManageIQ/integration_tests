@@ -20,6 +20,19 @@
 //    });
 //}
 
+function toggle(name)
+{
+  if ($('#'+name+'-check').is(":checked"))
+  {
+    $('[data='+name+']').show()
+  }
+  else
+  {
+    $('[data='+name+']').hide()
+  }
+}
+
+
 $().ready(function(){
 
 $(function() {
@@ -53,7 +66,14 @@ $(function() {
     }, 250);
   });
 });
+toggle('error')
+toggle('failed')
+toggle('passed')
+toggle('skipped')
+toggle('xpassed')
+toggle('xfailed')
 })
+
 </script>
 <header class="navbar navbar-static-top" role="banner">
     <div class="container">
@@ -61,12 +81,12 @@ $(function() {
             <span class="navbar-brand">{{title}}</span>
         </div>
         <div class="navbar-right">
-            <span class="label label-success navbar-text">{{counts.passed}} Passed</span>
-            <span class="label label-primary navbar-text">{{counts.skipped}} Skipped</span>
-            <span class="label label-warning navbar-text">{{counts.failed}} Failed</span>
-            <span class="label label-danger navbar-text">{{counts.error}} Error</span>
-            <span class="label label-danger navbar-text">{{counts.xpassed}} XPassed</span>
-            <span class="label label-success navbar-text">{{counts.xfailed}} XFailed</span>
+            <span class="label label-success navbar-text">{{counts.passed}} Passed &nbsp;<input id="passed-check" type="checkbox" onclick="toggle('passed');"></span>
+            <span class="label label-primary navbar-text">{{counts.skipped}} Skipped &nbsp;<input id="skipped-check" type="checkbox" onclick="toggle('skipped');"></span>
+            <span class="label label-warning navbar-text">{{counts.failed}} Failed &nbsp;<input id="failed-check" type="checkbox" onclick="toggle('failed');" checked="checked"></span>
+            <span class="label label-danger navbar-text">{{counts.error}} Error &nbsp;<input id="error-check" type="checkbox" onclick="toggle('error');" checked="checked"></span>
+            <span class="label label-danger navbar-text">{{counts.xpassed}} XPassed &nbsp;<input id="xpassed-check" type="checkbox" onclick="toggle('xpassed');" checked="checked"></span>
+            <span class="label label-success navbar-text">{{counts.xfailed}} XFailed &nbsp;<input id="xfailed-check" type="checkbox" onclick="toggle('xfailed');"></span>
         </div>
     </div>
 </header>
@@ -88,7 +108,7 @@ $(function() {
     </div>
 
 {% for test in tests %}
-    <div class="panel panel-info">
+    <div data="{{test.outcomes['overall']}}" class="panel panel-{{test.color}}">
         <div class="panel-heading">
             <div class="row">
                 <div class="col-md-10">
