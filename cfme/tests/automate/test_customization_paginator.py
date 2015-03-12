@@ -12,14 +12,14 @@ def some_dialogs(request):
     request.addfinalizer(lambda: map(lambda obj: obj.delete(), to_delete))
     for i in range(6):
         random_str = generate_random_string(16)
+        element_data = dict(ele_label='ele_label_{}'.format(random_str),
+                            ele_name='ele_name_{}'.format(random_str),
+                            choose_type='Check Box')
         dialog = ServiceDialog(
             label='test_paginator_{}'.format(random_str),
             tab_label='tab_{}'.format(random_str),
-            box_label='box_{}'.format(random_str),
-            ele_label='ele_label_{}'.format(random_str),
-            ele_name='ele_name_{}'.format(random_str),
-            choose_type='Check Box')
-        dialog.create()
+            box_label='box_{}'.format(random_str))
+        dialog.create(element_data)
         to_delete.append(dialog)
     return to_delete
 
