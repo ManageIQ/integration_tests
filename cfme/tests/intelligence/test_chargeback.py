@@ -36,7 +36,7 @@ def test_add_new_compute_chargeback():
 def test_compute_chargeback_duplicate_disallowed():
     ccb = new_compute_rate()
     ccb.create()
-    with error.expected('Name already exists'):  # currently cfme just blows up
+    with error.expected('Description has already been taken'):
         ccb.create()
 
 
