@@ -48,6 +48,7 @@ import re
 import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
+from xml.sax.saxutils import quoteattr
 
 from selenium.common import exceptions as sel_exceptions
 from selenium.common.exceptions import NoSuchElementException, MoveTargetOutOfBoundsException
@@ -977,10 +978,8 @@ def table_in_object(table_title):
         table_title: Text in `p` element preceeding the table
     Returns: XPath locator for the desired table.
     """
-    # Description     paragraph with the text       following element    which is the table
-    return (
-        "//p[@class='legend' and normalize-space(text())='{}']"
-        "/following-sibling::*[1][@class='style3']").format(table_title)
+    return "//table[(preceding-sibling::p[1] | preceding-sibling::h3[1])[.={}]]".format(
+        quoteattr(table_title))
 
 
 @multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))

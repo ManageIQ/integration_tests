@@ -11,6 +11,7 @@ from cfme.web_ui import Region, Form, Tree, CheckboxTree, Table, Select, EmailSe
     CheckboxSelect, Input
 from cfme.web_ui.multibox import MultiBoxSelect
 from selenium.common.exceptions import NoSuchElementException
+from utils import version
 from utils.db import cfmedb
 from utils.log import logger
 from utils.update import Updateable
@@ -22,62 +23,12 @@ import cfme.web_ui.toolbar as tb
 from utils.pretty import Pretty
 
 
-events_table = Table(
-    table_locator="//div[@id='event_list_div']//table[@class='style3']"
-)
-EVENT_NAME_CELL = 1
-
 events_policies_table = Table(
-    table_locator="//div[@id='event_info_div']//table[@class='style3']"
+    table_locator=table_in_object("Assigned to Policies")
 )
 
 events_in_policy_table = Table(
     table_locator=table_in_object("Events")
-)
-
-condition_folders_table = Table(
-    table_locator="//div[@id='condition_folders_div']//table[@class='style3']"
-)
-CONDITION_FOLDERS_CELL = 1
-
-condition_list_table = Table(
-    table_locator="//div[@id='condition_list_div']//table[@class='style3']"
-)
-CONDITION_LIST_CELL = 1
-
-actions_table = Table(
-    table_locator="//div[@id='records_div']//table[@class='style3']"
-)
-
-alerts_table = Table(
-    table_locator="//div[@id='records_div']//table[@class='style3']"
-)
-
-alert_profiles_main_table = Table(
-    table_locator="//div[@id='alert_profile_folders_div']//table[@class='style3']"
-)
-
-alert_profiles_list_table = Table(
-    table_locator="//div[@id='alert_profile_list_div']//table[@class='style3']"
-)
-ALERT_PROFILES_CELL = 1
-
-visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
-                    "[not(contains(@style, 'display: none'))]/div/div/div"
-                    "/ul[@class='dynatree-container']")
-
-policies_main_table = Table(
-    table_locator="//div[@id='main_div']//table[@class='style3']"
-)
-POLICIES_MAIN_CELL = 1
-
-policy_profiles_table = Table(
-    table_locator="//div[@id='main_div']//table[@class='style3']"
-)
-POLICY_PROFILES_CELL = 1
-
-policies_table = Table(
-    table_locator="//div[@id='records_div']//table[@class='style3']"
 )
 
 cfg_btn = partial(tb.select, "Configuration")
@@ -361,7 +312,9 @@ nav.add_branch(
             accordion_func("Conditions", "All Conditions", "VM Conditions"),
             {
                 "vm_condition_new":
-                lambda _: cfg_btn("Add a New Vm Condition")
+                lambda _: cfg_btn(version.pick({
+                    version.LOWEST: "Add a New Vm Condition",
+                    "5.4": "Add a New VM Condition"}))
             }
         ],
 
