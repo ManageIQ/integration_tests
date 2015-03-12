@@ -5,7 +5,8 @@ from cfme.web_ui.menu import nav
 
 from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Select, SortTable, accordion, fill, flash, form_buttons, toolbar
+from cfme.web_ui import Form, Select, SortTable, accordion, fill, flash, form_buttons, toolbar, \
+    Input
 from utils.update import Updateable
 from utils.pretty import Pretty
 
@@ -80,8 +81,8 @@ def _fill_dts_o(dts, tup):
 
 class ProvisioningDialog(Updateable, Pretty):
     form = Form(fields=[
-        ("name", "//input[@id='name']"),
-        ("description", "//input[@id='description']"),
+        ("name", Input('name')),
+        ("description", Input('description')),
         ("type", DialogTypeSelect("//select[@id='dialog_type']")),
         ("content", "//textarea[@id='content_data']"),
     ])
