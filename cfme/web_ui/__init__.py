@@ -49,6 +49,7 @@ import re
 import types
 from datetime import date
 from collections import Sequence, Mapping, Callable
+from xml.sax.saxutils import quoteattr
 
 from selenium.common import exceptions as sel_exceptions
 from selenium.common.exceptions import NoSuchElementException, MoveTargetOutOfBoundsException
@@ -1244,13 +1245,22 @@ def _fill_form_dict(form, values, **kwargs):
 
 
 class Input(Pretty):
-    pretty_attrs = ['name']
+    """Class designed to handle things about ``<input>`` tags that have name attr in one place.
 
-    def __init__(self, name):
-        self.name = name
+    Also applies on ``textarea``, which is basically input with multiple lines (if it has name).
+
+    Args:
+        names: Possible values (or) of the ``name`` attribute.
+    """
+    pretty_attrs = ['names']
+
+    def __init__(self, *names):
+        self.names = names
 
     def locate(self):
-        return '//input[@name="{}"]'.format(self.name)
+        return '(//input | //textarea)[{}]'.format(
+            " or ".join("@name={}".format(quoteattr(name)) for name in self.names)
+        )
 
     def __add__(self, string):
         return '//input[@name="{}"]{}'.format(self.name, string)

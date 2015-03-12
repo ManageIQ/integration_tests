@@ -7,7 +7,7 @@ from selenium.common.exceptions import NoSuchElementException
 from multimethods import singledispatch
 from utils.wait import wait_for, TimedOutError
 import cfme.fixtures.pytest_selenium as sel
-import cfme.web_ui as web_ui
+from cfme.web_ui import Anything, Calendar, Form, Input, Region, Select, fill
 import re
 import sys
 import types
@@ -33,7 +33,7 @@ def _expressions_root():
 
 ###
 # Buttons container
-buttons = web_ui.Region(
+buttons = Region(
     locators=dict(
         commit="//img[@alt='Commit expression element changes']",
         discard="//img[@alt='Discard expression element changes']",
@@ -145,84 +145,84 @@ def get_expression_as_text():
 ###
 # Form handling
 #
-field_form = web_ui.Form(
+field_form = Form(
     fields=[
-        ("type", web_ui.Select("//select[@id='chosen_typ']")),
-        ("field", web_ui.Select("//select[@id='chosen_field']")),
-        ("key", web_ui.Select("//select[@id='chosen_key']")),
-        ("value", "//*[@id='chosen_value']"),
-        ("user_input", "//input[@id='user_input']"),
+        ("type", Select("select#chosen_typ")),
+        ("field", Select("select#chosen_field")),
+        ("key", Select("select#chosen_key")),
+        ("value", Input("chosen_value")),
+        ("user_input", Input("user_input")),
     ]
 )
 
-field_date_form = web_ui.Form(
+field_date_form = Form(
     fields=[
-        ("dropdown_select", web_ui.Select("//select[@id='chosen_from_1']")),
-        ("input_select_date", web_ui.Calendar("miq_date_1_0")),
-        ("input_select_time", web_ui.Select("//select[@id='miq_time_1_0']"))
+        ("dropdown_select", Select("select#chosen_from_1")),
+        ("input_select_date", Calendar("miq_date_1_0")),
+        ("input_select_time", Select("select#miq_time_1_0"))
     ]
 )
 
-count_form = web_ui.Form(
+count_form = Form(
     fields=[
-        ("type", web_ui.Select("//select[@id='chosen_typ']")),
-        ("count", web_ui.Select("//select[@id='chosen_count']")),
-        ("key", web_ui.Select("//select[@id='chosen_key']")),
-        ("value", "//*[@id='chosen_value']"),
-        ("user_input", "//input[@id='user_input']"),
+        ("type", Select("select#chosen_typ")),
+        ("count", Select("select#chosen_count")),
+        ("key", Select("select#chosen_key")),
+        ("value", Input("chosen_value")),
+        ("user_input", Input("user_input")),
     ]
 )
 
-tag_form = web_ui.Form(
+tag_form = Form(
     fields=[
-        ("type", web_ui.Select("//select[@id='chosen_typ']")),
-        ("tag", web_ui.Select("//select[@id='chosen_tag']")),
-        ("value", web_ui.Select("//*[@id='chosen_value']")),
-        ("user_input", "//input[@id='user_input']"),
+        ("type", Select("select#chosen_typ")),
+        ("tag", Select("select#chosen_tag")),
+        ("value", Select("#chosen_value")),
+        ("user_input", Input("user_input")),
     ]
 )
 
-find_form = web_ui.Form(
+find_form = Form(
     fields=[
-        ("type", web_ui.Select("select#chosen_typ")),
-        ("field", web_ui.Select("select#chosen_field")),
-        ("skey", web_ui.Select("select#chosen_skey")),
+        ("type", Select("select#chosen_typ")),
+        ("field", Select("select#chosen_field")),
+        ("skey", Select("select#chosen_skey")),
         ("value", "#chosen_value"),
-        ("check", web_ui.Select("select#chosen_check")),
-        ("cfield", web_ui.Select("select#chosen_cfield")),
-        ("ckey", web_ui.Select("select#chosen_ckey")),
-        ("cvalue", "#chosen_cvalue"),
+        ("check", Select("select#chosen_check")),
+        ("cfield", Select("select#chosen_cfield")),
+        ("ckey", Select("select#chosen_ckey")),
+        ("cvalue", Input("chosen_cvalue")),
     ]
 )
 
-registry_form = web_ui.Form(
+registry_form = Form(
     fields=[
-        ("type", web_ui.Select("select#chosen_typ")),
-        ("key", "#chosen_regkey"),
-        ("value", "#chosen_regval"),
-        ("operation", web_ui.Select("#chosen_key")),
-        ("contents", "#chosen_value"),
+        ("type", Select("select#chosen_typ")),
+        ("key", Input("chosen_regkey")),
+        ("value", Input("chosen_regval")),
+        ("operation", Select("#chosen_key")),
+        ("contents", Input("chosen_value")),
     ]
 )
 
-date_switch_buttons = web_ui.Region(
+date_switch_buttons = Region(
     locators=dict(
         to_relative="//img[@alt='Click to change to a relative Date/Time format']",
         to_specific="//img[@alt='Click to change to a specific Date/Time format']"
     )
 )
 
-date_specific_form = web_ui.Form(
+date_specific_form = Form(
     fields=[
-        ("date", "//input[@id='miq_date_1_0']"),
-        ("time", "//input[@id='miq_time_1_0']"),
+        ("date", Input("miq_date_1_0")),
+        ("time", Input("miq_time_1_0")),
     ]
 )
 
-date_relative_form = web_ui.Form(
+date_relative_form = Form(
     fields=[
-        ("from", web_ui.Select("//select[@id='chosen_from_1']")),
-        ("through", web_ui.Select("//select[@id='chosen_through_1']")),
+        ("from", Select("select#chosen_from_1")),
+        ("through", Select("select#chosen_through_1")),
     ]
 )
 
@@ -242,7 +242,7 @@ def fill_count(count=None, key=None, value=None):
         value: Value to check against.
     Returns: See :py:func:`cfme.web_ui.fill`.
     """
-    web_ui.fill(
+    fill(
         count_form,
         dict(
             type="Count of",
@@ -256,7 +256,7 @@ def fill_count(count=None, key=None, value=None):
         user_input = value is None
     else:
         user_input = None
-    web_ui.fill(field_form.user_input, user_input)
+    fill(field_form.user_input, user_input)
     sel.click(buttons.commit)
 
 
@@ -268,7 +268,7 @@ def fill_tag(tag=None, value=None):
         value: Value to check against.
     Returns: See :py:func:`cfme.web_ui.fill`.
     """
-    web_ui.fill(
+    fill(
         tag_form,
         dict(
             type="Tag",
@@ -281,13 +281,13 @@ def fill_tag(tag=None, value=None):
         user_input = value is None
     else:
         user_input = None
-    web_ui.fill(field_form.user_input, user_input)
+    fill(field_form.user_input, user_input)
     sel.click(buttons.commit)
 
 
 def fill_registry(key=None, value=None, operation=None, contents=None):
     """ Fills the 'Registry' type of form."""
-    return web_ui.fill(
+    return fill(
         registry_form,
         dict(
             type="Registry",
@@ -301,7 +301,7 @@ def fill_registry(key=None, value=None, operation=None, contents=None):
 
 
 def fill_find(field=None, skey=None, value=None, check=None, cfield=None, ckey=None, cvalue=None):
-    web_ui.fill(
+    fill(
         find_form,
         dict(
             type="Find",
@@ -329,7 +329,7 @@ def fill_field(field=None, key=None, value=None):
         no_date = False
     else:
         no_date = True
-    web_ui.fill(
+    fill(
         field_form,
         dict(
             type="Field",
@@ -343,13 +343,13 @@ def fill_field(field=None, key=None, value=None):
         user_input = value is None
     else:
         user_input = None
-    web_ui.fill(field_form.user_input, user_input)
+    fill(field_form.user_input, user_input)
     if not no_date:
         # Flip the right part of form
         if isinstance(value, basestring) and not re.match(r"^[0-9]{2}/[0-9]{2}/[0-9]{4}$", value):
             if not sel.is_displayed(field_date_form.dropdown_select):
                 sel.click(date_switch_buttons.to_relative)
-            web_ui.fill(field_date_form, {"dropdown_select": value})
+            fill(field_date_form, {"dropdown_select": value})
             sel.click(buttons.commit)
         else:
             # Specific selection
@@ -364,14 +364,14 @@ def fill_field(field=None, key=None, value=None):
             else:
                 raise TypeError("fill_field expects a 2-tuple (date, time) or string with date")
             # TODO datetime.datetime support
-            web_ui.fill(field_date_form.input_select_date, date)
+            fill(field_date_form.input_select_date, date)
             # Try waiting a little bit for time field
             # If we don't wait, committing the expression will glitch
             try:
                 wait_for(lambda: sel.is_displayed(field_date_form.input_select_time), num_sec=6)
                 # It appeared, so if the time is to be set, we will set it (passing None glitches)
                 if time:
-                    web_ui.fill(field_date_form.input_select_time, time)
+                    fill(field_date_form.input_select_time, time)
             except TimedOutError:
                 # Did not appear, ignore that
                 pass
@@ -554,7 +554,7 @@ class Expression(Pretty):
         self.show_func = show_func
 
 
-@web_ui.fill.method((Expression, web_ui.Anything))
+@fill.method((Expression, Anything))
 def _fill_expression(e, p):
     e.show_func()
     prog = create_program(p)

@@ -5,36 +5,62 @@ from functools import partial
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import expression_editor as exp_ed
-from cfme.web_ui import Region, Select, fill
+from cfme.web_ui import Input, Region, Select, fill
+from utils.version import current_version
 from utils.wait import wait_for
 
 
 search_box = Region(
     locators=dict(
         # Filter of results, the search field that is normally visible
-        search_field="//div[@id='searchbox']//input[@id='search_text']",
+        search_field=Input("search_text", "search[text]"),
 
         # The icon buttons for searching
-        search_icon="//div[@id='searchbox']//*[@id='searchicon']",
+        search_icon={
+            "5.3": "//div[@id='searchbox']//*[@id='searchicon']",
+            "5.4": "//div[@id='searchbox']//div[contains(@class, 'form-group')]/a"},
 
         # The arrow opening/closing the advanced search box
-        toggle_advanced="//img[@id='adv_search_img']",
+        toggle_advanced={
+            "5.3": "//img[@id='adv_search_img']",
+            "5.4": "//button[@id='adv_search']"},
 
         # Container for the advanced search box
-        advanced_search_box="//div[@id='advsearchbox']",
+        advanced_search_box={
+            "5.3": "//div[@id='advsearchbox']",
+            "5.4": "//div[@id='advsearchModal']//div[@class='modal-content']"},
 
         # Buttons on main view
-        apply_filter_button="//a[@title='Apply the current filter']",
-        load_filter_button="//a[@title='Load a filter']",
-        delete_filter_button="//a[contains(@title, 'Delete the filter named')]",
-        save_filter_button="//a[@title='Save the current filter']",
-        reset_filter_button="//a[@title='Reset the filter']",
+        apply_filter_button={
+            "5.3": "//a[@title='Apply the current filter']",
+            "5.4": "//button[@alt='Apply the current filter']"},
+        load_filter_button={
+            "5.3": "//a[@title='Load a filter']",
+            "5.4": "//button[@alt='Load a filter']"},
+        delete_filter_button={
+            "5.3": "//a[contains(@title, 'Delete the filter named')]",
+            "5.4": "//button[contains(@alt, 'Delete the filter named')]"},
+        save_filter_button={
+            "5.3": "//a[@title='Save the current filter']",
+            "5.4": "//button[@alt='Save the current filter']"},
+        reset_filter_button={
+            "5.3": "//a[@title='Reset the filter']",
+            "5.4": "//button[@alt='Reset the filter']"},
+        close_button="//button[contains(@class, 'close')]",
 
         # Buttons in the "next step"
-        load_filter_dialog_button="//a[@title='Load the filter shown above']",
-        cancel_load_filter_dialog_button="//a[@title='Cancel the load']",
-        save_filter_dialog_button="//a[@title='Save the current search']",
-        cancel_save_filter_dialog_button="//a[@title='Cancel the save']",
+        load_filter_dialog_button={
+            "5.3": "//a[@title='Load the filter shown above']",
+            "5.4": "//button[@alt='Load the filter shown above']"},
+        cancel_load_filter_dialog_button={
+            "5.3": "//a[@title='Cancel the load']",
+            "5.4": "//button[@alt='Cancel the load']"},
+        save_filter_dialog_button={
+            "5.3": "//a[@title='Save the current search']",
+            "5.4": "//button[@alt='Save the current search']"},
+        cancel_save_filter_dialog_button={
+            "5.3": "//a[@title='Cancel the save']",
+            "5.4": "//button[@alt='Cancel the save']"},
 
         # If user input requested, this window appears
         quick_search_box="//div[@id='quicksearchbox']",
@@ -48,8 +74,8 @@ search_box = Region(
         report_filter=Select("//select[@id='chosen_report']"),
 
         # Elements in Save dialog
-        save_name="//input[@id='search_name']",
-        global_search="//input[@id='search_type']",
+        save_name=Input("search_name"),
+        global_search=Input("search_type"),
 
         # On the main page, this link clears the filters
         clear_advanced_search="//a[contains(@href, 'adv_search_clear')]",
@@ -120,7 +146,10 @@ def ensure_advanced_search_open():
     if not is_advanced_search_opened():
         sel.click(search_box.toggle_advanced)   # Open
     elif not sel.is_displayed(search_box.load_filter_button):   # If we aren't in default view
-        sel.click(search_box.toggle_advanced)   # Close
+        if current_version() >= "5.4":
+            sel.click(sel.element(search_box.close_button, root=search_box.advanced_search_box))
+        else:
+            sel.click(search_box.toggle_advanced)   # Close
         wait_for(is_advanced_search_opened, fail_condition=True, num_sec=5)
         sel.click(search_box.toggle_advanced)   # And open to see the default view
     wait_for(is_advanced_search_opened, fail_condition=False, num_sec=5)
@@ -146,7 +175,10 @@ def delete_filter(cancel=False):
 def ensure_advanced_search_closed():
     """Checks if the advanced search box is open and if it does, closes it."""
     if is_advanced_search_opened():
-        sel.click(search_box.toggle_advanced)
+        if current_version() >= "5.4":
+            sel.click(sel.element(search_box.close_button, root=search_box.advanced_search_box))
+        else:
+            sel.click(search_box.toggle_advanced)   # Close
         wait_for(is_advanced_search_opened, fail_condition=True, num_sec=5)
 
 
