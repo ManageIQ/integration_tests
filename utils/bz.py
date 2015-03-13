@@ -5,7 +5,8 @@ from collections import Sequence
 
 from utils import lazycache
 from utils.conf import cfme_data, credentials
-from utils.version import LATEST, LooseVersion, current_version, appliance_build_datetime
+from utils.version import (
+    LATEST, LooseVersion, current_version, appliance_build_datetime, appliance_is_downstream)
 
 NONE_FIELDS = {"---", "undefined", "unspecified"}
 
@@ -70,7 +71,7 @@ class Bugzilla(object):
     @property
     def default_product(self):
         if self.__product is None:
-            raise ValueError("No product specified!")
+            return None
         return self.product(self.__product)
 
     @classmethod
@@ -100,7 +101,10 @@ class Bugzilla(object):
 
     @lazycache
     def upstream_version(self):
-        return LooseVersion(cfme_data.get("bugzilla", {}).get("upstream_version", "9.9"))
+        if self.default_product is not None:
+            return self.default_product.latest_version
+        else:
+            return LooseVersion(cfme_data.get("bugzilla", {}).get("upstream_version", "9.9"))
 
     def get_bug(self, id):
         id = int(id)
@@ -277,7 +281,7 @@ class BugWrapper(object):
 
     @property
     def is_opened(self):
-        if self.is_upstream_bug:
+        if self.is_upstream_bug and not appliance_is_downstream():
             states = self._bugzilla.open_states
         else:
             states = self._bugzilla.open_states + ["POST"]
