@@ -276,6 +276,10 @@ class Group(MetadataMixin):
         return Template.objects.filter(template_group=self).order_by("-date", "provider__id")
 
     @property
+    def existing_templates(self):
+        return self.templates.filter(exists=True)
+
+    @property
     def appliances(self):
         return Appliance.objects.filter(template__template_group=self)
 
