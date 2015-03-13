@@ -921,7 +921,7 @@ def generic_shepherd(preconfigured):
                     possible_templates_for_provision)
                 if tpl_free:
                     appliance = Appliance(
-                        template=sorted(tpl_free, key=lambda p: p.appliance_load)[0],
+                        template=sorted(tpl_free, key=lambda t: t.provider.appliance_load)[0],
                         name=new_appliance_name)
                     appliance.save()
             if tpl_free:
