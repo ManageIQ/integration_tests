@@ -10,21 +10,22 @@
             <thead>
                 <th>Name</th>
                 <th>Original name</th>
+                <th>Preconfigured?</th>
                 <th>Version</th>
                 <th>Date</th>
                 <th>Provider</th>
                 <th>Ready</th>
-                <th>Exists</th>
                 <th>Usable</th>
                 {% if request.user.is_superuser %}
                     <th>Actions</th>
                 {% endif %}
             </thead>
             <tbody>
-            {% for template in group.templates %}
+            {% for template in group.existing_templates %}
             <tr>
                 <td>{{ template.name }}</td>
                 <td>{{ template.original_name }}</td>
+                <td>{% if template.preconfigured %}yes{% else %}no{% endif %}</td>
                 <td>{{ template.version }}</td>
                 <td>{{ template.date }}</td>
                 <td>{{ template.provider.id }}</td>
@@ -33,13 +34,6 @@
                         <button class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Ready</button>
                     {% else %}
                         <button class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> Not ready</button>
-                    {% endif %}
-                </td>
-                <td>
-                    {% if template.exists %}
-                        <button class="btn btn-success btn-xs"><span class="glyphicon glyphicon-ok"></span> Exists</button>
-                    {% else %}
-                        <button class="btn btn-danger btn-xs"><span class="glyphicon glyphicon-remove"></span> Does not exist</button>
                     {% endif %}
                 </td>
                 <td>
