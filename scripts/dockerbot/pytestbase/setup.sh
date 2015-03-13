@@ -121,7 +121,11 @@ fi
 
 # If specified, update PIP
 if [ -n "$UPDATE_PIP" ]; then
-    run_n_log "pip install -Ur $CFME_REPO_DIR/requirements.txt"
+    if [ -n "$WHEEL_HOST_URL" ]; then
+        run_n_log "pip install --trusted-host $WHEEL_HOST -f $WHEEL_HOST_URL -Ur $CFME_REPO_DIR/requirements.txt"
+    else
+        run_n_log "pip install -Ur $CFME_REPO_DIR/requirements.txt"
+    fi
 fi
 
 # If asked, provision the appliance, and update the APPLIANCE variable

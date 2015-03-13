@@ -11,6 +11,7 @@ import re
 import subprocess
 import sys
 import yaml
+import urlparse
 
 
 def _dgci(d, key):
@@ -290,6 +291,7 @@ class DockerBot(object):
             ec += 1
 
         self.check_arg('update_pip', False)
+        self.check_arg('wheel_host_url', None)
         self.check_arg('auto_gen_test', False)
         self.check_arg('artifactor_dir', '/log_depot')
 
@@ -386,7 +388,11 @@ class DockerBot(object):
         if self.args['update_pip']:
             print "  PIP: will be updated!"
             self.env_details['UPDATE_PIP'] = 'True'
-
+        if self.args['wheel_host_url'] and self.args['update_pip']:
+            self.env_details['WHEEL_HOST_URL'] = self.args['wheel_host_url']
+            self.env_details['WHEEL_HOST'] = urlparse.urlsplit(self.args['wheel_host_url']).netloc
+            print "  TRUSTED HOST: {}".format(self.env_details['WHEEL_HOST'])
+            print "  WHEEL URL: {}".format(self.env_details['WHEEL_HOST_URL'])
         if self.args['provision_appliance']:
             print "  APPLIANCE WILL BE PROVISIONED"
             self.env_details['PROVIDER'] = self.args['provision_provider']
@@ -523,6 +529,9 @@ if __name__ == "__main__":
                         default=None)
     pytest.add_argument('--update-pip', action='store_true',
                         help='If we should update requirements',
+                        default=None)
+    pytest.add_argument('--wheel-host-url',
+                        help="Use a particular wheel host for pip updates",
                         default=None)
     pytest.add_argument('--auto-gen-test', action='store_true',
                         help="Attempt to auto generate related tests (requires --pr)",
