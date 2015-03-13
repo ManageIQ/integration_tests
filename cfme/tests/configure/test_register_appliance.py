@@ -3,10 +3,9 @@
 import pytest
 import re
 
-from cfme.fixtures import pytest_selenium as sel
 from cfme.configure import red_hat_updates
 from cfme.web_ui import InfoBlock
-from utils import conf
+from utils import conf, version
 from utils.blockers import BZ
 from utils.ssh import SSHClient
 from utils.testgen import parametrize
@@ -29,8 +28,10 @@ def pytest_generate_tests(metafunc):
     argnames = ['reg_method', 'reg_data', 'proxy_url', 'proxy_creds']
     argvalues = []
     idlist = []
+
+    stream = version.current_stream()
     try:
-        all_reg_data = conf.cfme_data.get('redhat_updates', {})['registration']
+        all_reg_data = conf.cfme_data.get('redhat_updates', {})['streams'][stream]
     except KeyError:
         pytest.mark.uncollect(metafunc.function)
         return
@@ -41,10 +42,11 @@ def pytest_generate_tests(metafunc):
             if not reg_data or not reg_data.get('test_registration', False):
                 continue
 
-            proxy_data = all_reg_data.get('http_proxy', False)
-            if proxy_data and proxy_data.get('url', None):
+            proxy_data = conf.cfme_data['redhat_updates'].get('http_proxy', False)
+            if proxy_data and reg_data.get('use_http_proxy', False):
                 proxy_url = proxy_data['url']
-                proxy_creds = conf.credentials['http_proxy']
+                proxy_creds_key = proxy_data['credentials']
+                proxy_creds = conf.credentials[proxy_creds_key]
                 argval = [reg_method, reg_data, proxy_url, proxy_creds]
                 argid = '{}-{}'.format(reg_method, 'proxy_on')
                 idlist.append(argid)
@@ -64,13 +66,22 @@ def unset_org_id():
     try:
         red_hat_updates.update_registration(
             service='sat5',
-            url=None,
+            url="http://not.used.for.reg/XMLRPC",
             username='not_used_for_reg',
             password='not_used_for_reg',
             organization=''
         )
-    except sel.NoSuchElementException:
-        pass
+    except Exception as ex:
+        # Did this happen because the save button was dimmed?
+        try:
+            # If so, its fine - just return
+            if red_hat_updates.form_buttons.save.is_dimmed:
+                return
+        except:
+            # And if we cant access the save button
+            pass
+        # Something else happened so return the original exception
+        raise ex
 
 
 def rhsm_sat6_unregister():
@@ -87,20 +98,21 @@ def sat5_unregister():
 def is_registration_complete(used_repo_or_channel):
     with SSHClient() as ssh:
         ret, out = ssh.run_command('yum repolist enabled')
-        # Check that the specified (or default) repo is enabled and that there are
-        # packages available
-        if used_repo_or_channel in out and re.search(r'repolist: [^0]', out):
-            return True
-        return False
+        # Check that the specified (or default) repo (can be multiple, separated by a space)
+        # is enabled and that there are packages available
+        for repo_or_channel in used_repo_or_channel.split(' '):
+            if (repo_or_channel not in out) or (not re.search(r'repolist: [^0]', out)):
+                return False
+        return True
 
 
 @pytest.mark.ignore_stream("upstream")
 @pytest.mark.meta(
     blockers=[
-        1132942,
         BZ(1102724, unblock=lambda proxy_url: proxy_url is None),
     ]
 )
+@pytest.mark.rh_updates
 def test_appliance_registration(request, unset_org_id,
                                 reg_method, reg_data, proxy_url, proxy_creds):
 
@@ -150,6 +162,7 @@ def test_appliance_registration(request, unset_org_id,
     wait_for(
         func=is_registration_complete,
         func_args=[used_repo_or_channel],
-        delay=15,
-        num_sec=180
+        delay=40,
+        num_sec=400,
+        fail_func=red_hat_updates.register_appliances
     )

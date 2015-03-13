@@ -21,6 +21,7 @@ from py.io import TerminalWriter
 from utils import property_or_none
 from utils import conf
 from utils.randomness import generate_random_string
+from utils.log import logger
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -124,6 +125,8 @@ store = Store()
 
 
 def _push_appliance(app):
+    logger.info("Pushing appliance {} (old {} stored)"
+                .format(app.address, store.current_appliance.address))
     store._current_appliance.append(app)
     if app.browser_steal:
         from utils import browser
@@ -131,6 +134,8 @@ def _push_appliance(app):
 
 
 def _pop_appliance(app):
+    logger.info("Popping appliance {} (old {} restored)"
+                .format(store.current_appliance.address, store._current_appliance[-2].address))
     store._current_appliance.pop()
     if app.browser_steal:
         from utils import browser

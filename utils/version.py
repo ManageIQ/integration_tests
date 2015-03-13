@@ -34,6 +34,10 @@ def get_version(obj):
     return LooseVersion(obj)
 
 
+def current_stream():
+    return get_stream(store.current_appliance.version)
+
+
 def current_version():
     """A lazy cached method to return the appliance version.
 

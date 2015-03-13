@@ -67,6 +67,7 @@ def pytest_itemcollected(item):
                 item.add_marker(pytest.mark.uncollect)
 
 
+@pytest.mark.tryfirst
 def pytest_collection_modifyitems(session, config, items):
     # Just to print out the appliance's streams
     if not ssh_connection_failed:

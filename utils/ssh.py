@@ -107,12 +107,17 @@ class SSHClient(paramiko.SSHClient):
         # Returning two things so tuple unpacking the return works even if the ssh client fails
         return SSHResult(None, None)
 
+    def run_in_background(self, command):
+        command_bg = '{} >/dev/null 2>&1 &'.format(command)
+        self.run_command(command_bg)
+
+    def run_ruby_command(self, command):
+        return self.run_command('cd /var/www/miq/vmdb; bundle exec ruby {}'.format(command))
+
     def run_rails_command(self, command):
-        logger.info("Running rails command `{}`".format(command))
         return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {}'.format(command))
 
     def run_rake_command(self, command):
-        logger.info("Running rake command `{}`".format(command))
         return self.run_command('cd /var/www/miq/vmdb; bin/rake {}'.format(command))
 
     def put_file(self, local_file, remote_file='.', **kwargs):

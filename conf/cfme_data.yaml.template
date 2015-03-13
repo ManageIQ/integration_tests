@@ -692,45 +692,49 @@ datastores_not_for_provision:
     - datastore-name-1      # uses `in` operator
     - datastore-name-2
 redhat_updates:
-    current_version: 1.2.3.4
-    registration:
-        rhsm:
-            test_registration: True
-            test_direct: True
-            test_rhn_mirror: True
-            use_http_proxy: True
-            url: subscription.rhn.redhat.com
-            enable_repo: cfme-repo-name
-        sat5:
-            test_registration: True
-            test_direct: True
-            use_http_proxy: True
-            url: https://sat5.example.com
-            add_channel: cfme-channel-name
-            organization: 2
-        sat6:
-            test_registration: False
-            test_direct: False
-            test_rhn_mirror: False
-            use_http_proxy: False
-            url: https://sat6.example.com
-            enable_repo:
-        http_proxy:
-            url: 1.2.3.4:5678
-    appliances:
-        EVM:
-            register: True
-            update: True
-        EVM_2:
-            register: True
-            update: True
-    download_repo_files:
-        - url: http://my.example.com/repos/latest/my_repository.repo
-          reg_methods:
-              - rhsm
-              - rhn_mirror
-    enable_repos:
-    add_channels:
+    http_proxy:
+        url: 10.11.12.13:1234
+        credentials: http_proxy_creds
+    streams:
+        'mystream-12z':
+            rhsm:
+                versions_to_test:
+                    - 1.2.1.1
+                url: subscription.rhn.redhat.com
+                use_http_proxy: False
+                enable_repo: cfme-repo-name
+                test_direct: True
+                test_rhn_mirror: True
+                ssh_download_repo_files:
+                    - "http://example.com/path/to/CFME.repo"
+                ssh_enable_repos:
+                    - rhel-6-server-cfme-repo
+            sat5:
+                versions_to_test:
+                    - 1.2.2.1
+                url: https://sat5.example.com/XMLRPC
+                use_http_proxy: False
+                add_channel: cfme-channel-name
+                organization: 2
+                test_direct: False
+                ssh_add_channels:
+                    - rhel-6-server-cfme-channel
+            sat6:
+                versions_to_test:
+                    - 1.2.1.1
+                url: https://sat6.example.com
+                use_http_proxy: False
+                enable_repo: cfme-repo-name
+                test_direct: False
+                test_rhn_mirror: False
+            cli:
+                versions_to_test:
+                    - 1.2
+                test_direct: False
+                ssh_download_repo_files:
+                    - "http://example.com/path/to/CFME.repo"
+                ssh_enable_repos:
+                    - rhel-6-server-cfme-repo
 storage:
     managers:
         netapp-mgr-id-1:
