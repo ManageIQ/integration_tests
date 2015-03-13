@@ -71,7 +71,7 @@ class Bugzilla(object):
     @property
     def default_product(self):
         if self.__product is None:
-            raise ValueError("No product specified!")
+            return None
         return self.product(self.__product)
 
     @classmethod
@@ -101,7 +101,10 @@ class Bugzilla(object):
 
     @lazycache
     def upstream_version(self):
-        return LooseVersion(cfme_data.get("bugzilla", {}).get("upstream_version", "9.9"))
+        if self.default_product is not None:
+            return self.default_product.latest_version
+        else:
+            return LooseVersion(cfme_data.get("bugzilla", {}).get("upstream_version", "9.9"))
 
     def get_bug(self, id):
         id = int(id)
