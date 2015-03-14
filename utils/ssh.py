@@ -5,16 +5,28 @@ from collections import namedtuple
 from urlparse import urlparse
 
 import paramiko
+from lya import AttrDict
 from scp import SCPClient
 
 from utils import conf
 from utils.log import logger
 from utils.net import net_check
 from fixtures.pytest_store import store
+from utils.path import project_path
 from utils.timeutil import parsetime
 
 
 SSHResult = namedtuple("SSHResult", ["rc", "output"])
+
+_ssh_key_file = project_path.join('.generated_ssh_key')
+_ssh_pubkey_file = project_path.join('.generated_ssh_key.pub')
+
+# enum
+_ssh_keystate = AttrDict({
+    'not_installed': 0,
+    'installing': 1,
+    'installed': 2
+})
 
 
 class SSHClient(paramiko.SSHClient):
@@ -23,9 +35,11 @@ class SSHClient(paramiko.SSHClient):
     Allows copying/overriding and use as a context manager
     Constructor kwargs are handed directly to paramiko.SSHClient.connect()
     """
-    def __init__(self, stream_output=False, **connect_kwargs):
+    def __init__(self, stream_output=False, keystate=_ssh_keystate.not_installed,
+            **connect_kwargs):
         super(SSHClient, self).__init__()
         self._streaming = stream_output
+        self._keystate = keystate
 
         # Set up some sane defaults
         default_connect_kwargs = dict()
@@ -49,6 +63,11 @@ class SSHClient(paramiko.SSHClient):
         self._connect_kwargs = default_connect_kwargs
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+    @property
+    def transport(self):
+        with self:
+            return self._transport
+
     def __repr__(self):
         return "<SSHClient hostname={}>".format(repr(self._connect_kwargs.get("hostname")))
 
@@ -57,15 +76,21 @@ class SSHClient(paramiko.SSHClient):
         # then return a new instance with the updated kwargs
         new_connect_kwargs = dict(self._connect_kwargs)
         new_connect_kwargs.update(connect_kwargs)
+        # pass the key state if the hostname is the same, under the assumption that the same
+        # host will still have keys installed if they have already been
+        if self._connect_kwargs['hostname'] == new_connect_kwargs.get('hostname'):
+            new_connect_kwargs['keystate'] = self._keystate
         new_client = SSHClient(**new_connect_kwargs)
         return new_client
 
     def __enter__(self):
-        self.connect(**self._connect_kwargs)
+        if self._transport is None:
+            self.connect(**self._connect_kwargs)
         return self
 
     def __exit__(self, *args, **kwargs):
-        self.close()
+        # Noop, call clone explicitly to shut down the transport
+        pass
 
     def connect(self, hostname, *args, **kwargs):
         """See paramiko.SSHClient.connect"""
@@ -73,15 +98,18 @@ class SSHClient(paramiko.SSHClient):
         if not net_check(port, hostname):
             raise Exception("Connection to %s is not available as port %d is unavailable"
                             % (hostname, port))
+        # Only install ssh keys if they aren't installed (or currently being installed)
+        if self._keystate < _ssh_keystate.installing:
+            self.install_ssh_keys()
         super(SSHClient, self).connect(hostname, *args, **kwargs)
 
     def run_command(self, command):
         logger.info("Running command `{}`".format(command))
         template = '%s\n'
         command = template % command
-        with self as context:
-            transport = context.get_transport()
-            session = transport.open_session()
+
+        try:
+            session = self.transport.open_session()
             session.exec_command(command)
             stdout = session.makefile()
             stderr = session.makefile_stderr()
@@ -103,9 +131,11 @@ class SSHClient(paramiko.SSHClient):
                     break
             exit_status = session.recv_exit_status()
             return SSHResult(exit_status, output)
+        except paramiko.SSHException as exc:
+            logger.exception(exc)
 
         # Returning two things so tuple unpacking the return works even if the ssh client fails
-        return SSHResult(None, None)
+        return SSHResult(1, None)
 
     def run_rails_command(self, command):
         logger.info("Running rails command `{}`".format(command))
@@ -117,15 +147,11 @@ class SSHClient(paramiko.SSHClient):
 
     def put_file(self, local_file, remote_file='.', **kwargs):
         logger.info("Transferring local file {} to remote {}".format(local_file, remote_file))
-        with self as ctx:
-            transport = ctx.get_transport()
-            return SCPClient(transport).put(local_file, remote_file, **kwargs)
+        return SCPClient(self.transport).put(local_file, remote_file, **kwargs)
 
     def get_file(self, remote_file, local_path='', **kwargs):
         logger.info("Transferring remote file {} to local {}".format(remote_file, local_path))
-        with self as ctx:
-            transport = ctx.get_transport()
-            return SCPClient(transport).get(remote_file, local_path, **kwargs)
+        return SCPClient(self.transport).get(remote_file, local_path, **kwargs)
 
     def get_version(self):
         return self.run_command(
@@ -149,6 +175,19 @@ class SSHClient(paramiko.SSHClient):
 
     def appliance_has_netapp(self):
         return self.run_command("stat /var/www/miq/vmdb/HAS_NETAPP").rc == 0
+
+    def install_ssh_keys(self):
+        self._keystate = _ssh_keystate.installing
+        if not _ssh_key_file.check():
+            keygen()
+
+        if self.run_command('test -f ~/.ssh/authorized_keys').rc != 0:
+            self.run_command('mkdir -p ~/.ssh')
+            self.put_file(_ssh_key_file.strpath, '~/.ssh/id_rsa')
+            self.put_file(_ssh_pubkey_file.strpath, '~/.ssh/id_rsa.pub')
+            self.run_command('cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys;'
+                'chmod 700 ~/.ssh; chmod 600 ~/.ssh/*')
+        self._keystate = _ssh_keystate.installed
 
 
 class SSHTail(SSHClient):
@@ -183,3 +222,22 @@ class SSHTail(SSHClient):
         with self as sshtail:
             fstat = sshtail._sftp_client.stat(self._remote_filename)
             self._remote_file_size = fstat.st_size  # Seed initial size of file
+
+
+def keygen():
+    """Generate temporary ssh keypair for appliance SSH auth
+
+    Intended not only to simplify ssh access to appliances, but also to simplify
+    SSH access from one appliance to another in multi-appliance setups
+
+    """
+    # private key
+    prv = paramiko.RSAKey.generate(bits=1024)
+    with _ssh_key_file.open('w') as f:
+        prv.write_private_key(f)
+
+    # public key
+    pub = paramiko.RSAKey(filename=_ssh_key_file.strpath)
+    with _ssh_pubkey_file.open('w') as f:
+        f.write("{} {} {}".format(pub.get_name(), pub.get_base64(),
+            'autogenerated cfme_tests key'))

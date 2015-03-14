@@ -346,6 +346,8 @@ class IPAppliance(object):
         self.browser_steal = browser_steal
         # thing-toucher process, used for UI coverage
         self._thing_toucher_proc = None
+        # ssh client cache
+        self._ssh_client = None
 
     def __repr__(self):
         return '%s(%s)' % (type(self).__name__, repr(self.address))
@@ -434,13 +436,16 @@ class IPAppliance(object):
         """
         if not self.is_ssh_running:
             raise Exception('SSH is unavailable')
-        # IPAppliance.ssh_client only connects to its address
-        connect_kwargs['hostname'] = self.address
-        connect_kwargs['username'] = connect_kwargs.get(
-            'username', conf.credentials['ssh']['username'])
-        connect_kwargs['password'] = connect_kwargs.get(
-            'password', conf.credentials['ssh']['password'])
-        return SSHClient(**connect_kwargs)
+
+        if self._ssh_client is None:
+            # IPAppliance.ssh_client only connects to its address
+            connect_kwargs['hostname'] = self.address
+            connect_kwargs['username'] = connect_kwargs.get(
+                'username', conf.credentials['ssh']['username'])
+            connect_kwargs['password'] = connect_kwargs.get(
+                'password', conf.credentials['ssh']['password'])
+            self._ssh_client = SSHClient(**connect_kwargs)
+        return self._ssh_client
 
     def db_ssh_client(self, **connect_kwargs):
         if self.is_db_internal:
