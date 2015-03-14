@@ -1261,10 +1261,10 @@ class Input(Pretty):
         )
 
     def __add__(self, string):
-        return '//input[@name="{}"]{}'.format(self.name, string)
+        return self.locate() + string
 
     def __radd__(self, string):
-        return '{}//input[@name="{}"]'.format(string, self.name)
+        return string + self.locate()
 
 
 class Radio(Input):
