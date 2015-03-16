@@ -8,8 +8,10 @@
         <script src="dist/js/bootstrap.min.js"></script>
         <script src="dist/js/patternfly.min.js"></script>
         {% block scripts %}{% endblock %}
+        {% block extrahead %}{% endblock %}
     </head>
 <body>
+  {% block nav %}
   <nav class="navbar navbar-default navbar-pf" role="navigation">
     <div class="collapse navbar-collapse navbar-collapse-21">
       <ul class="nav navbar-nav navbar-primary">
@@ -19,6 +21,7 @@
       </ul>
     </div>
   </nav>
+  {% endblock %}
   <p></p>
         {% block content %}{% endblock %}
     </body>
