@@ -44,34 +44,22 @@ class SSHClient(paramiko.SSHClient):
         self._keystate = keystate
         logger.debug('client initialized with keystate {}'.format(_ssh_keystate[keystate]))
 
-        # Set up some sane defaults
-        default_connect_kwargs = dict()
-        if 'timeout' not in connect_kwargs:
-            default_connect_kwargs['timeout'] = 10
-        if 'allow_agent' not in connect_kwargs:
-            default_connect_kwargs['allow_agent'] = False
-        if 'look_for_keys' not in connect_kwargs:
-            default_connect_kwargs['look_for_keys'] = False
-
-        # Load credentials and destination from confs
+        # Load credentials and destination from confs, set up sane defaults
         parsed_url = urlparse(store.base_url)
         default_connect_kwargs = {
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],
             'hostname': parsed_url.hostname,
+            'timeout': 10,
+            'allow_agent': False,
+            'look_for_keys': False,
+            'gss_auth': False
         }
 
         # Overlay defaults with any passed-in kwargs and store
         default_connect_kwargs.update(connect_kwargs)
         self._connect_kwargs = default_connect_kwargs
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    @property
-    def transport(self):
-        if not (self._transport and self._transport.active):
-            logger.debug('connecting ssh transport')
-            self.connect(**self._connect_kwargs)
-        return self._transport
 
     def __repr__(self):
         return "<SSHClient hostname={}>".format(repr(self._connect_kwargs.get("hostname")))
@@ -89,8 +77,7 @@ class SSHClient(paramiko.SSHClient):
         return new_client
 
     def __enter__(self):
-        # vestigial context manager support, connections are now
-        # automatically managed by the transport property
+        self.connect()
         return self
 
     def __exit__(self, *args, **kwargs):
@@ -98,16 +85,36 @@ class SSHClient(paramiko.SSHClient):
         # It will be reopened automatically on next command
         pass
 
-    def connect(self, hostname, *args, **kwargs):
-        """See paramiko.SSHClient.connect"""
-        port = int(kwargs.get('port', 22))
+    def _check_port(self):
+        hostname = self._connect_kwargs['hostname']
+        port = int(self._connect_kwargs.get('port', 22))
         if not net_check(port, hostname):
             raise Exception("Connection to %s is not available as port %d is unavailable"
                             % (hostname, port))
+
+    @property
+    def connected(self):
+        return self._transport and self._transport.active
+
+    def connect(self, hostname=None, **kwargs):
+        """See paramiko.SSHClient.connect"""
+        if hostname:
+            self._connect_kwargs['hostname'] = hostname
+        self._connect_kwargs.update(kwargs)
+        self._check_port()
         # Only install ssh keys if they aren't installed (or currently being installed)
         if self._keystate < _ssh_keystate.installing:
             self.install_ssh_keys()
-        super(SSHClient, self).connect(hostname, *args, **kwargs)
+        if not self.connected:
+            return super(SSHClient, self).connect(**self._connect_kwargs)
+
+    def get_transport(self, *args, **kwargs):
+        if self.connected:
+            logger.trace('reusing ssh transport')
+        else:
+            logger.trace('connecting new ssh transport')
+            self.connect()
+        return super(SSHClient, self).get_transport(*args, **kwargs)
 
     def run_command(self, command):
         logger.info("Running command `{}`".format(command))
@@ -115,7 +122,8 @@ class SSHClient(paramiko.SSHClient):
         command = template % command
 
         try:
-            session = self.transport.open_session()
+            transport = self.get_transport()
+            session = transport.open_session()
             session.exec_command(command)
             stdout = session.makefile()
             stderr = session.makefile_stderr()
@@ -153,11 +161,11 @@ class SSHClient(paramiko.SSHClient):
 
     def put_file(self, local_file, remote_file='.', **kwargs):
         logger.info("Transferring local file {} to remote {}".format(local_file, remote_file))
-        return SCPClient(self.transport).put(local_file, remote_file, **kwargs)
+        return SCPClient(self.get_transport()).put(local_file, remote_file, **kwargs)
 
     def get_file(self, remote_file, local_path='', **kwargs):
         logger.info("Transferring remote file {} to local {}".format(remote_file, local_path))
-        return SCPClient(self.transport).get(remote_file, local_path, **kwargs)
+        return SCPClient(self.get_transport()).get(remote_file, local_path, **kwargs)
 
     def get_version(self):
         return self.run_command(
@@ -191,6 +199,7 @@ class SSHClient(paramiko.SSHClient):
         self._keystate = _ssh_keystate.installing
         if not _ssh_key_file.check():
             keygen()
+        self._connect_kwargs['key_filename'] = _ssh_key_file.strpath
 
         if self.run_command('test -f ~/.ssh/authorized_keys').rc != 0:
             self.run_command('mkdir -p ~/.ssh')
