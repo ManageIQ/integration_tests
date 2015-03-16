@@ -22,7 +22,7 @@ _entry_div = "|".join([
     # Old type
     "//div[contains(@class, 'ui-tabs')]",
     # New, bootstrap type
-    "//div[contains(@class, 'row') and ./div/ul[contains(@class, 'nav-tabs')]]"])
+    "//ul[contains(@class, 'nav-tabs')]"])
 _entry_ul = {
     '5.3': '//ul[@class="tab2" or @class="tab3"]',
     version.LOWEST: '//ul[@id="tab" and @class="tab"]'

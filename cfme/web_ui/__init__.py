@@ -1256,7 +1256,7 @@ class Input(Pretty):
         self.names = names
 
     def locate(self):
-        return '(//input | //textarea)[{}]'.format(
+        return '//*[(self::input or self::textarea) and ({})]'.format(
             " or ".join("@name={}".format(quoteattr(name)) for name in self.names)
         )
 

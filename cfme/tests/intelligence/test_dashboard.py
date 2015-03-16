@@ -19,6 +19,7 @@ AVAILABLE_WIDGETS = [
 ]
 
 
+@pytest.mark.meta(blockers=[1202394])
 def test_widgets_operation(request):
     sel.force_navigate("dashboard")
     request.addfinalizer(lambda: Widget.close_zoom())

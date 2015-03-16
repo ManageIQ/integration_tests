@@ -62,6 +62,7 @@ def test_custom_report_crud(custom_report):
     custom_report.delete()
 
 
+@pytest.mark.meta(blockers=[1202412])
 def test_schedule_crud(schedule):
     schedule.create()
     with update(schedule):
