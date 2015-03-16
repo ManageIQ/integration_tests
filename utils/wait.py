@@ -52,15 +52,21 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     num_sec = kwargs.get('num_sec', 120)
     expo = kwargs.get('expo', False)
     message = kwargs.get('message', None)
-    if not message:
-        if isinstance(func, partial):
+
+    if isinstance(func, partial):
+        line_no = "<partial>"
+        filename = "<partial>"
+        if not message:
             params = ", ".join([str(arg) for arg in func.args])
             message = "partial function %s(%s)" % (func.func.func_name, params)
-        else:
+    else:
+        line_no = func.func_code.co_firstlineno
+        filename = func.func_code.co_filename
+        if not message:
             message = "function %s()" % func.func_name
+
     fail_condition = kwargs.get('fail_condition', False)
-    line_no = func.func_code.co_firstlineno
-    filename = func.func_code.co_filename
+
     if not callable(fail_condition):
         fail_condition_check = lambda result: result == fail_condition
     else:

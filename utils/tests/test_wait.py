@@ -2,6 +2,7 @@
 # pylint: disable=W0621
 import pytest
 import time
+from functools import partial
 from utils.wait import wait_for, TimedOutError
 
 pytestmark = [
@@ -42,3 +43,11 @@ def test_lambda_long_wait():
     with pytest.raises(TimedOutError):
         wait_for(lambda self: self.i_sleep_a_lot() > 10, [incman],
                  num_sec=1, message="lambda_long_wait")
+
+
+def test_partial():
+    incman = Incrementor()
+    func = partial(lambda: incman.i_sleep_a_lot() > 10)
+    with pytest.raises(TimedOutError):
+        wait_for(func,
+                 num_sec=2, delay=1)
