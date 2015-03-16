@@ -27,6 +27,8 @@ _ssh_keystate = AttrDict({
     'installing': 1,
     'installed': 2
 })
+# enum reverse lookup
+_ssh_keystate.update({v: k for k, v in _ssh_keystate.items()})
 
 
 class SSHClient(paramiko.SSHClient):
@@ -40,6 +42,7 @@ class SSHClient(paramiko.SSHClient):
         super(SSHClient, self).__init__()
         self._streaming = stream_output
         self._keystate = keystate
+        logger.debug('client initialized with keystate {}'.format(_ssh_keystate[keystate]))
 
         # Set up some sane defaults
         default_connect_kwargs = dict()
@@ -65,8 +68,10 @@ class SSHClient(paramiko.SSHClient):
 
     @property
     def transport(self):
-        with self:
-            return self._transport
+        if not (self._transport and self._transport.active):
+            logger.debug('connecting ssh transport')
+            self.connect(**self._connect_kwargs)
+        return self._transport
 
     def __repr__(self):
         return "<SSHClient hostname={}>".format(repr(self._connect_kwargs.get("hostname")))
@@ -84,12 +89,13 @@ class SSHClient(paramiko.SSHClient):
         return new_client
 
     def __enter__(self):
-        if self._transport is None:
-            self.connect(**self._connect_kwargs)
+        # vestigial context manager support, connections are now
+        # automatically managed by the transport property
         return self
 
     def __exit__(self, *args, **kwargs):
-        # Noop, call clone explicitly to shut down the transport
+        # Noop, call close explicitly to shut down the transport
+        # It will be reopened automatically on next command
         pass
 
     def connect(self, hostname, *args, **kwargs):
