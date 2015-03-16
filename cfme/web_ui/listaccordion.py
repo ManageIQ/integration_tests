@@ -13,13 +13,21 @@ Usage:
 Note:
     Inactive links are not available in any way.
 """
+from xml.sax.saxutils import quoteattr
+
 
 import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import ListAccordionLinkNotFound
 from utils.pretty import Pretty
 
-DHX_ITEM = 'div[contains(@class, "dhx_acc_item") or @class="topbar"]'
-DHX_LABEL = '*[contains(@data-remote, "true") and normalize-space(.)="%s"]'
+LOCATOR = "|".join([
+    # The older one
+    '//div[contains(@class, "dhx_acc_item") or @class="topbar"]'
+    '/*[contains(@data-remote, "true") and normalize-space(.)={accname}]',
+    # The newer one
+    "//div[contains(@class, 'panel-group')]/div[contains(@class, 'panel-')]/div/h4"
+    "/a[@data-toggle and normalize-space(.)={accname}]"
+])
 
 
 def locate(name):
@@ -29,9 +37,7 @@ def locate(name):
         name: The name of the accordion.
     Returns: An xpath locator of the selected accordion.
     """
-    label_to_use = DHX_LABEL % (name)
-    xpath = '//%s/%s' % (DHX_ITEM, label_to_use)
-    return xpath
+    return LOCATOR.format(accname=quoteattr(name))
 
 
 def click(name):
