@@ -835,6 +835,7 @@ def _assign_unassign_policy_profiles(vm_name, assign, *policy_profile_names, **k
             manage_policies_tree.check_node(policy_profile)
         else:
             manage_policies_tree.uncheck_node(policy_profile)
+    sel.move_to_element('#tP')
     sel.click(form_buttons.save)
 
 
