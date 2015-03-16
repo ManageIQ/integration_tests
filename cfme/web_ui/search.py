@@ -23,7 +23,7 @@ search_box = Region(
         # The arrow opening/closing the advanced search box
         toggle_advanced={
             "5.3": "//img[@id='adv_search_img']",
-            "5.4": "//button[@id='adv_search']"},
+            "5.4": "(//button | //a)[@id='adv_search']"},
 
         # Container for the advanced search box
         advanced_search_box={
@@ -33,34 +33,34 @@ search_box = Region(
         # Buttons on main view
         apply_filter_button={
             "5.3": "//a[@title='Apply the current filter']",
-            "5.4": "//button[@alt='Apply the current filter']"},
+            "5.4": "(//button | //a)[@alt='Apply the current filter']"},
         load_filter_button={
             "5.3": "//a[@title='Load a filter']",
-            "5.4": "//button[@alt='Load a filter']"},
+            "5.4": "(//button | //a)[@alt='Load a filter']"},
         delete_filter_button={
             "5.3": "//a[contains(@title, 'Delete the filter named')]",
-            "5.4": "//button[contains(@alt, 'Delete the filter named')]"},
+            "5.4": "(//button | //a)[contains(@alt, 'Delete the filter named')]"},
         save_filter_button={
             "5.3": "//a[@title='Save the current filter']",
-            "5.4": "//button[@alt='Save the current filter']"},
+            "5.4": "(//button | //a)[@alt='Save the current filter']"},
         reset_filter_button={
             "5.3": "//a[@title='Reset the filter']",
-            "5.4": "//button[@alt='Reset the filter']"},
+            "5.4": "(//button | //a)[@alt='Reset the filter']"},
         close_button="//button[contains(@class, 'close')]",
 
         # Buttons in the "next step"
         load_filter_dialog_button={
             "5.3": "//a[@title='Load the filter shown above']",
-            "5.4": "//button[@alt='Load the filter shown above']"},
+            "5.4": "(//button | //a)[@alt='Load the filter shown above']"},
         cancel_load_filter_dialog_button={
             "5.3": "//a[@title='Cancel the load']",
-            "5.4": "//button[@alt='Cancel the load']"},
+            "5.4": "(//button | //a)[@alt='Cancel the load']"},
         save_filter_dialog_button={
             "5.3": "//a[@title='Save the current search']",
-            "5.4": "//button[@alt='Save the current search']"},
+            "5.4": "(//button | //a)[@alt='Save the current search']"},
         cancel_save_filter_dialog_button={
             "5.3": "//a[@title='Cancel the save']",
-            "5.4": "//button[@alt='Cancel the save']"},
+            "5.4": "(//button | //a)[@alt='Cancel the save']"},
 
         # If user input requested, this window appears
         quick_search_box="//div[@id='quicksearchbox']",
