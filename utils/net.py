@@ -43,16 +43,13 @@ def my_ip_address(http=False):
 
     """
     # Allow for DockerBot to set outside IP
-    my_ip = os.environ.get('CFME_MY_IP_ADDRESS')
-    if my_ip:
-        return my_ip
-    else:
-        address = urlparse.urlparse(store.base_url).hostname
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((address, 22))
-        ip = sock.getsockname()[0]
-        sock.close()
-        return ip
+    try:
+        # Check the environment first
+        return os.environ['CFME_MY_IP_ADDRESS']
+    except KeyError:
+        # Fall back to having an appliance tell us what it thinks our IP
+        # address is
+        return store.current_appliance.ssh_client().client_address()
 
 
 def ip_echo_socket(port=32123):
