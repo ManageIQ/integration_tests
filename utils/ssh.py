@@ -173,6 +173,11 @@ class SSHClient(paramiko.SSHClient):
 
         return 0
 
+    def client_address(self):
+        res = self.run_command('echo $SSH_CLIENT')
+        # SSH_CLIENT format is 'clientip clientport serverport', we want clientip
+        return res.output.split()[0]
+
     def appliance_has_netapp(self):
         return self.run_command("stat /var/www/miq/vmdb/HAS_NETAPP").rc == 0
 
