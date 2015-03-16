@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+"""UI performance tests on Infrastructure."""
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.datastore import get_all_datastores
 from cfme.infrastructure.host import get_all_hosts
@@ -72,8 +73,8 @@ infra_pxe_filters = [
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_providers(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_infra_providers(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     nav_limit = 0
     if 'providers' in perf_tests['ui']['page_check']['infrastructure']:
@@ -83,13 +84,13 @@ def test_perf_ui_infra_providers(ui_worker_pid, ssh_client, soft_assert):
         nav_limit, ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_infra_providers.csv')
-    pages_to_statistics_csv(pages, infra_provider_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, infra_provider_filters, 'ui-statistics.csv')
 
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_clusters(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_infra_clusters(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     nav_limit = 0
     if 'clusters' in perf_tests['ui']['page_check']['infrastructure']:
@@ -110,13 +111,13 @@ def test_perf_ui_infra_clusters(ui_worker_pid, ssh_client, soft_assert):
         ui_worker_pid, prod_tail, soft_assert, acc_bars))
 
     pages_to_csv(pages, 'perf_ui_infra_clusters.csv')
-    pages_to_statistics_csv(pages, cluster_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, cluster_filters, 'ui-statistics.csv')
 
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_hosts(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_infra_hosts(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     nav_limit = 0
     if 'hosts' in perf_tests['ui']['page_check']['infrastructure']:
@@ -128,7 +129,7 @@ def test_perf_ui_infra_hosts(ui_worker_pid, ssh_client, soft_assert):
         ui_worker_pid, prod_tail, soft_assert, acc_bars))
 
     pages_to_csv(pages, 'perf_ui_infra_hosts.csv')
-    pages_to_statistics_csv(pages, host_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, host_filters, 'ui-statistics.csv')
 
 
 # Currently unskip on 1175504 since a large environment is a requirement for this bug
@@ -140,8 +141,8 @@ def test_perf_ui_infra_hosts(ui_worker_pid, ssh_client, soft_assert):
 )
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_vm_explorer(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_infra_vm_explorer(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'infrastructure_virtual_machines'), soft_assert))
@@ -154,15 +155,15 @@ def test_perf_ui_infra_vm_explorer(ui_worker_pid, ssh_client, soft_assert):
         soft_assert))
 
     pages_to_csv(pages, 'perf_ui_infra_vm_explorer.csv')
-    pages_to_statistics_csv(pages, vm_infra_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, vm_infra_filters, 'ui-statistics.csv')
 
 
 # Currently unskip 1129260 since a large environment is a requirement for this bug
 @pytest.mark.meta(blockers=[BZ(1129260, unblock=True)])
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_resource_pools(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_infra_resource_pools(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     nav_limit = 0
     if 'resource_pools' in perf_tests['ui']['page_check']['infrastructure']:
@@ -184,13 +185,13 @@ def test_perf_ui_infra_resource_pools(ui_worker_pid, ssh_client, soft_assert):
         acc_bars))
 
     pages_to_csv(pages, 'perf_ui_infra_resource_pools.csv')
-    pages_to_statistics_csv(pages, resource_pool_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, resource_pool_filters, 'ui-statistics.csv')
 
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_datastores(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_infra_datastores(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     nav_limit = 0
     if 'datastores' in perf_tests['ui']['page_check']['infrastructure']:
@@ -202,13 +203,13 @@ def test_perf_ui_infra_datastores(ui_worker_pid, ssh_client, soft_assert):
         nav_limit, ui_worker_pid, prod_tail, soft_assert, acc_bars))
 
     pages_to_csv(pages, 'perf_ui_infra_datastores.csv')
-    pages_to_statistics_csv(pages, storage_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, storage_filters, 'ui-statistics.csv')
 
 
 @pytest.mark.perf_ui_infrastructure
 @pytest.mark.usefixtures("setup_infrastructure_providers", "cfme_log_level_rails_debug")
-def test_perf_ui_infra_pxe(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_infra_pxe(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'infrastructure_pxe'), soft_assert))
@@ -221,4 +222,4 @@ def test_perf_ui_infra_pxe(ui_worker_pid, ssh_client, soft_assert):
         ['infrastructure']['pxe']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_infra_pxe.csv')
-    pages_to_statistics_csv(pages, infra_pxe_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, infra_pxe_filters, 'ui-statistics.csv')

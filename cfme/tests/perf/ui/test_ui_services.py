@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+"""UI performance tests on Services."""
 from cfme.fixtures import pytest_selenium as sel
 from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
@@ -23,8 +24,8 @@ workloads_filters = [
 
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_services_my_services(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_services_my_services(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'my_services'), soft_assert))
@@ -35,13 +36,13 @@ def test_perf_ui_services_my_services(ui_worker_pid, ssh_client, soft_assert):
         ['services']['my_services']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_services_my_services.csv')
-    pages_to_statistics_csv(pages, my_services_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, my_services_filters, 'ui-statistics.csv')
 
 
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_services_catalogs(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_services_catalogs(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'services_catalogs'), soft_assert))
@@ -54,14 +55,14 @@ def test_perf_ui_services_catalogs(ui_worker_pid, ssh_client, soft_assert):
         soft_assert))
 
     pages_to_csv(pages, 'perf_ui_services_catalogs.csv')
-    pages_to_statistics_csv(pages, my_services_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, my_services_filters, 'ui-statistics.csv')
 
 
 @pytest.mark.meta(blockers=[1179478])
 @pytest.mark.perf_ui_services
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_services_workloads(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_services_workloads(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'services_workloads'), soft_assert))
@@ -74,4 +75,4 @@ def test_perf_ui_services_workloads(ui_worker_pid, ssh_client, soft_assert):
         soft_assert))
 
     pages_to_csv(pages, 'perf_ui_services_workloads.csv')
-    pages_to_statistics_csv(pages, my_services_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, my_services_filters, 'ui-statistics.csv')

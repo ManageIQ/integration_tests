@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*
-"""Set of functions for performance analysis/charting of the backend messages and top_output from an
+"""Functions for performance analysis/charting of the backend messages and top_output from an
 appliance.
 """
 from utils.log import logger
 from utils.path import log_path
+from utils.perf import convert_top_mem_to_mib
+from utils.perf import generate_statistics
 from datetime import datetime
 import dateutil.parser as du_parser
 from datetime import timedelta
@@ -55,50 +57,6 @@ miq_swap = re.compile(r'Swap:\s+([0-9]*)k\stotal,\s+([0-9]*)k\sused,\s+([0-9]*)k
 # 17526 2320 root 30 10 324m 9.8m 2444 S 0.0 0.2 0:09.38 /var/www/miq/vmdb/lib/workers/bin/worker.rb
 miq_top = re.compile(r'([0-9]+)\s+[0-9]+\s+[A-Za-z0-9]+\s+[0-9]+\s+[0-9\-]+\s+([0-9\.mg]+)\s+'
     r'([0-9\.mg]+)\s+([0-9\.mg]+)\s+[SRDZ]\s+([0-9\.]+)\s+([0-9\.]+)')
-
-
-def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False):
-    log_dir = '/var/www/miq/vmdb/log/'
-
-    log_file = '{}{}.log'.format(log_dir, log_prefix)
-    dest_file = '{}{}.perf.log'.format(log_dir, log_prefix)
-    dest_file_gz = '{}{}.perf.log.gz'.format(log_dir, log_prefix)
-
-    ssh_client.run_command('rm -f {}'.format(dest_file_gz))
-
-    status, out = ssh_client.run_command('ls -1 {}-*'.format(log_file))
-    if status == 0:
-        files = out.strip().split('\n')
-        for lfile in sorted(files):
-            ssh_client.run_command('cp {} {}-2.gz'.format(lfile, lfile))
-            ssh_client.run_command('gunzip {}-2.gz'.format(lfile))
-            if strip_whitespace:
-                ssh_client.run_command('sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
-                    '{}-2'.format(lfile))
-            ssh_client.run_command('cat {}-2 >> {}'.format(lfile, dest_file))
-            ssh_client.run_command('rm {}-2'.format(lfile))
-
-    ssh_client.run_command('cp {} {}-2'.format(log_file, log_file))
-    if strip_whitespace:
-        ssh_client.run_command('sed -i  \'s/^ *//; s/ *$//; /^$/d; /^\s*$/d\' '
-            '{}-2'.format(log_file))
-    ssh_client.run_command('cat {}-2 >> {}'.format(log_file, dest_file))
-    ssh_client.run_command('rm {}-2'.format(log_file))
-    ssh_client.run_command('gzip {}{}.perf.log'.format(log_dir, log_prefix))
-
-    ssh_client.get_file(dest_file_gz, local_file_name)
-    ssh_client.run_command('rm -f {}'.format(dest_file_gz))
-
-
-# Converts Memory Unit to MiB
-def convert_mem_to_mib(top_mem):
-    if top_mem[-1:] == 'm':
-        num = float(top_mem[:-1])
-    elif top_mem[-1:] == 'g':
-        num = float(top_mem[:-1]) * 1024
-    else:
-        num = float(top_mem) / 1024
-    return num
 
 
 def evm_to_messages(evm_file, filters):
@@ -403,15 +361,6 @@ def generate_raw_data_csv(rawdata_dict, csv_file_name):
         csvwriter.writerow(dict(rawdata_dict[key]))
 
 
-def generate_statistics(the_list):
-    if len(the_list) == 0:
-        return '0,0,0,0,0,0'
-    else:
-        return '{},{},{},{},{},{}'.format(len(the_list), numpy.amin(the_list), numpy.amax(the_list),
-            round(numpy.average(the_list), 2), round(numpy.std(the_list), 2),
-            numpy.percentile(the_list, 90))
-
-
 def generate_total_time_charts(msg_cmds, charts_dir):
     for cmd in sorted(msg_cmds):
         logger.info('Generating Total Time Chart for {}'.format(cmd))
@@ -601,27 +550,34 @@ def messages_to_statistics_csv(messages, statistics_file_name):
 
     csvdata_path = log_path.join('csv_output', statistics_file_name)
     outputfile = csvdata_path.open('w', ensure=True)
-    outputfile.write('cmd,puts,gets,'
-        'deq_time_samples,deq_time_min,deq_time_max,deq_time_avg,deq_time_std,deq_time_90,'
-        'del_time_samples,del_time_min,del_time_max,del_time_avg,del_time_std,del_time_90,'
-        'tot_time_samples,tot_time_min,tot_time_max,tot_time_avg,tot_time_std,tot_time_90\n')
 
-    # Contents of CSV
-    for msg_statistics in sorted(all_statistics, key=lambda x: x.cmd):
-        if msg_statistics.gets > 1:
-            logger.debug('Samples/Avg/90th/Std: {} : {} : {} : {},Cmd: {}'.format(
-                str(len(msg_statistics.totaltimes)).rjust(7),
-                str(round(numpy.average(msg_statistics.totaltimes))).rjust(7),
-                str(round(numpy.percentile(msg_statistics.totaltimes, 90))).rjust(7),
-                str(round(numpy.std(msg_statistics.totaltimes))).rjust(7),
-                msg_statistics.cmd))
-        stats = '{},{},{},{},{},{}\n'.format(msg_statistics.cmd,
-            msg_statistics.puts, msg_statistics.gets,
-            generate_statistics(numpy.array(msg_statistics.dequeuetimes)),
-            generate_statistics(numpy.array(msg_statistics.delivertimes)),
-            generate_statistics(numpy.array(msg_statistics.totaltimes)))
-        outputfile.write(stats)
-    outputfile.close()
+    try:
+        csvfile = csv.writer(outputfile)
+        metrics = ['samples', 'min', 'avg', 'median', 'max', 'std', '90', '99']
+        measurements = ['deq_time', 'del_time', 'total_time']
+        headers = ['cmd', 'puts', 'gets']
+        for measurement in measurements:
+            for metric in metrics:
+                headers.append('{}_{}'.format(measurement, metric))
+
+        csvfile.writerow(headers)
+
+        # Contents of CSV
+        for msg_statistics in sorted(all_statistics, key=lambda x: x.cmd):
+            if msg_statistics.gets > 1:
+                logger.debug('Samples/Avg/90th/Std: {} : {} : {} : {},Cmd: {}'.format(
+                    str(len(msg_statistics.totaltimes)).rjust(7),
+                    str(round(numpy.average(msg_statistics.totaltimes), 3)).rjust(7),
+                    str(round(numpy.percentile(msg_statistics.totaltimes, 90), 3)).rjust(7),
+                    str(round(numpy.std(msg_statistics.totaltimes), 3)).rjust(7),
+                    msg_statistics.cmd))
+            stats = [msg_statistics.cmd, msg_statistics.puts, msg_statistics.gets]
+            stats.extend(generate_statistics(msg_statistics.dequeuetimes, 3))
+            stats.extend(generate_statistics(msg_statistics.delivertimes, 3))
+            stats.extend(generate_statistics(msg_statistics.totaltimes, 3))
+            csvfile.writerow(stats)
+    finally:
+        outputfile.close()
 
 
 def provision_hour_buckets(test_start, test_end, init=True):
@@ -805,9 +761,9 @@ def top_to_workers(workers, top_file):
             top_results = miq_top.search(top_line)
             if top_results:
                 top_pid = top_results.group(1)
-                top_virt = convert_mem_to_mib(top_results.group(2))
-                top_res = convert_mem_to_mib(top_results.group(3))
-                top_share = convert_mem_to_mib(top_results.group(4))
+                top_virt = convert_top_mem_to_mib(top_results.group(2))
+                top_res = convert_top_mem_to_mib(top_results.group(3))
+                top_share = convert_top_mem_to_mib(top_results.group(4))
                 top_cpu_per = float(top_results.group(5))
                 top_mem_per = float(top_results.group(6))
                 for worker in workers:
@@ -896,7 +852,7 @@ def perf_process_evm(evm_file, top_file):
 
     logger.info('----------- Generating Raw Data csv files -----------')
     starttime = time()
-    generate_raw_data_csv(messages, 'messages-rawdata.csv')
+    generate_raw_data_csv(messages, 'queue-rawdata.csv')
     generate_raw_data_csv(workers, 'workers-rawdata.csv')
     timediff = time() - starttime
     logger.info('Generated Raw Data csv files in: {}'.format(timediff))
@@ -933,7 +889,7 @@ def perf_process_evm(evm_file, top_file):
 
     logger.info('----------- Generating Message Statistics -----------')
     starttime = time()
-    messages_to_statistics_csv(messages, 'messages-statistics.csv')
+    messages_to_statistics_csv(messages, 'queue-statistics.csv')
     timediff = time() - starttime
     logger.info('Generated Message Statistics in: {}'.format(timediff))
 

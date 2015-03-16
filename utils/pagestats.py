@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*
-"""Set of functions and PageStat object for performance testing of the UI.
-"""
+"""Functions and PageStat object for performance testing of the UI."""
 from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.login import login_admin
-from utils.browser import ensure_browser_open
 from cfme.web_ui import accordion
 from cfme.web_ui import listaccordion as list_acc
 from cfme.web_ui import paginator
 from cfme.web_ui import Quadicon
 from utils.browser import browser
+from utils.browser import ensure_browser_open
 from utils.conf import perf_tests
 from utils.log import logger
 from utils.path import log_path
+from utils.perf import generate_statistics
 from utils.ssh import SSHTail
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import UnexpectedAlertPresentException
@@ -32,10 +32,10 @@ def analyze_page_stat(pages, soft_assert):
                 perf_tests['ui']['threshold']['query_time'], len(page.slowselects)))
             for slow in page.slowselects:
                 logger.warning('Slow Query Log Line: {}'.format(slow))
-        if page.transactiontime > perf_tests['ui']['threshold']['transaction']:
-            soft_assert(False, 'Transaction Time Threshold ({} ms) exceeded: {}'.format(
-                perf_tests['ui']['threshold']['transaction'], page))
-            logger.warning('Slow Page Transaction Time')
+        if page.seleniumtime > perf_tests['ui']['threshold']['selenium']:
+            soft_assert(False, 'Selenium Transaction Time Threshold ({} ms) exceeded: {}'.format(
+                perf_tests['ui']['threshold']['selenium'], page))
+            logger.warning('Slow Selenium Time')
         if page.selectcount > perf_tests['ui']['threshold']['query_count']:
             soft_assert(False, 'Query Count Threshold ({}) exceeded:    {}'.format(
                 perf_tests['ui']['threshold']['query_count'], page))
@@ -47,15 +47,6 @@ def analyze_page_stat(pages, soft_assert):
 
 def any_in(items, thing):
     return any(item in thing for item in items)
-
-
-def generate_statistics(the_list):
-    if len(the_list) == 0:
-        return '0,0,0,0,0,0'
-    else:
-        return '{},{},{},{},{},{}'.format(len(the_list), numpy.amin(the_list), numpy.amax(the_list),
-            round(numpy.average(the_list), 2), round(numpy.std(the_list), 2),
-            numpy.percentile(the_list, 90))
 
 
 def generate_tree_paths(tree_contents, path, paths):
@@ -80,8 +71,8 @@ def navigate_accordions(accordions, page_name, ui_bench_pg_limit, ui_worker_pid,
             acc_tree), soft_assert))
 
         logger.info('Starting to read tree: {}'.format(acc_tree))
-        tree_contents, t_time = perf_bench_read_tree(accordion.tree(acc_tree))
-        logger.info('{} tree read in {}ms'.format(acc_tree, t_time))
+        tree_contents, sel_time = perf_bench_read_tree(accordion.tree(acc_tree))
+        logger.info('{} tree read in {}ms'.format(acc_tree, sel_time))
 
         pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, False, None),
             soft_assert))
@@ -155,11 +146,9 @@ def navigate_quadicons(q_names, q_type, page_name, nav_limit, ui_worker_pid, pro
 
                         except NoSuchElementException:
                             logger.warning('NoSuchElementException - page_name:{}, Quadicon:{},'
-                                ' topbar:{}, link title:{}'.format(page_name, q, topbar,
-                                links[link].title))
+                                ' topbar:{}'.format(page_name, q, topbar))
                             soft_assert(False, 'NoSuchElementException - page_name:{}, Quadicon:{},'
-                                ' topbar:{}, link title:{}'.format(page_name, q, topbar,
-                                links[link].title))
+                                ' topbar:{}'.format(page_name, q, topbar))
                             break
                     count += 1
                     break
@@ -215,7 +204,7 @@ def navigate_split_table(table, page_name, nav_limit, ui_worker_pid, prod_tail, 
     return pages
 
 
-def standup_perf_ui(ui_worker_pid, ssh_client, soft_assert):
+def standup_perf_ui(ui_worker_pid, soft_assert):
     logger.info('Opening /var/www/miq/vmdb/log/production.log for tail')
     prod_tail = SSHTail('/var/www/miq/vmdb/log/production.log')
     prod_tail.set_initial_file_end()
@@ -250,8 +239,8 @@ def pages_to_statistics_csv(pages, filters, report_file_name):
         if len(all_statistics) > 0:
             for pg_statistics in all_statistics:
                 if pg_statistics.request == page.request:
-                    if page.transactiontime > 0:
-                        pg_statistics.transactiontimes.append(int(page.transactiontime))
+                    if page.seleniumtime > 0:
+                        pg_statistics.seleniumtimes.append(int(page.seleniumtime))
                     pg_statistics.completedintimes.append(float(page.completedintime))
                     if page.viewstime > 0:
                         pg_statistics.viewstimes.append(float(page.viewstime))
@@ -265,8 +254,8 @@ def pages_to_statistics_csv(pages, filters, report_file_name):
         if not added:
             pg_statistics = PageStatLists()
             pg_statistics.request = page.request
-            if page.transactiontime > 0:
-                pg_statistics.transactiontimes.append(int(page.transactiontime))
+            if page.seleniumtime > 0:
+                pg_statistics.seleniumtimes.append(int(page.seleniumtime))
             pg_statistics.completedintimes.append(float(page.completedintime))
             if page.viewstime > 0:
                 pg_statistics.viewstimes.append(float(page.viewstime))
@@ -280,36 +269,44 @@ def pages_to_statistics_csv(pages, filters, report_file_name):
     if csvdata_path.isfile():
         logger.info('Appending to: {}'.format(report_file_name))
         outputfile = csvdata_path.open('a', ensure=True)
+        appending = True
     else:
         logger.info('Writing to: {}'.format(report_file_name))
         outputfile = csvdata_path.open('w', ensure=True)
-        outputfile.write('pattern,t_time_samples,t_time_min,t_time_max,t_time_avg,t_time_std'
-            ',t_time_90,c_time_samples,c_time_min,c_time_max,c_time_avg,c_time_std,c_time_90'
-            ',v_time_samples,v_time_min,v_time_max,v_time_avg,v_time_std,v_time_90'
-            ',ar_time_samples,ar_time_min,ar_time_max,ar_time_avg,ar_time_std,ar_time_90'
-            ',s_count_samples,s_count_min,s_count_max,s_count_avg,s_count_std,s_count_90'
-            ',c_count_samples,c_count_min,c_count_max,c_count_avg,c_count_std,c_count_90'
-            ',uc_count_samples,uc_count_min,uc_count_max,uc_count_avg,uc_count_std,uc_count_90\n')
+        appending = False
 
-    # Contents of CSV
-    for page_statistics in all_statistics:
-        if len(page_statistics.completedintimes) > 1:
-            logger.debug('Samples/Avg/90th/Std: {} : {} : {} : {} Pattern: {}'.format(
-                str(len(page_statistics.completedintimes)).rjust(7),
-                str(round(numpy.average(page_statistics.completedintimes), 2)).rjust(7),
-                str(round(numpy.percentile(page_statistics.completedintimes, 90), 2)).rjust(7),
-                str(round(numpy.std(page_statistics.completedintimes), 2)).rjust(7),
-                page_statistics.request))
-        stats = '{},{},{},{},{},{},{},{}\n'.format(page_statistics.request,
-            generate_statistics(numpy.array(page_statistics.transactiontimes)),
-            generate_statistics(numpy.array(page_statistics.completedintimes)),
-            generate_statistics(numpy.array(page_statistics.viewstimes)),
-            generate_statistics(numpy.array(page_statistics.activerecordtimes)),
-            generate_statistics(numpy.array(page_statistics.selectcounts)),
-            generate_statistics(numpy.array(page_statistics.cachedcounts)),
-            generate_statistics(numpy.array(page_statistics.uncachedcounts)))
-        outputfile.write(stats)
-    outputfile.close()
+    try:
+        csvfile = csv.writer(outputfile)
+        if not appending:
+            metrics = ['samples', 'min', 'avg', 'median', 'max', 'std', '90', '99']
+            measurements = ['sel_time', 'c_time', 'v_time', 'ar_time', 's_count', 'c_count',
+                'uc_count']
+            headers = ['pattern']
+            for measurement in measurements:
+                for metric in metrics:
+                    headers.append('{}_{}'.format(measurement, metric))
+            csvfile.writerow(headers)
+
+        # Contents of CSV
+        for page_statistics in all_statistics:
+            if len(page_statistics.completedintimes) > 1:
+                logger.debug('Samples/Avg/90th/Std: {} : {} : {} : {} Pattern: {}'.format(
+                    str(len(page_statistics.completedintimes)).rjust(7),
+                    str(round(numpy.average(page_statistics.completedintimes), 2)).rjust(7),
+                    str(round(numpy.percentile(page_statistics.completedintimes, 90), 2)).rjust(7),
+                    str(round(numpy.std(page_statistics.completedintimes), 2)).rjust(7),
+                    page_statistics.request))
+            stats = [page_statistics.request]
+            stats.extend(generate_statistics(page_statistics.seleniumtimes))
+            stats.extend(generate_statistics(page_statistics.completedintimes))
+            stats.extend(generate_statistics(page_statistics.viewstimes))
+            stats.extend(generate_statistics(page_statistics.activerecordtimes))
+            stats.extend(generate_statistics(page_statistics.selectcounts))
+            stats.extend(generate_statistics(page_statistics.cachedcounts))
+            stats.extend(generate_statistics(page_statistics.uncachedcounts))
+            csvfile.writerow(stats)
+    finally:
+        outputfile.close()
 
     logger.debug('Size of Aggregated list of pages: {}'.format(len(all_statistics)))
 
@@ -317,22 +314,24 @@ def pages_to_statistics_csv(pages, filters, report_file_name):
 def perf_bench_read_tree(tree):
     starttime = time()
     tree_contents = tree.read_contents()
-    transactiontime = int((time() - starttime) * 1000)
-    return tree_contents, transactiontime
+    seleniumtime = int((time() - starttime) * 1000)
+    return tree_contents, seleniumtime
 
 
-def perf_click(uiworker_pid, tailer, measure_t_time, clickable, *args):
+def perf_click(uiworker_pid, tailer, measure_sel_time, clickable, *args):
     # Regular Expressions to find the ruby production completed time and select query time
     status_re = re.compile(r'Completed\s([0-9]*\s[a-zA-Z]*)\sin\s([0-9\.]*)ms')
+    views_re = re.compile(r'Views:\s([0-9\.]*)ms')
+    activerecord_re = re.compile(r'ActiveRecord:\s([0-9\.]*)ms')
     select_query_time_re = re.compile(r'\s\(([0-9\.]*)ms\)')
     worker_pid = '#' + uiworker_pid
 
-    # Time the UI transaction from "click"
-    transactiontime = 0
+    # Time the selenium transaction from "click"
+    seleniumtime = 0
     if clickable:
         starttime = time()
         clickable(*args)
-        transactiontime = int((time() - starttime) * 1000)
+        seleniumtime = int((time() - starttime) * 1000)
 
     pgstats = []
     pgstat = PageStat()
@@ -364,39 +363,32 @@ def perf_click(uiworker_pid, tailer, measure_t_time, clickable, *args):
                 pgstat.uncachedcount = pgstat.selectcount - pgstat.cachedcount
 
                 # Redirects don't always have a view timing
-                try:
-                    vanchor = line.index('Views') + 7
-                    pgstat.viewstime = line[vanchor:line.index('ms', vanchor)]
-                except:
-                    pass
-                try:
-                    aranchor = line.index('ActiveRecord') + 14
-                    pgstat.activerecordtime = line[aranchor:line.index('ms', aranchor)]
-                except:
-                    pass
+                views_result = views_re.search(line)
+                if views_result:
+                    pgstat.viewstime = float(views_result.group(1))
+                activerecord_result = activerecord_re.search(line)
+                if activerecord_result:
+                    pgstat.activerecordtime = float(activerecord_result.group(1))
                 pgstats.append(pgstat)
                 pgstat = PageStat()
     if pgstats:
-        if measure_t_time:
-            pgstats[-1].transactiontime = transactiontime
+        if measure_sel_time:
+            pgstats[-1].seleniumtime = seleniumtime
     timediff = time() - starttime
     logger.debug('Parsed ({}) lines in {}'.format(line_count, timediff))
     return pgstats
 
 
-"""Object that represents page statistics and a list of any associated slow queries.
-"""
-
-
 class PageStat(object):
+    """Object that represents page statistics and a list of any associated slow queries."""
 
-    def __init__(self, request='', status='', transactiontime=0, completedintime=0, viewstime=0,
+    def __init__(self, request='', status='', seleniumtime=0, completedintime=0, viewstime=0,
             activerecordtime=0, selectcount=0, cachedcount=0, uncachedcount=0):
-        self.headers = ['request', 'status', 'transactiontime', 'completedintime', 'viewstime',
+        self.headers = ['request', 'status', 'seleniumtime', 'completedintime', 'viewstime',
             'activerecordtime', 'selectcount', 'cachedcount', 'uncachedcount']
         self.request = request
         self.status = status
-        self.transactiontime = transactiontime
+        self.seleniumtime = seleniumtime
         self.completedintime = completedintime
         self.viewstime = viewstime
         self.activerecordtime = activerecordtime
@@ -410,7 +402,7 @@ class PageStat(object):
             yield header, getattr(self, header)
 
     def __str__(self):
-        return 'Transaction/Completed/Views/ActiveRecord:' + str(self.transactiontime).rjust(6) + \
+        return 'Selenium/Completed/Views/ActiveRecord:' + str(self.seleniumtime).rjust(6) + \
             ':' + str(self.completedintime).rjust(8) + ':' + str(self.viewstime).rjust(8) + ':' + \
             str(self.activerecordtime).rjust(8) + ' Select/Cached/Uncached: ' + \
             str(self.selectcount).rjust(5) + ':' + str(self.cachedcount).rjust(5) + ':' \
@@ -422,7 +414,7 @@ class PageStatLists(object):
 
     def __init__(self):
         self.request = ''
-        self.transactiontimes = []
+        self.seleniumtimes = []
         self.completedintimes = []
         self.viewstimes = []
         self.activerecordtimes = []
