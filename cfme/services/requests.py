@@ -155,6 +155,9 @@ def wait_for_request(cells, partial_check=False):
          The matching :py:class:`cfme.web_ui.Table.Row` if found, ``False`` otherwise.
     """
     for page in paginator.pages():
+        if sel.elements(request_list) and not sel.is_displayed(request_list):
+            # The table exists but it is hidden - no cells
+            return False
         results = request_list.find_rows_by_cells(cells, partial_check)
         if len(results) == 0:
             # row not on this page, assume it has yet to appear
