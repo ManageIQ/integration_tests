@@ -278,7 +278,9 @@ class DefaultFilter(Updateable, Pretty):
         self.name = name
         self.filters = filters or []
 
-    def update(self, updates):
+    def update(self, updates, expect_success=True):
         sel.force_navigate("my_settings_default_filters", context=self)
         fill(self.filter_form, {'filter_tree': updates.get('filters')},
              action=form_buttons.save)
+        if expect_success:
+            flash.assert_success_message('Default Filters saved successfully')

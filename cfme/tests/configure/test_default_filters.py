@@ -7,6 +7,8 @@ from utils.providers import setup_a_provider
 from cfme.cloud import instance  # NOQA
 from cfme.services import workloads  # NOQA
 
+pytestmark = [pytest.mark.meta(blockers=[1202465])]
+
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
