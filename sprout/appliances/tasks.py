@@ -28,6 +28,7 @@ from utils.trackerbot import api, parse_template
 
 LOCK_EXPIRE = 60 * 15  # 15 minutes
 VERSION_REGEXPS = [
+    r"^cfme-(\d)(\d)(\d)(\d)(\d{2})",  # 1.2.3.4.11
     # newer format
     r"cfme-(\d)(\d)(\d)[.](\d{2})-",         # cfme-524.02-    -> 5.2.4.2
     r"cfme-(\d)(\d)(\d)[.](\d{2})[.](\d)-",  # cfme-524.02.1-    -> 5.2.4.2.1
