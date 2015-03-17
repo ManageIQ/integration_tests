@@ -859,7 +859,9 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     current_user = login.current_user()
 
     # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right here
-    if is_displayed("//div[@id='blocker_div']"):
+    if (
+            is_displayed("//div[@id='blocker_div' or @id='notification']")
+            or is_displayed(".modal-backdrop.fade.in")):
         logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
         quit()
         kwargs.pop("start", None)
@@ -918,7 +920,9 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 "UI failed in some way, jQuery not found, (probably) recycling the browser.")
             recycle = True
         # If the page is blocked, then recycle...
-        if is_displayed("//div[@id='blocker_div']"):
+        if (
+                is_displayed("//div[@id='blocker_div' or @id='notification']")
+                or is_displayed(".modal-backdrop.fade.in")):
             logger.warning("Page was blocked with blocker div, recycling.")
             recycle = True
         elif cfme_exc.is_cfme_exception():
