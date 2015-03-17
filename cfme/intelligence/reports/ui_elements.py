@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from xml.sax.saxutils import quoteattr
+
 from collections import Sequence, Mapping, Callable
 from contextlib import contextmanager
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
@@ -210,10 +212,9 @@ class ColumnStyleTable(Pretty):
         Returns: :py:class:`cfme.web_ui.Select`.
         """
         return Select(
-            "//div[@id='{}']//table/tbody/tr/td[contains(@class, 'key')"
-            " and normalize-space(.)='{}']/../td[not(contains(@class, 'key'))]"
-            "/select[@id[substring(., string-length() -1) = '_{}'] and contains(@id, 'style_')]"
-            .format(self._div_id, name, id)
+            "//div[@id={}]//table/tbody/tr[td[1][normalize-space(.)={}]]/td[2]/select"
+            "[@id[substring(., string-length() -1) = '_{}'] and contains(@id, 'style_')]"
+            .format(quoteattr(self._div_id), quoteattr(name), id)
         )
 
     def get_if_select(self, name, id=0):
@@ -225,10 +226,9 @@ class ColumnStyleTable(Pretty):
         Returns: :py:class:`cfme.web_ui.Select`.
         """
         return Select(
-            "//div[@id='{}']//table/tbody/tr/td[contains(@class, 'key')"
-            " and normalize-space(.)='{}']/../td[not(contains(@class, 'key'))]"
-            "/select[@id[substring(., string-length() -1) = '_{}'] and contains(@id, 'styleop')]"
-            .format(self._div_id, name, id)
+            "//div[@id={}]//table/tbody/tr[td[1][normalize-space(.)={}]]/td[3]/select"
+            "[@id[substring(., string-length() -1) = '_{}'] and contains(@id, 'styleop')]"
+            .format(quoteattr(self._div_id), quoteattr(name), id)
         )
 
     def get_if_input(self, name, id=0):
@@ -240,10 +240,9 @@ class ColumnStyleTable(Pretty):
         Returns: :py:class:`str` with locator.
         """
         return (
-            "//div[@id='{}']//table/tbody/tr/td[contains(@class, 'key')"
-            " and normalize-space(.)='{}']/../td[not(contains(@class, 'key'))]"
-            "/input[@id[substring(., string-length() -1) = '_{}'] and contains(@id, 'styleval')]"
-            .format(self._div_id, name, id)
+            "//div[@id={}]//table/tbody/tr[td[1][normalize-space(.)={}]]/td[3]/input"
+            "[@id[substring(., string-length() -1) = '_{}'] and contains(@id, 'styleval')]"
+            .format(quoteattr(self._div_id), quoteattr(name), id)
         )
 
 
