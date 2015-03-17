@@ -17,8 +17,9 @@ def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('-f', '--force', default=True, action='store_false', dest='prompt',
         help='Do not prompt before deleting VMs (danger zone!)')
-    parser.add_argument('--max-days', default=2,
-        help='Max days since the VM was created or last powered on (varies by provider, default 2)')
+    parser.add_argument('--max-hours', default=24,
+        help='Max hours since the VM was created or last powered on '
+        '(varies by provider, default 24)')
     parser.add_argument('--provider', dest='providers', action='append', default=None,
         help='Provider(s) to inspect, can be used multiple times', metavar='PROVIDER')
     parser.add_argument('text_to_match', nargs='*', default=['^test_', '^jenkins', '^i-'],
@@ -66,9 +67,9 @@ def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
         logger.exception(ex)
 
 
-def cleanup_vms(texts, max_days=2, providers=None, prompt=True):
+def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
     providers = providers or list_all_providers()
-    delta = datetime.timedelta(days=max_days)
+    delta = datetime.timedelta(hours=int(max_hours))
     vms_to_delete = defaultdict(set)
     thread_queue = []
     # precompile regexes
@@ -113,4 +114,4 @@ def cleanup_vms(texts, max_days=2, providers=None, prompt=True):
 
 if __name__ == "__main__":
     args = parse_cmd_line()
-    sys.exit(cleanup_vms(args.text_to_match, args.max_days, args.providers, args.prompt))
+    sys.exit(cleanup_vms(args.text_to_match, args.max_hours, args.providers, args.prompt))
