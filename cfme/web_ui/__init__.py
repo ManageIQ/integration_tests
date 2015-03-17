@@ -1256,6 +1256,7 @@ class Input(Pretty):
         self.names = names
 
     def locate(self):
+        # If the end of the locator is changed, modify also the choice in Radio!!!
         return '//*[(self::input or self::textarea) and ({})]'.format(
             " or ".join("@name={}".format(quoteattr(name)) for name in self.names)
         )
@@ -1300,7 +1301,8 @@ class Radio(Input):
         Returns: A string containing the XPATH of the specific radio element.
 
         """
-        return "//input[@name='%s' and @value='%s']" % (self.name, val)
+        # Ugly, but working - all the conditions are in parentheses
+        return re.sub(r"\]$", " and @value={}]".format(quoteattr(val)), self.locate())
 
     def observer_wait(self, val):
         sel.detect_observed_field(self.choice(val))
@@ -1309,7 +1311,7 @@ class Radio(Input):
 @fill.method((Radio, object))
 def _fill_radio(radio, value):
     """How to fill a radio button group (by selecting the given value)"""
-    logger.debug(' Filling in Radio (%s) with value "%s"' % (radio.name, value))
+    logger.debug(' Filling in Radio{} with value "{}"'.format(tuple(radio.names), value))
     sel.click(radio.choice(value))
     radio.observer_wait(value)
 
