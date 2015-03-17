@@ -478,6 +478,7 @@ class Provider(Updateable, Pretty):
                 manage_policies_tree.check_node(policy_profile)
             else:
                 manage_policies_tree.uncheck_node(policy_profile)
+        sel.move_to_element('#tP')
         form_buttons.save()
 
 

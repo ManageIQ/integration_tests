@@ -22,7 +22,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 from cfme.exceptions import (
     HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
 )
-from cfme.web_ui import Region, Quadicon, Form, Select, Tree, fill, paginator
+from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, paginator
 from cfme.web_ui import Timelines
 from utils import conf
 from utils.db import cfmedb
@@ -74,10 +74,12 @@ credential_form = Form(
         ('validate_btn', form_buttons.validate)
     ])
 
-manage_policies_form = Form(
-    fields=[
-        ('policy_select', Tree("//div[@id='treebox']/div/table")),
-    ])
+manage_policies_tree = CheckboxTree(
+    {
+        version.LOWEST: "//div[@id='treebox']/div/table",
+        "5.3": "//div[@id='protect_treebox']/ul"
+    }
+)
 
 details_page = Region(infoblock_type='detail')
 
@@ -426,16 +428,13 @@ class Provider(Updateable, Pretty):
                 coverage goes in, PolicyProfile object will be also passable.
         """
         sel.force_navigate('clouds_provider_policy_assignment', context={'provider': self})
-        policy_profiles = set([str(pp) for pp in policy_profile_names])
-        if assign:
-            do_not_process = self._assigned_policy_profiles
-        else:
-            do_not_process = self._unassigned_policy_profiles
-        fill(
-            manage_policies_form,
-            dict(policy_select=[(x,) for x in list(policy_profiles - do_not_process)]),
-            action=form_buttons.save
-        )
+        for policy_profile in policy_profile_names:
+            if assign:
+                manage_policies_tree.check_node(policy_profile)
+            else:
+                manage_policies_tree.uncheck_node(policy_profile)
+        sel.move_to_element('#tP')
+        form_buttons.save()
 
     def assign_policy_profiles(self, *policy_profile_names):
         """ Assign Policy Profiles to this Provider.
