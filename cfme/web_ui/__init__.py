@@ -979,8 +979,8 @@ def table_in_object(table_title):
         table_title: Text in `p` element preceeding the table
     Returns: XPath locator for the desired table.
     """
-    return "//table[(preceding-sibling::p[1] | preceding-sibling::h3[1])[.={}]]".format(
-        quoteattr(table_title))
+    return ("//table[(preceding-sibling::p[1] | preceding-sibling::h3[1])[normalize-space(.)={}]]"
+        .format(quoteattr(table_title)))
 
 
 @multimethod(lambda loc, value: (sel.tag(loc), sel.get_attribute(loc, 'type')))
