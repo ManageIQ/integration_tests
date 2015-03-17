@@ -22,7 +22,13 @@ def main(*providers):
     for provider_key in providers:
         print "Cleaning up", provider_key
         api = provider_factory(provider_key).capi
-        for volume in api.volumes.findall(attachments=[]):
+        try:
+            volumes = api.volumes.findall(attachments=[])
+        except Exception as e:
+            print "Connect to provider failed:", provider_key, type(e).__name__, str(e)
+            continue
+
+        for volume in volumes:
             if iso8601.parse_date(volume.created_at) < (datetime.now(tz=local_tz) - GRACE_TIME):
                 print "Deleting", volume.id
                 try:
