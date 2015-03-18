@@ -97,18 +97,20 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         else:
             duration = time.time() - st_time
             if not quiet:
-                logger.trace('Took %f to do %s' % (duration, message))
+                logger.trace('Took {:0.2f} to do {}'.format(duration, message))
             logger.trace('Finished {} at {}'.format(message, st_time + t_delta))
             return WaitForResult(out, duration)
         t_delta = time.time() - st_time
     logger.trace('Finished at {}'.format(st_time + t_delta))
     if not silent_fail:
-        logger.error('Could not complete {} at {}:{} in time, took {}'.format(message,
+        logger.error('Could not complete {} at {}:{} in time, took {:0.2f}'.format(message,
             filename, line_no, t_delta))
+        logger.error('The last result of the call was: {}'.format(str(out)))
         raise TimedOutError("Could not do {} at {}:{} in time".format(message, filename, line_no))
     else:
         logger.warning("Could not do {} at {}:{} in time but ignoring".format(message,
             filename, line_no))
+        logger.warning('The last result of the call was: {}'.format(str(out)))
 
 
 class TimedOutError(Exception):
