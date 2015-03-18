@@ -1540,6 +1540,10 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     if prov_data['type'] == 'rhevm':
         deploy_args['cluster'] = prov_data['default_cluster']
 
+    if prov_data["type"] == "virtualcenter":
+        if "allowed_datastores" in prov_data:
+            deploy_args["allowed_datastores"] = prov_data["allowed_datastores"]
+
     provider.deploy_template(template_name, **deploy_args)
 
     return Appliance(provider_name, vm_name)

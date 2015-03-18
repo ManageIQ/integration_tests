@@ -114,6 +114,9 @@ def main():
 
         if floating_ip_pool is not None:
             deploy_args['floating_ip_pool'] = floating_ip_pool
+    elif provider_type == "virtualcenter":
+        if "allowed_datastores" in provider_dict:
+            deploy_args["allowed_datastores"] = provider_dict["allowed_datastores"]
 
     # Do it!
     try:
