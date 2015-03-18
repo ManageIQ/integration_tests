@@ -160,6 +160,46 @@ def list_appliances(used=False):
     return result
 
 
+@jsonapi.method
+def num_shepherd_appliances(group, version=None, date=None, provider=None):
+    """Provides number of currently available shepherd appliances."""
+    group = Group.objects.get(id=group)
+    if provider is not None:
+        provider = Provider.objects.get(id=provider)
+    if version is None:
+        if provider is None:
+            try:
+                version = Template.get_versions(template_group=group)[0]
+            except IndexError:
+                # No version
+                pass
+        else:
+            try:
+                version = Template.get_versions(template_group=group, provider=provider)[0]
+            except IndexError:
+                # No version
+                pass
+    if date is None:
+        filter_kwargs = {"template_group": group}
+        if provider is not None:
+            filter_kwargs["provider"] = provider
+        if version is not None:
+            filter_kwargs["version"] = version
+        try:
+            date = Template.get_dates(**filter_kwargs)[0]
+        except IndexError:
+            # No date
+            pass
+    filter_kwargs = {"template__template_group": group, "ready": True, "appliance_pool": None}
+    if version is not None:
+        filter_kwargs["template__version"] = version
+    if date is not None:
+        filter_kwargs["template__date"] = date
+    if provider is not None:
+        filter_kwargs["template__provider"] = provider
+    return len(Appliance.objects.filter(**filter_kwargs))
+
+
 @jsonapi.authenticated_method
 def request_appliances(
         user, group, count=1, lease_time=60, version=None, date=None, provider=None,
