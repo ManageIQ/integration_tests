@@ -51,3 +51,11 @@ def test_partial():
     with pytest.raises(TimedOutError):
         wait_for(func,
                  num_sec=2, delay=1)
+
+
+def test_callable_fail_condition():
+    incman = Incrementor()
+    with pytest.raises(TimedOutError):
+        wait_for(
+            incman.i_sleep_a_lot,
+            fail_condition=lambda value: value <= 10, num_sec=2, delay=1)
