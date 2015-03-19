@@ -18,7 +18,9 @@ search_box = Region(
         # The icon buttons for searching
         search_icon={
             "5.3": "//div[@id='searchbox']//*[@id='searchicon']",
-            "5.4": "//div[@id='searchbox']//div[contains(@class, 'form-group')]/a"},
+            "5.4":
+            "//div[@id='searchbox']//div[contains(@class, 'form-group')]"
+            "/*[self::a or (self::button and @type='submit')]"},
 
         # The arrow opening/closing the advanced search box
         toggle_advanced={
