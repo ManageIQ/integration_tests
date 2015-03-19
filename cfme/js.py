@@ -14,3 +14,25 @@ return {
     document: document.readyState
 };
 """
+
+update_retirement_date_function_script = """\
+function updateDate(newValue) {
+    if(typeof $j == "undefined") {
+        var jq = $;
+    } else {
+        var jq = $j;
+    }
+    jq("#miq_date_1")[0].value = newValue;
+    miqSparkleOn();
+    jq.ajax({
+        type: 'POST',
+        url: '/vm_infra/retire_date_changed?miq_date_1='+newValue
+    }).done(
+        function(data){
+            eval(data);
+        }
+    )
+}
+
+"""
+# TODO: Get the url: directly from the attribute in the page?
