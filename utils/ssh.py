@@ -16,6 +16,9 @@ from utils.path import project_path
 from utils.timeutil import parsetime
 
 
+# Default blocking time before giving up on an ssh command execution,
+# in seconds (float)
+RUNCMD_TIMEOUT = 1200.0
 SSHResult = namedtuple("SSHResult", ["rc", "output"])
 
 _ssh_key_file = project_path.join('.generated_ssh_key')
@@ -116,14 +119,14 @@ class SSHClient(paramiko.SSHClient):
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
-    def run_command(self, command):
+    def run_command(self, command, timeout=RUNCMD_TIMEOUT):
         logger.info("Running command `{}`".format(command))
         template = '%s\n'
         command = template % command
 
         try:
-            transport = self.get_transport()
-            session = transport.open_session()
+            session = self.get_transport().open_session()
+            session.settimeout(float(timeout))
             session.exec_command(command)
             stdout = session.makefile()
             stderr = session.makefile_stderr()
@@ -151,13 +154,15 @@ class SSHClient(paramiko.SSHClient):
         # Returning two things so tuple unpacking the return works even if the ssh client fails
         return SSHResult(1, None)
 
-    def run_rails_command(self, command):
+    def run_rails_command(self, command, timeout=RUNCMD_TIMEOUT):
         logger.info("Running rails command `{}`".format(command))
-        return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {}'.format(command))
+        return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {}'.format(command),
+            timeout=timeout)
 
-    def run_rake_command(self, command):
+    def run_rake_command(self, command, timeout=RUNCMD_TIMEOUT):
         logger.info("Running rake command `{}`".format(command))
-        return self.run_command('cd /var/www/miq/vmdb; bin/rake {}'.format(command))
+        return self.run_command('cd /var/www/miq/vmdb; bin/rake {}'.format(command),
+            timeout=timeout)
 
     def put_file(self, local_file, remote_file='.', **kwargs):
         logger.info("Transferring local file {} to remote {}".format(local_file, remote_file))
