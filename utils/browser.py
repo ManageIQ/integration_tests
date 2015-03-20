@@ -206,7 +206,7 @@ def _load_firefox_profile():
     if firefox_profile_tmpdir is None or not os.path.exists(firefox_profile_tmpdir):
         firefox_profile_tmpdir = mkdtemp(prefix='firefox_profile_')
         # Clean up tempdir at exit
-        atexit.register(rmtree, firefox_profile_tmpdir)
+        atexit.register(rmtree, firefox_profile_tmpdir, ignore_errors=True)
 
     template = data_path.join('firefox_profile.js.template').read()
     profile_json = Template(template).substitute(profile_dir=firefox_profile_tmpdir)
