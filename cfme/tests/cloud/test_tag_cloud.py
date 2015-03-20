@@ -42,6 +42,6 @@ def test_tag_provider(setup_first_cloud_provider, tag):
 def test_tag_vm(setup_first_cloud_provider, tag):
     """Add a tag to a vm
     """
-    pytest.sel.force_navigate('clouds_instances')
+    pytest.sel.force_navigate('clouds_instances_by_provider')
     Quadicon.select_first_quad()
     mixins.add_tag(tag)

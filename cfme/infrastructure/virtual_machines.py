@@ -2,6 +2,7 @@
 quadicon lists, and VM details page.
 """
 import re
+from cfme import js
 from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable, TemplateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
@@ -10,6 +11,7 @@ from cfme.web_ui import (
     toolbar, Calendar, Select, Input
 )
 from cfme.web_ui.menu import nav
+from datetime import date
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.conf import cfme_data
@@ -69,8 +71,22 @@ snapshot_form = Form(
     ])
 
 
+def date_retire_element(fill_data):
+    """We need to call this function that will mimic clicking the calendar, picking the date and
+    the subsequent callbacks from the server"""
+    # TODO: Move the code in the Calendar itself? I did not check other calendars
+    if isinstance(fill_data, date):
+        date_str = '%s/%s/%s' % (fill_data.month, fill_data.day, fill_data.year)
+    else:
+        date_str = str(fill_data)
+    sel.execute_script(
+        js.update_retirement_date_function_script +
+        "updateDate(arguments[0]);",
+        date_str
+    )
+
 retire_form = Form(fields=[
-    ('date_retire', Calendar("miq_date_1")),
+    ('date_retire', date_retire_element),
     ('warn', sel.Select("select#retirement_warn"))
 ])
 
@@ -642,7 +658,7 @@ class Vm(Common):
             except TimedOutError:
                 pass
         else:
-            if len(sel.value(retire_form.date_retire).strip()) > 0:
+            if sel.is_displayed(retire_remove_button):
                 sel.click(retire_remove_button)
                 wait_for(lambda: not sel.is_displayed(retire_remove_button), num_sec=15, delay=0.2)
             fill(retire_form.date_retire, when)
