@@ -11,6 +11,7 @@ except ImportError:
 from PyPDF2 import PdfFileReader
 
 from cfme.configure.about import product_assistance as about
+from utils import version
 
 
 @pytest.fixture(scope="module")
@@ -42,24 +43,31 @@ def test_links(guides, soft_assert):
         )
 
 
-@pytest.mark.meta(blockers=[1026943])
+@pytest.mark.meta(blockers=[1145326, "GH#ManageIQ/manageiq:2246"])
 def test_contents(guides, soft_assert):
     """Test contents of each document."""
     pytest.sel.force_navigate("about")
+    precomp_noguide = re.compile("(.*) Guide")
     for link in guides:
         locator = getattr(about, link)
         url = pytest.sel.get_attribute(locator, "href")
         data = requests.get(url, verify=False)
         pdf = PdfFileReader(StringIO(data.content))
         pdf_info = pdf.getDocumentInfo()
-        soft_assert("CloudForms" in pdf_info["/Title"], "CloudForms is not in the title!")
-
+        pdf_title_low = pdf_info["/Title"].lower()
         # don't include the word 'guide'
-        p = re.compile("(.*) Guide")
-        title_text = p.search(pytest.sel.text(locator)).group(1).lower()
-        pdf_title = pdf_info["/Title"].lower()
-        soft_assert(title_text in pdf_title, "{} not in {}".format(
-            title_text, pdf_title))
+        title_text_low = precomp_noguide.search(pytest.sel.text(locator)).group(1).lower()
+
+        cur_ver = version.current_version()
+        expected = [title_text_low]
+        if cur_ver == version.LATEST:
+            expected.append('manageiq')
+        else:
+            expected.append('cloudforms')
+            expected.append('{}.{}'.format(cur_ver.version[0], cur_ver.version[1]))
+
+        for exp_str in expected:
+            soft_assert(exp_str in pdf_title_low, "{} not in {}".format(exp_str, pdf_title_low))
 
 
 @pytest.mark.meta(blockers=[1026939])
