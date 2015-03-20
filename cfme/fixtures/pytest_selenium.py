@@ -302,7 +302,7 @@ def is_displayed(loc, _deep=0):
     """
     try:
         return element(loc, _no_deeper=True).is_displayed()
-    except NoSuchElementException:
+    except (NoSuchElementException, exceptions.CannotScrollException):
         return False
     except StaleElementReferenceException:
         # It can happen sometimes that the change will happen between element lookup and visibility
