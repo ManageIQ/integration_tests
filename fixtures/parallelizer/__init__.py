@@ -232,7 +232,7 @@ class ParallelSession(object):
 
         """
         while True:
-            slaveid, empty, event_json = self.sock.recv_multipart()
+            slaveid, empty, event_json = self.sock.recv_multipart(flags=zmq.NOBLOCK)
             event_data = json.loads(event_json)
             event_name = event_data.pop('_event_name')
 
@@ -380,34 +380,43 @@ class ParallelSession(object):
                     self.session_finished = True
                     break
 
-                slaveid, event_data, event_name = self.recv(
-                    'collectionfinish',
-                    'need_tests',
-                    'runtest_logreport',
-                    'runtest_logstart',
-                    'sessionfinish',
-                )
-
-                if event_name == 'collectionfinish':
-                    slave_collections.append(event_data['node_ids'])
-                    self.terminal.rewrite(
-                        "Received %d collections from slaves" % len(slave_collections), yellow=True)
-                    # Don't ack here, leave the slaves blocking on recv
-                    # after sending collectionfinish, then sync up when all collections are diffed
-                elif event_name == 'need_tests':
-                    self.send_tests(slaveid)
-                elif event_name == 'runtest_logstart':
-                    self.ack(slaveid, event_name)
-                    self.trdist.runtest_logstart(slaveid,
-                        event_data['nodeid'], event_data['location'])
-                elif event_name == 'runtest_logreport':
-                    self.ack(slaveid, event_name)
-                    report = unserialize_report(event_data['report'])
-                    self.trdist.runtest_logreport(slaveid, report)
-                elif event_name == 'sessionfinish':
-                    self.ack(slaveid, event_name)
-                    slave = self.slaves.pop(slaveid)
-                    slave.wait()
+                try:
+                    slaveid, event_data, event_name = self.recv(
+                        'collectionfinish',
+                        'need_tests',
+                        'runtest_logreport',
+                        'runtest_logstart',
+                        'sessionfinish',
+                    )
+                except zmq.ZMQError as e:
+                    if e.errno == zmq.EAGAIN:
+                        # No message ready from slaves, continue processing
+                        pass
+                    else:
+                        raise
+                else:
+                    if event_name == 'collectionfinish':
+                        slave_collections.append(event_data['node_ids'])
+                        self.terminal.rewrite(
+                            "Received %d collections from slaves" %
+                            len(slave_collections), yellow=True)
+                        # Don't ack here, leave the slaves blocking on recv
+                        # after sending collectionfinish,
+                        # then sync up when all collections are diffed
+                    elif event_name == 'need_tests':
+                        self.send_tests(slaveid)
+                    elif event_name == 'runtest_logstart':
+                        self.ack(slaveid, event_name)
+                        self.trdist.runtest_logstart(slaveid,
+                            event_data['nodeid'], event_data['location'])
+                    elif event_name == 'runtest_logreport':
+                        self.ack(slaveid, event_name)
+                        report = unserialize_report(event_data['report'])
+                        self.trdist.runtest_logreport(slaveid, report)
+                    elif event_name == 'sessionfinish':
+                        self.ack(slaveid, event_name)
+                        slave = self.slaves.pop(slaveid)
+                        slave.wait()
 
                 # wait for all slave collections to arrive, then diff collections and ack
                 if slave_collections is not None:
