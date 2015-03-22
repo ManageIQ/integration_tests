@@ -1753,16 +1753,13 @@ class InfoBlock(Pretty):
 
     def __new__(cls, title, detail=None):
         # Caching
-        created_new = False
         if title not in cls._TITLE_CACHE:
-            cls._TITLE_CACHE[title] = super(InfoBlock, cls).__new__(cls, title)
-            created_new = True
+            cls._TITLE_CACHE[title] = super(InfoBlock, cls).__new__(cls)
+            cls._TITLE_CACHE[title].__init__(title)
         instance = cls._TITLE_CACHE[title]
         if detail is None:
             return instance
         else:
-            if created_new:
-                instance.__init__(title)
             return instance.member(detail)
 
     def __init__(self, title):
