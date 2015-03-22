@@ -164,7 +164,7 @@ def latest_template(api, group, provider_key=None):
         return response['latest_templates'][group['name']]
 
 
-def templates_to_test(api, limit=20):
+def templates_to_test(api, limit=1):
     """get untested templates to pass to jenkins
 
     Args:
@@ -172,7 +172,7 @@ def templates_to_test(api, limit=20):
 
     """
     templates = []
-    for pt in api.providertemplate.get(limit=limit, tested=False).get('objects', []):
+    for pt in api.untestedtemplate.get(limit=limit, tested=False).get('objects', []):
         name = pt['template']['name']
         group = pt['template']['group']['name']
         provider = pt['provider']['key']
