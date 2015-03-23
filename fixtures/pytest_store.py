@@ -18,8 +18,7 @@ from urlparse import urlparse
 from _pytest.terminal import TerminalReporter
 from py.io import TerminalWriter
 
-from utils import property_or_none
-from utils import conf
+from utils import conf, diaper, property_or_none
 from utils.randomness import generate_random_string
 
 
@@ -159,8 +158,7 @@ def write_line(line, **kwargs):
         store.slave_manager.message(line)
     else:
         # If py.test is supressing stdout/err, turn that off for a moment
-        if store.capturemanager:
-            store.capturemanager.suspendcapture()
+        diaper(store.capturemanager.suspendcapture)
 
         # terminal reporter knows whether or not to write a newline based on currentfspath
         # so stash it, then use rewrite to blow away the line that printed the current
@@ -174,5 +172,4 @@ def write_line(line, **kwargs):
         store.terminalreporter.write_ensure_prefix(cfp)
 
         # resume capturing
-        if store.capturemanager:
-            store.capturemanager.resumecapture()
+        diaper(store.capturemanager.resumecapture)
