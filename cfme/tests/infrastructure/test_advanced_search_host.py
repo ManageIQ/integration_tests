@@ -140,6 +140,7 @@ def test_filter_save_and_cancel_load(request, hosts, hosts_with_vm_count, host_w
     search.save_filter("fill_count(Host.VMs, >)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infrastructure_hosts")
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -161,6 +162,7 @@ def test_filter_save_and_load_cancel(request, hosts, hosts_with_vm_count, host_w
     search.save_filter("fill_count(Host.VMs, >)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infrastructure_hosts")
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -230,6 +232,7 @@ def test_delete_button_should_appear_after_save(request):
     search.save_filter("fill_count(Host.VMs, >, 0)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infrastructure_hosts")
         search.load_filter(filter_name)
         search.delete_filter()
 

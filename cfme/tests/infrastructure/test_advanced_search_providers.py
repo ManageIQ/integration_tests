@@ -129,6 +129,7 @@ def test_filter_save_and_cancel_load(request, providers, ssh_client):
     search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infrastructure_providers")
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -153,6 +154,7 @@ def test_filter_save_and_load_cancel(request, providers, ssh_client):
     search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infrastructure_providers")
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -213,6 +215,7 @@ def test_delete_button_should_appear_after_save(request):
     search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infrastructure_providers")
         search.load_filter(filter_name)
         search.delete_filter()
 

@@ -136,6 +136,7 @@ def test_filter_save_and_cancel_load(request):
     search.save_filter("fill_field(Virtual Machine : Name, =)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infra_vms")
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -156,6 +157,7 @@ def test_filter_save_and_load_cancel(request, vms, subset_of_vms):
     search.save_filter("fill_field(Virtual Machine : Name, =)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infra_vms")
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -224,6 +226,7 @@ def test_delete_button_should_appear_after_save(request):
     search.save_filter("fill_count(Virtual Machine.Files, >, 0)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infra_vms")
         search.load_filter(filter_name)
         search.delete_filter()
 
