@@ -22,6 +22,13 @@
                 <em>Owner: {{ pool.owner.first_name }} {{ pool.owner.last_name }}
                 <a href="{% url 'appliances.views.my_appliances' %}?show={{ pool.owner.username }}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
             {% endif %}
+            <div class="form-inline">
+                <div class="form-group">
+                    <label for="pool-desc-{{ pool.id }}">Description</label>
+                    <input id="pool-desc-{{ pool.id }}" name="pool-desc-{{ pool.id }}" value="{{ pool.description }}" class="form-control">
+                    <button class="btn btn-primary btn-xs set-pool-desc" data-poolid="{{ pool.id }}"><span class="glyphicon glyphicon-floppy-save"></span> Set</button>
+                </div>
+            </div>
         </div>
         <table class="table table-striped">
             <thead>
@@ -193,6 +200,21 @@
 <p>The numbers at the provider are sort of hint how much space is left. This does not take shepherd into the account, so although the select might tell you there is no more space, shepherd might have some appliances running that you can take. This will be modified later.</p>
 <script type="text/javascript">
 $(document).ready(function() {
+    // Description setting
+    $('button.set-pool-desc').click(function(){
+        var e = $(this);
+        var poolid = e.attr("data-poolid");
+        var input = document.getElementById("pool-desc-" + poolid);
+        var description = input.value;
+        $.ajax({
+            type: "POST",
+            url: "{% url 'appliances.views.set_pool_description' %}",
+            data: {pool_id: poolid, description: description},
+            dataType: 'html'
+        })
+    });
+
+    // Provisioning
     $('select#stream').change(function(){
         $.ajax({
                 type: "POST",

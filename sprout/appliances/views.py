@@ -2,9 +2,9 @@
 from dateutil import parser
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.template.base import add_to_builtins
 
@@ -314,6 +314,22 @@ def kill_pool(request, pool_id):
     else:
         messages.success(request, 'Kill successfully initiated.')
     return go_back_or_home(request)
+
+
+def set_pool_description(request):
+    if not request.user.is_authenticated():
+        raise PermissionDenied()
+    try:
+        pool_id = request.POST.get("pool_id", None)
+        pool = AppliancePool.objects.get(id=pool_id)
+    except ObjectDoesNotExist:
+        raise Http404('Pool with ID {} does not exist!.'.format(pool_id))
+    if not can_operate_appliance_or_pool(pool, request.user):
+        raise PermissionDenied()
+    description = request.POST.get("description", None)
+    pool.description = description
+    pool.save()
+    return HttpResponse("")
 
 
 def delete_template_provider(request, template_id):

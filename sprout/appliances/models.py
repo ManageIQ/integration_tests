@@ -432,6 +432,7 @@ class Appliance(MetadataMixin):
     ready = models.BooleanField(default=False,
         help_text="Appliance has an IP address and web UI is online.")
     uuid = models.CharField(max_length=36, null=True, blank=True, help_text="UUID of the machine")
+    description = models.TextField(blank=True)
 
     @property
     def serialized(self):
@@ -621,6 +622,7 @@ class AppliancePool(MetadataMixin):
 
     preconfigured = models.BooleanField(
         default=True, help_text="Whether to provision preconfigured appliances")
+    description = models.TextField(blank=True)
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
