@@ -49,7 +49,7 @@ search_box = Region(
         reset_filter_button={
             "5.3": "//a[@title='Reset the filter']",
             "5.4": FormButton("Reset the filter")},
-        close_button="//button[contains(@class, 'close')]",
+        close_button=".//div[contains(@class, 'modal-header')]/button[contains(@class, 'close')]",
 
         # Buttons in the "next step"
         load_filter_dialog_button={
