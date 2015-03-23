@@ -159,7 +159,6 @@ def test_quadicon_terminate_cancel(setup_provider_funcscope, provider_type, prov
 
 
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[1122039])
 def test_quadicon_terminate(setup_provider_funcscope, provider_type, provider_mgmt,
                             test_instance, verify_vm_running, soft_assert):
     """ Tests terminate instance
