@@ -416,7 +416,6 @@ class ParallelSession(object):
                     elif event_name == 'sessionfinish':
                         self.ack(slaveid, event_name)
                         slave = self.slaves.pop(slaveid)
-                        slave.wait()
 
                 # wait for all slave collections to arrive, then diff collections and ack
                 if slave_collections is not None:
