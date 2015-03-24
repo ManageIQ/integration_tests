@@ -313,6 +313,9 @@ class DockerBot(object):
         self.check_arg('trackerbot', None)
         self.check_arg('wharf', False)
 
+        self.check_arg('sprout_username', None)
+        self.check_arg('sprout_password', None)
+
         if ec:
             sys.exit(127)
 
@@ -400,6 +403,10 @@ class DockerBot(object):
             self.env_details['VM_NAME'] = self.args['provision_vm_name']
         else:
             self.env_details['APPLIANCE'] = self.appliance
+        if self.args['sprout_username']:
+            self.env_details['SPROUT_USER'] = self.args['sprout_username']
+        if self.args['sprout_password']:
+            self.env_details['SPROUT_PASSWORD'] = self.args['sprout_password']
 
     def handle_pr(self):
         if self.args['pr']:
@@ -575,6 +582,12 @@ if __name__ == "__main__":
                               default=None)
     provisioning.add_argument('--sprout-stream',
                               help="Sprout stream",
+                              default=None)
+    provisioning.add_argument('--sprout-username',
+                              help="Sprout Username",
+                              default=None)
+    provisioning.add_argument('--sprout-password',
+                              help="Sprout Password",
                               default=None)
 
     args = parser.parse_args()
