@@ -63,6 +63,7 @@ def test_filter_without_user_input(providers):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input(providers):
     sel.force_navigate("infrastructure_providers")
     # Set up the filter
@@ -71,6 +72,7 @@ def test_filter_with_user_input(providers):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input_and_cancellation(providers):
     sel.force_navigate("infrastructure_providers")
     # Set up the filter

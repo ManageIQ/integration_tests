@@ -73,6 +73,7 @@ def test_filter_without_user_input(hosts, hosts_with_vm_count, host_with_median_
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input(hosts, hosts_with_vm_count, host_with_median_vm):
     sel.force_navigate("infrastructure_hosts")
     median_host, median_vm_count = host_with_median_vm
@@ -86,6 +87,7 @@ def test_filter_with_user_input(hosts, hosts_with_vm_count, host_with_median_vm)
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input_and_cancellation(hosts, hosts_with_vm_count, host_with_median_vm):
     sel.force_navigate("infrastructure_hosts")
     median_host, median_vm_count = host_with_median_vm

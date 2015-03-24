@@ -71,6 +71,7 @@ def test_filter_without_user_input(vms, subset_of_vms, expression_for_vms_subset
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input(vms, subset_of_vms, expression_for_vms_subset):
     sel.force_navigate("infra_vms")
     vm = pick(subset_of_vms, 1)[0]
@@ -85,6 +86,7 @@ def test_filter_with_user_input(vms, subset_of_vms, expression_for_vms_subset):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input_and_cancellation(vms, subset_of_vms, expression_for_vms_subset):
     sel.force_navigate("infra_vms")
     vm = pick(subset_of_vms, 1)[0]
