@@ -49,7 +49,7 @@ search_box = Region(
         reset_filter_button={
             "5.3": "//a[@title='Reset the filter']",
             "5.4": FormButton("Reset the filter")},
-        close_button=".//div[contains(@class, 'modal-header')]/button[contains(@class, 'close')]",
+        close_button="//div[@id='advsearchModal']/div/div/div[1]/button/span[1]",
 
         # Buttons in the "next step"
         load_filter_dialog_button={
@@ -154,7 +154,7 @@ def ensure_advanced_search_open():
         sel.click(search_box.toggle_advanced)   # Open
     elif not sel.is_displayed(search_box.load_filter_button):   # If we aren't in default view
         if current_version() >= "5.4":
-            sel.click(sel.element(search_box.close_button, root=search_box.advanced_search_box))
+            sel.click(search_box.close_button)
         else:
             sel.click(search_box.toggle_advanced)   # Close
         wait_for(is_advanced_search_opened, fail_condition=True, num_sec=5)
@@ -183,7 +183,7 @@ def ensure_advanced_search_closed():
     """Checks if the advanced search box is open and if it does, closes it."""
     if is_advanced_search_opened():
         if current_version() >= "5.4":
-            sel.click(sel.element(search_box.close_button, root=search_box.advanced_search_box))
+            sel.click(search_box.close_button)
         else:
             sel.click(search_box.toggle_advanced)   # Close
         wait_for(is_advanced_search_opened, fail_condition=True, num_sec=5)
