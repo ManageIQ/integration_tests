@@ -4,6 +4,9 @@ import inspect
 import re
 import subprocess
 
+# import diaper for backward compatibility
+import diaper
+
 
 def lazycache(wrapped_method):
     """method decorator to create a lazily-evaluated and cached property
@@ -103,24 +106,6 @@ def classproperty(f):
         baz
     """
     return _classproperty(classmethod(f))
-
-
-def diaper(f, *a, **k):
-    """Diaper pattern helper. Not for regular use.
-
-    If you think you could need this, you are wrong in 99%% of the cases. Useful for non-critical
-    callbacks registered during atexit.
-
-    Args:
-        f: Function to be called.
-        *a: Arguments to pass.
-        **k: Keywords to pass.
-    Returns: Result of the function call if no exception is raised. Otherwise it returns None.
-    """
-    try:
-        return f(*a, **k)
-    except:
-        pass
 
 
 def at_exit(f, *args, **kwargs):

@@ -1,6 +1,7 @@
 boto
 bottle
 bottle-sqlite
+diaper
 docker-py
 fauxfactory>=2.0.4
 flake8
