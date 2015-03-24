@@ -206,6 +206,7 @@ def test_tag(provisioner, prov_data, template_name, provider_type):
     assert "Service Level: Gold" in tags, "Service Level: Gold not in tags ({})".format(str(tags))
 
 
+@pytest.mark.meta(blockers=[1204115])
 def test_provisioning_schedule(provisioner, prov_data, template_name):
     """ Tests provision scheduling
 
