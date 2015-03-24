@@ -114,14 +114,6 @@ class SlaveManager(object):
         self.log.error(msg)
         self.message(msg)
 
-    def pytest_sessionfinish(self, exitstatus):
-        """pytest session finish hook
-
-        - reports exit status to master
-
-        """
-        self.send_event('sessionfinish', exit=exitstatus)
-
     def pytest_runtestloop(self, session):
         """pytest runtest loop
 
@@ -139,6 +131,7 @@ class SlaveManager(object):
                 self.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
 
         self.message('no more tests, shutting down')
+        self.send_event('shutdown')
         return True
 
     def _test_generator(self):

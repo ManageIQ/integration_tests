@@ -36,6 +36,7 @@ import json
 import os
 import subprocess
 from collections import OrderedDict, defaultdict, namedtuple
+from functools import partial
 from threading import Timer
 
 import pytest
@@ -221,18 +222,22 @@ class ParallelSession(object):
         event_json = json.dumps(event_data)
         self.sock.send_multipart([slaveid, '', event_json])
 
-    def recv(self, *expected_event_names):
+    def recv(self):
         """Receive data from a slave
-
-        Args:
-            *expected_event_names: Event names to accept from slaves. Events received that aren't
-                in this list indicate a slave in the wrong state, which is a runtime error.
 
         Raises RuntimeError if unexpected events are received.
 
         """
-        while True:
+        slaveid = event_data = event_name = None
+        try:
             slaveid, empty, event_json = self.sock.recv_multipart(flags=zmq.NOBLOCK)
+        except zmq.ZMQError as e:
+            if e.errno == zmq.EAGAIN:
+                # No message ready from slaves, continue processing
+                pass
+            else:
+                raise
+        else:
             event_data = json.loads(event_json)
             event_name = event_data.pop('_event_name')
 
@@ -240,13 +245,7 @@ class ParallelSession(object):
                 # messages are special, if they're encountered in any recv loop they get printed
                 self.print_message(event_data['message'], slaveid)
                 self.ack(slaveid, event_name)
-            elif event_name not in expected_event_names:
-                self.kill(slaveid)
-                raise RuntimeError('slave event out of order. Expected one of "%s", got %s' %
-                    (', '.join(expected_event_names), event_name)
-                )
-            else:
-                return slaveid, event_data, event_name
+        return slaveid, event_data, event_name
 
     def print_message(self, message, prefix='master', **markup):
         """Print a message from a node to the py.test console
@@ -363,59 +362,45 @@ class ParallelSession(object):
 
         try:
             slave_collections = []
-            self.terminal.rewrite("Waiting for slave collections", red=True)
+            self.terminal.rewrite("Waiting for {} slave collections".format(len(self.slaves)),
+                red=True)
 
             while True:
                 # Clean up dead slaves
                 for slaveid, slave in self.slaves.items():
                     returncode = slave.poll()
-                    if returncode is not None and returncode != 0:
-                        self.print_message('slave terminated unexpectedly', slaveid, red=True)
-                        raise Exception('{} terminated unexpectedly with status {}'.format(
-                            slaveid, returncode)
-                        )
+                    if returncode:
+                        self.print_message('{} terminated unexpectedly with status {}'.format(
+                            slaveid, returncode), slaveid, red=True)
+                        self.slaves.pop(slaveid)
 
                 if not self.slaves:
                     # All slaves are killed or errored, we're done with tests
                     self.session_finished = True
                     break
 
-                try:
-                    slaveid, event_data, event_name = self.recv(
-                        'collectionfinish',
-                        'need_tests',
-                        'runtest_logreport',
-                        'runtest_logstart',
-                        'sessionfinish',
-                    )
-                except zmq.ZMQError as e:
-                    if e.errno == zmq.EAGAIN:
-                        # No message ready from slaves, continue processing
-                        pass
-                    else:
-                        raise
-                else:
-                    if event_name == 'collectionfinish':
-                        slave_collections.append(event_data['node_ids'])
-                        self.terminal.rewrite(
-                            "Received %d collections from slaves" %
-                            len(slave_collections), yellow=True)
-                        # Don't ack here, leave the slaves blocking on recv
-                        # after sending collectionfinish,
-                        # then sync up when all collections are diffed
-                    elif event_name == 'need_tests':
-                        self.send_tests(slaveid)
-                    elif event_name == 'runtest_logstart':
-                        self.ack(slaveid, event_name)
-                        self.trdist.runtest_logstart(slaveid,
-                            event_data['nodeid'], event_data['location'])
-                    elif event_name == 'runtest_logreport':
-                        self.ack(slaveid, event_name)
-                        report = unserialize_report(event_data['report'])
-                        self.trdist.runtest_logreport(slaveid, report)
-                    elif event_name == 'sessionfinish':
-                        self.ack(slaveid, event_name)
-                        slave = self.slaves.pop(slaveid)
+                slaveid, event_data, event_name = self.recv()
+                if event_name == 'collectionfinish':
+                    slave_collections.append(event_data['node_ids'])
+                    self.terminal.rewrite(
+                        "Received {} collections from {} slaves".format(len(slave_collections),
+                            len(self.slaves)), yellow=True)
+                    # Don't ack here, leave the slaves blocking on recv
+                    # after sending collectionfinish,
+                    # then sync up when all collections are diffed
+                elif event_name == 'need_tests':
+                    self.send_tests(slaveid)
+                elif event_name == 'runtest_logstart':
+                    self.ack(slaveid, event_name)
+                    self.trdist.runtest_logstart(slaveid,
+                        event_data['nodeid'], event_data['location'])
+                elif event_name == 'runtest_logreport':
+                    self.ack(slaveid, event_name)
+                    report = unserialize_report(event_data['report'])
+                    self.trdist.runtest_logreport(slaveid, report)
+                elif event_name == 'shutdown':
+                    self.ack(slaveid, event_name)
+                    _monitor_slave_shutdown(self, self.slaves.pop(slaveid), slaveid)
 
                 # wait for all slave collections to arrive, then diff collections and ack
                 if slave_collections is not None:
@@ -431,7 +416,8 @@ class ParallelSession(object):
                         pass
 
                     # compare slave collections to the master, all test ids must be the same
-                    self.terminal.rewrite("Received all collections from slaves", green=True)
+                    self.terminal.rewrite("Received {} collections from {} slaves".format(
+                        len(slave_collections), len(self.slaves)), green=True)
                     self.log.debug('diffing slave collections')
                     for slave_collection in slave_collections:
                         report_collection_diff(self.collection.keys(), slave_collection, slaveid)
@@ -545,6 +531,42 @@ def report_collection_diff(from_collection, to_collection, slaveid):
     err = '{slaveid} has a different collection than the master\n{diff}'.format(
         slaveid=slaveid, diff=diff)
     raise RuntimeError(err)
+
+
+def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
+    msg = partial(psession.print_message, prefix=slaveid)
+    # add a run to the configured max to account for the "throwaway" run
+    max_runs = _monitor_slave_shutdown.max_runs + 1
+    if runs > max_runs:
+        msg('failed to shut down gracefully; killed'.format(slaveid), red=True)
+        slave.kill()
+        return
+
+    remaining_runs = max_runs - runs
+    runs += 1
+    ec = slave.poll()
+    if ec is None:
+        if runs == 1:
+            # On the first run, give the slaves a small window in the event they're able
+            # to shutdown quickly. If not, we start tattling on them in future runs
+            interval = 1
+        else:
+            interval = _monitor_slave_shutdown.interval
+            msg('still shutting down, '
+                'will check again in {} seconds '
+                '({} attempts remaining)'
+                .format(_monitor_slave_shutdown.interval, remaining_runs), blue=True)
+        t = Timer(interval, _monitor_slave_shutdown, [psession, slave, slaveid, runs])
+        t.start()
+    else:
+        if ec == 0:
+            msg('exited', green=True)
+        else:
+            msg('died', red=True)
+# tweak these to change how long we wait for slaves to shut down
+# default is about 10 minutes
+_monitor_slave_shutdown.interval = 120
+_monitor_slave_shutdown.max_runs = 5
 
 
 class TerminalDistReporter(object):
