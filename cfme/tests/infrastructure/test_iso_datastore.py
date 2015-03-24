@@ -43,6 +43,7 @@ def no_iso_dss(provider_crud):
         template_crud.delete(cancel=False)
 
 
+@pytest.mark.meta(blockers=[1200783])
 def test_iso_datastore_crud(provider_init, no_iso_dss, provider_crud, iso_datastore):
     """
     Basic CRUD test for ISO datastores.
