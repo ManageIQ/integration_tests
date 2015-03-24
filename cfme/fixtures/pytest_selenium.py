@@ -12,7 +12,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 :var class_selector: Regular expression to detect simple CSS locators
 """
 
-from time import sleep, time
+from time import sleep
 from xml.sax.saxutils import quoteattr
 from collections import Iterable
 from contextlib import contextmanager
@@ -197,7 +197,8 @@ def element(o, **kwargs):
         raise NoSuchElementException("Element {} not found on page.".format(str(o)))
 
     if not matches:
-        if (not no_deeper) and is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
+        if (not no_deeper) and is_displayed(
+                "//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
             try:
                 title = text("//body/h1", _no_deeper=True)
                 body = text("//body/p", _no_deeper=True)
@@ -206,17 +207,28 @@ def element(o, **kwargs):
             raise exceptions.CFMEExceptionOccured(
                 "Element {} not found on page because the following Rails error happened:\n{}: {}"
                 .format(str(o), title, body))
+        elif (not no_deeper) and is_displayed(
+                "//h1[normalize-space(.)='Unexpected error encountered']", _no_deeper=True):
+            try:
+                error_text = text(
+                    "//h1[normalize-space(.)='Unexpected error encountered']"
+                    "/following-sibling::h3[not(fieldset)]", _no_deeper=True)
+            except NoSuchElementException:  # Just in case something goes really wrong
+                _fail()  # To not disguise the locator as something else, use the original one
+            raise exceptions.CFMEExceptionOccured(
+                "Element {} not found on page because the following Rails error happened:\n{}"
+                .format(str(o), error_text))
         else:
             _fail()
     return matches[0]
 
 
-def wait_until(f, msg="Webdriver wait timed out"):
+def wait_until(f, msg="Webdriver wait timed out", timeout=120.0):
+    """This used to be a wrapper around WebDriverWait from selenium.
+
+    Now it is just compatibility layer using :py:func:`utils.wait.wait_for`
     """
-    Wrapper around WebDriverWait from selenium
-    """
-    t = time()
-    return WebDriverWait(browser(), 120.0).until(f, msg) and time() - t
+    return wait_for(lambda: f(browser()), num_sec=timeout, message=msg, delay=0.5)
 
 
 def in_flight():
@@ -288,7 +300,7 @@ def ajax_timeout(seconds):
     _thread_local.ajax_timeout = original
 
 
-def is_displayed(loc, _deep=0):
+def is_displayed(loc, _deep=0, **kwargs):
     """
     Checks if a particular locator is displayed
 
@@ -299,9 +311,10 @@ def is_displayed(loc, _deep=0):
 
     Raises:
         NoSuchElementException: If element is not found on page
+        CFMEExceptionOccured: When there is a CFME rails exception on the page.
     """
     try:
-        return element(loc, _no_deeper=True).is_displayed()
+        return element(loc, **kwargs).is_displayed()
     except (NoSuchElementException, exceptions.CannotScrollException):
         return False
     except StaleElementReferenceException:
