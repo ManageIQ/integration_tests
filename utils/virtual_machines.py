@@ -49,6 +49,11 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         logger.info("Provisioned VM/instance %s" % vm_name)  # instance ID in case of EC2
     except Exception as e:
         logger.error('Could not provisioning VM/instance %s (%s)', vm_name, e)
+        try:
+            logger.info("VM/Instance status: {}".format(mgmt.vm_status(vm_name)))
+        except Exception as f:
+            logger.error(
+                "Could not retrieve VM/Instance status: {}: {}".format(type(f).__name__, str(f)))
         logger.info('Attempting cleanup on VM/instance %s', vm_name)
         try:
             if mgmt.does_vm_exist(vm_name):
@@ -59,7 +64,9 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
                 else:
                     logger.error('Error destroying VM/instance %s', vm_name)
         except Exception as f:
-            logger.error('Could not destroy VM/instance %s (%s)', vm_name, f)
+            logger.error(
+                'Could not destroy VM/instance {} ({}: {})'.format(
+                    vm_name, type(f).__name__, str(f)))
         finally:
             raise e
 
