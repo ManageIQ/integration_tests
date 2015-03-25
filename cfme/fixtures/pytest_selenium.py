@@ -873,8 +873,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
 
     # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right here
     if (
-            is_displayed("//div[@id='blocker_div' or @id='notification']")
-            or is_displayed(".modal-backdrop.fade.in")):
+            is_displayed("//div[@id='blocker_div' or @id='notification']", _no_deeper=True)
+            or is_displayed(".modal-backdrop.fade.in", _no_deeper=True)):
         logger.warning("Page was blocked with blocker div on start of navigation, recycling.")
         quit()
         kwargs.pop("start", None)
@@ -934,8 +934,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             recycle = True
         # If the page is blocked, then recycle...
         if (
-                is_displayed("//div[@id='blocker_div' or @id='notification']")
-                or is_displayed(".modal-backdrop.fade.in")):
+                is_displayed("//div[@id='blocker_div' or @id='notification']", _no_deeper=True)
+                or is_displayed(".modal-backdrop.fade.in", _no_deeper=True)):
             logger.warning("Page was blocked with blocker div, recycling.")
             recycle = True
         elif cfme_exc.is_cfme_exception():
@@ -943,14 +943,14 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 cfme_exc.cfme_exception_text()
             ))
             recycle = True
-        elif is_displayed("//body[./h1 and ./p and ./hr and ./address]"):
+        elif is_displayed("//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
             # 503 and similar sort of errors
             title = text("//body/h1")
             body = text("//body/p")
             logger.exception("Application error '{}': {}".format(title, body))
             sleep(5)  # Give it a little bit of rest
             recycle = True
-        elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]"):
+        elif is_displayed("//body/div[@class='dialog' and ./h1 and ./p]", _no_deeper=True):
             # Rails exception detection
             logger.exception("Rails exception before force_navigate started!: {}:{} at {}".format(
                 text("//body/div[@class='dialog']/h1").encode("utf-8"),

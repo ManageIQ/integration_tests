@@ -131,7 +131,8 @@ class Region(Pretty):
         except IndexError:
             browser_title = None
 
-        if self.identifying_loc and sel.is_displayed(self.locators[self.identifying_loc]):
+        if self.identifying_loc and sel.is_displayed(
+                self.locators[self.identifying_loc], _no_deeper=True):
             ident_match = True
         else:
             if not self.title:
