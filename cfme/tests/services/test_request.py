@@ -93,6 +93,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_copy_request(setup_provider, provider_key, provider_mgmt,
                       catalog_item, request):
     """Automate BZ 1194479"""

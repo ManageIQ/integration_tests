@@ -121,6 +121,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_item, request):
     """Tests order catalog item
 
@@ -141,6 +142,7 @@ def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_
     assert row.last_message.text == 'Request complete'
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalog_item, request):
     """Tests ordering a catalog bundle
 
@@ -167,6 +169,7 @@ def test_order_catalog_bundle(provider_key, provider_mgmt, provider_init, catalo
 
 
 # Note here this needs to be reduced, doesn't need to test against all providers
+@pytest.mark.meta(blockers=[1204899])
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
                                   vm_name, dialog, catalog):

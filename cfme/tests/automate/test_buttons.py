@@ -33,6 +33,7 @@ def dialog():
     yield service_dialog
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_button_group_crud(request):
     buttongroup = ButtonGroup(
         text=generate_random_string(), hover="btn_hvr", type=ButtonGroup.SERVICE)
@@ -43,6 +44,7 @@ def test_button_group_crud(request):
     buttongroup.delete()
 
 
+@pytest.mark.meta(blockers=[1204899])
 @pytest.mark.meta(blockers=[1143019])
 def test_button_crud(dialog, request):
     buttongroup = ButtonGroup(
@@ -62,6 +64,7 @@ def test_button_crud(dialog, request):
     button.delete()
 
 
+@pytest.mark.meta(blockers=[1204899])
 @pytest.mark.meta(blockers=[1193758])
 def test_button_on_host(dialog, request):
     buttongroup = ButtonGroup(

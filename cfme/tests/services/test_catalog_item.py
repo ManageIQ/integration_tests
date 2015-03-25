@@ -54,33 +54,39 @@ def catalog_item(dialog, catalog):
     yield catalog_item
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_create_catalog_item(catalog_item):
     catalog_item.create()
     flash.assert_success_message('Service Catalog Item "%s" was added' %
                                  catalog_item.name)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_update_catalog_item(catalog_item):
     catalog_item.create()
     with update(catalog_item):
         catalog_item.description = "my edited description"
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_delete_catalog_item(catalog_item):
     catalog_item.create()
     catalog_item.delete()
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_add_button_group(catalog_item):
     catalog_item.create()
     catalog_item.add_button_group()
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_add_button(catalog_item):
     catalog_item.create()
     catalog_item.add_button()
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_edit_tags(catalog_item):
     catalog_item.create()
     catalog_item.edit_tags("Cost Center 001")
@@ -88,6 +94,7 @@ def test_edit_tags(catalog_item):
 
 @pytest.mark.xfail(message='downstream - https://bugzilla.redhat.com/show_bug.cgi?id=996789 ;'
                            'upstream -  https://bugzilla.redhat.com/show_bug.cgi?id=1092651')
+@pytest.mark.meta(blockers=[1204899])
 def test_catalog_item_duplicate_name(catalog_item):
     catalog_item.create()
     with error.expected("Name has already been taken"):
@@ -95,6 +102,7 @@ def test_catalog_item_duplicate_name(catalog_item):
 
 
 @pytest.mark.meta(blockers=[1130301])
+@pytest.mark.meta(blockers=[1204899])
 def test_permissions_catalog_item_add(setup_cloud_providers, catalog_item):
     """ Tests that a catalog can be added only with the right permissions"""
     tac.single_task_permission_test([['Services', 'Catalogs Explorer', 'Catalog Items']],
