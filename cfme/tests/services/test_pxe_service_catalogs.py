@@ -139,6 +139,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
 
 
 @pytest.mark.meta(blockers=[1160486])
+@pytest.mark.meta(blockers=[1204899])
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_rhev_pxe_servicecatalog(setup_provider, provider_type,
                                  provider_key, provider_mgmt, catalog_item, request):

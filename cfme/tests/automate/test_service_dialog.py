@@ -8,6 +8,7 @@ from cfme.automate.service_dialogs import ServiceDialog
 pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_create_service_dialog():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -25,6 +26,7 @@ def test_create_service_dialog():
     dialog.create(element_data)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_update_service_dialog():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -44,6 +46,7 @@ def test_update_service_dialog():
         dialog.description = "my edited description"
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_delete_service_dialog():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -62,6 +65,7 @@ def test_delete_service_dialog():
     dialog.delete()
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_service_dialog_duplicate_name():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -85,6 +89,7 @@ def test_service_dialog_duplicate_name():
         dialog.create(element_data)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_checkbox_dialog_element():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -103,6 +108,7 @@ def test_checkbox_dialog_element():
     dialog.create(element_data)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_datecontrol_dialog_element():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -120,6 +126,7 @@ def test_datecontrol_dialog_element():
     dialog.create(element_data)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_dropdownlist_dialog_element():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -136,6 +143,7 @@ def test_dropdownlist_dialog_element():
     dialog.create(element_data)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_radiobutton_dialog_element():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -152,6 +160,7 @@ def test_radiobutton_dialog_element():
     dialog.create(element_data)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_tagcontrol_dialog_element():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -170,6 +179,7 @@ def test_tagcontrol_dialog_element():
     dialog.create(element_data)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_textareabox_dialog_element():
     element_data = {
         'ele_label': "ele_" + rand.generate_random_string(),
@@ -187,6 +197,7 @@ def test_textareabox_dialog_element():
     dialog.create(element_data)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_reorder_elements():
     element_1_data = {
         'ele_label': "ele_" + rand.generate_random_string(),

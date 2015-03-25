@@ -58,6 +58,7 @@ def catalog_item(dialog, catalog):
     yield catalog_item
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_delete_catalog_deletes_service(dialog, catalog):
     item_name = generate_random_string()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
@@ -70,6 +71,7 @@ def test_delete_catalog_deletes_service(dialog, catalog):
         service_catalogs.order(catalog.name, catalog_item)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_delete_catalog_item_deletes_service(catalog_item):
     catalog_item.delete()
     service_catalogs = ServiceCatalogs("service_name")
@@ -77,6 +79,7 @@ def test_delete_catalog_item_deletes_service(catalog_item):
         service_catalogs.order(catalog_item.catalog, catalog_item)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_service_circular_reference(catalog_item):
     bundle_name = "first_" + generate_random_string()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
@@ -93,6 +96,7 @@ def test_service_circular_reference(catalog_item):
                                'cat_item': sec_catalog_bundle.name})
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_service_generic_catalog_bundle(catalog_item):
     bundle_name = "generic_" + generate_random_string()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
@@ -109,6 +113,7 @@ def test_service_generic_catalog_bundle(catalog_item):
     assert row.last_message.text == 'Request complete'
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_bundles_in_bundle(catalog_item):
     bundle_name = "first_" + generate_random_string()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
@@ -133,6 +138,7 @@ def test_bundles_in_bundle(catalog_item):
     assert row.last_message.text == 'Request complete'
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_delete_dialog_before_parent_item(catalog_item):
     service_dialog = ServiceDialog(label=catalog_item.dialog)
     service_dialog.delete()

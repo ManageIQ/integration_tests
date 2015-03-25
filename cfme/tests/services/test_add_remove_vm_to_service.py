@@ -173,6 +173,7 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     return MyService(catalog_item.name, vm_name)
 
 
+@pytest.mark.meta(blockers=[1204899])
 def test_add_vm_to_service(request, myservice, create_method):
     """Tests adding vm to service
 
