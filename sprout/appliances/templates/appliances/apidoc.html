@@ -29,7 +29,9 @@ getMethods(function(data){
         defaults += "</ul>";
         var panel = $("<div class='panel panel-default'>" +
         "   <div class='panel-heading'>" +
-        "       <h4 class='panel-title'><a data-toggle='collapse' data-target='#method-" + method.name +"' href='#method-" + method.name +"'>" + method.name + "</a></h4>" +
+        "       <h4 class='panel-title'><a data-toggle='collapse' data-target='#method-" + method.name +"' href='#method-" + method.name +"'>" +
+        ((method.needs_authentication) ? "<span class='glyphicon glyphicon-eye-close'></span>" : "<span class='glyphicon glyphicon-globe'></span>") +
+        "&nbsp;" + method.name +"</a></h4>" +
         "   </div>" +
         "   <div class='panel-collapse collapse' id='method-" + method.name +"'>" +
         "       <div class='panel-body'>" +

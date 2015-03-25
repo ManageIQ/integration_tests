@@ -78,6 +78,7 @@ class JSONMethod(object):
             "args": f_args if not self.auth else f_args[1:],
             "defaults": defaults,
             "docstring": self._doc,
+            "needs_authentication": self.auth,
         }
 
 
@@ -404,3 +405,49 @@ def suspend(user, appliance):
     elif appliance.power_state != Appliance.Power.SUSPENDED:
         appliance_suspend.delay(appliance.id)
     return True
+
+
+@jsonapi.authenticated_method
+def set_pool_description(user, pool_id, description):
+    """Set the pool's description"""
+    pool = AppliancePool.objects.get(id=pool_id)
+    if pool.owner is None:
+        if not user.is_staff:
+            raise Exception("Only staff can operate with nonowned appliances")
+    elif pool.owner != user:
+        raise Exception("This appliance belongs to a different user!")
+    pool.description = description
+    pool.save()
+    return True
+
+
+@jsonapi.authenticated_method
+def get_pool_description(user, pool_id):
+    """Get the pool's description"""
+    pool = AppliancePool.objects.get(id=pool_id)
+    if pool.owner is None:
+        if not user.is_staff:
+            raise Exception("Only staff can operate with nonowned appliances")
+    elif pool.owner != user:
+        raise Exception("This appliance belongs to a different user!")
+    return pool.description
+
+
+@jsonapi.authenticated_method
+def find_pools_by_description(user, description, partial=False):
+    """Searches pools to find a pool with matching descriptions. When partial, `in` is used"""
+    pools = []
+    for pool in AppliancePool.objects.all():
+        if not pool.description:
+            continue
+        if partial:
+            if description in pool.description:
+                pools.append(pool)
+        else:
+            if pool.description == description:
+                pools.append(pool)
+
+    def _filter(pool):
+        return (pool.owner is None and user.is_staff) or (pool.owner == user)
+
+    return map(lambda pool: pool.id, filter(_filter, pools))
