@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-import pytest
-
 import re
+
+import diaper
+import pytest
 
 from cfme.configure import tasks
 from cfme.control.explorer import VMCompliancePolicy, VMCondition, PolicyProfile
@@ -9,7 +10,7 @@ from cfme.exceptions import VmNotFoundViaIP
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
-from utils import diaper, testgen, version
+from utils import testgen, version
 from utils.appliance import Appliance, provision_appliance
 from utils.log import logger
 from utils.randomness import generate_random_string

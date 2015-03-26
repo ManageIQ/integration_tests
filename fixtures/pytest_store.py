@@ -158,7 +158,8 @@ def write_line(line, **kwargs):
         store.slave_manager.message(line)
     else:
         # If py.test is supressing stdout/err, turn that off for a moment
-        diaper(store.capturemanager.suspendcapture)
+        with diaper:
+            store.capturemanager.suspendcapture()
 
         # terminal reporter knows whether or not to write a newline based on currentfspath
         # so stash it, then use rewrite to blow away the line that printed the current
@@ -172,4 +173,5 @@ def write_line(line, **kwargs):
         store.terminalreporter.write_ensure_prefix(cfp)
 
         # resume capturing
-        diaper(store.capturemanager.resumecapture)
+        with diaper:
+            store.capturemanager.resumecapture()
