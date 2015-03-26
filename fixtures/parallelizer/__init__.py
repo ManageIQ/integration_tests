@@ -37,6 +37,7 @@ import os
 import subprocess
 from collections import OrderedDict, defaultdict, namedtuple
 from threading import Timer
+from time import sleep, time
 
 import pytest
 import zmq
@@ -533,39 +534,44 @@ def report_collection_diff(from_collection, to_collection, slaveid):
 
 
 def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
-    # add a run to the configured max to account for the "throwaway" run
-    max_runs = _monitor_slave_shutdown.max_runs + 1
-    if runs > max_runs:
+    start_time = time()
+
+    # configure the polling logic
+    polls = 0
+    # how often to poll
+    poll_sleep_time = .5
+    # how often to report (calculated to be around once a minute based on poll_sleep_time)
+    poll_report_modulo = 60 / poll_sleep_time
+    # maximum time to wait
+    poll_num_sec = 300
+
+    # time spent waiting
+    def poll_walltime():
+        return time() - start_time
+
+    # start the poll
+    while poll_walltime() < poll_num_sec:
+        polls += 1
+        ec = slave.poll()
+        if ec is None:
+            # process still running, report if needed and continue polling
+            if polls % poll_report_modulo == 0:
+                remaining_time = int(poll_num_sec - poll_walltime())
+                psession.print_message('{} still shutting down, '
+                    'will continue polling for {} seconds '
+                    .format(slaveid, remaining_time), blue=True)
+        else:
+            if ec == 0:
+                psession.print_message('{} exited'.format(slaveid), green=True)
+            else:
+                psession.print_message('{} died'.format(slaveid), red=True)
+            return
+        sleep(poll_sleep_time)
+    else:
         psession.print_message('{} failed to shut down gracefully; killed'.format(slaveid),
             red=True)
         slave.kill()
         return
-
-    remaining_runs = max_runs - runs
-    runs += 1
-    ec = slave.poll()
-    if ec is None:
-        if runs == 1:
-            # On the first run, give the slaves a small window in the event they're able
-            # to shutdown quickly. If not, we start tattling on them in future runs
-            interval = 1
-        else:
-            interval = _monitor_slave_shutdown.interval
-            psession.print_message('{} still shutting down, '
-                'will check again in {} seconds '
-                '({} attempts remaining)'
-                .format(slaveid, _monitor_slave_shutdown.interval, remaining_runs), blue=True)
-        t = Timer(interval, _monitor_slave_shutdown, [psession, slave, slaveid, runs])
-        t.start()
-    else:
-        if ec == 0:
-            psession.print_message('{} exited'.format(slaveid), green=True)
-        else:
-            psession.print_message('{} died'.format(slaveid), red=True)
-# tweak these to change how long we wait for slaves to shut down
-# default is about 10 minutes
-_monitor_slave_shutdown.interval = 120
-_monitor_slave_shutdown.max_runs = 5
 
 
 class TerminalDistReporter(object):
