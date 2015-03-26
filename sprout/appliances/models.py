@@ -284,8 +284,17 @@ class Group(MetadataMixin):
         return Appliance.objects.filter(template__template_group=self)
 
     def get_fulfillment_percentage(self, preconfigured):
+        """Return percentage of fulfillment of the group shepherd.
+
+        Values between 0-100, can be over 100 if there are more than required.
+
+        Args:
+            preconfigured: Whether to check the pure ones or configured ones.
+        """
         appliances_in_shepherd = len(
-            self.appliances.filter(template__preconfigured=preconfigured, appliance_pool=None))
+            self.appliances.filter(
+                template__preconfigured=preconfigured, appliance_pool=None,
+                marked_for_deletion=False))
         wanted_pool_size = (
             self.template_pool_size if preconfigured else self.unconfigured_template_pool_size)
         if wanted_pool_size == 0:
