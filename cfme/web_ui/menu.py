@@ -45,10 +45,15 @@ def any_box_displayed():
     First part of the condition is for the 5.3+ pop-up, second is for 5.2.
     """
     return version.pick({
-        version.LOWEST: lambda: sel.is_displayed("//a[contains(@class, 'maintab_active')]"),
-        "5.3": lambda: any(map(sel.is_displayed, sel.elements(Loc.inactive_box_loc))),
-        "5.4": lambda: sel.is_displayed(
-            "//li[contains(@class, 'dropdown') and contains(@class, 'open')]")
+        version.LOWEST:
+        lambda: sel.is_displayed("//a[contains(@class, 'maintab_active')]", _no_deeper=True),
+        "5.3":
+        lambda: any(map(
+            lambda e: sel.is_displayed(e, _no_deeper=True),
+            sel.elements(Loc.inactive_box_loc))),
+        "5.4":
+        lambda: sel.is_displayed(
+            "//li[contains(@class, 'dropdown') and contains(@class, 'open')]", _no_deeper=True)
     })()
 
 
