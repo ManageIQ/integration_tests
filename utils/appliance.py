@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import atexit
+import hashlib
 import os
 import random
 import shutil
 import subprocess
-from multiprocessing import Process
 from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
@@ -366,6 +366,15 @@ class IPAppliance(object):
     def __exit__(self, *args, **kwargs):
         self.pop()
 
+    def __eq__(self, other):
+        return isinstance(other, IPAppliance) and self.address == other.address
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return int(hashlib.md5(self.address).hexdigest(), 16)
+
     @property
     def managed_providers(self):
         """Returns a set of providers that are managed by this appliance
@@ -384,12 +393,9 @@ class IPAppliance(object):
         return provider_keys
 
     @classmethod
-    def from_url(ip_appliance_class, url):
-        # Need to think about this bit
-        if url is None:
-            url = conf.env['base_url']
+    def from_url(cls, url):
         parsed_url = urlparse(url)
-        ip_a = ip_appliance_class(parsed_url.hostname)
+        ip_a = cls(parsed_url.hostname)
         # stash the passed-in url in the lazycache to save a step
         ip_a.url = url
         return ip_a

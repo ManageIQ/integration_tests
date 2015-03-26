@@ -22,7 +22,10 @@ def main():
         help='Maximum number of seconds to wait before giving up, default 600 (10 minutes)')
 
     args = parser.parse_args()
-    ip_a = IPAppliance.from_url(args.url)
+    if args.url:
+        ip_a = IPAppliance.from_url(args.url)
+    else:
+        ip_a = IPAppliance()
     result = ip_a.wait_for_web_ui(timeout=args.num_sec)
 
     if not result:
