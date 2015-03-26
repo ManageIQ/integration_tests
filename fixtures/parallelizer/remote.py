@@ -1,17 +1,3 @@
-import argparse
-import os
-import sys
-from collections import deque
-from urlparse import urlparse
-
-import zmq
-from py.path import local
-
-import utils.log
-from fixtures.pytest_store import store
-from utils import conf
-
-
 SLAVEID = None
 
 
@@ -23,10 +9,9 @@ class SlaveManager(object):
         self.collection = None
         self.slaveid = conf.runtime['env']['slaveid'] = slaveid
         self.base_url = conf.runtime['env']['base_url'] = base_url
+        self.log = utils.log.logger
         conf.clear()
-        self.log = utils.log.create_sublogger(self.slaveid)
         # Override the logger in utils.log
-        utils.log.logger = utils.log.ArtifactorLoggerAdapter(self.log, {})
 
         ctx = zmq.Context.instance()
         self.sock = ctx.socket(zmq.REQ)
@@ -129,10 +114,11 @@ class SlaveManager(object):
                 pass
             else:
                 self.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
-
-        self.message('no more tests, shutting down')
-        self.send_event('shutdown')
         return True
+
+    def pytest_sessionfinish(self, session, exitstatus):
+        self.message('shutting down')
+        self.send_event('shutdown')
 
     def _test_generator(self):
         # Pull the first batch of tests, stash in a deque
@@ -209,10 +195,28 @@ def _init_config(slave_options, slave_args):
 
 
 if __name__ == '__main__':
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('slaveid', help='The name of this slave')
     parser.add_argument('base_url', help='The base URL for this slave to use')
     args = parser.parse_args()
+
+    # overwrite the default logger before anything else is imported,
+    # to get our best chance at having everything import the replaced logger
+    import utils.log
+    slave_logger = utils.log.create_sublogger(args.slaveid)
+    utils.log.logger = utils.log.ArtifactorLoggerAdapter(slave_logger, {})
+
+    import os
+    import sys
+    from collections import deque
+    from urlparse import urlparse
+
+    import zmq
+    from py.path import local
+
+    from fixtures.pytest_store import store
+    from utils import conf
 
     # These must be set before remote_initconfig is called and py.test starts
     # TODO: Not sure this is necessary, since cwd should already be on the path?

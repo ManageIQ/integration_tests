@@ -36,7 +36,6 @@ import json
 import os
 import subprocess
 from collections import OrderedDict, defaultdict, namedtuple
-from functools import partial
 from threading import Timer
 
 import pytest
@@ -335,16 +334,6 @@ class ParallelSession(object):
         conf.runtime['slave_config']['options']['use_sprout'] = False  # Slaves don't use sprout
         conf.save('slave_config')
 
-        # Fire up the workers
-        devnull = open(os.devnull, 'w')
-        for i, base_url in enumerate(self.appliances):
-            slaveid = 'slave%d' % i
-            # worker output redirected to null; useful info comes via messages and logs
-            slave = subprocess.Popen(
-                ['python', remote.__file__, slaveid, base_url], stdout=devnull, stderr=devnull)
-            self.slaves[slaveid] = slave
-            at_exit(slave.kill)
-
     def pytest_runtestloop(self):
         """pytest runtest loop
 
@@ -360,9 +349,19 @@ class ParallelSession(object):
         for item in self.session.items:
             self.collection[item.nodeid] = item
 
+        # Fire up the workers
+        devnull = open(os.devnull, 'w')
+        for i, base_url in enumerate(self.appliances):
+            slaveid = 'slave%d' % i
+            # worker output redirected to null; useful info comes via messages and logs
+            slave = subprocess.Popen(
+                ['python', remote.__file__, slaveid, base_url], stdout=devnull, stderr=devnull)
+            self.slaves[slaveid] = slave
+            at_exit(slave.kill)
+
         try:
             slave_collections = []
-            self.terminal.rewrite("Waiting for {} slave collections".format(len(self.slaves)),
+            self.print_message("Waiting for {} slave collections".format(len(self.slaves)),
                 red=True)
 
             while True:
@@ -382,9 +381,9 @@ class ParallelSession(object):
                 slaveid, event_data, event_name = self.recv()
                 if event_name == 'collectionfinish':
                     slave_collections.append(event_data['node_ids'])
-                    self.terminal.rewrite(
-                        "Received {} collections from {} slaves".format(len(slave_collections),
-                            len(self.slaves)), yellow=True)
+                    self.print_message(
+                        "{} collection received ({}/{})".format(
+                            slaveid, len(slave_collections), len(self.slaves)), yellow=True)
                     # Don't ack here, leave the slaves blocking on recv
                     # after sending collectionfinish,
                     # then sync up when all collections are diffed
@@ -416,11 +415,11 @@ class ParallelSession(object):
                         pass
 
                     # compare slave collections to the master, all test ids must be the same
-                    self.terminal.rewrite("Received {} collections from {} slaves".format(
-                        len(slave_collections), len(self.slaves)), green=True)
                     self.log.debug('diffing slave collections')
                     for slave_collection in slave_collections:
                         report_collection_diff(self.collection.keys(), slave_collection, slaveid)
+                    else:
+                        self.print_message("All collections match", green=True)
 
                     # Clear slave collections
                     slave_collections = None
@@ -436,9 +435,8 @@ class ParallelSession(object):
             self.log.error('Exception in runtest loop:')
             self.log.exception(ex)
             raise
-        finally:
-            # Restore the terminal reporter for exit hooks
-            self.config.pluginmanager.register(self.terminal, 'terminalreporter')
+
+        self.config.pluginmanager.register(self.terminal, 'terminalreporter')
 
         # Suppress other runtestloop calls
         return True
@@ -446,6 +444,7 @@ class ParallelSession(object):
     def _test_item_generator(self):
         for tests in self._modscope_item_generator():
             yield tests
+        self.print_message('all tests distributed')
 
     def _modscope_item_generator(self):
         # breaks out tests by module, can work just about any way we want
@@ -534,11 +533,11 @@ def report_collection_diff(from_collection, to_collection, slaveid):
 
 
 def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
-    msg = partial(psession.print_message, prefix=slaveid)
     # add a run to the configured max to account for the "throwaway" run
     max_runs = _monitor_slave_shutdown.max_runs + 1
     if runs > max_runs:
-        msg('failed to shut down gracefully; killed'.format(slaveid), red=True)
+        psession.print_message('{} failed to shut down gracefully; killed'.format(slaveid),
+            red=True)
         slave.kill()
         return
 
@@ -552,17 +551,17 @@ def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
             interval = 1
         else:
             interval = _monitor_slave_shutdown.interval
-            msg('still shutting down, '
+            psession.print_message('{} still shutting down, '
                 'will check again in {} seconds '
                 '({} attempts remaining)'
-                .format(_monitor_slave_shutdown.interval, remaining_runs), blue=True)
+                .format(slaveid, _monitor_slave_shutdown.interval, remaining_runs), blue=True)
         t = Timer(interval, _monitor_slave_shutdown, [psession, slave, slaveid, runs])
         t.start()
     else:
         if ec == 0:
-            msg('exited', green=True)
+            psession.print_message('{} exited'.format(slaveid), green=True)
         else:
-            msg('died', red=True)
+            psession.print_message('{} died'.format(slaveid), red=True)
 # tweak these to change how long we wait for slaves to shut down
 # default is about 10 minutes
 _monitor_slave_shutdown.interval = 120
