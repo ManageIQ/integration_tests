@@ -902,7 +902,8 @@ def generic_shepherd(preconfigured):
         appliances = []
         for template in possible_templates:
             appliances.extend(
-                Appliance.objects.filter(template=template, appliance_pool=None))
+                Appliance.objects.filter(
+                    template=template, appliance_pool=None, marked_for_deletion=False))
         # If we then want to delete some templates, better kill the eldest. status_changed
         # says which one was provisioned when, because nothing else then touches that field.
         appliances.sort(key=lambda appliance: appliance.status_changed)
