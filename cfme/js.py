@@ -35,4 +35,16 @@ function updateDate(newValue) {
 }
 
 """
+
+# Expects: arguments[0] = element, arguments[1] = value to set
+set_angularjs_value_script = """\
+(function(elem, value){
+    var angular_elem = angular.element(elem);
+    var $parse = angular_elem.injector().get('$parse');
+    var getter = $parse(elem.getAttribute('ng-model'));
+    var setter = getter.assign;
+    angular_elem.scope().$apply(function($scope) { setter($scope, value); });
+}(arguments[0], arguments[1]));
+"""
+
 # TODO: Get the url: directly from the attribute in the page?

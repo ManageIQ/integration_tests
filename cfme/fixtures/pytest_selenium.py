@@ -600,6 +600,17 @@ def unset_attribute(loc, attr):
     return execute_script("arguments[0].removeAttribute(arguments[1]);", element(loc), attr)
 
 
+def set_angularjs_value(loc, value):
+    """Sets value of an element managed by angularjs
+
+    Args:
+        loc: A locator, expects either a string, WebElement, tuple.
+        value: Value to set.
+    """
+    logger.info("Setting value of an angularjs element {} to {}".format(loc, value))
+    return execute_script(js.set_angularjs_value_script, element(loc), value)
+
+
 def send_keys(loc, text):
     """
     Sends the supplied keys to an element.

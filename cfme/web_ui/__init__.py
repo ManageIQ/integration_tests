@@ -1127,7 +1127,11 @@ def _sd_fill_date(calendar, value):
         date_str = str(value)
 
     # need to write to a readonly field: resort to evil
-    sel.set_attribute(input, "value", date_str)
+    if sel.get_attribute(input, 'ng-model') is not None:
+        sel.set_angularjs_value(input, date_str)
+    else:
+        sel.set_attribute(input, "value", date_str)
+
     return True
 
 
