@@ -22,7 +22,7 @@ submit_button = form_buttons.FormButton("Submit")
 
 template_select_form = ui.Form(
     fields=[
-        ('template_table', ui.Table('//div[@id="pre_prov_div"]/fieldset/table')),
+        ('template_table', ui.Table('//div[@id="pre_prov_div"]//table')),
         ('cancel_button', form_buttons.cancel)
     ]
 )
