@@ -43,7 +43,7 @@ def test_button_group_crud(request):
     buttongroup.delete()
 
 
-@pytest.mark.meta(blockers=[1143019])
+@pytest.mark.meta(blockers=[1143019, 1205235])
 def test_button_crud(dialog, request):
     buttongroup = ButtonGroup(
         text=generate_random_string(),
@@ -62,7 +62,7 @@ def test_button_crud(dialog, request):
     button.delete()
 
 
-@pytest.mark.meta(blockers=[1193758])
+@pytest.mark.meta(blockers=[1193758, 1205235])
 def test_button_on_host(dialog, request):
     buttongroup = ButtonGroup(
         text=generate_random_string(),
