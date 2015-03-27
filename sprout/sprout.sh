@@ -46,7 +46,7 @@ function needs_update() {
     OLD=`pwd`
     cd ..
     git fetch origin >/dev/null 2>&1
-    git diff --name-only `git rev-parse master` `git rev-parse origin/master` | grep ^sprout/
+    git diff --name-only `git rev-parse master` `git rev-parse origin/master` | grep -E "^sprout|^utils/mgmt_system|^utils/appliance"
     RESULT=$?
     cd "${OLD}"
     return $RESULT

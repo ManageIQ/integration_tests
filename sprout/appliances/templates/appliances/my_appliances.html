@@ -30,15 +30,15 @@
                 </div>
             </div>
         </div>
-        <table class="table table-striped">
+        <table class="table table-striped table-hover">
             <thead>
                 <tr>
                     <th>ID:</th>
                     <th>Name:</th>
                     <th>Provider:</th>
                     <th>Address:</th>
-                    <th>Manages:</th>
-                    <th>Ready?</th>
+                    <th style="width: 10%;">Manages:</th>
+                    <th style="width: 10%;">Ready?</th>
                     <th>Power state:</th>
                     <th>Expires in:</th>
                     <th>Actions:</th>
@@ -49,7 +49,7 @@
                 {% for appliance in pool.appliances %}
                 <tr id="appliance-{{ appliance.id }}">
                     <td>{{ appliance.id }}</td>
-                    <td>{% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}{{ appliance.name }}</td>
+                    <td style=" overflow: auto;">{% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}{{ appliance.name }}</td>
                     <td>{{ appliance.template.provider.id }}</td>
                     <td>
                         {% if appliance.ip_address %}
@@ -67,11 +67,11 @@
                             <em>Nothing! :)</em>
                         {% endif %}
                     </td>
-                    <td>
+                    <td style="overflow-x: auto;">
                         {% if appliance.ready %}
-                            <button class="btn btn-success btn-sm"><span class="glyphicon glyphicon-ok"></span> Ready!</button>
+                            <span class="glyphicon glyphicon-ok"></span>
                         {% else %}
-                            <button class="btn btn-warning btn-sm">{{ appliance.status }}</button>
+                            {{ appliance.status }}
                         {% endif %}
                     </td>
                     <td>{{ appliance.power_state }}</td>
@@ -113,19 +113,20 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <td>Fulfillment progress:</td>
-                    <td colspan="5">{{ pool.percent_finished|progress }}</td>
-                    <td colspan="3"><em>Not relevant after provisioning finished (TODO: hide after)</em></td>
+                    <td colspan="2">Fulfillment progress:</td>
+                    <td colspan="6">{{ pool.percent_finished|progress }}</td>
+                    <td colspan="2">
+                        {% if pool.fulfilled %}
+                            <span class="glyphicon glyphicon-ok"></span> Fulfilled
+                        {% else %}
+                            <span class="glyphicon glyphicon-remove"></span> Not fulfilled
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
-                    <td colspan="9">
-                        {% if pool.fulfilled %}
-                            <button class="btn btn-success btn-sm"><span class="glyphicon glyphicon-ok"></span> Fulfilled</button>
-                        {% else %}
-                            <button class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-remove"></span> Not fulfilled</button>
-                        {% endif %}
-                        <a href="{% url 'appliances.views.kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
-                        <form action="{% url 'appliances.views.transfer_pool' %}" method="POST">
+                    <td colspan="10">
+                        <a href="{% url 'appliances.views.kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')" style="display: inline;"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
+                        <form action="{% url 'appliances.views.transfer_pool' %}" method="POST" style="display: inline;">
                             {% csrf_token %}
                             <input type="hidden" name="pool_id" value="{{ pool.id }}">
                             <input type="submit" class="btn btn-success btn-sm" value="Transfer ownership to:" onclick="return confirm('Are you sure?')">

@@ -111,6 +111,8 @@ class Provider(MetadataMixin):
 
     @property
     def remaining_appliance_slots(self):
+        if self.appliance_limit is None:
+            return 1
         result = self.appliance_limit - self.num_currently_managing
         if result < 0:
             return 0
@@ -632,6 +634,8 @@ class AppliancePool(MetadataMixin):
     preconfigured = models.BooleanField(
         default=True, help_text="Whether to provision preconfigured appliances")
     description = models.TextField(blank=True)
+    not_needed_anymore = models.BooleanField(
+        default=False, help_text="Used for marking the appliance pool as being deleted")
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
@@ -744,6 +748,10 @@ class AppliancePool(MetadataMixin):
             appliance.prolong_lease(time=time)
 
     def kill(self):
+        with transaction.atomic():
+            p = type(self).objects.get(pk=self.pk)
+            p.not_needed_anymore = True
+            p.save()
         save_lives = not self.fulfilled
         if self.appliances:
             for appliance in self.appliances:
