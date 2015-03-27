@@ -1,5 +1,6 @@
 import argparse
 import re
+from collections import namedtuple
 from datetime import date
 
 import slumber
@@ -20,8 +21,15 @@ stream_matchers = (
     # Nightly builds are currently in the 5.4.z stream
     (get_stream('5.4'), r'^cfme-nightly-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2})'),
 )
+generic_matchers = (
+    ('sprout', r'^s_tpl'),
+    ('sprout', r'^sprout_template'),
+    ('rhevm-internal', r'^auto-tmp'),
+)
 trackerbot_conf = env.get('trackerbot', {})
 _active_streams = None
+
+TemplateInfo = namedtuple('TemplateInfo', ['group_name', 'datestamp', 'stream'])
 
 
 def cmdline_parser():
@@ -74,14 +82,15 @@ def active_streams(api, force=False):
 
 
 def parse_template(template_name):
-    """Given a template name, attempt to extract its stream name and upload date
+    """Given a template name, attempt to extract its group name and upload date
 
     Returns:
-        * None if no streams matched
-        * stream, datestamp of the first matching stream. stream will be a string,
-          datestamp with be a :py:class:`datetime.date <python:datetime.date>`
+        * None if no groups matched
+        * group_name, datestamp of the first matching group. group name will be a string,
+          datestamp with be a :py:class:`datetime.date <python:datetime.date>`, or None if
+          a date can't be derived from the template name
     """
-    for stream, regex in stream_matchers:
+    for group_name, regex in stream_matchers:
         matches = re.match(regex, template_name)
         if matches:
             groups = matches.groupdict()
@@ -91,9 +100,13 @@ def parse_template(template_name):
             month, day = int(groups['month']), int(groups['day'])
             # validate the template date by turning into a date obj
             template_date = futurecheck(date(year, month, day))
-            return stream, template_date
-
-    raise ValueError('No streams matched template %s' % template_name)
+            return TemplateInfo(group_name, template_date, True)
+    for group_name, regex in generic_matchers:
+        matches = re.match(regex, template_name)
+        if matches:
+            return TemplateInfo(group_name, None, False)
+    # If no match, unknown
+    return TemplateInfo('unknown', None, False)
 
 
 def mark_provider_template(api, provider, template, tested=None, usable=None,
@@ -210,11 +223,49 @@ def post_jenkins_result(job_name, number, stream, date, fails,
     })
 
 
+def depaginate(api, result):
+    """Depaginate the first (or only) page of a paginated result"""
+    meta = result['meta']
+    if meta['next'] is None:
+        # No pages means we're done
+        return result
+
+    # make a copy of meta that we'll mess with and eventually return
+    # since we'll be chewing on the 'meta' object with every new GET
+    # same thing for objects, since we'll just be appending to it
+    # while we pull more records
+    ret_meta = meta.copy()
+    ret_objects = result['objects']
+    while meta['next']:
+        # parse out url bits for constructing the new api req
+        next_url = urlparse.urlparse(meta['next'])
+        # ugh...need to find the word after 'api/' in the next URL to
+        # get the resource endpoint name; not sure how to make this better
+        next_endpoint = next_url.path.strip('/').split('/')[-1]
+        next_params = {k: v[0] for k, v in urlparse.parse_qs(next_url.query).items()}
+        result = getattr(api, next_endpoint).get(**next_params)
+        ret_objects.extend(result['objects'])
+        meta = result['meta']
+
+    # fix meta up to not tell lies
+    ret_meta['total_count'] = len(ret_objects)
+    ret_meta['next'] = None
+    ret_meta['limit'] = ret_meta['total_count']
+    return {
+        'meta': ret_meta,
+        'objects': ret_objects
+    }
+
+
 # Dict subclasses to help with JSON serialization
 class Group(dict):
     """dict subclass to help serialize groups as JSON"""
-    def __init__(self, name):
-        self['name'] = name
+    def __init__(self, name, stream=True, active=True):
+        self.update({
+            'name': name,
+            'stream': stream,
+            'active': active
+        })
 
 
 class Provider(dict):
