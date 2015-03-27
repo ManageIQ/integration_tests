@@ -13,6 +13,8 @@ import fixtures
 import markers
 import metaplugins
 from fixtures.pytest_store import store
+from utils.ssh import SSHClient
+from utils.version import current_version
 
 
 @pytest.mark.tryfirst
@@ -29,6 +31,20 @@ def set_session_timeout():
     if vmdb_config["session"]["timeout"] < 86400:
         vmdb_config["session"]["timeout"] = 86400
         store.current_appliance.set_yaml_config("vmdb", vmdb_config)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def set_default_domain():
+    if current_version() < "5.3":
+        return  # Domains are not in 5.2.x and lower
+    ssh_client = SSHClient()
+    # The command ignores the case when the Default domain is not present (: true)
+    result = ssh_client.run_rails_command(
+        "\"d = MiqAeDomain.where :name => 'Default'; puts (d) ? d.first.enabled : true\"")
+    if result.output.lower().strip() != "true":
+        # Re-enable the domain
+        ssh_client.run_rails_command(
+            "\"d = MiqAeDomain.where :name => 'Default'; d = d.first; d.enabled = true; d.save!\"")
 
 
 def _pytest_plugins_generator(*extension_pkgs):
