@@ -4,6 +4,7 @@ Whenever you use Add, Save, Cancel, Reset button, use this module.
 You can use it also for the other buttons with same shape like those CRUD ones.
 """
 from selenium.common.exceptions import NoSuchElementException
+from xml.sax.saxutils import quoteattr
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill
@@ -19,22 +20,31 @@ class FormButton(Pretty):
     """
     pretty_attrs = ['alt', 'dimmed_alt']
 
-    def __init__(self, alt, dimmed_alt=None, force_click=False):
+    def __init__(self, alt, dimmed_alt=None, force_click=False, partial_alt=False):
         self._alt = alt
         self._dimmed_alt = dimmed_alt
         self._force = force_click
+        self._partial = partial_alt
+
+    def alt_expr(self, dimmed=False):
+        if self._partial:
+            return "(contains(normalize-space(@alt), {}))".format(
+                quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
+        else:
+            return "(normalize-space(@alt)={})".format(
+                quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
 
     def locate(self):
         """This hairy locator ensures that the button is not dimmed and not hidden."""
-        return ("(//a | //button | //img | //input)[@alt='{}' and not(contains(@class, 'dimmed'))"
+        return ("(//a | //button | //img | //input)[{} and not(contains(@class, 'dimmed'))"
                 " and (contains(@class, 'button') or contains(@class, 'btn')"
                 " or contains(@src, 'button'))"
                 " and not(ancestor::*[contains(@style, 'display:none')"
-                " or contains(@style, 'display: none')])]".format(self._alt))
+                " or contains(@style, 'display: none')])]".format(self.alt_expr(dimmed=False)))
 
     @property
     def is_dimmed(self):
-        return sel.is_displayed("(//a | //button | //img | //input)[@alt='{}'"
+        return sel.is_displayed("(//a | //button | //img | //input)[{}"
             " and contains(@class, 'dimmed')"
             " and (contains(@class, 'button') or contains(@class, 'btn')"
             " or contains(@src, 'button'))"
@@ -43,7 +53,7 @@ class FormButton(Pretty):
             " (@disabled='true' or contains(@class, 'btn-disabled'))"
             " and not(ancestor::*[contains(@style, 'display:none')"
             " or contains(@style, 'display: none')])]".format(
-                self._dimmed_alt or self._alt, self._dimmed_alt or self._alt
+                self.alt_expr(dimmed=True), self._dimmed_alt or self._alt
             ))
 
     @property

@@ -6,6 +6,7 @@ from functools import partial
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import expression_editor as exp_ed
 from cfme.web_ui import Input, Region, Select, fill
+from cfme.web_ui.form_buttons import FormButton
 from utils.version import current_version
 from utils.wait import wait_for
 
@@ -35,45 +36,49 @@ search_box = Region(
         # Buttons on main view
         apply_filter_button={
             "5.3": "//a[@title='Apply the current filter']",
-            "5.4": "(//button | //a)[@alt='Apply the current filter']"},
+            "5.4": FormButton("Apply the current filter")},
         load_filter_button={
             "5.3": "//a[@title='Load a filter']",
-            "5.4": "(//button | //a)[@alt='Load a filter']"},
+            "5.4": FormButton("Load a filter")},
         delete_filter_button={
             "5.3": "//a[contains(@title, 'Delete the filter named')]",
-            "5.4": "(//button | //a)[contains(@alt, 'Delete the filter named')]"},
+            "5.4": FormButton("Delete the filter named", partial_alt=True)},
         save_filter_button={
             "5.3": "//a[@title='Save the current filter']",
-            "5.4": "(//button | //a)[@alt='Save the current filter']"},
+            "5.4": FormButton("Save the current filter")},
         reset_filter_button={
             "5.3": "//a[@title='Reset the filter']",
-            "5.4": "(//button | //a)[@alt='Reset the filter']"},
-        close_button="//button[contains(@class, 'close')]",
+            "5.4": FormButton("Reset the filter")},
+        close_button="//div[@id='advsearchModal']/div/div/div[1]/button/span[1]",
 
         # Buttons in the "next step"
         load_filter_dialog_button={
             "5.3": "//a[@title='Load the filter shown above']",
-            "5.4": "(//button | //a)[@alt='Load the filter shown above']"},
+            "5.4": FormButton("Load the filter shown above")},
         cancel_load_filter_dialog_button={
             "5.3": "//a[@title='Cancel the load']",
-            "5.4": "(//button | //a)[@alt='Cancel the load']"},
+            "5.4": FormButton("Cancel the load")},
         save_filter_dialog_button={
             "5.3": "//a[@title='Save the current search']",
-            "5.4": "(//button | //a)[@alt='Save the current search']"},
+            "5.4": FormButton("Save the current search")},
         cancel_save_filter_dialog_button={
             "5.3": "//a[@title='Cancel the save']",
-            "5.4": "(//button | //a)[@alt='Cancel the save']"},
+            "5.4": FormButton("Cancel the save")},
 
         # If user input requested, this window appears
         quick_search_box="//div[@id='quicksearchbox']",
 
         # With these buttons
-        userinput_apply_filter_button="//a[@id='apply_button']",
-        userinput_cancel_button="//a[@title='Cancel (Esc)']",
+        userinput_apply_filter_button={
+            "5.3": "//a[@id='apply_button']",
+            "5.4": FormButton("Apply the current filter (Enter)")},
+        userinput_cancel_button={
+            "5.3": "//a[@title='Cancel (Esc)']",
+            "5.4": FormButton("Cancel (Esc)")},
 
         # Selects for selecting the filter
-        saved_filter=Select("//select[@id='chosen_search']"),
-        report_filter=Select("//select[@id='chosen_report']"),
+        saved_filter=Select("select#chosen_search"),
+        report_filter=Select("select#chosen_report"),
 
         # Elements in Save dialog
         save_name=Input("search_name"),
@@ -149,7 +154,7 @@ def ensure_advanced_search_open():
         sel.click(search_box.toggle_advanced)   # Open
     elif not sel.is_displayed(search_box.load_filter_button):   # If we aren't in default view
         if current_version() >= "5.4":
-            sel.click(sel.element(search_box.close_button, root=search_box.advanced_search_box))
+            sel.click(search_box.close_button)
         else:
             sel.click(search_box.toggle_advanced)   # Close
         wait_for(is_advanced_search_opened, fail_condition=True, num_sec=5)
@@ -178,7 +183,7 @@ def ensure_advanced_search_closed():
     """Checks if the advanced search box is open and if it does, closes it."""
     if is_advanced_search_opened():
         if current_version() >= "5.4":
-            sel.click(sel.element(search_box.close_button, root=search_box.advanced_search_box))
+            sel.click(search_box.close_button)
         else:
             sel.click(search_box.toggle_advanced)   # Close
         wait_for(is_advanced_search_opened, fail_condition=True, num_sec=5)

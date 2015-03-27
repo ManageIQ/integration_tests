@@ -63,6 +63,7 @@ def test_filter_without_user_input(providers):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input(providers):
     sel.force_navigate("infrastructure_providers")
     # Set up the filter
@@ -71,6 +72,7 @@ def test_filter_with_user_input(providers):
 
 
 @pytest.mark.requires("test_can_open_advanced_search")
+@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:2322"])
 def test_filter_with_user_input_and_cancellation(providers):
     sel.force_navigate("infrastructure_providers")
     # Set up the filter
@@ -129,6 +131,7 @@ def test_filter_save_and_cancel_load(request, providers, ssh_client):
     search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infrastructure_providers")
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -153,6 +156,7 @@ def test_filter_save_and_load_cancel(request, providers, ssh_client):
     search.save_filter("fill_count(Infrastructure Provider.VMs, >)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infrastructure_providers")
         search.load_filter(filter_name)
         search.delete_filter()
 
@@ -213,6 +217,7 @@ def test_delete_button_should_appear_after_save(request):
     search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
 
     def cleanup():
+        sel.force_navigate("infrastructure_providers")
         search.load_filter(filter_name)
         search.delete_filter()
 
