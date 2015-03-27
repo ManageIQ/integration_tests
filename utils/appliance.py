@@ -674,7 +674,7 @@ class IPAppliance(object):
             raise ApplianceException(msg)
 
         import_opts = 'DOMAIN={} IMPORT_DIR=/tmp/miq PREVIEW=false'.format(source)
-        import_opts += ' OVERWRITE=true IMPORT_AS={}'.format(dest)
+        import_opts += ' OVERWRITE=true IMPORT_AS={} ENABLED=true'.format(dest)
         import_cmd = 'evm:automate:import {}'.format(import_opts)
         log_callback('Importing domain ({}) ...'.format(import_cmd))
         status, output = client.run_rake_command(import_cmd)
