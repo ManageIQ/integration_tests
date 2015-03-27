@@ -121,7 +121,8 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
-def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_item, request):
+def test_order_catalog_item(provider_crud, provider_key, provider_mgmt, provider_init,
+                            catalog_item, request, register_event):
     """Tests order catalog item
 
     Metadata:
@@ -133,6 +134,8 @@ def test_order_catalog_item(provider_key, provider_mgmt, provider_init, catalog_
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
     flash.assert_no_errors()
+    register_event(provider_crud.get_yaml_data()['type'],
+            "vm", vm_name, ["vm_power_off_req", "vm_power_off"])
     logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
     row_description = catalog_item.name
     cells = {'Description': row_description}
