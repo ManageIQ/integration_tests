@@ -13,7 +13,7 @@ results = Hash.new
 coverage_root = File.join(File.expand_path(Rails.root), "coverage")
 puts "Scanning for results in #{coverage_root}"
 json_files = Dir.glob(
-  File.join(coverage_root, "*/*/.resultset.json")
+  File.join(coverage_root, "*", "*", ".resultset.json")
 )
 merged_dir = File.join(coverage_root, 'merged')
 

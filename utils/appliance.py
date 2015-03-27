@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import atexit
+import hashlib
 import os
 import random
 import shutil
 import subprocess
-from multiprocessing import Process
 from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
@@ -366,6 +366,15 @@ class IPAppliance(object):
     def __exit__(self, *args, **kwargs):
         self.pop()
 
+    def __eq__(self, other):
+        return isinstance(other, IPAppliance) and self.address == other.address
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return int(hashlib.md5(self.address).hexdigest(), 16)
+
     @property
     def managed_providers(self):
         """Returns a set of providers that are managed by this appliance
@@ -384,12 +393,9 @@ class IPAppliance(object):
         return provider_keys
 
     @classmethod
-    def from_url(ip_appliance_class, url):
-        # Need to think about this bit
-        if url is None:
-            url = conf.env['base_url']
+    def from_url(cls, url):
         parsed_url = urlparse(url)
-        ip_a = ip_appliance_class(parsed_url.hostname)
+        ip_a = cls(parsed_url.hostname)
         # stash the passed-in url in the lazycache to save a step
         ip_a.url = url
         return ip_a
@@ -415,6 +421,10 @@ class IPAppliance(object):
     @lazycache
     def log(self):
         return create_sublogger(self.address)
+
+    @lazycache
+    def coverage(self):
+        return ui_coverage.CoverageManager(self)
 
     def ssh_client(self, **connect_kwargs):
         """Creates an ssh client connected to this appliance
@@ -1349,94 +1359,6 @@ class IPAppliance(object):
 
     def set_yaml_config(self, config_name, data_dict):
         return db.set_yaml_config(config_name, data_dict, self.address)
-
-    def install_coverage(self):
-        self._coverage_install_simplecov()
-        self._coverage_install_coverage_hook()
-        self.restart_evm_service()
-        self._coverage_touch_all_the_things()
-        self.wait_for_web_ui()
-
-    def collect_coverage_reports(self):
-        self._coverage_stop_touching_all_the_things()
-        self._coverage_collect_reports()
-
-    @lazycache
-    def coverage_results_archive(self):
-        return ui_coverage.coverage_output_dir.join(
-            '{}-coverage-results.tgz'.format(self.address)
-        ).strpath
-
-    def _coverage_install_simplecov(self):
-        self.log.info('Installing coverage gems on appliance')
-        self.ssh_client().put_file(ui_coverage.gemfile.strpath, ui_coverage.rails_root.strpath)
-        x, out = self.ssh_client().run_command('cd {}; bundle'.format(ui_coverage.rails_root))
-        return x == 0
-
-    def _coverage_install_coverage_hook(self):
-        self.log.info('Installing coverage hook on appliance')
-        # Clean appliance coverage dir
-        self.ssh_client().run_command('rm -rf {}'.format(
-            ui_coverage.appliance_coverage_root.strpath))
-        # Put the coverage hook in the miq lib path
-        self.ssh_client().put_file(ui_coverage.coverage_hook.strpath, ui_coverage.rails_root.join(
-            '..', 'lib', ui_coverage.coverage_hook.basename).strpath)
-        replacements = {
-            'require': r"require 'coverage_hook'",
-            'config': ui_coverage.rails_root.join('config').strpath
-        }
-        # grep/echo to try to add the require line only once
-        # This goes in preinitializer after the miq lib path is set up,
-        # which makes it so ruby can actually require the hook
-        command_template = (
-            'cd {config};'
-            'grep -q "{require}" preinitializer.rb || echo -e "\\n{require}" >> preinitializer.rb'
-        )
-        x, out = self.ssh_client().run_command(command_template.format(**replacements))
-        return x == 0
-
-    def _coverage_restart_evm(self, rude=True):
-        self.log.info('Restarting EVM to enable coverage reporting')
-        # This is rude by default (issuing a kill -9 on ruby procs), since the most common use-case
-        # will be to set up coverage on a freshly provisioned appliance in a jenkins run
-        if rude:
-            x, out = self.ssh_client().run_command('killall -9 ruby; service evmserverd start')
-        else:
-            x, out = self.ssh_client().run_comment('service evmserverd restart')
-        return x == 0
-
-    def _coverage_touch_all_the_things(self):
-        self.log.info('Establishing baseline overage by requiring ALL THE THINGS')
-        # send over the thing toucher
-        self.ssh_client().put_file(
-            ui_coverage.thing_toucher.strpath, ui_coverage.rails_root.join(
-                ui_coverage.thing_toucher.basename).strpath
-        )
-        # start it in an async process so we can go one testing while this takes place
-        self._thing_toucher_proc = Process(target=ui_coverage._thing_toucher_mp_handler,
-            args=[self.ssh_client()])
-        self._thing_toucher_proc.start()
-
-    def _coverage_stop_touching_all_the_things(self):
-        self.log.info('Waiting for baseline coverage generator to finish')
-        # block while the thing toucher is still running
-        if self._thing_toucher_proc is not None:
-            self._thing_toucher_proc.join()
-            return self._thing_toucher_proc.exitcode == 0
-
-    def _coverage_collect_reports(self):
-        # restart evm to stop the proccesses and let the simplecov exit hook run
-        self.ssh_client().run_command('service evmserverd restart')
-        # then copy the remote coverage dir into it
-        self.log.info("Collecting coverage reports from {}".format(self.address))
-        self.log.info("Report collection can take several minutes")
-        # find all the resultsets, strip the leading path element, and tar them up
-        # tar structure will be ipaddress/pid/.resultset.json
-        # we can make a ton of resultsets, so tarring saves a lot of time
-        self.ssh_client().run_command('find /var/www/miq/vmdb/coverage -name ".resultset.json" |'
-            'sed "s#/var/www/miq/vmdb/coverage/##" |'
-            'tar cvzf /tmp/ui-coverage-results.tgz -C /var/www/miq/vmdb/coverage -T -')
-        self.ssh_client().get_file('/tmp/ui-coverage-results.tgz', self.coverage_results_archive)
 
 
 class ApplianceSet(object):

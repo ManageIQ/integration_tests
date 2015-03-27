@@ -92,8 +92,13 @@ class SSHClient(paramiko.SSHClient):
         hostname = self._connect_kwargs['hostname']
         port = int(self._connect_kwargs.get('port', 22))
         if not net_check(port, hostname):
-            raise Exception("Connection to %s is not available as port %d is unavailable"
-                            % (hostname, port))
+            raise Exception("SSH connection to %s:%d failed, port unavailable".format(
+                hostname, port))
+
+    def _progress_callback(self, filename, size, sent):
+        sent_percent = (sent * 100.) / size
+        if sent_percent > 0:
+            logger.debug('{} scp progress: {:.2f}% '.format(filename, sent_percent))
 
     @property
     def connected(self):
@@ -101,14 +106,16 @@ class SSHClient(paramiko.SSHClient):
 
     def connect(self, hostname=None, **kwargs):
         """See paramiko.SSHClient.connect"""
-        if hostname:
+        if hostname and hostname != self._connect_kwargs['hostname']:
             self._connect_kwargs['hostname'] = hostname
-        self._connect_kwargs.update(kwargs)
-        self._check_port()
-        # Only install ssh keys if they aren't installed (or currently being installed)
-        if self._keystate < _ssh_keystate.installing:
-            self.install_ssh_keys()
+            self.close()
+
         if not self.connected:
+            self._connect_kwargs.update(kwargs)
+            self._check_port()
+            # Only install ssh keys if they aren't installed (or currently being installed)
+            if self._keystate < _ssh_keystate.installing:
+                self.install_ssh_keys()
             return super(SSHClient, self).connect(**self._connect_kwargs)
 
     def get_transport(self, *args, **kwargs):
@@ -126,7 +133,8 @@ class SSHClient(paramiko.SSHClient):
 
         try:
             session = self.get_transport().open_session()
-            session.settimeout(float(timeout))
+            if timeout:
+                session.settimeout(float(timeout))
             session.exec_command(command)
             stdout = session.makefile()
             stderr = session.makefile_stderr()
@@ -166,11 +174,13 @@ class SSHClient(paramiko.SSHClient):
 
     def put_file(self, local_file, remote_file='.', **kwargs):
         logger.info("Transferring local file {} to remote {}".format(local_file, remote_file))
-        return SCPClient(self.get_transport()).put(local_file, remote_file, **kwargs)
+        return SCPClient(self.get_transport(), progress=self._progress_callback).put(
+            local_file, remote_file, **kwargs)
 
     def get_file(self, remote_file, local_path='', **kwargs):
         logger.info("Transferring remote file {} to local {}".format(remote_file, local_path))
-        return SCPClient(self.get_transport()).get(remote_file, local_path, **kwargs)
+        return SCPClient(self.get_transport(), progress=self._progress_callback).get(
+            remote_file, local_path, **kwargs)
 
     def get_version(self):
         return self.run_command(
