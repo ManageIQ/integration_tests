@@ -39,7 +39,8 @@ def rake(ssh_client, back_up_default_domain):
 def qe_ae_data(ssh_client, rake):
     ssh_client.put_file(cli_path.join("QECliTesting.yaml").strpath, "/root/QECliTesting.yaml")
     rc, stdout = rake(
-        "evm:automate:import DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml PREVIEW=false")
+        "evm:automate:import DOMAIN=QECliTesting YAML_FILE=/root/QECliTesting.yaml PREVIEW=false "
+        "ENABLED=true")
     assert rc == 0, stdout
     # Now we have to enable the domain to make it work.
     qe_cli_testing = Domain(name="QECliTesting")
