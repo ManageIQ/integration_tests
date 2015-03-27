@@ -5,6 +5,7 @@ from collections import Sequence
 
 from utils import lazycache
 from utils.conf import cfme_data, credentials
+from utils.log import logger
 from utils.version import (
     LATEST, LooseVersion, current_version, appliance_build_datetime, appliance_is_downstream)
 
@@ -151,33 +152,35 @@ class Bugzilla(object):
                 continue
             if variant.version is not None and variant.version > version:
                 continue
-            if variant.release_flag is not None and version.is_in_series(variant.release_flag):
-                # Simple case
-                filtered.add((variant, False))
-            elif variant.release_flag is None:
-                # Ignore this bug, must be a mistake
-                pass
-            else:
-                if variant.version is not None:
-                    if variant.version < variant.release_flag:
-                        filtered.add((variant, True))
+            if variant.release_flag is not None:
+                if version.is_in_series(variant.release_flag):
+                    # Simple case
+                    filtered.add(variant)
                 else:
-                    # Unspecified version, so better skip it
-                    if version < variant.release_flag:
-                        filtered.add((variant, True))
+                    logger.info(
+                        "Ignoring bug #{}, appliance version not in bug release flag"
+                        .format(variant.id))
+            elif variant.release_flag is None:
+                if variant.target_release is not None and variant.version is not None:
+                    filtered.add(variant)
+                else:
+                    # Ignore this bug, must be a mistake
+                    logger.info(
+                        "Ignoring bug #{}, no release flag, target release & version specified."
+                        .format(variant.id))
         if not filtered:
             return None
         # Prefer release_flag
-        for bug, forceskip in filtered:
+        for bug in filtered:
             if bug.release_flag and version.is_in_series(bug.release_flag):
-                return bug, forceskip
+                return bug
         # Otherwise, use version, but forceskip these
-        for bug, forceskip in filtered:
+        for bug in filtered:
             if bug.release_flag and version < bug.release_flag:
-                return bug, forceskip
+                return bug
             elif bug.version and bug.version <= version:
-                return bug, forceskip
-        return None, False
+                return bug
+        return None
 
 
 class BugWrapper(object):

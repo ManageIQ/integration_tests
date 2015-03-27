@@ -144,14 +144,11 @@ class BZ(Blocker):
 
     @property
     def blocks(self):
-        try:
-            bug, forceskip = self.data
-            if bug is None:
-                return False
-        except TypeError:
+        bug = self.data
+        if bug is None:
             return False
         result = False
-        if forceskip or bug.is_opened:
+        if bug.is_opened:
             result = True
         if bug.upstream_bug:
             if not version.appliance_is_downstream() and bug.can_test_on_upstream:
