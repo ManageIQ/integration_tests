@@ -1,6 +1,7 @@
 import argparse
 import re
-from collections import namedtuple
+import urlparse
+from collections import defaultdict, namedtuple
 from datetime import date
 
 import slumber
@@ -107,6 +108,14 @@ def parse_template(template_name):
             return TemplateInfo(group_name, None, False)
     # If no match, unknown
     return TemplateInfo('unknown', None, False)
+
+
+def provider_templates(api):
+    provider_templates = defaultdict(list)
+    for template in depaginate(api, api.template.get())['objects']:
+        for provider in template['providers']:
+            provider_templates[provider].append(template['name'])
+    return provider_templates
 
 
 def mark_provider_template(api, provider, template, tested=None, usable=None,

@@ -4,20 +4,17 @@
 import pytest
 
 from fixtures.prov_filter import filtered
-from fixtures.pytest_store import write_line
-from utils.providers import provider_factory
+from fixtures.pytest_store import store, write_line
+from utils import trackerbot
 
 TEMPLATES = {}
 
 
 @pytest.mark.trylast
-def pytest_configure(config):
-    write_line("Loading templates from providers (this may take some time)")
+def pytest_sessionstart(session):
+    if store.parallelizer_role == 'master':
+        return
+    write_line("Loading templates from trackerbot")
+    provider_templates = trackerbot.provider_templates(trackerbot.api())
     for provider in filtered.providers:
-        try:
-            p = provider_factory(provider)
-            TEMPLATES[provider] = set(map(str, p.list_template()))
-        except Exception as e:
-            write_line("-> Error: {}({})\n".format(type(e).__name__, str(e)), red=True)
-            TEMPLATES[provider] = None
-    write_line("Template retrieval finished")
+        TEMPLATES[provider] = provider_templates.get(provider, [])
