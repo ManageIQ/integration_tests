@@ -22,7 +22,7 @@ from utils.log import logger, create_sublogger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check
 from utils.path import data_path, scripts_path
-from utils.providers import provider_factory
+from utils.providers import provider_factory, list_cloud_providers
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.version import get_stream, get_version, LATEST
@@ -212,19 +212,21 @@ class Appliance(object):
         if setup_fleece:
             self.configure_fleecing(log_callback=log_callback)
 
-    def configure_fleecing(self, log_callback=None):
+    def configure_fleecing(self, log_callback=None, provider_key=None):
         if log_callback is None:
             log_callback = lambda message: logger.info("Configure fleecing: {}".format(message))
         else:
             cb = log_callback
             log_callback = lambda message: cb("Configure fleecing: {}".format(message))
 
-        if self.is_on_vsphere:
-            self.ipapp.install_vddk(reboot=True, log_callback=log_callback)
-            self.ipapp.wait_for_web_ui(log_callback=log_callback)
+        # if testing cloud provider, we do not need to setup any agents
+        if provider_key not in list_cloud_providers():
+            if self.is_on_vsphere:
+                self.ipapp.install_vddk(reboot=True, log_callback=log_callback)
+                self.ipapp.wait_for_web_ui(log_callback=log_callback)
 
-        if self.is_on_rhev:
-            self.add_rhev_direct_lun_disk()
+            if self.is_on_rhev:
+                self.add_rhev_direct_lun_disk()
 
         self.ipapp.browser_steal = True
         with self.ipapp:
@@ -239,17 +241,22 @@ class Appliance(object):
 
             # add provider
             log_callback('Setting up provider...')
-            setup_provider(self._provider_name)
+            if provider_key is None:
+                provider_key = self._provider_name
+            setup_provider(provider_key)
 
-            # credential hosts
-            log_callback('Credentialing hosts...')
-            setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
+            # if testing cloud provider, we do not need to configure hosts/relationship
+            if provider_key not in list_cloud_providers():
+                # credential hosts
+                if self.is_on_rhev or self.is_on_vsphere:
+                    log_callback('Credentialing hosts...')
+                    setup_providers_hosts_credentials(self._provider_name, ignore_errors=True)
 
-            # if rhev, set relationship
-            if self.is_on_rhev:
-                vm = Vm(self.vm_name, get_from_config(self._provider_name))
-                cfme_rel = Vm.CfmeRelationship(vm)
-                cfme_rel.set_relationship(str(server_name()), server_id())
+                # if rhev, set relationship
+                if self.is_on_rhev:
+                    vm = Vm(self.vm_name, get_from_config(self._provider_name))
+                    cfme_rel = Vm.CfmeRelationship(vm)
+                    cfme_rel.set_relationship(str(server_name()), server_id())
 
     def does_vm_exist(self):
         return self.provider.does_vm_exist(self.vm_name)
@@ -348,6 +355,8 @@ class IPAppliance(object):
         self._thing_toucher_proc = None
         # ssh client cache
         self._ssh_client = None
+        self.appliance = None
+
 
     def __repr__(self):
         return '%s(%s)' % (type(self).__name__, repr(self.address))
@@ -415,6 +424,22 @@ class IPAppliance(object):
     @lazycache
     def log(self):
         return create_sublogger(self.address)
+
+    def appliance_object(self):
+        if self.appliance is None:
+            for provider_key, data in conf.cfme_data.get("management_systems", {}).iteritems():
+                mgmt = provider_factory(provider_key)
+                try:
+                    appl_name = mgmt.get_vm_name_from_ip(self.address)
+                    logger.debug("{} found on provider {}".format(self.address, provider_key))
+                    self.appliance = Appliance(provider_key, appl_name)
+                    return self.appliance
+                except:
+                    logger.trace("{} not found on provider {}".format(self.address, provider_key))
+                    next
+            return None
+        else:
+            return self.appliance
 
     def ssh_client(self, **connect_kwargs):
         """Creates an ssh client connected to this appliance
@@ -779,6 +804,7 @@ class IPAppliance(object):
         # update
         log_callback('Running rhel updates on appliance')
         status, out = client.run_command('yum update -y --nogpgcheck')
+        self.log.info(out)
         if status != 0:
             self.log.error('appliance update failed')
             self.log.error(out)

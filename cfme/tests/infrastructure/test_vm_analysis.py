@@ -6,7 +6,7 @@ import re
 import time
 from cfme.configure import tasks
 from cfme.exceptions import CFMEException
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.virtual_machines import Vm, Template
 from cfme.web_ui import flash, toolbar
 from utils import conf, testgen, version
 from utils.appliance import Appliance, provision_appliance
@@ -104,7 +104,8 @@ def get_appliance(provider_crud):
             appliance = Appliance(provider_crud.key, appl_name)
             appliance.configure_fleecing()
             appliance_list[provider_crud.key] = appliance
-        except:
+        except Exception as e:
+            logger.warning("unable to use provider...  reason: {}".format(str(e)))
             # provision appliance and configure
             ver_to_prov = str(version.current_version())
             logger.info("provisioning {} appliance on {}...".format(ver_to_prov, provider_crud.key))
@@ -128,12 +129,6 @@ def get_appliance(provider_crud):
 @pytest.fixture(scope="class")
 def vm_name(vm_template_name):
     return "test_vmfleece_" + vm_template_name + "_" + generate_random_string()
-
-
-@pytest.fixture(scope="class")
-def template(request, vm_template_name, provider_crud):
-    logger.info("Starting template fixture")
-    return Vm(vm_template_name, provider_crud)
 
 
 @pytest.fixture(scope="class")
@@ -206,10 +201,10 @@ def pytest_generate_tests(metafunc):
 
     new_idlist = []
     new_argvalues = []
-    if 'by_vm_state' in metafunc.fixturenames:
-        argnames, argvalues, idlist = testgen.infra_providers(
-            metafunc, 'vm_analysis', require_fields=True)
+    argnames, argvalues, idlist = testgen.infra_providers(
+        metafunc, 'vm_analysis', require_fields=True)
 
+    if 'by_vm_state' in metafunc.fixturenames:
         for i, provider in enumerate(idlist):
             if provider not in by_state_tests:
                 single_index = random.choice(range(len(argvalues[i][0])))
@@ -235,27 +230,22 @@ def pytest_generate_tests(metafunc):
                 os = by_state_tests[provider][5]
                 fs_type = by_state_tests[provider][6]
 
-    # elif 'by_template' in metafunc.fixturenames:
-    #     for i, argvalue_tuple in enumerate(argvalues):
-    #         args = dict(zip(argnames, argvalue_tuple))
-    #         if not args['vm_analysis']:
-    #             # No analysis data available
-    #             continue
-    #         for vm_name in argvalue_tuple[0].keys():
-    #             fs_type = argvalue_tuple[0][vm_name]['fs_type']
-    #             os = argvalue_tuple[0][vm_name]['os']
-    #             provider_key = idlist[i]
-    #             provider_crud = get_infra_provider(provider_key)
-    #             provider_mgmt = provider_factory(provider_key)
-    #             new_argvalues.append(['', provider_crud, provider_mgmt, vm_name, os, fs_type])
-    #             new_idlist.append(provider_key + "-" + fs_type)
-    #             test_list.append([provider_crud.key, vm_name, os, fs_type])
-    #     argnames = [
-    #         'by_template', 'provider_crud', 'provider_mgmt', 'vm_template_name', 'os', 'fs_type']
+    elif 'by_template' in metafunc.fixturenames:
+        for i, argvalue_tuple in enumerate(argvalues):
+            for tmpl_name in argvalue_tuple[0].keys():
+                single_index = random.choice(range(len(argvalues[i][0])))
+                vm_template_name = argvalues[i][0].keys()[single_index]
+                os = argvalues[i][0][argvalues[i][0].keys()[single_index]]['os']
+                fs_type = argvalues[i][0][argvalues[i][0].keys()[single_index]]['fs_type']
+                provider_crud = argvalues[i][1]
+                provider_mgmt = argvalues[i][2]
+                new_idlist.append(provider_crud.key)
+                new_argvalues.append(['', provider_crud, provider_mgmt, tmpl_name, os, fs_type])
+                test_list.append([provider_crud.key, tmpl_name, os, fs_type])
+        argnames = [
+            'by_template', 'provider_crud', 'provider_mgmt', 'vm_template_name', 'os', 'fs_type']
 
     elif 'by_fs_type' in metafunc.fixturenames:
-        argnames, argvalues, idlist = testgen.infra_providers(
-            metafunc, 'vm_analysis', require_fields=True)
 
         for i, provider in enumerate(idlist):
             for vm_template_name in argvalues[i][0].keys():
@@ -415,12 +405,13 @@ class TestVmAnalysisOfVmStates():
         _scan_test(provider_crud, vm, os, fs_type, soft_assert)
 
 
-# @pytest.mark.usefixtures(
-#     "appliance_browser", "by_template", "finish_appliance_setup", "delete_tasks_first")
-# class TestTemplateAnalysis():
-#     def test_vm_template(
-#             self, provider_crud, template, os, fs_type, soft_assert):  # , register_event):
-#         self._scan_test(provider_crud, template, os, fs_type, soft_assert)
+@pytest.mark.usefixtures(
+    "appliance_browser", "by_template", "finish_appliance_setup", "delete_tasks_first")
+class TestTemplateAnalysis():
+    def test_vm_template(
+            self, provider_crud, vm_template_name, os, fs_type, soft_assert):  # , register_event):
+        template = Template(vm_template_name, provider_crud)
+        _scan_test(provider_crud, template, os, fs_type, soft_assert)
 
 
 @pytest.mark.usefixtures(
