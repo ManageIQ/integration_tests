@@ -388,15 +388,32 @@ class Action(object):
         query_dict = {"action": self._name}
         if resources:
             query_dict["resources"] = resources
-        if not resources:
+        else:
             if kwargs:
                 query_dict["resource"] = kwargs
         if self._method == "post":
-            return self.collection._api.post(self._href, **query_dict)
+            result = self.collection._api.post(self._href, **query_dict)
         elif self._method == "delete":
-            return self.collection._api.delete(self._href, **query_dict)
+            result = self.collection._api.delete(self._href, **query_dict)
         else:
             raise NotImplementedError
+        if result is None:
+            return None
+        elif "results" in result:
+            processed_results = []
+            for data in result["results"]:
+                if "id" in data:
+                    processed_results.append(
+                        Entity(
+                            self.collection,
+                            {"href": "{}/{}".format(self.collection._href, data["id"])}))
+                elif "href" in data:
+                    processed_results.append(Entity(self.collection, {"href": data["href"]}))
+                else:
+                    raise NotImplementedError
+            return processed_results
+        else:
+            return result
 
     def __repr__(self):
         return "<Action {} {}#{}>".format(self._method, self._container._entity._href, self._name)
