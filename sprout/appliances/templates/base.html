@@ -185,15 +185,23 @@
     </div>
   </nav>
   <p></p>
-  {% if messages %}
-    {% for message in messages %}
-        <div class='alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade in'>
-            <button class="close" data-dismiss="alert">×</button>
-            {{ message }}
-        </div>
-    {% endfor %}
-  {% endif %}
   <div class="container-fluid">
+    {% if messages %}
+        {% for message in messages %}
+            <div class='alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade-in'>
+                <button class="close" data-dismiss="alert">×</button>
+                {{ message }}
+                {% if "success" in message.tags %}
+                    <span class="pficon pficon-ok"></span>
+                {% elif "warning" in message.tags %}
+                    <span class="pficon-layered">
+                      <span class="pficon pficon-warning-triangle"></span>
+                      <span class="pficon pficon-warning-exclamation"></span>
+                    </span>
+                {% endif %}
+            </div>
+        {% endfor %}
+      {% endif %}
     {% block body %}{% endblock %}
   </div>
   {% block body-script %}

@@ -175,7 +175,7 @@ def my_appliances(request):
         pools = AppliancePool.objects.order_by("id")
     else:
         pools = AppliancePool.objects.filter(owner__username=show_user).order_by("id")
-    groups = Group.objects.all()
+    groups = Group.objects.order_by("id")
     return render(request, 'appliances/my_appliances.html', locals())
 
 

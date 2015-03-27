@@ -426,7 +426,7 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
     if pool.fulfilled:
         for appliance in pool.appliances:
             apply_lease_times.delay(appliance.id, time_minutes)
-        # pool_appliances_prefix_with_owner.delay(pool.id)
+        rename_appliances_for_pool.delay(pool.id)
     else:
         self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=50)
 
@@ -439,6 +439,9 @@ def process_delayed_provision_tasks(self):
     then deletes the task.
     """
     for task in DelayedProvisionTask.objects.order_by("id"):
+        if task.pool.not_needed_anymore:
+            task.delete()
+            continue
         # Try retrieve from shepherd
         appliances_given = Appliance.give_to_pool(task.pool, 1)
         if appliances_given == 0:
@@ -463,6 +466,8 @@ def process_delayed_provision_tasks(self):
 def replace_clone_to_pool(
         version, date, appliance_pool_id, time_minutes, exclude_template_id):
     appliance_pool = AppliancePool.objects.get(id=appliance_pool_id)
+    if appliance_pool.not_needed_anymore:
+        return
     exclude_template = Template.objects.get(id=exclude_template_id)
     templates = Template.objects.filter(
         ready=True, exists=True, usable=True, template_group=appliance_pool.group, version=version,
@@ -483,6 +488,8 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
         rnd=generate_random_string())
     with transaction.atomic():
         pool = AppliancePool.objects.get(id=appliance_pool_id)
+        if pool.not_needed_anymore:
+            return
         # Apply also username
         new_appliance_name = "{}_{}".format(pool.owner.username, new_appliance_name)
         appliance = Appliance(template=template, name=new_appliance_name, appliance_pool=pool)
@@ -529,6 +536,8 @@ def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, wai
     workflow = chain(*tasks)
     if Appliance.objects.get(id=appliance_id).appliance_pool is not None:
         # Case of the appliance pool
+        if Appliance.objects.get(id=appliance_id).appliance_pool.not_needed_anymore:
+            return
         workflow.link_error(
             kill_appliance.si(appliance_id, replace_in_pool=True, minutes=lease_time_minutes))
     else:
@@ -545,6 +554,12 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
         # source objects are not present, terminating the chain
         self.request.callbacks[:] = []
         return
+    if appliance.appliance_pool is not None:
+        if appliance.appliance_pool.not_needed_anymore:
+            # Terminate task chain
+            self.request.callbacks[:] = []
+            kill_appliance.delay(appliance_id)
+            return
     appliance.provider.cleanup()
     try:
         if not appliance.provider_api.does_vm_exist(appliance.name):
@@ -607,6 +622,12 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
         # source objects are not present, terminating the chain
         self.request.callbacks[:] = []
         return
+    if appliance.appliance_pool is not None:
+        if appliance.appliance_pool.not_needed_anymore:
+            # Terminate task chain
+            self.request.callbacks[:] = []
+            kill_appliance.delay(appliance_id)
+            return
     try:
         appliance.set_status("Waiting for the appliance to become visible in provider.")
         if not appliance.provider_api.does_vm_exist(appliance.name):
@@ -754,7 +775,8 @@ def refresh_appliances_provider(self, provider_id):
     uuid_vms = {}
     for vm in vms:
         dict_vms[vm.name] = vm
-        uuid_vms[vm.uuid] = vm
+        if vm.uuid:
+            uuid_vms[vm.uuid] = vm
     for appliance in Appliance.objects.filter(template__provider=provider):
         if appliance.uuid is not None and appliance.uuid in uuid_vms:
             vm = uuid_vms[appliance.uuid]
@@ -955,6 +977,12 @@ def wait_appliance_ready(self, appliance_id):
     the task to free up the queue."""
     try:
         appliance = Appliance.objects.get(id=appliance_id)
+        if appliance.appliance_pool is not None:
+            if appliance.appliance_pool.not_needed_anymore:
+                # Terminate task chain
+                self.request.callbacks[:] = []
+                kill_appliance.delay(appliance_id)
+                return
         if appliance.power_state == "unknown" or appliance.ip_address is None:
             self.retry(args=(appliance_id,), countdown=20, max_retries=45)
         if Appliance.objects.get(id=appliance_id).cfme.ipapp.is_web_ui_running():
@@ -1023,7 +1051,7 @@ def appliance_rename(self, appliance_id, new_name):
 
 
 @singleton_task()
-def pool_appliances_prefix_with_owner(self, pool_id):
+def rename_appliances_for_pool(self, pool_id):
     with transaction.atomic():
         try:
             appliance_pool = AppliancePool.objects.get(id=pool_id)
@@ -1033,13 +1061,20 @@ def pool_appliances_prefix_with_owner(self, pool_id):
             appliance
             for appliance
             in appliance_pool.appliances
-            if (not appliance.name.startswith(appliance_pool.owner.username))
-            and appliance.provider_api.can_rename
+            if appliance.provider_api.can_rename
         ]
         for appliance in appliances:
+            new_name = "{}-{}-{}".format(
+                appliance_pool.owner.username,
+                appliance_pool.group.id,
+                appliance.template.date.strftime("%y%m%d")
+            )
+            if appliance.template.version:
+                new_name += "-{}".format(appliance.template.version)
+            new_name += "-{}".format(generate_random_string(size=4))
             appliance_rename.apply_async(
                 countdown=10,  # To prevent clogging with the transaction.atomic
-                args=(appliance.id, "{}_{}".format(appliance_pool.owner.username, appliance.name)))
+                args=(appliance.id, new_name))
 
 
 @singleton_task(soft_time_limit=60)

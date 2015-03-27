@@ -436,6 +436,17 @@ class RHEVMSystem(MgmtSystemAPIBase):
         template.set_name(new_name)
         template.update()
 
+    def rename_vm(self, vm_name, new_vm_name):
+        vm = self._get_vm(vm_name)
+        try:
+            vm.set_name(new_vm_name)
+            vm.update()
+        except Exception as e:
+            logger.exception(e)
+            return vm_name
+        else:
+            return new_vm_name
+
     def _wait_template_ok(self, template_name):
         try:
             wait_for(
