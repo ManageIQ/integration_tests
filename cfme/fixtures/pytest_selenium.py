@@ -175,6 +175,28 @@ def _d(l, **kwargs):
     return elements(version.pick(l), **kwargs)
 
 
+def get_rails_error():
+    """Get displayed rails error. If not present, return None"""
+    if is_displayed(
+            "//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
+        try:
+            title = text("//body/h1", _no_deeper=True)
+            body = text("//body/p", _no_deeper=True)
+        except NoSuchElementException:  # Just in case something goes really wrong
+            return None
+        return "{}: {}".format(title, body)
+    elif is_displayed(
+            "//h1[normalize-space(.)='Unexpected error encountered']", _no_deeper=True):
+        try:
+            error_text = text(
+                "//h1[normalize-space(.)='Unexpected error encountered']"
+                "/following-sibling::h3[not(fieldset)]", _no_deeper=True)
+        except NoSuchElementException:  # Just in case something goes really wrong
+            return None
+        return error_text
+    return None
+
+
 def element(o, **kwargs):
     """
     Convert o to a single matching WebElement.
@@ -194,33 +216,14 @@ def element(o, **kwargs):
     no_deeper = kwargs.pop("_no_deeper", False)
     matches = elements(o, **kwargs)
 
-    def _fail():
-        raise NoSuchElementException("Element {} not found on page.".format(str(o)))
-
     if not matches:
-        if (not no_deeper) and is_displayed(
-                "//body[./h1 and ./p and ./hr and ./address]", _no_deeper=True):
-            try:
-                title = text("//body/h1", _no_deeper=True)
-                body = text("//body/p", _no_deeper=True)
-            except NoSuchElementException:  # Just in case something goes really wrong
-                _fail()  # To not disguise the locator as something else, use the original one
-            raise exceptions.CFMEExceptionOccured(
-                "Element {} not found on page because the following Rails error happened:\n{}: {}"
-                .format(str(o), title, body))
-        elif (not no_deeper) and is_displayed(
-                "//h1[normalize-space(.)='Unexpected error encountered']", _no_deeper=True):
-            try:
-                error_text = text(
-                    "//h1[normalize-space(.)='Unexpected error encountered']"
-                    "/following-sibling::h3[not(fieldset)]", _no_deeper=True)
-            except NoSuchElementException:  # Just in case something goes really wrong
-                _fail()  # To not disguise the locator as something else, use the original one
-            raise exceptions.CFMEExceptionOccured(
-                "Element {} not found on page because the following Rails error happened:\n{}"
-                .format(str(o), error_text))
-        else:
-            _fail()
+        if (not no_deeper):
+            r_e = get_rails_error()
+            if r_e is not None:
+                raise exceptions.CFMEExceptionOccured(
+                    "Element {} not found on page because the following Rails error happened:\n{}"
+                    .format(str(o), r_e))
+        raise NoSuchElementException("Element {} not found on page.".format(str(o)))
     return matches[0]
 
 
@@ -892,6 +895,16 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         kwargs.pop("start", None)
         force_navigate("dashboard")  # Start fresh
 
+    # Same with rails errors
+    rails_e = get_rails_error()
+    if rails_e is not None:
+        logger.warning("Page was blocked by rails error, renavigating.")
+        logger.error(rails_e)
+        kwargs.pop("start", None)
+        ensure_browser_open()
+        menu.nav.go_to("dashboard")
+        # If there is a rails error past this point, something is really awful
+
     def _login_func():
         if not current_user:  # default to admin user
             login.login_admin()
@@ -930,6 +943,11 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     except (ErrorInResponseException, InvalidSwitchToTargetException):
         # Unable to switch to the browser at all, need to recycle
         logger.info('Invalid browser state, recycling browser')
+        recycle = True
+    except exceptions.CFMEExceptionOccured as e:
+        # We hit a Rails exception
+        logger.info('CFME Exception occured')
+        logger.exception(e)
         recycle = True
     except exceptions.CannotContinueWithNavigation as e:
         # The some of the navigation steps cannot succeed
