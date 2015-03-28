@@ -290,7 +290,7 @@ def is_vm_analysis_finished(vm_name):
     if version.current_version() >= "5.4":
         vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
             'task_name': "Scan from Vm %s" % vm_name,
-            'state': 'inished'
+            'state': 'finished'
         })
     else:
         vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
