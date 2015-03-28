@@ -92,7 +92,7 @@ class MyService(Updateable):
             num_sec=wait_time_min * 120,
             message="wait for service to retire"
         )
-        quadicon = Quadicon(self.vm_name + "_0001", "vm")
+        quadicon = Quadicon(self.vm_name, "vm")
         sel.click(quadicon)
         detail_t = ("Power Management", "Power State")
         wait_for(
@@ -109,7 +109,7 @@ class MyService(Updateable):
         fill(retirement_form, {'retirement_date': retirement_date},
              action=form_buttons.save)
         wait_time_min = 1
-        quadicon = Quadicon(self.vm_name + "_0001", "vm")
+        quadicon = Quadicon(self.vm_name, "vm")
         sel.click(quadicon)
         detail_t = ("Power Management", "Power State")
         wait_for(

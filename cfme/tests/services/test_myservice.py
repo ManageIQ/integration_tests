@@ -33,7 +33,7 @@ def pytest_generate_tests(metafunc):
 def cleanup_vm(vm_name, provider_key, provider_mgmt):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name + "_0001")
+        provider_mgmt.delete_vm(vm_name)
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
@@ -127,7 +127,7 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1400, delay=20)
+        fail_func=requests.reload, num_sec=2000, delay=20)
     assert row.last_message.text == 'Request complete'
     return MyService(catalog_item.name, vm_name)
 
