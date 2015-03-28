@@ -165,7 +165,8 @@ class CopiableTreeNode(TreeNode):
             domain_name = domain.name
         else:
             domain_name = str(domain)
-        fill(self.copy_form, {"domain": domain_name, "override": True}, action=self.copy_button)
+        fill(self.copy_form, {"domain": domain_name, "override": True})
+        sel.click(self.copy_button)
         flash.assert_message_match("Copy selected Automate {} was saved".format(self.class_name))
 
         # Bunch'o functions that copy the chain to the domain and change domain's name

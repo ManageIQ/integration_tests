@@ -8,12 +8,22 @@ from cfme.web_ui import Form, Select, SplitTable, accordion,\
     fill, flash, form_buttons, Table, Tree, Input
 from utils.update import Updateable
 from utils.pretty import Pretty
+from utils import version
 
 accordion_tree = functools.partial(accordion.tree, "Service Dialogs")
 cfg_btn = functools.partial(tb.select, "Configuration")
 plus_btn = functools.partial(tb.select, "Add")
 entry_table = Table("//div[@id='field_values_div']/form/fieldset/table")
 text_area_table = Table("//div[@id='dialog_field_div']/fieldset/table[@class='style1']")
+dynamic_tree = Tree({version.LOWEST: "//div[@class='dhxcont_global_content_area']"
+                                     "[not(contains(@style, 'display: none'))]/div/div/div/div/div"
+                                     "/fieldset/div/ul[@class='dynatree-container']",
+                    '5.4': "//div[@class='dhxcont_global_content_area']"
+                           "[not(contains(@style, 'display: none'))]/div/div/div/div/div/div"
+                           "/div/div/div/ul[@class='dynatree-container']"})
+reorder_element_tree = Tree("//div[@class='dhxcont_global_content_area']"
+                            "[not(contains(@style, 'display: none'))]/div/div/div/div"
+                            "/ul[@class='dynatree-container']")
 
 label_form = Form(fields=[
     ('label', Input("label")),
@@ -46,6 +56,7 @@ element_form = Form(fields=[
     ('entry_description', Input("entry[description]")),
     ('field_category', Select("//select[@id='field_category']")),
     ('text_area', Input("field_default_value")),
+    ('apply_btn', '//a[@title="Apply"]')
 ])
 
 dialogs_table = SplitTable(
@@ -136,6 +147,11 @@ class ServiceDialog(Updateable, Pretty):
                                 'entry_description': "entry_desc"})
         if choose_type == "Text Area Box":
             text_area_table.click_cell(1, value="Default text")
+        if choose_type == "Drop Down Dynamic List":
+            node1 = each_element.get("field_entry_point")
+            sel.click(element_form.field_entry_point)
+            dynamic_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
+            sel.click(element_form.apply_btn)
 
     def element(self, element_data):
         return sel.element('//div[@class="modbox"]/h2[@class="modtitle"]'
@@ -143,10 +159,7 @@ class ServiceDialog(Updateable, Pretty):
 
     def reorder_elements(self, box, *element_data):
         sel.force_navigate('service_dialog_edit', context={'dialog': self})
-        tree = Tree("//div[@class='dhxcont_global_content_area']"
-                    "[not(contains(@style, 'display: none'))]/div/div/div/div"
-                    "/ul[@class='dynatree-container']")
-        tree.click_path(box)
+        reorder_element_tree.click_path(box)
         list_ele = []
         for each_element in element_data:
             list_ele.append(each_element.get("ele_label"))
