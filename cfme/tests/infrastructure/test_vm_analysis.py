@@ -287,10 +287,16 @@ def verify_no_data(provider_crud, vm):
 def is_vm_analysis_finished(vm_name):
     """ Check if analysis is finished - if not, reload page
     """
-    vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
-        'task_name': "Scan from Vm %s" % vm_name,
-        'state': 'Finished'
-    })
+    if version.current_version() >= "5.4":
+        vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
+            'task_name': "Scan from Vm %s" % vm_name,
+            'state': 'inished'
+        })
+    else:
+        vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
+            'task_name': "Scan from Vm %s" % vm_name,
+            'state': 'Finished'
+        })
     return vm_analysis_finished is not None
 
 
@@ -311,10 +317,16 @@ def _scan_test(provider_crud, vm, os, fs_type, soft_assert):
              handle_exception=True, fail_func=lambda: toolbar.select('Reload'))
 
     # make sure fleecing was successful
-    task_row = tasks.tasks_table.find_row_by_cells({
-        'task_name': "Scan from Vm %s" % vm.name,
-        'state': 'Finished'
-    })
+    if version.current_version() >= "5.4":
+        task_row = tasks.tasks_table.find_row_by_cells({
+            'task_name': "Scan from Vm %s" % vm.name,
+            'state': 'finished'
+        })
+    else:
+        task_row = tasks.tasks_table.find_row_by_cells({
+            'task_name': "Scan from Vm %s" % vm.name,
+            'state': 'Finished'
+        })
     icon_ele = task_row.row_element.find_elements_by_class_name("icon")
     icon_img = icon_ele[0].find_element_by_tag_name("img")
     assert "checkmark" in icon_img.get_attribute("src")
