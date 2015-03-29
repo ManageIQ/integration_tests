@@ -900,6 +900,14 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     if rails_e is not None:
         logger.warning("Page was blocked by rails error, renavigating.")
         logger.error(rails_e)
+        logger.debug('Top CPU consumers:')
+        logger.debug(store.current_appliance.ssh_client().run_command(
+            'top -c -b -n1 -M | head -30').output)
+        logger.debug('Top Memory consumers:')
+        logger.debug(store.current_appliance.ssh_client().run_command(
+            'top -c -b -n1 -M -a | head -30').output)
+        logger.debug('Managed Providers:')
+        logger.debug(store.current_appliance.managed_providers)
         kwargs.pop("start", None)
         ensure_browser_open()
         menu.nav.go_to("dashboard")
