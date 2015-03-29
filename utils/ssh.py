@@ -135,6 +135,7 @@ class SSHClient(paramiko.SSHClient):
             session = self.get_transport().open_session()
             if timeout:
                 session.settimeout(float(timeout))
+            session.get_pty(width=200)
             session.exec_command(command)
             stdout = session.makefile()
             stderr = session.makefile_stderr()
