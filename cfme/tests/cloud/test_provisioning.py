@@ -104,7 +104,7 @@ def default_domain_enabled():
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1152737])
-@pytest.mark.parametrize("disks", range(1, 5))
+@pytest.mark.parametrize("disks", [1, 2])
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, disks,
         soft_assert, provider_type, default_domain_enabled):
@@ -129,7 +129,7 @@ def test_provision_from_template_with_attached_disks(
             name="Methods",
             namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines"))
         method = automate.Method(
-            name="openstack_CustomizeRequest",
+            name="openstack_PreProvision",
             cls=cls)
         with update(method):
             disk_mapping = []
@@ -163,7 +163,7 @@ def test_provision_from_template_with_attached_disks(
         for volume_id in volumes:
             soft_assert(vm_name in provider_mgmt.volume_attachments(volume_id))
         for volume, device in device_mapping:
-            soft_assert(provider_mgmt.volume_attachments(volume)[vm_name] == device_mapping)
+            soft_assert(provider_mgmt.volume_attachments(volume)[vm_name] == device)
         instance.delete_from_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
 
