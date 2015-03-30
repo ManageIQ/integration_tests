@@ -11,6 +11,7 @@ from cfme.web_ui import Form, Region, Select, CheckboxTable, fill, paginator
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
+from utils.version import pick, LOWEST
 
 
 nav.add_branch("tasks",
@@ -24,9 +25,12 @@ nav.add_branch("tasks",
 
 buttons = Region(
     locators=dict(
-        default="//*[@id='buttons_off']/li[3]/a/img",
-        apply="//*[@id='buttons_on']/li[1]/a/img",
-        reset="//*[@id='buttons_on']/li[2]/a/img"
+        default=pick({LOWEST: "//*[@id='buttons_off']/li[3]/a/img",
+                 '5.4': "//*[@id='buttons_off']/a"}),
+        apply=pick({LOWEST: "//*[@id='buttons_on']/li[1]/a/img",
+               '5.4': "//*[@id='buttons_on']/a[1]"}),
+        reset=pick({LOWEST: "//*[@id='buttons_on']/li[2]/a/img",
+               '5.4': "//*[@id='buttons_on']/a[2]"})
     )
 )
 
