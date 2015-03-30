@@ -1004,6 +1004,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         else:
             logger.error("Could not determine the reason for failing the navigation. " +
                 " Reraising.  Exception: %s" % str(e))
+            logger.debug(store.current_appliance.ssh_client().run_command(
+                'service evmserverd status').output)
             raise
 
     if recycle:
