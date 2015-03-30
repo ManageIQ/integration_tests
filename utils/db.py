@@ -203,7 +203,7 @@ class Db(Mapping):
     @lazycache
     def db_url(self):
         """The connection URL for this database, including credentials"""
-        template = "postgres://{username}:{password}@{host}:5432/vmdb_production"
+        template = "postgresql://{username}:{password}@{host}:5432/vmdb_production"
         result = template.format(host=self.hostname, **self.credentials)
         logger.info("[DB] db_url is {}".format(result))
         return result
