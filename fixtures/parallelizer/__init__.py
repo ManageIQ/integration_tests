@@ -84,6 +84,8 @@ def pytest_addoption(parser):
         '--sprout-version', dest='sprout_version', default=None, help="Which version to use.")
     group._addoption(
         '--sprout-date', dest='sprout_date', default=None, help="Which date to use.")
+    group._addoption(
+        '--sprout-desc', dest='sprout_desc', default=None, help="Set description of the pool.")
 
 
 @pytest.mark.tryfirst
@@ -143,6 +145,9 @@ class ParallelSession(object):
             self.terminal.write("Pool {}. Waiting for fulfillment ...\n".format(pool_id))
             self.sprout_pool = pool_id
             at_exit(self.sprout_client.destroy_pool, self.sprout_pool)
+            if self.config.option.sprout_desc is not None:
+                self.sprout_client.set_pool_description(
+                    pool_id, str(self.config.option.sprout_desc))
             try:
                 result = wait_for(
                     lambda: self.sprout_client.request_check(self.sprout_pool)["fulfilled"],

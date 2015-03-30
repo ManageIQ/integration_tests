@@ -52,6 +52,8 @@ def pytest_configure(config, __multicall__):
         )
         terminal.write("Appliance pool {}. Waiting for fulfillment ...\n".format(pool_id))
         at_exit(destroy_the_pool)
+        if config.option.sprout_desc is not None:
+            sprout.set_pool_description(pool_id, str(config.option.sprout_desc))
         try:
             result = wait_for(
                 lambda: sprout.request_check(pool_id)["fulfilled"],
