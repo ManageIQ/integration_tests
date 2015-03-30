@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 """Populate template tracker with information based on cfme_data"""
 import sys
+import traceback
 from collections import defaultdict
 from threading import Lock, Thread
 
 from slumber.exceptions import SlumberHttpBaseException
 
 from utils import trackerbot
+from utils.conf import cfme_data
 from utils.providers import list_all_providers, provider_factory
 
 
@@ -36,38 +38,34 @@ def main(trackerbot_url, mark_usable=None):
     else:
         usable = {'usable': mark_usable}
 
-    active_streams = trackerbot.active_streams(api)
     existing_provider_templates = [pt['id'] for pt in api.providertemplate.get(limit=0)['objects']]
 
     # Find some templates and update the API
     for template_name, providers in template_providers.items():
-        try:
-            stream, datestamp = trackerbot.parse_template(template_name)
-        except (TypeError, ValueError):
-            # No matches or template name was somehow not a string
+        template_name = str(template_name)
+
+        group_name, datestamp, stream = trackerbot.parse_template(template_name)
+
+        # Don't want sprout templates
+        if group_name in ('sprout', 'rhevm-internal'):
+            print 'Ignoring %s from group %s' % (template_name, group_name)
             continue
 
         seen_templates.add(template_name)
-        group = trackerbot.Group(stream)
+        group = trackerbot.Group(group_name, stream=stream)
         template = trackerbot.Template(template_name, group, datestamp)
 
         for provider_key in providers:
             provider = trackerbot.Provider(provider_key)
 
-            if stream not in active_streams:
-                # stream isn't tracked by trackerbot, ignore
-                print 'Ignored %s template %s on provider %s (Inactive stream)' % (
-                    stream, template_name, provider_key)
-                continue
-
             if '{}_{}'.format(template_name, provider_key) in existing_provider_templates:
-                print 'Template %s already exists on on provider %s' % (template_name, provider_key)
+                print 'Template %s already tracked for provider %s' % (template_name, provider_key)
                 continue
 
             try:
                 trackerbot.mark_provider_template(api, provider, template, **usable)
                 print 'Added %s template %s on provider %s (datestamp: %s)' % (
-                    stream, template_name, provider_key, datestamp)
+                    group_name, template_name, provider_key, datestamp)
             except SlumberHttpBaseException as ex:
                 print ex.response.status_code, ex.content
 
@@ -105,7 +103,13 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
     # functionalized to make it easy to farm this out to threads
     provider_mgmt = provider_factory(provider_key)
     try:
-        templates = provider_mgmt.list_template()
+        if cfme_data['management_systems'][provider_key]['type'] == 'ec2':
+            # dirty hack to filter out ec2 public images, because there are literally hundreds.
+            templates = provider_mgmt.api.get_all_images(owners=['self'],
+                filters={'image-type': 'machine'})
+            templates = map(lambda i: i.name or i.id, templates)
+        else:
+            templates = provider_mgmt.list_template()
         print provider_key, 'returned %d templates' % len(templates)
         with thread_lock:
             for template in templates:
@@ -114,7 +118,7 @@ def get_provider_templates(provider_key, template_providers, unresponsive_provid
                     continue
                 template_providers[template].append(provider_key)
     except:
-        print provider_key, 'failed'
+        print provider_key, 'failed:', traceback.format_exc().splitlines()[-1]
         with thread_lock:
             unresponsive_providers.add(provider_key)
 
