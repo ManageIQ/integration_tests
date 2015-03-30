@@ -665,14 +665,14 @@ def appliance_power_on(self, appliance_id, wait_for_ui=True):
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
                 appliance.provider_api.vm_status(appliance.name)))
-            self.retry(args=(appliance_id,), countdown=20, max_retries=30)
+            self.retry(args=(appliance_id, wait_for_ui), countdown=20, max_retries=30)
         else:
             appliance.set_status("Powering on.")
             appliance.provider_api.start_vm(appliance.name)
-            self.retry(args=(appliance_id,), countdown=20, max_retries=30)
+            self.retry(args=(appliance_id, wait_for_ui), countdown=20, max_retries=30)
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
-        self.retry(args=(appliance_id,), exc=e, countdown=20, max_retries=30)
+        self.retry(args=(appliance_id, wait_for_ui), exc=e, countdown=20, max_retries=30)
 
 
 @singleton_task()
