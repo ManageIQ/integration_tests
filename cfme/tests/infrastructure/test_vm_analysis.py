@@ -104,7 +104,8 @@ def get_appliance(provider_crud):
             appliance = Appliance(provider_crud.key, appl_name)
             appliance.configure_fleecing()
             appliance_list[provider_crud.key] = appliance
-        except:
+        except Exception as e:
+            logger.error("Exception: %s" % str(e))
             # provision appliance and configure
             ver_to_prov = str(version.current_version())
             logger.info("provisioning {} appliance on {}...".format(ver_to_prov, provider_crud.key))
@@ -117,6 +118,7 @@ def get_appliance(provider_crud):
                 logger.info("appliance IP address: " + str(appliance.address))
                 appliance.configure(setup_fleece=True)
             except Exception as e:
+                logger.error("Exception: %s" % str(e))
                 if appliance is not None:
                     appliance.destroy()
                 raise CFMEException(
