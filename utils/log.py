@@ -249,10 +249,10 @@ class _RelpathFilter(logging.Filter):
     """
     def filter(self, record):
         try:
-            relpath = get_rel_path(record.source_file) or record.source_file
+            relpath = get_rel_path(record.source_file)
             lineno = record.source_lineno
         except AttributeError:
-            relpath = get_rel_path(record.pathname) or record.pathname
+            relpath = get_rel_path(record.pathname)
             lineno = record.lineno
         if lineno:
             record.source = "%s:%d" % (relpath, lineno)
