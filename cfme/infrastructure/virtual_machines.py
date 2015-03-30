@@ -22,6 +22,7 @@ from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.mgmt_system import ActionNotSupported
 from utils import version
+from xml.sax.saxutils import quoteattr
 
 QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
                          " or contains(@href, '/show/')]")  # for provider specific vm/template page
@@ -304,14 +305,15 @@ class Common(object):
         else:
             return details_page.infoblock.text(*properties)
 
-    def get_tags(self):
+    def get_tags(self, tag="My Company Tags"):
         """Returns all tags that are associated with this VM"""
         self.load_details(refresh=True)
-        # TODO: Make it count with different "My Company"
-        table = details_page.infoblock.element("Smart Management", "My Company Tags")
         tags = []
-        for row in sel.elements("./tbody/tr/td", root=table):
-            tags.append(row.text.encode("utf-8").strip())
+        for row in sel.elements(
+                "//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+                "//td[img[contains(@src, 'smarttag')]]".format(
+                    quoteattr(tag))):
+            tags.append(sel.text(row).strip())
         return tags
 
     def refresh_relationships(self, from_details=False, cancel=False):
