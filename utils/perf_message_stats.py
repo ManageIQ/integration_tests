@@ -54,7 +54,7 @@ miq_swap = re.compile(r'Swap:\s+([0-9]*)k\stotal,\s+([0-9]*)k\sused,\s+([0-9]*)k
 # PID PPID USER PR NI VIRT RES SHR S %CPU %MEM TIME+  COMMAND
 # 17526 2320 root 30 10 324m 9.8m 2444 S 0.0 0.2 0:09.38 /var/www/miq/vmdb/lib/workers/bin/worker.rb
 miq_top = re.compile(r'([0-9]+)\s+[0-9]+\s+[A-Za-z0-9]+\s+[0-9]+\s+[0-9\-]+\s+([0-9\.mg]+)\s+'
-    r'([0-9\.mg]+)\s+([0-9\.mg]+)\s+[SRD]\s+([0-9\.]+)\s+([0-9\.]+)')
+    r'([0-9\.mg]+)\s+([0-9\.mg]+)\s+[SRDZ]\s+([0-9\.]+)\s+([0-9\.]+)')
 
 
 def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False):
@@ -66,7 +66,7 @@ def collect_log(ssh_client, log_prefix, local_file_name, strip_whitespace=False)
 
     ssh_client.run_command('rm -f {}'.format(dest_file_gz))
 
-    status, out = ssh_client.run_command('ls {}-*'.format(log_file))
+    status, out = ssh_client.run_command('ls -1 {}-*'.format(log_file))
     if status == 0:
         files = out.strip().split('\n')
         for lfile in sorted(files):
