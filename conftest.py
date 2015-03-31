@@ -55,23 +55,11 @@ def set_default_domain():
 def fix_merkyl_workaround():
     """Workaround around merkyl not opening an iptables port for communication"""
     ssh_client = SSHClient()
-    local_file = data_path.join("bundles").join("merkyl").join("merkyl")
-    remote_file = "/etc/init.d/merkyl"
-    p = Popen(["md5sum", local_file.strpath], stdout=PIPE)
-    out, _ = p.communicate()
-    p.wait()
-    md5_local, _ = re.split(r"\s+", out, 1)
-    md5_local = md5_local.strip().lower()  # To be absolutely sure
-    result = ssh_client.run_command("md5sum {}".format(remote_file))
-    if result.rc != 0:
-        # No merkyl at all so ignore
-        return
-    md5_remote, _ = re.split(r"\s+", result.output, 1)
-    md5_remote = md5_remote.strip().lower()  # To be absolutely sure
-    if md5_local != md5_remote:
-        logger.info("Merkyl MD5 differs ({} vs {})".format(repr(md5_local), repr(md5_remote)))
+    if ssh_client.run_command('test -f /etc/init.d/merkyl').rc == 0:
+        logger.info('Rudely overwriting merkyl init.d on appliance;')
+        local_file = data_path.join("bundles").join("merkyl").join("merkyl")
+        remote_file = "/etc/init.d/merkyl"
         ssh_client.put_file(local_file.strpath, remote_file)
-        logger.info("Restarting merkyl service")
         ssh_client.run_command("service merkyl restart")
 
 
