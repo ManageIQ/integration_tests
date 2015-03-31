@@ -21,7 +21,7 @@ py
 pygal
 PyGithub
 PyPDF2
-pytest<2.7
+pytest
 python-bugzilla>=1.1.0
 python-cinderclient
 python-dateutil

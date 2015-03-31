@@ -33,11 +33,12 @@ def reset_timer(sprout, pool, timeout):
     timer.start()
 
 
-def pytest_configure(config, __multicall__):
+@pytest.mark.hookwrapper
+def pytest_configure(config):
     global appliance
     global pool_id
     global sprout
-    __multicall__.execute()
+    yield
     if not config.option.appliances and (config.option.use_sprout
             and config.option.sprout_appliances == 1):
         terminal = reporter()
@@ -85,19 +86,21 @@ def pytest_configure(config, __multicall__):
         conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider
 
 
-@pytest.mark.tryfirst
+@pytest.mark.hookwrapper
 def pytest_sessionstart(session):
     global appliance
     if appliance is not None:
         appliance.push()
+    yield
 
 
-@pytest.mark.trylast
+@pytest.mark.hookwrapper
 def pytest_sessionfinish(session, exitstatus):
     global appliance
     global timer
     global pool_id
     global sprout
+    yield
     terminal = reporter()
     if timer is not None:
         terminal.write("Stopping timer\n")

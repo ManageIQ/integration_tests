@@ -35,21 +35,21 @@ import difflib
 import json
 import os
 import subprocess
-from collections import OrderedDict, defaultdict, namedtuple
-from threading import Timer
+from collections import OrderedDict, defaultdict, deque, namedtuple
+from threading import Thread, Timer, Lock
 from time import sleep, time
 
 import pytest
 import zmq
 from _pytest import runner
 
+from fixtures import terminalreporter
 from fixtures.parallelizer import remote
 from fixtures.pytest_store import store
-from fixtures.terminalreporter import reporter
 from utils import at_exit, conf
 from utils.appliance import IPAppliance
 from utils.log import create_sublogger
-from utils.path import project_path
+from utils.path import conf_path, project_path
 from utils.sprout import SproutClient, SproutException
 from utils.wait import wait_for
 
@@ -64,6 +64,8 @@ if env_base_urls:
 # Initialize slaveid to None, indicating this as the master process
 # slaves will set this to a unique string when they're initialized
 conf.runtime['env']['slaveid'] = None
+
+recv_lock = Lock()
 
 
 def pytest_addoption(parser):
@@ -88,14 +90,14 @@ def pytest_addoption(parser):
         '--sprout-desc', dest='sprout_desc', default=None, help="Set description of the pool.")
 
 
-@pytest.mark.tryfirst
-def pytest_configure(config, __multicall__):
+@pytest.mark.hookwrapper
+def pytest_configure(config):
+    yield
     if (config.option.appliances or (config.option.use_sprout and
             config.option.sprout_appliances > 1)):
         session = ParallelSession(config)
         config.pluginmanager.register(session, "parallel_session")
         store.parallelizer_role = 'master'
-    __multicall__.execute()
 
 
 def dump_pool_info(printf, pool_data):
@@ -119,7 +121,7 @@ class ParallelSession(object):
         self.log = create_sublogger('master')
         self.maxfail = config.getvalue("maxfail")
         self._failed_collection_errors = {}
-        self.terminal = reporter()
+        self.terminal = store.terminalreporter
         self.trdist = None
         self.slaves = {}
         self.test_groups = self._test_item_generator()
@@ -191,6 +193,44 @@ class ParallelSession(object):
                     appliance["template_name"], appliance["provider"]
                 )
 
+        # set up the ipc socket
+        zmq_endpoint = 'ipc://%s' % project_path.join('.pytest-parallel.ipc').strpath
+        ctx = zmq.Context.instance()
+        self.sock = ctx.socket(zmq.ROUTER)
+        self.sock.bind('%s' % zmq_endpoint)
+
+        # clean out old slave config if it exists
+        slave_config = conf_path.join('slave_config.yaml')
+        slave_config.check() and slave_config.remove()
+
+        # write out the slave config
+        conf.runtime['slave_config'] = {
+            'args': self.config.args,
+            'options': self.config.option.__dict__,
+            'zmq_endpoint': zmq_endpoint,
+            'sprout': self.sprout_client is not None and self.sprout_pool is not None,
+        }
+        if hasattr(self, "slave_appliances_data"):
+            conf.runtime['slave_config']["appliance_data"] = self.slave_appliances_data
+        conf.runtime['slave_config']['options']['use_sprout'] = False  # Slaves don't use sprout
+        conf.save('slave_config')
+
+        # Fire up the workers
+        devnull = open(os.devnull, 'w')
+        for i, base_url in enumerate(self.appliances):
+            slaveid = 'slave%d' % i
+            # worker output redirected to null; useful info comes via messages and logs
+            slave = subprocess.Popen(
+                ['python', remote.__file__, slaveid, base_url], stdout=devnull, stderr=devnull)
+            self.slaves[slaveid] = slave
+            at_exit(slave.kill)
+
+        # Start the recv queue
+        self._recv_queue = deque()
+        recv_queuer = Thread(target=_recv_queue, args=(self,))
+        recv_queuer.daemon = True
+        recv_queuer.start()
+
     def _reset_timer(self):
         if not (self.sprout_client is not None and self.sprout_pool is not None):
             if self.sprout_timer:
@@ -228,29 +268,12 @@ class ParallelSession(object):
         self.sock.send_multipart([slaveid, '', event_json])
 
     def recv(self):
-        """Receive data from a slave
-
-        Raises RuntimeError if unexpected events are received.
-
-        """
-        slaveid = event_data = event_name = None
+        """Return any unproccesed events from the recv queue"""
         try:
-            slaveid, empty, event_json = self.sock.recv_multipart(flags=zmq.NOBLOCK)
-        except zmq.ZMQError as e:
-            if e.errno == zmq.EAGAIN:
-                # No message ready from slaves, continue processing
-                pass
-            else:
-                raise
-        else:
-            event_data = json.loads(event_json)
-            event_name = event_data.pop('_event_name')
-
-            if event_name == 'message':
-                # messages are special, if they're encountered in any recv loop they get printed
-                self.print_message(event_data['message'], slaveid)
-                self.ack(slaveid, event_name)
-        return slaveid, event_data, event_name
+            with recv_lock:
+                return self._recv_queue.popleft()
+        except IndexError:
+            return None, None, None
 
     def print_message(self, message, prefix='master', **markup):
         """Print a message from a node to the py.test console
@@ -302,7 +325,6 @@ class ParallelSession(object):
             ))
         return tests
 
-    @pytest.mark.trylast
     def pytest_sessionstart(self, session):
         """pytest sessionstart hook
 
@@ -315,30 +337,10 @@ class ParallelSession(object):
         """
         # If reporter() gave us a fake terminal reporter in __init__, the real
         # terminal reporter is registered by now
-        self.terminal = reporter(self.config)
+        self.terminal = store.terminalreporter
         self.trdist = TerminalDistReporter(self.config, self.terminal)
         self.config.pluginmanager.register(self.trdist, "terminaldistreporter")
         self.session = session
-
-        # set up the ipc socket
-        zmq_endpoint = 'ipc://%s' % os.path.join(session.fspath.strpath, '.pytest-parallel.ipc')
-        ctx = zmq.Context.instance()
-        self.sock = ctx.socket(zmq.ROUTER)
-        self.sock.bind('%s' % zmq_endpoint)
-
-        # write out the slave config
-        # The relies on args and option being easily serializable as yaml.
-        # If that stops being the case, look at serialize_/unserialize_ report for another option
-        conf.runtime['slave_config'] = {
-            'args': self.config.args,
-            'options': self.config.option.__dict__,
-            'zmq_endpoint': zmq_endpoint,
-            'sprout': self.sprout_client is not None and self.sprout_pool is not None,
-        }
-        if hasattr(self, "slave_appliances_data"):
-            conf.runtime['slave_config']["appliance_data"] = self.slave_appliances_data
-        conf.runtime['slave_config']['options']['use_sprout'] = False  # Slaves don't use sprout
-        conf.save('slave_config')
 
     def pytest_runtestloop(self):
         """pytest runtest loop
@@ -354,16 +356,6 @@ class ParallelSession(object):
         # Build master collection for diffing with slaves
         for item in self.session.items:
             self.collection[item.nodeid] = item
-
-        # Fire up the workers
-        devnull = open(os.devnull, 'w')
-        for i, base_url in enumerate(self.appliances):
-            slaveid = 'slave%d' % i
-            # worker output redirected to null; useful info comes via messages and logs
-            slave = subprocess.Popen(
-                ['python', remote.__file__, slaveid, base_url], stdout=devnull, stderr=devnull)
-            self.slaves[slaveid] = slave
-            at_exit(slave.kill)
 
         try:
             slave_collections = []
@@ -413,13 +405,6 @@ class ParallelSession(object):
                     if len(slave_collections) != num_slaves:
                         continue
 
-                    # Turn off the terminal reporter to suppress the builtin logstart printing
-                    try:
-                        self.config.pluginmanager.unregister(self.terminal)
-                    except ValueError:
-                        # plugin already disabled
-                        pass
-
                     # compare slave collections to the master, all test ids must be the same
                     self.log.debug('diffing slave collections')
                     for slave_collection in slave_collections:
@@ -437,12 +422,15 @@ class ParallelSession(object):
                     self.print_message('Distributing %d tests across %d slaves'
                         % (len(self.collection), num_slaves))
                     self.log.info('starting master test distribution')
+
+                    # Turn off the terminal reporter to suppress the builtin logstart printing
+                    terminalreporter.disable()
         except Exception as ex:
             self.log.error('Exception in runtest loop:')
             self.log.exception(ex)
             raise
 
-        self.config.pluginmanager.register(self.terminal, 'terminalreporter')
+        terminalreporter.enable()
 
         # Suppress other runtestloop calls
         return True
@@ -579,6 +567,31 @@ def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
         return
 
 
+def _recv_queue(session):
+    # poll the zmq socket, populate the recv queue deque with responses
+    while True:
+        try:
+            slaveid, empty, event_json = session.sock.recv_multipart(flags=zmq.NOBLOCK)
+        except zmq.ZMQError as e:
+            if e.errno == zmq.EAGAIN:
+                # No message ready from slaves, continue processing
+                sleep(.1)
+                continue
+            else:
+                raise
+        else:
+            event_data = json.loads(event_json)
+            event_name = event_data.pop('_event_name')
+
+            if event_name == 'message':
+                # messages are special, handle them immediately
+                session.print_message(event_data['message'], slaveid)
+                session.ack(slaveid, event_name)
+            else:
+                with recv_lock:
+                    session._recv_queue.append((slaveid, event_data, event_name))
+
+
 class TerminalDistReporter(object):
     """Terminal Reporter for Distributed Testing
 
@@ -598,7 +611,7 @@ class TerminalDistReporter(object):
         self.outcomes = {}
 
     def runtest_logstart(self, slaveid, nodeid, location):
-        test = self.tr._locationline(str(location[0]), *location)
+        test = self.tr._locationline(nodeid, *location)
         prefix = '(%s) %s' % (slaveid, test)
         self.tr.write_ensure_prefix(prefix, 'running', blue=True)
         self.config.hook.pytest_runtest_logstart(nodeid=nodeid, location=location)
@@ -612,7 +625,7 @@ class TerminalDistReporter(object):
         # Stash stats on the terminal reporter so it reports properly
         # after it's reenabled at the end of runtestloop
         self.tr.stats.setdefault(outcome, []).append(report)
-        test = self.tr._locationline(str(report.location[0]), *report.location)
+        test = self.tr._locationline(report.nodeid, *report.location)
 
         prefix = '(%s) %s' % (slaveid, test)
         try:

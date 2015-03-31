@@ -70,14 +70,15 @@ def pytest_addoption(parser):
                     help='Comma-separated list of metaplugins to disable')
 
 
-@pytest.mark.tryfirst
+@pytest.mark.hookwrapper
 def pytest_pycollect_makeitem(collector, name, obj):
     # Put the meta mark on objects as soon as pytest begins to collect them
     if isinstance(obj, FunctionType) and not hasattr(obj, 'meta'):
         pytest.mark.meta(obj)
+    yield
 
 
-@pytest.mark.tryfirst
+@pytest.mark.hookwrapper
 def pytest_collection_modifyitems(session, config, items):
     for item in items:
         item._metadata = AttrDict(item.function.meta.kwargs)
@@ -87,6 +88,7 @@ def pytest_collection_modifyitems(session, config, items):
         metas = reversed([x.kwargs for x in meta])  # Extract the kwargs, reverse the order
         for meta in metas:
             item._metadata.update(meta)
+    yield
 
 
 @pytest.fixture(scope="function")
@@ -161,9 +163,10 @@ def pytest_runtest_teardown(item):
     run_plugins(item, plugin.TEARDOWN)
 
 
-def pytest_runtest_call(__multicall__, item):
+@pytest.mark.hookwrapper
+def pytest_runtest_call(item):
     run_plugins(item, plugin.BEFORE_RUN)
     try:
-        __multicall__.execute()
+        yield
     finally:
         run_plugins(item, plugin.AFTER_RUN)

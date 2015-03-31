@@ -1,3 +1,12 @@
+import os
+import sys
+from collections import deque
+from time import sleep
+from urlparse import urlparse
+
+import zmq
+from py.path import local
+
 SLAVEID = None
 
 
@@ -72,6 +81,7 @@ class SlaveManager(object):
         self.log.debug('collection finished')
         self.session = session
         self.collection = {item.nodeid: item for item in session.items}
+        terminalreporter.disable()
 
     def pytest_runtest_logstart(self, nodeid, location):
         """pytest runtest logstart hook
@@ -123,6 +133,10 @@ class SlaveManager(object):
     def _test_generator(self):
         # Pull the first batch of tests, stash in a deque
         tests = self._get_tests()
+        # slight pause here, to make sure the initial distribution is properly spread among slaves.
+        # with small collections, it's possible for a slave to get a test, then request and receive
+        # the next test, before other slaves have received any tests.
+        sleep(.5)
         while True:
             # pop the first test, try to get the next
             try:
@@ -187,6 +201,8 @@ def _init_config(slave_options, slave_args):
     config.args = slave_args
     config._preparse(config.args, addopts=False)
     config.option = slave_options
+    # The master handles the result log, slaves shouldn't also write to it
+    config.option['resultlog'] = None
     # Unset appliances to prevent the slaves from starting distributes tests :)
     config.option.appliances = []
     for pluginarg in config.option.plugins:
@@ -207,14 +223,7 @@ if __name__ == '__main__':
     slave_logger = utils.log.create_sublogger(args.slaveid)
     utils.log.logger = utils.log.ArtifactorLoggerAdapter(slave_logger, {})
 
-    import os
-    import sys
-    from collections import deque
-    from urlparse import urlparse
-
-    import zmq
-    from py.path import local
-
+    from fixtures import terminalreporter
     from fixtures.pytest_store import store
     from utils import conf
 
@@ -236,6 +245,7 @@ if __name__ == '__main__':
         template_name, provider_name = appliance_data[ip_address]
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
         conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider_name
+        utils.log.logger.critical('terminalreporter disabled?')
     config = _init_config(slave_options, slave_args)
     slave_manager = SlaveManager(config, args.slaveid, args.base_url,
         conf.slave_config['zmq_endpoint'])

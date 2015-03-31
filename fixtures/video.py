@@ -37,7 +37,7 @@ def get_path_and_file_name(node):
     return node.parent.name, vid_name
 
 
-@pytest.mark.tryfirst
+@pytest.mark.hookwrapper
 def pytest_runtest_setup(item):
     global recorder
     if vid_options and vid_options['enabled']:
@@ -51,6 +51,7 @@ def pytest_runtest_setup(item):
         vid_name = vid_name + ".ogv"
         recorder = Recorder(full_vid_path.join(vid_name).strpath)
         recorder.start()
+    yield
 
 
 def stop_recording():
@@ -62,11 +63,13 @@ def stop_recording():
             recorder = None
 
 
-@pytest.mark.trylast
+@pytest.mark.hookwrapper
 def pytest_runtest_teardown(item, nextitem):
+    yield
     stop_recording()
 
 
-@pytest.mark.trylast
+@pytest.mark.hookwrapper
 def pytest_unconfigure(config):
+    yield
     stop_recording()

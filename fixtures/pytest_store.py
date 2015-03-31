@@ -59,6 +59,10 @@ class Store(object):
         self.parallelizer_role = None
         self._current_appliance = []
 
+        # Stash of the "real" terminal reporter once we get it,
+        # so we don't have to keep going through pluginmanager
+        self._terminalreporter = None
+
     @property
     def current_appliance(self):
         if not self._current_appliance:
@@ -96,9 +100,13 @@ class Store(object):
 
     @property_or_none
     def terminalreporter(self):
+        if self._terminalreporter is not None:
+            return self._terminalreporter
+
         if self.pluginmanager is not None:
             reporter = self.pluginmanager.getplugin('terminalreporter')
-            if reporter:
+            if reporter and isinstance(reporter, TerminalReporter):
+                self._terminalreporter = reporter
                 return reporter
 
         return FlexibleTerminalReporter(self.config)

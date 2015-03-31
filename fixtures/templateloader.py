@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Preloads all templates on all providers that were selected for testing. Useful for test collect.
 """
-import pytest
-
 from fixtures.prov_filter import filtered
 from fixtures.pytest_store import store, write_line
 from utils import trackerbot
@@ -10,8 +8,7 @@ from utils import trackerbot
 TEMPLATES = {}
 
 
-@pytest.mark.trylast
-def pytest_sessionstart(session):
+def pytest_configure():
     if store.parallelizer_role == 'master':
         return
     write_line("Loading templates from trackerbot")

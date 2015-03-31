@@ -1,6 +1,8 @@
 # FlexibleTerminalReporter is imported for backward compatibility;
 # it should be imported from pytest_store
-from fixtures.pytest_store import FlexibleTerminalReporter, store  # NOQA
+from fixtures.pytest_store import store
+from utils import diaper
+from utils.log import logger
 
 
 def reporter(config=None):
@@ -12,3 +14,17 @@ def reporter(config=None):
     """
     # config arg is accepted, but no longer needed thanks to pytest_store, so it is ignored
     return store.terminalreporter
+
+
+def disable():
+    # Cloud be a FlexibleTerminalReporter, which is a subclass of TerminalReporter,
+    # so match the type directly
+    with diaper:
+        store.pluginmanager.unregister(store.terminalreporter)
+        logger.debug('terminalreporter disabled')
+
+
+def enable():
+    with diaper:
+        store.pluginmanager.register(store.terminalreporter, 'terminalreporter')
+        logger.debug('terminalreporter enabled')
