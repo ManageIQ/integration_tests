@@ -2,6 +2,7 @@
 import inspect
 import json
 import re
+from celery.result import AsyncResult
 from datetime import datetime
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -10,7 +11,8 @@ from django.http import HttpResponse
 from django.shortcuts import render
 
 from appliances.models import Appliance, AppliancePool, Provider, Group, Template
-from appliances.tasks import appliance_power_on, appliance_power_off, appliance_suspend
+from appliances.tasks import (
+    appliance_power_on, appliance_power_off, appliance_suspend, appliance_rename)
 from utils.log import create_logger
 
 
@@ -331,7 +333,7 @@ def get_appliance(appliance):
 
 @jsonapi.authenticated_method
 def destroy_appliance(user, appliance):
-    """Destroy the appliance.
+    """Destroy the appliance. If the kill task was called, id is returned, otherwise None
 
     You can specify appliance by IP address, id or name.
     """
@@ -341,8 +343,10 @@ def destroy_appliance(user, appliance):
             raise Exception("Only staff can operate with nonowned appliances")
     elif appliance.owner != user:
         raise Exception("This appliance belongs to a different user!")
-    Appliance.kill(appliance)
-    return True
+    try:
+        return Appliance.kill(appliance).task_id
+    except AttributeError:  # None was returned
+        return None
 
 
 @jsonapi.method
@@ -356,7 +360,7 @@ def power_state(appliance):
 
 @jsonapi.authenticated_method
 def power_on(user, appliance):
-    """Power on the appliance
+    """Power on the appliance. If task is called, an id is returned, otherwise None.
 
     You can specify appliance by IP address, id or name.
     """
@@ -367,13 +371,12 @@ def power_on(user, appliance):
     elif appliance.owner != user:
         raise Exception("This appliance belongs to a different user!")
     if appliance.power_state != Appliance.Power.ON:
-        appliance_power_on.delay(appliance.id)
-    return True
+        return appliance_power_on.delay(appliance.id).task_id
 
 
 @jsonapi.authenticated_method
 def power_off(user, appliance):
-    """Power off the appliance
+    """Power off the appliance. If task is called, an id is returned, otherwise None.
 
     You can specify appliance by IP address, id or name.
     """
@@ -384,13 +387,12 @@ def power_off(user, appliance):
     elif appliance.owner != user:
         raise Exception("This appliance belongs to a different user!")
     if appliance.power_state != Appliance.Power.OFF:
-        appliance_power_off.delay(appliance.id)
-    return True
+        return appliance_power_off.delay(appliance.id).task_id
 
 
 @jsonapi.authenticated_method
 def suspend(user, appliance):
-    """Suspend the appliance
+    """Suspend the appliance. If task is called, an id is returned, otherwise None.
 
     You can specify appliance by IP address, id or name.
     """
@@ -403,8 +405,7 @@ def suspend(user, appliance):
     if appliance.power_state == Appliance.Power.OFF:
         return False
     elif appliance.power_state != Appliance.Power.SUSPENDED:
-        appliance_suspend.delay(appliance.id)
-    return True
+        return appliance_suspend.delay(appliance.id).task_id
 
 
 @jsonapi.authenticated_method
@@ -451,3 +452,34 @@ def find_pools_by_description(user, description, partial=False):
         return (pool.owner is None and user.is_staff) or (pool.owner == user)
 
     return map(lambda pool: pool.id, filter(_filter, pools))
+
+
+@jsonapi.authenticated_method
+def rename_appliance(user, appliance, new_name):
+    """Rename the appliance. Returns task id.
+
+    You can specify appliance by IP address, id or name.
+    """
+    appliance = get_appliance(appliance)
+    if appliance.owner is None:
+        if not user.is_staff:
+            raise Exception("Only staff can operate with nonowned appliances")
+    elif appliance.owner != user:
+        raise Exception("This appliance belongs to a different user!")
+    return appliance_rename.delay(appliance.id, new_name).task_id
+
+
+@jsonapi.method
+def task_finished(task_id):
+    """Returns whether specified task has already finished"""
+    result = AsyncResult(task_id)
+    return result.ready()
+
+
+@jsonapi.method
+def task_result(task_id):
+    """Returns result of the task. Returns None if no result yet"""
+    result = AsyncResult(task_id)
+    if not result.ready():
+        return None
+    return result.get(timeout=1)

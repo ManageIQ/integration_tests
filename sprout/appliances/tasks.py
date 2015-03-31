@@ -640,6 +640,15 @@ def clone_template_to_appliance__wait_present(self, appliance_id):
 
 
 @singleton_task()
+def mark_appliance_ready(self, appliance_id):
+    with transaction.atomic():
+        appliance = Appliance.objects.get(id=appliance_id)
+        appliance.ready = True
+        appliance.save()
+    Appliance.objects.get(id=appliance_id).set_status("Appliance was marked as ready")
+
+
+@singleton_task()
 def appliance_power_on(self, appliance_id, wait_for_ui=True):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
@@ -648,28 +657,24 @@ def appliance_power_on(self, appliance_id, wait_for_ui=True):
         return
     try:
         if appliance.provider_api.is_vm_running(appliance.name):
-            retrieve_appliance_ip.delay(appliance_id)  # retrieve IP after power on
             Appliance.objects.get(id=appliance_id).set_status("Appliance was powered on.")
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.set_power_state(Appliance.Power.ON)
                 appliance.save()
-            if wait_for_ui:
-                wait_appliance_ready.delay(appliance.id)
-            else:
-                with transaction.atomic():
-                    appliance = Appliance.objects.get(id=appliance_id)
-                    appliance.ready = True
-                    appliance.save()
+            flow = chain(
+                retrieve_appliance_ip.si(appliance_id),
+                (wait_appliance_ready if wait_for_ui else mark_appliance_ready).si(appliance_id))
+            flow()
             return
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
                 appliance.provider_api.vm_status(appliance.name)))
-            self.retry(args=(appliance_id, wait_for_ui), countdown=20, max_retries=30)
+            self.retry(args=(appliance_id, wait_for_ui), countdown=20, max_retries=40)
         else:
             appliance.set_status("Powering on.")
             appliance.provider_api.start_vm(appliance.name)
-            self.retry(args=(appliance_id, wait_for_ui), countdown=20, max_retries=30)
+            self.retry(args=(appliance_id, wait_for_ui), countdown=20, max_retries=40)
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
         self.retry(args=(appliance_id, wait_for_ui), exc=e, countdown=20, max_retries=30)
@@ -729,7 +734,7 @@ def appliance_suspend(self, appliance_id):
                 appliance.provider_api.vm_status(appliance.name)))
             self.retry(args=(appliance_id,), countdown=20, max_retries=30)
         else:
-            appliance.set_status("Suspendind.")
+            appliance.set_status("Suspending.")
             appliance.provider_api.suspend_vm(appliance.name)
             self.retry(args=(appliance_id,), countdown=20, max_retries=30)
     except Exception as e:
