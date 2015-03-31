@@ -27,7 +27,7 @@ generic_matchers = (
     ('sprout', r'^sprout_template'),
     ('rhevm-internal', r'^auto-tmp'),
 )
-trackerbot_conf = env.get('trackerbot', {})
+conf = env.get('trackerbot', {})
 _active_streams = None
 
 TemplateInfo = namedtuple('TemplateInfo', ['group_name', 'datestamp', 'stream'])
@@ -46,7 +46,7 @@ def cmdline_parser():
 
     """
     # Set up defaults from env, if they're set, otherwise require them on the commandline
-    def_url = {'default': None, 'nargs': '?'} if 'url' in trackerbot_conf else {}
+    def_url = {'default': None, 'nargs': '?'} if 'url' in conf else {}
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--trackerbot-url',
@@ -57,7 +57,7 @@ def cmdline_parser():
 def api(trackerbot_url=None):
     """Return an API object authenticated to the given trackerbot api"""
     if trackerbot_url is None:
-        trackerbot_url = trackerbot_conf['url']
+        trackerbot_url = conf['url']
 
     return slumber.API(trackerbot_url)
 
