@@ -24,6 +24,13 @@ class ProviderFilter(object):
 filtered = ProviderFilter(provider_keys())
 
 
+def pytest_addoption(parser):
+    # Create the cfme option group for use in other plugins
+    parser.getgroup('cfme')
+    parser.addoption("--use-provider", action="append", default=[],
+        help="list of providers or tags to include in test")
+
+
 def pytest_configure(config):
     """ Filters the list of providers as part of pytest configuration. """
 
