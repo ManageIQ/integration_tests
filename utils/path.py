@@ -46,8 +46,9 @@ def get_rel_path(absolute_path_str):
 
     Note:
 
-        This will not work for files that are not in `project_path`
+        This will be a no-op for files that are not in `project_path`
 
     """
     target_path = local(absolute_path_str)
-    return target_path.relto(project_path)
+    # relto returns empty string when no path parts are relative
+    return target_path.relto(project_path) or absolute_path_str

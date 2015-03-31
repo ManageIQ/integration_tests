@@ -161,7 +161,7 @@ def _annotate_failure(fail_message=''):
     if not fail_message:
         fail_message = str(frameinfo.code_context[0]).strip()
 
-    filename = get_rel_path(frameinfo.filename) or frameinfo.filename
+    filename = get_rel_path(frameinfo.filename)
     path = '%s:%r' % (filename, frameinfo.lineno)
     return '%s (%s)' % (fail_message, path)
 

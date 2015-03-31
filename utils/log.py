@@ -138,7 +138,7 @@ import datetime as dt
 from logging.handlers import RotatingFileHandler, SysLogHandler
 from pkgutil import iter_modules
 from time import time
-from traceback import extract_tb
+from traceback import extract_tb, format_tb
 
 import psphere
 
@@ -193,7 +193,8 @@ class SyslogMsecFormatter(logging.Formatter):
 
     converter = dt.datetime.fromtimestamp
 
-    def formatTime(self, record, datefmt=None):
+    # logging.Formatter impl hates pep8
+    def formatTime(self, record, datefmt=None):  # NOQA
         ct = self.converter(record.created)
         if datefmt:
             s = ct.strftime(datefmt)
@@ -249,10 +250,10 @@ class _RelpathFilter(logging.Filter):
     """
     def filter(self, record):
         try:
-            relpath = get_rel_path(record.source_file) or record.source_file
+            relpath = get_rel_path(record.source_file)
             lineno = record.source_lineno
         except AttributeError:
-            relpath = get_rel_path(record.pathname) or record.pathname
+            relpath = get_rel_path(record.pathname)
             lineno = record.lineno
         if lineno:
             record.source = "%s:%d" % (relpath, lineno)
@@ -331,8 +332,6 @@ def create_logger(logger_name, filename=None):
     else:
         log_file = str(log_path.join('%s.log' % logger_name))
 
-    relpath_filter = _RelpathFilter()
-
     # log_file is dynamic, so we can't used logging.config.dictConfig here without creating
     # a custom RotatingFileHandler class. At some point, we should do that, and move the
     # entire logging config into env.yaml
@@ -362,7 +361,7 @@ def create_logger(logger_name, filename=None):
 
         logger.addHandler(stream_handler)
 
-    logger.addFilter(relpath_filter)
+    logger.addFilter(_RelpathFilter())
     return logger
 
 
@@ -405,9 +404,10 @@ def format_marker(mstring, mark="-"):
 
 
 def _custom_excepthook(type, value, traceback):
-    file, lineno, function, text = extract_tb(traceback)[-1]
-    logger.error('Unhandled %s: %s' % (type.__name__, value),
-        extra={'source_file': file, 'source_lineno': lineno})
+    file, lineno, function, __ = extract_tb(traceback)[-1]
+    text = ''.join(format_tb(traceback)).strip()
+    logger.error('Unhandled %s', type.__name__)
+    logger.error(text, extra={'source_file': file, 'source_lineno': lineno})
     _original_excepthook(type, value, traceback)
 
 if '_original_excepthook' not in globals():
@@ -502,10 +502,15 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         # 3: original logging call
         frameinfo = nth_frame_info(3)
         extra = kwargs.get('extra', {})
-        extra.update({
-            'source_file': get_rel_path(frameinfo.filename) or frameinfo.filename,
-            'source_lineno': frameinfo.lineno
-        })
+        # add extra data if needed
+        if not extra.get('source_file'):
+            if frameinfo.filename:
+                extra['source_file'] = get_rel_path(frameinfo.filename)
+                extra['source_lineno'] = frameinfo.lineno
+            else:
+                # calling frame didn't have a filename
+                extra['source_file'] = 'unknown'
+                extra['source_lineno'] = 0
         kwargs['extra'] = extra
         return msg, kwargs
 

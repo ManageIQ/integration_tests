@@ -57,7 +57,7 @@ def pytest_exception_interact(node, call, report):
     # This is the same code that powers py.test's output, so we gain py.test's magical ability
     # to get useful AssertionError output by doing it this way, which makes the voodoo worth it.
     entry = call.excinfo.traceback.getcrashentry()
-    logger().error(call.excinfo.exconly(),
+    logger().error(call.excinfo.getrepr(),
         extra={'source_file': entry.path, 'source_lineno': entry.lineno + 1})
 
 
