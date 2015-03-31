@@ -22,6 +22,7 @@ from utils.log import logger, create_sublogger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check
 from utils.path import data_path, scripts_path
+from utils.pretty import Pretty
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
@@ -41,7 +42,7 @@ class ApplianceException(Exception):
     pass
 
 
-class Appliance(object):
+class Appliance(Pretty):
     """Appliance represents an already provisioned cfme appliance vm
 
     Args:
@@ -50,8 +51,9 @@ class Appliance(object):
     """
 
     _default_name = 'EVM'
+    pretty_attrs = ['_provider_name', 'vmname', 'ipapp']
 
-    def __init__(self, provider_name, vm_name):
+    def __init__(self, provider_name, vm_name, browser_steal=False):
         """Initializes a deployed appliance VM
         """
         self.name = Appliance._default_name
@@ -59,10 +61,11 @@ class Appliance(object):
 
         self._provider_name = provider_name
         self.vmname = vm_name
+        self.browser_steal = browser_steal
 
     @lazycache
     def ipapp(self):
-        return IPAppliance(self.address)
+        return IPAppliance(self.address, self.browser_steal)
 
     @lazycache
     def rest_api(self):
@@ -70,10 +73,6 @@ class Appliance(object):
 
     @lazycache
     def provider(self):
-        """
-        Note:
-            Cannot be cached because provider object is unpickable.
-        """
         return provider_factory(self._provider_name)
 
     @property
@@ -118,32 +117,47 @@ class Appliance(object):
             "log_callback",
             lambda msg: logger.info("Custom configure {}: {}".format(self.vmname, msg)))
         region = kwargs.get('region', 0)
-        db_address = kwargs.get('db_address', None)
         key_address = kwargs.get('key_address', None)
-        db_username = kwargs.get('db_username', None)
-        db_password = kwargs.get('ssh_password', None)
-        ssh_password = kwargs.get('ssh_password', None)
+        db_address = kwargs.get('db_address', None)
         db_name = kwargs.get('db_name', None)
+        db_username = kwargs.get('db_username', None)
+        db_password = kwargs.get('db_password', None)
+        ssh_password = kwargs.get('ssh_password', None)
 
+        if kwargs.get('deploy_merkyl', True) is True:
+            self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
         if kwargs.get('fix_ntp_clock', True) is True:
             self.ipapp.fix_ntp_clock(log_callback=log_callback)
-        if kwargs.get('patch_ajax_wait', True) is True:
+        if kwargs.get('patch_ajax_wait', False) is True:
             self.ipapp.patch_ajax_wait(log_callback=log_callback)
-        if kwargs.get('db_address', None) is None:
+
+        # Enable internal or external DB
+        if db_address is None:
             self.ipapp.enable_internal_db(
                 region, key_address, db_password, ssh_password, log_callback=log_callback)
         else:
             self.ipapp.enable_external_db(
                 db_address, region, db_name, db_username, db_password, log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
+
         if kwargs.get('loosen_pgssl', True) is True:
             self.ipapp.loosen_pgssl(log_callback=log_callback)
+        if kwargs.get('clone_domain', True) is True:
+            self.ipapp.clone_domain(log_callback=log_callback)
+        if kwargs.get('precompile_assets', False) is True:
+            self.ipapp.precompile_assets(log_callback=log_callback)
+            self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
+        # Rename the appliance
         name_to_set = kwargs.get('name_to_set', None)
         if name_to_set is not None and name_to_set != self.name:
             self.rename(name_to_set)
             self.ipapp.restart_evm_service(log_callback=log_callback)
-            self.ipapp.wait_for_web_ui(log_callback=log_callback)
+
+        if kwargs.get('update_rhel', True) is True:
+            self.ipapp.update_rhel(log_callback=log_callback)
+
+        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def _configure_5_2(self, log_callback=None):
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
@@ -185,11 +199,15 @@ class Appliance(object):
                         (default ``None``)
             name_to_set: Name to set the appliance name to if not ``None`` (default ``None``)
             region: Number to assign to region (default ``0``)
+            update_rhel: Updates RHEL on appliance if ``True`` (default ``True``)
+            precompile_assets: Precompiles CSS assets if ``True`` (default ``False``)
             fix_ntp_clock: Fixes appliance time if ``True`` (default ``True``)
-            patch_ajax_wait: Patches ajax wait code if ``True`` (default ``True``)
+            patch_ajax_wait: Patches ajax wait code if ``True`` (default ``False``)
             loosen_pgssl: Loosens postgres connections if ``True`` (default ``True``)
             key_address: Fetch encryption key from this address if set, generate a new key if
                          ``None`` (default ``None``)
+            clone_domain: Clones the Automate domain if ``True`` (default ``True``)
+            deploy_merkyl: Deploys Merkyl log relay service if ``True`` (default ``True``)
 
         """
         if log_callback is None:
@@ -336,9 +354,10 @@ class IPAppliance(object):
 
     Args:
         ipaddress: The IP address of the provider
-        browser_streal: If True then then current browser is killed and the new appliance
+        browser_steal: If True then the current browser is killed and the new appliance
             is used to generate a new session.
     """
+    pretty_attrs = ['address', 'db_address', 'version']
 
     def __init__(self, address=None, browser_steal=False):
         if address is not None:
@@ -348,9 +367,6 @@ class IPAppliance(object):
         self._thing_toucher_proc = None
         # ssh client cache
         self._ssh_client = None
-
-    def __repr__(self):
-        return '%s(%s)' % (type(self).__name__, repr(self.address))
 
     def push(self):
         _push_appliance(self)
@@ -445,7 +461,7 @@ class IPAppliance(object):
 
         """
         if not self.is_ssh_running:
-            raise Exception('SSH is unavailable')
+            raise ApplianceException('SSH is unavailable')
 
         if self._ssh_client is None:
             # IPAppliance.ssh_client only connects to its address
@@ -638,6 +654,34 @@ class IPAppliance(object):
 
         return result
 
+    def migrate_db(self, log_callback=None):
+        """Run database migrations
+        """
+
+        if log_callback is None:
+            log_callback = lambda msg: self.log.info("DB migration: {}".format(msg))
+        else:
+            cb = log_callback
+            log_callback = lambda msg: cb("DB migration: {}".format(msg))
+
+        client = self.ssh_client()
+
+        # Make sure the database is ready
+        log_callback('Starting migrations')
+        self.wait_for_db()
+
+        # Make sure the working dir exists
+        result = client.run_rake_command('db:migrate')
+
+        if result.rc != 0:
+            msg = 'DB Migration failed'
+            log_callback(msg)
+            raise ApplianceException(msg)
+
+        self.restart_evm_service(log_callback=log_callback)
+
+        return result
+
     def clone_domain(self, source="ManageIQ", dest="Default", log_callback=None):
         """Clones Automate domain
 
@@ -646,10 +690,11 @@ class IPAppliance(object):
             dst: Destination domain name.
 
         Note:
-            Not required (and does not do anything) on 5.2 appliances
+            Not required (and does not do anything) on 5.2 appliances or appliances with
+            external db connection
 
         """
-        if self.version.is_in_series("5.2"):
+        if self.version.is_in_series("5.2") or not self.is_db_internal:
             return
 
         if log_callback is None:
@@ -854,10 +899,11 @@ class IPAppliance(object):
         """Loosens postgres connections
 
         Note:
-            Not required (and does not do anything) on 5.2 appliances
+            Not required (and does not do anything) on 5.2 appliances or appliances with
+            external db connection
 
         """
-        if self.version.is_in_series("5.2"):
+        if self.version.is_in_series("5.2") or not self.is_db_internal:
             return
 
         (log_callback or self.log.info)('Loosening postgres permissions')
@@ -938,7 +984,7 @@ class IPAppliance(object):
                 )
             else:
                 status, out = client.run_command(
-                    'appliance_console_cli --region {} --internal --force-key -p {}'
+                    'appliance_console_cli --region {} --internal --key -p {}'
                     .format(region, db_password)
                 )
         else:
@@ -1016,7 +1062,7 @@ class IPAppliance(object):
             }
 
             # Find and load our rb template with replacements
-            rbt = datafile.data_path_for_filename('enable-internal-db.rbt', scripts_path.strpath)
+            rbt = datafile.data_path_for_filename('enable-external-db.rbt', scripts_path.strpath)
             rb = datafile.load_data_file(rbt, rbt_repl)
 
             # Init SSH client and sent rb file over to /tmp
@@ -1052,7 +1098,7 @@ class IPAppliance(object):
             # requests exposes invalid URLs as ValueErrors, which is excellent
             raise
         except Exception as ex:
-            self.log.debug('Appliance online, but connection failed: %s' % ex.message)
+            self.log.debug('Appliance online, but connection failed: %s' % ex)
         return False
 
     def is_web_ui_running(self, unsure=False):
@@ -1361,32 +1407,80 @@ class IPAppliance(object):
         return db.set_yaml_config(config_name, data_dict, self.address)
 
 
-class ApplianceSet(object):
+class ApplianceSet(Pretty):
     """Convenience class to ease access to appliances in appliance_set
     """
+    pretty_attrs = ['primary', 'secondary']
+
     def __init__(self, primary_appliance=None, secondary_appliances=None):
         self.primary = primary_appliance
         self.secondary = secondary_appliances or list()
 
+    def __iter__(self):
+        return iter(self.all_appliances)
+
     @property
     def all_appliances(self):
-        all_appliances = self.secondary[:]
-        all_appliances.append(self.primary)
+        """List with all appliances - primary must go first
+        """
+        all_appliances = [self.primary] + self.secondary
         return all_appliances
+
+    @property
+    def all_appliance_names(self):
+        names = [app.name for app in self]
+        return names
+
+    def harden_security(self):
+        script = scripts_path.join('harden_security.py')
+        args = [str(script), self.primary.address]
+        for app in self.secondary:
+            args.extend(['-c', app.address])
+        with open(os.devnull, 'w') as f_devnull:
+            status = subprocess.call(args, stdout=f_devnull)
+        if status != 0:
+            raise ApplianceException('Appliance set [{}] failed to harden security!'
+                    .format(', '.join([app.address for app in self])))
+
+    def harden_security_post_upgrade(self):
+        """Used after unhardened-5.2.z to 5.3.1+ upgrade
+        Creates new v2_key on primary appliance, copies it to all secondary and hardens all DBs
+        """
+        create_key_cmd = "tools/fix_auth.rb --key"
+        update_db_yaml_cmd = "tools/fix_auth.rb --databaseyml"
+        harden_db_cmd = "tools/fix_auth.rb"
+
+        with self.primary.ipapp.ssh_client() as ssh:
+            for cmd in [create_key_cmd, update_db_yaml_cmd, harden_db_cmd]:
+                status, output = ssh.run_ruby_command(cmd)
+                if status != 0:
+                    raise ApplianceException('Failed to harden security on {}.'
+                                             .format(self.primary.address))
+            rand_filename = "/tmp/v2_key_{}".format(generate_random_string())
+            ssh.get_file("/var/www/miq/vmdb/certs/v2_key", rand_filename)
+
+        for app in self.secondary:
+            with app.ipapp.ssh_client() as ssh:
+                ssh.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
+            with app.ipapp.ssh_client() as ssh:
+                status, output = ssh.run_ruby_command(update_db_yaml_cmd)
+                if status != 0:
+                    raise ApplianceException('Failed to harden security on {}.'
+                                             .format(app.address))
 
     def find_by_name(self, appliance_name):
         """Finds appliance of given name
 
         Returns: Instance of :py:class:`Appliance` if found, ``None`` otherwise
         """
-        for appliance in self.all_appliances:
+        for appliance in self:
             if appliance.name == appliance_name:
                 return appliance
         return None
 
 
 def provision_appliance(version=None, vm_name_prefix='cfme', template=None, provider_name=None,
-                        vm_name=None):
+                        vm_name=None, browser_steal=False):
     """Provisions fresh, unconfigured appliance of a specific version
 
     Note:
@@ -1395,6 +1489,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         If no matching template for given version is found, and trackerbot is set up,
         the latest available template of the same stream will be used.
         E.g.: if there is no template for 5.2.5.1 but there is 5.2.5.3, it will be used instead.
+        To get the latest version of 5.2 stream for example, you would specify version as '5.2'.
         If both template name and version are specified, template name takes priority.
 
     Args:
@@ -1414,8 +1509,10 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
         (identical outcome)
     """
 
-    def _generate_vm_name():
-        if version is not None:
+    def _generate_vm_name(template_name):
+        if template_name:
+            return '{}_{}_{}'.format(vm_name_prefix, template_name, generate_random_string())
+        elif version is not None:
             version_digits = ''.join([letter for letter in version if letter.isdigit()])
             return '{}_{}_{}'.format(vm_name_prefix, version_digits, generate_random_string())
         else:
@@ -1454,7 +1551,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
 
     provider = provider_factory(provider_name)
     if not vm_name:
-        vm_name = _generate_vm_name()
+        vm_name = _generate_vm_name(template_name)
 
     deploy_args = {}
     deploy_args['vm_name'] = vm_name
@@ -1468,10 +1565,11 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
 
     provider.deploy_template(template_name, **deploy_args)
 
-    return Appliance(provider_name, vm_name)
+    return Appliance(provider_name, vm_name, browser_steal)
 
 
-def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
+def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme', primary_browser_steal=False,
+        configure_kwargs=None):
     """Provisions configured appliance set according to appliance_set_data dict
 
     This provides complete working appliance set - with DBs enabled and names set.
@@ -1482,6 +1580,8 @@ def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
     Args:
         vm_name_prefix: name prefix to use when deploying the appliance vms
         appliance_set_data: dict that corresponds to the following yaml structure:
+        primary_browser_steal: True if primary appliance should steal the browser, False otherwise
+        configure_kwargs: Dict with kwargs to be passed to configure method
 
     .. code-block:: yaml
 
@@ -1501,15 +1601,19 @@ def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
 
     Returns: Configured appliance set; instance of :py:class:`ApplianceSet`
     """
+    configure_kwargs = configure_kwargs or dict()
 
     primary_data = appliance_set_data['primary_appliance']
     secondary_data = appliance_set_data.get('secondary_appliances') or []
-    all_appliances_data = [primary_data] + secondary_data
 
     logger.info('Provisioning appliances')
     provisioned_appliances = []
     try:
-        for appliance_data in all_appliances_data:
+        app = provision_appliance(primary_data['version'],
+                                  vm_name_prefix,
+                                  browser_steal=primary_browser_steal)
+        provisioned_appliances.append(app)
+        for appliance_data in secondary_data:
             app = provision_appliance(appliance_data['version'], vm_name_prefix)
             provisioned_appliances.append(app)
     except Exception as e:
@@ -1522,10 +1626,11 @@ def provision_appliance_set(appliance_set_data, vm_name_prefix='cfme'):
     logger.info('Done - provisioning appliances')
 
     logger.info('Configuring appliances')
-    appliance_set.primary.configure(name_to_set=primary_data['name'])
+    appliance_set.primary.configure(name_to_set=primary_data['name'], **configure_kwargs)
     for i, appliance in enumerate(appliance_set.secondary):
         appliance.configure(db_address=appliance_set.primary.address,
-                            name_to_set=secondary_data[i]['name'])
+                            name_to_set=secondary_data[i]['name'],
+                            **configure_kwargs)
     logger.info('Done - configuring appliances')
 
     return appliance_set
