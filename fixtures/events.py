@@ -406,8 +406,8 @@ def register_event(
     return self  # Run the test and provide the plugin as a fixture
 
 
-@pytest.mark.trylast
-def pytest_runtest_call(__multicall__, item):
+@pytest.mark.hookwrapper
+def pytest_runtest_call(item):
     """If we use register_event, then collect the events and fail the test if not all came.
 
     After the test function finishes, it checks the listener whether it has caught the events.
@@ -415,7 +415,7 @@ def pytest_runtest_call(__multicall__, item):
     Before and after each test run using `register_event` fixture, database is cleared.
     """
     try:
-        __multicall__.execute()
+        yield
     finally:
         if "register_event" not in item.funcargs:
             return

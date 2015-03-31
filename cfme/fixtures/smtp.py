@@ -86,10 +86,10 @@ def smtp_test(request):
     return client
 
 
-@pytest.mark.trylast
-def pytest_runtest_call(__multicall__, item):
+@pytest.mark.hookwrapper
+def pytest_runtest_call(item):
     try:
-        __multicall__.execute()
+        yield
     finally:
         if "smtp_test" not in item.funcargs:
             return

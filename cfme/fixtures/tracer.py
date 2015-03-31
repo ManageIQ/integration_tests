@@ -2,6 +2,8 @@ from contextlib import contextmanager
 import os.path
 import function_trace
 
+import pytest
+
 import cfme
 import utils.log
 import inspect
@@ -172,7 +174,8 @@ def pytest_configure(config):
         load()
 
 
-def pytest_runtest_call(__multicall__, item):
+@pytest.mark.hookwrapper
+def pytest_runtest_call(item):
     """hook to run each test with traced function calls"""
     if item.config.getvalue('tracer'):
         out = art_client.fire_hook('filedump', grab_result=True,
@@ -188,7 +191,9 @@ def pytest_runtest_call(__multicall__, item):
                     to_trace,
                     depths=depths,
                     filename=filename)):
-            __multicall__.execute()
+            yield
+    else:
+        yield
 
 
 @contextmanager

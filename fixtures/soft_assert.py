@@ -38,16 +38,16 @@ import utils
 _thread_locals = local()
 
 
-@pytest.mark.tryfirst
-def pytest_runtest_call(__multicall__, item):
+@pytest.mark.hookwrapper
+def pytest_runtest_call(item):
     """pytest hook to handle :py:func:`soft_assert` fixture usage"""
     # If a test is using soft_assert, wrap it in the context manager
     # This ensures SoftAssertionError will be raised in the call phase.
     if 'soft_assert' in item.fixturenames:
         with _soft_assert_cm():
-            __multicall__.execute()
+            yield
     else:
-        __multicall__.execute()
+        yield
 
 
 class SoftAssertionError(AssertionError):

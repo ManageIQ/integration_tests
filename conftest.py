@@ -17,12 +17,13 @@ from utils.ssh import SSHClient
 from utils.version import current_version
 
 
-@pytest.mark.tryfirst
+@pytest.mark.hookwrapper
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
     parser.addoption("--use-provider", action="append", default=[],
         help="list of providers or tags to include in test")
+    yield
 
 
 @pytest.fixture(scope="session", autouse=True)
