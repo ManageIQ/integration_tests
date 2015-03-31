@@ -34,6 +34,9 @@ do_start () {
   echo "Starting service..." >&2
   local CMD="python $DAEMON $DAEMON_OPTS &> \"$LOGFILE\" & echo \$!"
   su -c "$CMD" $DAEMON_USER > "$PIDFILE"
+  if ! [[ $(iptables -L -n | grep "state NEW tcp dpt:8192") ]]; then
+    iptables -I INPUT 6 -m state --state NEW -m tcp -p tcp --dport 8192 -j ACCEPT;
+  fi
   echo "Service $DAEMON_NAME started" >&2
 }
 
