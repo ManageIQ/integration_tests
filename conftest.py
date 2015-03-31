@@ -31,10 +31,16 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope="session", autouse=True)
 def set_session_timeout():
-    vmdb_config = store.current_appliance.get_yaml_config("vmdb")
-    if vmdb_config["session"]["timeout"] < 86400:
-        vmdb_config["session"]["timeout"] = 86400
-        store.current_appliance.set_yaml_config("vmdb", vmdb_config)
+    try:
+        vmdb_config = store.current_appliance.get_yaml_config("vmdb")
+        if vmdb_config["session"]["timeout"] < 86400:
+            vmdb_config["session"]["timeout"] = 86400
+            store.current_appliance.set_yaml_config("vmdb", vmdb_config)
+    except Exception as ex:
+        # Definitely need to implement retries or something, this is
+        # just a bandaid
+        logger.error('Setting session timout failed')
+        logger.exception(ex)
 
 
 @pytest.fixture(scope="session", autouse=True)
