@@ -5,18 +5,19 @@ Top-level conftest.py does a couple of things:
 2) Load a number of plugins and fixtures automatically
 """
 from pkgutil import iter_modules
-from subprocess import Popen, PIPE
 
 import pytest
-import re
+import requests
 
 import cfme.fixtures
 import fixtures
 import markers
 import metaplugins
+from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
 from utils.log import logger
 from utils.path import data_path
+from utils.net import net_check
 from utils.ssh import SSHClient
 from utils.version import current_version
 
@@ -25,8 +26,6 @@ from utils.version import current_version
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
     parser.getgroup('cfme', 'cfme: options related to cfme/miq appliances')
-    parser.addoption("--use-provider", action="append", default=[],
-        help="list of providers or tags to include in test")
     yield
 
 
@@ -62,6 +61,31 @@ def fix_merkyl_workaround():
         remote_file = "/etc/init.d/merkyl"
         ssh_client.put_file(local_file.strpath, remote_file)
         ssh_client.run_command("service merkyl restart")
+
+
+@pytest.fixture(autouse=True, scope="function")
+def appliance_police():
+    if not store.slave_manager:
+        return
+    try:
+        ports = {'ssh': 22, 'https': 443, 'postgres': 5432}
+        port_results = {pn: net_check(pp) for pn, pp in ports.items()}
+        for port, result in port_results.items():
+            if not result:
+                raise Exception('Port {} was not contactable'.format(port))
+        status_code = requests.get(store.current_appliance.url, verify=False,
+                                   timeout=60).status_code
+        if status_code != 200:
+            raise Exception('Status code was {}, should be 200'.format(status_code))
+    except Exception as e:
+        store.slave_manager.message(
+            'Help! My appliance {} crashed with: {}'.format(
+                store.current_appliance.url,
+                e.message))
+        Rdb().set_trace(**{
+            'subject': 'RDB Breakpoint: Appliance failure',
+            'recipients': ['semyers@redhat.com', 'psavage@redhat.com'],
+        })
 
 
 def _pytest_plugins_generator(*extension_pkgs):
