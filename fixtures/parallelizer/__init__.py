@@ -35,8 +35,8 @@ import difflib
 import json
 import os
 import subprocess
-from collections import OrderedDict, defaultdict, namedtuple
-from threading import Timer
+from collections import OrderedDict, defaultdict, deque, namedtuple
+from threading import Thread, Timer, Lock
 from time import sleep, time
 
 import pytest
@@ -64,6 +64,8 @@ if env_base_urls:
 # Initialize slaveid to None, indicating this as the master process
 # slaves will set this to a unique string when they're initialized
 conf.runtime['env']['slaveid'] = None
+
+recv_lock = Lock()
 
 
 def pytest_addoption(parser):
@@ -223,6 +225,12 @@ class ParallelSession(object):
             self.slaves[slaveid] = slave
             at_exit(slave.kill)
 
+        # Start the recv queue
+        self._recv_queue = deque()
+        recv_queuer = Thread(target=_recv_queue, args=(self,))
+        recv_queuer.daemon = True
+        recv_queuer.start()
+
     def _reset_timer(self):
         if not (self.sprout_client is not None and self.sprout_pool is not None):
             if self.sprout_timer:
@@ -260,29 +268,12 @@ class ParallelSession(object):
         self.sock.send_multipart([slaveid, '', event_json])
 
     def recv(self):
-        """Receive data from a slave
-
-        Raises RuntimeError if unexpected events are received.
-
-        """
-        slaveid = event_data = event_name = None
+        """Return any unproccesed events from the recv queue"""
         try:
-            slaveid, empty, event_json = self.sock.recv_multipart(flags=zmq.NOBLOCK)
-        except zmq.ZMQError as e:
-            if e.errno == zmq.EAGAIN:
-                # No message ready from slaves, continue processing
-                pass
-            else:
-                raise
-        else:
-            event_data = json.loads(event_json)
-            event_name = event_data.pop('_event_name')
-
-            if event_name == 'message':
-                # messages are special, if they're encountered in any recv loop they get printed
-                self.print_message(event_data['message'], slaveid)
-                self.ack(slaveid, event_name)
-        return slaveid, event_data, event_name
+            with recv_lock:
+                return self._recv_queue.popleft()
+        except IndexError:
+            return None, None, None
 
     def print_message(self, message, prefix='master', **markup):
         """Print a message from a node to the py.test console
@@ -334,7 +325,6 @@ class ParallelSession(object):
             ))
         return tests
 
-    @pytest.mark.trylast
     def pytest_sessionstart(self, session):
         """pytest sessionstart hook
 
@@ -575,6 +565,31 @@ def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
             red=True)
         slave.kill()
         return
+
+
+def _recv_queue(session):
+    # poll the zmq socket, populate the recv queue deque with responses
+    while True:
+        try:
+            slaveid, empty, event_json = session.sock.recv_multipart(flags=zmq.NOBLOCK)
+        except zmq.ZMQError as e:
+            if e.errno == zmq.EAGAIN:
+                # No message ready from slaves, continue processing
+                sleep(.1)
+                continue
+            else:
+                raise
+        else:
+            event_data = json.loads(event_json)
+            event_name = event_data.pop('_event_name')
+
+            if event_name == 'message':
+                # messages are special, handle them immediately
+                session.print_message(event_data['message'], slaveid)
+                session.ack(slaveid, event_name)
+            else:
+                with recv_lock:
+                    session._recv_queue.append((slaveid, event_data, event_name))
 
 
 class TerminalDistReporter(object):
