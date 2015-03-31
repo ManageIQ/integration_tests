@@ -5,14 +5,18 @@ Top-level conftest.py does a couple of things:
 2) Load a number of plugins and fixtures automatically
 """
 from pkgutil import iter_modules
+from subprocess import Popen, PIPE
 
 import pytest
+import re
 
 import cfme.fixtures
 import fixtures
 import markers
 import metaplugins
 from fixtures.pytest_store import store
+from utils.log import logger
+from utils.path import data_path
 from utils.ssh import SSHClient
 from utils.version import current_version
 
@@ -45,6 +49,18 @@ def set_default_domain():
         # Re-enable the domain
         ssh_client.run_rails_command(
             "\"d = MiqAeDomain.where :name => 'Default'; d = d.first; d.enabled = true; d.save!\"")
+
+
+@pytest.fixture(scope="session", autouse=True)
+def fix_merkyl_workaround():
+    """Workaround around merkyl not opening an iptables port for communication"""
+    ssh_client = SSHClient()
+    if ssh_client.run_command('test -f /etc/init.d/merkyl').rc == 0:
+        logger.info('Rudely overwriting merkyl init.d on appliance;')
+        local_file = data_path.join("bundles").join("merkyl").join("merkyl")
+        remote_file = "/etc/init.d/merkyl"
+        ssh_client.put_file(local_file.strpath, remote_file)
+        ssh_client.run_command("service merkyl restart")
 
 
 def _pytest_plugins_generator(*extension_pkgs):
