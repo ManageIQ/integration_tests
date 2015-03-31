@@ -330,6 +330,21 @@ def get_appliance(appliance):
 
 
 @jsonapi.authenticated_method
+def appliance_data(user, appliance):
+    """Returns data about the appliance serialized as JSON.
+
+    You can specify appliance by IP address, id or name.
+    """
+    appliance = get_appliance(appliance)
+    if appliance.owner is None:
+        if not user.is_staff:
+            raise Exception("Only staff can operate with nonowned appliances")
+    elif appliance.owner != user:
+        raise Exception("This appliance belongs to a different user!")
+    return appliance.serialized
+
+
+@jsonapi.authenticated_method
 def destroy_appliance(user, appliance):
     """Destroy the appliance.
 

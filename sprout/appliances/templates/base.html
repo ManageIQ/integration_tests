@@ -39,7 +39,7 @@
                 kwargs: kwargs,
             }),
             success: function(data, s, xhr) {
-                var result = callback($.parseJSON(data));
+                var result = $.parseJSON(data);
                 if(result["status"] == "success")
                 {
                     return callback_success(result["result"]);
