@@ -121,12 +121,16 @@ class Rdb(pdb.Pdb):
             A py.test run encountered an error. The remote debugger is running
             on {} (TCP), waiting for telnet connection.
             """).format(endpoint)
+
+        try:
             smtp_server = smtp_conf['server']
             smtp = smtplib.SMTP(smtp_server)
             msg = MIMEText(body)
             msg['Subject'] = subject
             msg['To'] = ', '.join(recipients)
             smtp.sendmail('rdb-breakpoint@example.com', recipients, msg.as_string())
+        except socket.error:
+            logger.critical("Couldn't send email")
 
         msg = 'Remote debugger listening on TCP {}'.format(port)
         logger.critical(msg)
