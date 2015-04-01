@@ -92,6 +92,7 @@ def appliance_police():
             'subject': 'RDB Breakpoint: Appliance failure',
             'recipients': ['semyers@redhat.com', 'psavage@redhat.com'],
         })
+        store.slave_manager.message('Resuming testing following remote debugging')
 
 
 def _pytest_plugins_generator(*extension_pkgs):
