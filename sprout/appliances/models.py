@@ -499,11 +499,11 @@ class Appliance(MetadataMixin):
             appliance.status = status
             appliance.status_changed = timezone.now()
             appliance.save()
-            logger().info("{}: {}".format(str(self), status))
+            logger().info("{}/{}: {}".format(self.id, self.name, status))
 
     def set_power_state(self, power_state):
         if power_state != self.power_state:
-            logger().info("{} changed power state to {}".format(self.name, power_state))
+            logger().info("{}/{} changed power state to {}".format(self.id, self.name, power_state))
             self.power_state = power_state
             self.power_state_changed = timezone.now()
 
@@ -544,7 +544,7 @@ class Appliance(MetadataMixin):
                 self = Appliance.objects.get(id=appliance_or_id.id)
             else:
                 self = Appliance.objects.get(id=appliance_or_id)
-            logger().info("Killing appliance {}".format(self.id))
+            logger().info("Killing appliance {}/{}".format(self.id, self.name))
             if not self.marked_for_deletion:
                 self.marked_for_deletion = True
                 self.leased_until = None
@@ -554,7 +554,7 @@ class Appliance(MetadataMixin):
     def delete(self, *args, **kwargs):
         # Intercept delete and lessen the number of appliances in the pool
         # Then if the appliance is still present in the management system, kill it
-        logger().info("Deleting appliance {}".format(self.id))
+        logger().info("Deleting appliance {}/{} from database".format(self.id, self.name))
         pool = self.appliance_pool
         result = super(Appliance, self).delete(*args, **kwargs)
         do_not_touch = kwargs.pop("do_not_touch_ap", False)
@@ -564,7 +564,7 @@ class Appliance(MetadataMixin):
         return result
 
     def prolong_lease(self, time=60):
-        logger().info("Prolonging lease of {} by {} minutes.".format(self.id, time))
+        logger().info("Prolonging lease of {} by {} minutes from now.".format(self.id, time))
         with transaction.atomic():
             appliance = Appliance.objects.get(id=self.id)
             appliance.leased_until = timezone.now() + timedelta(minutes=time)
@@ -744,6 +744,7 @@ class AppliancePool(MetadataMixin):
         return DelayedProvisionTask.objects.filter(pool=self)
 
     def prolong_lease(self, time=60):
+        logger().info("Initiated lease pronging of pool {}".format(self.id))
         for appliance in self.appliances:
             appliance.prolong_lease(time=time)
 
@@ -753,6 +754,7 @@ class AppliancePool(MetadataMixin):
             p.not_needed_anymore = True
             p.save()
         save_lives = not self.fulfilled
+        logger().info("Killing pool #{}".format(self.id))
         if self.appliances:
             for appliance in self.appliances:
                 # The leased_until is reliable sign of whether the appliance was used
