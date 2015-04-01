@@ -121,6 +121,8 @@ def kill_unused_appliances(self):
     with transaction.atomic():
         for appliance in Appliance.objects.filter(marked_for_deletion=False, ready=True):
             if appliance.leased_until is not None and appliance.leased_until <= timezone.now():
+                logger().info("Watchdog found an appliance that is to be deleted: {}/{}".format(
+                    appliance.id, appliance.name))
                 kill_appliance.delay(appliance.id)
 
 
@@ -212,6 +214,7 @@ def poke_trackerbot(self):
                         name=template_name, preconfigured=False, date=date,
                         version=template_version, ready=True, exists=True, usable=True)
                     tpl.save()
+                    logger().info("Created a new template #{}".format(tpl.id))
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
@@ -766,6 +769,7 @@ def retrieve_appliance_ip(self, appliance_id):
 @singleton_task()
 def refresh_appliances(self):
     """Dispatches the appliance refresh process among the providers"""
+    logger().info("Initiating regular appliance provider refresh")
     for provider in Provider.objects.all():
         refresh_appliances_provider.delay(provider.id)
 
@@ -775,6 +779,7 @@ def refresh_appliances_provider(self, provider_id):
     """Downloads the list of VMs from the provider, then matches them by name or UUID with
     appliances stored in database.
     """
+    logger().info("Refreshing appliances in {}".format(provider_id))
     provider = Provider.objects.get(id=provider_id)
     vms = provider.api.all_vms()
     dict_vms = {}
@@ -800,6 +805,8 @@ def refresh_appliances_provider(self, provider_id):
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
                 vm.power_state, Appliance.Power.UNKNOWN))
             appliance.save()
+            logger().info("Retrieved UUID for appliance {}/{}: {}".format(
+                appliance.id, appliance.name, appliance.uuid))
         else:
             # Orphaned :(
             appliance.set_power_state(Appliance.Power.ORPHANED)
@@ -808,12 +815,14 @@ def refresh_appliances_provider(self, provider_id):
 
 @singleton_task()
 def check_templates(self):
+    logger().info("Initiated a periodic template check")
     for provider in Provider.objects.all():
         check_templates_in_provider.delay(provider.id)
 
 
 @singleton_task(soft_time_limit=180)
 def check_templates_in_provider(self, provider_id):
+    logger().info("Initiated a periodic template check for {}".format(provider_id))
     provider = Provider.objects.get(id=provider_id)
     # Get templates and update metadata
     try:
@@ -856,6 +865,8 @@ def delete_nonexistent_appliances(self):
             if appliance.power_state_changed > expiration_time:
                 # Ignore it for now
                 continue
+            logger().info(
+                "I will delete orphaned appliance {}/{}".format(appliance.id, appliance.name))
             try:
                 appliance.delete()
             except ObjectDoesNotExist as e:
@@ -872,6 +883,7 @@ def delete_nonexistent_appliances(self):
     expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
     for appliance in Appliance.objects.filter(ready=False, marked_for_deletion=False).all():
         if appliance.status_changed < expiration_time:
+            logger().info("Killing broken appliance {}/{}".format(appliance.id, appliance.name))
             Appliance.kill(appliance)  # Use kill because the appliance may still exist
     # And now - if something happened during appliance deletion, call kill again
     for appliance in Appliance.objects.filter(
@@ -880,6 +892,7 @@ def delete_nonexistent_appliances(self):
             appl = Appliance.objects.get(pk=appliance.pk)
             appl.marked_for_deletion = False
             appl.save()
+        logger().info("Trying kill unkilled appliance {}/{}".format(appliance.id, appliance.name))
         Appliance.kill(appl)
 
 
@@ -955,10 +968,14 @@ def generic_shepherd(preconfigured):
                         name=new_appliance_name)
                     appliance.save()
             if tpl_free:
+                logger().info(
+                    "Adding an appliance to shepherd: {}/{}".format(appliance.id, appliance.name))
                 clone_template_to_appliance.delay(appliance.id, None, preconfigured)
         elif len(appliances) > pool_size:
             # Too many appliances, kill the surplus
             for appliance in appliances[:len(appliances) - pool_size]:
+                logger().info("Killing an extra appliance {}/{} in shepherd".format(
+                    appliance.id, appliance.name))
                 Appliance.kill(appliance)
 
         # Killing old appliances
@@ -968,6 +985,9 @@ def generic_shepherd(preconfigured):
                     **filter_kill):
                 for a in Appliance.objects.filter(
                         template=template, appliance_pool=None, marked_for_deletion=False):
+                    logger().info(
+                        "Killing appliance {}/{} in shepherd because it is obsolete now".format(
+                            a.id, a.name))
                     Appliance.kill(a)
 
 
@@ -1052,6 +1072,7 @@ def appliance_rename(self, appliance_id, new_name):
     if appliance.name == new_name:
         return
     with redis.appliances_ignored_when_renaming(appliance.name, new_name):
+        logger().info("Renaming {}/{} to {}".format(appliance_id, appliance.name, new_name))
         appliance.name = appliance.provider_api.rename_vm(appliance.name, new_name)
         appliance.save()
 
