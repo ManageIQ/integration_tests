@@ -1,4 +1,5 @@
 basic_info:
+    epel: http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
     app_version: 5.2.0
 bugzilla:
     url: http://bugzilla.example.test/xmlrpc.cgi

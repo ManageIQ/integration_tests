@@ -500,6 +500,26 @@ class VMwareProvider(Provider):
                 'ipaddress_text': kwargs.get('ip_address')}
 
 
+class OpenstackInfraProvider(Provider):
+    STATS_TO_MATCH = ['num_template', 'num_vm', 'num_host']
+
+    def __init__(self, name=None, credentials=None, key=None, hostname=None,
+                 ip_address=None, start_ip=None, end_ip=None, provider_data=None):
+        super(OpenstackInfraProvider, self).__init__(name=name, credentials=credentials,
+                                             key=key, provider_data=provider_data)
+
+        self.hostname = hostname
+        self.ip_address = ip_address
+        self.start_ip = start_ip
+        self.end_ip = end_ip
+
+    def _form_mapping(self, create=None, **kwargs):
+        return {'name_text': kwargs.get('name'),
+                'type_select': create and 'OpenStack Infrastructure',
+                'hostname_text': kwargs.get('hostname'),
+                'ipaddress_text': kwargs.get('ip_address')}
+
+
 class SCVMMProvider(Provider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
 
@@ -685,6 +705,15 @@ def get_from_config(provider_config_name):
                              key=provider_config_name,
                              start_ip=start_ip,
                              end_ip=end_ip)
+    elif prov_type == "openstack-infra":
+        return OpenstackInfraProvider(
+            name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials=credentials,
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip)
     else:
         raise UnknownProviderType('{} is not a known infra provider type'.format(prov_type))
 

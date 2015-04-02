@@ -5,6 +5,7 @@ import os
 import random
 import shutil
 import subprocess
+from contextlib import contextmanager
 from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
@@ -1115,6 +1116,120 @@ class IPAppliance(object):
         result, wait = wait_for(self._check_appliance_ui_wait_fn, num_sec=timeout,
             fail_condition=not running, delay=10)
         return result
+
+    def install_epel(self, log_callback=None):
+        """Install the EPEL repository on the appliance"""
+        if log_callback is None:
+            log_callback = self.log.info
+
+        def log_raise(exception_class, message):
+            log_callback(message)
+            raise exception_class(message)
+
+        if self.is_epel_installed:
+            return
+
+        log_callback("Installing EPEL")
+
+        try:
+            epel = conf.cfme_data.basic_info.epel
+        except AttributeError:
+            log_raise(KeyError, "You must specify the cfme_data.yaml/basic_info/epel rpm url!")
+
+        with self.ssh_client() as client:
+            result = client.run_command("yum install -y {}".format(epel))
+            if result.rc != 0:
+                log_raise(Exception, "Cannot install EPEL:\n{}".format(result.output.strip()))
+
+    @property
+    def is_epel_installed(self):
+        with self.ssh_client() as client:
+            result = client.run_command("rpm -qa | grep ^epel-release")
+            return result.rc == 0
+
+    @property
+    def is_openvpn_installed(self):
+        with self.ssh_client() as client:
+            result = client.run_command("rpm -qa | grep ^openvpn")
+            return result.rc == 0
+
+    def install_openvpn(self, log_callback=None):
+        if log_callback is None:
+            log_callback = self.log.info
+
+        def log_raise(exception_class, message):
+            log_callback(message)
+            raise exception_class(message)
+
+        if self.is_openvpn_installed:
+            return
+        log_callback("Installing OpenVPN")
+        if not self.is_epel_installed:
+            self.install_epel(
+                log_callback=lambda msg: log_callback("OpenVPN install: {}".format(msg)))
+        with self.ssh_client() as client:
+            result = client.run_command("yum install -y openvpn")
+            if result.rc != 0:
+                log_raise(Exception, "Could not install OpenVPN:\n{}".format(result.output.strip()))
+
+    def setup_openvpn_for(self, provider, log_callback=None):
+        if log_callback is None:
+            log_callback = self.log.info
+
+        self.install_openvpn(log_callback=log_callback)
+        provider_data = conf.cfme_data.management_systems[provider]
+        if "vpn" not in provider_data:
+            log_callback("No need to set up VPN for provider {}".format(provider))
+            return
+        # TODO: If they start building RHEL/CENTOS 7, modify
+        archive_url = provider_data["vpn"]["url6"]
+        with self.ssh_client() as client:
+            assert client.run_command("wget -O /vpn.tar.gz {}".format(archive_url)).rc == 0
+            assert client.run_command(
+                "cd /; tar xfv ovpn.tar.gz | grep '[^/]$' > ovpn_list").rc == 0
+            assert client.run_command("chkconfig openvpn on").rc == 0
+            assert client.run_command("service openvpn start").rc == 0
+
+    def remove_openvpn(self, log_callback=None):
+        if log_callback is None:
+            log_callback = self.log.info
+        if not self.is_openvpn_installed:
+            return
+        with self.ssh_client() as client:
+            if client.run_command("ls /ovpn_list").rc != 0:
+                log_callback("OpenVPN not set up")
+                return
+            client.run_command("service openvpn stop")
+            assert client.run_command("chkconfig openvpn off").rc == 0
+            files = client.run_command("cat /ovpn_list").output.strip()
+            for file in [file.strip() for file in files.split("\n")]:
+                client.run_command("rm -f {}".format(file))
+            client.run_command("rm -f /ovpn_list")
+
+    def uninstall_epel(self, log_callback=None):
+        if log_callback is None:
+            log_callback = self.log.info
+        if not self.is_epel_installed:
+            return
+        with self.ssh_client() as client:
+            client.run_command("yum remove -y epel-release")
+
+    def uninstall_openvpn(self, log_callback=None):
+        if log_callback is None:
+            log_callback = self.log.info
+        if not self.is_openvpn_installed:
+            return
+        with self.ssh_client() as client:
+            client.run_command("yum remove -y openvpn")
+
+    @contextmanager
+    def vpn_for(self, provider, log_callback=None):
+        """Context manager for setting up the VPN connection for special providers."""
+        self.setup_openvpn_for(provider, log_callback=log_callback)
+        yield
+        self.remove_openvpn(log_callback=log_callback)
+        self.uninstall_openvpn(log_callback=log_callback)
+        self.uninstall_epel(log_callback=log_callback)
 
     def install_vddk(self, reboot=True, force=False, vddk_url=None, log_callback=None):
         '''Install the vddk on a appliance'''

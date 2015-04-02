@@ -21,6 +21,7 @@ infra_provider_type_map = {
     'virtualcenter': mgmt_system.VMWareSystem,
     'rhevm': mgmt_system.RHEVMSystem,
     'scvmm': mgmt_system.SCVMMSystem,
+    'openstack-infra': mgmt_system.OpenstackSystem
 }
 
 #: mapping of cloud provider type names to :py:mod:`utils.mgmt_system` classes
