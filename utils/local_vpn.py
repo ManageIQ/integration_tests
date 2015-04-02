@@ -26,10 +26,10 @@ def vpn_for(provider_key):
         logger.info("OpenVPN log: {}".format(log_filename))
         with path.log_path.join(log_filename).open("w") as log:
             openvpn = Popen(
-                "cd {}; openvpn --config user.conf".format(tmpdir),
+                "cd {}; sudo -n openvpn --config user.conf".format(tmpdir),
                 shell=True, stdout=log)
             time.sleep(5)
-            assert openvpn.poll() is None, "OpenVPN died!"
+            assert openvpn.poll() is None, "OpenVPN died! (maybe needs no-password sudo?)"
             yield
             openvpn.terminate()
             openvpn.wait()

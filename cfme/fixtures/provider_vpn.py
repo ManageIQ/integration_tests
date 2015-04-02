@@ -1,6 +1,31 @@
 # -*- coding: utf-8 -*-
 """This module handles connections to providers that are hidden in some private networks, accessible
-by a VPN connection"""
+by a VPN connection.
+
+This requires some additional fields in cfme_data:
+
+.. code-block:: yaml
+
+   basic_info:
+     epel: url-to-epel-repo-rpm
+   management_systems:
+     my_mgmt_system:
+       vpn:
+         url6: url
+         test_machine: url
+
+So far we have url6 for the RHEL6 based appliances. Will be needed to be extended if RHEL7 comes.
+
+The ``url6`` url is a root-based archive (starts in ``i`` in the filesystem).
+This one gets downloaded
+into the ``/`` of the appliance and unpacked so it produces ``/etc/openvpn/*`` configuration files
+for RHEL6 based systems.
+
+The ``test_machine`` url is a flat archive with configuration and keys, the keys should not have
+any prefix path in the configuration file. This one is used to start openvpn client in the testing
+environment. The testing environemnt should have ``sudo`` command without password to successfully
+start the VPN environment.
+"""
 import pytest
 
 from fixtures.pytest_store import store
@@ -8,10 +33,14 @@ from utils import local_vpn
 
 
 @pytest.yield_fixture(scope="module")
-def provider_vpn(provider_data, provider_key):
+def provider_vpn(provider_data, provider_key, provider_crud):
+    """This fixture sets up a VPN connection between the provider and the appliance and also between
+    the provider and the test host to be able to access it using mgmt_system"""
     if "vpn" not in provider_data:
         yield
     else:
         with store.current_appliance.vpn_for(provider_key):
             with local_vpn.vpn_for(provider_key):
                 yield
+                # And delete to prevent having inaccessible providers
+                provider_crud.delete(cancel=False)
