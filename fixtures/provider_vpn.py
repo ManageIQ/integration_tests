@@ -34,6 +34,7 @@ from Runner import Run
 
 from fixtures.pytest_store import store
 from utils import local_vpn
+from utils.wait import wait_for
 
 
 @pytest.yield_fixture(scope="module")
@@ -49,4 +50,8 @@ def provider_vpn(provider_data, provider_key, provider_crud):
             with local_vpn.vpn_for(provider_key):
                 yield
                 # And delete to prevent having inaccessible providers
-                provider_crud.delete(cancel=False)
+                if provider_crud.exists:
+                    provider_crud.delete(cancel=False)
+                wait_for(
+                    lambda: provider_crud.exists,
+                    num_sec=90, delay=2, message="provider {} disappear".format(provider_key))
