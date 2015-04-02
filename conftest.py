@@ -8,6 +8,7 @@ from pkgutil import iter_modules
 
 import pytest
 import requests
+from Runner import Run
 
 import cfme.fixtures
 import fixtures
@@ -15,9 +16,10 @@ import markers
 import metaplugins
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
+from utils import local_vpn
 from utils.log import logger
-from utils.path import data_path
 from utils.net import net_check
+from utils.path import data_path
 from utils.ssh import SSHClient
 from utils.version import current_version
 
@@ -93,6 +95,40 @@ def appliance_police():
             'recipients': ['semyers@redhat.com', 'psavage@redhat.com'],
         })
         store.slave_manager.message('Resuming testing following remote debugging')
+
+
+@pytest.yield_fixture(autouse=True, scope="module")
+def provider_vpn_setup_moduledb():
+    data = {}
+    yield data
+    for key, crud in data.iteritems():
+        if crud.exists:
+            crud.delete(cancel=False)
+        appliance = fixtures.pytest_store.store.current_appliance
+        appliance.remove_openvpn()  # Just the config, the package itself stays
+
+
+@pytest.yield_fixture(autouse=True, scope="function")
+def provider_vpn_setup(request, provider_vpn_setup_moduledb):
+    if "provider_crud" not in request.fixturenames:
+        yield
+    else:
+        crud = request.getfuncargvalue("provider_crud")
+        if crud.key in provider_vpn_setup_moduledb:
+            yield
+        else:
+            data = crud.get_yaml_data()
+            if "vpn" not in data:
+                yield
+            else:
+                if not Run.command("sudo -n true"):
+                    pytest.skip("The environment does not allow non-password sudo.")
+                else:
+                    fixtures.pytest_store.store.current_appliance.setup_openvpn_for(crud.key)
+                    fixtures.pytest_store.store.current_appliance.uninstall_epel()
+                    provider_vpn_setup_moduledb[crud.key] = crud
+                    with local_vpn.vpn_for(crud.key):
+                        yield
 
 
 def _pytest_plugins_generator(*extension_pkgs):
