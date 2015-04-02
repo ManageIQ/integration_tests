@@ -501,7 +501,7 @@ class VMwareProvider(Provider):
 
 
 class OpenstackInfraProvider(Provider):
-    STATS_TO_MATCH = ['num_template', 'num_vm', 'num_host']
+    STATS_TO_MATCH = ['num_template', 'num_vm']  # , 'num_host']
 
     def __init__(self, name=None, credentials=None, key=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, provider_data=None):
