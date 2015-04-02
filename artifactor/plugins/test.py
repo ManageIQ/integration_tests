@@ -1,6 +1,6 @@
 """ Test plugin for Artifactor """
 
-from artifactor.utils import ArtifactorBasePlugin
+from artifactor import ArtifactorBasePlugin
 import time
 
 

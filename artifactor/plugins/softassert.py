@@ -13,7 +13,7 @@ artifactor:
 Requires the filedump plugin
 """
 
-from artifactor.utils import ArtifactorBasePlugin
+from artifactor import ArtifactorBasePlugin
 import os.path
 import os
 

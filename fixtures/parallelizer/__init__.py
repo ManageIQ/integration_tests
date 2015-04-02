@@ -115,6 +115,7 @@ class ParallelSession(object):
     def __init__(self, config):
         self.config = config
         self.session = None
+        self.session_finished = False
         self.countfailures = 0
         self.collection = OrderedDict()
         self.sent_tests = 0
@@ -598,7 +599,7 @@ def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
 
 def _recv_queue(session):
     # poll the zmq socket, populate the recv queue deque with responses
-    while True:
+    while not session.session_finished:
         try:
             slaveid, empty, event_json = session.sock.recv_multipart(flags=zmq.NOBLOCK)
         except zmq.ZMQError as e:

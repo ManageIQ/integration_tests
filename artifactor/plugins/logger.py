@@ -12,7 +12,7 @@ artifactor:
             level: DEBUG
 """
 
-from artifactor.utils import ArtifactorBasePlugin
+from artifactor import ArtifactorBasePlugin
 import os
 from utils.log import create_logger
 
