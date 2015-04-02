@@ -25,8 +25,12 @@ The ``test_machine`` url is a flat archive with configuration and keys, the keys
 any prefix path in the configuration file. This one is used to start openvpn client in the testing
 environment. The testing environemnt should have ``sudo`` command without password to successfully
 start the VPN environment.
+
+The :py:func:`provider_vpn` fixture should detect that non-password ``sudo`` is supported or not
+and should act accordingly (without it skip the test)
 """
 import pytest
+from Runner import Run
 
 from fixtures.pytest_store import store
 from utils import local_vpn
@@ -39,6 +43,8 @@ def provider_vpn(provider_data, provider_key, provider_crud):
     if "vpn" not in provider_data:
         yield
     else:
+        if not Run.command("sudo -n true"):
+            pytest.skip("The environment does not allow non-password sudo.")
         with store.current_appliance.vpn_for(provider_key):
             with local_vpn.vpn_for(provider_key):
                 yield
