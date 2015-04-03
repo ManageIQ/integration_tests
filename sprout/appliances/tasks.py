@@ -206,7 +206,7 @@ def poke_trackerbot(self):
                 name=template_name, preconfigured=False)
         except ObjectDoesNotExist:
             if template_name in provider.templates:
-                date = parse_template(template_name)[-1]
+                date = parse_template(template_name).datestamp
                 template_version = retrieve_cfme_appliance_version(template_name)
                 with transaction.atomic():
                     tpl = Template(
@@ -251,7 +251,7 @@ def create_appliance_template(provider_id, group_id, template_name):
         except ObjectDoesNotExist:
             pass
         # Fire off the template preparation
-        date = parse_template(template_name)[-1]
+        date = parse_template(template_name).datestamp
         template_version = retrieve_cfme_appliance_version(template_name)
         new_template_name = settings.TEMPLATE_FORMAT.format(
             group=group.id, date=date.strftime("%y%m%d"), rnd=generate_random_string())
