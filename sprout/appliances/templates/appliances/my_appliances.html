@@ -7,11 +7,11 @@
     <h2>Listing and operation of your appliances</h2>
 {% else %}
     {% if show_user == "my" %}
-        <h2>Listing and operation of your appliances - <a href="{% url 'appliances.views.my_appliances' %}?show=all">Show all</a></h2>
+        <h2>Listing and operation of your appliances - <a href="{% url 'my_appliances' %}?show=all">Show all</a></h2>
     {% elif show_user == "all" %}
-        <h2>Listing and operation of all users&apos; appliances - <a href="{% url 'appliances.views.my_appliances' %}?show=my">Show mine</a></h2>
+        <h2>Listing and operation of all users&apos; appliances - <a href="{% url 'my_appliances' %}?show=my">Show mine</a></h2>
     {% else %}
-        <h2>Listing and operation of all {{show_user}}&apos;s appliances - <a href="{% url 'appliances.views.my_appliances' %}?show=all">Show all</a>, <a href="{% url 'appliances.views.my_appliances' %}?show=my">Show mine</a></h2>
+        <h2>Listing and operation of all {{show_user}}&apos;s appliances - <a href="{% url 'my_appliances' %}?show=all">Show all</a>, <a href="{% url 'my_appliances' %}?show=my">Show mine</a></h2>
     {% endif %}
 {% endif %}
 {% for pool in pools %}
@@ -20,7 +20,7 @@
             <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} {% if pool.version %}({{ pool.version }}){% endif %} - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}</strong>
             {% if show_user == "all" %}
                 <em>Owner: {{ pool.owner.first_name }} {{ pool.owner.last_name }}
-                <a href="{% url 'appliances.views.my_appliances' %}?show={{ pool.owner.username }}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
+                <a href="{% url 'my_appliances' %}?show={{ pool.owner.username }}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
             {% endif %}
             <div class="form-inline">
                 <div class="form-group">
@@ -61,7 +61,7 @@
                     <td>
                         {% if appliance.managed_providers %}
                             {% for provider in appliance.managed_providers %}
-                                <a href="{% url 'appliances.views.providers' %}#provider-{{provider}}" class="btn btn-default btn-xs">{{provider}}</a>
+                                <a href="{% url 'providers' %}#provider-{{provider}}" class="btn btn-default btn-xs">{{provider}}</a>
                             {% endfor %}
                         {% else %}
                             <em>Nothing! :)</em>
@@ -80,30 +80,30 @@
                         <div class="btn-toolbar" role="toolbar" aria-label="Appliance operations">
                             <div class="btn-group" role="group" aria-label="Power operations">
                                 {% if appliance.can_launch %}
-                                    <a href="{% url 'appliances.views.start_appliance' appliance.id %}" class="btn btn-success btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Launch</a>
+                                    <a href="{% url 'start_appliance' appliance.id %}" class="btn btn-success btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Launch</a>
                                 {% endif %}
                                 {% if appliance.can_stop %}
-                                    <a href="{% url 'appliances.views.stop_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                    <a href="{% url 'stop_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
                                 {% endif %}
                                 {% if appliance.can_suspend %}
-                                    <a href="{% url 'appliances.views.suspend_appliance' appliance.id %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
+                                    <a href="{% url 'suspend_appliance' appliance.id %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
                                 {% endif %}
                             </div>
                             <div class="btn-group" role="group" aria-label="">
-                                <a href="{% url 'appliances.views.kill_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
+                                <a href="{% url 'kill_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
                             </div>
                         </div>
                     </td>
                     <td>
                         <div class="btn-toolbar" role="toolbar" aria-label="Appliance lease time control">
                             <div class="btn-group" role="group" aria-label="...">
-                            <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
-                            <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
-                            <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
-                            <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
-                            <a href="{% url 'appliances.views.prolong_lease_appliance' appliance.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
+                            <a href="{% url 'prolong_lease_appliance' appliance.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
+                            <a href="{% url 'prolong_lease_appliance' appliance.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
+                            <a href="{% url 'prolong_lease_appliance' appliance.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
+                            <a href="{% url 'prolong_lease_appliance' appliance.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
+                            <a href="{% url 'prolong_lease_appliance' appliance.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
                             {% if appliance.leased_until and request.user.is_superuser %}
-                                <a href="{% url 'appliances.views.dont_expire_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
+                                <a href="{% url 'dont_expire_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
                             {% endif %}
                             </div>
                         </div>
@@ -125,8 +125,8 @@
                 </tr>
                 <tr>
                     <td colspan="10">
-                        <a href="{% url 'appliances.views.kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')" style="display: inline;"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
-                        <form action="{% url 'appliances.views.transfer_pool' %}" method="POST" style="display: inline;">
+                        <a href="{% url 'kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')" style="display: inline;"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
+                        <form action="{% url 'transfer_pool' %}" method="POST" style="display: inline;">
                             {% csrf_token %}
                             <input type="hidden" name="pool_id" value="{{ pool.id }}">
                             <input type="submit" class="btn btn-success btn-sm" value="Transfer ownership to:" onclick="return confirm('Are you sure?')">
@@ -136,6 +136,15 @@
                             {% endfor %}
                             </select>
                         </form>
+                        | Set pool expiration: 
+                        <a href="{% url 'prolong_lease_pool' pool.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
+                        <a href="{% url 'prolong_lease_pool' pool.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
+                        <a href="{% url 'prolong_lease_pool' pool.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
+                        <a href="{% url 'prolong_lease_pool' pool.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
+                        <a href="{% url 'prolong_lease_pool' pool.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
+                        {% if request.user.is_superuser %}
+                            <a href="{% url 'dont_expire_pool' pool.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
+                        {% endif %}
                     </td>
                 </tr>
             </tfoot>
@@ -143,7 +152,7 @@
     </div>
 {% endfor %}
 <h2>Requesting additional pools</h2>
-<form action="{% url 'appliances.views.request_pool' %}" method="POST" class="form-horizontal">
+<form action="{% url 'request_pool' %}" method="POST" class="form-horizontal">
     {% csrf_token %}
     <div class="form-group">
       <label for="stream" class="col-md-2 control-label">Select stream:</label>
@@ -209,7 +218,7 @@ $(document).ready(function() {
         var description = input.value;
         $.ajax({
             type: "POST",
-            url: "{% url 'appliances.views.set_pool_description' %}",
+            url: "{% url 'set_pool_description' %}",
             data: {pool_id: poolid, description: description},
             dataType: 'html'
         })
@@ -219,7 +228,7 @@ $(document).ready(function() {
     $('select#stream').change(function(){
         $.ajax({
                 type: "POST",
-                url: "{% url 'appliances.views.versions_for_group' %}",
+                url: "{% url 'versions_for_group' %}",
                 data: {stream: $('select#stream').val(), preconfigured: $("#preconfigured").is(":checked")},
                 dataType: 'html'
          }).done(function(data){
@@ -233,7 +242,7 @@ $(document).ready(function() {
     $('select#version').change(function(){
         $.ajax({
                 type: "POST",
-                url: "{% url 'appliances.views.date_for_group_and_version' %}",
+                url: "{% url 'date_for_group_and_version' %}",
                 data: {stream: $('select#stream').val(), version: $('select#version').val(), preconfigured: $("#preconfigured").is(":checked")},
                 dataType: 'html'
          }).done(function(data){
@@ -244,7 +253,7 @@ $(document).ready(function() {
     $('select#date').change(function(){
         $.ajax({
                 type: "POST",
-                url: "{% url 'appliances.views.providers_for_date_group_and_version' %}",
+                url: "{% url 'providers_for_date_group_and_version' %}",
                 data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked")},
                 dataType: 'html'
          }).done(function(data){

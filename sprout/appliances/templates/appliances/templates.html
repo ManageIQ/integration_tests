@@ -48,7 +48,7 @@
                         <div class="btn-toolbar" role="toolbar" aria-label="Template operations">
                             <div class="btn-group" role="group" aria-label="">
                                 {% if template.can_be_deleted %}
-                                    <a href="{% url 'appliances.views.delete_template_provider' template.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-trash"></span> Delete in provider</a>
+                                    <a href="{% url 'delete_template_provider' template.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-trash"></span> Delete in provider</a>
                                 {% endif %}
                             </div>
                         </div>

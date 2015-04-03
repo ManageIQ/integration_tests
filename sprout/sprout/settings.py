@@ -57,22 +57,31 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.messages.context_processors.messages',
-    'django.contrib.auth.context_processors.auth',
-    "django.core.context_processors.request",
-    "django.core.context_processors.debug",
-    "django.core.context_processors.i18n",
-    "django.core.context_processors.media",
-    'appliances.context_processors.hubber_url',
-    'appliances.context_processors.sprout_needs_update',
-)
-
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
 ROOT_URLCONF = 'sprout.urls'
 
 WSGI_APPLICATION = 'sprout.wsgi.application'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.messages.context_processors.messages',
+                'django.contrib.auth.context_processors.auth',
+                "django.template.context_processors.request",
+                "django.template.context_processors.debug",
+                "django.template.context_processors.i18n",
+                "django.template.context_processors.media",
+                'appliances.context_processors.hubber_url',
+                'appliances.context_processors.sprout_needs_update',
+            ],
+        },
+    },
+]
 
 
 # Database

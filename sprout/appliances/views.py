@@ -50,9 +50,7 @@ def templates(request):
 def shepherd(request):
     if not request.user.is_authenticated():
         return go_home(request)
-    appliances = Appliance.objects.filter(
-        appliance_pool=None, ready=True, marked_for_deletion=False).order_by(
-            "template__template_group", "template__version", "template__date", "template__provider")
+    groups = Group.objects.all()
     return render(request, 'appliances/shepherd.html', locals())
 
 
@@ -262,6 +260,22 @@ def prolong_lease_appliance(request, appliance_id, minutes):
     return go_back_or_home(request)
 
 
+def prolong_lease_pool(request, pool_id, minutes):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    try:
+        appliance_pool = AppliancePool.objects.get(id=pool_id)
+    except ObjectDoesNotExist:
+        messages.error(request, 'Appliance pool with ID {} does not exist!.'.format(pool_id))
+        return go_back_or_home(request)
+    if not can_operate_appliance_or_pool(appliance_pool, request.user):
+        messages.error(request, 'This appliance belongs either to some other user or nobody.')
+        return go_back_or_home(request)
+    appliance_pool.prolong_lease(time=int(minutes))
+    messages.success(request, 'Lease prolonged successfully.')
+    return go_back_or_home(request)
+
+
 def dont_expire_appliance(request, appliance_id):
     if not request.user.is_authenticated():
         return go_home(request)
@@ -276,6 +290,25 @@ def dont_expire_appliance(request, appliance_id):
     with transaction.atomic():
         appliance.leased_until = None
         appliance.save()
+    messages.success(request, 'Lease disabled successfully. Be careful.')
+    return go_back_or_home(request)
+
+
+def dont_expire_pool(request, pool_id):
+    if not request.user.is_authenticated():
+        return go_home(request)
+    try:
+        appliance_pool = AppliancePool.objects.get(id=pool_id)
+    except ObjectDoesNotExist:
+        messages.error(request, 'Pool with ID {} does not exist!.'.format(pool_id))
+        return go_back_or_home(request)
+    if not request.user.is_superuser:
+        messages.error(request, 'Disabling expiration time is allowed only for superusers.')
+        return go_back_or_home(request)
+    with transaction.atomic():
+        for appliance in appliance_pool.appliances:
+            appliance.leased_until = None
+            appliance.save()
     messages.success(request, 'Lease disabled successfully. Be careful.')
     return go_back_or_home(request)
 

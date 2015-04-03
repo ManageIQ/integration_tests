@@ -24,7 +24,7 @@
 $(document).ready(function() {
     $.ajax({
         type: "GET",
-        url: "{% url 'appliances.views.vms_table' current_provider %}",
+        url: "{% url 'vms_table' current_provider %}",
         dataType: "html",
         error: function(j, t, e){
             $("div#vm_list").html(e);

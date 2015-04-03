@@ -285,6 +285,19 @@ class Group(MetadataMixin):
     def appliances(self):
         return Appliance.objects.filter(template__template_group=self)
 
+    def shepherd_appliances(self, preconfigured=True):
+        return self.appliances.filter(
+            appliance_pool=None, ready=True, marked_for_deletion=False,
+            template__preconfigured=preconfigured)
+
+    @property
+    def configured_shepherd_appliances(self):
+        return self.shepherd_appliances(True)
+
+    @property
+    def unconfigured_shepherd_appliances(self):
+        return self.shepherd_appliances(False)
+
     def get_fulfillment_percentage(self, preconfigured):
         """Return percentage of fulfillment of the group shepherd.
 
