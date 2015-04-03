@@ -4,6 +4,7 @@ from __future__ import absolute_import
 import hashlib
 import random
 import re
+import command
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -12,7 +13,6 @@ from celery import chain, chord, shared_task
 from datetime import timedelta
 from functools import wraps
 from novaclient.exceptions import OverLimit as OSOverLimit
-from Runner import Run
 
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask)
@@ -1107,8 +1107,8 @@ def rename_appliances_for_pool(self, pool_id):
 @singleton_task(soft_time_limit=60)
 def check_update(self):
     sprout_sh = project_path.join("sprout").join("sprout.sh")
-    result = Run.command("{} check-update".format(sprout_sh.strpath))
-    needs_update = result.stdout.strip().lower() != "up-to-date"
+    result = command.run([sprout_sh.strpath, "check-update"])
+    needs_update = result.output.strip().lower() != "up-to-date"
     redis.set("sprout-needs-update", needs_update)
 
 

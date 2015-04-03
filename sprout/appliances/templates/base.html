@@ -126,26 +126,26 @@
       <ul class="nav navbar-nav navbar-primary">
         <li id="home">
         
-        <a href="{% url 'appliances.views.index' %}"><span class="glyphicon glyphicon-home"></span></a>
+        <a href="{% url 'index' %}"><span class="glyphicon glyphicon-home"></span></a>
         </li>
         <li id="api">
-          <a href="{% url 'appliances.api.jsonapi_doc' %}">API Reference</a>
+          <a href="{% url 'jsonapi_doc' %}">API Reference</a>
         </li>
         <li id="providers">
-          <a href="{% url 'appliances.views.providers' %}">Providers</a>
+          <a href="{% url 'providers' %}">Providers</a>
         </li>
         <li id="templates">
-          <a href="{% url 'appliances.views.templates' %}">Templates</a>
+          <a href="{% url 'templates' %}">Templates</a>
         </li>
         {% if user.is_authenticated %}
             <li id="appliances">
-              <a href="{% url 'appliances.views.my_appliances' %}">My Appliances</a>
+              <a href="{% url 'my_appliances' %}">My Appliances</a>
             </li>
             <li id="vms">
-              <a href="{% url 'appliances.views.vms' %}">VM Manager</a>
+              <a href="{% url 'vms_default' %}">VM Manager</a>
             </li>
             <li id="shepherd">
-              <a href="{% url 'appliances.views.shepherd' %}">Free appliance shepherd</a>
+              <a href="{% url 'shepherd' %}">Free appliance shepherd</a>
             </li>
         {% endif %}
         {% if user.is_staff %}
@@ -171,14 +171,14 @@
             {% endif %}
             {% if user.is_authenticated %}
                 <li>
-                    <a href="{% url 'django.contrib.auth.views.password_change' %}?next={{request.path}}" title="Change password" style="color: #333;">Change password</a>
+                    <a href="{% url 'password_change' %}?next={{request.path}}" title="Change password" style="color: #333;">Change password</a>
                 </li>
                 <li>
-                    <a href="{% url 'django.contrib.auth.views.logout' %}?next={{request.path}}" title="Logout" style="color: #333;">Logout{% if user.first_name %}, {{ user.first_name }}{% endif %}</a>
+                    <a href="{% url 'logout' %}?next={{request.path}}" title="Logout" style="color: #333;">Logout{% if user.first_name %}, {{ user.first_name }}{% endif %}</a>
                 </li>
             {% else %}
                 <li>
-                    <a href="{% url 'django.contrib.auth.views.login' %}?next={{request.path}}" title="Login" style="color: #333;">Login</a>
+                    <a href="{% url 'login' %}?next={{request.path}}" title="Login" style="color: #333;">Login</a>
                 </li>
             {% endif %}
       </ul>
