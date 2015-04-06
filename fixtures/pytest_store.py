@@ -12,13 +12,14 @@ The availability of these objects varies during a test run, but
 all should be available in the collection and testing phases of a test run.
 
 """
+import os
 import sys
 from urlparse import urlparse
 
 from _pytest.terminal import TerminalReporter
 from py.io import TerminalWriter
 
-from utils import conf, diaper, property_or_none
+from utils import conf, diaper, lazycache, property_or_none
 from utils.randomness import generate_random_string
 
 
@@ -57,11 +58,16 @@ class Store(object):
 
         #: Parallelizer role, None if not running a parallelized session
         self.parallelizer_role = None
+
+        # appliance push/pop stack
         self._current_appliance = []
 
         # Stash of the "real" terminal reporter once we get it,
         # so we don't have to keep going through pluginmanager
         self._terminalreporter = None
+
+        # address of the test runner, set in sessionstart
+        self.my_ip_address = None
 
     @property
     def current_appliance(self):
@@ -126,6 +132,16 @@ class Store(object):
     def slave_manager(self):
         return self.pluginmanager.getplugin('slave_manager')
 
+    @lazycache
+    def my_ip_address(self):
+        try:
+            # Check the environment first
+            return os.environ['CFME_MY_IP_ADDRESS']
+        except KeyError:
+            # Fall back to having an appliance tell us what it thinks our IP
+            # address is
+            return self.current_appliance.ssh_client().client_address()
+
 
 store = Store()
 
@@ -150,6 +166,8 @@ def pytest_configure(config):
 
 def pytest_sessionstart(session):
     store.session = session
+    # populate my_ip_address if it hasn't been done yet
+    store.my_ip_address
 
 
 def write_line(line, **kwargs):

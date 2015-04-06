@@ -20,6 +20,7 @@ from utils.path import data_path
 from utils.net import net_check
 from utils.ssh import SSHClient
 from utils.version import current_version
+from utils.wait import TimedOutError
 
 
 @pytest.mark.hookwrapper
@@ -78,12 +79,31 @@ def appliance_police():
         port_results = {pn: net_check(pp) for pn, pp in ports.items()}
         for port, result in port_results.items():
             if not result:
-                raise Exception('Port {} was not contactable'.format(port))
+                raise Exception('Port {} was not contactable'.format(port), port)
         status_code = requests.get(store.current_appliance.url, verify=False,
                                    timeout=60).status_code
         if status_code != 200:
-            raise Exception('Status code was {}, should be 200'.format(status_code))
+            raise Exception('Status code was {}, should be 200'.format(status_code), port)
     except Exception as e:
+        port = e.args[1]
+        if port == 443:
+            # if the web ui worker merely crashed, give it 15 minutes
+            # to come back up
+            try:
+                store.current_appliance.wait_for_web_ui(900)
+            except TimedOutError:
+                # the UI didn't come back up after 15 minutes, and is
+                # probably frozen; kill it and restart
+                # fortunately we already check SSH is working...
+                store.current_appliance.restart_evm_service(900, rude=True)
+
+                # take another shot at letting the web UI come up
+                try:
+                    store.current_appliance.wait_for_web_ui(900)
+                except TimedOutError:
+                    # so much for that, time to call a human
+                    pass
+
         store.slave_manager.message(
             'Help! My appliance {} crashed with: {}'.format(
                 store.current_appliance.url,

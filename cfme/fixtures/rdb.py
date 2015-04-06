@@ -109,9 +109,10 @@ class Rdb(pdb.Pdb):
         # Try to guess a hostname based on jenkins env, otherwise just list the port
         if os.environ.get('JENKINS_URL'):
             parsed = urlparse(os.environ['JENKINS_URL'])
-            endpoint = 'host {} port {}'.format(parsed.hostname, port)
+            endpoint_host = parsed.hostname
         else:
-            endpoint = 'pytest runner port {}'.format(port)
+            endpoint_host = store.my_ip_address
+        endpoint = 'host {} port {}'.format(endpoint_host, port)
 
         recipients = kwargs.pop('recipients', None)
         if recipients:
@@ -122,17 +123,17 @@ class Rdb(pdb.Pdb):
             on {} (TCP), waiting for telnet connection.
             """).format(endpoint)
 
-        try:
-            smtp_server = smtp_conf['server']
-            smtp = smtplib.SMTP(smtp_server)
-            msg = MIMEText(body)
-            msg['Subject'] = subject
-            msg['To'] = ', '.join(recipients)
-            smtp.sendmail('rdb-breakpoint@example.com', recipients, msg.as_string())
-        except socket.error:
-            logger.critical("Couldn't send email")
+            try:
+                smtp_server = smtp_conf['server']
+                smtp = smtplib.SMTP(smtp_server)
+                msg = MIMEText(body)
+                msg['Subject'] = subject
+                msg['To'] = ', '.join(recipients)
+                smtp.sendmail('rdb-breakpoint@example.com', recipients, msg.as_string())
+            except socket.error:
+                logger.critical("Couldn't send email")
 
-        msg = 'Remote debugger listening on TCP {}'.format(port)
+        msg = 'Remote debugger listening on {}'.format(endpoint)
         logger.critical(msg)
         write_line(msg)
         self.sock.listen(1)
@@ -141,6 +142,9 @@ class Rdb(pdb.Pdb):
         pdb.Pdb.__init__(self, completekey='tab', stdin=client_fh, stdout=client_fh)
         sys.stdout = sys.stdin = client_fh
         pdb.Pdb.set_trace(self, *args, **kwargs)
+        msg = 'Debugger on {} shut down'.format(endpoint)
+        logger.critical(msg)
+        write_line(msg)
 
 
 def pytest_addoption(parser):
