@@ -259,11 +259,13 @@ def do_vm_provisioning(template_name, provider_crud, vm_name, provisioning_data,
 
     # Wait for e-mails to appear
     def verify():
+        if current_version() >= "5.4":
+            approval = dict(subject_like="%%Your Virtual Machine configuration was Approved%%")
+        else:
+            approval = dict(text_like="%%Your Virtual Machine Request was approved%%")
         return (
             len(
-                smtp_test.get_emails(
-                    text_like="%%Your Virtual Machine Request was approved%%"
-                )
+                smtp_test.get_emails(**approval)
             ) > 0
             and len(
                 smtp_test.get_emails(
