@@ -66,9 +66,6 @@ class Store(object):
         # so we don't have to keep going through pluginmanager
         self._terminalreporter = None
 
-        # address of the test runner, set in sessionstart
-        self.my_ip_address = None
-
     @property
     def current_appliance(self):
         if not self._current_appliance:
