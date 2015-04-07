@@ -1,5 +1,4 @@
 from collections import defaultdict
-import os
 import socket
 import re
 import urlparse
@@ -43,13 +42,7 @@ def my_ip_address(http=False):
 
     """
     # Allow for DockerBot to set outside IP
-    try:
-        # Check the environment first
-        return os.environ['CFME_MY_IP_ADDRESS']
-    except KeyError:
-        # Fall back to having an appliance tell us what it thinks our IP
-        # address is
-        return store.current_appliance.ssh_client().client_address()
+    return store.current_appliance.my_ip_address
 
 
 def ip_echo_socket(port=32123):

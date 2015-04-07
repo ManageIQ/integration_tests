@@ -1077,14 +1077,18 @@ class IPAppliance(object):
         else:
             return unsure
 
-    def restart_evm_service(self, log_callback=None):
+    def restart_evm_service(self, rude=False, log_callback=None):
         """Restarts the ``evmserverd`` service on this appliance
         """
         if log_callback is None:
             log_callback = self.log.info
         log_callback('restarting evm service')
         with self.ssh_client() as ssh:
-            status, msg = ssh.run_command('service evmserverd restart')
+            if rude:
+                status, msg = ssh.run_command('killall -9 ruby; service evmserverd start')
+            else:
+                status, msg = ssh.run_command('service evmserverd restart')
+
             if status != 0:
                 msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
                 log_callback(msg)
