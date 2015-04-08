@@ -75,7 +75,7 @@ def vm_name():
     return vm_name
 
 
-@pytest.mark.meta(blockers=[1200783])
+@pytest.mark.meta(blockers=[1200783, 1207209])
 def test_iso_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt,
                                      provisioning, vm_name, smtp_test, provider_init, request):
     """Tests ISO provisioning

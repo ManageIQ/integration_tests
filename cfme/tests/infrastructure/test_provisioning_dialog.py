@@ -144,6 +144,7 @@ def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
 
 
 # Special parametrization in testgen above
+@pytest.mark.meta(blockers=[1209847])
 @pytest.mark.parametrize("disk_format", ["thin", "thick", "preallocated"])
 @pytest.mark.uncollectif(lambda provider_type, disk_format:
                          (provider_type == "rhevm" and disk_format == "thick") or
