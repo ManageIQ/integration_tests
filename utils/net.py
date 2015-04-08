@@ -41,8 +41,8 @@ def my_ip_address(http=False):
     connection. See a working example of this in :py:func:`ip_echo_socket`.
 
     """
-    # Allow for DockerBot to set outside IP
-    return store.current_appliance.my_ip_address
+    # the pytest store does this work, it's included here for convenience
+    return store.my_ip_address
 
 
 def ip_echo_socket(port=32123):
