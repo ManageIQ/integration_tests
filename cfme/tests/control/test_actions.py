@@ -612,6 +612,7 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off):
         pytest.fail("Tags were not assigned!")
 
 
+@pytest.mark.meta(blockers=[1205496])
 def test_action_untag(request, assign_policy_for_testing, vm, vm_off):
     """ Tests action untag
 

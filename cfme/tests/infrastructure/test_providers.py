@@ -67,6 +67,7 @@ def test_host_name_required_validation():
         prov.create()
 
 
+@pytest.mark.meta(blockers=[1209756])
 def test_ip_required_validation():
     """Test to validate the ip address while adding a provider"""
     prov = provider.VMwareProvider(
