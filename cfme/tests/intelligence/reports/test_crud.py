@@ -71,6 +71,7 @@ def test_schedule_crud(schedule):
     schedule.delete()
 
 
+@pytest.mark.meta(blockers=[1209945])
 def test_menuwidget_crud():
     w = MenuWidget(
         generate_random_string(),
@@ -88,6 +89,7 @@ def test_menuwidget_crud():
     w.delete()
 
 
+@pytest.mark.meta(blockers=[1209945])
 def test_reportwidget_crud():
     w = ReportWidget(
         generate_random_string(),
@@ -105,6 +107,7 @@ def test_reportwidget_crud():
     w.delete()
 
 
+@pytest.mark.meta(blockers=[1209945])
 def test_chartwidget_crud():
     w = ChartWidget(
         generate_random_string(),
@@ -120,6 +123,7 @@ def test_chartwidget_crud():
     w.delete()
 
 
+@pytest.mark.meta(blockers=[1209945])
 def test_rssfeedwidget_crud():
     w = RSSFeedWidget(
         generate_random_string(),
