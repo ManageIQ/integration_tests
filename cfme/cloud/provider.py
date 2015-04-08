@@ -12,6 +12,7 @@
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
+from cfme.infrastructure.provider import OpenstackInfraProvider
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
 from cfme.common.provider import BaseProvider
@@ -19,6 +20,7 @@ from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect
 from cfme.web_ui import Input
 from utils.log import logger
+from utils.providers import setup_provider_by_name
 from utils.update import Updateable
 from utils.wait import wait_for
 from utils import version, deferred_verpick
@@ -50,6 +52,10 @@ properties_form = Form(
                 "5.5": "api_port",
             }
         )),
+        ('infra_provider', {
+            version.LOWEST: None,
+            "5.4": Select("select#provider_id"),
+            "5.5": AngularSelect("provider_id")}),
     ])
 
 details_page = Region(infoblock_type='detail')
@@ -131,19 +137,36 @@ class EC2Provider(Provider):
 
 class OpenStackProvider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None):
+                 ip_address=None, api_port=None, infra_provider=None):
         super(OpenStackProvider, self).__init__(name=name, credentials=credentials,
                                                 zone=zone, key=key)
         self.hostname = hostname
         self.ip_address = ip_address
         self.api_port = api_port
+        self.infra_provider = infra_provider
+
+    def create(self, *args, **kwargs):
+        # Override the standard behaviour to actually create the underlying infra first.
+        if self.infra_provider is not None:
+            from cfme.infrastructure.provider import OpenstackInfraProvider
+            if isinstance(self.infra_provider, OpenstackInfraProvider):
+                infra_provider_name = self.infra_provider.name
+            else:
+                infra_provider_name = str(self.infra_provider)
+            setup_provider_by_name(
+                infra_provider_name, validate=True, check_existing=True)
+        return super(OpenStackProvider, self).create(*args, **kwargs)
 
     def _form_mapping(self, create=None, **kwargs):
+        infra_provider = kwargs.get('infra_provider')
+        if isinstance(infra_provider, OpenstackInfraProvider):
+            infra_provider = infra_provider.name
         return {'name_text': kwargs.get('name'),
                 'type_select': create and 'OpenStack',
                 'hostname_text': kwargs.get('hostname'),
                 'api_port': kwargs.get('api_port'),
-                'ipaddress_text': kwargs.get('ip_address')}
+                'ipaddress_text': kwargs.get('ip_address'),
+                'infra_provider': "---" if infra_provider is False else infra_provider}
 
 
 def get_all_providers(do_not_navigate=False):

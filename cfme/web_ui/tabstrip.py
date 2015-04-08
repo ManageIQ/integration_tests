@@ -147,6 +147,7 @@ class TabStripForm(web_ui.Form):
         identifying_loc: A locator which should be present if the form is visible.
         order: If specified, specifies order of the tabs. Can be lower number than number of tabs,
             remaining values will be complemented.
+        fields_end: Same as fields, but these are appended at the end of generated fields instead.
 
     Usage:
 
@@ -182,7 +183,8 @@ class TabStripForm(web_ui.Form):
 
     """
 
-    def __init__(self, fields=None, tab_fields=None, identifying_loc=None, order=None):
+    def __init__(
+            self, fields=None, tab_fields=None, identifying_loc=None, order=None, fields_end=None):
         fields = fields or list()
         if order is None:
             order = tab_fields.keys()
@@ -198,4 +200,6 @@ class TabStripForm(web_ui.Form):
             field = tab_fields[tab_ident]
             for field_name, field_locator in field:
                 fields.append((field_name, _TabStripField(tab_ident, field_locator)))
+        if fields_end is not None:
+            fields.extend(fields_end)
         super(TabStripForm, self).__init__(fields, identifying_loc)

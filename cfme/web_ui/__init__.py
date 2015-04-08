@@ -1907,6 +1907,11 @@ class InfoBlock(Pretty):
             self._member_cache[name] = self.Member(self, name)
         return self._member_cache[name]
 
+    def by_member_icon(self, icon):
+        """In case you want to find the item by icon in the value field (like OS infra diff.)"""
+        l = ".//table/tbody/tr/td[2]/img[contains(@src, {})]/../../td[1]".format(quoteattr(icon))
+        return self.member(sel.text(l))
+
     def __call__(self, member):
         """A present for @smyers"""
         return self.member(member)

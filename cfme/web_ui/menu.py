@@ -10,7 +10,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from utils import version, classproperty
 from utils.wait import wait_for
-from utils.version import before_date_or_version
+from utils.version import current_version
 
 
 class Loc(object):
@@ -73,14 +73,17 @@ def open_top_level(title):
     sel.raw_click(sel.element(Loc.a, root=get_top_level_element(title)))
 
 
-def get_second_level_element(top_level_el, title):
+def get_second_level_element(top_level_el, desc):
     """Returns the ``li`` element representing the menu item in second-level menu."""
-    return sel.element("./ul/li/a[normalize-space(.)='{}']/..".format(title), root=top_level_el)
+    if desc.startswith("/"):
+        return sel.element("./ul/li/a[@href='{}']/..".format(desc), root=top_level_el)
+    else:
+        return sel.element("./ul/li/a[normalize-space(.)='{}']/..".format(desc), root=top_level_el)
 
 
-def open_second_level(top_level_element, title):
+def open_second_level(top_level_element, desc):
     """Click on second-level menu."""
-    second = get_second_level_element(top_level_element, title)
+    second = get_second_level_element(top_level_element, desc)
     sel.raw_click(sel.element("./a", root=second))
 
 
@@ -113,7 +116,7 @@ def os_infra_specific(without_infra, with_infra, with_both=None):
             specified, ``without_infra / with_infra`` will be used.
     """
     def _decide():
-        if before_date_or_version(date="2015-04-30", version="5.4.0.0.25"):
+        if current_version() < "5.4.0.0.25":
             # Don't bother, the code is not in
             return without_infra
 
@@ -134,6 +137,7 @@ def _tree_func_with_grid(*args):
 
 # Dictionary of (nav destination name, section title) section tuples
 # Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel sections
+# You can also add a resetting callable that is called after clicking the second level.
 sections = {
     ('cloud_intelligence', 'Cloud Intelligence'): (
         ('dashboard', 'Dashboard'),
@@ -160,8 +164,8 @@ sections = {
     ),
     ('infrastructure', 'Infrastructure'): (
         ('infrastructure_providers', 'Providers', toolbar.set_vms_grid_view),
-        ('infrastructure_clusters', os_infra_specific('Clusters', 'Deployment Roles')),
-        ('infrastructure_hosts', os_infra_specific('Hosts', 'Nodes')),
+        ('infrastructure_clusters', "/ems_cluster"),
+        ('infrastructure_hosts', "/host"),
         ('infrastructure_virtual_machines', 'Virtual Machines',
             _tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
         ('infrastructure_resource_pools', 'Resource Pools'),

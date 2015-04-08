@@ -8,6 +8,7 @@ import cfme
 from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form, Input
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons
+from cfme.web_ui.tabstrip import TabStripForm
 import cfme.fixtures.pytest_selenium as sel
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
@@ -31,21 +32,33 @@ manage_policies_tree = CheckboxTree(
 
 details_page = Region(infoblock_type='detail')
 
-credential_form = Form(
-    fields=[
-        ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('default_principal', Input("default_userid")),
-        ('default_secret', Input("default_password")),
-        ('default_verify_secret', Input("default_verify")),
-        ('amqp_button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
-        ('amqp_principal', "#amqp_userid"),
-        ('amqp_secret', "#amqp_password"),
-        ('amqp_verify_secret', "#amqp_verify"),
-        ('candu_button', "//div[@id='auth_tabs']/ul/li/a[@href='#metrics']"),
-        ('candu_principal', Input("metrics_userid")),
-        ('candu_secret', Input("metrics_password")),
-        ('candu_verify_secret', Input("metrics_verify")),
-        ('validate_btn', form_buttons.validate)
+credential_form = TabStripForm(
+    tab_fields={
+        "Default": [
+            ('default_principal', Input("default_userid")),
+            ('default_secret', Input("default_password")),
+            ('default_verify_secret', Input("default_verify")),
+        ],
+
+        "AMQP": [
+            ('amqp_principal', Input("amqp_userid")),
+            ('amqp_secret', Input("amqp_password")),
+            ('amqp_verify_secret', Input("amqp_verify")),
+        ],
+
+        "RSA key pair": [
+            ('ssh_user', Input("ssh_keypair_userid")),
+            ('ssh_key', Input("ssh_keypair_password")),
+        ],
+
+        "C & U Database": [
+            ('candu_principal', Input("metrics_userid")),
+            ('candu_secret', Input("metrics_password")),
+            ('candu_verify_secret', Input("metrics_verify")),
+        ],
+    },
+    fields_end=[
+        ('validate_btn', form_buttons.validate),
     ])
 
 
@@ -61,6 +74,7 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
             self.amqp = kwargs.get('amqp')
             self.candu = kwargs.get('candu')
             self.domain = kwargs.get('domain')
+            self.ssh = kwargs.get('ssh')
 
     @property
     def data(self):
@@ -378,17 +392,24 @@ class BaseProvider(PolicyProfileAssignable, Taggable):
         if not self._on_detail_page():
             sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
 
-    def get_detail(self, *ident):
+    def get_detail(self, *ident, **kwargs):
         """ Gets details from the details infoblock
 
         The function first ensures that we are on the detail page for the specific provider.
 
         Args:
             *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
+
+        Keywords:
+            use_icon: Whether to use icon matching
         Returns: A string representing the contents of the InfoBlock's value.
         """
         self._load_details()
-        return details_page.infoblock.text(*ident)
+        if kwargs.get("use_icon", False):
+            title, icon = ident
+            return details_page.infoblock(title).by_member_icon(icon).text
+        else:
+            return details_page.infoblock.text(*ident)
 
     def load_all_provider_instances(self):
         return self.load_all_provider_vms()
@@ -444,17 +465,18 @@ def _fill_credential(form, cred, validate=None):
     credential if that option is passed in.
     """
     if cred.amqp:
-        fill(credential_form, {'amqp_button': True,
-                               'amqp_principal': cred.principal,
+        fill(credential_form, {'amqp_principal': cred.principal,
                                'amqp_secret': cred.secret,
                                'amqp_verify_secret': cred.verify_secret,
                                'validate_btn': validate})
     elif cred.candu:
-        fill(credential_form, {'candu_button': True,
-                               'candu_principal': cred.principal,
+        fill(credential_form, {'candu_principal': cred.principal,
                                'candu_secret': cred.secret,
                                'candu_verify_secret': cred.verify_secret,
                                'validate_btn': validate})
+    elif cred.ssh:
+        fill(credential_form, {'ssh_user': cred.principal,
+                               'ssh_key': cred.secret})
     else:
         if cred.domain:
             principal = r'{}\{}'.format(cred.domain, cred.principal)
