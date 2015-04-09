@@ -64,7 +64,9 @@ def _content_element(name):
         name: The name of the accordion.
     """
     root = sel.element(locate(name))
-    el = sel.element('./../following-sibling::div[1]', root=root)
+    # Older or newer locator
+    el = sel.element('./../following-sibling::div[1]|'
+                     './../../following-sibling::div//ul[contains(@class, "nav-stack")]', root=root)
     return el
 
 
@@ -76,18 +78,6 @@ def is_active(name):
     Returns: ``True`` if the button is depressed, ``False`` if not.
     """
     return sel.is_displayed(_content_element(name))
-
-
-def is_link_internal(name, link_title):
-    """ Checks if link in accordion is internal or not
-
-    Args:
-        name: Name of the accordion.
-        link_title: Title of link in expanded accordion section.
-    """
-    link_root = _content_element(name)
-    link = ListAccordionLink(link_title, link_root)
-    return link.is_internal()
 
 
 def select(name, link_title):
@@ -111,7 +101,8 @@ def get_active_links(name):
         name: Name of the section
     """
     link_root = _content_element(name)
-    link_loc = './/div[@class="panecontent"]//a[@title and not(child::img)]'
+    link_loc = './/div[@class="panecontent"]//a[@title and not(child::img)]|'\
+               './li[not(contains(@class, "disabled"))]/a'
     active_els = sel.elements(link_loc, root=link_root)
     return [ListAccordionLink(el.get_attribute("title"), link_root) for el in active_els]
 
@@ -132,7 +123,10 @@ class ListAccordionLink(Pretty):
         """ Locates an active link.
 
         Returns: An XPATH locator for the element."""
-        return './/div[@class="panecontent"]//a[@title="%s" and not(child::img)]' % self.title
+        locator = './/div[@class="panecontent"]//a[@title="{title}" and not(child::img)]|'\
+                  './li[not(contains(@class, "disabled"))]/a[@title="{title}"]'\
+                  .format(title=self.title)
+        return locator
 
     def _check_exists(self):
         try:
@@ -140,19 +134,6 @@ class ListAccordionLink(Pretty):
         except sel.NoSuchElementException:
             raise ListAccordionLinkNotFound(
                 'No active link with title "{}" found.'.format(self.title))
-
-    def is_internal(self):
-        """ Checks if the link leads internally or not
-
-        Returns: ``True`` if the element is an internal link, ``False`` if not.
-        """
-        self._check_exists()
-        img_loc = './/div[@class="panecontent"]//a[@title="%s"]/img' % self.title
-        img_el = sel.element(img_loc, root=self.root)
-        if 'internal' in sel.get_attribute(img_el, 'src'):
-            return True
-        else:
-            return False
 
     def click(self):
         """ Clicks a link by title.
