@@ -909,6 +909,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         logger.debug('Managed Providers:')
         logger.debug(store.current_appliance.managed_providers)
         kwargs.pop("start", None)
+        quit()  # Refresh the session, forget loaded summaries, ...
+        kwargs.pop("start", None)
         ensure_browser_open()
         menu.nav.go_to("dashboard")
         # If there is a rails error past this point, something is really awful
