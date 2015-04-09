@@ -178,7 +178,7 @@ def write_line(line, **kwargs):
     """
     if store.slave_manager:
         # We're a pytest slave! Write out the vnc info through the slave manager
-        store.slave_manager.message(line)
+        store.slave_manager.message(line, **kwargs)
     else:
         # If py.test is supressing stdout/err, turn that off for a moment
         with diaper:

@@ -584,8 +584,9 @@ def _recv_queue(session):
             event_name = event_data.pop('_event_name')
 
             if event_name == 'message':
+                message = event_data.pop('message')
                 # messages are special, handle them immediately
-                session.print_message(event_data['message'], slaveid)
+                session.print_message(message, slaveid, **event_data)
                 session.ack(slaveid, event_name)
             else:
                 with recv_lock:
