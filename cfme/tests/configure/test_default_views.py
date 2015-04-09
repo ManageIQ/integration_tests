@@ -8,6 +8,8 @@ from cfme.web_ui import ButtonGroup, form_buttons
 from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
 from cfme.configure import settings  # NOQA
+from cfme.services.catalogs import catalog_item  # NOQA
+from cfme.services import workloads  # NOQA
 
 
 @pytest.fixture(scope="module")
@@ -17,27 +19,31 @@ def setup_a_provider():
 
 def set_tile_view(name):
     bg = ButtonGroup(name)
-    bg.choose('Tile View')
-    sel.click(form_buttons.save)
+    if bg.active != 'Tile View':
+            bg.choose('Tile View')
+            sel.click(form_buttons.save)
 
 
 def set_list_view(name):
     bg = ButtonGroup(name)
-    bg.choose('List View')
-    sel.click(form_buttons.save)
+    if bg.active != 'List View':
+            bg.choose('List View')
+            sel.click(form_buttons.save)
 
 
 def set_grid_view(name):
     bg = ButtonGroup(name)
-    bg.choose('Grid View')
-    sel.click(form_buttons.save)
+    if bg.active != 'Grid View':
+            bg.choose('Grid View')
+            sel.click(form_buttons.save)
 
 
 def reset_default_view(name, default_view):
     bg = ButtonGroup(name)
     sel.force_navigate("my_settings_default_views")
-    bg.choose(default_view)
-    sel.click(form_buttons.save)
+    if bg.active != default_view:
+            bg.choose(default_view)
+            sel.click(form_buttons.save)
 
 
 def get_default_view(name):
@@ -47,31 +53,34 @@ def get_default_view(name):
     return default_view
 
 
-@pytest.mark.parametrize('key', cfme_data.get('defaultview_data', []), scope="module")
+@pytest.mark.parametrize('key',
+    cfme_data.get('defaultview_data', {})['gtl']['infra'], scope="module")
 def test_tile_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
     default_view = get_default_view(name[0])
     set_tile_view(name[0])
     sel.force_navigate(name[1])
-    assert tb.is_vms_tile_view(), "Default view setting failed"
+    assert tb.is_vms_tile_view(), "Tile Default view setting failed"
     reset_default_view(name[0], default_view)
 
 
-@pytest.mark.parametrize('key', cfme_data.get('defaultview_data', []), scope="module")
+@pytest.mark.parametrize('key',
+    cfme_data.get('defaultview_data', {})['gtl']['infra'], scope="module")
 def test_list_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
     default_view = get_default_view(name[0])
     set_list_view(name[0])
     sel.force_navigate(name[1])
-    assert tb.is_vms_list_view(), "Default view setting failed"
+    assert tb.is_vms_list_view(), "List Default view setting failed"
     reset_default_view(name[0], default_view)
 
 
-@pytest.mark.parametrize('key', cfme_data.get('defaultview_data', []), scope="module")
+@pytest.mark.parametrize('key',
+    cfme_data.get('defaultview_data', {})['gtl']['infra'], scope="module")
 def test_grid_defaultview(request, setup_a_provider, key):
     name = re.split(r"\/", key)
     default_view = get_default_view(name[0])
     set_grid_view(name[0])
     sel.force_navigate(name[1])
-    assert tb.is_vms_grid_view(), "Default view setting failed"
+    assert tb.is_vms_grid_view(), "Grid Default view setting failed"
     reset_default_view(name[0], default_view)
