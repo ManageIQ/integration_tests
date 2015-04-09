@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+"""UI performance tests on Control."""
 from cfme.fixtures import pytest_selenium as sel
 from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
@@ -22,8 +23,8 @@ explorer_filters = [
 @pytest.mark.meta(blockers=[1182271])
 @pytest.mark.perf_ui_control
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_control_explorer(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_control_explorer(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'control_explorer'), soft_assert))
@@ -36,4 +37,4 @@ def test_perf_ui_control_explorer(ui_worker_pid, ssh_client, soft_assert):
         ['page_check']['control']['explorer']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_control_explorer.csv')
-    pages_to_statistics_csv(pages, explorer_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, explorer_filters, 'ui-statistics.csv')

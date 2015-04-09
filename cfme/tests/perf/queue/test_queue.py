@@ -3,16 +3,16 @@ log file aftwards and creates a bunch of graphs displaying the queued/execution 
 messages.
 """
 from cfme.configure.configuration import candu
-from utils.perf_message_stats import collect_log
-from utils.perf_message_stats import perf_process_evm
 from utils.conf import perf_tests
 from utils.log import logger
 from utils.path import log_path
+from utils.perf import collect_log
+from utils.perf_message_stats import perf_process_evm
+import os
+import os.path
 import pytest
 import subprocess
 import time
-import os
-import os.path
 
 pytestmark = [
     pytest.mark.meta(

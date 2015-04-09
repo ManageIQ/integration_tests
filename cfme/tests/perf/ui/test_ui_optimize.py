@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*
+"""UI performance tests on Optimize."""
 from cfme.fixtures import pytest_selenium as sel
 from utils.conf import perf_tests
 from utils.pagestats import analyze_page_stat
@@ -22,8 +23,8 @@ bottlenecks_filters = [
 
 @pytest.mark.perf_ui_optimize
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_optimize_utilization(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_optimize_utilization(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'utilization'), soft_assert))
@@ -34,13 +35,13 @@ def test_perf_ui_optimize_utilization(ui_worker_pid, ssh_client, soft_assert):
         ['optimize']['utilization']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_optimize_utilization.csv')
-    pages_to_statistics_csv(pages, explorer_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, explorer_filters, 'ui-statistics.csv')
 
 
 @pytest.mark.perf_ui_optimize
 @pytest.mark.usefixtures("cfme_log_level_rails_debug")
-def test_perf_ui_optimize_bottlenecks(ui_worker_pid, ssh_client, soft_assert):
-    pages, prod_tail = standup_perf_ui(ui_worker_pid, ssh_client, soft_assert)
+def test_perf_ui_optimize_bottlenecks(ui_worker_pid, soft_assert):
+    pages, prod_tail = standup_perf_ui(ui_worker_pid, soft_assert)
 
     pages.extend(analyze_page_stat(perf_click(ui_worker_pid, prod_tail, True, sel.force_navigate,
         'bottlenecks'), soft_assert))
@@ -51,4 +52,4 @@ def test_perf_ui_optimize_bottlenecks(ui_worker_pid, ssh_client, soft_assert):
         ['optimize']['bottlenecks']), ui_worker_pid, prod_tail, soft_assert))
 
     pages_to_csv(pages, 'perf_ui_optimize_bottlenecks.csv')
-    pages_to_statistics_csv(pages, bottlenecks_filters, 'statistics.csv')
+    pages_to_statistics_csv(pages, bottlenecks_filters, 'ui-statistics.csv')

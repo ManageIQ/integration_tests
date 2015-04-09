@@ -2,7 +2,7 @@ test_queue:
     infra_time: 28800
 ui:
     threshold:
-        transaction: 60000
+        selenium: 60000
         page_render: 5000
         query_time: 1000
         query_count: 1000
