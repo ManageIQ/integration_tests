@@ -49,7 +49,7 @@ search_box = Region(
         reset_filter_button={
             "5.3": "//a[@title='Reset the filter']",
             "5.4": FormButton("Reset the filter")},
-        close_button="//div[@id='advsearchModal']/div/div/div[1]/button/span[1]",
+        close_button="//div[@id='advsearchModal']/div//button/span[normalize-space(.)='×']",
 
         # Buttons in the "next step"
         load_filter_dialog_button={
