@@ -2049,6 +2049,7 @@ class Quadicon(Pretty):
             "no_snapshot": ("d", 'txt'),
             "policy": ("g", 'img'),
         },
+        "stack": {},
         "datastore": {
             "type": ("a", 'img'),
             "no_vm": ("b", 'txt'),
