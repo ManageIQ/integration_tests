@@ -908,6 +908,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             'top -c -b -n1 -M -a | head -30').output)
         logger.debug('Managed Providers:')
         logger.debug(store.current_appliance.managed_providers)
+        quit()  # Refresh the session, forget loaded summaries, ...
         kwargs.pop("start", None)
         ensure_browser_open()
         menu.nav.go_to("dashboard")
