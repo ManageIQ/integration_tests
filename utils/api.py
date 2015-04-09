@@ -416,4 +416,4 @@ class Action(object):
             return result
 
     def __repr__(self):
-        return "<Action {} {}#{}>".format(self._method, self._container._entity._href, self._name)
+        return "<Action {} {}#{}>".format(self._method, self._container._obj._href, self._name)

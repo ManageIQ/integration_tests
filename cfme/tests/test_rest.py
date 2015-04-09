@@ -2,6 +2,7 @@
 import pytest
 
 from utils import error, mgmt_system, testgen
+from utils.providers import setup_a_provider as _setup_a_provider
 from utils.randomness import generate_random_string
 from utils.wait import wait_for
 
@@ -13,6 +14,11 @@ pytest_generate_tests = testgen.generate(
 )
 
 pytestmark = [pytest.mark.ignore_stream("5.2")]
+
+
+@pytest.fixture(scope="module")
+def setup_a_provider():
+    _setup_a_provider("infra")
 
 
 @pytest.fixture(scope="module")
@@ -107,3 +113,21 @@ def test_add_delete_multiple_service_catalogs(rest_api):
     rest_api.collections.service_catalogs.action.delete(*scls)
     with error.expected("ActiveRecord::RecordNotFound"):
         rest_api.collections.service_catalogs.action.delete(*scls)
+
+
+def test_provider_refresh(setup_a_provider, rest_api):
+    if "refresh" not in rest_api.collections.providers.action.all:
+        pytest.skip("Refresh action is not implemented in this version")
+    assert rest_api.collections.providers[0].action.refresh()["success"]
+
+
+def test_provider_edit(request, setup_a_provider, rest_api):
+    if "edit" not in rest_api.collections.providers.action.all:
+        pytest.skip("Refresh action is not implemented in this version")
+    provider = rest_api.collections.providers[0]
+    new_name = generate_random_string()
+    old_name = provider.name
+    request.addfinalizer(lambda: provider.action.edit(name=old_name))
+    provider.action.edit(name=new_name)
+    provider.reload()
+    assert provider.name == new_name
