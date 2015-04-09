@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Fixtures, providing an access to the CFME REST API.
 
-See :py:func:`rest_api` and py:func:`rest_api_modscope
+See :py:func:`rest_api` and py:func:`rest_api_modscope`
 """
 import pytest
 

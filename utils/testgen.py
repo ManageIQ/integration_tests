@@ -5,7 +5,9 @@ Intended to functionalize common tasks when working with the pytest_generate_tes
 When running a test, it is quite often the case that multiple parameters need to be passed
 to a single test. An example of this would be the need to run a Provider Add test against
 multiple providers. We will assume that the providers are stored in the yaml under a common
-structure like so::
+structure like so:
+
+.. code-block:: yaml
 
     providers:
         prov_1:
@@ -176,12 +178,15 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         provider_types: A list of provider types to include. If None, all providers are considered
         *fields: Names of keys in an individual provider dict whose values will be returned when
             used as test function arguments
-        **options: two options...
-                required_fields: when fields passed are not present, skip them
-                choose_random: choose a single provider from the list
-                template_location: Specification where a required tempalte lies in the yaml, If not
-                    found in the provider, warning is printed and the test not collected. The spec
-                    is a tuple or list where each item is a key to the next field (str or int).
+        **options: Explained below
+
+    The ``**options`` available are defined below:
+
+    * ``required_fields``: when fields passed are not present, skip them
+    * ``choose_random``: choose a single provider from the list
+    * ``template_location``: Specification where a required tempalte lies in the yaml, If not
+      found in the provider, warning is printed and the test not collected. The spec
+      is a tuple or list where each item is a key to the next field (str or int).
 
     The following test function arguments are special:
 
