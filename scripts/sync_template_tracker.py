@@ -18,10 +18,10 @@ def main(trackerbot_url, mark_usable=None):
     thread_q = []
     thread_lock = Lock()
     template_providers = defaultdict(list)
-    providers = set(list_all_providers())
+    all_providers = set(list_all_providers())
     unresponsive_providers = set()
     # Queue up list_template calls
-    for provider_key in providers:
+    for provider_key in all_providers:
         thread = Thread(target=get_provider_templates,
             args=(provider_key, template_providers, unresponsive_providers, thread_lock))
         thread_q.append(thread)
@@ -69,13 +69,18 @@ def main(trackerbot_url, mark_usable=None):
             except SlumberHttpBaseException as ex:
                 print ex.response.status_code, ex.content
 
-    # Remove provider relationships where they no longer exist, skipping unresponsive providers
+    # Remove provider relationships where they no longer exist, skipping unresponsive providers,
+    # and providers not known to this environment
     for pt in api.providertemplate.get(limit=0)['objects']:
         provider_key, template_name = pt['provider']['key'], pt['template']['name']
         if provider_key not in template_providers[template_name] \
                 and provider_key not in unresponsive_providers:
-            print "Cleaning up template %s on %s" % (template_name, provider_key)
-            trackerbot.delete_provider_template(api, provider_key, template_name)
+            if provider_key in all_providers:
+                print "Cleaning up template %s on %s" % (template_name, provider_key)
+                trackerbot.delete_provider_template(api, provider_key, template_name)
+            else:
+                print "Skipping template cleanup %s on unknown provider %s" % (
+                    template_name, provider_key)
 
     # Remove templates that aren't on any providers anymore
     for template in api.template.get(limit=0)['objects']:

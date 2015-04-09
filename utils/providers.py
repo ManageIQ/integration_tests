@@ -34,6 +34,8 @@ provider_type_map = dict(
     infra_provider_type_map.items() + cloud_provider_type_map.items()
 )
 
+providers_data = conf.cfme_data.get("management_systems", {})
+
 
 def list_providers(allowed_types):
     """ Returns list of providers of selected type from configuration.
@@ -42,7 +44,7 @@ def list_providers(allowed_types):
     @type allowed_types: dict, list, set, tuple
     """
     providers = []
-    for provider, data in conf.cfme_data.get("management_systems", {}).iteritems():
+    for provider, data in providers_data.items():
         provider_type = data.get("type", None)
         if provider not in filtered:
             continue
@@ -77,7 +79,7 @@ def provider_factory(provider_key, providers=None, credentials=None):
         subclass
     """
     if providers is None:
-        providers = conf.cfme_data.get('management_systems', {})
+        providers = providers_data
     if isinstance(provider_key, Mapping):
         provider = provider_key
     else:
@@ -95,7 +97,7 @@ def provider_factory(provider_key, providers=None, credentials=None):
 
 
 def get_provider_key(provider_name):
-    for provider_key, provider_data in conf.cfme_data.get("management_systems", {}).iteritems():
+    for provider_key, provider_data in providers_data.items():
         if provider_data.get("name") == provider_name:
             return provider_key
     else:
@@ -123,7 +125,6 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         prov_type: "infra" or "cloud"
 
     """
-    providers_data = conf.cfme_data.get('management_systems', {})
     if prov_class == "infra":
         potential_providers = list_infra_providers()
         if prov_type:
