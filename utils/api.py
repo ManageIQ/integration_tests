@@ -8,6 +8,7 @@ import requests
 import simplejson
 
 from utils.version import LooseVersion
+from utils.wait import wait_for
 
 
 class APIException(Exception):
@@ -312,6 +313,24 @@ class Entity(object):
                 setattr(self, key, value)
             else:
                 setattr(self, key, value)
+
+    @property
+    def exists(self):
+        try:
+            self.reload()
+        except APIException:
+            return False
+        else:
+            return True
+
+    def wait_for_existence(self, existence, **kwargs):
+        return wait_for(lambda: self.exists, fail_condition=not existence, **kwargs)
+
+    def wait_exists(self, **kwargs):
+        return self.wait_for_existence(True, **kwargs)
+
+    def wait_not_exists(self, **kwargs):
+        return self.wait_for_existence(False, **kwargs)
 
     def reload_if_needed(self):
         if self._data is None:

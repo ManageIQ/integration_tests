@@ -131,3 +131,22 @@ def test_provider_edit(request, setup_a_provider, rest_api):
     provider.action.edit(name=new_name)
     provider.reload()
     assert provider.name == new_name
+
+
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["delete_from_detail", "delete_from_collection"])
+def test_provider_crud(request, rest_api, from_detail):
+    if "create" not in rest_api.collections.providers.action.all:
+        pytest.skip("Refresh action is not implemented in this version")
+    provider = rest_api.collections.providers.action.create(
+        hostname=generate_random_string(),
+        name=generate_random_string(),
+        type="EmsVmware",
+    )[0]
+    if from_detail:
+        provider.action.delete()
+        provider.wait_not_exists(num_sec=30, delay=0.5)
+    else:
+        rest_api.collections.providers.action.delete(provider)
+        provider.wait_not_exists(num_sec=30, delay=0.5)
