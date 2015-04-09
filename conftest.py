@@ -85,7 +85,8 @@ def appliance_police():
         if status_code != 200:
             raise Exception('Status code was {}, should be 200'.format(status_code), port)
     except Exception as e:
-        port = e.args[1]
+
+        port = e.args[1] if len(e.args) == 2 else None
         if port == 443:
             # if the web ui worker merely crashed, give it 15 minutes
             # to come back up
