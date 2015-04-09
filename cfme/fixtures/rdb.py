@@ -27,8 +27,6 @@ Note:
     This is very insecure, and should be used as a last resort for debugging elusive failures.
 
 """
-
-import os
 import pdb
 import signal
 import smtplib
@@ -38,7 +36,6 @@ from contextlib import contextmanager
 from email.mime.text import MIMEText
 from importlib import import_module
 from textwrap import dedent
-from urlparse import urlparse
 
 from fixtures.pytest_store import store, write_line
 from utils import conf
@@ -105,14 +102,7 @@ class Rdb(pdb.Pdb):
 
         """
         host, port = self.sock.getsockname()
-
-        # Try to guess a hostname based on jenkins env, otherwise just list the port
-        if os.environ.get('JENKINS_URL'):
-            parsed = urlparse(os.environ['JENKINS_URL'])
-            endpoint_host = parsed.hostname
-        else:
-            endpoint_host = store.my_ip_address
-        endpoint = 'host {} port {}'.format(endpoint_host, port)
+        endpoint = 'host {} port {}'.format(store.my_ip_address, port)
 
         recipients = kwargs.pop('recipients', None)
         if recipients:
