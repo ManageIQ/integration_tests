@@ -410,6 +410,7 @@ class Appliance(MetadataMixin):
         ON = "on"
         OFF = "off"
         SUSPENDED = "suspended"
+        LOCKED = "locked"
         UNKNOWN = "unknown"
         ORPHANED = "orphaned"
 
@@ -422,6 +423,7 @@ class Appliance(MetadataMixin):
         "up": Power.ON,
         "down": Power.OFF,
         "suspended": Power.SUSPENDED,
+        "image_locked": Power.LOCKED,
         # Openstack
         "ACTIVE": Power.ON,
         "SHUTOFF": Power.OFF,
@@ -770,9 +772,10 @@ class AppliancePool(MetadataMixin):
         logger().info("Killing pool #{}".format(self.id))
         if self.appliances:
             for appliance in self.appliances:
-                # The leased_until is reliable sign of whether the appliance was used
-                # Unless someone was messing with DB ;)
-                if save_lives and appliance.ready and appliance.leased_until is None:
+                if (
+                        save_lives and appliance.ready and appliance.leased_until is None
+                        and appliance.marked_for_deletion is False
+                        and not appliance.managed_providers):
                     with transaction.atomic():
                         appliance.appliance_pool = None
                         appliance.datetime_leased = None

@@ -1009,8 +1009,8 @@ def wait_appliance_ready(self, appliance_id):
                 self.request.callbacks[:] = []
                 kill_appliance.delay(appliance_id)
                 return
-        if appliance.power_state == "unknown" or appliance.ip_address is None:
-            self.retry(args=(appliance_id,), countdown=20, max_retries=45)
+        if appliance.power_state == Appliance.Power.UNKNOWN or appliance.ip_address is None:
+            self.retry(args=(appliance_id,), countdown=30, max_retries=45)
         if Appliance.objects.get(id=appliance_id).cfme.ipapp.is_web_ui_running():
             with transaction.atomic():
                 appliance = Appliance.objects.get(id=appliance_id)
@@ -1023,7 +1023,7 @@ def wait_appliance_ready(self, appliance_id):
                 appliance.ready = False
                 appliance.save()
             appliance.set_status("Waiting for UI to appear.")
-            self.retry(args=(appliance_id,), countdown=20, max_retries=45)
+            self.retry(args=(appliance_id,), countdown=30, max_retries=45)
     except ObjectDoesNotExist:
         # source object is not present, terminating
         return
