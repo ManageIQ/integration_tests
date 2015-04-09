@@ -432,7 +432,7 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
         # TODO: Renaming disabled until orphaning and killing resolved
         # rename_appliances_for_pool.delay(pool.id)
     else:
-        self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=50)
+        self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=120)
 
 
 @singleton_task()
