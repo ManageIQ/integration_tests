@@ -1152,7 +1152,8 @@ class Form(Region):
     user does not have to worry about which order the information is provided.
     This enables the data to be provided as a dict meaning it can be passed directly
     from yamls. It inherits the base Region class, meaning that locators can still be
-    referenced in the same way a Region's locators can.
+    referenced in the same way a Region's locators can. You can also add one more field which will
+    be a :py:class:`dict` of metadata, determining mostly field validity. See :py:meth:`field_valid`
 
     Args:
         fields: A list of field name/locator tuples. The argument not only defines
@@ -1190,9 +1191,32 @@ class Form(Region):
     pretty_attrs = ['fields']
 
     def __init__(self, fields=None, identifying_loc=None):
-        self.locators = dict((key, value) for key, value in fields)
+        self.metadata = {}
+        self.locators = {}
+        for field in fields:
+            try:
+                self.locators[field[0]] = field[1]
+                if len(field) == 3:
+                    self.metadata[field[0]] = field[2]
+            except IndexError:
+                raise ValueError("fields= can be 2- or 3-tuples only! (name, loc[, metadata])")
+
         self.fields = fields
         self.identifying_loc = identifying_loc
+
+    def field_valid(self, field_name):
+        """Add the validity constraints here."""
+        if field_name not in self.metadata:
+            return True
+        metadata = self.metadata[field_name]
+        if "removed_since" in metadata:
+            removed_since = metadata["removed_since"]
+            return version.current_version() < removed_since
+        if "appeared_in" in metadata:
+            appeared_in = metadata["appeared_in"]
+            return version.current_version() >= appeared_in
+
+        return True
 
     def fill(self, fill_data):
         fill(self, fill_data)
@@ -1227,7 +1251,7 @@ def _fill_form_list(form, values, action=None, action_always=False):
     values = list(val for key in form.fields for val in values if val[0] == key[0])
     res = []
     for field, value in values:
-        if value is not None:
+        if value is not None and form.field_valid(field):
             loc = form.locators[field]
             logger.trace(' Dispatching fill for "%s"' % field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item

@@ -62,7 +62,7 @@ properties_form = Form(
         ('type_select', Select("select#server_emstype")),
         ('name_text', Input("name")),
         ('hostname_text', Input("hostname")),
-        ('ipaddress_text', Input("ipaddress")),
+        ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('api_port', Input("port")),
         ('sec_protocol', Select("select#security_protocol")),
         ('sec_realm', Input("realm"))
