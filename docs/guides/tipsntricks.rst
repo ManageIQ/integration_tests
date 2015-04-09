@@ -104,3 +104,13 @@ module, this signal will automatically be fired, so unless you are doing somethi
 you shouldn't have to worry about it. However the signals are there if you need to. Note that the cache
 invalidation happens on the ``current_appliance`` in the stack. See the :ref:`appliance_stack` section
 for more details.
+
+pytest store
+------------
+
+TODO
+
+Test generation (testgen)
+-------------------------
+
+TODO
