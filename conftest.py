@@ -23,6 +23,13 @@ from utils.version import current_version
 from utils.wait import TimedOutError
 
 
+class _AppliancePoliceException(Exception):
+    def __init__(self, message, port, *args, **kwargs):
+        super(_AppliancePoliceException, self).__init__(message, port, *args, **kwargs)
+        self.message = message
+        self.port = port
+
+
 @pytest.mark.hookwrapper
 def pytest_addoption(parser):
     # Create the cfme option group for use in other plugins
@@ -79,19 +86,21 @@ def appliance_police():
         port_results = {pn: net_check(pp) for pn, pp in ports.items()}
         for port, result in port_results.items():
             if not result:
-                raise Exception('Port {} was not contactable'.format(port), port)
+                raise _AppliancePoliceException('Port {} was not contactable'.format(port), port)
         status_code = requests.get(store.current_appliance.url, verify=False,
                                    timeout=60).status_code
         if status_code != 200:
-            raise Exception('Status code was {}, should be 200'.format(status_code), port)
-    except Exception as e:
-
-        port = e.args[1] if len(e.args) == 2 else None
-        if port == 443:
+            raise _AppliancePoliceException('Status code was {}, should be 200'.format(
+                status_code), port)
+        return
+    except _AppliancePoliceException as e:
+        # special handling for known failure conditions
+        if e.port == 443:
             # if the web ui worker merely crashed, give it 15 minutes
             # to come back up
             try:
                 store.current_appliance.wait_for_web_ui(900)
+                return
             except TimedOutError:
                 # the UI didn't come back up after 15 minutes, and is
                 # probably frozen; kill it and restart
@@ -101,19 +110,25 @@ def appliance_police():
                 # take another shot at letting the web UI come up
                 try:
                     store.current_appliance.wait_for_web_ui(900)
+                    return
                 except TimedOutError:
-                    # so much for that, time to call a human
+                    # so much for that
                     pass
+        e_message = e.message
+    except Exception as e:
+        e_message = e.args[0]
 
-        store.slave_manager.message(
-            'Help! My appliance {} crashed with: {}'.format(
-                store.current_appliance.url,
-                e.message))
-        Rdb().set_trace(**{
-            'subject': 'RDB Breakpoint: Appliance failure',
-            'recipients': ['semyers@redhat.com', 'psavage@redhat.com'],
-        })
-        store.slave_manager.message('Resuming testing following remote debugging')
+    # Regardles of the exception raised, we didn't return anywhere above
+    # time to call a human
+    store.slave_manager.message(
+        'Help! My appliance {} crashed with: {}'.format(
+            store.current_appliance.url,
+            e_message))
+    Rdb().set_trace(**{
+        'subject': 'RDB Breakpoint: Appliance failure',
+        'recipients': ['semyers@redhat.com', 'psavage@redhat.com'],
+    })
+    store.slave_manager.message('Resuming testing following remote debugging')
 
 
 def _pytest_plugins_generator(*extension_pkgs):
