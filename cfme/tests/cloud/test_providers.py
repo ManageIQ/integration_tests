@@ -131,6 +131,7 @@ def test_host_name_required_validation(request):
         prov.create()
 
 
+@pytest.mark.meta(blockers=[1209756])
 def test_ip_address_required_validation(request):
     """Test to validate the ip address while adding a provider"""
     prov = provider.OpenStackProvider(
