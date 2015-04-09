@@ -125,7 +125,7 @@ class Rdb(pdb.Pdb):
 
         msg = 'Remote debugger listening on {}'.format(endpoint)
         logger.critical(msg)
-        write_line(msg)
+        write_line(msg, red=True, bold=True)
         self.sock.listen(1)
         (client_socket, address) = self.sock.accept()
         client_fh = client_socket.makefile('rw')
@@ -134,7 +134,7 @@ class Rdb(pdb.Pdb):
         pdb.Pdb.set_trace(self, *args, **kwargs)
         msg = 'Debugger on {} shut down'.format(endpoint)
         logger.critical(msg)
-        write_line(msg)
+        write_line(msg, green=True, bold=True)
 
 
 def pytest_addoption(parser):
