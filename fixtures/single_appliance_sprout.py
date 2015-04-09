@@ -5,6 +5,7 @@ import pytest
 
 from threading import Timer
 
+from fixtures.parallelizer import dump_pool_info
 from fixtures.terminalreporter import reporter
 from utils import at_exit, conf
 from utils.appliance import IPAppliance
@@ -63,6 +64,8 @@ def pytest_configure(config):
                 message="requesting appliance was fulfilled"
             )
         except:
+            pool = sprout.request_check(pool_id)
+            dump_pool_info(lambda x: terminal.write("{}\n".format(x)), pool)
             terminal.write("Destroying the pool on error.\n")
             sprout.destroy_pool(pool_id)
             raise

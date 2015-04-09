@@ -717,7 +717,9 @@ class BasePolicy(Updateable, Pretty):
 
         """
         true, false = [], []
-        if isinstance(actions, list) or isinstance(actions, tuple) or isinstance(actions, set):
+        if isinstance(actions, Action):
+            true.append(actions)
+        elif isinstance(actions, list) or isinstance(actions, tuple) or isinstance(actions, set):
             true.extend(actions)
         elif isinstance(actions, dict):
             for action, is_true in actions.iteritems():
@@ -1073,7 +1075,7 @@ class Action(Updateable, Pretty):
     )
 
     sub_forms = {
-        "Assign Profile to Analysis Tasks":
+        "Assign Profile to Analysis Task":
         Form(
             fields=[
                 ("analysis_profile", Select("select#analysis_profile")),

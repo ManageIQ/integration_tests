@@ -12,6 +12,7 @@ from cfme.web_ui import (
 )
 from cfme.web_ui.menu import nav
 from datetime import date
+from contextlib import contextmanager
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.conf import cfme_data
@@ -176,6 +177,9 @@ nav.add_branch(
 
 class Common(object):
 
+    def __init__(self):
+        self._assigned_pp = set([])
+
     def _load_details(self, refresh=False, is_vm=True):
         """Navigates to a VM's details page.
 
@@ -305,6 +309,68 @@ class Common(object):
         else:
             return details_page.infoblock.text(*properties)
 
+    @property
+    def compliance_status(self):
+        """Returns the title of the compliance infoblock. The title contains datetime so it can be
+        compared.
+
+        Returns:
+            :py:class:`NoneType` if no title is present (no compliance checks before), otherwise str
+        """
+        self.load_details(refresh=True)
+        return details_page.infoblock("Compliance", "Status").title
+
+    @property
+    def compliant(self):
+        """Check if the VM is compliant
+
+        Returns:
+            :py:class:`NoneType` if the VM was never verified, otherwise :py:class:`bool`
+        """
+        text = self.get_detail(properties=("Compliance", "Status")).strip().lower()
+        if text == "never verified":
+            return None
+        elif text.startswith("non-compliant"):
+            return False
+        elif text.startswith("compliant"):
+            return True
+        else:
+            raise ValueError("{} is not a known state for compliance".format(text))
+
+    @contextmanager
+    def check_compliance_wrapper(self, timeout=240):
+        """This wrapper takes care of waiting for the compliance status to change
+
+        Args:
+            timeout: Wait timeout in seconds.
+        """
+        self.load_details(refresh=True)
+        original_state = self.compliance_status
+        yield
+        wait_for(
+            lambda: self.compliance_status != original_state,
+            num_sec=timeout, delay=5, message="compliance of {} checked".format(self.name),
+            fail_func=lambda: toolbar.select("Reload"))
+
+    def check_compliance_and_wait(self, timeout=240):
+        with self.check_compliance_wrapper(timeout=timeout):
+            self.check_compliance()
+        return self.compliant
+
+    def rediscover(self):
+        """Deletes the VM from the provider and lets it discover again"""
+        self.remove_from_cfme(cancel=False, from_details=True)
+        wait_for(self.does_vm_exist_in_cfme, fail_condition=True,
+                 num_sec=300, delay=15, fail_func=sel.refresh)
+        self.provider_crud.refresh_provider_relationships()
+        self.wait_to_appear()
+
+    def rediscover_if_analysis_data_present(self):
+        if self.get_detail(properties=('Lifecycle', 'Last Analyzed')).lower() != 'never':
+            self.rediscover()
+            return True
+        return False
+
     def get_tags(self, tag="My Company Tags"):
         """Returns all tags that are associated with this VM"""
         self.load_details(refresh=True)
@@ -364,7 +430,7 @@ class Common(object):
         return Genealogy(self)
 
     def check_compliance(self):
-        self.load_details()
+        self.load_details(refresh=True)
         pol_btn("Check Compliance of Last Known Configuration", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
@@ -376,6 +442,7 @@ class Common(object):
             policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
                 coverage goes in, PolicyProfile objects will be also passable.
         """
+        map(self._assigned_pp.add, policy_profile_names)
         self._assign_unassign_policy_profiles(True, *policy_profile_names)
 
     def unassign_policy_profiles(self, *policy_profile_names):
@@ -385,6 +452,11 @@ class Common(object):
             policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
                 coverage goes in, PolicyProfile objects will be also passable.
         """
+        for pp_name in policy_profile_names:
+            try:
+                self._assigned_pp.remove(pp_name)
+            except KeyError:
+                pass
         self._assign_unassign_policy_profiles(False, *policy_profile_names)
 
     def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
@@ -396,7 +468,7 @@ class Common(object):
             assign: Wheter to assign or unassign.
             policy_profile_names: :py:class:`str` with Policy Profile names.
         """
-        self.load_details()
+        self.load_details(refresh=True)
         pol_btn("Manage Policies")
         for policy_profile in policy_profile_names:
             if assign:
@@ -418,6 +490,7 @@ class Vm(Common):
 
     class Snapshot(object):
         def __init__(self, name=None, description=None, memory=None, parent_vm=None):
+            super(Vm.Snapshot, self).__init__()
             self.name = name
             self.description = description
             self.memory = memory
@@ -500,6 +573,7 @@ class Vm(Common):
     STATE_SUSPENDED = "suspended"
 
     def __init__(self, name, provider_crud, template_name=None):
+        super(Vm, self).__init__()
         self.name = name
         self.template_name = template_name
         self.provider_crud = provider_crud
@@ -771,6 +845,7 @@ class Vm(Common):
 class Template(Common):
 
     def __init__(self, name, provider_crud):
+        super(Template, self).__init__()
         self.name = name
         self.template_name = name
         self.provider_crud = provider_crud

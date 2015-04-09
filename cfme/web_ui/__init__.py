@@ -15,6 +15,7 @@
   * :py:class:`CheckboxSelect`
   * :py:class:`DHTMLSelect`
   * :py:class:`DriftGrid`
+  * :py:class:`DynamicTable`
   * :py:class:`EmailSelectForm`
   * :py:class:`Filter`
   * :py:class:`Form`
@@ -58,7 +59,7 @@ from multimethods import multimethod, multidispatch, Anything
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import browser
-from utils import version
+from utils import lazycache, version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
@@ -1897,6 +1898,10 @@ class InfoBlock(Pretty):
             except sel_exceptions.NoSuchElementException:
                 return None
 
+        @property
+        def title(self):
+            return sel.get_attribute(self.pair, "title") or None
+
 
 @fill.method((InfoBlock, Sequence))
 def _ib_seq(ib, i):
@@ -2983,3 +2988,107 @@ class ColorGroup(object):
 @fill.method((ColorGroup, basestring))
 def _fill_showing_color_group(tb, s):
     tb.choose(s)
+
+
+class DynamicTable(Pretty):
+    """A table that can add or remove the rows.
+
+    """
+    pretty_attrs = "root_loc", "default_row_item"
+    ROWS = ".//tbody/tr[not(contains(@id, 'new_tr'))]"
+
+    def __init__(self, root_loc, default_row_item=None):
+        self.root_loc = root_loc
+        self.default_row_item = default_row_item
+
+    @property
+    def rows(self):
+        return map(lambda r_el: self.Row(self, r_el), sel.elements(self.ROWS, root=self.root_loc))
+
+    @lazycache
+    def header_names(self):
+        return map(sel.text, sel.elements(".//thead/tr/th", root=self.root_loc))
+
+    def click_add(self):
+        sel.click(sel.element(".//tbody/tr[@id='new_tr']/td//img", root=self.root_loc))
+
+    def click_save(self):
+        sel.click(sel.element(
+            ".//tbody/tr[@id='new_tr']/td//input[@type='image']", root=self.root_loc))
+
+    def delete_row(self, by):
+        pass
+
+    def clear(self):
+        while True:
+            buttons = sel.elements(".//tbody/tr/td/img[@alt='Delete']")
+            if not buttons:
+                break
+            sel.click(buttons[0])
+
+    def add_row(self, data):
+        self.click_add()
+        editing_row = self.Row(self, ".//tbody/tr[@id='new_tr']")
+        fill(editing_row, data)
+        self.click_save()
+
+    class Row(object):
+        def __init__(self, table, root):
+            self.table = table
+            self.root = root
+
+        @property
+        def values(self):
+            cells = sel.elements("./td", root=self.root)
+            return dict(zip(self.table.header_names, map(sel.text, cells)))
+
+        @property
+        def inputs(self):
+            result = []
+            for cell in sel.elements("./td", root=self.root):
+                inputs = sel.elements("./input", root=cell)
+                if not inputs:
+                    result.append(None)
+                else:
+                    result.append(inputs[0])
+            return result
+
+        @property
+        def inputs_for_filling(self):
+            return dict(zip(self.table.header_names, self.inputs))
+
+
+@fill.method((DynamicTable.Row, Mapping))
+def _fill_dt_row_map(dtr, m):
+    for name, input in dtr.inputs_for_filling.iteritems():
+        fill(input, m.get(name, None))
+
+
+@fill.method((DynamicTable.Row, Anything))
+def _fill_dt_row_other(dtr, anything):
+    mapping_fields = [name for name in dtr.table.header_names if name.strip()]
+    if isinstance(anything, (list, tuple)) and len(anything) == len(mapping_fields):
+        # Create the dict and fill by dict
+        fill(dtr, dict(zip(mapping_fields, anything)))
+    else:
+        # Use the default field
+        if dtr.table.default_row_item is None:
+            raise Exception("Cannot fill table row with anything when we dont know the def. field")
+        fill(dtr, {dtr.table.default_row_item: anything})
+
+
+@fill.method((DynamicTable, list))
+def _fill_dt_list(dt, l, clear_before=False):
+    if clear_before:
+        dt.clear()
+    for item in l:
+        dt.add_row(item)
+
+
+@fill.method((DynamicTable, Anything))
+def _fill_dt_anything(dt, anything, **kwargs):
+    fill(dt, [anything], **kwargs)
+
+
+fill.prefer((DynamicTable, Anything), (object, Mapping))
+fill.prefer((DynamicTable.Row, Anything), (object, Mapping))

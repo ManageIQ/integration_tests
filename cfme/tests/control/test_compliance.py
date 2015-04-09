@@ -4,8 +4,9 @@ import re
 import diaper
 import pytest
 
-from cfme.configure import tasks
-from cfme.control.explorer import VMCompliancePolicy, VMCondition, PolicyProfile
+from cfme.configure.configuration import VMAnalysisProfile
+from cfme.control.explorer import (
+    Action, VMCompliancePolicy, VMControlPolicy, VMCondition, PolicyProfile)
 from cfme.exceptions import VmNotFoundViaIP
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import flash, toolbar
@@ -14,6 +15,7 @@ from utils import testgen, version
 from utils.appliance import Appliance, provision_appliance
 from utils.log import logger
 from utils.randomness import generate_random_string
+from utils.update import update
 from utils.wait import wait_for
 
 PREFIX = "test_compliance_"
@@ -21,6 +23,7 @@ PREFIX = "test_compliance_"
 pytestmark = [
     # TODO: Problems with fleecing configuration - revisit later
     pytest.mark.ignore_stream("upstream"),
+    pytest.mark.meta(server_roles=["+automate", "+smartstate", "+smartproxy"]),
     pytest.mark.usefixtures("provider_type"),
     pytest.mark.uncollectif(lambda provider_type: provider_type in {"scvmm"}),
 ]
@@ -28,14 +31,14 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.infra_providers(
-        metafunc, require_fields=True)
+        metafunc, "vm_analysis", require_fields=True)
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
 def wait_for_ssa_enabled():
     wait_for(
         lambda: not toolbar.is_greyed('Configuration', 'Perform SmartState Analysis'),
-        delay=10, handle_exception=True, num_sec=600, fail_func=pytest.sel.refresh)
+        delay=10, handle_exception=True, num_sec=600, fail_func=lambda: toolbar.select("Reload"))
 
 
 @pytest.yield_fixture(scope="module")
@@ -49,74 +52,95 @@ def compliance_vm(request, provider_key, provider_crud):
                 appl_name, provider_key))
         appliance.configure_fleecing()
         vm = Vm(appl_name, provider_crud)
-        with appliance.ipapp:
-            provider_crud.refresh_provider_relationships()
-            vm.wait_to_appear()
-            vm.load_details()
-            wait_for_ssa_enabled()
-            yield vm
     except VmNotFoundViaIP:
         logger.info("Provisioning a new appliance on provider {}.".format(provider_key))
         appliance = provision_appliance(
-            vm_name_prefix=PREFIX,
+            vm_name_prefix=PREFIX + "host_",
             version=str(version.current_version()),
             provider_name=provider_key)
         request.addfinalizer(lambda: diaper(appliance.destroy))
         appliance.configure(setup_fleece=True)
         vm = Vm(appliance.vm_name, provider_crud)
-        with appliance.ipapp:
-            provider_crud.refresh_provider_relationships()
-            vm.wait_to_appear()
-            vm.load_details()
-            wait_for_ssa_enabled()
-            yield vm
+    # Do the final touches
+    with appliance.ipapp:
+        provider_crud.refresh_provider_relationships()
+        vm.wait_to_appear()
+        vm.load_details()
+        wait_for_ssa_enabled()
+        yield vm
 
 
-# TODO: Put it in the Vm class?
-def is_vm_analysis_finished(vm_name):
-    """ Check if analysis is finished - if not, reload page
-    """
-    vm_analysis_finished = tasks.tasks_table.find_row_by_cells({
-        'task_name': "Scan from Vm %s" % vm_name,
-        'state': 'Finished'
-    })
-    return vm_analysis_finished is not None
+@pytest.yield_fixture(scope="module")
+def analysis_profile(compliance_vm):
+    rand = generate_random_string()
+    ap = VMAnalysisProfile(
+        name="ap-{}".format(rand), description="ap-desc-{}".format(rand), files=[],
+        categories=["check_software"])
+    with ap:
+        yield ap
+
+
+@pytest.fixture(scope="module")
+def fleecing_vm(
+        request, compliance_vm, vm_analysis, provider_mgmt, provider_key, provider_crud,
+        analysis_profile):
+    logger.info("Provisioning an appliance for fleecing on {}".format(provider_key))
+    # TODO: When we get something smaller, use it!
+    appliance = provision_appliance(
+        vm_name_prefix=PREFIX + "for_fleece_",
+        version=str(version.current_version()),
+        provider_name=provider_key)
+    request.addfinalizer(lambda: diaper(appliance.destroy))
+    logger.info("Appliance {} provisioned".format(appliance.vm_name))
+    vm = Vm(appliance.vm_name, provider_crud)
+    provider_crud.refresh_provider_relationships()
+    vm.wait_to_appear()
+    # Assign the analysis profile
+    action = Action(
+        "Assign analysis profile {}".format(analysis_profile.name),
+        "Assign Profile to Analysis Task",
+        dict(analysis_profile=analysis_profile.name))
+    action.create()
+    request.addfinalizer(action.delete)
+    policy = VMControlPolicy("Analysis profile policy {}".format(generate_random_string()))
+    policy.create()
+    request.addfinalizer(policy.delete)
+    policy.assign_actions_to_event("VM Analysis Start", action)
+    analysis_pp = PolicyProfile(
+        "Analysis profile PP {}".format(generate_random_string()),
+        policies=[policy])
+    analysis_pp.create()
+    request.addfinalizer(analysis_pp.delete)
+    vm.assign_policy_profiles(analysis_pp.description)
+    request.addfinalizer(lambda: vm.unassign_policy_profiles(analysis_pp.description))
+    return vm
 
 
 def do_scan(vm):
-    scan = lambda: vm.get_detail(properties=("Lifecycle", "Last Analyzed")).lower()
-    vm.load_details()
-    original = scan()
+    if vm.rediscover_if_analysis_data_present():
+        # policy profile assignment is lost so reassign
+        vm.assign_policy_profiles(*vm._assigned_pp)
+
+    def _scan():
+        return vm.get_detail(properties=("Lifecycle", "Last Analyzed")).lower()
+    original = _scan()
     vm.smartstate_scan(cancel=False, from_details=True)
     flash.assert_message_contain("Smart State Analysis initiated")
     logger.info("Scan initiated")
-
-    # wait for task to complete
-    pytest.sel.force_navigate('tasks_my_vm')
-    wait_for(is_vm_analysis_finished, [vm.name], delay=15, num_sec=600,
-             handle_exception=True, fail_func=lambda: toolbar.select('Reload'))
-
-    # make sure fleecing was successful
-    task_row = tasks.tasks_table.find_row_by_cells({
-        'task_name': "Scan from Vm {}".format(vm.name),
-        'state': 'Finished'
-    })
-    icon_ele = task_row.row_element.find_elements_by_class_name("icon")
-    icon_img = icon_ele[0].find_element_by_tag_name("img")
-    assert "checkmark" in icon_img.get_attribute("src")
-    vm.load_details()
     wait_for(
-        lambda: scan() != original,
-        num_sec=300, delay=15, fail_func=lambda: toolbar.select('Reload'))
+        lambda: _scan() != original,
+        num_sec=600, delay=5, fail_func=lambda: toolbar.select("Reload"))
     logger.info("Scan finished")
 
 
-def test_check_package_presence(request, compliance_vm, ssh_client):
-    """This test checks compliance by presence of a certain software package."""
+def test_check_package_presence(request, fleecing_vm, ssh_client, vm_analysis, analysis_profile):
+    """This test checks compliance by presence of a certain cfme-appliance package which is expected
+    to be present on an appliance."""
+    # TODO: If we step out from provisioning a full appliance for fleecing, this might need revisit
     condition = VMCondition(
         "Compliance testing condition {}".format(generate_random_string(size=8)),
-        expression=("fill_find(VM and Instance.Guest Applications : Name, "
-            "=, mc, Check All, Arch ,= ,x86_64)")
+        expression=("fill_find(field=VM and Instance.Guest Applications : Name, "
+            "skey=STARTS WITH, value=cfme-appliance, check=Check Count, ckey= = , cvalue=1)")
     )
     request.addfinalizer(lambda: diaper(condition.delete))
     policy = VMCompliancePolicy("Compliance {}".format(generate_random_string(size=8)))
@@ -129,32 +153,60 @@ def test_check_package_presence(request, compliance_vm, ssh_client):
     )
     request.addfinalizer(lambda: diaper(profile.delete))
     profile.create()
-    compliance_vm.assign_policy_profiles(profile.description)
-    request.addfinalizer(lambda: compliance_vm.unassign_policy_profiles(profile.description))
-    detail = lambda: compliance_vm.get_detail(properties=("Compliance", "Status")).lower()
+    fleecing_vm.assign_policy_profiles(profile.description)
+    request.addfinalizer(lambda: fleecing_vm.unassign_policy_profiles(profile.description))
+
+    with update(analysis_profile):
+        analysis_profile.categories = [
+            "check_services", "check_accounts", "check_software", "check_vmconfig", "check_system"]
+
+    do_scan(fleecing_vm)
+    assert fleecing_vm.check_compliance_and_wait()
+
+
+##
+# File presence fleecing
+@pytest.fixture(scope="function")
+def check_file_name():
+    return "/root/{}".format(generate_random_string())
+
+
+def test_check_files(request, fleecing_vm, ssh_client, check_file_name, analysis_profile):
+    """This test checks presence and contents of a certain file. First the non-compliance is
+    enforced by not having the file, then the compliance is checked against existing file and
+    it is expected to be compliant.
+    """
+    contents = generate_random_string(size=12)
+    condition = VMCondition(
+        "Compliance testing condition {}".format(generate_random_string(size=8)),
+        expression=("fill_find(VM and Instance.Files : Name, "
+            "=, {}, Check Any, Contents, INCLUDES, {})".format(check_file_name, contents))
+    )
+    request.addfinalizer(lambda: diaper(condition.delete))
+    policy = VMCompliancePolicy("Compliance {}".format(generate_random_string(size=8)))
+    request.addfinalizer(lambda: diaper(policy.delete))
+    policy.create()
+    policy.assign_conditions(condition)
+    profile = PolicyProfile(
+        "Compliance PP {}".format(generate_random_string(size=8)),
+        policies=[policy]
+    )
+    request.addfinalizer(lambda: diaper(profile.delete))
+    profile.create()
+    fleecing_vm.assign_policy_profiles(profile.description)
+    request.addfinalizer(lambda: fleecing_vm.unassign_policy_profiles(profile.description))
+
+    with update(analysis_profile):
+        analysis_profile.files = [("/root/*", True)]
+        analysis_profile.categories = [
+            "check_services", "check_accounts", "check_software", "check_vmconfig", "check_system"]
 
     # Non-compliant
-    ssh_client.run_command("yum remove -y mc")
-    do_scan(compliance_vm)
-    compliance_vm.check_compliance()
-
-    wait_for(
-        lambda: detail() == "non-compliant as of less than a minute ago",
-        num_sec=240,
-        delay=1,
-        message="VM be non-compliant",
-        fail_func=lambda: toolbar.select('Reload')
-    )
+    ssh_client.run_command("rm -f {}".format(check_file_name))
+    do_scan(fleecing_vm)
+    assert not fleecing_vm.check_compliance_and_wait()
 
     # Compliant
-    ssh_client.run_command("yum install -y mc")
-    do_scan(compliance_vm)
-    compliance_vm.check_compliance()
-
-    wait_for(
-        lambda: detail() == "compliant as of less than a minute ago",
-        num_sec=240,
-        delay=1,
-        message="VM be non-compliant",
-        fail_func=lambda: toolbar.select('Reload')
-    )
+    ssh_client.run_command("echo {} > {}".format(contents, check_file_name))
+    do_scan(fleecing_vm)
+    assert fleecing_vm.check_compliance_and_wait()
