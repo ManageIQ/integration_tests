@@ -222,6 +222,7 @@ def request_check(user, request_id):
         raise Exception("This pool belongs to a different user!")
     return {
         "fulfilled": request.fulfilled,
+        "finished": request.finished,
         "preconfigured": request.preconfigured,
         "progress": int(round(request.percent_finished * 100)),
         "appliances": [

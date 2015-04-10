@@ -112,17 +112,19 @@
                 {% endfor %}
             </tbody>
             <tfoot>
-                <tr>
-                    <td colspan="2">Fulfillment progress:</td>
-                    <td colspan="6">{{ pool.percent_finished|progress }}</td>
-                    <td colspan="2">
-                        {% if pool.fulfilled %}
-                            <span class="glyphicon glyphicon-ok"></span> Fulfilled
-                        {% else %}
-                            <span class="glyphicon glyphicon-remove"></span> Not fulfilled
-                        {% endif %}
-                    </td>
-                </tr>
+                {% if not pool.finished %}
+                    <tr>
+                        <td colspan="2">Fulfillment progress:</td>
+                        <td colspan="6">{{ pool.percent_finished|progress }}</td>
+                        <td colspan="2">
+                            {% if pool.fulfilled %}
+                                <span class="glyphicon glyphicon-ok"></span> Fulfilled
+                            {% else %}
+                                <span class="glyphicon glyphicon-remove"></span> Not fulfilled
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endif %}
                 <tr>
                     <td colspan="10">
                         <a href="{% url 'kill_pool' pool.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')" style="display: inline;"><span class="glyphicon glyphicon-trash"></span> Terminate entire pool</a>
