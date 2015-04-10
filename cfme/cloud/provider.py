@@ -23,7 +23,7 @@ from cfme.exceptions import (
     HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
 )
 from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, paginator
-from cfme.web_ui import Timelines
+from cfme.web_ui import Timelines, Input
 from utils import conf
 from utils.db import cfmedb
 from utils.log import logger
@@ -49,16 +49,16 @@ discover_form = Form(
 properties_form = Form(
     fields=[
         ('type_select', Select("select#server_emstype")),
-        ('name_text', "#name"),
-        ('hostname_text', "#hostname"),
-        ('ipaddress_text', "#ipaddress"),
+        ('name_text', Input("name")),
+        ('hostname_text', Input("hostname")),
+        ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('amazon_region_select', Select(
             {
                 version.LOWEST: "select#hostname",
                 "5.3.0.14": "select#provider_region",
             }
         )),
-        ('api_port', "#port"),
+        ('api_port', Input("port")),
     ])
 
 credential_form = Form(
