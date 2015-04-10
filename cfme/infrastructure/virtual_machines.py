@@ -21,7 +21,7 @@ from utils.randomness import generate_random_string
 from utils.timeutil import parsetime
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
-from utils.mgmt_system import ActionNotSupported
+from utils.mgmt_system import ActionNotSupported, VMInstanceNotFound
 from utils import version
 from xml.sax.saxutils import quoteattr
 
@@ -288,7 +288,13 @@ class Common(object):
             except ActionNotSupported:
                 # Action is not supported on mgmt system. Simply continue
                 pass
-            return self.provider_crud.get_mgmt_system().delete_vm(self.name)
+            # One more check (for the suspended one)
+            if provider_mgmt.does_vm_exist(self.name):
+                try:
+                    return provider_mgmt.delete_vm(self.name)
+                except VMInstanceNotFound:
+                    # Does not exist already
+                    return True
         else:
             return True
 
