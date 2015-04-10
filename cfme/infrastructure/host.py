@@ -67,7 +67,10 @@ manage_policies_tree = CheckboxTree(
     }
 )
 
-drift_table = CheckboxTable("//table[@class='style3']")
+drift_table = CheckboxTable({
+    version.LOWEST: "//table[@class='style3']",
+    "5.4": "//th[normalize-space(.)='Timestamp']/ancestor::table[1]"
+})
 
 host_add_btn = FormButton('Add this Host')
 forced_saved = FormButton("Save Changes", dimmed_alt="Save", force_click=True)

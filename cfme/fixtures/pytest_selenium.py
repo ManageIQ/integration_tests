@@ -524,7 +524,7 @@ def text(loc, **kwargs):
 
     Returns: A string containing the text of the element.
     """
-    return element(loc, **kwargs).text
+    return move_to_element(loc, **kwargs).text
 
 
 def text_sane(loc, **kwargs):
