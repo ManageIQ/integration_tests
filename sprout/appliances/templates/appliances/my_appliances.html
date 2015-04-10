@@ -138,7 +138,7 @@
                             {% endfor %}
                             </select>
                         </form>
-                        | Set pool expiration: 
+                        | Set expiration for all vms:
                         <a href="{% url 'prolong_lease_pool' pool.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
                         <a href="{% url 'prolong_lease_pool' pool.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
                         <a href="{% url 'prolong_lease_pool' pool.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
