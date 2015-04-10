@@ -62,7 +62,8 @@ def compliance_vm(request, provider_key, provider_crud):
         appliance.configure(setup_fleece=True)
         vm = Vm(appliance.vm_name, provider_crud)
     # Do the final touches
-    with appliance.ipapp:
+    with appliance.ipapp(browser_steal=True) as appl:
+        appl.set_session_timeout(86400)
         provider_crud.refresh_provider_relationships()
         vm.wait_to_appear()
         vm.load_details()
