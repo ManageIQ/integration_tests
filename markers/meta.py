@@ -141,6 +141,7 @@ def run_plugins(item, when):
     for plugin_name, plugin_objects in by_names.iteritems():
         if plugin_name in disabled_plugins:
             logger.info("Ignoring plugin {} due to commandline option".format(plugin_name))
+            continue
         plugin_objects.sort(key=lambda p: len(p.metas), reverse=True)
         plug = plugin_objects[0]
         env = {"item": item}

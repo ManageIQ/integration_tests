@@ -651,6 +651,7 @@ class AppliancePool(MetadataMixin):
     description = models.TextField(blank=True)
     not_needed_anymore = models.BooleanField(
         default=False, help_text="Used for marking the appliance pool as being deleted")
+    finished = models.BooleanField(default=False, help_text="Whether fulfillment has been met.")
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
@@ -768,7 +769,7 @@ class AppliancePool(MetadataMixin):
             p = type(self).objects.get(pk=self.pk)
             p.not_needed_anymore = True
             p.save()
-        save_lives = not self.fulfilled
+        save_lives = not self.finished
         logger().info("Killing pool #{}".format(self.id))
         if self.appliances:
             for appliance in self.appliances:
