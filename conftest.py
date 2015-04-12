@@ -120,11 +120,9 @@ def appliance_police():
 
     # Regardles of the exception raised, we didn't return anywhere above
     # time to call a human
-    store.slave_manager.message(
-        'Help! My appliance {} crashed with: {}'.format(
-            store.current_appliance.url,
-            e_message))
-    Rdb().set_trace(**{
+    msg = 'Help! My appliance {} crashed with: {}'.format(store.current_appliance.url, e_message)
+    store.slave_manager.message(msg)
+    Rdb(msg).set_trace(**{
         'subject': 'RDB Breakpoint: Appliance failure',
         'recipients': ['semyers@redhat.com', 'psavage@redhat.com'],
     })

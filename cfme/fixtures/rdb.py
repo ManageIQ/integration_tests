@@ -13,7 +13,7 @@ Any time an exception listed in a breakpoint's "exceptions" list is raised in :p
 context in the course of a test run, a remote debugger will be started on a random port, and the
 users listed in "recipients" will be emailed instructions to access the remote debugger via telnet.
 
-An Rdb instance can be used just like a :py:class:`pdb.Pdb <python:pdb.Pdb>` instance.
+An Rdb instance can be used just like a :py:class:`Pdb <python:Pdb>` instance.
 
 Additionally, a signal handler has been set up to allow for triggering Rdb during a test run. To
 invoke it, ``kill -USR1`` a test-running process and Rdb will start up. No emails are sent when
@@ -27,7 +27,6 @@ Note:
     This is very insecure, and should be used as a last resort for debugging elusive failures.
 
 """
-import pdb
 import signal
 import smtplib
 import socket
@@ -35,6 +34,7 @@ import sys
 from contextlib import contextmanager
 from email.mime.text import MIMEText
 from importlib import import_module
+from pdb import Pdb
 from textwrap import dedent
 
 from fixtures.pytest_store import store, write_line
@@ -62,11 +62,12 @@ for breakpoint in (conf.rdb.get('breakpoints') or []):
 def rdb_handle_signal(signal, frame):
     # only registered for USR1, no need to inspect the signal,
     # just hand the frame off to Rdb
-    Rdb().set_trace(frame)
+    Rdb('Debugger started on user signal').set_trace(frame)
 signal.signal(signal.SIGUSR1, rdb_handle_signal)
 
 
-class Rdb(pdb.Pdb):
+# XXX: Pdb (and its bases) are old-style classobjs, so don't use super
+class Rdb(Pdb):
     """Remote Debugger
 
     When set_trace is called, it will open a socket on a random unprivileged port connected to a
@@ -74,7 +75,8 @@ class Rdb(pdb.Pdb):
     is called in the Pdb session.
 
     """
-    def __init__(self):
+    def __init__(self, prompt_msg=''):
+        self._prompt_msg = prompt_msg
         self._stdout = sys.stdout
         self._stdin = sys.stdin
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -89,6 +91,10 @@ class Rdb(pdb.Pdb):
         self.set_continue()
         return 1
     do_c = do_cont = do_continue
+
+    def interaction(self, *args, **kwargs):
+        print >>self.stdout, self._prompt_msg
+        Pdb.interaction(self, *args, **kwargs)
 
     def set_trace(self, *args, **kwargs):
         """Start a pdb debugger available via telnet, and optionally email people the endpoint
@@ -129,9 +135,9 @@ class Rdb(pdb.Pdb):
         self.sock.listen(1)
         (client_socket, address) = self.sock.accept()
         client_fh = client_socket.makefile('rw')
-        pdb.Pdb.__init__(self, completekey='tab', stdin=client_fh, stdout=client_fh)
+        Pdb.__init__(self, completekey='tab', stdin=client_fh, stdout=client_fh)
         sys.stdout = sys.stdin = client_fh
-        pdb.Pdb.set_trace(self, *args, **kwargs)
+        Pdb.set_trace(self, *args, **kwargs)
         msg = 'Debugger on {} shut down'.format(endpoint)
         logger.critical(msg)
         write_line(msg, green=True, bold=True)
