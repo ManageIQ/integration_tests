@@ -81,7 +81,14 @@ def pytest_pycollect_makeitem(collector, name, obj):
 @pytest.mark.hookwrapper
 def pytest_collection_modifyitems(session, config, items):
     for item in items:
-        item._metadata = AttrDict(item.function.meta.kwargs)
+        try:
+            item._metadata = AttrDict(item.function.meta.kwargs)
+        except AttributeError:
+            logger.warning('AttributeError getting metadata from item: {}'.format(
+                str(item.nodeid))
+            )
+            item._metadata = AttrDict()
+
         meta = item.get_marker("meta")
         if meta is None:
             continue
