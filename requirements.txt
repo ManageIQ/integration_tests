@@ -22,7 +22,7 @@ pygal
 PyGithub
 PyPDF2
 pytest
-python-bugzilla>=1.1.0
+-e git://git.fedorahosted.org/git/python-bugzilla@210a086454f523095c3fc1736cc96e0bb8ca1260#egg=python-bugzilla
 python-cinderclient
 python-dateutil
 python-keystoneclient
