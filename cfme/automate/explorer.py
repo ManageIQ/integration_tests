@@ -377,7 +377,11 @@ class Namespace(TreeNode, Updateable):
 
 
 class Class(CopiableTreeNode, Updateable):
-    """Represents a Class in the CFME ui."""
+    """Represents a Class in the CFME ui.
+
+    Providing a setup_schema dict, creates the Class with teh specified schema
+
+    """
 
     form = Form(fields=[('name_text', Input('name')),
                         ('display_name_text', Input('display_name')),
@@ -385,12 +389,13 @@ class Class(CopiableTreeNode, Updateable):
                         ('inherits_from_select', Select("//select[@name='inherits_from']"))])
 
     def __init__(self, name=None, display_name=None, description=None, inherits_from=None,
-                 namespace=None):
+                 namespace=None, setup_schema=None):
         self.name = name
         self.display_name = display_name
         self.description = description
         self.inherits_from = inherits_from
         self.namespace = namespace
+        self.setup_schema = setup_schema
 
     @property
     def parent(self):
@@ -437,6 +442,8 @@ class Class(CopiableTreeNode, Updateable):
                          self.inherits_from and self.inherits_from.path_str()},
              action=form_buttons.cancel if cancel else form_buttons.add)
         flash.assert_success_message('Automate Class "%s" was added' % self.path_str())
+        if self.setup_schema:
+            self.edit_schema(add_fields=self.setup_schema)
 
     def update(self, updates, cancel=False):
         sel.force_navigate("automate_explorer_edit", context={"tree_item": self.parent,
@@ -659,7 +666,8 @@ class InstanceFields(object):
         Requires to be on the page
         """
         names = []
-        for cell in sel.elements("//div[@id='form_div']//table[@class='style3']//td[img]"):
+        for cell in sel.elements("//div[@id='form_div']//table[@class='style3' "
+                                 "or contains(@class, 'table-striped')]//td[img]"):
             # The received text is something like u'  (blabla)' so we extract 'blabla'
             sel.move_to_element(cell)  # This is required in order to correctly read the content
             names.append(re.sub(r"^[^(]*\(([^)]+)\)[^)]*$", "\\1", sel.text(cell).encode("utf-8")))

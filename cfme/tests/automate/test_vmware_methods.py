@@ -5,7 +5,7 @@ from cfme.automate.buttons import ButtonGroup, Button
 from cfme.automate.explorer import Namespace, Class, Instance
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.infrastructure.virtual_machines import Vm
-from cfme.web_ui import fill, flash, form_buttons, toolbar
+from cfme.web_ui import fill, flash, form_buttons, toolbar, Input
 from utils import testgen
 from utils.providers import setup_provider
 from utils.randomness import generate_random_string
@@ -41,16 +41,21 @@ def testing_group(request):
 def testing_vm(request, provisioning, provider_crud, provider_key):
     setup_provider(provider_key)
     vm = Vm(
-        name=generate_random_string(),
+        name="test_ae_hd_{}".format(generate_random_string()),
         provider_crud=provider_crud,
         template_name=provisioning["template"]
     )
-    request.addfinalizer(lambda: vm.remove_from_cfme())
-    request.addfinalizer(lambda: vm.delete_from_provider())
+
+    def _finalize():
+        vm.delete_from_provider()
+        if vm.does_vm_exist_in_cfme():
+            vm.remove_from_cfme()
+    request.addfinalizer(_finalize)
     vm.create_on_provider()
     return vm
 
 
+@pytest.mark.meta(blockers=[1211627])
 def test_vmware_vimapi_hotadd_disk(
         request, testing_group, provider_crud, provider_mgmt, testing_vm):
     """ Tests hot adding a disk to vmware vm
@@ -62,19 +67,29 @@ def test_vmware_vimapi_hotadd_disk(
     instance = Instance(
         name="VMware_HotAdd_Disk",
         values={
-            "rel5": "/Integration/VimApi/VMware_HotAdd_Disk",
+            "rel5": "/Integration/VMware/VimApi/VMware_HotAdd_Disk",
         },
         cls=Class(
-            name="Automation Requests (Request)",
+            name="Request",
             namespace=Namespace(
                 name="System"
             ),
+            setup_schema=[Class.SchemaField(name="rel5",
+                                            type_="Relationship")]
         )
     )
     if not instance.exists():
         request.addfinalizer(lambda: instance.delete() if instance.exists() else None)
         instance.create()
     # Dialog to put the disk capacity
+
+    element_data = {
+        'ele_label': "Disk size",
+        'ele_name': "size",
+        'ele_desc': "Disk size",
+        'choose_type': "Text Box",
+        'default_text_box': "Default text"
+    }
     dialog = ServiceDialog(
         label=generate_random_string(),
         description=generate_random_string(),
@@ -83,12 +98,8 @@ def test_vmware_vimapi_hotadd_disk(
         tab_desc=generate_random_string(),
         box_label=generate_random_string(),
         box_desc=generate_random_string(),
-        ele_label="Disk size",
-        ele_name="size",
-        ele_desc="Disk size",
-        choose_type="Text Box",
     )
-    dialog.create()
+    dialog.create(element_data)
     request.addfinalizer(lambda: dialog.delete())
     # Button that will invoke the dialog and action
     button_name = generate_random_string()
@@ -105,7 +116,7 @@ def test_vmware_vimapi_hotadd_disk(
             properties=("Datastore Allocation Summary", "Number of Disks")).strip())
     original_disk_count = _get_disk_count()
     toolbar.select(testing_group.text, button.text)
-    fill("input#size", "1")
+    fill(Input("size"), "1")
     pytest.sel.click(submit)
     flash.assert_no_errors()
     wait_for(lambda: original_disk_count + 1 == _get_disk_count(), num_sec=180, delay=5)
