@@ -40,7 +40,7 @@ properties_form = Form(
     fields=[
         ('name_text', Input("name")),
         ('hostname_text', Input("hostname")),
-        ('ipaddress_text', Input("ipaddress")),
+        ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
         ('custom_ident_text', Input("custom")),
         ('host_platform', Select('//select[@id="user_assigned_os"]')),
         ('ipmi_address_text', Input("ipmi_address")),
