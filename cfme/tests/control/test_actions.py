@@ -31,7 +31,7 @@ from utils.pretty import Pretty
 class VMWrapper(Pretty):
     """This class binds a provider_mgmt object with VM name. Useful for on/off operation"""
     __slots__ = ("_mgmt", "_vm", "soap")
-    pretty_attrs = ['vm_name', 'provider_mgmt']
+    pretty_attrs = ['_vm', '_mgmt']
 
     def __init__(self, provider_mgmt, vm_name, soap):
         self._mgmt = provider_mgmt
@@ -106,57 +106,31 @@ def get_vm_object(vm_name):
 def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small_template):
     setup_provider(provider_key)
     vm_name = "test_actions-{}-{}".format(provider_key, generate_random_string())
+
     if isinstance(provider_mgmt, mgmt_system.RHEVMSystem):
-        # RHEV-M is sometimes overloaded, so a little protection here
-        try:
-            deploy_template(
-                provider_key,
-                vm_name,
-                template_name=small_template,
-                cluster=provider_data["default_cluster"]
-            )
-        except TimedOutError:
-            try:
-                provider_mgmt.delete_vm(vm_name)
-            except TimedOutError:
-                pass
-            finally:
-                # If this happened, we should skip all tests from this provider in this module
-                pytest.skip("RHEV-M %s is probably full! Check its status!" % provider_key)
+        kwargs = {"cluster": provider_data["default_cluster"]}
     elif isinstance(provider_mgmt, mgmt_system.VMWareSystem):
-        # VMWare behaves correctly... usually, but we have to be sure! :)
-        try:
-            deploy_template(
-                provider_key,
-                vm_name,
-                template_name=small_template,
-            )
-        except TimedOutError:
-            try:
-                provider_mgmt.delete_vm()
-            except TimedOutError:
-                pass
-            finally:
-                # If this happened, we should skip all tests from this provider in this module
-                pytest.skip("vSphere %s is probably overloaded! Check its status!" % provider_key)
+        kwargs = {}
     elif isinstance(provider_mgmt, mgmt_system.SCVMMSystem):
-        try:
-            deploy_template(
-                provider_key,
-                vm_name,
-                template_name=small_template,
-                host_group=provider_data.get("host_group", "All Hosts")
-            )
-        except TimedOutError:
-            try:
-                provider_mgmt.delete_vm()
-            except TimedOutError:
-                pass
-            finally:
-                # If this happened, we should skip all tests from this provider in this module
-                pytest.skip("SCVMM %s is probably overloaded! Check its status!" % provider_key)
+        kwargs = {"ost_group": provider_data.get("host_group", "All Hosts")}
     else:
-        raise Exception("Unknown provider")
+        raise TypeError("Cannot handle provider {}".format(type(provider_mgmt).__name__))
+
+    try:
+        deploy_template(
+            provider_key,
+            vm_name,
+            template_name=small_template,
+            **kwargs
+        )
+    except TimedOutError:
+        try:
+            provider_mgmt.delete_vm(vm_name)
+        except TimedOutError:
+            logger.warning("Could not delete VM {}!".format(vm_name))
+        finally:
+            # If this happened, we should skip all tests from this provider in this module
+            pytest.skip("{} is quite likely overloaded! Check its status!".format(provider_key))
 
     def finalize():
         """if getting SOAP object failed, we would not get the VM deleted! So explicit teardown."""
@@ -220,18 +194,23 @@ def automate_role_set(request):
 @pytest.fixture(scope="function")
 def vm_on(vm):
     """ Ensures that the VM is on when the control goes to the test."""
+    vm.wait_vm_steady()
     if not vm.is_vm_running():
         vm.start_vm()
+        vm.wait_vm_running()
     return vm
 
 
 @pytest.fixture(scope="function")
 def vm_off(vm):
     """ Ensures that the VM is off when the control goes to the test."""
+    vm.wait_vm_steady()
     if vm.is_vm_suspended():
         vm.start_vm()
+        vm.wait_vm_running()
     if not vm.is_vm_stopped():
         vm.stop_vm()
+        vm.wait_vm_stopped()
     return vm
 
 
