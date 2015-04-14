@@ -16,7 +16,7 @@ from utils.pretty import Pretty
 cfg_btn = partial(toolbar.select, "Configuration")
 
 
-schedules_table = CheckboxTable("//div[@id='records_div']//table[contains(@class, 'style3')]")
+schedules_table = CheckboxTable("//div[@id='records_div']//table[thead]")
 
 
 def get_sch_name(sch):

@@ -49,7 +49,9 @@ filter_form = Form(
 )
 
 tasks_table = CheckboxTable(
-    table_locator='//div[@id="records_div"]/table[@class="style3"]',
+    table_locator={
+        LOWEST: '//div[@id="records_div"]/table[@class="style3"]',
+        "5.4": '//div[@id="records_div"]/table[thead]'},
     header_checkbox_locator="//div[@id='records_div']//input[@id='masterToggle']"
 )
 
