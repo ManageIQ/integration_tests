@@ -128,7 +128,8 @@ sections = {
         ('infrastructure_datastores', 'Datastores'),
         ('infrastructure_repositories', 'Repositories'),
         ('infrastructure_pxe', 'PXE'),
-        ('infrastructure_requests', 'Requests')
+        ('infrastructure_requests', 'Requests'),
+        ('infrastructure_config_management', 'Configuration Management')
     ),
     ('storage', 'Storage'): (
         ('filers', 'Filers'),
