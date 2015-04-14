@@ -112,7 +112,7 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
     elif isinstance(provider_mgmt, mgmt_system.VMWareSystem):
         kwargs = {}
     elif isinstance(provider_mgmt, mgmt_system.SCVMMSystem):
-        kwargs = {"ost_group": provider_data.get("host_group", "All Hosts")}
+        kwargs = {"host_group": provider_data.get("host_group", "All Hosts")}
     else:
         raise TypeError("Cannot handle provider {}".format(type(provider_mgmt).__name__))
 
