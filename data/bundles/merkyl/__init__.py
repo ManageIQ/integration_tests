@@ -4,6 +4,7 @@ import subprocess
 import tempfile
 import sys
 import cgi
+import signal
 
 try:
     with open(sys.argv[2], "r") as f:
@@ -50,6 +51,14 @@ class Log(object):
             return os.path.getsize(self.f.name)
 
 Loggers = {}
+
+
+def die(a, b):
+    for logger in Loggers:
+        Loggers[logger].stop()
+    sys.exit()
+
+signal.signal(signal.SIGTERM, die)
 
 
 @route('/setup/<path:path>')
