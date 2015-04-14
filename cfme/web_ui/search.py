@@ -274,7 +274,10 @@ def _process_user_filling(fill_callback, cancel_on_user_filling=False):
         if isinstance(fill_callback, dict):
             fill_callback = partial(_answering_function, fill_callback)
         for input in sel.elements(
-                "//fieldset/*[contains(@id, 'value_')]",
+                {
+                    "5.3": "//fieldset/*[contains(@id, 'value_')]",
+                    "5.4": "//div[@id='user_input_filter']//*[contains(@id, 'value_')]"
+                },
                 root=sel.element(search_box.quick_search_box)):
             fill_callback(  # Let the func fill it
                 sel.text(input.find_element_by_xpath("..")),    # Parent element's text
