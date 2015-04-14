@@ -7,6 +7,7 @@ from datetime import date
 import slumber
 
 from utils.conf import env
+from utils.providers import providers_data
 from utils.version import get_stream
 
 
@@ -281,6 +282,8 @@ class Provider(dict):
     """dict subclass to help serialize providers as JSON"""
     def __init__(self, key):
         self['key'] = key
+        # We assume this provider exists, is locally known, and has a type
+        self['type'] = providers_data[key]['type']
 
 
 class Template(dict):
