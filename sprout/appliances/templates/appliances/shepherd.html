@@ -3,9 +3,9 @@
 {% block body %}
 <h1>Free appliance shepherd</h1>
     {% for group in groups %}
-        <h2>{{ group.id }}</h2>
-        <h3>Preconfigured appliances</h3>
         {% with group.configured_shepherd_appliances as appliances %}
+            <h2>{{ group.id }}</h2>
+            <h3>Preconfigured appliances ({{ appliances|length }})</h3>
             {% if appliances %}
                 <table class="table table-striped">
                     <thead>
@@ -31,8 +31,8 @@
                 <p>Sorry, no shepherd appliances from preconfigured template for {{group.id}}</p>
             {% endif %}
         {% endwith %}
-        <h3>Bare appliances</h3>
         {% with group.unconfigured_shepherd_appliances as appliances %}
+            <h3>Bare appliances ({{ appliances|length }})</h3>
             {% if appliances %}
                 <table class="table table-striped">
                     <thead>
