@@ -223,6 +223,10 @@ $(document).ready(function() {
             url: "{% url 'set_pool_description' %}",
             data: {pool_id: poolid, description: description},
             dataType: 'html'
+        }).done(function(data){
+            addAlert("success", "Description of the pool " + poolid + " set to '" + description + "'.");
+        }).fail(function(xhr, textStatus, errorThrown){
+            addAlert("danger", "Error during setting of the description of the pool " + poolid + ": '" + xhr.responseText + "'.");
         })
     });
 
