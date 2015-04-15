@@ -195,7 +195,7 @@ report_form = TabStripForm(
     order=["Columns", "Consolidation", "Formatting", "Styling", "Filter", "Summary", "Charts"]
 )
 
-records_table = Table("//div[@id='records_div']//table[contains(@class, 'style3')]")
+records_table = Table("//div[@id='records_div']//table[thead]")
 
 
 class CustomReport(Updateable):
@@ -286,7 +286,7 @@ class CustomSavedReport(Updateable, Pretty):
         datetime: Datetime of "Run At" of the report. That's what :py:func:`queue_canned_report`
             returns.
     """
-    _table_loc = "//div[@id='report_html_div']/table[@class='style3']"
+    _table_loc = "//div[@id='report_html_div']/table[thead]"
 
     pretty_attrs = ['report', 'datetime']
 

@@ -623,7 +623,9 @@ class InstanceFieldsRow(pretty.Pretty):
     Args:
         row_id: Sequential id of the row (begins with 0)
     """
-    table = Table("//div[@id='form_div']//table[@class='style3']")
+    table = Table({
+        version.LOWEST: "//div[@id='form_div']//table[@class='style3']",
+        "5.4": "//div[@id='form_div']//table[thead]"})
     columns = ("value", "on_entry", "on_exit", "on_error", "collect")
     fields = (
         "inst_value_{}", "inst_on_entry_{}", "inst_on_exit_{}",
@@ -658,6 +660,10 @@ class InstanceFields(object):
 
     Only real drawback is that you cannot use `form` when being somewhere else than on the page.
     """
+    fields = {
+        version.LOWEST: "//div[@id='form_div']//table[@class='style3']//td[img]",
+        "5.4": "//div[@id='form_div']//table[thead]//td[img]"
+    }
 
     @property
     def form(self):

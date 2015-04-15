@@ -7,6 +7,7 @@ from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Select, SortTable, accordion, fill, flash, form_buttons, toolbar, \
     Input
+from utils import version
 from utils.update import Updateable
 from utils.pretty import Pretty
 
@@ -14,7 +15,9 @@ from utils.pretty import Pretty
 acc_tree = partial(accordion.tree, "Provisioning Dialogs")
 cfg_btn = partial(toolbar.select, "Configuration")
 
-dialog_table = SortTable("//div[@id='records_div']//table[contains(@class, 'style3')]")
+dialog_table = SortTable({
+    version.LOWEST: "//div[@id='records_div']//table[contains(@class, 'style3')]",
+    "5.4": "//div[@id='records_div']//table[contains(@class, 'datatable')]"})
 
 
 def get_dialog_name(o):

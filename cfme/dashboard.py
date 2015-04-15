@@ -214,7 +214,7 @@ class RSSWidgetContent(BaseWidgetContent):
 class ReportWidgetContent(BaseWidgetContent):
     @property
     def data(self):
-        return Table(lambda: sel.element("./div/table[@class='style3']", root=self.root))
+        return Table(lambda: sel.element("./div/table[thead]", root=self.root))
 
 
 def get_csrf_token():

@@ -23,7 +23,7 @@ nav.add_branch(
     }
 )
 
-reports_table = CheckboxTable("//div[@id='records_div']//table[contains(@class, 'style3')]")
+reports_table = CheckboxTable("//div[@id='records_div']//table[thead]")
 cfg_btn = partial(toolbar.select, "Configuration")
 
 
