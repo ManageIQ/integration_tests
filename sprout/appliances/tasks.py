@@ -207,6 +207,11 @@ def poke_trackerbot(self):
         except ObjectDoesNotExist:
             if template_name in provider.templates:
                 date = parse_template(template_name).datestamp
+                if date is None:
+                    logger().warning("Ignoring template {} because it does not have a date!".format(
+                        template_name
+                    ))
+                    continue
                 template_version = retrieve_cfme_appliance_version(template_name)
                 with transaction.atomic():
                     tpl = Template(
