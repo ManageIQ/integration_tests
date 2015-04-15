@@ -102,6 +102,10 @@
             !(/^(\/\/|http:|https:).*/.test(url));
     }
 
+    function addAlert(type, text) {
+        return $("#alerts").append("<div class='alert alert-" + type + " alert-dismissible fade-in' role='alert'><button class='close' data-dismiss='alert'>×</button>" + text + "</div>");
+    }
+
     $.ajaxSetup({
         beforeSend: function(xhr, settings) {
             if (!csrfSafeMethod(settings.type) && sameOrigin(settings.url)) {
@@ -186,6 +190,7 @@
   </nav>
   <p></p>
   <div class="container-fluid">
+  <div id="alerts">
     {% if messages %}
         {% for message in messages %}
             <div class='alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissible fade-in'>
@@ -202,6 +207,7 @@
             </div>
         {% endfor %}
       {% endif %}
+    </div>
     {% block body %}{% endblock %}
   </div>
   {% block body-script %}
