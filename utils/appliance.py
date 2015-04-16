@@ -3,6 +3,7 @@ import atexit
 import hashlib
 import os
 import random
+import re
 import shutil
 import subprocess
 from tempfile import mkdtemp
@@ -20,7 +21,7 @@ from fixtures.pytest_store import _push_appliance, _pop_appliance, store
 from utils import api, conf, datafile, db, lazycache, trackerbot, db_queries
 from utils.log import logger, create_sublogger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
-from utils.net import net_check
+from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
@@ -385,7 +386,15 @@ class IPAppliance(object):
         ems_table = self.db["ext_management_systems"]
         ip_addresses = set([])
         for ems in self.db.session.query(ems_table):
-            ip_addresses.add(ems.ipaddress)
+            if ems.ipaddress is not None:
+                ip_addresses.add(ems.ipaddress)
+            elif ems.hostname is not None:
+                if re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", ems.hostname) is not None:
+                    ip_addresses.add(ems.hostname)
+                else:
+                    ip_address = resolve_hostname(ems.hostname)
+                    if ip_address is not None:
+                        ip_addresses.add(ip_address)
         provider_keys = set([])
         for provider_key, provider_data in conf.cfme_data.get("management_systems", {}).iteritems():
             if provider_data.get("ipaddress", None) in ip_addresses:
