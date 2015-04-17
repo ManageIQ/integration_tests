@@ -27,7 +27,10 @@ def parser(filename, exp=None):
 
     p = re.findall('\s*def\s*[a-zA-Z0-9_]*?(test_.*?{}.*?)\('.format(exp), data)
     for test in p:
-        print "{} :: {}".format(filename, test)
+        if isinstance(test, basestring):
+            print "{} :: {}".format(filename, test)
+        else:
+            print "{} :: {}".format(filename, test[0])
 
 exp = None
 if len(sys.argv) == 3:
