@@ -56,11 +56,11 @@ provisioning_form = tabstrip.TabStripForm(
     tab_fields=OrderedDict([
 
         ('Request', [
-            ('email', '//input[@name="requester__owner_email"]'),
-            ('first_name', 'input#requester__owner_first_name'),
-            ('last_name', 'input#requester__owner_last_name'),
-            ('notes', 'textarea#requester__request_notes'),
-            ('manager_name', 'input#requester__owner_manager')
+            ('email', ui.Input('requester__owner_email')),
+            ('first_name', ui.Input('requester__owner_first_name')),
+            ('last_name', ui.Input('requester__owner_last_name')),
+            ('notes', ui.Input('requester__request_notes')),
+            ('manager_name', ui.Input('requester__owner_manager'))
         ]),
 
         ('Purpose', [
@@ -74,23 +74,23 @@ provisioning_form = tabstrip.TabStripForm(
             # Cloud
             ('num_instances', ui.Select('select#service__number_of_vms')),
             ('instance_name', '//input[@name="service__vm_name"]'),
-            ('instance_description', 'textarea#service__vm_description'),
+            ('instance_description', ui.Input('service__vm_description')),
 
             # Infra
             ('vm_filter', ui.Select('select#service__vm_filter#')),
             ('num_vms', ui.Select('select#service__number_of_vms')),
             ('vm_name', '//input[@name="service__vm_name"]'),
-            ('vm_description', 'textarea#service__vm_description'),
+            ('vm_description', ui.Input('service__vm_description')),
             ('catalog_name', ui.Table('//div[@id="prov_vm_div"]/table')),
             ('provision_type', ui.Select('select#service__provision_type')),
-            ('linked_clone', 'input#service__linked_clone'),
+            ('linked_clone', ui.Input('service__linked_clone')),
             ('pxe_server', ui.Select('select#service__pxe_server_id')),
             ('pxe_image', ui.Table('//div[@id="prov_pxe_img_div"]/table')),
             ('iso_file', ui.Table('//div[@id="prov_iso_img_div"]/table'))
         ]),
 
         ('Environment', [
-            ('automatic_placement', 'input#environment__placement_auto'),
+            ('automatic_placement', ui.Input('environment__placement_auto')),
 
             # Cloud
             ('availability_zone', ui.Select('select#environment__placement_availability_zone')),
@@ -117,10 +117,10 @@ provisioning_form = tabstrip.TabStripForm(
             ('cores_per_socket', ui.Select('select#hardware__cores_per_socket')),
             ('memory', ui.Select('select#hardware__vm_memory')),
             ('disk_format', ui.Radio('hardware__disk_format')),
-            ('vm_limit_cpu', 'input#hardware__cpu_limit'),
-            ('vm_limit_memory', 'input#hardware__memory_limit'),
-            ('vm_reserve_cpu', 'input#hardware__cpu_reserve'),
-            ('vm_reserve_memory', 'input#hardware__memory_reserve'),
+            ('vm_limit_cpu', ui.Input('hardware__cpu_limit')),
+            ('vm_limit_memory', ui.Input('hardware__memory_limit')),
+            ('vm_reserve_cpu', ui.Input('hardware__cpu_reserve')),
+            ('vm_reserve_memory', ui.Input('hardware__memory_reserve')),
         ]),
 
         # Infra
@@ -137,27 +137,27 @@ provisioning_form = tabstrip.TabStripForm(
 
         ('Customize', [
             # Common
-            ('dns_servers', 'input#customize__dns_servers'),
-            ('dns_suffixes', 'input#customize__dns_suffixes'),
+            ('dns_servers', ui.Input('customize__dns_servers')),
+            ('dns_suffixes', ui.Input('customize__dns_suffixes')),
 
             # Cloud
             ('specification', ui.Select('select#customize__sysprep_enabled')),
             ('specification_name', ui.Table('//div[@id="prov_vc_div"]/table')),
-            ('computer_name', 'input#customize__linux_host_name'),
-            ('domain_name', 'input#customize__linux_domain_name'),
+            ('computer_name', ui.Input('customize__linux_host_name')),
+            ('domain_name', ui.Input('customize__linux_domain_name')),
 
             # Infra
             ('customize_type', ui.Select('select#customize__sysprep_enabled')),
             ('specification_name', ui.Table('//div[@id="prov_vc_div"]/table')),
-            ('linux_host_name', 'input#customize__linux_host_name'),
-            ('linux_domain_name', 'input#customize__linux_domain_name'),
-            ('prov_host_name', 'input#customize__hostname'),
-            ('ip_address', 'input#customize__ip_addr'),
-            ('subnet_mask', 'input#customize__subnet_mask'),
-            ('gateway', 'input#customize__gateway'),
+            ('linux_host_name', ui.Input('customize__linux_host_name')),
+            ('linux_domain_name', ui.Input('customize__linux_domain_name')),
+            ('prov_host_name', ui.Input('customize__hostname')),
+            ('ip_address', ui.Input('customize__ip_addr')),
+            ('subnet_mask', ui.Input('customize__subnet_mask')),
+            ('gateway', ui.Input('customize__gateway')),
             ('custom_template', ui.Table('//div[@id="prov_template_div"]/table')),
-            ('root_password', 'input#customize__root_password'),
-            ('vm_host_name', 'input#customize__hostname'),
+            ('root_password', ui.Input('customize__root_password')),
+            ('vm_host_name', ui.Input('customize__hostname')),
         ]),
         ('Schedule', [
             # Common
@@ -165,12 +165,12 @@ provisioning_form = tabstrip.TabStripForm(
             ('provision_date', ui.Calendar('miq_date_1')),
             ('provision_start_hour', ui.Select('select#start_hour')),
             ('provision_start_min', ui.Select('select#start_min')),
-            ('power_on', 'input#schedule__vm_auto_start'),
+            ('power_on', ui.Input('schedule__vm_auto_start')),
             ('retirement', ui.Select('select#schedule__retirement')),
             ('retirement_warning', ui.Select('select#schedule__retirement_warn')),
 
             # Infra
-            ('stateless', 'input#schedule__stateless'),
+            ('stateless', ui.Input('schedule__stateless')),
         ])
     ])
 )
