@@ -329,8 +329,7 @@ def _scan_test(provider_crud, vm, os, fs_type, soft_assert):
             'task_name': "Scan from Vm %s" % vm.name,
             'state': 'Finished'
         })
-    icon_ele = task_row.row_element.find_elements_by_class_name("icon")
-    icon_img = icon_ele[0].find_element_by_tag_name("img")
+    icon_img = task_row.columns[1].find_element_by_tag_name("img")
     assert "checkmark" in icon_img.get_attribute("src")
 
     # back to vm_details
