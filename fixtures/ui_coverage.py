@@ -53,7 +53,7 @@ import json
 import subprocess
 from threading import Thread
 
-
+import pytest
 from py.error import ENOENT
 from py.path import local
 
@@ -253,7 +253,12 @@ class UiCoveragePlugin(object):
             collection_appliance_address = manager().collection_appliance.address
             conf.runtime['.ui-coverage']['collection_appliance'] = collection_appliance_address
             conf.save('.ui-coverage')
-        else:
+
+    @pytest.mark.hookwrapper
+    def pytest_collection_finish(self):
+        yield
+        # Install coverage after collection finishes
+        if store.parallelizer_role != 'master':
             manager().install()
 
     def pytest_sessionfinish(self, exitstatus):

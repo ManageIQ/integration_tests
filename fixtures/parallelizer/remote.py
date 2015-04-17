@@ -82,6 +82,7 @@ class SlaveManager(object):
         self.session = session
         self.collection = {item.nodeid: item for item in session.items}
         terminalreporter.disable()
+        self.send_event("collectionfinish", node_ids=self.collection.keys())
 
     def pytest_runtest_logstart(self, nodeid, location):
         """pytest runtest logstart hook
@@ -115,7 +116,6 @@ class SlaveManager(object):
         - iterates over and runs tests in the order received from the master
 
         """
-        self.send_event("collectionfinish", node_ids=self.collection.keys())
         self.message("running tests on appliance at {}".format(self.base_url))
         self.log.info("entering runtest loop")
         for item, nextitem in self._test_generator():
