@@ -359,6 +359,17 @@ class IPAppliance(object):
     def pop(self):
         _pop_appliance(self)
 
+    def __call__(self, **kwargs):
+        """Syntactic sugar for overriding certain instance variables for context managers.
+
+        Currently possible variables are:
+
+        * `browser_steal`
+        """
+        if "browser_steal" in kwargs:
+            self.browser_steal = kwargs["browser_steal"]
+        return self
+
     def __enter__(self):
         """ This method will replace the current appliance in the store """
         self.push()
@@ -1372,6 +1383,24 @@ class IPAppliance(object):
 
     def set_yaml_config(self, config_name, data_dict):
         return db.set_yaml_config(config_name, data_dict, self.address)
+
+    def set_session_timeout(self, timeout=86400, quiet=True):
+        """Sets the timeout of UI timeout.
+
+        Args:
+            timeout: Timeout in seconds
+            quiet: Whether to ignore any errors
+        """
+        try:
+            vmdb_config = self.get_yaml_config("vmdb")
+            if vmdb_config["session"]["timeout"] != timeout:
+                vmdb_config["session"]["timeout"] = timeout
+                self.set_yaml_config("vmdb", vmdb_config)
+        except Exception as ex:
+            logger.error('Setting session timeout failed:')
+            logger.exception(ex)
+            if not quiet:
+                raise
 
 
 class ApplianceSet(object):
