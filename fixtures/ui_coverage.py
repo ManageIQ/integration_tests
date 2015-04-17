@@ -135,7 +135,7 @@ class CoverageManager(object):
         self.print_message('installing')
         self._install_simplecov()
         self._install_coverage_hook()
-        self._restart_evm()
+        self.ipapp.restart_evm_service(rude=True)
         self._touch_all_the_things()
         self.ipapp.wait_for_web_ui()
 
@@ -143,9 +143,10 @@ class CoverageManager(object):
         self.print_message('collecting reports')
         self._stop_touching_all_the_things()
         self._collect_reports()
+        self.ipapp.restart_evm_service(rude=False)
 
     def merge(self):
-        self.print_message('merging resports')
+        self.print_message('merging reports')
         self._merge_coverage_reports()
         self._retrieve_coverage_reports()
 
@@ -174,17 +175,6 @@ class CoverageManager(object):
             'grep -q "{require}" preinitializer.rb || echo -e "\\n{require}" >> preinitializer.rb'
         )
         x, out = self.ipapp.ssh_client().run_command(command_template.format(**replacements))
-        return x == 0
-
-    def _restart_evm(self, rude=True):
-        # This is rude by default (issuing a kill -9 on ruby procs), since the most common use-case
-        # will be to set up coverage on a freshly provisioned appliance in a jenkins run
-        if rude:
-            x, out = self.ipapp.ssh_client().run_command(
-                'killall -9 ruby; service evmserverd start')
-        else:
-            x, out = self.ipapp.ssh_client().run_command(
-                'service evmserverd restart')
         return x == 0
 
     def _touch_all_the_things(self):
