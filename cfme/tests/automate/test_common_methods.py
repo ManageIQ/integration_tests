@@ -59,13 +59,15 @@ def vm_name():
 @pytest.fixture(scope="function")
 def testing_vm(request, vm_name, provider_init, provider_crud, provider_mgmt, provisioning):
     vm_obj = Vm(vm_name, provider_crud, provisioning["template"])
-    request.addfinalizer(
-        lambda: vm_obj.delete_from_provider() if vm_obj.does_vm_exist_on_provider() else None)
-    request.addfinalizer(
-        lambda: vm_obj.remove_from_cfme() if vm_obj.does_vm_exist_in_cfme() else None)
+
+    def _finalize():
+        vm_obj.delete_from_provider()
+        if vm_obj.does_vm_exist_in_cfme():
+            vm_obj.remove_from_cfme()
+    request.addfinalizer(_finalize)
     vm_obj.create_on_provider()
     provider_crud.refresh_provider_relationships()
-    wait_for(vm_obj.does_vm_exist_in_cfme, num_sec=100)
+    wait_for(vm_obj.does_vm_exist_in_cfme, num_sec=450, delay=10)
     return vm_obj
 
 
