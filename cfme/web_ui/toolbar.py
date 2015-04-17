@@ -20,7 +20,10 @@ locators = Region(
     locators={
         'grid_view': "//div[@title='Grid View']",
         'list_view': "//div[@title='List View']",
-        'tile_view': "//div[@title='Tile View']"
+        'tile_view': "//div[@title='Tile View']",
+        'compressed_view': "//div[@title='Compressed View']",
+        'expanded_view': "//div[@title='Expanded View']"
+
     }
 )
 
@@ -177,6 +180,18 @@ def is_vms_tile_view():
     return "pres_dis" in sel.get_attribute(locators.tile_view, "class")
 
 
+def is_vms_expanded_view():
+    """Returns whether expanded view is selected or not.
+    """
+    return "pres" in sel.get_attribute(locators.expanded_view, "class")
+
+
+def is_vms_compressed_view():
+    """Returns whether compressed view is selected or not.
+    """
+    return "pres" in sel.get_attribute(locators.compressed_view, "class")
+
+
 def set_vms_grid_view():
     """Set the view to grid.
     """
@@ -196,3 +211,17 @@ def set_vms_tile_view():
     """
     if not is_vms_tile_view():
         sel.click(locators.tile_view)
+
+
+def set_vms_expanded_view():
+    """Set the view to expanded.
+    """
+    if not is_vms_expanded_view():
+        sel.click(locators.expanded_view)
+
+
+def set_vms_compressed_view():
+    """Set the view to expanded.
+    """
+    if not is_vms_compressed_view():
+        sel.click(locators.compressed_view)
