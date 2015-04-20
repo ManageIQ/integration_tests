@@ -127,6 +127,17 @@ def start(webdriver_name=None, base_url=None, **kwargs):
         atexit.register(wharf.checkin)
         thread_locals.wharf = wharf
 
+        if browser_kwargs['desired_capabilities']['browserName'] == 'chrome':
+            # chrome uses containers to sandbox the browser, and we use containers to
+            # run chrome in wharf, so disable the sandbox if running chrome in wharf
+            co = browser_kwargs['desired_capabilities'].get('chromeOptions', {})
+            arg = '--no-sandbox'
+            if 'args' not in co:
+                co['args'] = [arg]
+            elif arg not in co['args']:
+                co['args'].append(arg)
+            browser_kwargs['desired_capabilities']['chromeOptions'] = co
+
     if thread_locals.wharf:
         # Wharf is configured, make sure to use its command_executor
         wharf_config = thread_locals.wharf.config
