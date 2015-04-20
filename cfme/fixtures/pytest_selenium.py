@@ -269,7 +269,14 @@ def wait_for_ajax():
         """
         prev_log_msg = _thread_local.ajax_log_msg
 
-        running = in_flight()
+        try:
+            running = in_flight()
+        except Exception as e:
+            # if jQuery in error message, a non-cfme page (proxy error) is displayed
+            # should be handled by something else
+            if "jquery" not in str(e).lower():
+                raise
+            return True
         anything_in_flight = False
         anything_in_flight |= running["jquery"] > 0
         anything_in_flight |= running["prototype"] > 0
