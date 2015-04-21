@@ -269,7 +269,14 @@ def wait_for_ajax():
         """
         prev_log_msg = _thread_local.ajax_log_msg
 
-        running = in_flight()
+        try:
+            running = in_flight()
+        except Exception as e:
+            # if jQuery in error message, a non-cfme page (proxy error) is displayed
+            # should be handled by something else
+            if "jquery" not in str(e).lower():
+                raise
+            return True
         anything_in_flight = False
         anything_in_flight |= running["jquery"] > 0
         anything_in_flight |= running["prototype"] > 0
@@ -894,6 +901,26 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         quit()
         kwargs.pop("start", None)
         force_navigate("dashboard")  # Start fresh
+
+    # Check if jQuery present
+    try:
+        execute_script("jQuery")
+    except Exception as e:
+        if "jQuery" not in str(e):
+            logger.error("Checked for jQuery but got something different.")
+            logger.exception(e)
+        # Restart some workers
+        logger.warning("Restarting UI and VimBroker workers!")
+        with store.current_appliance.ssh_client() as ssh:
+            # Blow off the Vim brokers and UI workers
+            ssh.run_rails_command("\"(MiqVimBrokerWorker.all + MiqUiWorker.all).each &:kill\"")
+        logger.info("Waiting for web UI to come back alive.")
+        sleep(10)   # Give it some rest
+        store.current_appliance.wait_for_web_ui()
+        quit()
+        ensure_browser_open()
+        kwargs.pop("start", None)
+        force_navigate("dashboard")  # And start fresh
 
     # Same with rails errors
     rails_e = get_rails_error()
