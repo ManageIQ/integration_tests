@@ -7,6 +7,7 @@ from cfme.web_ui import accordion, flash, form_buttons, menu, Input
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
+from utils.blockers import BZ
 
 cfg_btn = partial(tb.select, "Configuration")
 catalog_tree = partial(accordion.tree, "Catalogs")
@@ -34,6 +35,8 @@ item_form = web_ui.Form(
 
 
 def _all_catalogs_add_new(_):
+    if BZ(1213863).blocks:
+        sel.pytest.skip("Blocker on the bug 1213863")
     catalog_tree('All Catalogs')
     cfg_btn('Add a New Catalog')
 
