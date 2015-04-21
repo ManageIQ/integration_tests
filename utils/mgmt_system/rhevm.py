@@ -104,8 +104,7 @@ class RHEVMSystem(MgmtSystemAPIBase):
             'url': url,
             'username': username,
             'password': password,
-            'insecure': True,
-            'debug': True
+            'insecure': True
         }
         self.kwargs = kwargs
 
