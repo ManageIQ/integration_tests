@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+from cfme import web_ui as ui
 
 from cfme.web_ui.menu import nav
-
 from cfme.exceptions import StorageManagerNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, InfoBlock, MultiFill, Region, Select, SplitTable, fill, flash
+from cfme.web_ui import Form, InfoBlock, MultiFill, Region, SplitTable, fill, flash
 from cfme.web_ui import form_buttons, paginator, toolbar
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -70,15 +70,15 @@ class StorageManager(Updateable):
             self.password = password
 
     form = Form(fields=[
-        ("name", "input#name"),
-        ("type", Select("select#sm_type")),
-        ("hostname", "input#hostname"),
-        ("ip", "input#ipaddress"),
-        ("port", "input#port"),
+        ("name", ui.Input("name")),
+        ("type", ui.Select("select#sm_type")),
+        ("hostname", ui.Input("hostname")),
+        ("ip", ui.Input("ipaddress")),
+        ("port", ui.Input("port")),
         ("credentials", Form(fields=[
-            ("username", "input#userid"),
+            ("username", ui.Input("userid")),
             ("password", MultiFill(
-                "input#password", "input#verify"
+                ui.Input("password"), ui.Input("verify")
             ))
         ])),
     ])
