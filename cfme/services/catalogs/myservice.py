@@ -83,15 +83,7 @@ class MyService(Updateable):
         lifecycle_btn("Retire this Service", invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('Retirement initiated for 1 Service from the CFME Database')
-        retirement_t = ("Lifecycle", "Retirement Date")
-
         wait_time_min = 1
-        wait_for(
-            lambda: self.get_detail(properties=retirement_t) != "Never",
-            fail_func=reload_func,
-            num_sec=wait_time_min * 120,
-            message="wait for service to retire"
-        )
         quadicon = Quadicon(self.vm_name, "vm")
         sel.click(quadicon)
         detail_t = ("Power Management", "Power State")
