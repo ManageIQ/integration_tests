@@ -5,8 +5,13 @@ so they have been stashed into the 'store' namespace
 
 Usage:
 
+    # as pytest.store
+    import pytest
+    pytest.store.config, pytest.store.pluginmanager, pytest.store.session
+
+    # imported directly (store is pytest.store)
     from fixtures.pytest_store import store
-    # store.config, store.pluginmanager, store.session
+    store.config, store.pluginmanager, store.session
 
 The availability of these objects varies during a test run, but
 all should be available in the collection and testing phases of a test run.
@@ -155,6 +160,11 @@ def _pop_appliance(app):
     if app.browser_steal:
         from utils import browser
         browser.start()
+
+
+def pytest_namespace():
+    # Expose the pytest store as pytest.store
+    return {'store': store}
 
 
 def pytest_configure(config):
