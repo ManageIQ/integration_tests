@@ -1,3 +1,4 @@
+from fixtures.pytest_store import store, write_line
 from utils.conf import cfme_data
 from utils.log import logger
 
@@ -51,10 +52,19 @@ def parse_filter(cmd_filter):
         cmd_filter: A list of ``--use-provider`` options.
     """
 
-    filtered_providers = provider_keys()
+    filtered_providers = []
     for provider in provider_keys():
+        if provider in cmd_filter:
+            filtered_providers.append(provider)
+            continue
+
         data = cfme_data['management_systems'][provider]
-        tags = data.get('tags', [])
-        if provider not in cmd_filter and not set(tags) & set(cmd_filter):
-            filtered_providers.remove(provider)
+        tags = set(data.get('tags', []))
+        tags.add(data['type'])
+        if 'disabled' not in tags:
+            tags.add('complete')
+        if tags & set(cmd_filter):
+            filtered_providers.append(provider)
+    if store.parallelizer_role != 'slave':
+        write_line('Using providers {}'.format(', '.join(filtered_providers)))
     return filtered_providers
