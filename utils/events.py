@@ -129,13 +129,13 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
         assert ssh_client.run_command("ruby -v")[0] == 0, "Patch failed"
 
     # INSTALL REST-CLIENT - REQUIRED FOR THE EVENT DISPATCHER SCRIPT
-    if ssh_client.run_command("ruby -e 'require \"rest-client\"'")[0] != 0:
+    if ssh_client.run_rails_command("\"require 'rest-client'\"")[0] != 0:
         # We have to install the gem
         logger.info("Installing rest-client ruby gem that is required by the event dispatcher.")
         success = ssh_client.run_command("gem install rest-client")[0] == 0
         assert success, "Could not install 'rest-client' gem"
         # Verify it works
-        assert ssh_client.run_command("ruby -e 'require \"rest-client\"'")[0] == 0
+        assert ssh_client.run_rails_command("\"require 'rest-client'\"")[0] == 0
 
     # IMPORT AUTOMATE NAMESPACE
     qe_automate_namespace_xml = "qe_event_handler.xml"
@@ -229,8 +229,6 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
                 name=version.pick({
                     version.LOWEST: "Automation Requests (Request)",
                     "5.3": "Request"
-                    # The latest nightlies still have the old name, so having 5.3.1
-                    # (even though they present themselves as 5.3.0.0)
                 }),
                 namespace=Namespace("System"))
         )
