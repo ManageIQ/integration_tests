@@ -132,13 +132,16 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     return MyService(catalog_item.name, vm_name)
 
 
-def test_retire_service(myservice):
+def test_retire_service(provider_crud, myservice, register_event):
     """Tests my service
 
     Metadata:
         test_flag: provision
     """
     myservice.retire()
+    register_event(
+        provider_crud.get_yaml_data()['type'],
+        "service", myservice.service_name, ["vm_retired"])
 
 
 def test_retire_service_on_date(myservice):
