@@ -180,3 +180,39 @@ def test_provider_crud(request, rest_api, from_detail):
     else:
         rest_api.collections.providers.action.delete(provider)
         provider.wait_not_exists(num_sec=30, delay=0.5)
+
+
+@pytest.fixture(scope="module")
+def vm(request, setup_a_provider, rest_api):
+    if "refresh" not in rest_api.collections.providers.action.all:
+        pytest.skip("Refresh action is not implemented in this version")
+    provider_mgmt = provider_factory(setup_a_provider.key)
+    provider = rest_api.collections.providers.find_by(name=setup_a_provider.name)[0]
+    vm_name = deploy_template(
+        setup_a_provider.key,
+        "test_rest_vm_{}".format(generate_random_string(size=4)))
+    request.addfinalizer(lambda: provider_mgmt.delete_vm(vm_name))
+    provider.action.refresh()
+    wait_for(
+        lambda: len(rest_api.collections.vms.find_by(name=vm_name)) > 0,
+        num_sec=600, delay=5)
+    return vm_name
+
+
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_set_vm_owner(request, setup_a_provider, rest_api, vm, from_detail):
+    """Test whether set_owner action from the REST API works."""
+    if "set_owner" not in rest_api.collections.vms.action.all:
+        pytest.skip("Set owner action is not implemented in this version")
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    if from_detail:
+        assert rest_vm.action.set_owner(owner="admin")["success"], "Could not set owner"
+    else:
+        assert (
+            len(rest_api.collections.vms.action.set_owner(rest_vm, owner="admin")) > 0,
+            "Could not set owner")
+    rest_vm.reload()
+    assert hasattr(rest_vm, "evm_owner")
+    assert rest_vm.evm_owner.userid == "admin"
