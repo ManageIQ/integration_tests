@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
 
+from cfme.configure.configuration import without_server_roles
+
 from utils import error, mgmt_system, testgen
-from utils.providers import setup_a_provider as _setup_a_provider
+from utils.providers import setup_a_provider as _setup_a_provider, provider_factory
 from utils.randomness import generate_random_string
+from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 
 pytest_generate_tests = testgen.generate(
@@ -18,7 +21,7 @@ pytestmark = [pytest.mark.ignore_stream("5.2")]
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    _setup_a_provider("infra")
+    return _setup_a_provider("infra")
 
 
 @pytest.fixture(scope="module")
@@ -115,10 +118,37 @@ def test_add_delete_multiple_service_catalogs(rest_api):
         rest_api.collections.service_catalogs.action.delete(*scls)
 
 
-def test_provider_refresh(setup_a_provider, rest_api):
+def test_provider_refresh(request, setup_a_provider, rest_api):
+    """Test checking that refresh invoked from the REST API works.
+
+    It provisions a VM when the Provider inventory functionality is disabled, then the functionality
+    is enabled and we wait for refresh to finish by checking the field in provider and then we check
+    whether the VM appeared in the provider.
+    """
     if "refresh" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
-    assert rest_api.collections.providers[0].action.refresh()["success"]
+    provider_mgmt = provider_factory(setup_a_provider.key)
+    provider = rest_api.collections.providers.find_by(name=setup_a_provider.name)[0]
+    with without_server_roles("ems_inventory", "ems_operations"):
+        vm_name = deploy_template(
+            setup_a_provider.key,
+            "test_rest_prov_refresh_{}".format(generate_random_string(size=4)))
+        request.addfinalizer(lambda: provider_mgmt.delete_vm(vm_name))
+    provider.reload()
+    old_refresh_dt = provider.last_refresh_date
+    assert provider.action.refresh()["success"], "Refresh was unsuccessful"
+    wait_for(
+        lambda: provider.last_refresh_date,
+        fail_func=provider.reload,
+        fail_condition=lambda refresh_date: refresh_date == old_refresh_dt,
+        num_sec=720,
+        delay=5,
+    )
+    # We suppose that thanks to the random string, there will be only one such VM
+    vms = rest_api.collections.vms.find_by(name=vm_name)
+    assert len(vms) > 0, "Could not find the VM {}".format(vm_name)
+    if "delete" in vms[0].action.all:
+        vms[0].action.delete()
 
 
 def test_provider_edit(request, setup_a_provider, rest_api):
