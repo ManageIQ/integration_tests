@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from functools import partial
+from cfme import web_ui as ui
 from cfme.exceptions import CandidateNotFound
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Select, accordion, fill, flash, form_buttons, menu, DHTMLSelect
+from cfme.web_ui import Form, accordion, fill, flash, form_buttons, menu, DHTMLSelect
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 
@@ -11,19 +12,19 @@ buttons_tree = partial(accordion.tree, "Buttons", "Object Types")
 
 button_group_form = Form(
     fields=[
-        ('btn_group_text', "input#name"),
-        ('btn_group_hvr_text', "input#description"),
+        ('btn_group_text', ui.Input('name')),
+        ('btn_group_hvr_text', ui.Input('description')),
         ('add_button', form_buttons.add),
         ('save_button', form_buttons.save)
     ])
 
 button_form = Form(
     fields=[
-        ('btn_text', "input#name"),
-        ('btn_hvr_text', "input#description"),
-        ('select_dialog', Select("select#dialog_id")),
-        ('system_process', Select("select#instance_name")),
-        ('request', "input#object_request"),
+        ('btn_text', ui.Input('name')),
+        ('btn_hvr_text', ui.Input('description')),
+        ('select_dialog', ui.Select('select#dialog_id')),
+        ('system_process', ui.Select('select#instance_name')),
+        ('request', ui.Input('object_request')),
         ('add_button', form_buttons.add),
         ('save_button', form_buttons.save)
     ])
