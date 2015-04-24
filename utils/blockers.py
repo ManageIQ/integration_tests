@@ -140,7 +140,7 @@ class BZ(Blocker):
     def bugzilla_bug(self):
         if self.data is None:
             return None
-        return self.data[0]
+        return self.data
 
     @property
     def blocks(self):
