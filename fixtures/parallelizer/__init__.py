@@ -358,7 +358,7 @@ class ParallelSession(object):
             self.collection[item.nodeid] = item
 
         try:
-            slave_collections = []
+            slave_collections = {}
             self.print_message("Waiting for {} slave collections".format(len(self.slaves)),
                 red=True)
 
@@ -378,7 +378,7 @@ class ParallelSession(object):
 
                 slaveid, event_data, event_name = self.recv()
                 if event_name == 'collectionfinish':
-                    slave_collections.append(event_data['node_ids'])
+                    slave_collections[slaveid] = event_data['node_ids']
                     self.print_message(
                         "{} collection received ({}/{})".format(
                             slaveid, len(slave_collections), len(self.slaves)), yellow=True)
@@ -400,7 +400,7 @@ class ParallelSession(object):
                     _monitor_slave_shutdown(self, self.slaves.pop(slaveid), slaveid)
 
                 # wait for all slave collections to arrive, then diff collections and ack
-                if slave_collections is not None:
+                if slave_collections:
                     num_slaves = len(self.slaves)
                     if len(slave_collections) != num_slaves:
                         continue
@@ -408,7 +408,7 @@ class ParallelSession(object):
                     # compare slave collections to the master, all test ids must be the same
                     self.log.debug('diffing slave collections')
                     for slave_collection in slave_collections:
-                        report_collection_diff(self.collection.keys(), slave_collection, slaveid)
+                        report_collection_diff(self.collection.keys(), slave_collections)
                     else:
                         self.print_message("All collections match", green=True)
 
@@ -497,7 +497,7 @@ class ParallelSession(object):
             yield tests
 
 
-def report_collection_diff(from_collection, to_collection, slaveid):
+def report_collection_diff(from_collection, slave_collections):
     """Report differences, if any exist, between master and slave collections
 
     Raises RuntimeError if collections differ
@@ -507,23 +507,30 @@ def report_collection_diff(from_collection, to_collection, slaveid):
         This function will sort functions before comparing them.
 
     """
-    from_collection, to_collection = sorted(from_collection), sorted(to_collection)
-    if from_collection == to_collection:
-        # Well, that was easy.
-        return True
+    err = ''
+    # be a bro and sort by slaveid so the diffs come out in slave order
+    for slaveid in sorted(slave_collections):
+        to_collection = slave_collections[slaveid]
+        from_collection, to_collection = sorted(from_collection), sorted(to_collection)
+        if from_collection == to_collection:
+            # Well, that was easy.
+            continue
 
-    # diff the two, so we get some idea of what's wrong
-    diff = difflib.unified_diff(
-        from_collection,
-        to_collection,
-        fromfile='master',
-        tofile=slaveid,
-    )
-    # diff is a line generator, stringify it
-    diff = '\n'.join([line.rstrip() for line in diff])
-    err = '{slaveid} has a different collection than the master\n{diff}'.format(
-        slaveid=slaveid, diff=diff)
-    raise RuntimeError(err)
+        # diff the two, so we get some idea of what's wrong
+        diff = difflib.unified_diff(
+            from_collection,
+            to_collection,
+            fromfile='master',
+            tofile=slaveid,
+        )
+
+        # diff is a line generator, stringify it
+        diff = '\n'.join([line.rstrip() for line in diff])
+        err += '{slaveid} diff:\n{diff}\n'.format(
+            slaveid=slaveid, diff=diff)
+
+    if err:
+        raise RuntimeError("slave collections don't match master\n{}".format(err))
 
 
 def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
