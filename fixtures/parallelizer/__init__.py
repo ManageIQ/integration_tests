@@ -124,6 +124,7 @@ class ParallelSession(object):
         self.terminal = store.terminalreporter
         self.trdist = None
         self.slaves = {}
+        self.slave_urls = {}
         self.test_groups = self._test_item_generator()
         self.sprout_client = None
         self.sprout_timer = None
@@ -216,20 +217,25 @@ class ParallelSession(object):
         conf.save('slave_config')
 
         # Fire up the workers
-        devnull = open(os.devnull, 'w')
         for i, base_url in enumerate(self.appliances):
             slaveid = 'slave%d' % i
-            # worker output redirected to null; useful info comes via messages and logs
-            slave = subprocess.Popen(
-                ['python', remote.__file__, slaveid, base_url], stdout=devnull, stderr=devnull)
-            self.slaves[slaveid] = slave
-            at_exit(slave.kill)
+            self.slave_urls[slaveid] = base_url
+            self._start_slave(slaveid)
 
         # Start the recv queue
         self._recv_queue = deque()
         recv_queuer = Thread(target=_recv_queue, args=(self,))
         recv_queuer.daemon = True
         recv_queuer.start()
+
+    def _start_slave(self, slaveid):
+        devnull = open(os.devnull, 'w')
+        base_url = self.slave_urls[slaveid]
+        # worker output redirected to null; useful info comes via messages and logs
+        slave = subprocess.Popen(
+            ['python', remote.__file__, slaveid, base_url], stdout=devnull, stderr=devnull)
+        self.slaves[slaveid] = slave
+        at_exit(slave.kill)
 
     def _reset_timer(self):
         if not (self.sprout_client is not None and self.sprout_pool is not None):
@@ -359,6 +365,7 @@ class ParallelSession(object):
 
         try:
             slave_collections = {}
+            collection_diff_fails = 0
             self.print_message("Waiting for {} slave collections".format(len(self.slaves)),
                 red=True)
 
@@ -373,6 +380,7 @@ class ParallelSession(object):
 
                 if not self.slaves:
                     # All slaves are killed or errored, we're done with tests
+                    self.print_message('all slaves have exited', yellow=True)
                     self.session_finished = True
                     break
 
@@ -402,26 +410,41 @@ class ParallelSession(object):
                 # wait for all slave collections to arrive, then diff collections and ack
                 if slave_collections:
                     num_slaves = len(self.slaves)
+
                     if len(slave_collections) != num_slaves:
                         continue
 
                     # compare slave collections to the master, all test ids must be the same
                     self.log.debug('diffing slave collections')
-                    for slave_collection in slave_collections:
-                        report_collection_diff(self.collection.keys(), slave_collections)
-                    else:
-                        self.print_message("All collections match", green=True)
+                    diff_err = report_collection_diff(self.collection.keys(), slave_collections)
+                    for slaveid, err in diff_err:
+                        self.print_message('{} collection differs, recollecting'.format(slaveid),
+                            purple=True)
+                        self.log.error('{}'.format(err))
+                        self.kill(slaveid)
+                        del(slave_collections[slaveid])
+                        self._start_slave(slaveid)
+                        collection_diff_fails += 1
+
+                        if collection_diff_fails >= len(self.appliances) * 2:
+                            self.print_message('too many slave collection diff failures, exiting',
+                                red=True, bold=True)
+                            raise KeyboardInterrupt('Interrupted due to bad slave collections')
+
+                    if len(slave_collections) != num_slaves:
+                        continue
 
                     # Clear slave collections
                     slave_collections = None
 
                     # let the slaves continue
                     for slave in self.slaves:
-                        self.ack(slave, event_name)
+                        self.ack(slave, 'collectionfinish')
 
-                    self.print_message('Distributing %d tests across %d slaves'
-                        % (len(self.collection), num_slaves))
-                    self.log.info('starting master test distribution')
+                    if self.slaves:
+                        self.print_message('Distributing %d tests across %d slaves'
+                            % (len(self.collection), num_slaves))
+                        self.log.info('starting master test distribution')
 
                     # Turn off the terminal reporter to suppress the builtin logstart printing
                     terminalreporter.disable()
@@ -507,7 +530,7 @@ def report_collection_diff(from_collection, slave_collections):
         This function will sort functions before comparing them.
 
     """
-    err = ''
+    diff_slaves = []
     # be a bro and sort by slaveid so the diffs come out in slave order
     for slaveid in sorted(slave_collections):
         to_collection = slave_collections[slaveid]
@@ -526,11 +549,10 @@ def report_collection_diff(from_collection, slave_collections):
 
         # diff is a line generator, stringify it
         diff = '\n'.join([line.rstrip() for line in diff])
-        err += '{slaveid} diff:\n{diff}\n'.format(
+        err = '{slaveid} diff:\n{diff}\n'.format(
             slaveid=slaveid, diff=diff)
-
-    if err:
-        raise RuntimeError("slave collections don't match master\n{}".format(err))
+        diff_slaves.append((slaveid, err))
+    return diff_slaves
 
 
 def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
