@@ -41,7 +41,7 @@ class MetadataMixin(models.Model):
     @property
     @contextmanager
     def metadata_lock(self):
-        with critical_section("({})[{}]".format(self.__class__.__name__, str(self.pk))):
+        with critical_section("metadata-({})[{}]".format(self.__class__.__name__, str(self.pk))):
             yield
 
     @property
@@ -225,6 +225,11 @@ class Provider(MetadataMixin):
         per_user_usage = per_user_usage.items()
         per_user_usage.sort(key=lambda item: item[1], reverse=True)
         return per_user_usage
+
+    @property
+    def free_shepherd_appliances(self):
+        return Appliance.objects.filter(
+            template__provider=self, appliance_pool=None, marked_for_deletion=False, ready=True)
 
     @classmethod
     def complete_user_usage(cls):
@@ -485,6 +490,12 @@ class Appliance(MetadataMixin):
         )
 
     @property
+    @contextmanager
+    def kill_lock(self):
+        with critical_section("kill-({})[{}]".format(self.__class__.__name__, str(self.pk))):
+            yield
+
+    @property
     def provider_api(self):
         return self.template.provider_api
 
@@ -541,11 +552,12 @@ class Appliance(MetadataMixin):
             for template in pool.possible_templates:
                 for appliance in cls.unassigned().filter(
                         template=template).all()[:limit - len(appliances)]:
-                    appliance.appliance_pool = pool
-                    appliance.save()
-                    appliance.set_status("Given to pool {}".format(pool.id))
-                    appliance_power_on.delay(appliance.id)
-                    appliances.append(appliance)
+                    with appliance.kill_lock:
+                        appliance.appliance_pool = pool
+                        appliance.save()
+                        appliance.set_status("Given to pool {}".format(pool.id))
+                        appliance_power_on.delay(appliance.id)
+                        appliances.append(appliance)
                 if len(appliances) == limit:
                     break
         return len(appliances)
@@ -554,17 +566,19 @@ class Appliance(MetadataMixin):
     def kill(cls, appliance_or_id):
         # Completely delete appliance from provider
         from appliances.tasks import kill_appliance
-        with transaction.atomic():
-            if isinstance(appliance_or_id, cls):
-                self = Appliance.objects.get(id=appliance_or_id.id)
-            else:
-                self = Appliance.objects.get(id=appliance_or_id)
-            logger().info("Killing appliance {}/{}".format(self.id, self.name))
-            if not self.marked_for_deletion:
-                self.marked_for_deletion = True
-                self.leased_until = None
-                self.save()
-                return kill_appliance.delay(self.id)
+        if isinstance(appliance_or_id, cls):
+            self = Appliance.objects.get(id=appliance_or_id.id)
+        else:
+            self = Appliance.objects.get(id=appliance_or_id)
+        with self.kill_lock:
+            with transaction.atomic():
+                self = type(self).objects.get(pk=self.pk)
+                logger().info("Killing appliance {}/{}".format(self.id, self.name))
+                if not self.marked_for_deletion:
+                    self.marked_for_deletion = True
+                    self.leased_until = None
+                    self.save()
+                    return kill_appliance.delay(self.id)
 
     def delete(self, *args, **kwargs):
         # Intercept delete and lessen the number of appliances in the pool
@@ -697,17 +711,32 @@ class AppliancePool(MetadataMixin):
         return super(AppliancePool, self).delete(*args, **kwargs)
 
     @property
-    def possible_templates(self):
-        filter_params = {}
+    def filter_params(self):
+        filter_params = {
+            "template_group": self.group,
+            "preconfigured": self.preconfigured,
+        }
         if self.version is not None:
             filter_params["version"] = self.version
         if self.date is not None:
             filter_params["date"] = self.date
         if self.provider is not None:
             filter_params["provider"] = self.provider
+        return filter_params
+
+    @property
+    def appliance_filter_params(self):
+        params = self.filter_params
+        result = {}
+        for key, value in params.iteritems():
+            result["template__{}".format(key)] = value
+        return result
+
+    @property
+    def possible_templates(self):
         return Template.objects.filter(
-            template_group=self.group, ready=True, exists=True, usable=True,
-            preconfigured=self.preconfigured, **filter_params).all()
+            ready=True, exists=True, usable=True,
+            **self.filter_params).all()
 
     @property
     def possible_provisioning_templates(self):
@@ -715,6 +744,11 @@ class AppliancePool(MetadataMixin):
             filter(lambda tpl: tpl.provider.free, self.possible_templates),
             # Sort by date and load to pick the best match (least loaded provider)
             key=lambda tpl: (tpl.date, 1.0 - tpl.provider.appliance_load), reverse=True)
+
+    @property
+    def possible_providers(self):
+        """Which providers contain a template that could be used for provisioning?."""
+        return set(tpl.provider for tpl in self.possible_templates)
 
     @property
     def appliances(self):
@@ -778,9 +812,10 @@ class AppliancePool(MetadataMixin):
                         and appliance.marked_for_deletion is False
                         and not appliance.managed_providers):
                     with transaction.atomic():
-                        appliance.appliance_pool = None
-                        appliance.datetime_leased = None
-                        appliance.save()
+                        with appliance.kill_lock:
+                            appliance.appliance_pool = None
+                            appliance.datetime_leased = None
+                            appliance.save()
                         self.total_count -= 1
                         if self.total_count < 0:
                             self.total_count = 0  # Protection against stupidity
