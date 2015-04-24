@@ -216,3 +216,30 @@ def test_set_vm_owner(request, setup_a_provider, rest_api, vm, from_detail):
     rest_vm.reload()
     assert hasattr(rest_vm, "evm_owner")
     assert rest_vm.evm_owner.userid == "admin"
+
+
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_vm_add_lifecycle_event(request, setup_a_provider, rest_api, vm, from_detail, db):
+    if "add_lifecycle_event" not in rest_api.collections.vms.action.all:
+        pytest.skip("add_lifecycle_event action is not implemented in this version")
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    event = dict(
+        status=generate_random_string(),
+        message=generate_random_string(),
+        event=generate_random_string(),
+    )
+    if from_detail:
+        assert rest_vm.action.add_lifecycle_event(**event)["success"], "Could not add event"
+    else:
+        assert (
+            len(rest_api.collections.vms.action.add_lifecycle_event(rest_vm, **event)) > 0,
+            "Could not add event")
+    # DB check
+    lifecycle_events = db["lifecycle_events"]
+    assert len(list(db.session.query(lifecycle_events).filter(
+        lifecycle_events.message == event["message"],
+        lifecycle_events.status == event["status"],
+        lifecycle_events.event == event["event"],
+    ))) == 1, "Could not find the lifecycle event in the database"
