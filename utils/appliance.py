@@ -1122,7 +1122,7 @@ class IPAppliance(object):
         status, out = client.run_command('reboot')
 
         wait_for(lambda: client.uptime() < old_uptime, handle_exception=True,
-            num_sec=300, message='appliance to reboot', delay=10)
+            num_sec=600, message='appliance to reboot', delay=10)
 
         if wait_for_web_ui:
             self.wait_for_web_ui()
