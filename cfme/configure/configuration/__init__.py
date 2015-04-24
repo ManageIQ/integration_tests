@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from contextlib import contextmanager
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
@@ -1787,6 +1788,33 @@ def get_server_roles(navigate=True, db=True):
             except:
                 logger.warning("role not found, skipping, netapp storage role?  (" + name + ")")
         return role_list
+
+
+@contextmanager
+def _server_roles_cm(enable, *roles):
+    """ Context manager that takes care of setting required roles and then restoring original roles.
+
+    Args:
+        enable: Whether to enable the roles.
+        *roles: Role ids to set
+    """
+    original_roles = get_server_roles()
+    set_roles = dict(original_roles)
+    for role in roles:
+        if role not in set_roles:
+            raise NameError("No such role {}".format(role))
+        set_roles[role] = enable
+    set_server_roles(**set_roles)
+    yield
+    set_server_roles(**original_roles)
+
+
+def with_server_roles(*roles):
+    return _server_roles_cm(True, *roles)
+
+
+def without_server_roles(*roles):
+    return _server_roles_cm(False, *roles)
 
 
 def set_ntp_servers(*servers):

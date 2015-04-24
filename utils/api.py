@@ -275,6 +275,7 @@ class Entity(object):
         host_id="hosts",
         current_group_id="groups",
         miq_user_role_id="roles",
+        evm_owner_id="users",
     )
 
     def __init__(self, collection, data):
@@ -406,7 +407,12 @@ class Action(object):
                 resources.append(res)
         query_dict = {"action": self._name}
         if resources:
-            query_dict["resources"] = resources
+            query_dict["resources"] = []
+            for resource in resources:
+                new_res = dict(resource)
+                if kwargs:
+                    new_res.update(kwargs)
+                query_dict["resources"].append(new_res)
         else:
             if kwargs:
                 query_dict["resource"] = kwargs
