@@ -6,6 +6,7 @@ from cfme.configure.configuration import without_server_roles
 from utils import error, mgmt_system, testgen
 from utils.providers import setup_a_provider as _setup_a_provider, provider_factory
 from utils.randomness import generate_random_string
+from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
 
@@ -216,3 +217,53 @@ def test_set_vm_owner(request, setup_a_provider, rest_api, vm, from_detail):
     rest_vm.reload()
     assert hasattr(rest_vm, "evm_owner")
     assert rest_vm.evm_owner.userid == "admin"
+
+
+@pytest.mark.parametrize(
+    "from_detail", [True, False],
+    ids=["from_detail", "from_collection"])
+def test_vm_add_lifecycle_event(request, setup_a_provider, rest_api, vm, from_detail, db):
+    if "add_lifecycle_event" not in rest_api.collections.vms.action.all:
+        pytest.skip("add_lifecycle_event action is not implemented in this version")
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    event = dict(
+        status=generate_random_string(),
+        message=generate_random_string(),
+        event=generate_random_string(),
+    )
+    if from_detail:
+        assert rest_vm.action.add_lifecycle_event(**event)["success"], "Could not add event"
+    else:
+        assert (
+            len(rest_api.collections.vms.action.add_lifecycle_event(rest_vm, **event)) > 0,
+            "Could not add event")
+    # DB check
+    lifecycle_events = db["lifecycle_events"]
+    assert len(list(db.session.query(lifecycle_events).filter(
+        lifecycle_events.message == event["message"],
+        lifecycle_events.status == event["status"],
+        lifecycle_events.event == event["event"],
+    ))) == 1, "Could not find the lifecycle event in the database"
+
+
+COLLECTIONS_IGNORED_53 = {
+    "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
+    "tags", "tasks",
+}
+
+
+# TODO: Gradually remove and write separate tests for those when they get extended
+@pytest.mark.parametrize(
+    "collection_name",
+    ["availability_zones", "clusters", "conditions", "data_stores", "events", "flavors", "groups",
+    "hosts", "policies", "policy_actions", "policy_profiles", "request_tasks", "requests",
+    "resource_pools", "roles", "security_groups", "servers", "service_requests", "tags", "tasks",
+    "templates", "users", "zones"])
+def test_query_simple_collections(rest_api, collection_name):
+    """This test tries to load each of the listed collections. 'Simple' collection means that they
+    have no usable actions that we could try to run"""
+    if current_version() < "5.4" and collection_name in COLLECTIONS_IGNORED_53:
+        pytest.skip("Collection {} not in 5.3.".format(collection_name))
+    collection = getattr(rest_api.collections, collection_name)
+    collection.reload()
+    list(collection)
