@@ -341,7 +341,16 @@ class Entity(object):
         if self._data is None:
             self.reload()
             return getattr(self, attr)
-        raise AttributeError("No such attribute {}".format(attr))
+        # Try to get subcollection
+        href = self._href
+        if not href.endswith("/"):
+            href += "/"
+        subcol = Collection(self.collection._api, href + attr, attr)
+        try:
+            subcol.reload()
+            return subcol
+        except APIException:
+            raise AttributeError("No such attribute/subcollection {}".format(attr))
 
     def __repr__(self):
         return "<Entity {}>".format(repr(self._href))
