@@ -158,6 +158,10 @@ report_form = TabStripForm(
         ],
         "Filter": [
             ("filter", Expression()),
+            ("filter_show_costs", select(id="cb_show_typ")),
+            ("filter_owner", select(id="cb_owner_id")),
+            ("filter_tag_cat", select(id="cb_tag_cat")),
+            ("filter_tag_value", select(id="cb_tag_value")),
         ],
         "Summary": [
             ("sort", ShowingInputs(
@@ -209,8 +213,12 @@ class CustomReport(Updateable):
         "calculations_grouped": None,
         "page_size": None,
         "headers": None,
-        "column_styles": {},
+        "column_styles": None,
         "filter": None,
+        "filter_show_costs": None,
+        "filter_owner": None,
+        "filter_tag_cat": None,
+        "filter_tag_value": None,
         "sort": None,
         "chart_type": None,
         "top_values": None,
