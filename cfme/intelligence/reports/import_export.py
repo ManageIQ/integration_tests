@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Region, Select, accordion, fill, flash, form_buttons
+from cfme.web_ui import Region, accordion, fill, flash, form_buttons
 from cfme.web_ui.menu import nav
 
 nav.add_branch(
@@ -12,14 +13,14 @@ nav.add_branch(
 )
 
 form = Region(locators=dict(
-    export_select=Select("//select[@id='choices_chosen']", multi=True),
+    export_select=ui.Select("//select[@id='choices_chosen']", multi=True),
     export_button=form_buttons.FormButton("Download Report to YAML"),
-    import_overwrite="//input[@id='overwrite']",
-    import_file="//input[@id='upload_file']",
-    import_submit="//input[@id='upload_atags']"
+    import_overwrite=ui.Input('overwrite'),
+    import_file=ui.Input('upload_file'),
+    import_submit=ui.Input('upload_atags')
 ))
 
-export_select = Select("//select[@id='choices_chosen']", multi=True)
+export_select = ui.Select("//select[@id='choices_chosen']", multi=True)
 export_button = form_buttons.FormButton("Download Report to YAML")
 
 
