@@ -79,7 +79,7 @@ def pytest_addoption(parser):
     group._addoption('--sprout-timeout', dest='sprout_timeout', type=int,
         default=60, help="How many minutes is the lease timeout.")
     group._addoption('--sprout-provision-timeout', dest='sprout_provision_timeout', type=int,
-        default=40, help="How many minutes to wait for appliances provisioned.")
+        default=60, help="How many minutes to wait for appliances provisioned.")
     group._addoption(
         '--sprout-group', dest='sprout_group', default=None, help="Which stream to use.")
     group._addoption(
