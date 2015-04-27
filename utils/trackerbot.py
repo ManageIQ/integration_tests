@@ -218,19 +218,20 @@ def post_task_result(tid, result, output=None):
     api().task(tid).put({'result': result, 'output': output})
 
 
-def post_jenkins_result(job_name, number, stream, date, fails,
-        skips, passes, template, build_status):
-    api().build.post({
-        'job_name': job_name,
-        'number': number,
-        'stream': '/api/group/{}/'.format(stream),
-        'datestamp': date,
-        'passes': passes,
-        'fails': fails,
-        'skips': skips,
-        'template': template,
-        'build_status': build_status,
-    })
+def post_jenkins_result(job_name, number, stream, date, template,
+        build_status, artifact_report):
+    try:
+        api().build.post({
+            'job_name': job_name,
+            'number': number,
+            'stream': '/api/group/{}/'.format(stream),
+            'datestamp': date,
+            'template': template,
+            'results': artifact_report,
+        })
+    except slumber.exceptions.HttpServerError as exc:
+        print exc.response
+        print exc.content
 
 
 def depaginate(api, result):
