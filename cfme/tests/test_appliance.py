@@ -148,3 +148,12 @@ def test_asset_precompiled(ssh_client):
     if not version.startswith('5.2'):
         file_exists = ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets")[0] == 0
         assert file_exists, "Assets not precompiled"
+
+
+@pytest.mark.ignore_stream("upstream", "5.3")
+@pytest.mark.meta(blockers=[1200424])
+def test_keys_included(ssh_client, soft_assert):
+    keys = ['v0_key', 'v1_key', 'v2_key']
+    for k in keys:
+        file_exists = ssh_client.run_command("test -e /var/www/miq/vmdb/certs/{}".format(k))[0] == 0
+        soft_assert(file_exists, "{} was not included in the build".format(k))
