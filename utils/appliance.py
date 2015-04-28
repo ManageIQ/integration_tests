@@ -1227,11 +1227,11 @@ class IPAppliance(object):
                  delay=20,
                  num_sec=timeout)
 
-    def wait_for_ssh(self, timeout=300):
-        """Waits for appliance database to be ready
+    def wait_for_ssh(self, timeout=600):
+        """Waits for appliance SSH connection to be ready
 
         Args:
-            timeout: Number of seconds to wait until timeout (default ``180``)
+            timeout: Number of seconds to wait until timeout (default ``600``)
         """
         wait_for(func=lambda: self.is_ssh_running,
                  message='appliance.is_ssh_running',
