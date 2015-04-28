@@ -3,10 +3,14 @@ import pytest
 
 import cfme.web_ui.flash as flash
 import cfme.configure.configuration as conf
+from utils import version
 from utils.randomness import generate_random_string
 from utils.update import update
 
 
+# zone configure button disappeared upstream, so we can't do the UD in CRUD
+# (smyers) I'll wrap this in a bug once I figure out where to report it :|
+@pytest.mark.uncollectif(lambda: version.current_version() > '5.4')
 @pytest.mark.smoke
 def test_zone_crud(soft_assert):
     zone = conf.Zone(
