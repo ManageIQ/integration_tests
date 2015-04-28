@@ -506,6 +506,14 @@ def process_delayed_provision_tasks(self):
             if tpls:
                 clone_template_to_pool(tpls[0].id, task.pool.id, task.lease_time)
                 task.delete()
+            else:
+                # Try freeing up some space in provider
+                for provider in task.pool.possible_providers:
+                    appliances = provider.free_shepherd_appliances.exclude(
+                        **task.pool.appliance_filter_params)
+                    if appliances:
+                        Appliance.kill(random.choice(appliances))
+                        break  # Just one
         else:
             # There was a free appliance in shepherd, so we took it and we don't need this task more
             task.delete()
