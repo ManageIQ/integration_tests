@@ -16,7 +16,7 @@ artifactor:
                 - /var/www/miq/vmdb/log/automation.log
 """
 
-from artifactor.utils import ArtifactorBasePlugin
+from artifactor import ArtifactorBasePlugin
 import os.path
 import requests
 

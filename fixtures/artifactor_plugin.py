@@ -18,16 +18,17 @@
 ``reuse_dir`` if this is False and Artifactor comes across a dir that has
 already been used, it will die
 """
-
+import atexit
 from urlparse import urlparse
 
-from artifactor import ArtifactorClient
 import pytest
+
+from artifactor import ArtifactorClient
+from fixtures.pytest_store import write_line
 from utils.conf import env, credentials
 from utils.net import random_port, net_check
 from utils.path import project_path
 from utils.wait import wait_for
-import atexit
 
 
 def get_test_idents(item):
@@ -140,6 +141,7 @@ def pytest_unconfigure():
     global proc
     yield
     if not SLAVEID:
+        write_line('collecting artifacts')
         art_client.fire_hook('finish_session')
     art_client.fire_hook('teardown_merkyl', ip=appliance_ip_address)
     if not SLAVEID:

@@ -81,6 +81,10 @@ coverage_output_dir = log_path.join('coverage')
 coverage_results_archive = coverage_output_dir.join('coverage-results.tgz')
 coverage_appliance_conf = conf_path.join('.ui-coverage')
 
+# This is set in sessionfinish, and should be reliably readable
+# in post-yield sessionfinish hook wrappers and all hooks thereafter
+ui_coverage_percent = None
+
 
 def _thing_toucher_async(ssh_client):
     # for use in a subprocess to kick off the thing toucher
@@ -263,19 +267,17 @@ class UiCoveragePlugin(object):
         # on master/standalone, merge all the collected reports and bring them back
         manager().merge()
 
-    def pytest_unconfigure(self, config):
-        if store.parallelizer_role == 'slave':
-            return
-
         try:
+            global ui_coverage_percent
             last_run = json.load(log_path.join('coverage', 'merged', '.last_run.json').open())
-            coverage = last_run['result']['covered_percent']
+            ui_coverage_percent = last_run['result']['covered_percent']
             style = {'bold': True}
-            if coverage > 40:
+            if ui_coverage_percent > 40:
                 style['green'] = True
             else:
                 style['red'] = True
-            store.terminalreporter.line('UI Coverage Result: {}%'.format(coverage), **style)
+            store.terminalreporter.line('UI Coverage Result: {}%'.format(ui_coverage_percent),
+                **style)
         except Exception as ex:
             logger.error('Error printing coverage report to terminal')
             logger.exception(ex)

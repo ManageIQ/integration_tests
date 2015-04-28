@@ -12,7 +12,7 @@ artifactor:
             only_failed: False #Only show faled tests in the report
 """
 
-from artifactor.utils import ArtifactorBasePlugin
+from artifactor import ArtifactorBasePlugin
 from copy import deepcopy
 from jinja2 import Environment, FileSystemLoader
 from utils.path import template_path
@@ -36,6 +36,23 @@ _tests_tpl = {
     },
     '_duration': 0
 }
+
+
+def overall_test_status(statuses):
+    # Handle some logic for when to count certain tests as which state
+    for when, status in statuses.iteritems():
+        if when == "call" and status[1] and status[0] == "skipped":
+            return "xfailed"
+        elif when == "call" and status[1] and status[0] == "failed":
+            return "xpassed"
+        elif (when == "setup" or when == "teardown") and status[0] == "failed":
+            return "error"
+        elif status[0] == "skipped":
+            return "skipped"
+        elif when == "call" and status[0] == 'failed':
+            return "failed"
+    else:
+        return "passed"
 
 
 class Reporter(ArtifactorBasePlugin):
@@ -85,33 +102,8 @@ class Reporter(ArtifactorBasePlugin):
         for test_name, test in artifacts.iteritems():
             if not test.get('statuses', None):
                 continue
-            overall_status = None
-
-            # Handle some logic for when to count certain tests as which state
-            for when, status in test['statuses'].iteritems():
-                if when == "call" and status[1] and status[0] == "skipped":
-                    counts['xfailed'] += 1
-                    overall_status = "xfailed"
-                    break
-                elif when == "call" and status[1] and status[0] == "failed":
-                    counts['xpassed'] += 1
-                    overall_status = "xpassed"
-                    break
-                elif (when == "setup" or when == "teardown") and status[0] == "failed":
-                    counts['error'] += 1
-                    overall_status = "error"
-                    break
-                elif status[0] == "skipped":
-                    counts['skipped'] += 1
-                    overall_status = "skipped"
-                    break
-                elif when == "call" and status[0] == 'failed':
-                    counts['failed'] += 1
-                    overall_status = "failed"
-                    break
-            else:
-                counts['passed'] += 1
-                overall_status = "passed"
+            overall_status = overall_test_status(test['statuses'])
+            counts[overall_status] += 1
             color = colors[overall_status]
             # Set the overall status and then process duration
             test['statuses']['overall'] = overall_status
