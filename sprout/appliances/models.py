@@ -806,3 +806,11 @@ class AppliancePool(MetadataMixin):
     def __unicode__(self):
         return "AppliancePool id: {}, group: {}, total_count: {}".format(
             self.id, self.group.id, self.total_count)
+
+
+class MismatchVersionMailer(models.Model):
+    provider = models.ForeignKey(Provider)
+    template_name = models.CharField(max_length=64)
+    supposed_version = models.CharField(max_length=32)
+    actual_version = models.CharField(max_length=32)
+    sent = models.BooleanField(default=False)

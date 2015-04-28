@@ -1,6 +1,40 @@
 {% extends "base.html" %}
 {% block title %}Providers{% endblock %}
 {% block body %}
+{% if mismatched_versions %}
+    <h1>Listing of mismatched versions of templates</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td>Provider</td>
+                <td>Template name</td>
+                <td>Supposed version</td>
+                <td>True version</td>
+                <td>E-mail sent?</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mismatch in mismatched_versions %}
+                <tr>
+                    <td>{{ mismatch.provider.id }}</td>
+                    <td>{{ mismatch.template_name }}</td>
+                    <td>{{ mismatch.supposed_version }}</td>
+                    <td>{{ mismatch.actual_version }}</td>
+                    <td>
+                        {% if mismatch.sent %}
+                            <span class="glyphicon glyphicon-ok"></span>
+                        {% else %}
+                            <span class="glyphicon glyphicon-remove"></span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <h1>No version mismatches detected</h1>
+{% endif %}
+<h1>Listing template groups</h1>
 {% for group in groups %}
     <div class="panel panel-primary">
         <div class="panel-heading">

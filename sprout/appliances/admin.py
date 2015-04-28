@@ -9,7 +9,8 @@ from django_object_actions import DjangoObjectActions
 
 # Register your models here.
 from appliances.models import (
-    Provider, Template, Appliance, Group, AppliancePool, DelayedProvisionTask)
+    Provider, Template, Appliance, Group, AppliancePool, DelayedProvisionTask,
+    MismatchVersionMailer)
 from appliances import tasks
 
 
@@ -177,3 +178,8 @@ class ProviderAdmin(Admin):
 class TemplateAdmin(Admin):
     list_display = [
         "name", "version", "original_name", "ready", "exists", "date", "template_group", "usable"]
+
+
+@register_for(MismatchVersionMailer)
+class MismatchVersionMailerAdmin(Admin):
+    list_display = ["provider", "template_name", "supposed_version", "actual_version", "sent"]

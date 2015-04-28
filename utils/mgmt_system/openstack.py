@@ -553,9 +553,11 @@ class OpenstackSystem(MgmtSystemAPIBase):
         instance = self._find_instance_by_name(instance_name)
         try:
             instance.update(new_name)
-        except:
-            instance.update(instance_name)
-            raise
+        except Exception as e:
+            logger.exception(e)
+            return instance_name
+        else:
+            return new_name
 
     def delete_template(self, template_name):
         template = self._find_template_by_name(template_name)
