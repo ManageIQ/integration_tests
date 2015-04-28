@@ -326,6 +326,7 @@ def prepare_template_verify_version(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Verifying version.")
     appliance = CFMEAppliance(template.provider_name, template.name)
+    appliance.ipapp.wait_for_ssh()
     try:
         true_version = str(appliance.version).strip()
     except Exception as e:
