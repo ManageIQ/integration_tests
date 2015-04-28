@@ -99,6 +99,10 @@ def reset_to_default(group):
 def manage_folder(group, folder=None):
     """Context manager to use when modifying the folder contents.
 
+    You can use manager's :py:meth:`FolderManager.bail_out` classmethod to end and discard the
+    changes done inside the with block. This context manager does not give the manager as a value to
+    the with block so you have to import and use the :py:class:`FolderManager` class manually.
+
     Args:
         group: User group.
         folder: Which folder to manage. If None, top-level will be managed.
@@ -127,6 +131,9 @@ def manage_folder(group, folder=None):
 @contextmanager
 def manage_subfolder(group, folder, subfolder):
     """Context manager to use when modifying the subfolder contents.
+
+    You can use manager's :py:meth:`FolderManager.bail_out` classmethod to end and discard the
+    changes done inside the with block.
 
     Args:
         group: User group.
