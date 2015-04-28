@@ -8,7 +8,8 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.template.base import add_to_builtins
 
-from appliances.models import Provider, AppliancePool, Appliance, Group, Template
+from appliances.models import (
+    Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer)
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
     anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider, )
 # appliance_rename)
@@ -44,6 +45,7 @@ def providers(request):
 
 def templates(request):
     groups = Group.objects.order_by("id")
+    mismatched_versions = MismatchVersionMailer.objects.order_by("id")
     return render(request, 'appliances/templates.html', locals())
 
 

@@ -207,6 +207,11 @@ CELERYBEAT_SCHEDULE = {
         'task': 'appliances.tasks.scavenge_managed_providers',
         'schedule': timedelta(minutes=30),
     },
+
+    'mailer-version-mismatch': {
+        'task': 'appliances.tasks.mailer_version_mismatch',
+        'schedule': timedelta(minutes=60),
+    },
 }
 
 try:

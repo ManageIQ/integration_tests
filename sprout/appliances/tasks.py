@@ -5,8 +5,10 @@ import hashlib
 import random
 import re
 import command
+from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 from celery import chain, chord, shared_task
@@ -15,7 +17,8 @@ from functools import wraps
 from novaclient.exceptions import OverLimit as OSOverLimit
 
 from appliances.models import (
-    Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask)
+    Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask,
+    MismatchVersionMailer)
 from sprout import settings, redis
 
 from utils.appliance import Appliance as CFMEAppliance
@@ -257,6 +260,8 @@ def create_appliance_template(provider_id, group_id, template_name):
             pass
         # Fire off the template preparation
         date = parse_template(template_name).datestamp
+        if not date:
+            raise ValueError("Could not parse template name {} properly".format(template_name))
         template_version = retrieve_cfme_appliance_version(template_name)
         new_template_name = settings.TEMPLATE_FORMAT.format(
             group=group.id, date=date.strftime("%y%m%d"), rnd=generate_random_string())
@@ -282,6 +287,7 @@ def create_appliance_template(provider_id, group_id, template_name):
         template.save()
     workflow = chain(
         prepare_template_deploy.si(template.id),
+        prepare_template_verify_version.si(template.id),
         prepare_template_configure.si(template.id),
         prepare_template_network_setup.si(template.id),
         prepare_template_poweroff.si(template.id),
@@ -313,6 +319,37 @@ def prepare_template_deploy(self, template_id):
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
     else:
         template.set_status("Template deployed.")
+
+
+@singleton_task()
+def prepare_template_verify_version(self, template_id):
+    template = Template.objects.get(id=template_id)
+    template.set_status("Verifying version.")
+    appliance = CFMEAppliance(template.provider_name, template.name)
+    try:
+        true_version = str(appliance.version).strip()
+    except Exception as e:
+        template.set_status("Some SSH error happened during appliance version check.")
+        self.retry(args=(template_id,), exc=e, countdown=20, max_retries=5)
+    supposed_version = template.version if template.version is not None else "latest"
+    if true_version != supposed_version:
+        # SPAM SPAM SPAM!
+        with transaction.atomic():
+            mismatch_in_db = MismatchVersionMailer.objects.filter(
+                provider=template.provider,
+                template_name=template.original_name,
+                supposed_version=supposed_version,
+                actual_version=true_version)
+            if not mismatch_in_db:
+                mismatch = MismatchVersionMailer(
+                    provider=template.provider,
+                    template_name=template.original_name,
+                    supposed_version=supposed_version,
+                    actual_version=true_version)
+                mismatch.save()
+        # Run the task to mail the problem
+        mailer_version_mismatch.delay()
+        raise Exception("Detected version mismatch!")
 
 
 @singleton_task()
@@ -510,7 +547,7 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
         pool.version = template.version
         pool.date = template.date
         pool.save()
-    clone_template_to_appliance.delay(appliance.id, time_minutes, template.preconfigured)
+    clone_template_to_appliance.delay(appliance.id, time_minutes)
 
 
 @logged_task()
@@ -538,12 +575,12 @@ def clone_template(template_id):
 
 
 @singleton_task()
-def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, wait_for_ui=True):
+def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None):
     Appliance.objects.get(id=appliance_id).set_status("Beginning deployment process")
     tasks = [
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
-        appliance_power_on.si(appliance_id, wait_for_ui),
+        appliance_power_on.si(appliance_id),
     ]
     workflow = chain(*tasks)
     if Appliance.objects.get(id=appliance_id).appliance_pool is not None:
@@ -661,7 +698,7 @@ def mark_appliance_ready(self, appliance_id):
 
 
 @singleton_task()
-def appliance_power_on(self, appliance_id, wait_for_ui=True):
+def appliance_power_on(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
@@ -676,20 +713,21 @@ def appliance_power_on(self, appliance_id, wait_for_ui=True):
                 appliance.save()
             flow = chain(
                 retrieve_appliance_ip.si(appliance_id),
-                (wait_appliance_ready if wait_for_ui else mark_appliance_ready).si(appliance_id))
+                (wait_appliance_ready if appliance.preconfigured else mark_appliance_ready).si(
+                    appliance_id))
             flow()
             return
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
                 appliance.provider_api.vm_status(appliance.name)))
-            self.retry(args=(appliance_id, wait_for_ui), countdown=20, max_retries=40)
+            self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
         else:
             appliance.set_status("Powering on.")
             appliance.provider_api.start_vm(appliance.name)
-            self.retry(args=(appliance_id, wait_for_ui), countdown=20, max_retries=40)
+            self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
-        self.retry(args=(appliance_id, wait_for_ui), exc=e, countdown=20, max_retries=30)
+        self.retry(args=(appliance_id, ), exc=e, countdown=20, max_retries=30)
 
 
 @singleton_task()
@@ -978,7 +1016,7 @@ def generic_shepherd(preconfigured):
             if tpl_free:
                 logger().info(
                     "Adding an appliance to shepherd: {}/{}".format(appliance.id, appliance.name))
-                clone_template_to_appliance.delay(appliance.id, None, preconfigured)
+                clone_template_to_appliance.delay(appliance.id, None)
         elif len(appliances) > pool_size:
             # Too many appliances, kill the surplus
             for appliance in appliances[:len(appliances) - pool_size]:
@@ -1076,13 +1114,14 @@ def appliance_rename(self, appliance_id, new_name):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
-        return
+        return None
     if appliance.name == new_name:
-        return
+        return None
     with redis.appliances_ignored_when_renaming(appliance.name, new_name):
         logger().info("Renaming {}/{} to {}".format(appliance_id, appliance.name, new_name))
         appliance.name = appliance.provider_api.rename_vm(appliance.name, new_name)
         appliance.save()
+    return appliance.name
 
 
 @singleton_task()
@@ -1155,3 +1194,46 @@ def calculate_provider_management_usage(self, appliance_ids):
             results[provider].append(appliance.id)
     for provider in Provider.objects.all():
         provider.appliances_manage_this_provider = results.get(provider.id, [])
+
+
+@singleton_task()
+def mailer_version_mismatch(self):
+    """This is usually called per-mismatch, but as the mismatches are stored in database and the
+    mail can fail sending, so this can send the mismatches in a batch in this case."""
+    with transaction.atomic():
+        mismatches = MismatchVersionMailer.objects.filter(sent=False)
+        if not mismatches:
+            return
+        email_body = """\
+Hello,
+
+I am Sprout template version mismatch spammer. I think there are some version mismatches.
+
+Here is the list:
+
+{}
+
+Sincerely,
+Sprout template version mismatch spammer™
+        """.format(
+            "\n".join(
+                "* {} @ {} : supposed {} , true {}".format(
+                    mismatch.template_name, mismatch.provider.id, mismatch.supposed_version,
+                    mismatch.actual_version)
+                for mismatch in mismatches
+            )
+        )
+        user_mails = []
+        for user in User.objects.filter(is_superuser=True):
+            if user.email:
+                user_mails.append(user.email)
+        result = send_mail(
+            "Template version mismatches detected",
+            email_body,
+            "sprout-template-version-mismatch@noreply.redhat.com",
+            user_mails,
+        )
+        if result > 0:
+            for mismatch in mismatches:
+                mismatch.sent = True
+                mismatch.save()
