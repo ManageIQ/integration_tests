@@ -40,6 +40,8 @@ urlpatterns = [
     url(r'^vms/(?P<current_provider>[a-z_A-Z0-9-]+)$', views.vms, name="vms_at_provider"),
     url(r'^ajax/vms/(?P<current_provider>[a-z_A-Z0-9-]+)$', views.vms_table, name="vms_table"),
     url(r'^ajax/versions_for_group$', views.versions_for_group, name="versions_for_group"),
+    url(r'^ajax/rename_appliance$', views.rename_appliance, name="rename_appliance"),
+    url(r'^ajax/task_result$', views.task_result, name="task_result"),
     url(r'^ajax/date_for_version_group$', views.date_for_group_and_version,
         name="date_for_group_and_version"),
     url(r'^ajax/pool/description$', views.set_pool_description, name="set_pool_description"),
