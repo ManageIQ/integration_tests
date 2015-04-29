@@ -220,7 +220,21 @@ class CoverageManager(object):
 
         # run the merger on the appliance to generate the simplecov report
         ssh_client.put_file(coverage_merger.strpath, rails_root.strpath)
-        ssh_client.run_rails_command(coverage_merger.basename)
+
+        # Things get weird here. This can take a *very* long time to run, so we need
+        # to start it backgrounded in a shell, and then poll while it runs
+        shell_session = ssh_client.get_transport().open_session()
+        shell_session.invoke_shell()
+        shell_session.send('cd {}; bin/rails r {} &\n'
+            .format(rails_root.strpath, coverage_merger.basename))
+
+        # Now that that's kicked off, poll the appliance to see if the merger is still running
+        def poll_coverage_merger():
+            # pgrep is nice, in that it doesn't include itself in its results, unlike ps|grep
+            result = ssh_client.run_command('pgrep -f {}'.format(coverage_merger.basename))
+            return result.rc == 1
+        wait_for(poll_coverage_merger, num_sec=3600)
+        shell_session.close()
 
     def _retrieve_coverage_reports(self):
         # Now bring the report back (tar it, get it, untar it)
