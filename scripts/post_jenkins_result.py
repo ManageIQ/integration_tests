@@ -35,8 +35,8 @@ if test_report.check():
     with test_report.open() as f:
         artifact_report = json.load(f)
 else:
-    artifact_report = None
-
+    raise RuntimeError('Unable to post to jenkins without test report: '
+        '{} does not exist!'.format(test_report.strpath))
 
 if runner_return and test_return:
     build_status = 'success'
