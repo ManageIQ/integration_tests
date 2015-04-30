@@ -175,7 +175,25 @@ def poke_trackerbot(self):
     """This beat-scheduled task periodically polls the trackerbot if there are any new templates.
     """
     template_usability = []
-    for template in trackerbot().providertemplate().get(limit=10000)["objects"]:
+    # Extract data from trackerbot
+    objects = trackerbot().providertemplate().get(limit=10000)["objects"]
+    per_group = {}
+    for obj in objects:
+        if obj["template"]["group"]["name"] not in per_group:
+            per_group[obj["template"]["group"]["name"]] = []
+        per_group[obj["template"]["group"]["name"]].append(obj)
+    # Sort them using the build date
+    for group in per_group.iterkeys():
+        per_group[group] = sorted(
+            per_group[group],
+            reverse=True, key=lambda o: o["template"]["datestamp"])
+    objects = []
+    # And interleave the the groups
+    while any(per_group.values()):
+        for key in per_group.iterkeys():
+            if per_group[key]:
+                objects.append(per_group[key].pop(0))
+    for template in objects:
         template_usability.append(
             (
                 template["provider"]["key"],
