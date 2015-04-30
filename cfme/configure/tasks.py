@@ -5,9 +5,10 @@
 Todo: Finish the rest of the things.
 """
 
+from cfme import web_ui as ui
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.tabstrip as tabs
-from cfme.web_ui import Form, Region, Select, CheckboxTable, fill, paginator
+from cfme.web_ui import Form, Region, CheckboxTable, fill, paginator
 from cfme.web_ui.menu import nav
 from utils.timeutil import parsetime
 from utils.wait import wait_for, TimedOutError
@@ -36,15 +37,15 @@ buttons = Region(
 
 filter_form = Form(
     fields=[
-        ("zone", Select("//select[@id='chosen_zone']")),
-        ("user", Select("//select[@id='user_choice']")),
-        ("time_period", Select("//select[@id='time_period']")),
-        ("task_status_queued", "//input[@id='queued']"),
-        ("task_status_running", "//input[@id='running']"),
-        ("task_status_ok", "//input[@id='ok']"),
-        ("task_status_error", "//input[@id='error']"),
-        ("task_status_warn", "//input[@id='warn']"),
-        ("task_state", Select("//select[@id='state_choice']")),
+        ("zone", ui.Select("//select[@id='chosen_zone']")),
+        ("user", ui.Select("//select[@id='user_choice']")),
+        ("time_period", ui.Select("//select[@id='time_period']")),
+        ("task_status_queued", ui.Input('queued')),
+        ("task_status_running", ui.Input('running')),
+        ("task_status_ok", ui.Input('ok')),
+        ("task_status_error", ui.Input('error')),
+        ("task_status_warn", ui.Input('warn')),
+        ("task_state", ui.Select("//select[@id='state_choice']")),
     ]
 )
 
