@@ -212,6 +212,11 @@ CELERYBEAT_SCHEDULE = {
         'task': 'appliances.tasks.mailer_version_mismatch',
         'schedule': timedelta(minutes=60),
     },
+
+    'obsolete-template-deleter': {
+        'task': 'appliances.tasks.obsolete_template_deleter',
+        'schedule': timedelta(days=1),
+    },
 }
 
 try:
