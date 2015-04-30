@@ -1,7 +1,7 @@
 from functools import partial
+from cfme import web_ui as ui
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import accordion, menu, flash, Quadicon, Region,\
-    Form, Select, fill, form_buttons, Calendar
+from cfme.web_ui import accordion, menu, flash, Quadicon, Region, Form, fill, form_buttons
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -16,25 +16,25 @@ policy_btn = partial(tb.select, "Policy")
 
 retirement_form = Form(
     fields=[
-        ('retirement_date', Calendar('miq_date_1')),
-        ('retirement_warning', Select("select#retirement_warn"))
+        ('retirement_date', ui.Calendar('miq_date_1')),
+        ('retirement_warning', ui.Select("select#retirement_warn"))
     ])
 
 edit_service_form = Form(
     fields=[
-        ("name", "input#name"),
-        ("description", "input#description")
+        ("name", ui.Input("name")),
+        ("description", ui.Input("description"))
     ])
 
 set_ownership_form = Form(
     fields=[
-        ("select_owner", Select("select#user_name")),
-        ("select_group", Select("select#group_name"))
+        ("select_owner", ui.Select("select#user_name")),
+        ("select_group", ui.Select("select#group_name"))
     ])
 
 edit_tags_form = Form(
     fields=[
-        ("select_value", Select("select#tag_add"))
+        ("select_value", ui.Select("select#tag_add"))
     ])
 
 menu.nav.add_branch(
