@@ -144,6 +144,8 @@ class Store(object):
             # address is
             return self.current_appliance.ssh_client().client_address()
 
+    def write_line(self, line, **kwargs):
+        return write_line(line, **kwargs)
 
 store = Store()
 
