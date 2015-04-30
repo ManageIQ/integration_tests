@@ -15,5 +15,4 @@ def test_about_links():
         except (requests.Timeout, requests.ConnectionError) as ex:
             pytest.fail(ex.message)
 
-        assert resp.status_code == 200,\
-            "Unable to access link '{}' ({})".format(link_key, href)
+        assert 200 <= resp.status_code < 400, "Unable to access '{}' ({})".format(link_key, href)

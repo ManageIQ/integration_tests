@@ -237,8 +237,8 @@ class Domain(TreeNode, Updateable):
         try:
             tree.click_path(*self.nav_path)
             return True
-        except exceptions.CandidateNotFound:
-            return False
+        except exceptions.CandidateNotFound as e:
+            return e
 
     def _nav_locked(self):
         path = self.nav_path
@@ -246,14 +246,14 @@ class Domain(TreeNode, Updateable):
         try:
             tree.click_path(*path)
             return True
-        except exceptions.CandidateNotFound:
-            return False
+        except exceptions.CandidateNotFound as e:
+            return e
 
     def navigate_tree(self):
-        if not self._nav_orig():
-            if not self._nav_locked():
-                raise exceptions.CandidateNotFound(
-                    "Could not navigate to {}".format(str(self.nav_path)))
+        last_nav = self._nav_orig()
+        if last_nav is not True:
+            if self._nav_locked() is not True:
+                raise last_nav
 
     @property
     def is_locked(self):

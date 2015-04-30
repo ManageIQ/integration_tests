@@ -395,17 +395,17 @@ class TestPowerControlRESTAPI(object):
     def test_power_off(self, verify_vm_running, vm):
         assert "stop" in vm.action
         vm.action.stop()
-        wait_for(lambda: vm.power_state == "off", num_sec=120, delay=5, fail_func=vm.reload)
+        wait_for(lambda: vm.power_state == "off", num_sec=300, delay=5, fail_func=vm.reload)
 
     def test_power_on(self, verify_vm_stopped, vm):
         assert "start" in vm.action
         vm.action.start()
-        wait_for(lambda: vm.power_state == "on", num_sec=120, delay=5, fail_func=vm.reload)
+        wait_for(lambda: vm.power_state == "on", num_sec=300, delay=5, fail_func=vm.reload)
 
     def test_suspend(self, verify_vm_running, vm):
         assert "suspend" in vm.action
         vm.action.suspend()
-        wait_for(lambda: vm.power_state == "suspended", num_sec=120, delay=5, fail_func=vm.reload)
+        wait_for(lambda: vm.power_state == "suspended", num_sec=300, delay=5, fail_func=vm.reload)
 
 
 @pytest.mark.usefixtures("test_vm")

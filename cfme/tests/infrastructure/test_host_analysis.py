@@ -110,8 +110,8 @@ def test_run_host_analysis(request, setup_provider, provider_key, provider_type,
 
     wait_for(
         is_host_analysis_finished,
-        delay=10,
-        num_sec=120,
+        delay=15,
+        num_sec=480,
         fail_func=lambda: tb.select('Reload')
     )
 
