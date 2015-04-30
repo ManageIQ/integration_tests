@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import json
+
+from celery.result import AsyncResult
 from dateutil import parser
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -8,11 +11,12 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.template.base import add_to_builtins
 
+from appliances.api import json_response
 from appliances.models import (
     Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer)
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
-    anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider, )
-# appliance_rename)
+    anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
+    appliance_rename)
 
 from utils.log import create_logger
 from utils.providers import provider_factory
@@ -513,3 +517,27 @@ def vm_action(request, current_provider):
 
 def logger():
     return create_logger("sprout_vm_actions")
+
+
+def rename_appliance(request):
+    post = json.loads(request.body)
+    if not request.user.is_authenticated():
+        raise PermissionDenied()
+    try:
+        appliance_id = post.get("appliance_id")
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist:
+        raise Http404('Appliance with ID {} does not exist!.'.format(appliance_id))
+    if not can_operate_appliance_or_pool(appliance, request.user):
+        raise PermissionDenied("Permission denied")
+    new_name = post.get("new_name")
+    return HttpResponse(str(appliance_rename.delay(appliance.id, new_name).task_id))
+
+
+def task_result(request):
+    post = json.loads(request.body)
+    task_id = post.get("task_id")
+    result = AsyncResult(task_id)
+    if not result.ready():
+        return json_response(None)
+    return json_response(result.get(timeout=1))

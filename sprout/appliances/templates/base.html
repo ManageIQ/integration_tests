@@ -19,6 +19,8 @@
   <script src={% static "js/bootstrap.min.js" %}></script>
   <script src={% static "js/bootstrap-select.min.js" %}></script>
   <script src={% static "js/patternfly.min.js" %}></script>
+  {% block additional_js %}{% endblock %}
+  {% block additional_css %}{% endblock %}
   <script type="text/javascript">
     function getMethods(callback)
     {
@@ -39,14 +41,13 @@
                 kwargs: kwargs,
             }),
             success: function(data, s, xhr) {
-                var result = $.parseJSON(data);
-                if(result["status"] == "success")
+                if(data["status"] == "success")
                 {
-                    return callback_success(result["result"]);
+                    return callback_success(data["result"]);
                 }
                 else if(callback_error !== undefined)
                 {
-                    return callback_error(result["result"]);
+                    return callback_error(data["result"]);
                 }
             },
         });

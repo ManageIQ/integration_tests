@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 {% block title %}My appliances{% endblock %}
+{% block additional_js %}
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+<script src={% static "app-js/my_appliances.js" %}></script>
+{% endblock %}
 {% block body %}
 
 {% if not request.user.is_superuser %}
@@ -14,6 +18,7 @@
         <h2>Listing and operation of all {{show_user}}&apos;s appliances - <a href="{% url 'my_appliances' %}?show=all">Show all</a>, <a href="{% url 'my_appliances' %}?show=my">Show mine</a></h2>
     {% endif %}
 {% endif %}
+<div ng-app="myAppliancesApp">
 {% for pool in pools %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
         <div class="panel-heading">
@@ -49,7 +54,18 @@
                 {% for appliance in pool.appliances %}
                 <tr id="appliance-{{ appliance.id }}">
                     <td>{{ appliance.id }}</td>
-                    <td style=" overflow: auto;">{% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}{{ appliance.name }}</td>
+                    <td style=" overflow: auto;" ng-controller="EditVmName" ng-init="applianceId = '{{ appliance.id }}'; apiURL = '{% url 'rename_appliance' %}'; taskResultURL = '{% url 'task_result' %}'; applianceOriginalName = '{{ appliance.name }}';">
+                    {% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}
+                        <div ng-hide="editing" ng-click="edit()">
+                            {[{ vm.name }]}
+                        </div>
+                        <div ng-show="editing">
+                            <input ng-model="vm.name" ng-disabled="submitting">
+                            <a href="#" class="btn btn-success btn-xs" ng-click="save(vm)" ng-hide="submitting"><span class="glyphicon glyphicon-ok"></span></a>
+                            <a href="#" class="btn btn-danger btn-xs" ng-click="cancel()" ng-hide="submitting"><span class="glyphicon glyphicon-remove"></span></a>
+                            <span class="spinner spinner-xs spinner-inline" ng-show="submitting"></span>
+                        </div>
+                    </td>
                     <td>{{ appliance.template.provider.id }}</td>
                     <td>
                         {% if appliance.ip_address %}
@@ -153,6 +169,7 @@
         </table>
     </div>
 {% endfor %}
+</div>
 <h2>Requesting additional pools</h2>
 <form action="{% url 'request_pool' %}" method="POST" class="form-horizontal">
     {% csrf_token %}
