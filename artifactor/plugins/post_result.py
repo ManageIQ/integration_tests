@@ -10,12 +10,10 @@ artifactor:
             enabled: True
             plugin: post_result
 """
-import os
 from collections import defaultdict
 
 from artifactor import ArtifactorBasePlugin
 
-from utils import read_env
 from utils.path import log_path
 
 # preseed the normal statuses, but let defaultdict handle
