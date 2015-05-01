@@ -74,7 +74,7 @@ def appliance_police():
         return
     try:
         ports = {'ssh': 22, 'https': 443, 'postgres': 5432}
-        port_results = {pn: net_check(pp) for pn, pp in ports.items()}
+        port_results = {pn: net_check(pp, force=True) for pn, pp in ports.items()}
         for port, result in port_results.items():
             if not result:
                 raise _AppliancePoliceException('Port {} was not contactable'.format(port), port)
