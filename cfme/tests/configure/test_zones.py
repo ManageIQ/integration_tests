@@ -3,7 +3,6 @@ import pytest
 
 import cfme.web_ui.flash as flash
 import cfme.configure.configuration as conf
-from utils import version
 from utils.randomness import generate_random_string
 from utils.update import update
 
