@@ -26,6 +26,7 @@ from utils.log import create_logger
 from utils.path import project_path
 from utils.providers import provider_factory
 from utils.randomness import generate_random_string
+from utils.timeutil import parsetime
 from utils.trackerbot import api, parse_template
 
 
@@ -181,6 +182,7 @@ def poke_trackerbot(self):
     for obj in objects:
         if obj["template"]["group"]["name"] not in per_group:
             per_group[obj["template"]["group"]["name"]] = []
+
         per_group[obj["template"]["group"]["name"]].append(obj)
     # Sort them using the build date
     for group in per_group.iterkeys():
@@ -204,6 +206,12 @@ def poke_trackerbot(self):
         if not template["usable"]:
             continue
         group, create = Group.objects.get_or_create(id=template["template"]["group"]["name"])
+        # Check if the template is already obsolete
+        if group.template_obsolete_days is not None:
+            build_date = parsetime.from_iso_date(template["template"]["datestamp"])
+            if build_date <= (parsetime.today() - timedelta(days=group.template_obsolete_days)):
+                # It is already obsolete, so ignore it
+                continue
         provider, create = Provider.objects.get_or_create(id=template["provider"]["key"])
         if not provider.working:
             continue
@@ -1264,3 +1272,15 @@ Sprout template version mismatch spammer™
             for mismatch in mismatches:
                 mismatch.sent = True
                 mismatch.save()
+
+
+@singleton_task()
+def obsolete_template_deleter(self):
+    for group in Group.objects.all():
+        if group.template_obsolete_days_delete:
+            # We can delete based on the template age
+            obsolete_templates = group.obsolete_templates
+            if obsolete_templates is not None:
+                for template in obsolete_templates:
+                    if template.can_be_deleted:
+                        delete_template_from_provider.delay(template.id)

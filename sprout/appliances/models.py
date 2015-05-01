@@ -2,7 +2,7 @@
 import yaml
 
 from contextlib import contextmanager
-from datetime import timedelta
+from datetime import timedelta, date
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
@@ -277,6 +277,28 @@ class Group(MetadataMixin):
         help_text="How many appliances to keep spinned for quick taking.")
     unconfigured_template_pool_size = models.IntegerField(default=0,
         help_text="How many appliances to keep spinned for quick taking - unconfigured ones.")
+    template_obsolete_days = models.IntegerField(
+        null=True, blank=True, help_text="Templates older than X days won't be loaded into sprout")
+    template_obsolete_days_delete = models.BooleanField(
+        default=False,
+        help_text="If template_obsolete_days set, this will enable deletion of obsolete templates"
+        " using that metric. WARNING! Use with care. Best use for upstream templates.")
+
+    @property
+    def obsolete_templates(self):
+        """Return a list of obsolete templates. Ignores the latest one even if it was obsolete by
+        the means of days."""
+        if self.template_obsolete_days is None:
+            return None
+        latest_template_date = Template.objects.filter(
+            exists=True, template_group=self).order_by("-date")[0].date
+        latest_template_ids = [
+            tpl.id
+            for tpl
+            in Template.objects.filter(exists=True, template_group=self, date=latest_template_date)]
+        return Template.objects.filter(
+            exists=True, date__lt=date.today() - timedelta(days=self.template_obsolete_days),
+            template_group=self).exclude(id__in=latest_template_ids).order_by("date")
 
     @property
     def templates(self):
@@ -370,7 +392,11 @@ class Template(MetadataMixin):
 
     @property
     def can_be_deleted(self):
-        return self.exists and self.preconfigured
+        return self.exists and self.preconfigured and len(self.appliances) == 0
+
+    @property
+    def appliances(self):
+        return Appliance.objects.filter(template=self)
 
     @property
     def temporary_name(self):
