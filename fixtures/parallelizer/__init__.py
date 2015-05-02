@@ -90,14 +90,23 @@ def pytest_addoption(parser):
         '--sprout-desc', dest='sprout_desc', default=None, help="Set description of the pool.")
 
 
+def pytest_addhooks(pluginmanager):
+    import hooks
+    pluginmanager.addhooks(hooks)
+
+
 @pytest.mark.hookwrapper
 def pytest_configure(config):
+    # configures the parallel session, then fires pytest_parallel_configured
     yield
     if (config.option.appliances or (config.option.use_sprout and
             config.option.sprout_appliances > 1)):
         session = ParallelSession(config)
         config.pluginmanager.register(session, "parallel_session")
         store.parallelizer_role = 'master'
+        config.hook.pytest_parallel_configured(parallel_session=session)
+    else:
+        config.hook.pytest_parallel_configured(parallel_session=None)
 
 
 def dump_pool_info(printf, pool_data):
