@@ -15,6 +15,7 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.control import explorer
 from utils import randomness
 from utils.update import update
+from utils.version import since_date_or_version
 from cfme.web_ui import flash
 from cfme.web_ui import expression_editor
 
@@ -72,9 +73,13 @@ def random_vm_condition():
 
 @pytest.yield_fixture
 def random_host_condition():
+    if since_date_or_version(date="2015-04-30"):  # TODO: Add version when in DS build
+        expression = "fill_count(Host / Node.Files, >, 150)"
+    else:
+        expression = "fill_count(Host.Files, >, 150)"
     cond = explorer.HostCondition(
         randomness.generate_random_string(),
-        expression="fill_count(Host.Files, >, 150)"
+        expression=expression,
     )
     cond.create()
     yield cond
@@ -121,9 +126,13 @@ def test_vm_condition_crud(soft_assert):
 
 
 def test_host_condition_crud(soft_assert):
+    if since_date_or_version(date="2015-04-30"):  # TODO: Add version when in DS build
+        expression = "fill_count(Host / Node.Files, >, 150)"
+    else:
+        expression = "fill_count(Host.Files, >, 150)"
     condition = explorer.HostCondition(
         randomness.generate_random_string(),
-        expression="fill_count(Host.Files, >, 150)"
+        expression=expression
     )
     # CR
     condition.create()

@@ -1311,6 +1311,11 @@ class IPAppliance(object):
         return datetime
 
     @lazycache
+    def build_date(self):
+        date = self.ssh_client().get_build_date()
+        return date
+
+    @lazycache
     def is_downstream(self):
         return self.ssh_client().is_appliance_downstream()
 

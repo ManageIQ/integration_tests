@@ -499,7 +499,11 @@ class BaseCondition(Updateable, Pretty):
         """
         sel.force_navigate(self.PREFIX + "condition",
                            context=dict(condition_name=self.description))
-        cfg_btn(self.DELETE_STRING, invokes_alert=True)
+        if callable(self.DELETE_STRING):
+            delete_string = self.DELETE_STRING()
+        else:
+            delete_string = self.DELETE_STRING
+        cfg_btn(delete_string, invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
@@ -511,7 +515,12 @@ class VMCondition(BaseCondition, VMObject):
 
 class HostCondition(BaseCondition, HostObject):
     PREFIX = "host_"
-    DELETE_STRING = "Delete this Host Condition"
+
+    def DELETE_STRING(self):
+        if version.since_date_or_version(date="2015-04-30"):  # TODO: Add version when released
+            return "Delete this Host / Node Condition"
+        else:
+            return "Delete this Host Condition"
 
 
 class BasePolicy(Updateable, Pretty):
@@ -628,7 +637,11 @@ class BasePolicy(Updateable, Pretty):
             cancel: Whether to cancel the process instead of saving.
         """
         sel.force_navigate(self.PREFIX + "policy", context=dict(policy_name=self.description))
-        cfg_btn(self.DELETE_STRING, invokes_alert=True)
+        if callable(self.DELETE_STRING):
+            delete_string = self.DELETE_STRING()
+        else:
+            delete_string = self.DELETE_STRING
+        cfg_btn(delete_string, invokes_alert=True)
         sel.handle_alert(cancel)
         flash.assert_no_errors()
 
@@ -786,10 +799,18 @@ class BaseControlPolicy(BasePolicy):
 
 class HostCompliancePolicy(BasePolicy, HostObject):
     PREFIX = "host_compliance_"
-    DELETE_STRING = "Delete this Host Policy"
+
+    def DELETE_STRING(self):
+        if version.since_date_or_version(date="2015-04-30"):  # TODO: Add version when released
+            return "Delete this Host / Node Policy"
+        else:
+            return "Delete this Host Policy"
 
     def __str__(self):
-        return "Host Compliance: %s" % self.description
+        if version.since_date_or_version(date="2015-04-30"):
+            return "Host / Node Compliance: {}".format(self.description)
+        else:
+            return "Host Compliance: {}".format(self.description)
 
 
 class VMCompliancePolicy(BasePolicy, VMObject):
@@ -802,10 +823,18 @@ class VMCompliancePolicy(BasePolicy, VMObject):
 
 class HostControlPolicy(BaseControlPolicy, HostObject):
     PREFIX = "host_control_"
-    DELETE_STRING = "Delete this Host Policy"
+
+    def DELETE_STRING(self):
+        if version.since_date_or_version(date="2015-04-30"):  # TODO: Add version when released
+            return "Delete this Host / Node Policy"
+        else:
+            return "Delete this Host Policy"
 
     def __str__(self):
-        return "Host Control: %s" % self.description
+        if version.since_date_or_version(date="2015-04-30"):
+            return "Host / Node Control: {}".format(self.description)
+        else:
+            return "Host Control: {}".format(self.description)
 
 
 class VMControlPolicy(BaseControlPolicy, VMObject):
