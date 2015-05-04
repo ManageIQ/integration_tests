@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
 import ui_navigate as nav
 
 from cfme.fixtures import pytest_selenium as sel
+from fixtures.pytest_store import store
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from utils import version, classproperty
 from utils.wait import wait_for
+from utils.version import before_date_or_version
 
 
 class Loc(object):
@@ -94,6 +97,29 @@ def get_rid_of_the_menu_box():
     ActionChains(sel.browser()).move_to_element(sel.element("#tP")).perform()
     wait_for(lambda: not any_box_displayed(), num_sec=10, delay=0.1, message="menu box")
 
+
+def os_infra_specific(without_infra, with_infra, with_both=None):
+    """If there is even one OS Infra provider, UI changes. This is wrapper for it.
+
+    Args:
+        without_infra: What the text should be when there are not OS infra providers.
+        with_infra: What the text should be when there is at least on OS Infra provider.
+        with_both: If specified, will be used when there are both kinds of providers. If not
+            specified, ``without_infra / with_infra`` will be used.
+    """
+    def _decide():
+        if before_date_or_version(date="2015-04-30", version="5.4.0.0.25"):
+            # Don't bother, the code is not in
+            return without_infra
+
+        if store.current_appliance.has_os_infra and store.current_appliance.has_non_os_infra:
+            return with_both or "{} / {}".format(without_infra, with_infra)
+        elif store.current_appliance.has_os_infra:
+            return with_infra
+        else:
+            return without_infra
+    return _decide
+
 # Dictionary of (nav destination name, section title) section tuples
 # Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel sections
 sections = {
@@ -121,8 +147,8 @@ sections = {
     ),
     ('infrastructure', 'Infrastructure'): (
         ('infrastructure_providers', 'Providers'),
-        ('infrastructure_clusters', 'Clusters'),
-        ('infrastructure_hosts', 'Hosts'),
+        ('infrastructure_clusters', os_infra_specific('Clusters', 'Deployment Roles')),
+        ('infrastructure_hosts', os_infra_specific('Hosts', 'Nodes')),
         ('infrastructure_virtual_machines', 'Virtual Machines'),
         ('infrastructure_resource_pools', 'Resource Pools'),
         ('infrastructure_datastores', 'Datastores'),
@@ -188,27 +214,31 @@ def is_page_active(toplevel, secondlevel=None):
 
 def nav_to_fn(toplevel, secondlevel=None):
     def f(_):
-        if not is_page_active(toplevel):
+        if callable(toplevel):
+            top_level = toplevel()
+        else:
+            top_level = toplevel
+        if not is_page_active(top_level):
             try:
                 # Try to circumvent the issue on fir
                 get_rid_of_the_menu_box()
-                open_top_level(toplevel)
+                open_top_level(top_level)
                 get_rid_of_the_menu_box()
-                if get_current_toplevel_name() != toplevel:
+                if get_current_toplevel_name() != top_level:
                     # Infrastructure / Requests workaround
-                    sel.move_to_element(get_top_level_element(toplevel))
+                    sel.move_to_element(get_top_level_element(top_level))
                     # Using pure move_to_element to not move the mouse anywhere else
                     # So in this case, we move the mouse to the first item of the second level
                     ActionChains(sel.browser())\
                         .move_to_element(sel.element(Loc.secondlevel_first_item_loc.format(
-                            toplevel)))\
+                            top_level)))\
                         .click()\
                         .perform()
                     get_rid_of_the_menu_box()
                     # Now when we went directly to the first item, everything should just work
                     tl = get_current_toplevel_name()
-                    if tl != toplevel:
-                        raise Exception("Navigation screwed! (wanted {}, got {}".format(toplevel,
+                    if tl != top_level:
+                        raise Exception("Navigation screwed! (wanted {}, got {}".format(top_level,
                                                                                         tl))
             except NoSuchElementException:
                 if visible_toplevel_tabs():  # Target menu is missing
@@ -221,7 +251,11 @@ def nav_to_fn(toplevel, secondlevel=None):
         #     return
         if secondlevel is not None:
             get_rid_of_the_menu_box()
-            open_second_level(get_top_level_element(toplevel), secondlevel)
+            if callable(secondlevel):
+                second_level = secondlevel()
+            else:
+                second_level = secondlevel
+            open_second_level(get_top_level_element(top_level), second_level)
             get_rid_of_the_menu_box()
     return f
 
@@ -255,10 +289,18 @@ def reverse_lookup(toplevel_path, secondlevel_path=None):
         menu_path = toplevel_path
 
     for (toplevel_dest, toplevel), secondlevels in sections.items():
-        if menu_path == toplevel:
+        if callable(toplevel):
+            top_level = toplevel()
+        else:
+            top_level = toplevel
+        if menu_path == top_level:
             return toplevel_dest
         for secondlevel_dest, secondlevel in secondlevels:
-            if menu_path == '%s/%s' % (toplevel, secondlevel):
+            if callable(secondlevel):
+                second_level = secondlevel()
+            else:
+                second_level = secondlevel
+            if menu_path == '%s/%s' % (toplevel, second_level):
                 return secondlevel_dest
 
 
