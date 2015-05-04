@@ -3,6 +3,8 @@
 
 :var area: A :py:class:`cfme.web_ui.Region` object representing the flash region.
 """
+from functools import wraps
+from cfme.exceptions import CFMEExceptionOccured
 from cfme.web_ui import Region
 import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
@@ -121,6 +123,20 @@ def is_error(message):
     return message.level in ('error',)
 
 
+def verify_rails_error(f):
+    # Wrapper that checks the rails error before the flash message
+    @wraps(f)
+    def g(*args, **kwargs):
+        sel.wait_for_ajax()  # Just in case
+        error = sel.get_rails_error()
+        if error is not None:
+            raise CFMEExceptionOccured(
+                "Flash message check failed because of following rails error:\n{}".format(error))
+        return f(*args, **kwargs)
+    return g
+
+
+@verify_rails_error
 def assert_no_errors(messages=None):
     """Asserts that there are no current Error messages. If no messages
     are passed in, they will be retrieved from the UI."""
@@ -133,6 +149,7 @@ def assert_no_errors(messages=None):
         return all_messages
 
 
+@verify_rails_error
 def assert_message_match(m):
     """ Asserts that a message matches a specific string."""
     logger.debug('Asserting flash message match for "{}"'.format(m))
@@ -141,12 +158,14 @@ def assert_message_match(m):
         raise Exception("No matching flash message for '%s'" % m)
 
 
+@verify_rails_error
 def assert_message_contain(m):
     """ Asserts that a message contains a specific string """
     if not any([m in fm.message for fm in get_messages()]):
         raise Exception("No flash message contains '%s'" % m)
 
 
+@verify_rails_error
 def assert_success_message(m):
     """Asserts that there are no errors and a (green) info message
     matches the given string."""

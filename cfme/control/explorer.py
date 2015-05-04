@@ -291,7 +291,11 @@ nav.add_branch(
         "vm_condition":
         [
             lambda ctx: accordion_func(
-                "Conditions", "All Conditions", "VM Conditions", ctx["condition_name"])(None),
+                "Conditions", "All Conditions",
+                version.pick({
+                    version.LOWEST: "VM Conditions",
+                    "5.4": "All VM and Instance Conditions"}),
+                ctx["condition_name"])(None),
             {
                 "vm_condition_edit":
                 lambda _: cfg_btn("Edit this Condition")
@@ -309,7 +313,10 @@ nav.add_branch(
 
         "vm_conditions":
         [
-            accordion_func("Conditions", "All Conditions", "VM Conditions"),
+            accordion_func("Conditions", "All Conditions",
+                version.pick({
+                    version.LOWEST: "VM Conditions",
+                    "5.4": "All VM and Instance Conditions"})),
             {
                 "vm_condition_new":
                 lambda _: cfg_btn(version.pick({

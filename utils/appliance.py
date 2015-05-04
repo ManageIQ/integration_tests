@@ -1207,12 +1207,7 @@ class IPAppliance(object):
 
                 # reboot
                 if reboot:
-                    log_callback('Appliance reboot')
-                    old_uptime = client.uptime()
-                    status, out = client.run_command('reboot')
-                    wait_for(
-                        lambda: client.uptime() < old_uptime,
-                        handle_exception=True, num_sec=300, message='appliance to reboot', delay=10)
+                    self.reboot(log_callback=log_callback, wait_for_web_ui=False)
                 else:
                     log_callback('A reboot is required before vddk will work')
 
