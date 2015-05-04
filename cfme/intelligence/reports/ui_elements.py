@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""This file contains element definitions of elements that are common in reports."""
 from xml.sax.saxutils import quoteattr
 
 from collections import Sequence, Mapping, Callable
@@ -28,7 +29,7 @@ class PivotCalcSelect(Pretty):
     _box_items = ".//div/div"
     _box_checkbox = (
         ".//div/div[normalize-space(text())='{}']/preceding-sibling::*[1][@type='checkbox']")
-    pretty_attrs = ['root_el_id']
+    pretty_attrs = ['_id']
 
     def __init__(self, root_el_id):
         self._id = root_el_id
@@ -169,8 +170,21 @@ def _fill_pcs_map(o, m):
 
 
 class RecordGrouper(Pretty):
-    """This class encapsulates the grouping editing in Edit Report/Consolidation"""
-    pretty_attrs = ['table_loc']
+    """This class encapsulates the grouping editing in Edit Report/Consolidation in the table at
+    the bottom
+
+    Filling this element expects a :py:class:`dict`. The key of the dictionary is the name of the
+    column (leftmost table cell). The value of the dictionary is a list of values that will get
+    selected in the dropdown (Minimum, Average, ...)
+
+    .. code-block:: yaml
+
+       CPU - % Overallocated:
+         - Maximum
+         - Minimum
+         - Average
+    """
+    pretty_attrs = ['_table_loc']
 
     def __init__(self, table_loc):
         self._table_loc = table_loc
@@ -192,10 +206,33 @@ class ColumnStyleTable(Pretty):
     """We cannot inherit Table because it does too much WebElement chaining. This avoids that
     with using xpath-only locating making it much more reliable.
 
+    This is the kind of table that is used in Styling tab. The fill value is expected to be a
+    :py:class:`dict`. Keys of the dictionary are names of the columns (leftmost table cell).
+    The values of the dictionary are lists up to 3 fields long. First element of each of the lists
+    is the ``Style`` to be selected in the same-named table column. Second one is the operation
+    (``=``, ``IS NULL``, ...) to happen. If the operation has some operand, it is the third (and
+    last) element of the list. If any of the lists has operation set as ``Default``, no other lists
+    cannot follow after them.
+
+
+    .. code-block:: yaml
+
+       Name:
+        -
+            - Blue Text
+            - "="
+            - asdf
+        -
+            - Yellow Background
+            - IS NULL
+        -
+            - Red Background
+            - IS NOT NULL
+
     Args:
         div_id: `id` of `div` where the table is located in.
     """
-    pretty_attrs = ['div_id']
+    pretty_attrs = ['_div_id']
 
     def __init__(self, div_id):
         self._div_id = div_id
@@ -264,7 +301,28 @@ def _fill_cst_map(cst, d):
 
 
 class ColumnHeaderFormatTable(Table):
-    """Used to fill the table with header names and value formatting."""
+    """Used to fill the table with header names and value formatting.
+
+    The value expected for filling is a :py:class:`dict` where keys are names of the columns
+    (leftmost cells in the table) and values are :py:class:`dict` , :py:class:`str` or
+    :py:class:`list`. In case of dictionary, the ``header`` and ``format`` fields are required, they
+    correspond to the table columns. If a string is specified, it is considered a header. If a list
+    is specified, then first item in it is considered a ``header``, second one a ``format``
+    (if present).
+
+    .. code-block:: yaml
+
+       Archived:
+           header: Test1
+           format: Boolean (T/F)
+       Busy:
+           header: Such busy
+           format: Boolean (Yes/No)
+       asdf: fghj
+       qwer:
+       - thisisheader
+       - thisisformat
+    """
     pass
 
 
@@ -294,12 +352,18 @@ def __fill_chft_map(chft, d):
 
 
 class MenuShortcuts(Pretty):
-    """This class operates the web ui object that handles adding new menus and shortcuts.
+    """This class operates the web ui object that handles adding new menus and shortcuts for widgets
+
+    The expected object for filling is one of :py:class:`dict`, :py:class:`list` or :py:class:`str`.
+    If :py:class:`dict`, then the keys are menu item names and their values are their aliases. If
+    you don't want to specify an alias for such particular menu item, use None. :py:class:`str`
+    behaves same as single element :py:class:`list`. If :py:class:`list`, then it is the same as it
+    would be with :py:class:`dict` but you cannot specify aliases, just menu names.
 
     Args:
         select_loc: Locator pointing to the selector.
     """
-    pretty_attrs = ['select_loc']
+    pretty_attrs = ['_select_loc']
 
     def __init__(self, select_loc):
         self._select_loc = select_loc
@@ -412,6 +476,13 @@ def _fill_timer_map(t, d):
 
 
 class ExternalRSSFeed(object):
+    """This element encapsulates selection of an external RSS source either from canned selection or
+    custom one.
+
+    It expects a :py:class:`str` filling object. If the string is not found in the dropdown, it is
+    considered to be custom url, so it selects custom URL option in the dropdown and fills the text
+    input with the URL. If the option is available in the dropdown, then it is selected.
+    """
     form = Region(locators=dict(
         rss_url=Select("//select[@id='rss_url']"),
         txt_url="//input[@id='txt_url']"
@@ -428,6 +499,13 @@ def _fill_rss_str(erf, s):
 
 
 class DashboardWidgetSelector(Pretty):
+    """This object encapsulates the selector of widgets that will appear on a dashboard.
+
+    It cannot move them around, just add and remove them.
+
+    The filling of this element expects a :py:class:`list` of strings (or just :py:class:`str`
+    itself). The strings are names of the widgets.
+    """
     _button_open_close = ".//img[contains(@src, 'combo_select.gif')]"
     _combo_list = (
         "//div[contains(@class, 'dhx_combo_list') and div/div[normalize-space(.)='Add a Widget']]")
