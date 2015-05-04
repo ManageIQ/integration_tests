@@ -7,6 +7,7 @@ from utils.randomness import generate_random_string
 from utils.update import update
 
 
+@pytest.mark.meta(blockers=[1216224])
 @pytest.mark.smoke
 def test_zone_crud(soft_assert):
     zone = conf.Zone(
@@ -40,6 +41,7 @@ def test_zone_add_cancel_validation():
     flash.assert_message_match('Add of new Miq Zone was cancelled by the user')
 
 
+@pytest.mark.meta(blockers=[1216224])
 def test_zone_change_appliance_zone(request):
     """ Tests that an appliance can be changed to another Zone """
     zone = conf.Zone(
