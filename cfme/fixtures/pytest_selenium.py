@@ -49,6 +49,25 @@ _thread_local.ajax_timeout = 30
 class_selector = re.compile(r"^(?:[a-zA-Z][a-zA-Z0-9]*)?(?:[#.][a-zA-Z0-9_-]+)+$")
 
 
+# Monkeypatching WebElement
+if "_old__repr__" not in globals():
+    _old__repr__ = WebElement.__repr__
+
+
+def __repr__(self):
+    if hasattr(self, "_source_locator"):
+        this, parent = self._source_locator
+        if parent:
+            return "element({}, root={})".format(repr(this), repr(parent))
+        else:
+            return "element({})".format(repr(this))
+    else:
+        return _old__repr__(self)
+
+if WebElement.__repr__ is not __repr__:
+    WebElement.__repr__ = __repr__
+
+
 class ByValue(Pretty):
     pretty_attrs = ['value']
 
@@ -127,7 +146,13 @@ def _w(webelement, **kwargs):
     Result: Flat list of elements
     """
     # accept **kwargs to deal with root if it's passed by singledispatch
-    return [webelement]
+    if hasattr(webelement, "_source_locator"):
+        # Refresh
+        loc, root = webelement._source_locator
+        return elements(loc, root=root)
+    else:
+        # Otherwise just pass through
+        return [webelement]
 
 
 @elements.method(tuple)
@@ -150,6 +175,9 @@ def _t(t, root=None):
                 sleep(0.25)
                 if count == 8:
                     result += root_element.find_elements(*t)
+    # Monkey patch them
+    for elem in result:
+        elem._source_locator = (t, root)
     return result
 
 
