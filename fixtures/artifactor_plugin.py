@@ -31,6 +31,14 @@ from utils.path import project_path
 from utils.wait import wait_for
 
 
+# Create a list of all our passwords for use with the sanitize request later in this module
+words = []
+for cred in credentials:
+    word = credentials[cred].get('password', None)
+    if word:
+        words.append(word)
+
+
 def get_test_idents(item):
 
     if getattr(item, 'location', None):
@@ -103,11 +111,6 @@ def pytest_runtest_protocol(item):
 
 def pytest_runtest_teardown(item, nextitem):
     name, location = get_test_idents(item)
-    words = []
-    for cred in credentials:
-        word = credentials[cred].get('password', None)
-        if word:
-            words.append(word)
     art_client.fire_hook('finish_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)
     art_client.fire_hook('sanitize', test_location=location, test_name=name,

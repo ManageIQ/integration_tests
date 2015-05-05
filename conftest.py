@@ -13,6 +13,7 @@ import cfme.fixtures
 import fixtures
 import markers
 import metaplugins
+from fixtures.artifactor_plugin import art_client, appliance_ip_address
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
 from utils.log import logger
@@ -60,12 +61,13 @@ def set_default_domain():
 def fix_merkyl_workaround():
     """Workaround around merkyl not opening an iptables port for communication"""
     ssh_client = SSHClient()
-    if ssh_client.run_command('test -f /etc/init.d/merkyl').rc == 0:
+    if ssh_client.run_command('test -s /etc/init.d/merkyl').rc != 0:
         logger.info('Rudely overwriting merkyl init.d on appliance;')
         local_file = data_path.join("bundles").join("merkyl").join("merkyl")
         remote_file = "/etc/init.d/merkyl"
         ssh_client.put_file(local_file.strpath, remote_file)
         ssh_client.run_command("service merkyl restart")
+        art_client.fire_hook('setup_merkyl', ip=appliance_ip_address)
 
 
 @pytest.fixture(autouse=True, scope="function")
