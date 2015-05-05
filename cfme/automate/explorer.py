@@ -236,29 +236,29 @@ class Domain(TreeNode, Updateable):
     def _nav_orig(self):
         try:
             tree.click_path(*self.nav_path)
-            return True
+            return True, None
         except exceptions.CandidateNotFound as e:
-            return e
+            return False, e
 
     def _nav_locked(self):
         path = self.nav_path
         path[-1] = path[-1] + " (Locked)"  # Try the Locked version
         try:
             tree.click_path(*path)
-            return True
+            return True, None
         except exceptions.CandidateNotFound as e:
-            return e
+            return False, e
 
     def navigate_tree(self):
-        last_nav = self._nav_orig()
+        last_nav, e = self._nav_orig()
         if last_nav is not True:
-            if self._nav_locked() is not True:
-                raise last_nav
+            if self._nav_locked()[0] is not True:
+                raise e
 
     @property
     def is_locked(self):
         sel.force_navigate("automate_explorer_tree_path", context={"tree_item": self})
-        return (not self._nav_orig()) and self._nav_locked()
+        return (not self._nav_orig()[0]) and self._nav_locked()[0]
 
     @property
     def is_enabled(self):
