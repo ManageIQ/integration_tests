@@ -10,6 +10,7 @@
 * **Elemental**
 
   * :py:class:`ButtonGroup`
+  * :py:class:`Calendar`
   * :py:class:`ColorGroup`
   * :py:class:`CheckboxTable`
   * :py:class:`CheckboxSelect`

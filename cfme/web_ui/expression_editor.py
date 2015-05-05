@@ -214,8 +214,8 @@ date_switch_buttons = Region(
 
 date_specific_form = Form(
     fields=[
-        ("date", Input("miq_date_1_0")),
-        ("time", Input("miq_time_1_0")),
+        ("date", Calendar("miq_date_1_0")),
+        ("time", Select("select#miq_time_1_0")),
     ]
 )
 
