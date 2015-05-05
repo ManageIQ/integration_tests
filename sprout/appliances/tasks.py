@@ -17,6 +17,7 @@ from datetime import timedelta
 from functools import wraps
 from novaclient.exceptions import OverLimit as OSOverLimit
 
+from appliances.execute_script import execute_script
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask,
     MismatchVersionMailer)
@@ -1310,6 +1311,19 @@ def obsolete_template_deleter(self):
                 for template in obsolete_templates:
                     if template.can_be_deleted:
                         delete_template_from_provider.delay(template.id)
+        if group.enable_delete_automation_script:
+            script = group.script
+            if script is None:
+                group.last_delete_script_exception = "Script was not found"
+                group.save()
+                continue
+            result = execute_script(script)
+            if result is not None:
+                # There was a problem
+                group.last_delete_script_exception = str(result)
+            else:
+                group.last_delete_script_exception = ""
+            group.save()
 
 
 @singleton_task()

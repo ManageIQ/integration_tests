@@ -13,6 +13,7 @@ from datetime import timedelta
 import os
 
 from utils.conf import credentials
+from utils.path import project_path
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -219,6 +220,10 @@ CELERYBEAT_SCHEDULE = {
         'schedule': timedelta(days=1),
     },
 }
+
+
+SPROUT_PATH = project_path.join("sprout")
+DB_SCRIPTS_PATH = SPROUT_PATH.join("data").join("db-scripts")
 
 try:
     from sprout.local_settings import *  # NOQA

@@ -8,7 +8,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.utils import timezone
 
-from sprout import critical_section
+from sprout import critical_section, settings
 from sprout.log import create_logger
 
 from utils import mgmt_system
@@ -288,6 +288,23 @@ class Group(MetadataMixin):
         default=False,
         help_text="If template_obsolete_days set, this will enable deletion of obsolete templates"
         " using that metric. WARNING! Use with care. Best use for upstream templates.")
+    delete_automation_script_name = models.TextField(
+        null=True, blank=True,
+        help_text="Name of the script executed for automating the template deletion")
+    enable_delete_automation_script = models.BooleanField(
+        default=False, help_text="Enable the template deletion script")
+    last_delete_script_exception = models.TextField(null=True, blank=True)
+
+    @property
+    def script(self):
+        if self.delete_automation_script_name and self.enable_delete_automation_script:
+            filename = settings.DB_SCRIPTS_PATH.join(
+                "{}.py".format(self.delete_automation_script_name))
+            if not filename.exists():
+                return None
+            with filename.open("r") as f:
+                return f.read()
+        return None
 
     @property
     def obsolete_templates(self):
