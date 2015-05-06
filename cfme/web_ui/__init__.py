@@ -1133,6 +1133,16 @@ def _sd_fill_date(calendar, value):
         sel.set_angularjs_value(input, date_str)
     else:
         sel.set_attribute(input, "value", date_str)
+        # Now when we set the value, we need to simulate a change event.
+        try:
+            sel.execute_script(
+                "if(typeof $j == 'undefined') {var jq = $;} else {var jq = $j;} "
+                "jq(\"#%s\").change();" % calendar.name)
+        except sel_exceptions.WebDriverException as e:
+            logger.warning(
+                "An exception was raised during handling of the Calendar #{}'s change event:\n{}"
+                .format(calendar.name, str(e)))
+    sel.wait_for_ajax()
 
     return True
 
