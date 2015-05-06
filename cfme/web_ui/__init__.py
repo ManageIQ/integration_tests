@@ -1886,19 +1886,19 @@ class InfoBlock(Pretty):
         @property
         def pair_locator(self):
             if self.ib.type == InfoBlock.DETAIL:
-                return 'table/tbody/tr/td[1][@class="label"][normalize-space(.)="{}"]/..'.format(
+                return './/table/tbody/tr/td[1][@class="label"][normalize-space(.)="{}"]/..'.format(
                     self.name)
             elif self.ib.type == InfoBlock.FORM:
-                return 'table/tbody/tr/td[1][@class="key"][normalize-space(.)="{}"]/..'.format(
+                return './/table/tbody/tr/td[1][@class="key"][normalize-space(.)="{}"]/..'.format(
                     self.name)
 
         @property
         def pair(self):
-            return lambda: sel.element(self.pair_locator, root=lambda: self.ib.root)
+            return sel.element(self.pair_locator, root=self.ib.root)
 
         @property
         def container(self):
-            return lambda: sel.element("./td[2]", root=self.pair)
+            return sel.element("./td[2]", root=self.pair)
 
         def locate(self):
             return self.container
