@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from datetime import date, datetime
 import string
 import re
 from fixtures.pytest_store import store
@@ -55,8 +57,62 @@ def appliance_build_datetime():
         return None
 
 
+def appliance_build_date():
+    try:
+        return store.current_appliance.build_date
+    except:
+        return None
+
+
 def appliance_is_downstream():
     return store.current_appliance.is_downstream
+
+
+def parsedate(o):
+    if isinstance(o, date):
+        return o
+    elif isinstance(o, datetime):
+        return o.date()
+    else:
+        # 1234-12-13
+        return date(*[int(x) for x in str(o).split("-", 2)])
+
+
+def before_date_or_version(date=None, version=None):
+    """Function for deciding based on the build date and version.
+
+    Usage:
+
+        * If both date and version are set, then two things can happen. If the appliance is
+            downstream, both date and version are checked, otherwise only the date.
+        * If only date is set, then only date is checked.
+        * if only version is set, then it checks the version if the appliance is downstream,
+            otherwise it returns ``False``
+
+    The checks are in form ``appliance_build_date() < date`` and ``current_version() < version``.
+    Therefore when used in ``if`` statement, the truthy value signalizes 'older' version and falsy
+    signalizes 'newer' version.
+    """
+    if date is not None:
+        date = parsedate(date)
+    if date is not None and version is not None:
+        if not appliance_is_downstream():
+            return appliance_build_date() < date
+        else:
+            return appliance_build_date() < date and current_version() < version
+    elif date is not None and version is None:
+        return appliance_build_date() < date
+    elif date is None and version is not None:
+        if not appliance_is_downstream():
+            return False
+        return current_version() < version
+    else:
+        raise TypeError("You have to pass either date or version, or both!")
+
+
+def since_date_or_version(*args, **kwargs):
+    """Opposite of :py:func:`before_date_or_version`"""
+    return not before_date_or_version(*args, **kwargs)
 
 
 def appliance_has_netapp():

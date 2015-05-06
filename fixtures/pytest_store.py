@@ -26,6 +26,7 @@ from py.io import TerminalWriter
 
 from utils import conf, diaper, lazycache, property_or_none
 from utils.randomness import generate_random_string
+from utils.signals import on_signal
 
 
 class FlexibleTerminalReporter(TerminalReporter):
@@ -210,3 +211,9 @@ def write_line(line, **kwargs):
         # resume capturing
         with diaper:
             store.capturemanager.resumecapture()
+
+
+@on_signal("providers_changed")
+def clear_openstack_infra_flag():
+    del store.current_appliance.has_os_infra
+    del store.current_appliance.has_non_os_infra

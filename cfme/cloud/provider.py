@@ -32,6 +32,7 @@ from utils.update import Updateable
 from utils.wait import wait_for, RefreshTimer
 from utils import version
 from utils.pretty import Pretty
+from utils.signals import fire
 from utils.stats import tol_check
 
 # Specific Add button
@@ -164,6 +165,7 @@ class Provider(Updateable, Pretty):
         fill(properties_form, self._form_mapping(True, **self.__dict__))
         fill(credential_form, self.credentials, validate=validate_credentials)
         self._submit(cancel, add_provider_button)
+        fire("providers_changed")
         if not cancel:
             flash.assert_message_match('Cloud Providers "%s" was saved' % self.name)
 
@@ -196,6 +198,7 @@ class Provider(Updateable, Pretty):
         sel.force_navigate('clouds_provider', context={'provider': self})
         cfg_btn('Remove this Cloud Provider from the VMDB', invokes_alert=True)
         sel.handle_alert(cancel=cancel)
+        fire("providers_changed")
         if not cancel:
             flash.assert_message_match(
                 'Delete initiated for 1 Cloud Provider from the CFME Database')

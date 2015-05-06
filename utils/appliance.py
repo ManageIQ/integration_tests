@@ -412,6 +412,22 @@ class IPAppliance(object):
                 provider_keys.add(provider_key)
         return provider_keys
 
+    @lazycache
+    def has_os_infra(self):
+        """If there is an OS Infra set up as a provider, some of the UI changes"""
+        ems_table = self.db["ext_management_systems"]
+        self.db.session.query(ems_table)
+        return list(
+            self.db.session.query(ems_table).filter(ems_table.type == "EmsOpenstackInfra")) > 0
+
+    @lazycache
+    def has_non_os_infra(self):
+        """If there is any non-OS-infra set up as a provider, some of the UI changes"""
+        ems_table = self.db["ext_management_systems"]
+        self.db.session.query(ems_table)
+        return list(
+            self.db.session.query(ems_table).filter(ems_table.type != "EmsOpenstackInfra")) > 0
+
     @classmethod
     def from_url(cls, url):
         parsed_url = urlparse(url)
@@ -1309,6 +1325,11 @@ class IPAppliance(object):
     def build_datetime(self):
         datetime = self.ssh_client().get_build_datetime()
         return datetime
+
+    @lazycache
+    def build_date(self):
+        date = self.ssh_client().get_build_date()
+        return date
 
     @lazycache
     def is_downstream(self):

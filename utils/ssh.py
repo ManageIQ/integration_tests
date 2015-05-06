@@ -190,6 +190,9 @@ class SSHClient(paramiko.SSHClient):
         command = "stat --printf=%Y /var/www/miq/vmdb/VERSION"
         return parsetime.fromtimestamp(int(self.run_command(command).output.strip()))
 
+    def get_build_date(self):
+        return self.get_build_datetime().date()
+
     def is_appliance_downstream(self):
         return self.run_command("stat /var/www/miq/vmdb/BUILD").rc == 0
 
