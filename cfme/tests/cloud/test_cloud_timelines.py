@@ -85,6 +85,7 @@ def count_events(instance_name, nav_step):
             events.append(event)
             if len(events) > 0:
                 return len(events)
+    return 0
 
 
 def test_provider_event(setup_provider, provider_crud, gen_events, test_instance):

@@ -74,9 +74,12 @@ def count_events(vm_name, nav_step):
         return 0
     events = []
     for event in prov_timeline.events():
-        if event.text == vm_name:
+        data = event.block_info()
+        if vm_name in data.values():
             events.append(event)
-    return len(events)
+            if len(events) > 0:
+                return len(events)
+    return 0
 
 
 def test_provider_event(provider_crud, gen_events, test_vm):
