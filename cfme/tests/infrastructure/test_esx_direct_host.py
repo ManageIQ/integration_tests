@@ -71,7 +71,7 @@ def setup_provider(provider, original_provider_key):
                 provider.num_template() > 0,
                 provider.num_datastore() > 0,
                 provider.num_host() > 0,
-            ]), num_sec=120, delay=5)
+            ]), num_sec=400, delay=5)
     except:
         provider.delete(cancel=False)
         raise
