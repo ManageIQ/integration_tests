@@ -484,11 +484,24 @@ def drag_and_drop(source_element, dest_element):
     """Drag and Drop element.
 
     Args:
-        loc: A locator, expects either a string, WebElement, tuple.
+        source_element: A locator, expects either a string, WebElement, tuple.
+        dest_element: A locator, expects either a string, WebElement, tuple.
         wait_ajax: Whether to wait for ajax call to finish. Default True but sometimes it's
             handy to not do that. (some toolbar clicks)
     """
     ActionChains(browser()).drag_and_drop(dest_element, source_element).perform()
+
+
+def drag_and_drop_by_offset(source_element, x=0, y=0):
+    """Drag and Drop element by offset
+
+    Args:
+        source_element: A locator, expects either a string, WebElement, tuple.
+        x: Distance in pixels on X axis to move it.
+        y: Distance in pixels on Y axis to move it.
+    """
+    e = move_to_element(source_element)
+    ActionChains(browser()).drag_and_drop_by_offset(e, x, y).perform()
 
 
 def move_to_element(loc, **kwargs):

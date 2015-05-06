@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+import re
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import fill, Form, Select, Table, toolbar, form_buttons, flash
 
@@ -40,3 +43,31 @@ def remove_tag(tag):
     sel.click(row[0])
     form_buttons.save()
     flash.assert_success_message('Tag edits were successfully saved')
+
+
+screen_splitter = (
+    "//div[contains(@class, 'dhtmlxLayoutObject')]"
+    "//td[contains(@class, 'dhtmlxLayoutPolySplitterVer')]")
+left_half = (
+    "//table[contains(@class, 'dhtmlxLayoutPolyContainer_dhx_blue')]/tbody/tr"
+    "/td[contains(@class, 'dhtmlxLayoutSinglePoly') and "
+    "following-sibling::td[contains(@class, 'dhtmlxLayoutPolySplitterVer')]]")
+
+
+def pull_splitter(x):
+    """Pulls the vertical separator between accordion and detail view.
+
+    Args:
+        x: Negative values move left, positive right.
+    """
+    sel.drag_and_drop_by_offset(screen_splitter, x)
+
+
+def left_half_size():
+    if not sel.is_displayed(screen_splitter) or not sel.is_displayed(left_half):
+        return None
+    style = sel.get_attribute(left_half, "style")
+    match = re.search(r"width:\s*(\d+)px", style)
+    if match is None:
+        return None
+    return int(match.groups()[0])
