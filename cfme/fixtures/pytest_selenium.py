@@ -146,13 +146,7 @@ def _w(webelement, **kwargs):
     Result: Flat list of elements
     """
     # accept **kwargs to deal with root if it's passed by singledispatch
-    if hasattr(webelement, "_source_locator"):
-        # Refresh
-        loc, root = webelement._source_locator
-        return elements(loc, root=root)
-    else:
-        # Otherwise just pass through
-        return [webelement]
+    return [webelement]
 
 
 @elements.method(tuple)
