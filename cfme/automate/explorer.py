@@ -249,11 +249,23 @@ class Domain(TreeNode, Updateable):
         except exceptions.CandidateNotFound as e:
             return False, e
 
+    def _nav_disabled(self):
+        path = self.nav_path
+        path[-1] = path[-1] + " (Disabled)"  # Try the Locked version
+        try:
+            tree.click_path(*path)
+            return True, None
+        except exceptions.CandidateNotFound as e:
+            return False, e
+
     def navigate_tree(self):
         last_nav, e = self._nav_orig()
         if last_nav is not True:
-            if self._nav_locked()[0] is not True:
-                raise e
+            nav = self._nav_locked()[0]
+            if nav is not True:
+                nav = self._nav_disabled()[0]
+                if nav is not True:
+                    raise e
 
     @property
     def is_locked(self):
