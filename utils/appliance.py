@@ -417,16 +417,18 @@ class IPAppliance(object):
         """If there is an OS Infra set up as a provider, some of the UI changes"""
         ems_table = self.db["ext_management_systems"]
         self.db.session.query(ems_table)
-        return list(
-            self.db.session.query(ems_table).filter(ems_table.type == "EmsOpenstackInfra")) > 0
+        count = self.db.session.query(ems_table).filter(
+            ems_table.type == "EmsOpenstackInfra").count()
+        return count > 0
 
     @lazycache
     def has_non_os_infra(self):
         """If there is any non-OS-infra set up as a provider, some of the UI changes"""
         ems_table = self.db["ext_management_systems"]
         self.db.session.query(ems_table)
-        return list(
-            self.db.session.query(ems_table).filter(ems_table.type != "EmsOpenstackInfra")) > 0
+        count = self.db.session.query(ems_table).filter(
+            ems_table.type != "EmsOpenstackInfra").count()
+        return count > 0
 
     @classmethod
     def from_url(cls, url):

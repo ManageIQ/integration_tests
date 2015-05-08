@@ -9,7 +9,7 @@ import cfme.web_ui.flash as flash
 import utils.error as error
 from cfme import Credential
 from cfme.cloud import provider
-from utils import testgen
+from utils import testgen, version
 from utils.randomness import generate_random_local_ip, generate_random_string
 from utils.update import update
 
@@ -131,7 +131,7 @@ def test_host_name_required_validation(request):
         prov.create()
 
 
-@pytest.mark.meta(blockers=[1209756])
+@pytest.mark.uncollectif(lambda: version.current_version() > '5.4')
 def test_ip_address_required_validation(request):
     """Test to validate the ip address while adding a provider"""
     prov = provider.OpenStackProvider(

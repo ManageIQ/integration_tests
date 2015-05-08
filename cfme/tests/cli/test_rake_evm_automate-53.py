@@ -21,6 +21,7 @@ def back_up_default_domain(ssh_client):
     if rc == 0:
         rc, stdout = ssh_client.run_rake_command(
             "evm:automate:import DOMAIN=Default YAML_FILE=/tmp/Default_backup.yaml PREVIEW=false")
+        Domain(name="Default").update({'enabled': True})
         if rc != 0:
             logger.exception("Could not re-improt back the Default domain!: `{}`".format(stdout))
 
