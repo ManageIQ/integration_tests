@@ -132,6 +132,7 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     return MyService(catalog_item.name, vm_name)
 
 
+@pytest.mark.meta(blockers=1218441)
 def test_retire_service(provider_crud, myservice, register_event):
     """Tests my service
 
@@ -144,6 +145,7 @@ def test_retire_service(provider_crud, myservice, register_event):
         "service", myservice.service_name, ["vm_retired"])
 
 
+@pytest.mark.meta(blockers=1218441)
 def test_retire_service_on_date(myservice):
     """Tests my service retirement
 
@@ -154,6 +156,7 @@ def test_retire_service_on_date(myservice):
     myservice.retire_on_date(dt)
 
 
+@pytest.mark.meta(blockers=1218441)
 def test_myservice_crud(myservice):
     """Tests my service crud
 
@@ -165,6 +168,7 @@ def test_myservice_crud(myservice):
     myservice.delete(edited_name)
 
 
+@pytest.mark.meta(blockers=1218441)
 def test_set_ownership(myservice):
     """Tests my service ownership
 
@@ -174,6 +178,7 @@ def test_set_ownership(myservice):
     myservice.set_ownership("Administrator", "EvmGroup-administrator")
 
 
+@pytest.mark.meta(blockers=1218441)
 def test_edit_tags(myservice):
     """Tests my service edit tags
 
