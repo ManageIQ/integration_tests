@@ -5,14 +5,13 @@ from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer import Domain, Namespace, Class, Method, Instance
-from cfme.web_ui import flash
 from utils.randomness import generate_random_string
 import utils.randomness as rand
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
     pytest.mark.long_running,
-    pytest.mark.ignore_stream("5.2"),
+    pytest.mark.ignore_stream("5.2", "5.3"),
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles="+automate")
 ]
@@ -35,29 +34,27 @@ log(:info, "===========================================") if @debug
         dialog_field['data_type'] = 'string'
         dialog_field['required']  = 'true'
         dialog_field['sort_by']   = 'value'
-        list = []
-        list << ['item_value', 'item_description']
-        dialog_field['values'] = list
+        dialog_field["values"] = [[1, "one"], [2, "two"], [10, "ten"], [50, "fifty"]]
 """
 
 
 @pytest.yield_fixture(scope="function")
 def dialog(copy_instance, create_method):
     dialog = "dialog_" + generate_random_string()
-    element_data = dict(
-        ele_label="ele_" + rand.generate_random_string(),
-        ele_name=rand.generate_random_string(),
-        ele_desc="my ele desc",
-        choose_type="Drop Down Dynamic List",
-        field_entry_point="InspectMe",
-        field_show_refresh_button=True
-    )
-    service_dialog = ServiceDialog(label=dialog, description="my dialog",
-                     submit=True, cancel=True,
-                     tab_label="tab_" + rand.generate_random_string(), tab_desc="my tab desc",
-                     box_label="box_" + rand.generate_random_string(), box_desc="my box desc")
-    service_dialog.create(element_data)
-    flash.assert_success_message('Dialog "%s" was added' % dialog)
+    element_data = {
+        'ele_label': "ele_" + rand.generate_random_string(),
+        'ele_name': rand.generate_random_string(),
+        'ele_desc': rand.generate_random_string(),
+        'choose_type': "Drop Down List",
+        'dynamic_chkbox': True
+    }
+    dialog = ServiceDialog(label="dialog_" + rand.generate_random_string(),
+                           description="my dialog", submit=True, cancel=True,
+                           tab_label="tab_" + rand.generate_random_string(),
+                           tab_desc="my tab desc",
+                           box_label="box_" + rand.generate_random_string(),
+                           box_desc="my box desc")
+    dialog.create(element_data)
     yield dialog
 
 
@@ -111,11 +108,12 @@ def copy_instance(request, copy_domain):
     instance.copy_to(copy_domain)
 
 
+@pytest.mark.meta(blockers=1219950)
 def test_dynamicdropdown_dialog(dialog, catalog):
     item_name = generate_random_string()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
-                  dialog=dialog)
+                  dialog=dialog.label)
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
