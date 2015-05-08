@@ -56,6 +56,7 @@ element_form = Form(fields=[
     ('entry_description', Input("entry[description]")),
     ('field_category', Select("//select[@id='field_category']")),
     ('text_area', Input("field_default_value")),
+    ('dynamic_chkbox', Input("field_dynamic")),
     ('apply_btn', '//a[@title="Apply"]')
 ])
 
@@ -141,17 +142,20 @@ class ServiceDialog(Updateable, Pretty):
 
     def element_type(self, each_element):
         choose_type = each_element.get("choose_type")
+        dynamic_chkbox = each_element.get("dynamic_chkbox")
         if choose_type == "Drop Down List" or choose_type == "Radio Button":
-            entry_table.click_cell(header='value', value='<New Entry>')
-            fill(element_form, {'entry_value': "Yes",
-                                'entry_description': "entry_desc"})
+            if not dynamic_chkbox:
+                entry_table.click_cell(header='value', value='<New Entry>')
+                fill(element_form, {'entry_value': "Yes",
+                                    'entry_description': "entry_desc"})
+            else:
+                node1 = "InspectMe"
+                sel.click(element_form.field_entry_point)
+                dynamic_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
+                sel.click(element_form.apply_btn)
+                fill(element_form, {'field_show_refresh_button': True})
         if choose_type == "Text Area Box":
             text_area_table.click_cell(1, value="Default text")
-        if choose_type == "Drop Down Dynamic List":
-            node1 = each_element.get("field_entry_point")
-            sel.click(element_form.field_entry_point)
-            dynamic_tree.click_path("Datastore", "new_domain", "System", "Request", node1)
-            sel.click(element_form.apply_btn)
 
     def element(self, element_data):
         return sel.element('//div[@class="modbox"]/h2[@class="modtitle"]'
