@@ -79,22 +79,24 @@ def appliance_police():
         port_results = {pn: net_check(pp, force=True) for pn, pp in ports.items()}
         for port, result in port_results.items():
             if not result:
-                raise _AppliancePoliceException('Port {} was not contactable'.format(port), port)
+                raise _AppliancePoliceException('Port {} was not contactable'.format(port),
+                    ports[port])
+
         try:
             status_code = requests.get(store.current_appliance.url, verify=False,
                                        timeout=120).status_code
         except Exception:
-            raise _AppliancePoliceException('Getting status code failed', port)
+            raise _AppliancePoliceException('Getting status code failed', ports['https'])
 
         if status_code != 200:
             raise _AppliancePoliceException('Status code was {}, should be 200'.format(
-                status_code), port)
+                status_code), ports['https'])
         return
     except _AppliancePoliceException as e:
         # special handling for known failure conditions
         if e.port == 443:
             # If we had an error on 443, about 101% of the time it means the UI worker is frozen
-            store.current_appliance.run_rails_command('MiqUiWorker.first.kill')
+            store.current_appliance.ssh_client().run_rails_command('MiqUiWorker.first.kill')
             try:
                 store.current_appliance.wait_for_web_ui(900)
                 store.write_line('UI worker was frozen and had to be restarted.', purple=True)
