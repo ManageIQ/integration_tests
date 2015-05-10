@@ -80,8 +80,12 @@ def appliance_police():
         for port, result in port_results.items():
             if not result:
                 raise _AppliancePoliceException('Port {} was not contactable'.format(port), port)
-        status_code = requests.get(store.current_appliance.url, verify=False,
-                                   timeout=60).status_code
+        try:
+            status_code = requests.get(store.current_appliance.url, verify=False,
+                                       timeout=120).status_code
+        except Exception:
+            raise _AppliancePoliceException('Getting status code failed', port)
+
         if status_code != 200:
             raise _AppliancePoliceException('Status code was {}, should be 200'.format(
                 status_code), port)
@@ -89,24 +93,14 @@ def appliance_police():
     except _AppliancePoliceException as e:
         # special handling for known failure conditions
         if e.port == 443:
-            # if the web ui worker merely crashed, give it 15 minutes
-            # to come back up
+            # If we had an error on 443, about 101% of the time it means the UI worker is frozen
+            store.current_appliance.run_rails_command('MiqUiWorker.first.kill')
             try:
                 store.current_appliance.wait_for_web_ui(900)
+                store.write_line('UI worker was frozen and had to be restarted.', purple=True)
                 return
             except TimedOutError:
-                # the UI didn't come back up after 15 minutes, and is
-                # probably frozen; kill it and restart
-                # fortunately we already check SSH is working...
-                store.current_appliance.restart_evm_service(900, rude=True)
-
-                # take another shot at letting the web UI come up
-                try:
-                    store.current_appliance.wait_for_web_ui(900)
-                    return
-                except TimedOutError:
-                    # so much for that
-                    pass
+                pass
         e_message = e.message
     except Exception as e:
         e_message = e.args[0]
