@@ -7,14 +7,23 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import ButtonGroup, form_buttons, Quadicon
 from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
+from utils import version
 from cfme.configure import settings  # NOQA
 from cfme.services.catalogs import catalog_item  # NOQA
 from cfme.services import workloads  # NOQA
 
 
+def minimise_dict(item):
+    if isinstance(item, dict):
+        return version.pick({str(k): v for k, v in item.iteritems()})
+    else:
+        return item
+
 try:
     gtl_params = cfme_data['defaultview_data']['gtl']['infra']
+    gtl_params = [minimise_dict(item) for item in gtl_params]
     exp_comp_params = cfme_data['defaultview_data']['exp_comp']['infra']
+    exp_comp_params = [minimise_dict(item) for item in exp_comp_params]
 except KeyError:
     gtl_params = []
     exp_comp_params = []
