@@ -16,6 +16,7 @@ import ui_navigate as nav
 import cfme
 from utils.db import cfmedb
 import cfme.fixtures.pytest_selenium as sel
+from cfme.infrastructure.host import Host
 import cfme.web_ui.flash as flash
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
@@ -437,6 +438,22 @@ class Provider(Updateable, Pretty):
             return True
         else:
             return False
+
+    @property
+    def hosts(self):
+        """Returns list of :py:class:`cfme.infrastructure.host.Host` that should belong to this
+        provider according to the YAML
+        """
+        result = []
+        for host in self.get_yaml_data().get("hosts", []):
+            creds = conf.credentials.get(host["credentials"], {})
+            cred = Host.Credential(
+                principal=creds["username"],
+                secret=creds["password"],
+                verify_secret=creds["password"],
+            )
+            result.append(Host(name=host["name"], credentials=cred))
+        return result
 
     def load_all_provider_vms(self):
         """ Loads the list of VMs that are running under the provider. """
