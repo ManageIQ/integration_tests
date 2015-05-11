@@ -384,13 +384,18 @@ def wait_for_element(*locs, **kwargs):
         loc: A locator, expects either a string, WebElement, tuple.
     Keywords:
         all_elements: Whether to wait not for one, but all elements (Default False)
+        timeout: How much time to wait
     """
     # wait_until(lambda s: is_displayed(loc),"Element '{}' did not appear as expected.".format(loc))
     filt = all if kwargs.get("all_elements", False) else any
     msg = "All" if kwargs.get("all_elements", False) else "Any"
+    new_kwargs = {}
+    if "timeout" in kwargs:
+        new_kwargs["timeout"] = kwargs["timeout"]
     wait_until(
         lambda s: filt([is_displayed(loc) for loc in locs]),
-        "{} of the elements '{}' did not appear as expected.".format(msg, str(locs))
+        msg="{} of the elements '{}' did not appear as expected.".format(msg, str(locs)),
+        **kwargs
     )
 
 
