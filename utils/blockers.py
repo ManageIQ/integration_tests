@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import re
 import sys
+import xmlrpclib
 from github import Github
 from urlparse import urlparse
 
+from fixtures.pytest_store import store
 from utils import classproperty, conf, version
 from utils.bz import Bugzilla
+from utils.log import logger
 
 
 class Blocker(object):
@@ -144,16 +147,25 @@ class BZ(Blocker):
 
     @property
     def blocks(self):
-        bug = self.data
-        if bug is None:
+        try:
+            bug = self.data
+            if bug is None:
+                return False
+            result = False
+            if bug.is_opened:
+                result = True
+            if bug.upstream_bug:
+                if not version.appliance_is_downstream() and bug.can_test_on_upstream:
+                    result = False
+            return result
+        except xmlrpclib.Fault as e:
+            code = e.faultCode
+            s = e.faultString.strip().split("\n")[0]
+            logger.error("Bugzilla thrown a fault: {}/".format(code, s))
+            logger.warning("Ignoring and taking the bug as non-blocking")
+            store.terminalreporter.write(
+                "Bugzila made a booboo: {}/{}\n".format(code, s), bold=True)
             return False
-        result = False
-        if bug.is_opened:
-            result = True
-        if bug.upstream_bug:
-            if not version.appliance_is_downstream() and bug.can_test_on_upstream:
-                result = False
-        return result
 
     def get_bug_url(self):
         bz_url = urlparse(self.bugzilla.bugzilla.url)
