@@ -231,4 +231,5 @@ def copy_request(cells):
         sel.click(buttons.cancel)
         raise
     else:
-        sel.click(form_buttons.FormButton("Submit this provisioning request"))
+        from cfme.provisioning import provisioning_form
+        sel.click(provisioning_form.submit_copy_button)

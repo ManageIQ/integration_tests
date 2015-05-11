@@ -49,6 +49,7 @@ def select_security_group(sg):
 provisioning_form = tabstrip.TabStripForm(
     fields=[
         ('submit_button', form_buttons.FormButton("Submit")),
+        ('submit_copy_button', form_buttons.FormButton("Submit this provisioning request")),
         ('cancel_button', form_buttons.cancel),
         ('host_submit_button', form_buttons.host_provision_submit),
         ('host_cancel_button', form_buttons.host_provision_cancel)
