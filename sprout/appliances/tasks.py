@@ -315,7 +315,7 @@ def create_appliance_template(provider_id, group_id, template_name):
         prepare_template_deploy.si(template.id),
         prepare_template_verify_version.si(template.id),
         prepare_template_configure.si(template.id),
-        prepare_template_network_setup.si(template.id),
+        prepare_template_seal.si(template.id),
         prepare_template_poweroff.si(template.id),
         prepare_template_finish.si(template.id),
     )
@@ -396,20 +396,38 @@ def prepare_template_configure(self, template_id):
 
 
 @singleton_task()
-def prepare_template_network_setup(self, template_id):
+def prepare_template_seal(self, template_id):
     template = Template.objects.get(id=template_id)
-    template.set_status("Setting up network.")
+    template.set_status("Sealing template.")
     try:
-        ssh = template.cfme.ipapp.ssh_client()
-        ssh.run_command("rm -f /etc/udev/rules.d/70-persistent-net.rules")
-        ssh.run_command("sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
-        ssh.run_command("sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
+        with template.cfme.ipapp.ssh_client() as ssh:
+            ssh.run_command("rm -rf /etc/ssh/ssh_host_*")
+            if ssh.run_command("grep HOSTNAME /etc/sysconfig/network").rc == 0:
+                # Replace it
+                ssh.run_command(
+                    "sed -i -r -e 's/^HOSTNAME=.*$/HOSTNAME=localhost.localdomain/' "
+                    "/etc/sysconfig/network")
+            else:
+                # Set it
+                ssh.run_command("echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network")
+            ssh.run_command("sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
+            ssh.run_command("sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
+            if ssh.run_command("hash sys-unconfig").rc == 0:
+                # with sys-unconfig
+                ssh.run_command("sys-unconfig")
+            else:
+                # If we don't have it
+                ssh.run_command("rm -f /etc/udev/rules.d/70-*")
+                ssh.run_command("touch /.unconfigured")
+            # Fix SELinux things
+            ssh.run_command("restorecon -R /etc/sysconfig/network-scripts")
+            ssh.run_command("restorecon /etc/sysconfig/network")
     except Exception as e:
-        template.set_status("Could not configure the network. Retrying.")
+        template.set_status("Could not seal the template. Retrying.")
         self.retry(
             args=(template_id,), exc=e, countdown=10, max_retries=5)
     else:
-        template.set_status("Network has been set up.")
+        template.set_status("Template sealed.")
 
 
 @singleton_task()
@@ -417,7 +435,9 @@ def prepare_template_poweroff(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Powering off")
     try:
-        template.provider_api.stop_vm(template.name)
+        with template.cfme.ipapp.ssh_client() as ssh:
+            # Be polite
+            ssh.run_command("poweroff")
         template.provider_api.wait_vm_stopped(template.name)
     except Exception as e:
         template.set_status("Could not power off the appliance. Retrying.")
