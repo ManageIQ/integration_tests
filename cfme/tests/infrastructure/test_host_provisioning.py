@@ -10,7 +10,7 @@ from utils.conf import cfme_data
 from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
-from utils import testgen
+from utils import testgen, version
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -31,6 +31,10 @@ def pytest_generate_tests(metafunc):
         args = dict(zip(argnames, argvalue_tuple))
         if not args['host_provisioning']:
             # No host provisioning data available
+            continue
+
+        stream = args['host_provisioning']['runs_on_stream']
+        if not version.current_version().is_in_series(str(stream)):
             continue
 
         # required keys should be a subset of the dict keys set
