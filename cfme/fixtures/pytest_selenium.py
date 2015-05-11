@@ -537,6 +537,12 @@ def move_to_element(loc, **kwargs):
     brand = "//div[@id='page_header_div']//div[contains(@class, 'brand')]"
     wait_for_ajax()
     el = element(loc, **kwargs)
+    if el.tag_name == "option":
+        # Instead of option, let's move on its parent <select> if possible
+        parent = element("..", root=el)
+        if parent.tag_name == "select":
+            move_to_element(parent)
+            return el
     move_to = ActionChains(browser()).move_to_element(el)
     try:
         move_to.perform()
