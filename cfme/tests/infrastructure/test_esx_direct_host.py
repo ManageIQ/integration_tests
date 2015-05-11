@@ -59,6 +59,10 @@ def pytest_generate_tests(metafunc):
 def setup_provider(provider, original_provider_key):
     original_provider = get_from_config(original_provider_key)
     if original_provider.exists:
+        # Delete original provider's hosts first
+        for host in original_provider.hosts:
+            if host.exists:
+                host.delete(cancel=False)
         # Get rid of the original provider, it would make a mess.
         original_provider.delete(cancel=False)
         wait_for_provider_delete(provider)
@@ -76,6 +80,9 @@ def setup_provider(provider, original_provider_key):
         provider.delete(cancel=False)
         raise
     yield
+    for host in provider.hosts:
+        if host.exists:
+            host.delete(cancel=False)
     provider.delete(cancel=False)
     wait_for_provider_delete(provider)
 
