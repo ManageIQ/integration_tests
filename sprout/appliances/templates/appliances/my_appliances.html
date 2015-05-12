@@ -22,7 +22,10 @@
 {% for pool in pools %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
         <div class="panel-heading">
-            <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} {% if pool.version %}({{ pool.version }}){% endif %} - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}</strong>
+            <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}
+            {% if not pool.finished %}
+            - D: {{ pool.num_delayed_provisioning_tasks }}, Q: {{ pool.num_provisioning_tasks_before }}, PS: {{ pool.num_possible_provisioning_slots }}, AS: {{ pool.num_possible_appliance_slots}}, SA: {{ pool.num_shepherd_appliances }}
+            {% endif %}</strong>
             {% if show_user == "all" %}
                 <em>Owner: {{ pool.owner.first_name }} {{ pool.owner.last_name }}
                 <a href="{% url 'my_appliances' %}?show={{ pool.owner.username }}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
@@ -170,6 +173,14 @@
     </div>
 {% endfor %}
 </div>
+<h3>Legend</h3>
+<ul>
+    <li><strong>D</strong> - How many delayed provisioning tasks are scheduled for this pool.</li>
+    <li><strong>Q</strong> - How many other delayed provisioning tasks are scheduled before the latest task of this pool.</li>
+    <li><strong>PS</strong> - How many slots for simultaneous provisioning are currently free.</li>
+    <li><strong>AS</strong> - How many slots for appliances are currently free. If it is lower than you need, you won't get the required number of appliances!</li>
+    <li><strong>SA</strong> - How many of shepherd appliances that can be taken in the pool.</li>
+</ul>
 <h2>Requesting additional pools</h2>
 <form action="{% url 'request_pool' %}" method="POST" class="form-horizontal">
     {% csrf_token %}
