@@ -92,7 +92,9 @@ nav.add_branch('infrastructure_hosts',
                                     'infrastructure_host_policy_assignment':
                                     lambda _: pol_btn('Manage Policies'),
                                     'infrastructure_provision_host':
-                                    lambda _: lif_btn('Provision this Host')}]})
+                                    lambda _: lif_btn(
+                                        version.pick({version.LOWEST: 'Provision this Host',
+                                                      '5.4': 'Provision items'}))}]})
 
 
 class Host(Updateable, Pretty):
