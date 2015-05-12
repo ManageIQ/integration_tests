@@ -429,10 +429,8 @@ def prepare_template_poweroff(self, template_id):
     template = Template.objects.get(id=template_id)
     template.set_status("Powering off")
     try:
-        with template.cfme.ipapp.ssh_client() as ssh:
-            # Be polite
-            ssh.run_command("poweroff")
-        template.provider_api.wait_vm_stopped(template.name, num_sec=480)
+        template.provider_api.stop_vm(template.name)
+        template.provider_api.wait_vm_stopped(template.name)
     except Exception as e:
         template.set_status("Could not power off the appliance. Retrying.")
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
