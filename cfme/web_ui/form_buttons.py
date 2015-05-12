@@ -13,12 +13,15 @@ from utils.pretty import Pretty
 
 
 class FormButton(Pretty):
-    """This class reresents the small black button usually located in forms or CRUD.
+    """This class represents the buttons usually located in forms or CRUD.
 
     Args:
-        alt: The text from `alt` field of the image
+        alt: The text from ``alt`` field of the image.
+        dimmed_alt: In case the ``alt`` param is different in the dimmed variant of the button.
+        force_click: Click always, even if it is dimmed. (Causes an error if not visible)
+        partial_alt: Whether the alt matching should be only partial (``in``).
     """
-    pretty_attrs = ['alt', 'dimmed_alt']
+    pretty_attrs = ['_alt', '_dimmed_alt', '_force', '_partial']
 
     def __init__(self, alt, dimmed_alt=None, force_click=False, partial_alt=False):
         self._alt = alt
@@ -71,9 +74,11 @@ class FormButton(Pretty):
 
     def _custom_click_handler(self):
         """Handler called from pytest_selenium"""
+        sel.wait_for_ajax()
         if self.is_dimmed and not self._force:
             logger.info("Not clicking {} because it is dimmed".format(str(repr(self))))
             return
+        sel.wait_for_element(self, timeout=5)
         return sel.click(self, no_custom_handler=True)
 
     def __str__(self):

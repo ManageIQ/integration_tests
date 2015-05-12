@@ -49,6 +49,7 @@ def select_security_group(sg):
 provisioning_form = tabstrip.TabStripForm(
     fields=[
         ('submit_button', form_buttons.FormButton("Submit")),
+        ('submit_copy_button', form_buttons.FormButton("Submit this provisioning request")),
         ('cancel_button', form_buttons.cancel),
         ('host_submit_button', form_buttons.host_provision_submit),
         ('host_cancel_button', form_buttons.host_provision_cancel)
@@ -184,14 +185,14 @@ def generate_nav_function(tb_item):
         template_select_form.template_table._update_cache()
         template = template_select_form.template_table.find_row_by_cells({
             'Name': template_name,
-            'Provider': provider.name
+            'Provider': provider if isinstance(provider, basestring) else provider.name
         })
         if template:
             sel.click(template)
             if current_version() < "5.4":
                 sel.click(submit_button)
             else:
-                sel.click(form_buttons.FormButton("Continue"))
+                sel.click(form_buttons.FormButton("Continue", force_click=True))
 
         else:
             raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(

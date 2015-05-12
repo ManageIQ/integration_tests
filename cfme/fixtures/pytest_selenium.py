@@ -340,14 +340,22 @@ def is_displayed(loc, _deep=0, **kwargs):
     Args:
         loc: A locator, expects either a  string, WebElement, tuple.
 
+    Keywords:
+        move_to: Uses :py:func:`move_to_element` instead of :py:func:`element`
+
     Returns: ``True`` if element is displayed, ``False`` if not
 
     Raises:
         NoSuchElementException: If element is not found on page
         CFMEExceptionOccured: When there is a CFME rails exception on the page.
     """
+    move_to = kwargs.pop("move_to", False)
     try:
-        return element(loc, **kwargs).is_displayed()
+        if move_to:
+            e = move_to_element(loc, **kwargs)
+        else:
+            e = element(loc, **kwargs)
+        return e.is_displayed()
     except (NoSuchElementException, exceptions.CannotScrollException):
         return False
     except StaleElementReferenceException:
@@ -384,13 +392,18 @@ def wait_for_element(*locs, **kwargs):
         loc: A locator, expects either a string, WebElement, tuple.
     Keywords:
         all_elements: Whether to wait not for one, but all elements (Default False)
+        timeout: How much time to wait
     """
     # wait_until(lambda s: is_displayed(loc),"Element '{}' did not appear as expected.".format(loc))
     filt = all if kwargs.get("all_elements", False) else any
     msg = "All" if kwargs.get("all_elements", False) else "Any"
+    new_kwargs = {}
+    if "timeout" in kwargs:
+        new_kwargs["timeout"] = kwargs["timeout"]
     wait_until(
-        lambda s: filt([is_displayed(loc) for loc in locs]),
-        "{} of the elements '{}' did not appear as expected.".format(msg, str(locs))
+        lambda s: filt([is_displayed(loc, move_to=True) for loc in locs]),
+        msg="{} of the elements '{}' did not appear as expected.".format(msg, str(locs)),
+        **kwargs
     )
 
 
@@ -537,6 +550,12 @@ def move_to_element(loc, **kwargs):
     brand = "//div[@id='page_header_div']//div[contains(@class, 'brand')]"
     wait_for_ajax()
     el = element(loc, **kwargs)
+    if el.tag_name == "option":
+        # Instead of option, let's move on its parent <select> if possible
+        parent = element("..", root=el)
+        if parent.tag_name == "select":
+            move_to_element(parent)
+            return el
     move_to = ActionChains(browser()).move_to_element(el)
     try:
         move_to.perform()
