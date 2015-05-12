@@ -2,7 +2,7 @@
 from contextlib import contextmanager
 from cfme.exceptions import RequestException
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Region, SplitTable, fill, flash, form_buttons, paginator, toolbar, Input
+from cfme.web_ui import Region, SplitTable, fill, flash, paginator, toolbar, Input
 from utils.log import logger
 
 request_list = SplitTable(
