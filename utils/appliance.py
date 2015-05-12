@@ -826,6 +826,8 @@ class IPAppliance(object):
 
         # update
         log_callback('Running rhel updates on appliance')
+        # clean yum beforehand to clear metadata from earlier update repos, if any
+        client.run_command('yum clean all')
         status, out = client.run_command('yum update -y --nogpgcheck', timeout=3600)
         if status != 0:
             self.log.error('appliance update failed')
