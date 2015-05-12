@@ -81,7 +81,8 @@ lif_btn = partial(tb.select, 'Lifecycle')
 
 nav.add_branch('infrastructure_hosts',
                {'infrastructure_host_new': lambda _: cfg_btn(
-                   'Add a New Host'),
+                   version.pick({version.LOWEST: 'Add a New Host',
+                                 '5.4': 'Add a New item'})),
                 'infrastructure_host_discover': lambda _: cfg_btn(
                     'Discover Hosts'),
                 'infrastructure_host': [lambda ctx: sel.click(Quadicon(ctx['host'].name,
