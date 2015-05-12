@@ -402,7 +402,7 @@ def prepare_template_seal(self, template_id):
     try:
         with template.cfme.ipapp.ssh_client() as ssh:
             ssh.run_command("rm -rf /etc/ssh/ssh_host_*")
-            if ssh.run_command("grep HOSTNAME /etc/sysconfig/network").rc == 0:
+            if ssh.run_command("grep '^HOSTNAME' /etc/sysconfig/network").rc == 0:
                 # Replace it
                 ssh.run_command(
                     "sed -i -r -e 's/^HOSTNAME=.*$/HOSTNAME=localhost.localdomain/' "
@@ -412,13 +412,7 @@ def prepare_template_seal(self, template_id):
                 ssh.run_command("echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network")
             ssh.run_command("sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
             ssh.run_command("sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
-            if ssh.run_command("hash sys-unconfig").rc == 0:
-                # with sys-unconfig
-                ssh.run_command("sys-unconfig")
-            else:
-                # If we don't have it
-                ssh.run_command("rm -f /etc/udev/rules.d/70-*")
-                ssh.run_command("touch /.unconfigured")
+            ssh.run_command("rm -f /etc/udev/rules.d/70-*")
             # Fix SELinux things
             ssh.run_command("restorecon -R /etc/sysconfig/network-scripts")
             ssh.run_command("restorecon /etc/sysconfig/network")
@@ -438,7 +432,7 @@ def prepare_template_poweroff(self, template_id):
         with template.cfme.ipapp.ssh_client() as ssh:
             # Be polite
             ssh.run_command("poweroff")
-        template.provider_api.wait_vm_stopped(template.name)
+        template.provider_api.wait_vm_stopped(template.name, num_sec=480)
     except Exception as e:
         template.set_status("Could not power off the appliance. Retrying.")
         self.retry(args=(template_id,), exc=e, countdown=10, max_retries=5)
