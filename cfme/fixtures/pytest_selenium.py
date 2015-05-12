@@ -340,14 +340,22 @@ def is_displayed(loc, _deep=0, **kwargs):
     Args:
         loc: A locator, expects either a  string, WebElement, tuple.
 
+    Keywords:
+        move_to: Uses :py:func:`move_to_element` instead of :py:func:`element`
+
     Returns: ``True`` if element is displayed, ``False`` if not
 
     Raises:
         NoSuchElementException: If element is not found on page
         CFMEExceptionOccured: When there is a CFME rails exception on the page.
     """
+    move_to = kwargs.pop("move_to", False)
     try:
-        return element(loc, **kwargs).is_displayed()
+        if move_to:
+            e = move_to_element(loc, **kwargs)
+        else:
+            e = element(loc, **kwargs)
+        return e.is_displayed()
     except (NoSuchElementException, exceptions.CannotScrollException):
         return False
     except StaleElementReferenceException:
@@ -393,7 +401,7 @@ def wait_for_element(*locs, **kwargs):
     if "timeout" in kwargs:
         new_kwargs["timeout"] = kwargs["timeout"]
     wait_until(
-        lambda s: filt([is_displayed(loc) for loc in locs]),
+        lambda s: filt([is_displayed(loc, move_to=True) for loc in locs]),
         msg="{} of the elements '{}' did not appear as expected.".format(msg, str(locs)),
         **kwargs
     )
