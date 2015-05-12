@@ -74,6 +74,12 @@ def start_db_process(address):
             "Could not start postgres process on {}".format(address)
 
 
+def update_appliance_uuid(address):
+    with get_ssh_client(address) as ssh:
+        assert ssh.run_command('uuidgen > /var/www/miq/vmdb/GUID')[0] == 0,\
+            "Could not update appliance's uuid on {}".format(address)
+
+
 def get_replication_appliances():
     """Returns two database-owning appliances configured
        with unique region numbers.
@@ -83,7 +89,23 @@ def get_replication_appliances():
     appl2 = provision_appliance(ver_to_prov, 'test_repl_B')
     appl1.configure(region=1, patch_ajax_wait=False)
     appl1.ipapp.wait_for_web_ui()
+    update_appliance_uuid(appl2.address)
     appl2.configure(region=2, patch_ajax_wait=False, key_address=appl1.address)
+    appl2.ipapp.wait_for_web_ui()
+    return (appl1, appl2)
+
+
+def get_distributed_appliances():
+    """Returns one database-owning appliance, and a second appliance
+       that connects to the database of the first.
+    """
+    ver_to_prov = str(version.current_version())
+    appl1 = provision_appliance(ver_to_prov, 'test_childDB_A')
+    appl2 = provision_appliance(ver_to_prov, 'test_childDB_B')
+    appl1.configure(region=1, patch_ajax_wait=False)
+    appl1.ipapp.wait_for_web_ui()
+    appl2.configure(region=1, patch_ajax_wait=False, key_address=appl1.address,
+                    db_address=appl1.address)
     appl2.ipapp.wait_for_web_ui()
     return (appl1, appl2)
 
@@ -152,6 +174,31 @@ def test_appliance_replicate_between_regions(request, provider_crud):
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         configure_db_replication(appl2.address)
+        provider_crud.create()
+        wait_for_a_provider()
+
+    appl2.ipapp.browser_steal = True
+    with appl2.ipapp:
+        wait_for_a_provider()
+        assert provider_crud.exists
+
+
+@pytest.mark.ignore_stream("upstream")
+def test_external_database_appliance(request, provider_crud):
+    """Tests that one appliance can externally
+       connect to the database of another appliance.
+
+    Metadata:
+        test_flag: replication
+    """
+    appl1, appl2 = get_distributed_appliances()
+
+    def finalize():
+        appl1.destroy()
+        appl2.destroy()
+    request.addfinalizer(finalize)
+    appl1.ipapp.browser_steal = True
+    with appl1.ipapp:
         provider_crud.create()
         wait_for_a_provider()
 
