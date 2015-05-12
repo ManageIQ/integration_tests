@@ -5,6 +5,7 @@ import os
 import random
 import re
 import shutil
+import socket
 import subprocess
 from tempfile import mkdtemp
 from textwrap import dedent
@@ -808,27 +809,33 @@ class IPAppliance(object):
 
         # create repo file
         log_callback('Creating repo file on appliance')
-        write_updates_repo = 'cat > /etc/yum.repos.d/updates.repo <<EOF\n'
-        for i, url in enumerate(urls):
-            write_updates_repo += dedent('''\
-                [update-{i}]
-                name=update-url-{i}
+        for url in urls:
+            repo_id = generate_random_string()
+            write_updates_repo = dedent('''\
+                cat > /etc/yum.repos.d/{repo_id}.repo <<EOF
+                [update-{repo_id}]
+                name=update-url-{repo_id}
                 baseurl={url}
                 enabled=1
                 gpgcheck=0
-                ''').format(i=i, url=url)
-        write_updates_repo += 'EOF\n'
-        status, out = client.run_command(write_updates_repo)
-        if status != 0:
-            msg = 'Failed to write repo updates repo to appliance'
-            log_callback(msg)
-            raise Exception(msg)
+                EOF
+                ''').format(repo_id=repo_id, url=url)
+            status, out = client.run_command(write_updates_repo)
+            if status != 0:
+                msg = 'Failed to write repo updates repo to appliance'
+                log_callback(msg)
+                raise Exception(msg)
 
         # update
         log_callback('Running rhel updates on appliance')
         # clean yum beforehand to clear metadata from earlier update repos, if any
-        client.run_command('yum clean all')
-        status, out = client.run_command('yum update -y --nogpgcheck', timeout=3600)
+        try:
+            status, out = client.run_command('yum update -y --nogpgcheck', timeout=3600)
+        except socket.timeout:
+            log_callback('SSH timed out while updating appliance, exiting')
+            # failure to update is fatal, kill this process
+            raise SystemExit(1)
+
         if status != 0:
             self.log.error('appliance update failed')
             self.log.error(out)
