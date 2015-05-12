@@ -826,7 +826,7 @@ class IPAppliance(object):
 
         # update
         log_callback('Running rhel updates on appliance')
-        status, out = client.run_command('yum update -y --nogpgcheck')
+        status, out = client.run_command('yum update -y --nogpgcheck', timeout=3600)
         if status != 0:
             self.log.error('appliance update failed')
             self.log.error(out)
