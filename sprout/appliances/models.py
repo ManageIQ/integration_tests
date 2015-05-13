@@ -817,7 +817,7 @@ class AppliancePool(MetadataMixin):
 
     @property
     def queued_provision_tasks(self):
-        return DelayedProvisionTask.objects.filter(pool=self)
+        return DelayedProvisionTask.objects.filter(pool=self).order_by("id")
 
     def prolong_lease(self, time=60):
         logger().info("Initiated lease pronging of pool {}".format(self.id))
@@ -859,6 +859,42 @@ class AppliancePool(MetadataMixin):
         """Returns a list of User objects that can own this pool instead of original owner"""
         return type(self.owner).objects.exclude(pk=self.owner.pk).order_by("last_name",
                                                                            "first_name")
+
+    @property
+    def num_delayed_provisioning_tasks(self):
+        return len(self.queued_provision_tasks)
+
+    @property
+    def num_provisioning_tasks_before(self):
+        tasks = self.queued_provision_tasks
+        if len(tasks) == 0:
+            return 0
+        latest_id = tasks[0].id
+        return len(DelayedProvisionTask.objects.filter(id__lt=latest_id))
+
+    @property
+    def num_possible_provisioning_slots(self):
+        providers = set([])
+        for template in self.possible_provisioning_templates:
+            providers.add(template.provider)
+        slots = 0
+        for provider in providers:
+            slots += provider.remaining_provisioning_slots
+        return slots
+
+    @property
+    def num_possible_appliance_slots(self):
+        providers = set([])
+        for template in self.possible_templates:
+            providers.add(template.provider)
+        slots = 0
+        for provider in providers:
+            slots += provider.remaining_appliance_slots
+        return slots
+
+    @property
+    def num_shepherd_appliances(self):
+        return len(Appliance.objects.filter(appliance_pool=None, **self.appliance_filter_params))
 
     def __repr__(self):
         return "<AppliancePool id: {}, group: {}, total_count: {}>".format(
