@@ -157,13 +157,3 @@ def test_keys_included(ssh_client, soft_assert):
     for k in keys:
         file_exists = ssh_client.run_command("test -e /var/www/miq/vmdb/certs/{}".format(k))[0] == 0
         soft_assert(file_exists, "{} was not included in the build".format(k))
-
-
-@pytest.mark.ignore_stream("upstream", "5.3")
-@pytest.mark.meta(blockers=[1191496])
-def test_gemfile_exists(ssh_client):
-    """Test that the cfme-gemset Gemfile is present in the build
-    """
-    gemfile = "/opt/rh/cfme-gemset/vmdb/Gemfile"
-    file_exists = ssh_client.run_command("test -f '%s'" % gemfile)[0] == 0
-    assert file_exists, "File %s does not exist!" % gemfile

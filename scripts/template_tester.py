@@ -62,13 +62,16 @@ def mark(api, provider_key, template, usable, diagnose):
     build_number = None
     if not usable:
         build_number = os.environ.get('BUILD_NUMBER', None)
-        if diagnose:
-            # diagnose will return None on a usable appliance, so don't bother
-            from utils.appliance import IPAppliance
-            ipa = IPAppliance()
-            diagnosis = ipa.diagnose_evm_failure()
-            if diagnosis:
-                logger.error('Appliance failed: {}'.format(diagnosis.split(os.linesep)[0]))
+
+#   temporarily disabled; diagnosis is causing template marking to fail on downstream appliances :(
+#         if diagnose:
+#             # diagnose will return None on a usable appliance, so don't bother
+#             from utils.appliance import IPAppliance
+#             ipa = IPAppliance()
+#             diagnosis = ipa.diagnose_evm_failure()
+#             if diagnosis:
+#                 logger.error('Appliance failed: {}'.format(diagnosis.split(os.linesep)[0]))
+
     trackerbot.mark_provider_template(api, provider_key, template, tested=True, usable=usable,
         diagnosis=diagnosis, build_number=build_number)
 
