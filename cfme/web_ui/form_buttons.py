@@ -89,6 +89,7 @@ class FormButton(Pretty):
 
 add = FormButton("Add")
 save = FormButton("Save Changes", dimmed_alt="Save")
+angular_save = FormButton("Save changes")
 cancel = FormButton("Cancel")
 submit = FormButton("Submit")
 reset = FormButton("Reset Changes", dimmed_alt="Reset")
