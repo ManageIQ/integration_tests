@@ -28,9 +28,9 @@ class MgmtSystemAPIBase(object):
     __metaclass__ = ABCMeta
     STEADY_WAIT_MINS = 3
 
-    # Flag to indicate whether or not this MgmtSystem can suspend,
-    # default True
+    # Flags to indicate whether or not this MgmtSystem can suspend/pause,
     can_suspend = True
+    can_pause = False
 
     @abstractmethod
     def start_vm(self, vm_name):

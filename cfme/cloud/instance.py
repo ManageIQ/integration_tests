@@ -461,20 +461,29 @@ class Instance(Updateable, Pretty):
 
 class OpenStackInstance(Instance, Updateable):
     # CFME & provider power control options
-    START = "Start"
+    START = "Start"  # START also covers RESUME and UNPAUSE (same as in CFME 5.4+ web UI)
     SUSPEND = "Suspend"
     TERMINATE = "Terminate"
     # CFME-only power control options
     SOFT_REBOOT = "Soft Reboot"
     HARD_REBOOT = "Hard Reboot"
     # Provider-only power control options
-    RESUME = "Resume"
+    STOP = "Stop"
+    PAUSE = "Pause"
     RESTART = "Restart"
 
     # CFME power states
     STATE_ON = "on"
     STATE_OFF = "off"
-    STATE_SUSPENDED = "suspended"
+    STATE_ERROR = "non-operational"
+    STATE_PAUSED = version.pick({
+        version.LOWEST: "off",
+        "5.4": "paused",
+    })
+    STATE_SUSPENDED = version.pick({
+        version.LOWEST: "off",
+        "5.4": "suspended",
+    })
     STATE_UNKNOWN = "unknown"
 
     def create(self, email=None, first_name=None, last_name=None, cloud_network=None,
@@ -548,6 +557,10 @@ class OpenStackInstance(Instance, Updateable):
             self.provider_crud.get_mgmt_system().suspend_vm(self.name)
         elif option == OpenStackInstance.RESUME:
             self.provider_crud.get_mgmt_system().resume_vm(self.name)
+        elif option == OpenStackInstance.PAUSE:
+            self.provider_crud.get_mgmt_system().pause_vm(self.name)
+        elif option == OpenStackInstance.UNPAUSE:
+            self.provider_crud.get_mgmt_system().unpause_vm(self.name)
         elif option == OpenStackInstance.RESTART:
             self.provider_crud.get_mgmt_system().restart_vm(self.name)
         elif option == OpenStackInstance.TERMINATE:
