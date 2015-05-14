@@ -165,8 +165,6 @@ class Appliance(object):
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def _configure_5_4(self, log_callback=None):
-        # Patch the environment if needed
-        self.ipapp.workaround_missing_gemfile(log_callback=log_callback)
         self._configure_5_3(log_callback=log_callback)
 
     def _configure_upstream(self, log_callback=None):
