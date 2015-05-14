@@ -2103,17 +2103,18 @@ class Quadicon(Pretty):
 
     def checkbox(self):
         """ Returns:  a locator for the internal checkbox for the quadicon"""
-        return "//input[@type='checkbox' and ../../..//a[@title='%s']]" % self._name
+        return "//input[@type='checkbox' and ../../..//a[@title={}]]".format(quoteattr(self._name))
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
         return sel.move_to_element('div/a',
-            root="//div[@id='quadicon' and ../../..//a[@title='%s']]" % self._name)
+            root="//div[@id='quadicon' and ../../..//a[@title={}]]".format(quoteattr(self._name)))
 
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
-        return "//div[contains(@class, '%s72') and ../../../..//a[@title='%s']]" \
-            % (corner, self._name)
+        return "//div[contains(@class, {}) and ../../../..//a[@title={}]]".format(
+            quoteattr("{}72".format(corner)),
+            quoteattr(self._name))
 
     def __getattr__(self, name):
         """ Queries the quadrants by name

@@ -244,7 +244,7 @@ class Common(object):
 
         paginator.results_per_page(1000)
         for page in paginator.pages():
-            if sel.is_displayed(quadicon):
+            if sel.is_displayed(quadicon, move_to=True):
                 if mark:
                     sel.check(quadicon.checkbox())
                 return quadicon
