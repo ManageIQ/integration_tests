@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.configure.configuration import without_server_roles
+from cfme.configure.configuration import server_roles_disabled
 
 from utils import error, mgmt_system, testgen
 from utils.providers import setup_a_provider as _setup_a_provider, provider_factory
@@ -130,7 +130,7 @@ def test_provider_refresh(request, setup_a_provider, rest_api):
         pytest.skip("Refresh action is not implemented in this version")
     provider_mgmt = provider_factory(setup_a_provider.key)
     provider = rest_api.collections.providers.find_by(name=setup_a_provider.name)[0]
-    with without_server_roles("ems_inventory", "ems_operations"):
+    with server_roles_disabled("ems_inventory", "ems_operations"):
         vm_name = deploy_template(
             setup_a_provider.key,
             "test_rest_prov_refresh_{}".format(generate_random_string(size=4)))

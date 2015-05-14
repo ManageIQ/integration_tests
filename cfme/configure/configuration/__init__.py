@@ -1820,22 +1820,24 @@ def _server_roles_cm(enable, *roles):
         enable: Whether to enable the roles.
         *roles: Role ids to set
     """
-    original_roles = get_server_roles()
-    set_roles = dict(original_roles)
-    for role in roles:
-        if role not in set_roles:
-            raise NameError("No such role {}".format(role))
-        set_roles[role] = enable
-    set_server_roles(**set_roles)
-    yield
-    set_server_roles(**original_roles)
+    try:
+        original_roles = get_server_roles()
+        set_roles = dict(original_roles)
+        for role in roles:
+            if role not in set_roles:
+                raise NameError("No such role {}".format(role))
+            set_roles[role] = enable
+        set_server_roles(**set_roles)
+        yield
+    finally:
+        set_server_roles(**original_roles)
 
 
-def with_server_roles(*roles):
+def server_roles_enabled(*roles):
     return _server_roles_cm(True, *roles)
 
 
-def without_server_roles(*roles):
+def server_roles_disabled(*roles):
     return _server_roles_cm(False, *roles)
 
 
