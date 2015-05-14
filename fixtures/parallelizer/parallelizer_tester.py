@@ -11,12 +11,15 @@ from time import sleep
 
 import pytest
 
-pytestmark = pytest.mark.usefixtures('param', 'wait')
+# add 'wait' to this to slow things down, if desired
+pytestmark = pytest.mark.usefixtures('param')
+# increase or decrease this to change the number of tests generated
+num_copies = 20
 
 
 def pytest_generate_tests(metafunc):
     # Starts at 10 for vane reason: Artifactor report does a naive sort, so 10 comes before 1
-    ids = [i + 10 for i in xrange(20)]
+    ids = [i + 10 for i in xrange(num_copies)]
     random.shuffle(ids)
     argvalues = [[v] for v in ids]
     metafunc.parametrize(['param'], argvalues, ids=ids, scope='module')

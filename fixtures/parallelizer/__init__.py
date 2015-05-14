@@ -49,6 +49,7 @@ from fixtures.pytest_store import store
 from utils import at_exit, conf
 from utils.appliance import IPAppliance
 from utils.log import create_sublogger
+from utils.net import random_port
 from utils.path import conf_path, project_path
 from utils.sprout import SproutClient, SproutException
 from utils.wait import wait_for
@@ -135,7 +136,9 @@ class ParallelSession(object):
         self.trdist = None
         self.slaves = {}
         self.slave_urls = {}
+        self.slave_tests = defaultdict(set)
         self.test_groups = self._test_item_generator()
+        self.failed_slave_test_groups = deque()
         self.sprout_client = None
         self.sprout_timer = None
         self.sprout_pool = None
@@ -205,7 +208,7 @@ class ParallelSession(object):
                 )
 
         # set up the ipc socket
-        zmq_endpoint = 'ipc://%s' % project_path.join('.pytest-parallel.ipc').strpath
+        zmq_endpoint = 'tcp://127.0.0.1:{}'.format(random_port())
         ctx = zmq.Context.instance()
         self.sock = ctx.socket(zmq.ROUTER)
         self.sock.bind('%s' % zmq_endpoint)
@@ -327,10 +330,15 @@ class ParallelSession(object):
     def send_tests(self, slaveid):
         """Send a slave a group of tests"""
         try:
-            tests = self.test_groups.next()
-        except StopIteration:
-            tests = []
+            tests = list(self.failed_slave_test_groups.popleft())
+        except IndexError:
+            try:
+                tests = self.test_groups.next()
+            except StopIteration:
+                tests = []
+
         self.send(slaveid, tests)
+        self.slave_tests[slaveid] |= set(tests)
         collect_len = len(self.collection)
         tests_len = len(tests)
         self.sent_tests += tests_len
@@ -369,24 +377,34 @@ class ParallelSession(object):
         - Restore the master terminal reporter after testing so we get the final report
 
         """
-        # Build master collection for diffing with slaves
+        # Build master collection for slave diffing and distribution
         for item in self.session.items:
             self.collection[item.nodeid] = item
 
         try:
-            slave_collections = {}
-            collection_diff_fails = 0
+            slave_respawn_count = 0
             self.print_message("Waiting for {} slave collections".format(len(self.slaves)),
                 red=True)
 
+            # Turn off the terminal reporter to suppress the builtin logstart printing
+            terminalreporter.disable()
+
             while True:
-                # Clean up dead slaves
+                # Replace dead slaves
                 for slaveid, slave in self.slaves.items():
                     returncode = slave.poll()
                     if returncode:
-                        self.print_message('{} terminated unexpectedly with status {}'.format(
-                            slaveid, returncode), slaveid, red=True)
-                        self.slaves.pop(slaveid)
+                        del(self.slaves[slaveid])
+                        msg = '{} terminated unexpectedly with status {}, respawning'.format(
+                            slaveid, returncode)
+                        if self.slave_tests[slaveid]:
+                            num_failed_tests = len(self.slave_tests[slaveid])
+                            self.sent_tests -= num_failed_tests
+                            msg += ' and redistributing {} tests'.format(num_failed_tests)
+                            self.failed_slave_test_groups.append(self.slave_tests.pop(slaveid))
+                        self.print_message(msg, red=True)
+                        self._start_slave(slaveid)
+                        slave_respawn_count += 1
 
                 if not self.slaves:
                     # All slaves are killed or errored, we're done with tests
@@ -396,15 +414,24 @@ class ParallelSession(object):
 
                 slaveid, event_data, event_name = self.recv()
                 if event_name == 'collectionfinish':
-                    slave_collections[slaveid] = event_data['node_ids']
-                    self.print_message(
-                        "{} collection received ({}/{})".format(
-                            slaveid, len(slave_collections), len(self.slaves)), yellow=True)
-                    # Don't ack here, leave the slaves blocking on recv
-                    # after sending collectionfinish,
-                    # then sync up when all collections are diffed
+                    slave_collection = event_data['node_ids']
+                    # compare slave collection to the master, all test ids must be the same
+                    self.log.debug('diffing {} collection'.format(slaveid))
+                    diff_err = report_collection_diff(slaveid, self.collection.keys(),
+                        slave_collection)
+                    if diff_err:
+                        self.print_message('collection differs, respawning', slaveid,
+                            purple=True)
+                        self.print_message(diff_err, purple=True)
+                        self.log.error('{}'.format(diff_err))
+                        self.kill(slaveid)
+                        self._start_slave(slaveid)
+                        slave_respawn_count += 1
+                    else:
+                        self.ack(slaveid, event_name)
                 elif event_name == 'need_tests':
                     self.send_tests(slaveid)
+                    self.log.info('starting master test distribution')
                 elif event_name == 'runtest_logstart':
                     self.ack(slaveid, event_name)
                     self.trdist.runtest_logstart(slaveid,
@@ -412,58 +439,24 @@ class ParallelSession(object):
                 elif event_name == 'runtest_logreport':
                     self.ack(slaveid, event_name)
                     report = unserialize_report(event_data['report'])
+                    if (report.when in ('call', 'teardown')
+                            and report.nodeid in self.slave_tests[slaveid]):
+                        self.slave_tests[slaveid].remove(report.nodeid)
                     self.trdist.runtest_logreport(slaveid, report)
                 elif event_name == 'shutdown':
                     self.ack(slaveid, event_name)
                     _monitor_slave_shutdown(self, self.slaves.pop(slaveid), slaveid)
 
-                # wait for all slave collections to arrive, then diff collections and ack
-                if slave_collections:
-                    num_slaves = len(self.slaves)
-
-                    if len(slave_collections) != num_slaves:
-                        continue
-
-                    # compare slave collections to the master, all test ids must be the same
-                    self.log.debug('diffing slave collections')
-                    diff_err = report_collection_diff(self.collection.keys(), slave_collections)
-                    for slaveid, err in diff_err:
-                        self.print_message('{} collection differs, recollecting'.format(slaveid),
-                            purple=True)
-                        self.log.error('{}'.format(err))
-                        self.kill(slaveid)
-                        del(slave_collections[slaveid])
-                        self._start_slave(slaveid)
-                        collection_diff_fails += 1
-
-                        if collection_diff_fails >= len(self.appliances) * 2:
-                            self.print_message('too many slave collection diff failures, exiting',
-                                red=True, bold=True)
-                            raise KeyboardInterrupt('Interrupted due to bad slave collections')
-
-                    if len(slave_collections) != num_slaves:
-                        continue
-
-                    # Clear slave collections
-                    slave_collections = None
-
-                    # let the slaves continue
-                    for slave in self.slaves:
-                        self.ack(slave, 'collectionfinish')
-
-                    if self.slaves:
-                        self.print_message('Distributing %d tests across %d slaves'
-                            % (len(self.collection), num_slaves))
-                        self.log.info('starting master test distribution')
-
-                    # Turn off the terminal reporter to suppress the builtin logstart printing
-                    terminalreporter.disable()
+                if slave_respawn_count >= len(self.appliances) * 2:
+                    self.print_message('too many slave respawns, exiting',
+                        red=True, bold=True)
+                    raise KeyboardInterrupt('Interrupted due to slave failures')
         except Exception as ex:
             self.log.error('Exception in runtest loop:')
             self.log.exception(ex)
             raise
-
-        terminalreporter.enable()
+        finally:
+            terminalreporter.enable()
 
         # Suppress other runtestloop calls
         return True
@@ -471,7 +464,6 @@ class ParallelSession(object):
     def _test_item_generator(self):
         for tests in self._modscope_item_generator():
             yield tests
-        self.print_message('all tests distributed')
 
     def _modscope_item_generator(self):
         # breaks out tests by module, can work just about any way we want
@@ -505,7 +497,8 @@ class ParallelSession(object):
                     sent_tests += tests_len
                     self.log.info('%d tests remaining to send'
                         % (collection_len - sent_tests))
-                    yield tests
+                    if tests:
+                        yield tests
 
                 # Then clear the cache in-place
                 module_items_cache[:] = []
@@ -530,8 +523,8 @@ class ParallelSession(object):
             yield tests
 
 
-def report_collection_diff(from_collection, slave_collections):
-    """Report differences, if any exist, between master and slave collections
+def report_collection_diff(slaveid, from_collection, to_collection):
+    """Report differences, if any exist, between master and a slave collection
 
     Raises RuntimeError if collections differ
 
@@ -540,29 +533,22 @@ def report_collection_diff(from_collection, slave_collections):
         This function will sort functions before comparing them.
 
     """
-    diff_slaves = []
-    # be a bro and sort by slaveid so the diffs come out in slave order
-    for slaveid in sorted(slave_collections):
-        to_collection = slave_collections[slaveid]
-        from_collection, to_collection = sorted(from_collection), sorted(to_collection)
-        if from_collection == to_collection:
-            # Well, that was easy.
-            continue
+    from_collection, to_collection = sorted(from_collection), sorted(to_collection)
+    if from_collection == to_collection:
+        # Well, that was easy.
+        return
 
-        # diff the two, so we get some idea of what's wrong
-        diff = difflib.unified_diff(
-            from_collection,
-            to_collection,
-            fromfile='master',
-            tofile=slaveid,
-        )
+    # diff the two, so we get some idea of what's wrong
+    diff = difflib.unified_diff(
+        from_collection,
+        to_collection,
+        fromfile='master',
+        tofile=slaveid,
+    )
 
-        # diff is a line generator, stringify it
-        diff = '\n'.join([line.rstrip() for line in diff])
-        err = '{slaveid} diff:\n{diff}\n'.format(
-            slaveid=slaveid, diff=diff)
-        diff_slaves.append((slaveid, err))
-    return diff_slaves
+    # diff is a line generator, stringify it
+    diff = '\n'.join([line.rstrip() for line in diff])
+    return '{slaveid} diff:\n{diff}\n'.format(slaveid=slaveid, diff=diff)
 
 
 def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
@@ -609,27 +595,20 @@ def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
 def _recv_queue(session):
     # poll the zmq socket, populate the recv queue deque with responses
     while not session.session_finished:
-        try:
-            slaveid, empty, event_json = session.sock.recv_multipart(flags=zmq.NOBLOCK)
-        except zmq.ZMQError as e:
-            if e.errno == zmq.EAGAIN:
-                # No message ready from slaves, continue processing
-                sleep(.1)
-                continue
-            else:
-                raise
-        else:
-            event_data = json.loads(event_json)
-            event_name = event_data.pop('_event_name')
+        slaveid, empty, event_json = session.sock.recv_multipart()
+        event_data = json.loads(event_json)
+        event_name = event_data.pop('_event_name')
 
-            if event_name == 'message':
-                message = event_data.pop('message')
-                # messages are special, handle them immediately
-                session.print_message(message, slaveid, **event_data)
-                session.ack(slaveid, event_name)
-            else:
-                with recv_lock:
-                    session._recv_queue.append((slaveid, event_data, event_name))
+        if event_name == 'message':
+            message = event_data.pop('message')
+            # messages are special, handle them immediately
+            session.print_message(message, slaveid, **event_data)
+            session.ack(slaveid, event_name)
+        else:
+            with recv_lock:
+                session._recv_queue.append((slaveid, event_data, event_name))
+        # 10ms tick rate on the zmq socket helps prevent the occasional snarl
+        sleep(.01)
 
 
 class TerminalDistReporter(object):
