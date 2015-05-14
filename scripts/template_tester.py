@@ -15,7 +15,6 @@ import os
 import sys
 
 from utils import trackerbot
-from utils.log import logger
 
 
 def get(api):
