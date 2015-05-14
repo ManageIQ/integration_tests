@@ -303,7 +303,7 @@ def test_resume(openstack_only, setup_provider_funcscope,
         test_flag: power_control, provision
     """
     test_instance.wait_for_vm_state_change(
-        desired_state=test_instance.STATE_SUSPENDED, timeout=720, from_details=True)
+        desired_state=test_instance.STATE_OFF, timeout=720, from_details=True)
     check_power_options(soft_assert, test_instance, 'off')
     test_instance.power_control_from_cfme(
         option=test_instance.START, cancel=False, from_details=True)
