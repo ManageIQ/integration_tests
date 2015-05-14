@@ -51,7 +51,7 @@ def testing_vm(request, provisioning, provider_crud, provider_key):
         if vm.does_vm_exist_in_cfme():
             vm.remove_from_cfme()
     request.addfinalizer(_finalize)
-    vm.create_on_provider()
+    vm.create_on_provider(find_in_cfme=True)
     return vm
 
 

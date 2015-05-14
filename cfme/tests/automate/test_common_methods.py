@@ -65,9 +65,7 @@ def testing_vm(request, vm_name, provider_init, provider_crud, provider_mgmt, pr
         if vm_obj.does_vm_exist_in_cfme():
             vm_obj.remove_from_cfme()
     request.addfinalizer(_finalize)
-    vm_obj.create_on_provider()
-    provider_crud.refresh_provider_relationships()
-    wait_for(vm_obj.does_vm_exist_in_cfme, num_sec=450, delay=10)
+    vm_obj.create_on_provider(find_in_cfme=True)
     return vm_obj
 
 
