@@ -577,6 +577,10 @@ class ServerLogDepot(Pretty):
         )
 
         validate = form_buttons.FormButton("Validate the credentials by logging into the Server")
+        save_button = {
+            version.LOWEST: form_buttons.save,
+            "5.4": form_buttons.angular_save,
+        }
 
         def __init__(self, p_type, name, uri, username=None, password=None):
             assert p_type in self.p_types.keys(), "{} is not allowed as the protocol type!".format(
@@ -634,7 +638,7 @@ class ServerLogDepot(Pretty):
                 flash.assert_message_match("Edit Log Depot settings was cancelled by the user")
                 flash.assert_no_errors()
             else:
-                sel.click(form_buttons.save)
+                sel.click(self.save_button)
                 flash.assert_message_match("Log Depot Settings were saved")
                 flash.assert_no_errors()
 
@@ -655,7 +659,7 @@ class ServerLogDepot(Pretty):
                 fill(
                     cls.server_collect_logs,
                     {"type": "<No Depot>"},
-                    action=form_buttons.cancel if cancel else form_buttons.save
+                    action=form_buttons.cancel if cancel else cls.save_button
                 )
 
     @classmethod
