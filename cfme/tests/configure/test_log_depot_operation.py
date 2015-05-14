@@ -12,6 +12,7 @@ from utils.timeutil import parsetime
 from utils import conf
 from utils.ftp import FTPClient
 from utils.blockers import BZ
+from utils.randomness import generate_random_string
 from cfme.configure import configuration as configure
 
 
@@ -163,18 +164,21 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
     if depot_type not in ["nfs"]:
         credentials = configure.ServerLogDepot.Credentials(
             depot_type,
+            generate_random_string(),
             depot_machine,
             username=depot_credentials["username"],
-            password=depot_credentials["password"]
+            password=depot_credentials["password"],
         )
     else:
         credentials = configure.ServerLogDepot.Credentials(
             depot_type,
-            depot_machine
+            generate_random_string(),
+            depot_machine,
         )
     # Fails on upstream - BZ1108087
     credentials.update()
     request.addfinalizer(configure.ServerLogDepot.Credentials.clear)
+    return credentials
 
 
 @pytest.mark.nondestructive

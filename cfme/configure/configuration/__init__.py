@@ -554,18 +554,22 @@ class ServerLogDepot(Pretty):
             log_credentials.update()
             log_credentials = ServerLogDepot.Credentials(
                 "smb",
+                "foobar",
                 "backup.acme.com",
                 username="jdoe",
-                password="xyz"
+                password="xyz",
             )
             log_credentials.update()
 
         """
-        pretty_attrs = ['p_type', 'uri', 'username', 'password']
+        pretty_attrs = ['p_type', 'name', 'uri', 'username', 'password']
 
         server_collect_logs = Form(
             fields=[
                 ("type", Select("select#log_protocol")),
+                ("name", {
+                    version.LOWEST: None,
+                    "5.4": Input("depot_name")}),
                 ("uri", Input("uri")),
                 ("user", Input("log_userid")),
                 ("password", MultiFill(Input("log_password"), Input("log_verify"))),
@@ -574,13 +578,14 @@ class ServerLogDepot(Pretty):
 
         validate = form_buttons.FormButton("Validate the credentials by logging into the Server")
 
-        def __init__(self, p_type, uri, username=None, password=None):
+        def __init__(self, p_type, name, uri, username=None, password=None):
             assert p_type in self.p_types.keys(), "{} is not allowed as the protocol type!".format(
                 p_type)
             self.p_type = p_type
             self.uri = uri
             self.username = username
             self.password = password
+            self.name = name
 
         @lazycache
         def p_types(self):
@@ -609,7 +614,8 @@ class ServerLogDepot(Pretty):
             sel.force_navigate("cfg_diagnostics_server_collect_settings")
             details = {
                 "type": self.p_types[self.p_type],
-                "uri": self.uri
+                "name": self.name,
+                "uri": self.uri,
             }
             if self.p_type != "nfs":
                 details["user"] = self.username
@@ -622,9 +628,15 @@ class ServerLogDepot(Pretty):
             if validate and self.p_type not in {"nfs", "anon_ftp", "dropbox"}:
                 sel.click(self.validate)
                 flash.assert_no_errors()
-            sel.click(form_buttons.cancel if cancel else form_buttons.save)
-            flash.assert_message_match("Log Depot Settings were saved")
-            flash.assert_no_errors()
+
+            if cancel:
+                sel.click(form_buttons.cancel)
+                flash.assert_message_match("Edit Log Depot settings was cancelled by the user")
+                flash.assert_no_errors()
+            else:
+                sel.click(form_buttons.save)
+                flash.assert_message_match("Log Depot Settings were saved")
+                flash.assert_no_errors()
 
         @classmethod
         def clear(cls, cancel=False):
@@ -634,11 +646,17 @@ class ServerLogDepot(Pretty):
                 cancel: If set to True, the Cancel button is clicked instead of saving.
             """
             sel.force_navigate("cfg_diagnostics_server_collect_settings")
-            fill(
-                cls.server_collect_logs,
-                {"type": "<No Depot>"},
-                action=form_buttons.cancel if cancel else form_buttons.save
-            )
+            sel.wait_for_element(cls.server_collect_logs.type)
+            sel.wait_for_ajax()
+            if sel.text(cls.server_collect_logs.type.first_selected_option) == "<No Depot>":
+                # Nothing to do here
+                sel.click(form_buttons.cancel)
+            else:
+                fill(
+                    cls.server_collect_logs,
+                    {"type": "<No Depot>"},
+                    action=form_buttons.cancel if cancel else form_buttons.save
+                )
 
     @classmethod
     def get_last_message(cls):
