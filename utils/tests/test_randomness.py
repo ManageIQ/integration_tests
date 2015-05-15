@@ -32,13 +32,6 @@ def test_generate_random_int_args():
     assert 0 <= random_int <= maxvalue
 
 
-def test_generate_random_uuid():
-    """Not sure if there's a better test than a string of normal uuid length (36)"""
-    uuid = randomness.generate_random_uuid_as_str()
-    assert len(uuid) == 36
-    assert isinstance(uuid, basestring)
-
-
 def test_randomness_fixtures(random_uuid_as_string, random_string):
     """Make sure the fixtures work as intended"""
     assert len(random_uuid_as_string) == 36

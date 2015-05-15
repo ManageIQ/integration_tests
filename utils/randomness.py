@@ -23,15 +23,11 @@ def generate_lowercase_random_string(size=8):
     return generate_random_string(size).lower()
 
 
-def generate_random_uuid_as_str():
-    return fauxfactory.gen_uuid()
-
-
 class RandomizeValues(object):
     _randomizers = {
         'random_int': generate_random_int,
         'random_str': generate_random_string,
-        'random_uuid': generate_random_uuid_as_str,
+        'random_uuid': fauxfactory.gen_uuid,
     }
 
     @classmethod
