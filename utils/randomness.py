@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
-import random
 import sys
 
 
@@ -26,35 +25,6 @@ def generate_lowercase_random_string(size=8):
 
 def generate_random_uuid_as_str():
     return fauxfactory.gen_uuid()
-
-
-def pick(from_where, n, quiet=True):
-    """Picks `n` elements randomly from source iterable.
-
-    Will be converted during processing so no side effects
-
-    Args:
-        from_where: Source iterable.
-        n: How many elements to pick
-        quiet: Whether raise the exception about n bigger than len(from_where) or not. Default True.
-    Returns: n-length list with randomly picked elements from `from_where`
-    """
-    if len(from_where) < n:
-        # We want more
-        if not quiet:
-            raise ValueError("Less elements in from_where than you want!")
-        else:
-            return list(from_where)
-    elif len(from_where) == n:
-        # We want all
-        return list(from_where)
-    # Random picking
-    result = []
-    from_where = list(from_where)  # to prevent side effects
-    while len(result) < n:
-        index = random.choice(range(len(from_where)))
-        result.append(from_where.pop(index))
-    return result
 
 
 class RandomizeValues(object):

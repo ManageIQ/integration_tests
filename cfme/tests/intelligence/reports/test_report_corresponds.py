@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 import pytest
+from random import sample
 
 import utils
 from cfme.intelligence.reports.reports import CustomReport
 from utils import version
 from utils.providers import provider_factory_by_name, setup_a_provider
-from utils.randomness import generate_random_string, pick
+from utils.randomness import generate_random_string
 from utils.version import since_date_or_version
 
 
@@ -41,7 +42,7 @@ def report_vms(setup_first_provider):
     )
     report.create()
     report.queue(wait_for_finish=True)
-    yield pick(
+    yield sample(
         filter(
             lambda i: len(i[
                 version.pick({
