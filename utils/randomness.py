@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
-import sys
-
-
-def generate_random_int(max=sys.maxint):
-    max = int(max)
-    return fauxfactory.gen_integer(0, max)
 
 
 def generate_random_local_ip():
     return "10.{}.{}.{}".format(
-        generate_random_int(255), generate_random_int(255), generate_random_int(255))
+        fauxfactory.gen_integer(0, 255),
+        fauxfactory.gen_integer(0, 255),
+        fauxfactory.gen_integer(0, 255))
 
 
 def generate_random_string(size=8):
@@ -25,7 +21,7 @@ def generate_lowercase_random_string(size=8):
 
 class RandomizeValues(object):
     _randomizers = {
-        'random_int': generate_random_int,
+        'random_int': fauxfactory.gen_integer,
         'random_str': generate_random_string,
         'random_uuid': fauxfactory.gen_uuid,
     }
