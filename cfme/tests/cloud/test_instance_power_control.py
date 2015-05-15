@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import cfme.web_ui.flash as flash
 import pytest
 from cfme.cloud.instance import instance_factory, get_all_instances, EC2Instance, OpenStackInstance
 from cfme.fixtures import pytest_selenium as sel
 from utils import error, testgen
-from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
 pytestmark = [pytest.mark.usefixtures('test_power_control')]
@@ -44,7 +45,7 @@ def pytest_generate_tests(metafunc):
 # This fixture must be named 'vm_name' because its tied to fixtures/virtual_machine
 @pytest.fixture(scope="module")
 def vm_name():
-    return "test_instance_pwrctl_{}".format(generate_random_string())
+    return "test_instance_pwrctl_{}".format(fauxfactory.gen_alphanumeric(8))
 
 
 @pytest.fixture(scope="function")
@@ -58,7 +59,8 @@ def test_instance(request, delete_instances_fin, setup_provider,
         instance.create_on_provider()
     elif isinstance(instance, EC2Instance) and \
             provider_mgmt.is_vm_state(vm_name, provider_mgmt.states['deleted']):
-        provider_mgmt.set_name(vm_name, 'test_terminated_{}'.format(generate_random_string()))
+        provider_mgmt.set_name(
+            vm_name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
         delete_instances_fin[provider_crud.key] = instance
         instance.create_on_provider()
     return instance

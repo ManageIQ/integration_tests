@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=E1101
 # pylint: disable=W0621
+import fauxfactory
 import uuid
 
 import pytest
@@ -10,7 +11,7 @@ import utils.error as error
 from cfme import Credential
 from cfme.cloud import provider
 from utils import testgen, version
-from utils.randomness import generate_random_local_ip, generate_random_string
+from utils.randomness import generate_random_local_ip
 from utils.update import update
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
@@ -38,9 +39,9 @@ def test_add_cancelled_validation(request):
 
 def test_password_mismatch_validation():
     cred = Credential(
-        principal=generate_random_string(size=5),
-        secret=generate_random_string(size=5),
-        verify_secret=generate_random_string(size=7))
+        principal=fauxfactory.gen_alphanumeric(5),
+        secret=fauxfactory.gen_alphanumeric(5),
+        verify_secret=fauxfactory.gen_alphanumeric(7))
 
     provider.discover(cred)
     flash.assert_message_match('Password/Verify Password do not match')
@@ -111,7 +112,7 @@ def test_name_required_validation(request):
 def test_region_required_validation(request):
     """Tests to validate the region while adding a provider"""
     prov = provider.EC2Provider(
-        name=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
         region=None)
 
     request.addfinalizer(prov.delete_if_exists)
@@ -122,7 +123,7 @@ def test_region_required_validation(request):
 def test_host_name_required_validation(request):
     """Test to validate the hostname while adding a provider"""
     prov = provider.OpenStackProvider(
-        name=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
         hostname=None,
         ip_address=generate_random_local_ip())
 
@@ -135,8 +136,8 @@ def test_host_name_required_validation(request):
 def test_ip_address_required_validation(request):
     """Test to validate the ip address while adding a provider"""
     prov = provider.OpenStackProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=None)
 
     request.addfinalizer(prov.delete_if_exists)
@@ -147,8 +148,8 @@ def test_ip_address_required_validation(request):
 def test_api_port_blank_validation(request):
     """Test to validate blank api port while adding a provider"""
     prov = provider.OpenStackProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=generate_random_local_ip(),
         api_port='')
 
@@ -157,14 +158,14 @@ def test_api_port_blank_validation(request):
 
 
 def test_user_id_max_character_validation():
-    cred = Credential(principal=generate_random_string(size=51))
+    cred = Credential(principal=fauxfactory.gen_alphanumeric(51))
     provider.discover(cred)
 
 
 def test_password_max_character_validation():
-    password = generate_random_string(size=51)
+    password = fauxfactory.gen_alphanumeric(51)
     cred = Credential(
-        principal=generate_random_string(size=5),
+        principal=fauxfactory.gen_alphanumeric(5),
         secret=password,
         verify_secret=password)
     provider.discover(cred)
@@ -173,7 +174,7 @@ def test_password_max_character_validation():
 def test_name_max_character_validation(request):
     """Test to validate max character for name field"""
     prov = provider.EC2Provider(
-        name=generate_random_string(size=255),
+        name=fauxfactory.gen_alphanumeric(255),
         region='us-east-1')
 
     request.addfinalizer(prov.delete_if_exists)
@@ -183,8 +184,8 @@ def test_name_max_character_validation(request):
 def test_hostname_max_character_validation(request):
     """Test to validate max character for hostname field"""
     prov = provider.OpenStackProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=255),
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(255),
         ip_address=generate_random_local_ip())
 
     request.addfinalizer(prov.delete_if_exists)
@@ -194,8 +195,8 @@ def test_hostname_max_character_validation(request):
 def test_ip_max_valid_character_validation(request):
     """Test to validate max character for ip address field with valid ip address"""
     prov = provider.OpenStackProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=generate_random_local_ip())
 
     request.addfinalizer(prov.delete_if_exists)
@@ -205,9 +206,9 @@ def test_ip_max_valid_character_validation(request):
 def test_ip_max_invalid_character_validation(request):
     """Test to validate max character for ip address field using random string"""
     prov = provider.OpenStackProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=5),
-        ip_address=generate_random_string(size=15))
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(5),
+        ip_address=fauxfactory.gen_alphanumeric(15))
 
     request.addfinalizer(prov.delete_if_exists)
     prov.create()
@@ -216,10 +217,10 @@ def test_ip_max_invalid_character_validation(request):
 def test_api_port_max_character_validation(request):
     """Test to validate max character for api port field"""
     prov = provider.OpenStackProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=generate_random_local_ip(),
-        api_port=generate_random_string(size=15))
+        api_port=fauxfactory.gen_alphanumeric(15))
 
     request.addfinalizer(prov.delete_if_exists)
     prov.create()

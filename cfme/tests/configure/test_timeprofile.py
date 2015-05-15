@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-
+import fauxfactory
 import cfme.configure.settings as st
 import utils.error as error
-import utils.randomness as random
 from utils.update import update
 
 
 def new_timeprofile():
-    return st.Timeprofile(description='time_profile' + random.generate_random_string(),
+    return st.Timeprofile(description='time_profile' + fauxfactory.gen_alphanumeric(),
                    scope='Current User',
                    days=True,
                    hours=True,
@@ -35,7 +34,7 @@ def test_timeprofile_duplicate_name():
 
 def test_timeprofile_name_max_character_validation():
     tp = st.Timeprofile(
-        description=random.generate_random_string(size=50),
+        description=fauxfactory.gen_alphanumeric(50),
         scope='Current User',
         timezone="(GMT-10:00) Hawaii")
     tp.create()
@@ -44,7 +43,7 @@ def test_timeprofile_name_max_character_validation():
 
 def test_days_required_error_validation():
     tp = st.Timeprofile(
-        description='time_profile' + random.generate_random_string(),
+        description='time_profile' + fauxfactory.gen_alphanumeric(),
         scope='Current User',
         timezone="(GMT-10:00) Hawaii",
         days=False,
@@ -55,7 +54,7 @@ def test_days_required_error_validation():
 
 def test_hours_required_error_validation():
     tp = st.Timeprofile(
-        description='time_profile' + random.generate_random_string(),
+        description='time_profile' + fauxfactory.gen_alphanumeric(),
         scope='Current User',
         timezone="(GMT-10:00) Hawaii",
         days=True,

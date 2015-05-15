@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-
+import fauxfactory
 import pytest
 from random import choice
 
@@ -8,7 +8,6 @@ from utils import testgen
 from utils.blockers import BZ
 from utils.miq_soap import MiqVM, set_client
 from utils.providers import setup_a_provider as _setup_a_provider
-from utils.randomness import generate_random_string
 
 pytest_generate_tests = testgen.generate(
     testgen.infra_providers,
@@ -476,7 +475,7 @@ def test_provision_via_soap(
     Metadata:
         test_flag: soap, provision
     """
-    vm_name = "test_soap_provision_{}".format(generate_random_string())
+    vm_name = "test_soap_provision_{}".format(fauxfactory.gen_alphanumeric())
     vlan = provider_data.get("provisioning", {}).get("vlan", None)
 
     def _cleanup():

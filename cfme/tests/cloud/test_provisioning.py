@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 # These tests don't work at the moment, due to the security_groups multi select not working
 # in selenium (the group is selected then immediately reset)
+import fauxfactory
 import pytest
 
 from textwrap import dedent
@@ -9,7 +11,6 @@ from cfme.cloud.instance import instance_factory
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
-from utils.randomness import generate_random_string
 from utils.update import update
 from utils.wait import wait_for
 
@@ -49,7 +50,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm_name(request, provider_mgmt):
-    vm_name = 'test_image_prov_%s' % generate_random_string()
+    vm_name = 'test_image_prov_%s' % fauxfactory.gen_alphanumeric()
     return vm_name
 
 

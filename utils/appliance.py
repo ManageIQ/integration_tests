@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import atexit
+import fauxfactory
 import hashlib
 import os
 import random
@@ -25,7 +26,6 @@ from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
 from utils.providers import provider_factory
-from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.version import get_stream, get_version, LATEST
 from utils.wait import wait_for
@@ -808,7 +808,7 @@ class IPAppliance(object):
         # create repo file
         log_callback('Creating repo file on appliance')
         for url in urls:
-            repo_id = generate_random_string()
+            repo_id = fauxfactory.gen_alphanumeric(8)
             write_updates_repo = dedent('''\
                 cat > /etc/yum.repos.d/{repo_id}.repo <<EOF
                 [update-{repo_id}]
@@ -998,7 +998,7 @@ class IPAppliance(object):
             rb = datafile.load_data_file(rbt, rbt_repl)
 
             # sent rb file over to /tmp
-            remote_file = '/tmp/%s' % generate_random_string()
+            remote_file = '/tmp/%s' % fauxfactory.gen_alphanumeric()
             client.put_file(rb.name, remote_file)
 
             # Run the rb script, clean it up when done
@@ -1038,7 +1038,7 @@ class IPAppliance(object):
         if self.has_cli:
             # copy v2 key
             master_client = client(hostname=self.db_address)
-            rand_filename = "/tmp/v2_key_{}".format(generate_random_string())
+            rand_filename = "/tmp/v2_key_{}".format(fauxfactory.gen_alphanumeric())
             master_client.get_file("/var/www/miq/vmdb/certs/v2_key", rand_filename)
             client.put_file(rand_filename, "/var/www/miq/vmdb/certs/v2_key")
 
@@ -1065,7 +1065,7 @@ class IPAppliance(object):
             rb = datafile.load_data_file(rbt, rbt_repl)
 
             # Init SSH client and sent rb file over to /tmp
-            remote_file = '/tmp/%s' % generate_random_string()
+            remote_file = '/tmp/%s' % fauxfactory.gen_alphanumeric()
             client.put_file(rb.name, remote_file)
 
             # Run the rb script, clean it up when done
@@ -1484,9 +1484,10 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
     def _generate_vm_name():
         if version is not None:
             version_digits = ''.join([letter for letter in version if letter.isdigit()])
-            return '{}_{}_{}'.format(vm_name_prefix, version_digits, generate_random_string())
+            return '{}_{}_{}'.format(
+                vm_name_prefix, version_digits, fauxfactory.gen_alphanumeric(8))
         else:
-            return '{}_{}'.format(vm_name_prefix, generate_random_string())
+            return '{}_{}'.format(vm_name_prefix, fauxfactory.gen_alphanumeric(8))
 
     def _get_latest_template():
         api = trackerbot.api()

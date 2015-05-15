@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 from cfme.automate.explorer import Class
-from utils.randomness import generate_random_string
 from utils.update import update
 import utils.error as error
 import cfme.tests.automate as ta
@@ -43,7 +44,7 @@ def test_schema_crud(a_class):
 # see 1138859
 #
 # def test_add_class_inherited(a_class):
-#     subclass = Class(name=generate_random_string(8),
+#     subclass = Class(name=fauxfactory.gen_alphanumeric(8),
 #                      namespace=a_class.namespace,
 #                      description="subclass",
 #                      inherits_from=a_class)
@@ -59,7 +60,7 @@ def test_duplicate_class_disallowed(a_class):
 
 def test_same_class_name_different_namespace(make_namespace):
     other_namespace = ta.make_namespace()
-    name = generate_random_string(8)
+    name = fauxfactory.gen_alphanumeric(8)
     cls1 = Class(name=name, namespace=make_namespace)
     cls2 = Class(name=name, namespace=other_namespace)
     cls1.create()
@@ -74,7 +75,7 @@ def test_display_name_unset_from_ui(request, a_class):
     a_class.create()
     request.addfinalizer(a_class.delete)
     with update(a_class):
-        a_class.display_name = generate_random_string()
+        a_class.display_name = fauxfactory.gen_alphanumeric()
     assert a_class.exists
     with update(a_class):
         a_class.display_name = ""

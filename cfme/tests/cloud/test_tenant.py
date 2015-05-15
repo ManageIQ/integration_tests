@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.cloud.tenant import Tenant
 from utils import testgen
-from utils.randomness import generate_random_string
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['openstack'],
                                          scope='module')
@@ -10,8 +11,8 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['openstack']
 
 @pytest.fixture
 def tenant(provider_key):
-    return Tenant(name=generate_random_string(size=8),
-                  description=generate_random_string(size=8),
+    return Tenant(name=fauxfactory.gen_alphanumeric(8),
+                  description=fauxfactory.gen_alphanumeric(8),
                   provider_key=provider_key)
 
 

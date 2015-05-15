@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 import requests
 from random import sample
@@ -8,7 +9,6 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.dashboard import Widget
 from cfme.intelligence.reports.dashboards import Dashboard
 from utils.blockers import BZ
-from utils.randomness import generate_random_string
 
 
 AVAILABLE_WIDGETS = [
@@ -54,9 +54,9 @@ def test_custom_dashboards(request, soft_assert, number_dashboards):
 
     def _create_dashboard(widgets):
         return Dashboard(
-            generate_random_string(),
+            fauxfactory.gen_alphanumeric(),
             "EvmGroup-super_administrator",
-            generate_random_string(),
+            fauxfactory.gen_alphanumeric(),
             locked=False,
             widgets=widgets
         )

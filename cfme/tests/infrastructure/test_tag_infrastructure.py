@@ -1,9 +1,11 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.web_ui import Quadicon, mixins
 from cfme.configure.configuration import Category, Tag
 from utils import providers
-from utils.randomness import generate_lowercase_random_string, generate_random_string
+from utils.randomness import generate_lowercase_random_string
 
 
 @pytest.fixture(scope="module")
@@ -27,8 +29,8 @@ pytestmark = [
 @pytest.yield_fixture(scope="module")
 def category():
     cg = Category(name=generate_lowercase_random_string(size=8),
-                  description=generate_random_string(size=32),
-                  display_name=generate_random_string(size=32))
+                  description=fauxfactory.gen_alphanumeric(length=32),
+                  display_name=fauxfactory.gen_alphanumeric(length=32))
     cg.create()
     yield cg
     cg.delete()
@@ -37,7 +39,7 @@ def category():
 @pytest.yield_fixture(scope="module")
 def tag(category):
     tag = Tag(name=generate_lowercase_random_string(size=8),
-              display_name=generate_random_string(size=32),
+              display_name=fauxfactory.gen_alphanumeric(length=32),
               category=category)
     tag.create()
     yield tag

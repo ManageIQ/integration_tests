@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -7,7 +9,6 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.services import requests
 from utils import testgen
-from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
 from utils.conf import cfme_data
@@ -77,9 +78,9 @@ def setup_iso_datastore(setup_provider, iso_cust_template, provisioning, iso_dat
 
 @pytest.yield_fixture(scope="function")
 def dialog():
-    dialog = "dialog_" + generate_random_string()
+    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = dict(
-        ele_label="ele_" + generate_random_string(),
+        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
         ele_name="service_name",
         ele_desc="ele_desc",
         choose_type="Text Box",
@@ -87,15 +88,15 @@ def dialog():
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                      submit=True, cancel=True,
-                     tab_label="tab_" + generate_random_string(), tab_desc="tab_desc",
-                     box_label="box_" + generate_random_string(), box_desc="box_desc")
+                     tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="tab_desc",
+                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="box_desc")
     service_dialog.create(element_data)
     yield dialog
 
 
 @pytest.yield_fixture(scope="function")
 def catalog():
-    catalog = "cat_" + generate_random_string()
+    catalog = "cat_" + fauxfactory.gen_alphanumeric()
     cat = Catalog(name=catalog,
                   description="my catalog")
     cat.create()
@@ -121,7 +122,7 @@ def catalog_item(setup_provider, provider_crud, provider_type, provisioning, vm_
         'vlan': vlan
     }
 
-    item_name = generate_random_string()
+    item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="RHEV", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=iso_template,

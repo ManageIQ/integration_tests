@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -10,11 +12,9 @@ from cfme.web_ui import flash
 from datetime import datetime
 from utils import testgen
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version
-import utils.randomness as rand
 
 pytestmark = [
     pytest.mark.usefixtures("vm_name"),
@@ -50,19 +50,19 @@ def provider_init(provider_key):
 
 @pytest.fixture(scope="function")
 def dialog():
-    dialog = "dialog_" + generate_random_string()
+    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = dict(
-        ele_label="ele_" + rand.generate_random_string(),
-        ele_name=rand.generate_random_string(),
+        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
+        ele_name=fauxfactory.gen_alphanumeric(),
         ele_desc="my ele desc",
         choose_type="Text Box",
         default_text_box="default value"
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                                    submit=True, cancel=True,
-                                   tab_label="tab_" + rand.generate_random_string(),
+                                   tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                                    tab_desc="my tab desc",
-                                   box_label="box_" + rand.generate_random_string(),
+                                   box_label="box_" + fauxfactory.gen_alphanumeric(),
                                    box_desc="my box desc")
     service_dialog.create(element_data)
     flash.assert_success_message('Dialog "%s" was added' % dialog)
@@ -71,7 +71,7 @@ def dialog():
 
 @pytest.fixture(scope="function")
 def catalog():
-    catalog = "cat_" + generate_random_string()
+    catalog = "cat_" + fauxfactory.gen_alphanumeric()
     cat = Catalog(name=catalog,
                   description="my catalog")
     cat.create()
@@ -100,7 +100,7 @@ def catalog_item(provider_crud, provider_type,
         })
     elif provider_type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
-    item_name = generate_random_string()
+    item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                                description="my catalog", display_in=True,
                                catalog=catalog.name, dialog=dialog.label,

@@ -1,4 +1,5 @@
-from utils.randomness import generate_random_string
+# -*- coding: utf-8 -*-
+import fauxfactory
 from cfme.automate.explorer import Namespace, Class, Instance, Domain
 from utils import version
 
@@ -10,8 +11,8 @@ def a_domain():
 
 @a_domain.method('5.3')
 def a_domain_53():
-    return Domain(name=generate_random_string(8),
-                  description=generate_random_string(32),
+    return Domain(name=fauxfactory.gen_alphanumeric(8),
+                  description=fauxfactory.gen_alphanumeric(32),
                   enabled=True)
 
 
@@ -27,18 +28,18 @@ def make_domain(request=None):
 def a_namespace(domain=None, request=None):
     if not domain:
         domain = make_domain(request=request)
-    return Namespace(name=generate_random_string(8),
-                     description=generate_random_string(32),
+    return Namespace(name=fauxfactory.gen_alphanumeric(8),
+                     description=fauxfactory.gen_alphanumeric(32),
                      parent=domain)
 
 
 def a_namespace_with_path(domain=None, request=None):
-    name = generate_random_string(8)
+    name = fauxfactory.gen_alphanumeric(8)
     if not domain:
         domain = make_domain(request=request)
 
     n = Namespace.make_path('Factory', 'StateMachines', name, domain=domain)
-    n.description = generate_random_string(32)
+    n.description = fauxfactory.gen_alphanumeric(32)
     return n
 
 
@@ -53,8 +54,8 @@ def make_namespace(request=None):
 def a_class(ns=None, request=None):
     if not ns:
         ns = make_namespace(request=request)
-    return Class(name=generate_random_string(8),
-                 description=generate_random_string(32),
+    return Class(name=fauxfactory.gen_alphanumeric(8),
+                 description=fauxfactory.gen_alphanumeric(32),
                  namespace=ns)
 
 
@@ -69,6 +70,6 @@ def make_class(ns=None, request=None):
 def an_instance(cls=None, request=None):
     if not cls:
         cls = make_class(request=request)
-    return Instance(name=generate_random_string(8),
-                    description=generate_random_string(32),
+    return Instance(name=fauxfactory.gen_alphanumeric(8),
+                    description=fauxfactory.gen_alphanumeric(32),
                     cls=cls)

@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 from utils.log import logger
 from utils import testgen
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 from cfme.infrastructure import virtual_machines as vms
 from utils.wait import wait_for
 import datetime
@@ -45,7 +46,7 @@ def provider_init(provider_key):
 
 @pytest.fixture(scope="function")
 def vm(request, provider_init, provider_crud, provisioning):
-    vm_name = 'test_retire_prov_%s' % generate_random_string()
+    vm_name = 'test_retire_prov_%s' % fauxfactory.gen_alphanumeric()
     myvm = vms.Vm(name=vm_name, provider_crud=provider_crud, template_name=provisioning['template'])
     request.addfinalizer(myvm.delete_from_provider)
     myvm.create_on_provider(find_in_cfme=True)

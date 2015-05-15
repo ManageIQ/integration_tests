@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
-from utils.randomness import generate_random_string
 
 pytestmark = [
     pytest.mark.nondestructive,
@@ -17,9 +17,9 @@ def test_ssh_client_run_command(ssh_client):
 
 def test_ssh_client_copies(ssh_client):
     ssh_client_kwargs = {
-        'username': generate_random_string(),
-        'password': generate_random_string(),
-        'hostname': generate_random_string(),
+        'username': fauxfactory.gen_alphanumeric(8),
+        'password': fauxfactory.gen_alphanumeric(8),
+        'hostname': fauxfactory.gen_alphanumeric(8),
     }
 
     # Make sure the ssh copy mechanism works
@@ -31,7 +31,7 @@ def test_ssh_client_copies(ssh_client):
     assert orig_kwargs['hostname'] != copy_kwargs['hostname']
 
     # And also make sure the ssh copy only updates new kwargs
-    ssh_client_copy = ssh_client(hostname=generate_random_string())
+    ssh_client_copy = ssh_client(hostname=fauxfactory.gen_alphanumeric(8))
     copy_kwargs = ssh_client_copy._connect_kwargs
     assert orig_kwargs['username'] == copy_kwargs['username']
     assert orig_kwargs['password'] == copy_kwargs['password']

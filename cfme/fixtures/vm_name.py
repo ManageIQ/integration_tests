@@ -1,12 +1,13 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
-from utils.randomness import generate_random_string
 from utils.log import logger
 
 
 @pytest.yield_fixture(scope='function')
 def vm_name(provider_key, provider_mgmt):
     # also tries to delete the VM that gets made with this name
-    vm_name = 'test_servicecatalog-%s' % generate_random_string()
+    vm_name = 'test_servicecatalog-%s' % fauxfactory.gen_alphanumeric()
     yield vm_name
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))

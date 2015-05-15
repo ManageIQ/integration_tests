@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -9,10 +11,8 @@ from cfme.services import requests
 from cfme.exceptions import CandidateNotFound
 from cfme.web_ui import flash
 from utils import error
-from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
-import utils.randomness as rand
 
 
 pytestmark = [
@@ -24,24 +24,24 @@ pytestmark = [
 
 @pytest.yield_fixture(scope="function")
 def dialog():
-    dialog = "dialog_" + generate_random_string()
+    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = dict(
-        ele_label="ele_" + rand.generate_random_string(),
-        ele_name=rand.generate_random_string(),
+        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
+        ele_name=fauxfactory.gen_alphanumeric(),
         ele_desc="my ele desc",
         choose_type="Text Box",
         default_text_box="default value"
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog", submit=True, cancel=True,
-                     tab_label="tab_" + rand.generate_random_string(), tab_desc="my tab desc",
-                     box_label="box_" + rand.generate_random_string(), box_desc="my box desc")
+                     tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="my tab desc",
+                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
     service_dialog.create(element_data)
     yield dialog
 
 
 @pytest.yield_fixture(scope="function")
 def catalog():
-    cat_name = "cat_" + generate_random_string()
+    cat_name = "cat_" + fauxfactory.gen_alphanumeric()
     catalog = Catalog(name=cat_name,
                   description="my catalog")
     catalog.create()
@@ -50,7 +50,7 @@ def catalog():
 
 @pytest.yield_fixture(scope="function")
 def catalog_item(dialog, catalog):
-    item_name = generate_random_string()
+    item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
                   dialog=dialog)
@@ -59,7 +59,7 @@ def catalog_item(dialog, catalog):
 
 
 def test_delete_catalog_deletes_service(dialog, catalog):
-    item_name = generate_random_string()
+    item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
                   dialog=dialog)
@@ -78,11 +78,11 @@ def test_delete_catalog_item_deletes_service(catalog_item):
 
 
 def test_service_circular_reference(catalog_item):
-    bundle_name = "first_" + generate_random_string()
+    bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     catalog_bundle.create([catalog_item.name])
-    sec_bundle_name = "sec_" + generate_random_string()
+    sec_bundle_name = "sec_" + fauxfactory.gen_alphanumeric()
     sec_catalog_bundle = CatalogBundle(name=sec_bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog,
                    dialog=catalog_item.dialog)
@@ -94,7 +94,7 @@ def test_service_circular_reference(catalog_item):
 
 
 def test_service_generic_catalog_bundle(catalog_item):
-    bundle_name = "generic_" + generate_random_string()
+    bundle_name = "generic_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     catalog_bundle.create([catalog_item.name])
@@ -110,15 +110,15 @@ def test_service_generic_catalog_bundle(catalog_item):
 
 
 def test_bundles_in_bundle(catalog_item):
-    bundle_name = "first_" + generate_random_string()
+    bundle_name = "first_" + fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     catalog_bundle.create([catalog_item.name])
-    sec_bundle_name = "sec_" + generate_random_string()
+    sec_bundle_name = "sec_" + fauxfactory.gen_alphanumeric()
     sec_catalog_bundle = CatalogBundle(name=sec_bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     sec_catalog_bundle.create([bundle_name])
-    third_bundle_name = "third_" + generate_random_string()
+    third_bundle_name = "third_" + fauxfactory.gen_alphanumeric()
     third_catalog_bundle = CatalogBundle(name=third_bundle_name, description="catalog_bundle",
                    display_in=True, catalog=catalog_item.catalog, dialog=catalog_item.dialog)
     third_catalog_bundle.create([bundle_name, sec_bundle_name])

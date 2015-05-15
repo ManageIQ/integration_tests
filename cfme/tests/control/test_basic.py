@@ -7,13 +7,12 @@ Can be also used as a unit-test for page model coverage.
 Todo:
     * Multiple expression types entering. (extend the update tests)
 """
-
+import fauxfactory
 import pytest
 
 import cfme.fixtures.pytest_selenium as sel
 
 from cfme.control import explorer
-from utils import randomness
 from utils.update import update
 from utils.version import since_date_or_version
 from cfme.web_ui import flash
@@ -50,7 +49,7 @@ VM_EXPRESSIONS_TO_TEST = [
 @pytest.yield_fixture(scope="module")
 def vm_condition_for_expressions():
     cond = explorer.VMCondition(
-        randomness.generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         expression="fill_field(VM and Instance : CPU Limit, =, 20)",
         scope="fill_count(VM and Instance.Files, >, 150)"
     )
@@ -62,7 +61,7 @@ def vm_condition_for_expressions():
 @pytest.yield_fixture
 def random_vm_condition():
     cond = explorer.VMCondition(
-        randomness.generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         expression="fill_field(VM and Instance : CPU Limit, =, 20)",
         scope="fill_count(VM and Instance.Files, >, 150)"
     )
@@ -78,7 +77,7 @@ def random_host_condition():
     else:
         expression = "fill_count(Host.Files, >, 150)"
     cond = explorer.HostCondition(
-        randomness.generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         expression=expression,
     )
     cond.create()
@@ -88,7 +87,7 @@ def random_host_condition():
 
 @pytest.yield_fixture
 def random_vm_control_policy():
-    policy = explorer.VMControlPolicy(randomness.generate_random_string())
+    policy = explorer.VMControlPolicy(fauxfactory.gen_alphanumeric())
     policy.create()
     yield policy
     policy.delete()
@@ -96,7 +95,7 @@ def random_vm_control_policy():
 
 @pytest.yield_fixture
 def random_host_control_policy():
-    policy = explorer.HostControlPolicy(randomness.generate_random_string())
+    policy = explorer.HostControlPolicy(fauxfactory.gen_alphanumeric())
     policy.create()
     yield policy
     policy.delete()
@@ -104,7 +103,7 @@ def random_host_control_policy():
 
 def test_vm_condition_crud(soft_assert):
     condition = explorer.VMCondition(
-        randomness.generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         expression="fill_field(VM and Instance : CPU Limit, =, 20)",
         scope="fill_count(VM and Instance.Files, >, 150)"
     )
@@ -131,7 +130,7 @@ def test_host_condition_crud(soft_assert):
     else:
         expression = "fill_count(Host.Files, >, 150)"
     condition = explorer.HostCondition(
-        randomness.generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         expression=expression
     )
     # CR
@@ -153,7 +152,7 @@ def test_host_condition_crud(soft_assert):
 
 def test_action_crud(request, soft_assert):
     action = explorer.Action(
-        randomness.generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Department", "Accounting")}
     )
@@ -178,7 +177,7 @@ def test_action_crud(request, soft_assert):
 
 
 def test_vm_control_policy_crud(request, soft_assert):
-    policy = explorer.VMControlPolicy(randomness.generate_random_string())
+    policy = explorer.VMControlPolicy(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
     soft_assert(policy.exists, "The policy {} does not exist!".format(
@@ -197,7 +196,7 @@ def test_vm_control_policy_crud(request, soft_assert):
 
 
 def test_vm_compliance_policy_crud(request, soft_assert):
-    policy = explorer.VMCompliancePolicy(randomness.generate_random_string())
+    policy = explorer.VMCompliancePolicy(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
     soft_assert(policy.exists, "The policy {} does not exist!".format(
@@ -216,7 +215,7 @@ def test_vm_compliance_policy_crud(request, soft_assert):
 
 
 def test_host_control_policy_crud(request, soft_assert):
-    policy = explorer.HostControlPolicy(randomness.generate_random_string())
+    policy = explorer.HostControlPolicy(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
     soft_assert(policy.exists, "The policy {} does not exist!".format(
@@ -235,7 +234,7 @@ def test_host_control_policy_crud(request, soft_assert):
 
 
 def test_host_compliance_policy_crud(request, soft_assert):
-    policy = explorer.HostCompliancePolicy(randomness.generate_random_string())
+    policy = explorer.HostCompliancePolicy(fauxfactory.gen_alphanumeric())
     # CR
     policy.create()
     soft_assert(policy.exists, "The policy {} does not exist!".format(
@@ -281,7 +280,7 @@ def test_assign_host_condition_to_host_policy(
 
 def test_policy_profile_crud(random_vm_control_policy, random_host_control_policy, soft_assert):
     profile = explorer.PolicyProfile(
-        randomness.generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         policies=[random_vm_control_policy, random_host_control_policy]
     )
     profile.create()
@@ -309,7 +308,7 @@ def test_modify_vm_condition_expression(
 
 def test_alert_crud(soft_assert):
     alert = explorer.Alert(
-        randomness.generate_random_string(), timeline_event=True, driving_event="Hourly Timer"
+        fauxfactory.gen_alphanumeric(), timeline_event=True, driving_event="Hourly Timer"
     )
     # CR
     alert.create()

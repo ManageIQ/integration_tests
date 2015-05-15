@@ -3,6 +3,7 @@
 
 Used to communicate with providers without using CFME facilities
 """
+import fauxfactory
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import DisconnectedError
 from ovirtsdk.xml import params
@@ -13,7 +14,6 @@ from utils.mgmt_system.base import MgmtSystemAPIBase, VMInfo
 from utils.mgmt_system.exceptions import (
     VMInstanceNotFound, VMInstanceNotSuspended
 )
-from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
 
@@ -392,7 +392,8 @@ class RHEVMSystem(MgmtSystemAPIBase):
             delete: Whether to delete the VM (default: True)
             temporary_name: If you want, you can specific an exact temporary name for renaming.
         """
-        temp_template_name = temporary_name or "templatize_{}".format(generate_random_string())
+        temp_template_name = temporary_name or "templatize_{}".format(
+            fauxfactory.gen_alphanumeric(8))
         try:
             with self.steady_wait(30):
                 create_new_template = True

@@ -8,18 +8,6 @@ pytestmark = [
 ]
 
 
-def test_generate_random_string_noargs():
-    random_string = randomness.generate_random_string()
-    # 8 is the default length
-    assert len(random_string) == 8
-
-
-def test_generate_random_string_args():
-    length = 16
-    random_string = randomness.generate_random_string(length)
-    assert len(random_string) == length
-
-
 def test_randomness_fixtures(random_uuid_as_string, random_string):
     """Make sure the fixtures work as intended"""
     assert len(random_uuid_as_string) == 36

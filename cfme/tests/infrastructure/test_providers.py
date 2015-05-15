@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import uuid
 
 import pytest
@@ -8,7 +9,6 @@ import utils.error as error
 from cfme.infrastructure import provider
 from utils import testgen
 from utils import providers
-from utils.randomness import generate_random_string
 from utils.update import update
 
 
@@ -49,7 +49,7 @@ def test_name_required_validation():
     """Tests to validate the name while adding a provider"""
     prov = provider.VMwareProvider(
         name=None,
-        hostname=generate_random_string(size=5),
+        hostname=fauxfactory.gen_alphanumeric(5),
         ip_address='10.10.10.10')
 
     with error.expected("Name can't be blank"):
@@ -59,7 +59,7 @@ def test_name_required_validation():
 def test_host_name_required_validation():
     """Test to validate the hostname while adding a provider"""
     prov = provider.VMwareProvider(
-        name=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
         hostname=None,
         ip_address='10.10.10.11')
 
@@ -71,8 +71,8 @@ def test_host_name_required_validation():
 def test_ip_required_validation():
     """Test to validate the ip address while adding a provider"""
     prov = provider.VMwareProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=None)
 
     with error.expected("IP Address can't be blank"):
@@ -84,8 +84,8 @@ def test_ip_required_validation():
 def test_name_max_character_validation():
     """Test to validate max character for name field"""
     prov = provider.VMwareProvider(
-        name=generate_random_string(size=256),
-        hostname=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(256),
+        hostname=fauxfactory.gen_alphanumeric(5),
         ip_address='10.10.10.12')
     prov.create()
     prov.delete(cancel=False)
@@ -94,8 +94,8 @@ def test_name_max_character_validation():
 def test_host_name_max_character_validation():
     """Test to validate max character for host name field"""
     prov = provider.VMwareProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=256),
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(256),
         ip_address='10.10.10.13')
     prov.create()
     prov.delete(cancel=False)
@@ -104,8 +104,8 @@ def test_host_name_max_character_validation():
 def test_ip_max_character_validation():
     """Test to validate max character for ip address field"""
     prov = provider.VMwareProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(5),
         ip_address='10.10.10.14')
     prov.create()
     prov.delete(cancel=False)
@@ -114,10 +114,10 @@ def test_ip_max_character_validation():
 def test_api_port_max_character_validation():
     """Test to validate max character for api port field"""
     prov = provider.RHEVMProvider(
-        name=generate_random_string(size=5),
-        hostname=generate_random_string(size=5),
+        name=fauxfactory.gen_alphanumeric(5),
+        hostname=fauxfactory.gen_alphanumeric(5),
         ip_address='10.10.10.15',
-        api_port=generate_random_string(size=15))
+        api_port=fauxfactory.gen_alphanumeric(15))
     prov.create()
     prov.delete(cancel=False)
 

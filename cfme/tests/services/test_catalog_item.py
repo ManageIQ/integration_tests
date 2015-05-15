@@ -1,13 +1,13 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 from cfme.web_ui import flash
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
-from utils.randomness import generate_random_string
 from utils import error
 from utils.update import update
 import cfme.tests.configure.test_access_control as tac
-import utils.randomness as rand
 
 pytestmark = [pytest.mark.usefixtures("logged_in"),
               pytest.mark.ignore_stream("5.2")]
@@ -15,11 +15,11 @@ pytestmark = [pytest.mark.usefixtures("logged_in"),
 
 @pytest.yield_fixture(scope="function")
 def dialog():
-    dialog = "dialog_" + generate_random_string()
+    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
 
     element_data = dict(
-        ele_label="ele_" + rand.generate_random_string(),
-        ele_name=rand.generate_random_string(),
+        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
+        ele_name=fauxfactory.gen_alphanumeric(),
         ele_desc="my ele desc",
         choose_type="Text Box",
         default_text_box="default value"
@@ -27,9 +27,9 @@ def dialog():
 
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                                    submit=True, cancel=True,
-                                   tab_label="tab_" + rand.generate_random_string(),
+                                   tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                                    tab_desc="my tab desc",
-                                   box_label="box_" + rand.generate_random_string(),
+                                   box_label="box_" + fauxfactory.gen_alphanumeric(),
                                    box_desc="my box desc")
     service_dialog.create(element_data)
     flash.assert_success_message('Dialog "%s" was added' % dialog)
@@ -38,7 +38,7 @@ def dialog():
 
 @pytest.yield_fixture(scope="function")
 def catalog():
-    catalog = "cat_" + generate_random_string()
+    catalog = "cat_" + fauxfactory.gen_alphanumeric()
     cat = Catalog(name=catalog,
                   description="my catalog")
     cat.create()
@@ -48,7 +48,7 @@ def catalog():
 @pytest.yield_fixture(scope="function")
 def catalog_item(dialog, catalog):
     catalog_item = CatalogItem(item_type="Generic",
-                               name=generate_random_string(),
+                               name=fauxfactory.gen_alphanumeric(),
                                description="my catalog", display_in=True,
                                catalog=catalog, dialog=dialog)
     yield catalog_item

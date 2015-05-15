@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.configure.configuration import server_roles_disabled
 
 from utils import error, mgmt_system, testgen
 from utils.providers import setup_a_provider as _setup_a_provider, provider_factory
-from utils.randomness import generate_random_string
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
@@ -43,7 +43,7 @@ def provision_data(
         },
         "vm_fields": {
             "number_of_cpus": 1,
-            "vm_name": "test_rest_prov_{}".format(generate_random_string()),
+            "vm_name": "test_rest_prov_{}".format(fauxfactory.gen_alphanumeric()),
             "vm_memory": "2048",
             "vlan": provider_data["provisioning"]["vlan"],
         },
@@ -95,8 +95,8 @@ def test_provision(request, provision_data, provider_mgmt, rest_api):
 
 def test_add_delete_service_catalog(rest_api):
     scl = rest_api.collections.service_catalogs.action.add(
-        name=generate_random_string(),
-        description=generate_random_string(),
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
         service_templates=[]
     )[0]
     scl.action.delete()
@@ -107,8 +107,8 @@ def test_add_delete_service_catalog(rest_api):
 def test_add_delete_multiple_service_catalogs(rest_api):
     def _gen_ctl():
         return {
-            "name": generate_random_string(),
-            "description": generate_random_string(),
+            "name": fauxfactory.gen_alphanumeric(),
+            "description": fauxfactory.gen_alphanumeric(),
             "service_templates": []
         }
     scls = rest_api.collections.service_catalogs.action.add(
@@ -133,7 +133,7 @@ def test_provider_refresh(request, setup_a_provider, rest_api):
     with server_roles_disabled("ems_inventory", "ems_operations"):
         vm_name = deploy_template(
             setup_a_provider.key,
-            "test_rest_prov_refresh_{}".format(generate_random_string(size=4)))
+            "test_rest_prov_refresh_{}".format(fauxfactory.gen_alphanumeric(length=4)))
         request.addfinalizer(lambda: provider_mgmt.delete_vm(vm_name))
     provider.reload()
     old_refresh_dt = provider.last_refresh_date
@@ -156,7 +156,7 @@ def test_provider_edit(request, setup_a_provider, rest_api):
     if "edit" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
     provider = rest_api.collections.providers[0]
-    new_name = generate_random_string()
+    new_name = fauxfactory.gen_alphanumeric()
     old_name = provider.name
     request.addfinalizer(lambda: provider.action.edit(name=old_name))
     provider.action.edit(name=new_name)
@@ -171,8 +171,8 @@ def test_provider_crud(request, rest_api, from_detail):
     if "create" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
     provider = rest_api.collections.providers.action.create(
-        hostname=generate_random_string(),
-        name=generate_random_string(),
+        hostname=fauxfactory.gen_alphanumeric(),
+        name=fauxfactory.gen_alphanumeric(),
         type="EmsVmware",
     )[0]
     if from_detail:
@@ -191,7 +191,7 @@ def vm(request, setup_a_provider, rest_api):
     provider = rest_api.collections.providers.find_by(name=setup_a_provider.name)[0]
     vm_name = deploy_template(
         setup_a_provider.key,
-        "test_rest_vm_{}".format(generate_random_string(size=4)))
+        "test_rest_vm_{}".format(fauxfactory.gen_alphanumeric(length=4)))
     request.addfinalizer(lambda: provider_mgmt.delete_vm(vm_name))
     provider.action.refresh()
     wait_for(
@@ -227,9 +227,9 @@ def test_vm_add_lifecycle_event(request, setup_a_provider, rest_api, vm, from_de
         pytest.skip("add_lifecycle_event action is not implemented in this version")
     rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
     event = dict(
-        status=generate_random_string(),
-        message=generate_random_string(),
-        event=generate_random_string(),
+        status=fauxfactory.gen_alphanumeric(),
+        message=fauxfactory.gen_alphanumeric(),
+        event=fauxfactory.gen_alphanumeric(),
     )
     if from_detail:
         assert rest_vm.action.add_lifecycle_event(**event)["success"], "Could not add event"

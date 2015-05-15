@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 import random
 
@@ -14,7 +16,6 @@ from utils.conf import credentials
 from utils.log import logger
 from utils.ssh import SSHClient
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.long_running]
@@ -137,7 +138,7 @@ def provider_init(provider_key):
 
 @pytest.fixture(scope="module")
 def vm_name():
-    return "test_repl_pwrctl_" + generate_random_string()
+    return "test_repl_pwrctl_" + fauxfactory.gen_alphanumeric()
 
 
 @pytest.fixture(scope="class")

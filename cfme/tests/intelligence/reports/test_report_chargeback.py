@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 import cfme.web_ui.flash as flash
 
 from cfme.intelligence.reports.reports import CustomReport
 from utils.providers import setup_a_provider
-from utils.randomness import generate_random_string
 from utils.log import logger
 
 
@@ -33,8 +33,8 @@ def test_charge_report_filter_owner(setup_first_provider, request):
     """
 
     report = CustomReport(
-        menu_name=generate_random_string(),
-        title=generate_random_string(),
+        menu_name=fauxfactory.gen_alphanumeric(),
+        title=fauxfactory.gen_alphanumeric(),
         base_report_on="Chargebacks",
         report_fields=[
             "Network I/O Used",
@@ -66,8 +66,8 @@ def test_charge_report_filter_tag(setup_first_provider, request):
     """
 
     report = CustomReport(
-        menu_name=generate_random_string(),
-        title=generate_random_string(),
+        menu_name=fauxfactory.gen_alphanumeric(),
+        title=fauxfactory.gen_alphanumeric(),
         base_report_on="Chargebacks",
         report_fields=[
             "CPU Used",

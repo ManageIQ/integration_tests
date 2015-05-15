@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.infrastructure.virtual_machines import Vm, details_page
@@ -7,7 +9,6 @@ from cfme.exceptions import ToolbarOptionGreyed
 from utils import testgen
 from utils.log import logger
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.ignore_stream("upstream")]
@@ -43,7 +44,7 @@ def provider_init(provider_key):
 
 @pytest.fixture(scope="module")
 def vm_name():
-    return "test_tt_" + generate_random_string(size=4)
+    return "test_tt_" + fauxfactory.gen_alphanumeric(length=4)
 
 
 @pytest.fixture(scope="module")

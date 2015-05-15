@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 import re
 from datetime import datetime, timedelta
@@ -10,7 +11,6 @@ from cfme.web_ui import fill, flash
 from utils import testgen, version
 from utils.log import logger
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
 
@@ -62,10 +62,12 @@ def prov_data(provisioning, provider_type):
         pytest.skip("SCVMM does not support provisioning yet!")  # TODO: After fixing - remove
 
     return {
-        "first_name": generate_random_string(),
-        "last_name": generate_random_string(),
-        "email": "{}@{}.test".format(generate_random_string(), generate_random_string()),
-        "manager_name": "{} {}".format(generate_random_string(), generate_random_string()),
+        "first_name": fauxfactory.gen_alphanumeric(),
+        "last_name": fauxfactory.gen_alphanumeric(),
+        "email": "{}@{}.test".format(
+            fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric()),
+        "manager_name": "{} {}".format(
+            fauxfactory.gen_alphanumeric(), fauxfactory.gen_alphanumeric()),
         "vlan": provisioning.get("vlan", None),
         # "datastore_create": False,
         "datastore_name": {"name": provisioning["datastore"]},
@@ -129,7 +131,7 @@ def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
+    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["num_sockets"] = "4"
     prov_data["cores_per_socket"] = "1"
     prov_data["memory"] = "4096"
@@ -157,7 +159,7 @@ def test_disk_format_select(provisioner, prov_data, template_name, disk_format, 
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
+    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["disk_format"] = disk_format
 
     vm = provisioner(template_name, prov_data)
@@ -180,7 +182,7 @@ def test_power_on_or_off_after_provision(
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
+    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["power_on"] = started
 
     provisioner(template_name, prov_data)
@@ -199,7 +201,7 @@ def test_tag(provisioner, prov_data, template_name, provider_type):
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
+    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["apply_tags"] = [
         ([version.pick({version.LOWEST: "Service Level", "5.3": "Service Level *"}), "Gold"], True)]
 
@@ -216,7 +218,7 @@ def test_provisioning_schedule(provisioner, prov_data, template_name):
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(generate_random_string())
+    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
     prov_data["schedule_type"] = "schedule"
     now = datetime.utcnow()
     prov_data["provision_date"] = now.strftime("%m/%d/%Y")

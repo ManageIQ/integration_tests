@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """This testing module tests the behaviour of the search box in the Hosts section"""
+import fauxfactory
 import pytest
 from itertools import dropwhile
 
@@ -9,7 +10,6 @@ from utils.providers import setup_a_provider
 from cfme.web_ui import search
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
-from utils.randomness import generate_random_string
 from utils.version import since_date_or_version
 
 
@@ -117,7 +117,7 @@ def test_filter_with_user_input_and_cancellation(hosts, hosts_with_vm_count, hos
 def test_filter_save_cancel(hosts, hosts_with_vm_count, host_with_median_vm):
     sel.force_navigate("infrastructure_hosts")
     median_host, median_vm_count = host_with_median_vm
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     # Try save filter
     search.save_filter(get_expression(True), filter_name, cancel=True)
     assert_no_cfme_exception()
@@ -132,7 +132,7 @@ def test_filter_save_and_load(request, hosts, hosts_with_vm_count, host_with_med
     # We will filter out hosts with less than median VMs
     more_than_median_hosts = list(dropwhile(lambda h: h[1] <= median_vm_count, hosts_with_vm_count))
 
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     # Try save filter
     search.save_filter(get_expression(True), filter_name)
     assert_no_cfme_exception()
@@ -149,7 +149,7 @@ def test_filter_save_and_cancel_load(request, hosts, hosts_with_vm_count, host_w
     sel.force_navigate("infrastructure_hosts")
     median_host, median_vm_count = host_with_median_vm
 
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     # Try save filter
     search.save_filter(get_expression(True), filter_name)
 
@@ -171,7 +171,7 @@ def test_filter_save_and_load_cancel(request, hosts, hosts_with_vm_count, host_w
     sel.force_navigate("infrastructure_hosts")
     median_host, median_vm_count = host_with_median_vm
 
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     # Try save filter
     search.save_filter(get_expression(True), filter_name)
 
@@ -226,7 +226,7 @@ def test_quick_search_with_filter(request, hosts, hosts_with_vm_count, host_with
 
 def test_can_delete_filter():
     sel.force_navigate("infrastructure_hosts")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter(get_expression(False) % 0, filter_name)
     assert_no_cfme_exception()
     search.reset_filter()
@@ -242,7 +242,7 @@ def test_can_delete_filter():
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     sel.force_navigate("infrastructure_hosts")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter(get_expression(False) % 0, filter_name)
 
     def cleanup():
@@ -259,7 +259,7 @@ def test_delete_button_should_appear_after_save(request):
 def test_cannot_delete_more_than_once(request):
     """When Delete button appars, it does not want to go away"""
     sel.force_navigate("infrastructure_hosts")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter(get_expression(False) % 0, filter_name)
 
     search.load_filter(filter_name)  # circumvent the thing happening in previous test

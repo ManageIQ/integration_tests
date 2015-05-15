@@ -2,8 +2,6 @@
 import fauxfactory
 import pytest
 
-from utils import randomness
-
 
 @pytest.fixture  # IGNORE:E1101
 def random_uuid_as_string():
@@ -14,4 +12,4 @@ def random_uuid_as_string():
 @pytest.fixture
 def random_string():
     """Generate a random string for use in tests"""
-    return randomness.generate_random_string()
+    return fauxfactory.gen_alphanumeric(8)

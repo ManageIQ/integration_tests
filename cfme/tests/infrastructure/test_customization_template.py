@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.infrastructure import pxe
 from utils import error
 from utils.blockers import BZ
-from utils.randomness import generate_random_string
 from utils.update import update
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
@@ -12,8 +13,8 @@ pytestmark = [pytest.mark.usefixtures("logged_in")]
 def test_customization_template_crud():
     """Basic CRUD test for customization templates."""
     template_crud = pxe.CustomizationTemplate(
-        name=generate_random_string(size=8),
-        description=generate_random_string(size=16),
+        name=fauxfactory.gen_alphanumeric(8),
+        description=fauxfactory.gen_alphanumeric(16),
         image_type='RHEL-6',
         script_type='Kickstart',
         script_data='Testing the script')
@@ -28,7 +29,7 @@ def test_name_required_error_validation():
     """Test to validate name in customization templates."""
     template_name = pxe.CustomizationTemplate(
         name=None,
-        description=generate_random_string(size=16),
+        description=fauxfactory.gen_alphanumeric(16),
         image_type='RHEL-6',
         script_type='Kickstart',
         script_data='Testing the script')
@@ -40,8 +41,8 @@ def test_name_required_error_validation():
 def test_type_required_error_validation():
     """Test to validate type in customization templates."""
     template_name = pxe.CustomizationTemplate(
-        name=generate_random_string(size=8),
-        description=generate_random_string(size=16),
+        name=fauxfactory.gen_alphanumeric(8),
+        description=fauxfactory.gen_alphanumeric(16),
         image_type='RHEL-6',
         script_type='<Choose>',
         script_data='Testing the script')
@@ -53,8 +54,8 @@ def test_type_required_error_validation():
 def test_pxe_image_type_required_error_validation():
     """Test to validate pxe image type in customization templates."""
     template_name = pxe.CustomizationTemplate(
-        name=generate_random_string(size=8),
-        description=generate_random_string(size=16),
+        name=fauxfactory.gen_alphanumeric(8),
+        description=fauxfactory.gen_alphanumeric(16),
         image_type='<Choose>',
         script_type='Kickstart',
         script_data='Testing the script')
@@ -71,8 +72,8 @@ def test_pxe_image_type_required_error_validation():
 def test_duplicate_name_error_validation():
     """Test to validate duplication in customization templates."""
     template_name = pxe.CustomizationTemplate(
-        name=generate_random_string(size=8),
-        description=generate_random_string(size=16),
+        name=fauxfactory.gen_alphanumeric(8),
+        description=fauxfactory.gen_alphanumeric(16),
         image_type='RHEL-6',
         script_type='Kickstart',
         script_data='Testing the script')
@@ -88,8 +89,8 @@ def test_duplicate_name_error_validation():
 def test_name_max_character_validation():
     """Test to validate name with maximum characters in customization templates."""
     template_name = pxe.CustomizationTemplate(
-        name=generate_random_string(size=256),
-        description=generate_random_string(size=16),
+        name=fauxfactory.gen_alphanumeric(256),
+        description=fauxfactory.gen_alphanumeric(16),
         image_type='RHEL-6',
         script_type='Kickstart',
         script_data='Testing the script')

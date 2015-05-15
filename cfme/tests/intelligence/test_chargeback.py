@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 import cfme.intelligence.chargeback as cb
-import utils.randomness as random
 import cfme.web_ui.flash as flash
 from utils.update import update
 import utils.error as error
@@ -9,7 +10,7 @@ pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
 def new_compute_rate():
-    return cb.ComputeRate(description='cb' + random.generate_random_string(),
+    return cb.ComputeRate(description='cb' + fauxfactory.gen_alphanumeric(),
                           cpu_alloc=(1000, cb.DAILY),
                           disk_io=(10, cb.DAILY),
                           compute_fixed_1=(100, cb.MONTHLY),
@@ -20,7 +21,7 @@ def new_compute_rate():
 
 
 def new_storage_rate():
-    return cb.StorageRate(description='cb' + random.generate_random_string(),
+    return cb.StorageRate(description='cb' + fauxfactory.gen_alphanumeric(),
                           storage_fixed_2=(4000, cb.MONTHLY),
                           storage_alloc=(2000, cb.DAILY),
                           storage_used=(6000, cb.DAILY))

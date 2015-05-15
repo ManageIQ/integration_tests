@@ -2,6 +2,7 @@
 import re
 
 import diaper
+import fauxfactory
 import pytest
 
 from cfme.configure.configuration import VMAnalysisProfile
@@ -14,7 +15,6 @@ from fixtures.pytest_store import store
 from utils import testgen, version
 from utils.appliance import Appliance, provision_appliance
 from utils.log import logger
-from utils.randomness import generate_random_string
 from utils.update import update
 from utils.wait import wait_for
 
@@ -73,7 +73,7 @@ def compliance_vm(request, provider_key, provider_crud):
 
 @pytest.yield_fixture(scope="module")
 def analysis_profile(compliance_vm):
-    rand = generate_random_string()
+    rand = fauxfactory.gen_alphanumeric()
     ap = VMAnalysisProfile(
         name="ap-{}".format(rand), description="ap-desc-{}".format(rand), files=[],
         categories=["check_software"])
@@ -103,12 +103,12 @@ def fleecing_vm(
         dict(analysis_profile=analysis_profile.name))
     action.create()
     request.addfinalizer(action.delete)
-    policy = VMControlPolicy("Analysis profile policy {}".format(generate_random_string()))
+    policy = VMControlPolicy("Analysis profile policy {}".format(fauxfactory.gen_alphanumeric()))
     policy.create()
     request.addfinalizer(policy.delete)
     policy.assign_actions_to_event("VM Analysis Start", action)
     analysis_pp = PolicyProfile(
-        "Analysis profile PP {}".format(generate_random_string()),
+        "Analysis profile PP {}".format(fauxfactory.gen_alphanumeric()),
         policies=[policy])
     analysis_pp.create()
     request.addfinalizer(analysis_pp.delete)
@@ -139,17 +139,17 @@ def test_check_package_presence(request, fleecing_vm, ssh_client, vm_analysis, a
     to be present on an appliance."""
     # TODO: If we step out from provisioning a full appliance for fleecing, this might need revisit
     condition = VMCondition(
-        "Compliance testing condition {}".format(generate_random_string(size=8)),
+        "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
         expression=("fill_find(field=VM and Instance.Guest Applications : Name, "
             "skey=STARTS WITH, value=cfme-appliance, check=Check Count, ckey= = , cvalue=1)")
     )
     request.addfinalizer(lambda: diaper(condition.delete))
-    policy = VMCompliancePolicy("Compliance {}".format(generate_random_string(size=8)))
+    policy = VMCompliancePolicy("Compliance {}".format(fauxfactory.gen_alphanumeric(8)))
     request.addfinalizer(lambda: diaper(policy.delete))
     policy.create()
     policy.assign_conditions(condition)
     profile = PolicyProfile(
-        "Compliance PP {}".format(generate_random_string(size=8)),
+        "Compliance PP {}".format(fauxfactory.gen_alphanumeric(8)),
         policies=[policy]
     )
     request.addfinalizer(lambda: diaper(profile.delete))
@@ -169,7 +169,7 @@ def test_check_package_presence(request, fleecing_vm, ssh_client, vm_analysis, a
 # File presence fleecing
 @pytest.fixture(scope="function")
 def check_file_name():
-    return "/root/{}".format(generate_random_string())
+    return "/root/{}".format(fauxfactory.gen_alphanumeric())
 
 
 def test_check_files(request, fleecing_vm, ssh_client, check_file_name, analysis_profile):
@@ -177,19 +177,19 @@ def test_check_files(request, fleecing_vm, ssh_client, check_file_name, analysis
     enforced by not having the file, then the compliance is checked against existing file and
     it is expected to be compliant.
     """
-    contents = generate_random_string(size=12)
+    contents = fauxfactory.gen_alphanumeric(12)
     condition = VMCondition(
-        "Compliance testing condition {}".format(generate_random_string(size=8)),
+        "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
         expression=("fill_find(VM and Instance.Files : Name, "
             "=, {}, Check Any, Contents, INCLUDES, {})".format(check_file_name, contents))
     )
     request.addfinalizer(lambda: diaper(condition.delete))
-    policy = VMCompliancePolicy("Compliance {}".format(generate_random_string(size=8)))
+    policy = VMCompliancePolicy("Compliance {}".format(fauxfactory.gen_alphanumeric(8)))
     request.addfinalizer(lambda: diaper(policy.delete))
     policy.create()
     policy.assign_conditions(condition)
     profile = PolicyProfile(
-        "Compliance PP {}".format(generate_random_string(size=8)),
+        "Compliance PP {}".format(fauxfactory.gen_alphanumeric(8)),
         policies=[policy]
     )
     request.addfinalizer(lambda: diaper(profile.delete))

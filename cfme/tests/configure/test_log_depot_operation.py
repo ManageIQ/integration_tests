@@ -5,14 +5,13 @@
 Author: Milan Falešník <mfalesni@redhat.com>
 Since: 2013-02-20
 """
-
+import fauxfactory
 import pytest
 import re
 from utils.timeutil import parsetime
 from utils import conf
 from utils.ftp import FTPClient
 from utils.blockers import BZ
-from utils.randomness import generate_random_string
 from cfme.configure import configuration as configure
 
 
@@ -164,7 +163,7 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
     if depot_type not in ["nfs"]:
         credentials = configure.ServerLogDepot.Credentials(
             depot_type,
-            generate_random_string(),
+            fauxfactory.gen_alphanumeric(),
             depot_machine,
             username=depot_credentials["username"],
             password=depot_credentials["password"],
@@ -172,7 +171,7 @@ def depot_configured(request, depot_type, depot_machine, depot_credentials):
     else:
         credentials = configure.ServerLogDepot.Credentials(
             depot_type,
-            generate_random_string(),
+            fauxfactory.gen_alphanumeric(),
             depot_machine,
         )
     # Fails on upstream - BZ1108087

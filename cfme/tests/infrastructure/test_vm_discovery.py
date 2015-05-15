@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 import time
 from cfme.exceptions import CFMEException
 from cfme.infrastructure import virtual_machines
 from cfme.infrastructure.provider import SCVMMProvider
 from utils import testgen
-from utils.randomness import generate_random_string
 from utils.wait import TimedOutError
 
 
@@ -16,7 +17,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="class")
 def vm_name():
-    return "test_dscvry_" + generate_random_string()
+    return "test_dscvry_" + fauxfactory.gen_alphanumeric(8)
 
 
 def if_scvmm_refresh_provider(provider):

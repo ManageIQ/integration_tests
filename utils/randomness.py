@@ -9,20 +9,14 @@ def generate_random_local_ip():
         fauxfactory.gen_integer(0, 255))
 
 
-def generate_random_string(size=8):
-    size = int(size)
-
-    return fauxfactory.gen_string("alphanumeric", size)
-
-
 def generate_lowercase_random_string(size=8):
-    return generate_random_string(size).lower()
+    return fauxfactory.gen_alphanumeric(size).lower()
 
 
 class RandomizeValues(object):
     _randomizers = {
         'random_int': fauxfactory.gen_integer,
-        'random_str': generate_random_string,
+        'random_str': lambda: fauxfactory.gen_alphanumeric(8),
         'random_uuid': fauxfactory.gen_uuid,
     }
 

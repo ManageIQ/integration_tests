@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -7,11 +9,9 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
 from cfme.services import requests
 from utils import testgen
-from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.wait import wait_for
 from utils.conf import cfme_data
-import utils.randomness as rand
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -82,25 +82,25 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 
 @pytest.yield_fixture(scope="function")
 def dialog():
-    dialog = "dialog_" + generate_random_string()
+    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = dict(
-        ele_label="ele_" + rand.generate_random_string(),
-        ele_name=rand.generate_random_string(),
+        ele_label="ele_" + fauxfactory.gen_alphanumeric(),
+        ele_name=fauxfactory.gen_alphanumeric(),
         ele_desc="my ele desc",
         choose_type="Text Box",
         default_text_box="default value"
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog",
                      submit=True, cancel=True,
-                     tab_label="tab_" + generate_random_string(), tab_desc="tab_desc",
-                     box_label="box_" + generate_random_string(), box_desc="box_desc")
+                     tab_label="tab_" + fauxfactory.gen_alphanumeric(), tab_desc="tab_desc",
+                     box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="box_desc")
     service_dialog.create(element_data)
     yield dialog
 
 
 @pytest.yield_fixture(scope="function")
 def catalog():
-    catalog = "cat_" + generate_random_string()
+    catalog = "cat_" + fauxfactory.gen_alphanumeric()
     cat = Catalog(name=catalog,
                   description="my catalog")
     cat.create()
@@ -130,7 +130,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
         'vlan': pxe_vlan,
     }
 
-    item_name = generate_random_string()
+    item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=pxe_template,

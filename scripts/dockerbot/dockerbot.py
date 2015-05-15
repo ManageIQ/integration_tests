@@ -1,8 +1,8 @@
 #!/usr/bin/env python2
 from utils.conf import docker as docker_conf
-from utils.randomness import generate_random_string
 from utils.net import random_port, my_ip_address
 import argparse
+import fauxfactory
 import requests
 import os
 import os.path
@@ -65,7 +65,7 @@ class DockerInstance(object):
 class SeleniumDocker(DockerInstance):
     def __init__(self, bindings, image, dry_run=False):
         self.dry_run = dry_run
-        sel_name = generate_random_string(size=8)
+        sel_name = fauxfactory.gen_alphanumeric(8)
         if not self.dry_run:
             sel_create_info = dc.create_container(image, tty=True, name=sel_name)
             self.container_id = _dgci(sel_create_info, 'id')
@@ -307,7 +307,7 @@ class DockerBot(object):
             ec += 1
 
         self.check_arg('capture', False)
-        self.check_arg('test_id', generate_random_string(size=8))
+        self.check_arg('test_id', fauxfactory.gen_alphanumeric(8))
 
         self.check_arg('prtester', False)
         self.check_arg('trackerbot', None)

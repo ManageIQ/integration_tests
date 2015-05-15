@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 from cfme.cloud import instance
 from utils import testgen
 from utils.virtual_machines import deploy_template
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
@@ -17,7 +18,7 @@ def provider_init(provider_key):
 
 @pytest.fixture(scope="class")
 def instance_name():
-    return "test_dscvry_" + generate_random_string()
+    return "test_dscvry_" + fauxfactory.gen_alphanumeric()
 
 
 def _check_instance(test_instance):

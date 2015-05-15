@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.automate.service_dialogs import ServiceDialog, dialogs_table
 from cfme.web_ui import paginator
-from utils.randomness import generate_random_string
 
 
 @pytest.fixture(scope="module")
@@ -11,7 +11,7 @@ def some_dialogs(request):
     to_delete = []
     request.addfinalizer(lambda: map(lambda obj: obj.delete(), to_delete))
     for i in range(6):
-        random_str = generate_random_string(16)
+        random_str = fauxfactory.gen_alphanumeric(16)
         element_data = dict(ele_label='ele_label_{}'.format(random_str),
                             ele_name='ele_name_{}'.format(random_str),
                             choose_type='Check Box')

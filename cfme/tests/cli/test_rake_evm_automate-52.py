@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
-from utils.randomness import generate_random_string
 from utils.version import current_version
 
 pytestmark = [
@@ -12,7 +12,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def backup_file_name():
-    return "/tmp/ae_backup_{}.xml".format(generate_random_string(32))
+    return "/tmp/ae_backup_{}.xml".format(fauxfactory.gen_alphanumeric(32))
 
 
 @pytest.yield_fixture(scope="module")
