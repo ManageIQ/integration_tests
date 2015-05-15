@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from collections import Mapping
+from copy import copy
 from functools import partial
 
 from selenium.webdriver.common.by import By
@@ -49,6 +52,55 @@ rate_form = Form(
         ('save_button', form_buttons.save),
         ('reset_button', form_buttons.reset),
         ('cancel_button', form_buttons.cancel)])
+
+
+class AssignFormTable(Pretty):
+    pretty_attrs = ["entry_loc"]
+
+    def __init__(self, entry_loc="//div[@id='cb_assignment_div']/table[contains(@class, 'table')]"):
+        self.entry_loc = entry_loc
+
+    def locate(self):
+        return self.entry_loc
+
+    @property
+    def rows(self):
+        return sel.elements("./tbody/tr[@id='new_tr']", root=self)
+
+    def row_by_name(self, name):
+        for row in self.rows:
+            row_name = sel.text_sane(sel.element("./td[1]", root=row))
+            if row_name == name:
+                return row
+        else:
+            raise NameError("Did not find row named {}!".format(name))
+
+    def select_from_row(self, row):
+        return Select(sel.element("./td/select", root=row))
+
+    def select_by_name(self, name):
+        return self.select_from_row(self.row_by_name(name))
+
+
+@fill.method((AssignFormTable, Mapping))
+def _fill_assignform_dict(form, d):
+    d = copy(d)  # Mutable
+    for name, value in d.iteritems():
+        if value is None:
+            value = "<Nothing>"
+        select = form.select_by_name(name)
+        sel.select(select, value)
+
+
+storage_assign_form = Form(
+    fields=[
+        ("assign_to", Select("select#cbshow_typ")),
+        # Enterprise
+        ("enterprise", Select("select#enterprise__1")),  # Simple shotcut, might explode one time
+        # Tagged DS
+        ("tag_category", Select("select#cbtag_cat")),
+        # Common - selection table
+        ("selections", AssignFormTable())])
 
 
 nav.add_branch('chargeback',
