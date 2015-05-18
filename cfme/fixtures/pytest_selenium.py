@@ -1174,26 +1174,37 @@ def set_text(loc, text):
         return old_text
 
 
-class Select(SeleniumSelect, Pretty):
+class Select(SeleniumSelect):
     """ A proxy class for the real selenium Select() object.
 
     We differ in one important point, that we can instantiate the object
     without it being present on the page. The object is located at the beginning
-    of each function call.
+    of each function call. We also tweak its performance using JS calls.
 
     Args:
-        loc: A locator.
+        loc: A locator. If you don't pass an XPath or simplified CSS locator and you just pass
+            through string like ``provider_type``, it assumes it is the ``@name``.
+        multi: Can select multiple options.
 
     Returns: A :py:class:`cfme.web_ui.Select` object.
     """
+    pure_name_rx = re.compile(r"^[a-zA-Z0-9_-]+$")
 
-    pretty_attrs = ['_loc', 'is_multiple']
+    @classmethod
+    def _process_locator(cls, loc):
+        if isinstance(loc, Select):
+            return loc._loc
+        elif isinstance(loc, SeleniumSelect):
+            return cls._process_locator(loc._el)
+        else:
+            if cls.pure_name_rx.match(str(loc)) is not None:
+                return "//select[@name={}]".format(quoteattr(loc))
+            else:
+                # Any other kind of locator
+                return loc
 
     def __init__(self, loc, multi=False):
-        if isinstance(loc, Select):
-            self._loc = loc._loc
-        else:
-            self._loc = loc
+        self._loc = self._process_locator(loc)
         self.is_multiple = multi
 
     @property
