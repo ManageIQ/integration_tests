@@ -301,35 +301,53 @@ def is_vm_analysis_finished(vm_name):
     return vm_analysis_finished is not None
 
 
-def _scan_test(provider_crud, vm, os, fs_type, soft_assert):
+def _scan_test(provider_crud, vm, os, fs_type, soft_assert, rest, rest_api):
     """Test scanning a VM"""
     vm.load_details()
     verify_no_data(provider_crud, vm)
     last_analysis_time = vm.get_detail(properties=('Lifecycle', 'Last Analyzed'))
     # register_event(cfme_data['management_systems'][provider]['type'], 'vm', vm_template_name,
     #    ['vm_analysis_request', 'vm_analysis_start', 'vm_analysis_complete'])
-    logger.info('Initiating vm smart scan on ' + provider_crud.name + ":" + vm.name)
-    vm.smartstate_scan(cancel=False, from_details=True)
-    flash.assert_message_contain("Smart State Analysis initiated")
+    if rest == "using_ui":
+        logger.info('Initiating vm smart scan on ' + provider_crud.name + ":" + vm.name)
+        vm.smartstate_scan(cancel=False, from_details=True)
+        flash.assert_message_contain("Smart State Analysis initiated")
 
-    # wait for task to complete
-    pytest.sel.force_navigate('tasks_my_vm')
-    wait_for(is_vm_analysis_finished, [vm.name], delay=15, num_sec=600,
-             handle_exception=True, fail_func=lambda: toolbar.select('Reload'))
+        # wait for task to complete
+        pytest.sel.force_navigate('tasks_my_vm')
+        wait_for(is_vm_analysis_finished, [vm.name], delay=15, num_sec=600,
+                 handle_exception=True, fail_func=lambda: toolbar.select('Reload'))
 
-    # make sure fleecing was successful
-    if version.current_version() >= "5.4":
-        task_row = tasks.tasks_table.find_row_by_cells({
-            'task_name': "Scan from Vm %s" % vm.name,
-            'state': 'finished'
-        })
+        # make sure fleecing was successful
+        if version.current_version() >= "5.4":
+            task_row = tasks.tasks_table.find_row_by_cells({
+                'task_name': "Scan from Vm %s" % vm.name,
+                'state': 'finished'
+            })
+        else:
+            task_row = tasks.tasks_table.find_row_by_cells({
+                'task_name': "Scan from Vm %s" % vm.name,
+                'state': 'Finished'
+            })
+        icon_img = task_row.columns[1].find_element_by_tag_name("img")
+        assert "checkmark" in icon_img.get_attribute("src")
     else:
-        task_row = tasks.tasks_table.find_row_by_cells({
-            'task_name': "Scan from Vm %s" % vm.name,
-            'state': 'Finished'
-        })
-    icon_img = task_row.columns[1].find_element_by_tag_name("img")
-    assert "checkmark" in icon_img.get_attribute("src")
+        vm_obj = rest_api.collections.vms.find_by(name=vm_name)[0]
+        if rest == "rest_detail":
+            vm_scan_obj = vm_obj.action.scan()
+        elif rest == "rest_collection":
+            vm_scan_obj = rest_api.collections.vms.action.scan(vm_obj)[0]
+        else:
+            raise Exception("Unknown parametrization value {}".format(rest))
+
+        vm_scan_obj.reload()
+        task = vm_scan_obj.task
+        task.reload()
+        wait_for(
+            lambda: task.state.lower(),
+            fail_condition=lambda state: state != "finished", num_sec=600, fail_func=task.reload)
+        assert task.message.lower().strip() == "task completed successfully"
+        assert task.status.lower().strip() == "ok"
 
     # back to vm_details
     # give it two minutes to update the DB / seeing instances where items are not updating
@@ -389,6 +407,8 @@ def _scan_test(provider_crud, vm, os, fs_type, soft_assert):
         soft_assert("os-linux_fedora.png" in details_os_icon)
         soft_assert("linux_fedora" in quadicon_os_icon)
 
+pytestmark = [pytest.mark.parametrize("rest", ["using_ui", "rest_detail", "rest_collection"])]
+
 
 @pytest.mark.usefixtures(
     "appliance_browser", "by_vm_state", "finish_appliance_setup", "delete_tasks_first")
@@ -402,13 +422,15 @@ class TestVmAnalysisOfVmStates():
             verify_vm_stopped,
             os,
             fs_type,
-            soft_assert):  # , register_event):
+            soft_assert,
+            rest,
+            rest_api):  # , register_event):
         """Tests stopped vm
 
         Metadata:
             test_flag: vm_analysis
         """
-        _scan_test(provider_crud, vm, os, fs_type, soft_assert)
+        _scan_test(provider_crud, vm, os, fs_type, soft_assert, rest, rest_api)
 
     def test_suspended_vm(
             self,
@@ -418,13 +440,15 @@ class TestVmAnalysisOfVmStates():
             verify_vm_suspended,
             os,
             fs_type,
-            soft_assert):  # , register_event):
+            soft_assert,
+            rest,
+            rest_api):  # , register_event):
         """Tests suspended vm
 
         Metadata:
             test_flag: vm_analysis, provision
         """
-        _scan_test(provider_crud, vm, os, fs_type, soft_assert)
+        _scan_test(provider_crud, vm, os, fs_type, soft_assert, rest, rest_api)
 
 
 # @pytest.mark.usefixtures(
@@ -447,10 +471,12 @@ class TestVmFileSystemsAnalysis():
             verify_vm_running,
             os,
             fs_type,
-            soft_assert):  # , register_event):
+            soft_assert,
+            rest,
+            rest_api):  # , register_event):
         """Tests running vm
 
         Metadata:
             test_flag: vm_analysis, provision
         """
-        _scan_test(provider_crud, vm, os, fs_type, soft_assert)
+        _scan_test(provider_crud, vm, os, fs_type, soft_assert, rest, rest_api)
