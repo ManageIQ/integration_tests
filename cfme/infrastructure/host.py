@@ -88,7 +88,9 @@ nav.add_branch('infrastructure_hosts',
                 'infrastructure_host': [lambda ctx: sel.click(Quadicon(ctx['host'].name,
                                                                       'host')),
                                    {'infrastructure_host_edit':
-                                    lambda _: cfg_btn('Edit this Host'),
+                                    lambda _: cfg_btn(
+                                        version.pick({version.LOWEST: 'Edit this Host',
+                                                      '5.4': 'Edit this item'})),
                                     'infrastructure_host_policy_assignment':
                                     lambda _: pol_btn('Manage Policies'),
                                     'infrastructure_provision_host':
