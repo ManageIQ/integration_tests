@@ -67,7 +67,7 @@ Artifactor uses the global and local values referenced earlier to store these ar
 When a pre, post or hook callback finishes, it has the opportunity to supply updates to both
 the global and local values dictionaries. In doing this, a pre-hook script can prepare data,
 which will could be stored in the locals dictionary and then passed to the actual plugin hook
-as a keyword argument. Local values override global values.
+as a keyword argument. local values override global values.
 
 We need to look at an example of this, but first we must configure artifactor and the plugin::
 
@@ -127,8 +127,11 @@ import re
 import sys
 import traceback
 
-from logging.handlers import RotatingFileHandler
+from py.path import local
 from riggerlib import Rigger, RiggerBasePlugin, RiggerClient
+
+from logging.handlers import RotatingFileHandler
+from utils.net import random_port
 from utils.path import log_path
 
 
@@ -144,21 +147,21 @@ class Artifactor(Rigger):
         """
         if not self.config:
             return False
-        self.log_dir = self.config.get('log_dir', log_path.join('artifacts').strpath)
-        if not os.path.isdir(self.log_dir):
-            os.makedirs(self.log_dir)
-        log_file_name = os.path.join(self.log_dir, "artifactor_log.txt")
-        self.logger = create_logger('artifactor_logger', log_file_name)
-        if not os.path.isdir(self.log_dir):
-            os.makedirs(self.log_dir)
+        self.log_dir = local(self.config.get('log_dir', log_path.join('artifacts')))
+        self.log_dir.ensure(dir=True)
+        self.logger = create_logger('artifactor', self.log_dir.join('log').strpath)
         self.squash_exceptions = self.config.get('squash_exceptions', False)
         if not self.log_dir:
             print "!!! Log dir must be specified in yaml"
             sys.exit(127)
+        self.config['zmq_socket_address'] = 'tcp://127.0.0.1:{}'.format(random_port())
         self.setup_plugin_instances()
         self.start_server()
-        self.global_data = {'artifactor_config': self.config, 'log_dir': self.config['log_dir'],
-                            'artifacts': dict()}
+        self.global_data = {
+            'artifactor_config': self.config,
+            'log_dir': self.log_dir.strpath,
+            'artifacts': dict()
+        }
 
     def handle_failure(self, exc):
         self.logger.debug(exc[0])

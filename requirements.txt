@@ -31,7 +31,8 @@ python-novaclient
 pywinrm
 PyYAML
 requests
-riggerlib
+#riggerlib
+git+git://github.com/seandst/riggerlib.git@gunicorns-in-flasks
 scp
 selenium
 slumber
