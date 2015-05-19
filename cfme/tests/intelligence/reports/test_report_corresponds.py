@@ -6,6 +6,7 @@ from cfme.intelligence.reports.reports import CustomReport
 from utils import version
 from utils.providers import provider_factory_by_name, setup_a_provider
 from utils.randomness import generate_random_string, pick
+from utils.version import since_date_or_version
 
 
 @pytest.fixture(scope="module")
@@ -24,11 +25,17 @@ def report_vms(setup_first_provider):
                 version.LOWEST: "Provider : Name",
                 "5.3": "Cloud/Infrastructure Provider : Name",
             }),
-            "Cluster : Name",
+            version.pick({
+                version.LOWEST: "Cluster : Name",
+                "5.4.0.0.24": "Cluster / Deployment Role : Name",
+            }),
             "Datastore : Name",
             "Hardware : Number of CPUs",
             "Hardware : RAM",
-            "Host : Name",
+            version.pick({
+                version.LOWEST: "Host : Name",
+                "5.4.0.0.24": "Host / Node : Name",
+            }),
             "Name",
         ]
     )
@@ -47,6 +54,12 @@ def report_vms(setup_first_provider):
 
 
 def test_custom_vm_report(soft_assert, report_vms):
+    if since_date_or_version(version="5.4.0.0.25"):
+        cluster = "Cluster / Deployment Role Name"
+        host = "Host / Node Name"
+    else:
+        cluster = "Cluster Name"
+        host = "Host Name"
     for row in report_vms:
         if row["Name"].startswith("test_"):
             continue  # Might disappear meanwhile
@@ -61,10 +74,10 @@ def test_custom_vm_report(soft_assert, report_vms):
         soft_assert(provider.does_vm_exist(row["Name"]), "VM {} does not exist in {}!".format(
             row["Name"], provider_name
         ))
-        if row["Cluster Name"]:
+        if row[cluster]:
             soft_assert(
-                row["Cluster Name"] in provider_clusters,
-                "Cluster {} not found in {}!".format(row["Cluster Name"], str(provider_clusters))
+                row[cluster] in provider_clusters,
+                "Cluster {} not found in {}!".format(row[cluster], str(provider_clusters))
             )
         if row["Datastore Name"]:
             soft_assert(
@@ -73,9 +86,9 @@ def test_custom_vm_report(soft_assert, report_vms):
                     row["Datastore Name"], str(provider_datastores))
             )
         # Because of mixing long and short host names, we have to use both-directional `in` op.
-        if row["Host Name"]:
+        if row[host]:
             found = False
-            possible_ips_or_hosts = utils.net.resolve_ips((row["Host Name"], ))
+            possible_ips_or_hosts = utils.net.resolve_ips((row[host], ))
             for possible_ip_or_host in possible_ips_or_hosts:
                 for host_ip in provider_hosts_and_ips:
                     if possible_ip_or_host in host_ip or host_ip in possible_ip_or_host:
