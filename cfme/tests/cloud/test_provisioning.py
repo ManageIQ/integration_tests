@@ -16,6 +16,11 @@ from utils.wait import wait_for
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
+def openstack_only(f):
+    f._os_only = True
+    return f
+
+
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
     argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
@@ -33,10 +38,7 @@ def pytest_generate_tests(metafunc):
             # Need image for image -> instance provisioning
             continue
 
-        if metafunc.function in {
-                test_provision_from_template_with_attached_disks, test_provision_with_boot_volume,
-                test_provision_with_additional_volume} \
-                and args['provider_type'] != 'openstack':
+        if getattr(metafunc.function, "_os_only", False) and args['provider_type'] != 'openstack':
             continue
 
         new_idlist.append(idlist[i])
@@ -84,13 +86,20 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
 
 
 def test_provision_from_template_using_rest(
-        request, setup_provider, provider_crud, provider_mgmt, provisioning, vm_name, rest_api):
+        request, setup_provider, provider_crud, provider_mgmt, provider_type, provisioning, vm_name,
+        rest_api):
+    """ Tests provisioning from a template using the REST API.
+
+    Metadata:
+        test_flag: provision
+    """
     if "flavors" not in rest_api.collections.all_names:
         pytest.skip("This appliance does not have `flavors` collection.")
     image_guid = rest_api.collections.templates.find_by(name=provisioning['image']['name'])[0].guid
     instance_type = (
-        provisioning['instance_type'] if ":" not in provisioning['instance_type']
-        else provisioning['instance_type'].split(":")[0].strip())
+        provisioning['instance_type'].split(":")[0].strip()
+        if ":" in provisioning['instance_type'] and provider_type == "ec2"
+        else provisioning['instance_type'])
     flavours = rest_api.collections.flavors.find_by(name=instance_type)
     assert len(flavours) > 0
     flavour_id = flavours[0].id
@@ -161,6 +170,7 @@ def default_domain_enabled():
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
+@openstack_only
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, disks,
         soft_assert, provider_type, default_domain_enabled):
@@ -226,6 +236,7 @@ def test_provision_from_template_with_attached_disks(
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1160342])
+@openstack_only
 def test_provision_with_boot_volume(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
         provider_type, default_domain_enabled):
@@ -295,6 +306,7 @@ def test_provision_with_boot_volume(
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1186413])
+@openstack_only
 def test_provision_with_additional_volume(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
         provider_type, default_domain_enabled, provider_data):
