@@ -83,6 +83,62 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
     instance.create(**inst_args)
 
 
+def test_provision_from_template_using_rest(
+        request, setup_provider, provider_crud, provider_mgmt, provisioning, vm_name, rest_api):
+    if "flavors" not in rest_api.collections.all_names:
+        pytest.skip("This appliance does not have `flavors` collection.")
+    image_guid = rest_api.collections.templates.find_by(name=provisioning['image']['name'])[0].guid
+    instance_type = (
+        provisioning['instance_type'] if ":" not in provisioning['instance_type']
+        else provisioning['instance_type'].split(":")[0].strip())
+    flavours = rest_api.collections.flavors.find_by(name=instance_type)
+    assert len(flavours) > 0
+    flavour_id = flavours[0].id
+
+    provision_data = {
+        "version": "1.1",
+        "template_fields": {
+            "guid": image_guid,
+        },
+        "vm_fields": {
+            "vm_name": vm_name,
+            "instance_type": flavour_id,
+            "request_type": "template",
+            "availability_zone": provisioning["availability_zone"],
+            "security_groups": [provisioning["security_group"]],
+            "guest_keypair": provisioning["guest_keypair"]
+        },
+        "requester": {
+            "user_name": "admin",
+            "owner_first_name": "Administrator",
+            "owner_last_name": "Administratorovich",
+            "owner_email": "admin@cfme.example",
+            "auto_approve": True,
+        },
+        "tags": {
+        },
+        "additional_values": {
+        },
+        "ems_custom_attributes": {
+        },
+        "miq_custom_attributes": {
+        }
+    }
+
+    request.addfinalizer(
+        lambda: provider_mgmt.delete_vm(vm_name) if provider_mgmt.does_vm_exist(vm_name) else None)
+    request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
+
+    def _finished():
+        request.reload()
+        if request.status.lower() in {"error"}:
+            pytest.fail("Error when provisioning: `{}`".format(request.message))
+        return request.request_state.lower() in {"finished", "provisioned"}
+
+    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    assert provider_mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
+
+
 VOLUME_METHOD = ("""
 prov = $evm.root["miq_provision"]
 prov.set_option(
