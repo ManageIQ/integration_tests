@@ -5,6 +5,7 @@ Used to communicate with providers without using CFME facilities
 """
 import winrm
 from cStringIO import StringIO
+from contextlib import contextmanager
 from textwrap import dedent
 
 from lxml import etree
@@ -130,7 +131,7 @@ class SCVMMSystem(MgmtSystemAPIBase):
         return etree.parse(StringIO(data)).getroot().xpath(
             "./Object/Property[@Name='Name']/text()")
 
-    def info(self):
+    def info(self, vm_name):
         pass
 
     def disconnect(self):
@@ -187,6 +188,13 @@ class SCVMMSystem(MgmtSystemAPIBase):
         self.start_vm(vm_name)
         return vm_name
 
+    @contextmanager
+    def with_vm(self, *args, **kwargs):
+        """Context manager for better cleanup"""
+        name = self.deploy_template(*args, **kwargs)
+        yield name
+        self.delete_vm(name)
+
     def current_ip_address(self, vm_name):
         data = self.run_script(
             "Get-SCVirtualMachine -Name \"{}\" -VMMServer $scvmm_server |"
@@ -201,6 +209,18 @@ class SCVMMSystem(MgmtSystemAPIBase):
 
     def remove_host_from_cluster(self, hostname):
         """I did not notice any scriptlet that lets you do this."""
+
+    def disconnect_dvd_drives(self, vm_name):
+        number_dvds_disconnected = 0
+        script = """\
+        $VM = Get-SCVirtualMachine -Name "{}"
+        $DVDDrive = Get-SCVirtualDVDDrive -VM $VM
+        $DVDDrive[0] | Remove-SCVirtualDVDDrive
+        """.format(vm_name)
+        while self.data(vm_name).VirtualDVDDrives is not None:
+            self.run_script(script)
+            number_dvds_disconnected += 1
+        return number_dvds_disconnected
 
     def data(self, vm_name):
         """Returns detailed informations about SCVMM VM"""
@@ -230,12 +250,12 @@ class SCVMMSystem(MgmtSystemAPIBase):
                 children = prop.getchildren()
                 if children:
                     if prop.xpath("./Property[@Name]"):
-                        self.__dict__[name] = self.SCVMMDataHolderDict(prop)
+                        self.__dict__[name] = SCVMMSystem.SCVMMDataHolderDict(prop)
                     else:
-                        self.__dict__[name] = self.SCVMMDataHolderList(prop)
+                        self.__dict__[name] = SCVMMSystem.SCVMMDataHolderList(prop)
                 else:
                     data = prop.text
-                    result = self.parse_data(t, prop.text)
+                    result = SCVMMSystem.parse_data(t, prop.text)
                     self.__dict__[name] = result
 
         def __repr__(self):
@@ -247,7 +267,7 @@ class SCVMMSystem(MgmtSystemAPIBase):
             for prop in data.xpath("./Property"):
                 t = prop.attrib["Type"]
                 data = prop.text
-                result = self.parse_data(t, prop.text)
+                result = SCVMMSystem.parse_data(t, prop.text)
                 self.append(result)
 
     class PowerShellScriptError(Exception):
