@@ -29,11 +29,13 @@ def pytest_generate_tests(metafunc):
     new_argvalues = []
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
-        if not args['host_provisioning']:
+        try:
+            prov_data = args['host_provisioning']
+        except KeyError:
             # No host provisioning data available
             continue
 
-        stream = args['host_provisioning']['runs_on_stream']
+        stream = prov_data.get('runs_on_stream', '')
         if not version.current_version().is_in_series(str(stream)):
             continue
 
@@ -41,15 +43,15 @@ def pytest_generate_tests(metafunc):
         if not {'pxe_server', 'pxe_image', 'pxe_image_type', 'pxe_kickstart',
                 'datacenter', 'cluster', 'datastores',
                 'hostname', 'root_password', 'ip_addr',
-                'subnet_mask', 'gateway', 'dns'}.issubset(args['host_provisioning'].viewkeys()):
+                'subnet_mask', 'gateway', 'dns'}.issubset(prov_data.viewkeys()):
             # Need all  for host provisioning
             continue
 
-        pxe_server_name = args['host_provisioning']['pxe_server']
+        pxe_server_name = prov_data.get('pxe_server', '')
         if pxe_server_name not in pxe_server_names:
             continue
 
-        pxe_cust_template = args['host_provisioning']['pxe_kickstart']
+        pxe_cust_template = prov_data.get('pxe_kickstart', '')
         if pxe_cust_template not in cfme_data.get('customization_templates', {}).keys():
             continue
 
