@@ -16,6 +16,11 @@ from utils.wait import wait_for
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
+def openstack_only(f):
+    f._os_only = True
+    return f
+
+
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
     argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
@@ -33,10 +38,7 @@ def pytest_generate_tests(metafunc):
             # Need image for image -> instance provisioning
             continue
 
-        if metafunc.function in {
-                test_provision_from_template_with_attached_disks, test_provision_with_boot_volume,
-                test_provision_with_additional_volume} \
-                and args['provider_type'] != 'openstack':
+        if getattr(metafunc.function, "_os_only", False) and args['provider_type'] != 'openstack':
             continue
 
         new_idlist.append(idlist[i])
@@ -83,6 +85,69 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
     instance.create(**inst_args)
 
 
+def test_provision_from_template_using_rest(
+        request, setup_provider, provider_crud, provider_mgmt, provider_type, provisioning, vm_name,
+        rest_api):
+    """ Tests provisioning from a template using the REST API.
+
+    Metadata:
+        test_flag: provision
+    """
+    if "flavors" not in rest_api.collections.all_names:
+        pytest.skip("This appliance does not have `flavors` collection.")
+    image_guid = rest_api.collections.templates.find_by(name=provisioning['image']['name'])[0].guid
+    instance_type = (
+        provisioning['instance_type'].split(":")[0].strip()
+        if ":" in provisioning['instance_type'] and provider_type == "ec2"
+        else provisioning['instance_type'])
+    flavours = rest_api.collections.flavors.find_by(name=instance_type)
+    assert len(flavours) > 0
+    flavour_id = flavours[0].id
+
+    provision_data = {
+        "version": "1.1",
+        "template_fields": {
+            "guid": image_guid,
+        },
+        "vm_fields": {
+            "vm_name": vm_name,
+            "instance_type": flavour_id,
+            "request_type": "template",
+            "availability_zone": provisioning["availability_zone"],
+            "security_groups": [provisioning["security_group"]],
+            "guest_keypair": provisioning["guest_keypair"]
+        },
+        "requester": {
+            "user_name": "admin",
+            "owner_first_name": "Administrator",
+            "owner_last_name": "Administratorovich",
+            "owner_email": "admin@cfme.example",
+            "auto_approve": True,
+        },
+        "tags": {
+        },
+        "additional_values": {
+        },
+        "ems_custom_attributes": {
+        },
+        "miq_custom_attributes": {
+        }
+    }
+
+    request.addfinalizer(
+        lambda: provider_mgmt.delete_vm(vm_name) if provider_mgmt.does_vm_exist(vm_name) else None)
+    request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
+
+    def _finished():
+        request.reload()
+        if request.status.lower() in {"error"}:
+            pytest.fail("Error when provisioning: `{}`".format(request.message))
+        return request.request_state.lower() in {"finished", "provisioned"}
+
+    wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
+    assert provider_mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
+
+
 VOLUME_METHOD = ("""
 prov = $evm.root["miq_provision"]
 prov.set_option(
@@ -105,6 +170,7 @@ def default_domain_enabled():
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
+@openstack_only
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, disks,
         soft_assert, provider_type, default_domain_enabled):
@@ -170,6 +236,7 @@ def test_provision_from_template_with_attached_disks(
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1160342])
+@openstack_only
 def test_provision_with_boot_volume(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
         provider_type, default_domain_enabled):
@@ -239,6 +306,7 @@ def test_provision_with_boot_volume(
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1186413])
+@openstack_only
 def test_provision_with_additional_volume(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
         provider_type, default_domain_enabled, provider_data):
