@@ -18,23 +18,8 @@ from utils.path import log_path
 
 # preseed the normal statuses, but let defaultdict handle
 # any unexpected statuses, which should probably never happen
-test_counts = defaultdict(int, {
-    'passed': 0,
-    'failed': 0,
-    'skipped': 0,
-    'error': 0,
-    'xpassed': 0,
-    'xfailed': 0
-})
 
 test_report = log_path.join('test-report.json')
-
-
-def _inc_test_count(test):
-    try:
-        test_counts[test['statuses']['overall']] += 1
-    except KeyError:
-        pass
 
 
 class PostResult(ArtifactorBasePlugin):
@@ -49,6 +34,19 @@ class PostResult(ArtifactorBasePlugin):
     def post_result(self, artifacts, log_dir):
         report = {}
         report['tests'] = artifacts
+
+        test_counts = defaultdict(int, {
+            'passed': 0,
+            'failed': 0,
+            'skipped': 0,
+            'error': 0,
+            'xpassed': 0,
+            'xfailed': 0
+        })
+
+        def _inc_test_count(test):
+            test_counts[test['statuses']['overall']] += 1
+
         map(_inc_test_count, artifacts.values())
         report['test_counts'] = test_counts
         report['test_counts']['total'] = sum(test_counts.values())
