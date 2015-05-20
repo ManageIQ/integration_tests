@@ -22,7 +22,8 @@ pycrypto
 pygal
 PyGithub
 PyPDF2
-pytest
+# Temporary stick to 2.7.0 due to fixture scoping mismatches in 2.7.1 and possibly up
+pytest==2.7.0
 python-bugzilla>=1.2.0
 python-cinderclient
 python-dateutil
