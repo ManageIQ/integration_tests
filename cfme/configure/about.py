@@ -11,7 +11,8 @@ product_assistance = Region(
         "//a[normalize-space(.)='Lifecycle and Automation Guide']",
         'integrate_guide': {
             version.LOWEST: "//a[normalize-space(.)='Integrate Guide']",
-            '5.3': "//a[normalize-space(.)='Integration Services Guide']"
+            '5.3': "//a[normalize-space(.)='Integration Services Guide']",
+            '5.4': "//a[normalize-space(.)='REST API Guide']"
         },
         'settings_and_operations_guide': "//a[normalize-space(.)='Settings and Operations Guide']",
         'red_hat_customer_portal': "//a[normalize-space(.)='Red Hat Customer Portal']"
