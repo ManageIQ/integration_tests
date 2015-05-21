@@ -210,7 +210,10 @@ def test_rh_registration(request, unset_org_id,
         validate=False if reg_method != 'sat6' else True
     )
 
-    used_repo_or_channel = InfoBlock('Red Hat Software Updates', 'Update Repository').text
+    used_repo_or_channel = InfoBlock('Red Hat Software Updates', version.pick({
+        version.LOWEST: 'Update Repository',
+        "5.4": 'Channel Name(s)' if reg_method == 'sat5' else 'Repository Name(s)'})
+    ).text
 
     red_hat_updates.register_appliances()  # Register all
 
