@@ -2,6 +2,7 @@
 import ui_navigate as nav
 
 from cfme.fixtures import pytest_selenium as sel
+from cfme.web_ui import accordion
 from fixtures.pytest_store import store
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
@@ -142,14 +143,16 @@ sections = {
         ('clouds_tenants', 'Tenants'),
         ('clouds_flavors', 'Flavors'),
         ('clouds_security_groups', 'Security Groups'),
-        ('clouds_instances', 'Instances'),
+        ('clouds_instances', 'Instances',
+            lambda: accordion.tree("Instances by Provider", "Instances by Provider")),
         ('clouds_stacks', 'Stacks')
     ),
     ('infrastructure', 'Infrastructure'): (
         ('infrastructure_providers', 'Providers'),
         ('infrastructure_clusters', os_infra_specific('Clusters', 'Deployment Roles')),
         ('infrastructure_hosts', os_infra_specific('Hosts', 'Nodes')),
-        ('infrastructure_virtual_machines', 'Virtual Machines'),
+        ('infrastructure_virtual_machines', 'Virtual Machines',
+            lambda: accordion.tree("VMs & Templates", "All VMs & Templates")),
         ('infrastructure_resource_pools', 'Resource Pools'),
         ('infrastructure_datastores', 'Datastores'),
         ('infrastructure_repositories', 'Repositories'),
@@ -212,7 +215,7 @@ def is_page_active(toplevel, secondlevel=None):
     return True
 
 
-def nav_to_fn(toplevel, secondlevel=None):
+def nav_to_fn(toplevel, secondlevel=None, reset_action=None):
     def f(_):
         if callable(toplevel):
             top_level = toplevel()
@@ -257,6 +260,12 @@ def nav_to_fn(toplevel, secondlevel=None):
                 second_level = secondlevel
             open_second_level(get_top_level_element(top_level), second_level)
             get_rid_of_the_menu_box()
+
+        if reset_action is not None:
+            if callable(reset_action):
+                reset_action()
+            else:
+                sel.click(reset_action)
     return f
 
 
@@ -295,7 +304,12 @@ def reverse_lookup(toplevel_path, secondlevel_path=None):
             top_level = toplevel
         if menu_path == top_level:
             return toplevel_dest
-        for secondlevel_dest, secondlevel in secondlevels:
+        for level in secondlevels:
+            if len(level) == 2:
+                secondlevel_dest, secondlevel = level
+                reset_action = None
+            else:
+                secondlevel_dest, secondlevel, reset_action = level
             if callable(secondlevel):
                 second_level = secondlevel()
             else:
@@ -343,8 +357,15 @@ _branches = dict()
 # secondlevel destinations don't depend on the toplevel nav taking place to reach
 # their destination.
 for (toplevel_dest, toplevel), secondlevels in sections.items():
-    for secondlevel_dest, secondlevel in secondlevels:
-        _branches[secondlevel_dest] = nav_to_fn(toplevel, secondlevel)
+    for level in secondlevels:
+        if len(level) == 2:
+            secondlevel_dest, secondlevel = level
+            reset_action = None
+        elif len(level) == 3:
+            secondlevel_dest, secondlevel, reset_action = level
+        else:
+            raise Exception("Wrong length of menu navigation tuple! ({})".format(len(level)))
+        _branches[secondlevel_dest] = nav_to_fn(toplevel, secondlevel, reset_action)
     _branches[toplevel_dest] = [nav_to_fn(toplevel, None), {}]
 
 nav.add_branch('toplevel', _branches)
