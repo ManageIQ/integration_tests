@@ -212,7 +212,8 @@ class CoverageManager(object):
             self.ipapp.ssh_client().run_command('scp -o StrictHostKeyChecking=no '
                 '-r /var/www/miq/vmdb/coverage/* '
                 '{addr}:/var/www/miq/vmdb/coverage/'.format(
-                    addr=self.collection_appliance.address))
+                    addr=self.collection_appliance.address),
+                timeout=1800)
 
     def _merge_coverage_reports(self):
         # # push the results to the appliance
@@ -290,7 +291,7 @@ class UiCoveragePlugin(object):
                 style['green'] = True
             else:
                 style['red'] = True
-            store.terminalreporter.line('UI Coverage Result: {}%'.format(ui_coverage_percent),
+            store.write_line('UI Coverage Result: {}%'.format(ui_coverage_percent),
                 **style)
         except Exception as ex:
             logger.error('Error printing coverage report to terminal')
