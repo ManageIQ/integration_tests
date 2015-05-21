@@ -154,7 +154,17 @@ class Version(object):
     seem to be the same for all version numbering classes.
     """
 
+    @classmethod
+    def _parse_vstring(cls, vstring):
+        if vstring is None:
+            return None
+        elif isinstance(vstring, (list, tuple)):
+            return ".".join(map(str, vstring))
+        else:
+            return str(vstring)
+
     def __init__(self, vstring=None):
+        vstring = self._parse_vstring(vstring)
         if vstring:
             self.parse(vstring)
 
@@ -416,6 +426,7 @@ class LooseVersion (Version):
 
     def __init__(self, vstring=None, latest=False, oldest=False):
         self.version = None
+        vstring = self._parse_vstring(vstring)
         if latest and oldest:
             raise ValueError('Cannot be both latest and oldest')
         if latest:
