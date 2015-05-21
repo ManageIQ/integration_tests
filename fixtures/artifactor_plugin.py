@@ -21,6 +21,7 @@ already been used, it will die
 import atexit
 from urlparse import urlparse
 
+import diaper
 import pytest
 
 from artifactor import ArtifactorClient
@@ -148,9 +149,11 @@ def pytest_unconfigure():
         art_client.fire_hook('finish_session')
     art_client.fire_hook('teardown_merkyl', ip=appliance_ip_address)
     if not SLAVEID:
-        art_client.fire_hook('terminate')
+        art_client.terminate()
 
 
 if not SLAVEID:
-    atexit.register(art_client.fire_hook, 'finish_session')
-    atexit.register(art_client.fire_hook, 'terminate')
+    # juuuust in case
+    with diaper:
+        atexit.register(art_client.fire_hook, 'finish_session')
+        atexit.register(art_client.terminate)
