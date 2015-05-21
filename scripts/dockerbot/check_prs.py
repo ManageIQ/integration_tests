@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 from datetime import datetime
 
+import fauxfactory
 import traceback
 import dockerbot
 import json
 import requests
 from utils.conf import docker as docker_conf
 from utils.appliance import Appliance
-from utils.randomness import generate_random_string
 from utils.trackerbot import api
 from utils.log import create_logger
 from slumber.exceptions import HttpClientError
@@ -77,7 +77,7 @@ def create_run(db_pr, pr):
         stream = group['name']
         logger.info('  Adding task stream {}...'.format(stream))
         tasks.append(dict(output="",
-                          tid=generate_random_string(size=8),
+                          tid=fauxfactory.gen_alphanumeric(8),
                           result="pending",
                           stream=stream,
                           datestamp=str(datetime.now())))

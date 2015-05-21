@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
-from utils.randomness import generate_random_string
 from utils.update import update
 import utils.error as error
 import cfme.tests.automate as ta
@@ -21,7 +22,7 @@ def test_instance_crud(an_instance):
     an_instance.create()
     origname = an_instance.name
     with update(an_instance):
-        an_instance.name = generate_random_string(8)
+        an_instance.name = fauxfactory.gen_alphanumeric(8)
         an_instance.description = "updated"
     with update(an_instance):
         an_instance.name = origname
@@ -40,7 +41,7 @@ def test_display_name_unset_from_ui(request, an_instance):
     an_instance.create()
     request.addfinalizer(an_instance.delete)
     with update(an_instance):
-        an_instance.display_name = generate_random_string()
+        an_instance.display_name = fauxfactory.gen_alphanumeric()
     assert an_instance.exists
     with update(an_instance):
         an_instance.display_name = ""

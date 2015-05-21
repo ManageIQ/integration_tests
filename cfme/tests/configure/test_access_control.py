@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 import traceback
 import cfme.configure.access_control as ac
 import utils.error as error
-import utils.randomness as random
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme import login
@@ -29,11 +29,11 @@ pytestmark = [pytest.mark.usefixtures("setup_first_provider")]
 
 
 def new_credential():
-    return Credential(principal='uid' + random.generate_random_string(), secret='redhat')
+    return Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret='redhat')
 
 
 def new_user(group=usergrp):
-    return ac.User(name='user' + random.generate_random_string(),
+    return ac.User(name='user' + fauxfactory.gen_alphanumeric(),
                    credential=new_credential(),
                    email='xyz@redhat.com',
                    group=group,
@@ -42,12 +42,12 @@ def new_user(group=usergrp):
 
 
 def new_group(role='EvmRole-approver'):
-    return ac.Group(description='grp' + random.generate_random_string(),
+    return ac.Group(description='grp' + fauxfactory.gen_alphanumeric(),
                     role=role)
 
 
 def new_role():
-    return ac.Role(name='rol' + random.generate_random_string(),
+    return ac.Role(name='rol' + fauxfactory.gen_alphanumeric(),
                    vm_restriction='None')
 
 
@@ -93,7 +93,7 @@ def test_username_required_error_validation():
 
 def test_userid_required_error_validation():
     user = ac.User(
-        name='user' + random.generate_random_string(),
+        name='user' + fauxfactory.gen_alphanumeric(),
         credential=Credential(principal=None, secret='redhat'),
         email='xyz@redhat.com',
         group=group_user)
@@ -103,8 +103,8 @@ def test_userid_required_error_validation():
 
 def test_user_password_required_error_validation():
     user = ac.User(
-        name='user' + random.generate_random_string(),
-        credential=Credential(principal='uid' + random.generate_random_string(), secret=None),
+        name='user' + fauxfactory.gen_alphanumeric(),
+        credential=Credential(principal='uid' + fauxfactory.gen_alphanumeric(), secret=None),
         email='xyz@redhat.com',
         group=group_user)
     with error.expected("Password_digest can't be blank"):
@@ -118,7 +118,7 @@ def test_user_password_required_error_validation():
 )
 def test_user_group_error_validation():
     user = ac.User(
-        name='user' + random.generate_random_string(),
+        name='user' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='xyz@redhat.com',
         group=None)
@@ -128,7 +128,7 @@ def test_user_group_error_validation():
 
 def test_user_email_error_validation():
     user = ac.User(
-        name='user' + random.generate_random_string(),
+        name='user' + fauxfactory.gen_alphanumeric(),
         credential=new_credential(),
         email='xyzdhat.com',
         group=group_user)
@@ -195,7 +195,7 @@ def test_permission_edit(request, product_features, action):
     Ensures that changes in permissions are enforced on next login
     """
     request.addfinalizer(login.login_admin)
-    role_name = random.generate_random_string()
+    role_name = fauxfactory.gen_alphanumeric()
     role = ac.Role(name=role_name,
                   vm_restriction=None,
                   product_features=[(['Everything'], False)] +    # role_features
@@ -227,7 +227,7 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
        testing.  name=None will generate a random name
 
     """
-    name = name or random.generate_random_string()
+    name = name or fauxfactory.gen_alphanumeric()
     return lambda: ac.Role(name=name,
                            vm_restriction=vm_restriction,
                            product_features=product_features)
@@ -297,12 +297,12 @@ def test_permissions(role, allowed_actions, disallowed_actions):
 def single_task_permission_test(product_features, actions):
     """Tests that action succeeds when product_features are enabled, and
        fail when everything but product_features are enabled"""
-    test_permissions(_mk_role(name=random.generate_random_string(),
+    test_permissions(_mk_role(name=fauxfactory.gen_alphanumeric(),
                               product_features=[(['Everything'], False)] +
                               [(f, True) for f in product_features]),
                      actions,
                      {})
-    test_permissions(_mk_role(name=random.generate_random_string(),
+    test_permissions(_mk_role(name=fauxfactory.gen_alphanumeric(),
                               product_features=[(['Everything'], True)] +
                               [(f, False) for f in product_features]),
                      {},
@@ -363,10 +363,10 @@ def test_permissions_vm_provisioning():
 # def test_user_add_button_should_be_disabled_without_group(soft_assert):
 #     from cfme.web_ui import fill, form_buttons
 #     sel.force_navigate('cfg_accesscontrol_user_add')
-#     pw = random.generate_random_string()
+#     pw = fauxfactory.gen_alphanumeric()
 #     fill(ac.User.user_form, {
-#         "name_txt": random.generate_random_string(),
-#         "userid_txt": random.generate_random_string(),
+#         "name_txt": fauxfactory.gen_alphanumeric(),
+#         "userid_txt": fauxfactory.gen_alphanumeric(),
 #         "password_txt": pw,
 #         "password_verify_txt": pw,
 #         "email_txt": "test@test.test"
@@ -376,9 +376,9 @@ def test_permissions_vm_provisioning():
 
 def test_user_change_password(request):
     user = ac.User(
-        name="user {}".format(random.generate_random_string()),
+        name="user {}".format(fauxfactory.gen_alphanumeric()),
         credential=Credential(
-            principal="user_principal_{}".format(random.generate_random_string()),
+            principal="user_principal_{}".format(fauxfactory.gen_alphanumeric()),
             secret="very_secret",
             verify_secret="very_secret"
         ),

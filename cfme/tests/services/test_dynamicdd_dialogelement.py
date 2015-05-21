@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.services.catalogs.catalog_item import CatalogItem
@@ -5,8 +7,6 @@ from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.automate.explorer import Domain, Namespace, Class, Method, Instance
-from utils.randomness import generate_random_string
-import utils.randomness as rand
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
@@ -16,7 +16,7 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate")
 ]
 
-item_name = generate_random_string()
+item_name = fauxfactory.gen_alphanumeric()
 
 METHOD_TORSO = """
 # Method for logging
@@ -40,19 +40,19 @@ log(:info, "===========================================") if @debug
 
 @pytest.yield_fixture(scope="function")
 def dialog(copy_instance, create_method):
-    dialog = "dialog_" + generate_random_string()
+    dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = {
-        'ele_label': "ele_" + rand.generate_random_string(),
-        'ele_name': rand.generate_random_string(),
-        'ele_desc': rand.generate_random_string(),
+        'ele_label': "ele_" + fauxfactory.gen_alphanumeric(),
+        'ele_name': fauxfactory.gen_alphanumeric(),
+        'ele_desc': fauxfactory.gen_alphanumeric(),
         'choose_type': "Drop Down List",
         'dynamic_chkbox': True
     }
-    dialog = ServiceDialog(label="dialog_" + rand.generate_random_string(),
+    dialog = ServiceDialog(label="dialog_" + fauxfactory.gen_alphanumeric(),
                            description="my dialog", submit=True, cancel=True,
-                           tab_label="tab_" + rand.generate_random_string(),
+                           tab_label="tab_" + fauxfactory.gen_alphanumeric(),
                            tab_desc="my tab desc",
-                           box_label="box_" + rand.generate_random_string(),
+                           box_label="box_" + fauxfactory.gen_alphanumeric(),
                            box_desc="my box desc")
     dialog.create(element_data)
     yield dialog
@@ -60,7 +60,7 @@ def dialog(copy_instance, create_method):
 
 @pytest.yield_fixture(scope="function")
 def catalog():
-    cat_name = "cat_" + generate_random_string()
+    cat_name = "cat_" + fauxfactory.gen_alphanumeric()
     catalog = Catalog(name=cat_name,
                   description="my catalog")
     catalog.create()
@@ -110,7 +110,7 @@ def copy_instance(request, copy_domain):
 
 @pytest.mark.meta(blockers=1219950)
 def test_dynamicdropdown_dialog(dialog, catalog):
-    item_name = generate_random_string()
+    item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type="Generic", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
                   dialog=dialog.label)

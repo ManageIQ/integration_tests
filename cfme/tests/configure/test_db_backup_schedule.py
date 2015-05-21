@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.configure.configuration import DatabaseBackupSchedule
@@ -8,7 +9,6 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from urlparse import urlparse
 from utils import conf
-from utils import randomness
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 from utils.pretty import Pretty
@@ -46,10 +46,10 @@ class DbBackupData(Pretty):
         self.__dict__.update(self._get_data(machine_data, protocol_type))
 
     def _get_random_schedule_name(self):
-        return '{}_name'.format(randomness.generate_random_string())
+        return '{}_name'.format(fauxfactory.gen_alphanumeric())
 
     def _get_random_schedule_description(self):
-        return '{}_desc'.format(randomness.generate_random_string())
+        return '{}_desc'.format(fauxfactory.gen_alphanumeric())
 
     def _get_credentials(self, machine_data):
         """ Loads credentials that correspond to 'credentials' key from machine_data dict
@@ -156,7 +156,7 @@ def test_db_backup_schedule(request, db_backup_data):
         'start_date': dt,
         'start_hour': hour,
         'start_min': minute,
-        'depot_name': randomness.generate_random_string(),
+        'depot_name': fauxfactory.gen_alphanumeric(),
     }
 
     if db_backup_data.protocol_type == 'smb':

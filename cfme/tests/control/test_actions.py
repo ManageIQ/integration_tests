@@ -10,7 +10,7 @@ Required YAML keys:
         nothing terrible happens, but provisioning can be then assigned to a datastore that does not
         work (iso datastore or whatever), therefore failing the provision.
 """
-
+import fauxfactory
 import pytest
 from cfme.control import explorer
 from cfme.infrastructure.provider import RHEVMProvider
@@ -22,7 +22,6 @@ from utils.db import cfmedb
 from utils.log import logger
 from utils.miq_soap import MiqVM
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -105,7 +104,7 @@ def get_vm_object(vm_name):
 @pytest.fixture(scope="module")
 def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small_template):
     setup_provider(provider_key)
-    vm_name = "test_actions-{}-{}".format(provider_key, generate_random_string())
+    vm_name = "test_actions-{}-{}".format(provider_key, fauxfactory.gen_alphanumeric())
 
     if isinstance(provider_mgmt, mgmt_system.RHEVMSystem):
         kwargs = {"cluster": provider_data["default_cluster"]}
@@ -163,7 +162,7 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
 
 @pytest.fixture(scope="module")
 def name_suffix():
-    return generate_random_string()
+    return fauxfactory.gen_alphanumeric()
 
 
 @pytest.fixture(scope="module")
@@ -410,9 +409,9 @@ def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testi
         test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
-    snapshot_name = generate_random_string()
+    snapshot_name = fauxfactory.gen_alphanumeric()
     snapshot_create_action = explorer.Action(
-        generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
     )
@@ -451,9 +450,9 @@ def test_action_create_snapshots_and_delete_them(request, assign_policy_for_test
         test_flag: actions, provision
     """
     # Set up the policy and prepare finalizer
-    snapshot_name = generate_random_string()
+    snapshot_name = fauxfactory.gen_alphanumeric()
     snapshot_create_action = explorer.Action(
-        generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         action_type="Create a Snapshot",
         action_values={"snapshot_name": snapshot_name}
     )
@@ -567,7 +566,7 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off):
         test_flag: actions, provision
     """
     tag_assign_action = explorer.Action(
-        generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         action_type="Tag",
         action_values={"tag": ("My Company Tags", "Service Level", "Gold")}
     )
@@ -599,7 +598,7 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off):
         test_flag: actions, provision
     """
     tag_unassign_action = explorer.Action(
-        generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         action_type="Remove Tags",
         action_values={"cat_service_level": True}
     )

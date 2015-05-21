@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.infrastructure.provider import RHEVMProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from utils import testgen
-from utils.randomness import generate_random_string
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -43,7 +43,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_genealogy_{}'.format(generate_random_string())
+    vm_name = 'test_genealogy_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 

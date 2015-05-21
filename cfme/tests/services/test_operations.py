@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests checking for link access from outside."""
+import fauxfactory
 import pytest
 
 import cfme.provisioning
@@ -10,7 +11,6 @@ from cfme.services import requests
 from cfme.web_ui import flash
 from utils.browser import browser
 from utils.providers import setup_a_provider
-from utils.randomness import generate_random_string
 from utils.wait import wait_for
 from fixtures.pytest_store import store
 
@@ -42,7 +42,7 @@ def template_name(provisioning):
 
 @pytest.fixture(scope="module")
 def vm_name():
-    return generate_random_string(size=16)
+    return fauxfactory.gen_alphanumeric(length=16)
 
 
 @pytest.yield_fixture(scope="module")
@@ -53,9 +53,9 @@ def generated_request(provider, provider_data, provisioning, template_name, vm_n
 
     Slightly modified code from :py:module:`cfme.tests.infrastructure.test_provisioning`
     """
-    first_name = generate_random_string()
-    last_name = generate_random_string()
-    notes = generate_random_string()
+    first_name = fauxfactory.gen_alphanumeric()
+    last_name = fauxfactory.gen_alphanumeric()
+    notes = fauxfactory.gen_alphanumeric()
     e_mail = "{}@{}.test".format(first_name, last_name)
     host, datastore = map(provisioning.get, ('host', 'datastore'))
     pytest.sel.force_navigate('infrastructure_provision_vms', context={
@@ -118,7 +118,7 @@ def test_services_request_direct_url(generated_request):
 
 def test_copy_request(request, generated_request, vm_name, template_name):
     """Check if request gets properly copied."""
-    new_vm_name = generate_random_string(size=16)
+    new_vm_name = fauxfactory.gen_alphanumeric(length=16)
     cfme.provisioning.copy_request_by_vm_and_template_name(
         vm_name, template_name, {"vm_name": new_vm_name}, multi=True)
     request.addfinalizer(lambda: requests.delete_request({

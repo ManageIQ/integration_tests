@@ -1,12 +1,11 @@
-
 # -*- coding: utf-8 -*-
 # pylint: disable=E1101
 # pylint: disable=W0621
+import fauxfactory
 import pytest
 
 from cfme.automate.explorer import Namespace
 from utils.providers import setup_a_provider
-from utils.randomness import generate_random_string
 from utils.update import update
 from utils import version
 import utils.error as error
@@ -35,7 +34,7 @@ def test_namespace_crud(namespace):
     namespace.create()
     old_name = namespace.name
     with update(namespace):
-        namespace.name = generate_random_string(8)
+        namespace.name = fauxfactory.gen_alphanumeric(8)
     with update(namespace):
         namespace.name = old_name
     namespace.delete()

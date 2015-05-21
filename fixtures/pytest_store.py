@@ -17,6 +17,7 @@ The availability of these objects varies during a test run, but
 all should be available in the collection and testing phases of a test run.
 
 """
+import fauxfactory
 import os
 import sys
 from urlparse import urlparse
@@ -25,7 +26,6 @@ from _pytest.terminal import TerminalReporter
 from py.io import TerminalWriter
 
 from utils import conf, diaper, lazycache, property_or_none
-from utils.randomness import generate_random_string
 from utils.signals import on_signal
 
 
@@ -205,7 +205,7 @@ def write_line(line, **kwargs):
         # carriage return, write spaces for the whole line, carriage return, write the new line
         store.terminalreporter.line('\r' + ' ' * store.terminalreporter._tw.fullwidth + '\r' + line,
             **kwargs)
-        store.terminalreporter.currentfspath = generate_random_string()
+        store.terminalreporter.currentfspath = fauxfactory.gen_alphanumeric(8)
         store.terminalreporter.write_ensure_prefix(cfp)
 
         # resume capturing

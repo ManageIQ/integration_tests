@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 import yaml
 
@@ -8,7 +9,6 @@ from cfme.intelligence.reports.reports import CustomReport
 from cfme.intelligence.reports.schedules import Schedule
 from cfme.intelligence.reports.widgets import ChartWidget, MenuWidget, ReportWidget, RSSFeedWidget
 from utils.path import data_path
-from utils.randomness import generate_random_string
 from utils.update import update
 
 
@@ -55,7 +55,7 @@ def schedule(request):
 def test_custom_report_crud(custom_report):
     custom_report.create()
     with update(custom_report):
-        custom_report.title += generate_random_string()
+        custom_report.title += fauxfactory.gen_alphanumeric()
     custom_report.queue(wait_for_finish=True)
     for report in custom_report.get_saved_reports():
         report.data  # touch the results
@@ -74,12 +74,12 @@ def test_schedule_crud(schedule):
 @pytest.mark.meta(blockers=[1209945])
 def test_menuwidget_crud():
     w = MenuWidget(
-        generate_random_string(),
-        description=generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
         active=True,
         shortcuts={
-            "Services / Catalogs": generate_random_string(),
-            "Clouds / Providers": generate_random_string(),
+            "Services / Catalogs": fauxfactory.gen_alphanumeric(),
+            "Clouds / Providers": fauxfactory.gen_alphanumeric(),
         },
         visibility=["<By Role>", sel.ByText("EvmRole-administrator")]
     )
@@ -92,8 +92,8 @@ def test_menuwidget_crud():
 @pytest.mark.meta(blockers=[1209945])
 def test_reportwidget_crud():
     w = ReportWidget(
-        generate_random_string(),
-        description=generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
         active=True,
         filter=["Events", "Operations", "Operations VMs Powered On/Off for Last Week"],
         columns=["VM Name", "Message"],
@@ -110,8 +110,8 @@ def test_reportwidget_crud():
 @pytest.mark.meta(blockers=[1209945])
 def test_chartwidget_crud():
     w = ChartWidget(
-        generate_random_string(),
-        description=generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
         active=True,
         filter="Configuration Management/Virtual Machines/Vendor and Guest OS",
         timer={"run": "Hourly", "hours": "Hour"},
@@ -126,8 +126,8 @@ def test_chartwidget_crud():
 @pytest.mark.meta(blockers=[1209945])
 def test_rssfeedwidget_crud():
     w = RSSFeedWidget(
-        generate_random_string(),
-        description=generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
         active=True,
         type="Internal",
         feed="Administrative Events",
@@ -151,9 +151,9 @@ def test_rssfeedwidget_crud():
 
 def test_dashboard_crud():
     d = Dashboard(
-        generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         "EvmGroup-administrator",
-        generate_random_string(),
+        fauxfactory.gen_alphanumeric(),
         locked=False,
         widgets=["Top CPU Consumers (weekly)", "Vendor and Guest OS Chart"]
     )

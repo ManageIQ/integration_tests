@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 from cfme.cloud.instance import instance_factory, details_page
 from cfme.cloud.provider import prov_timeline
@@ -5,7 +7,6 @@ from cfme.web_ui import toolbar
 from utils import testgen
 from utils.log import logger
 from cfme.exceptions import ToolbarOptionGreyed
-from utils.randomness import generate_random_string
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.ignore_stream("5.2")]
@@ -34,7 +35,7 @@ def delete_fx_provider_event(db, provider_crud):
 @pytest.fixture(scope="module")
 def vm_name():
     # We have to use "tt" here to avoid name truncating in the timelines view
-    return "test_tt_{}".format(generate_random_string())
+    return "test_tt_{}".format(fauxfactory.gen_alphanumeric())
 
 
 @pytest.fixture(scope="module")

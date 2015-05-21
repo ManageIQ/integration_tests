@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from utils.conf import cfme_data
@@ -5,7 +7,6 @@ from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_fro
 from cfme.provisioning import cleanup_vm, do_vm_provisioning
 from utils import testgen
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -74,7 +75,7 @@ def provider_init(provider_key):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_pxe_prov_%s' % generate_random_string()
+    vm_name = 'test_pxe_prov_%s' % fauxfactory.gen_alphanumeric()
     return vm_name
 
 

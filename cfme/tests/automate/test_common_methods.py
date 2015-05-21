@@ -1,4 +1,5 @@
-#  -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from datetime import timedelta
@@ -9,7 +10,6 @@ from cfme.web_ui import toolbar
 from utils import testgen
 from utils.providers import setup_provider
 from utils.timeutil import parsetime
-from utils.randomness import generate_random_string
 from utils.wait import wait_for
 
 
@@ -52,7 +52,7 @@ def provider_init(provider_key):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_ae_methods_{}'.format(generate_random_string())
+    vm_name = 'test_ae_methods_{}'.format(fauxfactory.gen_alphanumeric())
     return vm_name
 
 
@@ -71,7 +71,7 @@ def testing_vm(request, vm_name, provider_init, provider_crud, provider_mgmt, pr
 
 @pytest.fixture(scope="function")
 def retire_extend_button(request):
-    grp_name = "grp_{}".format(generate_random_string())
+    grp_name = "grp_{}".format(fauxfactory.gen_alphanumeric())
     grp = ButtonGroup(
         text=grp_name,
         hover=grp_name,
@@ -79,7 +79,7 @@ def retire_extend_button(request):
     )
     request.addfinalizer(lambda: grp.delete_if_exists())
     grp.create()
-    btn_name = "btn_{}".format(generate_random_string())
+    btn_name = "btn_{}".format(fauxfactory.gen_alphanumeric())
     button = Button(
         group=grp,
         text=btn_name,

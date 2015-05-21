@@ -130,6 +130,7 @@ Members
 ^^^^^^^
 
 """
+import fauxfactory
 import inspect
 import logging
 import sys
@@ -144,7 +145,6 @@ import psphere
 
 from utils import conf, lazycache
 from utils.path import get_rel_path, log_path
-from utils.randomness import generate_random_string
 
 MARKER_LEN = 80
 
@@ -346,7 +346,7 @@ def create_logger(logger_name, filename=None):
 
     syslog_settings = _get_syslog_settings()
     if syslog_settings:
-        lid = generate_random_string(8)
+        lid = fauxfactory.gen_alphanumeric(8)
         fmt = '%(asctime)s [' + lid + '] %(message)s'
         syslog_formatter = SyslogMsecFormatter(fmt=fmt)
         syslog_handler = SysLogHandler(address=syslog_settings)

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import cfme.web_ui.flash as flash
 import pytest
 import random
@@ -8,7 +10,6 @@ from cfme.web_ui import toolbar
 from selenium.common.exceptions import NoSuchElementException
 from utils import testgen, error
 from utils.log import logger
-from utils.randomness import generate_random_string
 from utils.wait import wait_for, TimedOutError
 from utils.version import appliance_is_downstream, current_version
 
@@ -51,7 +52,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="class")
 def vm_name():
-    return "test_pwrctl_" + generate_random_string()
+    return "test_pwrctl_" + fauxfactory.gen_alphanumeric()
 
 
 @pytest.fixture(scope="class")

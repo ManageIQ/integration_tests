@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 """A model of Infrastructure Virtual Machines area of CFME.  This includes the VMs explorer tree,
 quadicon lists, and VM details page.
 """
+import fauxfactory
 import re
 from cfme import js
 from cfme.exceptions import CandidateNotFound, VmNotFound, OptionNotAvailable, TemplateNotFound
@@ -17,7 +19,6 @@ from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.randomness import generate_random_string
 from utils.timeutil import parsetime
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
@@ -669,8 +670,8 @@ class Vm(Common):
                    host_name=None, datastore_name=None):
         sel.force_navigate("infra_vm_by_name", context={'vm': self})
         lcl_btn("Migrate this VM", invokes_alert=True)
-        first_name = first_name or generate_random_string()
-        last_name = last_name or generate_random_string()
+        first_name = first_name or fauxfactory.gen_alphanumeric()
+        last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
         provisioning_data = {
             "first_name": first_name,
@@ -685,8 +686,8 @@ class Vm(Common):
     def clone_vm(self, email=None, first_name=None, last_name=None, vm_name=None):
         sel.force_navigate("infra_vm_by_name", context={'vm': self})
         lcl_btn("Clone this VM")
-        first_name = first_name or generate_random_string()
-        last_name = last_name or generate_random_string()
+        first_name = first_name or fauxfactory.gen_alphanumeric()
+        last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
         try:
             prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]
@@ -752,8 +753,8 @@ class Vm(Common):
     def publish_to_template(self, template_name, email=None, first_name=None, last_name=None):
         self.load_details()
         lcl_btn("Publish this VM to a Template")
-        first_name = first_name or generate_random_string()
-        last_name = last_name or generate_random_string()
+        first_name = first_name or fauxfactory.gen_alphanumeric()
+        last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
         try:
             prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]

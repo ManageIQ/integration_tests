@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.automate.buttons import ButtonGroup, Button
@@ -8,7 +9,6 @@ from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import fill, flash, form_buttons, toolbar, Input
 from utils import testgen
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 from utils.version import current_version  # NOQA
 from utils.wait import wait_for
 
@@ -26,7 +26,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def testing_group(request):
-    group_desc = generate_random_string()
+    group_desc = fauxfactory.gen_alphanumeric()
     group = ButtonGroup(
         text=group_desc,
         hover=group_desc,
@@ -41,7 +41,7 @@ def testing_group(request):
 def testing_vm(request, provisioning, provider_crud, provider_key):
     setup_provider(provider_key)
     vm = Vm(
-        name="test_ae_hd_{}".format(generate_random_string()),
+        name="test_ae_hd_{}".format(fauxfactory.gen_alphanumeric()),
         provider_crud=provider_crud,
         template_name=provisioning["template"]
     )
@@ -91,18 +91,18 @@ def test_vmware_vimapi_hotadd_disk(
         'default_text_box': "Default text"
     }
     dialog = ServiceDialog(
-        label=generate_random_string(),
-        description=generate_random_string(),
+        label=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric(),
         submit=True,
-        tab_label=generate_random_string(),
-        tab_desc=generate_random_string(),
-        box_label=generate_random_string(),
-        box_desc=generate_random_string(),
+        tab_label=fauxfactory.gen_alphanumeric(),
+        tab_desc=fauxfactory.gen_alphanumeric(),
+        box_label=fauxfactory.gen_alphanumeric(),
+        box_desc=fauxfactory.gen_alphanumeric(),
     )
     dialog.create(element_data)
     request.addfinalizer(lambda: dialog.delete())
     # Button that will invoke the dialog and action
-    button_name = generate_random_string()
+    button_name = fauxfactory.gen_alphanumeric()
     button = Button(group=testing_group,
                     text=button_name,
                     hover=button_name,

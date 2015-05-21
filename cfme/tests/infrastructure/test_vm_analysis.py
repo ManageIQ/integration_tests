@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import fauxfactory
 import pytest
 import random
 import re
@@ -12,7 +12,6 @@ from utils import conf, testgen, version
 from utils.appliance import Appliance, provision_appliance
 from utils.log import logger
 from utils.wait import wait_for
-from utils.randomness import generate_random_string
 
 """
 This test suite focuses on vm analysis functionality.  Because analysis is specific to the provider,
@@ -129,7 +128,7 @@ def get_appliance(provider_crud):
 
 @pytest.fixture(scope="class")
 def vm_name(vm_template_name):
-    return "test_vmfleece_" + vm_template_name + "_" + generate_random_string()
+    return "test_vmfleece_" + vm_template_name + "_" + fauxfactory.gen_alphanumeric()
 
 
 @pytest.fixture(scope="class")

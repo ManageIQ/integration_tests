@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+import fauxfactory
 import hashlib
 import random
 import re
@@ -25,7 +26,6 @@ from utils.appliance import Appliance as CFMEAppliance
 from utils.log import create_logger
 from utils.path import project_path
 from utils.providers import provider_factory
-from utils.randomness import generate_random_string
 from utils.timeutil import parsetime
 from utils.trackerbot import api, parse_template
 
@@ -290,7 +290,7 @@ def create_appliance_template(provider_id, group_id, template_name):
             raise ValueError("Could not parse template name {} properly".format(template_name))
         template_version = retrieve_cfme_appliance_version(template_name)
         new_template_name = settings.TEMPLATE_FORMAT.format(
-            group=group.id, date=date.strftime("%y%m%d"), rnd=generate_random_string())
+            group=group.id, date=date.strftime("%y%m%d"), rnd=fauxfactory.gen_alphanumeric(8))
         if provider.template_name_length is not None:
             allowed_length = provider.template_name_length
             # There is some limit
@@ -305,7 +305,7 @@ def create_appliance_template(provider_id, group_id, template_name):
                     # Another solution
                     new_template_name = settings.TEMPLATE_FORMAT.format(
                         group=group.id[:2], date=date.strftime("%y%m%d"),  # Use only first 2 of grp
-                        rnd=generate_random_string(2))  # And just 2 chars random
+                        rnd=fauxfactory.gen_alphanumeric(2))  # And just 2 chars random
                     # TODO: If anything larger comes, do fix that!
         template = Template(
             provider=provider, template_group=group, name=new_template_name, date=date,
@@ -444,7 +444,7 @@ def prepare_template_finish(self, template_id):
     template.set_status("Finishing template creation.")
     try:
         if template.temporary_name is None:
-            tmp_name = "templatize_{}".format(generate_random_string())
+            tmp_name = "templatize_{}".format(fauxfactory.gen_alphanumeric(8))
             Template.objects.get(id=template_id).temporary_name = tmp_name
         else:
             tmp_name = template.temporary_name
@@ -581,7 +581,7 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
     new_appliance_name = settings.APPLIANCE_FORMAT.format(
         group=template.template_group.id,
         date=template.date.strftime("%y%m%d"),
-        rnd=generate_random_string())
+        rnd=fauxfactory.gen_alphanumeric(8))
     with transaction.atomic():
         pool = AppliancePool.objects.get(id=appliance_pool_id)
         if pool.not_needed_anymore:
@@ -615,7 +615,7 @@ def clone_template(template_id):
     new_appliance_name = settings.APPLIANCE_FORMAT.format(
         group=template.template_group.id,
         date=template.date.strftime("%y%m%d"),
-        rnd=generate_random_string())
+        rnd=fauxfactory.gen_alphanumeric(8))
     appliance = Appliance(template=template, name=new_appliance_name)
     appliance.save()
     clone_template_to_appliance.delay(appliance.id)
@@ -1049,7 +1049,7 @@ def generic_shepherd(preconfigured):
             new_appliance_name = settings.APPLIANCE_FORMAT.format(
                 group=template.template_group.id,
                 date=template.date.strftime("%y%m%d"),
-                rnd=generate_random_string())
+                rnd=fauxfactory.gen_alphanumeric(8))
             with transaction.atomic():
                 # Now look for templates that are on non-busy providers
                 tpl_free = filter(
@@ -1192,7 +1192,7 @@ def rename_appliances_for_pool(self, pool_id):
             )
             if appliance.template.version:
                 new_name += "-{}".format(appliance.template.version)
-            new_name += "-{}".format(generate_random_string(size=4))
+            new_name += "-{}".format(fauxfactory.gen_alphanumeric(length=4))
             appliance_rename.apply_async(
                 countdown=10,  # To prevent clogging with the transaction.atomic
                 args=(appliance.id, new_name))

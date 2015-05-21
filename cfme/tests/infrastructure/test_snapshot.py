@@ -1,11 +1,11 @@
-
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
 from utils import testgen
 from utils.conf import credentials
 from utils.providers import setup_provider
-from utils.randomness import generate_random_string
 from utils.log import logger
 from utils.ssh import SSHClient
 from utils.wait import wait_for
@@ -28,7 +28,7 @@ def provider_init(provider_key):
 
 @pytest.fixture(scope="module")
 def vm_name():
-    return "test_snpsht_" + generate_random_string()
+    return "test_snpsht_" + fauxfactory.gen_alphanumeric()
 
 
 @pytest.fixture(scope="module")
@@ -42,8 +42,9 @@ def test_vm(request, provider_init, provider_crud, provider_mgmt, vm_name):
 
 
 def new_snapshot(test_vm):
-    new_snapshot = Vm.Snapshot(name="snpshot_" + generate_random_string(), description="snapshot",
-                        memory=False, parent_vm=test_vm)
+    new_snapshot = Vm.Snapshot(
+        name="snpshot_" + fauxfactory.gen_alphanumeric(8),
+        description="snapshot", memory=False, parent_vm=test_vm)
     return new_snapshot
 
 

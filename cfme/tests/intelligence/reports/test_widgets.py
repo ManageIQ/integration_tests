@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """"""
+import fauxfactory
 import pytest
 
 from cfme.fixtures import pytest_selenium as sel
@@ -7,7 +8,6 @@ from cfme.dashboard import Widget
 from cfme.intelligence.reports.widgets import MenuWidget, ReportWidget, RSSFeedWidget, ChartWidget
 from cfme.intelligence.reports.dashboards import DefaultDashboard
 from cfme.web_ui import toolbar
-from utils.randomness import generate_random_string
 from utils.update import update
 
 
@@ -26,17 +26,17 @@ def dashboard(default_widgets):
 def custom_widgets(request):
     ws = [
         MenuWidget(
-            generate_random_string(),
-            description=generate_random_string(),
+            fauxfactory.gen_alphanumeric(),
+            description=fauxfactory.gen_alphanumeric(),
             active=True,
             shortcuts={
-                "Services / Catalogs": generate_random_string(),
-                "Clouds / Providers": generate_random_string(),
+                "Services / Catalogs": fauxfactory.gen_alphanumeric(),
+                "Clouds / Providers": fauxfactory.gen_alphanumeric(),
             },
             visibility="<To All Users>"),
         ReportWidget(
-            generate_random_string(),
-            description=generate_random_string(),
+            fauxfactory.gen_alphanumeric(),
+            description=fauxfactory.gen_alphanumeric(),
             active=True,
             filter=["Events", "Operations", "Operations VMs Powered On/Off for Last Week"],
             columns=["VM Name", "Message"],
@@ -44,15 +44,15 @@ def custom_widgets(request):
             timer={"run": "Hourly", "hours": "Hour"},
             visibility="<To All Users>"),
         ChartWidget(
-            generate_random_string(),
-            description=generate_random_string(),
+            fauxfactory.gen_alphanumeric(),
+            description=fauxfactory.gen_alphanumeric(),
             active=True,
             filter="Configuration Management/Virtual Machines/Vendor and Guest OS",
             timer={"run": "Hourly", "hours": "Hour"},
             visibility="<To All Users>"),
         RSSFeedWidget(
-            generate_random_string(),
-            description=generate_random_string(),
+            fauxfactory.gen_alphanumeric(),
+            description=fauxfactory.gen_alphanumeric(),
             active=True,
             type="Internal",
             feed="Administrative Events",

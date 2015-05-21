@@ -10,6 +10,7 @@ normally be placed in main function, are located in function run(**kwargs).
 """
 
 import argparse
+import fauxfactory
 import sys
 
 from ovirtsdk.api import API
@@ -17,15 +18,14 @@ from ovirtsdk.xml import params
 
 from utils.conf import cfme_data
 from utils.conf import credentials
-from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
 
 # temporary vm name (this vm will be deleted)
-TEMP_VM_NAME = 'auto-vm-%s' % generate_random_string()
+TEMP_VM_NAME = 'auto-vm-%s' % fauxfactory.gen_alphanumeric(8)
 # temporary template name (this template will be deleted)
-TEMP_TMP_NAME = 'auto-tmp-%s' % generate_random_string()
+TEMP_TMP_NAME = 'auto-tmp-%s' % fauxfactory.gen_alphanumeric(8)
 
 
 def parse_cmd_line():

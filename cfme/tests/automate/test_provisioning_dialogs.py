@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.automate import provisioning_dialogs
-from utils.randomness import generate_random_string
 from utils.update import update
 
 
@@ -10,8 +10,8 @@ from utils.update import update
 def dialog():
     dlg = provisioning_dialogs.ProvisioningDialog(
         provisioning_dialogs.ProvisioningDialog.VM_PROVISION,
-        name=generate_random_string(),
-        description=generate_random_string()
+        name=fauxfactory.gen_alphanumeric(),
+        description=fauxfactory.gen_alphanumeric()
     )
     yield dlg
     if dlg.exists:
@@ -22,8 +22,8 @@ def test_provisioning_dialog_crud(dialog):
     dialog.create()
     assert dialog.exists
     with update(dialog):
-        dialog.name = generate_random_string()
-        dialog.description = generate_random_string()
+        dialog.name = fauxfactory.gen_alphanumeric()
+        dialog.description = fauxfactory.gen_alphanumeric()
     assert dialog.exists
     dialog.change_type(provisioning_dialogs.ProvisioningDialog.HOST_PROVISION)
     assert dialog.exists

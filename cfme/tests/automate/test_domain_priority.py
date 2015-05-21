@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
 from cfme.automate.explorer import set_domain_order
 from cfme.automate.simulation import simulate
 from utils.providers import setup_a_provider as _setup_a_provider
-from utils.randomness import generate_random_string
 from utils.update import update
 from utils.wait import wait_for
 
@@ -18,7 +18,7 @@ pytestmark = [
 def setup_a_provider():
     _setup_a_provider("infra")
 
-FILE_LOCATION = "/var/www/miq/vmdb/test_ae_{}".format(generate_random_string(16))
+FILE_LOCATION = "/var/www/miq/vmdb/test_ae_{}".format(fauxfactory.gen_alphanumeric(16))
 
 METHOD_TORSO = """
 $evm.log("info", "Automate Method Started")
@@ -32,7 +32,7 @@ exit MIQ_OK
 
 @pytest.fixture(scope="function")
 def copy_domain(request):
-    domain = Domain(name=generate_random_string(), enabled=True)
+    domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
     return domain
@@ -40,18 +40,18 @@ def copy_domain(request):
 
 @pytest.fixture(scope="function")
 def original_method_write_data():
-    return generate_random_string(32)
+    return fauxfactory.gen_alphanumeric(32)
 
 
 @pytest.fixture(scope="function")
 def copy_method_write_data():
-    return generate_random_string(32)
+    return fauxfactory.gen_alphanumeric(32)
 
 
 @pytest.fixture(scope="function")
 def original_method(request, original_method_write_data):
     method = Method(
-        name=generate_random_string(),
+        name=fauxfactory.gen_alphanumeric(),
         data=METHOD_TORSO.format(original_method_write_data),
         cls=Class(
             name="Request",
@@ -72,7 +72,7 @@ def original_instance(request, original_method):
         with update(Domain.default):
             Domain.default.enabled = True
     instance = Instance(
-        name=generate_random_string(),
+        name=fauxfactory.gen_alphanumeric(),
         values={
             "meth5": {
                 "value": original_method.name

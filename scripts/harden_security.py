@@ -25,12 +25,12 @@ Example usage:
 """
 
 import argparse
+import fauxfactory
 import re
 import socket
 import sys
 
 from utils.conf import credentials
-from utils.randomness import generate_random_string
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -48,7 +48,7 @@ def main():
         for child in args.children:
             print "Child: " + child
 
-    local_key_name = "v2_key_" + generate_random_string()
+    local_key_name = "v2_key_" + fauxfactory.gen_alphanumeric(8)
 
     ssh_creds = {
         'username': credentials['ssh']['username'],

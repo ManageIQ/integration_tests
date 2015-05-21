@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from utils.conf import cfme_data
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
 from cfme.provisioning import cleanup_vm, do_vm_provisioning
 from utils import testgen
-from utils.randomness import generate_random_string
 from utils.providers import setup_provider
 
 pytestmark = [
@@ -71,7 +72,7 @@ def provider_init(provider_key, iso_cust_template, provisioning, iso_datastore):
 
 @pytest.fixture(scope="function")
 def vm_name():
-    vm_name = 'test_iso_prov_%s' % generate_random_string()
+    vm_name = 'test_iso_prov_%s' % fauxfactory.gen_alphanumeric(8)
     return vm_name
 
 

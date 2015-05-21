@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 from cfme.services.catalogs.catalog import Catalog
 import pytest
-import utils.randomness as rand
 from utils.update import update
 import utils.error as error
 import cfme.tests.configure.test_access_control as tac
@@ -9,7 +10,7 @@ pytestmark = [pytest.mark.usefixtures("logged_in")]
 
 
 def test_catalog_crud():
-    cat = Catalog(name=rand.generate_random_string(),
+    cat = Catalog(name=fauxfactory.gen_alphanumeric(),
                   description="my catalog")
     cat.create()
     with update(cat):
@@ -18,7 +19,7 @@ def test_catalog_crud():
 
 
 def test_catalog_duplicate_name():
-    cat = Catalog(name=rand.generate_random_string(),
+    cat = Catalog(name=fauxfactory.gen_alphanumeric(),
                   description="my catalog")
     cat.create()
     with error.expected("Name has already been taken"):
@@ -29,7 +30,7 @@ def test_catalog_duplicate_name():
 @pytest.mark.meta(blockers=[1130301])
 def test_permissions_catalog_add(setup_cloud_providers):
     """ Tests that a catalog can be added only with the right permissions"""
-    cat = Catalog(name=rand.generate_random_string(),
+    cat = Catalog(name=fauxfactory.gen_alphanumeric(),
                   description="my catalog")
 
     tac.single_task_permission_test([['Services', 'Catalogs Explorer', 'Catalogs']],

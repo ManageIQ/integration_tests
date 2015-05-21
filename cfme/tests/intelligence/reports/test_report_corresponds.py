@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
+from random import sample
 
 import utils
 from cfme.intelligence.reports.reports import CustomReport
 from utils import version
 from utils.providers import provider_factory_by_name, setup_a_provider
-from utils.randomness import generate_random_string, pick
 from utils.version import since_date_or_version
 
 
@@ -17,8 +18,8 @@ def setup_first_provider():
 @pytest.yield_fixture(scope="function")
 def report_vms(setup_first_provider):
     report = CustomReport(
-        menu_name=generate_random_string(),
-        title=generate_random_string(),
+        menu_name=fauxfactory.gen_alphanumeric(),
+        title=fauxfactory.gen_alphanumeric(),
         base_report_on="Virtual Machines",
         report_fields=[
             version.pick({
@@ -41,7 +42,7 @@ def report_vms(setup_first_provider):
     )
     report.create()
     report.queue(wait_for_finish=True)
-    yield pick(
+    yield sample(
         filter(
             lambda i: len(i[
                 version.pick({

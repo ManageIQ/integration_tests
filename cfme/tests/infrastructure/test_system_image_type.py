@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
 from cfme.infrastructure import pxe
 import utils.error as error
-from utils.randomness import generate_random_string
 from utils.update import update
 
 pytestmark = [pytest.mark.usefixtures("logged_in")]
@@ -13,7 +14,7 @@ def test_system_image_type_crud():
     Tests a System Image Type using CRUD operations.
     """
     sys_image_type = pxe.SystemImageType(
-        name=generate_random_string(size=8),
+        name=fauxfactory.gen_alphanumeric(8),
         provision_type='Vm')
     sys_image_type.create()
     with update(sys_image_type):
@@ -26,7 +27,7 @@ def test_duplicate_name_error_validation():
     Tests a System Image for duplicate name.
     """
     sys_image_type = pxe.SystemImageType(
-        name=generate_random_string(size=8),
+        name=fauxfactory.gen_alphanumeric(8),
         provision_type='Vm')
     sys_image_type.create()
     with error.expected('Name has already been taken'):
@@ -52,7 +53,7 @@ def test_name_required_error_validation():
 #    Tests a System Image name with max characters.
 #    """
 #    sys_image_type = pxe.SystemImageType(
-#        name=generate_random_string(size=256),
+#        name=fauxfactory.gen_alphanumeric(256),
 #        provision_type='Vm')
 #    sys_image_type.create()
 #    sys_image_type.delete(cancel=False)

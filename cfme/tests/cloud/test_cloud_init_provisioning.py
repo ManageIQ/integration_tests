@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
 # These tests don't work at the moment, due to the security_groups multi select not working
 # in selenium (the group is selected then immediately reset)
+import fauxfactory
 import pytest
 
 from cfme.cloud.instance import instance_factory
@@ -9,7 +11,6 @@ from cfme.infrastructure.pxe import get_template_from_config
 from utils.conf import cfme_data
 from utils import testgen, ssh
 from utils.wait import wait_for
-from utils.randomness import generate_random_string
 
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
@@ -52,7 +53,7 @@ def setup_ci_template(cloud_init_template):
 
 @pytest.fixture(scope="function")
 def vm_name(request, provider_mgmt):
-    vm_name = 'test_image_prov_%s' % generate_random_string()
+    vm_name = 'test_image_prov_%s' % fauxfactory.gen_alphanumeric()
     return vm_name
 
 

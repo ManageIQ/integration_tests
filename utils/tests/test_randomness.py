@@ -8,37 +8,6 @@ pytestmark = [
 ]
 
 
-def test_generate_random_string_noargs():
-    random_string = randomness.generate_random_string()
-    # 8 is the default length
-    assert len(random_string) == 8
-
-
-def test_generate_random_string_args():
-    length = 16
-    random_string = randomness.generate_random_string(length)
-    assert len(random_string) == length
-
-
-def test_generate_random_int_noargs():
-    # maxint is the default max, so no need to check against it
-    random_int = randomness.generate_random_int()
-    assert random_int > 0
-
-
-def test_generate_random_int_args():
-    maxvalue = 1
-    random_int = randomness.generate_random_int(maxvalue)
-    assert 0 <= random_int <= maxvalue
-
-
-def test_generate_random_uuid():
-    """Not sure if there's a better test than a string of normal uuid length (36)"""
-    uuid = randomness.generate_random_uuid_as_str()
-    assert len(uuid) == 36
-    assert isinstance(uuid, basestring)
-
-
 def test_randomness_fixtures(random_uuid_as_string, random_string):
     """Make sure the fixtures work as intended"""
     assert len(random_uuid_as_string) == 36

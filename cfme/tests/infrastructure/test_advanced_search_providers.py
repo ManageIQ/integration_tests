@@ -2,6 +2,7 @@
 """This testing module tests the behaviour of the search box in the Provider section
 
 It does not check for filtering results so far."""
+import fauxfactory
 import pytest
 
 from cfme.fixtures import pytest_selenium as sel
@@ -10,7 +11,6 @@ from utils.providers import setup_a_provider
 from cfme.web_ui import search
 from cfme.web_ui.cfme_exception import (assert_no_cfme_exception,
     is_cfme_exception, cfme_exception_text)
-from utils.randomness import generate_random_string
 
 
 @pytest.fixture(scope="module")
@@ -87,7 +87,7 @@ def test_filter_with_user_input_and_cancellation(providers):
 @pytest.mark.meta(blockers=[1168336])
 def test_filter_save_cancel(request, providers, ssh_client):
     sel.force_navigate("infrastructure_providers")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     # Set up finalizer
     request.addfinalizer(
         lambda: ssh_client.run_rails_command(
@@ -103,7 +103,7 @@ def test_filter_save_cancel(request, providers, ssh_client):
 @pytest.mark.meta(blockers=[1168336])
 def test_filter_save_and_load(request, providers, ssh_client):
     sel.force_navigate("infrastructure_providers")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     # Set up finalizer
     request.addfinalizer(
         lambda: ssh_client.run_rails_command(
@@ -122,7 +122,7 @@ def test_filter_save_and_load(request, providers, ssh_client):
 @pytest.mark.meta(blockers=[1168336])
 def test_filter_save_and_cancel_load(request, providers, ssh_client):
     sel.force_navigate("infrastructure_providers")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     # Set up finalizer
     request.addfinalizer(
         lambda: ssh_client.run_rails_command(
@@ -147,7 +147,7 @@ def test_filter_save_and_cancel_load(request, providers, ssh_client):
 @pytest.mark.meta(blockers=[1168336])
 def test_filter_save_and_load_cancel(request, providers, ssh_client):
     sel.force_navigate("infrastructure_providers")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     # Set up finalizer
     request.addfinalizer(
         lambda: ssh_client.run_rails_command(
@@ -179,7 +179,7 @@ def test_quick_search_without_filter(request, providers):
     # Make sure that we empty the regular search field after the test
     request.addfinalizer(search.ensure_normal_search_empty)
     # Filter this host only
-    search.normal_search(generate_random_string())
+    search.normal_search(fauxfactory.gen_alphanumeric())
     assert_no_cfme_exception()
 
 
@@ -190,14 +190,14 @@ def test_quick_search_with_filter(request, providers):
     # Make sure that we empty the regular search field after the test
     request.addfinalizer(search.ensure_normal_search_empty)
     # Filter this host only
-    search.normal_search(generate_random_string())
+    search.normal_search(fauxfactory.gen_alphanumeric())
     assert_no_cfme_exception()
 
 
 @pytest.mark.meta(blockers=[1168336])
 def test_can_delete_filter():
     sel.force_navigate("infrastructure_providers")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
     assert_no_cfme_exception()
     search.reset_filter()
@@ -213,7 +213,7 @@ def test_can_delete_filter():
 def test_delete_button_should_appear_after_save(request):
     """Delete button appears only after load, not after save"""
     sel.force_navigate("infrastructure_providers")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
 
     def cleanup():
@@ -230,7 +230,7 @@ def test_delete_button_should_appear_after_save(request):
 def test_cannot_delete_more_than_once(request):
     """When Delete button appars, it does not want to go away"""
     sel.force_navigate("infrastructure_providers")
-    filter_name = generate_random_string()
+    filter_name = fauxfactory.gen_alphanumeric()
     search.save_filter("fill_count(Infrastructure Provider.VMs, >, 0)", filter_name)
 
     search.load_filter(filter_name)  # circumvent the thing happening in previous test
