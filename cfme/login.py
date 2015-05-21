@@ -15,7 +15,7 @@ import cfme.web_ui.flash as flash
 from cfme import dashboard
 from cfme.web_ui import Region, Form, fill, Input
 from utils import conf
-from utils.browser import ensure_browser_open
+from utils.browser import ensure_browser_open, quit
 from utils.log import logger
 from utils.pretty import Pretty
 
@@ -110,7 +110,24 @@ def login(username, password, submit_method=_js_auth_fn):
         sel.sleep(1.0)
 
         logger.debug('Logging in as user %s' % username)
-        fill(form, {'username': username, 'password': password})
+        try:
+            fill(form, {'username': username, 'password': password})
+        except sel.InvalidElementStateException as e:
+            logger.warning("Got an error. Details follow.")
+            msg = str(e).lower()
+            if "element is read-only" in msg:
+                logger.warning("Got a read-only login form, will reload the browser.")
+                # Reload browser
+                quit()
+                ensure_browser_open()
+                sel.sleep(1.0)
+                sel.wait_for_ajax()
+                # And try filling the form again
+                fill(form, {'username': username, 'password': password})
+            else:
+                logger.warning("Unknown error, reraising.")
+                logger.exception(e)
+                raise
         with sel.ajax_timeout(90):
             submit_method()
         flash.assert_no_errors()
