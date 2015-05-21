@@ -6,6 +6,8 @@ from cfme import login
 from utils.conf import cfme_data
 from utils.providers import setup_a_provider
 
+pytestmark = [pytest.mark.uncollect]
+
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
