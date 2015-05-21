@@ -7,8 +7,7 @@ import pytest
 import cfme.web_ui.flash as flash
 import utils.error as error
 from cfme.infrastructure import provider
-from utils import testgen
-from utils import providers
+from utils import testgen, providers, version
 from utils.update import update
 
 
@@ -68,6 +67,7 @@ def test_host_name_required_validation():
 
 
 @pytest.mark.meta(blockers=[1209756])
+@pytest.mark.uncollectif(lambda: version.current_version() > "5.4.0.0.24")
 def test_ip_required_validation():
     """Test to validate the ip address while adding a provider"""
     prov = provider.VMwareProvider(
