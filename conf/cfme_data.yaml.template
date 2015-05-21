@@ -119,6 +119,25 @@ management_systems:
         network: defaultnetwork
         test_vm_power_control:
             - pwr-ctl-vm-1-dnd
+configuration_managers:
+    sat6:
+        name: Satellite 6
+        url: my-satellite.example.com
+        ssl: false
+        credentials: satellite_creds
+        provisioning: true
+        config_profiles:
+            - rhel7
+            - rhel6
+    foreman17:
+        name: Foreman 1.7
+        url: 10.0.2.1
+        ssl: false
+        credentials: foreman_creds
+        provisioning: false
+        config_profiles:
+            - centos
+            - fedora
 management_hosts:
     esx:
         name: esx-01

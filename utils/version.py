@@ -488,6 +488,7 @@ class LooseVersion (Version):
 
 LOWEST = LooseVersion(oldest=True)
 LATEST = LooseVersion(latest=True)
+UPSTREAM = LATEST
 
 SPTuple = namedtuple('StreamProductTuple', ['stream', 'product_version'])
 
