@@ -14,6 +14,7 @@ import fauxfactory
 import pytest
 from cfme.control import explorer
 from cfme.infrastructure.provider import RHEVMProvider
+from cfme.infrastructure.virtual_machines import Vm
 from datetime import datetime
 from functools import partial
 from utils import mgmt_system, testgen
@@ -102,9 +103,13 @@ def get_vm_object(vm_name):
 
 
 @pytest.fixture(scope="module")
-def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small_template):
+def vm_name(provider_key):
+    return "test_act-{}-{}".format(provider_key, fauxfactory.gen_alpha().lower())
+
+
+@pytest.fixture(scope="module")
+def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small_template, vm_name):
     setup_provider(provider_key)
-    vm_name = "test_actions-{}-{}".format(provider_key, fauxfactory.gen_alphanumeric())
 
     if isinstance(provider_mgmt, mgmt_system.RHEVMSystem):
         kwargs = {"cluster": provider_data["default_cluster"]}
@@ -190,18 +195,26 @@ def automate_role_set(request):
     configuration.set_server_roles(**old_roles)
 
 
+@pytest.fixture(scope="module")
+def vm_crud(vm_name, provider_crud):
+    return Vm(vm_name, provider_crud)
+
+
 @pytest.fixture(scope="function")
-def vm_on(vm):
+def vm_on(vm, vm_crud):
     """ Ensures that the VM is on when the control goes to the test."""
     vm.wait_vm_steady()
     if not vm.is_vm_running():
         vm.start_vm()
         vm.wait_vm_running()
+        # Make sure the state is consistent
+        vm_crud.refresh_relationships(from_details=True)
+        vm_crud.wait_for_vm_state_change(desired_state=Vm.STATE_ON, from_details=True)
     return vm
 
 
 @pytest.fixture(scope="function")
-def vm_off(vm):
+def vm_off(vm, vm_crud):
     """ Ensures that the VM is off when the control goes to the test."""
     vm.wait_vm_steady()
     if vm.is_vm_suspended():
@@ -210,6 +223,9 @@ def vm_off(vm):
     if not vm.is_vm_stopped():
         vm.stop_vm()
         vm.wait_vm_stopped()
+        # Make sure the state is consistent
+        vm_crud.refresh_relationships(from_details=True)
+        vm_crud.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, from_details=True)
     return vm
 
 
