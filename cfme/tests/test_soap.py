@@ -16,7 +16,7 @@ pytest_generate_tests = testgen.generate(
 )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="class")
 def setup_a_provider():
     _setup_a_provider("infra")
 
@@ -459,40 +459,39 @@ class TestSoapBasicInteraction(object):
             pytest.fail("Could not find tags for vm {}".format(vm.name))
 
 
-@pytest.mark.meta(
-    server_roles="+automate",
-    blockers=[
-        BZ(1118831, unblock=lambda appliance_version: appliance_version < "5.3"),
-        1131480,
-        1132578
-    ]
-)
-@pytest.mark.usefixtures("setup_provider")
-def test_provision_via_soap(
-        request, soap_client, provider_key, provider_data, provider_mgmt, small_template):
-    """Tests soap
+class TestProvisioning(object):
+    @pytest.mark.meta(
+        server_roles="+automate",
+        blockers=[
+            BZ(1118831, unblock=lambda appliance_version: appliance_version < "5.3"),
+            1131480,
+            1132578
+        ]
+    )
+    @pytest.mark.usefixtures("setup_provider_clsscope")
+    def test_provision_via_soap(
+            self, request, soap_client, provider_key, provider_data, provider_mgmt, small_template):
+        """Tests soap
 
-    Metadata:
-        test_flag: soap, provision
-    """
-    vm_name = "test_soap_provision_{}".format(fauxfactory.gen_alphanumeric())
-    vlan = provider_data.get("provisioning", {}).get("vlan", None)
+        Metadata:
+            test_flag: soap, provision
+        """
+        vm_name = "test_soap_provision_{}".format(fauxfactory.gen_alphanumeric())
+        vlan = provider_data.get("provisioning", {}).get("vlan", None)
 
-    def _cleanup():
-        try:
-            if provider_mgmt.does_vm_exist(vm_name):
-                provider_mgmt.delete_vm(vm_name)
-        except:
-            pass
+        def _cleanup():
+            try:
+                if provider_mgmt.does_vm_exist(vm_name):
+                    provider_mgmt.delete_vm(vm_name)
+            except:
+                pass
 
-    request.addfinalizer(_cleanup)
-    set_client(soap_client)
-    vm = MiqVM.provision_from_template(small_template, vm_name, vlan=vlan, wait_min=10,)
-    request.addfinalizer(lambda: vm.delete() if vm.exists else None)
-    if vm.is_powered_on:
-        vm.power_off()
-        vm.wait_powered_off(wait_time=300)
-    vm.power_on()
-    vm.wait_powered_on(wait_time=300)
-    vm.power_off()
-    vm.wait_powered_off(wait_time=300)
+        request.addfinalizer(_cleanup)
+        set_client(soap_client)
+        vm = MiqVM.provision_from_template(small_template, vm_name, vlan=vlan, wait_min=10,)
+        request.addfinalizer(lambda: vm.delete() if vm.exists else None)
+        if vm.is_powered_on:
+            vm.power_off()
+            vm.wait_powered_off(wait_time=300)
+        vm.power_on()
+        vm.wait_powered_on(wait_time=300)
