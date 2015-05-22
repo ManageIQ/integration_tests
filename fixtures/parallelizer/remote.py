@@ -33,40 +33,15 @@ class SlaveManager(object):
     def send_event(self, name, **kwargs):
         kwargs['_event_name'] = name
         self.log.trace("sending %s %r", name, kwargs)
-
-        # send message
-        sent = False
-        while not sent:
-            try:
-                self.sock.send_json(kwargs)
-                sent = True
-            except zmq.ZMQError as e:
-                if e.errno == zmq.EAGAIN:
-                    # message not queued for send, retry
-                    continue
-                else:
-                    raise
-
-        # receive response, probably "ack"
-        recved = False
-        while not recved:
-            try:
-                recv = self.sock.recv_json(flags=zmq.NOBLOCK)
-                recved = True
-            except zmq.ZMQError as e:
-                if e.errno == zmq.EAGAIN:
-                    # response not available yet, retry
-                    continue
-                else:
-                    raise
-            else:
-                if recv == 'die':
-                    self.log.info('Slave instructed to die by master; shutting down')
-                    raise SystemExit()
-                else:
-                    self.log.trace('received "%r" from master', recv)
-                    if recv != 'ack':
-                        return recv
+        self.sock.send_json(kwargs)
+        recv = self.sock.recv_json()
+        if recv == 'die':
+            self.log.info('Slave instructed to die by master; shutting down')
+            raise SystemExit()
+        else:
+            self.log.trace('received "%r" from master', recv)
+            if recv != 'ack':
+                return recv
 
     def message(self, message, **kwargs):
         """Send a message to the master, which should get printed to the console"""
@@ -116,7 +91,7 @@ class SlaveManager(object):
         - iterates over and runs tests in the order received from the master
 
         """
-        self.message("running tests on appliance at {}".format(self.base_url))
+        self.message("running tests on appliance at {}".format(self.base_url), green=True)
         self.log.info("entering runtest loop")
         for item, nextitem in self._test_generator():
             if self.config.option.collectonly:

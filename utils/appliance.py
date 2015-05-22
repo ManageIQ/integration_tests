@@ -830,9 +830,10 @@ class IPAppliance(object):
         try:
             status, out = client.run_command('yum update -y --nogpgcheck', timeout=3600)
         except socket.timeout:
-            log_callback('SSH timed out while updating appliance, exiting')
+            msg = 'SSH timed out while updating appliance, exiting'
+            log_callback(msg)
             # failure to update is fatal, kill this process
-            raise SystemExit(1)
+            raise KeyboardInterrupt(msg)
 
         if status != 0:
             self.log.error('appliance update failed')
