@@ -30,7 +30,9 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             defaults to the function's name.
         fail_condition: An object describing the failure condition that should be tested
             against the output of func. If func() == fail_condition, wait_for continues
-            to wait.
+            to wait. Can be a callable which takes the result and returns boolean whether to fail.
+            You can also specify it as a  set, that way it checks whether it is present in the
+            iterable.
         handle_exception: A boolean controlling the handling of excepetions during func()
             invocation. If set to True, in cases where func() results in an exception,
             clobber the exception and treat it as a fail_condition.
@@ -67,10 +69,12 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
 
     fail_condition = kwargs.get('fail_condition', False)
 
-    if not callable(fail_condition):
-        fail_condition_check = lambda result: result == fail_condition
-    else:
+    if callable(fail_condition):
         fail_condition_check = fail_condition
+    elif isinstance(fail_condition, set):
+        fail_condition_check = lambda result: result in fail_condition
+    else:
+        fail_condition_check = lambda result: result == fail_condition
     handle_exception = kwargs.get('handle_exception', False)
     delay = kwargs.get('delay', 1)
     fail_func = kwargs.get('fail_func', None)
