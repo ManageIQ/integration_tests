@@ -67,7 +67,10 @@ if env_base_urls:
 # slaves will set this to a unique string when they're initialized
 conf.runtime['env']['slaveid'] = None
 
+# lock for protecting mutation of recv queue
 recv_lock = Lock()
+# lock for protecting zmq socket access
+zmq_lock = Lock()
 
 
 def pytest_addoption(parser):
@@ -312,7 +315,8 @@ class ParallelSession(object):
 
         """
         event_json = json.dumps(event_data)
-        self.sock.send_multipart([slaveid, '', event_json])
+        with zmq_lock:
+            self.sock.send_multipart([slaveid, '', event_json])
 
     def recv(self):
         """Return any unproccesed events from the recv queue"""
@@ -625,7 +629,11 @@ def _monitor_slave_shutdown(psession, slave, slaveid, runs=0):
 def _recv_queue(session):
     # poll the zmq socket, populate the recv queue deque with responses
     while not session.session_finished:
-        slaveid, empty, event_json = session.sock.recv_multipart()
+        try:
+            with zmq_lock:
+                slaveid, empty, event_json = session.sock.recv_multipart(flags=zmq.NOBLOCK)
+        except zmq.Again:
+            continue
         event_data = json.loads(event_json)
         event_name = event_data.pop('_event_name')
 
@@ -637,8 +645,6 @@ def _recv_queue(session):
         else:
             with recv_lock:
                 session._recv_queue.append((slaveid, event_data, event_name))
-        # 10ms tick rate on the zmq socket helps prevent the occasional snarl
-        sleep(.01)
 
 
 class TerminalDistReporter(object):
