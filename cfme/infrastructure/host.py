@@ -96,7 +96,7 @@ nav.add_branch('infrastructure_hosts',
                                     'infrastructure_provision_host':
                                     lambda _: lif_btn(
                                         version.pick({version.LOWEST: 'Provision this Host',
-                                                      '5.4': 'Provision items'}))}]})
+                                                      '5.4': 'Provision this item'}))}]})
 
 
 class Host(Updateable, Pretty):
