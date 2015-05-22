@@ -5,7 +5,7 @@ Used to communicate with providers without using CFME facilities
 """
 import fauxfactory
 from ovirtsdk.api import API
-from ovirtsdk.infrastructure.errors import DisconnectedError
+from ovirtsdk.infrastructure.errors import DisconnectedError, RequestError
 from ovirtsdk.xml import params
 
 from cfme import exceptions as cfme_exc
@@ -194,22 +194,41 @@ class RHEVMSystem(MgmtSystemAPIBase):
     def stop_vm(self, vm_name):
         self.wait_vm_steady(vm_name)
         logger.info(' Stopping RHEV VM %s' % vm_name)
-        vm = self._get_vm(vm_name)
-        if vm.status.get_state() == 'down':
+        if self.is_vm_stopped(vm_name):
             logger.info(' RHEV VM %s os already stopped.' % vm_name)
             return True
         else:
+            vm = self._get_vm(vm_name)
             vm.stop()
             self.wait_vm_stopped(vm_name)
             return True
 
     def delete_vm(self, vm_name):
         self.wait_vm_steady(vm_name)
-        vm = self._get_vm(vm_name)
         if not self.is_vm_stopped(vm_name):
             self.stop_vm(vm_name)
         logger.debug(' Deleting RHEV VM %s' % vm_name)
-        vm.delete()
+
+        def _do_delete():
+            """Returns True if you have to retry"""
+            if not self.does_vm_exist(vm_name):
+                return False
+            try:
+                vm = self._get_vm(vm_name)
+                vm.delete()
+            except RequestError as e:
+                # Handle some states that can occur and can be circumvented
+                if e.status == 409 and "Related operation" in e.detail:
+                    logger.info("Waiting for RHEV: {}:{} ({})".format(e.status, e.reason, e.detail))
+                    return True
+                else:
+                    raise  # Raise other so we can see them and eventually add them into handling
+                # TODO: handle 400 - but I haven't seen the error message, it was empty.
+            else:
+                return False
+
+        wait_for(_do_delete, fail_condition=True, num_sec=600, delay=15, message="execute delete")
+
         wait_for(
             lambda: self.does_vm_exist(vm_name),
             fail_condition=True,
