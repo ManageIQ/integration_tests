@@ -60,7 +60,7 @@ from multimethods import multimethod, multidispatch, Anything
 import cfme.fixtures.pytest_selenium as sel
 from cfme import exceptions
 from cfme.fixtures.pytest_selenium import browser
-from utils import lazycache, version
+from utils import classproperty, lazycache, version
 # For backward compatibility with code that pulls in Select from web_ui instead of sel
 from cfme.fixtures.pytest_selenium import Select
 from utils.log import logger
@@ -2176,6 +2176,15 @@ class Quadicon(Pretty):
     @staticmethod
     def get_first_quad_title():
         return sel.get_attribute("//div[@id='quadicon']/../../../tr/td/a", "title")
+
+    @classproperty
+    def any_present(cls):
+        try:
+            cls.get_first_quad_title()
+        except NoSuchElementException:
+            return False
+        else:
+            return True
 
     @property
     def name(self):
