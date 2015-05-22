@@ -302,6 +302,7 @@ def is_vm_analysis_finished(vm_name):
 
 
 def _scan_rest(rest_api, vm, rest):
+    wait_for(lambda: len(rest_api.collections.vms.find_by(name=vm.name)) > 0, num_sec=300, delay=10)
     vm_obj = rest_api.collections.vms.find_by(name=vm.name)[0]
     if rest == "rest_detail":
         vm_scan_obj = vm_obj.action.scan()
