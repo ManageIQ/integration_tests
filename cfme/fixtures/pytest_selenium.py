@@ -14,7 +14,7 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 
 from time import sleep
 from xml.sax.saxutils import quoteattr
-from collections import Iterable
+from collections import Iterable, namedtuple
 from contextlib import contextmanager
 from textwrap import dedent
 import json
@@ -1189,6 +1189,8 @@ class Select(SeleniumSelect, Pretty):
 
     pretty_attrs = ['_loc', 'is_multiple']
 
+    Option = namedtuple("Option", ["text", "value"])
+
     def __init__(self, loc, multi=False):
         if isinstance(loc, Select):
             self._loc = loc._loc
@@ -1204,7 +1206,7 @@ class Select(SeleniumSelect, Pretty):
     def all_options(self):
         """Returns a list of tuples of all the options in the Select"""
         els = execute_script("return arguments[0].options;", element(self))
-        return [(el.text, el.get_attribute('value')) for el in els]
+        return [self.Option(el.text, el.get_attribute('value')) for el in els]
 
     @property
     def all_selected_options(self):
@@ -1235,6 +1237,15 @@ class Select(SeleniumSelect, Pretty):
             raise NotImplementedError("You may only deselect all options of a multi-select")
         for opt in self.all_selected_options:
             raw_click(opt)
+
+    def select_by_visible_text(self, text):
+        """Dump all of the options if the required option is not present."""
+        try:
+            return super(Select, self).select_by_visible_text(text)
+        except NoSuchElementException as e:
+            msg = str(e)
+            available = ", ".join(repr(opt.text) for opt in self.all_options)
+            raise type(e)("{} - Available options: {}".format(msg, available))
 
     def locate(self):
         """Guards against passing wrong locator (not resolving to a select)."""
