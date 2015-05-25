@@ -368,11 +368,13 @@ def _test_vm_removal():
     virtual_machines.remove(vm_name, cancel=True)
 
 
-@pytest.mark.parametrize('product_features, action',
-                        [([['Infrastructure', 'Virtual Machines', 'Accordions'],
-                          ['Infrastructure', 'Virtual Machines', 'VM Access Rules',
-                           'Modify', 'Provision VMs']],
-                        _test_vm_provision)])
+@pytest.mark.parametrize(
+    ('product_features', 'action'),
+    [
+        ([['Infrastructure', 'Virtual Machines', 'Accordions'],
+          ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify', 'Provision VMs']],
+        _test_vm_provision)],
+    ids=["test_vm_provision"])
 def test_permission_edit(request, product_features, action):
     """
     Ensures that changes in permissions are enforced on next login
@@ -411,81 +413,89 @@ def _mk_role(name=None, vm_restriction=None, product_features=None):
 
     """
     name = name or fauxfactory.gen_alphanumeric()
-    return lambda: ac.Role(name=name,
-                           vm_restriction=vm_restriction,
-                           product_features=product_features)
-
-
-def _go_to(dest):
-    """Create a thunk that navigates to the given destination"""
-    return lambda: nav.go_to(dest)
+    return ac.Role(name=name, vm_restriction=vm_restriction, product_features=product_features)
 
 
 cat_name = "Configure"
 
 
 @pytest.mark.parametrize(
-    'role,allowed_actions,disallowed_actions',
-    [[_mk_role(product_features=[[['Everything'], False],  # minimal permission
-                                 [[cat_name, 'Tasks'], True]]),
-      {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
-      {
-          'my services': _go_to('my_services'),
-          'chargeback': _go_to('chargeback'),
-          'clouds providers': _go_to('clouds_providers'),
-          'infrastructure providers': _go_to('infrastructure_providers'),
-          'control explorer': _go_to('control_explorer'),
-          'automate explorer': _go_to('automate_explorer')}],
-     [_mk_role(product_features=[[['Everything'], True]]),  # full permissions
-      {
-          'my services': _go_to('my_services'),
-          'chargeback': _go_to('chargeback'),
-          'clouds providers': _go_to('clouds_providers'),
-          'infrastructure providers': _go_to('infrastructure_providers'),
-          'control explorer': _go_to('control_explorer'),
-          'automate explorer': _go_to('automate_explorer')},
-      {}]])
+    ('role', 'allowed_actions', 'disallowed_actions'), [
+        (   # Minimal permissions
+            _mk_role(product_features=[[['Everything'], False], [[cat_name, 'Tasks'], True]]),
+            {'tasks': lambda: sel.click(tasks.buttons.default)},  # can only access one thing
+            {
+                # Disallowed actions
+                'my services': 'my_services',
+                'chargeback': 'chargeback',
+                'clouds providers': 'clouds_providers',
+                'infrastructure providers': 'infrastructure_providers',
+                'control explorer': 'control_explorer',
+                'automate explorer': 'automate_explorer'}),
+        (   # Full permissions
+            _mk_role(product_features=[[['Everything'], True]]),
+            {
+                # Allowed actions
+                'my services': 'my_services',
+                'chargeback': 'chargeback',
+                'clouds providers': 'clouds_providers',
+                'infrastructure providers': 'infrastructure_providers',
+                'control explorer': 'control_explorer',
+                'automate explorer': 'automate_explorer'},
+            {
+                # No blocked actions
+            })],
+    ids=[
+        "minimal_permissions",
+        "full_permissions",
+    ])
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
-def test_permissions(role, allowed_actions, disallowed_actions):
+def test_permissions(request, role, allowed_actions, disallowed_actions):
     # create a user and role
-    role = role()  # call function to get role
+    request.addfinalizer(login.login_admin)
     role.create()
+    request.addfinalizer(role.delete)
     group = new_group(role=role.name)
     group.create()
+    request.addfinalizer(group.delete)
     user = new_user(group=group)
     user.create()
+    request.addfinalizer(user.delete)
     fails = {}
-    try:
-        login.login(user.credential.principal, user.credential.secret)
-        for name, action_thunk in allowed_actions.items():
-            try:
-                action_thunk()
-            except Exception:
-                fails[name] = "%s: %s" % (name, traceback.format_exc())
-        for name, action_thunk in disallowed_actions.items():
-            try:
-                with error.expected(Exception):
-                    action_thunk()
-            except error.UnexpectedSuccessException:
-                fails[name] = "%s: %s" % (name, traceback.format_exc())
-        if fails:
-            message = ''
-            for failure in fails.values():
-                message = "%s\n\n%s" % (message, failure)
-            raise Exception(message)
-    finally:
-        login.login_admin()
+    login.login(user.credential.principal, user.credential.secret)
+    for name, nav_dest in allowed_actions.items():
+        try:
+            if callable(nav_dest):
+                nav_dest()
+            else:
+                nav.go_to(nav_dest)
+        except Exception:
+            fails[name] = "%s: %s" % (name, traceback.format_exc())
+    for name, nav_dest in disallowed_actions.items():
+        try:
+            with error.expected(Exception):
+                if callable(nav_dest):
+                    nav_dest()
+                else:
+                    nav.go_to(nav_dest)
+        except error.UnexpectedSuccessException:
+            fails[name] = "%s: %s" % (name, traceback.format_exc())
+    if fails:
+        message = ''
+        for failure in fails.values():
+            message = "%s\n\n%s" % (message, failure)
+        raise Exception(message)
 
 
-def single_task_permission_test(product_features, actions):
+def single_task_permission_test(request, product_features, actions):
     """Tests that action succeeds when product_features are enabled, and
        fail when everything but product_features are enabled"""
-    test_permissions(_mk_role(name=fauxfactory.gen_alphanumeric(),
+    test_permissions(request, _mk_role(name=fauxfactory.gen_alphanumeric(),
                               product_features=[(['Everything'], False)] +
                               [(f, True) for f in product_features]),
                      actions,
                      {})
-    test_permissions(_mk_role(name=fauxfactory.gen_alphanumeric(),
+    test_permissions(request, _mk_role(name=fauxfactory.gen_alphanumeric(),
                               product_features=[(['Everything'], True)] +
                               [(f, False) for f in product_features]),
                      {},
@@ -493,14 +503,15 @@ def single_task_permission_test(product_features, actions):
 
 
 @pytest.mark.meta(blockers=[1136112])
-def test_permissions_role_crud():
-    single_task_permission_test([[cat_name, 'Configuration'],
+def test_permissions_role_crud(request):
+    single_task_permission_test(request, [[cat_name, 'Configuration'],
                                  ['Services', 'Catalogs Explorer']],
                                 {'Role CRUD': test_role_crud})
 
 
-def test_permissions_vm_provisioning():
+def test_permissions_vm_provisioning(request):
     single_task_permission_test(
+        request,
         [
             ['Infrastructure', 'Virtual Machines', 'Accordions'],
             ['Infrastructure', 'Virtual Machines', 'VM Access Rules', 'Modify', 'Provision VMs']
