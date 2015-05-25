@@ -109,7 +109,7 @@ def test_services_request_direct_url(generated_request):
     sel.get(sel.base_url())    # I need to flip it with something different here
     sel.get(request_url)        # Ok, direct access now.
     wait_for(
-        lambda: sel.is_displayed(".brand"),
+        lambda: sel.is_displayed("//body[contains(@onload, 'miqOnLoad')]"),
         num_sec=20,
         message="wait for a CFME page appear",
         delay=0.5
