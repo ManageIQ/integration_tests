@@ -4,7 +4,7 @@ import cfme.web_ui.flash as flash
 import pytest
 from cfme.cloud.instance import instance_factory, get_all_instances, EC2Instance, OpenStackInstance
 from cfme.fixtures import pytest_selenium as sel
-from utils import error, testgen
+from utils import error, testgen, version
 from utils.wait import wait_for, TimedOutError
 
 pytestmark = [pytest.mark.usefixtures('test_power_control')]
@@ -13,18 +13,10 @@ pytestmark = [pytest.mark.usefixtures('test_power_control')]
 def pytest_generate_tests(metafunc):
     final_argv, final_argn, final_ids = [], [], []
 
-    if 'ec2_only' in metafunc.fixturenames:
-        prov_types = ['ec2']
-    elif 'openstack_only' in metafunc.fixturenames:
-        prov_types = ['openstack']
-    else:
-        prov_types = ['ec2', 'openstack']
-
     # Get all providers and pick those, that have power control test enabled
     argnames, argvalues, idlist = testgen.provider_by_type(
-        metafunc, prov_types, 'test_power_control')
-    if not idlist:
-        return
+        metafunc, ['ec2', 'openstack'], 'test_power_control')
+
     for argn, argv, single_id in zip(argnames, argvalues, idlist):
         test_pwr_ctl_i = argnames.index('test_power_control')
         provider_key_i = argnames.index('provider_key')
@@ -32,12 +24,6 @@ def pytest_generate_tests(metafunc):
         if argv[test_pwr_ctl_i] is True:
             final_argv.append(argv)
             final_ids.append(argv[provider_key_i])
-
-    # Then append '{provider_type}_only' fixture, if necessary
-    if len(prov_types) == 1:
-        final_argn.append('{}_only'.format(prov_types[0]))
-        for argval in final_argv:
-            argval.append('')
 
     testgen.parametrize(metafunc, final_argn, final_argv, ids=final_ids, scope="function")
 
@@ -50,7 +36,7 @@ def vm_name():
 
 @pytest.fixture(scope="function")
 def test_instance(request, delete_instances_fin, setup_provider,
-                  provider_crud, provider_mgmt, vm_name):
+        provider_crud, provider_mgmt, vm_name):
     """ Fixture to provision instance on the provider
     """
     instance = instance_factory(vm_name, provider_crud)
@@ -140,7 +126,7 @@ def check_power_options(soft_assert, instance, power_state):
 
 @pytest.mark.long_running
 def test_quadicon_terminate_cancel(setup_provider_funcscope, provider_type, provider_mgmt,
-                                   test_instance, verify_vm_running, soft_assert):
+        test_instance, verify_vm_running, soft_assert):
     """ Tests terminate cancel
 
     Metadata:
@@ -162,7 +148,7 @@ def test_quadicon_terminate_cancel(setup_provider_funcscope, provider_type, prov
 
 @pytest.mark.long_running
 def test_quadicon_terminate(setup_provider_funcscope, provider_type, provider_mgmt,
-                            test_instance, verify_vm_running, soft_assert):
+        test_instance, verify_vm_running, soft_assert):
     """ Tests terminate instance
 
     Metadata:
@@ -187,8 +173,9 @@ def test_quadicon_terminate(setup_provider_funcscope, provider_type, provider_mg
 
 
 @pytest.mark.long_running
-def test_stop(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
-              test_instance, soft_assert, verify_vm_running):
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'ec2')
+def test_stop(setup_provider_funcscope, provider_type, provider_mgmt,
+        test_instance, soft_assert, verify_vm_running):
     """ Tests instance stop
 
     Metadata:
@@ -210,8 +197,10 @@ def test_stop(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
 
 
 @pytest.mark.long_running
-def test_start(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
-               test_instance, soft_assert, verify_vm_stopped):
+@pytest.mark.uncollectif(
+    lambda provider_type: version.current_version < "5.3" and provider_type != 'ec2')
+def test_start(setup_provider_funcscope, provider_type, provider_mgmt,
+        test_instance, soft_assert, verify_vm_stopped):
     """ Tests instance start
 
     Metadata:
@@ -232,7 +221,7 @@ def test_start(ec2_only, setup_provider_funcscope, provider_type, provider_mgmt,
 
 @pytest.mark.long_running
 def test_soft_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
-                     test_instance, soft_assert, verify_vm_running):
+        test_instance, soft_assert, verify_vm_running):
     """ Tests instance soft reboot
 
     Metadata:
@@ -253,8 +242,9 @@ def test_soft_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
 
 
 @pytest.mark.long_running
-def test_hard_reboot(openstack_only, setup_provider_funcscope, provider_type,
-                     provider_mgmt, test_instance, soft_assert, verify_vm_running):
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+def test_hard_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
+        test_instance, soft_assert, verify_vm_running):
     """ Tests instance hard reboot
 
     Metadata:
@@ -275,8 +265,9 @@ def test_hard_reboot(openstack_only, setup_provider_funcscope, provider_type,
 
 
 @pytest.mark.long_running
-def test_suspend(openstack_only, setup_provider_funcscope, provider_type, provider_mgmt,
-                 test_instance, soft_assert, verify_vm_running):
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+def test_suspend(setup_provider_funcscope, provider_type, provider_mgmt,
+        test_instance, soft_assert, verify_vm_running):
     """ Tests instance suspend
 
     Metadata:
@@ -289,16 +280,39 @@ def test_suspend(openstack_only, setup_provider_funcscope, provider_type, provid
         option=test_instance.SUSPEND, cancel=False, from_details=True)
     flash.assert_message_contain("Suspend initiated")
     test_instance.wait_for_vm_state_change(
-        desired_state=test_instance.STATE_OFF, timeout=720, from_details=True)
+        desired_state=test_instance.STATE_SUSPENDED, timeout=720, from_details=True)
     soft_assert(
         provider_mgmt.is_vm_suspended(test_instance.name),
         "instance is still running")
 
 
 @pytest.mark.long_running
-@pytest.mark.meta(blockers=[1183757])
-def test_resume(openstack_only, setup_provider_funcscope,
-        provider_type, provider_mgmt, test_instance, soft_assert, verify_vm_suspended):
+@pytest.mark.ignore_stream("5.3")
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+def test_unpause(setup_provider_funcscope, provider_type, provider_mgmt,
+        test_instance, soft_assert, verify_vm_paused):
+    """ Tests instance unpause
+
+    Metadata:
+        test_flag: power_control, provision
+    """
+    test_instance.wait_for_vm_state_change(
+        desired_state=test_instance.STATE_PAUSED, timeout=720, from_details=True)
+    check_power_options(soft_assert, test_instance, 'off')
+    test_instance.power_control_from_cfme(
+        option=test_instance.START, cancel=False, from_details=True)
+    flash.assert_message_contain("Start initiated")
+    test_instance.wait_for_vm_state_change(
+        desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
+    soft_assert(
+        provider_mgmt.is_vm_running(test_instance.name),
+        "instance is not running")
+
+
+@pytest.mark.long_running
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+def test_resume(setup_provider_funcscope, provider_type, provider_mgmt,
+        test_instance, soft_assert, verify_vm_suspended):
     """ Tests instance resume
 
     Metadata:
@@ -318,8 +332,8 @@ def test_resume(openstack_only, setup_provider_funcscope,
 
 
 @pytest.mark.long_running
-def test_terminate(setup_provider_funcscope,
-        provider_type, provider_mgmt, test_instance, soft_assert, verify_vm_running):
+def test_terminate(setup_provider_funcscope, provider_type, provider_mgmt,
+        test_instance, soft_assert, verify_vm_running):
     """ Tests instance terminate
 
     Metadata:
@@ -330,7 +344,7 @@ def test_terminate(setup_provider_funcscope,
     test_instance.power_control_from_cfme(
         option=test_instance.TERMINATE, cancel=False, from_details=True)
     flash.assert_message_contain("Terminate initiated")
-    wait_for(test_instance.does_vm_exist_in_cfme, fail_condition=True, num_sec=300, delay=30,
+    wait_for(test_instance.does_vm_exist_in_cfme, fail_condition=True, num_sec=600, delay=30,
         fail_func=test_instance.provider_crud.refresh_provider_relationships,
         message="VM no longer exists in cfme UI")
     if provider_type == 'openstack':

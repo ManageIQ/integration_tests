@@ -67,12 +67,14 @@ class OpenstackSystem(MgmtSystemAPIBase):
     }
 
     states = {
+        'paused': ('PAUSED',),
         'running': ('ACTIVE',),
         'stopped': ('SHUTOFF',),
         'suspended': ('SUSPENDED',),
     }
 
     can_suspend = True
+    can_pause = True
 
     def __init__(self, **kwargs):
         self.tenant = kwargs['tenant']
@@ -175,6 +177,8 @@ class OpenstackSystem(MgmtSystemAPIBase):
         instance = self._find_instance_by_name(instance_name)
         if self.is_vm_suspended(instance_name):
             instance.resume()
+        elif self.is_vm_paused(instance_name):
+            instance.unpause()
         else:
             instance.start()
         wait_for(lambda: self.is_vm_running(instance_name), message="start %s" % instance_name)
@@ -343,13 +347,16 @@ class OpenstackSystem(MgmtSystemAPIBase):
         return local_tz.fromutc(create_time).replace(tzinfo=None)
 
     def is_vm_running(self, vm_name):
-        return self.vm_status(vm_name) == 'ACTIVE'
+        return self.vm_status(vm_name) in self.states['running']
 
     def is_vm_stopped(self, vm_name):
-        return self.vm_status(vm_name) == 'SHUTOFF'
+        return self.vm_status(vm_name) in self.states['stopped']
 
     def is_vm_suspended(self, vm_name):
-        return self.vm_status(vm_name) == 'SUSPENDED'
+        return self.vm_status(vm_name) in self.states['suspended']
+
+    def is_vm_paused(self, vm_name):
+        return self.vm_status(vm_name) in self.states['paused']
 
     def wait_vm_running(self, vm_name, num_sec=360):
         logger.info(" Waiting for OS instance %s to change status to ACTIVE" % vm_name)
@@ -363,6 +370,10 @@ class OpenstackSystem(MgmtSystemAPIBase):
         logger.info(" Waiting for OS instance %s to change status to SUSPENDED" % vm_name)
         wait_for(self.is_vm_suspended, [vm_name], num_sec=num_sec)
 
+    def wait_vm_paused(self, vm_name, num_sec=720):
+        logger.info(" Waiting for OS instance %s to change status to PAUSED" % vm_name)
+        wait_for(self.is_vm_paused, [vm_name], num_sec=num_sec)
+
     def suspend_vm(self, instance_name):
         logger.info(" Suspending OpenStack instance %s" % instance_name)
         if self.is_vm_suspended(instance_name):
@@ -371,6 +382,15 @@ class OpenstackSystem(MgmtSystemAPIBase):
         instance = self._find_instance_by_name(instance_name)
         instance.suspend()
         wait_for(lambda: self.is_vm_suspended(instance_name), message="suspend %s" % instance_name)
+
+    def pause_vm(self, instance_name):
+        logger.info(" Pausing OpenStack instance %s" % instance_name)
+        if self.is_vm_paused(instance_name):
+            return True
+
+        instance = self._find_instance_by_name(instance_name)
+        instance.pause()
+        wait_for(lambda: self.is_vm_paused(instance_name), message="pause %s" % instance_name)
 
     def clone_vm(self, source_name, vm_name):
         raise NotImplementedError('clone_vm not implemented.')
