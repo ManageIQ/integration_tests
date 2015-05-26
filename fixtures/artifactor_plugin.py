@@ -52,6 +52,12 @@ class DummyClient(object):
     def fire_hook(self, *args, **kwargs):
         return
 
+    def terminate(self):
+        return
+
+    def task_status(self):
+        return
+
     def __nonzero__(self):
         # DummyClient is always False, so it's easy to see if we have an artiactor client
         return False
