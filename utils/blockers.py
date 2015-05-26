@@ -157,6 +157,9 @@ class BZ(Blocker):
             if bug.upstream_bug:
                 if not version.appliance_is_downstream() and bug.can_test_on_upstream:
                     result = False
+            if result is False and version.appliance_is_downstream():
+                if bug.fixed_in is not None:
+                    return version.current_version() < bug.fixed_in
             return result
         except xmlrpclib.Fault as e:
             code = e.faultCode
