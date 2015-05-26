@@ -20,7 +20,9 @@ pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="functio
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
     provider.discover(None)
-    flash.assert_message_match('User ID is required')
+    ident = version.pick({version.LOWEST: 'User ID',
+                          '5.4': 'Username'})
+    flash.assert_message_match('{} is required'.format(ident))
 
 
 def test_discovery_cancelled_validation():
