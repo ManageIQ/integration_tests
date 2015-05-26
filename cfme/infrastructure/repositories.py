@@ -8,12 +8,12 @@ from cfme.web_ui import menu
 import cfme.web_ui.toolbar as tb
 
 
-from cfme.web_ui import Region, Form, Input, SplitCheckboxTable, fill, form_buttons
+from cfme.web_ui import Region, Form, Input, SplitCheckboxTable, fill, form_buttons, Quadicon
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui.paginator import pages
 from utils.update import Updateable
 from utils.pretty import Pretty
-from utils.version import LOWEST
+from utils.version import LOWEST, current_version
 
 repo_list = SplitCheckboxTable(
     ("//div[@id='list_grid']/div[1]//tbody", 1),
@@ -54,12 +54,20 @@ def _repo_row(name):
 
 def _repo_nav_fn(context):
     repo = context['repository']
-    sel.click(_repo_row(repo.name)[1])
+    if current_version() >= '5.4':
+        quadicon = Quadicon(repo.name, "repository")
+        sel.click(quadicon.locate())
+    else:
+        sel.click(_repo_row(repo.name)[1])
     sel.wait_for_element(repo._detail_page_identifying_loc)
 
 
 def _check_repo(name, callback=None):
-    sel.check(sel.element('.//img', root=_repo_row(name)[0]))
+    if current_version() >= '5.4':
+        quadicon = Quadicon(name, "repository")
+        sel.check(quadicon.checkbox())
+    else:
+        sel.check(sel.element('.//img', root=_repo_row(name)[0]))
     if callback:
         return callback()
 
@@ -168,6 +176,10 @@ class Repository(Updateable, Pretty):
     def exists(self):
         sel.force_navigate('infrastructure_repositories')
         try:
-            return bool(_repo_row(self.name))
+            if current_version() >= '5.4':
+                quadicon = Quadicon(self.name, "repository")
+                return sel.is_displayed(quadicon.locate())
+            else:
+                return bool(_repo_row(self.name))
         except:  # exception?
             return False
