@@ -4,6 +4,7 @@ import pytest
 import re
 from datetime import datetime, timedelta
 
+from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.virtual_machines import Vm, details_page
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
@@ -85,7 +86,10 @@ def template_name(provisioning):
 @pytest.fixture(scope="function")
 def provisioner(request, provider_key, provider_mgmt, provider_crud):
     if not provider_crud.exists:
-        setup_provider(provider_key)
+        try:
+            setup_provider(provider_key)
+        except FlashMessageException as e:
+            e.skip_and_log("Provider failed to set up")
 
     def _provisioner(template, provisioning_data, delayed=None):
         pytest.sel.force_navigate('infrastructure_provision_vms', context={

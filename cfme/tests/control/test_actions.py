@@ -13,6 +13,7 @@ Required YAML keys:
 import fauxfactory
 import pytest
 from cfme.control import explorer
+from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import RHEVMProvider
 from cfme.infrastructure.virtual_machines import Vm
 from datetime import datetime
@@ -109,7 +110,10 @@ def vm_name(provider_key):
 
 @pytest.fixture(scope="module")
 def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small_template, vm_name):
-    setup_provider(provider_key)
+    try:
+        setup_provider(provider_key)
+    except FlashMessageException as e:
+        e.skip_and_log("Provider failed to set up")
 
     if isinstance(provider_mgmt, mgmt_system.RHEVMSystem):
         kwargs = {"cluster": provider_data["default_cluster"]}
