@@ -2,7 +2,7 @@
 import fauxfactory
 import pytest
 
-from cfme.infrastructure.provider import RHEVMProvider
+from cfme.infrastructure.provider import RHEVMProvider, SCVMMProvider
 from cfme.infrastructure.virtual_machines import Vm, Template
 from utils import testgen
 
@@ -23,7 +23,8 @@ def pytest_generate_tests(metafunc):
         args = dict(zip(argnames, argvalue_tuple))
 
         if metafunc.function is test_vm_genealogy \
-           and isinstance(args['provider_crud'], RHEVMProvider):
+           and (isinstance(args['provider_crud'], RHEVMProvider) or
+                isinstance(args['provider_crud'], SCVMMProvider)):
             continue
 
         if not args['provisioning']:
