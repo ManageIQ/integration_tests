@@ -373,7 +373,10 @@ class Host(Updateable, Pretty):
         """
         # mark by indexes or mark all
         sel.force_navigate('infrastructure_host', context={'host': self})
-        list_acc.select('Relationships', 'Show host drift history')
+        list_acc.select('Relationships',
+            version.pick({
+                version.LOWEST: 'Show host drift history',
+                '5.4': 'Show Host drift history'}))
         if indexes:
             drift_table.select_rows_by_indexes(*indexes)
         else:
