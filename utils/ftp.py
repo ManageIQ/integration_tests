@@ -3,7 +3,7 @@
 
 @author: Milan Falešník <mfalesni@redhat.com>
 """
-
+import fauxfactory
 import ftplib
 import re
 from datetime import datetime
@@ -260,10 +260,6 @@ class FTPClient(object):
 
     """
 
-    TIMECHECK_FILE_NAME = "bnBFAA5789bdaBHJdqhdbd76_bhqd"
-    """ File name used for the temporary file determining the time difference
-    """
-
     def __init__(self, host, login, password):
         """ Constructor
 
@@ -295,15 +291,16 @@ class FTPClient(object):
         which adds the client's .dt to its time.
 
         """
-        void_file = StringIO("")
-        assert "Transfer complete" in self.storbinary(self.TIMECHECK_FILE_NAME, void_file),\
-            "Could not upload a file for time checking with name %s!" % self.TIMECHECK_FILE_NAME
+        TIMECHECK_FILE_NAME = fauxfactory.gen_alphanumeric(length=16)
+        void_file = StringIO(fauxfactory.gen_alpha())
+        assert "Transfer complete" in self.storbinary(TIMECHECK_FILE_NAME, void_file),\
+            "Could not upload a file for time checking with name %s!" % TIMECHECK_FILE_NAME
         void_file.close()
         now = datetime.now()
         for d, name, time in self.ls():
-            if name == self.TIMECHECK_FILE_NAME:
+            if name == TIMECHECK_FILE_NAME:
                 self.dt = now - time
-                self.dele(self.TIMECHECK_FILE_NAME)
+                self.dele(TIMECHECK_FILE_NAME)
                 return True
         raise FTPException("The timecheck file was not found in the current FTP directory")
 
