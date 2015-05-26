@@ -23,7 +23,7 @@ from cfme.exceptions import (
     HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
 )
 from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, paginator
-from cfme.web_ui import Timelines, Input
+from cfme.web_ui import Input
 from utils import conf
 from utils.db import cfmedb
 from utils.log import logger
@@ -83,8 +83,6 @@ manage_policies_tree = CheckboxTree(
 )
 
 details_page = Region(infoblock_type='detail')
-
-prov_timeline = Timelines('//div[@id="miq_timeline"]')
 
 cfg_btn = partial(tb.select, 'Configuration')
 pol_btn = partial(tb.select, 'Policy')

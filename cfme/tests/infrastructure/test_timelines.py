@@ -3,8 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.infrastructure.virtual_machines import Vm, details_page
-from cfme.infrastructure.provider import prov_timeline
-from cfme.web_ui import toolbar
+from cfme.web_ui import toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyed
 from utils import testgen
 from utils.log import logger
@@ -74,7 +73,7 @@ def count_events(vm_name, nav_step):
     except ToolbarOptionGreyed:
         return 0
     events = []
-    for event in prov_timeline.events():
+    for event in jstimelines.events():
         data = event.block_info()
         if vm_name in data.values():
             events.append(event)
