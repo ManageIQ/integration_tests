@@ -27,7 +27,6 @@ from cfme.exceptions import (
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input
 )
-from cfme.web_ui import Timelines
 from cfme.web_ui.form_buttons import FormButton
 from utils.browser import ensure_browser_open
 from utils.log import logger
@@ -42,8 +41,6 @@ from utils.stats import tol_check
 add_infra_provider = FormButton("Add this Infrastructure Provider")
 
 details_page = Region(infoblock_type='detail')
-
-prov_timeline = Timelines('//div[@id="miq_timeline"]')
 
 # Forms
 discover_form = Form(

@@ -2,8 +2,7 @@
 import fauxfactory
 import pytest
 from cfme.cloud.instance import instance_factory, details_page
-from cfme.cloud.provider import prov_timeline
-from cfme.web_ui import toolbar
+from cfme.web_ui import toolbar, jstimelines
 from utils import testgen
 from utils.log import logger
 from cfme.exceptions import ToolbarOptionGreyed
@@ -80,7 +79,7 @@ def count_events(instance_name, nav_step):
     except ToolbarOptionGreyed:
         return 0
     events = []
-    for event in prov_timeline.events():
+    for event in jstimelines.events():
         data = event.block_info()
         if instance_name in data.values():
             events.append(event)
