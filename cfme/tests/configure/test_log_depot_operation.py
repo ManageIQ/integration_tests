@@ -221,7 +221,7 @@ def test_collect_log_depot(depot_type,
         bad_files = ftp.filesystem.search(re.compile(r"^.*?unknown_unknown.*?[.]zip$"),
                                           directories=False)
         if bad_files:
-            raise Exception("BUG1018578: Files %s present!" % ", ".join(bad_files))
+            raise Exception("BUG1018578: Files %s present!" % ", ".join(f.path for f in bad_files))
 
         # And clean it up
         ftp.recursively_delete()
