@@ -53,6 +53,7 @@ def test_infrastructuretemplates_defaultfilters(setup_first_provider):
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
+@pytest.mark.meta(blockers=[1225145])
 def test_servicetemplateandimages_defaultfilters(setup_first_provider):
     filters = [['Services', 'Workloads', 'Templates & Images', 'Platform / Microsoft']]
     df = st.DefaultFilter(name='Platform / Microsoft')
@@ -62,6 +63,7 @@ def test_servicetemplateandimages_defaultfilters(setup_first_provider):
     assert sel.is_displayed_text(df.name), "Default Filter settings Failed!"
 
 
+@pytest.mark.meta(blockers=[1225145])
 def test_servicevmsandinstances_defaultfilters(setup_first_provider):
     filters = [['Services', 'Workloads', 'VMs & Instances', 'Platform / Openstack']]
     df = st.DefaultFilter(name='Platform / Openstack')
