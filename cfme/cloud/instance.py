@@ -283,7 +283,8 @@ class Instance(Updateable, Pretty):
         Raises: InstanceNotFound
         """
         if not do_not_navigate:
-            self.provider_crud.load_all_provider_instances()
+            if not self.provider_crud.load_all_provider_instances():
+                raise InstanceNotFound("No instances for the provider!")
             toolbar.set_vms_grid_view()
         elif refresh:
             sel.refresh()

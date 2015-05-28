@@ -242,14 +242,30 @@ class Provider(Updateable, Pretty):
         client.disconnect()
 
     def load_all_provider_instances(self):
-        """ Loads the list of instances that are running under the provider. """
+        """ Loads the list of instances that are running under the provider.
+
+        If it could click through the link in infoblock, returns ``True``. If it sees that the
+        number of instances is 0, it returns ``False``.
+        """
         sel.force_navigate('clouds_provider', context={'provider': self})
-        sel.click(details_page.infoblock.element("Relationships", "Instances"))
+        if details_page.infoblock.text("Relationships", "Instances") == "0":
+            return False
+        else:
+            sel.click(details_page.infoblock.element("Relationships", "Instances"))
+            return True
 
     def load_all_provider_images(self):
-        """ Loads the list of images that are available under the provider. """
+        """ Loads the list of images that are available under the provider.
+
+        If it could click through the link in infoblock, returns ``True``. If it sees that the
+        number of images is 0, it returns ``False``.
+        """
         sel.force_navigate('clouds_provider', context={'provider': self})
-        sel.click(details_page.infoblock.element("Relationships", "Images"))
+        if details_page.infoblock.text("Relationships", "Images") == "0":
+            return False
+        else:
+            sel.click(details_page.infoblock.element("Relationships", "Images"))
+            return True
 
     def refresh_provider_relationships(self):
         """Clicks on Refresh relationships button in provider"""
