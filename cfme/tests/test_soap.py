@@ -460,6 +460,10 @@ class TestSoapBasicInteraction(object):
 
 
 class TestProvisioning(object):
+    WAIT_TIME = 300
+    WAIT_TIME_SLOW = 600
+    SLOW_PROVIDERS = {"rhevm", "scvmm"}
+
     @pytest.mark.meta(
         server_roles="+automate",
         blockers=[
@@ -470,12 +474,15 @@ class TestProvisioning(object):
     )
     @pytest.mark.usefixtures("setup_provider_clsscope")
     def test_provision_via_soap(
-            self, request, soap_client, provider_key, provider_data, provider_mgmt, small_template):
+            self, request, soap_client, provider_key, provider_data, provider_mgmt, small_template,
+            provider_type):
         """Tests soap
 
         Metadata:
             test_flag: soap, provision
         """
+        # rhev-m and scvmm need extra time to make their minds
+        wtime = self.WAIT_TIME if provider_type not in self.SLOW_PROVIDERS else self.WAIT_TIME_SLOW
         vm_name = "test_soap_provision_{}".format(fauxfactory.gen_alphanumeric())
         vlan = provider_data.get("provisioning", {}).get("vlan", None)
 
@@ -492,6 +499,6 @@ class TestProvisioning(object):
         request.addfinalizer(lambda: vm.delete() if vm.exists else None)
         if vm.is_powered_on:
             vm.power_off()
-            vm.wait_powered_off(wait_time=300)
+            vm.wait_powered_off(wait_time=wtime)
         vm.power_on()
-        vm.wait_powered_on(wait_time=300)
+        vm.wait_powered_on(wait_time=wtime)
