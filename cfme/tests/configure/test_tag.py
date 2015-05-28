@@ -4,12 +4,11 @@ import pytest
 
 from cfme.configure.configuration import Category, Tag
 from utils.update import update
-from utils.randomness import generate_lowercase_random_string
 
 
 @pytest.yield_fixture
 def category():
-    cg = Category(name=generate_lowercase_random_string(size=8),
+    cg = Category(name=fauxfactory.gen_alphanumeric(8).lower(),
                   description=fauxfactory.gen_alphanumeric(32),
                   display_name=fauxfactory.gen_alphanumeric(32))
     cg.create()
@@ -18,7 +17,7 @@ def category():
 
 
 def test_tag_crud(category):
-    tag = Tag(name=generate_lowercase_random_string(size=8),
+    tag = Tag(name=fauxfactory.gen_alphanumeric(8).lower(),
               display_name=fauxfactory.gen_alphanumeric(32),
               category=category)
     tag.create()
