@@ -147,12 +147,18 @@ class Bugzilla(object):
             version = bug.product.latest_version
         variants = self.get_bug_variants(bug)
         filtered = set([])
+        version_series = ".".join(str(version).split(".")[:2])
         for variant in variants:
             if variant.id in ignore_bugs:
                 continue
             if variant.version is not None and variant.version > version:
                 continue
-            if variant.release_flag is not None:
+            if ((variant.version is not None and variant.target_release is not None) and
+                    (
+                        variant.version.is_in_series(version_series)
+                        or variant.target_release.is_in_series(version_series))):
+                    filtered.add(variant)
+            elif variant.release_flag is not None:
                 if version.is_in_series(variant.release_flag):
                     # Simple case
                     filtered.add(variant)
@@ -160,27 +166,30 @@ class Bugzilla(object):
                     logger.info(
                         "Ignoring bug #{}, appliance version not in bug release flag"
                         .format(variant.id))
-            elif variant.release_flag is None:
-                if variant.target_release is not None and variant.version is not None:
-                    filtered.add(variant)
-                else:
-                    # Ignore this bug, must be a mistake
-                    logger.info(
-                        "Ignoring bug #{}, no release flag, target release & version specified."
-                        .format(variant.id))
+            else:
+                logger.info("No release flags, wrogn versions, ignoring {}".format(variant.id))
         if not filtered:
             return None
-        # Prefer release_flag
+        # First, use versions
+        for bug in filtered:
+            if ((bug.version is not None and bug.target_release is not None) and
+                    check_fixed_in(bug.fixed_in, version_series) and
+                    (
+                        bug.version.is_in_series(version_series)
+                        or bug.target_release.is_in_series(version_series))):
+                return bug
+        # Otherwise prefer release_flag
         for bug in filtered:
             if bug.release_flag and version.is_in_series(bug.release_flag):
                 return bug
-        # Otherwise, use version, but forceskip these
-        for bug in filtered:
-            if bug.release_flag and version < bug.release_flag:
-                return bug
-            elif bug.version and bug.version <= version:
-                return bug
         return None
+
+
+def check_fixed_in(fixed_in, version_series):
+    # used to check if the bug belongs to that series
+    if fixed_in is None:
+        return True
+    return fixed_in.is_in_series(version_series)
 
 
 class BugWrapper(object):
@@ -216,7 +225,10 @@ class BugWrapper(object):
             if value.lower() in NONE_FIELDS:
                 return None
             # We have to strip any leading non-number characters to correctly match
-            return LooseVersion(re.sub(r"^[^0-9]+", "", value))
+            value = re.sub(r"^[^0-9]+", "", value)
+            if not value:
+                return None
+            return LooseVersion(value)
         if isinstance(value, basestring):
             if len(value.strip()) == 0:
                 return None
@@ -279,12 +291,8 @@ class BugWrapper(object):
         return self._release_flag_data[1]
 
     @property
-    def is_upstream_bug(self):
-        return self._bugzilla.upstream_version == self.release_flag
-
-    @property
     def is_opened(self):
-        if self.is_upstream_bug and not appliance_is_downstream():
+        if self.upstream_bug and not appliance_is_downstream():
             states = self._bugzilla.open_states
         else:
             states = self._bugzilla.open_states + ["POST"]

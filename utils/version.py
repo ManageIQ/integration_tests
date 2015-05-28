@@ -204,6 +204,9 @@ class Version(object):
                 return False
         return series.version == self.version[:len(series.version)]
 
+    def series(self, n=2):
+        return ".".join(str(self).strip().split(".")[:n])
+
 # Taken from stdlib, just change classes to new-style and clean up
 # Interface for version-number classes -- must be implemented
 # by the following classes (the concrete ones -- Version should
