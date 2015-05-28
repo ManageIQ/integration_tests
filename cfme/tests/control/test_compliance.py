@@ -157,9 +157,9 @@ def test_check_package_presence(request, fleecing_vm, ssh_client, vm_analysis, a
     fleecing_vm.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: fleecing_vm.unassign_policy_profiles(profile.description))
 
-    with update(analysis_profile):
-        analysis_profile.categories = [
-            "check_services", "check_accounts", "check_software", "check_vmconfig", "check_system"]
+    analysis_profile.categories = [
+        "check_services", "check_accounts", "check_software", "check_vmconfig", "check_system"]
+    analysis_profile.update()
 
     do_scan(fleecing_vm)
     assert fleecing_vm.check_compliance_and_wait()
@@ -197,10 +197,10 @@ def test_check_files(request, fleecing_vm, ssh_client, check_file_name, analysis
     fleecing_vm.assign_policy_profiles(profile.description)
     request.addfinalizer(lambda: fleecing_vm.unassign_policy_profiles(profile.description))
 
-    with update(analysis_profile):
-        analysis_profile.files = [("/root/*", True)]
-        analysis_profile.categories = [
-            "check_services", "check_accounts", "check_software", "check_vmconfig", "check_system"]
+    analysis_profile.files = [("/root/*", True)]
+    analysis_profile.categories = [
+        "check_services", "check_accounts", "check_software", "check_vmconfig", "check_system"]
+    analysis_profile.update()
 
     # Non-compliant
     ssh_client.run_command("rm -f {}".format(check_file_name))
