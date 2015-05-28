@@ -34,6 +34,7 @@ set_ownership_form = Form(
 
 edit_tags_form = Form(
     fields=[
+        ("select_tag", ui.Select("select#tag_cat")),
         ("select_value", ui.Select("select#tag_add"))
     ])
 
@@ -136,10 +137,11 @@ class MyService(Updateable):
              action=form_buttons.save)
         flash.assert_success_message('Ownership saved for selected Service')
 
-    def edit_tags(self, value):
+    def edit_tags(self, tag, value):
         sel.force_navigate('service_edit_tags',
                            context={'service_name': self.service_name})
-        fill(edit_tags_form, {'select_value': value},
+        fill(edit_tags_form, {'select_tag': tag,
+                              'select_value': value},
              action=form_buttons.save)
         flash.assert_success_message('Tag edits were successfully saved')
 
