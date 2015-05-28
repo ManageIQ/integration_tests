@@ -11,7 +11,6 @@ import utils.error as error
 from cfme import Credential
 from cfme.cloud import provider
 from utils import testgen, version
-from utils.randomness import generate_random_local_ip
 from utils.update import update
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
@@ -127,7 +126,7 @@ def test_host_name_required_validation(request):
     prov = provider.OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=None,
-        ip_address=generate_random_local_ip())
+        ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
 
     request.addfinalizer(prov.delete_if_exists)
     with error.expected("Host Name can't be blank"):
@@ -152,7 +151,7 @@ def test_api_port_blank_validation(request):
     prov = provider.OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=generate_random_local_ip(),
+        ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
         api_port='')
 
     request.addfinalizer(prov.delete_if_exists)
@@ -188,7 +187,7 @@ def test_hostname_max_character_validation(request):
     prov = provider.OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(255),
-        ip_address=generate_random_local_ip())
+        ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
 
     request.addfinalizer(prov.delete_if_exists)
     prov.create()
@@ -199,7 +198,7 @@ def test_ip_max_valid_character_validation(request):
     prov = provider.OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=generate_random_local_ip())
+        ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
 
     request.addfinalizer(prov.delete_if_exists)
     prov.create()
@@ -221,7 +220,7 @@ def test_api_port_max_character_validation(request):
     prov = provider.OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
-        ip_address=generate_random_local_ip(),
+        ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
         api_port=fauxfactory.gen_alphanumeric(15))
 
     request.addfinalizer(prov.delete_if_exists)

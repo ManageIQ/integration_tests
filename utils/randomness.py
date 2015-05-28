@@ -2,13 +2,6 @@
 import fauxfactory
 
 
-def generate_random_local_ip():
-    return "10.{}.{}.{}".format(
-        fauxfactory.gen_integer(0, 255),
-        fauxfactory.gen_integer(0, 255),
-        fauxfactory.gen_integer(0, 255))
-
-
 def generate_lowercase_random_string(size=8):
     return fauxfactory.gen_alphanumeric(size).lower()
 
