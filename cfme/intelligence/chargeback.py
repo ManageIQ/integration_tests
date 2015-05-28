@@ -10,8 +10,9 @@ import cfme.web_ui.toolbar as tb
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import Form, Select, Tree, fill, flash, form_buttons
 from cfme.web_ui.menu import nav
-from utils.update import Updateable
 from utils.pretty import Pretty
+from utils.update import Updateable
+from utils.version import LOWEST
 
 rate_tree = Tree("//div[@id='cb_rates_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")
@@ -57,7 +58,7 @@ rate_form = Form(
 class AssignFormTable(Pretty):
     pretty_attrs = ["entry_loc"]
 
-    def __init__(self, entry_loc="//div[@id='cb_assignment_div']/table[contains(@class, 'table')]"):
+    def __init__(self, entry_loc):
         self.entry_loc = entry_loc
 
     def locate(self):
@@ -100,7 +101,12 @@ storage_assign_form = Form(
         # Tagged DS
         ("tag_category", Select("select#cbtag_cat")),
         # Common - selection table
-        ("selections", AssignFormTable())])
+        ("selections", AssignFormTable({
+            LOWEST: (
+                "//div[@id='cb_assignment_div']/fieldset/table[contains(@class, 'style1')]"
+                "/tbody/tr/td/table"),
+            "5.4": "//div[@id='cb_assignment_div']/table[contains(@class, 'table')]",
+        }))])
 
 
 nav.add_branch('chargeback',
