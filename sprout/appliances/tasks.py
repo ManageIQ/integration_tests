@@ -683,7 +683,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
         else:
             # Something got screwed really bad
             appliance.set_status("Error happened: {}({})".format(type(e).__name__, str(e)))
-            self.retry(args=(appliance_id,), exc=e, countdown=60, max_retries=5)
+            self.retry(args=(appliance_id, lease_time_minutes), exc=e, countdown=60, max_retries=5)
 
         # Ignore that and provision it somewhere else
         if appliance.appliance_pool:
@@ -705,7 +705,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             return
         else:
             # We cannot put it aside, so just try that again
-            self.retry(args=(appliance_id,), exc=e, countdown=60, max_retries=5)
+            self.retry(args=(appliance_id, lease_time_minutes), exc=e, countdown=60, max_retries=5)
     else:
         appliance.set_status("Template cloning finished.")
 
