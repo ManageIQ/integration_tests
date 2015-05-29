@@ -14,7 +14,7 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
 from cfme import dashboard
 from cfme.web_ui import Region, Form, fill, Input
-from utils import conf
+from utils import conf, version
 from utils.browser import ensure_browser_open, quit
 from utils.log import logger
 from utils.pretty import Pretty
@@ -33,7 +33,10 @@ class User(Pretty):
 
 
 page = Region(
-    title="Dashboard",
+    title=version.pick({
+        version.LOWEST: "Dashboard",
+        version.LATEST: "Login",
+    }),
     locators={
         'username': Input("user_name"),
         'password': Input("user_password"),
