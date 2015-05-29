@@ -11,6 +11,7 @@ from cfme.cloud.instance import instance_factory
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen
+from utils.blockers import BZ
 from utils.update import update
 from utils.wait import wait_for
 
@@ -236,7 +237,10 @@ def test_provision_from_template_with_attached_disks(
 
 
 # Not collected for EC2 in generate_tests above
-@pytest.mark.meta(blockers=[1160342])
+@pytest.mark.meta(blockers=[
+    1160342,
+    BZ(1225951, unblock=lambda provider_key: provider_key != 'rhos6-ga')])
+@pytest.mark.usefixtures("provider_key")
 @openstack_only
 def test_provision_with_boot_volume(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
