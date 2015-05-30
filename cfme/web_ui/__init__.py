@@ -73,7 +73,8 @@ class Region(Pretty):
 
     Args:
         locators: A dict of locator objects for the given region
-        title: A string containing the title of the page
+        title: A string containing the title of the page,
+               or a versioned dict of page title strings
         identifying_loc: Single locator key from locators used by :py:meth:`Region.is_displayed`
                          to check if the region is currently visible
 
@@ -113,8 +114,15 @@ class Region(Pretty):
     def __init__(self, locators=None, title=None, identifying_loc=None, **kwargs):
         self.locators = locators
         self.identifying_loc = identifying_loc
-        self.title = title
+        self._title = title
         self.infoblock = InfoBlock  # Legacy support
+
+    @property
+    def title(self):
+        # support title being a versioned dict
+        if isinstance(self._title, dict):
+            self._title = version.pick(self._title)
+        return self._title
 
     def is_displayed(self):
         """
