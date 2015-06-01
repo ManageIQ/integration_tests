@@ -251,7 +251,7 @@ def test_provision_with_boot_volume(
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
             (image, vm_name, provider_crud.key))
 
-    with provider_mgmt.with_volume(1) as volume:
+    with provider_mgmt.with_volume(1, imageRef=provider_mgmt.get_template_id(image)) as volume:
         # Set up automate
         cls = automate.Class(
             name="Methods",
