@@ -5,6 +5,7 @@ To quickly add all providers::
     setup_providers(validate=False)
 
 """
+import random
 from collections import Mapping
 from functools import partial
 from operator import methodcaller
@@ -147,6 +148,16 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         providers = list_infra_providers()
 
     result = None
+
+    # If there is already a suitable provider, don't try to setup a new one.
+    already_existing = filter(is_provider_setup, providers)
+    if already_existing:
+        return setup_provider(  # This will run a refresh too
+            random.choice(already_existing), validate=validate, check_existing=check_existing)
+
+    # Shuffle the order to spread the load across providers
+    random.shuffle(providers)
+    # We need to setup a new one
     for provider in providers:
         try:
             result = setup_provider(provider, validate=validate, check_existing=check_existing)
@@ -157,6 +168,26 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     else:
         raise Exception("No providers could be set up matching the params")
     return result
+
+
+def is_provider_setup(provider_key):
+    """Checks whether provider is already existing in CFME
+
+    Args:
+        provider_key: YAML key of the provider
+
+    Returns:
+        :py:class:`bool` of existence
+    """
+    if provider_key in list_cloud_providers():
+        from cfme.cloud.provider import get_from_config
+        # provider = setup_infrastructure_provider(provider_key, validate, check_existing)
+    elif provider_key in list_infra_providers():
+        from cfme.infrastructure.provider import get_from_config
+    else:
+        raise UnknownProvider(provider_key)
+
+    return get_from_config(provider_key).exists
 
 
 def setup_provider(provider_key, validate=True, check_existing=True):
