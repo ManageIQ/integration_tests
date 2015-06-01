@@ -1,7 +1,6 @@
 import os
 import sys
 from collections import deque
-from time import sleep
 from urlparse import urlparse
 
 import zmq
