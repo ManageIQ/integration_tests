@@ -146,8 +146,13 @@ def test_provider_refresh(request, setup_a_provider, rest_api):
         delay=5,
     )
     # We suppose that thanks to the random string, there will be only one such VM
+    wait_for(
+        lambda: len(rest_api.collections.vms.find_by(name=vm_name)),
+        fail_condition=lambda l: l == 0,
+        num_sec=180,
+        delay=10,
+    )
     vms = rest_api.collections.vms.find_by(name=vm_name)
-    assert len(vms) > 0, "Could not find the VM {}".format(vm_name)
     if "delete" in vms[0].action.all:
         vms[0].action.delete()
 
