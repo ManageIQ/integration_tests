@@ -33,6 +33,7 @@ basic_info_form = Form(
 
 edit_tags_form = Form(
     fields=[
+        ("select_tag", Select("select#tag_cat")),
         ("select_value", Select("select#tag_add"))
     ])
 
@@ -251,11 +252,12 @@ class CatalogItem(Updateable, Pretty):
         sel.click(button_form.add_button)
         flash.assert_success_message('Button "btn_descr" was added')
 
-    def edit_tags(self, value):
+    def edit_tags(self, tag, value):
         sel.force_navigate('catalog_item', context={'catalog': self.catalog,
                                                     'catalog_item': self})
         policy_btn('Edit Tags', invokes_alert=True)
-        fill(edit_tags_form, {'select_value': value},
+        fill(edit_tags_form, {'select_tag': tag,
+                              'select_value': value},
              action=form_buttons.save)
         flash.assert_success_message('Tag edits were successfully saved')
 

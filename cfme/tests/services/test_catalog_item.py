@@ -83,7 +83,7 @@ def test_add_button(catalog_item):
 
 def test_edit_tags(catalog_item):
     catalog_item.create()
-    catalog_item.edit_tags("Cost Center 001")
+    catalog_item.edit_tags("Cost Center *", "Cost Center 001")
 
 
 @pytest.mark.xfail(message='downstream - https://bugzilla.redhat.com/show_bug.cgi?id=996789 ;'
