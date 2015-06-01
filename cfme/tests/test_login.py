@@ -27,6 +27,7 @@ def test_login(method):
     assert login.page.is_displayed()
 
 
+@pytest.mark.sauce
 def test_bad_password():
     """ Tests logging in with a bad password. """
     pytest.sel.get(pytest.sel.base_url())

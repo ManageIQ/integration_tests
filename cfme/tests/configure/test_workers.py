@@ -4,6 +4,7 @@ import pytest
 from cfme.configure import configuration
 
 
+@pytest.mark.sauce
 @pytest.mark.nondestructive
 @pytest.sel.go_to('dashboard')
 def test_restart_workers():

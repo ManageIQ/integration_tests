@@ -6,6 +6,7 @@ import pytest
 import requests
 
 
+@pytest.mark.sauce
 def test_about_links():
     sel.force_navigate('about')
     for link_key, link_loc in about.product_assistance.locators.items():

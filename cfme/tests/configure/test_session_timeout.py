@@ -8,6 +8,7 @@ from utils.browser import ensure_browser_open, quit
 from utils.wait import wait_for
 
 
+@pytest.mark.sauce
 def test_session_timeout(request):
     """Sets the timeout to shortest possible time and waits if it really times out."""
     @request.addfinalizer  # Wow, why we did not figure this out before?!
