@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import cfme.configure.settings as st
+import pytest
 import utils.error as error
 from utils.update import update
 
@@ -13,6 +14,7 @@ def new_timeprofile():
                    timezone="(GMT-10:00) Hawaii")
 
 
+@pytest.mark.sauce
 def test_timeprofile_crud():
     timeprofile = new_timeprofile()
     timeprofile.create()
@@ -23,6 +25,7 @@ def test_timeprofile_crud():
     timeprofile.delete()
 
 
+@pytest.mark.sauce
 def test_timeprofile_duplicate_name():
     nt = new_timeprofile()
     nt.create()
@@ -32,6 +35,7 @@ def test_timeprofile_duplicate_name():
     nt. delete()
 
 
+@pytest.mark.sauce
 def test_timeprofile_name_max_character_validation():
     tp = st.Timeprofile(
         description=fauxfactory.gen_alphanumeric(50),
@@ -41,6 +45,7 @@ def test_timeprofile_name_max_character_validation():
     tp.delete()
 
 
+@pytest.mark.sauce
 def test_days_required_error_validation():
     tp = st.Timeprofile(
         description='time_profile' + fauxfactory.gen_alphanumeric(),
@@ -52,6 +57,7 @@ def test_days_required_error_validation():
         tp.create()
 
 
+@pytest.mark.sauce
 def test_hours_required_error_validation():
     tp = st.Timeprofile(
         description='time_profile' + fauxfactory.gen_alphanumeric(),
@@ -63,6 +69,7 @@ def test_hours_required_error_validation():
         tp.create()
 
 
+@pytest.mark.sauce
 def test_description_required_error_validation():
     tp = st.Timeprofile(
         description=None,

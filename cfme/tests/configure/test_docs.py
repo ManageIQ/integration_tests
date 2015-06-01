@@ -31,6 +31,7 @@ def docs_info():
     ]
 
 
+@pytest.mark.sauce
 def test_links(guides, soft_assert):
     """Test whether the PDF documents are present."""
     pytest.sel.force_navigate("about")
@@ -70,6 +71,7 @@ def test_contents(guides, soft_assert):
             soft_assert(exp_str in pdf_title_low, "{} not in {}".format(exp_str, pdf_title_low))
 
 
+@pytest.mark.sauce
 @pytest.mark.meta(blockers=[1026939])
 def test_info(guides, soft_assert):
     pytest.sel.force_navigate("about")

@@ -33,6 +33,7 @@ def dialog():
     yield service_dialog
 
 
+@pytest.mark.sauce
 def test_button_group_crud(request):
     buttongroup = ButtonGroup(
         text=fauxfactory.gen_alphanumeric(), hover="btn_hvr", type=ButtonGroup.SERVICE)

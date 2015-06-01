@@ -4,6 +4,7 @@ from cfme.configure.about import product_assistance as about
 from utils.ssh import SSHClient
 
 
+@pytest.mark.sauce
 def test_version():
     """Check version presented in UI against version retrieved directly from the machine.
 

@@ -7,6 +7,7 @@ import cfme.configure.configuration as conf
 from utils.update import update
 
 
+@pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
 @pytest.mark.smoke
 def test_zone_crud(soft_assert):
@@ -32,6 +33,7 @@ def test_zone_crud(soft_assert):
     ))
 
 
+@pytest.mark.sauce
 def test_zone_add_cancel_validation():
     zone = conf.Zone(
         name=fauxfactory.gen_alphanumeric(5),
@@ -40,6 +42,7 @@ def test_zone_add_cancel_validation():
     flash.assert_message_match('Add of new Miq Zone was cancelled by the user')
 
 
+@pytest.mark.sauce
 @pytest.mark.meta(blockers=[1216224])
 def test_zone_change_appliance_zone(request):
     """ Tests that an appliance can be changed to another Zone """
