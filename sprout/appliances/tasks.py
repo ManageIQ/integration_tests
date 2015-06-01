@@ -516,6 +516,16 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
             pool.finished = True
             pool.save()
     else:
+        # Look whether we can swap any provisioning appliance with some in shepherd
+        unfinished = list(Appliance.objects.filter(appliance_pool=pool, ready=False).all())
+        random.shuffle(unfinished)
+        if len(unfinished) > 0:
+            n = Appliance.give_to_pool(pool, len(unfinished))
+            with transaction.atomic():
+                for _ in range(n):
+                    appl = unfinished.pop()
+                    appl.appliance_pool = None
+                    appl.save()
         self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=120)
 
 
@@ -1201,7 +1211,10 @@ def rename_appliances_for_pool(self, pool_id):
 @singleton_task(soft_time_limit=60)
 def check_update(self):
     sprout_sh = project_path.join("sprout").join("sprout.sh")
-    result = command.run([sprout_sh.strpath, "check-update"])
+    try:
+        result = command.run([sprout_sh.strpath, "check-update"])
+    except command.CommandException as e:
+        result = e
     needs_update = result.output.strip().lower() != "up-to-date"
     redis.set("sprout-needs-update", needs_update)
 
