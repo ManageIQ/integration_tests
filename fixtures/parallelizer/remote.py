@@ -78,12 +78,15 @@ class SlaveManager(object):
     def pytest_internalerror(self, excrepr):
         """pytest internal error hook
 
-        - logs errors to master console and main logger
+        - logs full traceback
+        - reports short traceback to the py.test console
 
         """
-        msg = "IERROR> %s" % str(excrepr)
+        msg = 'INTERNALERROR> {}'.format(str(excrepr))
         self.log.error(msg)
-        self.message(msg)
+        # Only send the last line (exc type/message) to keep the pytest log clean
+        short_tb = 'INTERNALERROR> {}'.format(msg.strip().splitlines()[-1])
+        self.send_event("internalerror", message=short_tb)
 
     def pytest_runtestloop(self, session):
         """pytest runtest loop
@@ -108,10 +111,6 @@ class SlaveManager(object):
     def _test_generator(self):
         # Pull the first batch of tests, stash in a deque
         tests = self._get_tests()
-        # slight pause here, to make sure the initial distribution is properly spread among slaves.
-        # with small collections, it's possible for a slave to get a test, then request and receive
-        # the next test, before other slaves have received any tests.
-        sleep(.5)
         while True:
             # pop the first test, try to get the next
             try:
