@@ -12,6 +12,8 @@ Required YAML keys:
 """
 import fauxfactory
 import pytest
+
+from cfme.cloud.instance import EC2Instance, OpenStackInstance
 from cfme.control import explorer
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import RHEVMProvider
@@ -23,7 +25,7 @@ from utils.blockers import BZ
 from utils.db import cfmedb
 from utils.log import logger
 from utils.miq_soap import MiqVM
-from utils.providers import setup_provider
+from utils.providers import setup_provider, is_cloud_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -55,7 +57,7 @@ class VMWrapper(Pretty):
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc,
+    argnames, argvalues, idlist = testgen.all_providers(metafunc,
         'small_template', scope="module", template_location=["small_template"])
 
     new_idlist = []
@@ -120,9 +122,10 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
     elif isinstance(provider_mgmt, mgmt_system.VMWareSystem):
         kwargs = {}
     elif isinstance(provider_mgmt, mgmt_system.SCVMMSystem):
-        kwargs = {"host_group": provider_data.get("host_group", "All Hosts")}
+        kwargs = {
+            "host_group": provider_data.get("provisioning", {}).get("host_group", "All Hosts")}
     else:
-        raise TypeError("Cannot handle provider {}".format(type(provider_mgmt).__name__))
+        kwargs = {}
 
     try:
         deploy_template(
@@ -130,28 +133,31 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
             vm_name,
             template_name=small_template,
             allow_skip="default",
+            power_on=True,
             **kwargs
         )
-    except TimedOutError:
+    except TimedOutError as e:
+        logger.exception(e)
         try:
             provider_mgmt.delete_vm(vm_name)
         except TimedOutError:
             logger.warning("Could not delete VM {}!".format(vm_name))
         finally:
             # If this happened, we should skip all tests from this provider in this module
-            pytest.skip("{} is quite likely overloaded! Check its status!".format(provider_key))
+            pytest.skip("{} is quite likely overloaded! Check its status!\n{}: {}".format(
+                provider_key, type(e).__name__, str(e)))
 
     def finalize():
         """if getting SOAP object failed, we would not get the VM deleted! So explicit teardown."""
-        logger.info("Shutting down VM with name %s" % vm_name)
+        logger.info("Shutting down VM with name {}".format(vm_name))
         if provider_mgmt.is_vm_suspended(vm_name):
-            logger.info("Powering up VM %s to shut it down correctly." % vm_name)
+            logger.info("Powering up VM {} to shut it down correctly.".format(vm_name))
             provider_mgmt.start_vm(vm_name)
         if provider_mgmt.is_vm_running(vm_name):
-            logger.info("Powering off VM %s" % vm_name)
+            logger.info("Powering off VM {}".format(vm_name))
             provider_mgmt.stop_vm(vm_name)
         if provider_mgmt.does_vm_exist(vm_name):
-            logger.info("Deleting VM %s in %s" % (vm_name, provider_mgmt.__class__.__name__))
+            logger.info("Deleting VM {} in {}".format(vm_name, provider_mgmt.__class__.__name__))
             provider_mgmt.delete_vm(vm_name)
     request.addfinalizer(finalize)
 
@@ -161,7 +167,7 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
     # Get the SOAP object
     soap = wait_for(
         lambda: get_vm_object(vm_name),
-        message="VM object %s appears in CFME" % vm_name,
+        message="VM object {} appears in CFME".format(vm_name),
         fail_condition=None,
         num_sec=600,
         delay=15,
@@ -177,12 +183,12 @@ def name_suffix():
 
 @pytest.fixture(scope="module")
 def policy_name(name_suffix):
-    return "action_testing: policy %s" % name_suffix
+    return "action_testing: policy {}".format(name_suffix)
 
 
 @pytest.fixture(scope="module")
 def policy_profile_name(name_suffix):
-    return "action_testing: policy profile %s" % name_suffix
+    return "action_testing: policy profile {}".format(name_suffix)
 
 
 @pytest.yield_fixture(scope="module")
@@ -201,8 +207,16 @@ def automate_role_set(request):
 
 
 @pytest.fixture(scope="module")
-def vm_crud(vm_name, provider_crud):
-    return Vm(vm_name, provider_crud)
+def vm_crud(vm_name, provider_crud, provider_key, provider_type):
+    if is_cloud_provider(provider_key):
+        if provider_type == "openstack":
+            return OpenStackInstance(vm_name, provider_crud)
+        elif provider_type == "ec2":
+            return EC2Instance(vm_name, provider_crud)
+        else:
+            raise Exception("Unknown provider type {}!".format(provider_type))
+    else:
+        return Vm(vm_name, provider_crud)
 
 
 @pytest.fixture(scope="function")
@@ -212,9 +226,9 @@ def vm_on(vm, vm_crud):
     if not vm.is_vm_running():
         vm.start_vm()
         vm.wait_vm_running()
-        # Make sure the state is consistent
-        vm_crud.refresh_relationships(from_details=True)
-        vm_crud.wait_for_vm_state_change(desired_state=Vm.STATE_ON, from_details=True)
+    # Make sure the state is consistent
+    vm_crud.refresh_relationships(from_details=True)
+    vm_crud.wait_for_vm_state_change(desired_state=vm_crud.STATE_ON, from_details=True)
     return vm
 
 
@@ -228,9 +242,9 @@ def vm_off(vm, vm_crud):
     if not vm.is_vm_stopped():
         vm.stop_vm()
         vm.wait_vm_stopped()
-        # Make sure the state is consistent
-        vm_crud.refresh_relationships(from_details=True)
-        vm_crud.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, from_details=True)
+    # Make sure the state is consistent
+    vm_crud.refresh_relationships(from_details=True)
+    vm_crud.wait_for_vm_state_change(desired_state=vm_crud.STATE_OFF, from_details=True)
     return vm
 
 
@@ -239,7 +253,7 @@ def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, 
     """ Takes care of setting the appliance up for testing """
     policy = explorer.VMControlPolicy(
         policy_name,
-        scope="fill_field(VM and Instance : Name, INCLUDES, %s)" % vm.name
+        scope="fill_field(VM and Instance : Name, INCLUDES, {})".format(vm.name)
     )
     policy.create()
     policy_profile = explorer.PolicyProfile(policy_profile_name, policies=[policy])

@@ -264,6 +264,7 @@ class EC2System(MgmtSystemAPIBase):
         # strip out kwargs that ec2 doesn't understand
         timeout = kwargs.pop('timeout', 900)
         vm_name = kwargs.pop('vm_name', None)
+        power_on = kwargs.pop('power_on', True)
 
         # Make sure we only provision one VM
         kwargs.update({'min_count': 1, 'max_count': 1})
@@ -283,6 +284,8 @@ class EC2System(MgmtSystemAPIBase):
 
         if vm_name:
             self.set_name(instances[0].id, vm_name)
+        if power_on:
+            self.start_vm(instances[0].id)
         return instances[0].id
 
     def set_name(self, instance_id, new_name):
