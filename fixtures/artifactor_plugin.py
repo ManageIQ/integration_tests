@@ -156,6 +156,7 @@ def pytest_unconfigure():
     art_client.fire_hook('teardown_merkyl', ip=appliance_ip_address)
     if not SLAVEID:
         art_client.terminate()
+        proc.wait()
 
 
 if not SLAVEID:

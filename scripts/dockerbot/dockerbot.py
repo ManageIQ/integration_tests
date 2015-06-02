@@ -134,6 +134,8 @@ class DockerBot(object):
         self.pytest_bindings = self.create_pytest_bindings()
 
         if self.args['dry_run']:
+            for i in self.env_details:
+                print 'export {}="{}"'.format(i, self.env_details[i])
             print self.env_details
 
         pytest = PytestDocker(name=self.pytest_name, bindings=self.pytest_bindings,
@@ -383,9 +385,9 @@ class DockerBot(object):
             print "  WHARF: {}".format(self.args['wharf'])
         if self.args['prtester']:
             print "  PRTESTING: Enabled"
-            self.env_details['TRACKERBOT'] = self.args['trackerbot']
-            print "  TRACKERBOT: {}".format(self.env_details['TRACKERBOT'])
             self.env_details['POST_TASK'] = self.pytest_name
+        self.env_details['TRACKERBOT'] = self.args['trackerbot']
+        print "  TRACKERBOT: {}".format(self.env_details['TRACKERBOT'])
         print "  REPO: {}".format(self.args['cfme_repo'])
         print "  BROWSER: {}".format(self.args['browser'])
         if self.args['update_pip']:
