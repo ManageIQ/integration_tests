@@ -176,7 +176,7 @@ CELERYBEAT_SCHEDULE = {
 
     'free-appliance-shepherd': {
         'task': 'appliances.tasks.free_appliance_shepherd',
-        'schedule': timedelta(minutes=1),
+        'schedule': timedelta(seconds=30),
     },
 
     'kill-unused-appliances': {
@@ -201,7 +201,7 @@ CELERYBEAT_SCHEDULE = {
 
     'check-update': {
         'task': 'appliances.tasks.check_update',
-        'schedule': timedelta(hours=1),
+        'schedule': timedelta(minutes=15),
     },
 
     'scavenge-managed-providers': {
