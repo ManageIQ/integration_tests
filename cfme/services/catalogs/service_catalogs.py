@@ -2,7 +2,7 @@
 from functools import partial
 
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import accordion, flash, menu, form_buttons
+from cfme.web_ui import accordion, flash, menu, form_buttons, Form, Input, Select
 from utils.update import Updateable
 from utils.pretty import Pretty
 from utils import version
@@ -12,6 +12,19 @@ order_button = {
     '5.4': "//button[@title='Order this Service']"
 }
 accordion_tree = partial(accordion.tree, "Service Catalogs")
+
+# Forms
+stack_form = Form(
+    fields=[
+        ('stack_name', Input("stack_name")),
+        ('timeout', Input("stack_timeout")),
+        ('key_name', Input("param_KeyName")),
+        ('db_user', Input("param_DBUser__protected")),
+        ('db_password', Input("param_DBPassword__protected")),
+        ('db_root_password', Input("param_DBRootPassword__protected")),
+        ('select_instance_type', Select("//select[@id='param_InstanceType']"))
+    ])
+
 
 menu.nav.add_branch(
     'services_catalogs',
@@ -37,12 +50,21 @@ menu.nav.add_branch(
 class ServiceCatalogs(Updateable, Pretty):
     pretty_attrs = ['service_name']
 
-    def __init__(self, service_name=None):
+    def __init__(self, service_name=None, stack_data=None):
         self.service_name = service_name
+        self.stack_data = stack_data
 
     def order(self, catalog, catalog_item):
         sel.force_navigate('order_service_catalog',
                            context={'catalog': catalog,
                                     'catalog_item': catalog_item})
+        sel.click(form_buttons.submit)
+        flash.assert_success_message("Order Request was Submitted")
+
+    def order_stack_item(self, catalog, catalog_item):
+        sel.force_navigate('order_service_catalog',
+                           context={'catalog': catalog,
+                                    'catalog_item': catalog_item})
+        stack_form.fill(self.stack_data)
         sel.click(form_buttons.submit)
         flash.assert_success_message("Order Request was Submitted")
