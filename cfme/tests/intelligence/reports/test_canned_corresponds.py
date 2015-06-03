@@ -5,6 +5,7 @@ from functools import partial
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider import Provider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
+from utils.net import ip_address, resolve_hostname
 from utils.providers import provider_factory_by_name, setup_a_provider as _setup_a_provider
 
 provider_props = partial(details_page.infoblock.text, "Properties")
@@ -49,12 +50,33 @@ def test_cluster_relationships(soft_assert, setup_a_provider):
         name = relation["Name"]
         provider_name = relation["Provider Name"]
         provider = provider_factory_by_name(provider_name)
-        host_name = relation["Host Name"]
+        host_name = relation["Host Name"].strip()
         soft_assert(name in provider.list_cluster(), "Cluster {} not found in {}".format(
             name, provider_name
         ))
+        if not host_name:
+            continue  # No host name
+        host_ip = resolve_hostname(host_name, force=True)
+        if host_ip is None:
+            # Don't check
+            continue
         for host in provider.list_host():
-            if host_name in host or host in host_name:  # Tends to get truncated and so
-                break
+            if ip_address.match(host) is None:
+                host_is_ip = False
+                ip_from_provider = resolve_hostname(host, force=True)
+            else:
+                host_is_ip = True
+                ip_from_provider = host
+            if not host_is_ip:
+                # Strings first
+                if host == host_name:
+                    break
+                elif host_name.startswith(host):
+                    break
+                elif ip_from_provider is not None and ip_from_provider == host_ip:
+                    break
+            else:
+                if host_ip == ip_from_provider:
+                    break
         else:
             soft_assert(False, "Hostname {} not found in {}".format(host_name, provider_name))
