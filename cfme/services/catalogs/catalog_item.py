@@ -28,6 +28,8 @@ basic_info_form = Form(
         ('display_checkbox', Input("display")),
         ('select_catalog', Select("//select[@id='catalog_id']")),
         ('select_dialog', Select("//select[@id='dialog_id']")),
+        ('select_orch_template', Select("//select[@id='template_id']")),
+        ('select_provider', Select("//select[@id='manager_id']")),
         ('edit_button', form_buttons.save)
     ])
 
@@ -177,7 +179,8 @@ class CatalogItem(Updateable, Pretty):
 
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None,
-                 catalog_name=None, provider=None, prov_data=None):
+                 catalog_name=None, orch_template=None, provider_type=None,
+                 provider=None, prov_data=None):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -185,7 +188,9 @@ class CatalogItem(Updateable, Pretty):
         self.catalog = catalog
         self.dialog = dialog
         self.catalog_name = catalog_name
+        self.orch_template = orch_template
         self.provider = provider
+        self.provider_type = provider_type
         self.provisioning_data = prov_data
 
     def create(self):
@@ -196,7 +201,9 @@ class CatalogItem(Updateable, Pretty):
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
                                'select_catalog': self.catalog,
-                               'select_dialog': self.dialog})
+                               'select_dialog': self.dialog,
+                               'select_orch_template': self.orch_template,
+                               'select_provider': self.provider_type})
         if(self.catalog_name is not None):
             tabstrip.select_tab("Request Info")
             template = template_select_form.template_table.find_row_by_cells({
