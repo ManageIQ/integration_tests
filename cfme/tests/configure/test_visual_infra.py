@@ -165,10 +165,13 @@ def test_report_page_per_item(setup_a_provider, set_report):
     if int(paginator.rec_total()) >= int(limit):
         assert int(paginator.rec_end()) == int(limit), "Reportview Failed!"
 
+from fixtures.rbac import roles
+
 
 @landing_uncollectif
+@pytest.mark.parametrize('rbac_role', roles)
 @pytest.mark.parametrize('start_page', landing_pages, scope="module")
-def test_start_page(request, setup_a_provider, start_page):
+def test_start_page(rbac_role, configure_ldap_auth_mode, request, setup_a_provider, start_page):
     """ Tests start page
 
     Metadata:

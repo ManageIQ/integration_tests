@@ -1,0 +1,3 @@
+node_name,evmgroup-administrator,evmgroup-auditor,default,evmgroup-super_administrator,evmgroup-operator
+cfme/tests/configure/test_visual_infra.py/test_start_page,,,,,
+cfme/tests/infrastructure/test_provisioning.py/test_provision_from_template,,,,,

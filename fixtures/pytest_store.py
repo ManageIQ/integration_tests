@@ -71,6 +71,11 @@ class Store(object):
         # Stash of the "real" terminal reporter once we get it,
         # so we don't have to keep going through pluginmanager
         self._terminalreporter = None
+        self._user = None
+
+    @property
+    def user(self):
+        return self._user or 'default'
 
     @property
     def current_appliance(self):
@@ -168,6 +173,14 @@ def _pop_appliance(app):
 def pytest_namespace():
     # Expose the pytest store as pytest.store
     return {'store': store}
+
+
+def set_user(user):
+    store._user = user
+
+
+def unset_user():
+    store._user = None
 
 
 def pytest_configure(config):

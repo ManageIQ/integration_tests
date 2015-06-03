@@ -171,6 +171,9 @@
                 {% if test.screenshot %}
                     <a href="{{test.screenshot}}" class="btn btn-primary" role="button">Screenshot</a>
                 {% endif %}
+                {% if test.rbac %}
+                    <a href="{{test.rbac}}" class="btn btn-success" role="button">RBAC Traceback</a>
+                {% endif %}
                 {% if test.full_tb %}
                     <a href="{{test.full_tb}}" class="btn btn-success" role="button">Full Traceback</a>
                 {% endif %}

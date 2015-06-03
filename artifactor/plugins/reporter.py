@@ -170,6 +170,8 @@ class Reporter(ArtifactorBasePlugin):
                         test_data['screenshot'] = filename.replace(log_dir, "")
                     elif "short-traceback" in filename:
                         test_data['short_tb'] = open(filename).read()
+                    elif "rbac-traceback" in filename:
+                        test_data['rbac'] = filename.replace(log_dir, "")
                     elif "traceback" in filename:
                         test_data['full_tb'] = filename.replace(log_dir, "")
                     elif "video" in filename:

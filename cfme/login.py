@@ -5,6 +5,7 @@ the credentials in the cfme yamls.
 
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the login page
 """
+from __future__ import absolute_import
 from threading import local
 
 from selenium.webdriver.common.keys import Keys
@@ -18,6 +19,8 @@ from utils import conf, version
 from utils.browser import ensure_browser_open, quit
 from utils.log import logger
 from utils.pretty import Pretty
+from fixtures.pytest_store import store
+
 
 thread_locals = local()
 thread_locals.current_user = None
@@ -144,8 +147,8 @@ def login_admin(**kwargs):
     if current_full_name() != 'Administrator':
         logout()
 
-        username = conf.credentials['default']['username']
-        password = conf.credentials['default']['password']
+        username = conf.credentials[store.user]['username']
+        password = conf.credentials[store.user]['password']
         login(username, password, **kwargs)
 
 
