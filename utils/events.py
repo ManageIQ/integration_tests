@@ -14,7 +14,6 @@ from cfme.infrastructure.provider import get_from_config
 from cfme.web_ui import flash
 from utils import version
 from utils.log import logger
-from utils.update import update
 
 ALL_EVENTS = [
     ('Datastore Analysis Complete', 'datastore_analysis_complete'),
@@ -120,6 +119,11 @@ ALL_VDI_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("vdi_")]
 
 
 def setup_for_event_testing(ssh_client, db, listener_info, providers):
+
+    domain = Domain(name="new_domain", enabled=True)
+    if not domain.exists():
+        domain.create()
+
     # FIX THE ENV ERROR IF PRESENT
     if ssh_client.run_command("ruby -v")[0] != 0:
         logger.info("Pathing env to correctly source EVM environment")
@@ -230,7 +234,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
                     version.LOWEST: "Automation Requests (Request)",
                     "5.3": "Request"
                 }),
-                namespace=Namespace("System"))
+                namespace=Namespace("System", domain=domain))
         )
         instance.create()
 
@@ -247,11 +251,3 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
             prov_obj.create()
         prov_obj.assign_policy_profiles("Automate event policies")
         flash.assert_no_errors()
-
-    # ENABLE THE DOMAIN IF UPSTREAM
-    if version.current_version() >= "5.3":
-        if not Domain.default.is_enabled:
-            logger.info(
-                "Enabling the {} domain to enable our automation.".format(Domain.default.name))
-            with update(Domain.default):
-                Domain.default.enabled = True
