@@ -125,6 +125,7 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
             provider_key,
             vm_name,
             template_name=small_template,
+            allow_skip="default",
             **kwargs
         )
     except TimedOutError:
