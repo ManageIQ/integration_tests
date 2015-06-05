@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
+import diaper
 import fauxfactory
 import pytest
 
 from cfme.web_ui import Quadicon, mixins, toolbar as tb
 from cfme.configure.configuration import Category, Tag
 from utils import providers
+from utils.version import current_version
 
 
 @pytest.fixture(scope="module")
@@ -57,25 +59,35 @@ def tag(category):
     tag.delete()
 
 
-def test_tag_item_through_selecting(location, tag):
+@pytest.mark.uncollectif(
+    lambda location: location in {"clouds_tenants"} and current_version() < "5.4")
+def test_tag_item_through_selecting(request, location, tag):
     """Add a tag to an item."""
     pytest.sel.force_navigate(location)
     tb.set_vms_grid_view()
     if not Quadicon.any_present:
         pytest.skip("No Quadicon present, cannot test.")
     Quadicon.select_first_quad()
+
+    def _delete():
+        pytest.sel.force_navigate(location)
+        tb.set_vms_grid_view()
+        Quadicon.select_first_quad()
+        mixins.remove_tag(tag)
+    request.addfinalizer(lambda: diaper(_delete))
     mixins.add_tag(tag)
-    tb.set_vms_grid_view()
-    Quadicon.select_first_quad()  # It goes back to the list view.
-    mixins.remove_tag(tag)
+    _delete()
 
 
-def test_tag_item_through_details(location, tag):
+@pytest.mark.uncollectif(
+    lambda location: location in {"clouds_tenants"} and current_version() < "5.4")
+def test_tag_item_through_details(request, location, tag):
     """Add a tag to an item."""
     pytest.sel.force_navigate(location)
     tb.set_vms_grid_view()
     if not Quadicon.any_present:
         pytest.skip("No Quadicon present, cannot test.")
     pytest.sel.click(Quadicon.first())
+    request.addfinalizer(lambda: diaper(lambda: mixins.remove_tag(tag)))
     mixins.add_tag(tag)
     mixins.remove_tag(tag)
