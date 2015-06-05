@@ -17,7 +17,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     if isinstance(allow_skip, dict):
         skip_exceptions = allow_skip.keys()
         callable_mapping = allow_skip
-    elif allow_skip.lower() == "default":
+    elif isinstance(allow_skip, basestring) and allow_skip.lower() == "default":
         skip_exceptions = (RHEVRequestError, )
         callable_mapping = {}
     else:
