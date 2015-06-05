@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
 """Provides custom exceptions for the ``cfme`` module. """
+import pytest
+from utils.log import logger
 
 
 class CFMEException(Exception):
@@ -8,6 +11,14 @@ class CFMEException(Exception):
 
     """
     pass
+
+
+class FlashMessageException(CFMEException):
+    """Raised by functions in :py:mod:`cfme.web_ui.flash`"""
+
+    def skip_and_log(self, message="Skipping due to flash message"):
+        logger.error("Flash message error: {}".format(str(self)))
+        pytest.skip("{}: {}".format(message, str(self)))
 
 
 class CFMEExceptionOccured(CFMEException):

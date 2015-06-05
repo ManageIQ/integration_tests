@@ -4,7 +4,7 @@
 :var area: A :py:class:`cfme.web_ui.Region` object representing the flash region.
 """
 from functools import wraps
-from cfme.exceptions import CFMEExceptionOccured
+from cfme.exceptions import CFMEExceptionOccured, FlashMessageException
 from cfme.web_ui import Region
 import cfme.fixtures.pytest_selenium as sel
 from utils.log import logger
@@ -144,7 +144,7 @@ def assert_no_errors(messages=None):
     all_messages = messages or get_messages()
     errors = [error.message for error in filter(is_error, all_messages)]
     if errors:
-        raise Exception(', '.join(errors))
+        raise FlashMessageException(', '.join(errors))
     else:
         return all_messages
 
@@ -155,14 +155,14 @@ def assert_message_match(m):
     logger.debug('Asserting flash message match for "{}"'.format(m))
     if not any([fm.message == m for fm in get_messages()]):
         logger.debug(' No match found in...{}'.format(get_messages()))
-        raise Exception("No matching flash message for '%s'" % m)
+        raise FlashMessageException("No matching flash message for '%s'" % m)
 
 
 @verify_rails_error
 def assert_message_contain(m):
     """ Asserts that a message contains a specific string """
     if not any([m in fm.message for fm in get_messages()]):
-        raise Exception("No flash message contains '%s'" % m)
+        raise FlashMessageException("No flash message contains '%s'" % m)
 
 
 @verify_rails_error
@@ -175,4 +175,5 @@ def assert_success_message(m):
             (fm.message == m and (fm.level in {"info", "success"}))
             for fm
             in messages]):
-        raise Exception("No matching info flash message for '%s', instead got %s" % (m, messages))
+        raise FlashMessageException(
+            "No matching info flash message for '{}', instead got {}".format(m, messages))

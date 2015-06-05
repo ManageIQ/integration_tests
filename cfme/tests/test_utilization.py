@@ -6,6 +6,7 @@ from utils import testgen
 from utils import conf
 from utils.log import logger
 from cfme.configure.configuration import server_roles_enabled, candu
+from cfme.exceptions import FlashMessageException
 
 pytest_generate_tests = testgen.generate(testgen.provider_by_type, None)
 
@@ -28,6 +29,9 @@ def handle_provider(provider_key):
     try:
         providers.clear_providers()
         providers.setup_provider(provider_key)
+    except FlashMessageException as e:
+        e.skip_and_log("Provider failed to set up")
+    else:
         yield
     finally:
         providers.clear_providers()
