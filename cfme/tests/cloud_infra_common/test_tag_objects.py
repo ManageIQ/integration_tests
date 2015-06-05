@@ -9,8 +9,10 @@ from utils import providers
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
-    providers.setup_a_provider(prov_class="infra", validate=True, check_existing=True)
-    providers.setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
+    providers.setup_a_provider(
+        prov_class="infra", validate=True, check_existing=True, delete_failure=True)
+    providers.setup_a_provider(
+        prov_class="cloud", validate=True, check_existing=True, delete_failure=True)
 
 
 pytestmark = [
@@ -55,9 +57,8 @@ def tag(category):
     tag.delete()
 
 
-def test_tag_infra_item_through_selecting(location, tag):
-    """Add a tag to a infra item
-    """
+def test_tag_item_through_selecting(location, tag):
+    """Add a tag to an item."""
     pytest.sel.force_navigate(location)
     tb.set_vms_grid_view()
     if not Quadicon.any_present:
@@ -69,9 +70,8 @@ def test_tag_infra_item_through_selecting(location, tag):
     mixins.remove_tag(tag)
 
 
-def test_tag_infra_item_through_details(location, tag):
-    """Add a tag to a infra item
-    """
+def test_tag_item_through_details(location, tag):
+    """Add a tag to an item."""
     pytest.sel.force_navigate(location)
     tb.set_vms_grid_view()
     if not Quadicon.any_present:

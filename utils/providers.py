@@ -119,14 +119,18 @@ def provider_factory_by_name(provider_name, *args, **kwargs):
     return provider_factory(get_provider_key(provider_name), *args, **kwargs)
 
 
-def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=True):
+def setup_a_provider(
+        prov_class=None, prov_type=None, validate=True, check_existing=True, delete_failure=False):
     """Sets up a random provider
 
     Args:
         prov_type: "infra" or "cloud"
+        delete_failure: Deletes the provider if the provider exists and the validation fails. Then
+            it re-adds the provider.
 
     """
     if prov_class == "infra":
+        from cfme.infrastructure.provider import get_from_config, wait_for_provider_delete
         potential_providers = list_infra_providers()
         if prov_type:
             providers = []
@@ -136,6 +140,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         else:
             providers = potential_providers
     elif prov_class == "cloud":
+        from cfme.cloud.provider import get_from_config, wait_for_provider_delete
         potential_providers = list_cloud_providers()
         if prov_type:
             providers = []
@@ -145,6 +150,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         else:
             providers = potential_providers
     else:
+        from cfme.infrastructure.provider import get_from_config, wait_for_provider_delete
         providers = list_infra_providers()
 
     result = None
@@ -152,8 +158,22 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     # If there is already a suitable provider, don't try to setup a new one.
     already_existing = filter(is_provider_setup, providers)
     if already_existing:
-        return setup_provider(  # This will run a refresh too
-            random.choice(already_existing), validate=validate, check_existing=check_existing)
+        chosen = random.choice(already_existing)
+        try:
+            return setup_provider(  # This will run a refresh too
+                chosen, validate=validate, check_existing=check_existing)
+        except Exception as e:
+            if not delete_failure:
+                raise
+            logger.exception(e)
+            logger.warning("Deleting and re-adding the provider {}.".format(chosen))
+            prov_object = get_from_config(chosen)
+            prov_object.delete(cancel=False)
+            wait_for_provider_delete(prov_object)
+            logger.info("Provider {} deleted, now going for re-add.".format(chosen))
+            # And try again
+            return setup_provider(  # This will run a refresh too
+                chosen, validate=validate, check_existing=check_existing)
 
     # Shuffle the order to spread the load across providers
     random.shuffle(providers)
