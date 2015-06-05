@@ -160,7 +160,8 @@ class Appliance(object):
         self.ipapp.enable_internal_db(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
-        self.ipapp.clone_domain(log_callback=log_callback)
+        self.ipapp.clone_domain("ManageIQ", "Default", log_callback=log_callback)
+        self.ipapp.clone_domain("RedHat", "RedHat_Over", log_callback=log_callback)
         self.ipapp.update_rhel(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
@@ -702,9 +703,10 @@ class IPAppliance(object):
         self.wait_for_db()
 
         # Make sure the working dir exists
-        client.run_command('mkdir -p /tmp/miq')
+        client.run_command('mkdir -p /tmp/{}'.format(source))
 
-        export_opts = 'DOMAIN={} EXPORT_DIR=/tmp/miq PREVIEW=false OVERWRITE=true'.format(source)
+        export_opts = 'DOMAIN={} EXPORT_DIR=/tmp/{} PREVIEW=false OVERWRITE=true'.format(source,
+            source)
         export_cmd = 'evm:automate:export {}'.format(export_opts)
         log_callback('Exporting domain ({}) ...'.format(export_cmd))
         status, output = client.run_rake_command(export_cmd)
@@ -713,14 +715,15 @@ class IPAppliance(object):
             log_callback(msg)
             raise ApplianceException(msg)
 
-        ro_fix_cmd = "sed -i 's/system: true/system: false/g' /tmp/miq/ManageIQ/__domain__.yaml"
+        ro_fix_cmd = ("sed -i 's/system: true/system: false/g' "
+                      "/tmp/{}/{}/__domain__.yaml".format(source, source))
         status, output = client.run_command(ro_fix_cmd)
         if status != 0:
             msg = 'Setting {} domain to read/write failed'.format(dest)
             log_callback(msg)
             raise ApplianceException(msg)
 
-        import_opts = 'DOMAIN={} IMPORT_DIR=/tmp/miq PREVIEW=false'.format(source)
+        import_opts = 'DOMAIN={} IMPORT_DIR=/tmp/{} PREVIEW=false'.format(source, source)
         import_opts += ' OVERWRITE=true IMPORT_AS={} ENABLED=true'.format(dest)
         import_cmd = 'evm:automate:import {}'.format(import_opts)
         log_callback('Importing domain ({}) ...'.format(import_cmd))
