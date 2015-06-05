@@ -16,13 +16,13 @@ accordion_tree = partial(accordion.tree, "Service Catalogs")
 # Forms
 stack_form = Form(
     fields=[
-        ('stack_name', Input("stack_name")),
         ('timeout', Input("stack_timeout")),
         ('key_name', Input("param_KeyName")),
         ('db_user', Input("param_DBUser__protected")),
         ('db_password', Input("param_DBPassword__protected")),
         ('db_root_password', Input("param_DBRootPassword__protected")),
-        ('select_instance_type', Select("//select[@id='param_InstanceType']"))
+        ('select_instance_type', Select("//select[@id='param_InstanceType']")),
+        ('stack_name', Input("stack_name"))
     ])
 
 
