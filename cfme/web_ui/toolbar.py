@@ -22,8 +22,9 @@ locators = Region(
         'list_view': "//div[@title='List View']",
         'tile_view': "//div[@title='Tile View']",
         'compressed_view': "//div[@title='Compressed View']",
-        'expanded_view': "//div[@title='Expanded View']"
-
+        'expanded_view': "//div[@title='Expanded View']",
+        'details_view': "//div[@title='Details Mode']",
+        'exists_view': "//div[@title='Exists Mode']"
     }
 )
 
@@ -192,6 +193,18 @@ def is_vms_compressed_view():
     return "pres" in sel.get_attribute(locators.compressed_view, "class")
 
 
+def is_vms_details_view():
+    """Returns whether details view is selected or not.
+    """
+    return "pres" in sel.get_attribute(locators.details_view, "class")
+
+
+def is_vms_exists_view():
+    """Returns whether exists mode is selected or not.
+    """
+    return "pres" in sel.get_attribute(locators.exists_view, "class")
+
+
 def set_vms_grid_view():
     """Set the view to grid.
     """
@@ -221,7 +234,21 @@ def set_vms_expanded_view():
 
 
 def set_vms_compressed_view():
-    """Set the view to expanded.
+    """Set the view to compressed.
     """
     if not is_vms_compressed_view():
         sel.click(locators.compressed_view)
+
+
+def set_vms_details_view():
+    """Set the view to details.
+    """
+    if not is_vms_details_view():
+        sel.click(locators.details_view)
+
+
+def set_vms_exists_view():
+    """Set the view to exists.
+    """
+    if not is_vms_exists_view():
+        sel.click(locators.exists_view)
