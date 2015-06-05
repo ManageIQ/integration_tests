@@ -6,6 +6,7 @@ Used to communicate with providers without using CFME facilities
 import winrm
 from cStringIO import StringIO
 from contextlib import contextmanager
+from datetime import datetime
 from textwrap import dedent
 
 from lxml import etree
@@ -130,6 +131,14 @@ class SCVMMSystem(MgmtSystemAPIBase):
             "Get-SCLogicalNetwork -VMMServer $scvmm_server | convertto-xml -as String")
         return etree.parse(StringIO(data)).getroot().xpath(
             "./Object/Property[@Name='Name']/text()")
+
+    def vm_creation_time(self, vm_name):
+        xml = self.run_script(
+            "Get-SCVirtualMachine -Name \"{}\""
+            " -VMMServer $scvmm_server | convertto-xml -as String".format(vm_name))
+        date_time = etree.parse(StringIO(xml)).getroot().xpath(
+            "./Object/Property[@Name='CreationTime']/text()")[0]
+        return datetime.strptime(date_time, "%m/%d/%Y %I:%M:%S %p")
 
     def info(self, vm_name):
         pass
