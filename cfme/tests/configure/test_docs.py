@@ -21,14 +21,25 @@ def guides():
 
 @pytest.fixture(scope="session")
 def docs_info():
-    return [
-        'Control',
-        'Lifecycle and Automation',
-        'Quick Start',
-        'Settings And Operations',
-        'Insight',
-        'Integration Services'
-    ]
+    return version.pick({
+        version.LOWEST: [
+            'Control',
+            'Lifecycle and Automation',
+            'Quick Start',
+            'Settings And Operations',
+            'Insight',
+            'Integration Services'
+        ],
+        '5.4': [
+            'Quick Start',
+            'Insight',
+            'Control',
+            'Lifecycle and Automation',
+            'REST API',
+            'SOAP API',
+            'User',
+            'Settings and Operations'
+        ]})
 
 
 @pytest.mark.sauce
