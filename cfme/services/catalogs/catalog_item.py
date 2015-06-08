@@ -3,14 +3,16 @@ from functools import partial
 from collections import OrderedDict
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
-    flash, form_buttons, menu, tabstrip, DHTMLSelect, Input
+    flash, form_buttons, menu, tabstrip, DHTMLSelect, Input, Tree
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
+from utils.version import current_version
 
 cfg_btn = partial(tb.select, "Configuration")
 accordion_tree = partial(accordion.tree, "Catalog Items")
 policy_btn = partial(tb.select, "Policy")
+dynamic_tree = Tree("//div[@id='basic_info_div']//ul[@class='dynatree-container']")
 
 template_select_form = Form(
     fields=[
@@ -30,7 +32,9 @@ basic_info_form = Form(
         ('select_dialog', Select("//select[@id='dialog_id']")),
         ('select_orch_template', Select("//select[@id='template_id']")),
         ('select_provider', Select("//select[@id='manager_id']")),
-        ('edit_button', form_buttons.save)
+        ('field_entry_point', Input("fqname")),
+        ('edit_button', form_buttons.save),
+        ('apply_btn', '//a[@title="Apply"]')
     ])
 
 edit_tags_form = Form(
@@ -204,6 +208,11 @@ class CatalogItem(Updateable, Pretty):
                                'select_dialog': self.dialog,
                                'select_orch_template': self.orch_template,
                                'select_provider': self.provider_type})
+        if current_version() >= "5.4":
+            sel.click(basic_info_form.field_entry_point)
+            dynamic_tree.click_path("Datastore", "Default", "Service", "Provisioning",
+                                    "StateMachines", "ServiceProvision_Template", "default")
+            sel.click(basic_info_form.apply_btn)
         if(self.catalog_name is not None):
             tabstrip.select_tab("Request Info")
             template = template_select_form.template_table.find_row_by_cells({
