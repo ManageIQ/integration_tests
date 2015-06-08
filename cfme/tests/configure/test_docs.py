@@ -16,19 +16,39 @@ from utils import version
 
 @pytest.fixture(scope="module")
 def guides():
-    return [loc for loc in about.locators.iterkeys() if loc.endswith("_guide")]
+    return [
+        loc
+        for loc
+        in about.locators.iterkeys()
+        if loc.endswith("_guide")
+        and (
+            version.pick(about.locators[loc])
+            if isinstance(about.locators[loc], dict)
+            else about.locators[loc]
+        ) is not None]
 
 
 @pytest.fixture(scope="session")
 def docs_info():
-    return [
-        'Control',
-        'Lifecycle and Automation',
-        'Quick Start',
-        'Settings And Operations',
-        'Insight',
-        'Integration Services'
-    ]
+    if version.current_version() < "5.4.0.1" or (not version.appliance_is_downstream()):
+        return [
+            'Control',
+            'Lifecycle and Automation',
+            'Quick Start',
+            'Settings And Operations',
+            'Insight',
+            'Integration Services'
+        ]
+    else:
+        return [
+            'Insight',
+            'Control',
+            'Lifecycle and Automation',
+            'REST API',
+            'SOAP API',
+            'User',
+            'Settings and Operations'
+        ]
 
 
 @pytest.mark.sauce
