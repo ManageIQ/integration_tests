@@ -324,7 +324,13 @@ class ParallelSession(object):
 
     def _start_slave(self, slaveid):
         devnull = open(os.devnull, 'w')
-        base_url = self.slave_urls[slaveid]
+        try:
+            base_url = self.slave_urls[slaveid]
+        except KeyError:
+            # race condition: slave was removed from slave_urls when something else decided to
+            # start it; in this case slave_urls wins and the slave should not start
+            return
+
         # worker output redirected to null; useful info comes via messages and logs
         slave = subprocess.Popen(
             ['python', remote.__file__, slaveid, base_url], stdout=devnull, stderr=devnull)
