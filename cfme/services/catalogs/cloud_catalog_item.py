@@ -9,10 +9,12 @@ import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui as web_ui
 import cfme.web_ui.toolbar as tb
 from cfme.provisioning import provisioning_form as request_form
-from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill, flash, form_buttons, Input
+from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill,\
+    flash, form_buttons, Input, Tree
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
+from utils.version import current_version
 
 
 tb_select = functools.partial(tb.select, "Configuration")
@@ -20,6 +22,7 @@ catalog_item_tree = web_ui.Tree({
     version.LOWEST: '//div[@id="sandt_tree_box"]//table',
     '5.3': '//div[@id="sandt_treebox"]//ul'
 })
+dynamic_tree = Tree("//div[@id='basic_info_div']//ul[@class='dynatree-container']")
 
 template_select_form = Form(
     fields=[
@@ -37,7 +40,9 @@ basic_info_form = Form(
         ('display_checkbox', Input("display")),
         ('select_catalog', Select("//select[@id='catalog_id']")),
         ('select_dialog', Select("//select[@id='dialog_id']")),
-        ('edit_button', form_buttons.save)
+        ('edit_button', form_buttons.save),
+        ('field_entry_point', Input("fqname")),
+        ('apply_btn', '//a[@title="Apply"]')
     ])
 
 
@@ -109,6 +114,11 @@ class Instance(Updateable, Pretty):
                                'display_checkbox': self.display_in,
                                'select_catalog': self.catalog,
                                'select_dialog': self.dialog})
+        if current_version() >= "5.4":
+            sel.click(basic_info_form.field_entry_point)
+            dynamic_tree.click_path("Datastore", "Default", "Service", "Provisioning",
+                                    "StateMachines", "ServiceProvision_Template", "default")
+            sel.click(basic_info_form.apply_btn)
         tabstrip.select_tab("Request Info")
         template = template_select_form.template_table.find_row_by_cells({
             'Name': self.catalog_name,
