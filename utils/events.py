@@ -119,8 +119,8 @@ ALL_VDI_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("vdi_")]
 
 
 def setup_for_event_testing(ssh_client, db, listener_info, providers):
-
-    domain = Domain(name="new_domain", enabled=True)
+    domain_name = "EventTesting"
+    domain = Domain(name=domain_name, enabled=True)
     if not domain.exists():
         domain.create()
 
@@ -184,8 +184,8 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
             version.LOWEST: None,
 
             "5.3.0.0":
-            "evm:automate:convert DOMAIN=Default FILE=/root/{} ZIP_FILE=/root/{}.zip".format(
-                qe_automate_namespace_xml, qe_automate_namespace_xml),
+            "evm:automate:convert DOMAIN={} FILE=/root/{} ZIP_FILE=/root/{}.zip".format(
+                domain_name, qe_automate_namespace_xml, qe_automate_namespace_xml),
         })
         if convert_cmd is not None:
             logger.info("Converting namespace for use on newer appliance...")
@@ -203,8 +203,8 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
             version.LOWEST: "evm:automate:import FILE=/root/{}".format(qe_automate_namespace_xml),
 
             "5.3.0.0":
-            "evm:automate:import ZIP_FILE=/root/{}.zip DOMAIN=Default OVERWRITE=true "
-            "PREVIEW=false".format(qe_automate_namespace_xml),
+            "evm:automate:import ZIP_FILE=/root/{}.zip DOMAIN={} OVERWRITE=true "
+            "PREVIEW=false".format(qe_automate_namespace_xml, domain_name),
         })
         logger.info("Importing the QE Automation namespace ...")
         return_code, stdout = ssh_client.run_rake_command(rake_cmd)
