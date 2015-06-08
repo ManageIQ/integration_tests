@@ -160,8 +160,6 @@ class Appliance(object):
         self.ipapp.enable_internal_db(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
-        self.ipapp.clone_domain("ManageIQ", "Default", log_callback=log_callback)
-        self.ipapp.clone_domain("RedHat", "RedHat_Over", log_callback=log_callback)
         self.ipapp.update_rhel(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
@@ -174,7 +172,6 @@ class Appliance(object):
         self.ipapp.setup_upstream_db(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
-        self.ipapp.clone_domain(log_callback=log_callback)
 
     def configure(self, setup_fleece=False, log_callback=None, **kwargs):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
