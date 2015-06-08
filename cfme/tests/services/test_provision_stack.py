@@ -5,6 +5,7 @@ from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
+from cfme.services.catalogs.myservice import MyService
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils import testgen
@@ -85,6 +86,45 @@ def test_provision_stack(provider_init, provider_key, provider_crud,
     catalog_item.create()
     if provider_type == 'ec2':
         stack_data = {
+            'stack_name': "stack" + fauxfactory.gen_alphanumeric(),
+            'key_name': provisioning['stack_provisioning']['key_name'],
+            'db_user': provisioning['stack_provisioning']['db_user'],
+            'db_password': provisioning['stack_provisioning']['db_password'],
+            'db_root_password': provisioning['stack_provisioning']['db_root_password'],
+            'select_instance_type': provisioning['stack_provisioning']['instance_type'],
+        }
+    elif provider_type == 'openstack':
+        stack_data = {
+            'stack_name': "stack" + fauxfactory.gen_alphanumeric()
+        }
+    service_catalogs = ServiceCatalogs("service_name", stack_data)
+    service_catalogs.order_stack_item(catalog.name, catalog_item)
+    flash.assert_no_errors()
+    logger.info('Waiting for cfme provision request for service %s' % item_name)
+    row_description = item_name
+    cells = {'Description': row_description}
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+                       fail_func=requests.reload, num_sec=1000, delay=20)
+    assert row.last_message.text == 'Service Provisioned Successfully'
+
+
+@pytest.mark.meta(blockers=[1221333])
+def test_reconfigure_service(provider_init, provider_key, provider_crud,
+                        provider_type, provisioning, dialog, catalog, request):
+    """Tests stack provisioning
+
+    Metadata:
+        test_flag: provision
+    """
+    dialog_name, template_name = dialog
+    item_name = fauxfactory.gen_alphanumeric()
+    catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
+                  description="my catalog", display_in=True, catalog=catalog.name,
+                  dialog=dialog_name, orch_template=template_name,
+                  provider_type=provider_crud.name)
+    catalog_item.create()
+    if provider_type == 'ec2':
+        stack_data = {
             'stack_name': fauxfactory.gen_alphanumeric(),
             'key_name': provisioning['stack_provisioning']['key_name'],
             'db_user': provisioning['stack_provisioning']['db_user'],
@@ -105,3 +145,5 @@ def test_provision_stack(provider_init, provider_key, provider_crud,
     row, __ = wait_for(requests.wait_for_request, [cells, True],
                        fail_func=requests.reload, num_sec=1000, delay=20)
     assert row.last_message.text == 'Service Provisioned Successfully'
+    myservice = MyService(catalog_item.name)
+    myservice.reconfigure_service()

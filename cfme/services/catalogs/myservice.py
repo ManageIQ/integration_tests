@@ -48,7 +48,8 @@ menu.nav.add_branch(
                 'retire_service_on_date': menu.nav.partial(lifecycle_btn, "Set Retirement Date"),
                 'edit_service': menu.nav.partial(cfg_btn, "Edit this Service"),
                 'service_set_ownership': menu.nav.partial(cfg_btn, "Set Ownership"),
-                'service_edit_tags': menu.nav.partial(policy_btn, "Edit Tags")
+                'service_edit_tags': menu.nav.partial(policy_btn, "Edit Tags"),
+                'reconfigure_service': menu.nav.partial(cfg_btn, "Reconfigure this Service")
             }
         ]
     }
@@ -64,7 +65,7 @@ class MyService(Updateable):
         retirement_date: Date to retire service.
     """
 
-    def __init__(self, service_name, vm_name):
+    def __init__(self, service_name, vm_name=None):
         self.service_name = service_name
         self.vm_name = vm_name
 
@@ -152,3 +153,7 @@ class MyService(Updateable):
         quadicon = Quadicon(add_vm_name, "vm")
         sel.click(quadicon)
         flash.assert_no_errors()
+
+    def reconfigure_service(self):
+        sel.force_navigate('reconfigure_service',
+                           context={'service_name': self.service_name})
