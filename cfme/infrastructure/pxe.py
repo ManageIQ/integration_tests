@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ A model of a PXE Server in CFME
 """
 
@@ -25,7 +26,10 @@ from utils.db import cfmedb
 cfg_btn = partial(tb.select, 'Configuration')
 
 pxe_server_table_exist = Table('//div[@id="records_div"]/table/tbody/tr/td')
-pxe_details_page = Region(infoblock_type='form')  # infoblock shoudl be type 'detail' #gofigure
+pxe_details_page = Region(locators=dict(
+    last_refreshed=InfoBlock("Basic Information", "Last Refreshed On"),
+    pxe_image_type=InfoBlock("Basic Information", "Type")
+))
 
 pxe_properties_form = Form(
     fields=[
@@ -170,7 +174,7 @@ class PXEServer(Updateable, Pretty):
             sel.click(submit_button)
             flash.assert_no_errors()
 
-    def create(self, cancel=False, refresh=True):
+    def create(self, cancel=False, refresh=True, refresh_timeout=120):
         """
         Creates a PXE server object
 
@@ -186,7 +190,7 @@ class PXEServer(Updateable, Pretty):
         if not cancel:
             flash.assert_message_match('PXE Server "{}" was added'.format(self.name))
             if refresh:
-                self.refresh()
+                self.refresh(timeout=refresh_timeout)
         else:
             flash.assert_message_match('Add of new PXE Server was cancelled by the user')
 
@@ -242,17 +246,11 @@ class PXEServer(Updateable, Pretty):
         if not cancel:
             flash.assert_message_match('PXE Server "{}": Delete successful'.format(self.name))
 
-    def refresh(self, wait=True):
+    def refresh(self, wait=True, timeout=120):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
         sel.force_navigate('infrastructure_pxe_server', context={"pxe_server": self})
-        # FIXME: When the UI has been altered GH1070
-        ref_time = version.pick({
-            version.LOWEST: lambda: pxe_details_page.infoblock.text(
-                'Basic Information', 'Last Refreshed On'),
-            '5.3': lambda: sel.text(sel.element(
-                '//td[contains(normalize-space(text()),"Last Refreshed On")]/../td[2]'))
-        })
+        ref_time = lambda: pxe_details_page.last_refreshed.text
         last_time = ref_time()
         cfg_btn('Refresh Relationships', invokes_alert=True)
         sel.handle_alert()
@@ -260,7 +258,7 @@ class PXEServer(Updateable, Pretty):
             'PXE Server "{}": Refresh Relationships successfully initiated'.format(self.name))
         if wait:
             wait_for(lambda lt: lt != ref_time(),
-                     func_args=[last_time], fail_func=sel.refresh, num_sec=120,
+                     func_args=[last_time], fail_func=sel.refresh, num_sec=timeout,
                      message="pxe refresh")
 
     def get_pxe_image_type(self, image_name, db=True):
@@ -280,13 +278,7 @@ class PXEServer(Updateable, Pretty):
         else:
             sel.force_navigate('infrastructure_pxe_servers')
             pxe_tree(self.name, 'PXE Images', image_name)
-            # GH1070
-            itype = version.pick({
-                version.LOWEST: lambda: InfoBlock('Basic Information', 'Type'),
-                '5.3': lambda: sel.text(sel.element(
-                    '//td[contains(normalize-space(text()),"Type")]/../td[2]'))
-            })
-            return itype()
+            return pxe_details_page.pxe_image_type.text
 
     def set_pxe_image_type(self, image_name, image_type):
         """
@@ -501,7 +493,7 @@ class ISODatastore(Updateable, Pretty):
             sel.click(submit_button)
             flash.assert_no_errors()
 
-    def create(self, cancel=False, refresh=True):
+    def create(self, cancel=False, refresh=True, refresh_timeout=120):
         """
         Creates an ISO datastore object
 
@@ -516,7 +508,7 @@ class ISODatastore(Updateable, Pretty):
         self._submit(cancel, form_buttons.add)
         flash.assert_message_match('ISO Datastore "{}" was added'.format(self.provider))
         if refresh:
-            self.refresh()
+            self.refresh(timeout=refresh_timeout)
 
     def exists(self, db=True):
         """
@@ -554,17 +546,11 @@ class ISODatastore(Updateable, Pretty):
         sel.handle_alert(cancel=cancel)
         flash.assert_message_match('ISO Datastore "{}": Delete successful'.format(self.provider))
 
-    def refresh(self, wait=True):
+    def refresh(self, wait=True, timeout=120):
         """ Refreshes the PXE relationships and waits for it to be updated
         """
         sel.force_navigate('infrastructure_iso_datastore', context={"pxe_iso_datastore": self})
-        # GH1070 see above
-        ref_time = version.pick({
-            version.LOWEST: lambda: pxe_details_page.infoblock.text(
-                'Basic Information', 'Last Refreshed On'),
-            '5.3': lambda: sel.text(sel.element(
-                '//td[contains(normalize-space(text()),"Last Refreshed On")]/../td[2]'))
-        })
+        ref_time = lambda: pxe_details_page.last_refreshed.text
         last_time = ref_time()
         cfg_btn('Refresh Relationships', invokes_alert=True)
         sel.handle_alert()
@@ -573,7 +559,7 @@ class ISODatastore(Updateable, Pretty):
             .format(self.provider))
         if wait:
             wait_for(lambda lt: lt != ref_time(),
-                     func_args=[last_time], fail_func=sel.refresh, num_sec=120,
+                     func_args=[last_time], fail_func=sel.refresh, num_sec=timeout,
                      message="iso refresh")
 
     def set_iso_image_type(self, image_name, image_type):
