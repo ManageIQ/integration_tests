@@ -15,6 +15,7 @@ from utils.update import Updateable
 from utils.version import LOWEST
 
 rate_tree = Tree("//div[@id='cb_rates_treebox']/ul")
+assignment_tree = Tree("//div[@id='cb_assignments_treebox']/ul")
 tb_select = partial(tb.select, "Configuration")
 tb_select_new_chargeback = nav.fn(partial(tb_select, "Add a new Chargeback Rate"))
 tb_select_edit_chargeback = nav.fn(partial(tb_select, "Edit this Chargeback Rate"))
@@ -66,7 +67,7 @@ class AssignFormTable(Pretty):
 
     @property
     def rows(self):
-        return sel.elements("./tbody/tr[@id='new_tr']", root=self)
+        return sel.elements("./tbody/tr", root=self)
 
     def row_by_name(self, name):
         for row in self.rows:
@@ -93,7 +94,7 @@ def _fill_assignform_dict(form, d):
         sel.select(select, value)
 
 
-storage_assign_form = Form(
+assign_form = Form(
     fields=[
         ("assign_to", Select("select#cbshow_typ")),
         # Enterprise
@@ -106,7 +107,8 @@ storage_assign_form = Form(
                 "//div[@id='cb_assignment_div']/fieldset/table[contains(@class, 'style1')]"
                 "/tbody/tr/td/table"),
             "5.4": "//div[@id='cb_assignment_div']/table[contains(@class, 'table')]",
-        }))])
+        })),
+        ('save_button', form_buttons.save)])
 
 
 nav.add_branch('chargeback',
@@ -124,7 +126,12 @@ nav.add_branch('chargeback',
                   'chargeback_rates_storage_named':
                   [lambda d: rate_tree.click_path('Rates', 'Storage', d['chargeback'].description),
                    {'chargeback_rates_storage_edit': tb_select_edit_chargeback}]}],
-                'chargeback_assignments': nav.fn(partial(accordion.click, "Assignments"))})
+                'chargeback_assignments':
+                [nav.fn(partial(accordion.click, "Assignments")),
+                 {'chargeback_assignments_compute':
+                  lambda d: assignment_tree.click_path('Assignments', 'Compute'),
+                 'chargeback_assignments_storage':
+                  lambda d: assignment_tree.click_path('Assignments', 'Storage')}]})
 
 
 HOURLY = 'hourly'
@@ -138,6 +145,11 @@ def _fill_rateform(rf, value):
     """value should be like (5, HOURLY)"""
     fill(rf.rate_loc, value[0])
     fill(rf.unit_select_loc, sel.ByValue(value[1]))
+
+
+@fill.method((RateFormItem))
+def _fill_assignform(rf, value):
+    fill(rf.rate_loc, value)
 
 
 class ComputeRate(Updateable, Pretty):
@@ -238,4 +250,53 @@ class StorageRate(Updateable, Pretty):
         sel.force_navigate('chargeback_rates_storage_named', context={'chargeback': self})
         tb_select('Remove from the VMDB', invokes_alert=True)
         sel.handle_alert()
+        flash.assert_no_errors()
+
+
+class Assign(Updateable, Pretty):
+    """
+    Model of Chargeback Assignment page in cfme.
+
+    Args:
+        assign_to: Assign the chargeback rate to entities such as VM,Provider,datastore or the
+            Enterprise itself.
+        tag_category: Tag category of the entity
+        selections: Selection of a particular entity to which the rate is to be assigned.
+            Eg:If the chargeback rate is to be assigned to providers,select which of the managed
+            providers the rate is to be assigned.
+
+    Usage:
+        tagged_datastore = Assign(
+            assign_to="Tagged Datastores",
+            tag_category="Location",
+            selections={
+                "Chicago": "Default"
+        })
+    tagged_datastore.storageassign()
+
+    """
+    def __init__(self, assign_to=None,
+                 tag_category=None,
+                 selections=None
+                 ):
+        self.assign_to = assign_to
+        self.tag_category = tag_category
+        self.selections = selections
+
+    def storageassign(self):
+        sel.force_navigate('chargeback_assignments_storage', context={'chargeback': self})
+        fill(assign_form,
+            {'assign_to': self.assign_to,
+             'tag_category': self.tag_category,
+             'selections': self.selections},
+            action=assign_form.save_button)
+        flash.assert_no_errors()
+
+    def computeassign(self):
+        sel.force_navigate('chargeback_assignments_compute', context={'chargeback': self})
+        fill(assign_form,
+            {'assign_to': self.assign_to,
+             'tag_category': self.tag_category,
+             'selections': self.selections},
+            action=assign_form.save_button)
         flash.assert_no_errors()
