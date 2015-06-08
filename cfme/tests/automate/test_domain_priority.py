@@ -38,6 +38,14 @@ def copy_domain(request):
     return domain
 
 
+@pytest.fixture(scope="module")
+def original_domain(request):
+    domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
+    domain.create()
+    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
+    return domain
+
+
 @pytest.fixture(scope="function")
 def original_method_write_data():
     return fauxfactory.gen_alphanumeric(32)
@@ -49,7 +57,7 @@ def copy_method_write_data():
 
 
 @pytest.fixture(scope="function")
-def original_method(request, original_method_write_data):
+def original_method(request, original_method_write_data, original_domain):
     method = Method(
         name=fauxfactory.gen_alphanumeric(),
         data=METHOD_TORSO.format(original_method_write_data),
@@ -57,8 +65,10 @@ def original_method(request, original_method_write_data):
             name="Request",
             namespace=Namespace(
                 name="System",
-                parent=Domain.default
-            )
+                parent=original_domain
+            ),
+            setup_schema=[Class.SchemaField(name="meth5",
+                                            type_="Method")]
         )
     )
     method.create()
@@ -67,10 +77,7 @@ def original_method(request, original_method_write_data):
 
 
 @pytest.fixture(scope="function")
-def original_instance(request, original_method):
-    if not Domain.default.is_enabled:
-        with update(Domain.default):
-            Domain.default.enabled = True
+def original_instance(request, original_method, original_domain):
     instance = Instance(
         name=fauxfactory.gen_alphanumeric(),
         values={
@@ -82,8 +89,10 @@ def original_instance(request, original_method):
             name="Request",
             namespace=Namespace(
                 name="System",
-                parent=Domain.default
-            )
+                parent=original_domain
+            ),
+            setup_schema=[Class.SchemaField(name="meth5",
+                                            type_="Method")]
         )
     )
     instance.create()
@@ -94,10 +103,10 @@ def original_instance(request, original_method):
 @pytest.mark.meta(server_roles="+automate")
 @pytest.mark.usefixtures("setup_a_provider")
 def test_priority(
-        request, ssh_client, original_method, original_instance, copy_domain,
+        request, ssh_client, original_method, original_instance, original_domain, copy_domain,
         original_method_write_data, copy_method_write_data):
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
-    set_domain_order([Domain.default.name])  # Default first
+    set_domain_order([original_domain.name])  # Default first
     #
     # FIRST SIMULATION
     #
@@ -147,7 +156,7 @@ def test_priority(
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     # END OF SECOND SIMULATION
     # And last shot, now again with default domain
-    set_domain_order([Domain.default.name])
+    set_domain_order([original_domain.name])
     # And verify
     #
     # LAST SIMULATION
@@ -171,12 +180,12 @@ def test_priority(
 
 @pytest.mark.meta(blockers=[1134500])
 def test_override_method_across_domains(
-        request, ssh_client, original_method, original_instance, copy_domain,
+        request, ssh_client, original_method, original_instance, copy_domain, original_domain,
         original_method_write_data, copy_method_write_data, setup_a_provider):
     instance = original_instance
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     request.addfinalizer(lambda: ssh_client.run_command("rm -f {}".format(FILE_LOCATION)))
-    set_domain_order([Domain.default.name])  # Default first
+    set_domain_order([original_domain.name])  # Default first
     simulate(
         instance="Request",
         message="create",

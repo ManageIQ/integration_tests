@@ -14,7 +14,6 @@ from cfme.infrastructure.provider import get_from_config
 from cfme.web_ui import flash
 from utils import version
 from utils.log import logger
-from utils.update import update
 
 ALL_EVENTS = [
     ('Datastore Analysis Complete', 'datastore_analysis_complete'),
@@ -120,6 +119,11 @@ ALL_VDI_EVENTS = [event for event in ALL_EVENTS if event[1].startswith("vdi_")]
 
 
 def setup_for_event_testing(ssh_client, db, listener_info, providers):
+    domain_name = "EventTesting"
+    domain = Domain(name=domain_name, enabled=True)
+    if not domain.exists():
+        domain.create()
+
     # FIX THE ENV ERROR IF PRESENT
     if ssh_client.run_command("ruby -v")[0] != 0:
         logger.info("Pathing env to correctly source EVM environment")
@@ -180,8 +184,8 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
             version.LOWEST: None,
 
             "5.3.0.0":
-            "evm:automate:convert DOMAIN=Default FILE=/root/{} ZIP_FILE=/root/{}.zip".format(
-                qe_automate_namespace_xml, qe_automate_namespace_xml),
+            "evm:automate:convert DOMAIN={} FILE=/root/{} ZIP_FILE=/root/{}.zip".format(
+                domain_name, qe_automate_namespace_xml, qe_automate_namespace_xml),
         })
         if convert_cmd is not None:
             logger.info("Converting namespace for use on newer appliance...")
@@ -199,8 +203,8 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
             version.LOWEST: "evm:automate:import FILE=/root/{}".format(qe_automate_namespace_xml),
 
             "5.3.0.0":
-            "evm:automate:import ZIP_FILE=/root/{}.zip DOMAIN=Default OVERWRITE=true "
-            "PREVIEW=false".format(qe_automate_namespace_xml),
+            "evm:automate:import ZIP_FILE=/root/{}.zip DOMAIN={} OVERWRITE=true "
+            "PREVIEW=false".format(qe_automate_namespace_xml, domain_name),
         })
         logger.info("Importing the QE Automation namespace ...")
         return_code, stdout = ssh_client.run_rake_command(rake_cmd)
@@ -230,7 +234,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
                     version.LOWEST: "Automation Requests (Request)",
                     "5.3": "Request"
                 }),
-                namespace=Namespace("System"))
+                namespace=Namespace("System", domain=domain))
         )
         instance.create()
 
@@ -247,11 +251,3 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
             prov_obj.create()
         prov_obj.assign_policy_profiles("Automate event policies")
         flash.assert_no_errors()
-
-    # ENABLE THE DOMAIN IF UPSTREAM
-    if version.current_version() >= "5.3":
-        if not Domain.default.is_enabled:
-            logger.info(
-                "Enabling the {} domain to enable our automation.".format(Domain.default.name))
-            with update(Domain.default):
-                Domain.default.enabled = True

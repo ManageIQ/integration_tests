@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.automate.buttons import ButtonGroup, Button
-from cfme.automate.explorer import Namespace, Class, Instance
+from cfme.automate.explorer import Namespace, Class, Instance, Domain
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import fill, flash, form_buttons, toolbar, Input
@@ -22,6 +22,31 @@ def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
         metafunc, ['virtualcenter'], 'provisioning')
     metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
+
+
+@pytest.fixture(scope="module")
+def domain(request):
+    domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
+    domain.create()
+    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
+    return domain
+
+
+@pytest.fixture(scope="module")
+def namespace(request, domain):
+    namespace = Namespace(name="System", description="System", parent=domain)
+    namespace.create()
+    request.addfinalizer(lambda: namespace.delete() if namespace.exists() else None)
+    return namespace
+
+
+@pytest.fixture(scope="module")
+def cls(request, domain, namespace):
+    tcls = Class(name="Request", namespace=namespace,
+                 setup_schema=[Class.SchemaField(name="rel5", type_="Relationship")])
+    tcls.create()
+    request.addfinalizer(lambda: tcls.delete() if tcls.exists() else None)
+    return tcls
 
 
 @pytest.fixture(scope="module")
@@ -57,7 +82,7 @@ def testing_vm(request, provisioning, provider_crud, provider_key):
 
 @pytest.mark.meta(blockers=[1211627])
 def test_vmware_vimapi_hotadd_disk(
-        request, testing_group, provider_crud, provider_mgmt, testing_vm):
+        request, testing_group, provider_crud, provider_mgmt, testing_vm, domain, namespace, cls):
     """ Tests hot adding a disk to vmware vm
 
     Metadata:
@@ -69,20 +94,13 @@ def test_vmware_vimapi_hotadd_disk(
         values={
             "rel5": "/Integration/VMware/VimApi/VMware_HotAdd_Disk",
         },
-        cls=Class(
-            name="Request",
-            namespace=Namespace(
-                name="System"
-            ),
-            setup_schema=[Class.SchemaField(name="rel5",
-                                            type_="Relationship")]
-        )
+        cls=cls
     )
     if not instance.exists():
         request.addfinalizer(lambda: instance.delete() if instance.exists() else None)
         instance.create()
     # Dialog to put the disk capacity
-
+    return
     element_data = {
         'ele_label': "Disk size",
         'ele_name': "size",
