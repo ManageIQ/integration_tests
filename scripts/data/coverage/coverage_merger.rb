@@ -7,7 +7,6 @@ require 'fileutils'
 require 'json'
 require 'simplecov'
 require 'simplecov/result'
-require 'simplecov-rcov'
 
 results = Hash.new
 coverage_root = File.join(File.expand_path(Rails.root), "coverage")
@@ -39,7 +38,7 @@ end
 # Set up simplecov to use the merged results, then fire off the formatters
 SimpleCov.coverage_dir merged_dir
 SimpleCov.instance_variable_set("@result", SimpleCov::Result.from_hash(results))
-SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter, SimpleCov::Formatter::RcovFormatter
+SimpleCov.formatters = SimpleCov::Formatter::HTMLFormatter
 SimpleCov.use_merging true
 SimpleCov.merge_timeout 2 << 28
 SimpleCov.add_group "APIs", "vmdb/app/apis"

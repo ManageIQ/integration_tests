@@ -155,10 +155,11 @@ class CoverageManager(object):
         self._retrieve_coverage_reports()
 
     def _install_simplecov(self):
-        self.log.info('Installing coverage gems on appliance')
-        self.ipapp.ssh_client().run_command('yum -y install git')
+        # This might not work upstream due to different gem installation methods
+        self.log.info('Installing coverage gem on appliance')
         self.ipapp.ssh_client().put_file(gemfile.strpath, rails_root.strpath)
-        self.ipapp.ssh_client().run_command('cd {}; bundle'.format(rails_root))
+        self.ipapp.ssh_client().run_command(
+            'gem install --install-dir /opt/rh/cfme-gemset/ -v0.9.2 simplecov')
 
     def _install_coverage_hook(self):
         # Clean appliance coverage dir
