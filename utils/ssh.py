@@ -14,6 +14,7 @@ from utils.net import net_check
 from fixtures.pytest_store import store
 from utils.path import project_path
 from utils.timeutil import parsetime
+from utils.wait import wait_for
 
 
 # Default blocking time before giving up on an ssh command execution,
@@ -126,8 +127,9 @@ class SSHClient(paramiko.SSHClient):
             self.connect()
         return super(SSHClient, self).get_transport(*args, **kwargs)
 
-    def run_command(self, command, timeout=RUNCMD_TIMEOUT):
-        logger.info("Running command `{}`".format(command))
+    def run_command(self, command, timeout=RUNCMD_TIMEOUT, padding=0, log=True):
+        if log:
+            logger.info("{}Running command `{}`".format(padding * " ", command))
         template = '%s\n'
         command = template % command
 
@@ -213,19 +215,30 @@ class SSHClient(paramiko.SSHClient):
     def appliance_has_netapp(self):
         return self.run_command("stat /var/www/miq/vmdb/HAS_NETAPP").rc == 0
 
-    def install_ssh_keys(self):
+    def install_ssh_keys(self, padding=0):
+        self.wait_ssh()
         self._keystate = _ssh_keystate.installing
         if not _ssh_key_file.check():
             keygen()
         self._connect_kwargs['key_filename'] = _ssh_key_file.strpath
 
-        if self.run_command('test -f ~/.ssh/authorized_keys').rc != 0:
-            self.run_command('mkdir -p ~/.ssh')
+        if self.run_command('test -f ~/.ssh/authorized_keys', padding=padding + 1).rc != 0:
+            self.run_command('mkdir -p ~/.ssh', padding=padding + 1)
             self.put_file(_ssh_key_file.strpath, '~/.ssh/id_rsa')
             self.put_file(_ssh_pubkey_file.strpath, '~/.ssh/id_rsa.pub')
             self.run_command('cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys;'
-                'chmod 700 ~/.ssh; chmod 600 ~/.ssh/*')
+                'chmod 700 ~/.ssh; chmod 600 ~/.ssh/*', padding=padding + 1)
         self._keystate = _ssh_keystate.installed
+
+    def wait_ssh(self):
+        def _wait_f():
+            try:
+                return self.run_command("true", log=False).rc == 0
+            except (EOFError, paramiko.SSHException) as e:
+                logger.info(" SSH not available yet ({}: {})".format(type(e).__name__, str(e)))
+                return False
+
+        wait_for(_wait_f, num_sec=60, delay=5, message="SSH available")
 
 
 class SSHTail(SSHClient):
