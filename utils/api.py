@@ -6,7 +6,7 @@ import json
 import re
 import requests
 import simplejson
-
+from copy import copy
 from utils.version import LooseVersion
 from utils.wait import wait_for
 
@@ -264,10 +264,9 @@ class Collection(object):
 
 
 class Entity(object):
-    TIME_FIELDS = (
+    TIME_FIELDS = {
         "updated_on", "created_on", "last_scan_attempt_on", "state_changed_on", "lastlogon",
-        "updated_at", "created_at",
-    )
+        "updated_at", "created_at", "last_scan_on", "last_sync_on"}
     COLLECTION_MAPPING = dict(
         ems_id="providers",
         storage_id="data_stores",
@@ -276,6 +275,7 @@ class Entity(object):
         current_group_id="groups",
         miq_user_role_id="roles",
         evm_owner_id="users",
+        task_id="tasks",
     )
 
     def __init__(self, collection, data):
@@ -289,7 +289,7 @@ class Entity(object):
             self.reload(get=False)
         elif "href" in self._data:  # We have only href
             self._href = self._data["href"]
-            self._data = None
+            # self._data = None
         else:  # Malformed
             raise ValueError("Malformed data: {}".format(repr(self._data)))
 
@@ -299,7 +299,11 @@ class Entity(object):
         else:
             kwargs = {}
         if get:
-            self._data = self.collection._api.get(self._href, **kwargs)
+            new = self.collection._api.get(self._href, **kwargs)
+            if self._data is None:
+                self._data = new
+            else:
+                self._data.update(new)
         self._href = self._data["id" if not self.collection._api.new_id_behaviour else "href"]
         self._actions = self._data.pop("actions", [])
         for key, value in self._data.iteritems():
@@ -434,20 +438,19 @@ class Action(object):
         if result is None:
             return None
         elif "results" in result:
-            processed_results = []
-            for data in result["results"]:
-                if "id" in data:
-                    processed_results.append(
-                        Entity(
-                            self.collection,
-                            {"href": "{}/{}".format(self.collection._href, data["id"])}))
-                elif "href" in data:
-                    processed_results.append(Entity(self.collection, {"href": data["href"]}))
-                else:
-                    raise NotImplementedError
-            return processed_results
+            return map(self._process_result, result["results"])
         else:
-            return result
+            return self._process_result(result)
+
+    def _process_result(self, result):
+        if "id" in result:
+            d = copy(result)
+            d["href"] = "{}/{}".format(self.collection._href, result["id"])
+            return Entity(self.collection, d)
+        elif "href" in result:
+            return Entity(self.collection, result)
+        else:
+            raise NotImplementedError
 
     def __repr__(self):
         return "<Action {} {}#{}>".format(self._method, self._container._obj._href, self._name)
