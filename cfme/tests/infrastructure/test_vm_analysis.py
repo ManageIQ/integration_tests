@@ -143,7 +143,7 @@ def vm(request, vm_template_name, vm_name, provider_crud, provider_mgmt):
     vm = Vm(vm_name, provider_crud, template_name=vm_template_name)
 
     if not provider_mgmt.does_vm_exist(vm_name):
-        vm.create_on_provider()
+        vm.create_on_provider(allow_skip="default")
 
     request.addfinalizer(vm.delete_from_provider)
     return vm

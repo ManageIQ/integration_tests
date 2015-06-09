@@ -150,7 +150,7 @@ def test_vm(request, provider_crud, provider_mgmt, vm_name):
 
     if not provider_mgmt.does_vm_exist(vm_name):
         logger.info("deploying {} on provider {}".format(vm_name, provider_crud.key))
-        vm.create_on_provider()
+        vm.create_on_provider(allow_skip="default")
     else:
         logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider_crud.key))
     vm.provider_crud.refresh_provider_relationships()

@@ -49,7 +49,7 @@ def vm(request, provider_init, provider_crud, provisioning):
     vm_name = 'test_retire_prov_%s' % fauxfactory.gen_alphanumeric()
     myvm = vms.Vm(name=vm_name, provider_crud=provider_crud, template_name=provisioning['template'])
     request.addfinalizer(myvm.delete_from_provider)
-    myvm.create_on_provider(find_in_cfme=True)
+    myvm.create_on_provider(find_in_cfme=True, allow_skip="default")
     return myvm
 
 

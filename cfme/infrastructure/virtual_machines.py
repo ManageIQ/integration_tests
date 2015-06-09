@@ -585,14 +585,14 @@ class Vm(Common):
         self.template_name = template_name
         self.provider_crud = provider_crud
 
-    def create_on_provider(self, timeout=900, find_in_cfme=False):
+    def create_on_provider(self, timeout=900, find_in_cfme=False, **kwargs):
         """Create the VM on the provider
 
         Args:
             timeout: Number of seconds to wait for the VM to appear in CFME
                      Will not wait at all, if set to 0 (Defaults to ``900``)
         """
-        deploy_template(self.provider_crud.key, self.name, self.template_name)
+        deploy_template(self.provider_crud.key, self.name, self.template_name, **kwargs)
         if find_in_cfme:
             self.provider_crud.refresh_provider_relationships()
             self.wait_to_appear(timeout=timeout, load_details=False)

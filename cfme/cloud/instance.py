@@ -203,14 +203,14 @@ class Instance(Updateable, Pretty):
         """
         raise NotImplementedError('create is not implemented.')
 
-    def create_on_provider(self, timeout=900):
+    def create_on_provider(self, timeout=900, **kwargs):
         """Create the instance on the provider
 
         Args:
             timeout: Number of seconds to wait for the instance to appear in CFME
                      Will not wait at all, if set to 0 (Defaults to ``900``)
         """
-        deploy_template(self.provider_crud.key, self.name, self.template_name)
+        deploy_template(self.provider_crud.key, self.name, self.template_name, **kwargs)
         if timeout:
             self.provider_crud.refresh_provider_relationships()
             self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
