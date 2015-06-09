@@ -20,6 +20,14 @@ from utils.path import log_path
 # any unexpected statuses, which should probably never happen
 
 test_report = log_path.join('test-report.json')
+test_counts = defaultdict(int, {
+    'passed': 0,
+    'failed': 0,
+    'skipped': 0,
+    'error': 0,
+    'xpassed': 0,
+    'xfailed': 0
+})
 
 
 class PostResult(ArtifactorBasePlugin):
@@ -34,15 +42,6 @@ class PostResult(ArtifactorBasePlugin):
     def post_result(self, artifacts, log_dir):
         report = {}
         report['tests'] = artifacts
-
-        test_counts = defaultdict(int, {
-            'passed': 0,
-            'failed': 0,
-            'skipped': 0,
-            'error': 0,
-            'xpassed': 0,
-            'xfailed': 0
-        })
 
         def _inc_test_count(test):
             test_counts[test['statuses']['overall']] += 1

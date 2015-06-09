@@ -70,6 +70,10 @@
                     <br>
                     <strong>OWNER:</strong> <em>{{test.qa_contact}}</em>
                     {% endif %}
+                    {% if test.composite %}
+                    <br>
+                    <strong>BUILD NUMBER:</strong> <a href="{{test.composite.result_url}}"><em>{{test.composite.best_result.0}}</em></a>
+                    {% endif %}
                 </div>
                 <div class="col-md-2">
                     Setup
@@ -134,6 +138,24 @@
                         {% elif test.outcomes['overall'] == "xfailed" %}
                             <span class="label label-success pull-right">XFAILED</span>
                         {% endif %}
+                    {% endif %}
+                    {% if test.composite %}
+                    <br>
+                    Streak
+                        {% if test.outcomes['overall'] == "passed" %}
+                            <span class="label label-success pull-right">
+                        {% elif test.outcomes['overall'] == "failed" %}
+                            <span class="label label-warning pull-right">
+                        {% elif test.outcomes['overall'] == "skipped" %}
+                            <span class="label label-primary pull-right">
+                        {% elif test.outcomes['overall'] == "error" %}
+                            <span class="label label-danger pull-right">
+                        {% elif test.outcomes['overall'] == "xpassed" %}
+                            <span class="label label-danger pull-right">
+                        {% elif test.outcomes['overall'] == "xfailed" %}
+                            <span class="label label-success pull-right">
+                        {% endif %}
+                        {{test.composite.streak.count}} {{test.composite.streak.latest_result|upper}}</span>
                     {% endif %}
                 </div>
             </div>

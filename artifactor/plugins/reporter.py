@@ -12,21 +12,20 @@ artifactor:
             plugin: reporter
             only_failed: False #Only show faled tests in the report
 """
-
-from artifactor import ArtifactorBasePlugin
-from copy import deepcopy
-from jinja2 import Environment, FileSystemLoader
-from utils.path import template_path
+import datetime
 import math
-from operator import itemgetter
 import os
 import re
 import shutil
 import time
-import datetime
+from copy import deepcopy
+
+from jinja2 import Environment, FileSystemLoader
+from py.path import local
 
 from utils.conf import cfme_data  # Only for the provider specific reports
-
+from utils.path import template_path
+from artifactor import ArtifactorBasePlugin
 
 _tests_tpl = {
     '_sub': {},
@@ -133,7 +132,7 @@ class Reporter(ArtifactorBasePlugin):
 
         template_data = {'tests': []}
         template_data['version'] = version
-        log_dir += "/"
+        log_dir = local(log_dir).strpath + "/"
         counts = {'passed': 0, 'failed': 0, 'skipped': 0, 'error': 0, 'xfailed': 0, 'xpassed': 0}
         colors = {'passed': 'success',
                   'failed': 'warning',
@@ -152,6 +151,8 @@ class Reporter(ArtifactorBasePlugin):
             test['statuses']['overall'] = overall_status
             test_data = {'name': test_name, 'outcomes': test['statuses'],
                          'slaveid': test.get('slaveid', "Unknown"), 'color': color}
+            if 'composite' in test:
+                test_data['composite'] = test['composite']
 
             if test.get('start_time', None):
                 if test.get('finish_time', None):
@@ -219,9 +220,6 @@ class Reporter(ArtifactorBasePlugin):
             self.build_dict(test['name'].replace('cfme/', ''), tests, test)
 
         template_data['ndata'] = self.build_li(tests)
-
-        # Sort the test output and if necessary discard tests that have passed
-        template_data['tests'] = sorted(template_data['tests'], key=itemgetter('name'))
 
         for test in template_data['tests']:
             if test.get('duration', None):
