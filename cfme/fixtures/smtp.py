@@ -53,7 +53,13 @@ def smtp_test(request):
         if collector is None:
             return
         logger.info("Sending KeyboardInterrupt to collector")
-        collector.send_signal(signal.SIGINT)
+        try:
+            collector.send_signal(signal.SIGINT)
+        except OSError as e:
+            # TODO: Better logging.
+            logger.exception(e)
+            logger.error("Something happened to the e-mail collector!")
+            return
         time.sleep(2)
         if collector.poll() is None:
             logger.info("Sending SIGTERM to collector")
@@ -96,11 +102,15 @@ def pytest_runtest_call(item):
 
         name, location = get_test_idents(item)
 
-        art_client.fire_hook(
-            "filedump",
-            test_name=name,
-            test_location=location,
-            filename="emails.html",
-            contents=item.funcargs["smtp_test"].get_html_report(),
-            fd_ident="emails"
-        )
+        try:
+            art_client.fire_hook(
+                "filedump",
+                test_name=name,
+                test_location=location,
+                filename="emails.html",
+                contents=item.funcargs["smtp_test"].get_html_report(),
+                fd_ident="emails"
+            )
+        except Exception as e:
+            logger.exception(e)
+            logger.error("Something happened to the SMTP collector.")
