@@ -155,6 +155,19 @@ def setup_a_provider(
 
     result = None
 
+    # If there is a provider that we want to specifically avoid ...
+    # If there is only a single provider, then do not do any filtering
+    # Specify `do_not_prefer` in provider's yaml to make it an object of avoidance.
+    if len(providers) > 1:
+        filtered_providers = [
+            provider
+            for provider
+            in providers
+            if not providers_data[provider].get("do_not_prefer", False)]
+        if filtered_providers:
+            # If our filtering yielded any providers, use them, otherwise do not bother with that
+            providers = filtered_providers
+
     # If there is already a suitable provider, don't try to setup a new one.
     already_existing = filter(is_provider_setup, providers)
     if already_existing:

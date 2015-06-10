@@ -295,6 +295,8 @@ class Entity(object):
 
     def reload(self, expand=None, get=True):
         if expand:
+            if isinstance(expand, (list, tuple)):
+                expand = ",".join(map(str, expand))
             kwargs = {"expand": expand}
         else:
             kwargs = {}
@@ -329,7 +331,8 @@ class Entity(object):
             return True
 
     def wait_for_existence(self, existence, **kwargs):
-        return wait_for(lambda: self.exists, fail_condition=not existence, **kwargs)
+        return wait_for(
+            lambda: self.exists, fail_condition=not existence, fail_func=self.reload, **kwargs)
 
     def wait_exists(self, **kwargs):
         return self.wait_for_existence(True, **kwargs)
@@ -342,9 +345,11 @@ class Entity(object):
             self.reload()
 
     def __getattr__(self, attr):
-        if self._data is None:
-            self.reload()
+        self.reload()
+        try:
             return getattr(self, attr)
+        except AttributeError:
+            pass  # Go on
         # Try to get subcollection
         href = self._href
         if not href.endswith("/"):
@@ -355,6 +360,10 @@ class Entity(object):
             return subcol
         except APIException:
             raise AttributeError("No such attribute/subcollection {}".format(attr))
+
+    def __getitem__(self, item):
+        # Backward compatibility
+        return getattr(self, item)
 
     def __repr__(self):
         return "<Entity {}>".format(repr(self._href))
