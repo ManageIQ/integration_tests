@@ -14,7 +14,7 @@ from utils.wait import wait_for
 pytestmark = [pytest.mark.long_running]
 
 
-pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
+pytest_generate_tests = testgen.generate(testgen.infra_providers, 'full_template', scope="module")
 
 
 @pytest.fixture(scope="module")
@@ -32,9 +32,9 @@ def vm_name():
 
 
 @pytest.fixture(scope="module")
-def test_vm(request, provider_init, provider_crud, provider_mgmt, vm_name):
+def test_vm(request, provider_init, provider_crud, provider_mgmt, provider_data, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = Vm(vm_name, provider_crud)
+    vm = Vm(vm_name, provider_crud, template_name=provider_data['full_template']['name'])
 
     if not provider_mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True)
@@ -75,7 +75,7 @@ def test_delete_all_snapshots(test_vm, provider_key, provider_type):
 
 
 @pytest.mark.uncollectif(lambda provider_type: provider_type != 'virtualcenter')
-def test_verify_revert_snapshot(test_vm, provider_key, provider_type,
+def test_verify_revert_snapshot(test_vm, provider_key, provider_type, provider_data,
                                 soft_assert, register_event, request):
     """Tests revert snapshot
 
@@ -86,8 +86,8 @@ def test_verify_revert_snapshot(test_vm, provider_key, provider_type,
     ip = snapshot1.vm.provider_crud.get_mgmt_system().get_ip_address(snapshot1.vm.name)
     print ip
     ssh_kwargs = {
-        'username': credentials['random_vm_ssh']['username'],
-        'password': credentials['random_vm_ssh']['password'],
+        'username': credentials[provider_data['full_template']['creds']]['username'],
+        'password': credentials[provider_data['full_template']['creds']]['password'],
         'hostname': ip
     }
     ssh = SSHClient(**ssh_kwargs)
@@ -112,9 +112,9 @@ def test_verify_revert_snapshot(test_vm, provider_key, provider_type,
     soft_assert(
         test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm not running")
     client = SSHClient(**ssh_kwargs)
-    status, out = client.run_command('test -e snapshot2.txt')
-    if status != 0:
-        logger.info('Revert to snapshot %s successful', snapshot1.name)
-    else:
-        logger.info('Revert to snapshot %s Failed', snapshot1.name)
     request.addfinalizer(test_vm.delete_from_provider)
+    try:
+        wait_for(lambda: client.run_command('test -e snapshot2.txt')[1] == 0, fail_condition=False)
+        logger.info('Revert to snapshot %s successful', snapshot1.name)
+    except:
+        logger.info('Revert to snapshot %s Failed', snapshot1.name)

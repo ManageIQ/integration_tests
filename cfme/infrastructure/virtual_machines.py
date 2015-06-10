@@ -505,7 +505,7 @@ class Vm(Common):
 
         def _nav_to_snapshot_mgmt(self):
             locator = ("//div[@class='dhtmlxInfoBarLabel' and " +
-                       "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"' % self.name) ]")
+                       "contains(. , '\"Snapshots\" for Virtual Machine \"%s\"') ]" % self.name)
             if not sel.is_displayed(locator):
                 self.vm.load_details()
                 sel.click(details_page.infoblock.element("Properties", "Snapshots"))
