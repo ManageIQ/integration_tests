@@ -58,7 +58,7 @@ from py.error import ENOENT
 from py.path import local
 
 from fixtures.pytest_store import store
-from utils import conf
+from utils import conf, version
 from utils.log import logger, create_sublogger
 from utils.path import conf_path, log_path, scripts_data_path
 from utils.wait import wait_for
@@ -155,11 +155,23 @@ class CoverageManager(object):
         self._retrieve_coverage_reports()
 
     def _install_simplecov(self):
-        # This might not work upstream due to different gem installation methods
         self.log.info('Installing coverage gem on appliance')
         self.ipapp.ssh_client().put_file(gemfile.strpath, rails_root.strpath)
-        self.ipapp.ssh_client().run_command(
-            'gem install --install-dir /opt/rh/cfme-gemset/ -v0.9.2 simplecov')
+
+        # gem install for more recent downstream builds
+        def _gem_install():
+            self.ipapp.ssh_client().run_command(
+                'gem install --install-dir /opt/rh/cfme-gemset/ -v0.9.2 simplecov')
+
+        # bundle install for old downstream and upstream builds
+        def _bundle_install():
+            self.ipapp.ssh_client().run_command('yum -y install git')
+            self.ipapp.ssh_client().run_command('cd {}; bundle'.format(rails_root))
+        version.pick({
+            version.LOWEST: _bundle_install,
+            '5.4': _gem_install,
+            version.LATEST: _bundle_install,
+        })()
 
     def _install_coverage_hook(self):
         # Clean appliance coverage dir
