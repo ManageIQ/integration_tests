@@ -76,18 +76,18 @@ class Store(object):
     def current_appliance(self):
         if not self._current_appliance:
             from utils.appliance import IPAppliance
-            self._current_appliance.append(IPAppliance(urlparse(self.base_url).netloc))
+            self._current_appliance.append(IPAppliance(urlparse(self.base_url)))
         return self._current_appliance[-1]
 
     @property
     def base_url(self):
         """ If there is a current appliance the base url of that appliance is returned
             else, the base_url from the config is returned."""
-
         if self._current_appliance:
-            return self._current_appliance[-1].url
+            result = self._current_appliance[-1].url
         else:
-            return conf.env['base_url']
+            result = conf.env['base_url']
+        return result
 
     @property
     def in_pytest_session(self):

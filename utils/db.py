@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import Pool
 
 from fixtures.pytest_store import store
-from utils import conf, lazycache
+from utils import conf, lazycache, ports
 from utils.datafile import load_data_file
 from utils.log import logger
 from utils.path import data_path
@@ -203,8 +203,8 @@ class Db(Mapping):
     @lazycache
     def db_url(self):
         """The connection URL for this database, including credentials"""
-        template = "postgresql://{username}:{password}@{host}:5432/vmdb_production"
-        result = template.format(host=self.hostname, **self.credentials)
+        template = "postgresql://{username}:{password}@{host}:{port}/vmdb_production"
+        result = template.format(host=self.hostname, port=ports.DB, **self.credentials)
         logger.info("[DB] db_url is {}".format(result))
         return result
 

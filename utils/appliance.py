@@ -11,7 +11,7 @@ import subprocess
 from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
-from urlparse import urlparse
+from urlparse import ParseResult, urlparse
 
 import requests
 
@@ -20,13 +20,12 @@ from cfme.infrastructure.provider import get_from_config
 from cfme.infrastructure.virtual_machines import Vm
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
-from utils import api, conf, datafile, db, lazycache, trackerbot, db_queries
+from utils import api, conf, datafile, db, lazycache, trackerbot, db_queries, ssh, ports
 from utils.log import logger, create_sublogger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
 from utils.providers import provider_factory
-from utils.ssh import SSHClient
 from utils.version import get_stream, get_version, LATEST
 from utils.wait import wait_for
 
@@ -340,7 +339,12 @@ class IPAppliance(object):
 
     def __init__(self, address=None, browser_steal=False):
         if address is not None:
-            self.address = address
+            if isinstance(address, ParseResult):
+                self.address = address.netloc
+                self.scheme = address.scheme
+                self.url = address.geturl()
+            else:
+                self.address = address
         self.browser_steal = browser_steal
         # thing-toucher process, used for UI coverage
         self._thing_toucher_proc = None
@@ -429,25 +433,44 @@ class IPAppliance(object):
 
     @classmethod
     def from_url(cls, url):
-        parsed_url = urlparse(url)
-        ip_a = cls(parsed_url.hostname)
-        # stash the passed-in url in the lazycache to save a step
-        ip_a.url = url
-        return ip_a
+        return cls(urlparse(url))
 
     @lazycache
     def rest_api(self):
-        return api.API("https://{}/api".format(self.address), auth=("admin", "smartvm"))
+        return api.API(
+            "{}://{}:{}/api".format(self.scheme, self.address, self.ui_port),
+            auth=("admin", "smartvm"))
 
     @lazycache
     def address(self):
         # If address wasn't set in __init__, use the hostname from base_url
-        parsed_url = urlparse(store.base_url)
+        parsed_url = urlparse(self.url or store.base_url)
         return parsed_url.netloc
 
     @lazycache
+    def hostname(self):
+        parsed_url = urlparse(self.url or store.base_url)
+        return parsed_url.hostname
+
+    @property
+    def ui_port(self):
+        parsed_url = urlparse(self.url or store.base_url)
+        if parsed_url.port is not None:
+            return parsed_url.port
+        elif parsed_url.scheme == "https":
+            return 443
+        elif parsed_url.scheme == "http":
+            return 80
+        else:
+            raise Exception("Unknown scheme {} for {}".format(parsed_url.scheme, store.base_url))
+
+    @lazycache
+    def scheme(self):
+        return "https"  # By default
+
+    @lazycache
     def url(self):
-        return 'https://%s/' % self.address
+        return "{}://{}".format(self.scheme, self.address)
 
     @lazycache
     def version(self):
@@ -484,12 +507,12 @@ class IPAppliance(object):
 
         if self._ssh_client is None:
             # IPAppliance.ssh_client only connects to its address
-            connect_kwargs['hostname'] = self.address
+            connect_kwargs['hostname'] = self.hostname
             connect_kwargs['username'] = connect_kwargs.get(
                 'username', conf.credentials['ssh']['username'])
             connect_kwargs['password'] = connect_kwargs.get(
                 'password', conf.credentials['ssh']['password'])
-            self._ssh_client = SSHClient(**connect_kwargs)
+            self._ssh_client = ssh.SSHClient(**connect_kwargs)
         return self._ssh_client
 
     def db_ssh_client(self, **connect_kwargs):
@@ -1322,7 +1345,7 @@ class IPAppliance(object):
 
     @property
     def is_ssh_running(self):
-        return net_check(22, self.address, force=True)
+        return net_check(ports.SSH, self.hostname, force=True)
 
     @property
     def has_cli(self):
