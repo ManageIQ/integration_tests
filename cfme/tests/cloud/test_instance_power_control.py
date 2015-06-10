@@ -42,13 +42,13 @@ def test_instance(request, delete_instances_fin, setup_provider,
     instance = instance_factory(vm_name, provider_crud)
     if not provider_mgmt.does_vm_exist(vm_name):
         delete_instances_fin[provider_crud.key] = instance
-        instance.create_on_provider()
+        instance.create_on_provider(allow_skip="default")
     elif isinstance(instance, EC2Instance) and \
             provider_mgmt.is_vm_state(vm_name, provider_mgmt.states['deleted']):
         provider_mgmt.set_name(
             vm_name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
         delete_instances_fin[provider_crud.key] = instance
-        instance.create_on_provider()
+        instance.create_on_provider(allow_skip="default")
     return instance
 
 

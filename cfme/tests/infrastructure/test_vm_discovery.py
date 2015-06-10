@@ -59,7 +59,7 @@ def test_vm_discovery(request, setup_provider, provider_crud, provider_mgmt, vm_
         if_scvmm_refresh_provider(provider_crud)
 
     request.addfinalizer(_cleanup)
-    vm.create_on_provider()
+    vm.create_on_provider(allow_skip="default")
     if_scvmm_refresh_provider(provider_crud)
 
     try:

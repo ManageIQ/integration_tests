@@ -63,7 +63,7 @@ def testing_vm(request, vm_name, provider_init, provider_crud, provider_mgmt, pr
     def _finalize():
         vm_obj.delete_from_provider()
     request.addfinalizer(_finalize)
-    vm_obj.create_on_provider(find_in_cfme=True)
+    vm_obj.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm_obj
 
 

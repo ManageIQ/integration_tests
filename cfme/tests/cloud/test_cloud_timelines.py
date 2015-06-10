@@ -60,7 +60,7 @@ def test_instance(setup_provider, request, delete_instances_fin, provider_crud,
     instance = instance_factory(vm_name, provider_crud)
     if not provider_mgmt.does_vm_exist(vm_name):
         delete_instances_fin[provider_crud.key] = instance
-        instance.create_on_provider()
+        instance.create_on_provider(allow_skip="default")
     return instance
 
 

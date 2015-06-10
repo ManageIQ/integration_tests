@@ -59,7 +59,7 @@ def test_vm_genealogy(
     """
     original_template = provisioning["template"]
     original_vm = Vm(vm_name, provider_crud, template_name=original_template)
-    original_vm.create_on_provider(find_in_cfme=True)
+    original_vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     request.addfinalizer(
         lambda: provider_mgmt.delete_vm(original_vm.name)
         if provider_mgmt.does_vm_exist(original_vm.name) else None)

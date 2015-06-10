@@ -53,7 +53,7 @@ def test_cloud_instance_discovery(request, provider_crud, provider_init, provide
         test_flag: discovery
     """
     if not provider_mgmt.does_vm_exist(instance_name):
-        deploy_template(provider_crud.key, instance_name)
+        deploy_template(provider_crud.key, instance_name, allow_skip="default")
     test_instance = instance.instance_factory(instance_name, provider_crud)
     request.addfinalizer(test_instance.delete_from_provider)
     try:

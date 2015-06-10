@@ -37,7 +37,7 @@ def test_vm(request, provider_init, provider_crud, provider_mgmt, provider_data,
     vm = Vm(vm_name, provider_crud, template_name=provider_data['full_template']['name'])
 
     if not provider_mgmt.does_vm_exist(vm_name):
-        vm.create_on_provider(find_in_cfme=True)
+        vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm
 
 
