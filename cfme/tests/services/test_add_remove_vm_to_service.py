@@ -27,28 +27,6 @@ pytestmark = [
     pytest.mark.meta(server_roles="+automate")
 ]
 
-item_name = fauxfactory.gen_alphanumeric()
-
-METHOD_TORSO = """
-def add_to_service
-  vm      = $evm.root['vm']
-  service = $evm.vmdb('service').find_by_name('%s')
-  user    = $evm.root['user']
-
-  if service && vm
-    $evm.log('info', "XXXXXXXX Attaching Service to VM: [#{service.name}][#{vm.name}]")
-    vm.add_to_service(service)
-    vm.owner = user if user
-    vm.group = user.miq_group if user
-  end
-end
-
-$evm.log("info", "Listing Root Object Attributes:")
-$evm.log("info", "===========================================")
-
-add_to_service
-""" % item_name
-
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
@@ -103,6 +81,7 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
 
 @pytest.yield_fixture(scope="function")
 def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
+    item_name = fauxfactory.gen_alphanumeric()
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
 
@@ -138,24 +117,6 @@ def copy_domain(request):
     return domain
 
 
-@pytest.fixture(scope="function")
-def create_method(request, copy_domain):
-    method = Method(
-        name="InspectMe",
-        data=METHOD_TORSO,
-        cls=Class(
-            name="Request",
-            namespace=Namespace(
-                name="System",
-                parent=copy_domain
-            )
-        )
-    )
-    method.create()
-    request.addfinalizer(lambda: method.delete() if method.exists() else None)
-    return method
-
-
 @pytest.fixture
 def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
@@ -173,19 +134,51 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     return MyService(catalog_item.name, vm_name)
 
 
-def test_add_vm_to_service(request, myservice, create_method):
+def test_add_vm_to_service(myservice, request, copy_domain):
     """Tests adding vm to service
 
     Metadata:
         test_flag: provision
     """
+    method_torso = """
+    def add_to_service
+        vm      = $evm.root['vm']
+        service = $evm.vmdb('service').find_by_name('%s')
+        user    = $evm.root['user']
 
+    if service && vm
+        $evm.log('info', "XXXXXXXX Attaching Service to VM: [#{service.name}][#{vm.name}]")
+        vm.add_to_service(service)
+        vm.owner = user if user
+        vm.group = user.miq_group if user
+    end
+    end
+
+    $evm.log("info", "Listing Root Object Attributes:")
+    $evm.log("info", "===========================================")
+
+    add_to_service
+    """ % myservice.service_name
+
+    method = Method(
+        name="InspectMe",
+        data=method_torso,
+        cls=Class(
+            name="Request",
+            namespace=Namespace(
+                name="System",
+                parent=copy_domain
+            )
+        )
+    )
+    method.create()
+    request.addfinalizer(lambda: method.delete() if method.exists() else None)
     simulate(
         instance="Request",
         message="create",
-        request=create_method.name,
+        request=method.name,
         attribute=["VM and Instance", "auto_test_services"],  # Random selection, does not matter
         execute_methods=True
     )
     myservice.check_vm_add("auto_test_services")
-    request.addfinalizer(lambda: myservice.delete(item_name))
+    request.addfinalizer(lambda: myservice.delete(myservice.service_name))
