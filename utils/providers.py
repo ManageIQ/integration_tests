@@ -64,6 +64,14 @@ list_cloud_providers = partial(list_providers, cloud_provider_type_map.keys())
 list_all_providers = partial(list_providers, provider_type_map.keys())
 
 
+def is_cloud_provider(provider_key):
+    return provider_key in list_cloud_providers()
+
+
+def is_infra_provider(provider_key):
+    return provider_key in list_infra_providers()
+
+
 def provider_factory(provider_key, providers=None, credentials=None):
     """
     Provides a :py:mod:`utils.mgmt_system` object, based on the request.

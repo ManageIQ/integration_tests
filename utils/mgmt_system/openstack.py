@@ -412,6 +412,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
         Note: If assign_floating_ip kwarg is present, then :py:meth:`OpenstackSystem.create_vm` will
             attempt to register a floating IP address from the pool specified in the arg.
         """
+        power_on = kwargs.pop("power_on", True)
         nics = []
         timeout = kwargs.pop('timeout', 900)
         if 'flavour_name' not in kwargs:
@@ -435,6 +436,9 @@ class OpenstackSystem(MgmtSystemAPIBase):
         if kwargs.get('floating_ip_pool', None):
             ip = self.api.floating_ips.create(kwargs['floating_ip_pool'])
             instance.add_floating_ip(ip)
+
+        if power_on:
+            self.start_vm(kwargs['vm_name'])
 
         return kwargs['vm_name']
 
