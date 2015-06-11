@@ -44,19 +44,19 @@ menu.nav.add_branch(
 
 class OrchestrationTemplate(Updateable, Pretty):
     pretty_attrs = ['template_type', 'template_name']
-    _name = "//li[@id='ot_xx-otcfn_ot-1']//a[contains(@class, 'dynatree-title')]"
 
     def __init__(self, template_type=None):
         self.template_type = template_type
 
-    @classmethod
-    def name(cls):
-        return sel.text(cls._name).encode("utf-8")
-
     def create_service_dialog(self, dialog_name):
         sel.force_navigate('orch_template_type',
                            context={'template_type': self.template_type})
-        template_name = self.name()
+        if(self.template_type == "CloudFormation Templates"):
+            template_name = sel.text("//li[@id='ot_xx-otcfn']/ul"
+                "//a[contains(@class, 'dynatree-title')]").encode("utf-8")
+        else:
+            template_name = sel.text("//li[@id='ot_xx-othot']/ul"
+                "//a[contains(@class, 'dynatree-title')]").encode("utf-8")
         sel.force_navigate('create_service_dialog',
                            context={'template_type': self.template_type,
                                     'template_name': template_name})
