@@ -332,7 +332,7 @@ class Entity(object):
 
     def wait_for_existence(self, existence, **kwargs):
         return wait_for(
-            lambda: self.exists, fail_condition=not existence, fail_func=self.reload, **kwargs)
+            lambda: self.exists, fail_condition=not existence, **kwargs)
 
     def wait_exists(self, **kwargs):
         return self.wait_for_existence(True, **kwargs)
