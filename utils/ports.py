@@ -1,0 +1,23 @@
+# -*- coding: utf-8 -*-
+"""Storage for ports. Set defaults here, then :py:mod:`fixtures.portset` will make overrides."""
+import sys
+
+
+class Ports(object):
+    from fixtures.pytest_store import store  # NOQA
+    from utils.log import logger  # NOQA
+
+    def __init__(self):
+        # Port that is used to used for SSH connections to an appliance
+        self.SSH = 22
+        # POrt that is used to connect to the POstgreSQL database of the appliance.
+        self.DB = 5432
+
+    def __setattr__(self, attr, value):
+        super(self.__class__, self).__setattr__(attr, value)
+        if self.store._current_appliance:
+            self.logger.info("Cleaning up the current_appliance object")
+            self.store._current_appliance[-1]._ssh_client = None
+
+
+sys.modules[__name__] = Ports()

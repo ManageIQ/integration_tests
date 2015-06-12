@@ -16,6 +16,7 @@ import metaplugins
 from fixtures.artifactor_plugin import art_client, appliance_ip_address
 from cfme.fixtures.rdb import Rdb
 from fixtures.pytest_store import store
+from utils import ports
 from utils.log import logger
 from utils.path import data_path
 from utils.net import net_check
@@ -75,22 +76,25 @@ def appliance_police():
     if not store.slave_manager:
         return
     try:
-        ports = {'ssh': 22, 'https': 443, 'postgres': 5432}
-        port_results = {pn: net_check(pp, force=True) for pn, pp in ports.items()}
+        port_numbers = {
+            'ssh': ports.SSH,
+            'https': store.current_appliance.ui_port,
+            'postgres': ports.DB}
+        port_results = {pn: net_check(pp, force=True) for pn, pp in port_numbers.items()}
         for port, result in port_results.items():
             if not result:
                 raise _AppliancePoliceException('Port {} was not contactable'.format(port),
-                    ports[port])
+                    port_numbers[port])
 
         try:
             status_code = requests.get(store.current_appliance.url, verify=False,
                                        timeout=120).status_code
         except Exception:
-            raise _AppliancePoliceException('Getting status code failed', ports['https'])
+            raise _AppliancePoliceException('Getting status code failed', port_numbers['https'])
 
         if status_code != 200:
             raise _AppliancePoliceException('Status code was {}, should be 200'.format(
-                status_code), ports['https'])
+                status_code), port_numbers['https'])
         return
     except _AppliancePoliceException as e:
         # special handling for known failure conditions

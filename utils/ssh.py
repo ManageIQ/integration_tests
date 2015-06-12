@@ -8,7 +8,7 @@ import paramiko
 from lya import AttrDict
 from scp import SCPClient
 
-from utils import conf
+from utils import conf, ports
 from utils.log import logger
 from utils.net import net_check
 from fixtures.pytest_store import store
@@ -59,13 +59,17 @@ class SSHClient(paramiko.SSHClient):
             'gss_auth': False
         }
 
+        default_connect_kwargs["port"] = ports.SSH
+
         # Overlay defaults with any passed-in kwargs and store
         default_connect_kwargs.update(connect_kwargs)
         self._connect_kwargs = default_connect_kwargs
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     def __repr__(self):
-        return "<SSHClient hostname={}>".format(repr(self._connect_kwargs.get("hostname")))
+        return "<SSHClient hostname={} port={}>".format(
+            repr(self._connect_kwargs.get("hostname")),
+            repr(self._connect_kwargs.get("port", 22)))
 
     def __call__(self, **connect_kwargs):
         # Update a copy of this instance's connect kwargs with passed in kwargs,
@@ -90,10 +94,9 @@ class SSHClient(paramiko.SSHClient):
 
     def _check_port(self):
         hostname = self._connect_kwargs['hostname']
-        port = int(self._connect_kwargs.get('port', 22))
-        if not net_check(port, hostname):
+        if not net_check(ports.SSH, hostname):
             raise Exception("SSH connection to %s:%d failed, port unavailable".format(
-                hostname, port))
+                hostname, ports.SSH))
 
     def _progress_callback(self, filename, size, sent):
         sent_percent = (sent * 100.) / size
