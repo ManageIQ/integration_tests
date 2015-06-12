@@ -72,6 +72,20 @@ def set_compressed_view(name):
         sel.click(form_buttons.save)
 
 
+def set_details_view(name):
+    bg = ButtonGroup(name)
+    if bg.active != 'Details Mode':
+        bg.choose('Details Mode')
+        sel.click(form_buttons.save)
+
+
+def set_exist_view(name):
+    bg = ButtonGroup(name)
+    if bg.active != 'Exists Mode':
+        bg.choose('Exists Mode')
+        sel.click(form_buttons.save)
+
+
 def reset_default_view(name, default_view):
     bg = ButtonGroup(name)
     sel.force_navigate("my_settings_default_views")
@@ -146,3 +160,32 @@ def test_compressed_view(request, setup_a_provider, key):
     tb.select(name[2], name[3])
     assert tb.is_vms_compressed_view(), "Compressed view setting failed"
     reset_default_view(name[0], default_view)
+
+
+@pytest.mark.parametrize('key', exp_comp_params, scope="module")
+def test_details_view(request, setup_a_provider, key):
+    name = re.split(r"\/", key)
+    button_name = name[0] + " Mode"
+    default_view = get_default_view(button_name)
+    set_details_view(button_name)
+    sel.force_navigate(name[1])
+    Quadicon.select_first_quad()
+    select_second_quad()
+    tb.select(name[2], name[3])
+    assert tb.is_vms_details_view(), "Details view setting failed"
+    reset_default_view(button_name, default_view)
+
+
+@pytest.mark.meta(blockers=[1228130])
+@pytest.mark.parametrize('key', exp_comp_params, scope="module")
+def test_exists_view(request, setup_a_provider, key):
+    name = re.split(r"\/", key)
+    button_name = name[0] + " Mode"
+    default_view = get_default_view(button_name)
+    set_exist_view(button_name)
+    sel.force_navigate(name[1])
+    Quadicon.select_first_quad()
+    select_second_quad()
+    tb.select(name[2], name[3])
+    assert tb.is_vms_exists_view(), "Exists view setting failed"
+    reset_default_view(button_name, default_view)
