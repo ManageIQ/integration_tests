@@ -248,6 +248,15 @@ def vm_off(vm, vm_crud):
     return vm
 
 
+@pytest.fixture(scope="function")
+def vm_crud_refresh(vm_crud, provider_type):
+    """Refreshes the VM if that is needed for the provider."""
+    if provider_type in {"ec2"}:
+        return lambda: vm_crud.refresh_relationships(from_details=True)
+    else:
+        return lambda: None
+
+
 @pytest.yield_fixture(scope="module")
 def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, provider_crud):
     """ Takes care of setting the appliance up for testing """
@@ -270,7 +279,8 @@ def assign_policy_for_testing(vm, policy_for_testing, provider_crud, policy_prof
     provider_crud.unassign_policy_profiles(policy_profile_name)
 
 
-def test_action_start_virtual_machine_after_stopping(request, assign_policy_for_testing, vm, vm_on):
+def test_action_start_virtual_machine_after_stopping(
+        request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests action 'Start Virtual Machine'
 
     This test sets the policy that it turns on the VM when it is turned off
@@ -285,6 +295,7 @@ def test_action_start_virtual_machine_after_stopping(request, assign_policy_for_
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Stop the VM
     vm.stop_vm()
+    vm_crud_refresh()
     # Wait for VM powered on by CFME
     try:
         wait_for(vm.is_vm_running, num_sec=600, delay=5)
@@ -292,7 +303,8 @@ def test_action_start_virtual_machine_after_stopping(request, assign_policy_for_
         pytest.fail("CFME did not power on the VM %s" % vm.name)
 
 
-def test_action_stop_virtual_machine_after_starting(request, assign_policy_for_testing, vm, vm_off):
+def test_action_stop_virtual_machine_after_starting(
+        request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests action 'Stop Virtual Machine'
 
     This test sets the policy that it turns off the VM when it is turned on
@@ -307,6 +319,7 @@ def test_action_stop_virtual_machine_after_starting(request, assign_policy_for_t
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
+    vm_crud_refresh()
     # Wait for VM powered off by CFME
     try:
         wait_for(vm.is_vm_stopped, num_sec=600, delay=5)
@@ -314,8 +327,8 @@ def test_action_stop_virtual_machine_after_starting(request, assign_policy_for_t
         pytest.fail("CFME did not power off the VM %s" % vm.name)
 
 
-def test_action_suspend_virtual_machine_after_starting(request,
-                                                       assign_policy_for_testing, vm, vm_off):
+def test_action_suspend_virtual_machine_after_starting(
+        request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests action 'Suspend Virtual Machine'
 
     This test sets the policy that it suspends the VM when it's turned on. Then it powers on the vm,
@@ -329,6 +342,7 @@ def test_action_suspend_virtual_machine_after_starting(request,
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
+    vm_crud_refresh()
     # Wait for VM be suspended by CFME
     try:
         wait_for(vm.is_vm_suspended, num_sec=600, delay=5)
@@ -337,7 +351,8 @@ def test_action_suspend_virtual_machine_after_starting(request,
 
 
 @pytest.mark.meta(blockers=[1142875])
-def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off):
+def test_action_prevent_event(
+        request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests action 'Prevent current event from proceeding'
 
     Must be done with SOAP.
@@ -362,7 +377,8 @@ def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off):
         pytest.fail("CFME did not prevent starting of the VM %s" % vm.name)
 
 
-def test_action_power_on_logged(request, assign_policy_for_testing, vm, vm_off, ssh_client):
+def test_action_power_on_logged(
+        request, assign_policy_for_testing, vm, vm_off, ssh_client, vm_crud_refresh):
     """ This test tests action 'Generate log message'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -376,6 +392,7 @@ def test_action_power_on_logged(request, assign_policy_for_testing, vm, vm_off, 
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
+    vm_crud_refresh()
     policy_desc = assign_policy_for_testing.description
 
     # Search the logs
@@ -399,7 +416,8 @@ def test_action_power_on_logged(request, assign_policy_for_testing, vm, vm_off, 
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-def test_action_power_on_audit(request, assign_policy_for_testing, vm, vm_off, ssh_client):
+def test_action_power_on_audit(
+        request, assign_policy_for_testing, vm, vm_off, ssh_client, vm_crud_refresh):
     """ This test tests action 'Generate Audit Event'.
 
     This test sets the policy that it logs powering on of the VM. Then it powers up the vm and
@@ -413,6 +431,7 @@ def test_action_power_on_audit(request, assign_policy_for_testing, vm, vm_off, s
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.start_vm()
+    vm_crud_refresh()
     policy_desc = assign_policy_for_testing.description
 
     # Search the logs
@@ -434,7 +453,8 @@ def test_action_power_on_audit(request, assign_policy_for_testing, vm, vm_off, s
     wait_for(search_logs, num_sec=180, message="log search")
 
 
-def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testing, vm, vm_on):
+def test_action_create_snapshot_and_delete_last(
+        request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete Most Recent Snapshot'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and when it is
@@ -462,6 +482,7 @@ def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testi
     snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
     # Power off to invoke snapshot creation
     vm.stop_vm()
+    vm_crud_refresh()
     wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=800,
              message="wait for snapshot appear", delay=5)
     assert vm.soap.ws_attributes["v_snapshot_newest_description"] == "Created by EVM Policy Action"
@@ -474,7 +495,8 @@ def test_action_create_snapshot_and_delete_last(request, assign_policy_for_testi
              message="wait for snapshot deleted", delay=5)
 
 
-def test_action_create_snapshots_and_delete_them(request, assign_policy_for_testing, vm, vm_on):
+def test_action_create_snapshots_and_delete_them(
+        request, assign_policy_for_testing, vm, vm_on, vm_crud_refresh):
     """ This test tests actions 'Create a Snapshot' (custom) and 'Delete all Snapshots'.
 
     This test sets the policy that it makes snapshot of VM after it's powered off and then it cycles
@@ -506,24 +528,29 @@ def test_action_create_snapshots_and_delete_them(request, assign_policy_for_test
         # Power off to invoke snapshot creation
         snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
         vm.stop_vm()
+        vm_crud_refresh()
         wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] > snapshots_before, num_sec=800,
                  message="wait for snapshot %d to appear" % (n + 1), delay=5)
         assert vm.soap.ws_attributes["v_snapshot_newest_name"] == snapshot_name
         vm.start_vm()
+        vm_crud_refresh()
 
     for i in range(4):
         create_one_snapshot(i)
     assign_policy_for_testing.assign_events()
     vm.stop_vm()
+    vm_crud_refresh()
     assign_policy_for_testing.assign_actions_to_event("VM Power On", ["Delete all Snapshots"])
     # Power on to invoke all snapshots deletion
     vm.start_vm()
+    vm_crud_refresh()
     wait_for(lambda: vm.soap.ws_attributes["v_total_snapshots"] == 0, num_sec=800,
              message="wait for snapshots to be deleted", delay=5)
 
 
 @pytest.mark.uncollect()
-def test_action_initiate_smartstate_analysis(request, assign_policy_for_testing, vm, vm_off):
+def test_action_initiate_smartstate_analysis(
+        request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests actions 'Initiate SmartState Analysis for VM'.
 
     This test sets the policy that it analyses VM after it's powered on. Then it checks whether
@@ -540,6 +567,7 @@ def test_action_initiate_smartstate_analysis(request, assign_policy_for_testing,
     switched_on = datetime.now()
     # Start the VM
     vm.start_vm()
+    vm_crud_refresh()
 
     # Wait for VM being tried analysed by CFME
     def wait_analysis_tried():
@@ -560,7 +588,8 @@ def test_action_initiate_smartstate_analysis(request, assign_policy_for_testing,
         pytest.fail("CFME did not analyse the VM %s" % vm.name)
 
 
-def test_action_raise_automation_event(request, assign_policy_for_testing, vm, vm_on, ssh_client):
+def test_action_raise_automation_event(
+        request, assign_policy_for_testing, vm, vm_on, ssh_client, vm_crud_refresh):
     """ This test tests actions 'Raise Automation Event'.
 
     This test sets the policy that it raises an automation event VM after it's powered on.
@@ -574,6 +603,7 @@ def test_action_raise_automation_event(request, assign_policy_for_testing, vm, v
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
     # Start the VM
     vm.stop_vm()
+    vm_crud_refresh()
 
     # Search the logs
     def search_logs():
@@ -594,7 +624,7 @@ def test_action_raise_automation_event(request, assign_policy_for_testing, vm, v
 
 
 # Purely custom actions
-def test_action_tag(request, assign_policy_for_testing, vm, vm_off):
+def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ Tests action tag
 
     Metadata:
@@ -613,6 +643,7 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off):
     request.addfinalizer(finalize)
 
     vm.start_vm()
+    vm_crud_refresh()
     try:
         wait_for(
             lambda: any(
@@ -626,7 +657,7 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off):
 
 
 @pytest.mark.meta(blockers=[1205496])
-def test_action_untag(request, assign_policy_for_testing, vm, vm_off):
+def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ Tests action untag
 
     Metadata:
@@ -645,6 +676,7 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off):
     request.addfinalizer(finalize)
 
     vm.start_vm()
+    vm_crud_refresh()
     try:
         wait_for(
             lambda: not any(
