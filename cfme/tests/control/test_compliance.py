@@ -7,7 +7,7 @@ import pytest
 
 from cfme.configure.configuration import VMAnalysisProfile
 from cfme.control.explorer import (
-    Action, VMCompliancePolicy, VMControlPolicy, VMCondition, PolicyProfile)
+    VMCompliancePolicy, VMCondition, PolicyProfile)
 from cfme.exceptions import VmNotFoundViaIP
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import flash, toolbar
@@ -59,7 +59,12 @@ def compliance_vm(request, provider_key, provider_crud):
             version=str(version.current_version()),
             provider_name=provider_key)
         request.addfinalizer(lambda: diaper(appliance.destroy))
-        appliance.configure(setup_fleece=True)
+        try:
+            appliance.configure(setup_fleece=True)
+        except (EOFError, ) as e:   # Add known exceptions as needed.
+            pytest.skip(
+                "Error during appliance configuration. Skipping:\n{}: {}".format(
+                    type(e).__name__, str(e)))
         vm = Vm(appliance.vm_name, provider_crud)
     # Do the final touches
     with appliance.ipapp(browser_steal=True) as appl:
@@ -73,10 +78,11 @@ def compliance_vm(request, provider_key, provider_crud):
 
 @pytest.yield_fixture(scope="module")
 def analysis_profile(compliance_vm):
-    rand = fauxfactory.gen_alphanumeric()
     ap = VMAnalysisProfile(
-        name="ap-{}".format(rand), description="ap-desc-{}".format(rand), files=[],
+        name="default", description="ap-desc", files=[],
         categories=["check_software"])
+    if ap.exists:
+        ap.delete()
     with ap:
         yield ap
 
@@ -96,28 +102,10 @@ def fleecing_vm(
     vm = Vm(appliance.vm_name, provider_crud)
     provider_crud.refresh_provider_relationships()
     vm.wait_to_appear()
-    # Assign the analysis profile
-    action = Action(
-        "Assign analysis profile {}".format(analysis_profile.name),
-        "Assign Profile to Analysis Task",
-        dict(analysis_profile=analysis_profile.name))
-    action.create()
-    request.addfinalizer(action.delete)
-    policy = VMControlPolicy("Analysis profile policy {}".format(fauxfactory.gen_alphanumeric()))
-    policy.create()
-    request.addfinalizer(policy.delete)
-    policy.assign_actions_to_event("VM Analysis Start", action)
-    analysis_pp = PolicyProfile(
-        "Analysis profile PP {}".format(fauxfactory.gen_alphanumeric()),
-        policies=[policy])
-    analysis_pp.create()
-    request.addfinalizer(analysis_pp.delete)
-    vm.assign_policy_profiles(analysis_pp.description)
-    request.addfinalizer(lambda: vm.unassign_policy_profiles(analysis_pp.description))
     return vm
 
 
-def do_scan(vm):
+def do_scan(vm, additional_item_check=None):
     if vm.rediscover_if_analysis_data_present():
         # policy profile assignment is lost so reassign
         vm.assign_policy_profiles(*vm._assigned_pp)
@@ -125,12 +113,18 @@ def do_scan(vm):
     def _scan():
         return vm.get_detail(properties=("Lifecycle", "Last Analyzed")).lower()
     original = _scan()
+    if additional_item_check is not None:
+        original_item = vm.get_detail(properties=additional_item_check)
     vm.smartstate_scan(cancel=False, from_details=True)
     flash.assert_message_contain("Smart State Analysis initiated")
     logger.info("Scan initiated")
     wait_for(
         lambda: _scan() != original,
         num_sec=600, delay=5, fail_func=lambda: toolbar.select("Reload"))
+    if additional_item_check is not None:
+        wait_for(
+            lambda: vm.get_detail(properties=additional_item_check) != original_item,
+            num_sec=120, delay=5, fail_func=lambda: toolbar.select("Reload"))
     logger.info("Scan finished")
 
 
@@ -165,23 +159,17 @@ def test_check_package_presence(request, fleecing_vm, ssh_client, vm_analysis, a
     assert fleecing_vm.check_compliance_and_wait()
 
 
-##
-# File presence fleecing
-@pytest.fixture(scope="function")
-def check_file_name():
-    return "/root/{}".format(fauxfactory.gen_alphanumeric())
-
-
-def test_check_files(request, fleecing_vm, ssh_client, check_file_name, analysis_profile):
-    """This test checks presence and contents of a certain file. First the non-compliance is
-    enforced by not having the file, then the compliance is checked against existing file and
-    it is expected to be compliant.
+def test_check_files(request, fleecing_vm, ssh_client, analysis_profile):
+    """This test checks presence and contents of a certain file. Due to caching, an existing file
+    is checked.
     """
-    contents = fauxfactory.gen_alphanumeric(12)
+    check_file_name = "/etc/sudo.conf"
+    check_file_contents = "sudoers_policy"  # The file contains: `Plugin sudoers_policy sudoers.so`
     condition = VMCondition(
         "Compliance testing condition {}".format(fauxfactory.gen_alphanumeric(8)),
         expression=("fill_find(VM and Instance.Files : Name, "
-            "=, {}, Check Any, Contents, INCLUDES, {})".format(check_file_name, contents))
+            "=, {}, Check Any, Contents, INCLUDES, {})".format(
+                check_file_name, check_file_contents))
     )
     request.addfinalizer(lambda: diaper(condition.delete))
     policy = VMCompliancePolicy("Compliance {}".format(fauxfactory.gen_alphanumeric(8)))
@@ -198,16 +186,9 @@ def test_check_files(request, fleecing_vm, ssh_client, check_file_name, analysis
     request.addfinalizer(lambda: fleecing_vm.unassign_policy_profiles(profile.description))
 
     with update(analysis_profile):
-        analysis_profile.files = [("/root/*", True)]
+        analysis_profile.files = [(check_file_name, True)]
         analysis_profile.categories = [
             "check_services", "check_accounts", "check_software", "check_vmconfig", "check_system"]
 
-    # Non-compliant
-    ssh_client.run_command("rm -f {}".format(check_file_name))
-    do_scan(fleecing_vm)
-    assert not fleecing_vm.check_compliance_and_wait()
-
-    # Compliant
-    ssh_client.run_command("echo {} > {}".format(contents, check_file_name))
-    do_scan(fleecing_vm)
+    do_scan(fleecing_vm, ("Configuration", "Files"))
     assert fleecing_vm.check_compliance_and_wait()

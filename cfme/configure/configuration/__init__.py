@@ -7,7 +7,7 @@ from fixtures.pytest_store import store
 
 import cfme.web_ui.tabstrip as tabs
 import cfme.web_ui.toolbar as tb
-from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound
+from cfme.exceptions import ScheduleNotFound, AuthModeUnknown, ZoneNotFound, CandidateNotFound
 from cfme.web_ui import (
     Calendar, CheckboxSelect, DynamicTable, Form, InfoBlock, Input, MultiFill, Region, Select,
     Table, accordion, fill, flash, form_buttons)
@@ -502,6 +502,15 @@ class AnalysisProfile(Pretty, Updateable):
         tb.select("Configuration", "Delete this Analysis Profile from the VMDB", invokes_alert=True)
         sel.handle_alert()
         flash.assert_no_errors()
+
+    @property
+    def exists(self):
+        try:
+            sel.force_navigate("cfg_analysis_profile", context={"analysis_profile": self})
+        except CandidateNotFound:
+            return False
+        else:
+            return True
 
     def __str__(self):
         return self.name
