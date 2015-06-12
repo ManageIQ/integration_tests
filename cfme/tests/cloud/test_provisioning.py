@@ -101,9 +101,16 @@ def test_provision_from_template_using_rest(
         provisioning['instance_type'].split(":")[0].strip()
         if ":" in provisioning['instance_type'] and provider_type == "ec2"
         else provisioning['instance_type'])
-    flavours = rest_api.collections.flavors.find_by(name=instance_type)
-    assert len(flavours) > 0
-    flavour_id = flavours[0].id
+    flavors = rest_api.collections.flavors.find_by(name=instance_type)
+    assert len(flavors) > 0
+    # TODO: Multi search when it works
+    for flavor in flavors:
+        if flavor.ems.name == provider_crud.name:
+            flavor_id = flavor.id
+            break
+    else:
+        pytest.fail(
+            "Cannot find flavour {} for provider {}".format(instance_type, provider_crud.name))
 
     provision_data = {
         "version": "1.1",
@@ -112,7 +119,7 @@ def test_provision_from_template_using_rest(
         },
         "vm_fields": {
             "vm_name": vm_name,
-            "instance_type": flavour_id,
+            "instance_type": flavor_id,
             "request_type": "template",
             "availability_zone": provisioning["availability_zone"],
             "security_groups": [provisioning["security_group"]],
@@ -146,7 +153,9 @@ def test_provision_from_template_using_rest(
         return request.request_state.lower() in {"finished", "provisioned"}
 
     wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
-    assert provider_mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
+    wait_for(
+        lambda: provider_mgmt.does_vm_exist(vm_name),
+        num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
 VOLUME_METHOD = ("""
