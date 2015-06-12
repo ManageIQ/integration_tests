@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-import pytest
 from cfme.configure import tasks
 from cfme.exceptions import ListAccordionLinkNotFound
 from cfme.fixtures import pytest_selenium as sel
@@ -8,7 +6,6 @@ from cfme.infrastructure import host
 from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as tb
 from utils import conf
 from utils import testgen
-from utils.blockers import BZ
 from utils.wait import wait_for
 
 
@@ -46,16 +43,8 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-@pytest.mark.meta(
-    blockers=[
-        BZ(1156028, unblock=lambda provider_type, provider_ver: (
-            provider_type != 'rhevm' or provider_ver < '3.3')),
-        BZ(1055657, unblock=lambda provider_type, provider_ver: (
-            provider_type != 'virtualcenter' or provider_ver >= '5'))
-    ]
-)
 def test_run_host_analysis(request, setup_provider, provider_key, provider_type, provider_ver,
-                           host_type, host_name, register_event, soft_assert):
+                           host_type, host_name, register_event, soft_assert, bug):
     """ Run host SmartState analysis
 
     Metadata:
@@ -124,8 +113,10 @@ def test_run_host_analysis(request, setup_provider, provider_key, provider_type,
     sel.handle_alert()
 
     # Check results of the analysis
-    soft_assert(test_host.get_detail('Configuration', 'Services') != '0',
-        'No services found in host detail')
+    services_bug = bug(1156028)
+    if not (services_bug is not None and provider_type == "rhevm" and provider_ver >= "3.3"):
+        soft_assert(test_host.get_detail('Configuration', 'Services') != '0',
+            'No services found in host detail')
 
     if host_type in ('rhel', 'rhev'):
         soft_assert(test_host.get_detail('Security', 'Users') != '0',
@@ -139,10 +130,12 @@ def test_run_host_analysis(request, setup_provider, provider_key, provider_type,
         soft_assert(test_host.get_detail('Configuration', 'Advanced Settings') != '0',
             'No advanced settings found in host detail')
 
-        # If the Firewall Rules are 0, the element can't be found (it's not a link)
-        try:
-            # This fails for vsphere4...  https://bugzilla.redhat.com/show_bug.cgi?id=1055657
-            list_acc.select('Security', 'Show the firewall rules on this Host')
-        except ListAccordionLinkNotFound:
-            # py.test's .fail would wipe the soft_assert data
-            soft_assert(False, "No firewall rules found in host detail accordion")
+        fw_bug = bug(1055657)
+        if not (fw_bug is not None and provider_type == "virtualcenter" and provider_ver < "5"):
+            # If the Firewall Rules are 0, the element can't be found (it's not a link)
+            try:
+                # This fails for vsphere4...  https://bugzilla.redhat.com/show_bug.cgi?id=1055657
+                list_acc.select('Security', 'Show the firewall rules on this Host')
+            except ListAccordionLinkNotFound:
+                # py.test's .fail would wipe the soft_assert data
+                soft_assert(False, "No firewall rules found in host detail accordion")
