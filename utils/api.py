@@ -278,10 +278,11 @@ class Entity(object):
         task_id="tasks",
     )
 
-    def __init__(self, collection, data):
+    def __init__(self, collection, data, incomplete=False):
         self.collection = collection
         self.action = ActionContainer(self)
         self._data = data
+        self._incomplete = incomplete
         self._load_data()
 
     def _load_data(self):
@@ -341,8 +342,9 @@ class Entity(object):
         return self.wait_for_existence(False, **kwargs)
 
     def reload_if_needed(self):
-        if self._data is None:
+        if self._data is None or self._incomplete:
             self.reload()
+            self._incomplete = False
 
     def __getattr__(self, attr):
         self.reload()
@@ -455,9 +457,9 @@ class Action(object):
         if "id" in result:
             d = copy(result)
             d["href"] = "{}/{}".format(self.collection._href, result["id"])
-            return Entity(self.collection, d)
+            return Entity(self.collection, d, incomplete=True)
         elif "href" in result:
-            return Entity(self.collection, result)
+            return Entity(self.collection, result, incomplete=True)
         else:
             raise NotImplementedError
 
