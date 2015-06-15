@@ -2477,85 +2477,6 @@ def fill_scriptbox(sb, script):
     sel.wait_for_ajax()
 
 
-class EmailSelectForm(Pretty):
-    """Class encapsulating the e-mail selector, eg. in Control/Alarms editing."""
-    fields = Region(locators=dict(
-        from_address=Input('from'),
-        user_emails=Select("//select[@id='user_email']"),
-        manual_input=Input('email'),
-        add_email_manually={
-            version.LOWEST: "(//img | //i)[@title='Add' and contains(@onclick, 'add_email')]",
-            "5.5": "//div[@alt='Add']/i"}
-    ))
-
-    @property
-    def to_emails(self):
-        """Returns list of e-mails that are selected"""
-        return [
-            sel.text(el)
-            for el
-            in sel.elements("//a[contains(@href, 'remove_email')]")
-        ]
-
-    @property
-    def user_emails(self):
-        """Returns list of e-mail that users inside CFME have so that they can be selected"""
-        try:
-            return [
-                sel.get_attribute(el, "value")
-                for el
-                in self.fields.user_emails.options
-                if len(sel.get_attribute(el, "value").strip()) > 0
-            ]
-        except NoSuchElementException:  # It disappears when empty
-            return []
-
-    def remove_email(self, email):
-        """Remove specified e-mail
-
-        Args:
-            email: E-mail to remove
-        """
-        if email in self.to_emails:
-            sel.click("//a[contains(@href, 'remove_email')][normalize-space(.)='%s']" % email)
-            return email not in self.to_emails
-        else:
-            return True
-
-    @to_emails.setter
-    def to_emails(self, emails):
-        """Function for filling e-mails
-
-        Args:
-            emails: List of e-mails that should be filled. Any existing e-mails that are not in this
-                variable will be deleted.
-        """
-        if isinstance(emails, basestring):
-            emails = [emails]
-        # Delete e-mails that have nothing to do here
-        for email in self.to_emails:
-            if email not in emails:
-                assert self.remove_email(email), "Could not remove e-mail '%s'" % email
-        # Add new
-        for email in emails:
-            if email in self.to_emails:
-                continue
-            if email in self.user_emails:
-                sel.select(self.fields.user_emails, sel.ByValue(email))
-            else:
-                fill(self.fields.manual_input, email)
-                sel.click(self.fields.add_email_manually)
-                assert email in self.to_emails, "Adding e-mail '%s' manually failed!" % email
-
-
-@fill.method((EmailSelectForm, basestring))
-@fill.method((EmailSelectForm, list))
-@fill.method((EmailSelectForm, set))
-@fill.method((EmailSelectForm, tuple))
-def fill_email_select_form(form, emails):
-    form.to_emails = emails
-
-
 class CheckboxSelect(Pretty):
     """Class used for filling those bunches of checkboxes I (@mfalesni) always hated to search for.
 
@@ -3316,3 +3237,84 @@ class AngularCalendarInput(Pretty):
 @fill.method((AngularCalendarInput, Anything))
 def _fill_angular_calendar_input(obj, a):
     return obj.fill(a)
+
+
+class EmailSelectForm(Pretty):
+    """Class encapsulating the e-mail selector, eg. in Control/Alarms editing."""
+    fields = Region(locators=dict(
+        from_address=Input('from'),
+        user_emails={
+            version.LOWEST: Select("//select[@id='user_email']"),
+            "5.5": AngularSelect("user_email")},
+        manual_input=Input('email'),
+        add_email_manually={
+            version.LOWEST: "(//img | //i)[@title='Add' and contains(@onclick, 'add_email')]",
+            "5.5": "//div[@alt='Add']/i"}
+    ))
+
+    @property
+    def to_emails(self):
+        """Returns list of e-mails that are selected"""
+        return [
+            sel.text(el)
+            for el
+            in sel.elements("//a[contains(@href, 'remove_email')]")
+        ]
+
+    @property
+    def user_emails(self):
+        """Returns list of e-mail that users inside CFME have so that they can be selected"""
+        try:
+            return [
+                sel.get_attribute(el, "value")
+                for el
+                in self.fields.user_emails.options
+                if len(sel.get_attribute(el, "value").strip()) > 0
+            ]
+        except NoSuchElementException:  # It disappears when empty
+            return []
+
+    def remove_email(self, email):
+        """Remove specified e-mail
+
+        Args:
+            email: E-mail to remove
+        """
+        if email in self.to_emails:
+            sel.click("//a[contains(@href, 'remove_email')][normalize-space(.)='%s']" % email)
+            return email not in self.to_emails
+        else:
+            return True
+
+    @to_emails.setter
+    def to_emails(self, emails):
+        """Function for filling e-mails
+
+        Args:
+            emails: List of e-mails that should be filled. Any existing e-mails that are not in this
+                variable will be deleted.
+        """
+        if isinstance(emails, basestring):
+            emails = [emails]
+        # Delete e-mails that have nothing to do here
+        for email in self.to_emails:
+            if email not in emails:
+                assert self.remove_email(email), "Could not remove e-mail '%s'" % email
+        # Add new
+        for email in emails:
+            if email in self.to_emails:
+                continue
+            if email in self.user_emails:
+                sel.select(self.fields.user_emails, sel.ByValue(email))
+            else:
+                fill(self.fields.manual_input, email)
+                sel.click(self.fields.add_email_manually)
+                assert email in self.to_emails, "Adding e-mail '%s' manually failed!" % email
+
+
+@fill.method((EmailSelectForm, basestring))
+@fill.method((EmailSelectForm, list))
+@fill.method((EmailSelectForm, set))
+@fill.method((EmailSelectForm, tuple))
+def fill_email_select_form(form, emails):
+    form.to_emails = emails

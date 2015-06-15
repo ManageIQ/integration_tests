@@ -56,7 +56,7 @@ class SNMPTrapField(Pretty):
 
     @property
     def type_loc(self):
-        return Select("//select[@id='var_type__%d']" % self.seq_id)
+        return Select("//select[@id='var_type__{}']".format(self.seq_id))
 
     @property
     def type(self):
@@ -181,7 +181,7 @@ class SNMPForm(object):
 
 
 @fill.method((SNMPForm, dict))
-def fill_snmp_form(form, values, action):
+def fill_snmp_form(form, values, *rest, **kwrest):
     """I wanted to use dict but that is overrided in web_ui that it disassembles dict to list
     of tuples :("""
     return fill(form.fields, values)

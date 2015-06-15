@@ -172,6 +172,21 @@ class SSHClient(paramiko.SSHClient):
         # Returning two things so tuple unpacking the return works even if the ssh client fails
         return SSHResult(1, None)
 
+    def cpu_spike(self, seconds=60, cpus=2, **kwargs):
+        """Creates a CPU spike of specific length and processes.
+
+        Args:
+            seconds: How long the spike should last.
+            cpus: How many processes to use.
+
+        Returns:
+            See :py:meth:`SSHClient.run_command`
+        """
+        return self.run_command(
+            "duration={}; instances={}; endtime=$(($(date +%s) + $duration)); "
+            "for ((i=0; i<instances; i++)) do while (($(date +%s) < $endtime)); "
+            "do :; done & done".format(seconds, cpus), **kwargs)
+
     def run_rails_command(self, command, timeout=RUNCMD_TIMEOUT):
         logger.info("Running rails command `{}`".format(command))
         return self.run_command('cd /var/www/miq/vmdb; bin/rails runner {}'.format(command),
