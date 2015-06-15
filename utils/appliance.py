@@ -444,8 +444,12 @@ class IPAppliance(object):
     @lazycache
     def address(self):
         # If address wasn't set in __init__, use the hostname from base_url
-        parsed_url = urlparse(self.url or store.base_url)
-        return parsed_url.netloc
+        if getattr(self, "_url", None) is not None:
+            parsed_url = urlparse(self.url)
+            return parsed_url.netloc
+        else:
+            parsed_url = urlparse(store.base_url)
+            return parsed_url.netloc
 
     @lazycache
     def hostname(self):
@@ -470,7 +474,7 @@ class IPAppliance(object):
 
     @lazycache
     def url(self):
-        return "{}://{}".format(self.scheme, self.address)
+        return "{}://{}/".format(self.scheme, self.address)
 
     @lazycache
     def version(self):
