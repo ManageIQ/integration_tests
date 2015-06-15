@@ -17,11 +17,6 @@ from utils.wait import wait_for
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
 
 
-def openstack_only(f):
-    f._os_only = True
-    return f
-
-
 def pytest_generate_tests(metafunc):
     # Filter out providers without templates defined
     argnames, argvalues, idlist = testgen.cloud_providers(metafunc, 'provisioning')
@@ -37,9 +32,6 @@ def pytest_generate_tests(metafunc):
         # required keys should be a subset of the dict keys set
         if not {'image'}.issubset(args['provisioning'].viewkeys()):
             # Need image for image -> instance provisioning
-            continue
-
-        if getattr(metafunc.function, "_os_only", False) and args['provider_type'] != 'openstack':
             continue
 
         new_idlist.append(idlist[i])
@@ -160,21 +152,30 @@ ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
 
 
 @pytest.fixture(scope="module")
-def default_domain_enabled():
-    dom = automate.Domain.default
-    if dom is not None:
-        if not dom.is_enabled:
-            with update(dom):
-                dom.enabled = True
+def domain(request):
+    domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
+    domain.create()
+    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
+    return domain
+
+
+@pytest.fixture(scope="module")
+def cls(request, domain):
+    tcls = automate.Class(name="Methods",
+        namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
+        parent=domain))
+    tcls.create()
+    request.addfinalizer(lambda: tcls.delete() if tcls.exists() else None)
+    return tcls
 
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
-@openstack_only
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, disks,
-        soft_assert, provider_type, default_domain_enabled):
+        soft_assert, provider_type, domain, cls):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:
@@ -192,9 +193,6 @@ def test_provision_from_template_with_attached_disks(
         for i, volume in enumerate(volumes):
             device_mapping.append((volume, DEVICE_NAME.format(chr(ord("b") + i))))
         # Set up automate
-        cls = automate.Class(
-            name="Methods",
-            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines"))
         method = automate.Method(
             name="openstack_PreProvision",
             cls=cls)
@@ -237,10 +235,10 @@ def test_provision_from_template_with_attached_disks(
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1160342])
-@openstack_only
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
 def test_provision_with_boot_volume(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
-        provider_type, default_domain_enabled):
+        provider_type):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
@@ -307,10 +305,10 @@ def test_provision_with_boot_volume(
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1186413])
-@openstack_only
+@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
 def test_provision_with_additional_volume(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
-        provider_type, default_domain_enabled, provider_data):
+        provider_type, provider_data):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
