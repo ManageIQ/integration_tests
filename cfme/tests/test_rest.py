@@ -119,6 +119,7 @@ def test_add_delete_multiple_service_catalogs(rest_api):
         rest_api.collections.service_catalogs.action.delete(*scls)
 
 
+@pytest.mark.ignore_stream("5.3")
 def test_provider_refresh(request, setup_a_provider, rest_api):
     """Test checking that refresh invoked from the REST API works.
 
@@ -157,6 +158,7 @@ def test_provider_refresh(request, setup_a_provider, rest_api):
         vms[0].action.delete()
 
 
+@pytest.mark.ignore_stream("5.3")
 def test_provider_edit(request, setup_a_provider, rest_api):
     if "edit" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
@@ -172,6 +174,7 @@ def test_provider_edit(request, setup_a_provider, rest_api):
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["delete_from_detail", "delete_from_collection"])
+@pytest.mark.ignore_stream("5.3")
 def test_provider_crud(request, rest_api, from_detail):
     if "create" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
@@ -208,6 +211,7 @@ def vm(request, setup_a_provider, rest_api):
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
+@pytest.mark.ignore_stream("5.3")
 def test_set_vm_owner(request, setup_a_provider, rest_api, vm, from_detail):
     """Test whether set_owner action from the REST API works."""
     if "set_owner" not in rest_api.collections.vms.action.all:
@@ -227,6 +231,7 @@ def test_set_vm_owner(request, setup_a_provider, rest_api, vm, from_detail):
 @pytest.mark.parametrize(
     "from_detail", [True, False],
     ids=["from_detail", "from_collection"])
+@pytest.mark.ignore_stream("5.3")
 def test_vm_add_lifecycle_event(request, setup_a_provider, rest_api, vm, from_detail, db):
     if "add_lifecycle_event" not in rest_api.collections.vms.action.all:
         pytest.skip("add_lifecycle_event action is not implemented in this version")
