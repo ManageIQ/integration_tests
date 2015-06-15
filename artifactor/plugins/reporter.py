@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Reporter plugin for Artifactor
 
 Add a stanza to the artifactor config like this,
@@ -39,6 +40,13 @@ _tests_tpl = {
     },
     '_duration': 0
 }
+
+# Regexp, that finds all URLs in a string
+# From: http://daringfireball.net/2010/07/improved_regex_for_matching_urls
+URL = re.compile(
+    r"""(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)"""
+    r"""(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)"""
+    r"""|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))""")
 
 
 def overall_test_status(statuses):
@@ -183,6 +191,11 @@ class Reporter(ArtifactorBasePlugin):
                 if "merkyl" in ident:
                     test_data['merkyl'] = [f.replace(log_dir, "")
                                            for f in test['files']['merkyl']]
+
+            if "short_tb" in test_data and test_data["short_tb"]:
+                urls = [url[0] for url in URL.findall(test_data["short_tb"])]
+                if urls:
+                    test_data["urls"] = urls
             template_data['tests'].append(test_data)
         template_data['counts'] = counts
 
