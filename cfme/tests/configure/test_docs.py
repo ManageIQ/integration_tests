@@ -8,10 +8,28 @@ try:
 except ImportError:
     # Slower, pure python
     from StringIO import StringIO
-from PyPDF2 import PdfFileReader
+
+from pdfminer.converter import TextConverter
+from pdfminer.layout import LAParams
+from pdfminer.pdfpage import PDFPage
+from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
 
 from cfme.configure.about import product_assistance as about
 from utils import version
+
+
+def pdf_get_text(file_obj, page_nums):
+    output = StringIO()
+    manager = PDFResourceManager()
+    laparams = LAParams(all_texts=True, detect_vertical=True)
+    converter = TextConverter(manager, output, laparams=laparams)
+    interpreter = PDFPageInterpreter(manager, converter)
+    for page in PDFPage.get_pages(file_obj, page_nums):
+        interpreter.process_page(page)
+    converter.close()
+    text = output.getvalue().replace('\n', ' ')
+    output.close()
+    return text
 
 
 @pytest.fixture(scope="module")
@@ -69,26 +87,25 @@ def test_contents(guides, soft_assert):
     """Test contents of each document."""
     pytest.sel.force_navigate("about")
     precomp_noguide = re.compile("(.*) Guide")
+    cur_ver = version.current_version()
     for link in guides:
         locator = getattr(about, link)
         url = pytest.sel.get_attribute(locator, "href")
         data = requests.get(url, verify=False)
-        pdf = PdfFileReader(StringIO(data.content))
-        pdf_info = pdf.getDocumentInfo()
-        pdf_title_low = pdf_info["/Title"].lower()
+        pdf_titlepage_text_low = pdf_get_text(StringIO(data.content), [0]).lower()
         # don't include the word 'guide'
         title_text_low = precomp_noguide.search(pytest.sel.text(locator)).group(1).lower()
-
-        cur_ver = version.current_version()
         expected = [title_text_low]
         if cur_ver == version.LATEST:
             expected.append('manageiq')
         else:
             expected.append('cloudforms')
-            expected.append('{}.{}'.format(cur_ver.version[0], cur_ver.version[1]))
+            maj_min = '{}.{}'.format(cur_ver.version[0], cur_ver.version[1])
+            expected.append(version.get_product_version(maj_min))
 
         for exp_str in expected:
-            soft_assert(exp_str in pdf_title_low, "{} not in {}".format(exp_str, pdf_title_low))
+            soft_assert(exp_str in pdf_titlepage_text_low,
+                "{} not in {}".format(exp_str, pdf_titlepage_text_low))
 
 
 @pytest.mark.sauce

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from collections import namedtuple
 from datetime import date, datetime
 import string
 import re
@@ -6,19 +7,26 @@ from fixtures.pytest_store import store
 import multimethods as mm
 
 
+def get_product_version(ver):
+    """Return product version for given Version obj or version string
+    """
+    if isinstance(ver, basestring):
+        ver = get_version(ver)
+    for app_ver, ver_data in version_stream_product_mapping.iteritems():
+        if ver.is_in_series(app_ver):
+            return ver_data.product_version
+    else:
+        raise Exception("Unrecognized version '{}' - no matching product version found".format(ver))
+
+
 def get_stream(ver):
     """Return a stream name for given Version obj or version string
     """
     if isinstance(ver, basestring):
         ver = get_version(ver)
-    if ver.is_in_series('5.2'):
-        return 'downstream-52z'
-    elif ver.is_in_series('5.3'):
-        return 'downstream-53z'
-    elif ver.is_in_series('5.4'):
-        return 'downstream-54z'
-    elif ver == LATEST:
-        return 'upstream'
+    for app_ver, ver_data in version_stream_product_mapping.iteritems():
+        if ver.is_in_series(app_ver):
+            return ver_data.stream
     else:
         raise Exception("Unrecognized version '{}' - no matching stream group found".format(ver))
 
@@ -480,6 +488,16 @@ class LooseVersion (Version):
 
 LOWEST = LooseVersion(oldest=True)
 LATEST = LooseVersion(latest=True)
+
+SPTuple = namedtuple('StreamProductTuple', ['stream', 'product_version'])
+
+# Maps stream and product version to each app version
+version_stream_product_mapping = {
+    '5.2': SPTuple('downstream-52z', '3.0'),
+    '5.3': SPTuple('downstream-53z', '3.1'),
+    '5.4': SPTuple('downstream-54z', '3.2'),
+    LATEST: SPTuple('upstream', 'upstream')
+}
 
 
 # Compare Versions using > for dispatch
