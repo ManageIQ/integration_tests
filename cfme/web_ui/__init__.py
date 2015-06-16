@@ -2121,8 +2121,20 @@ class Quadicon(Pretty):
 
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
-        return sel.move_to_element('div/a',
-            root="//div[@id='quadicon' and ../../..//a[@title={}]]".format(quoteattr(self._name)))
+        try:
+            return sel.move_to_element('div/a',
+                root="//div[@id='quadicon' and ../../..//a[@title={}]]".format(
+                    quoteattr(self._name)))
+        except sel.NoSuchElementException:
+            quads = sel.elements("//div[@id='quadicon']/../../../tr/td/a")
+            if not quads:
+                raise sel.NoSuchElementException("Quadicon {} not found. No quads present".format(
+                    self._name))
+            else:
+                quad_names = [sel.get_attribute(quad, "title") for quad in quads]
+                raise sel.NoSuchElementException(
+                    "Quadicon {} not found. These quads are present:\n{}".format(
+                        self._name, ", ".join(quad_names)))
 
     def _locate_quadrant(self, corner):
         """ Returns: a locator for the specific quadrant"""
