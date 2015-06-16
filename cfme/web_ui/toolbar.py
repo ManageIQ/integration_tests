@@ -24,7 +24,10 @@ locators = Region(
         'compressed_view': "//div[@title='Compressed View']",
         'expanded_view': "//div[@title='Expanded View']",
         'details_view': "//div[@title='Details Mode']",
-        'exists_view': "//div[@title='Exists Mode']"
+        'exists_view': "//div[@title='Exists Mode']",
+        'hybrid_view': "//div[@title='Hybrid View']",
+        'graph_view': "//div[@title='Graph View']",
+        'tabular_view': "//div[@title='Tabular View']"
     }
 )
 
@@ -205,6 +208,24 @@ def is_vms_exists_view():
     return "pres" in sel.get_attribute(locators.exists_view, "class")
 
 
+def is_vms_hybrid_view():
+    """Returns whether hybrid view is selected or not.
+    """
+    return "pres" in sel.get_attribute(locators.hybrid_view, "class")
+
+
+def is_vms_graph_view():
+    """Returns whether graph view is selected or not.
+    """
+    return "pres" in sel.get_attribute(locators.graph_view, "class")
+
+
+def is_vms_tabular_view():
+    """Returns whether tabular view is selected or not.
+    """
+    return "pres" in sel.get_attribute(locators.tabular_view, "class")
+
+
 def set_vms_grid_view():
     """Set the view to grid.
     """
@@ -252,3 +273,24 @@ def set_vms_exists_view():
     """
     if not is_vms_exists_view():
         sel.click(locators.exists_view)
+
+
+def set_vms_hybrid_view():
+    """Set the view to hybrid.
+    """
+    if not is_vms_hybrid_view():
+        sel.click(locators.hybrid_view)
+
+
+def set_vms_graph_view():
+    """Set the view to graph.
+    """
+    if not is_vms_graph_view():
+        sel.click(locators.graph_view)
+
+
+def set_vms_tabular_view():
+    """Set the view to tabular.
+    """
+    if not is_vms_tabular_view():
+        sel.click(locators.tabular_view)
