@@ -230,6 +230,46 @@ class SSHClient(paramiko.SSHClient):
                 'chmod 700 ~/.ssh; chmod 600 ~/.ssh/*')
         self._keystate = _ssh_keystate.installed
 
+    @property
+    def status(self):
+        """Parses the output of the ``service evmserverd status``.
+
+        Returns:
+            A dictionary containing ``servers`` and ``workers``, both lists. Each of the lists
+            contains dictionaries, one per line. You can refer inside the dictionary using the
+            headers.
+        """
+        data = self.run_command("service evmserverd status")
+        if data.rc != 0:
+            raise Exception("service evmserverd status $?={}".format(data.rc))
+        data = data.output.strip().split("\n\n")
+        if len(data) == 2:
+            srvs, wrks = data
+        else:
+            srvs = data[0]
+            wrks = ""
+        if "checking evm status" not in srvs.lower():
+            raise Exception("Wrong command output:\n{}".format(data.output))
+
+        # Servers part
+        srvs = srvs.split("\n")[1:]
+        srv_headers = [h.strip() for h in srvs[0].strip().split("|")]
+        srv_body = srvs[2:]
+        servers = []
+        for server in srv_body:
+            fields = [f.strip() for f in server.strip().split("|")]
+            servers.append(dict(zip(srv_headers, fields)))
+
+        # Workers part
+        wrks = wrks.split("\n")
+        wrk_headers = [h.strip() for h in wrks[0].strip().split("|")]
+        wrk_body = wrks[2:]
+        workers = []
+        for worker in wrk_body:
+            fields = [f.strip() for f in worker.strip().split("|")]
+            workers.append(dict(zip(wrk_headers, fields)))
+        return {"servers": servers, "workers": workers}
+
 
 class SSHTail(SSHClient):
 
