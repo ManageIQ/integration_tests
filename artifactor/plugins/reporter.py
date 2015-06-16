@@ -19,9 +19,12 @@ from utils.path import template_path
 import math
 from operator import itemgetter
 import os
+import re
 import shutil
 import time
 import datetime
+
+from utils.conf import cfme_data  # Only for the provider specific reports
 
 
 _tests_tpl = {
@@ -60,6 +63,7 @@ class Reporter(ArtifactorBasePlugin):
     def plugin_initialize(self):
         self.register_plugin_hook('report_test', self.report_test)
         self.register_plugin_hook('finish_session', self.run_report)
+        self.register_plugin_hook('finish_session', self.run_provider_report)
         self.register_plugin_hook('build_report', self.run_report)
         self.register_plugin_hook('start_test', self.start_test)
         self.register_plugin_hook('finish_test', self.finish_test)
@@ -86,9 +90,37 @@ class Reporter(ArtifactorBasePlugin):
 
     @ArtifactorBasePlugin.check_configured
     def run_report(self, artifacts, log_dir):
+        template_data = self.process_data(artifacts, log_dir)
+
+        if self.only_failed:
+            template_data['tests'] = [x for x in template_data['tests']
+                                  if x['outcomes']['overall'] not in ['passed']]
+
+        self.render_report(template_data, 'report', log_dir, 'test_report.html')
+
+    @ArtifactorBasePlugin.check_configured
+    def run_provider_report(self, artifacts, log_dir):
+        for mgmt in cfme_data['management_systems'].keys():
+            template_data = self.process_data(artifacts, log_dir, name_filter=mgmt)
+
+            self.render_report(template_data, "report_{}".format(mgmt), log_dir,
+                               'test_report_provider.html')
+
+    def render_report(self, report, filename, log_dir, template):
         template_env = Environment(
             loader=FileSystemLoader(template_path.strpath)
         )
+        data = template_env.get_template(template).render(**report)
+
+        with open(os.path.join(log_dir, '{}.html'.format(filename)), "w") as f:
+            f.write(data)
+        try:
+            shutil.copytree(template_path.join('dist').strpath, os.path.join(log_dir, 'dist'))
+        except OSError:
+            pass
+
+    def process_data(self, artifacts, log_dir, name_filter=None):
+
         template_data = {'tests': []}
         log_dir += "/"
         counts = {'passed': 0, 'failed': 0, 'skipped': 0, 'error': 0, 'xfailed': 0, 'xpassed': 0}
@@ -154,6 +186,10 @@ class Reporter(ArtifactorBasePlugin):
             template_data['tests'].append(test_data)
         template_data['counts'] = counts
 
+        if name_filter:
+            template_data['tests'] = [x for x in template_data['tests']
+                                      if re.findall('{}[-\]]+'.format(name_filter), x['name'])]
+
         # Create the tree dict that is used for js tree
         # Note template_data['tests'] != tests
         tests = deepcopy(_tests_tpl)
@@ -172,18 +208,7 @@ class Reporter(ArtifactorBasePlugin):
                 test['duration'] = str(datetime.timedelta(
                     seconds=math.ceil(test['duration'])))
 
-        if self.only_failed:
-            template_data['tests'] = [x for x in template_data['tests']
-                                  if x['outcomes']['overall'] not in ['passed']]
-
-        # Render the report
-        data = template_env.get_template('test_report.html').render(**template_data)
-        with open(os.path.join(log_dir, 'report.html'), "w") as f:
-            f.write(data)
-        try:
-            shutil.copytree(template_path.join('dist').strpath, os.path.join(log_dir, 'dist'))
-        except OSError:
-            pass
+        return template_data
 
     def build_dict(self, path, container, contents):
         """

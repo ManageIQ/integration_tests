@@ -149,7 +149,7 @@ class Artifactor(Rigger):
             return False
         self.log_dir = local(self.config.get('log_dir', log_path.join('artifacts')))
         self.log_dir.ensure(dir=True)
-        self.logger = create_logger('artifactor', self.log_dir.join('log').strpath)
+        self.logger = create_logger('artifactor', self.log_dir.join('artifactor.log').strpath)
         self.squash_exceptions = self.config.get('squash_exceptions', False)
         if not self.log_dir:
             print "!!! Log dir must be specified in yaml"
