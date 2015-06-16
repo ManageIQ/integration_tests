@@ -13,7 +13,7 @@ from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version
-from utils.appliance import Appliance, provision_appliance
+from utils.appliance import Appliance, ApplianceException, provision_appliance
 from utils.log import logger
 from utils.update import update
 from utils.wait import wait_for
@@ -24,7 +24,6 @@ pytestmark = [
     # TODO: Problems with fleecing configuration - revisit later
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles=["+automate", "+smartstate", "+smartproxy"]),
-    pytest.mark.usefixtures("provider_type"),
     pytest.mark.uncollectif(lambda provider_type: provider_type in {"scvmm"}),
 ]
 
@@ -42,7 +41,7 @@ def wait_for_ssa_enabled():
 
 
 @pytest.yield_fixture(scope="module")
-def compliance_vm(request, provider_key, provider_crud):
+def compliance_vm(request, provider_key, provider_crud, provider_type):
     try:
         ip_addr = re.findall(r'[0-9]+(?:\.[0-9]+){3}', store.base_url)[0]
         appl_name = provider_crud.get_mgmt_system().get_vm_name_from_ip(ip_addr)
@@ -50,7 +49,14 @@ def compliance_vm(request, provider_key, provider_crud):
         logger.info(
             "The tested appliance ({}) is already on this provider ({}) so reusing it.".format(
                 appl_name, provider_key))
-        appliance.configure_fleecing()
+        try:
+            appliance.configure_fleecing()
+        except (EOFError, ApplianceException) as e:
+            # If something was happening, restart and wait for the UI to reappear to prevent errors
+            appliance.ipapp.reboot()
+            pytest.skip(
+                "Error during appliance configuration. Skipping:\n{}: {}".format(
+                    type(e).__name__, str(e)))
         vm = Vm(appl_name, provider_crud)
     except VmNotFoundViaIP:
         logger.info("Provisioning a new appliance on provider {}.".format(provider_key))
@@ -61,11 +67,13 @@ def compliance_vm(request, provider_key, provider_crud):
         request.addfinalizer(lambda: diaper(appliance.destroy))
         try:
             appliance.configure(setup_fleece=True)
-        except (EOFError, ) as e:   # Add known exceptions as needed.
+        except (EOFError, ApplianceException) as e:   # Add known exceptions as needed.
             pytest.skip(
                 "Error during appliance configuration. Skipping:\n{}: {}".format(
                     type(e).__name__, str(e)))
         vm = Vm(appliance.vm_name, provider_crud)
+    if provider_type in {"rhevm"}:
+        request.addfinalizer(appliance.remove_rhev_direct_lun_disk)
     # Do the final touches
     with appliance.ipapp(browser_steal=True) as appl:
         appl.set_session_timeout(86400)
