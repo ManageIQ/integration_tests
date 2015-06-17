@@ -81,7 +81,7 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
         pxe_cust_template.create()
 
 
-@pytest.mark.meta(blockers=[1203775])
+@pytest.mark.meta(blockers=[1203775, 1232427])
 @pytest.mark.usefixtures('setup_pxe_servers_host_prov')
 def test_host_provisioning(provider_init, cfme_data, host_provisioning,
                            provider_crud, smtp_test, request):
