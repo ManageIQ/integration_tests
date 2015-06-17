@@ -1,0 +1,126 @@
+{% extends 'pattern_base.html' %}
+{% set title = 'Test Report' %}
+
+{% block title %}{{title}}{% endblock %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="dist/themes/default/style.min.css" />
+<style>
+.label {
+  display: inline-block;
+}
+</style>
+{% endblock %}
+
+{% block nav %}
+  <nav class="navbar navbar-default navbar-pf" role="navigation">
+    <div class="collapse navbar-collapse navbar-collapse-21">
+      <ul class="nav navbar-nav navbar-pf navbar-primary">
+      </ul>
+    </div>
+  </nav>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid" id="content">
+  <div class="row">
+    <div class="col-md-4">
+      <h1>Test Report</h1>
+    </div>
+    <div class="col-md-8 text-right">
+      <span class="label label-success">{{counts.passed}} Passed &nbsp;<input id="passed-check" type="checkbox" onclick="toggle('passed');"></span>
+      <span class="label label-primary">{{counts.skipped}} Skipped &nbsp;<input id="skipped-check" type="checkbox" onclick="toggle('skipped');"></span>
+      <span class="label label-warning">{{counts.failed}} Failed &nbsp;<input id="failed-check" type="checkbox" onclick="toggle('failed');" checked="checked"></span>
+      <span class="label label-danger">{{counts.error}} Error &nbsp;<input id="error-check" type="checkbox" onclick="toggle('error');" checked="checked"></span>
+      <span class="label label-danger">{{counts.xpassed}} XPassed &nbsp;<input id="xpassed-check" type="checkbox" onclick="toggle('xpassed');" checked="checked"></span>
+      <span class="label label-success">{{counts.xfailed}} XFailed &nbsp;<input id="xfailed-check" type="checkbox" onclick="toggle('xfailed');"></span>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <p></p>
+      <div>
+        <input id="plugins4_q" value="" class="input pull-right" style="display:block; color: #000;" type="text" placeholder="Search">
+      </div>
+    <div id="container">
+      {{ndata}}
+    </div>
+  </div>
+  <div class="col-md-8">
+    <p>Stripped Report</p>
+  </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="dist/jstree.min.js"></script>
+<script>
+//bigjson = $.parseJSON('{{big_data}}');
+
+//var build_li = function ting(lev, next_lev) {
+//  this_lev = $('<ul></ul>').appendTo(next_lev)
+//    $.each( lev, function( key, value ) {
+//      if (value['name']) {
+//        $('<li>'+value['name']+'</li>').appendTo(this_lev)
+//      } else {
+//       new_lev = $('<li>'+key+'</li>').appendTo(this_lev)
+//        ting(value, new_lev)
+//      }
+//    });
+//}
+
+function toggle(name)
+{
+  if ($('#'+name+'-check').is(":checked"))
+  {
+    $('[data='+name+']').show()
+  }
+  else
+  {
+    $('[data='+name+']').hide()
+  }
+}
+
+
+$().ready(function(){
+
+$(function() {
+  $('#container').jstree({
+    "plugins" : [ "search" , "sort"],
+    "search" : {
+        "show_only_matches": true,
+        "search_leaves_only": true,
+    }
+  })
+  .bind("ready.jstree", function (event, data) {
+    // you get two params - event & data - check the core docs for a detailed description
+  $("span[name=mod_lev]").parents(".jstree-closed").each(function () {
+    $("#container").jstree("open_node", this, false);
+  });
+  }).bind('select_node.jstree', function(e,data) {
+    window.location.href = data.node.a_attr.href;
+});
+  var to = false;
+  $('#plugins4_q').keyup(function () {
+    if(to) { clearTimeout(to); }
+    to = setTimeout(function () {
+      var v = $('#plugins4_q').val();
+      $('#container').jstree(true).search(v);
+      if (v == ""){
+        $.each(document.getElementsByName('blab'), function(k,v){v.style.display='InlineBlock'})
+      }
+      else {
+        $.each(document.getElementsByName('blab'), function(k,v){v.style.display='None'})
+      }
+    }, 250);
+  });
+});
+toggle('error')
+toggle('failed')
+toggle('passed')
+toggle('skipped')
+toggle('xpassed')
+toggle('xfailed')
+})
+
+</script>
+{% endblock scripts %}
