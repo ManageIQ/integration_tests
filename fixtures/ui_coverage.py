@@ -247,7 +247,9 @@ class CoverageManager(object):
             # pgrep is nice, in that it doesn't include itself in its results, unlike ps|grep
             result = ssh_client.run_command('pgrep -f {}'.format(coverage_merger.basename))
             return result.rc == 1
-        wait_for(poll_coverage_merger, num_sec=3600)
+        # Waiting for 4 hours right now since jenkins is timing out after 1
+        # Need to find a way to speed this up, assuming it isn't broken
+        wait_for(poll_coverage_merger, num_sec=14400)
         shell_session.close()
 
     def _retrieve_coverage_reports(self):
