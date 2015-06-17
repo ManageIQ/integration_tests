@@ -5,6 +5,7 @@ import random
 
 import cfme.web_ui.flash as flash
 from cfme.configure import configuration as conf
+from selenium.common.exceptions import WebDriverException
 from cfme.infrastructure.provider import wait_for_a_provider
 from cfme.infrastructure.virtual_machines import Vm
 import cfme.fixtures.pytest_selenium as sel
@@ -118,6 +119,11 @@ def configure_db_replication(db_address):
     """
     conf.set_replication_worker_host(db_address)
     flash.assert_message_contain("Configuration settings saved for CFME Server")
+    try:
+        sel.force_navigate("cfg_settings_currentserver_server")
+    except WebDriverException:
+        sel.handle_alert()
+        sel.force_navigate("cfg_settings_currentserver_server")
     conf.set_server_roles(database_synchronization=True)
     sel.force_navigate("cfg_diagnostics_region_replication")
     wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
