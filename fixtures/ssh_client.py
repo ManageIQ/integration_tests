@@ -43,3 +43,9 @@ def ssh_client(uses_ssh):
 
     """
     return store.current_appliance.ssh_client()
+
+
+@pytest.fixture(scope="module")
+def ssh_client_modscope(uses_ssh):
+    """See :py:func:`ssh_client`."""
+    return store.current_appliance.ssh_client()
