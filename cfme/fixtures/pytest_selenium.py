@@ -1291,6 +1291,7 @@ def _select_iter(loc, items):
 
 
 def _sel_desel(el, getter_fn, setter_attr, item):
+    wait_for_ajax()
     if item is not None:
         old_item = getter_fn(el)
         if old_item != item:
