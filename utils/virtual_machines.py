@@ -4,6 +4,8 @@ import pytest
 
 from cfme.cloud.provider import get_from_config as get_cloud_from_config
 from cfme.infrastructure.provider import get_from_config as get_infra_from_config
+from fixtures.pytest_store import store
+from novaclient.exceptions import OverLimit as OSOverLimit
 from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
 from utils import conf
 from utils.log import logger
@@ -19,7 +21,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         skip_exceptions = allow_skip.keys()
         callable_mapping = allow_skip
     elif isinstance(allow_skip, basestring) and allow_skip.lower() == "default":
-        skip_exceptions = (RHEVRequestError, VMInstanceNotCloned)
+        skip_exceptions = (OSOverLimit, RHEVRequestError, VMInstanceNotCloned)
         callable_mapping = {}
     else:
         skip_exceptions = allow_skip
@@ -88,5 +90,8 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         e_c = type(e)
         if e_c in callable_mapping and not callable_mapping[e_c](e):
             raise
+        # Make it visible also in the log.
+        store.write_line(
+            "Skipping due to a provider error: {}: {}\n".format(e_c.__name__, str(e)), purple=True)
         pytest.skip("{}: {}".format(e_c.__name__, str(e)))
     return vm_name
