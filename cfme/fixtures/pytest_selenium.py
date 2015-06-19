@@ -956,6 +956,11 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         kwargs.pop("start", None)
         force_navigate("dashboard")  # Start fresh
 
+    # Check if modal window is displayed
+    if (is_displayed("//div[contains(@class, 'modal-dialog') and contains(@class, 'modal-lg')]")):
+        logger.warning("Modal window was open; closing the window")
+        click("//button[contains(@class, 'close') and contains(@data-dismiss, 'modal')]")
+
     # Check if jQuery present
     try:
         execute_script("jQuery")
