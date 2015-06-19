@@ -109,7 +109,7 @@ def test_contents(guides, soft_assert):
 
 
 @pytest.mark.sauce
-@pytest.mark.meta(blockers=[1026939])
+@pytest.mark.meta(blockers=[1232434, "GH#ManageIQ/manageiq:2246"])
 def test_info(guides, soft_assert):
     pytest.sel.force_navigate("about")
     for link in guides:
