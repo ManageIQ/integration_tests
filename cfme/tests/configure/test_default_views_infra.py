@@ -11,6 +11,7 @@ from utils import version
 from cfme.configure import settings  # NOQA
 from cfme.services.catalogs import catalog_item  # NOQA
 from cfme.services import workloads  # NOQA
+from cfme.intelligence.reports.reports import CannedSavedReport
 
 
 def minimise_dict(item):
@@ -189,3 +190,27 @@ def test_exists_view(request, setup_a_provider, key):
     tb.select(name[2], name[3])
     assert tb.is_vms_exists_view(), "Exists view setting failed"
     reset_default_view(button_name, default_view)
+
+
+def test_hybrid_view(request, setup_a_provider):
+    path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
+    report = CannedSavedReport.new(path)
+    report.navigate()
+    tb.set_vms_hybrid_view()
+    assert tb.is_vms_hybrid_view(), "Hybrid view setting failed"
+
+
+def test_graph_view(request, setup_a_provider):
+    path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
+    report = CannedSavedReport.new(path)
+    report.navigate()
+    tb.set_vms_graph_view()
+    assert tb.is_vms_graph_view(), "Graph view setting failed"
+
+
+def test_tabular_view(request, setup_a_provider):
+    path = ["Configuration Management", "Hosts", "Virtual Infrastructure Platforms"]
+    report = CannedSavedReport.new(path)
+    report.navigate()
+    tb.set_vms_tabular_view()
+    assert tb.is_vms_tabular_view(), "Tabular view setting failed"
