@@ -140,8 +140,16 @@
         <div class="panel-body">
             <p>{{test.file}}</p>
             {% if test.short_tb %}
-	        <h4>Short Traceback</h4>
-                <pre class="well">{{test.short_tb|e}}</pre>
+	            <h4>Short Traceback</h4>
+              <pre class="well">{{test.short_tb|e}}</pre>
+            {% endif %}
+            {% if test.urls %}
+              <h4>Captured URLs:</h4>
+              <ul>
+              {% for url in test.urls %}
+                <a href="{{url}}" target="_blank">{{url}}</a>
+              {% endfor %}
+              </ul>
             {% endif %}
 	    {% if test.softassert %}
                 <div>
