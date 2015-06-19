@@ -134,6 +134,12 @@ class Visual(Updateable):
             ('template_quad', Input("quadicons_miq_template")),
         ])
 
+    display_form = Form(
+        fields=[
+            ('chart_theme', Select('//select[@id="display_reporttheme"]')),
+            ('time_zone', Select('//select[@id="display_timezone"]')),
+        ])
+
     save_button = form_buttons.FormButton("Add this Time Profile")
 
     @property
@@ -260,6 +266,17 @@ class Visual(Updateable):
     def cloud_provider_quad(self, value):
         sel.force_navigate("my_settings_visual")
         fill(self.quadicons_form.cloud_provider_quad, str(value))
+        sel.click(form_buttons.save)
+
+    @property
+    def timezone(self):
+        sel.force_navigate("my_settings_visual")
+        return sel.text(self.display_form.time_zone.first_selected_option)
+
+    @timezone.setter
+    def timezone(self, value):
+        sel.force_navigate("my_settings_visual")
+        fill(self.display_form.time_zone, str(value))
         sel.click(form_buttons.save)
 
 visual = Visual()
