@@ -12,6 +12,7 @@ from appliances.models import (
     Provider, Template, Appliance, Group, AppliancePool, DelayedProvisionTask,
     MismatchVersionMailer)
 from appliances import tasks
+from sprout.log import create_logger
 
 
 def action(label, short_description):
@@ -36,7 +37,9 @@ def register_for(model):
 
 
 class Admin(DjangoObjectActions, admin.ModelAdmin):
-    pass
+    @property
+    def logger(self):
+        return create_logger(self)
 
 
 @register_for(DelayedProvisionTask)
@@ -57,24 +60,36 @@ class ApplianceAdmin(Admin):
         for appliance in appliances:
             tasks.appliance_power_off.delay(appliance.id)
             self.message_user(request, "Initiated poweroff of {}.".format(appliance.name))
+            self.logger.info(
+                "User {}/{} requested poweroff of appliance {}".format(
+                    request.user.pk, request.user.username, appliance.id))
 
     @action("Power on", "Power on selected appliance")
     def power_on(self, request, appliances):
         for appliance in appliances:
             tasks.appliance_power_on.delay(appliance.id)
             self.message_user(request, "Initiated poweron of {}.".format(appliance.name))
+            self.logger.info(
+                "User {}/{} requested poweron of appliance {}".format(
+                    request.user.pk, request.user.username, appliance.id))
 
     @action("Suspend", "Suspend selected appliance")
     def suspend(self, request, appliances):
         for appliance in appliances:
             tasks.appliance_suspend.delay(appliance.id)
             self.message_user(request, "Initiated suspend of {}.".format(appliance.name))
+            self.logger.info(
+                "User {}/{} requested suspend of appliance {}".format(
+                    request.user.pk, request.user.username, appliance.id))
 
     @action("Kill", "Kill selected appliance")
     def kill(self, request, appliances):
         for appliance in appliances:
             Appliance.kill(appliance)
             self.message_user(request, "Initiated kill of {}.".format(appliance.name))
+            self.logger.info(
+                "User {}/{} requested kill of appliance {}".format(
+                    request.user.pk, request.user.username, appliance.id))
 
     def owner(self, instance):
         if instance.owner is not None:
@@ -108,6 +123,9 @@ class AppliancePoolAdmin(Admin):
         for pool in pools:
             pool.kill()
             self.message_user(request, "Initiated kill of appliance pool {}".format(pool.id))
+            self.logger.info(
+                "User {}/{} requested kill of pool {}".format(
+                    request.user.pk, request.user.username, pool.id))
 
     def fulfilled(self, instance):
         return instance.fulfilled
@@ -145,6 +163,9 @@ class GroupAdmin(Admin):
         for group in groups:
             pool = AppliancePool.create(request.user, group, num_appliances=number_appliances)
             self.message_user(request, "Appliance pool {} was requested!".format(pool.id))
+            self.logger.info(
+                "User {}/{} requested appliance pool {}".format(
+                    request.user.pk, request.user.username, pool.id))
 
 
 @register_for(Provider)
