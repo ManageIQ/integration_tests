@@ -18,7 +18,18 @@ pytestmark = [pytest.mark.long_running]
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.infra_providers(metafunc,
         'small_template', scope="module", template_location=["small_template"])
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+    new_idlist = []
+    new_argvalues = []
+    for i, argvalue_tuple in enumerate(argvalues):
+        args = dict(zip(argnames, argvalue_tuple))
+
+        if args["provider_type"] in {"scvmm"}:
+            continue
+
+        new_idlist.append(idlist[i])
+        new_argvalues.append(argvalues[i])
+
+    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 def wait_for_alert(smtp, alert, delay=None):

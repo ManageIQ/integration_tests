@@ -65,6 +65,9 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
 
+        if args["provider_type"] in {"scvmm"}:
+            continue
+
         if ((metafunc.function is test_action_create_snapshot_and_delete_last)
             or
             (metafunc.function is test_action_create_snapshots_and_delete_them)) \

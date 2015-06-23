@@ -219,7 +219,13 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
     # CREATE AUTOMATE INSTANCE HOOK
     if db is None or db.session.query(db['miq_ae_instances'].name)\
             .filter(db['miq_ae_instances'].name == "RelayEvents").count() == 0:
-        # Check presence
+        original_class = Class(
+            name=version.pick({
+                version.LOWEST: "Automation Requests (Request)",
+                "5.3": "Request"
+            }),
+            namespace=Namespace("System", domain=Domain("ManageIQ (Locked)")))
+        copied_class = original_class.copy_to(domain)
         instance = Instance(
             name="RelayEvents",
             display_name="RelayEvents",
@@ -229,12 +235,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
                     "value": "/QE/Automation/APIMethods/relay_events?event=$evm.object['event']"
                 }
             },
-            cls=Class(
-                name=version.pick({
-                    version.LOWEST: "Automation Requests (Request)",
-                    "5.3": "Request"
-                }),
-                namespace=Namespace("System", domain=domain))
+            cls=copied_class,
         )
         instance.create()
 
