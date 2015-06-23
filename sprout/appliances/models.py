@@ -9,18 +9,14 @@ from django.db import models, transaction
 from django.utils import timezone
 
 from sprout import critical_section
+from sprout.log import create_logger
 
 from utils import mgmt_system
 from utils.appliance import Appliance as CFMEAppliance, IPAppliance
 from utils.conf import cfme_data
-from utils.log import create_logger
 from utils.providers import provider_factory
 from utils.timeutil import nice_seconds
 from utils.version import LooseVersion
-
-
-def logger():
-    return create_logger("sprout")
 
 
 def apply_if_not_none(o, meth, *args, **kwargs):
@@ -65,6 +61,14 @@ class MetadataMixin(models.Model):
                 o.metadata = metadata
                 o.save()
         self.reload()
+
+    @property
+    def logger(self):
+        return create_logger(self)
+
+    @classmethod
+    def class_logger(cls, id=None):
+        return create_logger(cls, id)
 
 
 class DelayedProvisionTask(MetadataMixin):
@@ -245,16 +249,17 @@ class Provider(MetadataMixin):
 
     def cleanup(self):
         """Put any cleanup tasks that might help the application stability here"""
-        logger().info("Running cleanup on provider {}".format(self.id))
+        self.logger.info("Running cleanup on provider {}".format(self.id))
         if isinstance(self.api, mgmt_system.OpenstackSystem):
             # Openstack cleanup
             # Clean up the floating IPs
             for floating_ip in self.api.api.floating_ips.findall(fixed_ip=None):
-                logger().info("Cleaning up the {} floating ip {}".format(self.id, floating_ip.ip))
+                self.logger.info(
+                    "Cleaning up the {} floating ip {}".format(self.id, floating_ip.ip))
                 try:
                     floating_ip.delete()
                 except Exception as e:
-                    logger().exception(e)
+                    self.logger.exception(e)
 
     def vnc_console_link_for(self, appliance):
         if appliance.uuid is None:
@@ -384,7 +389,7 @@ class Template(MetadataMixin):
             template.status = status
             template.status_changed = timezone.now()
             template.save()
-            logger().info("{}: {}".format(str(self), status))
+            self.logger.info("{}: {}".format(self.pk, status))
 
     @property
     def cfme(self):
@@ -548,14 +553,15 @@ class Appliance(MetadataMixin):
     def set_status(self, status):
         with transaction.atomic():
             appliance = Appliance.objects.get(id=self.id)
-            appliance.status = status
-            appliance.status_changed = timezone.now()
-            appliance.save()
-            logger().info("{}/{}: {}".format(self.id, self.name, status))
+            if status != appliance.status:
+                appliance.status = status
+                appliance.status_changed = timezone.now()
+                appliance.save()
+                self.logger.info("Status changed: {}".format(status))
 
     def set_power_state(self, power_state):
         if power_state != self.power_state:
-            logger().info("{}/{} changed power state to {}".format(self.id, self.name, power_state))
+            self.logger.info("Changed power state to {}".format(power_state))
             self.power_state = power_state
             self.power_state_changed = timezone.now()
 
@@ -599,7 +605,7 @@ class Appliance(MetadataMixin):
         with self.kill_lock:
             with transaction.atomic():
                 self = type(self).objects.get(pk=self.pk)
-                logger().info("Killing appliance {}/{}".format(self.id, self.name))
+                self.class_logger(self.pk).info("Killing")
                 if not self.marked_for_deletion:
                     self.marked_for_deletion = True
                     self.leased_until = None
@@ -609,7 +615,7 @@ class Appliance(MetadataMixin):
     def delete(self, *args, **kwargs):
         # Intercept delete and lessen the number of appliances in the pool
         # Then if the appliance is still present in the management system, kill it
-        logger().info("Deleting appliance {}/{} from database".format(self.id, self.name))
+        self.logger.info("Deleting from database")
         pool = self.appliance_pool
         result = super(Appliance, self).delete(*args, **kwargs)
         do_not_touch = kwargs.pop("do_not_touch_ap", False)
@@ -619,7 +625,7 @@ class Appliance(MetadataMixin):
         return result
 
     def prolong_lease(self, time=60):
-        logger().info("Prolonging lease of {} by {} minutes from now.".format(self.id, time))
+        self.logger.info("Prolonging lease by {} minutes from now.".format(time))
         with transaction.atomic():
             appliance = Appliance.objects.get(id=self.id)
             appliance.leased_until = timezone.now() + timedelta(minutes=time)
@@ -724,12 +730,12 @@ class AppliancePool(MetadataMixin):
         if not req.possible_templates:
             raise Exception("No possible templates! (query: {}".format(str(req.__dict__)))
         req.save()
-        logger().info("Appliance pool {} created".format(req.id))
+        cls.class_logger(req.pk).info("Created")
         request_appliance_pool.delay(req.id, time_leased)
         return req
 
     def delete(self, *args, **kwargs):
-        logger().info("Deleting appliance pool {}".format(self.id))
+        self.logger.info("Deleting")
         with transaction.atomic():
             for task in DelayedProvisionTask.objects.filter(pool=self):
                 task.delete()
@@ -820,7 +826,7 @@ class AppliancePool(MetadataMixin):
         return DelayedProvisionTask.objects.filter(pool=self).order_by("id")
 
     def prolong_lease(self, time=60):
-        logger().info("Initiated lease pronging of pool {}".format(self.id))
+        self.logger.info("Initiated lease prolonging by {} minutes".format(time))
         for appliance in self.appliances:
             appliance.prolong_lease(time=time)
 
@@ -830,7 +836,7 @@ class AppliancePool(MetadataMixin):
             p.not_needed_anymore = True
             p.save()
         save_lives = not self.finished
-        logger().info("Killing pool #{}".format(self.id))
+        self.logger.info("Killing")
         if self.appliances:
             for appliance in self.appliances:
                 if (

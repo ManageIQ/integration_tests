@@ -13,11 +13,7 @@ from django.shortcuts import render
 from appliances.models import Appliance, AppliancePool, Provider, Group, Template
 from appliances.tasks import (
     appliance_power_on, appliance_power_off, appliance_suspend, appliance_rename)
-from utils.log import create_logger
-
-
-def api_logger():
-    return create_logger("sprout_api")
+from sprout.log import create_logger
 
 
 def json_response(data):
@@ -63,6 +59,10 @@ class JSONMethod(object):
         else:
             self._doc = ""
         self.auth = auth
+
+    @property
+    def __name__(self):
+        return self._method.__name__
 
     def __call__(self, *args, **kwargs):
         return self._method(*args, **kwargs)
@@ -113,8 +113,8 @@ class JSONApi(object):
                 method = self._methods[method_name]
             except KeyError:
                 raise NameError("Method {} not found!".format(method_name))
-            api_logger().info(
-                "Calling method {}{}{}".format(method_name, repr(tuple(args)), repr(kwargs)))
+            create_logger(method).info(
+                "Calling with parameters {}{}".format(repr(tuple(args)), repr(kwargs)))
             if method.auth:
                 if "auth" in data:
                     username, password = data["auth"]
@@ -124,18 +124,19 @@ class JSONApi(object):
                         return json_autherror("User {} does not exist!".format(username))
                     if not user.check_password(password):
                         return json_autherror("Wrong password for user {}!".format(username))
+                    create_logger(method).info(
+                        "Called by user {}/{}".format(user.id, user.username))
                     return json_success(method(user, *args, **kwargs))
                 else:
                     return json_autherror("Method {} needs authentication!".format(method_name))
             else:
                 return json_success(method(*args, **kwargs))
         except Exception as e:
-            api_logger().error(
-                "Exception raised during {} call: {}: {}".format(
-                    method_name, type(e).__name__, str(e)))
+            create_logger(method).error(
+                "Exception raised during call: {}: {}".format(type(e).__name__, str(e)))
             return json_exception(e)
         else:
-            api_logger().info("Call to {} finished".format(method_name))
+            create_logger(method).info("Call finished")
 
 jsonapi = JSONApi()
 

@@ -312,7 +312,7 @@ class Perflog(object):
             return None
 
 
-def create_logger(logger_name, filename=None):
+def create_logger(logger_name, filename=None, max_file_size=None, max_backups=None):
     """Creates and returns the named logger
 
     If the logger already exists, it will be destroyed and recreated
@@ -337,8 +337,8 @@ def create_logger(logger_name, filename=None):
     # entire logging config into env.yaml
 
     file_formatter = logging.Formatter(conf['file_format'])
-    file_handler = RotatingFileHandler(log_file, maxBytes=conf['max_file_size'],
-        backupCount=conf['max_file_backups'], encoding='utf8')
+    file_handler = RotatingFileHandler(log_file, maxBytes=max_file_size or conf['max_file_size'],
+        backupCount=max_backups or conf['max_file_backups'], encoding='utf8')
     file_handler.setFormatter(file_formatter)
 
     logger = logging.getLogger(logger_name)

@@ -21,9 +21,9 @@ from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask,
     MismatchVersionMailer)
 from sprout import settings, redis
+from sprout.log import create_logger
 
 from utils.appliance import Appliance as CFMEAppliance
-from utils.log import create_logger
 from utils.path import project_path
 from utils.providers import provider_factory
 from utils.timeutil import parsetime
@@ -65,25 +65,23 @@ def none_dict(l):
         return l
 
 
-def logger():
-    return create_logger("sprout")
-
-
 def provider_error_logger():
-    return create_logger("provider_error_sprout")
+    return create_logger("provider_errors")
 
 
 def logged_task(*args, **kwargs):
+    kwargs["bind"] = True
+
     def f(task):
         @wraps(task)
-        def wrapped_task(*args, **kwargs):
-            logger().info(
-                "[TASK {}] Entering with arguments: {} / {}".format(
-                    task.__name__, ", ".join(map(str, args)), str(kwargs)))
+        def wrapped_task(self, *args, **kwargs):
+            self.logger = create_logger(task)
+            self.logger.info(
+                "Entering with arguments: {} / {}".format(", ".join(map(str, args)), str(kwargs)))
             try:
-                return task(*args, **kwargs)
+                return task(self, *args, **kwargs)
             finally:
-                logger().info("[TASK {}] Leaving".format(task.__name__))
+                self.logger.info("Leaving")
         return shared_task(*args, **kwargs)(wrapped_task)
     return f
 
@@ -94,6 +92,7 @@ def singleton_task(*args, **kwargs):
     def f(task):
         @wraps(task)
         def wrapped_task(self, *args, **kwargs):
+            self.logger = create_logger(task)
             # Create hash of all args
             digest_base = "/".join(str(arg) for arg in args)
             keys = sorted(kwargs.keys())
@@ -102,16 +101,16 @@ def singleton_task(*args, **kwargs):
             lock_id = '{0}-lock-{1}'.format(self.name, digest)
 
             if cache.add(lock_id, 'true', LOCK_EXPIRE):
-                logger().info(
-                    "[SINGLETON TASK {}] Entering with arguments: {} / {}".format(
-                        self.name, ", ".join(map(str, args)), str(kwargs)))
+                self.logger.info(
+                    "Entering with arguments: {} / {}".format(
+                        ", ".join(map(str, args)), str(kwargs)))
                 try:
                     return task(self, *args, **kwargs)
                 finally:
                     cache.delete(lock_id)
-                    logger().info("[SINGLETON TASK {}] Leaving".format(self.name))
+                    self.logger.info("Leaving")
             else:
-                logger().info("Task {} is already running, ignoring.".format(self.name))
+                self.logger.info("Already running, ignoring.")
 
         return shared_task(*args, **kwargs)(wrapped_task)
     return f
@@ -125,7 +124,7 @@ def kill_unused_appliances(self):
     with transaction.atomic():
         for appliance in Appliance.objects.filter(marked_for_deletion=False, ready=True):
             if appliance.leased_until is not None and appliance.leased_until <= timezone.now():
-                logger().info("Watchdog found an appliance that is to be deleted: {}/{}".format(
+                self.logger.info("Watchdog found an appliance that is to be deleted: {}/{}".format(
                     appliance.id, appliance.name))
                 kill_appliance.delay(appliance.id)
 
@@ -136,7 +135,7 @@ def kill_appliance(self, appliance_id, replace_in_pool=False, minutes=60):
 
     If the appliance was assigned to pool and we want to replace it, redo the provisioning.
     """
-    logger().info("Initiated kill of appliance {}".format(appliance_id))
+    self.logger.info("Initiated kill of appliance {}".format(appliance_id))
     workflow = [
         appliance_power_off.si(appliance_id),
         kill_appliance_delete.si(appliance_id),
@@ -237,9 +236,9 @@ def poke_trackerbot(self):
             if template_name in provider.templates:
                 date = parse_template(template_name).datestamp
                 if date is None:
-                    logger().warning("Ignoring template {} because it does not have a date!".format(
-                        template_name
-                    ))
+                    self.logger.warning(
+                        "Ignoring template {} because it does not have a date!".format(
+                            template_name))
                     continue
                 template_version = retrieve_cfme_appliance_version(template_name)
                 with transaction.atomic():
@@ -248,7 +247,7 @@ def poke_trackerbot(self):
                         name=template_name, preconfigured=False, date=date,
                         version=template_version, ready=True, exists=True, usable=True)
                     tpl.save()
-                    logger().info("Created a new template #{}".format(tpl.id))
+                    self.logger.info("Created a new template #{}".format(tpl.id))
     # If any of the templates becomes unusable, let sprout know about it
     # Similarly if some of them becomes usable ...
     for provider_id, template_name, usability in template_usability:
@@ -266,7 +265,7 @@ def poke_trackerbot(self):
 
 
 @logged_task()
-def create_appliance_template(provider_id, group_id, template_name):
+def create_appliance_template(self, provider_id, group_id, template_name):
     """This task creates a template from a fresh CFME template. In case of fatal error during the
     operation, the template object is deleted to make sure the operation will be retried next time
     when poke_trackerbot runs."""
@@ -334,7 +333,7 @@ def prepare_template_deploy(self, template_id):
             kwargs["power_on"] = True
             if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
                 kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
-            logger().info("Deployment kwargs: {}".format(repr(kwargs)))
+            self.logger.info("Deployment kwargs: {}".format(repr(kwargs)))
             template.provider_api.deploy_template(
                 template.original_name, vm_name=template.name, **kwargs)
         else:
@@ -484,11 +483,11 @@ def prepare_template_delete_on_error(self, template_id):
 
 
 @logged_task()
-def request_appliance_pool(appliance_pool_id, time_minutes):
+def request_appliance_pool(self, appliance_pool_id, time_minutes):
     """This task gives maximum possible amount of spinned-up appliances to the specified pool and
     then if there is need to spin up another appliances, it spins them up via clone_template_to_pool
     task."""
-    logger().info(
+    self.logger.info(
         "Appliance pool {} requested for {} minutes.".format(appliance_pool_id, time_minutes))
     pool = AppliancePool.objects.get(id=appliance_pool_id)
     n = Appliance.give_to_pool(pool)
@@ -570,7 +569,7 @@ def process_delayed_provision_tasks(self):
 
 @logged_task()
 def replace_clone_to_pool(
-        version, date, appliance_pool_id, time_minutes, exclude_template_id):
+        self, version, date, appliance_pool_id, time_minutes, exclude_template_id):
     appliance_pool = AppliancePool.objects.get(id=appliance_pool_id)
     if appliance_pool.not_needed_anymore:
         return
@@ -608,8 +607,8 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
 
 
 @logged_task()
-def apply_lease_times(appliance_id, time_minutes):
-    logger().info(
+def apply_lease_times(self, appliance_id, time_minutes):
+    self.logger.info(
         "Applying lease time {} minutes on appliance {}".format(time_minutes, appliance_id))
     with transaction.atomic():
         appliance = Appliance.objects.get(id=appliance_id)
@@ -619,8 +618,8 @@ def apply_lease_times(appliance_id, time_minutes):
 
 
 @logged_task()
-def clone_template(template_id):
-    logger().info("Cloning template {}".format(template_id))
+def clone_template(self, template_id):
+    self.logger.info("Cloning template {}".format(template_id))
     template = Template.objects.get(id=template_id)
     new_appliance_name = settings.APPLIANCE_FORMAT.format(
         group=template.template_group.id,
@@ -675,7 +674,7 @@ def clone_template_to_appliance__clone_template(self, appliance_id, lease_time_m
             kwargs["power_on"] = False
             if "allowed_datastores" not in kwargs and "allowed_datastores" in provider_data:
                 kwargs["allowed_datastores"] = provider_data["allowed_datastores"]
-            logger().info("Deployment kwargs: {}".format(repr(kwargs)))
+            self.logger.info("Deployment kwargs: {}".format(repr(kwargs)))
             appliance.provider_api.deploy_template(
                 appliance.template.name, vm_name=appliance.name,
                 progress_callback=lambda progress: appliance.set_status(
@@ -872,7 +871,7 @@ def retrieve_appliance_ip(self, appliance_id):
 @singleton_task()
 def refresh_appliances(self):
     """Dispatches the appliance refresh process among the providers"""
-    logger().info("Initiating regular appliance provider refresh")
+    self.logger.info("Initiating regular appliance provider refresh")
     for provider in Provider.objects.all():
         refresh_appliances_provider.delay(provider.id)
 
@@ -882,7 +881,7 @@ def refresh_appliances_provider(self, provider_id):
     """Downloads the list of VMs from the provider, then matches them by name or UUID with
     appliances stored in database.
     """
-    logger().info("Refreshing appliances in {}".format(provider_id))
+    self.logger.info("Refreshing appliances in {}".format(provider_id))
     provider = Provider.objects.get(id=provider_id)
     vms = provider.api.all_vms()
     dict_vms = {}
@@ -908,7 +907,7 @@ def refresh_appliances_provider(self, provider_id):
             appliance.set_power_state(Appliance.POWER_STATES_MAPPING.get(
                 vm.power_state, Appliance.Power.UNKNOWN))
             appliance.save()
-            logger().info("Retrieved UUID for appliance {}/{}: {}".format(
+            self.logger.info("Retrieved UUID for appliance {}/{}: {}".format(
                 appliance.id, appliance.name, appliance.uuid))
         else:
             # Orphaned :(
@@ -918,14 +917,14 @@ def refresh_appliances_provider(self, provider_id):
 
 @singleton_task()
 def check_templates(self):
-    logger().info("Initiated a periodic template check")
+    self.logger.info("Initiated a periodic template check")
     for provider in Provider.objects.all():
         check_templates_in_provider.delay(provider.id)
 
 
 @singleton_task(soft_time_limit=180)
 def check_templates_in_provider(self, provider_id):
-    logger().info("Initiated a periodic template check for {}".format(provider_id))
+    self.logger.info("Initiated a periodic template check for {}".format(provider_id))
     provider = Provider.objects.get(id=provider_id)
     # Get templates and update metadata
     try:
@@ -968,7 +967,7 @@ def delete_nonexistent_appliances(self):
             if appliance.power_state_changed > expiration_time:
                 # Ignore it for now
                 continue
-            logger().info(
+            self.logger.info(
                 "I will delete orphaned appliance {}/{}".format(appliance.id, appliance.name))
             try:
                 appliance.delete()
@@ -986,7 +985,7 @@ def delete_nonexistent_appliances(self):
     expiration_time = (timezone.now() - timedelta(**settings.BROKEN_APPLIANCE_GRACE_TIME))
     for appliance in Appliance.objects.filter(ready=False, marked_for_deletion=False).all():
         if appliance.status_changed < expiration_time:
-            logger().info("Killing broken appliance {}/{}".format(appliance.id, appliance.name))
+            self.logger.info("Killing broken appliance {}/{}".format(appliance.id, appliance.name))
             Appliance.kill(appliance)  # Use kill because the appliance may still exist
     # And now - if something happened during appliance deletion, call kill again
     for appliance in Appliance.objects.filter(
@@ -995,11 +994,12 @@ def delete_nonexistent_appliances(self):
             appl = Appliance.objects.get(pk=appliance.pk)
             appl.marked_for_deletion = False
             appl.save()
-        logger().info("Trying kill unkilled appliance {}/{}".format(appliance.id, appliance.name))
+        self.logger.info(
+            "Trying to kill unkilled appliance {}/{}".format(appliance.id, appliance.name))
         Appliance.kill(appl)
 
 
-def generic_shepherd(preconfigured):
+def generic_shepherd(self, preconfigured):
     """This task takes care of having the required templates spinned into required number of
     appliances. For each template group, it keeps the last template's appliances spinned up in
     required quantity. If new template comes out of the door, it automatically kills the older
@@ -1071,13 +1071,13 @@ def generic_shepherd(preconfigured):
                         name=new_appliance_name)
                     appliance.save()
             if tpl_free:
-                logger().info(
+                self.logger.info(
                     "Adding an appliance to shepherd: {}/{}".format(appliance.id, appliance.name))
                 clone_template_to_appliance.delay(appliance.id, None)
         elif len(appliances) > pool_size:
             # Too many appliances, kill the surplus
             for appliance in appliances[:len(appliances) - pool_size]:
-                logger().info("Killing an extra appliance {}/{} in shepherd".format(
+                self.logger.info("Killing an extra appliance {}/{} in shepherd".format(
                     appliance.id, appliance.name))
                 Appliance.kill(appliance)
 
@@ -1088,7 +1088,7 @@ def generic_shepherd(preconfigured):
                     **filter_kill):
                 for a in Appliance.objects.filter(
                         template=template, appliance_pool=None, marked_for_deletion=False):
-                    logger().info(
+                    self.logger.info(
                         "Killing appliance {}/{} in shepherd because it is obsolete now".format(
                             a.id, a.name))
                     Appliance.kill(a)
@@ -1096,8 +1096,8 @@ def generic_shepherd(preconfigured):
 
 @singleton_task()
 def free_appliance_shepherd(self):
-    generic_shepherd(True)
-    generic_shepherd(False)
+    generic_shepherd(self, True)
+    generic_shepherd(self, False)
 
 
 @singleton_task()
@@ -1175,7 +1175,7 @@ def appliance_rename(self, appliance_id, new_name):
     if appliance.name == new_name:
         return None
     with redis.appliances_ignored_when_renaming(appliance.name, new_name):
-        logger().info("Renaming {}/{} to {}".format(appliance_id, appliance.name, new_name))
+        self.logger.info("Renaming {}/{} to {}".format(appliance_id, appliance.name, new_name))
         appliance.name = appliance.provider_api.rename_vm(appliance.name, new_name)
         appliance.save()
     return appliance.name

@@ -13,6 +13,7 @@ hash gunicorn 2>/dev/null && hash celery 2>/dev/null || {
 [ -e ".env" ] && source .env
 
 YAMLS_DIR=${YAMLS_DIR:-"../../cfme-qe-yamls"}
+BACKUP_DIR=${BACKUP_DIR:-"/tmp/sprout-backup"}
 
 export PYTHONPATH="`pwd`:${PYTHONPATH}"
 
@@ -379,16 +380,28 @@ function restart_sprout() {
 }
 
 function backup_before_update() {
-    cddir
     echo ">> Backing up"
-    BKPID="`date +%s | sha256sum | base64 | head -c 8`"
-    FILENAME="/tmp/sprout-update-${BKPID}.tgz"
-    tar -zcvf $FILENAME ../. >/dev/null 2>&1
-    echo ">> Backed up to file ${FILENAME}"
-    FILENAME="/tmp/sprout-update-${BKPID}.yaml"
+    cddir
+    [ ! -e "${BACKUP_DIR}" ] && {
+        echo ">>> Creating the backup directory"
+        mkdir "${BACKUP_DIR}"
+        cd "${BACKUP_DIR}"
+        git init .
+        cddir
+    }
+    echo ">>> Copying logs"
+    cp -R ./log "${BACKUP_DIR}"
+    echo ">>> Setting date"
+    date "+%Y-%m-%d %H:%M:%S" > "${BACKUP_DIR}/backup.date"
+    echo ">>> Getting the current hash"
+    git rev-parse HEAD > "${BACKUP_DIR}/backup.hash"
     echo ">> Dumping the database"
-    ./manage.py dumpdata --format=yaml --natural -e contenttypes -e sessions.Session -e auth.Permission > "/tmp/sprout-update-${BKPID}.yaml"
-    echo ">> Database dumped to ${FILENAME}"
+    ./manage.py dumpdata --format=yaml --natural -e contenttypes -e sessions.Session -e auth.Permission > "${BACKUP_DIR}/database.yaml"
+    echo ">>> Storing the backup in git"
+    cd "${BACKUP_DIR}"
+    git add .
+    git commit -a -m "`cat ${BACKUP_DIR}/backup.date`, `cat ${BACKUP_DIR}/backup.hash`"
+    cddir
 }
 
 
@@ -491,6 +504,7 @@ case "${ACTION}" in
     update) update_sprout ;;
     check-update) sprout_needs_update ;;
     yaml-update) update_yamls ;;
+    backup) backup_before_update ;;
     *) echo "Usage: ${0} start|{gunicorn,beat,worker,flower,memcached}-start|stop|{gunicorn,beat,worker,flower,memcached}-stop|restart|check-update|update|reload" ;;
 esac
 
