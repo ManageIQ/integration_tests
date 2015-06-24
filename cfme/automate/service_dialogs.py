@@ -112,16 +112,22 @@ class ServiceDialog(Updateable, Pretty):
                           'description_text': self.description,
                           'submit_button': self.submit,
                           'cancel_button': self.cancel})
-        plus_btn("Add a new Tab to this Dialog")
+        plus_btn({
+            version.LOWEST: "Add a New Tab to this Dialog",
+            "5.3": "Add a new Tab to this Dialog"})
         sel.wait_for_element(tab_form.tab_label)
         fill(tab_form, {'tab_label': self.tab_label,
                         'tab_desc': self.tab_desc})
-        plus_btn("Add a new Box to this Tab")
+        plus_btn({
+            version.LOWEST: "Add a New Box to this Tab",
+            "5.3": "Add a new Box to this Tab"})
         sel.wait_for_element(box_form.box_label)
         fill(box_form, {'box_label': self.box_label,
                         'box_desc': self.box_desc})
         for each_element in element_data:
-            plus_btn("Add a new Element to this Box")
+            plus_btn({
+                version.LOWEST: "Add a New Element to this Box",
+                "5.3": "Add a new Element to this Box"})
             sel.wait_for_element(element_form.ele_label)
             fill(element_form, each_element)
             self.element_type(each_element)

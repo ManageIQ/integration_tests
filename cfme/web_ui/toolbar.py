@@ -12,6 +12,7 @@ import cfme.fixtures.pytest_selenium as sel
 from selenium.webdriver.common.by import By
 from cfme.exceptions import ToolbarOptionGreyed, ToolbarOptionUnavailable
 from cfme.web_ui import Region
+from utils import version
 from utils.log import logger
 from xml.sax.saxutils import quoteattr
 
@@ -85,6 +86,10 @@ def select(root, sub=None, invokes_alert=False):
     """
     # wait for ajax on select to prevent pickup up a toolbar button in the middle of a page change
     sel.wait_for_ajax()
+    if isinstance(root, dict):
+        root = version.pick(root)
+    if sub is not None and isinstance(sub, dict):
+        sub = version.pick(sub)
     if not is_greyed(root):
         try:
             if sub is None and invokes_alert:

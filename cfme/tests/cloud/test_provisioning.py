@@ -10,7 +10,7 @@ from cfme.automate import explorer as automate
 from cfme.cloud.instance import instance_factory
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
-from utils import testgen
+from utils import testgen, version
 from utils.update import update
 from utils.wait import wait_for
 
@@ -78,6 +78,7 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
     instance.create(**inst_args)
 
 
+@pytest.mark.ignore_stream("5.2")
 def test_provision_from_template_using_rest(
         request, setup_provider, provider_crud, provider_mgmt, provider_type, provisioning, vm_name,
         rest_api):
@@ -162,6 +163,8 @@ ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
 
 @pytest.fixture(scope="module")
 def domain(request):
+    if version.current_version() < "5.3":
+        return None
     domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
@@ -182,6 +185,7 @@ def cls(request, domain):
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
 @pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+@pytest.mark.ignore_stream("5.2")
 def test_provision_from_template_with_attached_disks(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, disks,
         soft_assert, provider_type, domain, cls):
@@ -245,6 +249,7 @@ def test_provision_from_template_with_attached_disks(
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1160342])
 @pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+@pytest.mark.ignore_stream("5.2")
 def test_provision_with_boot_volume(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
         provider_type):
@@ -315,6 +320,7 @@ def test_provision_with_boot_volume(
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1186413])
 @pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+@pytest.mark.ignore_stream("5.2")
 def test_provision_with_additional_volume(
         request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
         provider_type, provider_data):
