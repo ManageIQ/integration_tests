@@ -150,7 +150,8 @@ class Appliance(object):
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.enable_internal_db(log_callback=log_callback)
-        self.ipapp.update_rhel(log_callback=log_callback)
+        # need to skip_broken here until/unless we see a newer 52z build
+        self.ipapp.update_rhel(log_callback=log_callback, skip_broken=True)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def _configure_5_3(self, log_callback=None):
@@ -807,10 +808,14 @@ class IPAppliance(object):
         On downstream builds, an additional RH SCL updates url can be inserted at
         cfme_data.get('basic_info', {})['rhscl_updates_urls'].
 
+        If the ``skip_broken`` kwarg is passed, and evaluated as True, broken packages will be
+        ignored in the yum update.
+
 
         """
         urls = list(urls)
         log_callback_f = kwargs.pop("log_callback", lambda msg: self.log.info)
+        skip_broken = kwargs.pop("skip_broken", False)
         reboot = kwargs.pop("reboot", True)
         log_callback = lambda msg: log_callback_f("Update RHEL: {}".format(msg))
         log_callback('updating appliance')
@@ -855,7 +860,9 @@ class IPAppliance(object):
         log_callback('Running rhel updates on appliance')
         # clean yum beforehand to clear metadata from earlier update repos, if any
         try:
-            status, out = client.run_command('yum update -y --nogpgcheck', timeout=3600)
+            skip = '--skip-broken' if skip_broken else ''
+            status, out = client.run_command('yum update -y --nogpgcheck {}'.format(skip),
+                timeout=3600)
         except socket.timeout:
             msg = 'SSH timed out while updating appliance, exiting'
             log_callback(msg)
