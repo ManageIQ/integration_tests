@@ -229,10 +229,15 @@ class CoverageManager(object):
                 timeout=1800)
 
     def _merge_coverage_reports(self):
-        # # push the results to the appliance
         ssh_client = self.collection_appliance.ssh_client()
 
+        # Before merging, archive and collect all the raw coverage results
+        ssh_client.run_command('cd /var/www/miq/vmdb/;'
+            'tar czf /tmp/ui-coverage-raw.tgz coverage/')
+        ssh_client.get_file('/tmp/ui-coverage-raw.tgz', coverage_results_archive.strpath)
+
         # run the merger on the appliance to generate the simplecov report
+        # This has been failing, presumably due to oom errors :(
         ssh_client.put_file(coverage_merger.strpath, rails_root.strpath)
         ssh_client.run_rails_command(coverage_merger.basename)
 
