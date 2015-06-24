@@ -9,6 +9,7 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import (Form, Region, Select, fill, form_buttons, flash, Table,
     Quadicon, CheckboxTree, Input)
 from cfme.web_ui.menu import nav
+from utils import version
 from utils.pretty import Pretty
 from utils.update import Updateable
 
@@ -285,7 +286,9 @@ visual = Visual()
 class DefaultFilter(Updateable, Pretty):
     filter_form = Form(
         fields=[
-            ("filter_tree", CheckboxTree("//div[@id='all_views_treebox']/ul")),
+            ("filter_tree", {
+                version.LOWEST: CheckboxTree("//div[@id='all_views_treebox']/div/table"),
+                "5.3": CheckboxTree("//div[@id='all_views_treebox']/ul")}),
         ]
     )
 
