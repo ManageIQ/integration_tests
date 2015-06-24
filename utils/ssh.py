@@ -211,6 +211,8 @@ class SSHClient(paramiko.SSHClient):
     def client_address(self):
         res = self.run_command('echo $SSH_CLIENT')
         # SSH_CLIENT format is 'clientip clientport serverport', we want clientip
+        if not res.output:
+            raise Exception('unable to get client address via SSH')
         return res.output.split()[0]
 
     def appliance_has_netapp(self):
