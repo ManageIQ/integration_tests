@@ -9,8 +9,7 @@ from cfme.web_ui import ButtonGroup, form_buttons
 
 pytestmark = [
     pytest.mark.usefixtures('logged_in'),
-    pytest.mark.ignore_stream("5.3"),
-    pytest.mark.ignore_stream("upstream")
+    pytest.mark.ignore_stream("5.2", "5.3", "upstream"),
 ]
 
 

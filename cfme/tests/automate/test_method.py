@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 from cfme.automate.explorer import Namespace, Class, Method, Domain
+from utils import version
 from utils.update import update
 import utils.error as error
 
@@ -27,6 +28,8 @@ def _make_class(domain):
 
 @pytest.fixture(scope="module")
 def domain(request):
+    if version.current_version() < "5.3":
+        return None
     domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)

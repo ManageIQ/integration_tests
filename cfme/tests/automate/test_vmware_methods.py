@@ -26,6 +26,8 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def domain(request):
+    if current_version < "5.3":
+        return None
     domain = Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
     domain.create()
     request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
@@ -89,10 +91,14 @@ def test_vmware_vimapi_hotadd_disk(
         test_flag: hotdisk, provision
     """
     # Instance that calls the method and is accessible from the button
+    if current_version() < "5.3":
+        rel = "/Integration/VimApi/VMware_HotAdd_Disk"
+    else:
+        rel = "/Integration/VMware/VimApi/VMware_HotAdd_Disk"
     instance = Instance(
         name="VMware_HotAdd_Disk",
         values={
-            "rel5": "/Integration/VMware/VimApi/VMware_HotAdd_Disk",
+            "rel5": rel,
         },
         cls=cls
     )
