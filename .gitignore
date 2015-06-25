@@ -25,6 +25,9 @@ log/*
 # docs inventories
 docs/*.inv
 
+# Docstrings
+doc_data.yaml
+
 # Unit test / coverage reports
 .coverage
 .tox
@@ -54,3 +57,7 @@ notebooks/.ipynb_checkpoints
 
 # yaml key
 .yaml_key
+
+# SSH related
+.generated_ssh_key*
+.ssh
