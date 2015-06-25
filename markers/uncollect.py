@@ -57,6 +57,7 @@ import os
 from fixtures.pytest_store import store
 from utils.path import log_path
 from utils.log import logger
+from utils.pytest_shortcuts import extract_fixtures_values
 
 
 def uncollectif(item):
@@ -77,7 +78,8 @@ def uncollectif(item):
             logger.debug(log_msg)
             return not bool(marker.args[0])
         try:
-            args = [item.callspec.params[arg] for arg in arg_names]
+            values = extract_fixtures_values(item)
+            args = [values[arg] for arg in arg_names]
         except KeyError:
             missing_argnames = list(set(arg_names) - set(item._request.funcargnames))
             func_name = item.name
