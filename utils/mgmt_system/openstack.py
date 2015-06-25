@@ -5,6 +5,7 @@ Used to communicate with providers without using CFME facilities
 """
 from contextlib import contextmanager
 from datetime import datetime
+from functools import partial
 
 from cinderclient.v2 import client as cinderclient
 from cinderclient import exceptions as cinder_exceptions
@@ -489,8 +490,41 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def get_ip_address(self, name, **kwargs):
         return self.current_ip_address(name)
 
+    def _generic_paginator(self, f):
+        """A generic paginator for OpenStack services
+
+        Takes a callable and recursively runs the "listing" until no more are returned
+        by sending the ```marker``` kwarg to offset the search results. We try to rollback
+        up to 10 times in the markers in case one was deleted. If we can't rollback after
+        10 times, we give up.
+        Possible improvement is to roll back in 5s or 10s, but then we have to check for
+        uniqueness and do dup removals.
+        """
+        lists = []
+        marker = None
+        while True:
+            if not lists:
+                temp_list = f()
+            else:
+                for i in range(min(10, len(lists))):
+                    list_offset = -(i + 1)
+                    marker = lists[list_offset].id
+                    try:
+                        temp_list = f(marker=marker)
+                        break
+                    except os_exceptions.BadRequest:
+                        continue
+                else:
+                    raise Exception("Could not get list, maybe mass deletion after 10 marker tries")
+            if temp_list:
+                lists.extend(temp_list)
+            else:
+                break
+        return lists
+
     def _get_all_instances(self, filter_tenants=True):
-        instances = self.api.servers.list(True, {'all_tenants': True})
+        call = partial(self.api.servers.list, True, {'all_tenants': True})
+        instances = self._generic_paginator(call)
         if filter_tenants:
             # Filter instances based on their tenant ID
             # needed for CFME 5.3 and higher
