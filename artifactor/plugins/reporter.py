@@ -42,11 +42,8 @@ _tests_tpl = {
 }
 
 # Regexp, that finds all URLs in a string
-# From: http://daringfireball.net/2010/07/improved_regex_for_matching_urls
-URL = re.compile(
-    r"""(?i)\b((?:[a-z][\w-]+:(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)"""
-    r"""(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)"""
-    r"""|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))""")
+# Does not cover all the cases, but rather only those we can
+URL = re.compile(r"https?://[^/ ]+(?:/[^/ ?]+)*/?(?:\?(?:[^& ]+=[^& ]+)*)?")
 
 
 def overall_test_status(statuses):
