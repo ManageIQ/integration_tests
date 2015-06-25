@@ -179,12 +179,12 @@ menu.nav.add_branch(
 
 
 class CatalogItem(Updateable, Pretty):
-    pretty_attrs = ['name', 'item_type', 'catalog', 'catalog_name', 'provider']
+    pretty_attrs = ['name', 'item_type', 'catalog', 'catalog_name', 'provider', 'domain']
 
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None,
                  catalog_name=None, orch_template=None, provider_type=None,
-                 provider=None, prov_data=None):
+                 provider=None, prov_data=None, domain="ManageIQ (Locked)"):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -196,6 +196,7 @@ class CatalogItem(Updateable, Pretty):
         self.provider = provider
         self.provider_type = provider_type
         self.provisioning_data = prov_data
+        self.domain = domain
 
     def create(self):
         sel.force_navigate('catalog_item_new',
@@ -210,7 +211,7 @@ class CatalogItem(Updateable, Pretty):
                                'select_provider': self.provider_type})
         if current_version() >= "5.4":
             sel.click(basic_info_form.field_entry_point)
-            dynamic_tree.click_path("Datastore", "Default", "Service", "Provisioning",
+            dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
             sel.click(basic_info_form.apply_btn)
         if(self.catalog_name is not None):
