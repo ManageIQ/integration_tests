@@ -151,8 +151,14 @@ class CoverageManager(object):
 
     def merge(self):
         self.print_message('merging reports')
-        self._merge_coverage_reports()
-        self._retrieve_coverage_reports()
+        try:
+            self._retrieve_coverage_reports()
+            self._merge_coverage_reports()
+            self._retrieve_merged_reports()
+        except Exception as exc:
+            self.log.error('Error merging coverage reports')
+            self.log.exception(exc)
+            self.print_message('merging reports failed, error has been logged')
 
     def _install_simplecov(self):
         self.log.info('Installing coverage gem on appliance')
@@ -228,20 +234,21 @@ class CoverageManager(object):
                     addr=self.collection_appliance.address),
                 timeout=1800)
 
-    def _merge_coverage_reports(self):
-        ssh_client = self.collection_appliance.ssh_client()
-
+    def _retreive_coverage_reports(self):
         # Before merging, archive and collect all the raw coverage results
+        ssh_client = self.collection_appliance.ssh_client()
         ssh_client.run_command('cd /var/www/miq/vmdb/;'
             'tar czf /tmp/ui-coverage-raw.tgz coverage/')
         ssh_client.get_file('/tmp/ui-coverage-raw.tgz', coverage_results_archive.strpath)
 
+    def _merge_coverage_reports(self):
         # run the merger on the appliance to generate the simplecov report
         # This has been failing, presumably due to oom errors :(
+        ssh_client = self.collection_appliance.ssh_client()
         ssh_client.put_file(coverage_merger.strpath, rails_root.strpath)
         ssh_client.run_rails_command(coverage_merger.basename)
 
-    def _retrieve_coverage_reports(self):
+    def _retrieve_merged_reports(self):
         # Now bring the report back (tar it, get it, untar it)
         ssh_client = self.collection_appliance.ssh_client()
         ssh_client.run_command('cd /var/www/miq/vmdb/coverage;'
