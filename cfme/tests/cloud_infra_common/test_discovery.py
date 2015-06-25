@@ -2,22 +2,34 @@
 import fauxfactory
 import pytest
 import time
+from cfme.cloud.instance import EC2Instance, OpenStackInstance
 from cfme.exceptions import CFMEException
-from cfme.infrastructure import virtual_machines
+from cfme.infrastructure.virtual_machines import Vm
 from cfme.infrastructure.provider import SCVMMProvider
 from utils import testgen
+from utils.log import logger
 from utils.wait import TimedOutError
 
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
+    argnames, argvalues, idlist = testgen.all_providers(metafunc)
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def vm_name():
-    return "test_dscvry_" + fauxfactory.gen_alphanumeric(8)
+    return "test_dscvry_" + fauxfactory.gen_alpha(8).lower()
+
+
+@pytest.fixture(scope="module")
+def vm_crud(vm_name, provider_crud, provider_type):
+    cls = Vm
+    if provider_type == "ec2":
+        cls = EC2Instance
+    elif provider_type == "openstack":
+        cls = OpenStackInstance
+    return cls(vm_name, provider_crud)
 
 
 def if_scvmm_refresh_provider(provider):
@@ -31,12 +43,14 @@ def wait_for_vm_state_changes(vm, timeout=600):
     count = 0
     while count < timeout:
         try:
-            quadicon = vm.find_quadicon(refresh=True)
-            if quadicon.state is 'Archived':
+            quadicon = vm.find_quadicon(refresh=True, from_any_provider=True)
+            logger.info("Quadicon state for {} is {}".format(vm.name, repr(quadicon.state)))
+            if "archived" in quadicon.state.lower():
                 return True
-            elif quadicon.state is 'Orphaned':
+            elif "orphaned" in quadicon.state.lower():
                 raise CFMEException("VM should be Archived but it is Orphaned now.")
-        except:
+        except Exception as e:
+            logger.exception(e)
             pass
         time.sleep(15)
         count += 15
@@ -44,7 +58,7 @@ def wait_for_vm_state_changes(vm, timeout=600):
         raise CFMEException("VM should be Archived but it is Orphaned now.")
 
 
-def test_vm_discovery(request, setup_provider, provider_crud, provider_mgmt, vm_name):
+def test_vm_discovery(request, setup_provider, provider_crud, provider_mgmt, vm_crud):
     """
     Tests whether cfme will discover a vm change
     (add/delete) without being manually refreshed.
@@ -52,20 +66,19 @@ def test_vm_discovery(request, setup_provider, provider_crud, provider_mgmt, vm_
     Metadata:
         test_flag: discovery
     """
-    vm = virtual_machines.Vm(vm_name, provider_crud)
 
+    @request.addfinalizer
     def _cleanup():
-        vm.delete_from_provider()
+        vm_crud.delete_from_provider()
         if_scvmm_refresh_provider(provider_crud)
 
-    request.addfinalizer(_cleanup)
-    vm.create_on_provider(allow_skip="default")
+    vm_crud.create_on_provider(allow_skip="default")
     if_scvmm_refresh_provider(provider_crud)
 
     try:
-        vm.wait_to_appear(timeout=600, load_details=False)
+        vm_crud.wait_to_appear(timeout=600, load_details=False)
     except TimedOutError:
         pytest.fail("VM was not found in CFME")
-    vm.delete_from_provider()
+    vm_crud.delete_from_provider()
     if_scvmm_refresh_provider(provider_crud)
-    wait_for_vm_state_changes(vm)
+    wait_for_vm_state_changes(vm_crud)

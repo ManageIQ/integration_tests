@@ -276,14 +276,21 @@ class Instance(Updateable, Pretty):
             else:
                 return True
 
-    def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
+    def find_quadicon(
+            self, do_not_navigate=False, mark=False, refresh=True, from_any_provider=False):
         """Find and return a quadicon belonging to a specific instance
+
+        Args:
+            from_any_provider: Whether to look for it anywhere (root of the tree). Useful when
+                looking up archived or orphaned VMs
 
         Returns: :py:class:`cfme.web_ui.Quadicon` instance
         Raises: InstanceNotFound
         """
         if not do_not_navigate:
-            if not self.provider_crud.load_all_provider_instances():
+            if from_any_provider:
+                sel.force_navigate("clouds_instances")
+            elif not self.provider_crud.load_all_provider_instances():
                 raise InstanceNotFound("No instances for the provider!")
             toolbar.set_vms_grid_view()
         elif refresh:
@@ -458,6 +465,9 @@ class Instance(Updateable, Pretty):
             fail_func=self.provider_crud.refresh_provider_relationships)
         if load_details:
             self.load_details()
+
+    wait_to_appear = wait_for_vm_to_appear  # For compatibility with Vm
+    # TODO: Make a base class for Infra and Cloud VMs
 
 
 class OpenStackInstance(Instance, Updateable):
