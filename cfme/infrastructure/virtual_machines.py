@@ -611,6 +611,10 @@ class Vm(Common):
     def load_details(self, refresh=False):
         self._load_details(is_vm=True, refresh=refresh)
 
+    def open_edit(self):
+        self.load_details(refresh=True)
+        toolbar.select("Configuration", "Edit this VM")
+
     def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True, **kwargs):
         return self._find_quadicon(
             is_vm=True, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh, **kwargs)
