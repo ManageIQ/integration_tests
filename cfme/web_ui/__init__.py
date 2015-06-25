@@ -2483,6 +2483,11 @@ class ScriptBox(Pretty):
         self.name = name
         self.ta_loc = ta_locator
 
+    def get_value(self):
+        script = sel.execute_script('return {}.getValue();'.format(self.name))
+        script = script.replace('\\"', '"').replace("\\n", "\n")
+        return script
+
 
 @fill.method((ScriptBox, Anything))
 def fill_scriptbox(sb, script):
