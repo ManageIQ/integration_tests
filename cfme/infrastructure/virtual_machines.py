@@ -222,15 +222,26 @@ class Common(object):
             else:
                 return False
 
-    def _find_quadicon(self, is_vm=True, do_not_navigate=False, mark=False, refresh=True):
+    def _find_quadicon(
+            self, is_vm=True, do_not_navigate=False, mark=False, refresh=True,
+            from_any_provider=False):
         """Find and return a quadicon belonging to a specific vm
+
+        Args:
+            from_any_provider: Whether to look for it anywhere (root of the tree). Useful when
+                looking up archived or orphaned VMs
 
         Returns: :py:class:`cfme.web_ui.Quadicon` instance
         Raises: VmNotFound
         """
         quadicon = Quadicon(self.name, "vm")
         if not do_not_navigate:
-            if is_vm:
+            if from_any_provider:
+                if is_vm:
+                    sel.force_navigate("infra_vms")
+                else:
+                    sel.force_navigate("infra_templates")
+            elif is_vm:
                 self.provider_crud.load_all_provider_vms()
             else:
                 self.provider_crud.load_all_provider_templates()
@@ -600,9 +611,9 @@ class Vm(Common):
     def load_details(self, refresh=False):
         self._load_details(is_vm=True, refresh=refresh)
 
-    def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
+    def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True, **kwargs):
         return self._find_quadicon(
-            is_vm=True, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh)
+            is_vm=True, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh, **kwargs)
 
     def remove_from_cfme(self, cancel=False, from_details=False):
         """Removes a VM from CFME VMDB"""
@@ -860,9 +871,9 @@ class Template(Common):
     def load_details(self, refresh=False):
         self._load_details(refresh=refresh, is_vm=False)
 
-    def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True):
+    def find_quadicon(self, do_not_navigate=False, mark=False, refresh=True, **kwargs):
         return self._find_quadicon(
-            is_vm=False, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh)
+            is_vm=False, do_not_navigate=do_not_navigate, mark=mark, refresh=refresh, **kwargs)
 
     def remove_from_cfme(self, cancel=False, from_details=False):
         """Removes a VM from CFME VMDB"""
