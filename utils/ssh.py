@@ -12,10 +12,10 @@ from utils import conf, ports
 from utils.log import logger
 from utils.net import net_check
 from fixtures.pytest_store import store
-from utils.path import project_path
+from utils.path import log_path, project_path
 from utils.timeutil import parsetime
 
-
+paramiko.util.log_to_file(log_path.join('ssh.log').strpath)
 # Default blocking time before giving up on an ssh command execution,
 # in seconds (float)
 RUNCMD_TIMEOUT = 1200.0
