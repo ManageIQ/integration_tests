@@ -11,7 +11,6 @@ from cfme.cloud.instance import instance_factory
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen, version
-from utils.update import update
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.meta(server_roles="+automate")]
@@ -160,24 +159,41 @@ prov.set_option(
 ONE_FIELD = """{:volume_id => "%s", :device_name => "%s"}"""
 
 
-@pytest.fixture(scope="module")
+@pytest.yield_fixture(scope="function")
 def domain(request):
     if version.current_version() < "5.3":
-        return None
-    domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
-    domain.create()
-    request.addfinalizer(lambda: domain.delete() if domain.exists() else None)
-    return domain
+        yield None
+    else:
+        domain = automate.Domain(name=fauxfactory.gen_alphanumeric(), enabled=True)
+        try:
+            domain.create()
+            yield domain
+        finally:
+            if domain.exists():
+                domain.delete()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def cls(request, domain):
-    tcls = automate.Class(name="Methods",
-        namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
-        parent=domain))
-    tcls.create()
-    request.addfinalizer(lambda: tcls.delete() if tcls.exists() else None)
-    return tcls
+    if domain is None:
+        # 5.2
+        tcls_orig = automate.Class(name="Methods",
+            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
+            parent=None))
+        return tcls_orig
+    else:
+        # 5.3+
+        original_domain = automate.Domain(name="ManageIQ (Locked)")
+        tcls_orig = automate.Class(name="Methods",
+            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
+            parent=original_domain))
+        tcls = tcls_orig.copy_to(domain)
+
+        @request.addfinalizer
+        def _delete_cls_if_exists():
+            if tcls.exists():
+                tcls.delete()
+        return tcls
 
 
 # Not collected for EC2 in generate_tests above
@@ -204,19 +220,25 @@ def test_provision_from_template_with_attached_disks(
         for i, volume in enumerate(volumes):
             device_mapping.append((volume, DEVICE_NAME.format(chr(ord("b") + i))))
         # Set up automate
+        disk_mapping = []
+        for mapping in device_mapping:
+            disk_mapping.append(ONE_FIELD % mapping)
+        method_data = VOLUME_METHOD % ", ".join(disk_mapping)
         method = automate.Method(
             name="openstack_PreProvision",
-            cls=cls)
-        with update(method):
-            disk_mapping = []
-            for mapping in device_mapping:
-                disk_mapping.append(ONE_FIELD % mapping)
-            method.data = VOLUME_METHOD % ", ".join(disk_mapping)
+            cls=cls,
+            data=method_data)
+        if method.exists():
+            method.update({"data": method.data})
+        else:
+            method.create()
 
+        @request.addfinalizer
         def _finish_method():
-            with update(method):
-                method.data = """prov = $evm.root["miq_provision"]"""
-        request.addfinalizer(_finish_method)
+            if domain is None:
+                method.update({"data": """prov = $evm.root["miq_provision"]"""})
+            elif domain is not None and method.exists():
+                method.delete()
         instance = instance_factory(vm_name, provider, image)
         request.addfinalizer(instance.delete_from_provider)
         inst_args = {
@@ -249,7 +271,7 @@ def test_provision_from_template_with_attached_disks(
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 @pytest.mark.ignore_stream("5.2")
 def test_provision_with_boot_volume(
-        request, setup_provider, provider, provisioning, vm_name, soft_assert):
+        request, setup_provider, provider, provisioning, vm_name, soft_assert, cls):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
@@ -262,14 +284,10 @@ def test_provision_with_boot_volume(
 
     with provider.mgmt.with_volume(1, imageRef=provider.mgmt.get_template_id(image)) as volume:
         # Set up automate
-        cls = automate.Class(
-            name="Methods",
-            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines"))
         method = automate.Method(
             name="openstack_CustomizeRequest",
-            cls=cls)
-        with update(method):
-            method.data = dedent('''\
+            cls=cls,
+            data=dedent('''\
                 $evm.root["miq_provision"].set_option(
                     :clone_options, {
                         :image_ref => nil,
@@ -283,12 +301,19 @@ def test_provision_with_boot_volume(
                         }]
                     }
                 )
-            ''' % (volume, ))
+            ''' % (volume, )))
 
+        if method.exists():
+            method.update({"data": method.data})
+        else:
+            method.create()
+
+        @request.addfinalizer
         def _finish_method():
-            with update(method):
-                method.data = """prov = $evm.root["miq_provision"]"""
-        request.addfinalizer(_finish_method)
+            if domain is None:
+                method.update({"data": """prov = $evm.root["miq_provision"]"""})
+            elif domain is not None and method.exists():
+                method.delete()
         instance = instance_factory(vm_name, provider, image)
         request.addfinalizer(instance.delete_from_provider)
         inst_args = {
@@ -319,7 +344,7 @@ def test_provision_with_boot_volume(
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 @pytest.mark.ignore_stream("5.2")
 def test_provision_with_additional_volume(
-        request, setup_provider, provisioning, provider, vm_name, soft_assert):
+        request, setup_provider, provisioning, provider, vm_name, soft_assert, cls):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
@@ -331,19 +356,15 @@ def test_provision_with_additional_volume(
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
             (image, vm_name, provider.key))
 
-    # Set up automate
-    cls = automate.Class(
-        name="Methods",
-        namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines"))
-    method = automate.Method(
-        name="openstack_CustomizeRequest",
-        cls=cls)
     try:
         image_id = provider.mgmt.get_template_id(provider.data["small_template"])
     except KeyError:
         pytest.skip("No small_template in provider adta!")
-    with update(method):
-        method.data = dedent('''\
+    # Set up automate
+    method = automate.Method(
+        name="openstack_CustomizeRequest",
+        cls=cls,
+        data=dedent('''\
             $evm.root["miq_provision"].set_option(
               :clone_options, {
                 :image_ref => nil,
@@ -358,12 +379,19 @@ def test_provision_with_additional_volume(
                 }]
               }
         )
-        ''' % (image_id, ))
+        ''' % (image_id, )))
 
+    if method.exists():
+        method.update({"data": method.data})
+    else:
+        method.create()
+
+    @request.addfinalizer
     def _finish_method():
-        with update(method):
-            method.data = """prov = $evm.root["miq_provision"]"""
-    request.addfinalizer(_finish_method)
+        if domain is None:
+            method.update({"data": """prov = $evm.root["miq_provision"]"""})
+        elif domain is not None and method.exists():
+            method.delete()
     instance = instance_factory(vm_name, provider, image)
     request.addfinalizer(instance.delete_from_provider)
     inst_args = {
