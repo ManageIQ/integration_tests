@@ -117,19 +117,8 @@ TODO
 
 Working with file paths
 -----------------------
-For relative file pathnames in the project, there are several helper functions that can be used:
-
-* utils.path.project_path for project root (e.g. cfme_tests)
-* utils.path.conf_path for configuration directory (e.g. cfme_tests/conf)
-* utils.path.data_path for data directory (e.g. cfme_tests/data)
-* utils.path.docs_path for documentation directory (e.g. cfme_tests/docs)
-* utils.path.log_path for logfile directory (e.g. cfme_tests/log)
-* utils.path.scripts_path for scripts directory (e.g. cfme_tests/scripts)
-* utils.path.scripts_data_path for scripts data directory (e.g. cfme_tests/scripts/data)
-* utils.path.template_path for template directory (e.g. cfme_tests/template)
-
-For other paths:
+For any path in the project root, there are several helper functions that can be used.  Look at https://cfme-tests.readthedocs.org/modules/utils/utils.path.html for the complete list of pre-configured directories.  For other paths:
 
 * utils.path.get_rel_path(absolute_path_str) gets relative paths from the project root
 
-An example of this can be found in utils/ssh.py.  Combine the imports from a single location when possible.
+An example can be found in utils/ssh.py.  Combine the imports from a single location (e.g. utils.path) whenever possible.
