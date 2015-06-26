@@ -57,3 +57,11 @@ def test_outputs_link(stack):
 
 def test_resources_link(stack):
     stack.nav_to_resources_link()
+
+
+def test_edit_tags(stack):
+    stack.edit_tags("Cost Center *", "Cost Center 001")
+
+
+def test_delete(stack):
+    stack.delete()
