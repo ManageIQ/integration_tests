@@ -58,6 +58,8 @@ notebooks/.ipynb_checkpoints
 # yaml key
 .yaml_key
 
-# SSH related
+# automation artifacts
 .generated_ssh_key*
-.ssh
+.appliance_template
+.jenkins_runner_result
+
