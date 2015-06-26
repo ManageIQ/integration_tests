@@ -43,7 +43,7 @@ _tests_tpl = {
 
 # Regexp, that finds all URLs in a string
 # Does not cover all the cases, but rather only those we can
-URL = re.compile(r"https?://[^/ ]+(?:/[^/ ?]+)*/?(?:\?(?:[^& ]+=[^& ]+)*)?")
+URL = re.compile(r"https?://[^/ ]+(?:/[^/ ?]+)*/?(?:\?(?:[^& =]+(?:=[^& ]+)?&?)*)?")
 
 
 def overall_test_status(statuses):
