@@ -114,3 +114,11 @@ Test generation (testgen)
 -------------------------
 
 TODO
+
+Working with file paths
+-----------------------
+For any path in the project root, there are several helper functions that can be used.  Look at https://cfme-tests.readthedocs.org/modules/utils/utils.path.html for the complete list of pre-configured directories.  For other paths:
+
+* utils.path.get_rel_path(absolute_path_str) gets relative paths from the project root
+
+An example can be found in utils/ssh.py.  Combine the imports from a single location (e.g. utils.path) whenever possible.
