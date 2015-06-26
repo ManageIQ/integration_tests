@@ -108,17 +108,13 @@ for more details.
 pytest store
 ------------
 
-TODO
+The pytest store provides access to common pytest data structures and instances that may not be readily available elsewhere. It can be found in :py:mod:`fixtures.pytest_store`, and during a test run is exposed on the pytest module in the store namespace as ``pytest.store``.
 
 Test generation (testgen)
 -------------------------
 
-TODO
+We try to consolidate common test generation functions in the :py:mod:`utils.testgen` module. When parametrizing tests with the ``pytest_generate_tests`` hook, check the testgen module to see if there are functions available that already parametrize on the axis you want (usually by provider, but there are some other helpers in there).
 
 Working with file paths
 -----------------------
-For any path in the project root, there are several helper functions that can be used.  Look at https://cfme-tests.readthedocs.org/modules/utils/utils.path.html for the complete list of pre-configured directories.  For other paths:
-
-* utils.path.get_rel_path(absolute_path_str) gets relative paths from the project root
-
-An example can be found in utils/ssh.py.  Combine the imports from a single location (e.g. utils.path) whenever possible.
+For any path in the project root, there are several helper functions that can be used.  Look at the :py:mod:`utils.path` module for the complete list of pre-configured directories and available functions.
