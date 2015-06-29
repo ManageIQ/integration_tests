@@ -263,3 +263,7 @@ class CannotScrollException(CFMEException):
 class StorageManagerNotFound(CFMEException):
     """Raised when a Storage Manager is not found"""
     pass
+
+
+class CredentialValidationFailed(CFMEException):
+    """Raised when provider/host credentials are not validated in time."""
