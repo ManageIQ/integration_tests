@@ -15,6 +15,7 @@ from utils.blockers import BZ
 from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
+from xml.sax.saxutils import quoteattr
 
 usergrp = ac.Group(description='EvmGroup-user')
 
@@ -136,12 +137,60 @@ def test_user_email_error_validation():
         user.create()
 
 
+def test_user_edit_tag():
+    user = new_user()
+    user.create()
+    user.edit_tags("Cost Center *", "Cost Center 001")
+    row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+        "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
+    tag = sel.text(row).strip()
+    assert tag == "Cost Center: Cost Center 001", "User edit tag failed"
+    user.delete()
+
+
+def test_user_remove_tag():
+    user = new_user()
+    user.create()
+    sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": user})
+    row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+        "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
+    tag = sel.text(row).strip()
+    user.edit_tags("Department", "Engineering")
+    user.remove_tag("Department", "Engineering")
+    assert tag != "Department: Engineering", "Remove User tag failed"
+    user.delete()
+
+
 # Group test cases
 def test_group_crud():
     group = new_group()
     group.create()
     with update(group):
         group.description = group.description + "edited"
+    group.delete()
+
+
+def test_group_edit_tag():
+    group = new_group()
+    group.create()
+    group.edit_tags("Cost Center *", "Cost Center 001")
+    row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+        "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
+    tag = sel.text(row).strip()
+    assert tag == "Cost Center: Cost Center 001", "Group edit tag failed"
+    group.delete()
+
+
+def test_group_remove_tag():
+    group = new_group()
+    group.create()
+    sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": group})
+    row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+        "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
+    tag = sel.text(row).strip()
+    group.edit_tags("Department", "Engineering")
+    group.remove_tag("Department", "Engineering")
+    assert tag != "Department: Engineering", "Remove Group tag failed"
     group.delete()
 
 
