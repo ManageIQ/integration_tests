@@ -764,7 +764,7 @@ def title():
 
 def get(url):
     """
-    Changes page to the spceified URL
+    Changes page to the specified URL
 
     Args:
         url: URL to navigate to.
