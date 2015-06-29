@@ -8,6 +8,7 @@ import re
 import shutil
 import socket
 import subprocess
+import yaml
 from tempfile import mkdtemp
 from textwrap import dedent
 from time import sleep
@@ -56,7 +57,6 @@ class Appliance(object):
         """Initializes a deployed appliance VM
         """
         self.name = Appliance._default_name
-        self.db_address = None
 
         self._provider_name = provider_name
         self.vmname = vm_name
@@ -103,7 +103,7 @@ class Appliance(object):
     def db_address(self):
         # returns the appliance address by default, methods that set up the internal
         # db should set db_address to something else when they do that
-        return self.ipapp.address
+        return self.ipapp.db_address
 
     @lazycache
     def db(self):
@@ -349,8 +349,6 @@ class IPAppliance(object):
         self.browser_steal = browser_steal
         # thing-toucher process, used for UI coverage
         self._thing_toucher_proc = None
-        # ssh client cache
-        self._ssh_client = None
 
     def __repr__(self):
         return '%s(%s)' % (type(self).__name__, repr(self.address))
@@ -479,7 +477,7 @@ class IPAppliance(object):
 
     @lazycache
     def version(self):
-        return get_version(self.ssh_client().get_version())
+        return get_version(self.ssh_client.get_version())
 
     @lazycache
     def log(self):
@@ -489,7 +487,8 @@ class IPAppliance(object):
     def coverage(self):
         return ui_coverage.CoverageManager(self)
 
-    def ssh_client(self, **connect_kwargs):
+    @lazycache
+    def ssh_client(self):
         """Creates an ssh client connected to this appliance
 
         Args:
@@ -510,21 +509,19 @@ class IPAppliance(object):
         if not self.is_ssh_running:
             raise Exception('SSH is unavailable')
 
-        if self._ssh_client is None:
-            # IPAppliance.ssh_client only connects to its address
-            connect_kwargs['hostname'] = self.hostname
-            connect_kwargs['username'] = connect_kwargs.get(
-                'username', conf.credentials['ssh']['username'])
-            connect_kwargs['password'] = connect_kwargs.get(
-                'password', conf.credentials['ssh']['password'])
-            self._ssh_client = ssh.SSHClient(**connect_kwargs)
-        return self._ssh_client
+        # IPAppliance.ssh_client only connects to its address
+        connect_kwargs = {
+            'hostname': self.hostname,
+            'username': conf.credentials['ssh']['username'],
+            'password': conf.credentials['ssh']['password'],
+        }
+        return ssh.SSHClient(**connect_kwargs)
 
     def db_ssh_client(self, **connect_kwargs):
         if self.is_db_internal:
-            return self.ssh_client()
+            return self.ssh_client
         else:
-            return self.ssh_client()(hostname=self.db_address)
+            return self.ssh_client(hostname=self.db_address)
 
     def diagnose_evm_failure(self):
         """Go through various EVM processes, trying to figure out what fails
@@ -576,7 +573,7 @@ class IPAppliance(object):
         if log_callback is None:
             log_callback = self.log.info
         log_callback('Fixing appliance clock')
-        client = self.ssh_client()
+        client = self.ssh_client
         try:
             ntp_server = random.choice(conf.cfme_data.get('clock_servers', {}))
         except IndexError:
@@ -603,7 +600,7 @@ class IPAppliance(object):
         """
         if log_callback is None:
             log_callback = self.log.info
-        client = self.ssh_client()
+        client = self.ssh_client
         status, out = client.run_command("ls /opt/rh/cfme-gemset")
         if status != 0:
             return  # Not needed
@@ -629,7 +626,7 @@ class IPAppliance(object):
             log_callback = self.log.info
         log_callback('Precompiling assets')
 
-        client = self.ssh_client()
+        client = self.ssh_client
         status, out = client.run_rake_command("assets:precompile")
 
         if status != 0:
@@ -657,7 +654,7 @@ class IPAppliance(object):
             cb = log_callback
             log_callback = lambda msg: cb("DB setup: {}".format(msg))
 
-        client = self.ssh_client()
+        client = self.ssh_client
 
         # Make sure the database is ready
         log_callback('Starting upstream db setup')
@@ -721,7 +718,7 @@ class IPAppliance(object):
             cb = log_callback
             log_callback = lambda msg: cb("Clone automate domain: {}".format(msg))
 
-        client = self.ssh_client()
+        client = self.ssh_client
 
         # Make sure the database is ready
         log_callback('Waiting for database')
@@ -768,7 +765,7 @@ class IPAppliance(object):
             cb = log_callback
             log_callback = lambda msg: cb("Deploying merkyl: {}".format(msg))
 
-        client = self.ssh_client()
+        client = self.ssh_client
 
         client.run_command('mkdir -p /root/merkyl')
         for filename in ['__init__.py', 'merkyl.tpl', ('bottle.py.dontflake', 'bottle.py'),
@@ -835,7 +832,7 @@ class IPAppliance(object):
                     if rhscl_url:
                         urls.append(rhscl_url)
 
-        client = self.ssh_client()
+        client = self.ssh_client
 
         # create repo file
         log_callback('Creating repo file on appliance')
@@ -911,7 +908,7 @@ class IPAppliance(object):
         source = '/var/www/miq/vmdb/public/javascripts/application.js'
         target = os.path.join(tmpdir, 'application.js')
 
-        client = self.ssh_client()
+        client = self.ssh_client
         log_callback('Retrieving appliance.js from appliance')
         client.get_file(source, target)
 
@@ -943,7 +940,7 @@ class IPAppliance(object):
         (log_callback or self.log.info)('Loosening postgres permissions')
 
         # Init SSH client
-        client = self.ssh_client()
+        client = self.ssh_client
 
         # set root password
         cmd = "psql -d vmdb_production -c \"alter user {} with password '{}'\"".format(
@@ -1003,7 +1000,7 @@ class IPAppliance(object):
         self.db_address = self.address
         del(self.db)
 
-        client = self.ssh_client()
+        client = self.ssh_client
 
         # Defaults
         db_password = db_password or conf.credentials['database']['password']
@@ -1068,7 +1065,7 @@ class IPAppliance(object):
         db_username = db_username or conf.credentials['database']['username']
         db_password = db_password or conf.credentials['database']['password']
 
-        client = self.ssh_client()
+        client = self.ssh_client
 
         if self.has_cli:
             # copy v2 key
@@ -1163,7 +1160,7 @@ class IPAppliance(object):
         if log_callback is None:
             log_callback = self.log.info
         log_callback('restarting evm service')
-        with self.ssh_client() as ssh:
+        with self.ssh_client as ssh:
             if rude:
                 status, msg = ssh.run_command('killall -9 ruby; service evmserverd start')
             else:
@@ -1176,7 +1173,7 @@ class IPAppliance(object):
 
     def reboot(self, wait_for_web_ui=True, log_callback=None):
         (log_callback or self.log.info)('Rebooting appliance')
-        client = self.ssh_client()
+        client = self.ssh_client
 
         old_uptime = client.uptime()
         status, out = client.run_command('reboot')
@@ -1214,7 +1211,7 @@ class IPAppliance(object):
         if vddk_url is None:
             raise Exception("vddk_url not specified!")
 
-        with self.ssh_client() as client:
+        with self.ssh_client as client:
             is_already_installed = False
             if client.run_command('test -d /usr/lib/vmware-vix-disklib/lib64')[0] == 0:
                 is_already_installed = True
@@ -1298,17 +1295,18 @@ class IPAppliance(object):
         # pulls the db address from the appliance by default, falling back to the appliance
         # ip address (and issuing a warning) if that fails. methods that set up the internal
         # db should set db_address to something else when they do that
-        result = self.ssh_client().run_rails_command(
-            "\"puts Rails.configuration.database_configuration['production']['host']\"")
-        # output can be empty, in which case the database is local
-        if result.rc == 0:
-            stripped_out = result.output.strip()
-            if stripped_out.startswith('127') or 'localhost' in stripped_out:
-                # address is localhost, use the appliance address
-                stripped_out = None
-            return stripped_out if stripped_out else self.address
-        else:
-            self.log.warning('Unable to pull database address from appliance')
+        try:
+            db = self.get_yaml_file('/var/www/miq/vmdb/config/vmdb.yml.db')['server']['host']
+            db = db.strip()
+            ip_addr = self.ssh_client.run_command('ip address show')
+            if db in ip_addr.output or db.startswith('127') or 'localhost' in db:
+                # address is local, use the appliance address
+                return self.address
+            else:
+                return db
+        except (IOError, KeyError) as exc:
+            self.log.error('Unable to pull database address from appliance')
+            self.log.exception(exc)
             return self.address
 
     @lazycache
@@ -1360,31 +1358,31 @@ class IPAppliance(object):
 
     @property
     def has_cli(self):
-        if self.ssh_client().run_command('ls -l /bin/appliance_console_cli')[0] == 0:
+        if self.ssh_client.run_command('ls -l /bin/appliance_console_cli')[0] == 0:
             return True
         else:
             return False
 
     @lazycache
     def build_datetime(self):
-        datetime = self.ssh_client().get_build_datetime()
+        datetime = self.ssh_client.get_build_datetime()
         return datetime
 
     @lazycache
     def build_date(self):
-        date = self.ssh_client().get_build_date()
+        date = self.ssh_client.get_build_date()
         return date
 
     @lazycache
     def is_downstream(self):
-        return self.ssh_client().is_appliance_downstream()
+        return self.ssh_client.is_appliance_downstream()
 
     def has_netapp(self):
-        return self.ssh_client().appliance_has_netapp()
+        return self.ssh_client.appliance_has_netapp()
 
     @lazycache
     def guid(self):
-        result = self.ssh_client().run_command('cat /var/www/miq/vmdb/GUID')
+        result = self.ssh_client.run_command('cat /var/www/miq/vmdb/GUID')
         return result.output
 
     @lazycache
@@ -1443,6 +1441,16 @@ class IPAppliance(object):
 
     def set_yaml_config(self, config_name, data_dict):
         return db.set_yaml_config(config_name, data_dict, self.address)
+
+    def get_yaml_file(self, yaml_path):
+        """Get (and parse) a yaml file from the appliance, returning a python data structure"""
+        ret = self.ssh_client.run_command('cat {}'.format(yaml_path))
+        if ret.rc == 0:
+            # Let yaml throw the exceptions here if yaml_path wasn't actually a yaml
+            return yaml.load(ret.output)
+        else:
+            # 2 = errno.ENOENT
+            raise IOError(2, 'Remote yaml not found or permission denied')
 
     def set_session_timeout(self, timeout=86400, quiet=True):
         """Sets the timeout of UI timeout.

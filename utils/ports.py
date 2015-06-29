@@ -2,12 +2,14 @@
 """Storage for ports. Set defaults here, then :py:mod:`fixtures.portset` will make overrides."""
 import sys
 
+from fixtures.pytest_store import store
+from utils.log import logger
+
 
 class Ports(object):
-    from fixtures.pytest_store import store  # NOQA
-    from utils.log import logger  # NOQA
-
     def __init__(self):
+        self.store = store
+        self.logger = logger
         # Port that is used to used for SSH connections to an appliance
         self.SSH = 22
         # POrt that is used to connect to the POstgreSQL database of the appliance.
