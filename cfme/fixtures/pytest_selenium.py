@@ -1380,3 +1380,24 @@ def execute_script(script, *args, **kwargs):
     It also provides our library which is stored in data/lib.js file.
     """
     return browser().execute_script(dedent(script), *args, **kwargs)
+
+
+ScreenShot = namedtuple("screenshot", ['png', 'error'])
+
+
+def take_screenshot():
+    screenshot = None
+    screenshot_error = None
+    try:
+        screenshot = browser().get_screenshot_as_base64()
+    except (AttributeError, WebDriverException):
+        # See comments utils.browser.ensure_browser_open for why these two exceptions
+        screenshot_error = 'browser error'
+    except Exception as ex:
+        # If this fails for any other reason,
+        # leave out the screenshot but record the reason
+        if ex.message:
+            screenshot_error = '%s: %s' % (type(ex).__name__, ex.message)
+        else:
+            screenshot_error = type(ex).__name__
+    return ScreenShot(screenshot, screenshot_error)
