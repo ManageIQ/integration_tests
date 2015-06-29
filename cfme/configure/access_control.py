@@ -3,7 +3,8 @@ from fixtures.pytest_store import store
 import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
-from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons, Input
+from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons, Input, \
+    Table
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
 from utils import version
@@ -35,7 +36,16 @@ def ac_tree(*path):
     )
 
 tb_select = partial(tb.select, "Configuration")
-# pol_btn = partial(tb.select, "Policy")
+pol_btn = partial(tb.select, "Policy")
+
+edit_tags_form = Form(
+    fields=[
+        ("select_tag", Select("select#tag_cat")),
+        ("select_value", Select("select#tag_add"))
+    ])
+
+tag_table = Table("//div[@id='assignments_div']//table")
+
 nav.add_branch(
     'configuration',
     {
@@ -117,12 +127,6 @@ class User(Updateable, Pretty):
             ('user_group_select', Select("//*[@id='chosen_group']")),
         ])
 
-    user_tag_form = Form(
-        fields=[
-            ('cost_center_select', Select("//*[@id='tag_cat']")),
-            ('value_assign_select', Select("//*[@id='tag_add']")),
-        ])
-
     pretty_attrs = ['name', 'group']
 
     def __init__(self, name=None, credential=None, email=None,
@@ -179,6 +183,23 @@ class User(Updateable, Pretty):
         sel.handle_alert()
         flash.assert_success_message('EVM User "%s": Delete successful' % self.name)
 
+    def edit_tags(self, tag, value):
+        sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
+        pol_btn("Edit 'My Company' Tags for this User", invokes_alert=True)
+        fill(edit_tags_form, {'select_tag': tag,
+                              'select_value': value},
+             action=form_buttons.save)
+        flash.assert_success_message('Tag edits were successfully saved')
+
+    def remove_tag(self, tag, value):
+        sel.force_navigate("cfg_accesscontrol_user_ed", context={"user": self})
+        pol_btn("Edit 'My Company' Tags for this User", invokes_alert=True)
+        row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
+            partial_check=True)
+        sel.click(row[0])
+        form_buttons.save()
+        flash.assert_success_message('Tag edits were successfully saved')
+
 
 class Group(Updateable, Pretty):
     group_form = Form(
@@ -212,6 +233,23 @@ class Group(Updateable, Pretty):
         tb_select('Delete this Group', invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('EVM Group "%s": Delete successful' % self.description)
+
+    def edit_tags(self, tag, value):
+        sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": self})
+        pol_btn("Edit 'My Company' Tags for this Group", invokes_alert=True)
+        fill(edit_tags_form, {'select_tag': tag,
+                              'select_value': value},
+             action=form_buttons.save)
+        flash.assert_success_message('Tag edits were successfully saved')
+
+    def remove_tag(self, tag, value):
+        sel.force_navigate("cfg_accesscontrol_group_ed", context={"group": self})
+        pol_btn("Edit 'My Company' Tags for this Group", invokes_alert=True)
+        row = tag_table.find_row_by_cells({'category': tag, 'assigned_value': value},
+            partial_check=True)
+        sel.click(row[0])
+        form_buttons.save()
+        flash.assert_success_message('Tag edits were successfully saved')
 
 
 class Role(Updateable, Pretty):
