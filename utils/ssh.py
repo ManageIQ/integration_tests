@@ -92,10 +92,13 @@ class SSHClient(paramiko.SSHClient):
         # It will be reopened automatically on next command
         pass
 
+    def __del__(self):
+        self.close()
+
     def _check_port(self):
         hostname = self._connect_kwargs['hostname']
-        if not net_check(ports.SSH, hostname):
-            raise Exception("SSH connection to %s:%d failed, port unavailable".format(
+        if not net_check(ports.SSH, hostname, force=True):
+            raise Exception("SSH connection to {}:{} failed, port unavailable".format(
                 hostname, ports.SSH))
 
     def _progress_callback(self, filename, size, sent):
