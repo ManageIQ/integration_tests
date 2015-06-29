@@ -99,11 +99,12 @@ def appliance_police():
     except _AppliancePoliceException as e:
         # special handling for known failure conditions
         if e.port == 443:
-            # If we had an error on 443, about 101% of the time it means the UI worker is frozen
-            store.current_appliance.ssh_client().run_rails_command('MiqUiWorker.first.kill')
+            # Lots of rdbs lately where evm seems to have entirely crashed
+            # and (sadly) the only fix is a rude restart
+            store.current_appliance.restart_evm_service(rude=True)
             try:
                 store.current_appliance.wait_for_web_ui(900)
-                store.write_line('UI worker was frozen and had to be restarted.', purple=True)
+                store.write_line('EVM was frozen and had to be restarted.', purple=True)
                 return
             except TimedOutError:
                 pass
