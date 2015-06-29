@@ -16,6 +16,7 @@ multimethods.py
 numpy
 ovirt-engine-sdk-python
 paramiko
+parsedatetime
 pdfminer
 psphere
 py

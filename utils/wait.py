@@ -1,11 +1,26 @@
+# -*- coding: utf-8 -*-
+import parsedatetime
 import time
 from collections import namedtuple
+from datetime import datetime, timedelta
 from utils.log import logger
 from functools import partial
 from threading import Timer
 
 
 WaitForResult = namedtuple("WaitForResult", ["out", "duration"])
+
+calendar = parsedatetime.Calendar()
+
+
+def _parse_time(t):
+    global calendar
+
+    parsed, code = calendar.parse(t)
+    if code != 2:
+        raise ValueError("Could not parse {}!".format(t))
+    parsed = datetime.fromtimestamp(time.mktime(parsed))
+    return (parsed - datetime.now()).total_seconds()
 
 
 def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
@@ -25,6 +40,9 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         func_args: A list of function arguments to be passed to func
         func_kwargs: A dict of function keyword arguments to be passed to func
         num_sec: An int describing the number of seconds to wait before timing out.
+        timeout: Either an int describing the number of seconds to wait before timing out. Or a
+            :py:class:`timedelta` object. Or a string formatted like ``1h 10m 5s``. This then sets
+            the ``num_sec`` variable.
         expo: A boolean flag toggling exponential delay growth.
         message: A string containing a description of func's operation. If None,
             defaults to the function's name.
@@ -51,7 +69,19 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     """
     st_time = time.time()
     total_time = 0
-    num_sec = kwargs.get('num_sec', 120)
+    if "timeout" in kwargs and kwargs["timeout"] is not None:
+        timeout = kwargs["timeout"]
+        if isinstance(timeout, (int, float)):
+            num_sec = float(timeout)
+        elif isinstance(timeout, basestring):
+            num_sec = _parse_time(timeout)
+        elif isinstance(timeout, timedelta):
+            num_sec = timeout.total_seconds()
+        else:
+            raise ValueError("Timeout got an unknown value {}".format(timeout))
+    else:
+        num_sec = kwargs.get('num_sec', 120)
+
     expo = kwargs.get('expo', False)
     message = kwargs.get('message', None)
 
@@ -115,6 +145,38 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
         logger.warning("Could not do {} at {}:{} in time but ignoring".format(message,
             filename, line_no))
         logger.warning('The last result of the call was: {}'.format(str(out)))
+
+
+def wait_for_decorator(*args, **kwargs):
+    """Wrapper for :py:func:`utils.wait.wait_for` that makes it nicer to write testing waits.
+
+    It passes the function decorated to to ``wait_for``
+
+    Example:
+
+    .. code-block:: python
+
+        @wait_for_decorator(num_sec=120)
+        def my_waiting_func():
+            return do_something()
+
+    You can also pass it without parameters, then it uses ``wait_for``'s defaults:
+
+    .. code-block:: python
+
+        @wait_for_decorator
+        def my_waiting_func():
+            return do_something()
+
+    Then the result of the waiting is stored in the variable named after the function.
+    """
+    if not kwargs and len(args) == 1 and callable(args[0]):
+        # No params passed, only a callable, so just call it
+        return wait_for(args[0])
+    else:
+        def g(f):
+            return wait_for(f, *args, **kwargs)
+        return g
 
 
 class TimedOutError(Exception):

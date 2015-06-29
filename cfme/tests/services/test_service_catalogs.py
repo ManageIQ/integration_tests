@@ -47,7 +47,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def dialog():
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = dict(
@@ -63,7 +63,7 @@ def dialog():
                      box_label="box_" + fauxfactory.gen_alphanumeric(), box_desc="my box desc")
     service_dialog.create(element_data)
     flash.assert_success_message('Dialog "%s" was added' % dialog)
-    yield dialog
+    return dialog
 
 
 @pytest.yield_fixture(scope="function")
@@ -71,11 +71,14 @@ def catalog():
     catalog = "cat_" + fauxfactory.gen_alphanumeric()
     cat = Catalog(name=catalog,
                   description="my catalog")
-    cat.create()
-    yield catalog
+    try:
+        cat.create()
+        yield catalog
+    finally:
+        cat.delete()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
@@ -101,7 +104,7 @@ def catalog_item(provider, provisioning, vm_name, dialog, catalog):
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=template,
                   provider=provider.name, prov_data=provisioning_data)
-    yield catalog_item
+    return catalog_item
 
 
 def test_order_catalog_item(provider, setup_provider, catalog_item, request):
@@ -122,6 +125,34 @@ def test_order_catalog_item(provider, setup_provider, catalog_item, request):
     row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=1400, delay=20)
     assert row.last_message.text == 'Request complete'
+
+
+@pytest.mark.ignore_stream("5.2", "5.3")
+def test_order_catalog_item_via_rest(
+        request, rest_api, provider, setup_provider, catalog_item, catalog):
+    """Same as :py:func:`test_order_catalog_item`, but using REST.
+
+    Metadata:
+        test_flag: provision, rest
+    """
+    vm_name = catalog_item.provisioning_data["vm_name"]
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+    catalog_item.create()
+    request.addfinalizer(catalog_item.delete)
+    catalog = rest_api.collections.service_catalogs.find_by(name=catalog)
+    assert len(catalog) == 1
+    catalog, = catalog
+    template = catalog.service_templates.find_by(name=catalog_item.name)
+    assert len(template) == 1
+    template, = template
+    req = template.action.order()
+
+    @pytest.wait_for(timeout="15m", delay=5)
+    def request_finished():
+        req.reload()
+        logger.info("Request status: {}, Request state: {}, Request message: {}".format(
+            req.status, req.request_state, req.message))
+        return req.status.lower() == "ok" and req.request_state.lower() == "finished"
 
 
 def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
