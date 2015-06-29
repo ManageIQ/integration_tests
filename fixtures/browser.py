@@ -1,8 +1,8 @@
 import pytest
 from py.error import ENOENT
-from selenium.common.exceptions import WebDriverException
 
 import utils.browser
+from cfme.fixtures.pytest_selenium import take_screenshot
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from utils.datafile import template_env
 from utils.path import log_path
@@ -56,27 +56,15 @@ def pytest_exception_interact(node, call, report):
     # screenshots. If removing that conditional now makes this too broad, we should consider
     # an isinstance(val, WebDriverException) check in addition to the browser fixture check that
     # exists here in commit 825ef50fd84a060b58d7e4dc316303a8b61b35d2
-    try:
-        template_data['screenshot'] = utils.browser.browser().get_screenshot_as_base64()
+
+    screenshot = take_screenshot()
+    template_data['screenshot'] = screenshot.png
+    template_data['screenshot_error'] = screenshot.error
+    if screenshot.png:
         art_client.fire_hook('filedump', test_location=location, test_name=name,
             filename="screenshot.png", fd_ident="screenshot", mode="wb", contents_base64=True,
             contents=template_data['screenshot'])
-    except (AttributeError, WebDriverException):
-        # See comments utils.browser.ensure_browser_open for why these two exceptions
-        template_data['screenshot'] = None
-        template_data['screenshot_error'] = 'browser error'
-        art_client.fire_hook('filedump', test_location=location, test_name=name,
-            filename="screenshot.txt", fd_ident="screenshot", mode="w", contents_base64=False,
-            contents=template_data['screenshot_error'])
-    except Exception as ex:
-        # If this fails for any other reason,
-        # leave out the screenshot but record the reason
-        template_data['screenshot'] = None
-        if ex.message:
-            screenshot_error = '%s: %s' % (type(ex).__name__, ex.message)
-        else:
-            screenshot_error = type(ex).__name__
-        template_data['screenshot_error'] = screenshot_error
+    if screenshot.error:
         art_client.fire_hook('filedump', test_location=location, test_name=name,
             filename="screenshot.txt", fd_ident="screenshot", mode="w", contents_base64=False,
             contents=template_data['screenshot_error'])
