@@ -43,7 +43,7 @@ _tests_tpl = {
 
 # Regexp, that finds all URLs in a string
 # Does not cover all the cases, but rather only those we can
-URL = re.compile(r"https?://[^/ ]+(?:/[^/ ?]+)*/?(?:\?(?:[^& =]+(?:=[^& ]+)?&?)*)?")
+URL = re.compile(r"https?://[^/\s]+(?:/[^/\s?]+)*/?(?:\?(?:[^&\s=]+(?:=[^&\s]+)?&?)*)?")
 
 
 def overall_test_status(statuses):
@@ -190,7 +190,7 @@ class Reporter(ArtifactorBasePlugin):
                                            for f in test['files']['merkyl']]
 
             if "short_tb" in test_data and test_data["short_tb"]:
-                urls = [url[0] for url in URL.findall(test_data["short_tb"])]
+                urls = [url for url in URL.findall(test_data["short_tb"])]
                 if urls:
                     test_data["urls"] = urls
             template_data['tests'].append(test_data)
