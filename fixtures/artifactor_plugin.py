@@ -30,6 +30,7 @@ from utils.conf import env, credentials
 from utils.net import random_port, net_check
 from utils.path import project_path
 from utils.wait import wait_for
+from utils import version
 
 
 # Create a list of all our passwords for use with the sanitize request later in this module
@@ -81,6 +82,7 @@ if env.get('slaveid', None):
 
 
 appliance_ip_address = urlparse(env['base_url']).netloc
+session_ver = None
 
 
 def pytest_addoption(parser):
@@ -111,6 +113,12 @@ def pytest_configure(config):
 
 
 def pytest_runtest_protocol(item):
+    global session_ver
+
+    if not session_ver:
+        session_ver = str(version.current_version())
+        art_client.fire_hook('session_info', version=session_ver)
+
     name, location = get_test_idents(item)
     art_client.fire_hook('start_test', test_location=location, test_name=name,
                          slaveid=SLAVEID, ip=appliance_ip_address)

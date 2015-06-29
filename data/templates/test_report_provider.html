@@ -26,6 +26,7 @@
   <div class="row">
     <div class="col-md-4">
       <h1>Test Report</h1>
+      {% if version %}<h2>Version: {{version}}</h2>{% endif %}
     </div>
     <div class="col-md-8 text-right">
       <span class="label label-success">{{counts.passed}} Passed &nbsp;<input id="passed-check" type="checkbox" onclick="toggle('passed');"></span>
