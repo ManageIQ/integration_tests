@@ -474,6 +474,9 @@ if __name__ == "__main__":
     interaction.add_argument('--server-ip',
                              help="Server IP address",
                              default=None)
+    interaction.add_argument('--nowait',
+                             help="No waiting for the container, just fire-and-forget",
+                             default=None)
 
     appliance = parser.add_argument_group('Appliance Options')
     appliance.add_argument('--appliance-name',
