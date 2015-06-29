@@ -25,12 +25,16 @@ def rake(ssh_client, backup_file_name):
 
 
 def test_import_export_5_2(ssh_client, rake):
+    """Test that import and export work for Control.
+
+    Steps:
+        * Pick a namespace and export it using ``evm:automate:export`` rake task
+        * Then drop whole AE domain using ``evm:automate:clear`` rake task
+        * Import the saved namespace from file using ``evm:automate:import`` rake task
+        * Do AE backup and make ``diff`` with the exported namespace
+        * If ``diff`` returns $?==0, then it is all right
+    """
     # How does this test work?
-    # 1. We pick a namespace and export it
-    # 2. Then we drop whole AE domain
-    # 3. We import the saved namespace from file
-    # 4. We do AE backup and make diff with the exported namespace
-    # If that returns $?==0, then it is all right
     ssh_client.run_command("rm -f /tmp/impexp_test_1.xml")
     ssh_client.run_command("rm -f /tmp/impexp_test_2.xml")
     # We pick namespace Automation

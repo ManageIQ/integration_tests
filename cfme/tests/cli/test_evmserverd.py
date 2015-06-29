@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""This module contains tests that exercise control of evmserverd service."""
 import pytest
 import re
 from utils.wait import wait_for
@@ -15,7 +16,13 @@ pytestmark = [pytest.mark.usefixtures("start_evmserverd_after_module")]
 
 
 def test_evmserverd_stop(ssh_client):
-    """Tests whether stopping the evmserverd really stops the CFME server processes"""
+    """Tests whether stopping the evmserverd really stops the CFME server processes.
+
+    Steps:
+        * Remember all server names from ``service evmserverd status`` command.
+        * Issue a ``service evmserverd stop`` command.
+        * Periodically check output of ``service evmserverd stop`` that all the servers are stopped.
+    """
     server_names = {server["Server Name"] for server in ssh_client.status["servers"]}
     assert ssh_client.run_command("service evmserverd stop").rc == 0
 
@@ -30,7 +37,17 @@ def test_evmserverd_stop(ssh_client):
 
 
 def test_evmserverd_start_twice(ssh_client):
-    """If evmserverd start is ran twice, it will then tell that it is already running."""
+    """If evmserverd start is ran twice, it will then tell that it is already running.
+
+    Steps:
+        * Stop the evmserverd using ``service evmserverd stop``.
+        * Start the evmserverd using ``service evmserverd start`` command.
+        * Assert that the output of the previous command states "Running EVM in background".
+        * Start the evmserverd using ``service evmserverd start`` command.
+        * Assert that the output of the previous command states "EVM is already running".
+        * Extract the PID of the evmserverd from the output from the last command.
+        * Verify the process with such PID exists ``kill -0 $PID``.
+    """
     assert ssh_client.run_command("service evmserverd stop").rc == 0
     # Start first time
     res = ssh_client.run_command("service evmserverd start")

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""This module contains tests that exercise the canned VMware Automate stuff."""
 import fauxfactory
 import pytest
 
@@ -85,7 +86,20 @@ def testing_vm(request, provisioning, provider_crud, provider_key):
 @pytest.mark.meta(blockers=[1211627])
 def test_vmware_vimapi_hotadd_disk(
         request, testing_group, provider_crud, provider_mgmt, testing_vm, domain, namespace, cls):
-    """ Tests hot adding a disk to vmware vm
+    """ Tests hot adding a disk to vmware vm.
+
+    This test exercises the ``VMware_HotAdd_Disk`` method, located either in
+    ``/Integration/VimApi/`` (<5.3) or ``/Integration/VMware/VimApi`` (5.3 and up).
+
+    Steps:
+        * It creates an instance in ``System/Request`` that can be accessible from eg. a button.
+        * Then it creates a service dialog that contains a field with the desired disk size, the
+            text field name should be ``size``
+        * Then it creates a button, that refers to the ``VMware_HotAdd_Disk`` in ``Request``. The
+            button shall belong in the VM and instance button group.
+        * After the button is created, it goes to a VM's summary page, clicks the button, enters
+            the size of the disk and submits the dialog.
+        * The test waits until the number of disks is raised.
 
     Metadata:
         test_flag: hotdisk, provision

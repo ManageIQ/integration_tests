@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""This module contains REST API specific tests."""
 import fauxfactory
 import pytest
 
@@ -72,7 +73,15 @@ def provision_data(
 @pytest.mark.meta(server_roles="+automate")
 @pytest.mark.usefixtures("setup_provider")
 def test_provision(request, provision_data, provider_mgmt, rest_api):
-    """Tests provision via rest
+    """Tests provision via REST API.
+
+    Prerequisities:
+        * Have a provider set up with templates suitable for provisioning.
+
+    Steps:
+        * POST /api/provision_requests (method ``create``) the JSON with provisioning data. The
+            request is returned.
+        * Query the request by its id until the state turns to ``finished`` or ``provisioned``.
 
     Metadata:
         test_flag: rest, provision
@@ -94,6 +103,20 @@ def test_provision(request, provision_data, provider_mgmt, rest_api):
 
 
 def test_add_delete_service_catalog(rest_api):
+    """Tests creating and deleting a service catalog.
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/service_catalogs (method ``add``) with the ``name``, ``description`` and
+            ``service_templates`` (empty list)
+        * DELETE /api/service_catalogs/<id>
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
     scl = rest_api.collections.service_catalogs.action.add(
         name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
@@ -105,6 +128,22 @@ def test_add_delete_service_catalog(rest_api):
 
 
 def test_add_delete_multiple_service_catalogs(rest_api):
+    """Tests creating and deleting multiple service catalogs at time.
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/service_catalogs (method ``add``) with the list of dictionaries used to create
+            the service templates (``name``, ``description`` and ``service_templates``
+            (empty list))
+        * DELETE /api/service_catalogs <- Insert a JSON with list of dicts containing ``href``s to
+            the catalogs
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
     def _gen_ctl():
         return {
             "name": fauxfactory.gen_alphanumeric(),
@@ -126,6 +165,20 @@ def test_provider_refresh(request, setup_a_provider, rest_api):
     It provisions a VM when the Provider inventory functionality is disabled, then the functionality
     is enabled and we wait for refresh to finish by checking the field in provider and then we check
     whether the VM appeared in the provider.
+
+    Prerequisities:
+        * A provider that is set up, with templates suitable for provisioning.
+
+    Steps:
+        * Disable the ``ems_inventory`` and ``ems_operations`` roles
+        * Provision a VM
+        * Store old refresh date from the provider
+        * Initiate refresh
+        * Wait until the refresh date updates
+        * The VM should appear soon.
+
+    Metadata:
+        test_flag: rest
     """
     if "refresh" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
@@ -160,6 +213,19 @@ def test_provider_refresh(request, setup_a_provider, rest_api):
 
 @pytest.mark.ignore_stream("5.3")
 def test_provider_edit(request, setup_a_provider, rest_api):
+    """Test editing a provider using REST API.
+
+    Prerequisities:
+        * A provider that is set up. Can be a dummy one.
+
+    Steps:
+        * Retrieve list of providers using GET /api/providers , pick the first one
+        * POST /api/providers/<id> (method ``edit``) -> {"name": <random name>}
+        * Query the provider again. The name should be set.
+
+    Metadata:
+        test_flag: rest
+    """
     if "edit" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
     provider = rest_api.collections.providers[0]
@@ -176,6 +242,20 @@ def test_provider_edit(request, setup_a_provider, rest_api):
     ids=["delete_from_detail", "delete_from_collection"])
 @pytest.mark.ignore_stream("5.3")
 def test_provider_crud(request, rest_api, from_detail):
+    """Test the CRUD on provider using REST API.
+
+    Steps:
+        * POST /api/providers (method ``create``) <- {"hostname":..., "name":..., "type":
+            "EmsVmware"}
+        * Remember the provider ID.
+        * Delete it either way:
+            * DELETE /api/providers/<id>
+            * POST /api/providers (method ``delete``) <- list of dicts containing hrefs to the
+                providers, in this case just list with one dict.
+
+    Metadata:
+        test_flag: rest
+    """
     if "create" not in rest_api.collections.providers.action.all:
         pytest.skip("Refresh action is not implemented in this version")
     provider = rest_api.collections.providers.action.create(
@@ -213,7 +293,23 @@ def vm(request, setup_a_provider, rest_api):
     ids=["from_detail", "from_collection"])
 @pytest.mark.ignore_stream("5.3")
 def test_set_vm_owner(request, setup_a_provider, rest_api, vm, from_detail):
-    """Test whether set_owner action from the REST API works."""
+    """Test whether set_owner action from the REST API works.
+
+    Prerequisities:
+        * A VM
+
+    Steps:
+        * Find a VM id using REST
+        * Call either:
+            * POST /api/vms/<id> (method ``set_owner``) <- {"owner": "owner username"}
+            * POST /api/vms (method ``set_owner``) <- {"owner": "owner username",
+                "resources": [{"href": ...}]}
+        * Query the VM again
+        * Assert it has the attribute ``evm_owner`` as we set it.
+
+    Metadata:
+        test_flag: rest
+    """
     if "set_owner" not in rest_api.collections.vms.action.all:
         pytest.skip("Set owner action is not implemented in this version")
     rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
@@ -233,6 +329,23 @@ def test_set_vm_owner(request, setup_a_provider, rest_api, vm, from_detail):
     ids=["from_detail", "from_collection"])
 @pytest.mark.ignore_stream("5.3")
 def test_vm_add_lifecycle_event(request, setup_a_provider, rest_api, vm, from_detail, db):
+    """Test that checks whether adding a lifecycle event using the REST API works.
+
+    Prerequisities:
+        * A VM
+
+    Steps:
+        * Find the VM's id
+        * Prepare the lifecycle event data (``status``, ``message``, ``event``)
+        * Call either:
+            * POST /api/vms/<id> (method ``add_lifecycle_event``) <- the lifecycle data
+            * POST /api/vms (method ``add_lifecycle_event``) <- the lifecycle data + resources field
+                specifying list of dicts containing hrefs to the VMs, in this case only one.
+        * Verify that appliance's database contains such entries in table ``lifecycle_events``
+
+    Metadata:
+        test_flag: rest
+    """
     if "add_lifecycle_event" not in rest_api.collections.vms.action.all:
         pytest.skip("add_lifecycle_event action is not implemented in this version")
     rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
@@ -271,7 +384,14 @@ COLLECTIONS_IGNORED_53 = {
     "templates", "users", "zones"])
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
-    have no usable actions that we could try to run"""
+    have no usable actions that we could try to run
+
+    Steps:
+        * GET /api/<collection_name>
+
+    Metadata:
+        test_flag: rest
+    """
     if current_version() < "5.4" and collection_name in COLLECTIONS_IGNORED_53:
         pytest.skip("Collection {} not in 5.3.".format(collection_name))
     collection = getattr(rest_api.collections, collection_name)

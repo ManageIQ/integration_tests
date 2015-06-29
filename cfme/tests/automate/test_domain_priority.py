@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+"""This module contains tests that check priority of domains."""
 import fauxfactory
 import pytest
 
 from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
 from cfme.automate.explorer import set_domain_order
 from cfme.automate.simulation import simulate
-from utils.providers import setup_a_provider as _setup_a_provider
 from utils.update import update
 from utils.wait import wait_for
 
@@ -13,10 +13,6 @@ pytestmark = [
     pytest.mark.ignore_stream("5.2")
 ]
 
-
-@pytest.fixture(scope="module")
-def setup_a_provider():
-    _setup_a_provider("infra")
 
 FILE_LOCATION = "/var/www/miq/vmdb/test_ae_{}".format(fauxfactory.gen_alphanumeric(16))
 
@@ -101,10 +97,33 @@ def original_instance(request, original_method, original_domain):
 
 
 @pytest.mark.meta(server_roles="+automate")
-@pytest.mark.usefixtures("setup_a_provider")
+@pytest.mark.meta(blockers=[1134500])
 def test_priority(
         request, ssh_client, original_method, original_instance, original_domain, copy_domain,
         original_method_write_data, copy_method_write_data):
+    """This test checks whether method overriding works across domains with the aspect of priority.
+
+    Prerequisities:
+        * Pick a random file name.
+
+    Steps:
+        * If the picked file name exists on the appliance, delete it
+        * Create two domains (one for the original method and one for copied method).
+        * Create a method in ``System/Request`` (in original domain) containing the method code as
+            in this testing module, with the file in the method being the file picked and you pick
+            the contents you want to write to the file.
+        * Set the domain order so the original domain is first.
+        * Run the simulation on the ``Request/<method_name>`` with executing.
+        * The file on appliance should contain the data as you selected.
+        * Copy the method to the second (copy) domain.
+        * Change the copied method so it writes different data.
+        * Set the domain order so the copy doamin is first.
+        * Run the same simulation again.
+        * Check the file contents, it should be the same as the ćontent you entered last.
+        * Then pick the domain order so the original domain is first.
+        * Run the same simulation again.
+        * The contents of the file should be the same as in the first case.
+    """
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     set_domain_order([original_domain.name])  # Default first
     #
@@ -176,51 +195,3 @@ def test_priority(
     assert stdout.strip() == original_method_write_data
     ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
     # END OF LAST SIMULATION
-
-
-@pytest.mark.meta(blockers=[1134500])
-def test_override_method_across_domains(
-        request, ssh_client, original_method, original_instance, copy_domain, original_domain,
-        original_method_write_data, copy_method_write_data, setup_a_provider):
-    instance = original_instance
-    ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
-    request.addfinalizer(lambda: ssh_client.run_command("rm -f {}".format(FILE_LOCATION)))
-    set_domain_order([original_domain.name])  # Default first
-    simulate(
-        instance="Request",
-        message="create",
-        request=instance.name,
-        attribute=None,  # Random selection, does not matter
-        execute_methods=True
-    )
-    wait_for(
-        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION))[0] == 0,
-        num_sec=120, delay=0.5, message="wait for file to appear"
-    )
-    rc, stdout = ssh_client.run_command("cat {}".format(FILE_LOCATION))
-    assert stdout.strip() == original_method_write_data
-    ssh_client.run_command("rm -f {}".format(FILE_LOCATION))
-    copied_method = original_method.copy_to(copy_domain)
-    request.addfinalizer(lambda: copied_method.delete())
-    # Set up a different thing to write to the file
-    with update(copied_method):
-        copied_method.data = METHOD_TORSO.format(copy_method_write_data)
-    # Set it as the first one
-    set_domain_order([copy_domain.name])
-    # And verify
-    #
-    # SECOND SIMULATION
-    #
-    simulate(
-        instance="Request",
-        message="create",
-        request=instance.name,
-        attribute=None,  # Random selection, does not matter
-        execute_methods=True
-    )
-    wait_for(
-        lambda: ssh_client.run_command("cat {}".format(FILE_LOCATION))[0] == 0,
-        num_sec=120, delay=0.5, message="wait for file to appear"
-    )
-    rc, stdout = ssh_client.run_command("cat {}".format(FILE_LOCATION))
-    assert stdout.strip() == copy_method_write_data
