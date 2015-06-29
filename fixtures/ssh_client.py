@@ -1,6 +1,7 @@
 import pytest
 
 from fixtures.pytest_store import store
+from utils.log import logger
 
 
 @pytest.fixture(scope="function")
@@ -49,3 +50,18 @@ def ssh_client(uses_ssh):
 def ssh_client_modscope(uses_ssh):
     """See :py:func:`ssh_client`."""
     return store.current_appliance.ssh_client()
+
+
+@pytest.mark.hookwrapper
+def pytest_sessionfinish(session, exitstatus):
+    """Loop through the appliance stack and close ssh connections"""
+
+    for appliance in store._current_appliance:
+        logger.debug('Closing ssh connection on {}'.format(appliance.address))
+        try:
+            appliance.ssh_client.close()
+        except:
+            logger.debug('Closing ssh connection on {} failed, but ignoring'.format(
+                appliance.address))
+            pass
+    yield
