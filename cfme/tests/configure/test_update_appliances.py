@@ -106,7 +106,7 @@ def appliance_set(cfme_data):
 
     # Unregister and destroy all
     for appliance in appliance_set.all_appliances:
-        with appliance.ssh_client() as ssh:
+        with appliance.ssh_client as ssh:
             ssh.run_command('subscription-manager remove --all')
             ssh.run_command('subscription-manager unregister')
         appliance.destroy()
@@ -189,7 +189,7 @@ def download_repo_files(appliance_set, rh_updates_data, reg_method, target_appli
 
     for appliance_name in target_appliances:
         appliance = appliance_set.find_by_name(appliance_name)
-        with appliance.ssh_client() as ssh:
+        with appliance.ssh_client as ssh:
             status, output = ssh.run_command(download_repos_str)
             assert status == 0, 'Failed to download specified repository files on machine {}'\
                                 .format(appliance.address)
@@ -212,7 +212,7 @@ def enable_repos(appliance_set, rh_updates_data, reg_method, target_appliances):
 
     for appliance_name in target_appliances:
         appliance = appliance_set.find_by_name(appliance_name)
-        with appliance.ssh_client() as ssh:
+        with appliance.ssh_client as ssh:
             for repo_name in enable_repos:
                 # Get first column from 'yum' using 'cut' and grep for repo with matching name
                 is_repo_disabled_str = "yum repolist disabled | cut -f1 -d' ' | grep '{}'"\
@@ -241,7 +241,7 @@ def add_channels(appliance_set, rh_updates_data, appliances_to_update):
 
     for appliance_name in appliances_to_update:
         appliance = appliance_set.find_by_name(appliance_name)
-        with appliance.ssh_client() as ssh:
+        with appliance.ssh_client as ssh:
             status, output = ssh.run_command(add_channels_str)
             assert status == 0, 'Failed to add specified channels on machine {}'\
                                 .format(appliance.address)
@@ -256,7 +256,7 @@ def rhn_mirror_setup(appliance_set):
 
     appliance_set.primary.restart_evm_service()
 
-    with appliance_set.primary.ssh_client() as ssh:
+    with appliance_set.primary.ssh_client as ssh:
         def is_repotrack_running():
             status, output = ssh.run_command('pgrep repotrack')
             if status == 0:
@@ -282,7 +282,7 @@ def rhn_mirror_setup(appliance_set):
 
     # Check /etc/yum.repos.d/cfme-mirror.repo file exists on secondary appliances
     for appliance in appliance_set.secondary:
-        with appliance.ssh_client() as ssh:
+        with appliance.ssh_client as ssh:
             def repo_file_exists():
                 status, output = ssh.run_command('ls /etc/yum.repos.d/cfme-mirror.repo')
                 if status == 0:
@@ -345,7 +345,7 @@ def run_platform_updates(appliance_set, appliances_to_update):
         primary_will_be_updated = False
         for appliance_name in appliances_to_update:
             appliance = appliance_set.find_by_name(appliance_name)
-            with appliance.ssh_client() as ssh:
+            with appliance.ssh_client as ssh:
                 status, output = ssh.run_command('yum check-update')
                 # 100 == there are packages available for update on this appliance
                 if status != 100:

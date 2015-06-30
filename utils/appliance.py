@@ -498,7 +498,7 @@ class IPAppliance(object):
 
         Usage:
 
-            with appliance.ssh_client() as ssh:
+            with appliance.ssh_client as ssh:
                 status, output = ssh.run_command('...')
 
         Note:
@@ -545,7 +545,7 @@ class IPAppliance(object):
         logger.info('Checking appliance database')
         if not self.db_online:
             # postgres isn't running, try to start it
-            result = self.db_ssh_client().run_command('service postgresql92-postgresql restart')
+            result = self.db_ssh_client.run_command('service postgresql92-postgresql restart')
             if result.rc != 0:
                 return 'postgres failed to start:\n{}'.format(result.output)
             else:
@@ -1335,21 +1335,21 @@ class IPAppliance(object):
     @property
     def db_online(self):
         db_check_command = ('psql -U postgres -t  -c "select now()" postgres')
-        result = self.db_ssh_client().run_command(db_check_command)
+        result = self.db_ssh_client.run_command(db_check_command)
         return result.rc == 0
 
     @property
     def db_has_database(self):
         db_check_command = ('psql -U postgres -t  -c "SELECT datname FROM pg_database '
             'WHERE datname LIKE \'vmdb_%\';" postgres | grep -q vmdb_production')
-        result = self.db_ssh_client().run_command(db_check_command)
+        result = self.db_ssh_client.run_command(db_check_command)
         return result.rc == 0
 
     @property
     def db_has_tables(self):
         db_check_command = ('psql -U postgres -t  -c "SELECT * FROM information_schema.tables '
             'WHERE table_schema = \'public\';" vmdb_production | grep -q vmdb_production')
-        result = self.db_ssh_client().run_command(db_check_command)
+        result = self.db_ssh_client.run_command(db_check_command)
         return result.rc == 0
 
     @property

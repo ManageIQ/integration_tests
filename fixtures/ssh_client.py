@@ -43,13 +43,13 @@ def ssh_client(uses_ssh):
             ssh_client_4 = ssh_client(hostname='different.host', **credentials['ssh'])
 
     """
-    return store.current_appliance.ssh_client()
+    return store.current_appliance.ssh_client
 
 
 @pytest.fixture(scope="module")
 def ssh_client_modscope(uses_ssh):
     """See :py:func:`ssh_client`."""
-    return store.current_appliance.ssh_client()
+    return store.current_appliance.ssh_client
 
 
 @pytest.mark.hookwrapper

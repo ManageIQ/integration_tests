@@ -20,7 +20,6 @@ from utils import ports
 from utils.log import logger
 from utils.path import data_path
 from utils.net import net_check
-from utils.ssh import SSHClient
 from utils.version import current_version
 from utils.wait import TimedOutError
 
@@ -48,7 +47,7 @@ def set_session_timeout():
 def set_default_domain():
     if current_version() < "5.3":
         return  # Domains are not in 5.2.x and lower
-    ssh_client = SSHClient()
+    ssh_client = store.current_appliance.ssh_client
     # The command ignores the case when the Default domain is not present (: true)
     result = ssh_client.run_rails_command(
         "\"d = MiqAeDomain.where :name => 'Default'; puts (d) ? d.first.enabled : true\"")
@@ -61,7 +60,7 @@ def set_default_domain():
 @pytest.fixture(scope="session", autouse=True)
 def fix_merkyl_workaround():
     """Workaround around merkyl not opening an iptables port for communication"""
-    ssh_client = SSHClient()
+    ssh_client = store.current_appliance.ssh_client
     if ssh_client.run_command('test -s /etc/init.d/merkyl').rc != 0:
         logger.info('Rudely overwriting merkyl init.d on appliance;')
         local_file = data_path.join("bundles").join("merkyl").join("merkyl")
