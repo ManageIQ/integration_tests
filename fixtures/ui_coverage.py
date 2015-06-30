@@ -234,7 +234,7 @@ class CoverageManager(object):
                     addr=self.collection_appliance.address),
                 timeout=1800)
 
-    def _retreive_coverage_reports(self):
+    def _retrieve_coverage_reports(self):
         # Before merging, archive and collect all the raw coverage results
         ssh_client = self.collection_appliance.ssh_client()
         ssh_client.run_command('cd /var/www/miq/vmdb/;'
