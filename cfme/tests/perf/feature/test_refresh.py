@@ -58,7 +58,7 @@ def test_refresh_provider_init_profile_perftools(ssh_client, clean_appliance, re
                'e = ExtManagementSystem.find_by_name(\'' + provider_name + '\');'
                'GC.start;'
                'PerfTools::CpuProfiler.start(\'/root/perftools-provider-init-'
-                + provider_name + '-' + str(repetition) + '\');'
+               + provider_name + '-' + str(repetition) + '\');'
                'value = Benchmark.realtime {EmsRefresh.refresh e};'
                'PerfTools::CpuProfiler.stop;'
                'value')
@@ -84,7 +84,7 @@ def test_refresh_provider_init_profile_stackprof(ssh_client, clean_appliance, re
                'GC.start;'
                'value = 0;'
                'StackProf.run(mode: :cpu, out: \'/root/stackprof-provider-init-'
-                + provider_name + '-' + str(repetition) + '\') do;'
+               + provider_name + '-' + str(repetition) + '\') do;'
                'value = Benchmark.realtime {EmsRefresh.refresh e};'
                'end;'
                'value')
@@ -122,7 +122,6 @@ def test_refresh_provider_delta_profile_perftools(ssh_client, clean_appliance, p
     Works with Ruby 1.9.3/2.0.0 w/ perftools.rb
     """
     set_server_roles_benchmark()
-    reps = perf_tests['feature']['refresh']['provider_nc']
     provider_name = cfme_data['management_systems'][provider]['name']
     providers.setup_provider(provider, validate=False)
     command = ('require \'perftools\';'
@@ -130,7 +129,8 @@ def test_refresh_provider_delta_profile_perftools(ssh_client, clean_appliance, p
                'EmsRefresh.refresh e;'
                'r = Array.new;'
                'GC.start;'
-               'PerfTools::CpuProfiler.start(\'/root/perftools-provider-delta-' + provider_name + '\');'
+               'PerfTools::CpuProfiler.start(\'/root/perftools-provider-delta-'
+               + provider_name + '\');'
                'r.push(Benchmark.realtime {EmsRefresh.refresh e});'
                'PerfTools::CpuProfiler.stop;'
                'r')
@@ -148,14 +148,14 @@ def test_refresh_provider_delta_profile_stackprof(ssh_client, clean_appliance, p
     Works with Ruby 2.1.x w/ stackprof
     """
     set_server_roles_benchmark()
-    reps = perf_tests['feature']['refresh']['provider_nc']
     provider_name = cfme_data['management_systems'][provider]['name']
     providers.setup_provider(provider, validate=False)
     command = ('e = ExtManagementSystem.find_by_name(\'' + provider_name + '\');'
                'EmsRefresh.refresh e;'
                'r = Array.new;'
                'GC.start;'
-               'StackProf.run(mode: :cpu, out: \'/root/stackprof-provider-delta-' + provider_name + '\') do;'
+               'StackProf.run(mode: :cpu, out: \'/root/stackprof-provider-delta-'
+               + provider_name + '\') do;'
                'r.push(Benchmark.realtime {EmsRefresh.refresh e});'
                'end;'
                'r')
