@@ -164,7 +164,10 @@ class Datastore(Pretty):
         sel.force_navigate('infrastructure_datastore', context=self._get_context())
         sel.click(details_page.infoblock.element("Relationships", "Hosts"))
         sel.click(pg.check_all())
-        cfg_btn("Remove Hosts from the VMDB", invokes_alert=True)
+        if version.current_version() < "5.4":
+            cfg_btn("Remove Hosts from the VMDB", invokes_alert=True)
+        else:
+            cfg_btn("Remove items from the VMDB", invokes_alert=True)
         sel.handle_alert(cancel=False)
 
     def wait_for_delete_all(self):
