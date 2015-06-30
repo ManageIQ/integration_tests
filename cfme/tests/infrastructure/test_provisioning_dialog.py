@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""This module tests various ways how to set up the provisioning using the provisioning dialog."""
 import fauxfactory
 import pytest
 import re
@@ -130,7 +131,16 @@ def provisioner(request, provider_key, provider_mgmt, provider_crud):
 
 
 def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
-    """ Tests change RAM and CPU
+    """ Tests change RAM and CPU in provisioning dialog.
+
+    Prerequisities:
+        * A provider set up, supporting provisioning in CFME
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, set number of CPUs and amount of RAM.
+        * Submit the provisioning request and wait for it to finish.
+        * Visit the page of the provisioned VM. The summary should state correct values for CPU&RAM.
 
     Metadata:
         test_flag: provision
@@ -156,9 +166,21 @@ def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
 @pytest.mark.parametrize("disk_format", ["thin", "thick", "preallocated"])
 @pytest.mark.uncollectif(lambda provider_type, disk_format:
                          (provider_type == "rhevm" and disk_format == "thick") or
-                         (provider_type != "rhevm" and disk_format == "preallocated"))
+                         (provider_type != "rhevm" and disk_format == "preallocated") or
+                         # Temporarily, our storage domain cannot handle preallocated disks
+                         (provider_type == "rhevm" and disk_format == "preallocated"))
 def test_disk_format_select(provisioner, prov_data, template_name, disk_format, provider_type):
-    """ Tests disk format
+    """ Tests disk format selection in provisioning dialog.
+
+    Prerequisities:
+        * A provider set up, supporting provisioning in CFME
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, set the disk format to be thick or thin.
+        * Submit the provisioning request and wait for it to finish.
+        * Visit the page of the provisioned VM.
+        * The ``Thin Provisioning Used`` field should state true of false according to the selection
 
     Metadata:
         test_flag: provision
@@ -181,26 +203,47 @@ def test_disk_format_select(provisioner, prov_data, template_name, disk_format, 
 @pytest.mark.parametrize("started", [True, False])
 def test_power_on_or_off_after_provision(
         provisioner, prov_data, template_name, provider_mgmt, started):
-    """ Tests power cycle after provisioning
+    """ Tests setting the desired power state after provisioning.
+
+    Prerequisities:
+        * A provider set up, supporting provisioning in CFME
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, set whether you want or not the VM to be
+            powered on after provisioning.
+        * Submit the provisioning request and wait for it to finish.
+        * The VM should become steady in the desired VM power state.
 
     Metadata:
         test_flag: provision
     """
-    prov_data["vm_name"] = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
+    vm_name = "test_prov_dlg_{}".format(fauxfactory.gen_alphanumeric())
+    prov_data["vm_name"] = vm_name
     prov_data["power_on"] = started
 
     provisioner(template_name, prov_data)
 
     wait_for(
-        lambda: provider_mgmt.does_vm_exist(prov_data["vm_name"]) and
-        provider_mgmt.is_vm_running(prov_data["vm_name"]) == started,
+        lambda: provider_mgmt.does_vm_exist(vm_name) and
+        (provider_mgmt.is_vm_running if started else provider_mgmt.is_vm_stopped)(vm_name),
         num_sec=240, delay=5
     )
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.3')
 def test_tag(provisioner, prov_data, template_name, provider_type):
-    """ Tests tagging
+    """ Tests tagging VMs using provisioning dialogs.
+
+    Prerequisities:
+        * A provider set up, supporting provisioning in CFME
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, pick a tag.
+        * Submit the provisioning request and wait for it to finish.
+        * Visit th page of VM, it should display the selected tags
+
 
     Metadata:
         test_flag: provision
@@ -217,7 +260,15 @@ def test_tag(provisioner, prov_data, template_name, provider_type):
 
 @pytest.mark.meta(blockers=[1204115])
 def test_provisioning_schedule(provisioner, prov_data, template_name):
-    """ Tests provision scheduling
+    """ Tests provision scheduling.
+
+    Prerequisities:
+        * A provider set up, supporting provisioning in CFME
+
+    Steps:
+        * Open the provisioning dialog.
+        * Apart from the usual provisioning settings, set a scheduled provision and pick a time.
+        * Submit the provisioning request, it should not start before the scheduled time.
 
     Metadata:
         test_flag: provision
