@@ -81,3 +81,24 @@ def test_button_on_host(dialog, request):
     if not myhost.exists:
         myhost.create()
     myhost.execute_button(buttongroup.hover, button.text)
+
+
+@pytest.mark.meta(blockers=[1229348], automates=[1229348])
+def test_button_avp_displayed(request):
+    """This test checks whether the Attribute/Values pairs are displayed in the dialog.
+
+    Steps:
+        * Open a dialog to create a button.
+        * Locate the section with attribute/value pairs.
+    """
+    # This is optional, our nav tree does not have unassigned button
+    buttongroup = ButtonGroup(
+        text=fauxfactory.gen_alphanumeric(),
+        hover="btn_desc_{}".format(fauxfactory.gen_alphanumeric()),
+        type=ButtonGroup.VM_INSTANCE)
+    request.addfinalizer(buttongroup.delete_if_exists)
+    buttongroup.create()
+    pytest.sel.force_navigate("new_button", context={'buttongroup': buttongroup})
+    assert (pytest.sel.is_displayed(
+        "//*[(self::h3 or self::p) and normalize-space(text())='Attribute/Value Pairs']"),
+        "The Attribute/Value Pairs part of the form is not displayed")
