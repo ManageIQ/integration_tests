@@ -15,20 +15,20 @@ def main():
     parser.add_argument("-u", "--url", help="url(s) to use for update",
         dest="urls", action="append")
     parser.add_argument('--reboot', help='reboot after installation ' +
-        '(required for proper operation)', action="store_true")
+        '(required for proper operation)', action="store_true", default=False)
 
     args = parser.parse_args()
-
     ip_a = IPAppliance(args.address)
-    status, out = ip_a.update_rhel(*args.urls)
+    # Don't reboot here, so we can print updates to the console when we do
+    res = ip_a.update_rhel(*args.urls, reboot=False, streaming=True)
 
-    if status == 0:
-        print out
-        print 'Appliance update complete'
+    if res.rc == 0:
         if args.reboot:
+            print 'Rebooting'
             ip_a.reboot()
+        print 'Appliance update complete'
 
-    return status
+    return res.rc
 
 
 if __name__ == '__main__':

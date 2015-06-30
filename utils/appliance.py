@@ -814,6 +814,7 @@ class IPAppliance(object):
         log_callback_f = kwargs.pop("log_callback", lambda msg: self.log.info)
         skip_broken = kwargs.pop("skip_broken", False)
         reboot = kwargs.pop("reboot", True)
+        streaming = kwargs.pop("streaming", False)
         log_callback = lambda msg: log_callback_f("Update RHEL: {}".format(msg))
         log_callback('updating appliance')
         if not urls:
@@ -832,7 +833,10 @@ class IPAppliance(object):
                     if rhscl_url:
                         urls.append(rhscl_url)
 
-        client = self.ssh_client
+        if streaming:
+            client = self.ssh_client(stream_output=True)
+        else:
+            client = self.ssh_client
 
         # create repo file
         log_callback('Creating repo file on appliance')
@@ -858,7 +862,7 @@ class IPAppliance(object):
         # clean yum beforehand to clear metadata from earlier update repos, if any
         try:
             skip = '--skip-broken' if skip_broken else ''
-            status, out = client.run_command('yum update -y --nogpgcheck {}'.format(skip),
+            result = client.run_command('yum update -y --nogpgcheck {}'.format(skip),
                 timeout=3600)
         except socket.timeout:
             msg = 'SSH timed out while updating appliance, exiting'
@@ -866,9 +870,9 @@ class IPAppliance(object):
             # failure to update is fatal, kill this process
             raise KeyboardInterrupt(msg)
 
-        if status != 0:
+        if result.rc != 0:
             self.log.error('appliance update failed')
-            self.log.error(out)
+            self.log.error(result.output)
             msg = 'Appliance {} failed to update RHEL, error in logs'.format(self.address)
             log_callback(msg)
             raise ApplianceException(msg)
@@ -876,7 +880,7 @@ class IPAppliance(object):
         if reboot:
             self.reboot(wait_for_web_ui=False, log_callback=log_callback)
 
-        return status, out
+        return result
 
     def patch_ajax_wait(self, reverse=False, log_callback=None):
         """Patches ajax wait code
