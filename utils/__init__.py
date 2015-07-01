@@ -193,7 +193,10 @@ def read_env(file):
 
         # filter out vars not defined
         for line in iter(proc.stdout.readline, b''):
-            key, value = line.split("=", 1)
+            try:
+                key, value = line.split("=", 1)
+            except ValueError:
+                continue
             if '{}='.format(key) in content:
                 env_vars[key] = value.strip()
         stdout, stderr = proc.communicate()
