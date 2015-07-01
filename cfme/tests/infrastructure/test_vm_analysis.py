@@ -162,8 +162,9 @@ def appliance_browser(get_appliance, provider_crud, vm_template_name, os, fs_typ
     test_list.remove([provider_crud.key, vm_template_name, os, fs_type])
 
     with get_appliance.ipapp.db.transaction:
-        with get_appliance.browser_session() as browser:
-            yield browser
+        with get_appliance.ipapp:  # To make REST API work
+            with get_appliance.browser_session() as browser:
+                yield browser
 
     # cleanup provisioned appliance if not more tests for it
     if provider_crud.key is not main_provider:
@@ -488,6 +489,7 @@ class TestVmFileSystemsAnalysis():
 # REST (rest_detail, rest_collection)
 @pytest.mark.usefixtures(
     "appliance_browser", "by_vm_state", "finish_appliance_setup", "delete_tasks_first")
+@pytest.mark.ignore_stream("5.2", "5.3")
 class TestVmAnalysisOfVmStatesUsingREST(object):
     def test_stopped_vm(
             self,
@@ -497,14 +499,15 @@ class TestVmAnalysisOfVmStatesUsingREST(object):
             verify_vm_stopped,
             os,
             fs_type,
-            soft_assert,
-            rest_api):  # , register_event):
+            soft_assert):  # , register_event):
         """Tests stopped vm
 
         Metadata:
             test_flag: vm_analysis
         """
-        _scan_test(provider_crud, vm, os, fs_type, soft_assert, "rest_detail", rest_api)
+        _scan_test(
+            provider_crud, vm, os, fs_type, soft_assert, "rest_detail",
+            pytest.store.current_appliance.rest_api)
 
     def test_suspended_vm(
             self,
@@ -514,14 +517,15 @@ class TestVmAnalysisOfVmStatesUsingREST(object):
             verify_vm_suspended,
             os,
             fs_type,
-            soft_assert,
-            rest_api):  # , register_event):
+            soft_assert):  # , register_event):
         """Tests suspended vm
 
         Metadata:
             test_flag: vm_analysis, provision
         """
-        _scan_test(provider_crud, vm, os, fs_type, soft_assert, "rest_detail", rest_api)
+        _scan_test(
+            provider_crud, vm, os, fs_type, soft_assert, "rest_detail",
+            pytest.store.current_appliance.rest_api)
 
 
 # @pytest.mark.usefixtures(
@@ -534,6 +538,7 @@ class TestVmAnalysisOfVmStatesUsingREST(object):
 
 @pytest.mark.usefixtures(
     "appliance_browser", "by_fs_type", "finish_appliance_setup", "delete_tasks_first")
+@pytest.mark.ignore_stream("5.2", "5.3")
 class TestVmFileSystemsAnalysisUsingREST(object):
     def test_running_vm(
             self,
@@ -550,4 +555,6 @@ class TestVmFileSystemsAnalysisUsingREST(object):
         Metadata:
             test_flag: vm_analysis, provision
         """
-        _scan_test(provider_crud, vm, os, fs_type, soft_assert, "rest_detail", rest_api)
+        _scan_test(
+            provider_crud, vm, os, fs_type, soft_assert, "rest_detail",
+            pytest.store.current_appliance.rest_api)
