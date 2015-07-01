@@ -134,6 +134,9 @@ class TreeNode(pretty.Pretty):
 class CopiableTreeNode(TreeNode):
     copy_form = Form(fields=[
         ("domain", Select("select#domain")),
+        ("domain_text_only",
+            "//fieldset[p]//tr[./td[@class='key' and normalize-space(.)='To Domain']]/"
+            "td[not(@class='key') and not(select)]"),
         ("override", Input("override_source"))
     ])
 
@@ -165,7 +168,15 @@ class CopiableTreeNode(TreeNode):
             domain_name = domain.name
         else:
             domain_name = str(domain)
-        fill(self.copy_form, {"domain": domain_name, "override": True})
+        if sel.is_displayed(self.copy_form.domain):
+            fill(self.copy_form, {"domain": domain_name, "override": True})
+        else:
+            # If there is only one domain, therefore the select is not present, only text
+            domain_selected = sel.text(self.copy_form.domain_text_only).strip()
+            if domain_selected != domain_name:
+                raise ValueError(
+                    "There is only one domain to select and that is {}".format(domain_selected))
+            fill(self.copy_form, {"override": True})
         sel.click(self.copy_button)
         flash.assert_message_match("Copy selected Automate {} was saved".format(self.class_name))
 
