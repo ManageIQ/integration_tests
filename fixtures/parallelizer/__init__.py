@@ -411,7 +411,11 @@ class ParallelSession(object):
 
     def _monitor_shutdown_t(self, slaveid, respawn):
         # a KeyError here means self.slaves got mangled, indicating a problem elsewhere
-        slave = self.slaves[slaveid]
+        try:
+            slave = self.slaves[slaveid]
+        except KeyError:
+            self.log.warning('Slave was missing when trying to monitor shutdown')
+            return
 
         start_time = time()
 
