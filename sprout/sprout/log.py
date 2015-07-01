@@ -78,7 +78,7 @@ def create_logger(o, additional_id=None):
     with logger_cache_lock:
         if None not in logger_cache:
             logger = logging.getLogger()
-            logger.setLevel(logging.DEBUG)
+            logger.setLevel(logging.INFO)
             socket_handler = logging.handlers.SocketHandler(
                 "localhost", logging.handlers.DEFAULT_TCP_LOGGING_PORT)
             atexit.register(socket_handler.close)
