@@ -45,9 +45,9 @@ menu.nav.add_branch(
                 [
                     lambda ctx: accordion_tree('All Orchestration Templates',
                         ctx['template_type'], ctx['template_name']),
-                    {'edit_template': lambda _: cfg_btn("Edit this Orchestration Template")},
-                    {'create_service_dialog': lambda _: cfg_btn("Create Service Dialog from \
-                        Orchestration Template")}
+                    {'edit_template': lambda _: cfg_btn("Edit this Orchestration Template"),
+                     'create_service_dialog': lambda _: cfg_btn("Create Service Dialog from "
+                        "Orchestration Template")}
                 ],
                 'orch_template_type':
                 [
@@ -123,6 +123,18 @@ class OrchestrationTemplate(Updateable, Pretty):
         else:
             template_name = sel.text("//li[@id='ot_xx-othot']/ul"
                 "//a[contains(@class, 'dynatree-title')]").encode("utf-8")
+        sel.force_navigate('create_service_dialog',
+                           context={'template_type': self.template_type,
+                                    'template_name': template_name})
+        fill(dialog_form, {'dialog_name': dialog_name},
+             action=dialog_form.save_button)
+        flash.assert_success_message('Service Dialog "%s" was successfully created' %
+                                     dialog_name)
+        return template_name
+
+    def create_service_dialog_from_template(self, dialog_name, template_name):
+        sel.force_navigate('orch_template_type',
+                           context={'template_type': self.template_type})
         sel.force_navigate('create_service_dialog',
                            context={'template_type': self.template_type,
                                     'template_name': template_name})

@@ -175,7 +175,6 @@ def wait_for_request(cells, partial_check=False):
         # Request not found at all, can't continue
         return False
 
-    assert row.status.text != 'Error'
     if row.request_state.text == 'Finished':
         return row
     else:

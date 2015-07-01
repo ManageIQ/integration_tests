@@ -209,7 +209,7 @@ class CatalogItem(Updateable, Pretty):
                                'select_dialog': self.dialog,
                                'select_orch_template': self.orch_template,
                                'select_provider': self.provider_type})
-        if current_version() >= "5.4":
+        if (current_version() >= "5.4") and (self.item_type != "Orchestration"):
             sel.click(basic_info_form.field_entry_point)
             dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
