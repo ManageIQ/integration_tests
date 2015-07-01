@@ -53,7 +53,7 @@ edit_form = Form(
     fields=[
         ('custom_ident', "//*[@id='custom_1']"),
         ('description_tarea', "//textarea[@id='description']"),
-        ('parent_sel', "//*[@id='chosen_parent']"),
+        ('parent_sel', Select("//select[@name='chosen_parent']")),
         ('child_sel', Select("//select[@id='kids_chosen']", multi=True)),
         ('vm_sel', Select("//select[@id='choices_chosen']", multi=True)),
         ('add_btn', "//img[@alt='Move selected VMs to left']"),
@@ -211,7 +211,12 @@ class Instance(Updateable, Pretty):
                      Will not wait at all, if set to 0 (Defaults to ``900``)
         """
         deploy_template(self.provider_crud.key, self.name, self.template_name, **kwargs)
-        if timeout:
+        # To make it compatible with the infrastructure Vm which takes find_in_cfme
+        if "find_in_cfme" not in kwargs:
+            find_in_cfme = bool(timeout)
+        else:
+            find_in_cfme = kwargs["find_in_cfme"]
+        if find_in_cfme:
             self.provider_crud.refresh_provider_relationships()
             self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
 
@@ -241,6 +246,10 @@ class Instance(Updateable, Pretty):
         else:
             if refresh:
                 toolbar.refresh()
+
+    def open_edit(self):
+        self.load_details(refresh=True)
+        toolbar.select("Configuration", "Edit this Instance")
 
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper instance details page.
