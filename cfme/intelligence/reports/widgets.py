@@ -128,7 +128,9 @@ class Widget(Updateable, Pretty):
         sel.handle_alert()
         flash.assert_no_errors()
         if wait:
-            wait_for(lambda: self.check_status() == "Complete")
+            wait_for(
+                self.check_status,
+                num_sec=600, delay=15, fail_condition=lambda result: result != "Complete")
 
     def check_status(self):
         self.go_to_detail()
