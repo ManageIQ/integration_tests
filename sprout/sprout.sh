@@ -24,6 +24,7 @@ PIDFILE_MEMCACHED="./.sprout.memcached.pid"
 PIDFILE_WORKER="./.sprout.worker.pid"
 PIDFILE_BEAT="./.sprout.beat.pid"
 PIDFILE_FLOWER="./.sprout.flower.pid"
+PIDFILE_LOGSERVER="./.sprout.logserver.pid"
 LOGFILE="./sprout-manager.log"
 UPDATE_LOG="./update.log"
 GUNICORN_CMD="gunicorn --bind 127.0.0.1:${DJANGO_PORT:-8000} -w ${GUNICORN_WORKERS:-4} --access-logfile access.log --error-logfile error.log sprout.wsgi:application"
@@ -31,6 +32,7 @@ MEMCACHED_CMD="memcached -l 127.0.0.1 -p ${MEMCACHED_PORT:-23156}"
 WORKER_CMD="./celery_runner worker --app=sprout.celery:app --concurrency=${CELERY_MAX_WORKERS:-8} --loglevel=INFO -Ofair"
 BEAT_CMD="./celery_runner beat --app=sprout.celery:app"
 FLOWER_CMD="./celery_runner flower --app=sprout.celery:app"
+LOGSERVER_CMD="./logserver.py"
 
 true
 TRUE=$?
@@ -130,6 +132,57 @@ function stop_memcached() {
         return 0
     else
         echo ">> No pidfile present, Memcached probably not running"
+        return 1
+    fi
+}
+
+
+##
+#
+# LOGSERVER functions
+#
+function start_logserver() {
+    cddir
+    if [ -e "${PIDFILE_LOGSERVER}" ] ;
+    then
+        ps -p `cat $PIDFILE_LOGSERVER` >/dev/null
+        if [ $? -eq 0 ] ;
+        then
+            echo ">> Logserver is already running!"
+            return 1
+        fi
+        rm -f $PIDFILE_LOGSERVER
+    fi
+
+    echo ">> Starting Logserver"
+    $LOGSERVER_CMD > $LOGFILE 2>&1 &
+    PID=$!
+    echo $PID > $PIDFILE_LOGSERVER
+    echo ">> Logserver is running!"
+}
+
+function stop_logserver() {
+    cddir
+    if [ -e "${PIDFILE_LOGSERVER}" ] ;
+    then
+        PID=`cat $PIDFILE_LOGSERVER`
+        ps -p $PID >/dev/null
+        if [ $? -ne 0 ] ;
+        then
+            echo ">> Logserver is already stopped!"
+            rm -f $PIDFILE_LOGSERVER
+            return 1
+        fi
+        kill -TERM $PID
+        echo "TERM signal issued to Logserver" >> $LOGFILE
+        echo ">> Waiting for the Logserver to stop"
+        while kill -0 "$PID" >/dev/null 2>&1 ; do
+            sleep 0.5
+        done
+        rm -f $PIDFILE_LOGSERVER
+        return 0
+    else
+        echo ">> No pidfile present, Logserver probably not running"
         return 1
     fi
 }
@@ -359,6 +412,7 @@ function stop_flower() {
 
 
 function start_sprout() {
+    start_logserver
     start_memcached
     start_gunicorn
     start_worker
@@ -372,6 +426,7 @@ function stop_sprout() {
     stop_flower
     stop_gunicorn
     stop_memcached
+    stop_logserver
 }
 
 function restart_sprout() {
@@ -452,6 +507,7 @@ function update_sprout() {
         start_flower
     fi
     start_beat
+    start_logserver
     echo "--- Update finished at `date` ---" >> $UPDATE_LOG
     rm .update-running
 }
@@ -489,12 +545,14 @@ case "${ACTION}" in
     worker-start) start_worker ;;
     flower-start) start_flower ;;
     memcached-start) start_memcached ;;
+    logserver-start) start_logserver ;;
     gunicorn-stop) stop_gunicorn ;;
     
     beat-stop) stop_beat ;;
     worker-stop) stop_worker ;;
     flower-stop) stop_flower ;;
     memcached-stop) stop_memcached ;;
+    logserver-stop) stop_logserver ;;
     
     start) start_sprout ;;
     stop) stop_sprout ;;
@@ -505,6 +563,6 @@ case "${ACTION}" in
     check-update) sprout_needs_update ;;
     yaml-update) update_yamls ;;
     backup) backup_before_update ;;
-    *) echo "Usage: ${0} start|{gunicorn,beat,worker,flower,memcached}-start|stop|{gunicorn,beat,worker,flower,memcached}-stop|restart|check-update|update|reload" ;;
+    *) echo "Usage: ${0} start|{gunicorn,beat,worker,flower,memcached,logserver}-start|stop|{gunicorn,beat,worker,flower,memcached, logserver}-stop|restart|check-update|update|reload" ;;
 esac
 
