@@ -73,15 +73,28 @@ def test_chkconfig_on(ssh_client, service):
 
 
 @pytest.mark.ignore_stream("upstream")
-@pytest.mark.parametrize(('rule'), [
-    'ACCEPT     tcp  --  anywhere             anywhere            state NEW tcp dpt:ssh',
-    'ACCEPT     tcp  --  anywhere             anywhere            state NEW tcp dpt:http',
-    'ACCEPT     tcp  --  anywhere             anywhere            state NEW tcp dpt:https'
+@pytest.mark.parametrize(('proto,port'), [
+    ('tcp', 22),
+    ('tcp', 80),
+    ('tcp', 443),
 ])
-def test_iptables_rules(ssh_client, rule):
+def test_iptables_rules(ssh_client, proto, port):
     """Verifies key iptable rules are in place"""
-    stdout = ssh_client.run_command('iptables -L')[1]
-    assert rule in stdout
+    # get the current iptables state, nicely formatted for us by iptables-save
+    res = ssh_client.run_command('iptables-save')
+    # get everything from the input chain
+    input_rules = filter(lambda line: line.startswith('-A INPUT'), res.output.splitlines())
+
+    # filter to make sure we have a rule that matches the given proto and port
+    def rule_filter(rule):
+        # iptables-save should put all of these in order for us
+        # if not, this can be broken up into its individual components
+        matches = [
+            '-p {proto}',
+            '-m {proto} --dport {port} -j ACCEPT'
+        ]
+        return all([match.format(proto=proto, port=port) in rule for match in matches])
+    assert filter(rule_filter, input_rules)
 
 
 # this is based on expected changes tracked in github/ManageIQ/cfme_build repo
