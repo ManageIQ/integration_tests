@@ -15,7 +15,8 @@ import_form = Form(
 
 export_form = Form(
     fields=[
-        ("available", Select("select#choices_chosen_"))
+        ("type", Select("select#dbtype")),
+        ("available", Select("select#choices_chosen_")),
     ]
 )
 
