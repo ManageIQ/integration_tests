@@ -1,15 +1,31 @@
 # -*- coding: utf-8 -*-
+import fauxfactory
 import pytest
 
-from cfme.control.explorer import PolicyProfile, VMCompliancePolicy
+from cfme.control.explorer import PolicyProfile, VMCompliancePolicy, Action, VMControlPolicy
 from cfme.infrastructure.virtual_machines import (assign_policy_profiles, get_first_vm_title,
-    unassign_policy_profiles)
+    unassign_policy_profiles, Vm)
+from utils.log import logger
 from utils.providers import setup_a_provider as _setup_a_provider
+from utils.wait import wait_for
 
 
 @pytest.fixture(scope="module")
 def setup_a_provider():
-    _setup_a_provider("infra")
+    return _setup_a_provider("infra")
+
+
+@pytest.fixture(scope="module")
+def vmware_provider():
+    return _setup_a_provider("infra", "virtualcenter")
+
+
+@pytest.fixture(scope="module")
+def vmware_vm(request, vmware_provider):
+    vm = Vm("test_control_{}".format(fauxfactory.gen_alpha().lower()), vmware_provider)
+    vm.create_on_provider(find_in_cfme=True)
+    request.addfinalizer(vm.delete_from_provider)
+    return vm
 
 
 @pytest.mark.meta(blockers=[1155284])
@@ -38,3 +54,73 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
     pytest.sel.force_navigate("infrastructure_virtual_machines")
     assert "except" not in pytest.sel.title().lower()
     unassign_policy_profiles(vm, profile.description, via_details=True)
+
+
+@pytest.mark.meta(blockers=[1209538], automates=[1209538])
+def test_folder_field_scope(request, vmware_provider, vmware_vm):
+    """This test tests the bug that makes the folder filter in expression not work.
+
+    Prerequisities:
+        * A VMware provider.
+        * A VM on the provider.
+        * A tag to assign.
+
+    Steps:
+        * Read the VM's 'Parent Folder Path (VMs & Templates)' from its summary page.
+        * Create an action for assigning the tag to the VM.
+        * Create a policy, for scope use ``Field``, field name
+            ``VM and Instance : Parent Folder Path (VMs & Templates)``, ``INCLUDES`` and the
+            folder name as stated on the VM's summary page.
+        * Assign the ``VM Discovery`` event to the policy.
+        * Assign the action to the ``VM Discovery`` event.
+        * Create a policy profile and assign the policy to it.
+        * Assign the policy profile to the provider.
+        * Delete the VM from the CFME database.
+        * Initiate provider refresh and wait for VM to appear again.
+        * Assert that the VM gets tagged by the tag.
+    """
+    # Retrieve folder location
+    folder = None
+    tags = vmware_vm.get_tags()
+    for tag in tags:
+        if "Parent Folder Path (VMs & Templates)" in tag:
+            folder = tag.split(":", 1)[-1].strip()
+            logger.info("Detected folder: {}".format(folder))
+            break
+    else:
+        pytest.fail("Could not read the folder from the tags:\n{}".format(repr(tags)))
+
+    # Create Control stuff
+    action = Action(
+        fauxfactory.gen_alpha(),
+        "Tag", dict(tag=("My Company Tags", "Service Level", "Platinum")))
+    action.create()
+    request.addfinalizer(action.delete)
+    policy = VMControlPolicy(
+        fauxfactory.gen_alpha(),
+        scope=(
+            "fill_field(VM and Instance : Parent Folder Path (VMs & Templates), "
+            "INCLUDES, {})".format(folder)))
+    policy.create()
+    request.addfinalizer(policy.delete)
+    policy.assign_events("VM Discovery")
+    request.addfinalizer(policy.assign_events)  # Unassigns
+    policy.assign_actions_to_event("VM Discovery", action)
+    profile = PolicyProfile(fauxfactory.gen_alpha(), policies=[policy])
+    profile.create()
+    request.addfinalizer(profile.delete)
+
+    # Assign policy profile to the provider
+    vmware_provider.assign_policy_profiles(profile.description)
+    request.addfinalizer(lambda: vmware_provider.unassign_policy_profiles(profile.description))
+
+    # Delete and rediscover the VM
+    vmware_vm.remove_from_cfme()
+    vmware_vm.wait_for_delete()
+    vmware_provider.refresh_provider_relationships()
+    vmware_vm.wait_to_appear()
+
+    # Wait for the tag to appear
+    wait_for(
+        vmware_vm.get_tags, num_sec=600, delay=15,
+        fail_condition=lambda tags: "Service Level: Platinum" not in tags, message="vm be tagged")
