@@ -46,6 +46,7 @@ pytest.ini
 .pydevproject
 .settings
 .floo*
+.python-version
 
 # rendered documentation
 docs/_build
