@@ -34,10 +34,12 @@ from multimethods import singledispatch, multidispatch
 
 import diaper
 import pytest
+import base64
 from cfme import exceptions, js
 from fixtures.pytest_store import store
 from utils import version
 from utils.browser import browser, ensure_browser_open, quit
+from utils.path import log_path
 from utils.log import logger
 from utils.wait import wait_for
 from utils.pretty import Pretty
@@ -47,6 +49,9 @@ _thread_local = local()
 _thread_local.ajax_timeout = 30
 
 class_selector = re.compile(r"^(?:[a-zA-Z][a-zA-Z0-9]*)?(?:[#.][a-zA-Z0-9_-]+)+$")
+
+
+urls = []
 
 
 # Monkeypatching WebElement
@@ -318,6 +323,24 @@ def wait_for_ajax():
         _nothing_in_flight,
         num_sec=_thread_local.ajax_timeout, delay=0.1, message="wait for ajax", quiet=True,
         silent_failure=True)
+
+    # If we are not supposed to take page screenshots...well...then...dont.
+    if not store.config.getvalue('page_screenshots'):
+        return
+
+    url = browser().current_url
+    url = url.replace(base_url(), '')
+    url = url.replace("/", '_')
+    if url not in urls:
+        logger.info('Taking picture of page: {}'.format(url))
+        ss, sse = take_screenshot()
+        if ss:
+            ss_path = log_path.join('page_screenshots')
+            if not ss_path.exists():
+                ss_path.mkdir()
+            with ss_path.join("{}.png".format(url)).open('wb') as f:
+                f.write(base64.b64decode(ss))
+        urls.append(url)
 
 
 @contextmanager
