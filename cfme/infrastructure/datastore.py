@@ -153,18 +153,21 @@ class Datastore(Pretty):
             % (self.name, "All Registered vms")
         )
 
-    def delete_all_attached_hosts(self):
+    def delete_all_attached_vms(self):
         sel.force_navigate('infrastructure_datastore', context=self._get_context())
         sel.click(details_page.infoblock.element("Relationships", "Managed VMs"))
         sel.click(pg.check_all())
         cfg_btn("Remove selected items from the VMDB", invokes_alert=True)
         sel.handle_alert(cancel=False)
 
-    def delete_all_attached_vms(self):
+    def delete_all_attached_hosts(self):
         sel.force_navigate('infrastructure_datastore', context=self._get_context())
         sel.click(details_page.infoblock.element("Relationships", "Hosts"))
         sel.click(pg.check_all())
-        cfg_btn("Remove Hosts from the VMDB", invokes_alert=True)
+        path = version.pick({
+            version.LOWEST: "Remove Hosts from the VMDB",
+            "5.4": "Remove items from the VMDB"})
+        cfg_btn(path, invokes_alert=True)
         sel.handle_alert(cancel=False)
 
     def wait_for_delete_all(self):

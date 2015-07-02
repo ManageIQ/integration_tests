@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import pytest
 from cfme.infrastructure import host, datastore, cluster, resource_pool, virtual_machines
 from cfme.web_ui import Region
 from utils import testgen
@@ -99,6 +100,8 @@ def test_delete_resource_pool(setup_provider, provider_crud, remove_test):
     test_resourcepool.wait_for_appear()
 
 
+@pytest.mark.meta(blockers=[1236977])
+@pytest.mark.ignore_stream("upstream")
 def test_delete_datastore(setup_provider, provider_crud, remove_test):
     """ Tests delete datastore
 
@@ -109,14 +112,13 @@ def test_delete_datastore(setup_provider, provider_crud, remove_test):
     test_datastore = datastore.Datastore(name=data_store)
     host_count = test_datastore.get_hosts()
     vm_count = test_datastore.get_vms()
-    if len(host_count) == 0 and len(vm_count) == 0:
-        test_datastore.delete(cancel=False)
-    else:
+    if host_count != 0:
         test_datastore.delete_all_attached_hosts()
         test_datastore.wait_for_delete_all()
+    if vm_count != 0:
         test_datastore.delete_all_attached_vms()
         test_datastore.wait_for_delete_all()
-        test_datastore.delete(cancel=False)
+    test_datastore.delete(cancel=False)
     test_datastore.wait_for_delete()
     provider_crud.refresh_provider_relationships()
     test_datastore.wait_for_appear()
