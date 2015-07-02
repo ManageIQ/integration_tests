@@ -307,7 +307,12 @@ class Entity(object):
                 self._data = new
             else:
                 self._data.update(new)
-        self._href = self._data["id" if not self.collection._api.new_id_behaviour else "href"]
+        if (
+                "id" in self._data and "href" in self._data
+                and isinstance(self._data["href"], basestring)):
+            self._href = self._data["href"]
+        else:
+            self._href = self._data["id" if not self.collection._api.new_id_behaviour else "href"]
         self._actions = self._data.pop("actions", [])
         for key, value in self._data.iteritems():
             if key in self.TIME_FIELDS:
