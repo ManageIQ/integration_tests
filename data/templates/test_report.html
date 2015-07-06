@@ -168,6 +168,9 @@
 	    {% endif %}
             <div>
                 <h3>Artifacts</h3>
+                {% if test.rbac_screenshot %}
+                    <a href="{{test.rbac_screenshot}}" class="btn btn-primary" role="button">RBAC Screenshot</a>
+                {% endif %}
                 {% if test.screenshot %}
                     <a href="{{test.screenshot}}" class="btn btn-primary" role="button">Screenshot</a>
                 {% endif %}

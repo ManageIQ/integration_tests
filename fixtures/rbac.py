@@ -71,6 +71,7 @@ from utils.log import logger
 from cfme.login import logout
 from fixtures.pytest_store import set_user
 from fixtures.artifactor_plugin import art_client, get_test_idents
+from cfme.fixtures.pytest_selenium import take_screenshot
 import pytest
 import traceback
 import csv
@@ -121,6 +122,18 @@ def save_traceback_file(node, contents):
                          contents=contents, fd_ident="rbac")
 
 
+def save_screenshot(node, ss, sse):
+    name, location = get_test_idents(node)
+    if ss:
+        art_client.fire_hook('filedump', test_location=location, test_name=name,
+                             filename="rbac_screenshot.png", fd_ident="rbac_screenshot", mode="wb",
+                             contents_base64=True, contents=ss)
+    if sse:
+        art_client.fire_hook('filedump', test_location=location, test_name=name,
+                             filename="rbac_screenshot.txt", fd_ident="rbac_screenshot", mode="w",
+                             contents_base64=False, contents=sse)
+
+
 def really_logout():
     """A convenience function logging out
 
@@ -159,6 +172,8 @@ def pytest_pyfunc_call(pyfuncitem):
     # Actually perform the test. outcome is set to be a result object from the test
     outcome = yield
 
+    screenshot, screenshot_error = take_screenshot()
+
     # Set the user back again and log out
     if 'rbac_role' in pyfuncitem.fixturenames:
         really_logout()
@@ -169,10 +184,11 @@ def pytest_pyfunc_call(pyfuncitem):
     if 'rbac_role' in pyfuncitem.fixturenames:
         logger.error(pyfuncitem.location[0])
         loc = "{}/{}".format(pyfuncitem.location[0], pyfuncitem.location[2])
-        loc = loc[:min([loc.rfind('['), len(loc)])]
+        # loc = loc[:min([loc.rfind('['), len(loc)])]
         logger.error(loc)
-        errors = tests.get(loc, None)
+        errors = [v for k, v in tests.iteritems() if loc.startswith(k)]
         if errors:
+            errors = errors[0]
             user = pyfuncitem.funcargs['rbac_role']
             if errors[user]:
                 if not outcome.excinfo:
@@ -186,6 +202,7 @@ def pytest_pyfunc_call(pyfuncitem):
                         contents = "".join(traceback.format_list(
                             traceback.extract_tb(outcome.excinfo[2])))
                         save_traceback_file(pyfuncitem, contents)
+                        save_screenshot(pyfuncitem, screenshot, screenshot_error)
                         logger.error("RBAC: You blithering idiot, "
                                      "you failed with the wrong exception")
                         raise Exception("RBAC: You should fail with {}!".format(errors[user]))
@@ -197,6 +214,14 @@ def pytest_pyfunc_call(pyfuncitem):
                     contents = "".join(traceback.format_list(
                         traceback.extract_tb(outcome.excinfo[2])))
                     save_traceback_file(pyfuncitem, contents)
+                    save_screenshot(pyfuncitem, screenshot, screenshot_error)
                     raise Exception("RBAC: Test should have passed!")
         else:
             logger.error("RBAC: I didn't get any thing from the csv")
+
+
+@pytest.mark.hookwrapper
+def pytest_generate_tests(metafunc):
+    yield
+    if 'rbac_role' in metafunc.fixturenames:
+        metafunc.parametrize('rbac_role', roles)
