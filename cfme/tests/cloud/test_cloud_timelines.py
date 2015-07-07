@@ -4,7 +4,7 @@ import pytest
 from cfme.cloud.instance import instance_factory, details_page
 from cfme.web_ui import toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyed
-from utils import testgen
+from utils import testgen, version
 from utils.blockers import BZ
 from utils.log import logger
 from utils.wait import wait_for
@@ -106,6 +106,8 @@ def db_event(db, provider_crud):
 @pytest.mark.meta(
     blockers=BZ(1201923, unblock=lambda provider_type: provider_type != 'ec2'),
 )
+@pytest.mark.uncollectif(
+    lambda provider_type: version.current_version < "5.4" and provider_type == 'ec2')
 def test_provider_event(setup_provider, provider_crud, provider_type, gen_events, test_instance):
     """ Tests provider events on timelines
 
@@ -122,6 +124,8 @@ def test_provider_event(setup_provider, provider_crud, provider_type, gen_events
 @pytest.mark.meta(
     blockers=BZ(1201923, unblock=lambda provider_type: provider_type != 'ec2'),
 )
+@pytest.mark.uncollectif(
+    lambda provider_type: version.current_version < "5.4" and provider_type == 'ec2')
 def test_azone_event(setup_provider, provider_crud, provider_type, gen_events, test_instance):
     """ Tests availablility zone events on timelines
 
@@ -136,8 +140,10 @@ def test_azone_event(setup_provider, provider_crud, provider_type, gen_events, t
              message="events to appear")
 
 
-def test_vm_event(setup_provider, provider_crud, provider_type, db, gen_events,
-                test_instance, bug):
+@pytest.mark.uncollectif(
+    lambda provider_type: version.current_version < "5.4" and provider_type == 'ec2')
+def test_vm_event(setup_provider, provider_crud, provider_type, db,
+                 bug):
     """ Tests vm events on timelines
 
     Metadata:
