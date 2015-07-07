@@ -150,7 +150,8 @@ def run_tasks():
                                     nowait=True,
                                     pr=task['pr_number'],
                                     sprout=True,
-                                    sprout_stream=stream)
+                                    sprout_stream=stream,
+                                    sprout_description=task['tid'])
                 cont_count += 1
                 tapi.task(task['tid']).put({'result': 'running', 'vm_name': vm_name,
                                             'provider': provider, 'template': template})
