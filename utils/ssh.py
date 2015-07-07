@@ -33,6 +33,8 @@ _ssh_keystate = AttrDict({
 # enum reverse lookup
 _ssh_keystate.update({v: k for k, v in _ssh_keystate.items()})
 
+_client_cache = {}
+
 
 class SSHClient(paramiko.SSHClient):
     """paramiko.SSHClient wrapper
@@ -40,31 +42,49 @@ class SSHClient(paramiko.SSHClient):
     Allows copying/overriding and use as a context manager
     Constructor kwargs are handed directly to paramiko.SSHClient.connect()
     """
-    def __init__(self, stream_output=False, keystate=_ssh_keystate.not_installed,
-            **connect_kwargs):
-        super(SSHClient, self).__init__()
-        self._streaming = stream_output
-        self._keystate = keystate
-        logger.debug('client initialized with keystate {}'.format(_ssh_keystate[keystate]))
+    def __new__(cls, *args, **kwargs):
+        # Custom __new__ method uses _client_cache in combination with
+        # the passed-in kwargs to memoize SSHClient instances
+
+        # bail out if this is a subclass, rather than trying to deal with its args
+        if cls != SSHClient:
+            return paramiko.SSHClient.__new__(cls, *args, **kwargs)
 
         # Load credentials and destination from confs, set up sane defaults
         parsed_url = urlparse(store.base_url)
-        default_connect_kwargs = {
+        connect_kwargs = {
             'username': conf.credentials['ssh']['username'],
             'password': conf.credentials['ssh']['password'],
             'hostname': parsed_url.hostname,
+            'port': ports.SSH,
             'timeout': 10,
             'allow_agent': False,
             'look_for_keys': False,
-            'gss_auth': False
+            'gss_auth': False,
+            'stream_output': False
         }
 
-        default_connect_kwargs["port"] = ports.SSH
+        # Overlay connect kwargs wih any passed-in kwargs
+        connect_kwargs.update(kwargs)
 
-        # Overlay defaults with any passed-in kwargs and store
-        default_connect_kwargs.update(connect_kwargs)
-        self._connect_kwargs = default_connect_kwargs
-        self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        # freeze connect kwargs to make a usable cache key
+        frozen_connect_kwargs = frozenset(connect_kwargs.items())
+        if frozen_connect_kwargs not in _client_cache:
+            client = paramiko.SSHClient.__new__(cls)
+            client.__init__(*args, **connect_kwargs)
+            _client_cache[frozen_connect_kwargs] = client
+        # Because we return an instance, __init__ will be called (again)
+        return _client_cache[frozen_connect_kwargs]
+
+    def __init__(self, keystate=_ssh_keystate.not_installed, **connect_kwargs):
+        super(SSHClient, self).__init__()
+        # Because of our __new__ shenanigans, this may already be set
+        if not hasattr(self, 'keystate'):
+            self._keystate = keystate
+        if not hasattr(self, '_connect_kwargs'):
+            self._streaming = connect_kwargs.pop('stream_output', False)
+            self._connect_kwargs = connect_kwargs
+        logger.debug('client initialized with keystate {}'.format(_ssh_keystate[keystate]))
 
     def __repr__(self):
         return "<SSHClient hostname={} port={}>".format(
@@ -72,16 +92,8 @@ class SSHClient(paramiko.SSHClient):
             repr(self._connect_kwargs.get("port", 22)))
 
     def __call__(self, **connect_kwargs):
-        # Update a copy of this instance's connect kwargs with passed in kwargs,
-        # then return a new instance with the updated kwargs
-        new_connect_kwargs = dict(self._connect_kwargs)
-        new_connect_kwargs.update(connect_kwargs)
-        # pass the key state if the hostname is the same, under the assumption that the same
-        # host will still have keys installed if they have already been
-        if self._connect_kwargs['hostname'] == new_connect_kwargs.get('hostname'):
-            new_connect_kwargs['keystate'] = self._keystate
-        new_client = SSHClient(**new_connect_kwargs)
-        return new_client
+        # Run the new connect kwargs back through __new__, since it knows what to do
+        return type(self)(self._keystate, **connect_kwargs)
 
     def __enter__(self):
         self.connect()
@@ -117,6 +129,7 @@ class SSHClient(paramiko.SSHClient):
             self.close()
 
         if not self.connected:
+            self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             self._connect_kwargs.update(kwargs)
             self._check_port()
             # Only install ssh keys if they aren't installed (or currently being installed)

@@ -1,7 +1,9 @@
 import pytest
 
+import diaper
 from fixtures.pytest_store import store
 from utils.log import logger
+from utils import ssh
 
 
 @pytest.fixture(scope="function")
@@ -64,4 +66,6 @@ def pytest_sessionfinish(session, exitstatus):
             logger.debug('Closing ssh connection on {} failed, but ignoring'.format(
                 appliance.address))
             pass
+    for client in ssh._client_cache.values():
+        diaper(client.close)
     yield
