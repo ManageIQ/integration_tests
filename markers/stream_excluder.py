@@ -13,12 +13,10 @@ import pytest
 from fixtures.terminalreporter import reporter
 from utils.version import appliance_is_downstream, current_version, current_stream
 
-ssh_connection_failed = False
-
 
 def get_streams_id():
     if appliance_is_downstream():
-        return {"{}.{}".format(*current_version().version[:2]), "downstream"}
+        return {current_version().series(2), "downstream"}
     else:
         return {"upstream"}
 
@@ -38,15 +36,7 @@ def pytest_configure(config):
 
 
 def pytest_itemcollected(item):
-    global ssh_connection_failed
-
-    if ssh_connection_failed:
-        return
-    try:
-        streams_id = get_streams_id()
-    except Exception:
-        ssh_connection_failed = True
-        return
+    streams_id = get_streams_id()
     marker = item.get_marker("ignore_stream")
     if marker is None:
         return
@@ -81,12 +71,11 @@ def pytest_itemcollected(item):
 
 def pytest_collection_modifyitems(session, config, items):
     # Just to print out the appliance's streams
-    if not ssh_connection_failed:
-        reporter(config).write("\nAppliance's streams: [{}]\n".format(", ".join(get_streams_id())))
-        # Bail out if the appliance stream or version do not match
-        check_stream = config.getvalue("check_stream").lower().strip()
-        if check_stream:
-            curr = current_stream()
-            if check_stream != curr:
-                raise Exception(
-                    "Stream mismatch - wanted {} but appliance is {}".format(check_stream, curr))
+    reporter(config).write("\nAppliance's streams: [{}]\n".format(", ".join(get_streams_id())))
+    # Bail out if the appliance stream or version do not match
+    check_stream = config.getvalue("check_stream").lower().strip()
+    if check_stream:
+        curr = current_stream()
+        if check_stream != curr:
+            raise Exception(
+                "Stream mismatch - wanted {} but appliance is {}".format(check_stream, curr))
