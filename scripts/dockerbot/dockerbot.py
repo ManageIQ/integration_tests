@@ -317,6 +317,7 @@ class DockerBot(object):
 
         self.check_arg('sprout_username', None)
         self.check_arg('sprout_password', None)
+        self.check_arg('sprout_description', None)
 
         if ec:
             sys.exit(127)
@@ -355,6 +356,7 @@ class DockerBot(object):
         if self.args['sprout']:
             self.args['pytest'] += ' --use-sprout --sprout-appliances 1'
             self.args['pytest'] += ' --sprout-group {}'.format(self.args['sprout_stream'])
+            self.args['pytest'] += ' --sprout-desc {}'.format(self.args['sprout_description'])
         if not self.args['capture']:
             self.args['pytest'] += ' --capture=no'
         print "  PYTEST Command: {}".format(self.args['pytest'])
@@ -409,6 +411,8 @@ class DockerBot(object):
             self.env_details['SPROUT_USER'] = self.args['sprout_username']
         if self.args['sprout_password']:
             self.env_details['SPROUT_PASSWORD'] = self.args['sprout_password']
+        if self.args['sprout_description']:
+            self.env_details['SPROUT_DESCRIPTION'] = self.args['sprout_description']
 
     def handle_pr(self):
         if self.args['pr']:
@@ -593,6 +597,9 @@ if __name__ == "__main__":
                               default=None)
     provisioning.add_argument('--sprout-password',
                               help="Sprout Password",
+                              default=None)
+    provisioning.add_argument('--sprout-description',
+                              help="Sprout Description",
                               default=None)
 
     args = parser.parse_args()
