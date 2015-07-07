@@ -341,6 +341,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                     if o not in templates:
                         logger.info(
                             "Wanted template {} on {} but it is not there!\n".format(o, provider))
+                        idlist.remove(provider)
                         # Skip collection of this one
                         continue
 
