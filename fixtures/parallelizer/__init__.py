@@ -283,9 +283,6 @@ class ParallelSession(object):
             self.print_message("using appliance {}".format(self.slave_urls[slave]),
                 slave, green=True)
 
-        # Fire up the workers
-        self._slave_audit()
-
         # Start the recv queue
         self._recv_queue = deque()
         recv_queuer = Thread(target=_recv_queue, args=(self,))
@@ -533,6 +530,11 @@ class ParallelSession(object):
         # Build master collection for slave diffing and distribution
         for item in self.session.items:
             self.collection[item.nodeid] = item
+
+        # Fire up the workers after master collection is complete
+        # master and the first slave share an appliance, this is a workaround to prevent a slave
+        # from altering an appliance while master collection is still taking place
+        self._slave_audit()
 
         try:
             self.print_message("Waiting for {} slave collections".format(len(self.slaves)),
