@@ -7,6 +7,7 @@ from urlparse import urlparse
 import paramiko
 from lya import AttrDict
 from scp import SCPClient
+import diaper
 
 from utils import conf, ports
 from utils.log import logger
@@ -32,6 +33,8 @@ _ssh_keystate = AttrDict({
 })
 # enum reverse lookup
 _ssh_keystate.update({v: k for k, v in _ssh_keystate.items()})
+
+_client_session = []
 
 
 class SSHClient(paramiko.SSHClient):
@@ -65,6 +68,7 @@ class SSHClient(paramiko.SSHClient):
         default_connect_kwargs.update(connect_kwargs)
         self._connect_kwargs = default_connect_kwargs
         self.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        _client_session.append(self)
 
     def __repr__(self):
         return "<SSHClient hostname={} port={}>".format(
@@ -105,6 +109,11 @@ class SSHClient(paramiko.SSHClient):
         sent_percent = (sent * 100.) / size
         if sent_percent > 0:
             logger.debug('{} scp progress: {:.2f}% '.format(filename, sent_percent))
+
+    def close(self):
+        with diaper:
+            _client_session.remove(self)
+        super(SSHClient, self).close()
 
     @property
     def connected(self):
