@@ -66,7 +66,6 @@ def pytest_sessionfinish(session, exitstatus):
             logger.debug('Closing ssh connection on {} failed, but ignoring'.format(
                 appliance.address))
             pass
-    for session in ssh._client_session:
-        with diaper:
-            session.close()
+    for client in ssh._client_cache.values():
+        diaper(client.close)
     yield
