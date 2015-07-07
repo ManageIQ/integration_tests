@@ -4,14 +4,13 @@
 :var area: A :py:class:`cfme.web_ui.Region` object representing the flash region.
 """
 from functools import wraps
+
+import cfme.fixtures.pytest_selenium as sel
 from cfme.exceptions import CFMEExceptionOccured, FlashMessageException
 from cfme.web_ui import Region
-import cfme.fixtures.pytest_selenium as sel
-from utils.log import logger
 from utils import version
-from cfme.versions import upstream
+from utils.log import logger
 from utils.pretty import Pretty
-
 
 area = Region(
     locators={
@@ -58,7 +57,7 @@ def get_message_level(el):
     return sel.get_attribute(el, "class") or "error"
 
 
-@get_message_level.method(upstream)
+@get_message_level.method(version.LATEST)
 def get_message_level_up(el):
     _class = sel.get_attribute(el, "class")
     for key, value in _mapping_new.iteritems():
@@ -76,7 +75,7 @@ def get_message_text(el):
         return sel.text(el)
 
 
-@get_message_text.method(upstream)
+@get_message_text.method(version.LATEST)
 def get_message_text_up(el):
     return sel.text(el)
 

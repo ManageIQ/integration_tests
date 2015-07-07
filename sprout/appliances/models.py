@@ -16,7 +16,7 @@ from utils.appliance import Appliance as CFMEAppliance, IPAppliance
 from utils.conf import cfme_data
 from utils.providers import provider_factory
 from utils.timeutil import nice_seconds
-from utils.version import LooseVersion
+from utils.version import Version
 
 
 def apply_if_not_none(o, meth, *args, **kwargs):
@@ -425,7 +425,7 @@ class Template(MetadataMixin):
             v = version.values()[0]
             if v is not None:
                 versions.append(v)
-        versions.sort(key=LooseVersion, reverse=True)
+        versions.sort(key=Version, reverse=True)
         return versions
 
     @classmethod

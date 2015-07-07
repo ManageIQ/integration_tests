@@ -9,7 +9,7 @@ import random
 from cfme.infrastructure.provider import VMwareProvider, get_from_config, wait_for_provider_delete
 from utils.conf import cfme_data, credentials
 from utils.net import resolve_hostname
-from utils.version import LooseVersion
+from utils.version import Version
 from utils.wait import wait_for
 
 
@@ -28,7 +28,7 @@ def pytest_generate_tests(metafunc):
         if version is None:
             # No version, no test
             continue
-        if LooseVersion(version) < "5.0":
+        if Version(version) < "5.0":
             # Ignore lesser than 5
             continue
 

@@ -7,7 +7,7 @@ from utils import lazycache
 from utils.conf import cfme_data, credentials
 from utils.log import logger
 from utils.version import (
-    LATEST, LooseVersion, current_version, appliance_build_datetime, appliance_is_downstream)
+    LATEST, Version, current_version, appliance_build_datetime, appliance_is_downstream)
 
 NONE_FIELDS = {"---", "undefined", "unspecified"}
 
@@ -18,7 +18,7 @@ class Product(object):
 
     @property
     def default_release(self):
-        return LooseVersion(self._data["default_release"])
+        return Version(self._data["default_release"])
 
     @property
     def name(self):
@@ -37,7 +37,7 @@ class Product(object):
         versions = []
         for version in self._data["versions"]:
             if version["name"] not in NONE_FIELDS:
-                versions.append(LooseVersion(version["name"]))
+                versions.append(Version(version["name"]))
         return sorted(versions)
 
     @property
@@ -105,7 +105,7 @@ class Bugzilla(object):
         if self.default_product is not None:
             return self.default_product.latest_version
         else:
-            return LooseVersion(cfme_data.get("bugzilla", {}).get("upstream_version", "9.9"))
+            return Version(cfme_data.get("bugzilla", {}).get("upstream_version", "9.9"))
 
     def get_bug(self, id):
         id = int(id)
@@ -211,7 +211,7 @@ class BugWrapper(object):
     def __getattr__(self, attr):
         """This proxies the attribute queries to the Bug object and modifies its result.
 
-        If the field looked up is specified as loose field, it will be converted to LooseVersion.
+        If the field looked up is specified as loose field, it will be converted to Version.
         If the field is string and it has zero length, or the value is specified as "not specified",
         it will return None.
         """
@@ -228,7 +228,7 @@ class BugWrapper(object):
             value = re.sub(r"^[^0-9]+", "", value)
             if not value:
                 return None
-            return LooseVersion(value)
+            return Version(value)
         if isinstance(value, basestring):
             if len(value.strip()) == 0:
                 return None
