@@ -218,7 +218,6 @@ if __name__ == '__main__':
         template_name, provider_name = appliance_data[ip_address]
         conf.runtime["cfme_data"]["basic_info"]["appliance_template"] = template_name
         conf.runtime["cfme_data"]["basic_info"]["appliances_provider"] = provider_name
-        utils.log.logger.critical('terminalreporter disabled?')
     config = _init_config(slave_options, slave_args)
     slave_manager = SlaveManager(config, args.slaveid, args.base_url,
         conf.slave_config['zmq_endpoint'])
