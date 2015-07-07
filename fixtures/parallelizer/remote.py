@@ -93,7 +93,6 @@ class SlaveManager(object):
         - iterates over and runs tests in the order received from the master
 
         """
-        self.message("running tests on appliance at {}".format(self.base_url), green=True)
         self.log.info("entering runtest loop")
         for item, nextitem in self._test_generator():
             if self.config.option.collectonly:
