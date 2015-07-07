@@ -298,9 +298,6 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         if provider not in filtered:
             continue
 
-        # Use the provider name for idlist, helps with readable parametrized test output
-        idlist.append(provider)
-
         # Get values for the requested fields, filling in with None for undefined fields
         data_values = {field: data.get(field, None) for field in fields}
 
@@ -366,6 +363,9 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         # skip when required field is not present and option['require_field'] == True
         if not skip:
             argvalues.append(values)
+
+            # Use the provider name for idlist, helps with readable parametrized test output
+            idlist.append(provider)
 
     # pick a single provider if option['choose_random'] == True
     if 'choose_random' not in options:
