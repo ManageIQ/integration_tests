@@ -287,3 +287,14 @@ class Role(Updateable, Pretty):
         tb_select('Delete this Role', invokes_alert=True)
         sel.handle_alert()
         flash.assert_success_message('Role "%s": Delete successful' % self.name)
+
+    def copy(self, name=None):
+        if not name:
+            name = self.name + "copy"
+        sel.force_navigate("cfg_accesscontrol_role_ed", context={"role": self})
+        tb.select('Configuration', 'Copy this Role to a new Role')
+        new_role = Role(name=name)
+        fill(self.form, {'name_txt': new_role.name},
+             action=form_buttons.add)
+        flash.assert_success_message('Role "%s" was saved' % new_role.name)
+        return new_role
