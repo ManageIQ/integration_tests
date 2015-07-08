@@ -9,6 +9,7 @@ from cfme import Credential
 from cfme import login
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
+from cfme.web_ui import flash
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
 from utils.blockers import BZ
@@ -200,7 +201,49 @@ def test_role_crud():
     role.create()
     with update(role):
         role.name = role.name + "edited"
+    copied_role = role.copy()
+    copied_role.delete()
     role.delete()
+
+
+def test_rolename_required_error_validation():
+    role = ac.Role(
+        name=None,
+        vm_restriction='Only User Owned')
+    with error.expected("Name can't be blank"):
+        role.create()
+
+
+def test_rolename_duplicate_validation():
+    role = new_role()
+    role.create()
+    with error.expected("Name has already been taken"):
+        role.create()
+
+
+def test_delete_default_roles():
+    flash_msg = \
+        'Role "{}": Error during \'destroy\': Cannot delete record because of dependent miq_groups'
+    role = ac.Role(name='EvmRole-approver')
+    with error.expected(flash_msg.format(role.name)):
+        role.delete()
+
+
+def test_edit_default_roles():
+    role = ac.Role(name='EvmRole-auditor')
+    sel.force_navigate("cfg_accesscontrol_role_edit", context={"role": role})
+    flash.assert_message_match("Read Only Role \"{}\" can not be edited" .format(role.name))
+
+
+def test_delete_roles_with_assigned_group():
+    flash_msg = \
+        'Role "{}": Error during \'destroy\': Cannot delete record because of dependent miq_groups'
+    role = new_role()
+    role.create()
+    group = new_group(role=role.name)
+    group.create()
+    with error.expected(flash_msg.format(role.name)):
+        role.delete()
 
 
 def test_assign_user_to_new_group():
