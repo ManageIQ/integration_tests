@@ -3,9 +3,11 @@ import fauxfactory
 import pytest
 from cfme.cloud.instance import instance_factory, details_page
 from cfme.web_ui import toolbar, jstimelines
-from utils import testgen
-from utils.log import logger
 from cfme.exceptions import ToolbarOptionGreyed
+from utils import testgen
+from utils.blockers import BZ
+from utils.log import logger
+from utils.version import current_version
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.ignore_stream("5.2")]
@@ -13,13 +15,12 @@ pytestmark = [pytest.mark.ignore_stream("5.2")]
 #    1127960, unskip={1127960: lambda appliance_version: appliance_version >= "5.3"})
 
 
-pytest_generate_tests = testgen.generate(testgen.provider_by_type,
-                                         provider_types=['openstack'], scope="module")
+pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module")
 
 
 @pytest.fixture(scope="module")
 def delete_fx_provider_event(db, provider_crud):
-    logger.debug("Deleting timeline events for provider name {}".format(provider_crud.name))
+    logger.info("Deleting timeline events for provider name {}".format(provider_crud.name))
     ems = db['ext_management_systems']
     ems_events = db['ems_events']
     with db.transaction:
@@ -88,7 +89,29 @@ def count_events(instance_name, nav_step):
     return 0
 
 
-def test_provider_event(setup_provider, provider_crud, gen_events, test_instance):
+def db_event(db, provider_crud):
+    # Get event count from the DB
+
+    logger.info("Getting event count from the DB for provider name {}".format(provider_crud.name))
+    ems = db['ext_management_systems']
+    ems_events = db['ems_events']
+    with db.transaction:
+        providers = (
+            db.session.query(ems_events.id)
+            .join(ems, ems_events.ems_id == ems.id)
+            .filter(ems.name == provider_crud.name)
+        )
+        query = db.session.query(ems_events).filter(ems_events.id.in_(providers.subquery()))
+        event_count = query.count()
+    return event_count
+
+
+@pytest.mark.meta(
+    blockers=BZ(1201923, unblock=lambda provider_type: provider_type != 'ec2'),
+)
+@pytest.mark.uncollectif(
+    lambda provider_type: current_version() < "5.4" and provider_type != 'openstack')
+def test_provider_event(setup_provider, provider_crud, provider_type, gen_events, test_instance):
     """ Tests provider events on timelines
 
     Metadata:
@@ -101,7 +124,12 @@ def test_provider_event(setup_provider, provider_crud, gen_events, test_instance
              message="events to appear")
 
 
-def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
+@pytest.mark.meta(
+    blockers=BZ(1201923, unblock=lambda provider_type: provider_type != 'ec2'),
+)
+@pytest.mark.uncollectif(
+    lambda provider_type: current_version() < "5.4" and provider_type != 'openstack')
+def test_azone_event(setup_provider, provider_crud, provider_type, gen_events, test_instance):
     """ Tests availablility zone events on timelines
 
     Metadata:
@@ -115,7 +143,10 @@ def test_azone_event(setup_provider, provider_crud, gen_events, test_instance):
              message="events to appear")
 
 
-def test_vm_event(setup_provider, provider_crud, gen_events, test_instance):
+@pytest.mark.uncollectif(
+    lambda provider_type: current_version() < "5.4" and provider_type != 'openstack')
+def test_vm_event(setup_provider, provider_crud, provider_type, db, gen_events,
+                 test_instance, bug):
     """ Tests vm events on timelines
 
     Metadata:
@@ -124,5 +155,12 @@ def test_vm_event(setup_provider, provider_crud, gen_events, test_instance):
     def nav_step():
         test_instance.load_details()
         toolbar.select('Monitoring', 'Timelines')
-    wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
+
+    ec2_ui_bug = bug(1201923)
+    if (ec2_ui_bug is None or provider_type == 'openstack'):
+        # This fails for ec2... https://bugzilla.redhat.com/show_bug.cgi?id=1201923
+        wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
+
+    wait_for(db_event, [db, provider_crud], num_sec=840, delay=30, fail_condition=0,
+        message="events to appear in the DB")
