@@ -38,24 +38,6 @@ def test_ssh_client_copies(ssh_client):
     assert orig_kwargs['hostname'] != copy_kwargs['hostname']
 
 
-def test_ssh_client_memoization(ssh_client):
-    ssh_client_kwargs = {
-        'username': fauxfactory.gen_alphanumeric(8),
-        'password': fauxfactory.gen_alphanumeric(8),
-        'hostname': fauxfactory.gen_alphanumeric(8),
-    }
-    client = ssh_client(**ssh_client_kwargs)
-    client_same = ssh_client(**ssh_client_kwargs)
-    assert client is client_same
-    different_ssh_client_kwargs = {
-        'username': fauxfactory.gen_alphanumeric(8),
-        'password': fauxfactory.gen_alphanumeric(8),
-        'hostname': fauxfactory.gen_alphanumeric(8),
-    }
-    client_different = ssh_client(**different_ssh_client_kwargs)
-    assert client is not client_different
-
-
 def test_scp_client_can_put_a_file(ssh_client, tmpdir):
     # Make sure we can put a file, get a file, and they all match
     tmpfile = tmpdir.mkdir("sub").join("temp.txt")
