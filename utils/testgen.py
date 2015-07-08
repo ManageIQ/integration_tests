@@ -298,9 +298,6 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         if provider not in filtered:
             continue
 
-        # Use the provider name for idlist, helps with readable parametrized test output
-        idlist.append(provider)
-
         # Get values for the requested fields, filling in with None for undefined fields
         data_values = {field: data.get(field, None) for field in fields}
 
@@ -312,10 +309,6 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                     options['require_fields'] = True
                 if options['require_fields']:
                     skip = True
-                    try:
-                        idlist.remove(provider)
-                    except ValueError:
-                        pass
                     logger.warning('Field "%s" not defined for provider "%s", skipping' %
                         (key, provider)
                     )
@@ -323,6 +316,8 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                     logger.debug('Field "%s" not defined for provider "%s", defaulting to None' %
                         (key, provider)
                     )
+        if skip:
+            continue
 
         # Check the template presence if requested
         if template_location is not None:
@@ -341,7 +336,6 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                     if o not in templates:
                         logger.info(
                             "Wanted template {} on {} but it is not there!\n".format(o, provider))
-                        idlist.remove(provider)
                         # Skip collection of this one
                         continue
 
@@ -364,8 +358,10 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                 values.append(data_values[arg])
 
         # skip when required field is not present and option['require_field'] == True
-        if not skip:
-            argvalues.append(values)
+        argvalues.append(values)
+
+        # Use the provider name for idlist, helps with readable parametrized test output
+        idlist.append(provider)
 
     # pick a single provider if option['choose_random'] == True
     if 'choose_random' not in options:
