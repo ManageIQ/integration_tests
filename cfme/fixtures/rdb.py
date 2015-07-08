@@ -6,12 +6,16 @@ Given the following configuration in conf/rdb.yaml::
       - subject: Brief explanation of a problem
         exceptions:
           - cfme.exceptions.ImportableExampleException
+          - BuiltinException (e.g. ValueError)
         recipients:
           - user@example.com
 
 Any time an exception listed in a breakpoint's "exceptions" list is raised in :py:func:`rdb_catch`
 context in the course of a test run, a remote debugger will be started on a random port, and the
 users listed in "recipients" will be emailed instructions to access the remote debugger via telnet.
+
+The exceptions will be imported, so their fully-qualified importable path is required.
+Exceptions without a module path are assumed to be builtins.
 
 An Rdb instance can be used just like a :py:class:`Pdb <python:Pdb>` instance.
 
@@ -54,6 +58,9 @@ smtp_conf.update(conf.env.get('smtp', {}))
 for breakpoint in (conf.rdb.get('breakpoints') or []):
     for i, exc_name in enumerate(breakpoint['exceptions']):
         split_exc = exc_name.rsplit('.', 1)
+        if len(split_exc) == 1:
+            # If no module is given to import from, assume builtin
+            split_exc = ['__builtin__', exc_name]
         exc = getattr(import_module(split_exc[0]), split_exc[1])
         # stash exceptions for easy matching in exception handlers
         _breakpoint_exceptions[exc] = breakpoint
@@ -76,7 +83,7 @@ class Rdb(Pdb):
 
     """
     def __init__(self, prompt_msg=''):
-        self._prompt_msg = prompt_msg
+        self._prompt_msg = str(prompt_msg)
         self._stdout = sys.stdout
         self._stdin = sys.stdin
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -143,26 +150,24 @@ class Rdb(Pdb):
         write_line(msg, green=True, bold=True)
 
 
-def pytest_addoption(parser):
-    group = parser.getgroup('cfme')
-    group.addoption('--rdb', dest='userdb', action='store_true', default=False,
-        help="Enable remote debugging")
+def send_breakpoint_email(exctype, msg=''):
+    breakpoint = _breakpoint_exceptions[exctype]
+    subject = 'RDB Breakpoint: {}'.format(breakpoint['subject'])
+    rdb = Rdb(msg)
+    rdb.set_trace(subject=subject, recipients=breakpoint['recipients'])
+
+
+def pytest_internalerror(excrepr, excinfo):
+    if excinfo.type in _breakpoint_exceptions:
+        msg = "A py.test internal error has triggered RDB:\n"
+        msg += str(excrepr)
+        send_breakpoint_email(excinfo.type, msg)
 
 
 @contextmanager
 def rdb_catch():
     """Context Manager used to wrap mysterious failures for remote debugging."""
-    if store.config and store.config.option.userdb:
-        try:
-            yield
-        except Exception as exc:
-            # Set up the remote debugger when we see one of our breakpoint exceptions
-            if type(exc) in _breakpoint_exceptions:
-                breakpoint = _breakpoint_exceptions[type(exc)]
-                subject = 'RDB Breakpoint: {}'.format(breakpoint['subject'])
-                rdb = Rdb()
-                rdb.set_trace(subject=subject, recipients=breakpoint['recipients'])
-            else:
-                raise
-    else:
+    try:
         yield
+    except tuple(_breakpoint_exceptions) as exc:
+        send_breakpoint_email(type(exc))
