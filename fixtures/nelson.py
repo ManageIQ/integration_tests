@@ -42,6 +42,11 @@ def pytest_collection_modifyitems(items):
         output[node_name]['metadata'] = {'from_docs': doc_meta}
 
     with open('doc_data.yaml', 'w') as f:
+        def dice_representer(dumper, data):
+            return dumper.represent_scalar("chew", "me")
+        import lya
+        from yaml.representer import SafeRepresenter
+        yaml.add_representer(lya.lya.AttrDict, SafeRepresenter.represent_dict)
         yaml.dump(output, f)
 
 
@@ -110,10 +115,8 @@ class GoogleDocstring(docstring.GoogleDocstring):
 
     def _parse_metadata_section(self, section):
         lines = self._consume_metadata_section()
-        for line in lines:
-            if line:
-                key, value = [kv.strip() for kv in line.split(':')]
-                self.metadata[key] = value
+        if lines:
+            self.metadata = yaml.load("\n".join(lines))
         return ['']
 
 
