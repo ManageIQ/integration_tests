@@ -40,7 +40,7 @@ def main():
             exit = 0
             for entry in result:
                 print entry
-        elif isinstance(result, str):
+        elif isinstance(result, (basestring, int)):
             exit = 0
             print result
         elif isinstance(result, bool):
@@ -71,7 +71,10 @@ def call_appliance(provider_name, vm_name, action, *args):
         call = getattr(appliance, action)
     except AttributeError:
         raise Exception('Action "%s" not found' % action)
-    return call(*args)
+    if isinstance(getattr(type(appliance), action), property):
+        return call
+    else:
+        return call(*args)
 
 if __name__ == '__main__':
     sys.exit(main())
