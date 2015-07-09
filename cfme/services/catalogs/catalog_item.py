@@ -7,7 +7,6 @@ from cfme.web_ui import Form, Radio, Select, Table, accordion, fill,\
 from cfme.web_ui import toolbar as tb
 from utils.update import Updateable
 from utils.pretty import Pretty
-from utils.version import current_version
 
 cfg_btn = partial(tb.select, "Configuration")
 accordion_tree = partial(accordion.tree, "Catalog Items")
@@ -209,7 +208,7 @@ class CatalogItem(Updateable, Pretty):
                                'select_dialog': self.dialog,
                                'select_orch_template': self.orch_template,
                                'select_provider': self.provider_type})
-        if (current_version() >= "5.4") and (self.item_type != "Orchestration"):
+        if (self.item_type != "Orchestration"):
             sel.click(basic_info_form.field_entry_point)
             dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
