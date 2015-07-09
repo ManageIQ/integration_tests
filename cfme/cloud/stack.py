@@ -6,7 +6,7 @@ from functools import partial
 from cfme.web_ui import toolbar as tb
 from cfme import web_ui as ui
 from xml.sax.saxutils import quoteattr
-
+from cfme.exceptions import CFMEException
 
 details_page = Region(infoblock_type='detail')
 cfg_btn = partial(tb.select, "Configuration")
@@ -49,11 +49,16 @@ class Stack(Pretty):
                               'select_value': value},
              action=form_buttons.save)
         flash.assert_success_message('Tag edits were successfully saved')
+        company_tag = self.get_tags()
+        if company_tag != "{}: {}".format(tag.replace(" *", ""), value):
+            raise CFMEException("{} ({}) tag is not assigned!".format(tag.replace(" *", ""), value))
+
+    def get_tags(self):
         sel.force_navigate('clouds_stack', context={'stack': self})
         row = sel.elements("//*[(self::th or self::td) and normalize-space(.)={}]/../.."
                      "//td[img[contains(@src, 'smarttag')]]".format(quoteattr("My Company Tags")))
-        tag = sel.text(row).strip()
-        assert tag == "Cost Center: Cost Center 001"
+        company_tag = sel.text(row).strip()
+        return company_tag
 
     def nav_to_security_group_link(self):
         sel.force_navigate('clouds_stack', context={'stack': self})
