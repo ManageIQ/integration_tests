@@ -8,7 +8,6 @@ from utils import normalize_text, testgen
 from utils.log import logger
 from utils.providers import setup_provider
 from utils.wait import wait_for
-from fixtures.rbac import roles
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -57,7 +56,6 @@ def vm_name():
     return vm_name
 
 
-@pytest.mark.parametrize('rbac_role', roles)
 def test_provision_from_template(rbac_role, configure_ldap_auth_mode,
                                  provider_init, provider_key, provider_crud, provider_type,
                                  provider_mgmt, provisioning, vm_name, smtp_test, request):
@@ -66,6 +64,13 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode,
     Metadata:
         test_flag: provision
         suite: infra_provisioning
+        rbac:
+            roles:
+                default:
+                evmgroup-super_administrator:
+                evmgroup-administrator:
+                evmgroup-operator: NoSuchElementException
+                evmgroup-auditor: NoSuchElementException
     """
 
     # generate_tests makes sure these have values

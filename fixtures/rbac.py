@@ -74,36 +74,12 @@ from fixtures.artifactor_plugin import art_client, get_test_idents
 from cfme.fixtures.pytest_selenium import take_screenshot
 import pytest
 import traceback
-import csv
 from utils.browser import browser, ensure_browser_open
-from utils.path import data_path
 
 
-def _rbac_importer():
-    """Imports roles and tests from the rbac.csv
-
-    This function imports the roles and tests from the csv and returns them. This
-    function is only used by the module and shouldn't need to be used by anything
-    else.
-
-    """
-    try:
-        with open(str(data_path.join('rbac.csv')), 'rb') as f:
-            tests = {}
-            reader = csv.reader(f, delimiter=',', quotechar='"')
-            headers = reader.next()
-            roles = headers[1:]
-            for row in reader:
-                tests[row[0]] = {
-                    roles[i]: row[1:][i] for i in range(len(roles))}
-        roles = sorted(roles)
-        return tests, roles
-    except:
-        return {}, []
-
-tests, roles = _rbac_importer()
 last_user = "default"
 old_user = None
+enable_rbac = False
 
 
 def save_traceback_file(node, contents):
@@ -180,15 +156,15 @@ def pytest_pyfunc_call(pyfuncitem):
         logger.info("setting user to default")
         set_user('default')
 
-    # Handle the Exception
-    if 'rbac_role' in pyfuncitem.fixturenames:
+        # Handle the Exception
         logger.error(pyfuncitem.location[0])
         loc = "{}/{}".format(pyfuncitem.location[0], pyfuncitem.location[2])
         # loc = loc[:min([loc.rfind('['), len(loc)])]
         logger.error(loc)
-        errors = [v for k, v in tests.iteritems() if loc.startswith(k)]
+        # errors = [v for k, v in tests.iteritems() if loc.startswith(k)]
+        errors = pyfuncitem.function.meta.kwargs['from_docs']['rbac']['roles']
         if errors:
-            errors = errors[0]
+            # errors = errors[0]
             user = pyfuncitem.funcargs['rbac_role']
             if errors[user]:
                 if not outcome.excinfo:
@@ -216,12 +192,34 @@ def pytest_pyfunc_call(pyfuncitem):
                     save_traceback_file(pyfuncitem, contents)
                     save_screenshot(pyfuncitem, screenshot, screenshot_error)
                     raise Exception("RBAC: Test should have passed!")
-        else:
-            logger.error("RBAC: I didn't get any thing from the csv")
 
 
 @pytest.mark.hookwrapper
 def pytest_generate_tests(metafunc):
     yield
     if 'rbac_role' in metafunc.fixturenames:
+        if enable_rbac:
+            try:
+                meta_data = metafunc.function.meta
+                roles = meta_data.kwargs['from_docs']['rbac']['roles'].keys()
+            except:
+                raise Exception("Test {} should have metadata describing RBAC roles")
+
+        else:
+            roles = ['default']
         metafunc.parametrize('rbac_role', roles)
+
+
+def pytest_addoption(parser):
+    # Create the cfme option group for use in other plugins
+    parser.getgroup('cfme')
+    parser.addoption("--rbac", action="store_true", default=False,
+        help="enable rbac testing")
+
+
+def pytest_configure(config):
+    """ Filters the list of providers as part of pytest configuration. """
+    global enable_rbac
+
+    if config.getoption('rbac'):
+        enable_rbac = True
