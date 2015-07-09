@@ -37,6 +37,9 @@ provider_type_map = dict(
 
 providers_data = conf.cfme_data.get("management_systems", {})
 
+# This is a global variable. Not the most ideal way to do things but how can we track bad providers?
+problematic_providers = set([])
+
 
 def list_providers(allowed_types):
     """ Returns list of providers of selected type from configuration.
@@ -137,6 +140,7 @@ def setup_a_provider(
             it re-adds the provider.
 
     """
+    global problematic_providers
     if prov_class == "infra":
         from cfme.infrastructure.provider import get_from_config, wait_for_provider_delete
         potential_providers = list_infra_providers()
@@ -162,6 +166,17 @@ def setup_a_provider(
         providers = list_infra_providers()
 
     result = None
+
+    # Check if the provider was behaving badly in the history
+    if problematic_providers:
+        filtered_providers = [
+            provider for provider in providers if provider not in problematic_providers]
+        if not filtered_providers:
+            # problematic_providers took all of the providers, so start over with clean list
+            # (next chance)
+            filtered_providers.clear()
+        else:
+            providers = filtered_providers
 
     # If there is a provider that we want to specifically avoid ...
     # If there is only a single provider, then do not do any filtering
@@ -205,6 +220,14 @@ def setup_a_provider(
             break
         except Exception as e:
             logger.exception(e)
+            problematic_providers.add(provider)
+            prov_object = get_from_config(provider)
+            if prov_object.exists:
+                # Remove it so next call to setup_a_provider does not explode
+                prov_object.delete(cancel=False)
+                wait_for_provider_delete(prov_object)
+                logger.warning(
+                    "Provider {} was deleted because it failed to set up.".format(provider))
             continue
     else:
         raise Exception("No providers could be set up matching the params")
