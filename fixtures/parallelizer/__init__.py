@@ -34,6 +34,7 @@ The Workflow
 import difflib
 import json
 import os
+import signal
 import subprocess
 from collections import OrderedDict, defaultdict, deque, namedtuple
 from itertools import count
@@ -124,6 +125,13 @@ def dump_pool_info(printf, pool_data):
         printf("\t{}:".format(name))
         for key in sorted(appliance.keys()):
             printf("\t\t{}: {}".format(key, appliance[key]))
+
+
+def handle_end_session(signal, frame):
+    # when signaled, end the current test session immediately
+    if store.parallel_session:
+        store.parallel_session.session_finished = True
+signal.signal(signal.SIGUSR2, handle_end_session)
 
 
 class SlaveDict(dict):
@@ -551,6 +559,8 @@ class ParallelSession(object):
                     # All slaves are killed or errored, we're done with tests
                     self.print_message('all slaves have exited', yellow=True)
                     self.session_finished = True
+
+                if self.session_finished:
                     break
 
                 slaveid, event_data, event_name = self.recv()
