@@ -363,7 +363,7 @@ def set_yaml_config(config_name, data_dict, hostname=None):
         _ssh_client = SSHClient(hostname=hostname)
     # Else, connect to the default one set up for this session
     else:
-        _ssh_client = store.current_appliance.ssh_client()
+        _ssh_client = store.current_appliance.ssh_client
     # Build & send new config
     temp_yaml = NamedTemporaryFile()
     dest_yaml = '/tmp/conf.yaml'

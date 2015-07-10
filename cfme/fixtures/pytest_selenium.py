@@ -972,7 +972,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
             logger.exception(e)
         # Restart some workers
         logger.warning("Restarting UI and VimBroker workers!")
-        with store.current_appliance.ssh_client() as ssh:
+        with store.current_appliance.ssh_client as ssh:
             # Blow off the Vim brokers and UI workers
             ssh.run_rails_command("\"(MiqVimBrokerWorker.all + MiqUiWorker.all).each &:kill\"")
         logger.info("Waiting for web UI to come back alive.")
@@ -989,10 +989,10 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         logger.warning("Page was blocked by rails error, renavigating.")
         logger.error(rails_e)
         logger.debug('Top CPU consumers:')
-        logger.debug(store.current_appliance.ssh_client().run_command(
+        logger.debug(store.current_appliance.ssh_client.run_command(
             'top -c -b -n1 -M | head -30').output)
         logger.debug('Top Memory consumers:')
-        logger.debug(store.current_appliance.ssh_client().run_command(
+        logger.debug(store.current_appliance.ssh_client.run_command(
             'top -c -b -n1 -M -a | head -30').output)
         logger.debug('Managed Providers:')
         logger.debug(store.current_appliance.managed_providers)
@@ -1093,7 +1093,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         else:
             logger.error("Could not determine the reason for failing the navigation. " +
                 " Reraising.  Exception: %s" % str(e))
-            logger.debug(store.current_appliance.ssh_client().run_command(
+            logger.debug(store.current_appliance.ssh_client.run_command(
                 'service evmserverd status').output)
             raise
 

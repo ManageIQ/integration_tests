@@ -148,7 +148,7 @@ class Store(object):
         except KeyError:
             # Fall back to having an appliance tell us what it thinks our IP
             # address is
-            return self.current_appliance.ssh_client().client_address()
+            return self.current_appliance.ssh_client.client_address()
 
     def write_line(self, line, **kwargs):
         return write_line(line, **kwargs)

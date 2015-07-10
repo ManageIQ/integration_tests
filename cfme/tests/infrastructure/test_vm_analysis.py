@@ -197,7 +197,7 @@ def finish_appliance_setup(get_appliance, appliance_browser, provider_crud, vm):
 
     # Configure for events
     # setup_for_event_testing(
-    #    appliance.ssh_client(), None, listener_info, providers.list_infra_providers())
+    #    appliance.ssh_client, None, listener_info, providers.list_infra_providers())
     return appliance_browser
 
 
