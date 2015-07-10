@@ -72,6 +72,7 @@ class Reporter(ArtifactorBasePlugin):
         self.register_plugin_hook('build_report', self.run_report)
         self.register_plugin_hook('start_test', self.start_test)
         self.register_plugin_hook('finish_test', self.finish_test)
+        self.register_plugin_hook('session_info', self.session_info)
 
     def configure(self):
         self.only_failed = self.data.get('only_failed', False)
@@ -94,8 +95,12 @@ class Reporter(ArtifactorBasePlugin):
             test_when: (test_outcome, test_xfail)}}}}
 
     @ArtifactorBasePlugin.check_configured
-    def run_report(self, artifacts, log_dir):
-        template_data = self.process_data(artifacts, log_dir)
+    def session_info(self, version=None):
+        return None, {'version': version}
+
+    @ArtifactorBasePlugin.check_configured
+    def run_report(self, artifacts, log_dir, version=None):
+        template_data = self.process_data(artifacts, log_dir, version)
 
         if self.only_failed:
             template_data['tests'] = [x for x in template_data['tests']
@@ -104,9 +109,9 @@ class Reporter(ArtifactorBasePlugin):
         self.render_report(template_data, 'report', log_dir, 'test_report.html')
 
     @ArtifactorBasePlugin.check_configured
-    def run_provider_report(self, artifacts, log_dir):
+    def run_provider_report(self, artifacts, log_dir, version=None):
         for mgmt in cfme_data['management_systems'].keys():
-            template_data = self.process_data(artifacts, log_dir, name_filter=mgmt)
+            template_data = self.process_data(artifacts, log_dir, version, name_filter=mgmt)
 
             self.render_report(template_data, "report_{}".format(mgmt), log_dir,
                                'test_report_provider.html')
@@ -124,9 +129,10 @@ class Reporter(ArtifactorBasePlugin):
         except OSError:
             pass
 
-    def process_data(self, artifacts, log_dir, name_filter=None):
+    def process_data(self, artifacts, log_dir, version, name_filter=None):
 
         template_data = {'tests': []}
+        template_data['version'] = version
         log_dir += "/"
         counts = {'passed': 0, 'failed': 0, 'skipped': 0, 'error': 0, 'xfailed': 0, 'xpassed': 0}
         colors = {'passed': 'success',
