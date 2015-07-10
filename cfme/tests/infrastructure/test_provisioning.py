@@ -56,13 +56,21 @@ def vm_name():
     return vm_name
 
 
-def test_provision_from_template(provider_init, provider_key, provider_crud, provider_type,
+def test_provision_from_template(rbac_role, configure_ldap_auth_mode,
+                                 provider_init, provider_key, provider_crud, provider_type,
                                  provider_mgmt, provisioning, vm_name, smtp_test, request):
     """ Tests provisioning from a template
 
     Metadata:
         test_flag: provision
         suite: infra_provisioning
+        rbac:
+            roles:
+                default:
+                evmgroup-super_administrator:
+                evmgroup-administrator:
+                evmgroup-operator: NoSuchElementException
+                evmgroup-auditor: NoSuchElementException
     """
 
     # generate_tests makes sure these have values
