@@ -517,7 +517,7 @@ class HostCondition(BaseCondition, HostObject):
     PREFIX = "host_"
 
     def DELETE_STRING(self):
-        if version.since_date_or_version(date="2015-04-30"):  # TODO: Add version when released
+        if version.current_version() >= "5.4":
             return "Delete this Host / Node Condition"
         else:
             return "Delete this Host Condition"
@@ -801,13 +801,13 @@ class HostCompliancePolicy(BasePolicy, HostObject):
     PREFIX = "host_compliance_"
 
     def DELETE_STRING(self):
-        if version.since_date_or_version(date="2015-04-30"):  # TODO: Add version when released
+        if version.current_version() >= "5.4":
             return "Delete this Host / Node Policy"
         else:
             return "Delete this Host Policy"
 
     def __str__(self):
-        if version.since_date_or_version(date="2015-04-30"):
+        if version.current_version() >= "5.4":
             return "Host / Node Compliance: {}".format(self.description)
         else:
             return "Host Compliance: {}".format(self.description)
@@ -825,13 +825,13 @@ class HostControlPolicy(BaseControlPolicy, HostObject):
     PREFIX = "host_control_"
 
     def DELETE_STRING(self):
-        if version.since_date_or_version(date="2015-04-30"):  # TODO: Add version when released
+        if version.current_version() >= "5.4":
             return "Delete this Host / Node Policy"
         else:
             return "Delete this Host Policy"
 
     def __str__(self):
-        if version.since_date_or_version(date="2015-04-30"):
+        if version.current_version() >= "5.4":
             return "Host / Node Control: {}".format(self.description)
         else:
             return "Host Control: {}".format(self.description)
