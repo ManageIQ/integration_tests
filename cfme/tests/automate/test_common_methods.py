@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""This module contains tests that test the universally applicable canned methods in Automate."""
 import fauxfactory
 import pytest
 
@@ -92,7 +93,17 @@ def retire_extend_button(request):
 
 
 def test_vm_retire_extend(request, testing_vm, soft_assert, retire_extend_button):
-    """ Tests extending a retirement
+    """ Tests extending a retirement using an AE method.
+
+    Prerequisities:
+        * A running VM on any provider.
+
+    Steps:
+        * It creates a button pointing to ``Request/vm_retire_extend`` instance. The button should
+            live in the VM and Instance button group.
+        * Then it sets a retirement date for the VM
+        * Then it waits until the retirement date is set
+        * Then it clicks the button that was created and it waits for the retirement date to extend.
 
     Metadata:
         test_flag: retire, provision

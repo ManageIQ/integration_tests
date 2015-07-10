@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""This module tests tagging of objects in different locations."""
 import diaper
 import fauxfactory
 import pytest
@@ -62,7 +63,19 @@ def tag(category):
 @pytest.mark.uncollectif(
     lambda location: location in {"clouds_tenants"} and current_version() < "5.4")
 def test_tag_item_through_selecting(request, location, tag):
-    """Add a tag to an item."""
+    """Add a tag to an item with going through the details page.
+
+    Prerequisities:
+        * Have a tag category and tag created.
+        * Be on the page you want to test.
+
+    Steps:
+        * Select any quadicon.
+        * Select ``Policy/Edit Tags`` and assign the tag to it.
+        * Click on the quadicon and verify the tag is assigned. (TODO)
+        * Go back to the quadicon view and select ``Policy/Edit Tags`` and remove the tag.
+        * Click on the quadicon and verify the tag is not present. (TODO)
+    """
     pytest.sel.force_navigate(location)
     tb.set_vms_grid_view()
     if not Quadicon.any_present:
@@ -82,7 +95,19 @@ def test_tag_item_through_selecting(request, location, tag):
 @pytest.mark.uncollectif(
     lambda location: location in {"clouds_tenants"} and current_version() < "5.4")
 def test_tag_item_through_details(request, location, tag):
-    """Add a tag to an item."""
+    """Add a tag to an item with going through the details page.
+
+    Prerequisities:
+        * Have a tag category and tag created.
+        * Be on the page you want to test.
+
+    Steps:
+        * Click any quadicon.
+        * On the details page, select ``Policy/Edit Tags`` and assign the tag to it.
+        * Verify the tag is assigned. (TODO)
+        * Select ``Policy/Edit Tags`` and remove the tag.
+        * Verify the tag is not present. (TODO)
+    """
     pytest.sel.force_navigate(location)
     tb.set_vms_grid_view()
     if not Quadicon.any_present:

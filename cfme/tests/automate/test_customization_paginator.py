@@ -35,8 +35,19 @@ def get_relevant_rows(table):
 
 @pytest.mark.meta(blocks=[1125230, 1205235])
 def test_paginator(some_dialogs, soft_assert):
-    """ Ths test currently fails as this thing is completely broken
+    """ This test tests weird behaviour of the paginator in Service dialogs.
 
+    Prerequisities:
+        * There have to be couple of service dialogs, about 16 is recommended.
+
+    Steps:
+        * Go to service dialogs page
+        * Set the paginator to 50 results per page, then to 5 results per page.
+        * Assert there are 5 rows displayed in the table
+        * Then cycle through the pages. Note all the dialogs you see, in the end the list of all
+            dialogs must contain all idalogs you created before.
+        * During the cycling, assert the numbers displayed in the paginator make sense
+        * During the cycling, assert the paginator does not get stuck.
     """
     pytest.sel.force_navigate("service_dialogs")
     paginator.results_per_page(50)
