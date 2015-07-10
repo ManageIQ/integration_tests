@@ -144,9 +144,17 @@ def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
 
     # Go to the VM info
     data = vm.get_detail(properties=("Properties", "Container")).strip()
-    regex = version.pick({version.LOWEST: r"^[^(]*\((\d+) CPUs?, ([^)]+)\)[^)]*$",
-                          '5.4': r"^.*?(\d+) CPUs? .*?(\d+ MB)$"})
-    num_cpus, memory = re.match(regex, data).groups()
+    # No longer possible to use version pick because of cherrypicking?
+    regexes = map(re.compile, [
+        r"^[^(]*\((\d+) CPUs?, ([^)]+)\)[^)]*$",
+        r"^.*?(\d+) CPUs? .*?(\d+ MB)$"])
+    for regex in regexes:
+        match = regex.match(data)
+        if match is not None:
+            num_cpus, memory = match.groups()
+            break
+    else:
+        raise ValueError("Could not parse string {}".format(repr(data)))
     soft_assert(num_cpus == "4", "num_cpus should be {}, is {}".format("4", num_cpus))
     soft_assert(memory == "4096 MB", "memory should be {}, is {}".format("4096 MB", memory))
 
