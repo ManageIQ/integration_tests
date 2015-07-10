@@ -209,7 +209,7 @@ class CatalogItem(Updateable, Pretty):
                                'select_dialog': self.dialog,
                                'select_orch_template': self.orch_template,
                                'select_provider': self.provider_type})
-        if (current_version() >= "5.4") and (self.item_type != "Orchestration"):
+        if self.item_type != "Orchestration":
             sel.click(basic_info_form.field_entry_point)
             dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
@@ -293,11 +293,17 @@ class CatalogBundle(Updateable, Pretty):
 
     def create(self, cat_items):
         sel.force_navigate('catalog_bundle_new')
+        domain = "ManageIQ (Locked)"
         fill(basic_info_form, {'name_text': self.name,
                                'description_text': self.description,
                                'display_checkbox': self.display_in,
                                'select_catalog': self.catalog,
                                'select_dialog': self.dialog})
+        if current_version().is_in_series("5.3"):
+            sel.click(basic_info_form.field_entry_point)
+            dynamic_tree.click_path("Datastore", domain, "Service", "Provisioning",
+                                    "StateMachines", "ServiceProvision_Template", "default")
+            sel.click(basic_info_form.apply_btn)
         tabstrip.select_tab("Resources")
         for cat_item in cat_items:
             fill(resources_form, {'choose_resource': cat_item})
