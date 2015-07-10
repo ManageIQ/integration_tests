@@ -97,7 +97,7 @@ class Appliance(object):
         ec, tc = wait_for(is_ip_available,
                           delay=5,
                           num_sec=600)
-        return ec
+        return str(ec)
 
     @lazycache
     def db_address(self):
@@ -275,6 +275,27 @@ class Appliance(object):
             self.remove_rhev_direct_lun_disk()
         self.provider.delete_vm(self.vm_name)
 
+    def stop(self):
+        """Stops the VM this appliance is running as
+        """
+        self.provider.stop_vm(self.vm_name)
+        self.provider.wait_vm_stopped(self.vm_name)
+
+    def start(self):
+        """Starts the VM this appliance is running as
+        """
+        self.provider.start_vm(self.vm_name)
+        self.provider.wait_vm_running(self.vm_name)
+
+    def templatize(self):
+        """Marks the appliance as a template. Destroys the original VM in the process.
+        """
+        if not self.is_running:
+            self.start()
+        self.ipapp.seal_for_templatizing()
+        self.stop()
+        self.provider.mark_as_template(self.vm_name)
+
     @property
     def is_running(self):
         return self.provider.is_vm_running(self.vm_name)
@@ -325,6 +346,10 @@ class Appliance(object):
             msg = 'Appliance {} failed to disconnect rhev direct lun!'.format(self.address)
             log_callback(msg)
             raise ApplianceException(msg)
+
+    def reset_automate_model(self):
+        with self.ipapp.ssh_client as ssh:
+            ssh.run_rake_command("evm:automate:reset")
 
 
 class IPAppliance(object):
@@ -386,6 +411,26 @@ class IPAppliance(object):
 
     def __hash__(self):
         return int(hashlib.md5(self.address).hexdigest(), 16)
+
+    def seal_for_templatizing(self):
+        """Prepares the VM to be "generalized" for saving as a template."""
+        with self.ssh_client as ssh:
+            # Seals the VM in order to work when spawned again.
+            ssh.run_command("rm -rf /etc/ssh/ssh_host_*")
+            if ssh.run_command("grep '^HOSTNAME' /etc/sysconfig/network").rc == 0:
+                # Replace it
+                ssh.run_command(
+                    "sed -i -r -e 's/^HOSTNAME=.*$/HOSTNAME=localhost.localdomain/' "
+                    "/etc/sysconfig/network")
+            else:
+                # Set it
+                ssh.run_command("echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network")
+            ssh.run_command("sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
+            ssh.run_command("sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
+            ssh.run_command("rm -f /etc/udev/rules.d/70-*")
+            # Fix SELinux things
+            ssh.run_command("restorecon -R /etc/sysconfig/network-scripts")
+            ssh.run_command("restorecon /etc/sysconfig/network")
 
     @property
     def managed_providers(self):
