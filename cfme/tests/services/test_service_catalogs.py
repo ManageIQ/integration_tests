@@ -170,6 +170,7 @@ def test_order_catalog_bundle(provider_crud, provider_key, provider_mgmt, provid
 
 # Note here this needs to be reduced, doesn't need to test against all providers
 @pytest.mark.usefixtures('has_no_infra_providers')
+@pytest.mark.meta(blockers=[1242152])
 def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
                                   vm_name, dialog, catalog):
     """Tests no template catalog item
@@ -190,3 +191,18 @@ def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
                   description="my catalog", display_in=True, catalog=catalog, dialog=dialog)
     catalog_item.create()
     flash.assert_message_match("'Catalog/Name' is required")
+
+
+@pytest.mark.meta(blockers=[1210541])
+def test_edit_catalog_after_deleting_provider(provider_crud, provider_key, provider_mgmt,
+                                              provider_init, catalog_item):
+    """Tests edit catalog item after deleting provider
+
+    Metadata:
+        test_flag: provision
+    """
+    catalog_item.create()
+    provider_crud.delete(cancel=False)
+    catalog_item.update({'description': 'my edited description'})
+    flash.assert_success_message('Service Catalog Item "%s" was saved' %
+                                 catalog_item.name)
