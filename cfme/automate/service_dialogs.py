@@ -129,6 +129,10 @@ class ServiceDialog(Updateable, Pretty):
                 version.LOWEST: "Add a New Element to this Box",
                 "5.3": "Add a new Element to this Box"})
             sel.wait_for_element(element_form.ele_label)
+            # Workaround to refresh the fields, select other values (text area box and checkbox)and
+            # then select "text box"
+            fill(element_form, {'choose_type': "Text Area Box"})
+            fill(element_form, {'choose_type': "Check Box"})
             fill(element_form, each_element)
             self.element_type(each_element)
         sel.click(form_buttons.add)
