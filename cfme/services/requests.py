@@ -42,6 +42,7 @@ def approve(reason, cancel=False):
     """
     sel.wait_for_element(buttons.approve)
     sel.click(buttons.approve)
+    sel.wait_for_element(fields.reason)
     fill(fields.reason, reason)
     sel.click(buttons.submit if not cancel else buttons.cancel)
     flash.assert_no_errors()
