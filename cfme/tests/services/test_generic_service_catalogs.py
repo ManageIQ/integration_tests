@@ -26,10 +26,10 @@ pytestmark = [
 def dialog():
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
     element_data = dict(
+        choose_type="Text Box",
         ele_label="ele_" + fauxfactory.gen_alphanumeric(),
         ele_name=fauxfactory.gen_alphanumeric(),
         ele_desc="my ele desc",
-        choose_type="Text Box",
         default_text_box="default value"
     )
     service_dialog = ServiceDialog(label=dialog, description="my dialog", submit=True, cancel=True,
