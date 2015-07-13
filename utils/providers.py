@@ -28,6 +28,7 @@ infra_provider_type_map = {
 cloud_provider_type_map = {
     'ec2': mgmt_system.EC2System,
     'openstack': mgmt_system.OpenstackSystem,
+    'openstack-infra': mgmt_system.OpenstackSystem,
 }
 
 #: mapping of all provider type names to :py:mod:`utils.mgmt_system` classes
