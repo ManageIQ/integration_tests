@@ -372,8 +372,7 @@ class IPAppliance(object):
             else:
                 self.address = address
         self.browser_steal = browser_steal
-        # thing-toucher process, used for UI coverage
-        self._thing_toucher_proc = None
+        self._db_ssh_client = None
 
     def __repr__(self):
         return '%s(%s)' % (type(self).__name__, repr(self.address))
@@ -562,11 +561,15 @@ class IPAppliance(object):
         }
         return ssh.SSHClient(**connect_kwargs)
 
+    @property
     def db_ssh_client(self, **connect_kwargs):
+        # Not lazycached to allow for the db address changing
         if self.is_db_internal:
             return self.ssh_client
         else:
-            return self.ssh_client(hostname=self.db_address)
+            if self._db_ssh_client is None:
+                self._db_ssh_client = self.ssh_client(hostname=self.db_address)
+            return self._db_ssh_client
 
     def diagnose_evm_failure(self):
         """Go through various EVM processes, trying to figure out what fails
