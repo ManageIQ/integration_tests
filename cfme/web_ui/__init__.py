@@ -2119,6 +2119,14 @@ class Quadicon(Pretty):
         """ Returns:  a locator for the internal checkbox for the quadicon"""
         return "//input[@type='checkbox' and ../../..//a[@title={}]]".format(quoteattr(self._name))
 
+    @property
+    def exists(self):
+        try:
+            self.locate()
+            return True
+        except sel.NoSuchElementException:
+            return False
+
     def locate(self):
         """ Returns:  a locator for the quadicon anchor"""
         try:
