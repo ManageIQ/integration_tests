@@ -47,6 +47,8 @@ def test_iptables_running(ssh_client):
     assert 'is not running' not in stdout
 
 
+# In versions using systemd, httpd is disabled, and started by evmserverd
+@pytest.mark.uncollectif(lambda: version.current_version() >= '5.5')
 def test_httpd_running(ssh_client):
     """Verifies httpd service is running on the appliance"""
     stdout = ssh_client.run_command('service httpd status')[1]
@@ -56,7 +58,7 @@ def test_httpd_running(ssh_client):
 def test_evm_running(ssh_client):
     """Verifies overall evm service is running on the appliance"""
     stdout = ssh_client.run_command('service evmserverd status | grep EVM')[1]
-    assert 'started' in stdout
+    assert 'started' in stdout.lower()
 
 
 @pytest.mark.parametrize(('service'), [
@@ -66,10 +68,16 @@ def test_evm_running(ssh_client):
     'iptables',
     'postgresql92-postgresql',
 ])
-def test_chkconfig_on(ssh_client, service):
+def test_service_enabled(ssh_client, service):
     """Verifies if key services are configured to start on boot up"""
-    stdout = ssh_client.run_command('chkconfig | grep ' + service)[1]
-    assert '5:on' in stdout
+    if version.current_version() == version.LATEST and service == 'iptables':
+        raise pytest.skip('iptables service is not installed on upstream appliances')
+    if pytest.store.current_appliance.os_version >= '7':
+        cmd = 'systemctl is-enabled {}'.format(service)
+    else:
+        cmd = 'chkconfig | grep {} | grep -q "5:on"'
+    result = ssh_client.run_command(cmd)
+    assert result.rc == 0, result.output
 
 
 @pytest.mark.ignore_stream("upstream")
@@ -157,8 +165,8 @@ def test_db_connection(db):
 
 @pytest.mark.meta(blockers=[1121202, 'GH#ManageIQ/manageiq:1823'])
 def test_asset_precompiled(ssh_client):
-    version = ssh_client.get_version()
-    if not version.startswith('5.2'):
+    v = version.get_version()
+    if not v.is_in_series('5.2'):
         file_exists = ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets")[0] == 0
         assert file_exists, "Assets not precompiled"
 

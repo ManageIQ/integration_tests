@@ -60,7 +60,7 @@ form = Form(
     identifying_loc='username')
 
 
-def _click_on_login():
+def click_on_login():
     """
     Convenience internal function to click the login locator submit button.
     """
@@ -68,9 +68,8 @@ def _click_on_login():
 
 
 def _js_auth_fn():
-    """
-    Convenience internal function to click the login locator submit button.
-    """
+    # In case clicking on login or hitting enter is broken, this can still let you log in
+    # This shouldn't be used in automation, though.
     sel.execute_script('miqAjaxAuth();')
 
 
@@ -88,7 +87,7 @@ def press_enter_after_password():
     sel.send_keys(page.password, Keys.RETURN)
 
 
-LOGIN_METHODS = [_click_on_login, _js_auth_fn, press_enter_after_password]
+LOGIN_METHODS = [click_on_login, press_enter_after_password]
 
 
 def login(username, password, submit_method=_js_auth_fn):
@@ -207,7 +206,7 @@ def show_password_update_form():
 
 
 def update_password(username, password, new_password,
-                    verify_password=None, submit_method=_click_on_login):
+                    verify_password=None, submit_method=click_on_login):
     """ Changes user password """
     if logged_in():
         logout()

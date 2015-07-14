@@ -27,7 +27,7 @@ from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
 from utils.providers import provider_factory
-from utils.version import get_stream, get_version, LATEST
+from utils.version import Version, get_stream, get_version, LATEST
 from utils.wait import wait_for
 
 
@@ -522,6 +522,16 @@ class IPAppliance(object):
     @lazycache
     def version(self):
         return get_version()
+
+    @lazycache
+    def os_version(self):
+        # Currently parses the os version out of redhat release file to allow for
+        # rhel and centos appliances
+        res = self.ssh_client.run_command(
+            r"cat /etc/redhat-release | sed 's/.* release \(.*\) (.*/\1/'")
+        if res.rc != 0:
+            raise RuntimeError('Unable to retrieve appliance OS version')
+        return Version(res.output)
 
     @lazycache
     def log(self):
