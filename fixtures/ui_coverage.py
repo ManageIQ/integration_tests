@@ -49,7 +49,6 @@ Post-testing (e.g. ci environment):
 2. Zip up and archive the entire coverage dir for review
 
 """
-import json
 import subprocess
 from threading import Thread
 
@@ -59,7 +58,7 @@ from py.path import local
 
 from fixtures.pytest_store import store
 from utils import conf, version
-from utils.log import logger, create_sublogger
+from utils.log import create_sublogger
 from utils.path import conf_path, log_path, scripts_data_path
 from utils.wait import wait_for
 
@@ -153,8 +152,11 @@ class CoverageManager(object):
         self.print_message('merging reports')
         try:
             self._retrieve_coverage_reports()
-            self._merge_coverage_reports()
-            self._retrieve_merged_reports()
+            # If the appliance runs out of memory, these can take *days* to complete,
+            # so for now we'll just collect the raw coverage data and figure the merging
+            # out later
+            # self._merge_coverage_reports()
+            # self._retrieve_merged_reports()
         except Exception as exc:
             self.log.error('Error merging coverage reports')
             self.log.exception(exc)
@@ -293,20 +295,23 @@ class UiCoveragePlugin(object):
         # on master/standalone, merge all the collected reports and bring them back
         manager().merge()
 
-        try:
-            global ui_coverage_percent
-            last_run = json.load(log_path.join('coverage', 'merged', '.last_run.json').open())
-            ui_coverage_percent = last_run['result']['covered_percent']
-            style = {'bold': True}
-            if ui_coverage_percent > 40:
-                style['green'] = True
-            else:
-                style['red'] = True
-            store.write_line('UI Coverage Result: {}%'.format(ui_coverage_percent),
-                **style)
-        except Exception as ex:
-            logger.error('Error printing coverage report to terminal')
-            logger.exception(ex)
+# TODO
+# When the coverage reporting breaks out, we'll want to have this handy,
+# so I'm commenting it out instead of outright deleting it :)
+#         try:
+#             global ui_coverage_percent
+#             last_run = json.load(log_path.join('coverage', 'merged', '.last_run.json').open())
+#             ui_coverage_percent = last_run['result']['covered_percent']
+#             style = {'bold': True}
+#             if ui_coverage_percent > 40:
+#                 style['green'] = True
+#             else:
+#                 style['red'] = True
+#             store.write_line('UI Coverage Result: {}%'.format(ui_coverage_percent),
+#                 **style)
+#         except Exception as ex:
+#             logger.error('Error printing coverage report to terminal')
+#             logger.exception(ex)
 
 
 def pytest_addoption(parser):
