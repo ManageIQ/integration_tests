@@ -521,7 +521,7 @@ class IPAppliance(object):
 
     @lazycache
     def version(self):
-        return get_version(self.ssh_client.get_version())
+        return get_version()
 
     @lazycache
     def log(self):
