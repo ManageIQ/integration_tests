@@ -197,10 +197,6 @@ class SSHClient(paramiko.SSHClient):
         return SCPClient(self.get_transport(), progress=self._progress_callback).get(
             remote_file, local_path, **kwargs)
 
-    def get_version(self):
-        return self.run_command(
-            'cd /var/www/miq/vmdb; cat /var/www/miq/vmdb/VERSION').output.strip()
-
     def get_build_datetime(self):
         command = "stat --printf=%Y /var/www/miq/vmdb/VERSION"
         return parsetime.fromtimestamp(int(self.run_command(command).output.strip()))

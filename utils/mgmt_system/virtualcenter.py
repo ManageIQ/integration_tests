@@ -18,7 +18,7 @@ from cfme import exceptions as cfme_exc
 from utils.log import logger
 from utils.mgmt_system.base import MgmtSystemAPIBase, VMInfo
 from utils.mgmt_system.exceptions import VMInstanceNotCloned, VMInstanceNotSuspended
-from utils.version import LooseVersion
+from utils.version import Version
 from utils.wait import wait_for, TimedOutError
 
 
@@ -134,7 +134,7 @@ class VMWareSystem(MgmtSystemAPIBase):
 
     @property
     def version(self):
-        return LooseVersion(self.api.si.content.about.version)
+        return Version(self.api.si.content.about.version)
 
     @property
     def default_resource_pool(self):

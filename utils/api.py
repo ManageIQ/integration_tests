@@ -7,7 +7,7 @@ import re
 import requests
 import simplejson
 from copy import copy
-from utils.version import LooseVersion
+from utils.version import Version
 from utils.wait import wait_for
 
 
@@ -38,7 +38,7 @@ class API(object):
 
     @property
     def version(self):
-        return LooseVersion(self._version)
+        return Version(self._version)
 
     @staticmethod
     def _result_processor(result):
@@ -95,7 +95,7 @@ class API(object):
 
     @property
     def versions(self):
-        return sorted(self._versions.keys(), reverse=True, key=LooseVersion)
+        return sorted(self._versions.keys(), reverse=True, key=Version)
 
     @property
     def new_id_behaviour(self):
