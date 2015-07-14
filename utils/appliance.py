@@ -702,49 +702,20 @@ class IPAppliance(object):
             cb = log_callback
             log_callback = lambda msg: cb("DB setup: {}".format(msg))
 
-        client = self.ssh_client
+        log_callback('Starting upstream db setup')
+
+        # wait for the db config to appear
+        # this happens after migrations are run, which takes a few minutes
+        wait_for(func=lambda: self.ssh_client.run_command(
+            'test -f /var/www/miq/vmdb/config/vmdb.yml.db').rc == 0,
+            message='appliance db config exists',
+            delay=20, num_sec=1200)
 
         # Make sure the database is ready
-        log_callback('Starting upstream db setup')
-        wait_for(func=lambda: self.db_online,
-            message='appliance db online', delay=20, num_sec=120)
+        wait_for(func=lambda: self.is_db_ready,
+            message='appliance db ready', delay=20, num_sec=1200)
 
-        if self.db_has_database and self.db_has_tables:
-            log_callback('db already configured')
-            return
-
-        # Make sure the working dir exists
-        result = client.run_rails_command(
-            dedent("""\
-            "
-            require 'trollop'
-
-            # spoof the trollop options method so region is set correctly
-            module Trollop
-              class << self
-                def options(*args)
-                  return {:region => 0}
-                end
-              end
-            end
-
-            # now load the rake tasks and invoke
-            Rails.application.load_tasks
-            Rake.application['evm:db:region'].invoke
-            "
-        """)
-        )
-
-        if result.rc != 0:
-            msg = 'DB setup failed'
-            log_callback(msg)
-            raise ApplianceException(msg)
-        else:
-            log_callback('DB setup complete')
-
-        self.restart_evm_service(log_callback=log_callback)
-
-        return result
+        log_callback('DB setup complete')
 
     def clone_domain(self, source="ManageIQ", dest="Default", log_callback=None):
         """Clones Automate domain
