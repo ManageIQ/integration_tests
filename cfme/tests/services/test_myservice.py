@@ -117,9 +117,7 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     Metadata:
         test_flag: provision
     """
-    vm_name = catalog_item.provisioning_data["vm_name"]
-    vm_name = version.pick({version.LOWEST: vm_name,
-                            '5.4': vm_name + "_0001"})
+    vm_name = catalog_item.provisioning_data["vm_name"] + "_0001"
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
