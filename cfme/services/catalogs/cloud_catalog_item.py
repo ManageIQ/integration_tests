@@ -14,7 +14,6 @@ from cfme.web_ui import accordion, tabstrip, Form, Table, Select, fill,\
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
-from utils.version import current_version
 
 
 tb_select = functools.partial(tb.select, "Configuration")
@@ -114,7 +113,7 @@ class Instance(Updateable, Pretty):
                                'display_checkbox': self.display_in,
                                'select_catalog': self.catalog,
                                'select_dialog': self.dialog})
-        if current_version() >= "5.4":
+        if self.item_type != "Orchestration":
             sel.click(basic_info_form.field_entry_point)
             dynamic_tree.click_path("Datastore", "Default", "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
