@@ -81,6 +81,16 @@ def test_custom_dashboards(request, soft_assert, number_dashboards):
 
 
 def test_verify_rss_links(widgets_generated):
+    """This test verifies that RSS links on dashboard are working.
+
+    Prerequisities:
+        * Generated widgets, at least one RSS.
+
+    Steps:
+        * Loop through all RSS widgets
+        * Loop through all the links in a widget
+        * Try making a request on the provided URLs, should make sense
+    """
     pytest.sel.force_navigate("dashboard")
     for widget in Widget.by_type("rss_widget"):
         for desc, date, url in widget.content.data:

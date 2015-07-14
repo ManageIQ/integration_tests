@@ -66,4 +66,5 @@ def setup_provider_funcscope(provider_key):
 
 @pytest.fixture(scope="session")
 def any_provider_session():
+    providers.clear_providers()  # To make it clean
     providers.setup_a_provider(validate=True, check_existing=True)

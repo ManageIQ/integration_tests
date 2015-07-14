@@ -2,6 +2,8 @@
 """Module handling Dashboard Widgets accordion.
 
 """
+from xml.sax.saxutils import quoteattr
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.intelligence.reports.ui_elements import ExternalRSSFeed, MenuShortcuts, Timer
 from cfme.web_ui import (
@@ -116,21 +118,37 @@ visibility_obj = ShowingInputs(
 
 
 class Widget(Updateable, Pretty):
+    TITLE = None
     DETAIL_PAGE = None
+    WAIT_STATES = {"Queued", "Running"}
     status_info = InfoBlock("Status")
 
-    def go_to_detail(self):
-        sel.force_navigate(type(self).DETAIL_PAGE, context={"widget": self})
+    @property
+    def on_widget_page(self):
+        return sel.is_displayed(
+            "//div[contains(@class, 'dhtmlxPolyInfoBar')]"
+            "/div[contains(@class, 'dhtmlxInfoBarLabel') and normalize-space(.)={}]".format(
+                quoteattr("{} Widget \"{}\"".format(self.TITLE, self.title))))
 
-    def generate(self, wait=True):
+    def go_to_detail(self):
+        if self.on_widget_page:
+            toolbar.select("Reload current display")
+        else:
+            sel.force_navigate(type(self).DETAIL_PAGE, context={"widget": self})
+
+    def generate(self, wait=True, **kwargs):
         self.go_to_detail()
         toolbar.select("Configuration", "Generate Widget content now", invokes_alert=True)
         sel.handle_alert()
+        flash.assert_message_match("Content generation for this Widget has been initiated")
         flash.assert_no_errors()
         if wait:
-            wait_for(
-                self.check_status,
-                num_sec=600, delay=15, fail_condition=lambda result: result != "Complete")
+            self.wait_generated(**kwargs)
+
+    def wait_generated(self, timeout=600):
+        wait_for(
+            self.check_status,
+            num_sec=timeout, delay=5, fail_condition=lambda result: result != "Complete")
 
     def check_status(self):
         self.go_to_detail()
@@ -162,6 +180,7 @@ class MenuWidget(Widget):
         ("shortcuts", MenuShortcuts("//select[@id='add_shortcut']")),
         ("visibility", visibility_obj),
     ])
+    TITLE = "Menu"
     pretty_attrs = ['description', 'shortcuts', 'visibility']
     DETAIL_PAGE = "reports_widgets_menu"
 
@@ -211,6 +230,7 @@ class ReportWidget(Widget):
         ("timer", Timer()),
         ("visibility", visibility_obj),
     ])
+    TITLE = "Report"
     pretty_attrs = ['description', 'filter', 'visibility']
     DETAIL_PAGE = "reports_widgets_report"
 
@@ -252,6 +272,7 @@ class ChartWidget(Widget):
         ("timer", Timer()),
         ("visibility", visibility_obj),
     ])
+    TITLE = "Chart"
     pretty_attrs = ['title', 'description', 'filter', 'visibility']
     DETAIL_PAGE = "reports_widgets_chart"
 
@@ -293,6 +314,7 @@ class RSSFeedWidget(Widget):
         ("timer", Timer()),
         ("visibility", visibility_obj),
     ])
+    TITLE = "RSS Feed"
     pretty_attrs = ['title', 'description', 'type', 'feed', 'visibility']
     DETAIL_PAGE = "reports_widgets_rss_feed"
 
