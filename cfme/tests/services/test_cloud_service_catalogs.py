@@ -89,6 +89,7 @@ def cleanup_vm(vm_name, provider_key, provider_mgmt):
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
 
 
+@pytest.mark.meta(blockers=1242706)
 def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud,
                             provider_type, provisioning, dialog, catalog, request):
     """Tests cloud catalog item
