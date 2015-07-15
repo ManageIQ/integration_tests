@@ -91,7 +91,7 @@ def check_prs():
 
     Iterates over each PR and runs the check_pr functon on it.
     """
-    json_data = perform_request('pulls'.format(owner, repo))
+    json_data = perform_request('pulls?per_page=100'.format(owner, repo))
     numbers = []
     for pr in json_data:
         numbers.append(pr['number'])
