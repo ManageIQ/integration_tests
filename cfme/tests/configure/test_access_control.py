@@ -9,7 +9,7 @@ from cfme import Credential
 from cfme import login
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
-from cfme.web_ui import flash
+from cfme.web_ui import flash, Table, toolbar as tb
 from cfme.web_ui.menu import nav
 from cfme.configure import tasks
 from utils.blockers import BZ
@@ -17,7 +17,9 @@ from utils.log import logger
 from utils.providers import setup_a_provider
 from utils.update import update
 from xml.sax.saxutils import quoteattr
+from utils import version
 
+records_table = Table("//div[@id='main_div']//table")
 usergrp = ac.Group(description='EvmGroup-user')
 
 
@@ -160,6 +162,24 @@ def test_user_remove_tag():
     user.remove_tag("Department", "Engineering")
     assert tag != "Department: Engineering", "Remove User tag failed"
     user.delete()
+
+
+def test_delete_default_user():
+    """Test for deleting default user Administrator.
+
+    Steps:
+        * Login as Administrator user
+        * Try deleting the user
+    """
+    user = ac.User(name='Administrator')
+    sel.force_navigate("cfg_accesscontrol_users")
+    column = version.pick({version.LOWEST: "Name",
+        "5.4": "Full Name"})
+    row = records_table.find_row_by_cells({column: user.name})
+    sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
+    tb.select('Configuration', 'Delete selected Users', invokes_alert=True)
+    sel.handle_alert()
+    flash.assert_message_match('Default EVM User "{}" cannot be deleted' .format(user.name))
 
 
 # Group test cases
