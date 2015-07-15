@@ -225,9 +225,9 @@ def test_request_with_orphaned_template(provider_crud, provider_key, provider_mg
                                                                    catalog_item.name)
     # row_description = catalog_item.name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1400, delay=20)
-    assert row.last_message.text == 'Request complete'
+    # row, __ = wait_for(requests.wait_for_request, [cells, True],
+    #  fail_func=requests.reload, num_sec=1400, delay=20)
+    # assert row.last_message.text == 'Request complete'
     provider_crud.delete(cancel=False)
     wait_for(lambda: requests.go_to_request(cells), num_sec=80, delay=5)
     requests.approve_request(cells, "Approved")
