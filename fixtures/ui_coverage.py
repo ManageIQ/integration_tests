@@ -164,17 +164,17 @@ class CoverageManager(object):
 
     def _install_simplecov(self):
         self.log.info('Installing coverage gem on appliance')
-        self.ipapp.ssh_client().put_file(gemfile.strpath, rails_root.strpath)
+        self.ipapp.ssh_client.put_file(gemfile.strpath, rails_root.strpath)
 
         # gem install for more recent downstream builds
         def _gem_install():
-            self.ipapp.ssh_client().run_command(
+            self.ipapp.ssh_client.run_command(
                 'gem install --install-dir /opt/rh/cfme-gemset/ -v0.9.2 simplecov')
 
         # bundle install for old downstream and upstream builds
         def _bundle_install():
-            self.ipapp.ssh_client().run_command('yum -y install git')
-            self.ipapp.ssh_client().run_command('cd {}; bundle'.format(rails_root))
+            self.ipapp.ssh_client.run_command('yum -y install git')
+            self.ipapp.ssh_client.run_command('cd {}; bundle'.format(rails_root))
         version.pick({
             version.LOWEST: _bundle_install,
             '5.4': _gem_install,
@@ -183,10 +183,10 @@ class CoverageManager(object):
 
     def _install_coverage_hook(self):
         # Clean appliance coverage dir
-        self.ipapp.ssh_client().run_command('rm -rf {}'.format(
+        self.ipapp.ssh_client.run_command('rm -rf {}'.format(
             appliance_coverage_root.strpath))
         # Put the coverage hook in the miq lib path
-        self.ipapp.ssh_client().put_file(coverage_hook.strpath, rails_root.join(
+        self.ipapp.ssh_client.put_file(coverage_hook.strpath, rails_root.join(
             '..', 'lib', coverage_hook.basename).strpath)
         replacements = {
             'require': r"require 'coverage_hook'",
@@ -199,23 +199,23 @@ class CoverageManager(object):
             'cd {config};'
             'grep -q "{require}" preinitializer.rb || echo -e "\\n{require}" >> preinitializer.rb'
         )
-        x, out = self.ipapp.ssh_client().run_command(command_template.format(**replacements))
+        x, out = self.ipapp.ssh_client.run_command(command_template.format(**replacements))
         return x == 0
 
     def _touch_all_the_things(self):
         self.log.info('Establishing baseline coverage by requiring ALL THE THINGS')
         # send over the thing toucher
-        self.ipapp.ssh_client().put_file(
+        self.ipapp.ssh_client.put_file(
             thing_toucher.strpath, rails_root.join(
                 thing_toucher.basename).strpath
         )
         # start it in an async thread so we can go on testing while this takes place
-        t = Thread(target=_thing_toucher_async, args=[self.ipapp.ssh_client()])
+        t = Thread(target=_thing_toucher_async, args=[self.ipapp.ssh_client])
         t.daemon = True
         t.start()
 
     def _still_touching_all_the_things(self):
-        return self.ipapp.ssh_client().run_command('pgrep -f thing_toucher.rb', timeout=10).rc == 0
+        return self.ipapp.ssh_client.run_command('pgrep -f thing_toucher.rb', timeout=10).rc == 0
 
     def _stop_touching_all_the_things(self):
         self.log.info('Waiting for baseline coverage generator to finish')
@@ -226,11 +226,11 @@ class CoverageManager(object):
 
     def _collect_reports(self):
         # restart evm to stop the proccesses and let the simplecov exit hook run
-        self.ipapp.ssh_client().run_command('service evmserverd stop')
+        self.ipapp.ssh_client.run_command('service evmserverd stop')
         # collect back to the collection appliance if parallelized
         if store.current_appliance != self.collection_appliance:
             self.print_message('sending reports to {}'.format(self.collection_appliance.address))
-            self.ipapp.ssh_client().run_command('scp -o StrictHostKeyChecking=no '
+            self.ipapp.ssh_client.run_command('scp -o StrictHostKeyChecking=no '
                 '-r /var/www/miq/vmdb/coverage/* '
                 '{addr}:/var/www/miq/vmdb/coverage/'.format(
                     addr=self.collection_appliance.address),
@@ -238,7 +238,7 @@ class CoverageManager(object):
 
     def _retrieve_coverage_reports(self):
         # Before merging, archive and collect all the raw coverage results
-        ssh_client = self.collection_appliance.ssh_client()
+        ssh_client = self.collection_appliance.ssh_client
         ssh_client.run_command('cd /var/www/miq/vmdb/;'
             'tar czf /tmp/ui-coverage-raw.tgz coverage/')
         ssh_client.get_file('/tmp/ui-coverage-raw.tgz', coverage_results_archive.strpath)
@@ -246,13 +246,13 @@ class CoverageManager(object):
     def _merge_coverage_reports(self):
         # run the merger on the appliance to generate the simplecov report
         # This has been failing, presumably due to oom errors :(
-        ssh_client = self.collection_appliance.ssh_client()
+        ssh_client = self.collection_appliance.ssh_client
         ssh_client.put_file(coverage_merger.strpath, rails_root.strpath)
         ssh_client.run_rails_command(coverage_merger.basename)
 
     def _retrieve_merged_reports(self):
         # Now bring the report back (tar it, get it, untar it)
-        ssh_client = self.collection_appliance.ssh_client()
+        ssh_client = self.collection_appliance.ssh_client
         ssh_client.run_command('cd /var/www/miq/vmdb/coverage;'
             'tar czf /tmp/ui-coverage-results.tgz merged/')
         ssh_client.get_file('/tmp/ui-coverage-results.tgz', coverage_results_archive.strpath)
