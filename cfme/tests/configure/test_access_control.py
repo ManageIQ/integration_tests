@@ -182,6 +182,30 @@ def test_delete_default_user():
     flash.assert_message_match('Default EVM User "{}" cannot be deleted' .format(user.name))
 
 
+@pytest.mark.meta(automates=[1090877])
+def test_current_user_login_delete(request):
+    """Test for deleting current user login.
+
+    Steps:
+        * Login as Admin user
+        * Create a new user
+        * Login with the new user
+        * Try deleting the user
+    """
+    group_user = ac.Group("EvmGroup-super_administrator")
+    user = ac.User(
+        name='user' + fauxfactory.gen_alphanumeric(),
+        credential=new_credential(),
+        email='xyz@redhat.com',
+        group=group_user)
+    user.create()
+    request.addfinalizer(user.delete)
+    request.addfinalizer(login.login_admin)
+    login.login(user.credential.principal, user.credential.secret)
+    with error.expected("Current EVM User \"%s\" cannot be deleted" % user.name):
+        user.delete()
+
+
 # Group test cases
 def test_group_crud():
     group = new_group()
