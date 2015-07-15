@@ -319,14 +319,12 @@ class Appliance(object):
             raise ApplianceException("appliance NOT on rhev, unable to connect direct_lun")
         log_callback('Adding RHEV direct_lun hook...')
         self.ipapp.wait_for_ssh()
-        script = scripts_path.join('connect_directlun.py')
-        args = [str(script), '--provider', self._provider_name, '--vm_name', self.vm_name]
-        with open(os.devnull, 'w') as f_devnull:
-            status = subprocess.call(args, stdout=f_devnull)
-        if status != 0:
-            msg = 'Appliance {} failed to connect rhev direct lun!'.format(self.address)
-            log_callback(msg)
-            raise ApplianceException(msg)
+        try:
+            self.provider.connect_direct_lun_to_appliance(self.vm_name, False)
+        except Exception as e:
+            log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
+            log_callback(str(e))
+            raise
 
     def remove_rhev_direct_lun_disk(self, log_callback=None):
         if log_callback is None:
@@ -337,15 +335,12 @@ class Appliance(object):
             raise ApplianceException(msg)
         log_callback('Removing RHEV direct_lun hook...')
         self.ipapp.wait_for_ssh()
-        script = scripts_path.join('connect_directlun.py')
-        args = [str(script), '--remove', '--provider',
-                self._provider_name, '--vm_name', self.vm_name]
-        with open(os.devnull, 'w') as f_devnull:
-            status = subprocess.call(args, stdout=f_devnull)
-        if status != 0:
-            msg = 'Appliance {} failed to disconnect rhev direct lun!'.format(self.address)
-            log_callback(msg)
-            raise ApplianceException(msg)
+        try:
+            self.provider.connect_direct_lun_to_appliance(self.vm_name, True)
+        except Exception as e:
+            log_callback("Appliance {} failed to connect RHEV direct LUN.".format(self.vm_name))
+            log_callback(str(e))
+            raise
 
     def reset_automate_model(self):
         with self.ipapp.ssh_client as ssh:
