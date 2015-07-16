@@ -39,7 +39,7 @@ def _setup_provider(provider_key):
         skip(provider_key)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='function')
 def setup_provider(provider_key):
     """Module-scoped fixture to set up a provider"""
     _setup_provider(provider_key)

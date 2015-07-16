@@ -37,7 +37,7 @@ def pytest_generate_tests(metafunc):
         new_idlist.append(idlist[i])
         new_argvalues.append([args[argname] for argname in argnames])
 
-    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
+    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="function")
 
 
 @pytest.fixture(scope="function")

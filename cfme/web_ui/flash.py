@@ -57,7 +57,7 @@ def get_message_level(el):
     return sel.get_attribute(el, "class") or "error"
 
 
-@get_message_level.method(version.LATEST)
+@get_message_level.method('5.3')
 def get_message_level_up(el):
     _class = sel.get_attribute(el, "class")
     for key, value in _mapping_new.iteritems():
@@ -75,7 +75,7 @@ def get_message_text(el):
         return sel.text(el)
 
 
-@get_message_text.method(version.LATEST)
+@get_message_text.method('5.3')
 def get_message_text_up(el):
     return sel.text(el)
 
