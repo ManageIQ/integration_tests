@@ -207,9 +207,9 @@ class Version(object):
 
         if self == other:
             return 0
-        elif self == self.latest():
+        elif self == self.latest() or other == self.lowest():
             return 1
-        elif self == self.lowest():
+        elif self == self.lowest() or other == self.latest():
             return -1
         else:
             return cmp(self.version, other.version)
