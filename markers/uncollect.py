@@ -69,7 +69,7 @@ def uncollectif(item):
 
     marker = item.get_marker('uncollectif')
     if marker:
-        log_msg = 'Uncollecting {}: {}'.format(item.name,
+        log_msg = 'Trying uncollecting {}: {}'.format(item.name,
             marker.kwargs.get('reason', 'No reason given'))
 
         try:
@@ -89,9 +89,10 @@ def uncollectif(item):
             else:
                 raise Exception("Failed to uncollect {}, best guess a fixture wasn't "
                                 "ready".format(func_name))
-
-        logger.debug(log_msg)
-        return not marker.args[0](*args)
+        retval = marker.args[0](*args)
+        if retval:
+            logger.debug(log_msg)
+        return not retval
     else:
         return True
 
