@@ -12,8 +12,8 @@ def get_product_version(ver):
     """Return product version for given Version obj or version string
     """
     ver = Version(ver)
-    if ver.product_version is not None:
-        return ver.product_version
+    if ver.product_version() is not None:
+        return ver.product_version()
     else:
         raise LookupError("no matching product version found for version {}".format(ver))
 
@@ -22,8 +22,8 @@ def get_stream(ver):
     """Return a stream name for given Version obj or version string
     """
     ver = Version(ver)
-    if ver.stream is not None:
-        return ver.stream
+    if ver.stream() is not None:
+        return ver.stream()
     else:
         raise LookupError("no matching stream found for version {}".format(ver))
 
