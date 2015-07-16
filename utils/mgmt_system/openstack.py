@@ -10,6 +10,7 @@ from functools import partial
 from cinderclient.v2 import client as cinderclient
 from cinderclient import exceptions as cinder_exceptions
 from keystoneclient.v2_0 import client as oskclient
+from keystoneclient.openstack.common.apiclient.exceptions import NotFound
 from novaclient.v1_1 import client as osclient
 from novaclient import exceptions as os_exceptions
 from novaclient.client import HTTPClient
@@ -152,6 +153,35 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def _get_role(self, **kwargs):
         return self.kapi.roles.find(**kwargs).id
 
+    def add_user(self, user_name, password=None, enabled=True, email=None, tenant=None):
+        user = self.kapi.users.create(
+            user_name, password=password, email=email, tenant_id=tenant, enabled=enabled)
+        return user.id
+
+    def remove_user(self, user_name):
+        uid = self._get_user(name=user_name)
+        self.kapi.users.delete(uid)
+
+    @contextmanager
+    def with_user(self, user_name, *args, **kwargs):
+        """This context manager ensures that user is deleted after use.
+
+        Args:
+            *args, **kwargs: Passed to add_user
+        """
+        try:
+            uid = self.add_user(user_name, *args, **kwargs)
+            logger.info("Tenant {}/{} created.".format(uid, user_name))
+            yield uid
+        finally:
+            logger.info("Removing user {}/{}".format(uid, user_name))
+            try:
+                self.remove_user(user_name)
+            except NotFound:
+                logger.info("User {}/{} already does not exist".format(uid, user_name))
+            else:
+                logger.info("User {}/{} removed".format(uid, user_name))
+
     def add_tenant(self, tenant_name, description=None, enabled=True, user=None, roles=None):
         tenant = self.kapi.tenants.create(tenant_name=tenant_name,
                                           description=description,
@@ -169,6 +199,26 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def remove_tenant(self, tenant_name):
         tid = self._get_tenant(name=tenant_name)
         self.kapi.tenants.delete(tid)
+
+    @contextmanager
+    def with_tenant(self, tenant_name, *args, **kwargs):
+        """This context manager ensures that tenant is deleted after use.
+
+        Args:
+            *args, **kwargs: Passed to add_tenant
+        """
+        try:
+            tid = self.add_tenant(tenant_name, *args, **kwargs)
+            logger.info("Tenant {} created.".format(tid))
+            yield tid
+        finally:
+            logger.info("Removing tenant {}".format(tid))
+            try:
+                self.remove_tenant(tenant_name)
+            except NotFound:
+                logger.info("Tenant {} already does not exist".format(tid))
+            else:
+                logger.info("Tenant {} removed".format(tid))
 
     def start_vm(self, instance_name):
         logger.info(" Starting OpenStack instance %s" % instance_name)

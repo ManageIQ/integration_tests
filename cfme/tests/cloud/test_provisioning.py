@@ -46,11 +46,15 @@ def vm_name(request):
     return vm_name
 
 
-def test_provision_from_template(request, setup_provider, provider, provisioning, vm_name):
+@pytest.mark.uncollectif(lambda provider_type: provider_type != "openstack")
+def test_provision_from_template(
+        request, setup_provider, provider, provisioning, vm_name, tenant_test):
     """ Tests instance provision from template
 
     Metadata:
         test_flag: provision
+        tenant:
+            random:
     """
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
