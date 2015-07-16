@@ -75,7 +75,7 @@ def test_service_enabled(ssh_client, service):
     if pytest.store.current_appliance.os_version >= '7':
         cmd = 'systemctl is-enabled {}'.format(service)
     else:
-        cmd = 'chkconfig | grep {} | grep -q "5:on"'
+        cmd = 'chkconfig | grep {} | grep -q "5:on"'.format(service)
     result = ssh_client.run_command(cmd)
     assert result.rc == 0, result.output
 
