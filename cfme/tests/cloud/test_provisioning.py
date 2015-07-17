@@ -399,6 +399,6 @@ def test_provision_with_additional_volume(
     finally:
         instance.delete_from_provider()
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
-        if volume_id in locals():
+        if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
             if provider_mgmt.volume_exists(volume_id):
                 provider_mgmt.delete_volume(volume_id)
