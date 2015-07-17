@@ -170,8 +170,8 @@ class Appliance(object):
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.setup_upstream_db(log_callback=log_callback)
-        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
+        self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def configure(self, setup_fleece=False, log_callback=None, **kwargs):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
