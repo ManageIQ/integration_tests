@@ -27,7 +27,7 @@ from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
 from utils.providers import provider_factory
-from utils.version import Version, get_stream, get_version, LATEST
+from utils.version import Version, get_stream, LATEST
 from utils.wait import wait_for
 
 
@@ -521,7 +521,10 @@ class IPAppliance(object):
 
     @lazycache
     def version(self):
-        return get_version()
+        res = self.ssh_client.run_command('cat /var/www/miq/vmdb/VERSION')
+        if res.rc != 0:
+            raise RuntimeError('Unable to retrieve appliance VMDB version')
+        return Version(res.output)
 
     @lazycache
     def os_version(self):

@@ -40,10 +40,6 @@ def get_version(obj=None):
     If obj is None, the version will be retrieved from the current appliance
 
     """
-    if obj is None:
-        res = store.current_appliance.ssh_client.run_command(
-            'cd /var/www/miq/vmdb; cat /var/www/miq/vmdb/VERSION')
-        obj = res.output.strip()
     if isinstance(obj, Version):
         return obj
     if obj.startswith('master'):
@@ -58,7 +54,7 @@ def current_version():
        testing, without knowing the server version.
 
     """
-    return get_version(store.current_appliance.version)
+    return store.current_appliance.version
 
 
 def appliance_build_datetime():
