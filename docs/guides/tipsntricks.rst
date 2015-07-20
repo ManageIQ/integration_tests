@@ -10,6 +10,28 @@ as they are developed and rediscovered.
 
 .. _blockers:
 
+
+Version Picking
+---------------
+
+Dealing with multiple releases, it's obvious that some things change from version to version. A lot
+of the time, these changes are simple, such as a string change. So that we can continue using the same
+codebase for any version, we define the idea of version picking. Version picking essentially returns
+an object depending on the version of an appliance. It's particularly useful for things like locator
+changes because most of the element handling routines are version picking away. This means if they
+receive a dict as an argument, they will automatically try to resolve it using the version picking tool.
+To use version picking is easy::
+
+    from utils import version
+
+    version.pick({'5.4': "Houses",
+                  '5.3': "House",
+                  version.LOWEST: "Boat"})
+
+In this example, if the version is below 5.3, the ``Boat`` will be returned. Anything between 5.3 and 5.4
+will return ``House`` and anything over 5.4 will return ``Houses``. There is also a ``version.LATEST``
+which points to upstream appliances.
+
 Defining blockers
 -----------------
 
@@ -26,6 +48,18 @@ really easy::
 
 Note the two bug numbers 12345 and 12346. More information can be found in the :py:mod:`fixtures.blockers`
 fixture.
+
+Using blockers in tests
+-----------------------
+
+On the odd occasion, you don't want to disable an entire test, but just a part of it, until a bug
+is fixed. To do this, we can specify a bug object and ask the framework to skip if a certain bug
+exists and is not closed. The syntax is pretty simple::
+
+    def my_test(provider, bug):
+        ui_bug = bug(12234)
+        if not ui_bug:
+            # Do something unless the bug is still present in which case, it will be skipped
 
 Uncollecting tests
 ------------------
