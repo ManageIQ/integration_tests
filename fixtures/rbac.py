@@ -135,6 +135,9 @@ def pytest_pyfunc_call(pyfuncitem):
         pyfuncitem: A pytest test item.
     """
     # do whatever you want before the next hook executes
+    if not enable_rbac:
+        yield
+        return
 
     # Login as the "new" user to run the test under
     global last_user
