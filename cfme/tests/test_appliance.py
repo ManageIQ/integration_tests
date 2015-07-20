@@ -70,7 +70,7 @@ def test_evm_running(ssh_client):
 ])
 def test_service_enabled(ssh_client, service):
     """Verifies if key services are configured to start on boot up"""
-    if version.current_version() == version.LATEST and service == 'iptables':
+    if version.current_version().is_in_series('upstream') and service == 'iptables':
         raise pytest.skip('iptables service is not installed on upstream appliances')
     if pytest.store.current_appliance.os_version >= '7':
         cmd = 'systemctl is-enabled {}'.format(service)
@@ -163,12 +163,11 @@ def test_db_connection(db):
     assert len(databases) > 0
 
 
+@pytest.mark.ignore_stream("5.2")
 @pytest.mark.meta(blockers=[1121202, 'GH#ManageIQ/manageiq:1823'])
 def test_asset_precompiled(ssh_client):
-    v = version.get_version()
-    if not v.is_in_series('5.2'):
-        file_exists = ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets")[0] == 0
-        assert file_exists, "Assets not precompiled"
+    file_exists = ssh_client.run_command("test -d /var/www/miq/vmdb/public/assets").rc == 0
+    assert file_exists, "Assets not precompiled"
 
 
 @pytest.mark.ignore_stream("upstream", "5.3")
