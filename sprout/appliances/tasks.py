@@ -137,6 +137,7 @@ def kill_appliance(self, appliance_id, replace_in_pool=False, minutes=60):
     """
     self.logger.info("Initiated kill of appliance {}".format(appliance_id))
     workflow = [
+        disconnect_direct_lun.si(appliance_id),
         appliance_power_off.si(appliance_id),
         kill_appliance_delete.si(appliance_id),
     ]
@@ -1309,3 +1310,39 @@ def obsolete_template_deleter(self):
                 for template in obsolete_templates:
                     if template.can_be_deleted:
                         delete_template_from_provider.delay(template.id)
+
+
+@singleton_task()
+def connect_direct_lun(self, appliance_id):
+    appliance = Appliance.objects.get(id=appliance_id)
+    if not hasattr(appliance.provider_api, "connect_direct_lun_to_appliance"):
+        return False
+    try:
+        appliance.provider_api.connect_direct_lun_to_appliance(appliance.name, False)
+    except Exception as e:
+        appliance.set_status("LUN: {}: {}".format(type(e).__name__, str(e)))
+        return False
+    else:
+        appliance.reload()
+        with transaction.atomic():
+            appliance.lun_disk_connected = True
+            appliance.save()
+        return True
+
+
+@singleton_task()
+def disconnect_direct_lun(self, appliance_id):
+    appliance = Appliance.objects.get(id=appliance_id)
+    if not hasattr(appliance.provider_api, "connect_direct_lun_to_appliance"):
+        return False
+    try:
+        appliance.provider_api.connect_direct_lun_to_appliance(appliance.name, True)
+    except Exception as e:
+        appliance.set_status("LUN: {}: {}".format(type(e).__name__, str(e)))
+        return False
+    else:
+        appliance.reload()
+        with transaction.atomic():
+            appliance.lun_disk_connected = False
+            appliance.save()
+        return True

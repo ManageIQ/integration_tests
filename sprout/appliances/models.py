@@ -495,6 +495,9 @@ class Appliance(MetadataMixin):
         help_text="Appliance has an IP address and web UI is online.")
     uuid = models.CharField(max_length=36, null=True, blank=True, help_text="UUID of the machine")
     description = models.TextField(blank=True)
+    lun_disk_connected = models.BooleanField(
+        default=False,
+        help_text="Whether the Direct LUN disk is connected. (RHEV Only)")
 
     @property
     def serialized(self):
@@ -518,6 +521,7 @@ class Appliance(MetadataMixin):
             template_group=self.template.template_group.id,
             template_sprout_name=self.template.name,
             preconfigured=self.preconfigured,
+            lun_disk_connected=self.lun_disk_connected,
         )
 
     @property

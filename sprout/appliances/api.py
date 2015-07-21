@@ -12,7 +12,8 @@ from django.shortcuts import render
 
 from appliances.models import Appliance, AppliancePool, Provider, Group, Template
 from appliances.tasks import (
-    appliance_power_on, appliance_power_off, appliance_suspend, appliance_rename)
+    appliance_power_on, appliance_power_off, appliance_suspend, appliance_rename,
+    connect_direct_lun, disconnect_direct_lun)
 from sprout.log import create_logger
 
 
@@ -500,3 +501,44 @@ def task_result(task_id):
     if not result.ready():
         return None
     return result.get(timeout=1)
+
+
+@jsonapi.method
+def appliance_provider_type(appliance):
+    """Return appliance's provider class.
+
+    Corresponds to the mgmt_system class names.
+
+    You can specify appliance by IP address, id or name.
+    """
+    api_class = type(get_appliance(appliance).provider_api)
+    return api_class.__name__
+
+
+@jsonapi.method
+def appliance_provider_key(appliance):
+    """Return appliance's provider key.
+
+    You can specify appliance by IP address, id or name.
+    """
+    return get_appliance(appliance).provider.id
+
+
+@jsonapi.method
+def appliance_connect_direct_lun(appliance):
+    """Connects direct LUN disk to the appliance (RHEV only).
+
+    You can specify appliance by IP address, id or name.
+    """
+    appliance = get_appliance(appliance)
+    return connect_direct_lun(appliance.id).task_id
+
+
+@jsonapi.method
+def appliance_disconnect_direct_lun(appliance):
+    """Disconnects direct LUN disk from the appliance (RHEV only).
+
+    You can specify appliance by IP address, id or name.
+    """
+    appliance = get_appliance(appliance)
+    return disconnect_direct_lun(appliance.id).task_id

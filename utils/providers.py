@@ -104,6 +104,8 @@ def provider_factory(provider_key, providers=None, credentials=None):
     # Let the provider do whatever they need with them
     provider_kwargs = provider.copy()
     provider_kwargs.update(credentials)
+    if isinstance(provider_key, basestring):
+        provider_kwargs["provider_key"] = provider_key
     provider_instance = provider_type_map[provider['type']](**provider_kwargs)
     return provider_instance
 
