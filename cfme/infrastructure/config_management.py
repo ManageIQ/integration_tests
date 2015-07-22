@@ -56,16 +56,31 @@ nav.add_branch(
                 lambda _: cfg_btn('Add a new Provider'),
                 'infrastructure_config_manager':
                 [
-                    lambda ctx: (toolbar.set_vms_grid_view(),
-                    sel.click(
-                        Quadicon('{} Configuration Manager'.format(ctx['manager'].name), None))),
+                    lambda ctx: sel.check(
+                        Quadicon(
+                            '{} Configuration Manager'
+                            .format(ctx['manager'].name), None).checkbox),
                     {
                         'infrastructure_config_manager_edit':
-                        lambda _: cfg_btn('Edit this Provider'),
+                        lambda _: cfg_btn('Edit Selected item'),
                         'infrastructure_config_manager_refresh':
                         lambda _: cfg_btn('Refresh Relationships and Power states',
                                   invokes_alert=True),
                         'infrastructure_config_manager_remove':
+                        lambda _: cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
+                    }
+                ],
+                'infrastructure_config_manager_detail':
+                [
+                    lambda ctx: sel.click(
+                        Quadicon('{} Configuration Manager'.format(ctx['manager'].name), None)),
+                    {
+                        'infrastructure_config_manager_edit_detail':
+                        lambda _: cfg_btn('Edit this Provider'),
+                        'infrastructure_config_manager_refresh_detail':
+                        lambda _: cfg_btn('Refresh Relationships and Power states',
+                                  invokes_alert=True),
+                        'infrastructure_config_manager_remove_detail':
                         lambda _: cfg_btn('Remove this Provider from the VMDB', invokes_alert=True),
                         'infrastructure_config_manager_config_profile':
                         lambda ctx: list_table.click_cell('Description', ctx['profile'].name)
@@ -141,7 +156,7 @@ class ConfigManager(Updateable, Pretty):
 
     def navigate(self):
         """Navigates to the manager's detail page"""
-        sel.force_navigate('infrastructure_config_manager', context={'manager': self})
+        sel.force_navigate('infrastructure_config_manager_detail', context={'manager': self})
 
     @lazycache
     def type(self):
@@ -171,7 +186,8 @@ class ConfigManager(Updateable, Pretty):
             logger.info(
                 "UI: {}\nYAML: {}"
                 .format(set(config_profiles_names), set(self.yaml_data['config_profiles'])))
-            return set(config_profiles_names) == set(self.yaml_data['config_profiles'])
+            return all(
+                [cp in config_profiles_names for cp in self.yaml_data['config_profiles']])
 
         if not force and self.exists:
             return
@@ -246,8 +262,8 @@ class ConfigManager(Updateable, Pretty):
         sel.handle_alert(cancel)
         if not cancel:
             flash.assert_message_match(
-                'Refresh Ems initiated for 1 Provider ({}) from the CFME Database'
-                .format("Foreman"))  # BZ1230335; TODO "Foreman" => self.type once fixed
+                'Refresh {0} initiated for 1 Provider ({0}) from the CFME Database'
+                .format(self.type))
 
     @property
     def config_profiles(self):
@@ -313,8 +329,12 @@ class ConfigProfile(Pretty):
         """Returns 'ConfigSystem' objects that are active under this profile"""
         self.navigate()
         # ajax wait doesn't work here
-        sel.wait_for_element(tabs._entry_div)
-        tabs.select_tab("Configured Systems")
+        _header_loc = "//div[contains(@class, 'dhtmlxInfoBarLabel')"\
+                      " and contains(normalize-space(text()), 'Configured Systems')]"
+        sel.wait_for_element(_header_loc)
+        # Unassigned config profile has no tabstrip
+        if "unassigned" not in self.name.lower():
+            tabs.select_tab("Configured Systems")
         if sel.is_displayed(list_table):
             return [ConfigSystem(row['description'].text, self) for row in list_table.rows()]
         return list()
