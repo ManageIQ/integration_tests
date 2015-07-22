@@ -710,24 +710,27 @@ class AppliancePool(MetadataMixin):
         # Retrieve latest possible
         if not version:
             versions = Template.get_versions(
-                template_group=group, ready=True, usable=True, preconfigured=preconfigured)
+                template_group=group, ready=True, usable=True, preconfigured=preconfigured,
+                provider__working=True)
             if versions:
                 version = versions[0]
         if not date:
             if version is not None:
                 dates = Template.get_dates(template_group=group, version=version, ready=True,
-                    usable=True, preconfigured=preconfigured)
+                    usable=True, preconfigured=preconfigured, provider__working=True)
             else:
                 dates = Template.get_dates(
-                    template_group=group, ready=True, usable=True, preconfigured=preconfigured)
+                    template_group=group, ready=True, usable=True, preconfigured=preconfigured,
+                    provider__working=True)
             if dates:
                 date = dates[0]
         if isinstance(group, basestring):
             group = Group.objects.get(id=group)
         if isinstance(provider, basestring):
-            provider = Provider.objects.get(id=provider)
+            provider = Provider.objects.get(id=provider, working=True)
         if not (version or date):
-            raise Exception("Could not find possible combination of group, date and version!")
+            raise Exception(
+                "Could not find proper combination of group, date, version and a working provider!")
         req = cls(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
             provider=provider, preconfigured=preconfigured)

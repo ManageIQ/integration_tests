@@ -1333,6 +1333,8 @@ def connect_direct_lun(self, appliance_id):
 @singleton_task()
 def disconnect_direct_lun(self, appliance_id):
     appliance = Appliance.objects.get(id=appliance_id)
+    if not appliance.lun_disk_connected:
+        return False
     if not hasattr(appliance.provider_api, "connect_direct_lun_to_appliance"):
         return False
     try:

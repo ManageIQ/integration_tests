@@ -323,15 +323,24 @@ def add_provider(user, provider_key):
         return True
 
 
-def get_appliance(appliance):
+def get_appliance(appliance, user=None):
     """'Multimethod' that receives an object and tries to guess by what field the appliance
     should be retrieved. Then it retrieves the appliance"""
     if isinstance(appliance, int):
-        return Appliance.objects.get(id=appliance)
+        appliance = Appliance.objects.get(id=appliance)
     elif re.match(r"^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$", appliance) is not None:
-        return Appliance.objects.get(ip_address=appliance)
+        appliance = Appliance.objects.get(ip_address=appliance)
     else:
-        return Appliance.objects.get(name=appliance)
+        appliance = Appliance.objects.get(name=appliance)
+    if user is None:
+        return appliance
+    else:
+        if appliance.owner is None:
+            if not user.is_staff:
+                raise Exception("Only staff can operate with nonowned appliances")
+        elif appliance.owner != user:
+            raise Exception("This appliance belongs to a different user!")
+        return appliance
 
 
 @jsonapi.authenticated_method
@@ -340,12 +349,7 @@ def appliance_data(user, appliance):
 
     You can specify appliance by IP address, id or name.
     """
-    appliance = get_appliance(appliance)
-    if appliance.owner is None:
-        if not user.is_staff:
-            raise Exception("Only staff can operate with nonowned appliances")
-    elif appliance.owner != user:
-        raise Exception("This appliance belongs to a different user!")
+    appliance = get_appliance(appliance, user)
     return appliance.serialized
 
 
@@ -355,12 +359,7 @@ def destroy_appliance(user, appliance):
 
     You can specify appliance by IP address, id or name.
     """
-    appliance = get_appliance(appliance)
-    if appliance.owner is None:
-        if not user.is_staff:
-            raise Exception("Only staff can operate with nonowned appliances")
-    elif appliance.owner != user:
-        raise Exception("This appliance belongs to a different user!")
+    appliance = get_appliance(appliance, user)
     try:
         return Appliance.kill(appliance).task_id
     except AttributeError:  # None was returned
@@ -382,12 +381,7 @@ def power_on(user, appliance):
 
     You can specify appliance by IP address, id or name.
     """
-    appliance = get_appliance(appliance)
-    if appliance.owner is None:
-        if not user.is_staff:
-            raise Exception("Only staff can operate with nonowned appliances")
-    elif appliance.owner != user:
-        raise Exception("This appliance belongs to a different user!")
+    appliance = get_appliance(appliance, user)
     if appliance.power_state != Appliance.Power.ON:
         return appliance_power_on.delay(appliance.id).task_id
 
@@ -398,12 +392,7 @@ def power_off(user, appliance):
 
     You can specify appliance by IP address, id or name.
     """
-    appliance = get_appliance(appliance)
-    if appliance.owner is None:
-        if not user.is_staff:
-            raise Exception("Only staff can operate with nonowned appliances")
-    elif appliance.owner != user:
-        raise Exception("This appliance belongs to a different user!")
+    appliance = get_appliance(appliance, user)
     if appliance.power_state != Appliance.Power.OFF:
         return appliance_power_off.delay(appliance.id).task_id
 
@@ -414,12 +403,7 @@ def suspend(user, appliance):
 
     You can specify appliance by IP address, id or name.
     """
-    appliance = get_appliance(appliance)
-    if appliance.owner is None:
-        if not user.is_staff:
-            raise Exception("Only staff can operate with nonowned appliances")
-    elif appliance.owner != user:
-        raise Exception("This appliance belongs to a different user!")
+    appliance = get_appliance(appliance, user)
     if appliance.power_state == Appliance.Power.OFF:
         return False
     elif appliance.power_state != Appliance.Power.SUSPENDED:
@@ -478,12 +462,7 @@ def rename_appliance(user, appliance, new_name):
 
     You can specify appliance by IP address, id or name.
     """
-    appliance = get_appliance(appliance)
-    if appliance.owner is None:
-        if not user.is_staff:
-            raise Exception("Only staff can operate with nonowned appliances")
-    elif appliance.owner != user:
-        raise Exception("This appliance belongs to a different user!")
+    appliance = get_appliance(appliance, user)
     return appliance_rename.delay(appliance.id, new_name).task_id
 
 
@@ -503,42 +482,42 @@ def task_result(task_id):
     return result.get(timeout=1)
 
 
-@jsonapi.method
-def appliance_provider_type(appliance):
+@jsonapi.authenticated_method
+def appliance_provider_type(user, appliance):
     """Return appliance's provider class.
 
     Corresponds to the mgmt_system class names.
 
     You can specify appliance by IP address, id or name.
     """
-    api_class = type(get_appliance(appliance).provider_api)
+    api_class = type(get_appliance(appliance, user).provider_api)
     return api_class.__name__
 
 
-@jsonapi.method
-def appliance_provider_key(appliance):
+@jsonapi.authenticated_method
+def appliance_provider_key(user, appliance):
     """Return appliance's provider key.
 
     You can specify appliance by IP address, id or name.
     """
-    return get_appliance(appliance).provider.id
+    return get_appliance(appliance, user).provider.id
 
 
-@jsonapi.method
-def appliance_connect_direct_lun(appliance):
+@jsonapi.authenticated_method
+def appliance_connect_direct_lun(user, appliance):
     """Connects direct LUN disk to the appliance (RHEV only).
 
     You can specify appliance by IP address, id or name.
     """
-    appliance = get_appliance(appliance)
+    appliance = get_appliance(appliance, user)
     return connect_direct_lun(appliance.id).task_id
 
 
-@jsonapi.method
-def appliance_disconnect_direct_lun(appliance):
+@jsonapi.authenticated_method
+def appliance_disconnect_direct_lun(user, appliance):
     """Disconnects direct LUN disk from the appliance (RHEV only).
 
     You can specify appliance by IP address, id or name.
     """
-    appliance = get_appliance(appliance)
+    appliance = get_appliance(appliance, user)
     return disconnect_direct_lun(appliance.id).task_id
