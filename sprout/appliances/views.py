@@ -18,7 +18,7 @@ from appliances.tasks import (appliance_power_on, appliance_power_off, appliance
     anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
     appliance_rename)
 
-from utils.log import create_logger
+from sprout.log import create_logger
 from utils.providers import provider_factory
 
 add_to_builtins('appliances.templatetags.appliances_extras')
@@ -75,7 +75,7 @@ def versions_for_group(request):
         else:
             versions = Template.get_versions(
                 template_group=group, ready=True, usable=True, exists=True,
-                preconfigured=preconfigured)
+                preconfigured=preconfigured, provider__working=True)
             if versions:
                 latest_version = versions[0]
 
@@ -101,6 +101,7 @@ def date_for_group_and_version(request):
                 "exists": True,
                 "usable": True,
                 "preconfigured": preconfigured,
+                "provider__working": True,
             }
             if version == "latest":
                 try:
@@ -136,6 +137,7 @@ def providers_for_date_group_and_version(request):
                 "exists": True,
                 "usable": True,
                 "preconfigured": preconfigured,
+                "provider__working": True,
             }
             if version == "latest":
                 try:
