@@ -22,7 +22,8 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 import utils.conf as conf
 from cfme.exceptions import (
-    HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
+    HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType,
+    CredentialValidationFailed
 )
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input
@@ -32,7 +33,7 @@ from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.providers import provider_factory
 from utils.update import Updateable
-from utils.wait import wait_for, RefreshTimer
+from utils.wait import wait_for, RefreshTimer, TimedOutError
 from utils import version
 from utils.pretty import Pretty
 from utils.signals import fire
@@ -222,7 +223,12 @@ class Provider(Updateable, Pretty):
             creds = q.creds
             return creds == "checkmark"
 
-        wait_for(_wait_f, num_sec=300, delay=5, message="credentials of {} ok!".format(self.name))
+        try:
+            wait_for(
+                _wait_f, num_sec=300, delay=5, message="credentials of {} ok!".format(self.name))
+        except TimedOutError:
+            raise CredentialValidationFailed(
+                "Provider {} failed to validate credentials!".format(self.name))
 
     def validate(self, db=True):
         """ Validates that the detail page matches the Providers information.
@@ -231,6 +237,9 @@ class Provider(Updateable, Pretty):
         a set of statistics to be matched against the UI. The details page is then refreshed
         continuously until the matching of all items is complete. A error will be raised
         if the match is not complete within a certain defined time period.
+
+        Raises:
+            :py:class:`cfme.exceptions.CredentialValidationFailed`
         """
         # Wait for credentials to become OK to prevent the error in some 5.4 builds
         self.wait_for_creds_ok()

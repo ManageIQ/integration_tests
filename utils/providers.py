@@ -11,6 +11,7 @@ from functools import partial
 from operator import methodcaller
 
 import cfme.fixtures.pytest_selenium as sel
+from cfme.exceptions import CredentialValidationFailed
 from cfme.web_ui import Quadicon, paginator, toolbar
 from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
@@ -193,13 +194,24 @@ def setup_a_provider(
             # If our filtering yielded any providers, use them, otherwise do not bother with that
             providers = filtered_providers
 
+    # Keep track of providers that do not behave correctly
+    bad_providers = set([])
     # If there is already a suitable provider, don't try to setup a new one.
     already_existing = filter(is_provider_setup, providers)
-    if already_existing:
-        chosen = random.choice(already_existing)
+    random.shuffle(already_existing)
+    for chosen in already_existing:
         try:
             return setup_provider(  # This will run a refresh too
                 chosen, validate=validate, check_existing=check_existing)
+        # We want to strike this provider out:
+        except (CredentialValidationFailed, ) as e:
+            logger.info("Deleting {} because of an exception.")
+            logger.exception(e)
+            prov_object = get_from_config(chosen)
+            prov_object.delete(cancel=False)
+            wait_for_provider_delete(prov_object)
+            bad_providers.add(chosen)
+        # We want to give the provider a new chance
         except Exception as e:
             if not delete_failure:
                 raise
@@ -210,9 +222,17 @@ def setup_a_provider(
             wait_for_provider_delete(prov_object)
             logger.info("Provider {} deleted, now going for re-add.".format(chosen))
             # And try again
-            return setup_provider(  # This will run a refresh too
-                chosen, validate=validate, check_existing=check_existing)
-
+            try:
+                return setup_provider(  # This will run a refresh too
+                    chosen, validate=validate, check_existing=check_existing)
+            except Exception as e:
+                logger.exception(e)
+                logger.error("Provider {} failed to re-setup after an error.".format(chosen))
+                prov_object.delete(cancel=False)
+                wait_for_provider_delete(prov_object)
+                bad_providers.add(chosen)
+    # remove the detected badly functioning providers
+    providers = list(set(providers) - bad_providers)
     # Shuffle the order to spread the load across providers
     random.shuffle(providers)
     # We need to setup a new one
