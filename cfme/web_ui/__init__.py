@@ -1448,12 +1448,12 @@ class Tree(Pretty):
         self.root_el = sel.element(self.locator)
         if self._get_tag() == 'ul':
             # Dynatree
-            self.expandable = 'span'
-            self.is_expanded_condition = ('class', 'dynatree-expanded')
+            self.expandable = './span'
+            self.is_expanded_condition = ('class', 'dynatree-expanded', 'dynatree-has-children')
             self.node_root = ".//li[span/a[normalize-space(.)='%s']]"
             self.node_label = ".//li/span/a[normalize-space(.)='%s']"
-            self.click_expand = "span/span"
-            self.leaf = "span/a"
+            self.click_expand = "./span/span"
+            self.leaf = "./span/a"
             # Locators for reading the tree
             # Finds all child nodes
             self.nodes_root = "./li[span/a[@class='dynatree-title']]"
@@ -1490,13 +1490,20 @@ class Tree(Pretty):
         except NoSuchElementException:
             return True  # Some trees have always-expanded roots
 
+        # This is a condition of checking whether this even is expandable
+        if len(self.is_expanded_condition) == 3:
+            if self.is_expanded_condition[2] not in sel.get_attribute(
+                    meta, self.is_expanded_condition[0]):
+                return True  # no need to expand
+
+        # It should be expandable, so now just check
         if self.is_expanded_condition[1] in sel.get_attribute(
                 meta, self.is_expanded_condition[0]):
             return True
         else:
             return False
 
-    def _expand(self, el):
+    def _expand(self, el, state=True):
         """ Expands a tree node
 
         Checks if a tree node needs expanding and then expands it.
@@ -1504,8 +1511,11 @@ class Tree(Pretty):
         Args:
             el: The element to expand.
         """
-        if not self._is_expanded(el):
+        if self._is_expanded(el) != state:
             sel.click(sel.element(self.click_expand, root=el))
+            return True
+        else:
+            return False
 
     def node_element(self, node_name, parent):
         return sel.element((self.node_label % node_name), root=parent)
@@ -1557,7 +1567,7 @@ class Tree(Pretty):
 
         return node
 
-    def read_contents(self, parent=None):
+    def read_contents(self, parent=None, unexpand=False):
         """Reads complete contents of the tree recursively.
 
         Tree is represented as a list. If the item in the list is string, it is leaf element and it
@@ -1566,6 +1576,7 @@ class Tree(Pretty):
 
         Args:
             parent: Starting element, used during recursion
+            unexpand: Whether it should unexpand the expanded levels to original state.
         Returns: Tree in format mentioned in description
         """
         self._detect()
@@ -1577,13 +1588,16 @@ class Tree(Pretty):
 
         for item in self.nodes_root_elements(parent):
             item_name = sel.text(self.node_label_loc, root=item).encode("utf-8").strip()
-            self._expand(item)
+            expanded = self._expand(item, True)
             try:
-                item_contents = self.read_contents(sel.element(self.nodes_root_continue, root=item))
+                item_contents = self.read_contents(
+                    sel.element(self.nodes_root_continue, root=item), unexpand)
                 if item_contents is None:
                     result.append(item_name)
                 else:
                     result.append((item_name, item_contents))
+                    if expanded and unexpand:
+                        self._expand(item, False)
             except NoSuchElementException:
                 result.append(item_name)
 
