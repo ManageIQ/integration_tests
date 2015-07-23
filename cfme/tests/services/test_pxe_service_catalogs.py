@@ -22,7 +22,7 @@ pytestmark = [
 
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
-    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning', 'provider_type')
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'provisioning')
     pargnames, pargvalues, pidlist = testgen.pxe_servers(metafunc)
     argnames = argnames + ['pxe_server', 'pxe_cust_template']
     pxe_server_names = [pval[0] for pval in pargvalues]
@@ -35,7 +35,7 @@ def pytest_generate_tests(metafunc):
             # No provisioning data available
             continue
 
-        if args['provider_type'] != 'rhevm':
+        if args['provider_type'] == "scvmm":
             continue
 
         # required keys should be a subset of the dict keys set
@@ -138,7 +138,6 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     yield catalog_item
 
 
-@pytest.mark.meta(blockers=[1160486])
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
 def test_rhev_pxe_servicecatalog(setup_provider, provider_type,
                                  provider_key, provider_mgmt, catalog_item, request):
