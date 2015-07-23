@@ -294,7 +294,7 @@ def get_edomain(api):
     """
     edomain_names = []
 
-    for domain in api.storagedomains.list():
+    for domain in api.storagedomains.list(status=None):
         if domain.get_type() == 'export':
             edomain_names.append(domain.get_name())
 
@@ -309,7 +309,7 @@ def get_sdomain(api):
     """
     sdomain_names = []
 
-    for domain in api.storagedomains.list():
+    for domain in api.storagedomains.list(status=None):
         if domain.get_type() == 'data':
             sdomain_names.append(domain.get_name())
 

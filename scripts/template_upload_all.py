@@ -249,6 +249,13 @@ if __name__ == "__main__":
         dir_files = browse_directory(url)
         if not dir_files:
             continue
+        checksum_url = url + "SHA256SUM"
+        try:
+            o = urlopen(checksum_url)
+        except Exception:
+            print "No valid checksum file for %s. Skipping..." % key
+            continue
+
         kwargs = {}
 
         for provider in mgmt_sys:
@@ -284,7 +291,7 @@ if __name__ == "__main__":
                         kwargs['template_name'] = template_name(
                             dir_files[module],
                             dir_files[module + "_date"],
-                            url + "checksums",
+                            checksum_url,
                             get_version(url)
                         )
 
