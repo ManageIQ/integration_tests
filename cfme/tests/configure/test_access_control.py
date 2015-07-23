@@ -215,6 +215,45 @@ def test_group_remove_tag():
     group.delete()
 
 
+def test_description_required_error_validation():
+    group = ac.Group(description=None, role='EvmRole-approver')
+    with error.expected("Description can't be blank"):
+        group.create()
+
+
+def test_delete_default_group():
+    flash_msg = \
+        'EVM Group "{}": Error during \'destroy\': A read only group cannot be deleted.'
+    group = ac.Group(description='EvmGroup-administrator')
+    sel.force_navigate("cfg_accesscontrol_groups")
+    row = records_table.find_row_by_cells({'Name': group.description})
+    sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
+    tb.select('Configuration', 'Delete selected Groups', invokes_alert=True)
+    sel.handle_alert()
+    flash.assert_message_match(flash_msg.format(group.description))
+
+
+def test_delete_group_with_assigned_user():
+    flash_msg = \
+        'EVM Group "{}": Error during \'destroy\': Still has users assigned'
+    group = new_group()
+    group.create()
+    user = new_user(group=group)
+    user.create()
+    with error.expected(flash_msg.format(group.description)):
+        group.delete()
+
+
+def test_edit_default_group():
+    flash_msg = 'Read Only EVM Group "{}" can not be edited'
+    group = ac.Group(description='EvmGroup-approver')
+    sel.force_navigate("cfg_accesscontrol_groups")
+    row = records_table.find_row_by_cells({'Name': group.description})
+    sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
+    tb.select('Configuration', 'Edit the selected Group')
+    flash.assert_message_match(flash_msg.format(group.description))
+
+
 # Role test cases
 def test_role_crud():
     role = new_role()
