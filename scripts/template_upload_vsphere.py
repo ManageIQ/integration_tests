@@ -147,7 +147,7 @@ def add_disk(client, name):
 
     if task.info.state == "success":
         print " VSPHERE: Successfully added new disk"
-        client.api.logout()
+        # client.api.logout()
     else:
         client.api.logout()
         print " VSPHERE: Failed to add disk"
@@ -310,12 +310,13 @@ def run(**kwargs):
             if ova_ret is -1:
                 print "VSPHERE: Ovftool failed to upload file."
                 print ova_out
-                sys.exit(127)
+                return
 
         if kwargs.get('disk'):
             add_disk(client, name)
         if kwargs.get('template'):
-            make_template(client, name, hostname, username, password)
+            # make_template(client, name, hostname, username, password)
+            make_template(client, name)
         client.api.logout()
     print "VSPHERE: Completed successfully"
 
