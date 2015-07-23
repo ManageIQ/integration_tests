@@ -1,6 +1,7 @@
 
 import fauxfactory
 import pytest
+from cfme.fixtures import pytest_selenium as sel
 from cfme.configure.configuration import Category, Tag
 from cfme.infrastructure.config_management import ConfigManager
 from utils import error
@@ -49,13 +50,17 @@ def tag(category):
     tag.delete()
 
 
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:3412"])
+@pytest.mark.meta(blockers=["BZ#1244842"])
+def test_config_manager_detail_config_btn(request, config_manager):
+    sel.force_navigate('infrastructure_config_manager_refresh_detail',
+        context={'manager': config_manager})
+
+
 def test_config_manager_add(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.create()
 
 
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:3412"])
 def test_config_manager_add_invalid_url(request, config_manager_obj):
     request.addfinalizer(config_manager_obj.delete)
     config_manager_obj.url = "invalid_url"
@@ -70,7 +75,7 @@ def test_config_manager_add_invalid_creds(request, config_manager_obj):
         config_manager_obj.create()
 
 
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:3412"])
+@pytest.mark.meta(blockers=["BZ#1244837"])
 def test_config_manager_edit(request, config_manager):
     new_name = fauxfactory.gen_alpha(8)
     old_name = config_manager.name
@@ -81,12 +86,10 @@ def test_config_manager_edit(request, config_manager):
         "Failed to update configuration manager's name")
 
 
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:3412"])
 def test_config_manager_remove(config_manager):
     config_manager.delete()
 
 
-@pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:3412"])
 def test_config_system_tag(request, config_system, tag):
     config_system.tag(tag)
     assert ('{}: {}'.format(tag.category.display_name, tag.display_name) in config_system.tags,
