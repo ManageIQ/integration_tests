@@ -7,6 +7,7 @@ from cfme.infrastructure.provider import get_from_config as get_infra_from_confi
 from fixtures.pytest_store import store
 from novaclient.exceptions import OverLimit as OSOverLimit
 from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
+from ssl import SSLError
 from utils import conf
 from utils.log import logger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSystem, SCVMMSystem
@@ -21,7 +22,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         skip_exceptions = allow_skip.keys()
         callable_mapping = allow_skip
     elif isinstance(allow_skip, basestring) and allow_skip.lower() == "default":
-        skip_exceptions = (OSOverLimit, RHEVRequestError, VMInstanceNotCloned)
+        skip_exceptions = (OSOverLimit, RHEVRequestError, VMInstanceNotCloned, SSLError)
         callable_mapping = {}
     else:
         skip_exceptions = allow_skip

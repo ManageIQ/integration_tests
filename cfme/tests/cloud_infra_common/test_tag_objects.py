@@ -12,10 +12,8 @@ from utils.version import current_version
 
 @pytest.fixture(scope="module")
 def setup_first_provider():
-    providers.setup_a_provider(
-        prov_class="infra", validate=True, check_existing=True, delete_failure=True)
-    providers.setup_a_provider(
-        prov_class="cloud", validate=True, check_existing=True, delete_failure=True)
+    providers.setup_a_provider(prov_class="infra", validate=True, check_existing=True)
+    providers.setup_a_provider(prov_class="cloud", validate=True, check_existing=True)
 
 
 pytestmark = [
