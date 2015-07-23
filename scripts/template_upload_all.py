@@ -33,7 +33,7 @@ NIGHTLY_MIQ_ID = "manageiq"
 def parse_cmd_line():
     parser = argparse.ArgumentParser(argument_default=None)
     parser.add_argument('--stream', dest='stream',
-                        help='Stream to work with (downstream, upstream)',
+                        help='Stream to work with (downstream, upstream, upstream_stable)',
                         default=None)
     parser.add_argument('--provider-type', dest='provider_type',
                         help='Type of provider to upload to (virtualcenter, rhevm, openstack)',
@@ -63,11 +63,16 @@ def template_name(image_link, image_ts, checksum_link, version=None):
             return "cfme-nightly-%s.%s-%s" % (result[0][0], result[0][1], result[0][2])
     # nightly builds MIQ
     elif NIGHTLY_MIQ_ID in image_name:
-        pattern = re.compile(r'[^\d]*?-master-(\d*)-*')
+        if "master" in image_name:
+            pattern = re.compile(r'[^\d]*?-master-(\d*)-*')
+        else:
+            pattern = re.compile(r'[^\d]*?-(\w*)-(\d*)-(\d*)-*')
         result = pattern.findall(image_name)
         if version:
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-vvvv-yyyymmddhhmm
             return "miq-nightly-%s-%s" % (version, result[0])
+        elif "stable" in image_link:
+            return "miq-stable-%s-%s" % (result[0][0], result[0][2])
         else:
             # manageiq-pppp-bbbbbb-yyyymmddhhmm.ova => miq-nightly-yyyymmddhhmm
             return "miq-nightly-%s" % result[0]
