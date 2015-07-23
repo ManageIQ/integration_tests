@@ -124,3 +124,37 @@ def test_folder_field_scope(request, vmware_provider, vmware_vm):
     wait_for(
         vmware_vm.get_tags, num_sec=600, delay=15,
         fail_condition=lambda tags: "Service Level: Platinum" not in tags, message="vm be tagged")
+
+
+@pytest.mark.meta(blockers=[1243357], automates=[1243357])
+def test_invoke_custom_automation(request):
+    """This test tests a bug that caused the ``Invoke Custom Automation`` fields to disappear.
+
+    Steps:
+        * Go create new action, select Invoke Custom Automation
+        * The form with additional fields should appear
+    """
+    # The action is to have all possible fields filled, that way we can ensure it is good
+    action = Action(
+        fauxfactory.gen_alpha(),
+        "Invoke a Custom Automation",
+        dict(
+            message=fauxfactory.gen_alpha(),
+            request=fauxfactory.gen_alpha(),
+            attribute_1=fauxfactory.gen_alpha(),
+            value_1=fauxfactory.gen_alpha(),
+            attribute_2=fauxfactory.gen_alpha(),
+            value_2=fauxfactory.gen_alpha(),
+            attribute_3=fauxfactory.gen_alpha(),
+            value_3=fauxfactory.gen_alpha(),
+            attribute_4=fauxfactory.gen_alpha(),
+            value_4=fauxfactory.gen_alpha(),
+            attribute_5=fauxfactory.gen_alpha(),
+            value_5=fauxfactory.gen_alpha(),))
+
+    @request.addfinalizer
+    def _delete_action():
+        if action.exists:
+            action.delete()
+
+    action.create()
