@@ -15,6 +15,6 @@ def test_version():
     So we check whether the UI version starts with SSH version
     """
     pytest.sel.force_navigate("about")
-    ssh_version = current_version()
+    ssh_version = str(current_version())
     ui_version = about.infoblock.text("Session Information", "Version").encode("utf-8").strip()
     assert ui_version.startswith(ssh_version), "UI: {}, SSH: {}".format(ui_version, ssh_version)
