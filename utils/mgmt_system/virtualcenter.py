@@ -3,6 +3,13 @@
 
 Used to communicate with providers without using CFME facilities
 """
+try:
+    # In Fedora 22, we see SSL errors when connecting to vSphere, this prevents the error.
+    import ssl
+    ssl._create_default_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+
 import re
 from datetime import datetime
 from functools import partial

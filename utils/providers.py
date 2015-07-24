@@ -11,6 +11,7 @@ from functools import partial
 from operator import methodcaller
 
 import cfme.fixtures.pytest_selenium as sel
+from fixtures.pytest_store import store
 from cfme.web_ui import Quadicon, paginator, toolbar
 from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
@@ -132,15 +133,15 @@ def provider_factory_by_name(provider_name, *args, **kwargs):
     return provider_factory(get_provider_key(provider_name), *args, **kwargs)
 
 
-def setup_a_provider(
-        prov_class=None, prov_type=None, validate=True, check_existing=True, delete_failure=False):
-    """Sets up a random provider
+def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=True):
+    """Sets up a random provider.
+
+    Does some counter-badness measures.
 
     Args:
         prov_type: "infra" or "cloud"
-        delete_failure: Deletes the provider if the provider exists and the validation fails. Then
-            it re-adds the provider.
-
+        validate: Whether to validate the provider.
+        check_existing: Whether to check if the provider already exists.
     """
     global problematic_providers
     if prov_class == "infra":
@@ -167,16 +168,18 @@ def setup_a_provider(
         from cfme.infrastructure.provider import get_from_config, wait_for_provider_delete
         providers = list_infra_providers()
 
-    result = None
-
     # Check if the provider was behaving badly in the history
     if problematic_providers:
         filtered_providers = [
             provider for provider in providers if provider not in problematic_providers]
         if not filtered_providers:
             # problematic_providers took all of the providers, so start over with clean list
-            # (next chance)
-            filtered_providers.clear()
+            # (next chance for bad guys) and use the original list. This will then slow down a
+            # little bit but make it more reliable.
+            problematic_providers.clear()
+            store.terminalreporter.write_line(
+                "Reached the point where all possible providers forthis case are marked as bad. "
+                "Clearing the bad provider list for a fresh start and next chance.", yellow=True)
         else:
             providers = filtered_providers
 
@@ -195,45 +198,38 @@ def setup_a_provider(
 
     # If there is already a suitable provider, don't try to setup a new one.
     already_existing = filter(is_provider_setup, providers)
-    if already_existing:
-        chosen = random.choice(already_existing)
-        try:
-            return setup_provider(  # This will run a refresh too
-                chosen, validate=validate, check_existing=check_existing)
-        except Exception as e:
-            if not delete_failure:
-                raise
-            logger.exception(e)
-            logger.warning("Deleting and re-adding the provider {}.".format(chosen))
-            prov_object = get_from_config(chosen)
-            prov_object.delete(cancel=False)
-            wait_for_provider_delete(prov_object)
-            logger.info("Provider {} deleted, now going for re-add.".format(chosen))
-            # And try again
-            return setup_provider(  # This will run a refresh too
-                chosen, validate=validate, check_existing=check_existing)
+    random.shuffle(already_existing)        # Make the provider load more even by random chaice.
+    not_already_existing = filter(lambda x: not is_provider_setup(x), providers)
+    random.shuffle(not_already_existing)    # Make the provider load more even by random chaice.
 
-    # Shuffle the order to spread the load across providers
-    random.shuffle(providers)
-    # We need to setup a new one
-    for provider in providers:
+    # So, make this one loop and it tries the existing providers first, then the nonexisting
+    for provider in already_existing + not_already_existing:
         try:
-            result = setup_provider(provider, validate=validate, check_existing=check_existing)
-            break
+            if provider in already_existing:
+                store.terminalreporter.write_line(
+                    "Trying to reuse provider {}\n".format(provider), green=True)
+            else:
+                store.terminalreporter.write_line(
+                    "Trying to set up provider {}\n".format(provider), green=True)
+            return setup_provider(provider, validate=validate, check_existing=check_existing)
         except Exception as e:
+            # In case of a known provider error:
             logger.exception(e)
+            message = "Provider {} is behaving badly, marking it as bad. {}: {}".format(
+                provider, type(e).__name__, str(e))
+            logger.warning(message)
+            store.terminalreporter.write_line(message + "\n", red=True)
             problematic_providers.add(provider)
             prov_object = get_from_config(provider)
             if prov_object.exists:
-                # Remove it so next call to setup_a_provider does not explode
+                # Remove it in order to not explode on next calls
                 prov_object.delete(cancel=False)
                 wait_for_provider_delete(prov_object)
-                logger.warning(
-                    "Provider {} was deleted because it failed to set up.".format(provider))
-            continue
+                message = "Provider {} was deleted because it failed to set up.".format(provider)
+                logger.warning(message)
+                store.terminalreporter.write_line(message + "\n", red=True)
     else:
         raise Exception("No providers could be set up matching the params")
-    return result
 
 
 def is_provider_setup(provider_key):
