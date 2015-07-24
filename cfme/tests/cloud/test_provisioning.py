@@ -105,6 +105,8 @@ def test_provision_from_template_using_rest(
         pytest.fail(
             "Cannot find flavour {} for provider {}".format(instance_type, provider_crud.name))
 
+    print flavor_id
+
     provision_data = {
         "version": "1.1",
         "template_fields": {
