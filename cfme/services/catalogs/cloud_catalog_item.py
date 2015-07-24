@@ -106,6 +106,7 @@ class Instance(Updateable, Pretty):
         self.guest_keypair = guest_keypair
 
     def create(self):
+        domain = "ManageIQ (Locked)"
         sel.force_navigate('catalog_item_new', context={'provider_type': self.item_type})
         sel.wait_for_element(basic_info_form.name_text)
         fill(basic_info_form, {'name_text': self.name,
@@ -115,7 +116,7 @@ class Instance(Updateable, Pretty):
                                'select_dialog': self.dialog})
         if self.item_type != "Orchestration":
             sel.click(basic_info_form.field_entry_point)
-            dynamic_tree.click_path("Datastore", "Default", "Service", "Provisioning",
+            dynamic_tree.click_path("Datastore", domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
             sel.click(basic_info_form.apply_btn)
         tabstrip.select_tab("Request Info")
