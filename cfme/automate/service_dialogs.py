@@ -93,7 +93,6 @@ menu.nav.add_branch(
 
 class ServiceDialog(Updateable, Pretty):
     pretty_attrs = ['label', 'description']
-    add_entry_button = "//img[@alt='Add this entry'"
 
     def __init__(self, label=None, description=None,
                  submit=False, cancel=False,
