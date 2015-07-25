@@ -54,6 +54,7 @@ element_form = Form(fields=[
     ('field_show_refresh_button', Input("field_show_refresh_button")),
     ('entry_value', Input("entry[value]")),
     ('entry_description', Input("entry[description]")),
+    ('add_entry_button', Input("accept")),
     ('field_category', Select("//select[@id='field_category']")),
     ('text_area', Input("field_default_value")),
     ('dynamic_chkbox', Input("field_dynamic")),
@@ -92,6 +93,7 @@ menu.nav.add_branch(
 
 class ServiceDialog(Updateable, Pretty):
     pretty_attrs = ['label', 'description']
+    add_entry_button = "//img[@alt='Add this entry'"
 
     def __init__(self, label=None, description=None,
                  submit=False, cancel=False,
@@ -157,7 +159,8 @@ class ServiceDialog(Updateable, Pretty):
             if not dynamic_chkbox:
                 entry_table.click_cell(header='value', value='<New Entry>')
                 fill(element_form, {'entry_value': "Yes",
-                                    'entry_description': "entry_desc"})
+                                    'entry_description': "entry_desc"},
+                    action=element_form.add_entry_button)
             else:
                 node1 = "InspectMe"
                 sel.click(element_form.field_entry_point)
