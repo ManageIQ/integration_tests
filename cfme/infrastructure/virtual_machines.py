@@ -19,6 +19,7 @@ from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.conf import cfme_data
 from utils.log import logger
+from utils.pretty import Pretty
 from utils.timeutil import parsetime
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
@@ -175,7 +176,9 @@ nav.add_branch(
 )
 
 
-class Common(object):
+class Common(Pretty):
+
+    pretty_attrs = ["name", "provider_crud", "template_name"]
 
     def __init__(self):
         self._assigned_pp = set([])
