@@ -125,7 +125,7 @@ class Provider(Updateable, Pretty):
         myprov.create()
 
     """
-    pretty_attr = ['name', 'key', 'zone']
+    pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
 
     def __init__(
