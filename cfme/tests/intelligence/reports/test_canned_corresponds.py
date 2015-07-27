@@ -49,6 +49,9 @@ def test_cluster_relationships(soft_assert, setup_a_provider):
     for relation in report.data.rows:
         name = relation["Name"]
         provider_name = relation["Provider Name"]
+        if not provider_name.strip():
+            # If no provider name specified, ignore it
+            continue
         provider = provider_factory_by_name(provider_name)
         host_name = relation["Host Name"].strip()
         soft_assert(name in provider.list_cluster(), "Cluster {} not found in {}".format(
