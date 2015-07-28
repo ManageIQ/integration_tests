@@ -269,6 +269,10 @@ def check_status(pr):
 
                         set_status(commit, states[task['result']], task['stream'])
                         break
+            else:
+                logger.info('Setting task {} for pr {} to {}'
+                            .format(task['stream'], pr['number'], states[task['result']]))
+                set_status(commit, states[task['result']], task['stream'])
     except HttpClientError:
         pass
 
