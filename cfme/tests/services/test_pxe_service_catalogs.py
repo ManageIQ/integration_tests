@@ -156,5 +156,5 @@ def test_rhev_pxe_servicecatalog(setup_provider, provider_type,
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=2100, delay=20)
+        fail_func=requests.reload, num_sec=3100, delay=20)
     assert row.last_message.text == 'Request complete'
