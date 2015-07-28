@@ -207,7 +207,7 @@ def vm_reaper():
                 tapi.task(task['tid']).put({'cleanup': True})
 
 
-def set_status(commit, status, description):
+def set_status(commit, status, context):
     """ Puts a status for a given commit to GitHub
 
     This function takes a commit hash, a status, and a description and posts them to GitHub.
@@ -220,8 +220,8 @@ def set_status(commit, status, description):
     """
     data = {
         "state": status,
-        "description": description,
-        "context": "ci/prtester"
+        "description": status,
+        "context": "ci/{}".format(context)
     }
     data_json = json.dumps(data)
 
@@ -249,28 +249,28 @@ def check_status(pr):
 
     if db_pr['runs']:
         commit = db_pr['runs'][0]['commit']
+        run_id = db_pr['runs'][0]['id']
     else:
         return
-    statuses = perform_request("commits/{}/statuses".format(commit))
-    state = "pending"
-    if "failed" in db_pr['status']:
-        state = "failure"
-    elif "passed" in db_pr['status']:
-        state = "success"
-    elif "pending" in db_pr['status']:
-        state = "pending"
-    elif "invalid" in db_pr['status']:
-        state = "error"
 
-    if not statuses:
-        set_status(commit, state, db_pr['status'])
-        logger.info('Setting commit for pr {} to {}'.format(pr['number'], db_pr['status']))
-    else:
-        if statuses[0]['state'] != state or statuses[0]['description'] != db_pr['status']:
-            set_status(commit, state, db_pr['status'])
-            logger.info('Setting commit for pr {} to {}'.format(pr['number'], db_pr['status']))
-        else:
-            return
+    states = {'pending': 'pending', 'failed': 'failure', 'invalid': 'error', 'passed': 'success'}
+
+    try:
+        tasks = tapi.task.get(run=run_id)['objects']
+        statuses = perform_request("commits/{}/statuses".format(commit))
+        for task in tasks:
+            for status in statuses:
+                if status['context'] == "ci/{}".format(task['stream']):
+                    if status['state'] == states[task['result']]:
+                        break
+                    else:
+                        logger.info('Setting task {} for pr {} to {}'
+                                    .format(task['stream'], pr['number'], states[task['result']]))
+
+                        set_status(commit, states[task['result']], task['stream'])
+                        break
+    except HttpClientError:
+        pass
 
 
 def check_pr(pr):
