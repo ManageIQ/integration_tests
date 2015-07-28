@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import time
 from functools import partial
 from collections import OrderedDict
 from cfme.fixtures import pytest_selenium as sel
@@ -51,6 +52,7 @@ detail_form = Form(
         ('long_desc', "//textarea[@id='long_description']")
     ])
 
+# TODO: Unify with the provisioning form? It appears to me that it could be perfectly used.
 request_form = tabstrip.TabStripForm(
     tab_fields=OrderedDict([
         ('Catalog', [
@@ -65,6 +67,7 @@ request_form = tabstrip.TabStripForm(
         ]),
         ('Environment', [
             ('automatic_placement', Input("environment__placement_auto")),
+            ('cloud_network', Input("environment__cloud_network")),
             ('datacenter', Select('//select[@id="environment__placement_dc_name"]')),
             ('cluster', Select('//select[@id="environment__placement_cluster_name"]')),
             ('resource_pool', Select('//select[@id="environment__placement_rp_name"]')),
@@ -74,6 +77,9 @@ request_form = tabstrip.TabStripForm(
             ('datastore_create', Input("environment__new_datastore_create")),
             ('datastore_filter', Select('//select[@id="environment__ds_filter"]')),
             ('datastore_name', Table('//div[@id="prov_ds_div"]/table')),
+        ]),
+        ('Properties', [
+            ('instance_type', Select("//select[@name='hardware__instance_type']")),
         ]),
         ('Hardware', [
             ('num_sockets', Select('//select[@id="hardware__number_of_sockets"]')),
@@ -92,6 +98,7 @@ request_form = tabstrip.TabStripForm(
             ('customize_type', Select('//select[@id="customize__sysprep_enabled"]')),
             ('specification_name', Table('//div[@id="prov_vc_div"]/table')),
             ('linux_host_name', Input("customize__linux_host_name")),
+            ('address_mode', Radio("customize__addr_mode")),
             ('linux_domain_name', Input("customize__linux_domain_name")),
             ('dns_servers', Input("customize__dns_servers")),
             ('dns_suffixes', Input("customize__dns_suffixes")),
@@ -187,7 +194,7 @@ class CatalogItem(Updateable, Pretty):
     def __init__(self, item_type=None, name=None, description=None,
                  display_in=False, catalog=None, dialog=None,
                  catalog_name=None, orch_template=None, provider_type=None,
-                 provider=None, prov_data=None, domain="ManageIQ (Locked)"):
+                 provider=None, prov_data=None, domain="ManageIQ (Locked)", entry_point=None):
         self.item_type = item_type
         self.name = name
         self.description = description
@@ -200,6 +207,7 @@ class CatalogItem(Updateable, Pretty):
         self.provider_type = provider_type
         self.provisioning_data = prov_data
         self.domain = domain
+        self.entry_point = entry_point
 
     def create(self):
         sel.force_navigate('catalog_item_new',
@@ -212,7 +220,11 @@ class CatalogItem(Updateable, Pretty):
                                'select_dialog': self.dialog,
                                'select_orch_template': self.orch_template,
                                'select_provider': self.provider_type})
-        if self.item_type != "Orchestration":
+        if self.entry_point is not None:
+            sel.click(basic_info_form.field_entry_point)
+            dynamic_tree.click_path("Datastore", self.domain, *self.entry_point)
+            sel.click(basic_info_form.apply_btn)
+        elif self.item_type != "Orchestration":
             sel.click(basic_info_form.field_entry_point)
             dynamic_tree.click_path("Datastore", self.domain, "Service", "Provisioning",
                                     "StateMachines", "ServiceProvision_Template", "default")
@@ -280,13 +292,15 @@ class CatalogItem(Updateable, Pretty):
         sel.click(button_form.add_button)
         flash.assert_success_message('Button "btn_descr" was added')
 
-    def edit_tags(self, tag, value):
+    def edit_tags(self, tag, *values):
         sel.force_navigate('catalog_item', context={'catalog': self.catalog,
                                                     'catalog_item': self})
         policy_btn('Edit Tags', invokes_alert=True)
-        fill(edit_tags_form, {'select_tag': tag,
-                              'select_value': value},
-             action=form_buttons.save)
+        fill(edit_tags_form, {"select_tag": tag})
+        for value in values:
+            fill(edit_tags_form, {"select_value": value})
+            time.sleep(0.75)
+        sel.click(form_buttons.save)
         flash.assert_success_message('Tag edits were successfully saved')
 
 
