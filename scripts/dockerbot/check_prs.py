@@ -253,7 +253,11 @@ def check_status(pr):
     else:
         return
 
-    states = {'pending': 'pending', 'failed': 'failure', 'invalid': 'error', 'passed': 'success'}
+    states = {'pending': 'pending',
+              'failed': 'failure',
+              'invalid': 'error',
+              'passed': 'success',
+              'running': 'pending'}
 
     try:
         tasks = tapi.task.get(run=run_id)['objects']
