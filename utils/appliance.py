@@ -30,7 +30,6 @@ from utils.providers import provider_factory
 from utils.version import Version, get_stream, LATEST
 from utils.wait import wait_for
 
-
 # Do not import the whole stuff around
 if os.environ.get("RUNNING_UNDER_SPROUT", "false") == "false":
     from cfme.configure.configuration import set_server_roles, get_server_roles
@@ -694,6 +693,43 @@ class IPAppliance(object):
 
         return status
 
+    def backup_database(self, log_callback=None):
+        """Backup VMDB database
+
+        """
+        if log_callback is None:
+            log_callback = logger.info
+        log_callback('Backing up database')
+
+        with self.ssh_client as ssh:
+            status, output = ssh.run_rake_command(
+                'evm:db:backup:local -- --local-file /tmp/evm_db.backup --dbname vmdb_production')
+            if status != 0:
+                msg = 'Failed to backup database'
+                log_callback(msg)
+                raise ApplianceException(msg)
+
+    def restore_database(self, log_callback=None):
+        """Restore VMDB database
+
+        """
+        if log_callback is None:
+            log_callback = logger.info
+        log_callback('Restoring database')
+
+        self.stop_evm_service()
+
+        with self.ssh_client as ssh:
+            status, output = ssh.run_rake_command(
+                'evm:db:restore:local -- --local-file /tmp/evm_db.backup')
+            if status != 0:
+                msg = 'Failed to restore database on appl {},output is {}'.format(self.address,
+                    output)
+                log_callback(msg)
+                raise ApplianceException(msg)
+            else:
+                self.start_evm_service()
+
     def setup_upstream_db(self, log_callback=None):
         """Configure upstream database
 
@@ -1199,6 +1235,36 @@ class IPAppliance(object):
 
             if status != 0:
                 msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
+                log_callback(msg)
+                raise ApplianceException(msg)
+
+    def stop_evm_service(self, log_callback=None):
+        """Stops the ``evmserverd`` service on this appliance
+        """
+        if log_callback is None:
+            log_callback = self.log.info
+        log_callback('stopping evm service')
+
+        with self.ssh_client as ssh:
+            status, output = ssh.run_command('service evmserverd stop')
+
+            if status != 0:
+                msg = 'Failed to stop evmserverd on {}\nError: {}'.format(self.address, output)
+                log_callback(msg)
+                raise ApplianceException(msg)
+
+    def start_evm_service(self, log_callback=None):
+        """Starts the ``evmserverd`` service on this appliance
+        """
+        if log_callback is None:
+            log_callback = self.log.info
+        log_callback('starting evm service')
+
+        with self.ssh_client as ssh:
+            status, output = ssh.run_command('service evmserverd start')
+
+            if status != 0:
+                msg = 'Failed to start evmserverd on {}\nError: {}'.format(self.address, output)
                 log_callback(msg)
                 raise ApplianceException(msg)
 
