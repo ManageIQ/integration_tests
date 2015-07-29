@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import re
-
 import diaper
 import fauxfactory
 import pytest
@@ -17,6 +15,7 @@ from utils.appliance import Appliance, ApplianceException, provision_appliance
 from utils.log import logger
 from utils.update import update
 from utils.wait import wait_for
+from urlparse import urlparse
 
 PREFIX = "test_compliance_"
 
@@ -43,8 +42,8 @@ def wait_for_ssa_enabled():
 @pytest.yield_fixture(scope="module")
 def compliance_vm(request, provider):
     try:
-        ip_addr = re.findall(r'[0-9]+(?:\.[0-9]+){3}', store.base_url)[0]
-        appl_name = provider.get_mgmt_system().get_vm_name_from_ip(ip_addr)
+        ip_addr = urlparse(store.base_url).hostname
+        appl_name = provider.mgmt.get_vm_name_from_ip(ip_addr)
         appliance = Appliance(provider.key, appl_name)
         logger.info(
             "The tested appliance ({}) is already on this provider ({}) so reusing it.".format(

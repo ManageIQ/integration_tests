@@ -242,7 +242,7 @@ class DuckwebQaTestSetup(object):
     """
     def __init__(self):
         self.selenium_client = DuckwebQaClient()
-        self.base_url = conf.env['base_url']
+        self.base_url = store.base_url
         self.credentials = conf.credentials
 
     @property

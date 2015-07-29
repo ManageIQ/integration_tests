@@ -45,7 +45,7 @@ class Db(Mapping):
     """Helper class for interacting with a CFME database using SQLAlchemy
 
     Args:
-        hostname: base url to be used (default ``conf.env['base_url']``)
+        hostname: base url to be used (default is from current_appliance)
         credentials: name of credentials to use from :py:attr:`utils.conf.credentials`
             (default ``database``)
 
