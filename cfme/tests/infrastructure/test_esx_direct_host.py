@@ -6,7 +6,7 @@ not be difficult to extend the parametrizer.
 import pytest
 import random
 
-from cfme.infrastructure.provider import VMwareProvider, get_from_config, wait_for_provider_delete
+from cfme.infrastructure.provider import VMwareProvider, get_from_config
 from utils.conf import cfme_data, credentials
 from utils.net import resolve_hostname
 from utils.version import Version
@@ -74,7 +74,7 @@ def setup_provider(provider, original_provider_key):
                 host.delete(cancel=False)
         # Get rid of the original provider, it would make a mess.
         original_provider.delete(cancel=False)
-        wait_for_provider_delete(provider)
+        provider.wait_for_delete()
     provider.create()
     provider.refresh_provider_relationships()
     try:
@@ -93,7 +93,7 @@ def setup_provider(provider, original_provider_key):
         if host.exists:
             host.delete(cancel=False)
     provider.delete(cancel=False)
-    wait_for_provider_delete(provider)
+    provider.wait_for_delete()
 
 
 def test_validate(provider, setup_provider, provider_data):

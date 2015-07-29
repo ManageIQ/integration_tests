@@ -8,7 +8,7 @@ from utils import testgen
 from utils.providers import is_cloud_provider
 
 pytestmark = [
-    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider_type')
+    pytest.mark.usefixtures('uses_infra_providers', 'uses_cloud_providers', 'provider')
 ]
 
 
@@ -23,7 +23,7 @@ def pytest_generate_tests(metafunc):
         args = dict(zip(argnames, argvalue_tuple))
 
         if metafunc.function in {test_vm_genealogy_detected} \
-                and args["provider_type"] in {"scvmm", "rhevm"}:
+                and args["provider"].type in {"scvmm", "rhevm"}:
             continue
 
         new_idlist.append(idlist[i])
@@ -33,27 +33,26 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="function")
-def vm_crud(provider_type, provider_crud, small_template):
+def vm_crud(provider, small_template):
     """To simplify the logic in the test, this fixture picks the correct"""
-    if provider_type == "ec2":
+    if provider.type == "ec2":
         cls = EC2Instance
-    elif provider_type == "openstack":
+    elif provider.type == "openstack":
         cls = OpenStackInstance
     else:
         cls = Vm
     return cls(
         'test_genealogy_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
-        provider_crud, template_name=small_template)
+        provider, template_name=small_template)
 
 
 # uncollected above in pytest_generate_tests
 @pytest.mark.meta(blockers=["GH#ManageIQ/manageiq:473"])
 @pytest.mark.parametrize("from_edit", [True, False], ids=["via_edit", "via_summary"])
 @pytest.mark.uncollectif(
-    lambda provider_key, from_edit: is_cloud_provider(provider_key) and not from_edit)
+    lambda provider, from_edit: is_cloud_provider(provider.key) and not from_edit)
 def test_vm_genealogy_detected(
-        request, setup_provider, provider_crud, small_template, soft_assert, provider_mgmt,
-        from_edit, vm_crud):
+        request, setup_provider, provider, small_template, soft_assert, from_edit, vm_crud):
     """Tests vm genealogy from what CFME can detect.
 
     Prerequisities:
@@ -78,9 +77,9 @@ def test_vm_genealogy_detected(
 
     @request.addfinalizer
     def _():
-        if provider_mgmt.does_vm_exist(vm_crud.name):
-            provider_mgmt.delete_vm(vm_crud.name)
-    provider_mgmt.wait_vm_steady(vm_crud.name)
+        if provider.mgmt.does_vm_exist(vm_crud.name):
+            provider.mgmt.delete_vm(vm_crud.name)
+    provider.mgmt.wait_vm_steady(vm_crud.name)
 
     if from_edit:
         vm_crud.open_edit()

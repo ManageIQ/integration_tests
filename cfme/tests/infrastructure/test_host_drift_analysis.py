@@ -9,23 +9,28 @@ from utils.update import update
 
 
 def pytest_generate_tests(metafunc):
-    p_argn, p_argv, p_ids = testgen.infra_providers(metafunc, 'hosts')
-    argnames = ['provider_key', 'host_type', 'host_name']
-    argvalues = []
-    idlist = []
-    for argv in p_argv:
-        prov_hosts, prov_key = argv[0], argv[1]
-        if not prov_hosts:
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'hosts')
+    argnames += ['host_name', 'host_type']
+
+    new_idlist = []
+    new_argvalues = []
+
+    for i, argvalue_tuple in enumerate(argvalues):
+        args = dict(zip(argnames, argvalue_tuple))
+
+        if not args['hosts']:
             continue
-        for test_host in prov_hosts:
+        for test_host in args['hosts']:
             if not test_host.get('test_fleece', False):
                 continue
 
-            argvalues.append([prov_key, test_host['type'], test_host['name']])
-            test_id = '{}-{}-{}'.format(prov_key, test_host['type'], test_host['name'])
-            idlist.append(test_id)
-
-    testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
+            argvs = argvalues[i][:]
+            argvs.pop(argnames.index('hosts'))
+            new_argvalues.append(argvs + [test_host['type'], test_host['name']])
+            test_id = '{}-{}-{}'.format(args['provider'].key, test_host['type'], test_host['name'])
+            new_idlist.append(test_id)
+    argnames.remove('hosts')
+    testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 def get_host_data_by_name(provider_key, host_name):
@@ -35,14 +40,13 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-def test_host_drift_analysis(request, setup_provider, provider_key, host_type, host_name,
-                             soft_assert):
+def test_host_drift_analysis(request, setup_provider, provider, host_type, host_name, soft_assert):
     """Tests host drift analysis
 
     Metadata:
         test_flag: host_drift_analysis
     """
-    host_data = get_host_data_by_name(provider_key, host_name)
+    host_data = get_host_data_by_name(provider.key, host_name)
     test_host = host.Host(name=host_name)
 
     wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh,

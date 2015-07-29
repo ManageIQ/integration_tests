@@ -3,10 +3,10 @@ import fauxfactory
 import pytest
 
 from utils.conf import cfme_data
+from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.pxe import get_pxe_server_from_config, get_template_from_config
-from cfme.provisioning import cleanup_vm, do_vm_provisioning
+from cfme.provisioning import do_vm_provisioning
 from utils import testgen
-from utils.providers import setup_provider
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate +notifier"),
@@ -29,7 +29,7 @@ def pytest_generate_tests(metafunc):
             # No provisioning data available
             continue
 
-        if args['provider_type'] == "scvmm":
+        if args['provider'].type == "scvmm":
             continue
 
         # required keys should be a subset of the dict keys set
@@ -65,14 +65,6 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
         pxe_cust_template.create()
 
 
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.fixture(scope="function")
 def vm_name():
     vm_name = 'test_pxe_prov_%s' % fauxfactory.gen_alphanumeric()
@@ -80,8 +72,8 @@ def vm_name():
 
 
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
-def test_pxe_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt,
-                                     provisioning, vm_name, smtp_test, provider_init, request):
+def test_pxe_provision_from_template(provider, provisioning, vm_name, smtp_test, setup_provider,
+                                     request):
     """Tests provisioning via PXE
 
     Metadata:
@@ -95,7 +87,7 @@ def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
                                 'datastore', 'pxe_server', 'pxe_image', 'pxe_kickstart',
                                 'pxe_root_password', 'pxe_image_type', 'vlan'))
 
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
         'vm_name': vm_name,
@@ -109,5 +101,5 @@ def test_pxe_provision_from_template(provider_key, provider_crud, provider_type,
         'vlan': pxe_vlan,
     }
 
-    do_vm_provisioning(pxe_template, provider_crud, vm_name, provisioning_data, request,
-                       provider_mgmt, provider_key, smtp_test, num_sec=2100)
+    do_vm_provisioning(pxe_template, provider, vm_name, provisioning_data, request, smtp_test,
+                       num_sec=2100)

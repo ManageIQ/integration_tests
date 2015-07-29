@@ -41,12 +41,12 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="function")
-def vm_name(request, provider_mgmt):
+def vm_name(request):
     vm_name = 'test_image_prov_%s' % fauxfactory.gen_alphanumeric()
     return vm_name
 
 
-def test_provision_from_template(request, setup_provider, provider_crud, provisioning, vm_name):
+def test_provision_from_template(request, setup_provider, provider, provisioning, vm_name):
     """ Tests instance provision from template
 
     Metadata:
@@ -54,9 +54,9 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
     """
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider_crud.key))
+            (image, vm_name, provider.key))
 
-    instance = instance_factory(vm_name, provider_crud, image)
+    instance = instance_factory(vm_name, provider, image)
 
     request.addfinalizer(instance.delete_from_provider)
 
@@ -71,7 +71,7 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
         'guest_keypair': provisioning['guest_keypair']
     }
 
-    if isinstance(provider_crud, OpenStackProvider):
+    if isinstance(provider, OpenStackProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
 
     sel.force_navigate("clouds_instances_by_provider")
@@ -80,8 +80,7 @@ def test_provision_from_template(request, setup_provider, provider_crud, provisi
 
 @pytest.mark.ignore_stream("5.2")
 def test_provision_from_template_using_rest(
-        request, setup_provider, provider_crud, provider_mgmt, provider_type, provisioning, vm_name,
-        rest_api):
+        request, setup_provider, provider, provisioning, vm_name, rest_api):
     """ Tests provisioning from a template using the REST API.
 
     Metadata:
@@ -92,18 +91,18 @@ def test_provision_from_template_using_rest(
     image_guid = rest_api.collections.templates.find_by(name=provisioning['image']['name'])[0].guid
     instance_type = (
         provisioning['instance_type'].split(":")[0].strip()
-        if ":" in provisioning['instance_type'] and provider_type == "ec2"
+        if ":" in provisioning['instance_type'] and provider.type == "ec2"
         else provisioning['instance_type'])
     flavors = rest_api.collections.flavors.find_by(name=instance_type)
     assert len(flavors) > 0
     # TODO: Multi search when it works
     for flavor in flavors:
-        if flavor.ems.name == provider_crud.name:
+        if flavor.ems.name == provider.name:
             flavor_id = flavor.id
             break
     else:
         pytest.fail(
-            "Cannot find flavour {} for provider {}".format(instance_type, provider_crud.name))
+            "Cannot find flavour {} for provider {}".format(instance_type, provider.name))
 
     provision_data = {
         "version": "1.1",
@@ -136,7 +135,7 @@ def test_provision_from_template_using_rest(
     }
 
     request.addfinalizer(
-        lambda: provider_mgmt.delete_vm(vm_name) if provider_mgmt.does_vm_exist(vm_name) else None)
+        lambda: provider.mgmt.delete_vm(vm_name) if provider.mgmt.does_vm_exist(vm_name) else None)
     request = rest_api.collections.provision_requests.action.create(**provision_data)[0]
 
     def _finished():
@@ -147,7 +146,7 @@ def test_provision_from_template_using_rest(
 
     wait_for(_finished, num_sec=600, delay=5, message="REST provisioning finishes")
     wait_for(
-        lambda: provider_mgmt.does_vm_exist(vm_name),
+        lambda: provider.mgmt.does_vm_exist(vm_name),
         num_sec=600, delay=5, message="VM {} becomes visible".format(vm_name))
 
 
@@ -184,11 +183,10 @@ def cls(request, domain):
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1152737])
 @pytest.mark.parametrize("disks", [1, 2])
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 @pytest.mark.ignore_stream("5.2")
 def test_provision_from_template_with_attached_disks(
-        request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, disks,
-        soft_assert, provider_type, domain, cls):
+        request, setup_provider, provider, provisioning, vm_name, disks, soft_assert, domain, cls):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:
@@ -197,12 +195,12 @@ def test_provision_from_template_with_attached_disks(
 
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider_crud.key))
+            (image, vm_name, provider.key))
 
     DEVICE_NAME = "/dev/sd{}"
     device_mapping = []
 
-    with provider_mgmt.with_volumes(1, n=disks) as volumes:
+    with provider.mgmt.with_volumes(1, n=disks) as volumes:
         for i, volume in enumerate(volumes):
             device_mapping.append((volume, DEVICE_NAME.format(chr(ord("b") + i))))
         # Set up automate
@@ -219,7 +217,7 @@ def test_provision_from_template_with_attached_disks(
             with update(method):
                 method.data = """prov = $evm.root["miq_provision"]"""
         request.addfinalizer(_finish_method)
-        instance = instance_factory(vm_name, provider_crud, image)
+        instance = instance_factory(vm_name, provider, image)
         request.addfinalizer(instance.delete_from_provider)
         inst_args = {
             'email': 'image_provisioner@example.com',
@@ -232,27 +230,26 @@ def test_provision_from_template_with_attached_disks(
             'guest_keypair': provisioning['guest_keypair']
         }
 
-        if isinstance(provider_crud, OpenStackProvider):
+        if isinstance(provider, OpenStackProvider):
             inst_args['cloud_network'] = provisioning['cloud_network']
 
         sel.force_navigate("clouds_instances_by_provider")
         instance.create(**inst_args)
 
         for volume_id in volumes:
-            soft_assert(vm_name in provider_mgmt.volume_attachments(volume_id))
+            soft_assert(vm_name in provider.mgmt.volume_attachments(volume_id))
         for volume, device in device_mapping:
-            soft_assert(provider_mgmt.volume_attachments(volume)[vm_name] == device)
+            soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == device)
         instance.delete_from_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
 
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1160342])
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 @pytest.mark.ignore_stream("5.2")
 def test_provision_with_boot_volume(
-        request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
-        provider_type):
+        request, setup_provider, provider, provisioning, vm_name, soft_assert):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
@@ -261,9 +258,9 @@ def test_provision_with_boot_volume(
 
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider_crud.key))
+            (image, vm_name, provider.key))
 
-    with provider_mgmt.with_volume(1, imageRef=provider_mgmt.get_template_id(image)) as volume:
+    with provider.mgmt.with_volume(1, imageRef=provider.mgmt.get_template_id(image)) as volume:
         # Set up automate
         cls = automate.Class(
             name="Methods",
@@ -292,7 +289,7 @@ def test_provision_with_boot_volume(
             with update(method):
                 method.data = """prov = $evm.root["miq_provision"]"""
         request.addfinalizer(_finish_method)
-        instance = instance_factory(vm_name, provider_crud, image)
+        instance = instance_factory(vm_name, provider, image)
         request.addfinalizer(instance.delete_from_provider)
         inst_args = {
             'email': 'image_provisioner@example.com',
@@ -305,25 +302,24 @@ def test_provision_with_boot_volume(
             'guest_keypair': provisioning['guest_keypair']
         }
 
-        if isinstance(provider_crud, OpenStackProvider):
+        if isinstance(provider, OpenStackProvider):
             inst_args['cloud_network'] = provisioning['cloud_network']
 
         sel.force_navigate("clouds_instances_by_provider")
         instance.create(**inst_args)
 
-        soft_assert(vm_name in provider_mgmt.volume_attachments(volume))
-        soft_assert(provider_mgmt.volume_attachments(volume)[vm_name] == "vda")
+        soft_assert(vm_name in provider.mgmt.volume_attachments(volume))
+        soft_assert(provider.mgmt.volume_attachments(volume)[vm_name] == "vda")
         instance.delete_from_provider()  # To make it possible to delete the volume
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
 
 
 # Not collected for EC2 in generate_tests above
 @pytest.mark.meta(blockers=[1186413])
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 @pytest.mark.ignore_stream("5.2")
 def test_provision_with_additional_volume(
-        request, setup_provider, provider_crud, provisioning, vm_name, provider_mgmt, soft_assert,
-        provider_type, provider_data):
+        request, setup_provider, provisioning, provider, vm_name, soft_assert):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
@@ -333,7 +329,7 @@ def test_provision_with_additional_volume(
 
     image = provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider_crud.key))
+            (image, vm_name, provider.key))
 
     # Set up automate
     cls = automate.Class(
@@ -343,7 +339,7 @@ def test_provision_with_additional_volume(
         name="openstack_CustomizeRequest",
         cls=cls)
     try:
-        image_id = provider_mgmt.get_template_id(provider_data["small_template"])
+        image_id = provider.mgmt.get_template_id(provider.data["small_template"])
     except KeyError:
         pytest.skip("No small_template in provider adta!")
     with update(method):
@@ -368,7 +364,7 @@ def test_provision_with_additional_volume(
         with update(method):
             method.data = """prov = $evm.root["miq_provision"]"""
     request.addfinalizer(_finish_method)
-    instance = instance_factory(vm_name, provider_crud, image)
+    instance = instance_factory(vm_name, provider, image)
     request.addfinalizer(instance.delete_from_provider)
     inst_args = {
         'email': 'image_provisioner@example.com',
@@ -381,24 +377,24 @@ def test_provision_with_additional_volume(
         'guest_keypair': provisioning['guest_keypair']
     }
 
-    if isinstance(provider_crud, OpenStackProvider):
+    if isinstance(provider, OpenStackProvider):
         inst_args['cloud_network'] = provisioning['cloud_network']
 
     sel.force_navigate("clouds_instances_by_provider")
     instance.create(**inst_args)
 
-    prov_instance = provider_mgmt._find_instance_by_name(vm_name)
+    prov_instance = provider.mgmt._find_instance_by_name(vm_name)
     try:
         assert hasattr(prov_instance, 'os-extended-volumes:volumes_attached')
         volumes_attached = getattr(prov_instance, 'os-extended-volumes:volumes_attached')
         assert len(volumes_attached) == 1
         volume_id = volumes_attached[0]["id"]
-        assert provider_mgmt.volume_exists(volume_id)
-        volume = provider_mgmt.get_volume(volume_id)
+        assert provider.mgmt.volume_exists(volume_id)
+        volume = provider.mgmt.get_volume(volume_id)
         assert volume.size == 3
     finally:
         instance.delete_from_provider()
         wait_for(lambda: not instance.does_vm_exist_on_provider(), num_sec=180, delay=5)
         if "volume_id" in locals():  # To handle the case of 1st or 2nd assert
-            if provider_mgmt.volume_exists(volume_id):
-                provider_mgmt.delete_volume(volume_id)
+            if provider.mgmt.volume_exists(volume_id):
+                provider.mgmt.delete_volume(volume_id)

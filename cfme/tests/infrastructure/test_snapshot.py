@@ -5,7 +5,6 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
 from utils import testgen
 from utils.conf import credentials
-from utils.providers import setup_provider
 from utils.log import logger
 from utils.ssh import SSHClient
 from utils.wait import wait_for
@@ -18,25 +17,16 @@ pytest_generate_tests = testgen.generate(testgen.infra_providers, 'full_template
 
 
 @pytest.fixture(scope="module")
-def provider_init(provider_key):
-    """cfme/infrastructure/provider.py provider object."""
-    try:
-        setup_provider(provider_key)
-    except Exception as e:
-        pytest.skip("Skipping,because it's not possible to set up this provider({})".format(str(e)))
-
-
-@pytest.fixture(scope="module")
 def vm_name():
     return "test_snpsht_" + fauxfactory.gen_alphanumeric()
 
 
 @pytest.fixture(scope="module")
-def test_vm(request, provider_init, provider_crud, provider_mgmt, provider_data, vm_name):
+def test_vm(setup_provider_modscope, provider, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = Vm(vm_name, provider_crud, template_name=provider_data['full_template']['name'])
+    vm = Vm(vm_name, provider, template_name=provider.data['full_template']['name'])
 
-    if not provider_mgmt.does_vm_exist(vm_name):
+    if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm
 
@@ -48,8 +38,8 @@ def new_snapshot(test_vm):
     return new_snapshot
 
 
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'virtualcenter')
-def test_snapshot_crud(test_vm, provider_key, provider_type):
+@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+def test_snapshot_crud(test_vm, provider):
     """Tests snapshot crud
 
     Metadata:
@@ -60,8 +50,8 @@ def test_snapshot_crud(test_vm, provider_key, provider_type):
     snapshot.delete()
 
 
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'virtualcenter')
-def test_delete_all_snapshots(test_vm, provider_key, provider_type):
+@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+def test_delete_all_snapshots(test_vm, provider):
     """Tests snapshot removal
 
     Metadata:
@@ -74,9 +64,8 @@ def test_delete_all_snapshots(test_vm, provider_key, provider_type):
     snapshot2.delete_all()
 
 
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'virtualcenter')
-def test_verify_revert_snapshot(test_vm, provider_key, provider_type, provider_data,
-                                soft_assert, register_event, request):
+@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, request):
     """Tests revert snapshot
 
     Metadata:
@@ -86,8 +75,8 @@ def test_verify_revert_snapshot(test_vm, provider_key, provider_type, provider_d
     ip = snapshot1.vm.provider_crud.get_mgmt_system().get_ip_address(snapshot1.vm.name)
     print ip
     ssh_kwargs = {
-        'username': credentials[provider_data['full_template']['creds']]['username'],
-        'password': credentials[provider_data['full_template']['creds']]['password'],
+        'username': credentials[provider.data['full_template']['creds']]['username'],
+        'password': credentials[provider.data['full_template']['creds']]['password'],
         'hostname': ip
     }
     ssh = SSHClient(**ssh_kwargs)

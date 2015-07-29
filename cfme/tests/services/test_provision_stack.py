@@ -9,7 +9,6 @@ from cfme.services.catalogs.myservice import MyService
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils import testgen
-from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -113,15 +112,6 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture
-def provider_init(provider_key):
-    """cfme/infrastructure/provider.py provider object."""
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.fixture(scope="function")
 def dialog(provisioning):
     dialog_name = "dialog_" + fauxfactory.gen_alphanumeric()
@@ -140,8 +130,7 @@ def catalog():
     catalog.delete()
 
 
-def test_provision_stack(provider_init, provider_key, provider_crud,
-                        provider_type, provisioning, dialog, catalog, request):
+def test_provision_stack(setup_provider, provider, provisioning, dialog, catalog, request):
     """Tests stack provisioning
 
     Metadata:
@@ -152,9 +141,9 @@ def test_provision_stack(provider_init, provider_key, provider_crud,
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
                   dialog=dialog_name, orch_template=template_name,
-                  provider_type=provider_crud.name)
+                  provider_type=provider.name)
     catalog_item.create()
-    if provider_type == 'ec2':
+    if provider.type == 'ec2':
         stack_data = {
             'stack_name': "stack" + fauxfactory.gen_alphanumeric(),
             'key_name': provisioning['stack_provisioning']['key_name'],
@@ -163,7 +152,7 @@ def test_provision_stack(provider_init, provider_key, provider_crud,
             'db_root_password': provisioning['stack_provisioning']['db_root_password'],
             'select_instance_type': provisioning['stack_provisioning']['instance_type'],
         }
-    elif provider_type == 'openstack':
+    elif provider.type == 'openstack':
         stack_data = {
             'stack_name': "stack" + fauxfactory.gen_alphanumeric()
         }
@@ -179,8 +168,7 @@ def test_provision_stack(provider_init, provider_key, provider_crud,
 
 
 @pytest.mark.meta(blockers=[1221333])
-def test_reconfigure_service(provider_init, provider_key, provider_crud,
-                        provider_type, provisioning, dialog, catalog, request):
+def test_reconfigure_service(setup_provider, provider, provisioning, dialog, catalog, request):
     """Tests stack provisioning
 
     Metadata:
@@ -191,9 +179,9 @@ def test_reconfigure_service(provider_init, provider_key, provider_crud,
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
                   dialog=dialog_name, orch_template=template_name,
-                  provider_type=provider_crud.name)
+                  provider_type=provider.name)
     catalog_item.create()
-    if provider_type == 'ec2':
+    if provider.type == 'ec2':
         stack_data = {
             'stack_name': fauxfactory.gen_alphanumeric(),
             'key_name': provisioning['stack_provisioning']['key_name'],
@@ -202,7 +190,7 @@ def test_reconfigure_service(provider_init, provider_key, provider_crud,
             'db_root_password': provisioning['stack_provisioning']['db_root_password'],
             'select_instance_type': provisioning['stack_provisioning']['instance_type'],
         }
-    elif provider_type == 'openstack':
+    elif provider.type == 'openstack':
         stack_data = {
             'stack_name': fauxfactory.gen_alphanumeric()
         }
@@ -220,8 +208,7 @@ def test_reconfigure_service(provider_init, provider_key, provider_crud,
 
 
 @pytest.mark.meta(blockers=[1236932])
-def test_remove_template_provisioning(provider_init, provider_key, provider_crud,
-                        provider_type, provisioning, catalog, request):
+def test_remove_template_provisioning(setup_provider, provider, provisioning, catalog, request):
     """Tests stack provisioning
 
     Metadata:
@@ -238,13 +225,13 @@ def test_remove_template_provisioning(provider_init, provider_key, provider_crud
     catalog_item = CatalogItem(item_type="Orchestration", name=item_name,
                   description="my catalog", display_in=True, catalog=catalog.name,
                   dialog=dialog_name_new, orch_template=template.template_name,
-                  provider_type=provider_crud.name)
+                  provider_type=provider.name)
     catalog_item.create()
-    if provider_type == 'ec2':
+    if provider.type == 'ec2':
         stack_data = {
             'stack_name': "stack" + fauxfactory.gen_alphanumeric()
         }
-    elif provider_type == 'openstack':
+    elif provider.type == 'openstack':
         stack_data = {
             'stack_name': "stack" + fauxfactory.gen_alphanumeric()
         }

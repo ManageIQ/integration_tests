@@ -5,6 +5,7 @@ import pytest
 import re
 from datetime import datetime, timedelta
 
+from cfme.common.provider import cleanup_vm
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.virtual_machines import Vm, details_page
 from cfme.provisioning import provisioning_form
@@ -22,17 +23,6 @@ pytestmark = [
     pytest.sel.go_to("dashboard"),
     pytest.mark.long_running
 ]
-
-
-def cleanup_vm(vm_name, provider_key, provider_mgmt):
-    try:
-        if provider_mgmt.does_vm_exist(vm_name):
-            logger.info('Cleaning up VM {} on provider {}'.format(vm_name, provider_key))
-            provider_mgmt.delete_vm(vm_name)
-    except Exception as e:
-        # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM {} on provider {} ({})'.format(
-            vm_name, provider_key, str(e)))
 
 
 def pytest_generate_tests(metafunc):
@@ -59,8 +49,8 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture(scope="function")
-def prov_data(provisioning, provider_type):
-    if provider_type == "scvmm":
+def prov_data(provisioning, provider):
+    if provider.type == "scvmm":
         pytest.skip("SCVMM does not support provisioning yet!")  # TODO: After fixing - remove
 
     return {
@@ -75,7 +65,7 @@ def prov_data(provisioning, provider_type):
         "datastore_name": {"name": provisioning["datastore"]},
         "host_name": {"name": provisioning["host"]},
         # "catalog_name": provisioning["catalog_item_type"],
-        "provision_type": "Native Clone" if provider_type == "rhevm" else "VMware"
+        "provision_type": "Native Clone" if provider.type == "rhevm" else "VMware"
     }
 
 
@@ -85,16 +75,16 @@ def template_name(provisioning):
 
 
 @pytest.fixture(scope="function")
-def provisioner(request, provider_key, provider_mgmt, provider_crud):
-    if not provider_crud.exists:
+def provisioner(request, provider):
+    if not provider.exists:
         try:
-            setup_provider(provider_key)
+            setup_provider(provider.key)
         except FlashMessageException as e:
             e.skip_and_log("Provider failed to set up")
 
     def _provisioner(template, provisioning_data, delayed=None):
         pytest.sel.force_navigate('infrastructure_provision_vms', context={
-            'provider': provider_crud,
+            'provider': provider,
             'template_name': template,
         })
 
@@ -102,7 +92,7 @@ def provisioner(request, provider_key, provider_mgmt, provider_crud):
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
         flash.assert_no_errors()
 
-        request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+        request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
         if delayed is not None:
             total_seconds = (delayed - datetime.utcnow()).total_seconds()
             row_description = 'Provision from [%s] to [%s]' % (template, vm_name)
@@ -113,8 +103,8 @@ def provisioner(request, provider_key, provider_mgmt, provider_crud):
                 pytest.fail("The provisioning was not postponed")
             except TimedOutError:
                 pass
-        logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider_crud.key)
-        wait_for(provider_mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
+        logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
+        wait_for(provider.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
 
         # nav to requests page happens on successful provision
         logger.info('Waiting for cfme provision request for vm %s' % vm_name)
@@ -125,7 +115,7 @@ def provisioner(request, provider_key, provider_mgmt, provider_crud):
         assert row.last_message.text == version.pick(
             {version.LOWEST: 'VM Provisioned Successfully',
              "5.3": 'Vm Provisioned Successfully', })
-        return Vm(vm_name, provider_crud)
+        return Vm(vm_name, provider)
 
     return _provisioner
 
@@ -172,12 +162,12 @@ def test_change_cpu_ram(provisioner, prov_data, template_name, soft_assert):
 # Special parametrization in testgen above
 @pytest.mark.meta(blockers=[1209847])
 @pytest.mark.parametrize("disk_format", ["thin", "thick", "preallocated"])
-@pytest.mark.uncollectif(lambda provider_type, disk_format:
-                         (provider_type == "rhevm" and disk_format == "thick") or
-                         (provider_type != "rhevm" and disk_format == "preallocated") or
+@pytest.mark.uncollectif(lambda provider, disk_format:
+                         (provider.type == "rhevm" and disk_format == "thick") or
+                         (provider.type != "rhevm" and disk_format == "preallocated") or
                          # Temporarily, our storage domain cannot handle preallocated disks
-                         (provider_type == "rhevm" and disk_format == "preallocated"))
-def test_disk_format_select(provisioner, prov_data, template_name, disk_format, provider_type):
+                         (provider.type == "rhevm" and disk_format == "preallocated"))
+def test_disk_format_select(provisioner, prov_data, template_name, disk_format, provider):
     """ Tests disk format selection in provisioning dialog.
 
     Prerequisities:
@@ -209,8 +199,7 @@ def test_disk_format_select(provisioner, prov_data, template_name, disk_format, 
 
 
 @pytest.mark.parametrize("started", [True, False])
-def test_power_on_or_off_after_provision(
-        provisioner, prov_data, template_name, provider_mgmt, started):
+def test_power_on_or_off_after_provision(provisioner, prov_data, template_name, provider, started):
     """ Tests setting the desired power state after provisioning.
 
     Prerequisities:
@@ -233,14 +222,14 @@ def test_power_on_or_off_after_provision(
     provisioner(template_name, prov_data)
 
     wait_for(
-        lambda: provider_mgmt.does_vm_exist(vm_name) and
-        (provider_mgmt.is_vm_running if started else provider_mgmt.is_vm_stopped)(vm_name),
+        lambda: provider.mgmt.does_vm_exist(vm_name) and
+        (provider.mgmt.is_vm_running if started else provider.mgmt.is_vm_stopped)(vm_name),
         num_sec=240, delay=5
     )
 
 
 @pytest.mark.uncollectif(lambda: version.current_version() < '5.3')
-def test_tag(provisioner, prov_data, template_name, provider_type):
+def test_tag(provisioner, prov_data, template_name, provider):
     """ Tests tagging VMs using provisioning dialogs.
 
     Prerequisities:

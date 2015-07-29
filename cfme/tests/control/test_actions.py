@@ -65,13 +65,13 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
 
-        if args["provider_type"] in {"scvmm"}:
+        if args["provider"].type in {"scvmm"}:
             continue
 
         if ((metafunc.function is test_action_create_snapshot_and_delete_last)
             or
             (metafunc.function is test_action_create_snapshots_and_delete_them)) \
-                and isinstance(args['provider_crud'], RHEVMProvider):
+                and isinstance(args['provider'], RHEVMProvider):
             continue
 
         new_idlist.append(idlist[i])
@@ -85,7 +85,7 @@ pytestmark = [
     pytest.mark.meta(blockers=[
         BZ(
             1149128,
-            unblock=lambda provider_mgmt: not isinstance(provider_mgmt, mgmt_system.SCVMMSystem))
+            unblock=lambda provider: not isinstance(provider.mgmt, mgmt_system.SCVMMSystem))
     ])
 ]
 
@@ -109,30 +109,30 @@ def get_vm_object(vm_name):
 
 
 @pytest.fixture(scope="module")
-def vm_name(provider_key):
-    return "test_act-{}-{}".format(provider_key, fauxfactory.gen_alpha().lower())
+def vm_name(provider):
+    return "test_act-{}-{}".format(provider.key, fauxfactory.gen_alpha().lower())
 
 
 @pytest.fixture(scope="module")
-def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small_template, vm_name):
+def vm(request, provider, small_template, vm_name):
     try:
-        setup_provider(provider_key)
+        setup_provider(provider.key)
     except FlashMessageException as e:
         e.skip_and_log("Provider failed to set up")
 
-    if isinstance(provider_mgmt, mgmt_system.RHEVMSystem):
-        kwargs = {"cluster": provider_data["default_cluster"]}
-    elif isinstance(provider_mgmt, mgmt_system.VMWareSystem):
+    if isinstance(provider.mgmt, mgmt_system.RHEVMSystem):
+        kwargs = {"cluster": provider.data["default_cluster"]}
+    elif isinstance(provider.mgmt, mgmt_system.VMWareSystem):
         kwargs = {}
-    elif isinstance(provider_mgmt, mgmt_system.SCVMMSystem):
+    elif isinstance(provider.mgmt, mgmt_system.SCVMMSystem):
         kwargs = {
-            "host_group": provider_data.get("provisioning", {}).get("host_group", "All Hosts")}
+            "host_group": provider.data.get("provisioning", {}).get("host_group", "All Hosts")}
     else:
         kwargs = {}
 
     try:
         deploy_template(
-            provider_key,
+            provider.key,
             vm_name,
             template_name=small_template,
             allow_skip="default",
@@ -142,30 +142,30 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
     except TimedOutError as e:
         logger.exception(e)
         try:
-            provider_mgmt.delete_vm(vm_name)
+            provider.mgmt.delete_vm(vm_name)
         except TimedOutError:
             logger.warning("Could not delete VM {}!".format(vm_name))
         finally:
             # If this happened, we should skip all tests from this provider in this module
             pytest.skip("{} is quite likely overloaded! Check its status!\n{}: {}".format(
-                provider_key, type(e).__name__, str(e)))
+                provider.key, type(e).__name__, str(e)))
 
     def finalize():
         """if getting SOAP object failed, we would not get the VM deleted! So explicit teardown."""
         logger.info("Shutting down VM with name {}".format(vm_name))
-        if provider_mgmt.is_vm_suspended(vm_name):
+        if provider.mgmt.is_vm_suspended(vm_name):
             logger.info("Powering up VM {} to shut it down correctly.".format(vm_name))
-            provider_mgmt.start_vm(vm_name)
-        if provider_mgmt.is_vm_running(vm_name):
+            provider.mgmt.start_vm(vm_name)
+        if provider.mgmt.is_vm_running(vm_name):
             logger.info("Powering off VM {}".format(vm_name))
-            provider_mgmt.stop_vm(vm_name)
-        if provider_mgmt.does_vm_exist(vm_name):
-            logger.info("Deleting VM {} in {}".format(vm_name, provider_mgmt.__class__.__name__))
-            provider_mgmt.delete_vm(vm_name)
+            provider.mgmt.stop_vm(vm_name)
+        if provider.mgmt.does_vm_exist(vm_name):
+            logger.info("Deleting VM {} in {}".format(vm_name, provider.mgmt.__class__.__name__))
+            provider.mgmt.delete_vm(vm_name)
     request.addfinalizer(finalize)
 
     # Make it appear in the provider
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
 
     # Get the SOAP object
     soap = wait_for(
@@ -176,7 +176,7 @@ def vm(request, provider_mgmt, provider_crud, provider_key, provider_data, small
         delay=15,
     )[0]
 
-    return VMWrapper(provider_mgmt, vm_name, soap)
+    return VMWrapper(provider.mgmt, vm_name, soap)
 
 
 @pytest.fixture(scope="module")
@@ -210,16 +210,16 @@ def automate_role_set(request):
 
 
 @pytest.fixture(scope="module")
-def vm_crud(vm_name, provider_crud, provider_key, provider_type):
-    if is_cloud_provider(provider_key):
-        if provider_type == "openstack":
-            return OpenStackInstance(vm_name, provider_crud)
-        elif provider_type == "ec2":
-            return EC2Instance(vm_name, provider_crud)
+def vm_crud(vm_name, provider):
+    if is_cloud_provider(provider.key):
+        if provider.type == "openstack":
+            return OpenStackInstance(vm_name, provider)
+        elif provider.type == "ec2":
+            return EC2Instance(vm_name, provider)
         else:
-            raise Exception("Unknown provider type {}!".format(provider_type))
+            raise Exception("Unknown provider type {}!".format(provider.type))
     else:
-        return Vm(vm_name, provider_crud)
+        return Vm(vm_name, provider)
 
 
 @pytest.fixture(scope="function")
@@ -252,16 +252,16 @@ def vm_off(vm, vm_crud):
 
 
 @pytest.fixture(scope="function")
-def vm_crud_refresh(vm_crud, provider_type):
+def vm_crud_refresh(vm_crud, provider):
     """Refreshes the VM if that is needed for the provider."""
-    if provider_type in {"ec2"}:
+    if provider.type in {"ec2"}:
         return lambda: vm_crud.refresh_relationships(from_details=True)
     else:
         return lambda: None
 
 
 @pytest.yield_fixture(scope="module")
-def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, provider_crud):
+def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, provider):
     """ Takes care of setting the appliance up for testing """
     policy = explorer.VMControlPolicy(
         policy_name,
@@ -276,10 +276,10 @@ def policy_for_testing(automate_role_set, vm, policy_name, policy_profile_name, 
 
 
 @pytest.yield_fixture(scope="module")
-def assign_policy_for_testing(vm, policy_for_testing, provider_crud, policy_profile_name):
-    provider_crud.assign_policy_profiles(policy_profile_name)
+def assign_policy_for_testing(vm, policy_for_testing, provider, policy_profile_name):
+    provider.assign_policy_profiles(policy_profile_name)
     yield policy_for_testing
-    provider_crud.unassign_policy_profiles(policy_profile_name)
+    provider.unassign_policy_profiles(policy_profile_name)
 
 
 def test_action_start_virtual_machine_after_stopping(

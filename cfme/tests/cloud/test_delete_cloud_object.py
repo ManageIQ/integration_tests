@@ -39,30 +39,30 @@ def reset():
     toolbar.set_vms_list_view()
 
 
-def test_delete_instance(setup_provider, provider_crud, remove_test):
+def test_delete_instance(setup_provider, provider, remove_test):
     """ Tests delete instance
 
     Metadata:
         test_flag: delete_object
     """
     instance_name = remove_test['instance']
-    test_instance = instance.instance_factory(instance_name, provider_crud)
+    test_instance = instance.instance_factory(instance_name, provider)
     test_instance.remove_from_cfme(cancel=False)
     test_instance.wait_for_delete()
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
     test_instance.wait_for_vm_to_appear()
 
 
-def test_delete_image(setup_provider, provider_crud, remove_test, set_grid, request):
+def test_delete_image(setup_provider, provider, remove_test, set_grid, request):
     """ Tests delete image
 
     Metadata:
         test_flag: delete_object
     """
     image_name = remove_test['image']
-    test_image = instance.Image(image_name, provider_crud)
+    test_image = instance.Image(image_name, provider)
     test_image.delete()
     test_image.wait_for_delete()
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
     test_image.wait_for_appear()
     request.addfinalizer(reset)

@@ -3,10 +3,10 @@ import fauxfactory
 import pytest
 
 from utils.conf import cfme_data
+from cfme.common.provider import cleanup_vm
 from cfme.infrastructure.pxe import get_template_from_config, ISODatastore
-from cfme.provisioning import cleanup_vm, do_vm_provisioning
+from cfme.provisioning import do_vm_provisioning
 from utils import testgen
-from utils.providers import setup_provider
 
 pytestmark = [
     pytest.mark.meta(server_roles="+automate"),
@@ -27,11 +27,11 @@ def pytest_generate_tests(metafunc):
             # No provisioning data available
             continue
 
-        if args['provider_type'] == "scvmm":
+        if args['provider'].type == "scvmm":
             continue
 
         provider_data = cfme_data.get('management_systems', {})[
-            argvalue_tuple[argnames.index('provider_key')]]
+            argvalue_tuple[argnames.index('provider')].key]
         if not provider_data.get('iso_datastore', False):
             continue
 
@@ -56,12 +56,7 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture
-def provider_init(provider_key, iso_cust_template, provisioning, iso_datastore):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
+def datastore_init(iso_cust_template, provisioning, iso_datastore):
     if not iso_datastore.exists():
         iso_datastore.create()
     # Fails on upstream, BZ1109256
@@ -77,8 +72,8 @@ def vm_name():
 
 
 @pytest.mark.meta(blockers=[1200783, 1207209])
-def test_iso_provision_from_template(provider_key, provider_crud, provider_type, provider_mgmt,
-                                     provisioning, vm_name, smtp_test, provider_init, request):
+def test_iso_provision_from_template(provider, provisioning, vm_name, smtp_test, datastore_init,
+                                     request, setup_provider):
     """Tests ISO provisioning
 
     Metadata:
@@ -91,7 +86,7 @@ def test_iso_provision_from_template(provider_key, provider_crud, provider_type,
                                 'datastore', 'iso_file', 'iso_kickstart',
                                 'iso_root_password', 'iso_image_type', 'vlan'))
 
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
         'vm_name': vm_name,
@@ -104,5 +99,5 @@ def test_iso_provision_from_template(provider_key, provider_crud, provider_type,
         'vlan': vlan,
     }
 
-    do_vm_provisioning(iso_template, provider_crud, vm_name, provisioning_data, request,
-                       provider_mgmt, provider_key, smtp_test, num_sec=1500)
+    do_vm_provisioning(iso_template, provider, vm_name, provisioning_data, request, smtp_test,
+                       num_sec=1500)

@@ -19,15 +19,15 @@ pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module"
 
 
 @pytest.fixture(scope="module")
-def delete_fx_provider_event(db, provider_crud):
-    logger.info("Deleting timeline events for provider name {}".format(provider_crud.name))
+def delete_fx_provider_event(db, provider):
+    logger.info("Deleting timeline events for provider name {}".format(provider.name))
     ems = db['ext_management_systems']
     ems_events = db['ems_events']
     with db.transaction:
         providers = (
             db.session.query(ems_events.id)
             .join(ems, ems_events.ems_id == ems.id)
-            .filter(ems.name == provider_crud.name)
+            .filter(ems.name == provider.name)
         )
         db.session.query(ems_events).filter(ems_events.id.in_(providers.subquery())).delete(False)
 
@@ -54,24 +54,23 @@ def delete_instances_fin(request):
 
 
 @pytest.fixture(scope="module")
-def test_instance(setup_provider, request, delete_instances_fin, provider_crud,
-                  provider_mgmt, vm_name):
+def test_instance(setup_provider, request, delete_instances_fin, provider, vm_name):
     """ Fixture to provision instance on the provider
     """
-    instance = instance_factory(vm_name, provider_crud)
-    if not provider_mgmt.does_vm_exist(vm_name):
-        delete_instances_fin[provider_crud.key] = instance
+    instance = instance_factory(vm_name, provider)
+    if not provider.mgmt.does_vm_exist(vm_name):
+        delete_instances_fin[provider.key] = instance
         instance.create_on_provider(allow_skip="default")
     return instance
 
 
 @pytest.fixture(scope="module")
-def gen_events(setup_provider, delete_fx_provider_event, provider_crud, test_instance):
+def gen_events(setup_provider, delete_fx_provider_event, provider, test_instance):
     logger.debug('Starting, stopping VM')
-    mgmt = provider_crud.get_mgmt_system()
+    mgmt = provider.mgmt
     mgmt.stop_vm(test_instance.name)
     mgmt.start_vm(test_instance.name)
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
 
 
 def count_events(instance_name, nav_step):
@@ -89,17 +88,17 @@ def count_events(instance_name, nav_step):
     return 0
 
 
-def db_event(db, provider_crud):
+def db_event(db, provider):
     # Get event count from the DB
 
-    logger.info("Getting event count from the DB for provider name {}".format(provider_crud.name))
+    logger.info("Getting event count from the DB for provider name {}".format(provider.name))
     ems = db['ext_management_systems']
     ems_events = db['ems_events']
     with db.transaction:
         providers = (
             db.session.query(ems_events.id)
             .join(ems, ems_events.ems_id == ems.id)
-            .filter(ems.name == provider_crud.name)
+            .filter(ems.name == provider.name)
         )
         query = db.session.query(ems_events).filter(ems_events.id.in_(providers.subquery()))
         event_count = query.count()
@@ -107,11 +106,11 @@ def db_event(db, provider_crud):
 
 
 @pytest.mark.meta(
-    blockers=BZ(1201923, unblock=lambda provider_type: provider_type != 'ec2'),
+    blockers=BZ(1201923, unblock=lambda provider: provider.type != 'ec2'),
 )
 @pytest.mark.uncollectif(
-    lambda provider_type: current_version() < "5.4" and provider_type != 'openstack')
-def test_provider_event(setup_provider, provider_crud, provider_type, gen_events, test_instance):
+    lambda provider: current_version() < "5.4" and provider.type != 'openstack')
+def test_provider_event(setup_provider, provider, gen_events, test_instance):
     """ Tests provider events on timelines
 
     Metadata:
@@ -119,17 +118,17 @@ def test_provider_event(setup_provider, provider_crud, provider_type, gen_events
     """
     def nav_step():
         pytest.sel.force_navigate('cloud_provider_timelines',
-                                  context={'provider': provider_crud})
+                                  context={'provider': provider})
     wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
 
 @pytest.mark.meta(
-    blockers=BZ(1201923, unblock=lambda provider_type: provider_type != 'ec2'),
+    blockers=BZ(1201923, unblock=lambda provider: provider.type != 'ec2'),
 )
 @pytest.mark.uncollectif(
-    lambda provider_type: current_version() < "5.4" and provider_type != 'openstack')
-def test_azone_event(setup_provider, provider_crud, provider_type, gen_events, test_instance):
+    lambda provider: current_version() < "5.4" and provider.type != 'openstack')
+def test_azone_event(setup_provider, provider, gen_events, test_instance):
     """ Tests availablility zone events on timelines
 
     Metadata:
@@ -144,9 +143,8 @@ def test_azone_event(setup_provider, provider_crud, provider_type, gen_events, t
 
 
 @pytest.mark.uncollectif(
-    lambda provider_type: current_version() < "5.4" and provider_type != 'openstack')
-def test_vm_event(setup_provider, provider_crud, provider_type, db, gen_events,
-                 test_instance, bug):
+    lambda provider: current_version() < "5.4" and provider.type != 'openstack')
+def test_vm_event(setup_provider, provider, db, gen_events, test_instance, bug):
     """ Tests vm events on timelines
 
     Metadata:
@@ -157,10 +155,10 @@ def test_vm_event(setup_provider, provider_crud, provider_type, db, gen_events,
         toolbar.select('Monitoring', 'Timelines')
 
     ec2_ui_bug = bug(1201923)
-    if (ec2_ui_bug is None or provider_type == 'openstack'):
+    if (ec2_ui_bug is None or provider.type == 'openstack'):
         # This fails for ec2... https://bugzilla.redhat.com/show_bug.cgi?id=1201923
         wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
 
-    wait_for(db_event, [db, provider_crud], num_sec=840, delay=30, fail_condition=0,
+    wait_for(db_event, [db, provider], num_sec=840, delay=30, fail_condition=0,
         message="events to appear in the DB")

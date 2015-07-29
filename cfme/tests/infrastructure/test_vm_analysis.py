@@ -70,7 +70,6 @@ In addition, this requires that host credentials are in cfme_data.yaml under the
 # GLOBAL vars to track a few items
 appliance_list = {}         # keep track appliances to use for which provider
 test_list = []              # keeps track of the tests ran to delete appliance when not needed
-by_state_tests = {}         # keeps track of options for state test to reuse
 main_provider = None
 
 
@@ -88,32 +87,32 @@ def delete_tasks_first():
 
 
 @pytest.fixture(scope="class")
-def get_appliance(provider_crud):
+def get_appliance(provider):
     '''Fixture to provision appliance to the provider being tested if necessary'''
     global appliance_list, main_provider
     appliance_vm_prefix = "test_vm_analysis"
 
-    if provider_crud.key not in appliance_list:
+    if provider.key not in appliance_list:
         try:
             # see if the current appliance is on the needed provider
             ip_addr = re.findall(r'[0-9]+(?:\.[0-9]+){3}', conf.env['base_url'])[0]
-            appl_name = provider_crud.get_mgmt_system().get_vm_name_from_ip(ip_addr)
-            logger.info("re-using already provisioned appliance on {}...".format(provider_crud.key))
-            main_provider = provider_crud.key
-            appliance = Appliance(provider_crud.key, appl_name)
+            appl_name = provider.mgmt.get_vm_name_from_ip(ip_addr)
+            logger.info("re-using already provisioned appliance on {}...".format(provider.key))
+            main_provider = provider.key
+            appliance = Appliance(provider.key, appl_name)
             appliance.configure_fleecing()
-            appliance_list[provider_crud.key] = appliance
+            appliance_list[provider.key] = appliance
         except Exception as e:
             logger.error("Exception: %s" % str(e))
             # provision appliance and configure
             ver_to_prov = str(version.current_version())
-            logger.info("provisioning {} appliance on {}...".format(ver_to_prov, provider_crud.key))
+            logger.info("provisioning {} appliance on {}...".format(ver_to_prov, provider.key))
             appliance = None
             try:
                 appliance = provision_appliance(
                     vm_name_prefix=appliance_vm_prefix,
                     version=ver_to_prov,
-                    provider_name=provider_crud.key)
+                    provider_name=provider.key)
                 logger.info("appliance IP address: " + str(appliance.address))
                 appliance.configure(setup_fleece=True)
             except Exception as e:
@@ -122,8 +121,8 @@ def get_appliance(provider_crud):
                     appliance.destroy()
                 raise CFMEException(
                     'Appliance encountered error during initial setup: {}'.format(str(e)))
-            appliance_list[provider_crud.key] = appliance
-    return appliance_list[provider_crud.key]
+            appliance_list[provider.key] = appliance
+    return appliance_list[provider.key]
 
 
 @pytest.fixture(scope="class")
@@ -132,17 +131,17 @@ def vm_name(vm_template_name):
 
 
 @pytest.fixture(scope="class")
-def template(request, vm_template_name, provider_crud):
+def template(request, vm_template_name, provider):
     logger.info("Starting template fixture")
-    return Vm(vm_template_name, provider_crud)
+    return Vm(vm_template_name, provider)
 
 
 @pytest.fixture(scope="class")
-def vm(request, vm_template_name, vm_name, provider_crud, provider_mgmt):
+def vm(request, vm_template_name, vm_name, provider):
     logger.info("Starting vm fixture")
-    vm = Vm(vm_name, provider_crud, template_name=vm_template_name)
+    vm = Vm(vm_name, provider, template_name=vm_template_name)
 
-    if not provider_mgmt.does_vm_exist(vm_name):
+    if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(allow_skip="default")
 
     request.addfinalizer(vm.delete_from_provider)
@@ -150,7 +149,7 @@ def vm(request, vm_template_name, vm_name, provider_crud, provider_mgmt):
 
 
 @pytest.yield_fixture(scope="class")
-def appliance_browser(get_appliance, provider_crud, vm_template_name, os, fs_type):
+def appliance_browser(get_appliance, provider, vm_template_name, os, fs_type):
     '''Overrides env.conf and points a browser to the appliance IP passed to it.
 
     Once finished with the test, it checks if any tests need the appliance and delete it if not the
@@ -159,7 +158,7 @@ def appliance_browser(get_appliance, provider_crud, vm_template_name, os, fs_typ
     logger.info("Starting appliance browser fixture")
     global test_list
 
-    test_list.remove([provider_crud.key, vm_template_name, os, fs_type])
+    test_list.remove([provider.key, vm_template_name, os, fs_type])
 
     with get_appliance.ipapp.db.transaction:
         with get_appliance.ipapp:  # To make REST API work
@@ -167,10 +166,10 @@ def appliance_browser(get_appliance, provider_crud, vm_template_name, os, fs_typ
                 yield browser
 
     # cleanup provisioned appliance if not more tests for it
-    if provider_crud.key is not main_provider:
+    if provider.key is not main_provider:
         more_same_provider_tests = False
         for outstanding_test in test_list:
-            if outstanding_test[0] == provider_crud.key:
+            if outstanding_test[0] == provider.key:
                 logger.info("More provider tests found")
                 more_same_provider_tests = True
                 break
@@ -179,13 +178,13 @@ def appliance_browser(get_appliance, provider_crud, vm_template_name, os, fs_typ
 
 
 @pytest.fixture(scope="class")
-def finish_appliance_setup(get_appliance, appliance_browser, provider_crud, vm):  # ,listener_info):
+def finish_appliance_setup(get_appliance, appliance_browser, provider, vm):  # ,listener_info):
     ''' Configure the appliance for smart state analysis '''
     logger.info("Starting finish appliance setup fixture")
     global appliance_list
 
     # find the vm (needed when appliance already configured for earlier class of tests)
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
     vm.wait_to_appear()
     vm.load_details()
 
@@ -204,73 +203,40 @@ def finish_appliance_setup(get_appliance, appliance_browser, provider_crud, vm):
 def pytest_generate_tests(metafunc):
     # Filter out providers without provisioning data or hosts defined
     global test_list
-    global by_state_tests
 
     new_idlist = []
     new_argvalues = []
-    if 'by_vm_state' in metafunc.fixturenames:
-        argnames, argvalues, idlist = testgen.infra_providers(
-            metafunc, 'vm_analysis', require_fields=True)
 
-        for i, provider in enumerate(idlist):
-            if provider not in by_state_tests:
-                single_index = random.choice(range(len(argvalues[i][0])))
-                vm_template_name = argvalues[i][0].keys()[single_index]
-                os = argvalues[i][0][argvalues[i][0].keys()[single_index]]['os']
-                fs_type = argvalues[i][0][argvalues[i][0].keys()[single_index]]['fs_type']
-                provider_crud = argvalues[i][1]
-                provider_mgmt = argvalues[i][2]
-                argnames = ['by_vm_state', 'provider_crud', 'provider_mgmt',
-                            'vm_template_name', 'os', 'fs_type']
-                new_argvalues.append(
-                    ['', provider_crud, provider_mgmt, vm_template_name, os, fs_type])
-                new_idlist = idlist
-                by_state_tests[provider] = [argnames, new_argvalues, new_idlist,
-                                            provider_crud, vm_template_name, os, fs_type]
-                test_list.append([provider_crud.key, vm_template_name, os, fs_type])
-            else:
-                argnames = by_state_tests[provider][0]
-                new_argvalues = by_state_tests[provider][1]
-                new_idlist = by_state_tests[provider][2]
-                provider_crud = by_state_tests[provider][3]
-                vm_template_name = by_state_tests[provider][4]
-                os = by_state_tests[provider][5]
-                fs_type = by_state_tests[provider][6]
+    argnames, argvalues, idlist = testgen.infra_providers(
+        metafunc, 'vm_analysis', require_fields=True)
+    argnames = argnames + ['vm_template_name', 'os', 'fs_type']
 
-    # elif 'by_template' in metafunc.fixturenames:
-    #     for i, argvalue_tuple in enumerate(argvalues):
-    #         args = dict(zip(argnames, argvalue_tuple))
-    #         if not args['vm_analysis']:
-    #             # No analysis data available
-    #             continue
-    #         for vm_name in argvalue_tuple[0].keys():
-    #             fs_type = argvalue_tuple[0][vm_name]['fs_type']
-    #             os = argvalue_tuple[0][vm_name]['os']
-    #             provider_key = idlist[i]
-    #             provider_crud = get_infra_provider(provider_key)
-    #             provider_mgmt = provider_factory(provider_key)
-    #             new_argvalues.append(['', provider_crud, provider_mgmt, vm_name, os, fs_type])
-    #             new_idlist.append(provider_key + "-" + fs_type)
-    #             test_list.append([provider_crud.key, vm_name, os, fs_type])
-    #     argnames = [
-    #         'by_template', 'provider_crud', 'provider_mgmt', 'vm_template_name', 'os', 'fs_type']
+    if 'by_vm_state' in metafunc.function.meta.args:
+        for i, argvalue_tuple in enumerate(argvalues):
+            args = dict(zip(argnames, argvalue_tuple))
+            idx = random.choice(range(len(args['vm_analysis'])))
+            vm_template_name = args['vm_analysis'].keys()[idx]
+            os = args['vm_analysis'][vm_template_name]['os']
+            fs_type = args['vm_analysis'][vm_template_name]['fs_type']
+            new_idlist = idlist
+            argvs = argvalues[i][:]
+            argvs.pop(argnames.index('vm_analysis'))
+            new_argvalues.append(argvs + [vm_template_name, os, fs_type])
+            test_list.append([args['provider'].key, vm_template_name, os, fs_type])
+    elif 'by_fs_type' in metafunc.function.meta.args:
+        for i, argvalue_tuple in enumerate(argvalues):
+            args = dict(zip(argnames, argvalue_tuple))
 
-    elif 'by_fs_type' in metafunc.fixturenames:
-        argnames, argvalues, idlist = testgen.infra_providers(
-            metafunc, 'vm_analysis', require_fields=True)
+            for vm_template_name in args['vm_analysis'].keys():
+                os = args['vm_analysis'][vm_template_name]['os']
+                fs_type = args['vm_analysis'][vm_template_name]['fs_type']
+                argvs = argvalues[i][:]
+                argvs.pop(argnames.index('vm_analysis'))
+                new_argvalues.append(argvs + [vm_template_name, os, fs_type])
+                new_idlist.append(args['provider'].key + "-" + fs_type)
+                test_list.append([args['provider'].key, vm_template_name, os, fs_type])
 
-        for i, provider in enumerate(idlist):
-            for vm_template_name in argvalues[i][0].keys():
-                os = argvalues[i][0].get(vm_template_name).get('os')
-                fs_type = argvalues[i][0].get(vm_template_name).get('fs_type')
-                provider_crud = argvalues[i][1]
-                provider_mgmt = argvalues[i][2]
-                argnames = ['by_fs_type', 'provider_crud', 'provider_mgmt',
-                            'vm_template_name', 'os', 'fs_type']
-                new_argvalues.append(
-                    ['', provider_crud, provider_mgmt, vm_template_name, os, fs_type])
-                new_idlist.append(provider_crud.key + "-" + fs_type)
-                test_list.append([provider_crud.key, vm_template_name, os, fs_type])
+    argnames.remove('vm_analysis')
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="class")
 
 
@@ -421,12 +387,13 @@ def _scan_test(provider_crud, vm, os, fs_type, soft_assert, rest="using_ui", res
 
 
 @pytest.mark.usefixtures(
-    "appliance_browser", "by_vm_state", "finish_appliance_setup", "delete_tasks_first")
+    "appliance_browser", "finish_appliance_setup", "delete_tasks_first")
+@pytest.mark.meta('by_vm_state')
 class TestVmAnalysisOfVmStates():
 
     def test_stopped_vm(
             self,
-            provider_crud,
+            provider,
             vm,
             vm_name,
             verify_vm_stopped,
@@ -438,11 +405,11 @@ class TestVmAnalysisOfVmStates():
         Metadata:
             test_flag: vm_analysis
         """
-        _scan_test(provider_crud, vm, os, fs_type, soft_assert)
+        _scan_test(provider, vm, os, fs_type, soft_assert)
 
     def test_suspended_vm(
             self,
-            provider_crud,
+            provider,
             vm,
             vm_name,
             verify_vm_suspended,
@@ -454,7 +421,7 @@ class TestVmAnalysisOfVmStates():
         Metadata:
             test_flag: vm_analysis, provision
         """
-        _scan_test(provider_crud, vm, os, fs_type, soft_assert)
+        _scan_test(provider, vm, os, fs_type, soft_assert)
 
 
 # @pytest.mark.usefixtures(
@@ -466,12 +433,13 @@ class TestVmAnalysisOfVmStates():
 
 
 @pytest.mark.usefixtures(
-    "appliance_browser", "by_fs_type", "finish_appliance_setup", "delete_tasks_first")
+    "appliance_browser", "finish_appliance_setup", "delete_tasks_first")
+@pytest.mark.meta('by_fs_type')
 class TestVmFileSystemsAnalysis():
 
     def test_running_vm(
             self,
-            provider_crud,
+            provider,
             vm,
             vm_name,
             verify_vm_running,
@@ -483,17 +451,18 @@ class TestVmFileSystemsAnalysis():
         Metadata:
             test_flag: vm_analysis, provision
         """
-        _scan_test(provider_crud, vm, os, fs_type, soft_assert)
+        _scan_test(provider, vm, os, fs_type, soft_assert)
 
 
 # REST (rest_detail, rest_collection)
 @pytest.mark.usefixtures(
-    "appliance_browser", "by_vm_state", "finish_appliance_setup", "delete_tasks_first")
+    "appliance_browser", "finish_appliance_setup", "delete_tasks_first")
+@pytest.mark.meta('by_vm_state')
 @pytest.mark.ignore_stream("5.2", "5.3")
 class TestVmAnalysisOfVmStatesUsingREST(object):
     def test_stopped_vm(
             self,
-            provider_crud,
+            provider,
             vm,
             vm_name,
             verify_vm_stopped,
@@ -506,12 +475,12 @@ class TestVmAnalysisOfVmStatesUsingREST(object):
             test_flag: vm_analysis
         """
         _scan_test(
-            provider_crud, vm, os, fs_type, soft_assert, "rest_detail",
+            provider, vm, os, fs_type, soft_assert, "rest_detail",
             pytest.store.current_appliance.rest_api)
 
     def test_suspended_vm(
             self,
-            provider_crud,
+            provider,
             vm,
             vm_name,
             verify_vm_suspended,
@@ -524,7 +493,7 @@ class TestVmAnalysisOfVmStatesUsingREST(object):
             test_flag: vm_analysis, provision
         """
         _scan_test(
-            provider_crud, vm, os, fs_type, soft_assert, "rest_detail",
+            provider, vm, os, fs_type, soft_assert, "rest_detail",
             pytest.store.current_appliance.rest_api)
 
 
@@ -537,12 +506,13 @@ class TestVmAnalysisOfVmStatesUsingREST(object):
 
 
 @pytest.mark.usefixtures(
-    "appliance_browser", "by_fs_type", "finish_appliance_setup", "delete_tasks_first")
+    "appliance_browser", "finish_appliance_setup", "delete_tasks_first")
 @pytest.mark.ignore_stream("5.2", "5.3")
+@pytest.mark.meta('by_fs_type')
 class TestVmFileSystemsAnalysisUsingREST(object):
     def test_running_vm(
             self,
-            provider_crud,
+            provider,
             vm,
             vm_name,
             verify_vm_running,
@@ -556,5 +526,5 @@ class TestVmFileSystemsAnalysisUsingREST(object):
             test_flag: vm_analysis, provision
         """
         _scan_test(
-            provider_crud, vm, os, fs_type, soft_assert, "rest_detail",
+            provider, vm, os, fs_type, soft_assert, "rest_detail",
             pytest.store.current_appliance.rest_api)

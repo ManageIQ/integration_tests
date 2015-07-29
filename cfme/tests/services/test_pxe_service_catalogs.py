@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
@@ -35,7 +36,7 @@ def pytest_generate_tests(metafunc):
             # No provisioning data available
             continue
 
-        if args['provider_type'] == "scvmm":
+        if args['provider'].type == "scvmm":
             continue
 
         # required keys should be a subset of the dict keys set
@@ -71,15 +72,6 @@ def setup_pxe_servers_vm_prov(pxe_server, pxe_cust_template, provisioning):
         pxe_cust_template.create()
 
 
-def cleanup_vm(vm_name, provider_key, provider_mgmt):
-    try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name + "_0001")
-    except:
-        # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
-
-
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
@@ -108,7 +100,7 @@ def catalog():
 
 
 @pytest.yield_fixture(scope="function")
-def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
+def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     # generate_tests makes sure these have values
     pxe_template, host, datastore, pxe_server, pxe_image, pxe_kickstart, pxe_root_password,\
         pxe_image_type, pxe_vlan, catalog_item_type = map(
@@ -134,20 +126,19 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=pxe_template,
-                  provider=provider_crud.name, prov_data=provisioning_data)
+                  provider=provider.name, prov_data=provisioning_data)
     yield catalog_item
 
 
 @pytest.mark.usefixtures('setup_pxe_servers_vm_prov')
-def test_rhev_pxe_servicecatalog(setup_provider, provider_type,
-                                 provider_key, provider_mgmt, catalog_item, request):
+def test_rhev_pxe_servicecatalog(setup_provider, provider, catalog_item, request):
     """Tests RHEV PXE service catalog
 
     Metadata:
         test_flag: pxe, provision
     """
     vm_name = catalog_item.provisioning_data["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)

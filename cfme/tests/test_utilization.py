@@ -25,10 +25,10 @@ def enable_candu():
 # blow away all providers when done - collecting metrics for all of them is
 # too much
 @pytest.yield_fixture
-def handle_provider(provider_key):
+def handle_provider(provider):
     try:
         providers.clear_providers()
-        providers.setup_provider(provider_key)
+        providers.setup_provider(provider.key)
     except FlashMessageException as e:
         e.skip_and_log("Provider failed to set up")
     else:
@@ -37,7 +37,7 @@ def handle_provider(provider_key):
         providers.clear_providers()
 
 
-def test_metrics_collection(handle_provider, provider_key, provider_crud, enable_candu):
+def test_metrics_collection(handle_provider, provider, enable_candu):
     """check the db is gathering collection data for the given provider
 
     Metadata:
@@ -46,9 +46,9 @@ def test_metrics_collection(handle_provider, provider_key, provider_crud, enable
     metrics_tbl = db.cfmedb()['metrics']
     mgmt_systems_tbl = db.cfmedb()['ext_management_systems']
 
-    logger.info("Fetching provider ID for {}".format(provider_key))
+    logger.info("Fetching provider ID for {}".format(provider.key))
     mgmt_system_id = db.cfmedb().session.query(mgmt_systems_tbl).filter(
-        mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider_key]['name']
+        mgmt_systems_tbl.name == conf.cfme_data.get('management_systems', {})[provider.key]['name']
     ).first().id
 
     logger.info("ID fetched; testing metrics collection now")
@@ -58,7 +58,7 @@ def test_metrics_collection(handle_provider, provider_key, provider_crud, enable
     while time.time() < start_time + timeout:
         last_metric_count = metric_count
         logger.info("name: {}, id: {}, metrics: {}".format(
-            provider_key, mgmt_system_id, metric_count))
+            provider.key, mgmt_system_id, metric_count))
         # count all the metrics for the provider we're testing
         metric_count = db.cfmedb().session.query(metrics_tbl).filter(
             metrics_tbl.parent_ems_id == mgmt_system_id

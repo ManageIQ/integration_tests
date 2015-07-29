@@ -2,7 +2,6 @@ import pytest
 from cfme.fixtures import pytest_selenium as sel
 from cfme.cloud.stack import Stack
 from utils import testgen
-from utils.providers import setup_provider
 from cfme.configure import settings  # NOQA
 from cfme.web_ui import ButtonGroup, form_buttons
 
@@ -18,12 +17,6 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
 
 
-@pytest.fixture
-def provider_init(provider_key):
-    """cfme/cloud/provider.py provider object."""
-    setup_provider(provider_key)
-
-
 def set_grid_view(name):
     bg = ButtonGroup(name)
     sel.force_navigate("my_settings_default_views")
@@ -34,7 +27,7 @@ def set_grid_view(name):
 
 
 @pytest.fixture(scope="function")
-def stack(provider_init, provisioning):
+def stack(setup_provider, provisioning):
     set_grid_view("Stacks")
     stackname = provisioning['stack']
     stack = Stack(stackname)

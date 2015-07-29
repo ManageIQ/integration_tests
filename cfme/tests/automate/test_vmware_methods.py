@@ -66,11 +66,11 @@ def testing_group(request):
 
 
 @pytest.fixture(scope="function")
-def testing_vm(request, provisioning, provider_crud, provider_key):
-    setup_provider(provider_key)
+def testing_vm(request, provisioning, provider):
+    setup_provider(provider.key)
     vm = Vm(
         name="test_ae_hd_{}".format(fauxfactory.gen_alphanumeric()),
-        provider_crud=provider_crud,
+        provider_crud=provider,
         template_name=provisioning["template"]
     )
 
@@ -85,7 +85,7 @@ def testing_vm(request, provisioning, provider_crud, provider_key):
 
 @pytest.mark.meta(blockers=[1211627])
 def test_vmware_vimapi_hotadd_disk(
-        request, testing_group, provider_crud, provider_mgmt, testing_vm, domain, namespace, cls):
+        request, testing_group, provider, testing_vm, domain, namespace, cls):
     """ Tests hot adding a disk to vmware vm.
 
     This test exercises the ``VMware_HotAdd_Disk`` method, located either in

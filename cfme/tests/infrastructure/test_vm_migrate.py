@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from utils.providers import setup_provider
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.services import requests
 from cfme.web_ui import flash
@@ -18,22 +17,14 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.mark.meta(blockers=[1174881])
-def test_vm_migrate(provider_init, provider_crud, provider_mgmt, request):
+def test_vm_migrate(setup_provider, provider, request):
     """Tests migration of a vm
 
     Metadata:
         test_flag: migrate, provision
     """
-    vm = Vm("vmtest", provider_crud)
+    vm = Vm("vmtest", provider)
     vm.migrate_vm("email@xyz.com", "first", "last", "host", "datstore")
     flash.assert_no_errors()
     row_description = 'VM Migrate'

@@ -145,7 +145,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     """
     global problematic_providers
     if prov_class == "infra":
-        from cfme.infrastructure.provider import get_from_config, wait_for_provider_delete
+        from cfme.infrastructure.provider import get_from_config
         potential_providers = list_infra_providers()
         if prov_type:
             providers = []
@@ -155,7 +155,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         else:
             providers = potential_providers
     elif prov_class == "cloud":
-        from cfme.cloud.provider import get_from_config, wait_for_provider_delete
+        from cfme.cloud.provider import get_from_config
         potential_providers = list_cloud_providers()
         if prov_type:
             providers = []

@@ -84,6 +84,7 @@ More information on ``parametrize`` can be found in pytest's documentation:
 """
 import pytest
 import random
+
 from cfme.cloud.provider import get_from_config as get_cloud_provider
 from cfme.infrastructure.provider import get_from_config as get_infra_provider
 from cfme.infrastructure.pxe import get_pxe_server_from_config
@@ -94,7 +95,7 @@ from utils import version
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.providers import (
-    cloud_provider_type_map, infra_provider_type_map, provider_factory, provider_type_map)
+    cloud_provider_type_map, infra_provider_type_map, provider_type_map)
 
 
 def generate(gen_func, *args, **kwargs):
@@ -119,8 +120,7 @@ def generate(gen_func, *args, **kwargs):
         pytest_generate_tests = testgen.generate(testgen.test_gen_func, arg1, arg2, kwarg1='a')
 
         # Concrete example using infra_providers and scope
-        pytest_generate_tests = testgen.generate(testgen.infra_providers, 'provider_crud',
-            scope="module")
+        pytest_generate_tests = testgen.generate(testgen.infra_providers, scope="module")
 
     Note:
 
@@ -191,18 +191,9 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
 
     The following test function arguments are special:
 
-        ``provider_data``
-            the entire provider data dict from cfme_data.
-
-        ``provider_key``
-            the provider's key in ``cfme_data.get('management_systems', {})``
-
-        ``provider_crud``
+        ``provider``
             the provider's CRUD object, either a :py:class:`cfme.cloud.provider.Provider`
             or a :py:class:`cfme.infrastructure.provider.Provider`
-
-        ``provider_mgmt``
-            the provider's backend manager, from :py:class:`utils.mgmt_system`
 
     Returns:
         An tuple of ``(argnames, argvalues, idlist)`` for use in a pytest_generate_tests hook, or
@@ -214,13 +205,13 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         def pytest_generate_tests(metafunc):
             argnames, argvalues, idlist = testgen.provider_by_type(
                 ['openstack', 'ec2'],
-                'type', 'name', 'credentials', 'provider_data', 'hosts'
+                'type', 'name', 'credentials', 'provider', 'hosts'
             )
         metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
 
         # Using the parametrize wrapper
         pytest_generate_tests = testgen.parametrize(testgen.provider_by_type, ['openstack', 'ec2'],
-            'type', 'name', 'credentials', 'provider_data', 'hosts', scope='module')
+            'type', 'name', 'credentials', 'provider', 'hosts', scope='module')
 
     Note:
 
@@ -243,17 +234,18 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
     idlist = []
     template_location = options.pop("template_location", None)
 
-    special_args = ('provider_key', 'provider_data', 'provider_crud',
-        'provider_mgmt', 'provider_type')
-    # Hook on special attrs if requested
-    for argname in special_args:
-        if argname in metafunc.fixturenames and argname not in argnames:
-            argnames.append(argname)
+    if 'provider' in metafunc.fixturenames and 'provider' not in argnames:
+        argnames.append('provider')
 
     for provider, data in cfme_data.get('management_systems', {}).iteritems():
+
+        if data['type'] in cloud_provider_type_map:
+            prov_obj = get_cloud_provider(provider)
+        elif data['type'] in infra_provider_type_map:
+            prov_obj = get_infra_provider(provider)
+
         skip = False
-        prov_type = data['type']
-        if provider_types is not None and prov_type not in provider_types:
+        if provider_types is not None and prov_obj.type not in provider_types:
             # Skip unwanted types
             continue
 
@@ -288,14 +280,14 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                 continue
 
         try:
-            if prov_type == "scvmm" and version.current_version() < "5.3":
+            if prov_obj.type == "scvmm" and version.current_version() < "5.3":
                 # Ignore SCVMM on 5.2
                 continue
         except Exception:  # No SSH connection
             continue
 
         # Check provider hasn't been filtered out with --use-provider
-        if provider not in filtered:
+        if prov_obj.key not in filtered:
             continue
 
         # Get values for the requested fields, filling in with None for undefined fields
@@ -339,21 +331,11 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
                         # Skip collection of this one
                         continue
 
-        if prov_type in cloud_provider_type_map:
-            crud = get_cloud_provider(provider)
-        elif prov_type in infra_provider_type_map:
-            crud = get_infra_provider(provider)
-        # else: wat? You deserve the NameError you're about to receive
-
-        mgmt = provider_factory(provider)
-
         values = []
-        special_args_map = dict(zip(special_args, (provider, data, crud, mgmt, prov_type)))
         for arg in argnames:
-            if arg in special_args_map:
-                if arg == "provider_crud":
-                    metafunc.function = pytest.mark.provider_related()(metafunc.function)
-                values.append(special_args_map[arg])
+            if arg == 'provider':
+                metafunc.function = pytest.mark.provider_related()(metafunc.function)
+                values.append(prov_obj)
             elif arg in data_values:
                 values.append(data_values[arg])
 

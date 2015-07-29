@@ -2,12 +2,12 @@
 import fauxfactory
 import pytest
 
-from cfme.provisioning import do_vm_provisioning, cleanup_vm
+from cfme.common.provider import cleanup_vm
+from cfme.provisioning import do_vm_provisioning
 from cfme.infrastructure.pxe import get_template_from_config
 from utils.conf import cfme_data
 from utils import ssh
 from utils import testgen
-from utils.providers import setup_provider
 from utils.wait import wait_for
 
 pytestmark = [
@@ -29,7 +29,7 @@ def pytest_generate_tests(metafunc):
             # No provisioning data available
             continue
 
-        if args['provider_type'] == "scvmm" or args['provider_type'] == 'virtualcenter':
+        if args['provider'].type == "scvmm" or args['provider'].type == 'virtualcenter':
             continue
 
         # required keys should be a subset of the dict keys set
@@ -55,23 +55,14 @@ def setup_ci_template(cloud_init_template):
         cloud_init_template.create()
 
 
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.fixture(scope="function")
 def vm_name():
     vm_name = 'test_tmpl_prov_%s' % fauxfactory.gen_alphanumeric()
     return vm_name
 
 
-def test_provision_cloud_init(provider_init, provider_key, provider_crud, provider_type,
-                              setup_ci_template,
-                              provider_mgmt, provisioning, vm_name, smtp_test, request):
+def test_provision_cloud_init(setup_provider, provider, setup_ci_template, provisioning,
+                              vm_name, smtp_test, request):
     """Tests cloud init provisioning
 
     Metadata:
@@ -82,9 +73,9 @@ def test_provision_cloud_init(provider_init, provider_key, provider_crud, provid
     template = provisioning.get('ci-image', None) or provisioning['image']['name']
     host, datastore = map(provisioning.get, ('host', 'datastore'))
 
-    mgmt_system = provider_crud.get_mgmt_system()
+    mgmt_system = provider.get_mgmt_system()
 
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
         'vm_name': vm_name,
@@ -98,11 +89,11 @@ def test_provision_cloud_init(provider_init, provider_key, provider_crud, provid
         provisioning_data['vlan'] = provisioning['vlan']
     except KeyError:
         # provisioning['vlan'] is required for rhevm provisioning
-        if provider_type == 'rhevm':
+        if provider.type == 'rhevm':
             raise pytest.fail('rhevm requires a vlan value in provisioning info')
 
-    do_vm_provisioning(template, provider_crud, vm_name, provisioning_data, request,
-                       provider_mgmt, provider_key, smtp_test, num_sec=900)
+    do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
+                       num_sec=900)
 
     connect_ip, tc = wait_for(mgmt_system.get_ip_address, [vm_name], num_sec=300,
                               handle_exception=True)

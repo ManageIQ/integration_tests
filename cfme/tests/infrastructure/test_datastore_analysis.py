@@ -30,27 +30,31 @@ CONTENT_ROWS_TO_CHECK = (
 def pytest_generate_tests(metafunc):
     verpicked_prov_types = version.pick(PROVIDER_TYPES)
 
-    p_argn, p_argv, p_ids = testgen.provider_by_type(
-        metafunc, verpicked_prov_types, 'provider_type', 'datastores')
-    argnames = ['provider_key', 'provider_type', 'datastore_type', 'datastore_name']
-    argvalues = []
-    idlist = []
-    for argv in p_argv:
-        prov_type, prov_datastores, prov_key = argv[0], argv[1], argv[2]
-        if not prov_datastores:
+    new_idlist = []
+    new_argvalues = []
+
+    argnames, argvalues, idlist = testgen.provider_by_type(
+        metafunc, verpicked_prov_types, 'datastores')
+    argnames += ['datastore_type', 'datastore_name']
+
+    for i, argvalue_tuple in enumerate(argvalues):
+        args = dict(zip(argnames, argvalue_tuple))
+
+        if not args['datastores']:
             continue
-        for test_datastore in prov_datastores:
-            if not test_datastore.get('test_fleece', False):
+        for ds in args['datastores']:
+            if not ds.get('test_fleece', False):
                 continue
-            assert test_datastore.get('type', None) in DATASTORE_TYPES,\
+            assert ds.get('type', None) in DATASTORE_TYPES,\
                 'datastore type must be set to [{}] for smartstate analysis tests'\
                 .format('|'.join(DATASTORE_TYPES))
-
-            argvalues.append([prov_key, prov_type, test_datastore['type'], test_datastore['name']])
-            test_id = '{}-{}-{}'.format(prov_key, test_datastore['type'], test_datastore['name'])
-            idlist.append(test_id)
-
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope="module")
+            argvs = argvalues[i][:]
+            argvs.pop(argnames.index('datastores'))
+            new_argvalues.append(argvs + [ds['type'], ds['name']])
+            test_id = '{}-{}-{}'.format(args['provider'].key, ds['type'], ds['name'])
+            new_idlist.append(test_id)
+    argnames.remove('datastores')
+    metafunc.parametrize(argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 def get_host_data_by_name(provider_key, host_name):
@@ -64,17 +68,16 @@ def get_host_data_by_name(provider_key, host_name):
 @pytest.mark.meta(
     blockers=[
         BZ(1091033, unblock=lambda datastore_type: datastore_type != 'iscsi'),
-        BZ(1180467, unblock=lambda provider_type: provider_type != 'rhevm'),
+        BZ(1180467, unblock=lambda provider: provider.type != 'rhevm'),
     ]
 )
-def test_run_datastore_analysis(request, setup_provider, provider_key, provider_type,
-                                datastore_type, datastore_name):
+def test_run_datastore_analysis(request, setup_provider, provider, datastore_type, datastore_name):
     """Tests smarthost analysis
 
     Metadata:
         test_flag: datastore_analysis
     """
-    test_datastore = datastore.Datastore(datastore_name, provider_key)
+    test_datastore = datastore.Datastore(datastore_name, provider.key)
 
     # Check if there is a host with valid credentials
     host_names = test_datastore.get_hosts()
@@ -87,7 +90,7 @@ def test_run_datastore_analysis(request, setup_provider, provider_key, provider_
         # If not, get credentials for one of the present hosts
         found_host = False
         for host_name in host_names:
-            host_data = get_host_data_by_name(provider_key, host_name)
+            host_data = get_host_data_by_name(provider.key, host_name)
             if host_data is None:
                 continue
 

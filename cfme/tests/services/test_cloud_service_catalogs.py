@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs import cloud_catalog_item as cct
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
@@ -9,7 +10,6 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils import testgen
-from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -43,15 +43,6 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture
-def provider_init(provider_key):
-    """cfme/infrastructure/provider.py provider object."""
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
@@ -81,17 +72,8 @@ def catalog():
     yield catalog
 
 
-def cleanup_vm(vm_name, provider_key, provider_mgmt):
-    try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name + "_0001")
-    except:
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
-
-
 @pytest.mark.meta(blockers=1242706)
-def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider_crud,
-                            provider_type, provisioning, dialog, catalog, request):
+def test_cloud_catalog_item(setup_provider, provider, provisioning, dialog, catalog, request):
     """Tests cloud catalog item
 
     Metadata:
@@ -99,7 +81,7 @@ def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider
     """
 
     vm_name = 'test_servicecatalog-%s' % fauxfactory.gen_alphanumeric()
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     image = provisioning['image']['name']
     item_name = fauxfactory.gen_alphanumeric()
 
@@ -117,8 +99,8 @@ def test_cloud_catalog_item(provider_init, provider_key, provider_mgmt, provider
         cloud_tenant=provisioning['cloud_tenant'],
         cloud_network=provisioning['cloud_network'],
         security_groups=[provisioning['security_group']],
-        provider_mgmt=provider_mgmt,
-        provider=provider_crud.name,
+        provider_mgmt=provider.mgmt,
+        provider=provider.name,
         guest_keypair=provisioning['guest_keypair'])
 
     cloud_catalog_item.create()

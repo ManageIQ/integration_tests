@@ -2,7 +2,6 @@ import pytest
 
 from cfme.infrastructure import pxe
 from utils import testgen
-from utils.providers import setup_provider
 
 pytestmark = [
     pytest.mark.usefixtures("logged_in"),
@@ -29,22 +28,14 @@ def pytest_generate_tests(metafunc):
 
 
 @pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
-@pytest.fixture()
-def no_iso_dss(provider_crud):
-    template_crud = pxe.ISODatastore(provider_crud.name)
+def no_iso_dss(provider):
+    template_crud = pxe.ISODatastore(provider.name)
     if template_crud.exists():
         template_crud.delete(cancel=False)
 
 
 @pytest.mark.meta(blockers=[1200783])
-def test_iso_datastore_crud(provider_init, no_iso_dss, provider_crud, iso_datastore):
+def test_iso_datastore_crud(setup_provider, no_iso_dss, provider, iso_datastore):
     """
     Basic CRUD test for ISO datastores.
 
@@ -54,6 +45,6 @@ def test_iso_datastore_crud(provider_init, no_iso_dss, provider_crud, iso_datast
     Metadata:
         test_flag: iso
     """
-    template_crud = pxe.ISODatastore(provider_crud.name)
+    template_crud = pxe.ISODatastore(provider.name)
     template_crud.create()
     template_crud.delete(cancel=False)

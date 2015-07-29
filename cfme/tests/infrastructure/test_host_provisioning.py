@@ -7,7 +7,6 @@ from cfme.provisioning import provisioning_form
 from cfme.services import requests
 from cfme.web_ui import flash, fill
 from utils.conf import cfme_data
-from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
 from utils import testgen, version
@@ -63,14 +62,6 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.fixture(scope="module")
 def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning):
     if not pxe_server.exists():
@@ -83,8 +74,8 @@ def setup_pxe_servers_host_prov(pxe_server, pxe_cust_template, host_provisioning
 
 @pytest.mark.meta(blockers=[1203775, 1232427])
 @pytest.mark.usefixtures('setup_pxe_servers_host_prov')
-def test_host_provisioning(provider_init, cfme_data, host_provisioning,
-                           provider_crud, smtp_test, request):
+def test_host_provisioning(setup_provider, cfme_data, host_provisioning, provider, smtp_test,
+                           request):
     """Tests host provisioning
 
     Metadata:
@@ -104,8 +95,8 @@ def test_host_provisioning(provider_init, cfme_data, host_provisioning,
 
     def cleanup_host():
         try:
-            logger.info('Cleaning up host %s on provider %s' % (prov_host_name, provider_crud.key))
-            mgmt_system = provider_crud.get_mgmt_system()
+            logger.info('Cleaning up host %s on provider %s' % (prov_host_name, provider.key))
+            mgmt_system = provider.mgmt
             host_list = mgmt_system.list_host()
             if host_provisioning['ip_addr'] in host_list:
                 wait_for(mgmt_system.is_host_connected, [host_provisioning['ip_addr']])
@@ -135,14 +126,14 @@ def test_host_provisioning(provider_init, cfme_data, host_provisioning,
         except:
             # The mgmt_sys classes raise Exception :\
             logger.warning('Failed to clean up host %s on provider %s' %
-                           (prov_host_name, provider_crud.key))
+                           (prov_host_name, provider.key))
 
     request.addfinalizer(cleanup_host)
 
     pytest.sel.force_navigate('infrastructure_provision_host', context={
         'host': test_host, })
 
-    note = ('Provisioning host %s on provider %s' % (prov_host_name, provider_crud.key))
+    note = ('Provisioning host %s on provider %s' % (prov_host_name, provider.key))
     provisioning_data = {
         'email': 'template_provisioner@example.com',
         'first_name': 'Template',
@@ -150,7 +141,7 @@ def test_host_provisioning(provider_init, cfme_data, host_provisioning,
         'notes': note,
         'pxe_server': pxe_server,
         'pxe_image': {'name': [pxe_image]},
-        'provider_name': provider_crud.name,
+        'provider_name': provider.name,
         'cluster': "{} / {}".format(datacenter, cluster),
         'datastore_name': {'name': datastores},
         'root_password': root_password,
@@ -177,7 +168,7 @@ def test_host_provisioning(provider_init, cfme_data, host_provisioning,
     # Navigate to host details page and verify Provider and cluster names
     sel.force_navigate('infrastructure_host', context={'host': test_host, })
     assert test_host.get_detail('Relationships', 'Infrastructure Provider') ==\
-        provider_crud.name, 'Provider name does not match'
+        provider.name, 'Provider name does not match'
 
     assert test_host.get_detail('Relationships', 'Cluster') ==\
         host_provisioning['cluster'], 'Cluster does not match'

@@ -23,13 +23,13 @@ def vm_name():
 
 
 @pytest.fixture(scope="module")
-def vm_crud(vm_name, provider_crud, provider_type):
+def vm_crud(vm_name, provider):
     cls = Vm
-    if provider_type == "ec2":
+    if provider.type == "ec2":
         cls = EC2Instance
-    elif provider_type == "openstack":
+    elif provider.type == "openstack":
         cls = OpenStackInstance
-    return cls(vm_name, provider_crud)
+    return cls(vm_name, provider)
 
 
 def if_scvmm_refresh_provider(provider):
@@ -58,7 +58,7 @@ def wait_for_vm_state_changes(vm, timeout=600):
         raise CFMEException("VM should be Archived but it is Orphaned now.")
 
 
-def test_vm_discovery(request, setup_provider, provider_crud, provider_mgmt, vm_crud):
+def test_vm_discovery(request, setup_provider, provider, vm_crud):
     """ Tests whether cfme will discover a vm change (add/delete) without being manually refreshed.
 
     Prerequisities:
@@ -77,15 +77,15 @@ def test_vm_discovery(request, setup_provider, provider_crud, provider_mgmt, vm_
     @request.addfinalizer
     def _cleanup():
         vm_crud.delete_from_provider()
-        if_scvmm_refresh_provider(provider_crud)
+        if_scvmm_refresh_provider(provider)
 
     vm_crud.create_on_provider(allow_skip="default")
-    if_scvmm_refresh_provider(provider_crud)
+    if_scvmm_refresh_provider(provider)
 
     try:
         vm_crud.wait_to_appear(timeout=600, load_details=False)
     except TimedOutError:
         pytest.fail("VM was not found in CFME")
     vm_crud.delete_from_provider()
-    if_scvmm_refresh_provider(provider_crud)
+    if_scvmm_refresh_provider(provider)
     wait_for_vm_state_changes(vm_crud)

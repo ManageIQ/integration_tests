@@ -2,11 +2,11 @@
 import fauxfactory
 import pytest
 
-from cfme.provisioning import cleanup_vm, do_vm_provisioning
+from cfme.common.provider import cleanup_vm
+from cfme.provisioning import do_vm_provisioning
 from cfme.services import requests
 from utils import normalize_text, testgen
 from utils.log import logger
-from utils.providers import setup_provider
 from utils.wait import wait_for
 
 pytestmark = [
@@ -28,7 +28,7 @@ def pytest_generate_tests(metafunc):
             # No provisioning data available
             continue
 
-        if args['provider_type'] == "scvmm":
+        if args['provider'].type == "scvmm":
             continue
 
         # required keys should be a subset of the dict keys set
@@ -42,23 +42,14 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.fixture(scope="function")
 def vm_name():
     vm_name = 'test_tmpl_prov_%s' % fauxfactory.gen_alphanumeric()
     return vm_name
 
 
-def test_provision_from_template(rbac_role, configure_ldap_auth_mode,
-                                 provider_init, provider_key, provider_crud, provider_type,
-                                 provider_mgmt, provisioning, vm_name, smtp_test, request):
+def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_provider, provider,
+                                 provisioning, vm_name, smtp_test, request):
     """ Tests provisioning from a template
 
     Metadata:
@@ -76,7 +67,7 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode,
     # generate_tests makes sure these have values
     template, host, datastore = map(provisioning.get, ('template', 'host', 'datastore'))
 
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
 
     provisioning_data = {
         'vm_name': vm_name,
@@ -85,24 +76,23 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode,
     }
 
     # Same thing, different names. :\
-    if provider_type == 'rhevm':
+    if provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
-    elif provider_type == 'virtualcenter':
+    elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
 
     try:
         provisioning_data['vlan'] = provisioning['vlan']
     except KeyError:
         # provisioning['vlan'] is required for rhevm provisioning
-        if provider_type == 'rhevm':
+        if provider.type == 'rhevm':
             raise pytest.fail('rhevm requires a vlan value in provisioning info')
 
-    do_vm_provisioning(template, provider_crud, vm_name, provisioning_data, request,
-                       provider_mgmt, provider_key, smtp_test, num_sec=900)
+    do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
+                       num_sec=900)
 
 
-def test_provision_approval(provider_init, provider_key, provider_crud, provider_type,
-                            provider_mgmt, provisioning, vm_name, smtp_test, request):
+def test_provision_approval(setup_provider, provider, provisioning, vm_name, smtp_test, request):
     """ Tests provisioning approval
 
     Metadata:
@@ -115,7 +105,7 @@ def test_provision_approval(provider_init, provider_key, provider_crud, provider
     # It will provision two of them
     vm_names = [vm_name + "001", vm_name + "002"]
     request.addfinalizer(
-        lambda: [cleanup_vm(vmname, provider_key, provider_mgmt) for vmname in vm_names])
+        lambda: [cleanup_vm(vmname, provider) for vmname in vm_names])
 
     provisioning_data = {
         'vm_name': vm_name,
@@ -125,20 +115,20 @@ def test_provision_approval(provider_init, provider_key, provider_crud, provider
     }
 
     # Same thing, different names. :\
-    if provider_type == 'rhevm':
+    if provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
-    elif provider_type == 'virtualcenter':
+    elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
 
     try:
         provisioning_data['vlan'] = provisioning['vlan']
     except KeyError:
         # provisioning['vlan'] is required for rhevm provisioning
-        if provider_type == 'rhevm':
+        if provider.type == 'rhevm':
             raise pytest.fail('rhevm requires a vlan value in provisioning info')
 
-    do_vm_provisioning(template, provider_crud, vm_name, provisioning_data, request,
-                       provider_mgmt, provider_key, smtp_test, wait=False)
+    do_vm_provisioning(template, provider, vm_name, provisioning_data, request, smtp_test,
+                       wait=False)
     wait_for(
         lambda:
         len(filter(
@@ -168,9 +158,9 @@ def test_provision_approval(provider_init, provider_key, provider_crud, provider
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info(
         'Waiting for vms "{}" to appear on provider {}'.format(
-            ", ".join(vm_names), provider_crud.key))
+            ", ".join(vm_names), provider.key))
     wait_for(
-        lambda: all(map(provider_mgmt.does_vm_exist, vm_names)),
+        lambda: all(map(provider.mgmt.does_vm_exist, vm_names)),
         handle_exception=True, num_sec=600)
 
     row, __ = wait_for(requests.wait_for_request, [cells],
