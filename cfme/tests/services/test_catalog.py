@@ -30,7 +30,7 @@ def test_catalog_duplicate_name():
 
 
 @pytest.mark.sauce
-def test_permissions_catalog_add():
+def test_permissions_catalog_add(setup_cloud_providers):
     """ Tests that a catalog can be added only with the right permissions"""
     cat = Catalog(name=fauxfactory.gen_alphanumeric(),
                   description="my catalog")
