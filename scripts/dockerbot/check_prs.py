@@ -197,7 +197,7 @@ def vm_reaper():
             for container in containers:
                 if task['tid'] in container['Names'][0]:
                     logger.info('Cleaning up docker container {}'.format(container['Id']))
-                    dockerbot.dc.remove_container(container['Id'])
+                    dockerbot.dc.remove_container(container['Id'], force=True)
                     docker_cleanup = True
                     break
             else:
