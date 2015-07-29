@@ -53,7 +53,7 @@ def set_invalid_runs(db_pr):
         if run['result'] == "pending":
             run_db = tapi.run(run['id']).get()
             for task in run_db['tasks']:
-                tapi.task(task['tid']).put({'result': 'invalid', 'cleanup': True})
+                tapi.task(task['tid']).put({'result': 'invalid', 'cleanup': False})
 
 
 def create_run(db_pr, pr):
