@@ -70,6 +70,25 @@ def fix_merkyl_workaround():
         art_client.fire_hook('setup_merkyl', ip=appliance_ip_address)
 
 
+@pytest.fixture(scope="session", autouse=True)
+def fix_missing_hostname():
+    """Fix for hostname missing from the /etc/hosts file
+
+    Note: Affects RHOS-based appliances but can't hurt the others so
+          it's applied on all.
+    """
+    ssh_client = store.current_appliance.ssh_client
+    logger.info("Checking appliance's /etc/hosts for its own hostname")
+    if ssh_client.run_command('grep $(hostname) /etc/hosts').rc != 0:
+        logger.info("Adding it's hostname to its /etc/hosts")
+        # Append hostname to the first line (127.0.0.1)
+        ret = ssh_client.run_command('sed -i "1 s/$/ $(hostname)/" /etc/hosts')
+        if ret.rc == 0:
+            logger.info("Hostname added")
+        else:
+            logger.error("Failed to add hostname")
+
+
 @pytest.fixture(autouse=True, scope="function")
 def appliance_police():
     if not store.slave_manager:
