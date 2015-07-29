@@ -5,6 +5,7 @@ from utils import providers
 from utils import testgen
 from utils import conf
 from utils.log import logger
+from utils.providers import cloud_provider_type_map, infra_provider_type_map
 from cfme.configure.configuration import server_roles_enabled, candu
 from cfme.exceptions import FlashMessageException
 
@@ -53,19 +54,36 @@ def test_metrics_collection(handle_provider, provider, enable_candu):
 
     logger.info("ID fetched; testing metrics collection now")
     start_time = time.time()
-    metric_count = 0
+    host_count = 0
+    vm_count = 0
+    host_rising = False
+    vm_rising = False
     timeout = 900.0  # 15 min
     while time.time() < start_time + timeout:
-        last_metric_count = metric_count
-        logger.info("name: {}, id: {}, metrics: {}".format(
-            provider.key, mgmt_system_id, metric_count))
-        # count all the metrics for the provider we're testing
-        metric_count = db.cfmedb().session.query(metrics_tbl).filter(
-            metrics_tbl.parent_ems_id == mgmt_system_id
+        last_host_count = host_count
+        last_vm_count = vm_count
+        logger.info("name: {}, id: {}, vms: {}, hosts: {}".format(
+            provider.key, mgmt_system_id, vm_count, host_count))
+        # count host and vm metrics for the provider we're testing
+        host_count = db.cfmedb().session.query(metrics_tbl).filter(
+            metrics_tbl.parent_ems_id == mgmt_system_id).filter(
+            metrics_tbl.resource_type == "Host"
+        ).count()
+        vm_count = db.cfmedb().session.query(metrics_tbl).filter(
+            metrics_tbl.parent_ems_id == mgmt_system_id).filter(
+            metrics_tbl.resource_type == "VmOrTemplate"
         ).count()
 
-        # collection is working if increasing
-        if metric_count > last_metric_count and last_metric_count > 0:
+        if (host_count > last_host_count) and (last_host_count > 0):
+            host_rising = True
+        if (vm_count > last_vm_count) and (last_vm_count > 0):
+            vm_rising = True
+
+        # only vms are collected for cloud
+        if provider.type in cloud_provider_type_map and vm_rising:
+            return
+        # both vms and hosts must be collected for infra
+        elif provider.type in infra_provider_type_map and vm_rising and host_rising:
             return
         else:
             time.sleep(15)
