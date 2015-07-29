@@ -208,25 +208,16 @@ nav.add_branch('clouds_instances_by_provider', {
 })
 
 
-def cleanup_vm(vm_name, provider_key, provider_mgmt):
-    try:
-        logger.info('Cleaning up VM {} on provider {}'.format(vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name)
-    except Exception as e:
-        logger.warning('Failed to clean up VM {} on provider {}: {}'.format(vm_name,
-                                                                            provider_key, str(e)))
-
-
-def do_vm_provisioning(template_name, provider_crud, vm_name, provisioning_data, request,
-                       provider_mgmt, provider_key, smtp_test, num_sec=1500, wait=True):
+def do_vm_provisioning(template_name, provider, vm_name, provisioning_data, request,
+                       smtp_test, num_sec=1500, wait=True):
     # generate_tests makes sure these have values
     sel.force_navigate('infrastructure_provision_vms', context={
-        'provider': provider_crud,
+        'provider': provider,
         'template_name': template_name,
     })
 
     note = ('template %s to vm %s on provider %s' %
-        (template_name, vm_name, provider_crud.key))
+        (template_name, vm_name, provider.key))
     provisioning_data.update({
         'email': 'template_provisioner@example.com',
         'first_name': 'Template',
@@ -241,8 +232,8 @@ def do_vm_provisioning(template_name, provider_crud, vm_name, provisioning_data,
         return
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
-    logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider_crud.key)
-    wait_for(provider_mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
+    logger.info('Waiting for vm %s to appear on provider %s', vm_name, provider.key)
+    wait_for(provider.mgmt.does_vm_exist, [vm_name], handle_exception=True, num_sec=600)
 
     # nav to requests page happens on successful provision
     logger.info('Waiting for cfme provision request for vm %s' % vm_name)

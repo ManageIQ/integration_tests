@@ -52,12 +52,12 @@ def setup_ci_template(cloud_init_template):
 
 
 @pytest.fixture(scope="function")
-def vm_name(request, provider_mgmt):
+def vm_name(request):
     vm_name = 'test_image_prov_%s' % fauxfactory.gen_alphanumeric()
     return vm_name
 
 
-def test_provision_cloud_init(request, setup_provider, provider_crud, provisioning,
+def test_provision_cloud_init(request, setup_provider, provider, provisioning,
                               setup_ci_template, vm_name):
     """ Tests provisioning from a template with cloud_init
 
@@ -66,11 +66,11 @@ def test_provision_cloud_init(request, setup_provider, provider_crud, provisioni
     """
     image = provisioning.get('ci-image', None) or provisioning['image']['name']
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
-            (image, vm_name, provider_crud.key))
+            (image, vm_name, provider.key))
 
-    mgmt_system = provider_crud.get_mgmt_system()
+    mgmt_system = provider.mgmt
 
-    instance = instance_factory(vm_name, provider_crud, image)
+    instance = instance_factory(vm_name, provider, image)
 
     request.addfinalizer(instance.delete_from_provider)
 
@@ -86,7 +86,7 @@ def test_provision_cloud_init(request, setup_provider, provider_crud, provisioni
         'custom_template': {'name': [provisioning['ci-template']]},
     }
 
-    if isinstance(provider_crud, OpenStackProvider):
+    if isinstance(provider, OpenStackProvider):
         floating_ip = mgmt_system.get_first_floating_ip()
         inst_args['cloud_network'] = provisioning['cloud_network']
         inst_args['public_ip_address'] = floating_ip

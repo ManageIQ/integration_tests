@@ -19,18 +19,18 @@ def pytest_generate_tests(metafunc):
 
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
-        if 'remove_test' not in args['provider_crud'].get_yaml_data():
+        if 'remove_test' not in args['provider'].data:
             # No provisioning data available
             continue
 
         new_idlist.append(idlist[i])
-        argvalues[i].append(args['provider_crud'].get_yaml_data()['remove_test'])
+        argvalues[i].append(args['provider'].data['remove_test'])
         new_argvalues.append(argvalues[i])
 
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-def test_delete_cluster(setup_provider, provider_crud, remove_test):
+def test_delete_cluster(setup_provider, provider, remove_test):
     """ Tests delete cluster
 
     Metadata:
@@ -40,11 +40,11 @@ def test_delete_cluster(setup_provider, provider_crud, remove_test):
     test_cluster = cluster.Cluster(name=cluster_name)
     test_cluster.delete(cancel=False)
     test_cluster.wait_for_delete()
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
     test_cluster.wait_for_appear()
 
 
-def test_delete_host(setup_provider, provider_crud, remove_test):
+def test_delete_host(setup_provider, provider, remove_test):
     """ Tests delete host
 
     Metadata:
@@ -54,39 +54,39 @@ def test_delete_host(setup_provider, provider_crud, remove_test):
     test_host = host.Host(name=host_name)
     test_host.delete(cancel=False)
     host.wait_for_host_delete(test_host)
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
     host.wait_for_host_to_appear(test_host)
 
 
-def test_delete_vm(setup_provider, provider_crud, remove_test):
+def test_delete_vm(setup_provider, provider, remove_test):
     """ Tests delete vm
 
     Metadata:
         test_flag: delete_object
     """
     vm = remove_test['vm']
-    test_vm = virtual_machines.Vm(vm, provider_crud)
+    test_vm = virtual_machines.Vm(vm, provider)
     test_vm.remove_from_cfme(cancel=False)
     test_vm.wait_for_delete()
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
     test_vm.wait_to_appear()
 
 
-def test_delete_template(setup_provider, provider_crud, remove_test):
+def test_delete_template(setup_provider, provider, remove_test):
     """ Tests delete template
 
     Metadata:
         test_flag: delete_object
     """
     template = remove_test['template']
-    test_template = virtual_machines.Template(template, provider_crud)
+    test_template = virtual_machines.Template(template, provider)
     test_template.remove_from_cfme(cancel=False)
     test_template.wait_for_delete()
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
     test_template.wait_to_appear()
 
 
-def test_delete_resource_pool(setup_provider, provider_crud, remove_test):
+def test_delete_resource_pool(setup_provider, provider, remove_test):
     """ Tests delete pool
 
     Metadata:
@@ -96,13 +96,13 @@ def test_delete_resource_pool(setup_provider, provider_crud, remove_test):
     test_resourcepool = resource_pool.ResourcePool(name=resourcepool_name)
     test_resourcepool.delete(cancel=False)
     test_resourcepool.wait_for_delete()
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
     test_resourcepool.wait_for_appear()
 
 
 @pytest.mark.meta(blockers=[1236977])
 @pytest.mark.ignore_stream("upstream")
-def test_delete_datastore(setup_provider, provider_crud, remove_test):
+def test_delete_datastore(setup_provider, provider, remove_test):
     """ Tests delete datastore
 
     Metadata:
@@ -120,5 +120,5 @@ def test_delete_datastore(setup_provider, provider_crud, remove_test):
         test_datastore.wait_for_delete_all()
     test_datastore.delete(cancel=False)
     test_datastore.wait_for_delete()
-    provider_crud.refresh_provider_relationships()
+    provider.refresh_provider_relationships()
     test_datastore.wait_for_appear()

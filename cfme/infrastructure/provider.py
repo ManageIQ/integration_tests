@@ -20,9 +20,10 @@ from cfme.infrastructure.host import Host
 import cfme.web_ui.flash as flash
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
+from cfme.common.provider import BaseProvider
 import utils.conf as conf
 from cfme.exceptions import (
-    HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
+    HostStatsNotContains, ProviderHasNoProperty, UnknownProviderType
 )
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input
@@ -30,7 +31,6 @@ from cfme.web_ui import (
 from cfme.web_ui.form_buttons import FormButton
 from utils.browser import ensure_browser_open
 from utils.log import logger
-from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for, RefreshTimer
 from utils import version
@@ -106,7 +106,7 @@ nav.add_branch('infrastructure_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
-class Provider(Updateable, Pretty):
+class Provider(Updateable, Pretty, BaseProvider):
     """
     Abstract model of an infrastructure provider in cfme. See VMwareProvider or RHEVMProvider.
 
@@ -271,26 +271,6 @@ class Provider(Updateable, Pretty):
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
         sel.handle_alert(cancel=False)
 
-    def get_yaml_data(self):
-        """ Returns yaml data for this provider.
-        """
-        if self.provider_data is not None:
-            return self.provider_data
-        elif self.key is not None:
-            return conf.cfme_data['management_systems'][self.key]
-        else:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data', self.name)
-
-    def get_mgmt_system(self):
-        """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
-        """
-        if self.provider_data is not None:
-            return provider_factory(self.provider_data)
-        elif self.key is not None:
-            return provider_factory(self.key)
-        else:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
-
     def _load_details(self):
         if not self._on_detail_page():
             sel.force_navigate('infrastructure_provider', context={'provider': self})
@@ -427,6 +407,19 @@ class Provider(Updateable, Pretty):
         else:
             return int(self.get_detail("Relationships", "Clusters"))
 
+    def discover(self):
+        """
+        Begins provider discovery from a provider instance
+
+        Usage:
+            discover_from_config(provider.get_from_config('rhevm'))
+        """
+        vmware = isinstance(self, VMwareProvider)
+        rhevm = isinstance(self, RHEVMProvider)
+        scvmm = isinstance(self, SCVMMProvider)
+        discover(rhevm, vmware, scvmm, cancel=False, start_ip=self.start_ip,
+                 end_ip=self.end_ip)
+
     @property
     def exists(self):
         ems = cfmedb()['ext_management_systems']
@@ -497,6 +490,13 @@ class Provider(Updateable, Pretty):
                 manage_policies_tree.uncheck_node(policy_profile)
         sel.move_to_element('#tP')
         form_buttons.save()
+
+    def wait_for_delete(self):
+        sel.force_navigate('infrastructure_providers')
+        quad = Quadicon(self.name, 'infra_prov')
+        logger.info('Waiting for a provider to delete...')
+        wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
+                 message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)
 
 
 class VMwareProvider(Provider):
@@ -706,20 +706,6 @@ def get_from_config(provider_config_name):
         raise UnknownProviderType('{} is not a known infra provider type'.format(prov_type))
 
 
-def discover_from_provider(provider_data):
-    """
-    Begins provider discovery from a provider instance
-
-    Usage:
-        discover_from_config(provider.get_from_config('rhevm'))
-    """
-    vmware = isinstance(provider_data, VMwareProvider)
-    rhevm = isinstance(provider_data, RHEVMProvider)
-    scvmm = isinstance(provider_data, SCVMMProvider)
-    discover(rhevm, vmware, scvmm, cancel=False, start_ip=provider_data.start_ip,
-             end_ip=provider_data.end_ip)
-
-
 def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None, end_ip=None):
     """
     Discover infrastructure providers. Note: only starts discovery, doesn't
@@ -758,11 +744,3 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
-
-
-def wait_for_provider_delete(provider):
-    sel.force_navigate('infrastructure_providers')
-    quad = Quadicon(provider.name, 'infra_prov')
-    logger.info('Waiting for a provider to delete...')
-    wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
-             message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)

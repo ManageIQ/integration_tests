@@ -16,7 +16,6 @@ from utils.appliance import provision_appliance
 from utils.conf import credentials
 from utils.log import logger
 from utils.ssh import SSHClient
-from utils.providers import setup_provider
 from utils.wait import wait_for
 
 pytestmark = [pytest.mark.long_running]
@@ -133,39 +132,30 @@ def configure_db_replication(db_address):
              num_sec=120, delay=10, fail_func=sel.refresh, message="get_replication_backlog")
 
 
-@pytest.fixture
-def provider_init(provider_key):
-    """cfme/infrastructure/provider.py provider object."""
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.fixture(scope="module")
 def vm_name():
     return "test_repl_pwrctl_" + fauxfactory.gen_alphanumeric()
 
 
 @pytest.fixture(scope="class")
-def test_vm(request, provider_crud, provider_mgmt, vm_name):
+def test_vm(request, provider, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = Vm(vm_name, provider_crud)
+    vm = Vm(vm_name, provider)
 
     request.addfinalizer(vm.delete_from_provider)
 
-    if not provider_mgmt.does_vm_exist(vm_name):
-        logger.info("deploying {} on provider {}".format(vm_name, provider_crud.key))
+    if not provider.mgmt.does_vm_exist(vm_name):
+        logger.info("deploying {} on provider {}".format(vm_name, provider.key))
         vm.create_on_provider(allow_skip="default")
     else:
-        logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider_crud.key))
+        logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider.key))
     vm.provider_crud.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_between_regions(request, provider_crud):
+def test_appliance_replicate_between_regions(request, provider):
     """Tests that a provider added to an appliance in one region
         is replicated to the parent appliance in another region.
 
@@ -181,17 +171,17 @@ def test_appliance_replicate_between_regions(request, provider_crud):
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         configure_db_replication(appl2.address)
-        provider_crud.create()
+        provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider_crud.exists
+        assert provider.exists
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_external_database_appliance(request, provider_crud):
+def test_external_database_appliance(request, provider):
     """Tests that one appliance can externally
        connect to the database of another appliance.
 
@@ -206,17 +196,17 @@ def test_external_database_appliance(request, provider_crud):
     request.addfinalizer(finalize)
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
-        provider_crud.create()
+        provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider_crud.exists
+        assert provider.exists
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_sync_role_change(request, provider_crud):
+def test_appliance_replicate_sync_role_change(request, provider):
     """Tests that a role change is replicated
 
     Metadata:
@@ -241,17 +231,17 @@ def test_appliance_replicate_sync_role_change(request, provider_crud):
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
-        provider_crud.create()
+        provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider_crud.exists
+        assert provider.exists
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_sync_role_change_with_backlog(request, provider_crud):
+def test_appliance_replicate_sync_role_change_with_backlog(request, provider):
     """Tests that a role change is replicated with backlog
 
     Metadata:
@@ -267,7 +257,7 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, provider_cru
     with appl1.ipapp:
         configure_db_replication(appl2.address)
         # Replication is up and running, now disable DB sync role
-        provider_crud.create()
+        provider.create()
         conf.set_server_roles(database_synchronization=False)
         sel.force_navigate("cfg_diagnostics_region_replication")
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=True,
@@ -282,11 +272,11 @@ def test_appliance_replicate_sync_role_change_with_backlog(request, provider_cru
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider_crud.exists
+        assert provider.exists
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_database_disconnection(request, provider_crud):
+def test_appliance_replicate_database_disconnection(request, provider):
     """Tests a database disconnection
 
     Metadata:
@@ -309,17 +299,17 @@ def test_appliance_replicate_database_disconnection(request, provider_crud):
         wait_for(lambda: conf.get_replication_status(navigate=False), fail_condition=False,
                  num_sec=360, delay=10, fail_func=sel.refresh, message="get_replication_status")
         assert conf.get_replication_status()
-        provider_crud.create()
+        provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider_crud.exists
+        assert provider.exists
 
 
 @pytest.mark.ignore_stream("upstream")
-def test_appliance_replicate_database_disconnection_with_backlog(request, provider_crud):
+def test_appliance_replicate_database_disconnection_with_backlog(request, provider):
     """Tests a database disconnection with backlog
 
     Metadata:
@@ -335,7 +325,7 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, provid
     with appl1.ipapp:
         configure_db_replication(appl2.address)
         # Replication is up and running, now stop the DB on the replication parent
-        provider_crud.create()
+        provider.create()
         stop_db_process(appl2.address)
         sleep(60)
         start_db_process(appl2.address)
@@ -348,14 +338,13 @@ def test_appliance_replicate_database_disconnection_with_backlog(request, provid
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         wait_for_a_provider()
-        assert provider_crud.exists
+        assert provider.exists
 
 
 @pytest.mark.usefixtures("random_pwr_ctl_vm")
-@pytest.mark.usefixtures("provider_init")
 @pytest.mark.ignore_stream("upstream")
-def test_distributed_vm_power_control(request, test_vm, provider_crud,
-                                      verify_vm_running, register_event, soft_assert):
+def test_distributed_vm_power_control(request, test_vm, provider, verify_vm_running, register_event,
+                                      soft_assert, setup_provider):
     """Tests that a replication parent appliance can control the power state of a
     VM being managed by a replication child appliance.
 
@@ -371,7 +360,7 @@ def test_distributed_vm_power_control(request, test_vm, provider_crud,
     appl1.ipapp.browser_steal = True
     with appl1.ipapp:
         configure_db_replication(appl2.address)
-        provider_crud.create()
+        provider.create()
         wait_for_a_provider()
 
     appl2.ipapp.browser_steal = True

@@ -19,11 +19,11 @@ def pytest_generate_tests(metafunc):
 
     for argn, argv, single_id in zip(argnames, argvalues, idlist):
         test_pwr_ctl_i = argnames.index('test_power_control')
-        provider_key_i = argnames.index('provider_key')
+        provider = argnames.index('provider')
         final_argn = argnames
         if argv[test_pwr_ctl_i] is True:
             final_argv.append(argv)
-            final_ids.append(argv[provider_key_i])
+            final_ids.append(argv[provider].key)
 
     testgen.parametrize(metafunc, final_argn, final_argv, ids=final_ids, scope="function")
 
@@ -35,19 +35,18 @@ def vm_name():
 
 
 @pytest.fixture(scope="function")
-def test_instance(request, delete_instances_fin, setup_provider,
-        provider_crud, provider_mgmt, vm_name):
+def test_instance(request, delete_instances_fin, setup_provider, provider, vm_name):
     """ Fixture to provision instance on the provider
     """
-    instance = instance_factory(vm_name, provider_crud)
-    if not provider_mgmt.does_vm_exist(vm_name):
-        delete_instances_fin[provider_crud.key] = instance
+    instance = instance_factory(vm_name, provider)
+    if not provider.mgmt.does_vm_exist(vm_name):
+        delete_instances_fin[provider.key] = instance
         instance.create_on_provider(allow_skip="default")
     elif isinstance(instance, EC2Instance) and \
-            provider_mgmt.is_vm_state(vm_name, provider_mgmt.states['deleted']):
-        provider_mgmt.set_name(
+            provider.mgmt.is_vm_state(vm_name, provider.mgmt.states['deleted']):
+        provider.mgmt.set_name(
             vm_name, 'test_terminated_{}'.format(fauxfactory.gen_alphanumeric(8)))
-        delete_instances_fin[provider_crud.key] = instance
+        delete_instances_fin[provider.key] = instance
         instance.create_on_provider(allow_skip="default")
     return instance
 
@@ -125,8 +124,8 @@ def check_power_options(soft_assert, instance, power_state):
 
 
 @pytest.mark.long_running
-def test_quadicon_terminate_cancel(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, verify_vm_running, soft_assert):
+def test_quadicon_terminate_cancel(setup_provider_funcscope, provider, test_instance,
+                                   verify_vm_running, soft_assert):
     """ Tests terminate cancel
 
     Metadata:
@@ -138,7 +137,7 @@ def test_quadicon_terminate_cancel(setup_provider_funcscope, provider_type, prov
     with error.expected('instance still exists'):
         # try to find VM, if found, try again - times out with expected message
         wait_for(
-            lambda: provider_mgmt.does_vm_exist(test_instance.name),
+            lambda: provider.mgmt.does_vm_exist(test_instance.name),
             fail_condition=True,
             num_sec=60,
             delay=15,
@@ -147,8 +146,8 @@ def test_quadicon_terminate_cancel(setup_provider_funcscope, provider_type, prov
 
 
 @pytest.mark.long_running
-def test_quadicon_terminate(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, verify_vm_running, soft_assert):
+def test_quadicon_terminate(setup_provider_funcscope, provider, test_instance,
+                            verify_vm_running, soft_assert):
     """ Tests terminate instance
 
     Metadata:
@@ -160,11 +159,11 @@ def test_quadicon_terminate(setup_provider_funcscope, provider_type, provider_mg
     wait_for(test_instance.does_vm_exist_in_cfme, fail_condition=True, num_sec=300, delay=30,
         fail_func=test_instance.provider_crud.refresh_provider_relationships,
         message="instance still exists in cfme UI")
-    if provider_type == 'openstack':
-        soft_assert(not provider_mgmt.does_vm_exist(test_instance.name), "instance still exists")
+    if provider.type == 'openstack':
+        soft_assert(not provider.mgmt.does_vm_exist(test_instance.name), "instance still exists")
     else:
         soft_assert(
-            provider_mgmt.is_vm_state(test_instance.name, provider_mgmt.states['deleted']),
+            provider.mgmt.is_vm_state(test_instance.name, provider.mgmt.states['deleted']),
             "instance still exists")
     sel.force_navigate("clouds_instances_archived_branch")
     soft_assert(
@@ -173,9 +172,8 @@ def test_quadicon_terminate(setup_provider_funcscope, provider_type, provider_mg
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'ec2')
-def test_stop(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, soft_assert, verify_vm_running):
+@pytest.mark.uncollectif(lambda provider: provider.type != 'ec2')
+def test_stop(setup_provider_funcscope, provider, test_instance, soft_assert, verify_vm_running):
     """ Tests instance stop
 
     Metadata:
@@ -190,7 +188,7 @@ def test_stop(setup_provider_funcscope, provider_type, provider_mgmt,
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_OFF, timeout=720, from_details=True)
     wait_for(
-        lambda: provider_mgmt.is_vm_stopped(test_instance.name),
+        lambda: provider.mgmt.is_vm_stopped(test_instance.name),
         num_sec=180,
         delay=20,
         message="mgmt system check - instance stopped")
@@ -198,9 +196,8 @@ def test_stop(setup_provider_funcscope, provider_type, provider_mgmt,
 
 @pytest.mark.long_running
 @pytest.mark.uncollectif(
-    lambda provider_type: version.current_version < "5.3" and provider_type != 'ec2')
-def test_start(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, soft_assert, verify_vm_stopped):
+    lambda provider: version.current_version < "5.3" and provider.type != 'ec2')
+def test_start(setup_provider_funcscope, provider, test_instance, soft_assert, verify_vm_stopped):
     """ Tests instance start
 
     Metadata:
@@ -215,13 +212,13 @@ def test_start(setup_provider_funcscope, provider_type, provider_mgmt,
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
     soft_assert(
-        provider_mgmt.is_vm_running(test_instance.name),
+        provider.mgmt.is_vm_running(test_instance.name),
         "instance is not running")
 
 
 @pytest.mark.long_running
-def test_soft_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, soft_assert, verify_vm_running):
+def test_soft_reboot(setup_provider_funcscope, provider, test_instance, soft_assert,
+                     verify_vm_running):
     """ Tests instance soft reboot
 
     Metadata:
@@ -237,14 +234,14 @@ def test_soft_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, from_details=True)
     soft_assert(
-        provider_mgmt.is_vm_running(test_instance.name),
+        provider.mgmt.is_vm_running(test_instance.name),
         "instance is not running")
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
-def test_hard_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, soft_assert, verify_vm_running):
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
+def test_hard_reboot(setup_provider_funcscope, provider, test_instance, soft_assert,
+                     verify_vm_running):
     """ Tests instance hard reboot
 
     Metadata:
@@ -260,14 +257,13 @@ def test_hard_reboot(setup_provider_funcscope, provider_type, provider_mgmt,
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, from_details=True)
     soft_assert(
-        provider_mgmt.is_vm_running(test_instance.name),
+        provider.mgmt.is_vm_running(test_instance.name),
         "instance is not running")
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
-def test_suspend(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, soft_assert, verify_vm_running):
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
+def test_suspend(setup_provider_funcscope, provider, test_instance, soft_assert, verify_vm_running):
     """ Tests instance suspend
 
     Metadata:
@@ -282,15 +278,14 @@ def test_suspend(setup_provider_funcscope, provider_type, provider_mgmt,
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_SUSPENDED, timeout=720, from_details=True)
     soft_assert(
-        provider_mgmt.is_vm_suspended(test_instance.name),
+        provider.mgmt.is_vm_suspended(test_instance.name),
         "instance is still running")
 
 
 @pytest.mark.long_running
 @pytest.mark.ignore_stream("5.3")
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
-def test_unpause(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, soft_assert, verify_vm_paused):
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
+def test_unpause(setup_provider_funcscope, provider, test_instance, soft_assert, verify_vm_paused):
     """ Tests instance unpause
 
     Metadata:
@@ -305,14 +300,14 @@ def test_unpause(setup_provider_funcscope, provider_type, provider_mgmt,
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
     soft_assert(
-        provider_mgmt.is_vm_running(test_instance.name),
+        provider.mgmt.is_vm_running(test_instance.name),
         "instance is not running")
 
 
 @pytest.mark.long_running
-@pytest.mark.uncollectif(lambda provider_type: provider_type != 'openstack')
-def test_resume(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, soft_assert, verify_vm_suspended):
+@pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
+def test_resume(setup_provider_funcscope, provider, test_instance, soft_assert,
+                verify_vm_suspended):
     """ Tests instance resume
 
     Metadata:
@@ -327,13 +322,13 @@ def test_resume(setup_provider_funcscope, provider_type, provider_mgmt,
     test_instance.wait_for_vm_state_change(
         desired_state=test_instance.STATE_ON, timeout=720, from_details=True)
     soft_assert(
-        provider_mgmt.is_vm_running(test_instance.name),
+        provider.mgmt.is_vm_running(test_instance.name),
         "instance is not running")
 
 
 @pytest.mark.long_running
-def test_terminate(setup_provider_funcscope, provider_type, provider_mgmt,
-        test_instance, soft_assert, verify_vm_running):
+def test_terminate(setup_provider_funcscope, provider, test_instance, soft_assert,
+                   verify_vm_running):
     """ Tests instance terminate
 
     Metadata:
@@ -347,11 +342,11 @@ def test_terminate(setup_provider_funcscope, provider_type, provider_mgmt,
     wait_for(test_instance.does_vm_exist_in_cfme, fail_condition=True, num_sec=600, delay=30,
         fail_func=test_instance.provider_crud.refresh_provider_relationships,
         message="VM no longer exists in cfme UI")
-    if provider_type == 'openstack':
-        soft_assert(not provider_mgmt.does_vm_exist(test_instance.name), "instance still exists")
+    if provider.type == 'openstack':
+        soft_assert(not provider.mgmt.does_vm_exist(test_instance.name), "instance still exists")
     else:
         soft_assert(
-            provider_mgmt.is_vm_state(test_instance.name, provider_mgmt.states['deleted']),
+            provider.mgmt.is_vm_state(test_instance.name, provider.mgmt.states['deleted']),
             "instance still exists")
     sel.force_navigate("clouds_instances_archived_branch")
     soft_assert(

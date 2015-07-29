@@ -56,22 +56,22 @@ def vm_name():
 
 
 @pytest.fixture(scope="class")
-def test_vm(request, provider_crud, provider_mgmt, vm_name):
+def test_vm(request, provider, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = Vm(vm_name, provider_crud)
-    logger.info("provider_key: {}".format(provider_crud.key))
+    vm = Vm(vm_name, provider)
+    logger.info("provider_key: {}".format(provider.key))
 
     def _cleanup():
         vm.delete_from_provider()
-        if_scvmm_refresh_provider(provider_crud)
+        if_scvmm_refresh_provider(provider)
 
     request.addfinalizer(_cleanup)
 
-    if not provider_mgmt.does_vm_exist(vm_name):
-        logger.info("deploying {} on provider {}".format(vm_name, provider_crud.key))
+    if not provider.mgmt.does_vm_exist(vm_name):
+        logger.info("deploying {} on provider {}".format(vm_name, provider.key))
         vm.create_on_provider(allow_skip="default")
     else:
-        logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider_crud.key))
+        logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider.key))
     vm.provider_crud.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm
@@ -358,9 +358,9 @@ class TestVmDetailsPowerControlPerProvider(object):
                         "ui: {} should !=  orig: {}".format(new_last_boot_time, last_boot_time))
 
 
-def test_no_template_power_control(provider_crud, setup_provider_funcscope):
+def test_no_template_power_control(provider, setup_provider_funcscope):
     """ Ensures that no power button is displayed for templates."""
-    provider_crud.load_all_provider_templates()
+    provider.load_all_provider_templates()
     toolbar.set_vms_grid_view()
     try:
         with error.expected(NoSuchElementException):
@@ -373,7 +373,7 @@ def test_no_template_power_control(provider_crud, setup_provider_funcscope):
     # Ensure selecting a template doesn't cause power menu to appear
     templates = list(get_all_vms(True))
     template_name = random.choice(templates)
-    selected_template = Vm(template_name, provider_crud)
+    selected_template = Vm(template_name, provider)
     quadicon = selected_template.find_quadicon(do_not_navigate=True, mark=False, refresh=False)
     with error.expected(NoSuchElementException):
         toolbar.select("Power")

@@ -9,7 +9,6 @@ from cfme.automate.buttons import ButtonGroup, Button
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import toolbar
 from utils import testgen
-from utils.providers import setup_provider
 from utils.timeutil import parsetime
 from utils.wait import wait_for
 
@@ -43,14 +42,6 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.fixture(scope="function")
 def vm_name():
     vm_name = 'test_ae_methods_{}'.format(fauxfactory.gen_alphanumeric())
@@ -58,8 +49,8 @@ def vm_name():
 
 
 @pytest.fixture(scope="function")
-def testing_vm(request, vm_name, provider_init, provider_crud, provider_mgmt, provisioning):
-    vm_obj = Vm(vm_name, provider_crud, provisioning["template"])
+def testing_vm(request, vm_name, setup_provider, provider, provisioning):
+    vm_obj = Vm(vm_name, provider, provisioning["template"])
 
     def _finalize():
         vm_obj.delete_from_provider()

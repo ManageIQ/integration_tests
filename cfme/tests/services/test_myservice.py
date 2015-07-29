@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
@@ -11,7 +12,6 @@ from cfme.services import requests
 from cfme.web_ui import flash
 from datetime import datetime
 from utils import testgen
-from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version
@@ -28,24 +28,6 @@ def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
         metafunc, ['virtualcenter'], 'provisioning')
     metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
-
-
-def cleanup_vm(vm_name, provider_key, provider_mgmt):
-    try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name)
-    except:
-        # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
-
-
-@pytest.fixture
-def provider_init(provider_key):
-    """cfme/infrastructure/provider.py provider object."""
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 @pytest.fixture(scope="function")
@@ -79,8 +61,7 @@ def catalog():
 
 
 @pytest.fixture(scope="function")
-def catalog_item(provider_crud, provider_type,
-                 provisioning, vm_name, dialog, catalog):
+def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
 
@@ -90,7 +71,7 @@ def catalog_item(provider_crud, provider_type,
         'datastore_name': {'name': [datastore]}
     }
 
-    if provider_type == 'rhevm':
+    if provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = provisioning['vlan']
         catalog_item_type = version.pick({
@@ -98,27 +79,27 @@ def catalog_item(provider_crud, provider_type,
             '5.3': "RHEV",
             '5.2': "Redhat"
         })
-    elif provider_type == 'virtualcenter':
+    elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                                description="my catalog", display_in=True,
                                catalog=catalog.name, dialog=dialog.label,
                                catalog_name=template,
-                               provider=provider_crud.name,
+                               provider=provider.name,
                                prov_data=provisioning_data)
     return catalog_item
 
 
 @pytest.fixture
-def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request):
+def myservice(setup_provider, provider, catalog_item, request):
     """Tests my service
 
     Metadata:
         test_flag: provision
     """
     vm_name = catalog_item.provisioning_data["vm_name"] + "_0001"
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
@@ -132,7 +113,7 @@ def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request)
     return MyService(catalog_item.name, vm_name)
 
 
-def test_retire_service(provider_crud, myservice, register_event):
+def test_retire_service(provider, myservice, register_event):
     """Tests my service
 
     Metadata:
@@ -140,7 +121,7 @@ def test_retire_service(provider_crud, myservice, register_event):
     """
     myservice.retire()
     register_event(
-        provider_crud.get_yaml_data()['type'],
+        provider.get_yaml_data()['type'],
         "service", myservice.service_name, ["vm_retired"])
 
 

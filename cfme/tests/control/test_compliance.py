@@ -24,7 +24,7 @@ pytestmark = [
     # TODO: Problems with fleecing configuration - revisit later
     pytest.mark.ignore_stream("upstream"),
     pytest.mark.meta(server_roles=["+automate", "+smartstate", "+smartproxy"]),
-    pytest.mark.uncollectif(lambda provider_type: provider_type in {"scvmm"}),
+    pytest.mark.uncollectif(lambda provider: provider.type in {"scvmm"}),
 ]
 
 
@@ -41,14 +41,14 @@ def wait_for_ssa_enabled():
 
 
 @pytest.yield_fixture(scope="module")
-def compliance_vm(request, provider_key, provider_crud, provider_type):
+def compliance_vm(request, provider):
     try:
         ip_addr = re.findall(r'[0-9]+(?:\.[0-9]+){3}', store.base_url)[0]
-        appl_name = provider_crud.get_mgmt_system().get_vm_name_from_ip(ip_addr)
-        appliance = Appliance(provider_key, appl_name)
+        appl_name = provider.get_mgmt_system().get_vm_name_from_ip(ip_addr)
+        appliance = Appliance(provider.key, appl_name)
         logger.info(
             "The tested appliance ({}) is already on this provider ({}) so reusing it.".format(
-                appl_name, provider_key))
+                appl_name, provider.key))
         try:
             appliance.configure_fleecing()
         except (EOFError, ApplianceException) as e:
@@ -57,13 +57,13 @@ def compliance_vm(request, provider_key, provider_crud, provider_type):
             pytest.skip(
                 "Error during appliance configuration. Skipping:\n{}: {}".format(
                     type(e).__name__, str(e)))
-        vm = Vm(appl_name, provider_crud)
+        vm = Vm(appl_name, provider)
     except VmNotFoundViaIP:
-        logger.info("Provisioning a new appliance on provider {}.".format(provider_key))
+        logger.info("Provisioning a new appliance on provider {}.".format(provider.key))
         appliance = provision_appliance(
             vm_name_prefix=PREFIX + "host_",
             version=str(version.current_version()),
-            provider_name=provider_key)
+            provider_name=provider.key)
         request.addfinalizer(lambda: diaper(appliance.destroy))
         try:
             appliance.configure(setup_fleece=True)
@@ -71,13 +71,13 @@ def compliance_vm(request, provider_key, provider_crud, provider_type):
             pytest.skip(
                 "Error during appliance configuration. Skipping:\n{}: {}".format(
                     type(e).__name__, str(e)))
-        vm = Vm(appliance.vm_name, provider_crud)
-    if provider_type in {"rhevm"}:
+        vm = Vm(appliance.vm_name, provider)
+    if provider.type in {"rhevm"}:
         request.addfinalizer(appliance.remove_rhev_direct_lun_disk)
     # Do the final touches
     with appliance.ipapp(browser_steal=True) as appl:
         appl.set_session_timeout(86400)
-        provider_crud.refresh_provider_relationships()
+        provider.refresh_provider_relationships()
         vm.wait_to_appear()
         vm.load_details()
         wait_for_ssa_enabled()
@@ -97,18 +97,18 @@ def analysis_profile(compliance_vm):
 
 @pytest.fixture(scope="module")
 def fleecing_vm(
-        request, compliance_vm, vm_analysis, provider_mgmt, provider_key, provider_crud,
+        request, compliance_vm, vm_analysis, provider,
         analysis_profile):
-    logger.info("Provisioning an appliance for fleecing on {}".format(provider_key))
+    logger.info("Provisioning an appliance for fleecing on {}".format(provider.key))
     # TODO: When we get something smaller, use it!
     appliance = provision_appliance(
         vm_name_prefix=PREFIX + "for_fleece_",
         version=str(version.current_version()),
-        provider_name=provider_key)
+        provider_name=provider.key)
     request.addfinalizer(lambda: diaper(appliance.destroy))
     logger.info("Appliance {} provisioned".format(appliance.vm_name))
-    vm = Vm(appliance.vm_name, provider_crud)
-    provider_crud.refresh_provider_relationships()
+    vm = Vm(appliance.vm_name, provider)
+    provider.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm
 

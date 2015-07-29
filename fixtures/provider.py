@@ -40,19 +40,25 @@ def _setup_provider(provider_key):
 
 
 @pytest.fixture(scope='function')
-def setup_provider(provider_key):
-    """Module-scoped fixture to set up a provider"""
-    _setup_provider(provider_key)
+def setup_provider(provider):
+    """Function-scoped fixture to set up a provider"""
+    _setup_provider(provider.key)
+
+
+@pytest.fixture(scope='module')
+def setup_provider_modscope(provider):
+    """Function-scoped fixture to set up a provider"""
+    _setup_provider(provider.key)
 
 
 @pytest.fixture(scope='class')
-def setup_provider_clsscope(provider_key):
+def setup_provider_clsscope(provider):
     """Module-scoped fixture to set up a provider"""
-    _setup_provider(provider_key)
+    _setup_provider(provider.key)
 
 
 @pytest.fixture
-def setup_provider_funcscope(provider_key):
+def setup_provider_funcscope(provider):
     """Function-scoped fixture to set up a provider
 
     Note:
@@ -61,7 +67,7 @@ def setup_provider_funcscope(provider_key):
         be module-scoped the majority of the time.
 
     """
-    _setup_provider(provider_key)
+    _setup_provider(provider.key)
 
 
 @pytest.fixture(scope="session")

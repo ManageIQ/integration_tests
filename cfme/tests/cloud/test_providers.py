@@ -9,7 +9,8 @@ import pytest
 import cfme.web_ui.flash as flash
 import utils.error as error
 from cfme import Credential
-from cfme.cloud import provider
+from cfme.cloud.provider import (discover, EC2Provider, get_credentials_from_config,
+    wait_for_a_provider, Provider, OpenStackProvider)
 from utils import testgen, version
 from utils.update import update
 
@@ -18,7 +19,7 @@ pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="functio
 
 def test_empty_discovery_form_validation():
     """ Tests that the flash message is correct when discovery form is empty."""
-    provider.discover(None)
+    discover(None)
     ident = version.pick({version.LOWEST: 'User ID',
                           '5.4': 'Username'})
     flash.assert_message_match('{} is required'.format(ident))
@@ -26,13 +27,13 @@ def test_empty_discovery_form_validation():
 
 def test_discovery_cancelled_validation():
     """ Tests that the flash message is correct when discovery is cancelled."""
-    provider.discover(None, cancel=True)
+    discover(None, cancel=True)
     flash.assert_message_match('Amazon Cloud Providers Discovery was cancelled by the user')
 
 
 def test_add_cancelled_validation(request):
     """Tests that the flash message is correct when add is cancelled."""
-    prov = provider.EC2Provider()
+    prov = EC2Provider()
     request.addfinalizer(prov.delete_if_exists)
     prov.create(cancel=True)
     flash.assert_message_match('Add of new Cloud Provider was cancelled by the user')
@@ -44,55 +45,55 @@ def test_password_mismatch_validation():
         secret=fauxfactory.gen_alphanumeric(5),
         verify_secret=fauxfactory.gen_alphanumeric(7))
 
-    provider.discover(cred)
+    discover(cred)
     flash.assert_message_match('Password/Verify Password do not match')
 
 
 @pytest.mark.uncollect()
 @pytest.mark.usefixtures('has_no_cloud_providers')
 def test_providers_discovery_amazon():
-    amazon_creds = provider.get_credentials_from_config('cloudqe_amazon')
-    provider.discover(amazon_creds)
+    amazon_creds = get_credentials_from_config('cloudqe_amazon')
+    discover(amazon_creds)
     flash.assert_message_match('Amazon Cloud Providers: Discovery successfully initiated')
-    provider.wait_for_a_provider()
+    wait_for_a_provider()
 
 
 @pytest.mark.usefixtures('has_no_cloud_providers')
-def test_provider_add_with_bad_credentials(provider_crud):
+def test_provider_add_with_bad_credentials(provider):
     """ Tests provider add with bad credentials
 
     Metadata:
         test_flag: crud
     """
-    provider_crud.credentials = provider.get_credentials_from_config('bad_credentials')
+    provider.credentials = get_credentials_from_config('bad_credentials')
     with error.expected('Login failed due to a bad username or password.'):
-        provider_crud.create(validate_credentials=True)
+        provider.create(validate_credentials=True)
 
 
 @pytest.mark.usefixtures('has_no_cloud_providers')
-def test_provider_crud(provider_crud):
+def test_provider_crud(provider):
     """ Tests provider add with good credentials
 
     Metadata:
         test_flag: crud
     """
-    provider_crud.create()
-    provider_crud.validate(db=False)
+    provider.create()
+    provider.validate(db=False)
 
-    old_name = provider_crud.name
-    with update(provider_crud):
-        provider_crud.name = str(uuid.uuid4())  # random uuid
+    old_name = provider.name
+    with update(provider):
+        provider.name = str(uuid.uuid4())  # random uuid
 
-    with update(provider_crud):
-        provider_crud.name = old_name  # old name
+    with update(provider):
+        provider.name = old_name  # old name
 
-    provider_crud.delete(cancel=False)
-    provider.wait_for_provider_delete(provider_crud)
+    provider.delete(cancel=False)
+    provider.wait_for_delete()
 
 
 def test_type_required_validation(request):
     """Test to validate type while adding a provider"""
-    prov = provider.Provider()
+    prov = Provider()
 
     request.addfinalizer(prov.delete_if_exists)
     with error.expected('Type is required'):
@@ -101,7 +102,7 @@ def test_type_required_validation(request):
 
 def test_name_required_validation(request):
     """Tests to validate the name while adding a provider"""
-    prov = provider.EC2Provider(
+    prov = EC2Provider(
         name=None,
         region='us-east-1')
 
@@ -112,7 +113,7 @@ def test_name_required_validation(request):
 
 def test_region_required_validation(request):
     """Tests to validate the region while adding a provider"""
-    prov = provider.EC2Provider(
+    prov = EC2Provider(
         name=fauxfactory.gen_alphanumeric(5),
         region=None)
 
@@ -123,7 +124,7 @@ def test_region_required_validation(request):
 
 def test_host_name_required_validation(request):
     """Test to validate the hostname while adding a provider"""
-    prov = provider.OpenStackProvider(
+    prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=None,
         ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
@@ -136,7 +137,7 @@ def test_host_name_required_validation(request):
 @pytest.mark.uncollectif(lambda: version.current_version() > '5.4')
 def test_ip_address_required_validation(request):
     """Test to validate the ip address while adding a provider"""
-    prov = provider.OpenStackProvider(
+    prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=None)
@@ -148,7 +149,7 @@ def test_ip_address_required_validation(request):
 
 def test_api_port_blank_validation(request):
     """Test to validate blank api port while adding a provider"""
-    prov = provider.OpenStackProvider(
+    prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=fauxfactory.gen_ipaddr(prefix=[10]),
@@ -160,7 +161,7 @@ def test_api_port_blank_validation(request):
 
 def test_user_id_max_character_validation():
     cred = Credential(principal=fauxfactory.gen_alphanumeric(51))
-    provider.discover(cred)
+    discover(cred)
 
 
 def test_password_max_character_validation():
@@ -169,12 +170,12 @@ def test_password_max_character_validation():
         principal=fauxfactory.gen_alphanumeric(5),
         secret=password,
         verify_secret=password)
-    provider.discover(cred)
+    discover(cred)
 
 
 def test_name_max_character_validation(request):
     """Test to validate max character for name field"""
-    prov = provider.EC2Provider(
+    prov = EC2Provider(
         name=fauxfactory.gen_alphanumeric(255),
         region='us-east-1')
 
@@ -184,7 +185,7 @@ def test_name_max_character_validation(request):
 
 def test_hostname_max_character_validation(request):
     """Test to validate max character for hostname field"""
-    prov = provider.OpenStackProvider(
+    prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(255),
         ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
@@ -195,7 +196,7 @@ def test_hostname_max_character_validation(request):
 
 def test_ip_max_valid_character_validation(request):
     """Test to validate max character for ip address field with valid ip address"""
-    prov = provider.OpenStackProvider(
+    prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=fauxfactory.gen_ipaddr(prefix=[10]))
@@ -206,7 +207,7 @@ def test_ip_max_valid_character_validation(request):
 
 def test_ip_max_invalid_character_validation(request):
     """Test to validate max character for ip address field using random string"""
-    prov = provider.OpenStackProvider(
+    prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=fauxfactory.gen_alphanumeric(15))
@@ -217,7 +218,7 @@ def test_ip_max_invalid_character_validation(request):
 
 def test_api_port_max_character_validation(request):
     """Test to validate max character for api port field"""
-    prov = provider.OpenStackProvider(
+    prov = OpenStackProvider(
         name=fauxfactory.gen_alphanumeric(5),
         hostname=fauxfactory.gen_alphanumeric(5),
         ip_address=fauxfactory.gen_ipaddr(prefix=[10]),

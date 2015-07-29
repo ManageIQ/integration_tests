@@ -10,16 +10,16 @@ pytest_generate_tests = testgen.generate(testgen.provider_by_type, ['openstack']
 
 
 @pytest.fixture
-def tenant(provider_key):
+def tenant(provider):
     return Tenant(name=fauxfactory.gen_alphanumeric(8),
                   description=fauxfactory.gen_alphanumeric(8),
-                  provider_key=provider_key)
+                  provider_key=provider.key)
 
 
-def test_tenant(provider_mgmt, tenant, provider_key):
+def test_tenant(tenant, provider):
     """ Tests tenant (currently disabled)
 
     Metadata:
         test_flag: tenant
     """
-    print tenant.name, tenant.description, provider_key
+    print tenant.name, tenant.description, provider.key

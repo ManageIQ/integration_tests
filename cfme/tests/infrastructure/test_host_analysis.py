@@ -13,12 +13,16 @@ HOST_TYPES = ('rhev', 'rhel', 'esx', 'esxi')
 
 
 def pytest_generate_tests(metafunc):
-    p_argn, p_argv, p_ids = testgen.infra_providers(metafunc, 'hosts', 'version')
-    argnames = ['provider_key', 'provider_type', 'provider_ver', 'host_type', 'host_name']
-    argvalues = []
-    idlist = []
-    for argv in p_argv:
-        prov_hosts, prov_ver, prov_key, prov_type = argv[:4]
+    argnames, argvalues, idlist = testgen.infra_providers(metafunc)
+    argnames = argnames + ['host_type', 'host_name']
+    new_argvalues = []
+    new_idlist = []
+
+    for i, argvalue_tuple in enumerate(argvalues):
+        args = dict(zip(argnames, argvalue_tuple))
+
+        prov_hosts = args['provider'].data['hosts']
+
         if not prov_hosts:
             continue
         for test_host in prov_hosts:
@@ -28,12 +32,12 @@ def pytest_generate_tests(metafunc):
                 'host type must be set to [{}] for smartstate analysis tests'\
                 .format('|'.join(HOST_TYPES))
 
-            argvalues.append(
-                [prov_key, prov_type, str(prov_ver), test_host['type'], test_host['name']])
-            test_id = '{}-{}-{}'.format(prov_key, test_host['type'], test_host['name'])
+            argvalues[i] = argvalues[i] + [test_host['type'], test_host['name']]
+            test_id = '{}-{}-{}'.format(args['provider'].key, test_host['type'], test_host['name'])
             idlist.append(test_id)
-
-    metafunc.parametrize(argnames, argvalues, ids=idlist, scope="module")
+            new_argvalues.append(argvalues[i])
+            new_idlist.append(test_id)
+    metafunc.parametrize(argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
 def get_host_data_by_name(provider_key, host_name):
@@ -43,15 +47,15 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
-def test_run_host_analysis(request, setup_provider, provider_key, provider_type, provider_ver,
-                           host_type, host_name, register_event, soft_assert, bug):
+def test_run_host_analysis(request, setup_provider, provider, host_type, host_name, register_event,
+                           soft_assert, bug):
     """ Run host SmartState analysis
 
     Metadata:
         test_flag: host_analysis
     """
     # Add credentials to host
-    host_data = get_host_data_by_name(provider_key, host_name)
+    host_data = get_host_data_by_name(provider.key, host_name)
     test_host = host.Host(name=host_name)
 
     wait_for(lambda: test_host.exists, delay=10, num_sec=120, fail_func=sel.refresh)
@@ -114,7 +118,7 @@ def test_run_host_analysis(request, setup_provider, provider_key, provider_type,
 
     # Check results of the analysis
     services_bug = bug(1156028)
-    if not (services_bug is not None and provider_type == "rhevm" and provider_ver >= "3.3"):
+    if not (services_bug is not None and provider.type == "rhevm" and provider.version >= "3.3"):
         soft_assert(test_host.get_detail('Configuration', 'Services') != '0',
             'No services found in host detail')
 
@@ -131,7 +135,7 @@ def test_run_host_analysis(request, setup_provider, provider_key, provider_type,
             'No advanced settings found in host detail')
 
         fw_bug = bug(1055657)
-        if not (fw_bug is not None and provider_type == "virtualcenter" and provider_ver < "5"):
+        if not (fw_bug is not None and provider.type == "virtualcenter" and provider.version < "5"):
             # If the Firewall Rules are 0, the element can't be found (it's not a link)
             try:
                 # This fails for vsphere4...  https://bugzilla.redhat.com/show_bug.cgi?id=1055657

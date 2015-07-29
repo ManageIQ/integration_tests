@@ -3,7 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.control import explorer
-from cfme.infrastructure import provider
+from cfme.infrastructure.provider import Provider
 from utils import testgen
 from utils.log import logger
 from utils.providers import setup_provider
@@ -23,7 +23,7 @@ def pytest_generate_tests(metafunc):
     for i, argvalue_tuple in enumerate(argvalues):
         args = dict(zip(argnames, argvalue_tuple))
 
-        if args["provider_type"] in {"scvmm"}:
+        if args["provider"].type in {"scvmm"}:
             continue
 
         new_idlist.append(idlist[i])
@@ -55,7 +55,7 @@ def wait_for_alert(smtp, alert, delay=None):
     )
 
 
-def setup_for_alerts(request, alerts, event, vm_name, provider_data, provider_key):
+def setup_for_alerts(request, alerts, event, vm_name, provider):
     """This function takes alerts and sets up CFME for testing it
 
     Args:
@@ -63,9 +63,9 @@ def setup_for_alerts(request, alerts, event, vm_name, provider_data, provider_ke
         alerts: Alert objects
         event: Event to hook on (VM Power On, ...)
         vm_name: VM name to use for policy filtering
-        provider_data: funcarg provider_data
+        provider: funcarg provider_data
     """
-    setup_provider(provider_key)
+    setup_provider(provider.key)
     alert_profile = explorer.VMInstanceAlertProfile(
         "Alert profile for %s" % vm_name,
         alerts
@@ -92,29 +92,28 @@ def setup_for_alerts(request, alerts, event, vm_name, provider_data, provider_ke
     policy_profile.create()
     request.addfinalizer(policy_profile.delete)
     policy.assign_actions_to_event(event, [action])
-    prov = provider.Provider(provider_data["name"])
+    prov = Provider(provider.data["name"])
     prov.assign_policy_profiles(policy_profile.description)
 
 
 @pytest.yield_fixture(scope="module")
-def vm_name(provider_key, provider_mgmt, small_template):
+def vm_name(provider, small_template):
     name = "test_alerts_{}".format(fauxfactory.gen_alpha())
     try:
         name = deploy_template(
-            provider_key, name, template_name=small_template, allow_skip="default")
+            provider.key, name, template_name=small_template, allow_skip="default")
         yield name
     finally:
         try:
-            if provider_mgmt.does_vm_exist(name):
-                provider_mgmt.delete_vm(name)
+            if provider.mgmt.does_vm_exist(name):
+                provider.mgmt.delete_vm(name)
         except Exception as e:
             logger.exception(e)
 
 
 @pytest.mark.meta(server_roles=["+automate", "+notifier"])
 def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
-        vm_name, provider_crud, provider_data, provider_mgmt, provider_type, request, smtp_test,
-        provider_key, register_event):
+        vm_name, provider, request, smtp_test, register_event):
     """ Tests alerts for vm turned on more than twice in 15 minutes
 
     Metadata:
@@ -125,22 +124,22 @@ def test_alert_vm_turned_on_more_than_twice_in_past_15_minutes(
         alert.emails = "test@test.test"
 
     setup_for_alerts(
-        request, [alert], "VM Power On", vm_name, provider_data, provider_key)
+        request, [alert], "VM Power On", vm_name, provider)
 
     # Ok, hairy stuff done, now - hammertime!
     register_event(
-        provider_crud.get_yaml_data()['type'],
+        provider.get_yaml_data()['type'],
         "vm", vm_name, ["vm_power_off"])
     register_event(
-        provider_crud.get_yaml_data()['type'],
+        provider.get_yaml_data()['type'],
         "vm", vm_name, ["vm_power_on"])
     # We don't check for *_req events because these happen only if the operation is issued via CFME.
-    provider_mgmt.stop_vm(vm_name)
-    wait_for(lambda: provider_mgmt.is_vm_stopped(vm_name), num_sec=240)
+    provider.mgmt.stop_vm(vm_name)
+    wait_for(lambda: provider.mgmt.is_vm_stopped(vm_name), num_sec=240)
     for i in range(5):
-        provider_mgmt.start_vm(vm_name)
-        wait_for(lambda: provider_mgmt.is_vm_running(vm_name), num_sec=240)
-        provider_mgmt.stop_vm(vm_name)
-        wait_for(lambda: provider_mgmt.is_vm_stopped(vm_name), num_sec=240)
+        provider.mgmt.start_vm(vm_name)
+        wait_for(lambda: provider.mgmt.is_vm_running(vm_name), num_sec=240)
+        provider.mgmt.stop_vm(vm_name)
+        wait_for(lambda: provider.mgmt.is_vm_stopped(vm_name), num_sec=240)
 
     wait_for_alert(smtp_test, alert, delay=16 * 60)

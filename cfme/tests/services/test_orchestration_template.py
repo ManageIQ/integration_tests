@@ -2,7 +2,6 @@
 import fauxfactory
 from cfme.services.catalogs.orchestration_template import OrchestrationTemplate
 import pytest
-from utils.providers import setup_provider
 from utils import testgen
 from utils.update import update
 
@@ -61,15 +60,6 @@ def pytest_generate_tests(metafunc):
         new_argvalues.append([args[argname] for argname in argnames])
 
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
-
-
-@pytest.fixture
-def provider_init(provider_key):
-    """cfme/infrastructure/provider.py provider object."""
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 def test_orchestration_template_crud(provisioning):

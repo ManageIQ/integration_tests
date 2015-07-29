@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
@@ -13,7 +14,6 @@ from utils.wait import wait_for
 from utils import testgen
 from utils.log import logger
 from utils import version
-from utils.providers import setup_provider
 
 pytestmark = [
     pytest.mark.fixtureconf(server_roles="+automate")
@@ -44,14 +44,6 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
@@ -79,17 +71,8 @@ def catalog():
     yield catalog
 
 
-def cleanup_vm(vm_name, provider_key, provider_mgmt):
-    try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name + "_0001")
-    except:
-        # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
-
-
 @pytest.yield_fixture(scope="function")
-def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
+def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
 
@@ -99,7 +82,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
         'datastore_name': {'name': [datastore]}
     }
 
-    if provider_type == 'rhevm':
+    if provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = provisioning['vlan']
         catalog_item_type = version.pick({
@@ -107,13 +90,13 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
             '5.3': "RHEV",
             '5.2': "Redhat"
         })
-    elif provider_type == 'virtualcenter':
+    elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=template,
-                  provider=provider_crud.name, prov_data=provisioning_data)
+                  provider=provider.name, prov_data=provisioning_data)
     yield catalog_item
 
 
@@ -124,7 +107,7 @@ def clone_vm_name():
 
 
 @pytest.fixture
-def create_vm(provider_key, provider_mgmt, provider_init, catalog_item, request):
+def create_vm(provider, setup_provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
@@ -142,12 +125,11 @@ def create_vm(provider_key, provider_mgmt, provider_init, catalog_item, request)
 @pytest.mark.meta(blockers=[1144207])
 @pytest.mark.usefixtures("setup_provider")
 @pytest.mark.long_running
-def test_vm_clone(provisioning, provider_type, provider_crud, clone_vm_name,
-                  provider_mgmt, request, create_vm, provider_key):
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
-    request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider_key, provider_mgmt))
+def test_vm_clone(provisioning, provider, clone_vm_name, request, create_vm):
     vm_name = create_vm + "_0001"
-    vm = Vm(vm_name, provider_crud)
+    request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
+    request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider))
+    vm = Vm(vm_name, provider)
     vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name)
     row_description = 'Clone from [%s] to [%s]' % (vm_name, clone_vm_name)
     cells = {'Description': row_description}

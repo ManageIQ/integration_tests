@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
@@ -12,7 +13,6 @@ from cfme.automate.simulation import simulate
 from cfme.automate.explorer import Domain, Namespace, Class, Method
 from cfme.web_ui import flash
 from utils import testgen
-from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version
@@ -32,14 +32,6 @@ def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.provider_by_type(
         metafunc, ['virtualcenter'], 'provisioning')
     metafunc.parametrize(argnames, argvalues, ids=idlist, scope='module')
-
-
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
 
 
 @pytest.yield_fixture(scope="function")
@@ -70,17 +62,8 @@ def catalog():
     yield catalog
 
 
-def cleanup_vm(vm_name, provider_key, provider_mgmt):
-    try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name + "_0001")
-    except:
-        # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
-
-
 @pytest.yield_fixture(scope="function")
-def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
+def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     item_name = fauxfactory.gen_alphanumeric()
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
@@ -91,7 +74,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
         'datastore_name': {'name': [datastore]}
     }
 
-    if provider_type == 'rhevm':
+    if provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = provisioning['vlan']
         catalog_item_type = version.pick({
@@ -99,13 +82,13 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
             '5.3': "RHEV",
             '5.2': "Redhat"
         })
-    elif provider_type == 'virtualcenter':
+    elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
 
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=template,
-                  provider=provider_crud.name, prov_data=provisioning_data)
+                  provider=provider.name, prov_data=provisioning_data)
     yield catalog_item
 
 
@@ -118,9 +101,9 @@ def copy_domain(request):
 
 
 @pytest.fixture
-def myservice(provider_init, provider_key, provider_mgmt, catalog_item, request):
+def myservice(setup_provider, provider, catalog_item, request):
     vm_name = catalog_item.provisioning_data["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)

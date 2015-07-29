@@ -2,6 +2,7 @@
 import fauxfactory
 import pytest
 
+from cfme.common.provider import cleanup_vm
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.services.catalogs.catalog_item import CatalogBundle
 from cfme.automate.service_dialogs import ServiceDialog
@@ -10,7 +11,6 @@ from cfme.services.catalogs.service_catalogs import ServiceCatalogs
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils import testgen
-from utils.providers import setup_provider
 from utils.log import logger
 from utils.wait import wait_for
 from utils import version
@@ -47,14 +47,6 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture()
-def provider_init(provider_key):
-    try:
-        setup_provider(provider_key)
-    except Exception:
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.yield_fixture(scope="function")
 def dialog():
     dialog = "dialog_" + fauxfactory.gen_alphanumeric()
@@ -83,17 +75,8 @@ def catalog():
     yield catalog
 
 
-def cleanup_vm(vm_name, provider_key, provider_mgmt):
-    try:
-        logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider_key))
-        provider_mgmt.delete_vm(vm_name + "_0001")
-    except:
-        # The mgmt_sys classes raise Exception :\
-        logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider_key))
-
-
 @pytest.yield_fixture(scope="function")
-def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, catalog):
+def catalog_item(provider, provisioning, vm_name, dialog, catalog):
     template, host, datastore, iso_file, catalog_item_type = map(provisioning.get,
         ('template', 'host', 'datastore', 'iso_file', 'catalog_item_type'))
 
@@ -103,7 +86,7 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
         'datastore_name': {'name': [datastore]}
     }
 
-    if provider_type == 'rhevm':
+    if provider.type == 'rhevm':
         provisioning_data['provision_type'] = 'Native Clone'
         provisioning_data['vlan'] = provisioning['vlan']
         catalog_item_type = version.pick({
@@ -111,25 +94,24 @@ def catalog_item(provider_crud, provider_type, provisioning, vm_name, dialog, ca
             '5.3': "RHEV",
             '5.2': "Redhat"
         })
-    elif provider_type == 'virtualcenter':
+    elif provider.type == 'virtualcenter':
         provisioning_data['provision_type'] = 'VMware'
     item_name = fauxfactory.gen_alphanumeric()
     catalog_item = CatalogItem(item_type=catalog_item_type, name=item_name,
                   description="my catalog", display_in=True, catalog=catalog,
                   dialog=dialog, catalog_name=template,
-                  provider=provider_crud.name, prov_data=provisioning_data)
+                  provider=provider.name, prov_data=provisioning_data)
     yield catalog_item
 
 
-def test_order_catalog_item(provider_crud, provider_key, provider_mgmt, provider_init,
-                            catalog_item, request):
+def test_order_catalog_item(provider, setup_provider, catalog_item, request):
     """Tests order catalog item
 
     Metadata:
         test_flag: provision
     """
     vm_name = catalog_item.provisioning_data["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     service_catalogs = ServiceCatalogs("service_name")
     service_catalogs.order(catalog_item.catalog, catalog_item)
@@ -142,8 +124,7 @@ def test_order_catalog_item(provider_crud, provider_key, provider_mgmt, provider
     assert row.last_message.text == 'Request complete'
 
 
-def test_order_catalog_bundle(provider_crud, provider_key, provider_mgmt, provider_init,
-                              catalog_item, request):
+def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
     """Tests ordering a catalog bundle
 
     Metadata:
@@ -151,7 +132,7 @@ def test_order_catalog_bundle(provider_crud, provider_key, provider_mgmt, provid
     """
 
     vm_name = catalog_item.provisioning_data["vm_name"]
-    request.addfinalizer(lambda: cleanup_vm(vm_name, provider_key, provider_mgmt))
+    request.addfinalizer(lambda: cleanup_vm(vm_name + "_0001", provider))
     catalog_item.create()
     bundle_name = fauxfactory.gen_alphanumeric()
     catalog_bundle = CatalogBundle(name=bundle_name, description="catalog_bundle",
@@ -170,8 +151,7 @@ def test_order_catalog_bundle(provider_crud, provider_key, provider_mgmt, provid
 
 # Note here this needs to be reduced, doesn't need to test against all providers
 @pytest.mark.usefixtures('has_no_infra_providers')
-def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
-                                  vm_name, dialog, catalog):
+def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catalog):
     """Tests no template catalog item
 
     Metadata:
@@ -179,7 +159,7 @@ def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
     """
     template, catalog_item_type = map(provisioning.get,
         ('template', 'catalog_item_type'))
-    if provider_type == 'rhevm':
+    if provider.type == 'rhevm':
         catalog_item_type = version.pick({
             version.LATEST: "RHEV",
             '5.3': "RHEV",
@@ -194,15 +174,14 @@ def test_no_template_catalog_item(provider_crud, provider_type, provisioning,
 
 
 @pytest.mark.meta(blockers=[1210541])
-def test_edit_catalog_after_deleting_provider(provider_crud, provider_key, provider_mgmt,
-                                              provider_init, catalog_item):
+def test_edit_catalog_after_deleting_provider(provider, setup_provider, catalog_item):
     """Tests edit catalog item after deleting provider
 
     Metadata:
         test_flag: provision
     """
     catalog_item.create()
-    provider_crud.delete(cancel=False)
+    provider.delete(cancel=False)
     catalog_item.update({'description': 'my edited description'})
     flash.assert_success_message('Service Catalog Item "%s" was saved' %
                                  catalog_item.name)

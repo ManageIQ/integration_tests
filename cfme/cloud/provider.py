@@ -18,16 +18,14 @@ import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import flash
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
+from cfme.common.provider import BaseProvider
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.exceptions import (
-    HostStatsNotContains, ProviderHasNoProperty, ProviderHasNoKey, UnknownProviderType
-)
+from cfme.exceptions import HostStatsNotContains, ProviderHasNoProperty, UnknownProviderType
 from cfme.web_ui import Region, Quadicon, Form, Select, CheckboxTree, fill, paginator
 from cfme.web_ui import Input
 from utils import conf
 from utils.db import cfmedb
 from utils.log import logger
-from utils.providers import provider_factory
 from utils.update import Updateable
 from utils.wait import wait_for, RefreshTimer
 from utils import version
@@ -101,7 +99,7 @@ nav.add_branch('clouds_providers',
                                     lambda _: mon_btn('Timelines')}]})
 
 
-class Provider(Updateable, Pretty):
+class Provider(Updateable, Pretty, BaseProvider):
     """
     Abstract model of a cloud provider in cfme. See EC2Provider or OpenStackProvider.
 
@@ -272,22 +270,6 @@ class Provider(Updateable, Pretty):
         sel.force_navigate('clouds_provider', context={"provider": self})
         tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
         sel.handle_alert(cancel=False)
-
-    def get_yaml_data(self):
-        """ Returns yaml data for this provider.
-        """
-        if not self.key:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data')
-        else:
-            return conf.cfme_data.get('management_systems', {})[self.key]
-
-    def get_mgmt_system(self):
-        """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
-        """
-        if not self.key:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
-        else:
-            return provider_factory(self.key)
 
     def _load_details(self):
         if not self._on_detail_page():
@@ -471,6 +453,13 @@ class Provider(Updateable, Pretty):
         """
         self._assign_unassign_policy_profiles(False, *policy_profile_names)
 
+    def wait_for_delete(self):
+        sel.force_navigate('clouds_providers')
+        quad = Quadicon(self.name, 'cloud_prov')
+        logger.info('Waiting for a provider to delete...')
+        wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
+                 message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)
+
 
 class EC2Provider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, region=None):
@@ -599,11 +588,3 @@ def wait_for_a_provider():
     logger.info('Waiting for a provider to appear...')
     wait_for(paginator.rec_total, fail_condition=None, message="Wait for any provider to appear",
              num_sec=1000, fail_func=sel.refresh)
-
-
-def wait_for_provider_delete(provider):
-    sel.force_navigate('clouds_providers')
-    quad = Quadicon(provider.name, 'cloud_prov')
-    logger.info('Waiting for a provider to delete...')
-    wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
-             message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)

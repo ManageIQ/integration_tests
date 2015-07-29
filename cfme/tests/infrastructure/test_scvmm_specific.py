@@ -14,14 +14,14 @@ def pytest_generate_tests(metafunc):
 
 @pytest.mark.meta(blockers=[1178961])
 @pytest.mark.uncollectif(
-    lambda provider_data: "host_group" in provider_data.get("provisioning", {}),
+    lambda provider: "host_group" in provider.data.get("provisioning", {}),
     reason="No host group")
-def test_no_dvd_ruins_refresh(provider_mgmt, provider_crud, provider_data, small_template):
-    host_group = provider_data["provisioning"]["host_group"]
-    with provider_mgmt.with_vm(
+def test_no_dvd_ruins_refresh(provider, small_template):
+    host_group = provider.data["provisioning"]["host_group"]
+    with provider.mgmt.with_vm(
             small_template, vm_name="test_no_dvd_{}".format(fauxfactory.gen_alpha()),
             host_group=host_group) as vm_name:
-        provider_mgmt.disconnect_dvd_drives(vm_name)
-        vm = Vm(vm_name, provider_crud)
-        provider_crud.refresh_provider_relationships()
+        provider.mgmt.disconnect_dvd_drives(vm_name)
+        vm = Vm(vm_name, provider)
+        provider.refresh_provider_relationships()
         vm.wait_to_appear()

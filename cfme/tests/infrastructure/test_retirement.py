@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from utils.log import logger
 from utils import testgen
-from utils.providers import setup_provider
 from cfme.infrastructure import virtual_machines as vms
 from utils.wait import wait_for
 import datetime
@@ -34,20 +32,10 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, new_argvalues, ids=new_idlist, scope="module")
 
 
-@pytest.fixture
-def provider_init(provider_key):
-    """cfme/infrastructure/provider.py provider object."""
-    try:
-        setup_provider(provider_key)
-    except Exception as e:
-        logger.info("Exception detected on provider setup: " + str(e))
-        pytest.skip("It's not possible to set up this provider, therefore skipping")
-
-
 @pytest.fixture(scope="function")
-def vm(request, provider_init, provider_crud, provisioning):
+def vm(request, setup_provider, provider, provisioning):
     vm_name = 'test_retire_prov_%s' % fauxfactory.gen_alphanumeric()
-    myvm = vms.Vm(name=vm_name, provider_crud=provider_crud, template_name=provisioning['template'])
+    myvm = vms.Vm(name=vm_name, provider_crud=provider, template_name=provisioning['template'])
     request.addfinalizer(myvm.delete_from_provider)
     myvm.create_on_provider(find_in_cfme=True, allow_skip="default")
     return myvm
