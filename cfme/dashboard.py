@@ -18,7 +18,8 @@ page = Region(
         'csrf_token': "//meta[@name='csrf-token']",
         'user_dropdown': {
             LOWEST: '//div[@id="page_header_div"]//li[contains(@class, "dropdown")]',
-            '5.4': '//nav//ul[contains(@class, "navbar-utility")]/li[contains(@class, "dropdown")]'
+            '5.4': '//nav//ul[contains(@class, "navbar-utility")]'
+                   '/li[contains(@class, "dropdown")]/a'
         }
     },
     identifying_loc='reset_widgets_button')
