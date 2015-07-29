@@ -130,6 +130,7 @@ def pytest_runtest_teardown(item, nextitem):
                          slaveid=SLAVEID, ip=appliance_ip_address)
     art_client.fire_hook('sanitize', test_location=location, test_name=name,
                          fd_idents=['func_trace'], words=words)
+    art_client.fire_hook('encode', test_location=item.location[0], test_name=item.location[2])
 
 
 def pytest_runtest_logreport(report):

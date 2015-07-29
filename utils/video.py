@@ -52,20 +52,30 @@ class Recorder(object):
 
     The first way is preferred, obviously
     """
-    def __init__(self, filename, display=None, quality=None):
+    def __init__(self, filename, display=None, quality=None, rtype=None, encoder=None):
         self.filename = filename
         self.display = display or vid_options["display"]
         self.quality = quality or vid_options["quality"]
+        self.encoder = encoder
+        self.rtype = rtype or "xfb"
         self.pid = None
 
     def start(self):
-        cmd_line = ['recordmydesktop',
-                    '--display', str(self.display),
-                    '-o', str(self.filename),
-                    '--no-sound',
-                    '--v_quality', str(self.quality),
-                    '--on-the-fly-encoding',
-                    '--overwrite']
+        if self.rtype == "xfb":
+            cmd_line = ['recordmydesktop',
+                        '--display', str(self.display),
+                        '-o', str(self.filename),
+                        '--no-sound',
+                        '--v_quality', str(self.quality),
+                        '--on-the-fly-encoding',
+                        '--overwrite']
+        elif self.rtype == "vnc":
+            cmd_line = ['vncrec',
+                        '-record', str(self.filename + ".tmp"),
+                        '-viewonly',
+                        '-shared',
+                        '-depth', '16',
+                        str(self.display)]
         try:
             proc = subprocess.Popen(cmd_line, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.pid = proc.pid
@@ -85,6 +95,21 @@ class Recorder(object):
             else:
                 # Had to disable for artifactor
                 # logger.exception("Could not find recordmydesktop process #%d" % self.pid)
+                pass
+
+    def encode(self):
+        if self.rtype == "vnc":
+            c_string = self.encoder.replace('$file', self.filename)
+            cmd_line = c_string.split(" ")
+            cmd_line = ['vncrec', '-movie', self.filename + ".tmp", '|'] + cmd_line
+            try:
+                proc = subprocess.Popen(" ".join(cmd_line), stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE, shell=True)
+                proc.wait()
+                os.remove(self.filename + ".tmp")
+            except OSError:
+                # Had to disable for artifactor
+                # logger.exception("Couldn't initialize videoer! Is recordmydesktop installed?")
                 pass
 
     def __enter__(self):
