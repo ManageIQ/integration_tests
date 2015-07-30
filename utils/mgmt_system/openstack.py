@@ -200,8 +200,12 @@ class OpenstackSystem(MgmtSystemAPIBase):
 
     def delete_vm(self, instance_name):
         logger.info(" Deleting OpenStack instance %s" % instance_name)
-        instance = self._find_instance_by_name(instance_name)
-        instance.delete()
+        try:
+            instance = self._find_instance_by_name(instance_name)
+            instance.delete()
+        except os_exceptions.NotFound:
+            logger.info("The instance {} is already gone.".format(instance_name))
+            return False
         return self.does_vm_exist(instance_name)
 
     def restart_vm(self, instance_name):
