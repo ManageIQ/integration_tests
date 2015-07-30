@@ -165,7 +165,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         else:
             providers = potential_providers
     else:
-        from cfme.infrastructure.provider import get_from_config, wait_for_provider_delete
+        from cfme.infrastructure.provider import get_from_config
         providers = list_infra_providers()
 
     # Check if the provider was behaving badly in the history
@@ -224,7 +224,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
             if prov_object.exists:
                 # Remove it in order to not explode on next calls
                 prov_object.delete(cancel=False)
-                wait_for_provider_delete(prov_object)
+                prov_object.wait_for_delete()
                 message = "Provider {} was deleted because it failed to set up.".format(provider)
                 logger.warning(message)
                 store.terminalreporter.write_line(message + "\n", red=True)
