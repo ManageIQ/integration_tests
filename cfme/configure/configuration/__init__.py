@@ -1860,12 +1860,21 @@ def set_ntp_servers(*servers):
     Args:
         *servers: Maximum of 3 hostnames.
     """
+    server_value = ["", "", ""]
     sel.force_navigate("cfg_settings_currentserver_server")
     assert len(servers) <= 3, "There is place only for 3 servers!"
-    fields = {}
     for enum, server in enumerate(servers):
+        server_value[enum] = server
+    fields = {}
+    for enum, server in enumerate(server_value):
         fields["ntp_server_%d" % (enum + 1)] = server
     fill(ntp_servers, fields, action=form_buttons.save)
+    if servers:
+        flash.assert_message_match(
+            "Configuration settings saved for CFME Server \"%s [%s]\" in Zone \"%s\"" % (
+                server_name(),
+                server_id(),
+                server_zone_description().partition(' ')[0].lower()))
 
 
 def get_ntp_servers():
@@ -1876,13 +1885,6 @@ def get_ntp_servers():
         if value:
             servers.add(value)
     return servers
-
-
-def unset_ntp_servers():
-    """ Clears the NTP server settings.
-
-    """
-    return set_ntp_servers("", "", "")
 
 
 def set_database_internal():

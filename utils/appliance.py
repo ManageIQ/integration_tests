@@ -28,6 +28,7 @@ from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
 from utils.providers import provider_factory
 from utils.version import Version, get_stream, LATEST
+from utils.signals import fire
 from utils.wait import wait_for
 
 # Do not import the whole stuff around
@@ -1237,6 +1238,7 @@ class IPAppliance(object):
                 msg = 'Failed to restart evmserverd on {}\nError: {}'.format(self.address, msg)
                 log_callback(msg)
                 raise ApplianceException(msg)
+        fire("server_details_changed")
 
     def stop_evm_service(self, log_callback=None):
         """Stops the ``evmserverd`` service on this appliance
