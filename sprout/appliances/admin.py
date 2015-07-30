@@ -3,6 +3,7 @@ from functools import wraps
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.helpers import ActionForm
+from django.contrib.auth.admin import UserAdmin
 from django.db.models.query import QuerySet
 
 from django_object_actions import DjangoObjectActions
@@ -10,7 +11,7 @@ from django_object_actions import DjangoObjectActions
 # Register your models here.
 from appliances.models import (
     Provider, Template, Appliance, Group, AppliancePool, DelayedProvisionTask,
-    MismatchVersionMailer)
+    MismatchVersionMailer, UserApplianceQuota, User)
 from appliances import tasks
 from sprout.log import create_logger
 
@@ -29,8 +30,10 @@ def action(label, short_description):
     return g
 
 
-def register_for(model):
+def register_for(model, reregister=False):
     def f(modeladmin):
+        if reregister:
+            admin.site.unregister(model)
         admin.site.register(model, modeladmin)
         return modeladmin
     return f
@@ -204,3 +207,13 @@ class TemplateAdmin(Admin):
 @register_for(MismatchVersionMailer)
 class MismatchVersionMailerAdmin(Admin):
     list_display = ["provider", "template_name", "supposed_version", "actual_version", "sent"]
+
+
+class UserApplianceQuotaInline(admin.StackedInline):
+    model = UserApplianceQuota
+    can_delete = False
+
+
+@register_for(User, reregister=True)
+class CustomUserAdmin(UserAdmin):
+    inlines = (UserApplianceQuotaInline, )

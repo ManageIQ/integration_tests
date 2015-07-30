@@ -4,7 +4,6 @@ import json
 from celery.result import AsyncResult
 from dateutil import parser
 from django.contrib import messages
-from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.http import HttpResponse, Http404
@@ -13,7 +12,7 @@ from django.template.base import add_to_builtins
 
 from appliances.api import json_response
 from appliances.models import (
-    Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer)
+    Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer, User)
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
     anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
     appliance_rename)
@@ -182,6 +181,25 @@ def my_appliances(request):
     else:
         pools = AppliancePool.objects.filter(owner__username=show_user).order_by("id")
     groups = Group.objects.order_by("id")
+    can_order_pool = show_user == "my"
+    new_pool_possible = True
+    per_pool_quota = None
+    pools_remaining = None
+    num_user_vms = Appliance.objects.filter(appliance_pool__owner=request.user).count()
+    if request.user.has_quotas:
+        if request.user.quotas.total_pool_quota is not None:
+            if request.user.quotas.total_pool_quota <= len(pools):
+                new_pool_possible = False
+            pools_remaining = request.user.quotas.total_pool_quota - len(pools)
+        if request.user.quotas.total_vm_quota is not None:
+            if request.user.quotas.total_vm_quota <= num_user_vms:
+                new_pool_possible = False
+        if request.user.quotas.per_pool_quota is not None:
+            per_pool_quota = request.user.quotas.per_pool_quota
+            remaining_vms = request.user.quotas.total_vm_quota - num_user_vms
+            if remaining_vms < per_pool_quota:
+                per_pool_quota = remaining_vms
+    per_pool_quota_enabled = per_pool_quota is not None
     return render(request, 'appliances/my_appliances.html', locals())
 
 

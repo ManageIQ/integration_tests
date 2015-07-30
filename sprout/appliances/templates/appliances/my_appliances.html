@@ -181,120 +181,126 @@
     <li><strong>AS</strong> - How many slots for appliances are currently free. If it is lower than you need, you won't get the required number of appliances!</li>
     <li><strong>SA</strong> - How many of shepherd appliances that can be taken in the pool.</li>
 </ul>
-<h2>Requesting additional pools</h2>
-<form action="{% url 'request_pool' %}" method="POST" class="form-horizontal">
-    {% csrf_token %}
-    <div class="form-group">
-      <label for="stream" class="col-md-2 control-label">Select stream:</label>
-      <div class="col-md-4">
-          <select class="form-control" id="stream" name="stream">
-            <option value="<None>">Please select ...</option>
-            {% for group in groups %}
-            <option value="{{ group.id }}">{{ group.id }}</option>
-            {% endfor %}
-          </select>
-      </div>
-    </div>
-    <div class="form-group">
-        <label for="preconfigured" class="col-md-2 control-label">Preconfigured?:</label>
-        <div class="col-md-4">
-            <div class="checkbox">
-              <label>
-                <input type="checkbox" class="form-control" id="preconfigured" name="preconfigured" value="true" checked>
-              </label>
+{% if can_order_pool %}
+    {% if new_pool_possible %}
+        <h2>Requesting additional pools{% if pools_remaining %} ({{pools_remaining}} remaining){% endif %}</h2>
+        <form action="{% url 'request_pool' %}" method="POST" class="form-horizontal">
+            {% csrf_token %}
+            <div class="form-group">
+              <label for="stream" class="col-md-2 control-label">Select stream:</label>
+              <div class="col-md-4">
+                  <select class="form-control" id="stream" name="stream">
+                    <option value="<None>">Please select ...</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}">{{ group.id }}</option>
+                    {% endfor %}
+                  </select>
+              </div>
             </div>
-        </div>
-    </div>
-    <div class="form-group">
-      <label for="version" class="col-md-2 control-label">Select version (if applicable):</label>
-      <div class="col-md-4">
-          <select class="form-control" id="version" name="version">
-            <option value="latest">Latest</option>
-          </select>
-        </div>
-    </div>
-    <div class="form-group">
-      <label for="date" class="col-md-2 control-label">Select build date (if you want):</label>
-      <div class="col-md-4">
-          <select class="form-control" id="date" name="date">
-            <option value="latest">Latest</option>
-          </select>
-      </div>
-    </div>
-    <div class="form-group">
-      <label for="provider" class="col-md-2 control-label">Select specific provider (if you know what you do) (remaining provisioning slots:remaining appliance slots):</label>
-      <div class="col-md-4">
-          <select class="form-control" id="provider" name="provider">
-            <option value="any">Any provider (recommended option!)</option>
-          </select>
-        </div>
-    </div>
-    <div class="form-group">
-      <label for="count" class="col-md-2 control-label">Number of appliances wanted:</label>
-      <div class="col-md-4">
-        <input type="number" class="form-control" id="count" name="count" min="1" value="1">
-      </div>
-    </div>
-    <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
-</form>
-<p>The numbers at the provider are sort of hint how much space is left. This does not take shepherd into the account, so although the select might tell you there is no more space, shepherd might have some appliances running that you can take. This will be modified later.</p>
-<script type="text/javascript">
-$(document).ready(function() {
-    // Description setting
-    $('button.set-pool-desc').click(function(){
-        var e = $(this);
-        var poolid = e.attr("data-poolid");
-        var input = document.getElementById("pool-desc-" + poolid);
-        var description = input.value;
-        $.ajax({
-            type: "POST",
-            url: "{% url 'set_pool_description' %}",
-            data: {pool_id: poolid, description: description},
-            dataType: 'html'
-        }).done(function(data){
-            addAlert("success", "Description of the pool " + poolid + " set to '" + description + "'.");
-        }).fail(function(xhr, textStatus, errorThrown){
-            addAlert("danger", "Error during setting of the description of the pool " + poolid + ": '" + xhr.responseText + "'.");
-        })
-    });
+            <div class="form-group">
+                <label for="preconfigured" class="col-md-2 control-label">Preconfigured?:</label>
+                <div class="col-md-4">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" class="form-control" id="preconfigured" name="preconfigured" value="true" checked>
+                      </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+              <label for="version" class="col-md-2 control-label">Select version (if applicable):</label>
+              <div class="col-md-4">
+                  <select class="form-control" id="version" name="version">
+                    <option value="latest">Latest</option>
+                  </select>
+                </div>
+            </div>
+            <div class="form-group">
+              <label for="date" class="col-md-2 control-label">Select build date (if you want):</label>
+              <div class="col-md-4">
+                  <select class="form-control" id="date" name="date">
+                    <option value="latest">Latest</option>
+                  </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="provider" class="col-md-2 control-label">Select specific provider (if you know what you do) (remaining provisioning slots:remaining appliance slots):</label>
+              <div class="col-md-4">
+                  <select class="form-control" id="provider" name="provider">
+                    <option value="any">Any provider (recommended option!)</option>
+                  </select>
+                </div>
+            </div>
+            <div class="form-group">
+              <label for="count" class="col-md-2 control-label">Number of appliances wanted:</label>
+              <div class="col-md-4">
+                <input type="number" class="form-control" id="count" name="count" min="1" value="1" {% if per_pool_quota_enabled %}max="{{per_pool_quota}}"{% endif %}>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
+        </form>
+        <p>The numbers at the provider are sort of hint how much space is left. This does not take shepherd into the account, so although the select might tell you there is no more space, shepherd might have some appliances running that you can take. This will be modified later.</p>
+        <script type="text/javascript">
+        $(document).ready(function() {
+            // Description setting
+            $('button.set-pool-desc').click(function(){
+                var e = $(this);
+                var poolid = e.attr("data-poolid");
+                var input = document.getElementById("pool-desc-" + poolid);
+                var description = input.value;
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'set_pool_description' %}",
+                    data: {pool_id: poolid, description: description},
+                    dataType: 'html'
+                }).done(function(data){
+                    addAlert("success", "Description of the pool " + poolid + " set to '" + description + "'.");
+                }).fail(function(xhr, textStatus, errorThrown){
+                    addAlert("danger", "Error during setting of the description of the pool " + poolid + ": '" + xhr.responseText + "'.");
+                })
+            });
 
-    // Provisioning
-    $('select#stream').change(function(){
-        $.ajax({
-                type: "POST",
-                url: "{% url 'versions_for_group' %}",
-                data: {stream: $('select#stream').val(), preconfigured: $("#preconfigured").is(":checked")},
-                dataType: 'html'
-         }).done(function(data){
-            $('select#version').html(data);
-            $("select#version").trigger("change");
-         });
-    });
-    $('#preconfigured').change(function(){
-        $("select#stream").trigger("change");  // a bit stupid but no better idea right now
-    });
-    $('select#version').change(function(){
-        $.ajax({
-                type: "POST",
-                url: "{% url 'date_for_group_and_version' %}",
-                data: {stream: $('select#stream').val(), version: $('select#version').val(), preconfigured: $("#preconfigured").is(":checked")},
-                dataType: 'html'
-         }).done(function(data){
-            $('select#date').html(data);
-            $("select#date").trigger("change");
-         });
-    });
-    $('select#date').change(function(){
-        $.ajax({
-                type: "POST",
-                url: "{% url 'providers_for_date_group_and_version' %}",
-                data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked")},
-                dataType: 'html'
-         }).done(function(data){
-            $('select#provider').html(data);
-            $("select#provider").trigger("change");
-         });
-    });
-});
-</script>
+            // Provisioning
+            $('select#stream').change(function(){
+                $.ajax({
+                        type: "POST",
+                        url: "{% url 'versions_for_group' %}",
+                        data: {stream: $('select#stream').val(), preconfigured: $("#preconfigured").is(":checked")},
+                        dataType: 'html'
+                 }).done(function(data){
+                    $('select#version').html(data);
+                    $("select#version").trigger("change");
+                 });
+            });
+            $('#preconfigured').change(function(){
+                $("select#stream").trigger("change");  // a bit stupid but no better idea right now
+            });
+            $('select#version').change(function(){
+                $.ajax({
+                        type: "POST",
+                        url: "{% url 'date_for_group_and_version' %}",
+                        data: {stream: $('select#stream').val(), version: $('select#version').val(), preconfigured: $("#preconfigured").is(":checked")},
+                        dataType: 'html'
+                 }).done(function(data){
+                    $('select#date').html(data);
+                    $("select#date").trigger("change");
+                 });
+            });
+            $('select#date').change(function(){
+                $.ajax({
+                        type: "POST",
+                        url: "{% url 'providers_for_date_group_and_version' %}",
+                        data: {stream: $('select#stream').val(), version: $('select#version').val(), date: $('select#date').val(), preconfigured: $("#preconfigured").is(":checked")},
+                        dataType: 'html'
+                 }).done(function(data){
+                    $('select#provider').html(data);
+                    $("select#provider").trigger("change");
+                 });
+            });
+        });
+        </script>
+    {% else %}
+        <h3>You reached the limit of your account, no more pools</h3>
+    {% endif %}
+{% endif %}
 {% endblock %}

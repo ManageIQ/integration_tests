@@ -6,7 +6,6 @@ import hashlib
 import random
 import re
 import command
-from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
@@ -19,7 +18,7 @@ from novaclient.exceptions import OverLimit as OSOverLimit
 
 from appliances.models import (
     Provider, Group, Template, Appliance, AppliancePool, DelayedProvisionTask,
-    MismatchVersionMailer)
+    MismatchVersionMailer, User)
 from sprout import settings, redis
 from sprout.log import create_logger
 

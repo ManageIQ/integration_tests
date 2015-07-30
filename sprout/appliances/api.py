@@ -4,13 +4,12 @@ import json
 import re
 from celery.result import AsyncResult
 from datetime import datetime
-from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import render
 
-from appliances.models import Appliance, AppliancePool, Provider, Group, Template
+from appliances.models import Appliance, AppliancePool, Provider, Group, Template, User
 from appliances.tasks import (
     appliance_power_on, appliance_power_off, appliance_suspend, appliance_rename,
     connect_direct_lun, disconnect_direct_lun)
