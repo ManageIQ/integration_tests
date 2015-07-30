@@ -19,6 +19,18 @@ from utils.timeutil import nice_seconds
 from utils.version import Version
 
 
+# Monkey patch the User object in order to have nicer checks
+def has_quotas(self):
+    try:
+        self.quotas
+    except ObjectDoesNotExist:
+        return False
+    else:
+        return True
+
+User.has_quotas = property(has_quotas)
+
+
 def apply_if_not_none(o, meth, *args, **kwargs):
     if o is None:
         return None
@@ -683,7 +695,10 @@ class Appliance(MetadataMixin):
 
     @property
     def vnc_link(self):
-        return self.provider.vnc_console_link_for(self)
+        try:
+            return self.provider.vnc_console_link_for(self)
+        except KeyError:  # provider does not exist any more
+            return None
 
 
 class AppliancePool(MetadataMixin):
@@ -706,6 +721,23 @@ class AppliancePool(MetadataMixin):
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
             time_leased=60, preconfigured=True):
+        if owner.has_quotas:
+            user_pools_count = cls.objects.filter(owner=owner).count()
+            user_vms_count = Appliance.objects.filter(appliance_pool__owner=owner).count()
+            if owner.quotas.total_pool_quota is not None:
+                if owner.quotas.total_pool_quota <= user_pools_count:
+                    raise ValueError(
+                        "User has too many pools ({} allowed, {} already existing)".format(
+                            owner.quotas.total_pool_quota, user_pools_count))
+            if owner.quotas.total_vm_quota is not None:
+                if owner.quotas.total_vm_quota <= (user_vms_count + num_appliances):
+                    raise ValueError(
+                        "Requested {} appliances, limit is {} and currently user has {}".format(
+                            num_appliances, owner.quotas.total_vm_quota, user_vms_count))
+            if owner.quotas.per_pool_quota is not None:
+                if num_appliances > owner.quotas.per_pool_quota:
+                    raise ValueError("You are limited to {} VMs per pool, requested {}".format(
+                        owner.quotas.per_pool_quota, num_appliances))
         from appliances.tasks import request_appliance_pool
         # Retrieve latest possible
         if not version:
@@ -924,3 +956,10 @@ class MismatchVersionMailer(models.Model):
     supposed_version = models.CharField(max_length=32)
     actual_version = models.CharField(max_length=32)
     sent = models.BooleanField(default=False)
+
+
+class UserApplianceQuota(models.Model):
+    user = models.OneToOneField(User, related_name="quotas")
+    per_pool_quota = models.IntegerField(null=True, blank=True)
+    total_pool_quota = models.IntegerField(null=True, blank=True)
+    total_vm_quota = models.IntegerField(null=True, blank=True)
