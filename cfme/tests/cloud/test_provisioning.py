@@ -174,10 +174,23 @@ def domain(request):
 def cls(request, domain):
     tcls = automate.Class(name="Methods",
         namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
-        parent=domain))
+            parent=domain, create_on_init=True))
     tcls.create()
     request.addfinalizer(lambda: tcls.delete() if tcls.exists() else None)
     return tcls
+
+
+@pytest.fixture(scope="module")
+def copy_domains(domain):
+    methods = ['openstack_PreProvision', 'openstack_CustomizeRequest']
+    for method in methods:
+        ocls = automate.Class(name="Methods",
+            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
+                parent=automate.Domain(name="ManageIQ (Locked)")))
+
+        method = automate.Method(name=method, cls=ocls)
+
+        method = method.copy_to(domain)
 
 
 # Not collected for EC2 in generate_tests above
@@ -186,7 +199,8 @@ def cls(request, domain):
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 @pytest.mark.ignore_stream("5.2")
 def test_provision_from_template_with_attached_disks(
-        request, setup_provider, provider, provisioning, vm_name, disks, soft_assert, domain, cls):
+        request, setup_provider, provider, provisioning, vm_name,
+        disks, soft_assert, domain, cls, copy_domains):
     """ Tests provisioning from a template and attaching disks
 
     Metadata:
@@ -204,9 +218,15 @@ def test_provision_from_template_with_attached_disks(
         for i, volume in enumerate(volumes):
             device_mapping.append((volume, DEVICE_NAME.format(chr(ord("b") + i))))
         # Set up automate
+
+        cls = automate.Class(name="Methods",
+            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
+                parent=domain))
+
         method = automate.Method(
             name="openstack_PreProvision",
             cls=cls)
+
         with update(method):
             disk_mapping = []
             for mapping in device_mapping:
@@ -248,8 +268,8 @@ def test_provision_from_template_with_attached_disks(
 @pytest.mark.meta(blockers=[1160342])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 @pytest.mark.ignore_stream("5.2")
-def test_provision_with_boot_volume(
-        request, setup_provider, provider, provisioning, vm_name, soft_assert):
+def test_provision_with_boot_volume(request, setup_provider, provider, provisioning, vm_name,
+        soft_assert, domain, copy_domains):
     """ Tests provisioning from a template and attaching one booting volume.
 
     Metadata:
@@ -264,7 +284,8 @@ def test_provision_with_boot_volume(
         # Set up automate
         cls = automate.Class(
             name="Methods",
-            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines"))
+            namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
+                parent=domain))
         method = automate.Method(
             name="openstack_CustomizeRequest",
             cls=cls)
@@ -318,8 +339,8 @@ def test_provision_with_boot_volume(
 @pytest.mark.meta(blockers=[1186413])
 @pytest.mark.uncollectif(lambda provider: provider.type != 'openstack')
 @pytest.mark.ignore_stream("5.2")
-def test_provision_with_additional_volume(
-        request, setup_provider, provisioning, provider, vm_name, soft_assert):
+def test_provision_with_additional_volume(request, setup_provider, provisioning, provider,
+                                          vm_name, soft_assert, copy_domains, domain):
     """ Tests provisioning with setting specific image from AE and then also making it create and
     attach an additional 3G volume.
 
@@ -334,7 +355,8 @@ def test_provision_with_additional_volume(
     # Set up automate
     cls = automate.Class(
         name="Methods",
-        namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines"))
+        namespace=automate.Namespace.make_path("Cloud", "VM", "Provisioning", "StateMachines",
+            parent=domain))
     method = automate.Method(
         name="openstack_CustomizeRequest",
         cls=cls)

@@ -335,20 +335,19 @@ class Namespace(TreeNode, Updateable):
             #is equivalent to:
                 n = Namespace(name="bar", parent=Namespace(name="foo"))
         """
-
         domain = kwargs.get('domain', None)
+        parent = kwargs.get('parent', None)
+        create_on_init = kwargs.get('create_on_init', False)
 
-        if len(names) == 1 and domain:
-            names = list(names)
-            return cls(name=names.pop(), parent=domain)
-        elif names:
-            names = list(names)
-            if domain:
-                return cls(name=names.pop(), parent=cls.make_path(domain=domain, *names))
-            else:
-                return cls(name=names.pop(), parent=cls.make_path(*names))
+        names = list(names)
+        parent = domain or parent
+        ns = cls(name=names.pop(0), parent=parent)
+        if create_on_init and not ns.exists():
+            ns.create()
+        if names:
+            return cls.make_path(*names, parent=ns, create_on_init=create_on_init)
         else:
-            return None
+            return ns
 
     def __init__(self, name=None, description=None, parent=None, domain=None):
         self.name = name
