@@ -87,6 +87,12 @@ class TenantPlugin(object):
                             name=provider.name + TENANTED_SUFF) as tenanted_provider:
                         logger.info("Giving control back to test, now with tenanted provider.")
                         yield
+                        if tenanted_provider.exists:
+                            # Delete it after use so it does not confuse other tests
+                            logger.info("Deleting tenanted provider {}/{}.".format(
+                                tenanted_provider.name, tenant_name))
+                            tenanted_provider.delete(cancel=False)
+                            tenanted_provider.wait_for_delete()
         else:
             # Other possibilities in-dev
             yield
