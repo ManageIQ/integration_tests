@@ -7,8 +7,7 @@ import re
 import requests
 import simplejson
 from copy import copy
-from utils import lazycache
-from utils.log import create_logger
+from utils.log import logger
 from utils.version import Version
 from utils.wait import wait_for
 
@@ -42,10 +41,6 @@ class API(object):
     def version(self):
         return Version(self._version)
 
-    @lazycache
-    def log(self):
-        return create_logger("rest")
-
     @staticmethod
     def _result_processor(result):
         if not isinstance(result, dict):
@@ -58,7 +53,7 @@ class API(object):
             return result
 
     def get(self, url, **get_params):
-        self.log.info("GET {}".format(url))
+        logger.info("[RESTAPI] GET {} {}".format(url, repr(get_params)))
         data = requests.get(url, auth=self._auth, params=get_params, verify=False)
         try:
             data = data.json()
@@ -67,10 +62,7 @@ class API(object):
         return self._result_processor(data)
 
     def post(self, url, **payload):
-        self.log.info(
-            "POST {} ({})".format(
-                url, ", ".join(
-                    ["{}={}".format(str(k), repr(v)) for k, v in payload.iteritems()])))
+        logger.info("[RESTAPI] POST {} {}".format(url, repr(payload)))
         data = requests.post(url, auth=self._auth, data=json.dumps(payload), verify=False)
         try:
             data = data.json()
@@ -82,10 +74,7 @@ class API(object):
         return self._result_processor(data)
 
     def delete(self, url, **payload):
-        self.log.info(
-            "DELETE {} ({})".format(
-                url, ", ".join(
-                    ["{}={}".format(str(k), repr(v)) for k, v in payload.iteritems()])))
+        logger.info("[RESTAPI] DELETE {} {}".format(url, repr(payload)))
         data = requests.delete(url, auth=self._auth, data=json.dumps(payload), verify=False)
         try:
             data = data.json()
@@ -285,6 +274,7 @@ class Collection(object):
 
 
 class Entity(object):
+    # TODO: Extend these fields
     TIME_FIELDS = {
         "updated_on", "created_on", "last_scan_attempt_on", "state_changed_on", "lastlogon",
         "updated_at", "created_at", "last_scan_on", "last_sync_on"}
@@ -396,9 +386,10 @@ class Entity(object):
         subcol = Collection(self.collection._api, href + attr, attr)
         try:
             subcol.reload()
-            return subcol
         except APIException:
             raise AttributeError("No such attribute/subcollection {}".format(attr))
+        else:
+            return subcol
 
     def __getitem__(self, item):
         # Backward compatibility

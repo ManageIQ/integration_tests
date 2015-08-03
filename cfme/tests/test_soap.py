@@ -473,23 +473,21 @@ class TestProvisioning(object):
         ]
     )
     @pytest.mark.usefixtures("setup_provider_clsscope")
-    def test_provision_via_soap(
-            self, request, soap_client, provider_key, provider_data, provider_mgmt, small_template,
-            provider_type):
+    def test_provision_via_soap(self, request, soap_client, provider, small_template):
         """Tests soap
 
         Metadata:
             test_flag: soap, provision
         """
         # rhev-m and scvmm need extra time to make their minds
-        wtime = self.WAIT_TIME if provider_type not in self.SLOW_PROVIDERS else self.WAIT_TIME_SLOW
+        wtime = self.WAIT_TIME if provider.type not in self.SLOW_PROVIDERS else self.WAIT_TIME_SLOW
         vm_name = "test_soap_provision_{}".format(fauxfactory.gen_alphanumeric())
-        vlan = provider_data.get("provisioning", {}).get("vlan", None)
+        vlan = provider.data.get("provisioning", {}).get("vlan", None)
 
         def _cleanup():
             try:
-                if provider_mgmt.does_vm_exist(vm_name):
-                    provider_mgmt.delete_vm(vm_name)
+                if provider.mgmt.does_vm_exist(vm_name):
+                    provider.mgmt.delete_vm(vm_name)
             except:
                 pass
 
