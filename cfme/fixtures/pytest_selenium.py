@@ -325,7 +325,7 @@ def wait_for_ajax():
         silent_failure=True)
 
     # If we are not supposed to take page screenshots...well...then...dont.
-    if not store.config.getvalue('page_screenshots'):
+    if store.config and not store.config.getvalue('page_screenshots'):
         return
 
     url = browser().current_url
