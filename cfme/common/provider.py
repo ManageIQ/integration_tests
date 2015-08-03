@@ -6,7 +6,7 @@ from utils.providers import provider_factory
 from utils.log import logger
 
 
-class BaseProvider():
+class BaseProvider(object):
 
     @property
     def data(self):
