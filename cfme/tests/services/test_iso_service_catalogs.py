@@ -121,7 +121,7 @@ def catalog_item(setup_provider, provider, provisioning, vm_name, dialog, catalo
     yield catalog_item
 
 
-@pytest.mark.meta(blockers=[1206654, 1207209])
+@pytest.mark.meta(blockers=[1246686])
 @pytest.mark.usefixtures('setup_iso_datastore')
 def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request):
     """Tests RHEV ISO service catalog
@@ -139,5 +139,5 @@ def test_rhev_iso_servicecatalog(setup_provider, provider, catalog_item, request
     row_description = catalog_item.name
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells, True],
-        fail_func=requests.reload, num_sec=1800, delay=20)
+        fail_func=requests.reload, num_sec=3100, delay=20)
     assert row.last_message.text == 'Request complete'
