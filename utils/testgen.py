@@ -238,11 +238,12 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         argnames.append('provider')
 
     for provider, data in cfme_data.get('management_systems', {}).iteritems():
-
         if data['type'] in cloud_provider_type_map:
             prov_obj = get_cloud_provider(provider)
         elif data['type'] in infra_provider_type_map:
             prov_obj = get_infra_provider(provider)
+        else:
+            continue
 
         skip = False
         if provider_types is not None and prov_obj.type not in provider_types:
