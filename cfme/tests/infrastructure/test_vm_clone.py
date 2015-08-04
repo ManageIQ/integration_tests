@@ -16,7 +16,7 @@ from utils.log import logger
 from utils import version
 
 pytestmark = [
-    pytest.mark.fixtureconf(server_roles="+automate")
+    pytest.mark.meta(roles="+automate")
 ]
 
 
