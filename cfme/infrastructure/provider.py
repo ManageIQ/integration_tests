@@ -126,18 +126,17 @@ class Provider(Updateable, Pretty, BaseProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
     string_name = "Infrastructure"
     page_name = "infrastructure"
-    quad_name = "infra"
+    quad_name = "infra_prov"
     vm_name = "VMs"
     template_name = "Templates"
 
     def __init__(
-            self, name=None, credentials=None, key=None, zone=None, candu=None, provider_data=None):
+            self, name=None, credentials=None, key=None, zone=None, provider_data=None):
         self.name = name
         self.credentials = credentials
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
-        self.candu = candu
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
@@ -164,8 +163,8 @@ class Provider(Updateable, Pretty, BaseProvider):
         """
         sel.force_navigate('infrastructure_provider_new')
         fill(properties_form, self._form_mapping(True, **self.__dict__))
-        fill(credential_form, self.credentials, validate=validate_credentials)
-        fill(credential_form, self.candu, validate=validate_credentials)
+        for cred in self.credentials:
+            fill(credential_form, self.credentials[cred], validate=validate_credentials)
         self._submit(cancel, add_infra_provider)
         fire("providers_changed")
         if not cancel:
@@ -183,8 +182,9 @@ class Provider(Updateable, Pretty, BaseProvider):
 
         sel.force_navigate('infrastructure_provider_edit', context={'provider': self})
         fill(properties_form, self._form_mapping(**updates))
-        fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
-        fill(credential_form, updates.get('candu', None), validate=validate_credentials)
+        for cred in self.credentials:
+            fill(credential_form, updates.get('credentials', {}).get(cred, None),
+                 validate=validate_credentials)
         self._submit(cancel, form_buttons.save)
         name = updates['name'] or self.name
         if not cancel:
@@ -299,8 +299,8 @@ class SCVMMProvider(Provider):
     def __init__(self, name=None, credentials=None, key=None, zone=None, hostname=None,
                  ip_address=None, start_ip=None, end_ip=None, sec_protocol=None, sec_realm=None,
                  provider_data=None):
-        super(SCVMMProvider, self).__init__(name=name, credentials=credentials, zone=zone, key=key,
-            provider_data=provider_data)
+        super(SCVMMProvider, self).__init__(name=name, credentials=credentials,
+            zone=zone, key=key, provider_data=provider_data)
 
         self.hostname = hostname
         self.ip_address = ip_address
@@ -339,7 +339,7 @@ class SCVMMProvider(Provider):
 
 class RHEVMProvider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
-                 ip_address=None, api_port=None, start_ip=None, end_ip=None, candu=None,
+                 ip_address=None, api_port=None, start_ip=None, end_ip=None,
                  provider_data=None):
         super(RHEVMProvider, self).__init__(name=name, credentials=credentials,
                                             zone=zone, key=key, provider_data=provider_data)
@@ -349,7 +349,6 @@ class RHEVMProvider(Provider):
         self.api_port = api_port
         self.start_ip = start_ip
         self.end_ip = end_ip
-        self.candu = candu
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name'),
@@ -441,7 +440,7 @@ def get_from_config(provider_config_name):
         return VMwareProvider(name=prov_config['name'],
                               hostname=prov_config['hostname'],
                               ip_address=prov_config['ipaddress'],
-                              credentials=credentials,
+                              credentials={'default': credentials},
                               zone=prov_config['server_zone'],
                               key=provider_config_name,
                               start_ip=start_ip,
@@ -456,7 +455,7 @@ def get_from_config(provider_config_name):
             name=prov_config['name'],
             hostname=prov_config['hostname'],
             ip_address=prov_config['ipaddress'],
-            credentials=credentials,
+            credentials={'default': credentials},
             key=provider_config_name,
             start_ip=start_ip,
             end_ip=end_ip,
@@ -472,8 +471,8 @@ def get_from_config(provider_config_name):
                              hostname=prov_config['hostname'],
                              ip_address=prov_config['ipaddress'],
                              api_port='',
-                             credentials=credentials,
-                             candu=candu_credentials,
+                             credentials={'default': credentials,
+                                          'candu': candu_credentials},
                              zone=prov_config['server_zone'],
                              key=provider_config_name,
                              start_ip=start_ip,

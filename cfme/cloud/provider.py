@@ -112,7 +112,7 @@ class Provider(Updateable, Pretty, BaseProvider):
     STATS_TO_MATCH = ['num_template', 'num_vm']
     string_name = "Cloud"
     page_name = "clouds"
-    quad_name = "cloud"
+    quad_name = "cloud_prov"
     vm_name = "Instances"
     template_name = "Images"
 
