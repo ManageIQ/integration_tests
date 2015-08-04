@@ -22,9 +22,7 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 from cfme.common.provider import BaseProvider
 import utils.conf as conf
-from cfme.exceptions import (
-    HostStatsNotContains, ProviderHasNoProperty, UnknownProviderType
-)
+from cfme.exceptions import UnknownProviderType
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input
 )
@@ -32,11 +30,10 @@ from cfme.web_ui.form_buttons import FormButton
 from utils.browser import ensure_browser_open
 from utils.log import logger
 from utils.update import Updateable
-from utils.wait import wait_for, RefreshTimer
+from utils.wait import wait_for
 from utils import version
 from utils.pretty import Pretty
 from utils.signals import fire
-from utils.stats import tol_check
 
 add_infra_provider = FormButton("Add this Infrastructure Provider")
 
@@ -127,6 +124,11 @@ class Provider(Updateable, Pretty, BaseProvider):
     """
     pretty_attrs = ['name', 'key', 'zone']
     STATS_TO_MATCH = ['num_template', 'num_vm', 'num_datastore', 'num_host', 'num_cluster']
+    string_name = "Infrastructure"
+    page_name = "infrastructure"
+    quad_name = "infra"
+    vm_name = "VMs"
+    template_name = "Templates"
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, candu=None, provider_data=None):
@@ -149,14 +151,6 @@ class Provider(Updateable, Pretty, BaseProvider):
         def __init__(self, **kwargs):
             super(Provider.Credential, self).__init__(**kwargs)
             self.candu = kwargs.get('candu')
-
-    def _submit(self, cancel, submit_button):
-        if cancel:
-            form_buttons.cancel()
-            # sel.wait_for_element(page.configuration_btn)
-        else:
-            submit_button()
-            flash.assert_no_errors()
 
     def create(self, cancel=False, validate_credentials=False):
         """
@@ -196,177 +190,11 @@ class Provider(Updateable, Pretty, BaseProvider):
         if not cancel:
             flash.assert_message_match('Infrastructure Provider "%s" was saved' % name)
 
-    def delete(self, cancel=True):
-        """
-        Deletes a provider from CFME
-
-        Args:
-            cancel: Whether to cancel the deletion, defaults to True
-        """
-
-        sel.force_navigate('infrastructure_provider', context={'provider': self})
-        cfg_btn('Remove this Infrastructure Provider from the VMDB', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-        fire("providers_changed")
-        if not cancel:
-            flash.assert_message_match(
-                'Delete initiated for 1 Infrastructure Provider from the CFME Database')
-
-    def wait_for_creds_ok(self):
-        """Waits for provider's credentials to become O.K. (circumvents the summary rails exc.)"""
-        self.refresh_provider_relationships(from_list_view=True)
-
-        def _wait_f():
-            sel.force_navigate("infrastructure_providers")
-            q = Quadicon(self.name, "infra_prov")
-            creds = q.creds
-            return creds == "checkmark"
-
-        wait_for(_wait_f, num_sec=300, delay=5, message="credentials of {} ok!".format(self.name))
-
-    def validate(self, db=True):
-        """ Validates that the detail page matches the Providers information.
-
-        This method logs into the provider using the mgmt_system interface and collects
-        a set of statistics to be matched against the UI. The details page is then refreshed
-        continuously until the matching of all items is complete. A error will be raised
-        if the match is not complete within a certain defined time period.
-        """
-        # Wait for credentials to become OK to prevent the error in some 5.4 builds
-        self.wait_for_creds_ok()
-
-        client = self.get_mgmt_system()
-
-        # If we're not using db, make sure we are on the provider detail page
-        if not db:
-            sel.force_navigate('infrastructure_provider', context={'provider': self})
-
-        # Initial bullet check
-        if self._do_stats_match(client, self.STATS_TO_MATCH, db=db):
-            client.disconnect()
-            return
-        else:
-            # Set off a Refresh Relationships
-            sel.force_navigate('infrastructure_provider', context={'provider': self})
-            tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
-            sel.handle_alert()
-
-            refresh_timer = RefreshTimer(time_for_refresh=300)
-            wait_for(self._do_stats_match,
-                     [client, self.STATS_TO_MATCH, refresh_timer],
-                     {'db': db},
-                     message="do_stats_match_db",
-                     num_sec=1000,
-                     delay=60)
-
-        client.disconnect()
-
-    def refresh_provider_relationships(self, from_list_view=False):
-        """Clicks on Refresh relationships button in provider"""
-        if from_list_view:
-            sel.force_navigate("infrastructure_providers")
-            sel.check(Quadicon(self.name, "infra_prov").checkbox())
-        else:
-            sel.force_navigate('infrastructure_provider', context={"provider": self})
-        tb.select("Configuration", "Refresh Relationships and Power States", invokes_alert=True)
-        sel.handle_alert(cancel=False)
-
-    def _load_details(self):
-        if not self._on_detail_page():
-            sel.force_navigate('infrastructure_provider', context={'provider': self})
-
-    def get_detail(self, *ident):
-        """ Gets details from the details infoblock
-
-        The function first ensures that we are on the detail page for the specific provider.
-
-        Args:
-            *ident: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-        Returns: A string representing the contents of the InfoBlock's value.
-        """
-        self._load_details()
-        return details_page.infoblock.text(*ident)
-
-    def _do_stats_match(self, client, stats_to_match=None, refresh_timer=None, db=True):
-        """ A private function to match a set of statistics, with a Provider.
-
-        This function checks if the list of stats match, if not, the page is refreshed.
-
-        Note: Provider mgmt_system uses the same key names as this Provider class to avoid
-            having to map keyname/attributes e.g. ``num_template``, ``num_vm``.
-
-        Args:
-            client: A provider mgmt_system instance.
-            stats_to_match: A list of key/attribute names to match.
-
-        Raises:
-            KeyError: If the host stats does not contain the specified key.
-            ProviderHasNoProperty: If the provider does not have the property defined.
-        """
-        host_stats = client.stats(*stats_to_match)
-        if not db:
-            sel.refresh()
-
-        if refresh_timer:
-            if refresh_timer.is_it_time():
-                logger.info(' Time for a refresh!')
-                sel.force_navigate('infrastructure_provider', context={'provider': self})
-                tb.select("Configuration", "Refresh Relationships and Power States",
-                          invokes_alert=True)
-                sel.handle_alert(cancel=False)
-                refresh_timer.reset()
-
-        for stat in stats_to_match:
-            try:
-                cfme_stat = getattr(self, stat)(db=db)
-                success, value = tol_check(host_stats[stat],
-                                           cfme_stat,
-                                           min_error=0.05,
-                                           low_val_correction=2)
-                logger.info(' Matching stat [{}], Host({}), CFME({}), '
-                    'with tolerance {} is {}'.format(stat, host_stats[stat], cfme_stat,
-                                                     value, success))
-                if not success:
-                    return False
-            except KeyError:
-                raise HostStatsNotContains("Host stats information does not contain '%s'" % stat)
-            except AttributeError:
-                raise ProviderHasNoProperty("Provider does not know how to get '%s'" % stat)
-        else:
-            return True
-
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
         ensure_browser_open()
         return sel.is_displayed(
             '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
-
-    def num_template(self, db=True):
-        """ Returns the providers number of templates, as shown on the Details page."""
-        if db:
-            ext_management_systems = cfmedb()["ext_management_systems"]
-            vms = cfmedb()["vms"]
-            truthy = True  # This is to prevent a lint error with ==True
-            temlist = list(cfmedb().session.query(vms.name)
-                           .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                           .filter(ext_management_systems.name == self.name)
-                           .filter(vms.template == truthy))
-            return len(temlist)
-        else:
-            return int(self.get_detail("Relationships", "Templates"))
-
-    def num_vm(self, db=True):
-        """ Returns the providers number of instances, as shown on the Details page."""
-        if db:
-            ext_management_systems = cfmedb()["ext_management_systems"]
-            vms = cfmedb()["vms"]
-            falsey = False  # This is to prevent a lint error with ==False
-            vmlist = list(cfmedb().session.query(vms.name)
-                          .join(ext_management_systems, vms.ems_id == ext_management_systems.id)
-                          .filter(ext_management_systems.name == self.name)
-                          .filter(vms.template == falsey))
-            return len(vmlist)
-        return int(self.get_detail("Relationships", "VMs"))
 
     def num_datastore(self, db=True):
         """ Returns the providers number of templates, as shown on the Details page."""
@@ -421,15 +249,6 @@ class Provider(Updateable, Pretty, BaseProvider):
                  end_ip=self.end_ip)
 
     @property
-    def exists(self):
-        ems = cfmedb()['ext_management_systems']
-        provs = (prov[0] for prov in cfmedb().session.query(ems.name))
-        if self.name in provs:
-            return True
-        else:
-            return False
-
-    @property
     def hosts(self):
         """Returns list of :py:class:`cfme.infrastructure.host.Host` that should belong to this
         provider according to the YAML
@@ -454,49 +273,6 @@ class Provider(Updateable, Pretty, BaseProvider):
         """ Loads the list of templates that are running under the provider. """
         sel.force_navigate('infrastructure_provider', context={'provider': self})
         sel.click(details_page.infoblock.element("Relationships", "Templates"))
-
-    def assign_policy_profiles(self, *policy_profile_names):
-        """ Assign Policy Profiles to this Provider.
-
-        Args:
-            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
-                coverage goes in, PolicyProfile objects will be also passable.
-        """
-        self._assign_unassign_policy_profiles(True, *policy_profile_names)
-
-    def unassign_policy_profiles(self, *policy_profile_names):
-        """ Unssign Policy Profiles to this Provider.
-
-        Args:
-            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
-                coverage goes in, PolicyProfile objects will be also passable.
-        """
-        self._assign_unassign_policy_profiles(False, *policy_profile_names)
-
-    def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
-        """DRY function for managing policy profiles.
-
-        See :py:func:`assign_policy_profiles` and :py:func:`assign_policy_profiles`
-
-        Args:
-            assign: Wheter to assign or unassign.
-            policy_profile_names: :py:class:`str` with Policy Profile names.
-        """
-        sel.force_navigate('infrastructure_provider_policy_assignment', context={'provider': self})
-        for policy_profile in policy_profile_names:
-            if assign:
-                manage_policies_tree.check_node(policy_profile)
-            else:
-                manage_policies_tree.uncheck_node(policy_profile)
-        sel.move_to_element('#tP')
-        form_buttons.save()
-
-    def wait_for_delete(self):
-        sel.force_navigate('infrastructure_providers')
-        quad = Quadicon(self.name, 'infra_prov')
-        logger.info('Waiting for a provider to delete...')
-        wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
-                 message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)
 
 
 class VMwareProvider(Provider):
