@@ -856,6 +856,54 @@ class IPAppliance(object):
             log_callback("Setting it to start after reboot")
             client.run_command("chkconfig merkyl on")
 
+    def install_munin(self, log_callback=None):
+        """Installs the Munin monitoring server and node."""
+        if log_callback is None:
+            log_callback = lambda msg: self.log.info("Installing Munin: {}".format(msg))
+        else:
+            cb = log_callback
+            log_callback = lambda msg: cb("Installing Munin: {}".format(msg))
+
+        client = self.ssh_client
+        log_callback("Adding EPEL/Supplementary/Optional Repos")
+        status, out = client.run_command("wget -P /etc/yum.repos.d/ {}".format(
+            conf.cfme_data['basic_info']['epel_repo_url']))
+        if status != 0:
+            msg = 'Unable to install EPEL Repos!'
+            log_callback(msg)
+            raise Exception(msg)
+        client.run_command('yum install -y munin munin-node')
+        client.run_command('chkconfig munin-node on')
+        log_callback("Editing httpd config to disable https redirection and basic auth")
+        client.run_command("sed -e '/^Rewrite*/ s/^#*/#/' -i /etc/httpd/conf.d/cfme-http.conf")
+        client.run_command("sed -e '/^Auth*/ s/^#*/#/' -i /etc/httpd/conf.d/munin.conf")
+        client.run_command("sed -e '/require valid-user/ s/^#*/#/' -i /etc/httpd/conf.d/munin.conf")
+        log_callback("Audit SELinux config to allow munin/munin-postgres")
+        client.run_command('chcon -t munin_unconfined_plugin_exec_t cfme-msgqueue')
+        client.run_command('setsebool -P allow_user_postgresql_connect on')
+        client.run_command('audit2allow -i test -a -M munin-postgres')
+        log_callback("Restarting httpd")
+        client.run_command('service httpd restart')
+        log_callback("Symlinking munin postgres plugins")
+        pg_munin_cfg_string = dedent('''\
+            cat >> /etc/munin/plugin-conf.d/munin-node <<EOF
+            [postgres_*]
+            user postgres
+            env.PGUSER {pg_user}
+            env.PGPASSWORD {pg_pass}
+            env.PGHOST 127.0.0.1
+            env.PGPORT 5432
+            EOF
+            ''').format(pg_user=conf.credentials['database']['username'],
+                        pg_pass=conf.credentials['database']['password'])
+        client.run_command(pg_munin_cfg_string)
+        status, out = client.run_command("ls /usr/share/munin/plugins/ | grep ^postgres.*_$")
+        for plugin in out.splitlines():
+            client.run_command(
+                "ln -s /usr/share/munin/plugins/{} /etc/munin/plugins/{}vmdb_production".format(
+                    plugin, plugin))
+        client.run_command('service munin-node restart')
+
     def update_rhel(self, *urls, **kwargs):
         """Update RHEL on appliance
 
