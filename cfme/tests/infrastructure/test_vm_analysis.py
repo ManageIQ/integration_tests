@@ -2,13 +2,15 @@
 import fauxfactory
 import pytest
 import random
-import re
 import time
+import urlparse
+
 from cfme.configure import tasks
 from cfme.exceptions import CFMEException
 from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import flash, toolbar
-from utils import conf, testgen, version
+from fixtures.pytest_store import store
+from utils import testgen, version
 from utils.appliance import Appliance, provision_appliance
 from utils.log import logger
 from utils.wait import wait_for
@@ -95,7 +97,7 @@ def get_appliance(provider):
     if provider.key not in appliance_list:
         try:
             # see if the current appliance is on the needed provider
-            ip_addr = re.findall(r'[0-9]+(?:\.[0-9]+){3}', conf.env['base_url'])[0]
+            ip_addr = urlparse(store.base_url).hostname
             appl_name = provider.mgmt.get_vm_name_from_ip(ip_addr)
             logger.info("re-using already provisioned appliance on {}...".format(provider.key))
             main_provider = provider.key

@@ -491,12 +491,12 @@ class IPAppliance(object):
 
     @lazycache
     def hostname(self):
-        parsed_url = urlparse(self.url or store.base_url)
+        parsed_url = urlparse(self.url)
         return parsed_url.hostname
 
     @property
     def ui_port(self):
-        parsed_url = urlparse(self.url or store.base_url)
+        parsed_url = urlparse(self.url)
         if parsed_url.port is not None:
             return parsed_url.port
         elif parsed_url.scheme == "https":
