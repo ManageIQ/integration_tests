@@ -10,10 +10,10 @@ from py.path import local
 from cfme.automate.explorer import Namespace, Instance, Class, Domain
 from cfme.control.import_export import import_file, is_imported
 from cfme.exceptions import AutomateImportError
-from cfme.infrastructure.provider import get_from_config
 from cfme.web_ui import flash
 from utils import version
 from utils.log import logger
+from utils.providers import get_from_config
 
 ALL_EVENTS = [
     ('Datastore Analysis Complete', 'datastore_analysis_complete'),

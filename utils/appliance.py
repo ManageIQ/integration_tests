@@ -17,7 +17,6 @@ from urlparse import ParseResult, urlparse
 import requests
 
 from cfme.configure.configuration import server_name, server_id
-from cfme.infrastructure.provider import get_from_config
 from cfme.infrastructure.virtual_machines import Vm
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
@@ -26,7 +25,7 @@ from utils.log import logger, create_sublogger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
-from utils.providers import provider_factory
+from utils.providers import provider_factory, get_from_config
 from utils.version import Version, get_stream, LATEST
 from utils.signals import fire
 from utils.wait import wait_for

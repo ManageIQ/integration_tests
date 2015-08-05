@@ -85,8 +85,7 @@ More information on ``parametrize`` can be found in pytest's documentation:
 import pytest
 import random
 
-from cfme.cloud.provider import get_from_config as get_cloud_provider
-from cfme.infrastructure.provider import get_from_config as get_infra_provider
+from cfme.exceptions import UnknownProviderType
 from cfme.infrastructure.pxe import get_pxe_server_from_config
 from fixtures.prov_filter import filtered
 from fixtures.templateloader import TEMPLATES
@@ -95,7 +94,7 @@ from utils import version
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.providers import (
-    cloud_provider_type_map, infra_provider_type_map, provider_type_map)
+    cloud_provider_type_map, infra_provider_type_map, provider_type_map, get_from_config)
 
 
 def generate(gen_func, *args, **kwargs):
@@ -238,11 +237,9 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
         argnames.append('provider')
 
     for provider, data in cfme_data.get('management_systems', {}).iteritems():
-        if data['type'] in cloud_provider_type_map:
-            prov_obj = get_cloud_provider(provider)
-        elif data['type'] in infra_provider_type_map:
-            prov_obj = get_infra_provider(provider)
-        else:
+        try:
+            prov_obj = get_from_config(provider)
+        except UnknownProviderType:
             continue
 
         skip = False

@@ -152,7 +152,6 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     """
 
     if prov_class == "infra":
-        from cfme.infrastructure.provider import get_from_config
         potential_providers = list_infra_providers()
         if prov_type:
             providers = []
@@ -162,7 +161,6 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         else:
             providers = potential_providers
     elif prov_class == "cloud":
-        from cfme.cloud.provider import get_from_config
         potential_providers = list_cloud_providers()
         if prov_type:
             providers = []
@@ -172,7 +170,6 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         else:
             providers = potential_providers
     else:
-        from cfme.infrastructure.provider import get_from_config
         providers = list_infra_providers()
 
     final_providers = []
@@ -254,14 +251,6 @@ def is_provider_setup(provider_key):
     Returns:
         :py:class:`bool` of existence
     """
-    if provider_key in list_cloud_providers():
-        from cfme.cloud.provider import get_from_config
-        # provider = setup_infrastructure_provider(provider_key, validate, check_existing)
-    elif provider_key in list_infra_providers():
-        from cfme.infrastructure.provider import get_from_config
-    else:
-        raise UnknownProvider(provider_key)
-
     return get_from_config(provider_key).exists
 
 
@@ -280,14 +269,6 @@ def setup_provider(provider_key, validate=True, check_existing=True):
         :py:class:`cfme.infrastructure.provider.Provider` for the named provider, as appropriate.
 
     """
-    if provider_key in list_cloud_providers():
-        from cfme.cloud.provider import get_from_config
-        # provider = setup_infrastructure_provider(provider_key, validate, check_existing)
-    elif provider_key in list_infra_providers():
-        from cfme.infrastructure.provider import get_from_config
-    else:
-        raise UnknownProvider(provider_key)
-
     provider = get_from_config(provider_key)
     if check_existing and provider.exists:
         # no need to create provider if the provider exists
@@ -529,12 +510,13 @@ def get_from_config(provider_config_name):
     credentials = get_credentials_from_config(prov_config['credentials'])
     prov_type = prov_config.get('type')
 
-    if prov_config.get('discovery_range', None):
-        start_ip = prov_config['discovery_range']['start']
-        end_ip = prov_config['discovery_range']['end']
-    else:
-        start_ip = prov_config['ipaddress']
-        end_ip = prov_config['ipaddress']
+    if prov_type != 'ec2':
+        if prov_config.get('discovery_range', None):
+            start_ip = prov_config['discovery_range']['start']
+            end_ip = prov_config['discovery_range']['end']
+        else:
+            start_ip = prov_config['ipaddress']
+            end_ip = prov_config['ipaddress']
 
     if prov_type == 'ec2':
         return EC2Provider(name=prov_config['name'],

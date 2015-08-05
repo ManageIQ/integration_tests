@@ -6,9 +6,10 @@ import pytest
 
 import cfme.web_ui.flash as flash
 import utils.error as error
-from cfme.infrastructure.provider import (discover, Provider, VMwareProvider,
-    get_credentials_from_config, RHEVMProvider, wait_for_a_provider)
+from cfme.infrastructure.provider import (discover, Provider, VMwareProvider, RHEVMProvider,
+    wait_for_a_provider)
 from utils import testgen, providers, version
+from utils.providers import get_credentials_from_config
 from utils.update import update
 
 

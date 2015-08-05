@@ -6,9 +6,10 @@ not be difficult to extend the parametrizer.
 import pytest
 import random
 
-from cfme.infrastructure.provider import VMwareProvider, get_from_config
+from cfme.infrastructure.provider import VMwareProvider
 from utils.conf import cfme_data, credentials
 from utils.net import resolve_hostname
+from utils.providers import get_from_config
 from utils.version import Version
 from utils.wait import wait_for
 

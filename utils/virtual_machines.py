@@ -2,17 +2,14 @@
 """
 import pytest
 
-from cfme.cloud.provider import get_from_config as get_cloud_from_config
-from cfme.infrastructure.provider import get_from_config as get_infra_from_config
+from utils.providers import get_from_config
 from fixtures.pytest_store import store
 from novaclient.exceptions import OverLimit as OSOverLimit
 from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
 from ssl import SSLError
-from utils import conf
 from utils.log import logger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSystem, SCVMMSystem
 from utils.mgmt_system.exceptions import VMInstanceNotCloned
-from utils.providers import infra_provider_type_map
 
 
 def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):
@@ -27,11 +24,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     else:
         skip_exceptions = allow_skip
         callable_mapping = {}
-    provider_type = conf.cfme_data.get('management_systems', {})[provider_key]['type']
-    if provider_type in infra_provider_type_map:
-        provider_crud = get_infra_from_config(provider_key)
-    else:
-        provider_crud = get_cloud_from_config(provider_key)
+    provider_crud = get_from_config(provider_key)
 
     mgmt = provider_crud.get_mgmt_system()
     data = provider_crud.get_yaml_data()

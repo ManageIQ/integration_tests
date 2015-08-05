@@ -193,7 +193,7 @@ class Provider(Updateable, Pretty, BaseProvider):
         Begins provider discovery from a provider instance
 
         Usage:
-            discover_from_config(provider.get_from_config('rhevm'))
+            discover_from_config(utils.providers.get_from_config('rhevm'))
         """
         vmware = isinstance(self, VMwareProvider)
         rhevm = isinstance(self, RHEVMProvider)

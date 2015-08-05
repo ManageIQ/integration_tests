@@ -9,9 +9,10 @@ import pytest
 import cfme.web_ui.flash as flash
 import utils.error as error
 from cfme import Credential
-from cfme.cloud.provider import (discover, EC2Provider, get_credentials_from_config,
-    wait_for_a_provider, Provider, OpenStackProvider)
+from cfme.cloud.provider import (discover, EC2Provider, wait_for_a_provider,
+    Provider, OpenStackProvider)
 from utils import testgen, version
+from utils.providers import get_credentials_from_config
 from utils.update import update
 
 pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="function")
