@@ -1,20 +1,22 @@
 ---
 - MiqPolicySet:
-    name: b3549dd2-f0b7-11e2-96aa-005056924c3d
+    name: 64ff30fe-3b4f-11e5-a668-fa163ebb7028
     description: Automate event policies
     set_type: MiqPolicySet
-    guid: b3549dd2-f0b7-11e2-96aa-005056924c3d
+    guid: 64ff30fe-3b4f-11e5-a668-fa163ebb7028
     read_only: 
     set_data: 
-    mode: control
+    mode: 
     owner_type: 
     owner_id: 
+    userid: 
+    group_id: 
     MiqPolicy:
-    - name: 0cc46944-ab8c-11e3-bc11-005056bfc27d
-      description: vm_analysis_start
+    - name: f785cef2-3b4e-11e5-a668-fa163ebb7028
+      description: tag_req
       expression: 
       towhat: Vm
-      guid: 0cc46944-ab8c-11e3-bc11-005056bfc27d
+      guid: f785cef2-3b4e-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -25,29 +27,29 @@
         success_sequence: 1
         success_synchronous: true
         MiqEvent:
-          name: vm_scan_start
-          description: VM Analysis Start
-          guid: d265e3b4-ab8a-11e3-b88b-005056bfc27d
+          name: request_assign_company_tag
+          description: Tag Request
+          guid: 715392ea-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: 79e972ae-ab8b-11e3-bc11-005056bfc27d
-          description: ! 'automate: vm_analysis_start'
-          guid: 79e972ae-ab8b-11e3-bc11-005056bfc27d
+          name: ecfe975c-3b4e-11e5-a668-fa163ebb7028
+          description: ! 'automate: tag_req'
+          guid: ecfe975c-3b4e-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
             :ae_request: RelayEvents
             :ae_hash:
-              event: vm_analysis_start
+              event: tag_req
       Condition: []
-    - name: e2881ed2-ab8b-11e3-bc11-005056bfc27d
-      description: vm_analysis_request
+    - name: 35503d3a-3b4f-11e5-a668-fa163ebb7028
+      description: untag_req
       expression: 
       towhat: Vm
-      guid: e2881ed2-ab8b-11e3-bc11-005056bfc27d
+      guid: 35503d3a-3b4f-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -58,62 +60,29 @@
         success_sequence: 1
         success_synchronous: true
         MiqEvent:
-          name: request_vm_scan
-          description: VM Analysis Request
-          guid: d25c425a-ab8a-11e3-b88b-005056bfc27d
+          name: request_unassign_company_tag
+          description: Un-Tag Request
+          guid: 715cb438-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: 652e4466-ab8b-11e3-bc11-005056bfc27d
-          description: ! 'automate: vm_analysis_request'
-          guid: 652e4466-ab8b-11e3-bc11-005056bfc27d
+          name: 29208ba0-3b4f-11e5-a668-fa163ebb7028
+          description: ! 'automate: untag_req'
+          guid: 29208ba0-3b4f-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
             :ae_request: RelayEvents
             :ae_hash:
-              event: vm_analysis_request
+              event: untag_req
       Condition: []
-    - name: 4ffe83f2-ab8c-11e3-bc11-005056bfc27d
-      description: vm_analysis_failure
-      expression: 
-      towhat: Vm
-      guid: 4ffe83f2-ab8c-11e3-bc11-005056bfc27d
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        success_synchronous: true
-        MiqEvent:
-          name: vm_scan_abort
-          description: VM Analysis Failure
-          guid: d2602870-ab8a-11e3-b88b-005056bfc27d
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 475be226-ab8c-11e3-bc11-005056bfc27d
-          description: ! 'automate: vm_analysis_failure'
-          guid: 475be226-ab8c-11e3-bc11-005056bfc27d
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_analysis_failure
-      Condition: []
-    - name: 24ec26f6-ab8c-11e3-bc11-005056bfc27d
+    - name: f9af3aac-3b4d-11e5-a668-fa163ebb7028
       description: vm_analysis_complete
       expression: 
       towhat: Vm
-      guid: 24ec26f6-ab8c-11e3-bc11-005056bfc27d
+      guid: f9af3aac-3b4d-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -126,15 +95,15 @@
         MiqEvent:
           name: vm_scan_complete
           description: VM Analysis Complete
-          guid: d25e3a42-ab8a-11e3-b88b-005056bfc27d
+          guid: 71a9ef14-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: 8d00707c-ab8b-11e3-bc11-005056bfc27d
+          name: f1b70370-3b4d-11e5-a668-fa163ebb7028
           description: ! 'automate: vm_analysis_complete'
-          guid: 8d00707c-ab8b-11e3-bc11-005056bfc27d
+          guid: f1b70370-3b4d-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
@@ -142,11 +111,11 @@
             :ae_hash:
               event: vm_analysis_complete
       Condition: []
-    - name: 177634d0-8373-11e3-b73a-005056bfa4fd
-      description: vm_standby_guest_req
+    - name: 244b2532-3b4e-11e5-a668-fa163ebb7028
+      description: vm_analysis_failure
       expression: 
       towhat: Vm
-      guid: 177634d0-8373-11e3-b73a-005056bfa4fd
+      guid: 244b2532-3b4e-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -155,30 +124,31 @@
       MiqPolicyContent:
       - qualifier: success
         success_sequence: 1
+        success_synchronous: true
         MiqEvent:
-          name: request_vm_standby_guest
-          description: VM Standby of Guest Request
-          guid: 04028c7e-8273-11e3-96ce-005056bfa4fd
+          name: vm_scan_abort
+          description: VM Analysis Failure
+          guid: 71abd932-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: a8bfe578-8371-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_standby_guest_req'
-          guid: a8bfe578-8371-11e3-b73a-005056bfa4fd
+          name: 1c1f5284-3b4e-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_analysis_failure'
+          guid: 1c1f5284-3b4e-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
             :ae_request: RelayEvents
             :ae_hash:
-              event: vm_standby_guest_req
+              event: vm_analysis_failure
       Condition: []
-    - name: fbbb410e-8372-11e3-b73a-005056bfa4fd
-      description: vm_standby_guest
+    - name: bebf5f5c-3b4e-11e5-a668-fa163ebb7028
+      description: vm_analysis_req
       expression: 
       towhat: Vm
-      guid: fbbb410e-8372-11e3-b73a-005056bfa4fd
+      guid: bebf5f5c-3b4e-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -187,734 +157,31 @@
       MiqPolicyContent:
       - qualifier: success
         success_sequence: 1
+        success_synchronous: true
         MiqEvent:
-          name: vm_standby_guest
-          description: VM Standby of Guest
-          guid: 04006d9a-8273-11e3-96ce-005056bfa4fd
+          name: request_vm_scan
+          description: VM Analysis Request
+          guid: 71a8037a-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: 90e0d6ce-8371-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_standby_guest'
-          guid: 90e0d6ce-8371-11e3-b73a-005056bfa4fd
+          name: b4ede3c2-3b4e-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_analysis_req'
+          guid: b4ede3c2-3b4e-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
             :ae_request: RelayEvents
             :ae_hash:
-              event: vm_standby_guest
+              event: vm_analysis_req
       Condition: []
-    - name: f2526436-8371-11e3-b73a-005056bfa4fd
-      description: vm_snapshot_create_started
-      expression: 
-      towhat: Vm
-      guid: f2526436-8371-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_snapshot
-          description: VM Snapshot Create Started
-          guid: 04095720-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 5c4d2594-8370-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_snapshot_create_started'
-          guid: 5c4d2594-8370-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_snapshot_create_started
-      Condition: []
-    - name: d4f8ab84-8371-11e3-b73a-005056bfa4fd
-      description: vm_snapshot_create_request
-      expression: 
-      towhat: Vm
-      guid: d4f8ab84-8371-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: request_vm_create_snapshot
-          description: VM Snapshot Create Request
-          guid: 041786f6-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 439caf7e-8370-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_snapshot_create_request'
-          guid: 439caf7e-8370-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_snapshot_create_request
-      Condition: []
-    - name: b92a90ca-8371-11e3-b73a-005056bfa4fd
-      description: vm_snapshot_create_complete
-      expression: 
-      towhat: Vm
-      guid: b92a90ca-8371-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_snapshot_complete
-          description: VM Snapshot Create Complete
-          guid: 040bb600-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 2a44356a-8370-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_snapshot_create_complete'
-          guid: 2a44356a-8370-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_snapshot_create_complete
-      Condition: []
-    - name: 81667fa4-8372-11e3-b73a-005056bfa4fd
-      description: vm_guest_shutdown_req
-      expression: 
-      towhat: Vm
-      guid: 81667fa4-8372-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: request_vm_shutdown_guest
-          description: VM Guest Shutdown Request
-          guid: 03fe4f74-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: b8997fdc-8370-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_guest_shutdown_req'
-          guid: b8997fdc-8370-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_guest_shutdown_req
-      Condition: []
-    - name: 661b257e-8372-11e3-b73a-005056bfa4fd
-      description: vm_guest_shutdown
-      expression: 
-      towhat: Vm
-      guid: 661b257e-8372-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_shutdown_guest
-          description: VM Guest Shutdown
-          guid: 03f8368e-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: a18672a0-8370-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_guest_shutdown'
-          guid: a18672a0-8370-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_guest_shutdown
-      Condition: []
-    - name: 4adb26e2-8372-11e3-b73a-005056bfa4fd
-      description: vm_guest_reboot_req
-      expression: 
-      towhat: Vm
-      guid: 4adb26e2-8372-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: request_vm_reboot_guest
-          description: VM Guest Reboot Request
-          guid: 03fa3628-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 87d84c66-8370-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_guest_reboot_req'
-          guid: 87d84c66-8370-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_guest_reboot_req
-      Condition: []
-    - name: 2d0d5ee6-8372-11e3-b73a-005056bfa4fd
-      description: vm_guest_reboot
-      expression: 
-      towhat: Vm
-      guid: 2d0d5ee6-8372-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_reboot_guest
-          description: VM Guest Reboot
-          guid: 03fc3360-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 6fba9288-8370-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_guest_reboot'
-          guid: 6fba9288-8370-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_guest_reboot
-      Condition: []
-    - name: b4a9b8f4-8372-11e3-b73a-005056bfa4fd
-      description: vm_delete_req
-      expression: 
-      towhat: Vm
-      guid: b4a9b8f4-8372-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: request_vm_destroy
-          description: VM Delete (from Disk) Request
-          guid: 03dc5c34-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: f4734060-8370-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_delete_request'
-          guid: f4734060-8370-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_delete_request
-      Condition: []
-    - name: 9b96c5d2-8372-11e3-b73a-005056bfa4fd
-      description: vm_create_complete
-      expression: 
-      towhat: Vm
-      guid: 9b96c5d2-8372-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_create
-          description: VM Create Complete
-          guid: 03d0278e-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: dedd6762-8370-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_create_complete'
-          guid: dedd6762-8370-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_create_complete
-      Condition: []
-    - name: cd5b6488-8372-11e3-b73a-005056bfa4fd
-      description: vm_clone_start
-      expression: 
-      towhat: Vm
-      guid: cd5b6488-8372-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_clone_start
-          description: VM Clone Start
-          guid: 03d43b12-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 24c0dc5a-8371-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_clone_start'
-          guid: 24c0dc5a-8371-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_clone_start
-      Condition: []
-    - name: e4ff1198-8372-11e3-b73a-005056bfa4fd
-      description: vm_clone_complete
-      expression: 
-      towhat: Vm
-      guid: e4ff1198-8372-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_clone
-          description: VM Clone Complete
-          guid: 03d21fa8-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 7cbcfbdc-8371-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_clone_complete'
-          guid: 7cbcfbdc-8371-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_clone_complete
-      Condition: []
-    - name: ce7e1bc8-8366-11e3-b73a-005056bfa4fd
-      description: vm_template_create_complete
-      expression: 
-      towhat: Vm
-      guid: ce7e1bc8-8366-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_template
-          description: VM Template Create Complete
-          guid: 03d63930-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 83c11c52-8366-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_template_create_complete'
-          guid: 83c11c52-8366-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_template_create_complete
-      Condition: []
-    - name: a857f5ea-8366-11e3-b73a-005056bfa4fd
-      description: vm_settings_change
-      expression: 
-      towhat: Vm
-      guid: a857f5ea-8366-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_reconfigure
-          description: VM Settings Change
-          guid: 03d83b7c-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 6593bd2a-8366-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_settings_change'
-          guid: 6593bd2a-8366-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_settings_change
-      Condition: []
-    - name: eb7640ca-8366-11e3-b73a-005056bfa4fd
-      description: vm_retired
-      expression: 
-      towhat: Vm
-      guid: eb7640ca-8366-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_retired
-          description: VM Retired
-          guid: 03e09dd0-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 96c57e9c-8366-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_retired'
-          guid: 96c57e9c-8366-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_retired
-      Condition: []
-    - name: 54796382-8361-11e3-b73a-005056bfa4fd
-      description: vm_suspend_req
-      expression: 
-      towhat: Vm
-      guid: 54796382-8361-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: request_vm_suspend
-          description: VM Suspend Request
-          guid: 03f24e40-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: ff3b8e9a-8360-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_suspend_req'
-          guid: ff3b8e9a-8360-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_suspend_req
-      Condition: []
-    - name: 8a3c5204-8361-11e3-b73a-005056bfa4fd
-      description: vm_suspend
-      expression: 
-      towhat: Vm
-      guid: 8a3c5204-8361-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_suspend
-          description: VM Suspend
-          guid: 03f05ae0-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 121ddc84-8361-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_suspend'
-          guid: 121ddc84-8361-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_suspend
-      Condition: []
-    - name: e9df94aa-8361-11e3-b73a-005056bfa4fd
-      description: vm_reset_req
-      expression: 
-      towhat: Vm
-      guid: e9df94aa-8361-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: request_vm_reset
-          description: VM Reset Request
-          guid: 03ee6f00-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 393ff1ee-8361-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_reset_req'
-          guid: 393ff1ee-8361-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_reset_req
-      Condition: []
-    - name: c7626600-8361-11e3-b73a-005056bfa4fd
-      description: vm_reset
-      expression: 
-      towhat: Vm
-      guid: c7626600-8361-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_reset
-          description: VM Reset
-          guid: 03ec7b8c-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 25dd6370-8361-11e3-b73a-005056bfa4fd
-          description: ! 'automate: vm_reset'
-          guid: 25dd6370-8361-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_reset
-      Condition: []
-    - name: 9ee23e72-82b1-11e3-b73a-005056bfa4fd
-      description: host_analysis_request
-      expression: 
-      towhat: Host
-      guid: 9ee23e72-82b1-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: request_host_scan
-          description: Host Analysis Request
-          guid: 038ded24-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 515d2d2e-82b1-11e3-b73a-005056bfa4fd
-          description: ! 'automate: host_analysis_request'
-          guid: 515d2d2e-82b1-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: host_analysis_request
-      Condition: []
-    - name: 65ecb9cc-82b0-11e3-b73a-005056bfa4fd
-      description: host_analysis_complete
-      expression: 
-      towhat: Host
-      guid: 65ecb9cc-82b0-11e3-b73a-005056bfa4fd
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: host_scan_complete
-          description: Host Analysis Complete
-          guid: 038fc98c-8273-11e3-96ce-005056bfa4fd
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: 6f88d316-82b1-11e3-b73a-005056bfa4fd
-          description: ! 'automate: host_analysis_complete'
-          guid: 6f88d316-82b1-11e3-b73a-005056bfa4fd
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: host_analysis_complete
-      Condition: []
-    - name: e1d3fb0e-f0b6-11e2-96aa-005056924c3d
-      description: vm_power_on_req
-      expression: 
-      towhat: Vm
-      guid: e1d3fb0e-f0b6-11e2-96aa-005056924c3d
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: request_vm_start
-          description: VM Power On Request
-          guid: f87bee80-ed72-11e2-a4a9-005056924c3d
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: c950502e-f0b5-11e2-96aa-005056924c3d
-          description: ! 'automate: vm_power_on_req'
-          guid: c950502e-f0b5-11e2-96aa-005056924c3d
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_power_on_req
-      Condition: []
-    - name: 03c32be0-f0b7-11e2-96aa-005056924c3d
-      description: vm_power_on
-      expression: 
-      towhat: Vm
-      guid: 03c32be0-f0b7-11e2-96aa-005056924c3d
-      created_by: admin
-      updated_by: admin
-      notes: 
-      active: true
-      mode: control
-      MiqPolicyContent:
-      - qualifier: success
-        success_sequence: 1
-        MiqEvent:
-          name: vm_start
-          description: VM Power On
-          guid: f87981ae-ed72-11e2-a4a9-005056924c3d
-          event_type: Default
-          definition: 
-          default: 
-          enabled: 
-        MiqAction:
-          name: b6c937b8-f0b5-11e2-96aa-005056924c3d
-          description: ! 'automate: vm_power_on'
-          guid: b6c937b8-f0b5-11e2-96aa-005056924c3d
-          action_type: custom_automation
-          options:
-            :ae_message: create
-            :ae_request: RelayEvents
-            :ae_hash:
-              event: vm_power_on
-      Condition: []
-    - name: 18617b24-f0b7-11e2-96aa-005056924c3d
+    - name: 535cef90-3b4e-11e5-a668-fa163ebb7028
       description: vm_power_off_req
       expression: 
       towhat: Vm
-      guid: 18617b24-f0b7-11e2-96aa-005056924c3d
+      guid: 535cef90-3b4e-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -923,18 +190,19 @@
       MiqPolicyContent:
       - qualifier: success
         success_sequence: 1
+        success_synchronous: true
         MiqEvent:
           name: request_vm_poweroff
           description: VM Power Off Request
-          guid: f88dbaca-ed72-11e2-a4a9-005056924c3d
+          guid: 7194512c-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: eace0200-f0b5-11e2-96aa-005056924c3d
+          name: 49604b18-3b4e-11e5-a668-fa163ebb7028
           description: ! 'automate: vm_power_off_req'
-          guid: eace0200-f0b5-11e2-96aa-005056924c3d
+          guid: 49604b18-3b4e-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
@@ -942,11 +210,11 @@
             :ae_hash:
               event: vm_power_off_req
       Condition: []
-    - name: 306e0728-f0b7-11e2-96aa-005056924c3d
-      description: vm_power_off
+    - name: 8b5062b0-3b4e-11e5-a668-fa163ebb7028
+      description: vm_retirement_warning
       expression: 
       towhat: Vm
-      guid: 306e0728-f0b7-11e2-96aa-005056924c3d
+      guid: 8b5062b0-3b4e-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -955,30 +223,31 @@
       MiqPolicyContent:
       - qualifier: success
         success_sequence: 1
+        success_synchronous: true
         MiqEvent:
-          name: vm_poweroff
-          description: VM Power Off
-          guid: f88b187e-ed72-11e2-a4a9-005056924c3d
+          name: vm_retire_warn
+          description: VM Retirement Warning
+          guid: 71844afc-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: da993dd2-f0b5-11e2-96aa-005056924c3d
-          description: ! 'automate: vm_power_off'
-          guid: da993dd2-f0b5-11e2-96aa-005056924c3d
+          name: 814d435a-3b4e-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_retirement_warning'
+          guid: 814d435a-3b4e-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
             :ae_request: RelayEvents
             :ae_hash:
-              event: vm_power_off
+              event: vm_retirement_warning
       Condition: []
-    - name: a4a28a52-f0b6-11e2-96aa-005056924c3d
-      description: tag_req
+    - name: d16310d2-3b4d-11e5-a668-fa163ebb7028
+      description: vm_standby_of_guest
       expression: 
       towhat: Vm
-      guid: a4a28a52-f0b6-11e2-96aa-005056924c3d
+      guid: d16310d2-3b4d-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -987,30 +256,1008 @@
       MiqPolicyContent:
       - qualifier: success
         success_sequence: 1
+        success_synchronous: true
         MiqEvent:
-          name: request_assign_company_tag
-          description: Tag Request
-          guid: f82c1c70-ed72-11e2-a4a9-005056924c3d
+          name: vm_standby_guest
+          description: VM Standby of Guest
+          guid: 719cefc6-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: 27d15008-f0b6-11e2-96aa-005056924c3d
-          description: ! 'automate: tag_req'
-          guid: 27d15008-f0b6-11e2-96aa-005056924c3d
+          name: cb71693a-3b4d-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_standby_of_guest'
+          guid: cb71693a-3b4d-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
             :ae_request: RelayEvents
             :ae_hash:
-              event: tag_req
+              event: vm_standby_of_guest
       Condition: []
-    - name: caf645ea-f0b6-11e2-96aa-005056924c3d
+    - name: db796c18-3b4f-11e5-a668-fa163ebb7028
+      description: host_added_to_cluster
+      expression: 
+      towhat: Host
+      guid: db796c18-3b4f-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_add_to_cluster
+          description: Host Added to Cluster
+          guid: 71419702-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: b911e9fa-3b47-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_added_to_cluster'
+          guid: b911e9fa-3b47-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_added_to_cluster
+      Condition: []
+    - name: fb22f11a-3b4f-11e5-a668-fa163ebb7028
+      description: host_analysis_complete
+      expression: 
+      towhat: Host
+      guid: fb22f11a-3b4f-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_scan_complete
+          description: Host Analysis Complete
+          guid: 713ccd12-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 2267906c-3b4d-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_analysis_complete'
+          guid: 2267906c-3b4d-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_analysis_complete
+      Condition: []
+    - name: 1655f9aa-3b50-11e5-a668-fa163ebb7028
+      description: host_analysis_req
+      expression: 
+      towhat: Host
+      guid: 1655f9aa-3b50-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_host_scan
+          description: Host Analysis Request
+          guid: 713b3f4c-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: be15183a-3ac2-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_analysis_req'
+          guid: be15183a-3ac2-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_analysis_req
+      Condition: []
+    - name: 3afab20a-3b50-11e5-a668-fa163ebb7028
+      description: host_auth_changed
+      expression: 
+      towhat: Host
+      guid: 3afab20a-3b50-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_auth_changed
+          description: Host Auth Changed
+          guid: 7149783c-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: d52591f2-3b4a-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_auth_changed'
+          guid: d52591f2-3b4a-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_auth_changed
+      Condition: []
+    - name: 57dbc1ac-3b50-11e5-a668-fa163ebb7028
+      description: host_auth_error
+      expression: 
+      towhat: Host
+      guid: 57dbc1ac-3b50-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_auth_error
+          description: Host Auth Error
+          guid: 7151db62-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 85d12e6e-3ac7-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_auth_error'
+          guid: 85d12e6e-3ac7-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_auth_error
+      Condition: []
+    - name: 9cf6d538-3b50-11e5-a668-fa163ebb7028
+      description: host_auth_incomplete_credentials
+      expression: 
+      towhat: Host
+      guid: 9cf6d538-3b50-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_auth_incomplete
+          description: Host Auth Incomplete Credentials
+          guid: 7150252e-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 0a7b8024-3ac8-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_auth_incomplete_credentials'
+          guid: 0a7b8024-3ac8-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_auth_incomplete_credentials
+      Condition: []
+    - name: cb0774f0-3b50-11e5-a668-fa163ebb7028
+      description: host_auth_invalid
+      expression: 
+      towhat: Host
+      guid: cb0774f0-3b50-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_auth_invalid
+          description: Host Auth Invalid
+          guid: 714cc15e-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: b4066c20-3b4b-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_auth_invalid'
+          guid: b4066c20-3b4b-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_auth_invalid
+      Condition: []
+    - name: fd6e1e30-3b50-11e5-a668-fa163ebb7028
+      description: host_auth_unreachable
+      expression: 
+      towhat: Host
+      guid: fd6e1e30-3b50-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_auth_unreachable
+          description: Host Auth Unreachable
+          guid: 714e73c8-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 0eda6eba-3ac7-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_auth_unreachable'
+          guid: 0eda6eba-3ac7-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_auth_unreachable
+      Condition: []
+    - name: 26186598-3b51-11e5-a668-fa163ebb7028
+      description: host_auth_valid
+      expression: 
+      towhat: Host
+      guid: 26186598-3b51-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_auth_valid
+          description: Host Auth Valid
+          guid: 714b1962-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: b6205e5a-3b49-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_auth_valid'
+          guid: b6205e5a-3b49-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_auth_valid
+      Condition: []
+    - name: 51c58680-3b51-11e5-a668-fa163ebb7028
+      description: host_compliance_failed
+      expression: 
+      towhat: Host
+      guid: 51c58680-3b51-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_compliance_failed
+          description: Host Compliance Failed
+          guid: 7147eaee-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 9736e3f8-3ac5-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_compliance_failed'
+          guid: 9736e3f8-3ac5-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_compliance_failed
+      Condition: []
+    - name: 75212102-3b51-11e5-a668-fa163ebb7028
+      description: host_compliance_passed
+      expression: 
+      towhat: Host
+      guid: 75212102-3b51-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - MiqEvent:
+          name: host_compliance_passed
+          description: Host Compliance Passed
+          guid: 7146646c-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+      Condition: []
+    - name: 8de0f21c-3b51-11e5-a668-fa163ebb7028
+      description: host_connect
+      expression: 
+      towhat: Host
+      guid: 8de0f21c-3b51-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_connect
+          description: Host Connect
+          guid: 713831a8-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 6710db56-3ac6-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_connect'
+          guid: 6710db56-3ac6-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_connect
+      Condition: []
+    - name: ba290314-3b51-11e5-a668-fa163ebb7028
+      description: host_disconnect
+      expression: 
+      towhat: Host
+      guid: ba290314-3b51-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_disconnect
+          description: Host Disconnect
+          guid: 7139b726-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: b9828754-3ac1-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_disconnect'
+          guid: b9828754-3ac1-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_disconnect
+      Condition: []
+    - name: e70ad4f2-3b51-11e5-a668-fa163ebb7028
+      description: host_provision_complete
+      expression: 
+      towhat: Host
+      guid: e70ad4f2-3b51-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_provisioned
+          description: Host Provision Complete
+          guid: 713ff9b0-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 661f7cbc-3b4c-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_provision_complete'
+          guid: 661f7cbc-3b4c-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_provision_complete
+      Condition: []
+    - name: 778d9444-3b50-11e5-a668-fa163ebb7028
+      description: host_removed_from_cluster
+      expression: 
+      towhat: Host
+      guid: 778d9444-3b50-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: host_remove_from_cluster
+          description: Host Removed from Cluster
+          guid: 714337ec-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 0cb82936-3b4b-11e5-a668-fa163ebb7028
+          description: ! 'automate: host_removed_from_cluster'
+          guid: 0cb82936-3b4b-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: host_removed_from_cluster
+      Condition: []
+    - name: 5867c888-3ac8-11e5-a668-fa163ebb7028
+      description: datastore_analysis_complete
+      expression: 
+      towhat: Vm
+      guid: 5867c888-3ac8-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: storage_scan_complete
+          description: Datastore Analysis Complete
+          guid: 71de6064-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 4bb7fb80-3ac8-11e5-a668-fa163ebb7028
+          description: ! 'automate: datastore_analysis_complete'
+          guid: 4bb7fb80-3ac8-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: datastore_analysis_complete
+      Condition: []
+    - name: d0e31ffe-3ac5-11e5-a668-fa163ebb7028
+      description: datastore_analysis_req
+      expression: 
+      towhat: Vm
+      guid: d0e31ffe-3ac5-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_storage_scan
+          description: Datastore Analysis Request
+          guid: 71d8edaa-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: c7b20dd2-3ac5-11e5-a668-fa163ebb7028
+          description: ! 'automate: datastore_analysis_req'
+          guid: c7b20dd2-3ac5-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: datastore_analysis_req
+      Condition: []
+    - name: 6b7955fc-3b47-11e5-a668-fa163ebb7028
+      description: provider_auth_changed
+      expression: 
+      towhat: Vm
+      guid: 6b7955fc-3b47-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: ems_auth_changed
+          description: Provider Auth Changed
+          guid: 712d1f2a-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 646f08ba-3b47-11e5-a668-fa163ebb7028
+          description: ! 'automate: provider_auth_changed'
+          guid: 646f08ba-3b47-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: provider_auth_changed
+      Condition: []
+    - name: e693632a-3b49-11e5-a668-fa163ebb7028
+      description: provider_auth_error
+      expression: 
+      towhat: Vm
+      guid: e693632a-3b49-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: ems_auth_error
+          description: Provider Auth Error
+          guid: 7135032a-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: de4189ae-3b49-11e5-a668-fa163ebb7028
+          description: ! 'automate: provider_auth_error'
+          guid: de4189ae-3b49-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: provider_auth_error
+      Condition: []
+    - name: 501c2658-3b48-11e5-a668-fa163ebb7028
+      description: provider_auth_incomplete_credentials
+      expression: 
+      towhat: Vm
+      guid: 501c2658-3b48-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: ems_auth_incomplete
+          description: Provider Auth Incomplete Credentials
+          guid: 71336236-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 4653051a-3b48-11e5-a668-fa163ebb7028
+          description: ! 'automate: provider_auth_incomplete_credentials'
+          guid: 4653051a-3b48-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: provider_auth_incomplete_credentials
+      Condition: []
+    - name: 9b9ebb48-3ac8-11e5-a668-fa163ebb7028
+      description: provider_auth_invalid
+      expression: 
+      towhat: Vm
+      guid: 9b9ebb48-3ac8-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: ems_auth_invalid
+          description: Provider Auth Invalid
+          guid: 71303e80-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 8ec08870-3ac8-11e5-a668-fa163ebb7028
+          description: ! 'automate: provider_auth_invalid'
+          guid: 8ec08870-3ac8-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: provider_auth_invalid
+      Condition: []
+    - name: ee005174-3b47-11e5-a668-fa163ebb7028
+      description: provider_auth_unreachable
+      expression: 
+      towhat: Vm
+      guid: ee005174-3b47-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: ems_auth_unreachable
+          description: Provider Auth Unreachable
+          guid: 7131ced0-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: e606e456-3b47-11e5-a668-fa163ebb7028
+          description: ! 'automate: provider_auth_unreachable'
+          guid: e606e456-3b47-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: provider_auth_unreachable
+      Condition: []
+    - name: 237fe088-3ac3-11e5-a668-fa163ebb7028
+      description: provider_auth_valid
+      expression: 
+      towhat: Vm
+      guid: 237fe088-3ac3-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: ems_auth_valid
+          description: Provider Auth Valid
+          guid: 712ead72-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 1d971ede-3ac3-11e5-a668-fa163ebb7028
+          description: ! 'automate: provider_auth_valid'
+          guid: 1d971ede-3ac3-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: provider_auth_valid
+      Condition: []
+    - name: eae2a16a-3ac3-11e5-a668-fa163ebb7028
+      description: service_provision_complete
+      expression: 
+      towhat: Vm
+      guid: eae2a16a-3ac3-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: service_provisioned
+          description: Service Provision Complete
+          guid: 71e31a5a-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: e35fe18c-3ac3-11e5-a668-fa163ebb7028
+          description: ! 'automate: service_provision_complete'
+          guid: e35fe18c-3ac3-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: service_provision_complete
+      Condition: []
+    - name: 9aa8aab4-3ac3-11e5-a668-fa163ebb7028
+      description: service_retired
+      expression: 
+      towhat: Vm
+      guid: 9aa8aab4-3ac3-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: service_retired
+          description: Service Retired
+          guid: 71dffaaa-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 93407a04-3ac3-11e5-a668-fa163ebb7028
+          description: ! 'automate: service_retired'
+          guid: 93407a04-3ac3-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: service_retired
+      Condition: []
+    - name: 718dc312-3ac3-11e5-a668-fa163ebb7028
+      description: service_retirement_warning
+      expression: 
+      towhat: Vm
+      guid: 718dc312-3ac3-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: service_retire_warn
+          description: Service Retirement Warning
+          guid: 71e187a8-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 6944717e-3ac3-11e5-a668-fa163ebb7028
+          description: ! 'automate: service_retirement_warning'
+          guid: 6944717e-3ac3-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: service_retirement_warning
+      Condition: []
+    - name: 97628026-3b4c-11e5-a668-fa163ebb7028
+      description: service_start_req
+      expression: 
+      towhat: Vm
+      guid: 97628026-3b4c-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_service_start
+          description: Service Start Request
+          guid: 71e4adca-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 8f5f760e-3b4c-11e5-a668-fa163ebb7028
+          description: ! 'automate: service_start_req'
+          guid: 8f5f760e-3b4c-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: service_start_req
+      Condition: []
+    - name: d1ccb7f2-3ac7-11e5-a668-fa163ebb7028
+      description: service_started
+      expression: 
+      towhat: Vm
+      guid: d1ccb7f2-3ac7-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: service_started
+          description: Service Started
+          guid: 71e653dc-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: c5b3b6f0-3ac7-11e5-a668-fa163ebb7028
+          description: ! 'automate: service_started'
+          guid: c5b3b6f0-3ac7-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: service_started
+      Condition: []
+    - name: 455930fe-3b47-11e5-a668-fa163ebb7028
+      description: service_stop_req
+      expression: 
+      towhat: Vm
+      guid: 455930fe-3b47-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_service_stop
+          description: Service Stop Request
+          guid: 71e7efbc-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 3ebe2b5a-3b47-11e5-a668-fa163ebb7028
+          description: ! 'automate: service_stop_req'
+          guid: 3ebe2b5a-3b47-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: service_stop_req
+      Condition: []
+    - name: e6d55b84-3ac4-11e5-a668-fa163ebb7028
+      description: service_stopped
+      expression: 
+      towhat: Vm
+      guid: e6d55b84-3ac4-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: service_stopped
+          description: Service Stopped
+          guid: 71e98e44-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: debd53e8-3ac4-11e5-a668-fa163ebb7028
+          description: ! 'automate: service_stopped'
+          guid: debd53e8-3ac4-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: service_stopped
+      Condition: []
+    - name: aa1b1b6c-3b4a-11e5-a668-fa163ebb7028
       description: tag_complete
       expression: 
       towhat: Vm
-      guid: caf645ea-f0b6-11e2-96aa-005056924c3d
+      guid: aa1b1b6c-3b4a-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -1019,18 +1266,19 @@
       MiqPolicyContent:
       - qualifier: success
         success_sequence: 1
+        success_synchronous: true
         MiqEvent:
           name: assigned_company_tag
           description: Tag Complete
-          guid: f82e7fd8-ed72-11e2-a4a9-005056924c3d
+          guid: 71550ae4-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: 39a6d21c-f0b6-11e2-96aa-005056924c3d
+          name: a0f02d84-3b4a-11e5-a668-fa163ebb7028
           description: ! 'automate: tag_complete'
-          guid: 39a6d21c-f0b6-11e2-96aa-005056924c3d
+          guid: a0f02d84-3b4a-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
@@ -1038,11 +1286,11 @@
             :ae_hash:
               event: tag_complete
       Condition: []
-    - name: 662edb8e-f301-11e2-96aa-005056924c3d
-      description: auth_change
+    - name: 1e2fab52-3b4c-11e5-a668-fa163ebb7028
+      description: tag_parent_cluster_complete
       expression: 
       towhat: Vm
-      guid: 662edb8e-f301-11e2-96aa-005056924c3d
+      guid: 1e2fab52-3b4c-11e5-a668-fa163ebb7028
       created_by: admin
       updated_by: admin
       notes: 
@@ -1051,22 +1299,1330 @@
       MiqPolicyContent:
       - qualifier: success
         success_sequence: 1
+        success_synchronous: true
         MiqEvent:
-          name: ems_auth_changed
-          description: Provider Auth Changed
-          guid: f7f0821e-ed72-11e2-a4a9-005056924c3d
+          name: assigned_company_tag_parent_ems_cluster
+          description: Tag Parent Cluster Complete
+          guid: 71580942-e45c-11e4-b5f9-fa163e067f80
           event_type: Default
           definition: 
           default: 
           enabled: 
         MiqAction:
-          name: 03f49262-f0b6-11e2-96aa-005056924c3d
-          description: ! 'automate: mgmt_sys_auth_change'
-          guid: 03f49262-f0b6-11e2-96aa-005056924c3d
+          name: 1832a54c-3b4c-11e5-a668-fa163ebb7028
+          description: ! 'automate: tag_parent_cluster_complete'
+          guid: 1832a54c-3b4c-11e5-a668-fa163ebb7028
           action_type: custom_automation
           options:
             :ae_message: create
             :ae_request: RelayEvents
             :ae_hash:
-              event: mgmt_sys_auth_change
+              event: tag_parent_cluster_complete
+      Condition: []
+    - name: 6669ac66-3ac4-11e5-a668-fa163ebb7028
+      description: tag_parent_datastore_complete
+      expression: 
+      towhat: Vm
+      guid: 6669ac66-3ac4-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: assigned_company_tag_parent_storage
+          description: Tag Parent Datastore Complete
+          guid: 715b1fce-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 5ec237bc-3ac4-11e5-a668-fa163ebb7028
+          description: ! 'automate: tag_parent_datastore_complete'
+          guid: 5ec237bc-3ac4-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: tag_parent_datastore_complete
+      Condition: []
+    - name: f56532d0-3b48-11e5-a668-fa163ebb7028
+      description: tag_parent_host_complete
+      expression: 
+      towhat: Vm
+      guid: f56532d0-3b48-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: assigned_company_tag_parent_host
+          description: Tag Parent Host Complete
+          guid: 71568504-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: ea6f1e72-3b48-11e5-a668-fa163ebb7028
+          description: ! 'automate: tag_parent_host_complete'
+          guid: ea6f1e72-3b48-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: tag_parent_host_complete
+      Condition: []
+    - name: f6ffa7fc-3b4c-11e5-a668-fa163ebb7028
+      description: tag_parent_resource_pool_complete
+      expression: 
+      towhat: Vm
+      guid: f6ffa7fc-3b4c-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: assigned_company_tag_parent_resource_pool
+          description: Tag Parent Resource Pool Complete
+          guid: 7159928a-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: ed9dc004-3b4c-11e5-a668-fa163ebb7028
+          description: ! 'automate: tag_parent_resource_pool_complete'
+          guid: ed9dc004-3b4c-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: tag_parent_resource_pool_complete
+      Condition: []
+    - name: 22f16b12-3b47-11e5-a668-fa163ebb7028
+      description: untag_complete
+      expression: 
+      towhat: Vm
+      guid: 22f16b12-3b47-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: unassigned_company_tag
+          description: Un-Tag Complete
+          guid: 715e52ca-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 1d004a02-3b47-11e5-a668-fa163ebb7028
+          description: ! 'automate: untag_complete'
+          guid: 1d004a02-3b47-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: untag_complete
+      Condition: []
+    - name: c5d9f2c2-3b4c-11e5-a668-fa163ebb7028
+      description: untag_parent_cluster_complete
+      expression: 
+      towhat: Vm
+      guid: c5d9f2c2-3b4c-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: unassigned_company_tag_parent_ems_cluster
+          description: Un-Tag Parent Cluster Complete
+          guid: 7161b73a-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: bd10ede4-3b4c-11e5-a668-fa163ebb7028
+          description: ! 'automate: untag_parent_cluster_complete'
+          guid: bd10ede4-3b4c-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: untag_parent_cluster_complete
+      Condition: []
+    - name: c2ff4a5e-3ac3-11e5-a668-fa163ebb7028
+      description: untag_parent_datastore_complete
+      expression: 
+      towhat: Vm
+      guid: c2ff4a5e-3ac3-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: unassigned_company_tag_parent_storage
+          description: Un-Tag Parent Datastore Complete
+          guid: 71653586-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: ba85a8fa-3ac3-11e5-a668-fa163ebb7028
+          description: ! 'automate: untag_parent_datastore_complete'
+          guid: ba85a8fa-3ac3-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: untag_parent_datastore_complete
+      Condition: []
+    - name: e36721e6-3ac2-11e5-a668-fa163ebb7028
+      description: untag_parent_host_complete
+      expression: 
+      towhat: Vm
+      guid: e36721e6-3ac2-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: unassigned_company_tag_parent_host
+          description: Un-Tag Parent Host Complete
+          guid: 71600764-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: dd73d6e4-3ac2-11e5-a668-fa163ebb7028
+          description: ! 'automate: untag_parent_host_complete'
+          guid: dd73d6e4-3ac2-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: untag_parent_host_complete
+      Condition: []
+    - name: bb8a9958-3ac4-11e5-a668-fa163ebb7028
+      description: untag_parent_resource_pool_complete
+      expression: 
+      towhat: Vm
+      guid: bb8a9958-3ac4-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: unassigned_company_tag_parent_resource_pool
+          description: Un-Tag Parent Resource Pool Complete
+          guid: 716373ae-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: b36bc6de-3ac4-11e5-a668-fa163ebb7028
+          description: ! 'automate: untag_parent_resource_pool_complete'
+          guid: b36bc6de-3ac4-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: untag_parent_resource_pool_complete
+      Condition: []
+    - name: 0734b324-3ac6-11e5-a668-fa163ebb7028
+      description: vm_analysis_start
+      expression: 
+      towhat: Vm
+      guid: 0734b324-3ac6-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_scan_start
+          description: VM Analysis Start
+          guid: 71b1c432-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: fdabe21e-3ac5-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_analysis_start'
+          guid: fdabe21e-3ac5-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_analysis_start
+      Condition: []
+    - name: 3a9807ca-3ac6-11e5-a668-fa163ebb7028
+      description: vm_clone_complete
+      expression: 
+      towhat: Vm
+      guid: 3a9807ca-3ac6-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_clone
+          description: VM Clone Complete
+          guid: 7176dec6-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 305ea3ea-3ac6-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_clone_complete'
+          guid: 305ea3ea-3ac6-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_clone_complete
+      Condition: []
+    - name: 900ce150-3ac4-11e5-a668-fa163ebb7028
+      description: vm_clone_start
+      expression: 
+      towhat: Vm
+      guid: 900ce150-3ac4-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_clone_start
+          description: VM Clone Start
+          guid: 71788212-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 8823d6ce-3ac4-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_clone_start'
+          guid: 8823d6ce-3ac4-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_clone_start
+      Condition: []
+    - name: 141d3af0-3b4a-11e5-a668-fa163ebb7028
+      description: vm_compliance_failed
+      expression: 
+      towhat: Vm
+      guid: 141d3af0-3b4a-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_compliance_failed
+          description: VM Compliance Failed
+          guid: 71c8b94e-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 0b890356-3b4a-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_compliance_failed'
+          guid: 0b890356-3b4a-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_compliance_failed
+      Condition: []
+    - name: df32c55c-3ac8-11e5-a668-fa163ebb7028
+      description: vm_compliance_passed
+      expression: 
+      towhat: Vm
+      guid: df32c55c-3ac8-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_compliance_passed
+          description: VM Compliance Passed
+          guid: 71c71c10-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: d2661e6e-3ac8-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_compliance_passed'
+          guid: d2661e6e-3ac8-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_compliance_passed
+      Condition: []
+    - name: 45e134c2-3b4c-11e5-a668-fa163ebb7028
+      description: vm_create_complete
+      expression: 
+      towhat: Vm
+      guid: 45e134c2-3b4c-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_create
+          description: VM Create Complete
+          guid: 7166fc86-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 3f04068e-3b4c-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_create_complete'
+          guid: 3f04068e-3b4c-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_create_complete
+      Condition: []
+    - name: e2a9c296-3ac1-11e5-a668-fa163ebb7028
+      description: vm_delete_from_disk_req
+      expression: 
+      towhat: Vm
+      guid: e2a9c296-3ac1-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_destroy
+          description: VM Delete (from Disk) Request
+          guid: 717f4c0a-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: dd38b330-3ac1-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_delete_from_disk_req'
+          guid: dd38b330-3ac1-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_delete_from_disk_req
+      Condition: []
+    - name: 14042e88-3ac4-11e5-a668-fa163ebb7028
+      description: vm_discovery
+      expression: 
+      towhat: Vm
+      guid: 14042e88-3ac4-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_discover
+          description: VM Discovery
+          guid: 71810f7c-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 0c73c0ca-3ac4-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_discovery'
+          guid: 0c73c0ca-3ac4-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_discovery
+      Condition: []
+    - name: 439c2bac-3ac2-11e5-a668-fa163ebb7028
+      description: vm_guest_reboot
+      expression: 
+      towhat: Vm
+      guid: 439c2bac-3ac2-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_reboot_guest
+          description: VM Guest Reboot
+          guid: 71996d60-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 3c497a6c-3ac2-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_guest_reboot'
+          guid: 3c497a6c-3ac2-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_guest_reboot
+      Condition: []
+    - name: 21deaa08-3ac2-11e5-a668-fa163ebb7028
+      description: vm_guest_reboot_req
+      expression: 
+      towhat: Vm
+      guid: 21deaa08-3ac2-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_reboot_guest
+          description: VM Guest Reboot Request
+          guid: 7197b5a6-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 1b4c6608-3ac2-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_guest_reboot_req'
+          guid: 1b4c6608-3ac2-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_guest_reboot_req
+      Condition: []
+    - name: 6fa9f4b8-3b49-11e5-a668-fa163ebb7028
+      description: vm_guest_shutdown
+      expression: 
+      towhat: Vm
+      guid: 6fa9f4b8-3b49-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_shutdown_guest
+          description: VM Guest Shutdown
+          guid: 71960198-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 69c3a0e4-3b49-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_guest_shutdown'
+          guid: 69c3a0e4-3b49-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_guest_shutdown
+      Condition: []
+    - name: 653bcca4-3ac2-11e5-a668-fa163ebb7028
+      description: vm_guest_shutdown_req
+      expression: 
+      towhat: Vm
+      guid: 653bcca4-3ac2-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_shutdown_guest
+          description: VM Guest Shutdown Request
+          guid: 719b2dda-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 5f286d2c-3ac2-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_guest_shutdown_req'
+          guid: 5f286d2c-3ac2-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_guest_shutdown_req
+      Condition: []
+    - name: 95d42366-3b49-11e5-a668-fa163ebb7028
+      description: vm_live_migration_vmotion
+      expression: 
+      towhat: Vm
+      guid: 95d42366-3b49-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_migrate
+          description: VM Live Migration (VMOTION)
+          guid: 718a9182-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 8ee13bfc-3b49-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_live_migration_vmotion'
+          guid: 8ee13bfc-3b49-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_live_migration_vmotion
+      Condition: []
+    - name: 0167de16-3ac2-11e5-a668-fa163ebb7028
+      description: vm_power_off
+      expression: 
+      towhat: Vm
+      guid: 0167de16-3ac2-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_poweroff
+          description: VM Power Off
+          guid: 7192a87c-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: fbce6eac-3ac1-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_power_off'
+          guid: fbce6eac-3ac1-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_power_off
+      Condition: []
+    - name: 498a4a52-3b4a-11e5-a668-fa163ebb7028
+      description: vm_power_on
+      expression: 
+      towhat: Vm
+      guid: 498a4a52-3b4a-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_start
+          description: VM Power On
+          guid: 71878f5a-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 40d9dc2e-3b4a-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_power_on'
+          guid: 40d9dc2e-3b4a-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_power_on
+      Condition: []
+    - name: 13a8aa3a-3ac5-11e5-a668-fa163ebb7028
+      description: vm_power_on_req
+      expression: 
+      towhat: Vm
+      guid: 13a8aa3a-3ac5-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_start
+          description: VM Power On Request
+          guid: 71890ef2-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 0b18218e-3ac5-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_power_on_req'
+          guid: 0b18218e-3ac5-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_power_on_req
+      Condition: []
+    - name: 488161b8-3ac3-11e5-a668-fa163ebb7028
+      description: vm_provision_complete
+      expression: 
+      towhat: Vm
+      guid: 488161b8-3ac3-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_provisioned
+          description: VM Provision Complete
+          guid: 7185ed6c-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 419623f2-3ac3-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_provision_complete'
+          guid: 419623f2-3ac3-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_provision_complete
+      Condition: []
+    - name: 78956d36-3b4a-11e5-a668-fa163ebb7028
+      description: vm_remote_console_connected
+      expression: 
+      towhat: Vm
+      guid: 78956d36-3b4a-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_remote_console_connected
+          description: VM Remote Console Connected
+          guid: 71ca57fe-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 6f9d76ec-3b4a-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_remote_console_connected'
+          guid: 6f9d76ec-3b4a-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_remote_console_connected
+      Condition: []
+    - name: 02f41cd0-3ac3-11e5-a668-fa163ebb7028
+      description: vm_removal_from_inventory
+      expression: 
+      towhat: Vm
+      guid: 02f41cd0-3ac3-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_unregister
+          description: VM Removal from Inventory
+          guid: 71a0891a-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: fd23e574-3ac2-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_removal_from_inventory'
+          guid: fd23e574-3ac2-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_removal_from_inventory
+      Condition: []
+    - name: 84806da4-3ac2-11e5-a668-fa163ebb7028
+      description: vm_removal_from_inventory_req
+      expression: 
+      towhat: Vm
+      guid: 84806da4-3ac2-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_unregister
+          description: VM Removal from Inventory Request
+          guid: 71a25966-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 7ead569e-3ac2-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_removal_from_inventory_req'
+          guid: 7ead569e-3ac2-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_removal_from_inventory_req
+      Condition: []
+    - name: 8794dbac-3b48-11e5-a668-fa163ebb7028
+      description: vm_renamed_event
+      expression: 
+      towhat: Vm
+      guid: 8794dbac-3b48-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_renamed_event
+          description: VM Renamed Event
+          guid: 717d899c-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 7def459c-3b48-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_renamed_event'
+          guid: 7def459c-3b48-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_renamed_event
+      Condition: []
+    - name: 4106951e-3ac5-11e5-a668-fa163ebb7028
+      description: vm_reset
+      expression: 
+      towhat: Vm
+      guid: 4106951e-3ac5-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_reset
+          description: VM Reset
+          guid: 718c1e94-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 3821d102-3ac5-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_reset'
+          guid: 3821d102-3ac5-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_reset
+      Condition: []
+    - name: a492c920-3ac2-11e5-a668-fa163ebb7028
+      description: vm_reset_req
+      expression: 
+      towhat: Vm
+      guid: a492c920-3ac2-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_reset
+          description: VM Reset Request
+          guid: 718dc6ea-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 9e5047f4-3ac2-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_reset_req'
+          guid: 9e5047f4-3ac2-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_reset_req
+      Condition: []
+    - name: bde2ed52-3b48-11e5-a668-fa163ebb7028
+      description: vm_retired
+      expression: 
+      towhat: Vm
+      guid: bde2ed52-3b48-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_retired
+          description: VM Retired
+          guid: 7182ab34-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: b3ec9258-3b48-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_retired'
+          guid: b3ec9258-3b48-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_retired
+      Condition: []
+    - name: a72a37a0-3ac6-11e5-a668-fa163ebb7028
+      description: vm_settings_change
+      expression: 
+      towhat: Vm
+      guid: a72a37a0-3ac6-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_reconfigure
+          description: VM Settings Change
+          guid: 717bdc32-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 9ceb1a7a-3ac6-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_settings_change'
+          guid: 9ceb1a7a-3ac6-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_settings_change
+      Condition: []
+    - name: 1e6bbe3e-3b48-11e5-a668-fa163ebb7028
+      description: vm_snapshot_create_complete
+      expression: 
+      towhat: Vm
+      guid: 1e6bbe3e-3b48-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_snapshot_complete
+          description: VM Snapshot Create Complete
+          guid: 71a61e34-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 13b76c4a-3b48-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_snapshot_create_complete'
+          guid: 13b76c4a-3b48-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_snapshot_create_complete
+      Condition: []
+    - name: 001ad3ee-3b47-11e5-a668-fa163ebb7028
+      description: vm_snapshot_create_req
+      expression: 
+      towhat: Vm
+      guid: 001ad3ee-3b47-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_create_snapshot
+          description: VM Snapshot Create Request
+          guid: 71afcb5a-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: faa179f4-3b46-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_snapshot_create_req'
+          guid: faa179f4-3b46-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_snapshot_create_req
+      Condition: []
+    - name: 7082cd3a-3ac5-11e5-a668-fa163ebb7028
+      description: vm_snapshot_create_started
+      expression: 
+      towhat: Vm
+      guid: 7082cd3a-3ac5-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_snapshot
+          description: VM Snapshot Create Started
+          guid: 71a42af2-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 68016e1e-3ac5-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_snapshot_create_started'
+          guid: 68016e1e-3ac5-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_snapshot_create_started
+      Condition: []
+    - name: 25a9ef74-3ac9-11e5-a668-fa163ebb7028
+      description: vm_standby_of_guest_req
+      expression: 
+      towhat: Vm
+      guid: 25a9ef74-3ac9-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - MiqEvent:
+          name: request_vm_standby_guest
+          description: VM Standby of Guest Request
+          guid: 719eba54-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+      Condition: []
+    - name: 3d3690de-3ac4-11e5-a668-fa163ebb7028
+      description: vm_suspend
+      expression: 
+      towhat: Vm
+      guid: 3d3690de-3ac4-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_suspend
+          description: VM Suspend
+          guid: 718f65ae-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 35bc86a6-3ac4-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_suspend'
+          guid: 35bc86a6-3ac4-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_suspend
+      Condition: []
+    - name: df3c5970-3ac6-11e5-a668-fa163ebb7028
+      description: vm_suspend_req
+      expression: 
+      towhat: Vm
+      guid: df3c5970-3ac6-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: request_vm_suspend
+          description: VM Suspend Request
+          guid: 719102f6-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: d4c8a91c-3ac6-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_suspend_req'
+          guid: d4c8a91c-3ac6-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_suspend_req
+      Condition: []
+    - name: 5588981e-3ac7-11e5-a668-fa163ebb7028
+      description: vm_template_create_complete
+      expression: 
+      towhat: Vm
+      guid: 5588981e-3ac7-11e5-a668-fa163ebb7028
+      created_by: admin
+      updated_by: admin
+      notes: 
+      active: true
+      mode: control
+      MiqPolicyContent:
+      - qualifier: success
+        success_sequence: 1
+        success_synchronous: true
+        MiqEvent:
+          name: vm_template
+          description: VM Template Create Complete
+          guid: 717a2f18-e45c-11e4-b5f9-fa163e067f80
+          event_type: Default
+          definition: 
+          default: 
+          enabled: 
+        MiqAction:
+          name: 4acbc270-3ac7-11e5-a668-fa163ebb7028
+          description: ! 'automate: vm_template_create_complete'
+          guid: 4acbc270-3ac7-11e5-a668-fa163ebb7028
+          action_type: custom_automation
+          options:
+            :ae_message: create
+            :ae_request: RelayEvents
+            :ae_hash:
+              event: vm_template_create_complete
       Condition: []
