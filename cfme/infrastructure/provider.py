@@ -314,25 +314,14 @@ def _fill_credential(form, cred, validate=None):
                                'candu_verify_secret': cred.verify_secret,
                                'validate_btn': validate})
     else:
-        fill(credential_form, {'default_principal': cred.principal,
+        if cred.domain:
+            principal = r'{}\{}'.format(cred.domain, cred.principal)
+        else:
+            principal = cred.principal
+        fill(credential_form, {'default_principal': principal,
                                'default_secret': cred.secret,
                                'default_verify_secret': cred.verify_secret,
                                'validate_btn': validate})
-    if validate:
-        flash.assert_no_errors()
-
-
-@fill.method((Form, SCVMMProvider.Credential))
-def _fill_scvmm_credential(form, cred, validate=None):
-    fill(
-        credential_form,
-        {
-            'default_principal': r'{}\{}'.format(cred.domain, cred.principal),
-            'default_secret': cred.secret,
-            'default_verify_secret': cred.verify_secret,
-            'validate_btn': validate
-        }
-    )
     if validate:
         flash.assert_no_errors()
 
