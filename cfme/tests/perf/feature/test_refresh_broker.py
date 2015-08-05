@@ -47,7 +47,7 @@ def test_refresh_broker_provider_init(ssh_client, clean_appliance, repetition, p
 
 @pytest.mark.parametrize('repetition', range(0, perf_tests['feature']['refresh']['provider_init']))
 @pytest.mark.parametrize('provider', get_benchmark_vmware_providers())
-def test_refresh_broker_provider_init_profile_perftools(ssh_client, clean_appliance, repetition,
+def test_profile_refresh_broker_provider_init_perftools(ssh_client, clean_appliance, repetition,
         provider):
     """Measures time required to complete an initial EmsRefresh.refresh on specific provider and
     profile using perftools.rb.  Appliance must be setup with perftools in advance.  Profile file
@@ -75,7 +75,7 @@ def test_refresh_broker_provider_init_profile_perftools(ssh_client, clean_applia
 
 @pytest.mark.parametrize('repetition', range(0, perf_tests['feature']['refresh']['provider_init']))
 @pytest.mark.parametrize('provider', get_benchmark_vmware_providers())
-def test_refresh_broker_provider_init_profile_stackprof(ssh_client, clean_appliance, repetition,
+def test_profile_refresh_broker_provider_init_stackprof(ssh_client, clean_appliance, repetition,
         provider):
     """Measures time required to complete an initial EmsRefresh.refresh on specific provider and
     profile using perftools.rb.  Appliance must be setup with stackprof in advance.  Profile file
@@ -125,7 +125,7 @@ def test_refresh_broker_provider_delta(ssh_client, clean_appliance, provider):
 
 
 @pytest.mark.parametrize('provider', get_benchmark_vmware_providers())
-def test_refresh_broker_provider_delta_profile_perftools(ssh_client, clean_appliance, provider):
+def test_profile_refresh_broker_provider_delta_perftools(ssh_client, clean_appliance, provider):
     """Measures time required to complete an EmsRefresh.refresh on specific provider after initial
     refresh.
     Works with Ruby 1.9.3/2.0.0 w/ perftools.rb
@@ -152,7 +152,7 @@ def test_refresh_broker_provider_delta_profile_perftools(ssh_client, clean_appli
 
 
 @pytest.mark.parametrize('provider', get_benchmark_vmware_providers())
-def test_refresh_broker_provider_delta_profile_stackprof(ssh_client, clean_appliance, provider):
+def test_profile_refresh_broker_provider_delta_stackprof(ssh_client, clean_appliance, provider):
     """Measures time required to complete an EmsRefresh.refresh on specific provider after initial
     refresh.
     Works with Ruby 2.1.x w/ stackprof
