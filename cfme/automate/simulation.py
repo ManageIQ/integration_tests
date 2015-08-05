@@ -2,7 +2,7 @@
 from collections import Mapping
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import Form, Select, ShowingInputs, fill, flash, form_buttons
+from cfme.web_ui import Form, Input, Select, ShowingInputs, fill, flash, form_buttons
 
 
 class AVPForm(object):
@@ -33,14 +33,14 @@ def _fill_avp_form(avp, data):
 
 sim_form = Form(fields=[
     ("instance", Select("select#instance_name")),
-    ("message", "input#object_message"),
-    ("request", "input#object_request"),
+    ("message", Input("object_message")),
+    ("request", Input("object_request")),
     ("attribute", ShowingInputs(
         Select("select#target_class"),
         Select("select#target_id"),
-        min_values=2,
+        min_values=1,
     )),
-    ("execute_methods", "input#readonly"),
+    ("execute_methods", Input("readonly")),
     ("avp", AVPForm()),
 ])
 
@@ -50,17 +50,13 @@ sim_btn = form_buttons.FormButton("Submit Automation Simulation with the specifi
 def simulate(**data):
     """Runs the simulation of specified Automate object.
 
-    If `attribute` is not specified, will be chosen randomly.
-
     Args:
         **data: See :py:data:`sim_form` for keyword reference
     """
     sel.force_navigate("automate_simulation")
     if data.get("attribute", None) is None:
-        t = sel.text(sim_form.attribute[0].options[1]).encode("utf-8")
+        t = sel.text(sim_form.attribute[0].options[0]).encode("utf-8")  # None
         sel.select(sim_form.attribute[0], t)
-        selection = sel.text(sim_form.attribute[1].options[1]).encode("utf-8")
-        data["attribute"] = [t, selection]
     fill(sim_form, data, action=sim_btn)
     flash.assert_message_match("Automation Simulation has been run")
     flash.assert_no_errors()
