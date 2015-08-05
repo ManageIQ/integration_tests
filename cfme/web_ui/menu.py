@@ -95,6 +95,8 @@ def get_current_toplevel_name():
 
 def get_rid_of_the_menu_box():
     """Moves the mouse pointer away from the menu location and waits for the popups to hide."""
+    # We received quite a lot of errors based on #tP not being visible. This tries to wait for it.
+    wait_for(sel.is_displayed, ["#tP"], num_sec=5, delay=0.1, message="page ready")
     ActionChains(sel.browser()).move_to_element(sel.element("#tP")).perform()
     wait_for(lambda: not any_box_displayed(), num_sec=10, delay=0.1, message="menu box")
 
