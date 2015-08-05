@@ -215,6 +215,13 @@ def test_group_crud():
     group.delete()
 
 
+def test_group_duplicate_name():
+    group = new_group()
+    group.create()
+    with error.expected("Description has already been taken"):
+        group.create()
+
+
 def test_group_edit_tag():
     group = new_group()
     group.create()
