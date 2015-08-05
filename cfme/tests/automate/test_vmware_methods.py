@@ -6,7 +6,7 @@ import pytest
 from cfme.automate.buttons import ButtonGroup, Button
 from cfme.automate.explorer import Namespace, Class, Instance, Domain
 from cfme.automate.service_dialogs import ServiceDialog
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.common.vm import VM
 from cfme.web_ui import fill, flash, form_buttons, toolbar, Input
 from utils import testgen
 from utils.providers import setup_provider
@@ -68,16 +68,16 @@ def testing_group(request):
 @pytest.fixture(scope="function")
 def testing_vm(request, provisioning, provider):
     setup_provider(provider.key)
-    vm = Vm(
-        name="test_ae_hd_{}".format(fauxfactory.gen_alphanumeric()),
-        provider_crud=provider,
+    vm = VM.factory(
+        "test_ae_hd_{}".format(fauxfactory.gen_alphanumeric()),
+        provider,
         template_name=provisioning["template"]
     )
 
     def _finalize():
         vm.delete_from_provider()
-        if vm.does_vm_exist_in_cfme():
-            vm.remove_from_cfme()
+        if vm.exists:
+            vm.delete()
     request.addfinalizer(_finalize)
     vm.create_on_provider(find_in_cfme=True, allow_skip="default")
     return vm

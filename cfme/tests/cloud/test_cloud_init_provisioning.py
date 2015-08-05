@@ -4,8 +4,7 @@
 import fauxfactory
 import pytest
 
-from cfme.cloud.instance import instance_factory
-from cfme.cloud.provider import OpenStackProvider
+from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.pxe import get_template_from_config
 from utils.conf import cfme_data
@@ -70,7 +69,7 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
 
     mgmt_system = provider.mgmt
 
-    instance = instance_factory(vm_name, provider, image)
+    instance = VM.factory(vm_name, provider, image)
 
     request.addfinalizer(instance.delete_from_provider)
 
@@ -86,7 +85,7 @@ def test_provision_cloud_init(request, setup_provider, provider, provisioning,
         'custom_template': {'name': [provisioning['ci-template']]},
     }
 
-    if isinstance(provider, OpenStackProvider):
+    if provider.type == "openstack":
         floating_ip = mgmt_system.get_first_floating_ip()
         inst_args['cloud_network'] = provisioning['cloud_network']
         inst_args['public_ip_address'] = floating_ip

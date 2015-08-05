@@ -77,6 +77,17 @@ class BaseProvider(object):
     def version(self):
         return self.data['version']
 
+    @property
+    def category(self):
+        # Prevent circular imports
+        from utils.providers import cloud_provider_type_map, infra_provider_type_map
+        if self.type in cloud_provider_type_map:
+            return "cloud"
+        elif self.type in infra_provider_type_map:
+            return "infra"
+        else:
+            return "unknown"
+
     def get_yaml_data(self):
         """ Returns yaml data for this provider.
         """

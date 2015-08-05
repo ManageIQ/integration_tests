@@ -377,7 +377,7 @@ def _test_vm_provision():
 def _test_vm_power_on():
     """Ensures power button is shown for a VM"""
     logger.info("Checking for power button")
-    vm_name = virtual_machines.get_first_vm_title()
+    vm_name = virtual_machines.Vm.get_first_vm_title()
     logger.debug("VM " + vm_name + " selected")
     if not virtual_machines.is_pwr_option_visible(vm_name, option=virtual_machines.Vm.POWER_ON):
         raise OptionNotAvailable("Power button does not exist")

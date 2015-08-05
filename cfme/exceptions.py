@@ -183,13 +183,6 @@ class UnidentifiableTagType(CFMEException):
     pass
 
 
-class VmNotFound(CFMEException):
-    """
-    Raised if a specific VM cannot be found.
-    """
-    pass
-
-
 class VmNotFoundViaIP(CFMEException):
     """
     Raised if a specific VM cannot be found.
@@ -197,16 +190,27 @@ class VmNotFoundViaIP(CFMEException):
     pass
 
 
-class TemplateNotFound(CFMEException):
+class VmOrInstanceNotFound(CFMEException):
+    pass
+
+
+class VmNotFound(VmOrInstanceNotFound):
     """
-    Raised if a specific Template cannot be found.
+    Raised if a specific VM cannot be found.
     """
     pass
 
 
-class InstanceNotFound(CFMEException):
+class InstanceNotFound(VmOrInstanceNotFound):
     """
     Raised if a specific instance cannot be found.
+    """
+    pass
+
+
+class TemplateNotFound(CFMEException):
+    """
+    Raised if a specific Template cannot be found.
     """
     pass
 

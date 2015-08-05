@@ -6,11 +6,11 @@ import re
 from datetime import datetime, timedelta
 
 from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.exceptions import FlashMessageException
-from cfme.infrastructure.virtual_machines import Vm, details_page
 from cfme.provisioning import provisioning_form
 from cfme.services import requests
-from cfme.web_ui import fill, flash
+from cfme.web_ui import InfoBlock, fill, flash
 from utils import testgen, version
 from utils.log import logger
 from utils.providers import setup_provider
@@ -115,7 +115,7 @@ def provisioner(request, provider):
         assert row.last_message.text == version.pick(
             {version.LOWEST: 'VM Provisioned Successfully',
              "5.3": 'Vm Provisioned Successfully', })
-        return Vm(vm_name, provider)
+        return VM.factory(vm_name, provider)
 
     return _provisioner
 
@@ -190,7 +190,7 @@ def test_disk_format_select(provisioner, prov_data, template_name, disk_format, 
 
     # Go to the VM info
     vm.load_details(refresh=True)
-    thin = details_page.infoblock.text(
+    thin = InfoBlock.text(
         "Datastore Allocation Summary", "Thin Provisioning Used").strip().lower() == "true"
     if disk_format == "thin":
         assert thin, "The disk format should be Thin"

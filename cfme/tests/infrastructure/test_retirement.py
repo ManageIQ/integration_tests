@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
+import datetime
 import fauxfactory
 import pytest
-from utils import testgen
-from cfme.infrastructure import virtual_machines as vms
-from utils.wait import wait_for
-import datetime
 from functools import partial
+
+from cfme.common.vm import VM
+from utils import testgen
+from utils.wait import wait_for
 
 
 def pytest_generate_tests(metafunc):
@@ -35,7 +36,7 @@ def pytest_generate_tests(metafunc):
 @pytest.fixture(scope="function")
 def vm(request, setup_provider, provider, provisioning):
     vm_name = 'test_retire_prov_%s' % fauxfactory.gen_alphanumeric()
-    myvm = vms.Vm(name=vm_name, provider_crud=provider, template_name=provisioning['template'])
+    myvm = VM.factory(vm_name, provider, template_name=provisioning['template'])
     request.addfinalizer(myvm.delete_from_provider)
     myvm.create_on_provider(find_in_cfme=True, allow_skip="default")
     return myvm

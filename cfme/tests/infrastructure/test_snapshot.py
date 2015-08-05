@@ -3,8 +3,9 @@ import fauxfactory
 import pytest
 from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
 from cfme.automate.simulation import simulate
+from cfme.common.vm import VM
 from cfme.fixtures import pytest_selenium as sel
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.virtual_machines import Vm  # For Vm.Snapshot
 from utils import testgen
 from utils.conf import credentials
 from utils.log import logger
@@ -35,7 +36,7 @@ def domain(request):
 @pytest.fixture(scope="module")
 def test_vm(setup_provider_modscope, provider, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = Vm(vm_name, provider, template_name=provider.data['full_template']['name'])
+    vm = VM.factory(vm_name, provider, template_name=provider.data['full_template']['name'])
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(find_in_cfme=True, allow_skip="default")
@@ -83,7 +84,7 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         test_flag: snapshot, provision
     """
     snapshot1 = new_snapshot(test_vm)
-    ip = snapshot1.vm.provider_crud.get_mgmt_system().get_ip_address(snapshot1.vm.name)
+    ip = snapshot1.vm.provider.mgmt.get_ip_address(snapshot1.vm.name)
     print ip
     ssh_kwargs = {
         'username': credentials[provider.data['full_template']['creds']]['username'],
@@ -100,17 +101,17 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
     # Wait for the snapshot to become active
     logger.info('Waiting for vm %s to become active', snapshot1.name)
     wait_for(snapshot1.wait_for_snapshot_active, num_sec=300, delay=20, fail_func=sel.refresh)
-    test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, timeout=720)
+    test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=720)
     register_event(
-        test_vm.provider_crud.get_yaml_data()['type'],
+        test_vm.provider.type,
         "vm", test_vm.name, ["vm_power_on_req", "vm_power_on"])
-    test_vm.power_control_from_cfme(option=Vm.POWER_ON, cancel=False)
+    test_vm.power_control_from_cfme(option=test_vm.POWER_ON, cancel=False)
     pytest.sel.force_navigate(
-        'infrastructure_provider', context={'provider': test_vm.provider_crud})
-    test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_ON, timeout=900)
+        'infrastructure_provider', context={'provider': test_vm.provider})
+    test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_ON, timeout=900)
     soft_assert(test_vm.find_quadicon().state == 'currentstate-on')
     soft_assert(
-        test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name), "vm not running")
+        test_vm.provider.mgmt.is_vm_running(test_vm.name), "vm not running")
     client = SSHClient(**ssh_kwargs)
     request.addfinalizer(test_vm.delete_from_provider)
     try:

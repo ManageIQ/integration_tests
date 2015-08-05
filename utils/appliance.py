@@ -16,8 +16,9 @@ from urlparse import ParseResult, urlparse
 
 import requests
 
+from cfme.common.vm import VM
 from cfme.configure.configuration import server_name, server_id
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.infrastructure.virtual_machines import Vm  # For Vm.CfmeRelationship
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
 from utils import api, conf, datafile, db, lazycache, trackerbot, db_queries, ssh, ports
@@ -245,7 +246,7 @@ class Appliance(object):
 
             # if rhev, set relationship
             if self.is_on_rhev:
-                vm = Vm(self.vm_name, get_crud(self._provider_name))
+                vm = VM.factory(self.vm_name, get_crud(self._provider_name))
                 cfme_rel = Vm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(server_name()), server_id())
 

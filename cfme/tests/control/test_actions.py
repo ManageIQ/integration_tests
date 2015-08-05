@@ -13,11 +13,10 @@ Required YAML keys:
 import fauxfactory
 import pytest
 
-from cfme.cloud.instance import EC2Instance, OpenStackInstance
+from cfme.common.vm import VM
 from cfme.control import explorer
 from cfme.exceptions import FlashMessageException
 from cfme.infrastructure.provider import RHEVMProvider
-from cfme.infrastructure.virtual_machines import Vm
 from datetime import datetime
 from functools import partial
 from utils import mgmt_system, testgen
@@ -25,7 +24,7 @@ from utils.blockers import BZ
 from utils.db import cfmedb
 from utils.log import logger
 from utils.miq_soap import MiqVM
-from utils.providers import setup_provider, is_cloud_provider
+from utils.providers import setup_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -211,15 +210,7 @@ def automate_role_set(request):
 
 @pytest.fixture(scope="module")
 def vm_crud(vm_name, provider):
-    if is_cloud_provider(provider.key):
-        if provider.type == "openstack":
-            return OpenStackInstance(vm_name, provider)
-        elif provider.type == "ec2":
-            return EC2Instance(vm_name, provider)
-        else:
-            raise Exception("Unknown provider type {}!".format(provider.type))
-    else:
-        return Vm(vm_name, provider)
+    return VM.factory(vm_name, provider)
 
 
 @pytest.fixture(scope="function")

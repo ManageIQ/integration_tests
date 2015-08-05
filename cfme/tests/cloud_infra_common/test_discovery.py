@@ -2,9 +2,8 @@
 import fauxfactory
 import pytest
 import time
-from cfme.cloud.instance import EC2Instance, OpenStackInstance
+from cfme.common.vm import VM
 from cfme.exceptions import CFMEException
-from cfme.infrastructure.virtual_machines import Vm
 from cfme.infrastructure.provider import SCVMMProvider
 from utils import testgen
 from utils.log import logger
@@ -24,12 +23,7 @@ def vm_name():
 
 @pytest.fixture(scope="module")
 def vm_crud(vm_name, provider):
-    cls = Vm
-    if provider.type == "ec2":
-        cls = EC2Instance
-    elif provider.type == "openstack":
-        cls = OpenStackInstance
-    return cls(vm_name, provider)
+    return VM.factory(vm_name, provider)
 
 
 def if_scvmm_refresh_provider(provider):

@@ -2,7 +2,7 @@ import cfme.configure.access_control as ac
 import fauxfactory
 import pytest
 from cfme import Credential, login
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.common.vm import VM
 from utils.providers import setup_a_provider
 
 
@@ -100,7 +100,7 @@ def new_user(group_only_user_owned):
 
 
 def test_form_button_validation(request, user1, setup_infra_provider):
-    set_vm_to_user = Vm('cu-9-5', setup_infra_provider)
+    set_vm_to_user = VM.factory('cu-9-5', setup_infra_provider)
     # Reset button test
     set_vm_to_user.set_ownership(user=user1.name, click_reset=True)
     # Cancel button test
@@ -112,58 +112,58 @@ def test_form_button_validation(request, user1, setup_infra_provider):
 
 
 def test_user_ownership_crud(request, user1, setup_infra_provider):
-    set_vm_to_user = Vm('cu-9-5', setup_infra_provider)
+    set_vm_to_user = VM.factory('cu-9-5', setup_infra_provider)
     # Set the ownership and checking it
     set_vm_to_user.set_ownership(user=user1.name)
     login.login(user1.credential.principal, user1.credential.secret)
-    assert(set_vm_to_user.does_vm_exist_in_cfme(), "vm not found")
+    assert(set_vm_to_user.exists, "vm not found")
     # Unset the ownership
     login.login_admin()
     set_vm_to_user.unset_ownership()
     login.login(user1.credential.principal, user1.credential.secret)
-    assert(not set_vm_to_user.does_vm_exist_in_cfme(), "vm exists")
+    assert(not set_vm_to_user.exists, "vm exists")
 
 
 def test_group_ownership_on_user_only_role(request, user2, setup_infra_provider):
-    set_vm_to_group = Vm('cu-9-5', setup_infra_provider)
+    set_vm_to_group = VM.factory('cu-9-5', setup_infra_provider)
     set_vm_to_group.set_ownership(group=user2.group.description)
     login.login(user2.credential.principal, user2.credential.secret)
-    assert(set_vm_to_group.does_vm_exist_in_cfme(), "vm not found")
+    assert(set_vm_to_group.exists, "vm not found")
     # Unset the ownership
     login.login_admin()
     set_vm_to_group.unset_ownership()
     login.login(user2.credential.principal, user2.credential.secret)
-    assert(not set_vm_to_group.does_vm_exist_in_cfme(), "vm exists")
+    assert(not set_vm_to_group.exists, "vm exists")
 
 
 def test_group_ownership_on_user_or_group_role(request, user3, setup_infra_provider):
-    set_vm_to_group = Vm('cu-9-5', setup_infra_provider)
+    set_vm_to_group = VM.factory('cu-9-5', setup_infra_provider)
     set_vm_to_group.set_ownership(group=user3.group.description)
     login.login(user3.credential.principal, user3.credential.secret)
-    assert(set_vm_to_group.does_vm_exist_in_cfme(), "vm not found")
+    assert(set_vm_to_group.exists, "vm not found")
     # Unset the ownership
     login.login_admin()
     set_vm_to_group.unset_ownership()
     login.login(user3.credential.principal, user3.credential.secret)
-    assert(not set_vm_to_group.does_vm_exist_in_cfme(), "vm exists")
+    assert(not set_vm_to_group.exists, "vm exists")
 
 
 # @pytest.mark.meta(blockers=[1202947])
 @pytest.mark.skipif('True')
 def test_ownership_transfer(request, user1, user3, setup_infra_provider):
-    set_vm_to_user = Vm('cu-9-5', setup_infra_provider)
+    set_vm_to_user = VM.factory('cu-9-5', setup_infra_provider)
     # Setting ownership
     login.login_admin()
     set_vm_to_user.set_ownership(user=user1.name)
     login.login(user1.credential.principal, user1.credential.secret)
     # Checking before and after the ownership transfer
-    assert(set_vm_to_user.does_vm_exist_in_cfme(), "vm not found")
+    assert(set_vm_to_user.exists, "vm not found")
     set_vm_to_user.set_ownership(user=user3.name)
-    assert(not set_vm_to_user.does_vm_exist_in_cfme(), "vm exists")
+    assert(not set_vm_to_user.exists, "vm exists")
     login.login(user3.credential.principal, user3.credential.secret)
-    assert(set_vm_to_user.does_vm_exist_in_cfme(), "vm not found")
+    assert(set_vm_to_user.exists, "vm not found")
     # Unset the ownership
     login.login_admin()
     set_vm_to_user.unset_ownership()
     login.login(user3.credential.principal, user3.credential.secret)
-    assert(set_vm_to_user.does_vm_exist_in_cfme(), "vm exists")
+    assert(set_vm_to_user.exists, "vm exists")

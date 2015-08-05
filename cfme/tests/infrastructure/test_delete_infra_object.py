@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from cfme.infrastructure import host, datastore, cluster, resource_pool, virtual_machines
+from cfme.common.vm import VM
+from cfme.infrastructure import host, datastore, cluster, resource_pool
 from cfme.web_ui import Region
 from utils import testgen
 
@@ -65,8 +66,8 @@ def test_delete_vm(setup_provider, provider, remove_test):
         test_flag: delete_object
     """
     vm = remove_test['vm']
-    test_vm = virtual_machines.Vm(vm, provider)
-    test_vm.remove_from_cfme(cancel=False)
+    test_vm = VM.factory(vm, provider)
+    test_vm.delete()
     test_vm.wait_for_delete()
     provider.refresh_provider_relationships()
     test_vm.wait_to_appear()
@@ -79,8 +80,8 @@ def test_delete_template(setup_provider, provider, remove_test):
         test_flag: delete_object
     """
     template = remove_test['template']
-    test_template = virtual_machines.Template(template, provider)
-    test_template.remove_from_cfme(cancel=False)
+    test_template = VM.factory(template, provider, template=True)
+    test_template.delete()
     test_template.wait_for_delete()
     provider.refresh_provider_relationships()
     test_template.wait_to_appear()

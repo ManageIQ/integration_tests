@@ -2,7 +2,8 @@
 import fauxfactory
 import pytest
 
-from cfme.infrastructure.virtual_machines import Vm, details_page
+from cfme.common.vm import VM
+from cfme.infrastructure.virtual_machines import details_page
 from cfme.web_ui import toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyed
 from utils import testgen
@@ -40,7 +41,7 @@ def vm_name():
 def test_vm(request, provider, vm_name, setup_provider_modscope):
     """Fixture to provision appliance to the provider being tested if necessary"""
     pytest.sel.force_navigate('infrastructure_providers')
-    vm = Vm(vm_name, provider)
+    vm = VM.factory(vm_name, provider)
 
     request.addfinalizer(vm.delete_from_provider)
 

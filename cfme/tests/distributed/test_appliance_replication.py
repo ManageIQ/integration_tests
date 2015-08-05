@@ -4,10 +4,10 @@ import pytest
 import random
 
 import cfme.web_ui.flash as flash
+from cfme.common.vm import VM
 from cfme.configure import configuration as conf
 from selenium.common.exceptions import WebDriverException
 from cfme.infrastructure.provider import wait_for_a_provider
-from cfme.infrastructure.virtual_machines import Vm
 import cfme.fixtures.pytest_selenium as sel
 from time import sleep
 from urlparse import urlparse
@@ -140,7 +140,7 @@ def vm_name():
 @pytest.fixture(scope="class")
 def test_vm(request, provider, vm_name):
     """Fixture to provision appliance to the provider being tested if necessary"""
-    vm = Vm(vm_name, provider)
+    vm = VM.factory(vm_name, provider)
 
     request.addfinalizer(vm.delete_from_provider)
 
@@ -149,7 +149,7 @@ def test_vm(request, provider, vm_name):
         vm.create_on_provider(allow_skip="default")
     else:
         logger.info("recycling deployed vm {} on provider {}".format(vm_name, provider.key))
-    vm.provider_crud.refresh_provider_relationships()
+    vm.provider.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm
 
@@ -366,14 +366,14 @@ def test_distributed_vm_power_control(request, test_vm, provider, verify_vm_runn
     appl2.ipapp.browser_steal = True
     with appl2.ipapp:
         register_event(
-            test_vm.provider_crud.get_yaml_data()['type'],
+            test_vm.provider.type,
             "vm", test_vm.name, ["vm_power_off_req", "vm_power_off"])
-        test_vm.power_control_from_cfme(option=Vm.POWER_OFF, cancel=False)
+        test_vm.power_control_from_cfme(option=test_vm.POWER_OFF, cancel=False)
         flash.assert_message_contain("Stop initiated")
         pytest.sel.force_navigate(
-            'infrastructure_provider', context={'provider': test_vm.provider_crud})
-        test_vm.wait_for_vm_state_change(desired_state=Vm.STATE_OFF, timeout=900)
+            'infrastructure_provider', context={'provider': test_vm.provider})
+        test_vm.wait_for_vm_state_change(desired_state=test_vm.STATE_OFF, timeout=900)
         soft_assert(test_vm.find_quadicon().state == 'currentstate-off')
         soft_assert(
-            not test_vm.provider_crud.get_mgmt_system().is_vm_running(test_vm.name),
+            not test_vm.provider.mgmt.is_vm_running(test_vm.name),
             "vm running")

@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.cloud import instance, stack
-from cfme.web_ui import Region, toolbar
-from utils.version import current_version
+from cfme.cloud import stack
+from cfme.common.vm import VM
+from cfme.web_ui import toolbar
 from utils import testgen
+from utils.version import current_version
 import pytest
-
-
-# Page specific locators
-details_page = Region(infoblock_type='detail')
 
 
 def pytest_generate_tests(metafunc):
@@ -58,11 +55,11 @@ def test_delete_instance(setup_provider, provider, remove_test):
         test_flag: delete_object
     """
     instance_name = remove_test['instance']
-    test_instance = instance.instance_factory(instance_name, provider)
-    test_instance.remove_from_cfme(cancel=False)
+    test_instance = VM.factory(instance_name, provider)
+    test_instance.delete()
     test_instance.wait_for_delete()
     provider.refresh_provider_relationships()
-    test_instance.wait_for_vm_to_appear()
+    test_instance.wait_to_appear()
 
 
 def test_delete_image(setup_provider, provider, remove_test, set_grid, request):
@@ -72,11 +69,11 @@ def test_delete_image(setup_provider, provider, remove_test, set_grid, request):
         test_flag: delete_object
     """
     image_name = remove_test['image']
-    test_image = instance.Image(image_name, provider)
+    test_image = VM.factory(image_name, provider, template=True)
     test_image.delete()
     test_image.wait_for_delete()
     provider.refresh_provider_relationships()
-    test_image.wait_for_appear()
+    test_image.wait_to_appear()
     request.addfinalizer(reset)
 
 
