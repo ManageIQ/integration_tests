@@ -17,7 +17,6 @@ import cfme
 from utils.db import cfmedb
 import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.host import Host
-import cfme.web_ui.flash as flash
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
 import cfme.web_ui.toolbar as tb
 from cfme.common.provider import BaseProvider
@@ -61,19 +60,6 @@ properties_form = Form(
         ('api_port', Input("port")),
         ('sec_protocol', Select("select#security_protocol")),
         ('sec_realm', Input("realm"))
-    ])
-
-credential_form = Form(
-    fields=[
-        ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('default_principal', Input("default_userid")),
-        ('default_secret', Input("default_password")),
-        ('default_verify_secret', Input("default_verify")),
-        ('candu_button', "//div[@id='auth_tabs']/ul/li/a[@href='#metrics']"),
-        ('candu_principal', Input("metrics_userid")),
-        ('candu_secret', Input("metrics_password")),
-        ('candu_verify_secret', Input("metrics_verify")),
-        ('validate_btn', form_buttons.validate)
     ])
 
 manage_policies_tree = CheckboxTree(
@@ -129,7 +115,6 @@ class Provider(Updateable, Pretty, BaseProvider):
     vm_name = "VMs"
     template_name = "Templates"
     properties_form = properties_form
-    credential_form = credential_form
     add_provider_button = add_infra_provider
 
     def __init__(
@@ -193,7 +178,7 @@ class Provider(Updateable, Pretty, BaseProvider):
         Begins provider discovery from a provider instance
 
         Usage:
-            discover_from_config(utils.providers.get_from_config('rhevm'))
+            discover_from_config(utils.providers.get_crud('rhevm'))
         """
         vmware = isinstance(self, VMwareProvider)
         rhevm = isinstance(self, RHEVMProvider)
@@ -273,12 +258,6 @@ class SCVMMProvider(Provider):
 
         return values
 
-    class Credential(Provider.Credential):
-        # SCVMM needs to deal with domain
-        def __init__(self, **kwargs):
-            self.domain = kwargs.pop('domain', None)
-            super(SCVMMProvider.Credential, self).__init__(**kwargs)
-
 
 class RHEVMProvider(Provider):
     def __init__(self, name=None, credentials=None, zone=None, key=None, hostname=None,
@@ -299,30 +278,6 @@ class RHEVMProvider(Provider):
                 'hostname_text': kwargs.get('hostname'),
                 'api_port': kwargs.get('api_port'),
                 'ipaddress_text': kwargs.get('ip_address')}
-
-
-@fill.method((Form, Provider.Credential))
-def _fill_credential(form, cred, validate=None):
-    """How to fill in a credential (either candu or default).  Validates the
-    credential if that option is passed in.
-    """
-    if cred.candu:
-        fill(credential_form, {'candu_button': True,
-                               'candu_principal': cred.principal,
-                               'candu_secret': cred.secret,
-                               'candu_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
-    else:
-        if cred.domain:
-            principal = r'{}\{}'.format(cred.domain, cred.principal)
-        else:
-            principal = cred.principal
-        fill(credential_form, {'default_principal': principal,
-                               'default_secret': cred.secret,
-                               'default_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
-    if validate:
-        flash.assert_no_errors()
 
 
 def get_all_providers(do_not_navigate=False):

@@ -9,7 +9,7 @@ import random
 from cfme.infrastructure.provider import VMwareProvider
 from utils.conf import cfme_data, credentials
 from utils.net import resolve_hostname
-from utils.providers import get_from_config
+from utils.providers import get_crud
 from utils.version import Version
 from utils.wait import wait_for
 
@@ -67,7 +67,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.yield_fixture(scope="module")
 def setup_provider(provider, original_provider_key):
-    original_provider = get_from_config(original_provider_key)
+    original_provider = get_crud(original_provider_key)
     if original_provider.exists:
         # Delete original provider's hosts first
         for host in original_provider.hosts:

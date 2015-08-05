@@ -18,7 +18,7 @@ from appliances.tasks import (appliance_power_on, appliance_power_off, appliance
     appliance_rename)
 
 from sprout.log import create_logger
-from utils.providers import provider_factory
+from utils.providers import get_mgmt
 
 add_to_builtins('appliances.templatetags.appliances_extras')
 
@@ -486,20 +486,20 @@ def vms(request, current_provider=None):
 def vms_table(request, current_provider=None):
     if not request.user.is_authenticated():
         return go_home(request)
-    manager = provider_factory(current_provider)
+    manager = get_mgmt(current_provider)
     vms = sorted(manager.list_vm())
     return render(request, 'appliances/vms/_list.html', locals())
 
 
 def power_state(request, current_provider):
     vm_name = request.POST["vm_name"]
-    manager = provider_factory(current_provider)
+    manager = get_mgmt(current_provider)
     state = Appliance.POWER_STATES_MAPPING.get(manager.vm_status(vm_name), "unknown")
     return HttpResponse(state, content_type="text/plain")
 
 
 def power_state_buttons(request, current_provider):
-    manager = provider_factory(current_provider)
+    manager = get_mgmt(current_provider)
     vm_name = request.POST["vm_name"]
     power_state = request.POST["power_state"]
     can_power_on = power_state in {Appliance.Power.SUSPENDED, Appliance.Power.OFF}
@@ -513,7 +513,7 @@ def vm_action(request, current_provider):
     if not request.user.is_authenticated():
         return HttpResponse("Not authenticated", content_type="text/plain")
     try:
-        provider_factory(current_provider)
+        get_mgmt(current_provider)
     except Exception as e:
         return HttpResponse(
             "Troubles with provider {}: {}".format(current_provider, str(e)),

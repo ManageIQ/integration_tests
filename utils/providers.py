@@ -80,7 +80,7 @@ def is_infra_provider(provider_key):
     return provider_key in list_infra_providers()
 
 
-def provider_factory(provider_key, providers=None, credentials=None):
+def get_mgmt(provider_key, providers=None, credentials=None):
     """
     Provides a :py:mod:`utils.mgmt_system` object, based on the request.
 
@@ -123,10 +123,10 @@ def get_provider_key(provider_name):
         raise NameError("Could not find provider {}".format(provider_name))
 
 
-def provider_factory_by_name(provider_name, *args, **kwargs):
+def get_mgmt_by_name(provider_name, *args, **kwargs):
     """Provides a :py:mod:`utils.mgmt_system` object, based on the request.
 
-    For detailed parameter description, refer to the :py:func:`provider_factory` (except its
+    For detailed parameter description, refer to the :py:func:`get_mgmt` (except its
     `provider_key` parameter)
 
     Args:
@@ -134,7 +134,7 @@ def provider_factory_by_name(provider_name, *args, **kwargs):
     Return: A provider instance of the appropriate :py:class:`utils.mgmt_system.MgmtSystemAPIBase`
         subclass
     """
-    return provider_factory(get_provider_key(provider_name), *args, **kwargs)
+    return get_mgmt(get_provider_key(provider_name), *args, **kwargs)
 
 
 def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=True,
@@ -230,7 +230,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
             logger.warning(message)
             store.terminalreporter.write_line(message + "\n", red=True)
             problematic_providers.add(provider)
-            prov_object = get_from_config(provider)
+            prov_object = get_crud(provider)
             if prov_object.exists:
                 # Remove it in order to not explode on next calls
                 prov_object.delete(cancel=False)
@@ -251,7 +251,7 @@ def is_provider_setup(provider_key):
     Returns:
         :py:class:`bool` of existence
     """
-    return get_from_config(provider_key).exists
+    return get_crud(provider_key).exists
 
 
 def setup_provider(provider_key, validate=True, check_existing=True):
@@ -269,7 +269,7 @@ def setup_provider(provider_key, validate=True, check_existing=True):
         :py:class:`cfme.infrastructure.provider.Provider` for the named provider, as appropriate.
 
     """
-    provider = get_from_config(provider_key)
+    provider = get_crud(provider_key)
     if check_existing and provider.exists:
         # no need to create provider if the provider exists
         # pass so we don't skip the validate step
@@ -496,12 +496,12 @@ def get_credentials_from_config(credential_config_name):
                                secret=creds['password'])
 
 
-def get_from_config(provider_config_name):
+def get_crud(provider_config_name):
     """
     Creates a Provider object given a yaml entry in cfme_data.
 
     Usage:
-        get_from_config('ec2east')
+        get_crud('ec2east')
 
     Returns: A Provider object that has methods that operate on CFME
     """
@@ -542,11 +542,6 @@ def get_from_config(provider_config_name):
             start_ip=start_ip,
             end_ip=end_ip)
     elif prov_type == 'scvmm':
-        creds = conf.credentials[prov_config['credentials']]
-        credentials = SCVMMProvider.Credential(
-            principal=creds['username'],
-            secret=creds['password'],
-            domain=creds['domain'],)
         return SCVMMProvider(
             name=prov_config['name'],
             hostname=prov_config['hostname'],

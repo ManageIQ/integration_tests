@@ -94,7 +94,7 @@ from utils import version
 from utils.conf import cfme_data
 from utils.log import logger
 from utils.providers import (
-    cloud_provider_type_map, infra_provider_type_map, provider_type_map, get_from_config)
+    cloud_provider_type_map, infra_provider_type_map, provider_type_map, get_crud)
 
 
 def generate(gen_func, *args, **kwargs):
@@ -238,7 +238,7 @@ def provider_by_type(metafunc, provider_types, *fields, **options):
 
     for provider, data in cfme_data.get('management_systems', {}).iteritems():
         try:
-            prov_obj = get_from_config(provider)
+            prov_obj = get_crud(provider)
         except UnknownProviderType:
             continue
 

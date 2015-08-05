@@ -14,7 +14,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg
 from functools import partial
 from utils.pretty import Pretty
-from utils.provider import get_from_config
+from utils.provider import get_crud
 from utils.wait import wait_for
 from utils import version
 
@@ -56,7 +56,7 @@ class Datastore(Pretty):
     def __init__(self, name=None, provider_key=None):
         self.name = name
         if provider_key:
-            self.provider = get_from_config(provider_key)
+            self.provider = get_crud(provider_key)
         else:
             self.provider = None
 

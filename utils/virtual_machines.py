@@ -2,7 +2,7 @@
 """
 import pytest
 
-from utils.providers import get_from_config
+from utils.providers import get_crud
 from fixtures.pytest_store import store
 from novaclient.exceptions import OverLimit as OSOverLimit
 from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
@@ -24,7 +24,7 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
     else:
         skip_exceptions = allow_skip
         callable_mapping = {}
-    provider_crud = get_from_config(provider_key)
+    provider_crud = get_crud(provider_key)
 
     mgmt = provider_crud.get_mgmt_system()
     data = provider_crud.get_yaml_data()

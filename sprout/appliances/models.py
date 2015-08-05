@@ -14,7 +14,7 @@ from sprout.log import create_logger
 from utils import mgmt_system
 from utils.appliance import Appliance as CFMEAppliance, IPAppliance
 from utils.conf import cfme_data
-from utils.providers import provider_factory
+from utils.providers import get_mgmt
 from utils.timeutil import nice_seconds
 from utils.version import Version
 
@@ -106,7 +106,7 @@ class Provider(MetadataMixin):
 
     @property
     def api(self):
-        return provider_factory(self.id)
+        return get_mgmt(self.id)
 
     @property
     def num_currently_provisioning(self):

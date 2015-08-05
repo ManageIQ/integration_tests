@@ -8,7 +8,7 @@ import sys
 from utils.appliance import Appliance
 from utils.conf import cfme_data
 from utils.log import logger
-from utils.providers import destroy_vm, provider_factory
+from utils.providers import destroy_vm, get_mgmt
 from utils.wait import wait_for
 
 
@@ -51,8 +51,8 @@ def main():
 
     args = parser.parse_args()
 
-    # provider_factory validates, since it will explode without an existing key or type
-    provider = provider_factory(args.provider)
+    # get_mgmt validates, since it will explode without an existing key or type
+    provider = get_mgmt(args.provider)
     provider_dict = cfme_data['management_systems'][args.provider]
     provider_type = provider_dict['type']
 

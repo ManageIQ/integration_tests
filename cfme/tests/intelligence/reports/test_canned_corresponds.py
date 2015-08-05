@@ -6,7 +6,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.provider import Provider, details_page
 from cfme.intelligence.reports.reports import CannedSavedReport
 from utils.net import ip_address, resolve_hostname
-from utils.providers import provider_factory_by_name, setup_a_provider as _setup_a_provider
+from utils.providers import get_mgmt_by_name, setup_a_provider as _setup_a_provider
 
 provider_props = partial(details_page.infoblock.text, "Properties")
 
@@ -52,7 +52,7 @@ def test_cluster_relationships(soft_assert, setup_a_provider):
         if not provider_name.strip():
             # If no provider name specified, ignore it
             continue
-        provider = provider_factory_by_name(provider_name)
+        provider = get_mgmt_by_name(provider_name)
         host_name = relation["Host Name"].strip()
         soft_assert(name in provider.list_cluster(), "Cluster {} not found in {}".format(
             name, provider_name

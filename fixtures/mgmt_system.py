@@ -35,7 +35,7 @@ def mgmt_sys_api_clients(cfme_data, uses_providers):
     """Returns a list of management system api clients"""
     clients = {}
     for provider_key in cfme_data['management_systems']:
-        clients[provider_key] = providers.provider_factory(provider_key)
+        clients[provider_key] = providers.get_mgmt(provider_key)
     return clients
 
 

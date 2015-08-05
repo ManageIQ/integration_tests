@@ -5,7 +5,7 @@
 
 import argparse
 import sys
-from utils.providers import provider_factory
+from utils.providers import get_mgmt
 
 
 def main():
@@ -16,7 +16,7 @@ def main():
     parser.add_argument('--remove', help='remove disk from vm', action="store_true")
     args = parser.parse_args()
 
-    provider = provider_factory(args.provider_name)
+    provider = get_mgmt(args.provider_name)
 
     provider.connect_direct_lun_to_appliance(args.vm_name, args.remove)
 

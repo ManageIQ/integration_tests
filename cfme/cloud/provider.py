@@ -15,15 +15,12 @@ import ui_navigate as nav
 
 import cfme
 import cfme.fixtures.pytest_selenium as sel
-from cfme.web_ui import flash
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
 from cfme.common.provider import BaseProvider
 import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
-from cfme.exceptions import UnknownProviderType
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator
 from cfme.web_ui import Input
-from utils import conf
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
@@ -56,19 +53,6 @@ properties_form = Form(
             }
         )),
         ('api_port', Input("port")),
-    ])
-
-credential_form = Form(
-    fields=[
-        ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('default_principal', "#default_userid"),
-        ('default_secret', "#default_password"),
-        ('default_verify_secret', "#default_verify"),
-        ('amqp_button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
-        ('amqp_principal', "#amqp_userid"),
-        ('amqp_secret', "#amqp_password"),
-        ('amqp_verify_secret', "#amqp_verify"),
-        ('validate_btn', form_buttons.validate)
     ])
 
 details_page = Region(infoblock_type='detail')
@@ -116,7 +100,6 @@ class Provider(Updateable, Pretty, BaseProvider):
     vm_name = "Instances"
     template_name = "Images"
     properties_form = properties_form
-    credential_form = credential_form
     add_provider_button = add_provider_button
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
@@ -156,26 +139,6 @@ class OpenStackProvider(Provider):
                 'hostname_text': kwargs.get('hostname'),
                 'api_port': kwargs.get('api_port'),
                 'ipaddress_text': kwargs.get('ip_address')}
-
-
-@fill.method((Form, Provider.Credential))
-def _fill_credential(form, cred, validate=None):
-    """How to fill in a credential (either amqp or default).  Validates the
-    credential if that option is passed in.
-    """
-    if cred.amqp:
-        fill(credential_form, {'amqp_button': True,
-                               'amqp_principal': cred.principal,
-                               'amqp_secret': cred.secret,
-                               'amqp_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
-    else:
-        fill(credential_form, {'default_principal': cred.principal,
-                               'default_secret': cred.secret,
-                               'default_verify_secret': cred.verify_secret,
-                               'validate_btn': validate})
-    if validate:
-        flash.assert_no_errors()
 
 
 def get_all_providers(do_not_navigate=False):

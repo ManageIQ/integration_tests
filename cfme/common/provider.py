@@ -5,13 +5,13 @@ from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
 )
 import cfme
-from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill
+from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill, Form, Input
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons
 import cfme.fixtures.pytest_selenium as sel
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
-#from utils.providers import provider_factory
+from utils.providers import get_mgmt
 from utils.log import logger
 from utils.signals import fire
 from utils.wait import wait_for, RefreshTimer
@@ -31,9 +31,25 @@ manage_policies_tree = CheckboxTree(
 
 details_page = Region(infoblock_type='detail')
 
+credential_form = Form(
+    fields=[
+        ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
+        ('default_principal', "#default_userid"),
+        ('default_secret', "#default_password"),
+        ('default_verify_secret', "#default_verify"),
+        ('amqp_button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
+        ('amqp_principal', "#amqp_userid"),
+        ('amqp_secret', "#amqp_password"),
+        ('amqp_verify_secret', "#amqp_verify"),
+        ('candu_button', "//div[@id='auth_tabs']/ul/li/a[@href='#metrics']"),
+        ('candu_principal', Input("metrics_userid")),
+        ('candu_secret', Input("metrics_password")),
+        ('candu_verify_secret', Input("metrics_verify")),
+        ('validate_btn', form_buttons.validate)
+    ])
+
 
 class BaseProvider(object):
-
     class Credential(cfme.Credential, Updateable):
         """Provider credentials
 
@@ -44,6 +60,7 @@ class BaseProvider(object):
             super(BaseProvider.Credential, self).__init__(**kwargs)
             self.amqp = kwargs.get('amqp')
             self.candu = kwargs.get('candu')
+            self.domain = kwargs.get('domain')
 
     @property
     def data(self):
@@ -71,15 +88,15 @@ class BaseProvider(object):
         else:
             raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data', self.name)
 
-    #def get_mgmt_system(self):
-    #    """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
-    #    """
-    #    if hasattr(self, 'provider_data') and self.provider_data is not None:
-    #        return provider_factory(self.provider_data)
-    #    elif self.key is not None:
-    #        return provider_factory(self.key)
-    #    else:
-    #        raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
+    def get_mgmt_system(self):
+        """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
+        """
+        if hasattr(self, 'provider_data') and self.provider_data is not None:
+            return get_mgmt(self.provider_data)
+        elif self.key is not None:
+            return get_mgmt(self.key)
+        else:
+            raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
 
     def _submit(self, cancel, submit_button):
         if cancel:
@@ -448,6 +465,36 @@ class BaseProvider(object):
     #    return utils.provider.get_crud(provider_key)
 
 
+@fill.method((Form, BaseProvider.Credential))
+def _fill_credential(form, cred, validate=None):
+    """How to fill in a credential (either amqp or default).  Validates the
+    credential if that option is passed in.
+    """
+    if cred.amqp:
+        fill(credential_form, {'amqp_button': True,
+                               'amqp_principal': cred.principal,
+                               'amqp_secret': cred.secret,
+                               'amqp_verify_secret': cred.verify_secret,
+                               'validate_btn': validate})
+    elif cred.candu:
+        fill(credential_form, {'candu_button': True,
+                               'candu_principal': cred.principal,
+                               'candu_secret': cred.secret,
+                               'candu_verify_secret': cred.verify_secret,
+                               'validate_btn': validate})
+    else:
+        if cred.domain:
+            principal = r'{}\{}'.format(cred.domain, cred.principal)
+        else:
+            principal = cred.principal
+        fill(credential_form, {'default_principal': principal,
+                               'default_secret': cred.secret,
+                               'default_verify_secret': cred.verify_secret,
+                               'validate_btn': validate})
+    if validate:
+        flash.assert_no_errors()
+
+
 def cleanup_vm(vm_name, provider):
     try:
         logger.info('Cleaning up VM %s on provider %s' % (vm_name, provider.key))
@@ -455,5 +502,3 @@ def cleanup_vm(vm_name, provider):
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider.key))
-
-
