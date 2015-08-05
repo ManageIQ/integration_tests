@@ -33,7 +33,7 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils import version
 from utils.pretty import Pretty
-from utils.signals import fire
+
 
 add_infra_provider = FormButton("Add this Infrastructure Provider")
 
@@ -129,6 +129,9 @@ class Provider(Updateable, Pretty, BaseProvider):
     quad_name = "infra_prov"
     vm_name = "VMs"
     template_name = "Templates"
+    properties_form = properties_form
+    credential_form = credential_form
+    add_provider_button = add_infra_provider
 
     def __init__(
             self, name=None, credentials=None, key=None, zone=None, provider_data=None):
@@ -140,55 +143,6 @@ class Provider(Updateable, Pretty, BaseProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
-
-    class Credential(cfme.Credential, Updateable):
-        """Provider credentials
-
-           Args:
-             **kwargs: If using C & U database type credential, candu = True"""
-
-        def __init__(self, **kwargs):
-            super(Provider.Credential, self).__init__(**kwargs)
-            self.candu = kwargs.get('candu')
-
-    def create(self, cancel=False, validate_credentials=False):
-        """
-        Creates a provider in the UI
-
-        Args:
-           cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-               after all the information present in the Provider has been filled in the UI.
-           validate_credentials (boolean): Whether to validate credentials - if True and the
-               credentials are invalid, an error will be raised.
-        """
-        sel.force_navigate('infrastructure_provider_new')
-        fill(properties_form, self._form_mapping(True, **self.__dict__))
-        for cred in self.credentials:
-            fill(credential_form, self.credentials[cred], validate=validate_credentials)
-        self._submit(cancel, add_infra_provider)
-        fire("providers_changed")
-        if not cancel:
-            flash.assert_message_match('Infrastructure Providers "%s" was saved' % self.name)
-
-    def update(self, updates, cancel=False, validate_credentials=False):
-        """
-        Updates a provider in the UI.  Better to use utils.update.update context
-        manager than call this directly.
-
-        Args:
-           updates (dict): fields that are changing.
-           cancel (boolean): whether to cancel out of the update.
-        """
-
-        sel.force_navigate('infrastructure_provider_edit', context={'provider': self})
-        fill(properties_form, self._form_mapping(**updates))
-        for cred in self.credentials:
-            fill(credential_form, updates.get('credentials', {}).get(cred, None),
-                 validate=validate_credentials)
-        self._submit(cancel, form_buttons.save)
-        name = updates['name'] or self.name
-        if not cancel:
-            flash.assert_message_match('Infrastructure Provider "%s" was saved' % name)
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""
@@ -263,16 +217,6 @@ class Provider(Updateable, Pretty, BaseProvider):
             )
             result.append(Host(name=host["name"], credentials=cred))
         return result
-
-    def load_all_provider_vms(self):
-        """ Loads the list of VMs that are running under the provider. """
-        sel.force_navigate('infrastructure_provider', context={'provider': self})
-        sel.click(details_page.infoblock.element("Relationships", "VMs"))
-
-    def load_all_provider_templates(self):
-        """ Loads the list of templates that are running under the provider. """
-        sel.force_navigate('infrastructure_provider', context={'provider': self})
-        sel.click(details_page.infoblock.element("Relationships", "Templates"))
 
 
 class VMwareProvider(Provider):

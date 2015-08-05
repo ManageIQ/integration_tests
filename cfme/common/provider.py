@@ -4,16 +4,19 @@ from utils import conf
 from cfme.exceptions import (
     ProviderHasNoKey, HostStatsNotContains, ProviderHasNoProperty
 )
-from cfme.web_ui import flash, Quadicon, CheckboxTree, Region
+import cfme
+from cfme.web_ui import flash, Quadicon, CheckboxTree, Region, fill
 from cfme.web_ui import toolbar as tb
 from cfme.web_ui import form_buttons
 import cfme.fixtures.pytest_selenium as sel
+from utils.browser import ensure_browser_open
 from utils.db import cfmedb
 from utils.providers import provider_factory
 from utils.log import logger
 from utils.signals import fire
 from utils.wait import wait_for, RefreshTimer
 from utils.stats import tol_check
+from utils.update import Updateable
 from utils import version
 
 
@@ -30,6 +33,17 @@ details_page = Region(infoblock_type='detail')
 
 
 class BaseProvider(object):
+
+    class Credential(cfme.Credential, Updateable):
+        """Provider credentials
+
+           Args:
+             **kwargs: If using amqp type credential, amqp = True"""
+
+        def __init__(self, **kwargs):
+            super(BaseProvider.Credential, self).__init__(**kwargs)
+            self.amqp = kwargs.get('amqp')
+            self.candu = kwargs.get('candu')
 
     @property
     def data(self):
@@ -74,6 +88,46 @@ class BaseProvider(object):
         else:
             submit_button()
             flash.assert_no_errors()
+
+    def create(self, cancel=False, validate_credentials=False):
+        """
+        Creates a provider in the UI
+
+        Args:
+           cancel (boolean): Whether to cancel out of the creation.  The cancel is done
+               after all the information present in the Provider has been filled in the UI.
+           validate_credentials (boolean): Whether to validate credentials - if True and the
+               credentials are invalid, an error will be raised.
+        """
+        sel.force_navigate('{}_provider_new'.format(self.page_name))
+        fill(self.properties_form, self._form_mapping(True, **self.__dict__))
+        for cred in self.credentials:
+            fill(self.credential_form, self.credentials[cred], validate=validate_credentials)
+        self._submit(cancel, self.add_provider_button)
+        fire("providers_changed")
+        if not cancel:
+            flash.assert_message_match('{} Providers "{}" was saved'.format(self.string_name,
+                                                                            self.name))
+
+    def update(self, updates, cancel=False, validate_credentials=False):
+        """
+        Updates a provider in the UI.  Better to use utils.update.update context
+        manager than call this directly.
+
+        Args:
+           updates (dict): fields that are changing.
+           cancel (boolean): whether to cancel out of the update.
+        """
+
+        sel.force_navigate('{}_provider_edit'.format(self.page_name), context={'provider': self})
+        fill(self.properties_form, self._form_mapping(**updates))
+        for cred in self.credentials:
+            fill(self.credential_form, updates.get('credentials', {}).get(cred, None),
+                 validate=validate_credentials)
+        self._submit(cancel, form_buttons.save)
+        name = updates['name'] or self.name
+        if not cancel:
+            flash.assert_message_match('{} Provider "{}" was saved'.format(self.string_name, name))
 
     def delete(self, cancel=True):
         """
@@ -342,6 +396,52 @@ class BaseProvider(object):
         """
         self._load_details()
         return details_page.infoblock.text(*ident)
+
+    def load_all_provider_instances(self):
+        self.load_all_provider_vms()
+
+    def load_all_provider_vms(self):
+        """ Loads the list of instances that are running under the provider.
+
+        If it could click through the link in infoblock, returns ``True``. If it sees that the
+        number of instances is 0, it returns ``False``.
+        """
+        sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
+        if details_page.infoblock.text("Relationships", self.vm_name) == "0":
+            return False
+        else:
+            sel.click(details_page.infoblock.element("Relationships", self.vm_name))
+            return True
+
+    def load_all_provider_images(self):
+        self.load_all_provider_templates()
+
+    def load_all_provider_templates(self):
+        """ Loads the list of images that are available under the provider.
+
+        If it could click through the link in infoblock, returns ``True``. If it sees that the
+        number of images is 0, it returns ``False``.
+        """
+        sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
+        if details_page.infoblock.text("Relationships", self.template_name) == "0":
+            return False
+        else:
+            sel.click(details_page.infoblock.element("Relationships", self.template_name))
+            return True
+
+    """
+    From cloud
+    def _on_detail_page(self):
+        "" Returns ``True`` if on the providers detail page, ``False`` if not.""
+        return sel.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
+                                % self.name)
+    """
+
+    def _on_detail_page(self):
+        """ Returns ``True`` if on the providers detail page, ``False`` if not."""
+        ensure_browser_open()
+        return sel.is_displayed(
+            '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
 
 
 def cleanup_vm(vm_name, provider):

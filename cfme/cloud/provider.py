@@ -29,7 +29,7 @@ from utils.update import Updateable
 from utils.wait import wait_for
 from utils import version
 from utils.pretty import Pretty
-from utils.signals import fire
+
 
 # Specific Add button
 add_provider_button = form_buttons.FormButton("Add this Cloud Provider")
@@ -115,6 +115,9 @@ class Provider(Updateable, Pretty, BaseProvider):
     quad_name = "cloud_prov"
     vm_name = "Instances"
     template_name = "Images"
+    properties_form = properties_form
+    credential_form = credential_form
+    add_provider_button = add_provider_button
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
         self.name = name
@@ -124,83 +127,6 @@ class Provider(Updateable, Pretty, BaseProvider):
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
-
-    class Credential(cfme.Credential, Updateable):
-        """Provider credentials
-
-           Args:
-             **kwargs: If using amqp type credential, amqp = True"""
-
-        def __init__(self, **kwargs):
-            super(Provider.Credential, self).__init__(**kwargs)
-            self.amqp = kwargs.get('amqp')
-
-    def create(self, cancel=False, validate_credentials=False):
-        """
-        Creates a provider in the UI
-
-        Args:
-           cancel (boolean): Whether to cancel out of the creation.  The cancel is done
-               after all the information present in the Provider has been filled in the UI.
-           validate_credentials (boolean): Whether to validate credentials - if True and the
-               credentials are invalid, an error will be raised.
-        """
-        sel.force_navigate('clouds_provider_new')
-        fill(properties_form, self._form_mapping(True, **self.__dict__))
-        fill(credential_form, self.credentials, validate=validate_credentials)
-        self._submit(cancel, add_provider_button)
-        fire("providers_changed")
-        if not cancel:
-            flash.assert_message_match('Cloud Providers "%s" was saved' % self.name)
-
-    def update(self, updates, cancel=False, validate_credentials=False):
-        """
-        Updates a provider in the UI.  Better to use utils.update.update context
-        manager than call this directly.
-
-        Args:
-           updates (dict): fields that are changing.
-           cancel (boolean): whether to cancel out of the update.
-        """
-
-        sel.force_navigate('clouds_provider_edit', context={'provider': self})
-        fill(properties_form, self._form_mapping(**updates))
-        fill(credential_form, updates.get('credentials', None), validate=validate_credentials)
-        self._submit(cancel, form_buttons.save)
-        name = updates['name'] or self.name
-        if not cancel:
-            flash.assert_message_match('Cloud Provider "%s" was saved' % name)
-
-    def load_all_provider_instances(self):
-        """ Loads the list of instances that are running under the provider.
-
-        If it could click through the link in infoblock, returns ``True``. If it sees that the
-        number of instances is 0, it returns ``False``.
-        """
-        sel.force_navigate('clouds_provider', context={'provider': self})
-        if details_page.infoblock.text("Relationships", "Instances") == "0":
-            return False
-        else:
-            sel.click(details_page.infoblock.element("Relationships", "Instances"))
-            return True
-
-    def load_all_provider_images(self):
-        """ Loads the list of images that are available under the provider.
-
-        If it could click through the link in infoblock, returns ``True``. If it sees that the
-        number of images is 0, it returns ``False``.
-        """
-        sel.force_navigate('clouds_provider', context={'provider': self})
-        if details_page.infoblock.text("Relationships", "Images") == "0":
-            return False
-        else:
-            sel.click(details_page.infoblock.element("Relationships", "Images"))
-            return True
-
-    def _on_detail_page(self):
-        """ Returns ``True`` if on the providers detail page, ``False`` if not."""
-        return sel.is_displayed('//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s")]'
-                                % self.name)
 
 
 class EC2Provider(Provider):
@@ -290,7 +216,7 @@ def get_from_config(provider_config_name):
     if prov_type == 'ec2':
         return EC2Provider(name=prov_config['name'],
                            region=prov_config['region'],
-                           credentials=credentials,
+                           credentials={'default': credentials},
                            zone=prov_config['server_zone'],
                            key=provider_config_name)
     elif prov_type == 'openstack':
@@ -298,7 +224,7 @@ def get_from_config(provider_config_name):
                                  hostname=prov_config['hostname'],
                                  ip_address=prov_config['ipaddress'],
                                  api_port=prov_config['port'],
-                                 credentials=credentials,
+                                 credentials={'default': credentials},
                                  zone=prov_config['server_zone'],
                                  key=provider_config_name)
     else:
