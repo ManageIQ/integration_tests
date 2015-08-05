@@ -13,6 +13,10 @@ from operator import methodcaller
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 from cfme.web_ui import Quadicon, paginator, toolbar
+from cfme.common.provider import BaseProvider
+from cfme.exceptions import UnknownProviderType
+from cfme.infrastructure.provider import RHEVMProvider, VMwareProvider, SCVMMProvider
+from cfme.cloud.provider import EC2Provider, OpenStackProvider
 from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
 from utils.log import logger, perflog
@@ -503,6 +507,92 @@ def destroy_vm(provider_mgmt, vm_name):
             return vm_deleted
     except Exception as e:
         logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, e.message)
+
+
+def get_credentials_from_config(credential_config_name):
+    creds = conf.credentials[credential_config_name]
+    return BaseProvider.Credential(principal=creds['username'],
+                               secret=creds['password'])
+
+
+def get_from_config(provider_config_name):
+    """
+    Creates a Provider object given a yaml entry in cfme_data.
+
+    Usage:
+        get_from_config('ec2east')
+
+    Returns: A Provider object that has methods that operate on CFME
+    """
+
+    prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
+    credentials = get_credentials_from_config(prov_config['credentials'])
+    prov_type = prov_config.get('type')
+
+    if prov_config.get('discovery_range', None):
+        start_ip = prov_config['discovery_range']['start']
+        end_ip = prov_config['discovery_range']['end']
+    else:
+        start_ip = prov_config['ipaddress']
+        end_ip = prov_config['ipaddress']
+
+    if prov_type == 'ec2':
+        return EC2Provider(name=prov_config['name'],
+            region=prov_config['region'],
+            credentials={'default': credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name)
+    elif prov_type == 'openstack':
+        return OpenStackProvider(name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            api_port=prov_config['port'],
+            credentials={'default': credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name)
+    elif prov_type == 'virtualcenter':
+        return VMwareProvider(name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials={'default': credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip)
+    elif prov_type == 'scvmm':
+        creds = conf.credentials[prov_config['credentials']]
+        credentials = SCVMMProvider.Credential(
+            principal=creds['username'],
+            secret=creds['password'],
+            domain=creds['domain'],)
+        return SCVMMProvider(
+            name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials={'default': credentials},
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip,
+            sec_protocol=prov_config['sec_protocol'],
+            sec_realm=prov_config['sec_realm'])
+    elif prov_type == 'rhevm':
+        if prov_config.get('candu_credentials', None):
+            candu_credentials = get_credentials_from_config(prov_config['candu_credentials'])
+            candu_credentials.candu = True
+        else:
+            candu_credentials = None
+        return RHEVMProvider(name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            api_port='',
+            credentials={'default': credentials,
+                         'candu': candu_credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip)
+    else:
+        raise UnknownProviderType('{} is not a known infra provider type'.format(prov_type))
 
 
 class UnknownProvider(Exception):

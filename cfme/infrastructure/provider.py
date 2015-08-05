@@ -22,7 +22,6 @@ import cfme.web_ui.menu  # so that menu is already loaded before grafting onto i
 import cfme.web_ui.toolbar as tb
 from cfme.common.provider import BaseProvider
 import utils.conf as conf
-from cfme.exceptions import UnknownProviderType
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, fill, form_buttons, paginator, Input
 )
@@ -340,78 +339,6 @@ def get_all_providers(do_not_navigate=False):
                 "'{}/show')]".format(link_marker)):
             providers.add(sel.get_attribute(title, "title"))
     return providers
-
-
-def get_credentials_from_config(credential_config_name):
-    creds = conf.credentials[credential_config_name]
-    return Provider.Credential(principal=creds['username'],
-                               secret=creds['password'])
-
-
-def get_from_config(provider_config_name):
-    """
-    Creates a Provider object given a yaml entry in cfme_data.
-
-    Usage:
-        get_from_config('rhevm32')
-
-    Returns: A Provider object that has methods that operate on CFME
-    """
-
-    prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
-    credentials = get_credentials_from_config(prov_config['credentials'])
-    prov_type = prov_config.get('type')
-
-    if prov_config.get('discovery_range', None):
-        start_ip = prov_config['discovery_range']['start']
-        end_ip = prov_config['discovery_range']['end']
-    else:
-        start_ip = prov_config['ipaddress']
-        end_ip = prov_config['ipaddress']
-
-    if prov_type == 'virtualcenter':
-        return VMwareProvider(name=prov_config['name'],
-                              hostname=prov_config['hostname'],
-                              ip_address=prov_config['ipaddress'],
-                              credentials={'default': credentials},
-                              zone=prov_config['server_zone'],
-                              key=provider_config_name,
-                              start_ip=start_ip,
-                              end_ip=end_ip)
-    elif prov_type == 'scvmm':
-        creds = conf.credentials[prov_config['credentials']]
-        credentials = SCVMMProvider.Credential(
-            principal=creds['username'],
-            secret=creds['password'],
-            domain=creds['domain'],)
-        return SCVMMProvider(
-            name=prov_config['name'],
-            hostname=prov_config['hostname'],
-            ip_address=prov_config['ipaddress'],
-            credentials={'default': credentials},
-            key=provider_config_name,
-            start_ip=start_ip,
-            end_ip=end_ip,
-            sec_protocol=prov_config['sec_protocol'],
-            sec_realm=prov_config['sec_realm'])
-    elif prov_type == 'rhevm':
-        if prov_config.get('candu_credentials', None):
-            candu_credentials = get_credentials_from_config(prov_config['candu_credentials'])
-            candu_credentials.candu = True
-        else:
-            candu_credentials = None
-        return RHEVMProvider(name=prov_config['name'],
-                             hostname=prov_config['hostname'],
-                             ip_address=prov_config['ipaddress'],
-                             api_port='',
-                             credentials={'default': credentials,
-                                          'candu': candu_credentials},
-                             zone=prov_config['server_zone'],
-                             key=provider_config_name,
-                             start_ip=start_ip,
-                             end_ip=end_ip)
-    else:
-        raise UnknownProviderType('{} is not a known infra provider type'.format(prov_type))
 
 
 def discover(rhevm=False, vmware=False, scvmm=False, cancel=False, start_ip=None, end_ip=None):

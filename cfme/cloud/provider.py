@@ -194,43 +194,6 @@ def get_all_providers(do_not_navigate=False):
     return providers
 
 
-def get_credentials_from_config(credential_config_name):
-    creds = conf.credentials[credential_config_name]
-    return Provider.Credential(principal=creds['username'],
-                               secret=creds['password'])
-
-
-def get_from_config(provider_config_name):
-    """
-    Creates a Provider object given a yaml entry in cfme_data.
-
-    Usage:
-        get_from_config('ec2east')
-
-    Returns: A Provider object that has methods that operate on CFME
-    """
-
-    prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
-    credentials = get_credentials_from_config(prov_config['credentials'])
-    prov_type = prov_config.get('type')
-    if prov_type == 'ec2':
-        return EC2Provider(name=prov_config['name'],
-                           region=prov_config['region'],
-                           credentials={'default': credentials},
-                           zone=prov_config['server_zone'],
-                           key=provider_config_name)
-    elif prov_type == 'openstack':
-        return OpenStackProvider(name=prov_config['name'],
-                                 hostname=prov_config['hostname'],
-                                 ip_address=prov_config['ipaddress'],
-                                 api_port=prov_config['port'],
-                                 credentials={'default': credentials},
-                                 zone=prov_config['server_zone'],
-                                 key=provider_config_name)
-    else:
-        raise UnknownProviderType('{} is not a known cloud provider type'.format(prov_type))
-
-
 def discover(credential, cancel=False):
     """
     Discover cloud providers. Note: only starts discovery, doesn't

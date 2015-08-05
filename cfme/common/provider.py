@@ -11,7 +11,7 @@ from cfme.web_ui import form_buttons
 import cfme.fixtures.pytest_selenium as sel
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
-from utils.providers import provider_factory
+#from utils.providers import provider_factory
 from utils.log import logger
 from utils.signals import fire
 from utils.wait import wait_for, RefreshTimer
@@ -71,15 +71,15 @@ class BaseProvider(object):
         else:
             raise ProviderHasNoKey('Provider %s has no key, so cannot get yaml data', self.name)
 
-    def get_mgmt_system(self):
-        """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
-        """
-        if hasattr(self, 'provider_data') and self.provider_data is not None:
-            return provider_factory(self.provider_data)
-        elif self.key is not None:
-            return provider_factory(self.key)
-        else:
-            raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
+    #def get_mgmt_system(self):
+    #    """ Returns the mgmt_system using the :py:func:`utils.providers.provider_factory` method.
+    #    """
+    #    if hasattr(self, 'provider_data') and self.provider_data is not None:
+    #        return provider_factory(self.provider_data)
+    #    elif self.key is not None:
+    #        return provider_factory(self.key)
+    #    else:
+    #        raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
 
     def _submit(self, cancel, submit_button):
         if cancel:
@@ -443,6 +443,10 @@ class BaseProvider(object):
         return sel.is_displayed(
             '//div[@class="dhtmlxInfoBarLabel-2"][contains(., "%s (Summary)")]' % self.name)
 
+    # @classmethod
+    # def get_from_config(provider_key):
+    #    return utils.provider.get_crud(provider_key)
+
 
 def cleanup_vm(vm_name, provider):
     try:
@@ -451,3 +455,5 @@ def cleanup_vm(vm_name, provider):
     except:
         # The mgmt_sys classes raise Exception :\
         logger.warning('Failed to clean up VM %s on provider %s' % (vm_name, provider.key))
+
+
