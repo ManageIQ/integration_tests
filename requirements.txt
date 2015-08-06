@@ -17,6 +17,7 @@ numpy
 ovirt-engine-sdk-python
 paramiko
 pdfminer
+progress
 psphere
 py
 pycrypto
