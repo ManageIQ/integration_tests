@@ -201,7 +201,16 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def delete_vm(self, instance_name):
         logger.info(" Deleting OpenStack instance %s" % instance_name)
         instance = self._find_instance_by_name(instance_name)
+        ip_addr = self.current_ip_address(instance_name)
+        floating_ip = None
+        if ip_addr is not None:
+            floating_ips = self.api.floating_ips.findall(ip=ip_addr)
+            if floating_ips:
+                floating_ip = floating_ips[0]
         instance.delete()
+        if floating_ip is not None:
+            logger.info("Deleting floating IP {}".format(floating_ip.ip))
+            floating_ip.delete()
         return self.does_vm_exist(instance_name)
 
     def restart_vm(self, instance_name):
@@ -435,8 +444,22 @@ class OpenstackSystem(MgmtSystemAPIBase):
                                            *args, **kwargs)
         self.wait_vm_running(kwargs['vm_name'], num_sec=timeout)
         if kwargs.get('floating_ip_pool', None):
-            ip = self.api.floating_ips.create(kwargs['floating_ip_pool'])
+            pool = kwargs['floating_ip_pool']
+            free_ips = sorted(
+                self.api.floating_ips.findall(fixed_ip=None, pool=pool), key=lambda ip: ip.ip)
+            # We maintain 1 floating IP as a protection against race condition
+            # I know it is bad practice, but I did not figure out how to prevent the race
+            # condition by openstack saying "Hey, this IP is already assigned somewhere"
+            if len(free_ips) > 1:
+                # There are 2 and more ips, so we will take the first one (eldest)
+                ip = free_ips[0]
+                logger.info("Reusing {} from pool {}".format(ip.ip, pool))
+            else:
+                # There is one or none, so create one.
+                ip = self.api.floating_ips.create(pool)
+                logger.info("Created {} in pool {}".format(ip.ip, pool))
             instance.add_floating_ip(ip)
+            logger.info("Instance {} got a floating IP {}".format(kwargs['vm_name'], ip.ip))
 
         if power_on:
             self.start_vm(kwargs['vm_name'])
