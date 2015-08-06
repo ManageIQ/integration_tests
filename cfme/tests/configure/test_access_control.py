@@ -21,6 +21,7 @@ from utils import version
 
 records_table = Table("//div[@id='main_div']//table")
 usergrp = ac.Group(description='EvmGroup-user')
+group_table = Table("//div[@id='main_div']//table")
 
 
 @pytest.fixture(scope="module")
@@ -257,7 +258,7 @@ def test_delete_default_group():
         'EVM Group "{}": Error during \'destroy\': A read only group cannot be deleted.'
     group = ac.Group(description='EvmGroup-administrator')
     sel.force_navigate("cfg_accesscontrol_groups")
-    row = records_table.find_row_by_cells({'Name': group.description})
+    row = group_table.find_row_by_cells({'Name': group.description})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
     tb.select('Configuration', 'Delete selected Groups', invokes_alert=True)
     sel.handle_alert()
@@ -279,7 +280,7 @@ def test_edit_default_group():
     flash_msg = 'Read Only EVM Group "{}" can not be edited'
     group = ac.Group(description='EvmGroup-approver')
     sel.force_navigate("cfg_accesscontrol_groups")
-    row = records_table.find_row_by_cells({'Name': group.description})
+    row = group_table.find_row_by_cells({'Name': group.description})
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
     tb.select('Configuration', 'Edit the selected Group')
     flash.assert_message_match(flash_msg.format(group.description))
