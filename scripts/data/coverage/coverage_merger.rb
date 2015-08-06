@@ -9,7 +9,7 @@ require 'simplecov'
 require 'simplecov/result'
 
 results = Hash.new
-coverage_root = File.join(File.expand_path(Rails.root), "coverage")
+coverage_root = "/var/www/miq/vmdb/coverage"
 puts "Scanning for results in #{coverage_root}"
 json_files = Dir.glob(
   File.join(coverage_root, "*", "*", ".resultset.json")
@@ -28,6 +28,8 @@ end
 
 if results.empty?
   abort "No results found for merging."
+else
+  puts "All results merged, compiling report."
 end
 
 FileUtils.mkdir_p(merged_dir)
