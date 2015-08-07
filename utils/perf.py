@@ -55,8 +55,10 @@ def convert_top_mem_to_mib(top_mem):
 
 def generate_statistics(the_list, decimals=2):
     """Returns comma seperated statistics over a list of numbers.
-    Return:  list of samples(runs), minimum, average, median, maximum, stddev, 90th(percentile),
-        99th(percentile)
+
+    Returns:  list of samples(runs), minimum, average, median, maximum,
+              stddev, 90th(percentile),
+              99th(percentile)
     """
     if len(the_list) == 0:
         return [0, 0, 0, 0, 0, 0, 0, 0]

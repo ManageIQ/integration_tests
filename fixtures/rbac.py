@@ -4,13 +4,21 @@ The purpose of this fixture is to allow tests to be run within the context of mu
 users, without the hastle or modifying the test. To this end, the RBAC module and fixture do not
 require any modifications to the test body.
 
-The RBAC fixture starts by receiving a list of roles and associated errors from the ``rbac.csv``
-file. This file looks similar to the one below
+The RBAC fixture starts by receiving a list of roles and associated errors from the test metadata.
+This data is in YAML format and an example can be seen below.
 
-.. code-block:: csv
+.. code-block:: yaml
 
-    node_name,evmgroup-administrator,evmgroup-auditor,default,evmgroup-super_administrator,evmgroup-operator
-    cfme/tests/test_rbac.py/test_rbac,,ZeroDivisionError,MonkeyError,,ZeroDivisionError
+    Metadata:
+        test_flag: provision
+        suite: infra_provisioning
+        rbac:
+            roles:
+                default:
+                evmgroup-super_administrator:
+                evmgroup-administrator:
+                evmgroup-operator: NoSuchElementException
+                evmgroup-auditor: NoSuchElementException
 
 Let's assume also we have a test that looks like the following::
 
@@ -18,9 +26,9 @@ Let's assume also we have a test that looks like the following::
         if rbac_role != 'evmgroup-superadministrator' or rbac_role != 'evmgroup-operator':
             1 / 0
 
-This csv defines the roles to be tested in row 0 and then each subsequent row defines the name of
-a test followed by the exceptions that are expected for that particular test. In this way we can
-have 5 states of test result.
+This metadata defines the roles to be tested, and associates with them the exceptions that are
+expected for that particular test, or blank if no Exception is expected. In this way we can have
+5 states of test result.
 
  * **Test Passed** - This was expected - We do nothing to this and exit early. In the example above
    evmgroup-super_administrator fulfills this, as it expects no Exception.
@@ -37,8 +45,8 @@ have 5 states of test result.
    of our own as the test should have failed. In the example above, evmgroup-operator satisfies
    this as it should have received the ZeroDivisionError, but actually passes with no error.
 
-When a test is configured to run against RBAC suite, it will first parametrize the test with
-the associated roles from the ``rbac.csv``. The test will then be wrapped and before it begins
+When a test is configured to run against the RBAC suite, it will first parametrize the test with
+the associated roles from the metadata. The test will then be wrapped and before it begins
 we login as the *new* user. This process is also two fold. The ``pytest_store`` holds the current
 user, and logging in is performed with whatever this user value is set to. So we first replace this
 value with our new user. This ensures that if the browser fails during a force_naviagate, we get
@@ -49,22 +57,37 @@ of the test with the wrapped hook handler. This ensures that the next test will 
 user at login, even if the test fails horribly, and even if the inspection of the outcome should
 fail.
 
-To configure a test to use RBAC is simple. It requires the importing of the RBAC imported roles
-and the addition of this and the ldap configuration fixture to the prototype. Below is a complete
-example of adding RBAC to a test::
+To configure a test to use RBAC is simple. We simply need to add ``rbac_role`` to the list of
+fixtures and the addition and the ldap configuration fixture also. Below is a complete
+example of adding RBAC to a test.
+
+
+.. code-block:: python
 
     import pytest
-    from fixtures.rbac import roles
 
-
-    @pytest.mark.parametrize('rbac_role', roles)
     def test_rbac(rbac_role):
+    \"\"\" Tests provisioning from a template
+
+    Metadata:
+        rbac:
+            roles:
+                default:
+                evmgroup-super_administrator:
+                evmgroup-administrator:
+                evmgroup-operator: NoSuchElementException
+                evmgroup-auditor: NoSuchElementException
+    \"\"\"
         if rbac_role != 'evmgroup-superadministrator' or rbac_role != 'evmgroup-operator':
             1 / 0
 
 Exception matching is done with a simple string startswith match.
 
-Currently there is no provision for skipping a role for a certain test.
+Currently there is no provision for skipping a role for a certain test, though this is easy to
+implement. There is also no provision, for tests that have multiple parameters, to change the
+expectation of the test, with relation to a parameter. For example, if there was a parameter
+called *rhos* and one called *ec2* we could not change the expected exception to be different
+depending on if the test was run against *rhos* or *ec2*.
 
 """
 from utils.log import logger

@@ -2231,6 +2231,10 @@ class Quadicon(Pretty):
             cls.get_first_quad_title()
         except NoSuchElementException:
             return False
+        except AttributeError:
+            # This is needed so that if there is no browser, we fail nicely, this in turn is
+            # needed to make the docs not error.
+            return False
         else:
             return True
 

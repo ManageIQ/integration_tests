@@ -543,10 +543,7 @@ class IPAppliance(object):
     def ssh_client(self):
         """Creates an ssh client connected to this appliance
 
-        Args:
-            **connect_kwargs: Keyword arguments accepted by the SSH client
-
-        Returns: A configured :py:class:`utils.ssh.SSHClient` instance.
+        Returns: A configured :py:class:``utils.ssh.SSHClient`` instance.
 
         Usage:
 
@@ -1297,7 +1294,7 @@ class IPAppliance(object):
         return result
 
     def install_vddk(self, reboot=True, force=False, vddk_url=None, log_callback=None):
-        '''Install the vddk on a appliance'''
+        """Install the vddk on a appliance"""
         if log_callback is None:
             log_callback = self.log.info
 
