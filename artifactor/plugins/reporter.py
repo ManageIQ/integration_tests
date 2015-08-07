@@ -68,10 +68,12 @@ class Reporter(ArtifactorBasePlugin):
         self.register_plugin_hook('report_test', self.report_test)
         self.register_plugin_hook('finish_session', self.run_report)
         self.register_plugin_hook('finish_session', self.run_provider_report)
+        self.register_plugin_hook('finish_session', self.run_rbac_report)
         self.register_plugin_hook('build_report', self.run_report)
         self.register_plugin_hook('start_test', self.start_test)
         self.register_plugin_hook('finish_test', self.finish_test)
         self.register_plugin_hook('session_info', self.session_info)
+        self.register_plugin_hook('rbac_result', self.rbac_result)
 
     def configure(self):
         self.only_failed = self.data.get('only_failed', False)
@@ -305,3 +307,32 @@ class Reporter(ArtifactorBasePlugin):
                                                               pretty_time)
         list_string += '</ul>\n'
         return list_string
+
+    @ArtifactorBasePlugin.check_configured
+    def rbac_result(self, feature_name, role, result):
+        return None, {'rbac': {feature_name: {role: result}}}
+
+    @ArtifactorBasePlugin.check_configured
+    def run_rbac_report(self, rbac):
+
+        features_list = []
+        roles_list = []
+
+        for feature, roles in rbac.items():
+            if feature not in features_list:
+                features_list.append(feature)
+            for role in roles:
+                if role not in roles_list:
+                    roles_list.append(role)
+
+        for feature in features_list:
+            line = ""
+            for role in roles_list:
+                result = rbac.get(feature, {}).get(role, None)
+                if result is None:
+                    line += "N "
+                elif result is False:
+                    line += "F "
+                else:
+                    line += "T "
+            print line
