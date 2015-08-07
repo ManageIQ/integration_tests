@@ -9,6 +9,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import paginator, toolbar as tb, menu
 from utils.conf import cfme_data
 from utils.providers import setup_a_provider as _setup_a_provider
+from utils.version import current_version
 
 try:
     grid_pages = cfme_data.grid_pages.cloud
@@ -70,6 +71,7 @@ def set_cloud_provider_quad():
 
 @grid_uncollectif
 @pytest.mark.parametrize('page', grid_pages, scope="module")
+@pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
 def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     """ Tests grid items per page
 
@@ -80,12 +82,15 @@ def test_grid_page_per_item(request, setup_a_provider, page, set_grid):
     limit = visual.grid_view_limit
     sel.force_navigate(page)
     tb.select('Grid View')
-    if int(paginator.rec_total()) >= int(limit):
-        assert int(paginator.rec_end()) == int(limit), "Gridview Failed for page {}!".format(page)
+    if paginator.rec_total() is not None:
+        if int(paginator.rec_total()) >= int(limit):
+            assert int(paginator.rec_end()) == int(limit), \
+                "Gridview Failed for page {}!".format(page)
 
 
 @grid_uncollectif
 @pytest.mark.parametrize('page', grid_pages, scope="module")
+@pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
 def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
     """ Tests tile items per page
 
@@ -96,12 +101,15 @@ def test_tile_page_per_item(request, setup_a_provider, page, set_tile):
     limit = visual.tile_view_limit
     sel.force_navigate(page)
     tb.select('Tile View')
-    if int(paginator.rec_total()) >= int(limit):
-        assert int(paginator.rec_end()) == int(limit), "Tileview Failed for page {}!".format(page)
+    if paginator.rec_total() is not None:
+        if int(paginator.rec_total()) >= int(limit):
+            assert int(paginator.rec_end()) == int(limit), \
+                "Tileview Failed for page {}!".format(page)
 
 
 @grid_uncollectif
 @pytest.mark.parametrize('page', grid_pages, scope="module")
+@pytest.mark.uncollectif(lambda page: page == "clouds_stacks" and current_version() < "5.4")
 def test_list_page_per_item(request, setup_a_provider, page, set_list):
     """ Tests list items per page
 
@@ -112,8 +120,10 @@ def test_list_page_per_item(request, setup_a_provider, page, set_list):
     limit = visual.list_view_limit
     sel.force_navigate(page)
     tb.select('List View')
-    if int(paginator.rec_total()) >= int(limit):
-        assert int(paginator.rec_end()) == int(limit), "Listview Failed for page {}!".format(page)
+    if paginator.rec_total() is not None:
+        if int(paginator.rec_total()) >= int(limit):
+            assert int(paginator.rec_end()) == int(limit), \
+                "Listview Failed for page {}!".format(page)
 
 
 @landing_uncollectif
