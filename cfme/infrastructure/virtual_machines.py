@@ -12,7 +12,7 @@ from cfme.web_ui import (
     CheckboxTree, Form, InfoBlock, Region, Quadicon, Tree, accordion, fill, flash, form_buttons,
     paginator, toolbar, Calendar, Select, Input
 )
-from cfme.web_ui.menu import nav
+from cfme.web_ui.menu import extend_nav
 from functools import partial
 from selenium.common.exceptions import NoSuchElementException
 from utils.conf import cfme_data
@@ -74,79 +74,63 @@ retirement_date_form = Form(fields=[
 
 retire_remove_button = "//span[@id='remove_button']/a/img"
 
-nav.add_branch(
-    'infrastructure_virtual_machines',
-    {
-        "infra_vm_and_templates":
-        [
-            lambda _: accordion.tree("VMs & Templates", "All VMs & Templates"),
-            {
-                "vm_templates_provider_branch":
-                [
-                    lambda ctx: visible_tree.click_path(ctx["provider_name"]),
-                    {
-                        "datacenter_branch":
-                        [
-                            lambda ctx: visible_tree.click_path(ctx["datacenter_name"]),
-                            {
-                                "infra_vm_obj": lambda ctx: visible_tree.click_path(ctx["vm_name"]),
-                            }
-                        ],
-                    }
-                ],
 
-                "vm_templates_archived_branch":
-                [
-                    lambda ctx: visible_tree.click_path("<Archived>"),
-                    {
-                        "infra_archive_obj":
-                        lambda ctx: visible_tree.click_path(ctx["archive_name"]),
-                    }
-                ],
+@extend_nav
+class infrastructure_virtual_machines(object):
+    class infra_vm_and_templates(object):
+        def navigate(_):
+            accordion.tree("VMs & Templates", "All VMs & Templates")
 
-                "vm_templates_orphaned_branch":
-                [
-                    lambda ctx: visible_tree.click_path('<Orphaned>'),
-                    {
-                        "infra_orphan_obj": lambda ctx: visible_tree.click_path(ctx["orphan_name"]),
-                    }
-                ],
-            }
-        ],
+        class vm_templates_provider_branch(object):
+            def navigate(ctx):
+                visible_tree.click_path(ctx["provider_name"])
 
-        "infra_vms":
-        [
-            lambda _: accordion.tree("VMs", "All VMs"),
-            {
-                "infra_vms_filter_folder":
-                [
-                    lambda ctx: visible_tree.click_path(ctx["folder_name"]),
-                    {
-                        "infra_vms_filter": lambda ctx: visible_tree.click_path(ctx["filter_name"]),
-                    }
-                ],
+            class datacenter_branch(object):
+                def navigate(ctx):
+                    visible_tree.click_path(ctx["datacenter_name"])
 
-                "infra_vm_by_name": lambda ctx: sel.click(ctx['vm'].find_quadicon(
-                    do_not_navigate=True))
-            }
-        ],
+                def infra_vm_obj(ctx):
+                    visible_tree.click_path(ctx["vm_name"])
 
-        "infra_templates":
-        [
-            lambda _: (accordion.tree("Templates", "All Templates"), toolbar.set_vms_grid_view()),
-            {
-                "infra_templates_filter_folder":
-                [
-                    lambda ctx: visible_tree.click_path(ctx["folder_name"]),
-                    {
-                        "infra_templates_filter":
-                        lambda ctx: visible_tree.click_path(ctx["filter_name"]),
-                    }
-                ],
-            }
-        ],
-    }
-)
+        class vm_templates_archived_branch(object):
+            def navigate(ctx):
+                visible_tree.click_path("<Archived>")
+
+            def infra_archive_obj(ctx):
+                visible_tree.click_path(ctx["archive_name"])
+
+        class vm_templates_orphaned_branch(object):
+            def navigate(ctx):
+                visible_tree.click_path("<Orphaned>")
+
+            def infra_orphan_obj(ctx):
+                visible_tree.click_path(ctx["orphan_name"])
+
+    class infra_vms(object):
+        def navigate(_):
+            accordion.tree("VMs", "All VMs")
+
+        class infra_vms_filter_folder(object):
+            def navigate(ctx):
+                visible_tree.click_path(ctx["folder_name"])
+
+            def infra_vms_filter(ctx):
+                visible_tree.click_path(ctx["filter_name"])
+
+        def infra_vm_by_name(ctx):
+            sel.click(ctx['vm'].find_quadicon(do_not_navigate=True))
+
+    class infra_templates(object):
+        def navigate(_):
+            accordion.tree("Templates", "All Templates")
+            toolbar.set_vms_grid_view()
+
+        class infra_templates_filter_folder(object):
+            def navigate(ctx):
+                visible_tree.click_path(ctx["folder_name"])
+
+            def infra_templates_filter(ctx):
+                visible_tree.click_path(ctx["filter_name"])
 
 
 class Common(object):
