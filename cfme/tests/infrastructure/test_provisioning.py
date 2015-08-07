@@ -5,6 +5,7 @@ import pytest
 from cfme.common.provider import cleanup_vm
 from cfme.provisioning import do_vm_provisioning
 from cfme.services import requests
+from cfme.web_ui import fill
 from utils import normalize_text, testgen
 from utils.log import logger
 from utils.wait import wait_for
@@ -92,8 +93,29 @@ def test_provision_from_template(rbac_role, configure_ldap_auth_mode, setup_prov
                        num_sec=900)
 
 
-def test_provision_approval(setup_provider, provider, provisioning, vm_name, smtp_test, request):
-    """ Tests provisioning approval
+@pytest.mark.parametrize("edit", [True, False], ids=["edit", "approve"])
+def test_provision_approval(
+        setup_provider, provider, provisioning, vm_name, smtp_test, request, edit):
+    """ Tests provisioning approval. Tests couple of things.
+
+    * Approve manually
+    * Approve by editing the request to conform
+
+    Prerequisities:
+        * A provider that can provision.
+        * Automate role enabled
+        * User with e-mail set so you can receive and view them
+
+    Steps:
+        * Create a provisioning request that does not get automatically approved (eg. ``num_vms``
+            bigger than 1)
+        * Wait for an e-mail to come, informing you that the auto-approval was unsuccessful.
+        * Depending on whether you want to do manual approval or edit approval, do:
+            * MANUAL: manually approve the request in UI
+            * EDIT: Edit the request in UI so it conforms the rules for auto-approval.
+        * Wait for an e-mail with approval
+        * Wait until the request finishes
+        * Wait until an email, informing about finished provisioning, comes.
 
     Metadata:
         test_flag: provision
@@ -146,14 +168,31 @@ def test_provision_approval(setup_provider, provider, provisioning, vm_name, smt
 
     cells = {'Description': 'Provision from [{}] to [{}###]'.format(template, vm_name)}
     wait_for(lambda: requests.go_to_request(cells), num_sec=80, delay=5)
-    requests.approve_request(cells, "Approved")
+    if edit:
+        # Automatic approval after editing the request to conform
+        with requests.edit_request(cells) as form:
+            fill(form.num_vms, "1")
+            new_vm_name = vm_name + "_xx"
+            fill(form.vm_name, new_vm_name)
+        vm_names = [new_vm_name]  # Will be just one now
+        cells = {'Description': 'Provision from [{}] to [{}]'.format(template, new_vm_name)}
+        check = "vm provisioned successfully"
+        request.addfinalizer(
+            lambda: cleanup_vm(new_vm_name, provider))
+    else:
+        # Manual approval
+        requests.approve_request(cells, "Approved")
+        vm_names = [vm_name + "001", vm_name + "002"]  # There will be two VMs
+        request.addfinalizer(
+            lambda: [cleanup_vm(vmname, provider) for vmname in vm_names])
+        check = "request complete"
     wait_for(
         lambda:
         len(filter(
             lambda mail:
             "your virtual machine configuration was approved" in normalize_text(mail["subject"]),
             smtp_test.get_emails())) > 0,
-        num_sec=90, delay=5)
+        num_sec=120, delay=5)
 
     # Wait for the VM to appear on the provider backend before proceeding to ensure proper cleanup
     logger.info(
@@ -165,7 +204,7 @@ def test_provision_approval(setup_provider, provider, provisioning, vm_name, smt
 
     row, __ = wait_for(requests.wait_for_request, [cells],
                        fail_func=requests.reload, num_sec=1500, delay=20)
-    assert normalize_text(row.last_message.text) == "request complete"
+    assert normalize_text(row.last_message.text) == check
 
     # Wait for e-mails to appear
     def verify():
@@ -174,7 +213,7 @@ def test_provision_approval(setup_provider, provider, provisioning, vm_name, smt
                 lambda mail:
                 "your virtual machine request has completed vm {}".format(normalize_text(vm_name))
                 in normalize_text(mail["subject"]),
-                smtp_test.get_emails())) == 2
+                smtp_test.get_emails())) == len(vm_names)
         )
 
     wait_for(verify, message="email receive check", delay=5)

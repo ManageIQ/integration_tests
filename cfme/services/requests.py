@@ -233,3 +233,27 @@ def copy_request(cells):
     else:
         from cfme.provisioning import provisioning_form
         sel.click(provisioning_form.submit_copy_button)
+        flash.assert_no_errors()
+
+
+@contextmanager
+def edit_request(cells):
+    """Context manager that opens the request for editing and saves or cancels depending on success.
+
+    Args:
+        cells: Search data for the requests table.
+    """
+    if not go_to_request(cells):
+        raise Exception("The requst specified by {} not found!".format(str(cells)))
+    sel.wait_for_element(buttons.edit)  # It is glitching here ...
+    sel.click(buttons.edit)
+    from cfme.provisioning import provisioning_form
+    try:
+        yield provisioning_form
+    except Exception as e:
+        logger.exception(e)
+        sel.click(buttons.cancel)
+        raise
+    else:
+        sel.click(provisioning_form.submit_copy_button)
+        flash.assert_no_errors()
