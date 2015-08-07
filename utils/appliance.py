@@ -343,8 +343,8 @@ class Appliance(object):
             raise
 
     def reset_automate_model(self):
-        with self.ipapp.ssh_client as ssh:
-            ssh.run_rake_command("evm:automate:reset")
+        with self.ipapp.ssh_client as ssh_client:
+            ssh_client.run_rake_command("evm:automate:reset")
 
 
 class IPAppliance(object):
@@ -408,23 +408,26 @@ class IPAppliance(object):
 
     def seal_for_templatizing(self):
         """Prepares the VM to be "generalized" for saving as a template."""
-        with self.ssh_client as ssh:
+        with self.ssh_client as ssh_client:
             # Seals the VM in order to work when spawned again.
-            ssh.run_command("rm -rf /etc/ssh/ssh_host_*")
-            if ssh.run_command("grep '^HOSTNAME' /etc/sysconfig/network").rc == 0:
+            ssh_client.run_command("rm -rf /etc/ssh/ssh_host_*")
+            if ssh_client.run_command("grep '^HOSTNAME' /etc/sysconfig/network").rc == 0:
                 # Replace it
-                ssh.run_command(
+                ssh_client.run_command(
                     "sed -i -r -e 's/^HOSTNAME=.*$/HOSTNAME=localhost.localdomain/' "
                     "/etc/sysconfig/network")
             else:
                 # Set it
-                ssh.run_command("echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network")
-            ssh.run_command("sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
-            ssh.run_command("sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
-            ssh.run_command("rm -f /etc/udev/rules.d/70-*")
+                ssh_client.run_command(
+                    "echo HOSTNAME=localhost.localdomain >> /etc/sysconfig/network")
+            ssh_client.run_command(
+                "sed -i -r -e '/^HWADDR/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
+            ssh_client.run_command(
+                "sed -i -r -e '/^UUID/d' /etc/sysconfig/network-scripts/ifcfg-eth0")
+            ssh_client.run_command("rm -f /etc/udev/rules.d/70-*")
             # Fix SELinux things
-            ssh.run_command("restorecon -R /etc/sysconfig/network-scripts")
-            ssh.run_command("restorecon /etc/sysconfig/network")
+            ssh_client.run_command("restorecon -R /etc/sysconfig/network-scripts")
+            ssh_client.run_command("restorecon /etc/sysconfig/network")
 
     @property
     def managed_providers(self):
