@@ -170,13 +170,13 @@ We also do a few things that aren't explicitly called out in PEP 8:
 General Notes
 """""""""""""
 
-* Avoid using ``time.sleep`` as much as possible to workaround quirks in the UI.
-  There is a ``utils.wait.wait_for`` utility that can be used to wait for
+* Avoid using :py:func:`time.sleep` as much as possible to workaround quirks in the UI.
+  There is a :py:func:`utils.wait.wait_for` utility that can be used to wait for
   arbitrary conditions. In most cases there is some DOM visible change on the page
   which can be waited for.
-* Avoid using ``time.sleep`` for waiting for changes to happen outside of the UI.
+* Avoid using :py:func:`time.sleep` for waiting for changes to happen outside of the UI.
   Consider using tools like mgmt_system to probe the external systems for
-  conditions for example and tie it in with a ``wait_for`` as discussed above.
+  conditions for example and tie it in with a :py:func:`utils.wait.wait_for` as discussed above.
 * If you feel icky about something you've written but don't know how to make
   it better, ask someone. It's better to have it fixed before submitting it as
   a pull request ;)
@@ -189,71 +189,42 @@ Other useful code style guidelines:
 cfme_tests
 ----------
 
-With regard to design, if a component can be shared between different pages (trees, accordions,
-etc.), then it should be turned into a region. This is a standalone bit of code that models just
-a small portion of a page. From there, these regions can be composited into a page object. Page
-objects themselves should expose properties that represent items on the page, and also any
-"services" that the page has. So, rather than write a test with 'Fill in username, fill in
-password click submit', you would create a 'login' method on the page that takes the username
-and password as an argument. This will shield the tests from changing implementation of that
-login method. If you want pass something different, create a new method, like
-``login_with_enter_key``, so as to allow other variations of the service.
-
-If an action results in navigation to a new page, and that page will always be known, the
-action should return the page that results.
-
-The elements and methods exposed on a page will result from tests written against that page.
-If there is a specific test that you are working on, write the test first, modeling the page
-as you go (if needed) to provide the necessary functionality. Developers are not expected or
-encourage to model pages without a test that uses the modeling.
+For page development, please refer to :doc:`page_development`.
 
 Layout
 ^^^^^^
 
-`cfme_tests/`
+``cfme_tests/``
 
-* `cfme/` The new selenium interface framework currently (**In Heavy Development**).
+* ``cfme/`` Page modeling and tests
 
-  * `web_ui/` The new web framework being developed (**In Heavy Development**)
-  * `fixtures/` The new fixtures (**In Heavy Development**)
+  * ``web_ui/`` The new web framework
+  * ``fixtures/`` The new fixtures
+  * ``tests/`` Tests container
 
-* `pages/` Top-level pages container. The structure of this directory should mimic
-  the layout of the CFME UI as much as possible.
-
-* `tests/` Top-level tests container
-
-  * `appliance/` Appliance tests, generally using tools other than the UI to
-    inspect appliance internals, like verify installed packages or required
-    service states
-  * `scenario/` Large test scenarios, representing complicated setup and teardown
-    workflows with interdependent tests
-  * `ui/` General UI tests, testing specific functional units of behavior
-
-* `data/` Test data. The structure of this directory should match the
-  structure under `tests/`, with data files for tests in the same relative
+* ``conf/`` Place for configuration files
+* ``data/`` Test data. The structure of this directory should match the
+  structure under ``cfme/tests/``, with data files for tests in the same relative
   location as the test itself.
 
-  * For example, data files for `tests/ui/test_ui_widgets.py` could go into
-    `data/ui/test_ui_widgets/`.
+  * For example, data files for ``cfme/tests/dashboard/test_widgets.py`` could go into
+    ``data/dashboard/test_widgets/``.
 
-* `fixtures/` py.test fixtures that can be used by any test. Modules in
+* ``fixtures/`` py.test fixtures that can be used by any test. Modules in
   this directory will be auto loaded.
-* `markers/` py.test markers that can be used by any test. Modules in this
+* ``markers/`` py.test markers that can be used by any test. Modules in this
   directory will be auto loaded.
-* `utils/` Utility functions that can be called inside our outside the
+* ``metaplugins/`` Plugins loaded by ``@pytest.mark.meta``. Further informations in
+  :py:mod:`markers.meta`
+* ``utils/`` Utility functions that can be called inside our outside the
   test context. Generally, util functions benefit from having a related test
   fixture that exposes the utility to the tests. Modules in this directory
   will be auto loaded.
-* `db/` The 'db' module provides access to an appliance's database, as
-  well as convenience mappings for model to table names.
-* `scripts/` Useful scripts for QE developers that aren't used during
+
+  * ``tests/`` Unit tests for utils
+* ``scripts/`` Useful scripts for QE developers that aren't used during
   a test run
-
-Writing Pages
-^^^^^^^^^^^^^
-
-Information on developing page models, as well as a full example can be found in the
-:doc:`page_development` section.
+* ``sprout/`` Here lives the Sprout appliance tool.
 
 Writing Tests
 ^^^^^^^^^^^^^
@@ -262,9 +233,6 @@ Tests in `cfme_tests` have the following properties:
 
 * They pass on a freshly deployed appliance with no configuration beyond the
   defaults (i.e. tests do their own setup and teardown).
-* They never directly access a page's ``testsetup`` attribute, or call
-  selenium methods. Instead, methods defined on the page objects will carry
-  out the required behavior.
 * Where possible, they strive to be idempotent to facilitate repeated testing
   and debugging of failing tests. (Repeatable is Reportable)
 * Where possible, they try to clean up behind themselves. This not only helps
