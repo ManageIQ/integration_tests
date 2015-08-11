@@ -12,6 +12,7 @@ artifactor:
             plugin: reporter
             only_failed: False #Only show faled tests in the report
 """
+import csv
 import datetime
 import math
 import os
@@ -130,7 +131,7 @@ class Reporter(ArtifactorBasePlugin):
 
     def process_data(self, artifacts, log_dir, version, name_filter=None):
 
-        template_data = {'tests': []}
+        template_data = {'tests': [], 'qa': []}
         template_data['version'] = version
         log_dir = local(log_dir).strpath + "/"
         counts = {'passed': 0, 'failed': 0, 'skipped': 0, 'error': 0, 'xfailed': 0, 'xpassed': 0}
@@ -194,8 +195,13 @@ class Reporter(ArtifactorBasePlugin):
                     elif "events.html" in filename:
                         test_data['event_testing'] = filename.replace(log_dir, "")
                     elif "qa_contact.txt" in filename:
-                        with open(filename) as qafile:
-                            test_data['qa_contact'] = qafile.read()
+                        test_data['qa_contact'] = []
+                        with open(filename, 'rb') as qafile:
+                            qareader = csv.reader(qafile, delimiter=',', quotechar='"')
+                            for qacontact in qareader:
+                                test_data['qa_contact'].append(qacontact)
+                                if qacontact[0] not in template_data['qa']:
+                                    template_data['qa'].append(qacontact[0])
                 if "merkyl" in ident:
                     test_data['merkyl'] = [f.replace(log_dir, "")
                                            for f in test['files']['merkyl']]
