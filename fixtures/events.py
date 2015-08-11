@@ -1,4 +1,29 @@
 # -*- coding: utf-8 -*-
+"""Event testing framework.
+
+Some very important tips:
+
+* You MUST have your firewall turned off if you use random ports (as it is done in tests). If you
+  use a specific fixed port, make sure it is reachable from outside.
+* If you develop tests that use event testing, create a config in env.yaml:
+
+  .. code-block:: yaml
+    event_testing:
+        port: 12345
+
+  Then in multiple runs, the port stays the same so it works. Failure to do this will bite you. If
+  you forgot to do that, you can change the hostname and ip of event listener at Automate's
+  ``Datastore/EventTesting/QE/Automation/APIMethods/relay_events``. You can run the listener
+  standalone using ``python scripts/listener.py 0.0.0.0 <port>`` and use it for development.
+  It will eat all events that come to it and you will be able to see them at
+  ``localhost:port/events``, although just in JSON (rendering of HTML is done in cfme_tests). You
+  can issue a ``DELETE /events`` on the listener (eg. using ``curl``) in order to flush the event
+  database.
+
+* You should run with artifactor in order to get per-test HTML event reports.
+
+Usage of ``register_event`` is explained in :py:func:`register_event`.
+"""
 import requests
 import signal
 import subprocess
