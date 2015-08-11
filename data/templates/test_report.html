@@ -29,12 +29,18 @@
       {% if version %}<h2>Version: {{version}}</h2>{% endif %}
     </div>
     <div class="col-md-8 text-right">
-      <span class="label label-success">{{counts.passed}} Passed &nbsp;<input id="passed-check" type="checkbox" onclick="toggle('passed');"></span>
-      <span class="label label-primary">{{counts.skipped}} Skipped &nbsp;<input id="skipped-check" type="checkbox" onclick="toggle('skipped');"></span>
-      <span class="label label-warning">{{counts.failed}} Failed &nbsp;<input id="failed-check" type="checkbox" onclick="toggle('failed');" checked="checked"></span>
-      <span class="label label-danger">{{counts.error}} Error &nbsp;<input id="error-check" type="checkbox" onclick="toggle('error');" checked="checked"></span>
-      <span class="label label-danger">{{counts.xpassed}} XPassed &nbsp;<input id="xpassed-check" type="checkbox" onclick="toggle('xpassed');" checked="checked"></span>
-      <span class="label label-success">{{counts.xfailed}} XFailed &nbsp;<input id="xfailed-check" type="checkbox" onclick="toggle('xfailed');"></span>
+<form>User Filter:
+  <select class="toggle-user">
+    <option value="none" selected="selected">All</option>
+    {% for qac in qa %}<option value="{{qac}}">{{qac}}</option>{% endfor %}
+  </select>
+</form>
+      <span class="label label-success">{{counts.passed}} Passed &nbsp;<input id="passed-check" type="checkbox" onclick="check_name('passed');"></span>
+      <span class="label label-primary">{{counts.skipped}} Skipped &nbsp;<input id="skipped-check" type="checkbox" onclick="check_name('skipped');"></span>
+      <span class="label label-warning">{{counts.failed}} Failed &nbsp;<input id="failed-check" type="checkbox" onclick="check_name('failed');" checked="checked"></span>
+      <span class="label label-danger">{{counts.error}} Error &nbsp;<input id="error-check" type="checkbox" onclick="check_name('error');" checked="checked"></span>
+      <span class="label label-danger">{{counts.xpassed}} XPassed &nbsp;<input id="xpassed-check" type="checkbox" onclick="check_name('xpassed');" checked="checked"></span>
+      <span class="label label-success">{{counts.xfailed}} XFailed &nbsp;<input id="xfailed-check" type="checkbox" onclick="check_name('xfailed');"></span>
     </div>
   </div>
   <div class="col-md-4">
@@ -49,7 +55,7 @@
   <div class="col-md-8">
     <p></p>
 {% for test in tests %}
-    <div data="{{test.outcomes['overall']}}" class="panel panel-inverse panel-{{test.color}}">
+    <div data="{{test.outcomes['overall']}}" data-qa="{{test.qa_contact[0][0]}}" class="panel panel-inverse panel-{{test.color}}" data-test="test">
         <div class="panel-heading">
             <div class="row">
                 <div class="col-md-10">
@@ -68,7 +74,11 @@
                     {% endif %}
                     {% if test.qa_contact %}
                     <br>
-                    <strong>OWNER:</strong> <em>{{test.qa_contact}}</em>
+                    <strong>OWNER:</strong> <em>
+                      {% for contact in test.qa_contact %}
+                        {{contact[0]}} ({{contact[1]}}),&nbsp;
+                      {% endfor %}
+                      </em>
                     {% endif %}
                     {% if test.composite %}
                     <br>
@@ -246,20 +256,48 @@
 //    });
 //}
 
-function toggle(name)
+toggle_state = ['failed', 'error', 'xpassed']
+toggle_user = "none"
+
+function check_name(name)
 {
   if ($('#'+name+'-check').is(":checked"))
   {
-    $('[data='+name+']').show()
+    toggle_state.push(name)
   }
   else
   {
-    $('[data='+name+']').hide()
+    idx = toggle_state.indexOf(name)
+    if (idx > -1)
+    {
+      toggle_state.splice(idx, 1)
+    }
   }
+  update_display()
+}
+
+function update_display()
+{
+  $('[data-test="test"]').each(function(item){
+    if (toggle_state.indexOf($(this).attr('data')) > -1)
+    {
+      if (toggle_user == "none" || $(this).attr('data-qa') == toggle_user)
+      {
+        $(this).show()
+        return
+      }
+      $(this).hide()
+    }
+  })
 }
 
 
 $().ready(function(){
+
+$( ".toggle-user" ).change(function() {
+  toggle_user = $(".toggle-user").val()
+  update_display()
+});
 
 $(function() {
   $('#container').jstree({
@@ -292,12 +330,6 @@ $(function() {
     }, 250);
   });
 });
-toggle('error')
-toggle('failed')
-toggle('passed')
-toggle('skipped')
-toggle('xpassed')
-toggle('xfailed')
 })
 
 </script>

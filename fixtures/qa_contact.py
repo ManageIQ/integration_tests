@@ -36,14 +36,14 @@ def pytest_exception_interact(node, call, report):
         # The owner is specified in metadata
         art_client.fire_hook(
             'filedump', test_location=location, test_name=name, filename="qa_contact.txt",
-            contents="{} (from metadata)".format(node._metadata.owner), fd_ident="qa")
+            contents="{},from metadata".format(node._metadata.owner), fd_ident="qa")
         return
     try:
         qa_arr = []
         results = dig_code(node)
         for idx in range(min(2, len(results))):
-            qa_arr.append("{} ({:.2f}%)".format(results[idx][0], results[idx][1]))
-        qa_string = ", ".join(qa_arr)
+            qa_arr.append("{},{:.2f}%\n".format(results[idx][0], results[idx][1]))
+        qa_string = "".join(qa_arr)
 
     except:
         qa_string = "Unknown"
