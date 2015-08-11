@@ -19,7 +19,7 @@ from cfme import exceptions as cfme_exc
 from utils.log import logger
 from utils.mgmt_system.base import MgmtSystemAPIBase, VMInfo
 from utils.mgmt_system.exceptions import (
-    NetworkNameNotFound, VMInstanceNotFound
+    NoMoreFloatingIPs, NetworkNameNotFound, VMInstanceNotFound
 )
 from utils.timeutil import local_tz
 from utils.version import current_version
@@ -405,6 +405,10 @@ class OpenstackSystem(MgmtSystemAPIBase):
     def clone_vm(self, source_name, vm_name):
         raise NotImplementedError('clone_vm not implemented.')
 
+    def free_fips(self, pool):
+        """Returns list of free floating IPs sorted by ip address."""
+        return sorted(self.api.floating_ips.findall(fixed_ip=None, pool=pool), key=lambda ip: ip.ip)
+
     def deploy_template(self, template, *args, **kwargs):
         """ Deploys an OpenStack instance from a template.
 
@@ -445,8 +449,7 @@ class OpenstackSystem(MgmtSystemAPIBase):
         self.wait_vm_running(kwargs['vm_name'], num_sec=timeout)
         if kwargs.get('floating_ip_pool', None):
             pool = kwargs['floating_ip_pool']
-            free_ips = sorted(
-                self.api.floating_ips.findall(fixed_ip=None, pool=pool), key=lambda ip: ip.ip)
+            free_ips = self.free_fips(pool)
             # We maintain 1 floating IP as a protection against race condition
             # I know it is bad practice, but I did not figure out how to prevent the race
             # condition by openstack saying "Hey, this IP is already assigned somewhere"
@@ -456,7 +459,20 @@ class OpenstackSystem(MgmtSystemAPIBase):
                 logger.info("Reusing {} from pool {}".format(ip.ip, pool))
             else:
                 # There is one or none, so create one.
-                ip = self.api.floating_ips.create(pool)
+                try:
+                    ip = self.api.floating_ips.create(pool)
+                except (os_exceptions.ClientException, os_exceptions.OverLimit) as e:
+                    logger.error("Probably no more FIP slots available: {}".format(str(e)))
+                    free_ips = self.free_fips(pool)
+                    # So, try picking one from the list (there still might be one)
+                    if free_ips:
+                        # There is something free. Slight risk of race condition
+                        ip = free_ips[0]
+                        logger.info("Reused {} from pool {} because no more free spaces for new ips"
+                            .format(ip.ip, pool))
+                    else:
+                        # Nothing can be done
+                        raise NoMoreFloatingIPs("Provider {} ran out of FIPs".format(self.auth_url))
                 logger.info("Created {} in pool {}".format(ip.ip, pool))
             instance.add_floating_ip(ip)
             logger.info("Instance {} got a floating IP {}".format(kwargs['vm_name'], ip.ip))

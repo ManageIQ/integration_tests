@@ -15,6 +15,10 @@ class MultipleImagesError(Exception):
     pass
 
 
+class NoMoreFloatingIPs(Exception):
+    """Raised when provider runs out of FIPs."""
+
+
 class MultipleInstancesError(Exception):
     def __init__(self, value):
         self.value = value
