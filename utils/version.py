@@ -169,6 +169,8 @@ class Version(object):
             vstring = ".".join(map(str, vstring))
         elif vstring:
             vstring = str(vstring).strip()
+        if vstring in ('master', 'latest', 'upstream'):
+            vstring = 'master'
 
         components = filter(lambda x: x and x != '.',
                             self.component_re.split(vstring))
@@ -274,7 +276,7 @@ version_stream_product_mapping = {
     '5.2': SPTuple('downstream-52z', '3.0'),
     '5.3': SPTuple('downstream-53z', '3.1'),
     '5.4': SPTuple('downstream-54z', '3.2'),
-    LATEST: SPTuple('upstream', 'upstream')
+    LATEST: SPTuple('upstream', 'master')
 }
 
 
