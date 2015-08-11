@@ -10,7 +10,8 @@ using the provider.
 """
 import pytest
 
-from utils import providers
+from cfme.cloud.provider import credential_form
+from utils import letobj, providers
 from utils.log import logger
 
 # failed provider tracking for _setup_provider_fixture
@@ -43,26 +44,51 @@ def _setup_provider(provider):
         skip(provider)
 
 
-@pytest.fixture(scope='function')
-def setup_provider(provider, override_tenant_settings_funcscope):
+@pytest.yield_fixture(scope="module")
+def delete_tenanted_provider_after_module(provider, tenanted_provider):
+    yield
+    if tenanted_provider.exists:
+        tenanted_provider.delete(cancel=False)
+        tenanted_provider.wait_for_delete()
+
+
+@pytest.yield_fixture(scope='function')
+def setup_provider(provider, tenanted_provider):
     """Function-scoped fixture to set up a provider"""
-    _setup_provider(provider)
+    if tenanted_provider is None:
+        _setup_provider(provider)
+        yield
+        return
+    else:
+        if tenanted_provider.exists:
+            # If it exists, let's check if it already has the credentials
+            pytest.sel.force_navigate("clouds_provider_edit", context={"provider": provider})
+            current_user_name = pytest.sel.value(credential_form.default_principal)
+            if current_user_name != tenanted_provider.credentials.principal:
+                # It does not, so it is something different - just delete it
+                tenanted_provider.delete(cancel=False)
+                tenanted_provider.wait_for_delete()
+        with letobj(
+                provider, credentials=tenanted_provider.credentials, name=tenanted_provider.name):
+            # Do provider setup as usual
+            _setup_provider(provider)
+            yield
 
 
 @pytest.fixture(scope='module')
-def setup_provider_modscope(provider, override_tenant_settings_modscope):
+def setup_provider_modscope(provider):
     """Function-scoped fixture to set up a provider"""
     _setup_provider(provider)
 
 
 @pytest.fixture(scope='class')
-def setup_provider_clsscope(provider, override_tenant_settings_clsscope):
+def setup_provider_clsscope(provider):
     """Module-scoped fixture to set up a provider"""
     _setup_provider(provider)
 
 
 @pytest.fixture
-def setup_provider_funcscope(provider, override_tenant_settings_funcscope):
+def setup_provider_funcscope(provider, tenanted_provider):
     """Function-scoped fixture to set up a provider
 
     Note:
