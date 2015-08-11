@@ -61,6 +61,8 @@ def test_evm_running(ssh_client):
     assert 'started' in stdout.lower()
 
 
+@pytest.mark.uncollectif(lambda service: version.current_version().is_in_series('upstream')
+    and service == 'iptables')
 @pytest.mark.parametrize(('service'), [
     'evmserverd',
     'evminit',
@@ -70,8 +72,6 @@ def test_evm_running(ssh_client):
 ])
 def test_service_enabled(ssh_client, service):
     """Verifies if key services are configured to start on boot up"""
-    if version.current_version().is_in_series('upstream') and service == 'iptables':
-        raise pytest.skip('iptables service is not installed on upstream appliances')
     if pytest.store.current_appliance.os_version >= '7':
         cmd = 'systemctl is-enabled {}'.format(service)
     else:

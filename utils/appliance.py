@@ -171,6 +171,7 @@ class Appliance(object):
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
         self.ipapp.setup_upstream_db(log_callback=log_callback)
         self.ipapp.loosen_pgssl(log_callback=log_callback)
+        self.ipapp.restart_evm_service(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
     def configure(self, setup_fleece=False, log_callback=None, **kwargs):

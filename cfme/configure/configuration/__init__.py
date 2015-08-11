@@ -261,7 +261,7 @@ nav.add_branch("configuration",
         [
             lambda _: settings_tree(
                 version.pick({
-                    "default": "Region: Region %d [%d]" % server_region_pair(),
+                    version.LOWEST: "Region: Region %d [%d]" % server_region_pair(),
                     "5.3": "CFME Region: Region %d [%d]" % server_region_pair(),
                 }),
                 "Zones"),
