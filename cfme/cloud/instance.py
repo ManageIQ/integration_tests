@@ -3,6 +3,7 @@
 :var details_page: A :py:class:`cfme.web_ui.Region` object describing the details page.
 :var edit_form: A :py:class:`cfme.web_ui.Form` object describing the instance edit form.
 """
+from xml.sax.saxutils import quoteattr
 
 from cfme.cloud.provider import OpenStackProvider, EC2Provider
 from cfme.exceptions import InstanceNotFound, OptionNotAvailable, UnknownProviderType
@@ -197,6 +198,16 @@ class Instance(Updateable, Pretty):
         self.name = name
         self.template_name = template_name
         self.provider_crud = provider_crud
+
+    def assign_policy_profiles(self, *policy_profile_names):
+        """Unify with VM behaviour."""
+        return assign_policy_profiles(
+            self.name, *policy_profile_names, provider_crud=self.provider_crud)
+
+    def unassign_policy_profiles(self, *policy_profile_names):
+        """Unify with VM behaviour."""
+        return unassign_policy_profiles(
+            self.name, *policy_profile_names, provider_crud=self.provider_crud)
 
     def create(self):
         """Provisions an instance with the given properties through CFME
@@ -477,6 +488,17 @@ class Instance(Updateable, Pretty):
 
     wait_to_appear = wait_for_vm_to_appear  # For compatibility with Vm
     # TODO: Make a base class for Infra and Cloud VMs
+
+    def get_tags(self, tag="My Company Tags"):
+        """Returns all tags that are associated with this VM"""
+        self.load_details(refresh=True)
+        tags = []
+        for row in sel.elements(
+                "//*[(self::th or self::td) and normalize-space(.)={}]/../.."
+                "//td[img[contains(@src, 'smarttag')]]".format(
+                    quoteattr(tag))):
+            tags.append(sel.text(row).strip())
+        return tags
 
 
 class OpenStackInstance(Instance, Updateable):
