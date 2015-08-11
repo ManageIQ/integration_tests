@@ -357,7 +357,7 @@ def prepare_template_verify_version(self, template_id):
     except Exception as e:
         template.set_status("Some SSH error happened during appliance version check.")
         self.retry(args=(template_id,), exc=e, countdown=20, max_retries=5)
-    supposed_version = template.version if template.version is not None else "latest"
+    supposed_version = template.version if template.version is not None else "master"
     if true_version != supposed_version:
         # SPAM SPAM SPAM!
         with transaction.atomic():
