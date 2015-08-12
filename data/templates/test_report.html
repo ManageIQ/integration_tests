@@ -55,7 +55,7 @@
   <div class="col-md-8">
     <p></p>
 {% for test in tests %}
-    <div data="{{test.outcomes['overall']}}" {% if test.qa_contact %}data-qa="{{test.qa_contact[0][0]}}" {% else %} data-qa="Unknown" {% endif %}class="panel panel-inverse panel-{{test.color}}" data-test="test">
+    <div data="{{test.outcomes['overall']}}" {% if test.qa_contact %} data-qa="{{test.qa_contact[0][0]}}" {% else %} data-qa="Unknown" {% endif %} class="panel panel-inverse panel-{{test.color}}" data-test="test">
         <div class="panel-heading">
             <div class="row">
                 <div class="col-md-10">
@@ -286,8 +286,8 @@ function update_display()
         $(this).show()
         return
       }
-      $(this).hide()
     }
+    $(this).hide()
   })
 }
 
@@ -330,6 +330,7 @@ $(function() {
     }, 250);
   });
 });
+update_display()
 })
 
 </script>
