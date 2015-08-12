@@ -7,3 +7,5 @@ from openstack import OpenstackSystem  # NOQA
 from rhevm import RHEVMSystem  # NOQA
 from scvmm import SCVMMSystem  # NOQA
 from virtualcenter import VMWareSystem  # NOQA
+from kubernetes import Kubernetes  # NOQA
+from openshift import Openshift  # NOQA
