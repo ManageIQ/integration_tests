@@ -1290,7 +1290,7 @@ Sprout template version mismatch spammer™
         result = send_mail(
             "Template version mismatches detected",
             email_body,
-            "sprout-template-version-mismatch@noreply.redhat.com",
+            "sprout-template-version-mismatch@example.com",
             user_mails,
         )
         if result > 0:
