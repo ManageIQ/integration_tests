@@ -131,7 +131,7 @@ def handle_end_session(signal, frame):
     # when signaled, end the current test session immediately
     if store.parallel_session:
         store.parallel_session.session_finished = True
-signal.signal(signal.SIGUSR2, handle_end_session)
+signal.signal(signal.SIGQUIT, handle_end_session)
 
 
 class SlaveDict(dict):

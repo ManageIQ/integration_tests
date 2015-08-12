@@ -1,4 +1,5 @@
 import os
+import signal
 import sys
 from collections import deque
 from urlparse import urlparse
@@ -28,6 +29,8 @@ class SlaveManager(object):
         self.sock.connect(zmq_endpoint)
 
         self.messages = {}
+
+        self.quit_signaled = False
 
     def send_event(self, name, **kwargs):
         kwargs['_event_name'] = name
@@ -100,11 +103,17 @@ class SlaveManager(object):
                 pass
             else:
                 self.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+            if self.quit_signaled:
+                break
         return True
 
     def pytest_sessionfinish(self, session, exitstatus):
         self.message('shutting down')
         self.send_event('shutdown')
+
+    def handle_quit(self):
+        self.message('shutting down after the current test due to QUIT signal')
+        self.quit_signaled = True
 
     def _test_generator(self):
         # Pull the first batch of tests, stash in a deque
@@ -222,3 +231,4 @@ if __name__ == '__main__':
         conf.slave_config['zmq_endpoint'])
     config.pluginmanager.register(slave_manager, 'slave_manager')
     config.hook.pytest_cmdline_main(config=config)
+    signal.signal(signal.SIGQUIT, slave_manager.handle_quit)
