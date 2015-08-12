@@ -629,7 +629,7 @@ class ServerLogDepot(Pretty):
             """
             sel.force_navigate("cfg_diagnostics_server_collect_settings")
             details = {
-                "type": self.p_types[self.p_type],
+                "type": sel.ByValue(self.p_types[self.p_type]),
                 "name": self.name,
                 "uri": self.uri,
             }

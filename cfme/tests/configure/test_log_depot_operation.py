@@ -12,6 +12,7 @@ from utils.timeutil import parsetime
 from utils import conf
 from utils.ftp import FTPClient
 from utils.blockers import BZ
+from utils.path import log_path
 from cfme.configure import configuration as configure
 
 
@@ -195,11 +196,19 @@ def test_collect_log_depot(depot_type,
                            depot_machine,
                            depot_credentials,
                            depot_ftp,
-                           depot_configured):
+                           depot_configured,
+                           soft_assert,
+                           request):
     """ Boilerplate test to verify functionality of this concept
 
     Will be extended and improved.
     """
+    # Wipe the FTP contents in the end
+    @request.addfinalizer
+    def _clear_ftp():
+        with depot_ftp() as ftp:
+            ftp.recursively_delete()
+
     # Prepare empty workspace
     with depot_ftp() as ftp:
         ftp.recursively_delete()
@@ -214,17 +223,23 @@ def test_collect_log_depot(depot_type,
 
         # And must be older than the start time.
         for file in zip_files:
-            assert file.local_time < parsetime.now(), "%s is older." % file.name
+            soft_assert(file.local_time < parsetime.now(), "%s is older." % file.name)
 
         # No file contains 'unknown_unknown' sequence
         # BZ: 1018578
         bad_files = ftp.filesystem.search(re.compile(r"^.*?unknown_unknown.*?[.]zip$"),
                                           directories=False)
         if bad_files:
-            raise Exception("BUG1018578: Files %s present!" % ", ".join(f.path for f in bad_files))
+            print_list = []
+            for file in bad_files:
+                random_name = "{}.zip".format(fauxfactory.gen_alphanumeric())
+                download_file_name = log_path.join(random_name).strpath
+                file.download(download_file_name)
+                print_list.append((file, random_name))
 
-        # And clean it up
-        ftp.recursively_delete()
+            pytest.fail(
+                "BUG1018578: Files {} present!".format(
+                    ", ".join("{} as {}".format(f, r) for f, r in print_list)))
 
     # Check the times of the files by names
     datetimes = []
@@ -234,17 +249,24 @@ def test_collect_log_depot(depot_type,
         r"_(?P<y2>[0-9]{4})(?P<m2>[0-9]{2})(?P<d2>[0-9]{2})_"
         r"(?P<h2>[0-9]{2})(?P<M2>[0-9]{2})(?P<S2>[0-9]{2})[.]zip$"
     )
+    failed = False
     for file in zip_files:
         data = regexp.match(file.name)
-        assert data, "Wrong file matching"
+        if not soft_assert(data, "Wrong file matching of {}".format(file.name)):
+            failed = True
+            continue
         data = {key: int(value) for key, value in data.groupdict().iteritems()}
         date_from = parsetime(
             data["y1"], data["m1"], data["d1"], data["h1"], data["M1"], data["S1"])
         date_to = parsetime(data["y2"], data["m2"], data["d2"], data["h2"], data["M2"], data["S2"])
-        datetimes.append((date_from, date_to))
+        datetimes.append((date_from, date_to, file.name))
 
-    # Check for the gaps
-    if len(datetimes) > 1:
-        for i in range(len(datetimes) - 1):
-            dt = datetimes[i + 1][0] - datetimes[i][1]
-            assert dt.total_seconds() >= 0.0, "Negative gap between log files"
+    if not failed:
+        # Check for the gaps
+        if len(datetimes) > 1:
+            for i in range(len(datetimes) - 1):
+                dt = datetimes[i + 1][0] - datetimes[i][1]
+                soft_assert(
+                    dt.total_seconds() >= 0.0,
+                    "Negative gap between log files ({}, {})".format(
+                        datetimes[i][2], datetimes[i + 1][2]))
