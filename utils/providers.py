@@ -133,17 +133,20 @@ def provider_factory_by_name(provider_name, *args, **kwargs):
     return provider_factory(get_provider_key(provider_name), *args, **kwargs)
 
 
-def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=True):
-    """Sets up a random provider.
+def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=True,
+                     required_keys=[]):
+    """Sets up a single provider robustly.
 
     Does some counter-badness measures.
 
     Args:
-        prov_type: "infra" or "cloud"
+        prov_class: "infra" or "cloud"
+        prov_type: "ec2", "virtualcenter" or any other valid type
         validate: Whether to validate the provider.
         check_existing: Whether to check if the provider already exists.
+        required_keys: A set of required keys for the provider data to have
     """
-    global problematic_providers
+
     if prov_class == "infra":
         from cfme.infrastructure.provider import get_from_config
         potential_providers = list_infra_providers()
@@ -167,6 +170,12 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     else:
         from cfme.infrastructure.provider import get_from_config
         providers = list_infra_providers()
+
+    final_providers = []
+    for provider in providers:
+        if all(key in providers_data[provider] for key in required_keys):
+            final_providers.append(provider)
+    providers = final_providers
 
     # Check if the provider was behaving badly in the history
     if problematic_providers:
