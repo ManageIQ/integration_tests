@@ -1095,6 +1095,7 @@ def fill_callable(f, val):
     return f(val)
 
 
+@fill.method((Select, types.NoneType))
 @fill.method((Select, object))
 def fill_select(slist, val):
     logger.debug('  Filling in {} with value {}'.format(str(slist), val))
@@ -1275,6 +1276,9 @@ def _fill_form_list(form, values, action=None, action_always=False):
             logger.trace(' Dispatching fill for "%s"' % field)
             fill_prev = fill(loc, value)  # re-dispatch to fill for each item
             res.append(fill_prev != value)  # note whether anything changed
+        elif value is None and isinstance(form.locators[field], Select):
+            fill_prev = fill(form.locators[field], None)
+            res.append(fill_prev != value)
         else:
             res.append(False)
 
@@ -3195,3 +3199,4 @@ def _fill_dt_anything(dt, anything, **kwargs):
 
 fill.prefer((DynamicTable, Anything), (object, Mapping))
 fill.prefer((DynamicTable.Row, Anything), (object, Mapping))
+fill.prefer((Select, types.NoneType), (object, types.NoneType))

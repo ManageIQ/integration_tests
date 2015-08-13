@@ -1221,12 +1221,20 @@ class Select(SeleniumSelect, Pretty):
 
     Option = namedtuple("Option", ["text", "value"])
 
-    def __init__(self, loc, multi=False):
+    def __init__(self, loc, multi=False, none=None):
+        self._none = none
         if isinstance(loc, Select):
             self._loc = loc._loc
         else:
             self._loc = loc
         self.is_multiple = multi
+
+    @property
+    def none(self):
+        if self._none:
+            return version.pick(self._none)
+        else:
+            return None
 
     @property
     def _el(self):
@@ -1301,13 +1309,30 @@ def select(loc, o):
 
 @select.method((object, ByValue))
 def _select_tuple(loc, val):
-    return select_by_value(Select(loc), val.value)
+    value = val.value
+    if not value and isinstance(loc, Select):
+        if loc.none:
+            value = loc.none
+        else:
+            return
+    elif not value:
+        return
+    return select_by_value(Select(loc), value)
 
 
+@select.method((object, type(None)))
 @select.method((object, basestring))
 @select.method((object, ByText))
 def _select_str(loc, s):
-    return select_by_text(Select(loc), str(s))
+    value = s
+    if not value and isinstance(loc, Select):
+        if loc.none:
+            value = loc.none
+        else:
+            return
+    elif not value:
+        return
+    return select_by_text(Select(loc), str(value))
 
 
 @select.method((object, Iterable))

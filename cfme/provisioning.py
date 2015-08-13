@@ -132,7 +132,9 @@ provisioning_form = tabstrip.TabStripForm(
         # Cloud
         ('Properties', [
             ('instance_type', ui.Select('select#hardware__instance_type')),
-            ('guest_keypair', ui.Select('select#hardware__guest_access_key_pair')),
+            ('guest_keypair', ui.Select('select#hardware__guest_access_key_pair',
+                none={'5.4': "<None>",
+                      version.LOWEST: "<No Choices Available>"})),
             ('hardware_monitoring', ui.Select('select#hardware__monitoring')),
         ]),
 
