@@ -2,7 +2,7 @@
 import ui_navigate as nav
 
 from cfme.fixtures import pytest_selenium as sel
-from cfme.web_ui import accordion
+from cfme.web_ui import accordion, toolbar
 from fixtures.pytest_store import store
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
@@ -123,6 +123,13 @@ def os_infra_specific(without_infra, with_infra, with_both=None):
             return without_infra
     return _decide
 
+
+def _tree_func_with_grid(*args):
+    def f():
+        accordion.tree(*args)
+        toolbar.set_vms_grid_view()
+    return f
+
 # Dictionary of (nav destination name, section title) section tuples
 # Keys are toplevel sections (the main tabs), values are a supertuple of secondlevel sections
 sections = {
@@ -140,21 +147,21 @@ sections = {
         ('services_requests', 'Requests')
     ),
     ('clouds', 'Clouds'): (
-        ('clouds_providers', 'Providers'),
+        ('clouds_providers', 'Providers', toolbar.set_vms_grid_view),
         ('clouds_availability_zones', 'Availability Zones'),
         ('clouds_tenants', 'Tenants'),
         ('clouds_flavors', 'Flavors'),
         ('clouds_security_groups', 'Security Groups'),
         ('clouds_instances', 'Instances',
-            lambda: accordion.tree("Instances by Provider", "Instances by Provider")),
+            _tree_func_with_grid("Instances by Provider", "Instances by Provider")),
         ('clouds_stacks', 'Stacks')
     ),
     ('infrastructure', 'Infrastructure'): (
-        ('infrastructure_providers', 'Providers'),
+        ('infrastructure_providers', 'Providers', toolbar.set_vms_grid_view),
         ('infrastructure_clusters', os_infra_specific('Clusters', 'Deployment Roles')),
         ('infrastructure_hosts', os_infra_specific('Hosts', 'Nodes')),
         ('infrastructure_virtual_machines', 'Virtual Machines',
-            lambda: accordion.tree("VMs & Templates", "All VMs & Templates")),
+            _tree_func_with_grid("VMs & Templates", "All VMs & Templates")),
         ('infrastructure_resource_pools', 'Resource Pools'),
         ('infrastructure_datastores', 'Datastores'),
         ('infrastructure_repositories', 'Repositories'),
