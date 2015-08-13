@@ -7,6 +7,8 @@ import re
 import requests
 import simplejson
 from copy import copy
+from utils import lazycache
+from utils.log import create_logger
 from utils.version import Version
 from utils.wait import wait_for
 
@@ -40,6 +42,10 @@ class API(object):
     def version(self):
         return Version(self._version)
 
+    @lazycache
+    def log(self):
+        return create_logger("rest")
+
     @staticmethod
     def _result_processor(result):
         if not isinstance(result, dict):
@@ -52,6 +58,7 @@ class API(object):
             return result
 
     def get(self, url, **get_params):
+        self.log.info("GET {}".format(url))
         data = requests.get(url, auth=self._auth, params=get_params, verify=False)
         try:
             data = data.json()
@@ -60,6 +67,10 @@ class API(object):
         return self._result_processor(data)
 
     def post(self, url, **payload):
+        self.log.info(
+            "POST {} ({})".format(
+                url, ", ".join(
+                    ["{}={}".format(str(k), repr(v)) for k, v in payload.iteritems()])))
         data = requests.post(url, auth=self._auth, data=json.dumps(payload), verify=False)
         try:
             data = data.json()
@@ -71,6 +82,10 @@ class API(object):
         return self._result_processor(data)
 
     def delete(self, url, **payload):
+        self.log.info(
+            "DELETE {} ({})".format(
+                url, ", ".join(
+                    ["{}={}".format(str(k), repr(v)) for k, v in payload.iteritems()])))
         data = requests.delete(url, auth=self._auth, data=json.dumps(payload), verify=False)
         try:
             data = data.json()
@@ -176,9 +191,15 @@ class Collection(object):
         self.name = name
         self.description = description
 
+    @property
+    def api(self):
+        return self._api
+
     def reload(self, expand=False):
-        if expand:
+        if expand is True:
             kwargs = {"expand": "resources"}
+        elif expand:
+            kwargs = {"expand": expand}
         else:
             kwargs = {}
         self._data = self._api.get(self._href, **kwargs)
@@ -277,6 +298,10 @@ class Entity(object):
         evm_owner_id="users",
         task_id="tasks",
     )
+    # TODO: Extend
+    SUBCOLLECTIONS = dict(
+        service_catalogs={"service_templates"},
+    )
 
     def __init__(self, collection, data, incomplete=False):
         self.collection = collection
@@ -324,6 +349,12 @@ class Entity(object):
                     self.collection._api.get_entity(self.COLLECTION_MAPPING[key], value)
                 )
                 setattr(self, key, value)
+            elif isinstance(value, dict) and "count" in value and "resources" in value:
+                href = self._href
+                if not href.endswith("/"):
+                    href += "/"
+                subcol = Collection(self.collection._api, href + key, key)
+                setattr(self, key, subcol)
             else:
                 setattr(self, key, value)
 
@@ -347,16 +378,14 @@ class Entity(object):
         return self.wait_for_existence(False, **kwargs)
 
     def reload_if_needed(self):
-        if self._data is None or self._incomplete:
+        if self._data is None or self._incomplete or not hasattr(self, "_actions"):
             self.reload()
             self._incomplete = False
 
     def __getattr__(self, attr):
         self.reload()
-        try:
-            return getattr(self, attr)
-        except AttributeError:
-            pass  # Go on
+        if attr not in self.SUBCOLLECTIONS.get(self.collection.name, set([])):
+            raise AttributeError("No such attribute/subcollection {}".format(attr))
         # Try to get subcollection
         href = self._href
         if not href.endswith("/"):
@@ -426,6 +455,10 @@ class Action(object):
     def collection(self):
         return self._container.collection
 
+    @property
+    def api(self):
+        return self.collection.api
+
     def __call__(self, *args, **kwargs):
         resources = []
         # We got resources to post
@@ -446,9 +479,9 @@ class Action(object):
             if kwargs:
                 query_dict["resource"] = kwargs
         if self._method == "post":
-            result = self.collection._api.post(self._href, **query_dict)
+            result = self.api.post(self._href, **query_dict)
         elif self._method == "delete":
-            result = self.collection._api.delete(self._href, **query_dict)
+            result = self.api.delete(self._href, **query_dict)
         else:
             raise NotImplementedError
         if result is None:
@@ -459,7 +492,13 @@ class Action(object):
             return self._process_result(result)
 
     def _process_result(self, result):
-        if "id" in result:
+        if "request_state" in result and "requester_id" in result:
+            collection = getattr(self.api.collections, "service_requests")
+            d = copy(result)
+            if "id" in result:
+                d["href"] = "{}/{}".format(collection._href, result["id"])
+            return Entity(collection, d)
+        elif "id" in result:
             d = copy(result)
             d["href"] = "{}/{}".format(self.collection._href, result["id"])
             return Entity(self.collection, d, incomplete=True)

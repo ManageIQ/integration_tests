@@ -59,3 +59,31 @@ def test_callable_fail_condition():
         wait_for(
             incman.i_sleep_a_lot,
             fail_condition=lambda value: value <= 10, num_sec=2, delay=1)
+
+
+def test_wait_decorator():
+    incman = Incrementor()
+
+    @pytest.wait_for(fail_condition=0, delay=.05)
+    def a_test():
+        incman.i_sleep_a_lot()
+    print "Function output %s in time %s " % (a_test.out, a_test.duration)
+    assert a_test.duration < 1, "Should take less than 1 seconds"
+
+
+def test_wait_decorator_noparams():
+    incman = Incrementor()
+
+    @pytest.wait_for
+    def a_test():
+        return incman.i_sleep_a_lot() != 0
+    print "Function output %s in time %s " % (a_test.out, a_test.duration)
+    assert a_test.duration < 1, "Should take less than 1 seconds"
+
+
+def test_nonnumeric_numsec_timedelta_via_string():
+    incman = Incrementor()
+    func = partial(lambda: incman.i_sleep_a_lot() > 10)
+    with pytest.raises(TimedOutError):
+        wait_for(func,
+                 timeout="2s", delay=1)
