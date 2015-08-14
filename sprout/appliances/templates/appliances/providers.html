@@ -13,7 +13,7 @@
         <tbody>
             {% for username, count in complete_usage %}
             <tr>
-                <td>{% if request.user.is_superuser %}<a href="{% url 'my_appliances' %}?show={{username}}">{{ username }}</a>{% else %}{{ username }}{% endif %}</td>
+                <td>{% if request.user.is_superuser %}<a href="{% url 'user_appliances' username %}">{{ username }}</a>{% else %}{{ username }}{% endif %}</td>
                 <td>{{ count }}</td>
             </tr>
             {% endfor %}
@@ -84,7 +84,7 @@
             <tbody>
                 {% for username, count in provider.user_usage %}
                 <tr>
-                    <td>{% if request.user.is_superuser %}<a href="{% url 'my_appliances' %}?show={{username}}">{{ username }}</a>{% else %}{{ username }}{% endif %}</td>
+                    <td>{% if request.user.is_superuser %}<a href="{% url 'user_appliances' username %}">{{ username }}</a>{% else %}{{ username }}{% endif %}</td>
                     <td>{{ count }}</td>
                 </tr>
                 {% endfor %}
@@ -108,7 +108,7 @@
                     <td>
                         {% if appliance.owner %}
                             {% if request.user.is_superuser %}
-                                <a href="{% url 'my_appliances' %}?show={{ appliance.owner.username }}#appliance-{{ appliance.id }}">{{ appliance.owner.username }}</a>
+                                <a href="{% url 'user_appliances' appliance.owner.username %}#appliance-{{ appliance.id }}">{{ appliance.owner.username }}</a>
                             {% else %}
                                 {{ appliance.owner }}
                             {% endif %}

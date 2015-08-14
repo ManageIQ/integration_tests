@@ -182,10 +182,9 @@ def providers_for_date_group_and_version(request):
     return render(request, 'appliances/_providers.html', locals())
 
 
-def my_appliances(request):
+def my_appliances(request, show_user="my"):
     if not request.user.is_authenticated():
         return go_home(request)
-    show_user = request.GET.get("show", "my")
     if not request.user.is_superuser:
         if not (show_user == "my" or show_user == request.user.username):
             messages.info(request, "You can't view others' appliances!")
