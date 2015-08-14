@@ -122,7 +122,7 @@ def test_retire_service(provider, myservice, register_event):
     myservice.retire()
     register_event(
         provider.get_yaml_data()['type'],
-        "service", myservice.service_name, ["vm_retired"])
+        "service", myservice.service_name, ["service_retired"])
 
 
 def test_retire_service_on_date(myservice):
