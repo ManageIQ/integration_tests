@@ -5,6 +5,11 @@
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
 <script src={% static "app-js/my_appliances.js" %}></script>
 {% endblock %}
+{% block body-script %}
+<script type="text/javascript">
+  $('select').select2();
+</script>
+{% endblock %}
 {% block body %}
 
 {% if not request.user.is_superuser %}
@@ -151,7 +156,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="pool_id" value="{{ pool.id }}">
                             <input type="submit" class="btn btn-success btn-sm" value="Transfer ownership to:" onclick="return confirm('Are you sure?')">
-                            <select name="user_id">
+                            <select name="user_id" class='select-user'>
                             {% for user in pool.possible_other_owners %}
                                 <option value="{{ user.id }}">{{ user.first_name }} {{ user.last_name }}</option>
                             {% endfor %}
@@ -173,14 +178,16 @@
     </div>
 {% endfor %}
 </div>
-<h3>Legend</h3>
-<ul>
-    <li><strong>D</strong> - How many delayed provisioning tasks are scheduled for this pool.</li>
-    <li><strong>Q</strong> - How many other delayed provisioning tasks are scheduled before the latest task of this pool.</li>
-    <li><strong>PS</strong> - How many slots for simultaneous provisioning are currently free.</li>
-    <li><strong>AS</strong> - How many slots for appliances are currently free. If it is lower than you need, you won't get the required number of appliances!</li>
-    <li><strong>SA</strong> - How many of shepherd appliances that can be taken in the pool.</li>
-</ul>
+{% if display_legend %}
+    <h3>Legend</h3>
+    <ul>
+        <li><strong>D</strong> - How many delayed provisioning tasks are scheduled for this pool.</li>
+        <li><strong>Q</strong> - How many other delayed provisioning tasks are scheduled before the latest task of this pool.</li>
+        <li><strong>PS</strong> - How many slots for simultaneous provisioning are currently free.</li>
+        <li><strong>AS</strong> - How many slots for appliances are currently free. If it is lower than you need, you won't get the required number of appliances!</li>
+        <li><strong>SA</strong> - How many of shepherd appliances that can be taken in the pool.</li>
+    </ul>
+{% endif %}
 {% if can_order_pool %}
     {% if new_pool_possible %}
         <h2>Requesting additional pools{% if pools_remaining %} ({{pools_remaining}} remaining){% endif %}</h2>
@@ -208,27 +215,30 @@
                 </div>
             </div>
             <div class="form-group">
-              <label for="version" class="col-md-2 control-label">Select version (if applicable):</label>
+              <label for="version" class="col-md-2 control-label">Select version:</label>
               <div class="col-md-4">
                   <select class="form-control" id="version" name="version">
                     <option value="latest">Latest</option>
                   </select>
+                  <em>If applicable</em>
                 </div>
             </div>
             <div class="form-group">
-              <label for="date" class="col-md-2 control-label">Select build date (if you want):</label>
+              <label for="date" class="col-md-2 control-label">Select build date:</label>
               <div class="col-md-4">
                   <select class="form-control" id="date" name="date">
                     <option value="latest">Latest</option>
                   </select>
+                  <em>If applicable</em>
               </div>
             </div>
             <div class="form-group">
-              <label for="provider" class="col-md-2 control-label">Select specific provider (if you know what you do) (remaining provisioning slots:remaining appliance slots):</label>
+              <label for="provider" class="col-md-2 control-label">Select specific provider:</label>
               <div class="col-md-4">
                   <select class="form-control" id="provider" name="provider">
                     <option value="any">Any provider (recommended option!)</option>
                   </select>
+                  <em>The meaning of the numbers in parentheses are: Remaining provisioning slots, Remaining appliance slots and Number of such appliances in shepherd. Use only in the case when you really need a specific provider. In every other case, leave the choice to Sprout!</em>
                 </div>
             </div>
             <div class="form-group">
@@ -239,7 +249,6 @@
             </div>
             <button class="btn btn-primary btn-lg" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-star-empty"></span> Gimme one!</button>
         </form>
-        <p>The numbers at the provider are sort of hint how much space is left. This does not take shepherd into the account, so although the select might tell you there is no more space, shepherd might have some appliances running that you can take. This will be modified later.</p>
         <script type="text/javascript">
         $(document).ready(function() {
             // Description setting
