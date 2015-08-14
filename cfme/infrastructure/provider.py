@@ -11,13 +11,10 @@
 
 from functools import partial
 
-import ui_navigate as nav
-
-import cfme
 from utils.db import cfmedb
 import cfme.fixtures.pytest_selenium as sel
 from cfme.infrastructure.host import Host
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
+from cfme.web_ui.menu import nav
 import cfme.web_ui.toolbar as tb
 from cfme.common.provider import BaseProvider
 import utils.conf as conf

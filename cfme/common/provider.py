@@ -11,7 +11,6 @@ from cfme.web_ui import form_buttons
 import cfme.fixtures.pytest_selenium as sel
 from utils.browser import ensure_browser_open
 from utils.db import cfmedb
-from utils.providers import get_mgmt
 from utils.log import logger
 from utils.signals import fire
 from utils.wait import wait_for, RefreshTimer
@@ -91,10 +90,13 @@ class BaseProvider(object):
     def get_mgmt_system(self):
         """ Returns the mgmt_system using the :py:func:`utils.providers.get_mgmt` method.
         """
-        if hasattr(self, 'provider_data') and self.provider_data is not None:
-            return get_mgmt(self.provider_data)
-        elif self.key is not None:
+        # gotta stash this in here to prevent circular imports
+        from utils.providers import get_mgmt
+
+        if self.key:
             return get_mgmt(self.key)
+        elif getattr(self, 'provider_data', None):
+            return get_mgmt(self.provider_data)
         else:
             raise ProviderHasNoKey('Provider %s has no key, so cannot get mgmt system')
 

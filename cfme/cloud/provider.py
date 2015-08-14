@@ -11,14 +11,11 @@
 
 from functools import partial
 
-import ui_navigate as nav
-
-import cfme
 import cfme.fixtures.pytest_selenium as sel
 from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
 from cfme.common.provider import BaseProvider
-import cfme.web_ui.menu  # so that menu is already loaded before grafting onto it
+from cfme.web_ui.menu import nav
 from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator
 from cfme.web_ui import Input
 from utils.log import logger
