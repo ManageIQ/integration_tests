@@ -181,7 +181,9 @@ provisioning_form = tabstrip.TabStripForm(
 
 def generate_nav_function(tb_item):
     def f(context):
-        toolbar.select('Lifecycle', tb_item)
+        # Here it also can have long spinners
+        with sel.ajax_timeout(90):
+            toolbar.select('Lifecycle', tb_item)
         provider = context['provider']
         template_name = context['template_name']
         template_select_form.template_table._update_cache()
@@ -191,10 +193,12 @@ def generate_nav_function(tb_item):
         })
         if template:
             sel.click(template)
-            if current_version() < "5.4":
-                sel.click(submit_button)
-            else:
-                sel.click(form_buttons.FormButton("Continue", force_click=True))
+            # In order to mitigate the sometimes very long spinner timeout, raise the timeout
+            with sel.ajax_timeout(90):
+                if current_version() < "5.4":
+                    sel.click(submit_button)
+                else:
+                    sel.click(form_buttons.FormButton("Continue", force_click=True))
 
         else:
             raise TemplateNotFound('Unable to find template "{}" for provider "{}"'.format(
