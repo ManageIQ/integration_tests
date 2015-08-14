@@ -14,7 +14,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import Quadicon, Region, listaccordion as list_acc, toolbar as tb, paginator as pg
 from functools import partial
 from utils.pretty import Pretty
-from utils.provider import get_crud
+from utils.providers import get_crud
 from utils.wait import wait_for
 from utils import version
 

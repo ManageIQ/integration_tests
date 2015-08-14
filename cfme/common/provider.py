@@ -464,7 +464,7 @@ class BaseProvider(object):
 
     # @classmethod
     # def get_from_config(provider_key):
-    #    return utils.provider.get_crud(provider_key)
+    #    return utils.providers.get_crud(provider_key)
 
 
 @fill.method((Form, BaseProvider.Credential))
