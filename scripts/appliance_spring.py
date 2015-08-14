@@ -21,7 +21,7 @@ class Queue(pretty.Pretty):
         self.template_name = template_name
         self.max_size = max_size
         self.shutdown_flag = False
-        self.provider = providers.provider_factory(self.provider_name)
+        self.provider = providers.get_mgmt(self.provider_name)
 
     def vm_generator(self):
         '''Generates unique Vm definitions for this queue'''
@@ -141,7 +141,7 @@ def manage_all_queues(target_providers):
 
     '''
     init()
-    provs = {(p, providers.provider_factory(p)) for p in target_providers}
+    provs = {(p, providers.get_mgmt(p)) for p in target_providers}
     global queues
     queues = set()
     template_re = re.compile("autoqueue-(\d+)")

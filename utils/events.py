@@ -10,10 +10,10 @@ from py.path import local
 from cfme.automate.explorer import Namespace, Instance, Class, Domain
 from cfme.control.import_export import import_file, is_imported
 from cfme.exceptions import AutomateImportError
-from cfme.infrastructure.provider import get_from_config
 from cfme.web_ui import flash
 from utils import version
 from utils.log import logger
+from utils.providers import get_crud
 
 ALL_EVENTS = [
     ('Datastore Analysis Complete', 'datastore_analysis_complete'),
@@ -247,7 +247,7 @@ def setup_for_event_testing(ssh_client, db, listener_info, providers):
 
     # ASSIGN POLICY PROFILES
     for provider in providers:
-        prov_obj = get_from_config(provider)
+        prov_obj = get_crud(provider)
         if not prov_obj.exists:
             prov_obj.create()
         prov_obj.assign_policy_profiles("Automate event policies")

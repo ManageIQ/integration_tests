@@ -1,6 +1,6 @@
 #! /usr/bin/env python2
 from collections import defaultdict
-from utils.providers import provider_factory
+from utils.providers import get_mgmt
 from utils.conf import cfme_data, jenkins
 from utils import appliance
 from jinja2 import Environment, FileSystemLoader
@@ -59,7 +59,7 @@ for prov in li:
     ip = li[prov].get('ipaddress', None)
     prov_key_db[ip] = prov
     if li[prov]['type'] not in ['ec2', 'scvmm']:
-        mgmt = provider_factory(prov)
+        mgmt = get_mgmt(prov)
         print "DOING {}".format(prov)
         process_provider(mgmt, prov)
 

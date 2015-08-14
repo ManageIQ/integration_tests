@@ -6,7 +6,7 @@ from random import sample
 import utils
 from cfme.intelligence.reports.reports import CustomReport
 from utils import version
-from utils.providers import provider_factory_by_name, setup_a_provider
+from utils.providers import get_mgmt_by_name, setup_a_provider
 from utils.version import since_date_or_version
 
 
@@ -69,7 +69,7 @@ def test_custom_vm_report(soft_assert, report_vms):
             version.LOWEST: "Provider : Name",
             "5.3": "Cloud/Infrastructure Provider Name",
         })]
-        provider = provider_factory_by_name(provider_name)
+        provider = get_mgmt_by_name(provider_name)
         provider_hosts_and_ips = utils.net.resolve_ips(provider.list_host())
         provider_datastores = provider.list_datastore()
         provider_clusters = provider.list_cluster()
