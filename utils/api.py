@@ -384,6 +384,9 @@ class Entity(object):
 
     def __getattr__(self, attr):
         self.reload()
+        if attr in self.__dict__:
+            # It got loaded
+            return self.__dict__[attr]
         if attr not in self.SUBCOLLECTIONS.get(self.collection.name, set([])):
             raise AttributeError("No such attribute/subcollection {}".format(attr))
         # Try to get subcollection
