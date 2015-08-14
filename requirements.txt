@@ -1,3 +1,4 @@
+azure
 boto
 bottle
 bottle-sqlite
