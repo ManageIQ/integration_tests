@@ -16,11 +16,11 @@
     <h2>Listing and operation of your appliances</h2>
 {% else %}
     {% if show_user == "my" %}
-        <h2>Listing and operation of your appliances - <a href="{% url 'my_appliances' %}?show=all">Show all</a></h2>
+        <h2>Listing and operation of your appliances - <a href="{% url 'all_appliances' %}">Show all</a></h2>
     {% elif show_user == "all" %}
-        <h2>Listing and operation of all users&apos; appliances - <a href="{% url 'my_appliances' %}?show=my">Show mine</a></h2>
+        <h2>Listing and operation of all users&apos; appliances - <a href="{% url 'my_appliances' %}">Show mine</a></h2>
     {% else %}
-        <h2>Listing and operation of all {{show_user}}&apos;s appliances - <a href="{% url 'my_appliances' %}?show=all">Show all</a>, <a href="{% url 'my_appliances' %}?show=my">Show mine</a></h2>
+        <h2>Listing and operation of all {{show_user}}&apos;s appliances - <a href="{% url 'all_appliances' %}">Show all</a>, <a href="{% url 'my_appliances' %}">Show mine</a></h2>
     {% endif %}
 {% endif %}
 <div ng-app="myAppliancesApp">
@@ -33,7 +33,7 @@
             {% endif %}</strong>
             {% if show_user == "all" %}
                 <em>Owner: {{ pool.owner.first_name }} {{ pool.owner.last_name }}
-                <a href="{% url 'my_appliances' %}?show={{ pool.owner.username }}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
+                <a href="{% url 'user_appliances' pool.owner.username %}" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-hand-right"></span> {{ pool.owner.username }}</a></em>
             {% endif %}
             <div class="form-inline">
                 <div class="form-group">
