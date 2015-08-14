@@ -119,6 +119,8 @@ def date_for_group_and_version(request):
 def providers_for_date_group_and_version(request):
     total_provisioning_slots = 0
     total_appliance_slots = 0
+    total_shepherd_slots = 0
+    shepherd_appliances = {}
     group_id = request.POST.get("stream")
     preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
     if group_id == "<None>":
@@ -159,8 +161,24 @@ def providers_for_date_group_and_version(request):
             providers = sorted([p.values()[0] for p in providers])
             providers = [Provider.objects.get(id=provider) for provider in providers]
             for provider in providers:
+                appl_filter = dict(
+                    appliance_pool=None, ready=True, template__provider=provider,
+                    template__preconfigured=filters["preconfigured"],
+                    template__template_group=filters["template_group"])
+                if "date" in filters:
+                    appl_filter["template__date"] = filters["date"]
+
+                if "version" in filters:
+                    appl_filter["template__version"] = filters["version"]
+                shepherd_appliances[provider.id] = len(Appliance.objects.filter(**appl_filter))
+                total_shepherd_slots += shepherd_appliances[provider.id]
                 total_appliance_slots += provider.remaining_appliance_slots
                 total_provisioning_slots += provider.remaining_provisioning_slots
+
+            render_providers = {}
+            for provider in providers:
+                render_providers[provider.id] = {
+                    "shepherd_count": shepherd_appliances[provider.id], "object": provider}
     return render(request, 'appliances/_providers.html', locals())
 
 
@@ -183,6 +201,10 @@ def my_appliances(request):
     groups = Group.objects.order_by("id")
     can_order_pool = show_user == "my"
     new_pool_possible = True
+    display_legend = False
+    for pool in pools:
+        if not pool.finished:
+            display_legend = True
     per_pool_quota = None
     pools_remaining = None
     num_user_vms = Appliance.objects.filter(appliance_pool__owner=request.user).count()
