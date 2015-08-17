@@ -11,9 +11,9 @@ Members of this module are available in the the pytest.sel namespace, e.g.::
 :var ajax_wait_js: A Javascript function for ajax wait checking
 :var class_selector: Regular expression to detect simple CSS locators
 """
-
+from HTMLParser import HTMLParser
 from time import sleep
-from xml.sax.saxutils import quoteattr
+from xml.sax.saxutils import quoteattr, unescape
 from collections import Iterable, namedtuple
 from contextlib import contextmanager
 from textwrap import dedent
@@ -1212,6 +1212,9 @@ class Select(SeleniumSelect, Pretty):
     without it being present on the page. The object is located at the beginning
     of each function call.
 
+    Can hadle patternfly ``selectpicker`` kind of select. It alters the behaviour slightly, it does
+    not use :py:func:`move_to_element` and uses JavaScript more extensively.
+
     Args:
         loc: A locator.
 
@@ -1238,14 +1241,29 @@ class Select(SeleniumSelect, Pretty):
             return None
 
     @property
+    def is_patternfly(self):
+        return "selectpicker" in get_attribute(self._loc, "class")
+
+    @property
     def _el(self):
-        return move_to_element(self)
+        return element(self) if self.is_patternfly else move_to_element(self)
 
     @property
     def all_options(self):
         """Returns a list of tuples of all the options in the Select"""
-        els = execute_script("return arguments[0].options;", element(self))
-        return [self.Option(el.text, el.get_attribute('value')) for el in els]
+        # More reliable using javascript
+        script = dedent("""\
+            var result_arr = [];
+            var opt_elements = arguments[0].options;
+            for(var i = 0; i < opt_elements.length; i++){
+                var option = opt_elements[i];
+                result_arr.push([option.innerHTML, option.getAttribute("value")]);
+            }
+            return result_arr;
+        """)
+        options = execute_script(script, element(self))
+        parser = HTMLParser()
+        return [self.Option(parser.unescape(option[0]), option[1]) for option in options]
 
     @property
     def all_selected_options(self):
@@ -1274,13 +1292,37 @@ class Select(SeleniumSelect, Pretty):
         """
         if not self.is_multiple:
             raise NotImplementedError("You may only deselect all options of a multi-select")
-        for opt in self.all_selected_options:
-            raw_click(opt)
+        if not self.is_patternfly:
+            for opt in self.all_selected_options:
+                raw_click(opt)
+        else:
+            execute_script(
+                "$(arguments[0]).selectpicker('deselectAll'); $(arguments[0]).trigger('change');",
+                element(self))
+
+    def get_value_by_text(self, text):
+        # unescape because it turns <> into &lt;&gt; which we don't want in xpath
+        opt = element(".//option[.={}]".format(unescape(quoteattr(text))), root=element(self))
+        return get_attribute(opt, "value")
+
+    def select_by_value(self, value):
+        if not self.is_patternfly:
+            return super(Select, self).select_by_value(value)
+        else:
+            execute_script(
+                "$(arguments[0]).selectpicker('val', arguments[1]);"
+                "$(arguments[0]).trigger('change');",
+                element(self), value)
+            return None
 
     def select_by_visible_text(self, text):
         """Dump all of the options if the required option is not present."""
         try:
-            return super(Select, self).select_by_visible_text(text)
+            if not self.is_patternfly:
+                return super(Select, self).select_by_visible_text(text)
+            else:
+                # selectpicker needs value only
+                return self.select_by_value(self.get_value_by_text(text))
         except NoSuchElementException as e:
             msg = str(e)
             available = ", ".join(repr(opt.text) for opt in self.all_options)
@@ -1288,7 +1330,7 @@ class Select(SeleniumSelect, Pretty):
 
     def locate(self):
         """Guards against passing wrong locator (not resolving to a select)."""
-        sel_el = move_to_element(self._loc)
+        sel_el = element(self._loc) if self.is_patternfly else move_to_element(self._loc)
         sel_tag = tag(sel_el)
         if sel_tag != "select":
             raise exceptions.UnidentifiableTagType(
