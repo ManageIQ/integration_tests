@@ -143,9 +143,10 @@ def test_provision_stack(setup_provider, provider, provisioning, dialog, catalog
                   dialog=dialog_name, orch_template=template_name,
                   provider_type=provider.name)
     catalog_item.create()
+    stackname = "test-" + fauxfactory.gen_alphanumeric()
     if provider.type == 'ec2':
         stack_data = {
-            'stack_name': "stack" + fauxfactory.gen_alphanumeric(),
+            'stack_name': stackname,
             'key_name': provisioning['stack_provisioning']['key_name'],
             'db_user': provisioning['stack_provisioning']['db_user'],
             'db_password': provisioning['stack_provisioning']['db_password'],
@@ -154,8 +155,14 @@ def test_provision_stack(setup_provider, provider, provisioning, dialog, catalog
         }
     elif provider.type == 'openstack':
         stack_data = {
-            'stack_name': "stack" + fauxfactory.gen_alphanumeric()
+            'stack_name': stackname,
         }
+
+    @request.addfinalizer
+    def _cleanup_vms():
+        if provider.mgmt.stack_exist(stackname):
+            provider.mgmt.delete_stack(stackname)
+
     service_catalogs = ServiceCatalogs("service_name", stack_data)
     service_catalogs.order_stack_item(catalog.name, catalog_item)
     flash.assert_no_errors()

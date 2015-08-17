@@ -3,6 +3,7 @@ from datetime import datetime
 
 import boto
 from boto.ec2 import EC2Connection, get_region
+from boto.cloudformation import CloudFormationConnection
 
 from utils.mgmt_system.base import MgmtSystemAPIBase
 from utils.mgmt_system.exceptions import (
@@ -55,6 +56,7 @@ class EC2System(MgmtSystemAPIBase):
 
         region = get_region(kwargs.get('region'))
         self.api = EC2Connection(username, password, region=region)
+        self.stackapi = CloudFormationConnection(username, password)
         self.kwargs = kwargs
 
     def disconnect(self):
@@ -121,6 +123,37 @@ class EC2System(MgmtSystemAPIBase):
         try:
             self.api.terminate_instances([instance_id])
             self._block_until(instance_id, self.states['deleted'])
+            return True
+        except ActionTimedOutError:
+            return False
+
+    def describe_stack(self, stack_name):
+        """Describe stackapi
+
+        Returns the description for the specified stack
+        Args:
+            stack_name: Unique name of stack
+        """
+        result = []
+        stacks = self.stackapi.describe_stacks(stack_name)
+        result.extend(stacks)
+        return result
+
+    def stack_exist(self, stack_name):
+        stacks = [stack for stack in self.describe_stack(stack_name)
+            if stack.stack_name == stack_name]
+        if stacks:
+            return bool(stacks)
+
+    def delete_stack(self, stack_name):
+        """Deletes stack
+
+        Args:
+            stack_name: Unique name of stack
+        """
+        logger.info(" Terminating EC2 stack {}" .format(stack_name))
+        try:
+            self.stackapi.delete_stack(stack_name)
             return True
         except ActionTimedOutError:
             return False
