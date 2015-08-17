@@ -895,6 +895,14 @@ class AppliancePool(MetadataMixin):
                         "The appliance was taken out of dying pool {}".format(self.id))
                 else:
                     Appliance.kill(appliance)
+
+            if self.current_count == 0:
+                # Pool is empty, no point of keeping it alive.
+                # This is needed when deleting a pool that has appliances that can be salvaged.
+                # They are not deleted. the .delete() method on appliances takes care that when the
+                # last appliance in pool is deleted, it deletes the pool. But since we don't delete
+                # in the case of salvaging them, we do have to do it manually here.
+                self.delete()
         else:
             # No appliances, so just delete it
             self.delete()
