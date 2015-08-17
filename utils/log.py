@@ -447,7 +447,7 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
     def art_log(self, level_name, message, kwargs):
         art_log_record = {
             'level': level_name,
-            'message': str(message),
+            'message': message.encode("ascii", "xmlcharrefreplace"),
             'extra': kwargs.get('extra', '')
         }
         self.artifactor.fire_hook('log_message', log_record=art_log_record, slaveid=self.slaveid)
