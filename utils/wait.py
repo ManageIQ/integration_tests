@@ -112,14 +112,18 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
     silent_fail = kwargs.get("silent_failure", False)
 
     t_delta = 0
+    tries = 0
     logger.trace('Started {} at {}'.format(message, st_time))
     while t_delta <= num_sec:
         try:
+            tries += 1
             out = func(*func_args, **func_kwargs)
         except:
             if handle_exception:
                 out = fail_condition
             else:
+                logger.info("Wait for {} took {} tries and {} seconds before failure.".format(
+                    message, tries, time.time() - st_time))
                 raise
         if out is fail_condition or fail_condition_check(out):
             time.sleep(delay)
@@ -132,18 +136,18 @@ def wait_for(func, func_args=[], func_kwargs={}, **kwargs):
             duration = time.time() - st_time
             if not quiet:
                 logger.trace('Took {:0.2f} to do {}'.format(duration, message))
-            logger.trace('Finished {} at {}'.format(message, st_time + t_delta))
+            logger.trace('Finished {} at {}, {} tries'.format(message, st_time + t_delta, tries))
             return WaitForResult(out, duration)
         t_delta = time.time() - st_time
     logger.trace('Finished at {}'.format(st_time + t_delta))
     if not silent_fail:
-        logger.error('Could not complete {} at {}:{} in time, took {:0.2f}'.format(message,
-            filename, line_no, t_delta))
+        logger.error("Couldn't complete {} at {}:{} in time, took {:0.2f}, {} tries".format(message,
+            filename, line_no, t_delta, tries))
         logger.error('The last result of the call was: {}'.format(str(out)))
         raise TimedOutError("Could not do {} at {}:{} in time".format(message, filename, line_no))
     else:
-        logger.warning("Could not do {} at {}:{} in time but ignoring".format(message,
-            filename, line_no))
+        logger.warning("Could not do {} at {}:{} in time ({} tries) but ignoring".format(message,
+            filename, line_no, tries))
         logger.warning('The last result of the call was: {}'.format(str(out)))
 
 
