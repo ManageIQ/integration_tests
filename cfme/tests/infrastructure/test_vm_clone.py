@@ -117,12 +117,11 @@ def create_vm(provider, setup_provider, catalog_item, request):
     row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
     cells = {'Description': row_description}
     row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=900, delay=20)
+        fail_func=requests.reload, num_sec=4000, delay=20)
     assert row.last_message.text == 'Request complete'
     return vm_name
 
 
-@pytest.mark.meta(blockers=[1144207])
 @pytest.mark.usefixtures("setup_provider")
 @pytest.mark.long_running
 def test_vm_clone(provisioning, provider, clone_vm_name, request, create_vm):
