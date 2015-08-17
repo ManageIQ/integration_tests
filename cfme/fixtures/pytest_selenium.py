@@ -32,7 +32,6 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.select import Select as SeleniumSelect
 from multimethods import singledispatch, multidispatch
 
-import diaper
 import pytest
 import base64
 from cfme import exceptions, js
@@ -273,9 +272,11 @@ def in_flight():
         The keys are: ``jquery, prototype, miq, spinner and document``.
         The values are: ``True`` if running, ``False`` otherwise.
     """
-    with diaper:
+    try:
         return execute_script(js.in_flight)
-    if diaper.smelly:
+    except UnexpectedAlertPresentException:
+        raise
+    except Exception:
         sleep(0.5)
         return execute_script(js.in_flight)
 
