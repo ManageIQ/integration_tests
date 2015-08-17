@@ -3200,3 +3200,4 @@ def _fill_dt_anything(dt, anything, **kwargs):
 fill.prefer((DynamicTable, Anything), (object, Mapping))
 fill.prefer((DynamicTable.Row, Anything), (object, Mapping))
 fill.prefer((Select, types.NoneType), (object, types.NoneType))
+fill.prefer((DHTMLSelect, types.NoneType), (object, types.NoneType))
