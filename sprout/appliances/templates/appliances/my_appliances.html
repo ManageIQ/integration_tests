@@ -7,7 +7,12 @@
 {% endblock %}
 {% block body-script %}
 <script type="text/javascript">
-  $('select').select2();
+    $('select').select2();
+    $('select#view_user').change(function(){
+        var url = $('select#view_user').val();
+        if(url != "")
+            window.location.href = url;
+    });
 </script>
 {% endblock %}
 {% block body %}
@@ -15,13 +20,22 @@
 {% if not request.user.is_superuser %}
     <h2>Listing and operation of your appliances</h2>
 {% else %}
-    {% if show_user == "my" %}
-        <h2>Listing and operation of your appliances - <a href="{% url 'all_appliances' %}">Show all</a></h2>
-    {% elif show_user == "all" %}
-        <h2>Listing and operation of all users&apos; appliances - <a href="{% url 'my_appliances' %}">Show mine</a></h2>
-    {% else %}
-        <h2>Listing and operation of all {{show_user}}&apos;s appliances - <a href="{% url 'all_appliances' %}">Show all</a>, <a href="{% url 'my_appliances' %}">Show mine</a></h2>
-    {% endif %}
+    <h2>Listing and operation of {% if show_user == "my" %}my{% else %}{{ show_user }}'s{% endif %} appliances - switch to: 
+        <select id="view_user">
+            <option value="">Select an user ...</option>
+        {% if show_user != "my" %}
+            <option value="{% url 'my_appliances' %}">My appliances</option>
+        {% endif %}
+        {% if show_user != "all" %}
+            <option value="{% url 'all_appliances' %}">All appliances</option>
+        {% endif %}
+        {% for user in other_users %}
+            {% if user.id != show_user %}
+                <option value="{% url 'user_appliances' user.username %}">{{ user.first_name }} {{ user.last_name }}</option>
+            {% endif %}
+        {% endfor %}
+        </select>
+    </h2>
 {% endif %}
 <div ng-app="myAppliancesApp">
 {% for pool in pools %}
