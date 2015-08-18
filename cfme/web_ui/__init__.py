@@ -2509,9 +2509,17 @@ class ScriptBox(Pretty):
 
     pretty_attrs = ['locator']
 
-    def __init__(self, name="miqEditor", ta_locator="//textarea[contains(@id, 'method_data')]"):
-        self.name = name
+    def __init__(self, name=None, ta_locator="//textarea[contains(@id, 'method_data')]"):
+        self._name = name
         self.ta_loc = ta_locator
+
+    @property
+    def name(self):
+        if not self._name:
+            self._name = version.pick({
+                version.LOWEST: 'miqEditor',
+                '5.5': 'ManageIQ.editor'})
+        return self._name
 
     def get_value(self):
         script = sel.execute_script('return {}.getValue();'.format(self.name))

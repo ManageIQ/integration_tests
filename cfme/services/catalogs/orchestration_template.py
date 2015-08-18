@@ -20,8 +20,7 @@ create_template_form = Form(
         ('template_name', Input("name")),
         ('description', "textarea#description"),
         ("template_type", Select("select#type")),
-        ('content', ScriptBox(name="miqEditor",
-                    ta_locator="//div[@id='basic_info_div']/div/div"
+        ('content', ScriptBox(ta_locator="//div[@id='basic_info_div']/div/div"
                     "/div/div/div/div/div/div/pre/span")),
         ('add_button', form_buttons.add),
         ('edit_button', form_buttons.save),
