@@ -114,15 +114,15 @@ def create_vm(provider, setup_provider, catalog_item, request):
     service_catalogs.order(catalog_item.catalog, catalog_item)
     flash.assert_no_errors()
     logger.info('Waiting for cfme provision request for service %s' % catalog_item.name)
-    row_description = 'Provisioning [%s] for Service [%s]' % (catalog_item.name, catalog_item.name)
+    row_description = catalog_item.name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
-        fail_func=requests.reload, num_sec=900, delay=20)
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
+        fail_func=requests.reload, num_sec=1400, delay=20)
     assert row.last_message.text == 'Request complete'
     return vm_name
 
 
-@pytest.mark.meta(blockers=[1144207])
+@pytest.mark.meta(blockers=[1254377])
 @pytest.mark.usefixtures("setup_provider")
 @pytest.mark.long_running
 def test_vm_clone(provisioning, provider, clone_vm_name, request, create_vm):
