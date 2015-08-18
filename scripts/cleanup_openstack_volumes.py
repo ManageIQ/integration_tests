@@ -12,7 +12,7 @@ import iso8601
 import tzlocal
 from datetime import datetime, timedelta
 
-from utils.providers import list_providers, provider_factory
+from utils.providers import list_providers, get_mgmt
 
 local_tz = tzlocal.get_localzone()
 GRACE_TIME = timedelta(hours=2)
@@ -21,7 +21,7 @@ GRACE_TIME = timedelta(hours=2)
 def main(*providers):
     for provider_key in providers:
         print "Cleaning up", provider_key
-        api = provider_factory(provider_key).capi
+        api = get_mgmt(provider_key).capi
         try:
             volumes = api.volumes.findall(attachments=[])
         except Exception as e:

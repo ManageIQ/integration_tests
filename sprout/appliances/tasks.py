@@ -24,7 +24,7 @@ from sprout.log import create_logger
 
 from utils.appliance import Appliance as CFMEAppliance
 from utils.path import project_path
-from utils.providers import provider_factory
+from utils.providers import get_mgmt
 from utils.timeutil import parsetime
 from utils.trackerbot import api, parse_template
 
@@ -1134,25 +1134,25 @@ def wait_appliance_ready(self, appliance_id):
 
 @singleton_task()
 def anyvm_power_on(self, provider, vm):
-    provider = provider_factory(provider)
+    provider = get_mgmt(provider)
     provider.start_vm(vm)
 
 
 @singleton_task()
 def anyvm_power_off(self, provider, vm):
-    provider = provider_factory(provider)
+    provider = get_mgmt(provider)
     provider.stop_vm(vm)
 
 
 @singleton_task()
 def anyvm_suspend(self, provider, vm):
-    provider = provider_factory(provider)
+    provider = get_mgmt(provider)
     provider.suspend_vm(vm)
 
 
 @singleton_task()
 def anyvm_delete(self, provider, vm):
-    provider = provider_factory(provider)
+    provider = get_mgmt(provider)
     provider.delete_vm(vm)
 
 

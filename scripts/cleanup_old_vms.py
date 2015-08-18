@@ -8,7 +8,7 @@ from collections import defaultdict
 from threading import Lock, Thread
 
 from utils.log import logger
-from utils.providers import list_all_providers, provider_factory
+from utils.providers import list_all_providers, get_mgmt
 
 lock = Lock()
 
@@ -42,7 +42,7 @@ def process_provider_vms(provider_key, matchers, delta, vms_to_delete):
         print '%s processing' % provider_key
     try:
         now = datetime.datetime.now()
-        provider = provider_factory(provider_key)
+        provider = get_mgmt(provider_key)
         for vm_name in provider.list_vm():
             if not match(matchers, vm_name):
                 continue
@@ -103,7 +103,7 @@ def cleanup_vms(texts, max_hours=24, providers=None, prompt=True):
         print 'No VMs to delete.'
 
     for provider_key, vm_set in vms_to_delete.items():
-        provider = provider_factory(provider_key)
+        provider = get_mgmt(provider_key)
         for vm_name, __ in vm_set:
             print 'Deleting %s on %s' % (vm_name, provider_key)
             try:

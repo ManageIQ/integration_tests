@@ -21,11 +21,11 @@ import argparse
 import os
 import sys
 
-# Make sure the parent dir is on the path before importing provider_factory
+# Make sure the parent dir is on the path before importing get_mgmt
 cfme_tests_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, cfme_tests_path)
 
-from utils.providers import provider_factory
+from utils.providers import get_mgmt
 
 
 def main():
@@ -69,7 +69,7 @@ def main():
 def call_provider(provider_name, action, *args):
     # Given a provider class, find the named method and call it with
     # *args. This could possibly be generalized for other CLI tools.
-    provider = provider_factory(provider_name)
+    provider = get_mgmt(provider_name)
 
     try:
         call = getattr(provider, action)

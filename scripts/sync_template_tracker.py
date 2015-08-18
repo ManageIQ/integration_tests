@@ -9,7 +9,7 @@ from slumber.exceptions import SlumberHttpBaseException
 
 from utils import trackerbot
 from utils.conf import cfme_data
-from utils.providers import list_all_providers, provider_factory
+from utils.providers import list_all_providers, get_mgmt
 
 
 def main(trackerbot_url, mark_usable=None):
@@ -106,7 +106,7 @@ def main(trackerbot_url, mark_usable=None):
 
 def get_provider_templates(provider_key, template_providers, unresponsive_providers, thread_lock):
     # functionalized to make it easy to farm this out to threads
-    provider_mgmt = provider_factory(provider_key)
+    provider_mgmt = get_mgmt(provider_key)
     try:
         if cfme_data['management_systems'][provider_key]['type'] == 'ec2':
             # dirty hack to filter out ec2 public images, because there are literally hundreds.

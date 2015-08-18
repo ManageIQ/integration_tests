@@ -15,7 +15,7 @@ import argparse
 import sys
 import time
 
-from utils.providers import provider_factory
+from utils.providers import get_mgmt
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
     args = parser.parse_args()
 
     # Make sure the VM is off to start
-    provider = provider_factory(args.provider_name)
+    provider = get_mgmt(args.provider_name)
 
     if provider.is_vm_running(args.vm_name):
         provider.stop_vm(args.vm_name)
@@ -56,7 +56,7 @@ def main():
                     start_success = True
                     provider.disconnect()
                     time.sleep(args.uptime)
-                    provider = provider_factory(args.provider_name)
+                    provider = get_mgmt(args.provider_name)
                 except Exception:
                     time.sleep(60)
                     times_failed_counter += 1
@@ -76,7 +76,7 @@ def main():
                     stop_success = True
                     provider.disconnect()
                     time.sleep(args.downtime)
-                    provider = provider_factory(args.provider_name)
+                    provider = get_mgmt(args.provider_name)
                 except Exception:
                     time.sleep(60)
                     times_failed_counter += 1
