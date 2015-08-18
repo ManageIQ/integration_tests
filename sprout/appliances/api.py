@@ -208,12 +208,12 @@ def num_shepherd_appliances(group, version=None, date=None, provider=None):
 @jsonapi.authenticated_method
 def request_appliances(
         user, group, count=1, lease_time=60, version=None, date=None, provider=None,
-        preconfigured=True):
+        preconfigured=True, yum_update=False):
     """Request a number of appliances."""
     if date:
         date = datetime.strptime(date, "%y%m%d")
     return AppliancePool.create(
-        user, group, version, date, provider, count, lease_time, preconfigured).id
+        user, group, version, date, provider, count, lease_time, preconfigured, yum_update).id
 
 
 @jsonapi.authenticated_method
@@ -226,6 +226,7 @@ def request_check(user, request_id):
         "fulfilled": request.fulfilled,
         "finished": request.finished,
         "preconfigured": request.preconfigured,
+        "yum_update": request.yum_update,
         "progress": int(round(request.percent_finished * 100)),
         "appliances": [
             appliance.serialized

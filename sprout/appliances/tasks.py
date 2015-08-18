@@ -603,7 +603,7 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
         pool.version = template.version
         pool.date = template.date
         pool.save()
-    clone_template_to_appliance.delay(appliance.id, time_minutes)
+    clone_template_to_appliance.delay(appliance.id, time_minutes, pool.yum_update)
 
 
 @logged_task()
@@ -631,7 +631,7 @@ def clone_template(self, template_id):
 
 
 @singleton_task()
-def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None):
+def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, yum_update=False):
     appliance = Appliance.objects.get(id=appliance_id)
     appliance.set_status("Beginning deployment process")
     tasks = [
@@ -639,6 +639,9 @@ def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None):
         clone_template_to_appliance__wait_present.si(appliance_id),
         appliance_power_on.si(appliance_id),
     ]
+    if yum_update:
+        tasks.append(appliance_yum_update.si(appliance_id))
+        tasks.append(appliance_reboot.si(appliance_id, if_needs_restarting=True))
     if appliance.preconfigured:
         tasks.append(wait_appliance_ready.si(appliance_id))
     else:
@@ -787,13 +790,17 @@ def appliance_power_on(self, appliance_id):
 
 
 @singleton_task()
-def appliance_reboot(self, appliance_id):
+def appliance_reboot(self, appliance_id, if_needs_restarting=False):
     try:
         appliance = Appliance.objects.get(id=appliance_id)
     except ObjectDoesNotExist:
         # source objects are not present
         return
     try:
+        if if_needs_restarting:
+            with appliance.ssh as ssh:
+                if int(ssh.run_command("needs-restarting | wc -l").output.strip()) == 0:
+                    return  # No reboot needed
         with transaction.atomic():
             appliance = Appliance.objects.get(id=appliance_id)
             appliance.set_power_state(Appliance.Power.REBOOTING)
@@ -1370,3 +1377,12 @@ def disconnect_direct_lun(self, appliance_id):
             appliance.lun_disk_connected = False
             appliance.save()
         return True
+
+
+@singleton_task()
+def appliance_yum_update(self, appliance_id):
+    appliance = Appliance.objects.get(id=appliance_id)
+    if appliance.preconfigured:
+        appliance.ipapp.update_rhel(setup_repos=False, reboot=False)
+    else:
+        appliance.ipapp.update_rhel(setup_repos=True, reboot=False)

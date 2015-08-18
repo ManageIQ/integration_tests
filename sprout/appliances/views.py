@@ -412,10 +412,12 @@ def request_pool(request):
         if provider == "any":
             provider = None
         preconfigured = request.POST.get("preconfigured", "false").lower() == "true"
+        yum_update = request.POST.get("yum_update", "false").lower() == "true"
         count = int(request.POST["count"])
         lease_time = 60
         pool_id = AppliancePool.create(
-            request.user, group, version, date, provider, count, lease_time, preconfigured).id
+            request.user, group, version, date, provider, count, lease_time, preconfigured,
+            yum_update).id
         messages.success(request, "Pool requested - id {}".format(pool_id))
     except Exception as e:
         messages.error(request, "Exception {} happened: {}".format(type(e).__name__, str(e)))

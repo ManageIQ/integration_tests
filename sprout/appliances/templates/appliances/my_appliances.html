@@ -41,7 +41,7 @@
 {% for pool in pools %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
         <div class="panel-heading">
-            <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}
+            <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.yum_update %} with YUM updated appliances{% endif %}
             {% if not pool.finished %}
             - D: {{ pool.num_delayed_provisioning_tasks }}, Q: {{ pool.num_provisioning_tasks_before }}, PS: {{ pool.num_possible_provisioning_slots }}, AS: {{ pool.num_possible_appliance_slots}}, SA: {{ pool.num_shepherd_appliances }}
             {% endif %}</strong>
@@ -225,6 +225,16 @@
                     <div class="checkbox">
                       <label>
                         <input type="checkbox" class="form-control" id="preconfigured" name="preconfigured" value="true" checked>
+                      </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="yum_update" class="col-md-2 control-label">YUM updated?:</label>
+                <div class="col-md-4">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" class="form-control" id="yum_update" name="yum_update" value="true">
                       </label>
                     </div>
                 </div>

@@ -595,7 +595,9 @@ class Appliance(MetadataMixin):
         """Give appliances from shepherd to the pool where the maximum count is specified by pool
         or you can specify a custom limit
         """
-        from appliances.tasks import appliance_power_on, mark_appliance_ready, wait_appliance_ready
+        from appliances.tasks import (
+            appliance_power_on, mark_appliance_ready, wait_appliance_ready, appliance_yum_update,
+            appliance_reboot)
         limit = custom_limit if custom_limit is not None else pool.total_count
         appliances = []
         with transaction.atomic():
@@ -607,6 +609,10 @@ class Appliance(MetadataMixin):
                         appliance.save()
                         appliance.set_status("Given to pool {}".format(pool.id))
                         tasks = [appliance_power_on.si(appliance.id)]
+                        if pool.yum_update:
+                            tasks.append(appliance_yum_update.si(appliance.id))
+                            tasks.append(
+                                appliance_reboot.si(appliance.id, if_needs_restarting=True))
                         if appliance.preconfigured:
                             tasks.append(wait_appliance_ready.si(appliance.id))
                         else:
@@ -724,10 +730,11 @@ class AppliancePool(MetadataMixin):
     not_needed_anymore = models.BooleanField(
         default=False, help_text="Used for marking the appliance pool as being deleted")
     finished = models.BooleanField(default=False, help_text="Whether fulfillment has been met.")
+    yum_update = models.BooleanField(default=False, help_text="Whether to update appliances.")
 
     @classmethod
     def create(cls, owner, group, version=None, date=None, provider=None, num_appliances=1,
-            time_leased=60, preconfigured=True):
+            time_leased=60, preconfigured=True, yum_update=False):
         if owner.has_quotas:
             user_pools_count = cls.objects.filter(owner=owner).count()
             user_vms_count = Appliance.objects.filter(appliance_pool__owner=owner).count()
@@ -772,7 +779,7 @@ class AppliancePool(MetadataMixin):
                 "Could not find proper combination of group, date, version and a working provider!")
         req = cls(
             group=group, version=version, date=date, total_count=num_appliances, owner=owner,
-            provider=provider, preconfigured=preconfigured)
+            provider=provider, preconfigured=preconfigured, yum_update=yum_update)
         if not req.possible_templates:
             raise Exception("No possible templates! (query: {}".format(str(req.__dict__)))
         req.save()
