@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 
+from celery import chain
 from celery.result import AsyncResult
 from dateutil import parser
 from django.contrib import messages
@@ -15,7 +16,7 @@ from appliances.models import (
     Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer, User)
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
     anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
-    appliance_rename)
+    appliance_rename, wait_appliance_ready, mark_appliance_ready)
 
 from sprout.log import create_logger
 from utils.providers import get_mgmt
@@ -245,7 +246,10 @@ def start_appliance(request, appliance_id):
         messages.error(request, 'This appliance belongs either to some other user or nobody.')
         return go_back_or_home(request)
     if appliance.power_state != Appliance.Power.ON:
-        appliance_power_on.delay(appliance.id)
+        chain(
+            appliance_power_on.si(appliance.id),
+            (wait_appliance_ready if appliance.preconfigured else mark_appliance_ready).si(
+                appliance.id))()
         messages.success(request, 'Initiated launch of appliance.')
         return go_back_or_home(request)
     else:

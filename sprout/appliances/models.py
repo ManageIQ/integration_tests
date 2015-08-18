@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import yaml
 
+from celery import chain
 from contextlib import contextmanager
 from datetime import timedelta, date
 from django.contrib.auth.models import User
@@ -593,7 +594,7 @@ class Appliance(MetadataMixin):
         """Give appliances from shepherd to the pool where the maximum count is specified by pool
         or you can specify a custom limit
         """
-        from appliances.tasks import appliance_power_on
+        from appliances.tasks import appliance_power_on, mark_appliance_ready, wait_appliance_ready
         limit = custom_limit if custom_limit is not None else pool.total_count
         appliances = []
         with transaction.atomic():
@@ -604,7 +605,12 @@ class Appliance(MetadataMixin):
                         appliance.appliance_pool = pool
                         appliance.save()
                         appliance.set_status("Given to pool {}".format(pool.id))
-                        appliance_power_on.delay(appliance.id)
+                        tasks = [appliance_power_on.si(appliance.id)]
+                        if appliance.preconfigured:
+                            tasks.append(wait_appliance_ready.si(appliance.id))
+                        else:
+                            tasks.append(mark_appliance_ready.si(appliance.id))
+                        chain(*tasks)()
                         appliances.append(appliance)
                 if len(appliances) == limit:
                     break

@@ -2,6 +2,7 @@
 import inspect
 import json
 import re
+from celery import chain
 from celery.result import AsyncResult
 from datetime import datetime
 from django.core.exceptions import ObjectDoesNotExist
@@ -12,7 +13,7 @@ from django.shortcuts import render
 from appliances.models import Appliance, AppliancePool, Provider, Group, Template, User
 from appliances.tasks import (
     appliance_power_on, appliance_power_off, appliance_suspend, appliance_rename,
-    connect_direct_lun, disconnect_direct_lun)
+    connect_direct_lun, disconnect_direct_lun, mark_appliance_ready, wait_appliance_ready)
 from sprout.log import create_logger
 
 
@@ -375,14 +376,19 @@ def power_state(appliance):
 
 
 @jsonapi.authenticated_method
-def power_on(user, appliance):
+def power_on(user, appliance, wait_ready=True):
     """Power on the appliance. If task is called, an id is returned, otherwise None.
 
     You can specify appliance by IP address, id or name.
     """
     appliance = get_appliance(appliance, user)
     if appliance.power_state != Appliance.Power.ON:
-        return appliance_power_on.delay(appliance.id).task_id
+        tasks = [appliance_power_on.si(appliance.id)]
+        if wait_ready:
+            tasks.append(wait_appliance_ready.si(appliance.id))
+        else:
+            tasks.append(mark_appliance_ready.si(appliance.id))
+        return chain(*tasks)().task_id
 
 
 @jsonapi.authenticated_method
