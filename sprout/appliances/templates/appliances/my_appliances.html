@@ -118,30 +118,31 @@
                         <div class="btn-toolbar" role="toolbar" aria-label="Appliance operations">
                             <div class="btn-group" role="group" aria-label="Power operations">
                                 {% if appliance.can_launch %}
-                                    <a href="{% url 'start_appliance' appliance.id %}" class="btn btn-success btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Launch</a>
+                                    <a href="{% url 'appliance_action' appliance.id 'start' %}" class="btn btn-success btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Launch</a>
                                 {% endif %}
                                 {% if appliance.can_stop %}
-                                    <a href="{% url 'stop_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                    <a href="{% url 'appliance_action' appliance.id 'stop' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                    <a href="{% url 'appliance_action' appliance.id 'reboot' %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-repeat"></span> Reboot</a>
                                 {% endif %}
                                 {% if appliance.can_suspend %}
-                                    <a href="{% url 'suspend_appliance' appliance.id %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
+                                    <a href="{% url 'appliance_action' appliance.id 'suspend' %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
                                 {% endif %}
                             </div>
                             <div class="btn-group" role="group" aria-label="">
-                                <a href="{% url 'kill_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
+                                <a href="{% url 'appliance_action' appliance.id 'kill' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
                             </div>
                         </div>
                     </td>
                     <td>
                         <div class="btn-toolbar" role="toolbar" aria-label="Appliance lease time control">
                             <div class="btn-group" role="group" aria-label="...">
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
                             {% if appliance.leased_until and request.user.is_superuser %}
-                                <a href="{% url 'dont_expire_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
+                                <a href="{% url 'appliance_action' appliance.id 'dont_expire' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
                             {% endif %}
                             </div>
                         </div>

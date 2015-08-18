@@ -787,6 +787,29 @@ def appliance_power_on(self, appliance_id):
 
 
 @singleton_task()
+def appliance_reboot(self, appliance_id):
+    try:
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist:
+        # source objects are not present
+        return
+    try:
+        with transaction.atomic():
+            appliance = Appliance.objects.get(id=appliance_id)
+            appliance.set_power_state(Appliance.Power.REBOOTING)
+            appliance.ready = False
+            appliance.save()
+        appliance.ipapp.reboot(wait_for_web_ui=False, log_callback=appliance.set_status)
+        with transaction.atomic():
+            appliance = Appliance.objects.get(id=appliance_id)
+            appliance.set_power_state(Appliance.Power.ON)
+            appliance.save()
+    except Exception as e:
+        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
+        self.retry(args=(appliance_id, ), exc=e, countdown=20, max_retries=30)
+
+
+@singleton_task()
 def appliance_power_off(self, appliance_id):
     try:
         appliance = Appliance.objects.get(id=appliance_id)

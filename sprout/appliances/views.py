@@ -16,7 +16,7 @@ from appliances.models import (
     Provider, AppliancePool, Appliance, Group, Template, MismatchVersionMailer, User)
 from appliances.tasks import (appliance_power_on, appliance_power_off, appliance_suspend,
     anyvm_power_on, anyvm_power_off, anyvm_suspend, anyvm_delete, delete_template_from_provider,
-    appliance_rename, wait_appliance_ready, mark_appliance_ready)
+    appliance_rename, wait_appliance_ready, mark_appliance_ready, appliance_reboot)
 
 from sprout.log import create_logger
 from utils.providers import get_mgmt
@@ -234,7 +234,7 @@ def can_operate_appliance_or_pool(appliance_or_pool, user):
         return appliance_or_pool.owner == user
 
 
-def start_appliance(request, appliance_id):
+def appliance_action(request, appliance_id, action, x=None):
     if not request.user.is_authenticated():
         return go_home(request)
     try:
@@ -245,72 +245,66 @@ def start_appliance(request, appliance_id):
     if not can_operate_appliance_or_pool(appliance, request.user):
         messages.error(request, 'This appliance belongs either to some other user or nobody.')
         return go_back_or_home(request)
-    if appliance.power_state != Appliance.Power.ON:
-        chain(
-            appliance_power_on.si(appliance.id),
-            (wait_appliance_ready if appliance.preconfigured else mark_appliance_ready).si(
-                appliance.id))()
-        messages.success(request, 'Initiated launch of appliance.')
+    if action == "start":
+        if appliance.power_state != Appliance.Power.ON:
+            chain(
+                appliance_power_on.si(appliance.id),
+                (wait_appliance_ready if appliance.preconfigured else mark_appliance_ready).si(
+                    appliance.id))()
+            messages.success(request, 'Initiated launch of appliance.')
+            return go_back_or_home(request)
+        else:
+            messages.info(request, 'Appliance was already powered on.')
+            return go_back_or_home(request)
+    elif action == "reboot":
+        if appliance.power_state == Appliance.Power.ON:
+            chain(
+                appliance_reboot.si(appliance.id),
+                (wait_appliance_ready if appliance.preconfigured else mark_appliance_ready).si(
+                    appliance.id))()
+            messages.success(request, 'Initiated reboot of appliance.')
+            return go_back_or_home(request)
+        else:
+            messages.error(request, 'Only powered on appliances can be rebooted')
+            return go_back_or_home(request)
+    elif action == "stop":
+        if appliance.power_state != Appliance.Power.OFF:
+            appliance_power_off.delay(appliance.id)
+            messages.success(request, 'Initiated stop of appliance.')
+            return go_back_or_home(request)
+        else:
+            messages.info(request, 'Appliance was already powered off.')
+            return go_back_or_home(request)
+    elif action == "suspend":
+        if appliance.power_state != Appliance.Power.SUSPENDED:
+            appliance_suspend.delay(appliance.id)
+            messages.success(request, 'Initiated suspend of appliance.')
+            return go_back_or_home(request)
+        else:
+            messages.info(request, 'Appliance was already suspended.')
+            return go_back_or_home(request)
+    elif action == "kill":
+        Appliance.kill(appliance)
+        messages.success(request, 'Kill initiated.')
+        return go_back_or_home(request)
+    elif action == "dont_expire":
+        if not request.user.is_superuser:
+            messages.error(request, 'Disabling expiration time is allowed only for superusers.')
+            return go_back_or_home(request)
+        with transaction.atomic():
+            appliance.leased_until = None
+            appliance.save()
+        messages.success(request, 'Lease disabled successfully. Be careful.')
+        return go_back_or_home(request)
+    elif action == "set_lease":
+        if not can_operate_appliance_or_pool(appliance, request.user):
+            messages.error(request, 'This appliance belongs either to some other user or nobody.')
+            return go_back_or_home(request)
+        appliance.prolong_lease(time=int(x))
+        messages.success(request, 'Lease prolonged successfully.')
         return go_back_or_home(request)
     else:
-        messages.info(request, 'Appliance was already powered on.')
-        return go_back_or_home(request)
-
-
-def stop_appliance(request, appliance_id):
-    if not request.user.is_authenticated():
-        return go_home(request)
-    try:
-        appliance = Appliance.objects.get(id=appliance_id)
-    except ObjectDoesNotExist:
-        messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
-        return go_back_or_home(request)
-    if not can_operate_appliance_or_pool(appliance, request.user):
-        messages.error(request, 'This appliance belongs either to some other user or nobody.')
-        return go_back_or_home(request)
-    if appliance.power_state != Appliance.Power.OFF:
-        appliance_power_off.delay(appliance.id)
-        messages.success(request, 'Initiated stop of appliance.')
-        return go_back_or_home(request)
-    else:
-        messages.info(request, 'Appliance was already powered off.')
-        return go_back_or_home(request)
-
-
-def suspend_appliance(request, appliance_id):
-    if not request.user.is_authenticated():
-        return go_home(request)
-    try:
-        appliance = Appliance.objects.get(id=appliance_id)
-    except ObjectDoesNotExist:
-        messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
-        return go_back_or_home(request)
-    if not can_operate_appliance_or_pool(appliance, request.user):
-        messages.error(request, 'This appliance belongs either to some other user or nobody.')
-        return go_back_or_home(request)
-    if appliance.power_state != Appliance.Power.SUSPENDED:
-        appliance_suspend.delay(appliance.id)
-        messages.success(request, 'Initiated suspend of appliance.')
-        return go_back_or_home(request)
-    else:
-        messages.info(request, 'Appliance was already suspended.')
-        return go_back_or_home(request)
-
-
-def prolong_lease_appliance(request, appliance_id, minutes):
-    if not request.user.is_authenticated():
-        return go_home(request)
-    try:
-        appliance = Appliance.objects.get(id=appliance_id)
-    except ObjectDoesNotExist:
-        messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
-        return go_back_or_home(request)
-    if not can_operate_appliance_or_pool(appliance, request.user):
-        messages.error(request, 'This appliance belongs either to some other user or nobody.')
-        return go_back_or_home(request)
-    appliance.prolong_lease(time=int(minutes))
-    messages.success(request, 'Lease prolonged successfully.')
-    return go_back_or_home(request)
+        messages.error(request, "Unknown action '{}'".format(action))
 
 
 def prolong_lease_pool(request, pool_id, minutes):
@@ -326,24 +320,6 @@ def prolong_lease_pool(request, pool_id, minutes):
         return go_back_or_home(request)
     appliance_pool.prolong_lease(time=int(minutes))
     messages.success(request, 'Lease prolonged successfully.')
-    return go_back_or_home(request)
-
-
-def dont_expire_appliance(request, appliance_id):
-    if not request.user.is_authenticated():
-        return go_home(request)
-    try:
-        appliance = Appliance.objects.get(id=appliance_id)
-    except ObjectDoesNotExist:
-        messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
-        return go_back_or_home(request)
-    if not request.user.is_superuser:
-        messages.error(request, 'Disabling expiration time is allowed only for superusers.')
-        return go_back_or_home(request)
-    with transaction.atomic():
-        appliance.leased_until = None
-        appliance.save()
-    messages.success(request, 'Lease disabled successfully. Be careful.')
     return go_back_or_home(request)
 
 
@@ -363,22 +339,6 @@ def dont_expire_pool(request, pool_id):
             appliance.leased_until = None
             appliance.save()
     messages.success(request, 'Lease disabled successfully. Be careful.')
-    return go_back_or_home(request)
-
-
-def kill_appliance(request, appliance_id):
-    if not request.user.is_authenticated():
-        return go_home(request)
-    try:
-        appliance = Appliance.objects.get(id=appliance_id)
-    except ObjectDoesNotExist:
-        messages.error(request, 'Appliance with ID {} does not exist!.'.format(appliance_id))
-        return go_back_or_home(request)
-    if not can_operate_appliance_or_pool(appliance, request.user):
-        messages.error(request, 'This appliance belongs either to some other user or nobody.')
-        return go_back_or_home(request)
-    Appliance.kill(appliance)
-    messages.success(request, 'Kill initiated.')
     return go_back_or_home(request)
 
 

@@ -459,6 +459,7 @@ class Appliance(MetadataMixin):
         ON = "on"
         OFF = "off"
         SUSPENDED = "suspended"
+        REBOOTING = "rebooting"
         LOCKED = "locked"
         UNKNOWN = "unknown"
         ORPHANED = "orphaned"
