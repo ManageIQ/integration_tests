@@ -445,6 +445,10 @@ class ArtifactorLoggerAdapter(logging.LoggerAdapter):
         return SLAVEID or ""
 
     def art_log(self, level_name, message, kwargs):
+        if not isinstance(message, basestring):
+            # INTERNALERROR>     'message': message.encode("ascii", "xmlcharrefreplace"),
+            # INTERNALERROR> AttributeError: ReprExceptionInfo instance has no attribute 'encode'
+            message = str(message)
         art_log_record = {
             'level': level_name,
             'message': message.encode("ascii", "xmlcharrefreplace"),
