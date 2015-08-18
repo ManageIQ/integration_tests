@@ -13,6 +13,10 @@ from operator import methodcaller
 import cfme.fixtures.pytest_selenium as sel
 from fixtures.pytest_store import store
 from cfme.web_ui import Quadicon, paginator, toolbar
+from cfme.common.provider import BaseProvider
+from cfme.exceptions import UnknownProviderType
+from cfme.infrastructure.provider import RHEVMProvider, VMwareProvider, SCVMMProvider
+from cfme.cloud.provider import EC2Provider, OpenStackProvider
 from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
 from utils.log import logger, perflog
@@ -76,7 +80,7 @@ def is_infra_provider(provider_key):
     return provider_key in list_infra_providers()
 
 
-def provider_factory(provider_key, providers=None, credentials=None):
+def get_mgmt(provider_key, providers=None, credentials=None):
     """
     Provides a :py:mod:`utils.mgmt_system` object, based on the request.
 
@@ -119,10 +123,10 @@ def get_provider_key(provider_name):
         raise NameError("Could not find provider {}".format(provider_name))
 
 
-def provider_factory_by_name(provider_name, *args, **kwargs):
+def get_mgmt_by_name(provider_name, *args, **kwargs):
     """Provides a :py:mod:`utils.mgmt_system` object, based on the request.
 
-    For detailed parameter description, refer to the :py:func:`provider_factory` (except its
+    For detailed parameter description, refer to the :py:func:`get_mgmt` (except its
     `provider_key` parameter)
 
     Args:
@@ -130,7 +134,7 @@ def provider_factory_by_name(provider_name, *args, **kwargs):
     Return: A provider instance of the appropriate :py:class:`utils.mgmt_system.MgmtSystemAPIBase`
         subclass
     """
-    return provider_factory(get_provider_key(provider_name), *args, **kwargs)
+    return get_mgmt(get_provider_key(provider_name), *args, **kwargs)
 
 
 def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_existing=True,
@@ -148,7 +152,6 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
     """
 
     if prov_class == "infra":
-        from cfme.infrastructure.provider import get_from_config
         potential_providers = list_infra_providers()
         if prov_type:
             providers = []
@@ -158,7 +161,6 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         else:
             providers = potential_providers
     elif prov_class == "cloud":
-        from cfme.cloud.provider import get_from_config
         potential_providers = list_cloud_providers()
         if prov_type:
             providers = []
@@ -168,7 +170,6 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
         else:
             providers = potential_providers
     else:
-        from cfme.infrastructure.provider import get_from_config
         providers = list_infra_providers()
 
     final_providers = []
@@ -229,7 +230,7 @@ def setup_a_provider(prov_class=None, prov_type=None, validate=True, check_exist
             logger.warning(message)
             store.terminalreporter.write_line(message + "\n", red=True)
             problematic_providers.add(provider)
-            prov_object = get_from_config(provider)
+            prov_object = get_crud(provider)
             if prov_object.exists:
                 # Remove it in order to not explode on next calls
                 prov_object.delete(cancel=False)
@@ -250,15 +251,7 @@ def is_provider_setup(provider_key):
     Returns:
         :py:class:`bool` of existence
     """
-    if provider_key in list_cloud_providers():
-        from cfme.cloud.provider import get_from_config
-        # provider = setup_infrastructure_provider(provider_key, validate, check_existing)
-    elif provider_key in list_infra_providers():
-        from cfme.infrastructure.provider import get_from_config
-    else:
-        raise UnknownProvider(provider_key)
-
-    return get_from_config(provider_key).exists
+    return get_crud(provider_key).exists
 
 
 def setup_provider(provider_key, validate=True, check_existing=True):
@@ -276,15 +269,7 @@ def setup_provider(provider_key, validate=True, check_existing=True):
         :py:class:`cfme.infrastructure.provider.Provider` for the named provider, as appropriate.
 
     """
-    if provider_key in list_cloud_providers():
-        from cfme.cloud.provider import get_from_config
-        # provider = setup_infrastructure_provider(provider_key, validate, check_existing)
-    elif provider_key in list_infra_providers():
-        from cfme.infrastructure.provider import get_from_config
-    else:
-        raise UnknownProvider(provider_key)
-
-    provider = get_from_config(provider_key)
+    provider = get_crud(provider_key)
     if check_existing and provider.exists:
         # no need to create provider if the provider exists
         # pass so we don't skip the validate step
@@ -503,6 +488,88 @@ def destroy_vm(provider_mgmt, vm_name):
             return vm_deleted
     except Exception as e:
         logger.error('%s destroying VM %s (%s)', type(e).__name__, vm_name, e.message)
+
+
+def get_credentials_from_config(credential_config_name):
+    creds = conf.credentials[credential_config_name]
+    return BaseProvider.Credential(principal=creds['username'],
+                               secret=creds['password'])
+
+
+def get_crud(provider_config_name):
+    """
+    Creates a Provider object given a yaml entry in cfme_data.
+
+    Usage:
+        get_crud('ec2east')
+
+    Returns: A Provider object that has methods that operate on CFME
+    """
+
+    prov_config = conf.cfme_data.get('management_systems', {})[provider_config_name]
+    credentials = get_credentials_from_config(prov_config['credentials'])
+    prov_type = prov_config.get('type')
+
+    if prov_type != 'ec2':
+        if prov_config.get('discovery_range', None):
+            start_ip = prov_config['discovery_range']['start']
+            end_ip = prov_config['discovery_range']['end']
+        else:
+            start_ip = prov_config['ipaddress']
+            end_ip = prov_config['ipaddress']
+
+    if prov_type == 'ec2':
+        return EC2Provider(name=prov_config['name'],
+            region=prov_config['region'],
+            credentials={'default': credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name)
+    elif prov_type == 'openstack':
+        return OpenStackProvider(name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            api_port=prov_config['port'],
+            credentials={'default': credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name)
+    elif prov_type == 'virtualcenter':
+        return VMwareProvider(name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials={'default': credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip)
+    elif prov_type == 'scvmm':
+        return SCVMMProvider(
+            name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            credentials={'default': credentials},
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip,
+            sec_protocol=prov_config['sec_protocol'],
+            sec_realm=prov_config['sec_realm'])
+    elif prov_type == 'rhevm':
+        if prov_config.get('candu_credentials', None):
+            candu_credentials = get_credentials_from_config(prov_config['candu_credentials'])
+            candu_credentials.candu = True
+        else:
+            candu_credentials = None
+        return RHEVMProvider(name=prov_config['name'],
+            hostname=prov_config['hostname'],
+            ip_address=prov_config['ipaddress'],
+            api_port='',
+            credentials={'default': credentials,
+                         'candu': candu_credentials},
+            zone=prov_config['server_zone'],
+            key=provider_config_name,
+            start_ip=start_ip,
+            end_ip=end_ip)
+    else:
+        raise UnknownProviderType('{} is not a known infra provider type'.format(prov_type))
 
 
 class UnknownProvider(Exception):

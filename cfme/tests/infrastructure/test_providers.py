@@ -6,9 +6,10 @@ import pytest
 
 import cfme.web_ui.flash as flash
 import utils.error as error
-from cfme.infrastructure.provider import (discover, Provider, VMwareProvider,
-    get_credentials_from_config, RHEVMProvider, wait_for_a_provider)
+from cfme.infrastructure.provider import (discover, Provider, VMwareProvider, RHEVMProvider,
+    wait_for_a_provider)
 from utils import testgen, providers, version
+from utils.providers import get_credentials_from_config
 from utils.update import update
 
 
@@ -143,7 +144,7 @@ def test_provider_add_with_bad_credentials(provider):
     Metadata:
         test_flag: crud
     """
-    provider.credentials = get_credentials_from_config('bad_credentials')
+    provider.credentials['default'] = get_credentials_from_config('bad_credentials')
     if isinstance(provider, VMwareProvider):
         with error.expected('Cannot complete login due to an incorrect user name or password.'):
             provider.create(validate_credentials=True)

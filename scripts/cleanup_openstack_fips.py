@@ -10,13 +10,13 @@ If no providers specified, it will cleanup all of them.
 import sys
 from traceback import format_exc
 
-from utils.providers import list_providers, provider_factory
+from utils.providers import list_providers, get_mgmt
 
 
 def main(*providers):
     for provider_key in list_providers('openstack'):
         print 'Checking {}'.format(provider_key)
-        api = provider_factory(provider_key).api
+        api = get_mgmt(provider_key).api
         try:
             fips = api.floating_ips.findall(fixed_ip=None)
         except Exception:

@@ -17,7 +17,6 @@ from urlparse import ParseResult, urlparse
 import requests
 
 from cfme.configure.configuration import server_name, server_id
-from cfme.infrastructure.provider import get_from_config
 from cfme.infrastructure.virtual_machines import Vm
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
@@ -26,7 +25,7 @@ from utils.log import logger, create_sublogger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
-from utils.providers import provider_factory
+from utils.providers import get_mgmt, get_crud
 from utils.version import Version, get_stream, LATEST
 from utils.signals import fire
 from utils.wait import wait_for
@@ -75,7 +74,7 @@ class Appliance(object):
         Note:
             Cannot be cached because provider object is unpickable.
         """
-        return provider_factory(self._provider_name)
+        return get_mgmt(self._provider_name)
 
     @property
     def vm_name(self):
@@ -246,7 +245,7 @@ class Appliance(object):
 
             # if rhev, set relationship
             if self.is_on_rhev:
-                vm = Vm(self.vm_name, get_from_config(self._provider_name))
+                vm = Vm(self.vm_name, get_crud(self._provider_name))
                 cfme_rel = Vm.CfmeRelationship(vm)
                 cfme_rel.set_relationship(str(server_name()), server_id())
 
@@ -1663,7 +1662,7 @@ def provision_appliance(version=None, vm_name_prefix='cfme', template=None, prov
 
     prov_data = conf.cfme_data.get('management_systems', {})[provider_name]
 
-    provider = provider_factory(provider_name)
+    provider = get_mgmt(provider_name)
     if not vm_name:
         vm_name = _generate_vm_name()
 
