@@ -61,7 +61,7 @@ template_properties_form = Form(
         ('description_text', Input('description')),
         ('image_type', Select('//select[@id="img_typ"]')),
         ('script_type', Select('//select[@id="typ"]')),
-        ('script_data', ScriptBox("miqEditor", ta_locator="//textarea[@id='script_data']"))
+        ('script_data', ScriptBox(ta_locator="//textarea[@id='script_data']"))
     ])
 
 

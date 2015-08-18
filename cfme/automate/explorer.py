@@ -592,7 +592,6 @@ class Method(CopiableTreeNode, Updateable):
         fields=[('name_text', "//input[contains(@name,'method_name')]"),
                 ('display_name_text', "//input[contains(@name,'method_display_name')]"),
                 ('data_text', ScriptBox(
-                    name="miqEditor",
                     ta_locator="//textarea[@id='method_data' or @id='cls_method_data']"))])
 
     def __init__(self, name=None, display_name=None, location=None, data=None, cls=None):
