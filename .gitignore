@@ -62,5 +62,7 @@ notebooks/.ipynb_checkpoints
 # automation artifacts
 .generated_ssh_key*
 .appliance_template
-.jenkins_runner_result
+.jenkins*
+cfme-qe-yamls
+rhci-qe-data
 
