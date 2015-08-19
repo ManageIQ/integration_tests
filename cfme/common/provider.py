@@ -417,7 +417,7 @@ class BaseProvider(object):
         return details_page.infoblock.text(*ident)
 
     def load_all_provider_instances(self):
-        self.load_all_provider_vms()
+        return self.load_all_provider_vms()
 
     def load_all_provider_vms(self):
         """ Loads the list of instances that are running under the provider.
