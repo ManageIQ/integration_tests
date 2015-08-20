@@ -515,8 +515,7 @@ def get_crud(provider_config_name):
             start_ip = prov_config['discovery_range']['start']
             end_ip = prov_config['discovery_range']['end']
         else:
-            start_ip = prov_config['ipaddress']
-            end_ip = prov_config['ipaddress']
+            start_ip = end_ip = prov_config.get('ipaddress')
 
     if prov_type == 'ec2':
         return EC2Provider(name=prov_config['name'],
