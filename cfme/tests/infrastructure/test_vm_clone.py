@@ -122,7 +122,7 @@ def create_vm(provider, setup_provider, catalog_item, request):
     return vm_name
 
 
-@pytest.mark.meta(blockers=[1254377])
+@pytest.mark.meta(blockers=[1255190])
 @pytest.mark.usefixtures("setup_provider")
 @pytest.mark.long_running
 def test_vm_clone(provisioning, provider, clone_vm_name, request, create_vm):
