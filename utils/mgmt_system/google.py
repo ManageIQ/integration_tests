@@ -14,10 +14,6 @@ from utils.mgmt_system.exceptions import VMInstanceNotFound
 from utils.log import logger
 from utils.wait import wait_for
 
-CLIENT_SECRETS = 'client_secrets.json'
-OAUTH2_STORAGE = 'oauth2.dat'
-SCOPE = 'https://www.googleapis.com/auth/compute'
-
 
 class GoogleCloudSystem (MgmtSystemAPIBase):
     """
@@ -32,21 +28,25 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         'stopping': ('STOPPING'),
     }
 
-    def __init__(self):
-        self._project = "cfme-1044"
-        self._zone = 'us-central1-f'
+    def __init__(self, **kwards):
+        self._project = kwards['project']
+        self._zone = kwards['zone']
 
         # Default name of the instance name from config file
-        self._instance_name = 'demo-instance'
+        self._instance_name = kwards['default_instance_name']
 
         # Perform OAuth 2.0 authorization.
         # based on OAuth 2.0 client IDs credentials from client_secretes file
-        flow = flow_from_clientsecrets(CLIENT_SECRETS, scope=SCOPE)
-        storage = Storage(OAUTH2_STORAGE)
-        self._credentials = storage.get()
+        if kwards['client_secrets'] and kwards['scope'] and kwards['oauth2_storage']:
+            flow = flow_from_clientsecrets(kwards['client_secrets'], scope=kwards['scope'])
+            storage = Storage(kwards['oauth2_storage'])
+            self._credentials = storage.get()
 
         if self._credentials is None or self._credentials.invalid:
             self._credentials = run(flow, storage)
+
+        else:
+            raise Exception("Incorrect credentials for Google Cloud System")
 
         self._compute = build('compute', 'v1', credentials=self._credentials)
 
@@ -85,12 +85,11 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             else:
                 time.sleep(1)
 
-    def create_vm(self, instance_name):
+    def create_vm(self, instance_name = self._instance_name):
         source_disk_image = "projects/debian-cloud/global/images/debian-7-wheezy-v20150320"
         machine_type = "zones/%s/machineTypes/n1-standard-1" % self._zone
         startup_script = open('startup-script.sh', 'r').read()
         image_url = "http://storage.googleapis.com/gce-demo-input/photo.jpg"
-        image_caption = "Ready for dessert?"
 
         config = {
             'name': instance_name,
@@ -137,8 +136,8 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
                     'key': 'url',
                     'value': image_url
                 }, {
-                    'key': 'text',
-                    'value': image_caption
+                    # 'key': 'text',
+                    # 'value': image_caption
                 }, {
                     # Every project has a default Cloud Storage bucket that's
                     # the same name as the project.
