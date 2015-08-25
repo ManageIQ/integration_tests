@@ -12,6 +12,7 @@ from googleapiclient.discovery import build
 from utils.mgmt_system.base import MgmtSystemAPIBase, VMInfo
 from utils.mgmt_system.exceptions import VMInstanceNotFound
 from utils.log import logger
+from utils.wait import wait_for
 
 CLIENT_SECRETS = 'client_secrets.json'
 OAUTH2_STORAGE = 'oauth2.dat'
@@ -187,8 +188,9 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
     def clone_vm(self):
         raise NotImplementedError('clone_vm not implemented.')
 
-    def current_ip_address(self):
-        raise NotImplementedError('current_ip_address not implemented.')
+    # Get external IP (ephemeral)
+    def current_ip_address(self, vm_name):
+        return self.vm_status(vm_name)['natIP']
 
     def deploy_template(self):
         raise NotImplementedError('deploy_template not implemented.')
@@ -196,11 +198,15 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
     def disconnect(self):
         raise NotImplementedError('disconnect not implemented.')
 
-    def does_vm_exist(self):
-        raise NotImplementedError('does_vm_exist not implemented.')
+    def does_vm_exist(self, name):
+        try:
+            self._find_instance_by_name(name)
+            return True
+        except Exception:
+            return False
 
-    def get_ip_address(self):
-        raise NotImplementedError('get_ip_address not implemented.')
+    def get_ip_address(self, vm_name):
+        return self.current_ip_address(vm_name)
 
     def info(self):
         raise NotImplementedError('info not implemented.')
@@ -236,8 +242,23 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
     def vm_status(self, vm_name):
         return self._find_instance_by_name(vm_name)['status']
 
-    def wait_vm_stopped(self):
-        raise NotImplementedError('wait_vm_stopped not implemented.')
+    def wait_vm_stopped(self, vm_name, num_sec=360):
+        logger.info(" Waiting for instance %s to change status to TERMINATED" % vm_name)
+        wait_for(self.is_vm_stopped, [vm_name], num_sec=num_sec)
 
     def wait_vm_suspended(self):
         raise NotImplementedError('wait_vm_suspended not implemented.')
+
+    def all_vms(self):
+        result = []
+        for vm in self._get_all_instances()['items']:
+            if (vm['id'] and vm['name'] and vm['status'] and
+                    vm['networkInterfaces'][0]['accessConfigs'][0]['natIP']):
+
+                result.append(VMInfo(
+                    vm['id'],
+                    vm['name'],
+                    vm['status'],
+                    vm['networkInterfaces'][0]['accessConfigs'][0]['natIP'],
+                ))
+        return result
