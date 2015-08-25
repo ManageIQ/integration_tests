@@ -16,7 +16,7 @@ from cfme.web_ui import Quadicon, paginator, toolbar
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import UnknownProviderType
 from cfme.infrastructure.provider import RHEVMProvider, VMwareProvider, SCVMMProvider
-from cfme.cloud.provider import EC2Provider, OpenStackProvider, GoogleCloudSystem
+from cfme.cloud.provider import EC2Provider, OpenStackProvider, GoogleCloudProvider
 from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
 from utils.log import logger, perflog
@@ -525,8 +525,9 @@ def get_crud(provider_config_name):
             zone=prov_config['server_zone'],
             key=provider_config_name)
     elif prov_type == 'gcloud':
-        return GoogleCloudSystem(project=prov_config['project'],
+        return GoogleCloudProvider(project=prov_config['project'],
             zone=prov_config['zone'],
+            credentials={'default': credentials},
             default_instance_name=prov_config['default_instance_name'],
             scope=prov_config['scope'],
             oauth2_storage=prov_config['oauth2_storage'],

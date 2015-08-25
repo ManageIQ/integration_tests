@@ -85,7 +85,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             else:
                 time.sleep(1)
 
-    def create_vm(self, instance_name = self._instance_name):
+    def create_vm(self, instance_name):
         source_disk_image = "projects/debian-cloud/global/images/debian-7-wheezy-v20150320"
         machine_type = "zones/%s/machineTypes/n1-standard-1" % self._zone
         startup_script = open('startup-script.sh', 'r').read()
