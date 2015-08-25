@@ -27,6 +27,10 @@ class MultipleInstancesError(Exception):
         return repr(self.value)
 
 
+class RestClientException(Exception):
+    pass
+
+
 class NetworkNameNotFound(Exception):
     pass
 

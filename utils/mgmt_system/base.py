@@ -271,6 +271,7 @@ class MgmtSystemAPIBase(object):
         :rtype: boolean
 
         """
+        raise NotImplementedError('remove_host_from_cluster not implemented.')
 
     def stats(self, *requested_stats):
         """Returns all available stats, if none are explicitly requested
@@ -340,3 +341,85 @@ class MgmtSystemAPIBase(object):
 
     def delete_template(self, template_name):
         return self.delete_vm(template_name)  # Fall back to original vSphere behaviour
+
+
+class ContainerMgmtSystemAPIBase(MgmtSystemAPIBase):
+    """Base interface class for Container Management Systems
+
+    Interface notes:
+
+    * Initializers of subclasses must support \*\*kwargs in their
+      signtures
+    * Action methods (start/stop/etc) should block until the requested
+      action is complete
+
+    """
+
+    def clone_vm(self, source_name, vm_name):
+        raise NotImplementedError('clone_vm not implemented.')
+
+    def create_vm(self, vm_name):
+        raise NotImplementedError('create_vm not implemented.')
+
+    def current_ip_address(self, vm_name):
+        raise NotImplementedError('current_ip_address not implemented.')
+
+    def delete_vm(self, vm_name):
+        raise NotImplementedError('delete_vm not implemented.')
+
+    def deploy_template(self, template, *args, **kwargs):
+        raise NotImplementedError('deploy_template not implemented.')
+
+    def disconnect(self):
+        raise NotImplementedError('disconnect not implemented.')
+
+    def does_vm_exist(self, name):
+        raise NotImplementedError('does_vm_exist not implemented.')
+
+    def get_ip_address(self, vm_name):
+        raise NotImplementedError('get_ip_address not implemented.')
+
+    def is_vm_running(self, vm_name):
+        raise NotImplementedError('is_vm_running not implemented.')
+
+    def is_vm_stopped(self, vm_name):
+        raise NotImplementedError('is_vm_stopped not implemented.')
+
+    def is_vm_suspended(self, vm_name):
+        raise NotImplementedError('is_vm_suspended not implemented.')
+
+    def list_flavor(self):
+        raise NotImplementedError('list_flavor not implemented.')
+
+    def list_template(self):
+        raise NotImplementedError('list_template not implemented.')
+
+    def list_vm(self, **kwargs):
+        raise NotImplementedError('list_vm not implemented.')
+
+    def remove_host_from_cluster(self, hostname):
+        raise NotImplementedError('remove_host_from_cluster not implemented.')
+
+    def restart_vm(self, vm_name):
+        raise NotImplementedError('restart_vm not implemented.')
+
+    def start_vm(self, vm_name):
+        raise NotImplementedError('start_vm not implemented.')
+
+    def stop_vm(self, vm_name):
+        raise NotImplementedError('stop_vm not implemented.')
+
+    def suspend_vm(self, vm_name):
+        raise NotImplementedError('restart_vm not implemented.')
+
+    def vm_status(self, vm_name):
+        raise NotImplementedError('vm_status not implemented.')
+
+    def wait_vm_running(self, vm_name, num_sec):
+        raise NotImplementedError('wait_vm_running not implemented.')
+
+    def wait_vm_stopped(self, vm_name, num_sec):
+        raise NotImplementedError('wait_vm_stopped not implemented.')
+
+    def wait_vm_suspended(self, vm_name, num_sec):
+        raise NotImplementedError('wait_vm_suspended not implemented.')
