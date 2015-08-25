@@ -7,6 +7,7 @@ fauxfactory>=2.0.7
 flake8
 function_trace
 functools32
+google-api-python-client
 ipython
 iso8601
 Jinja2
@@ -29,6 +30,7 @@ pytest==2.7.0
 python-bugzilla>=1.2.0
 python-cinderclient
 python-dateutil
+python-gflags
 python-keystoneclient
 python-novaclient
 pywinrm
