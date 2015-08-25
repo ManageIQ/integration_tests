@@ -30,22 +30,21 @@ def dig_code(node):
     return results
 
 
-def pytest_exception_interact(node, call, report):
-    name, location = get_test_idents(node)
-    if hasattr(node, "_metadata") and node._metadata.get('owner') is not None:
+def pytest_runtest_teardown(item, nextitem):
+    name, location = get_test_idents(item)
+    qa_string = "Unknown,None"
+    if hasattr(item, "_metadata") and item._metadata.get('owner') is not None:
         # The owner is specified in metadata
-        art_client.fire_hook(
-            'filedump', test_location=location, test_name=name, filename="qa_contact.txt",
-            contents="{},from metadata".format(node._metadata.owner), fd_ident="qa")
-        return
-    try:
-        qa_arr = []
-        results = dig_code(node)
-        for idx in range(min(2, len(results))):
-            qa_arr.append("{},{:.2f}%\n".format(results[idx][0], results[idx][1]))
-        qa_string = "".join(qa_arr)
-
-    except:
-        qa_string = "Unknown"
+        qa_string = "{},from metadata"
+    else:
+        try:
+            qa_arr = []
+            results = dig_code(item)
+            for idx in range(min(2, len(results))):
+                qa_arr.append("{},{:.2f}%\n".format(results[idx][0], results[idx][1]))
+            if qa_arr:
+                qa_string = "".join(qa_arr)
+        except:
+            pass
     art_client.fire_hook('filedump', test_location=location, test_name=name,
                          filename="qa_contact.txt", contents=str(qa_string), fd_ident="qa")
