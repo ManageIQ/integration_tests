@@ -140,6 +140,11 @@ def test_certificates_present(ssh_client, soft_assert):
             ("/etc/pki/product/69.pem", None),
             ("/etc/pki/product/167.pem", None),
             ("/etc/pki/product/201.pem", None)
+        ],
+        '5.4.2': [
+            ("/etc/pki/product-default/69.pem", '0f7e6e9343c2b7fe1162f06dd92c93c3'),
+            ("/etc/pki/product/167.pem", '1a67ad5013806cad9d839180b6564e00'),
+            ("/etc/pki/product/201.pem", '0a2739f9ad6f4f5288379295004a1d7d')
         ]
     })
     for filename, given_md5 in filenames_md5s:
