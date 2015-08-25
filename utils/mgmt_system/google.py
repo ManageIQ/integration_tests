@@ -147,10 +147,11 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             }
         }
 
-        return self._compute.instances().insert(
-            project=self._project,
-            zone=self._zone,
-            body=config).execute()
+        operation = self._compute.instances().insert(project=self._project,
+                                                     zone=self._zone,
+                                                     body=config).execute()
+        self.wait_vm_running(operation['name'])
+        return True
 
     def delete_vm(self, instance_name):
         logger.info(" Deleting Google Cloud instance %s" % instance_name)
