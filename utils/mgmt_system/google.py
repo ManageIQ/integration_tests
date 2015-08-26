@@ -58,9 +58,8 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         return result['items']
 
     def _find_instance_by_name(self, instance_name):
-        instance = self._compute.instances().get(project=self._project,
-                                                 zone=self._zone,
-                                                 instance=instance_name).execute()
+        instance = self._compute.instances().get(
+            project=self._project, zone=self._zone, instance=instance_name).execute()
         if instance:
             return instance
         else:
@@ -68,25 +67,25 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
     # didn't use the utils.wait -> wait_for because native way for cheking the status
     # is more safety and we can get additional information about error
-    def wait_vm_running(self, operation):
-        logger.info("Waiting for {} operation to finish".format(operation))
+    def wait_vm_running(self, operation_name):
+        logger.info("Waiting for {} operation to finish".format(operation_name))
         while True:
             result = self._compute.zoneOperations().get(
                 project=self._project,
                 zone=self._zone,
-                operation=operation).execute()
+                operation=operation_name).execute()
 
             if result['status'] == 'DONE':
                 logger.info("DONE")
                 return True
                 if 'error' in result:
-                    logger.error("Error during {} operation.".format(operation))
+                    logger.error("Error during {} operation.".format(operation_name))
                     raise Exception(result['error'])
             else:
                 time.sleep(1)
 
     def create_vm(self, instance_name=None, source_disk_image=None, machine_type=None,
-                startup_script=None):
+            startup_script=None):
 
         if not instance_name:
             instance_name = self._instance_name
@@ -153,30 +152,29 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             }
         }
 
-        operation = self._compute.instances().insert(project=self._project,
-                                                     zone=self._zone,
-                                                     body=config).execute()
+        operation = self._compute.instances().insert(
+            project=self._project, zone=self._zone, body=config).execute()
         self.wait_vm_running(operation['name'])
         return True
 
     def delete_vm(self, instance_name):
         logger.info(" Deleting Google Cloud instance %s" % instance_name)
-        operation = self._compute.instances().delete(project=self._project,
-                                         zone=self._zone, instance=instance_name).execute()
+        operation = self._compute.instances().delete(
+            project=self._project, zone=self._zone, instance=instance_name).execute()
         self.wait_vm_running(operation['name'])
         return True
 
     def restart_vm(self, instance_name):
         logger.info(" Restarting Google Cloud instance %s" % instance_name)
-        operation = self._compute.instances().reset(project=self._project,
-                                       zone=self._zone, instance=instance_name).execute()
+        operation = self._compute.instances().reset(
+            project=self._project, zone=self._zone, instance=instance_name).execute()
         self.wait_vm_running(operation['name'])
         return True
 
     def stop_vm(self, instance_name):
         logger.info(" Stoping Google Cloud instance %s" % instance_name)
-        operation = self._compute.instances().start(project=self._project,
-                                        zone=self._zone, instance=instance_name).execute()
+        operation = self._compute.instances().start(
+            project=self._project, zone=self._zone, instance=instance_name).execute()
 
         self.wait_vm_running(operation['name'])
         return True
@@ -185,8 +183,8 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         # This method starts an instance that was stopped using the using the
         # instances().stop method.
         logger.info(" Starting Google Cloud instance %s" % instance_name)
-        operation = self._compute.instances().start(project=self._project,
-                                        zone=self._zone, instance=instance_name).execute()
+        operation = self._compute.instances().start(
+            project=self._project, zone=self._zone, instance=instance_name).execute()
         self.wait_vm_running(operation['name'])
         return True
 
