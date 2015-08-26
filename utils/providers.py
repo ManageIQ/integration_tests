@@ -532,6 +532,9 @@ def get_crud(provider_config_name):
             scope=prov_config['scope'],
             oauth2_storage=prov_config['oauth2_storage'],
             client_secrets=prov_config['client_secrets'],
+            source_disk_image=prov_config['source_disk_image'],
+            machine_type=prov_config['machine_type'],
+            startup_script=prov_config['startup_script'],
             key=provider_config_name)
     elif prov_type == 'openstack':
         return OpenStackProvider(name=prov_config['name'],
