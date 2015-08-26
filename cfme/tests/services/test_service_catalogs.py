@@ -184,6 +184,7 @@ def test_order_catalog_bundle(provider, setup_provider, catalog_item, request):
 
 
 # Note here this needs to be reduced, doesn't need to test against all providers
+@pytest.mark.meta(blockers=[1256941])
 @pytest.mark.usefixtures('has_no_infra_providers')
 def test_no_template_catalog_item(provider, provisioning, vm_name, dialog, catalog):
     """Tests no template catalog item
