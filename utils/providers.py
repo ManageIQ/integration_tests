@@ -36,9 +36,17 @@ cloud_provider_type_map = {
     'gcloud': mgmt_system.GoogleCloudSystem,
 }
 
+#: mapping of container provider type names to :py:mod:`utils.mgmt_system` classes
+container_provider_type_map = {
+    'kubernetes': mgmt_system.Kubernetes,
+    'openshift': mgmt_system.Openshift
+}
+
 #: mapping of all provider type names to :py:mod:`utils.mgmt_system` classes
 provider_type_map = dict(
-    infra_provider_type_map.items() + cloud_provider_type_map.items()
+    infra_provider_type_map.items()
+    + cloud_provider_type_map.items()
+    + container_provider_type_map.items()
 )
 
 providers_data = conf.cfme_data.get("management_systems", {})
@@ -69,6 +77,9 @@ list_infra_providers = partial(list_providers, infra_provider_type_map.keys())
 #: function that returns a list of cloud provider keys in cfme_data
 list_cloud_providers = partial(list_providers, cloud_provider_type_map.keys())
 
+#: function that returns a list of container provider keys in cfme_data
+list_container_providers = partial(list_providers, container_provider_type_map.keys())
+
 #: function that returns a list of all provider keys in cfme_data
 list_all_providers = partial(list_providers, provider_type_map.keys())
 
@@ -79,6 +90,10 @@ def is_cloud_provider(provider_key):
 
 def is_infra_provider(provider_key):
     return provider_key in list_infra_providers()
+
+
+def is_container_provider(provider_key):
+    return provider_key in list_container_providers()
 
 
 def get_mgmt(provider_key, providers=None, credentials=None):
