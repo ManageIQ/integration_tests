@@ -45,7 +45,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         if self._credentials is None or self._credentials.invalid:
             self._credentials = run(flow, storage)
 
-        else:
+        if self._credentials is None or self._credentials.invalid:
             raise Exception("Incorrect credentials for Google Cloud System")
 
         self._compute = build('compute', 'v1', credentials=self._credentials)
@@ -85,11 +85,23 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             else:
                 time.sleep(1)
 
-    def create_vm(self, instance_name):
-        source_disk_image = "projects/debian-cloud/global/images/debian-7-wheezy-v20150320"
-        machine_type = "zones/%s/machineTypes/n1-standard-1" % self._zone
-        startup_script = open('startup-script.sh', 'r').read()
-        image_url = "http://storage.googleapis.com/gce-demo-input/photo.jpg"
+    def create_vm(self, instance_name=None, source_disk_image=None, machine_type=None,
+                startup_script=None):
+
+        if not instance_name:
+            instance_name = self._instance_name
+
+        if not source_disk_image:
+            source_disk_image = "projects/debian-cloud/global/images/debian-7-wheezy-v20150320"
+
+        machine_type = machine_type or ("zones/%s/machineTypes/n1-standard-1" % self._zone)
+
+        try:
+            script = open(startup_script, 'r').read()
+        except:
+            logger.error("Couldn't open the startup script %s for GoogleCloudSystem"
+                        % startup_script)
+            script = "#!/bin/bash"
 
         config = {
             'name': instance_name,
@@ -131,13 +143,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
                     # Startup script is automatically executed by the
                     # instance upon startup.
                     'key': 'startup-script',
-                    'value': startup_script
-                }, {
-                    'key': 'url',
-                    'value': image_url
-                }, {
-                    # 'key': 'text',
-                    # 'value': image_caption
+                    'value': script
                 }, {
                     # Every project has a default Cloud Storage bucket that's
                     # the same name as the project.
