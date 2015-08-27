@@ -28,18 +28,20 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         'stopping': ('STOPPING'),
     }
 
-    def __init__(self, **kwards):
-        self._project = kwards['project']
-        self._zone = kwards['zone']
+    def __init__(self, project=None, zone=None, default_instance_name=None, scope=None,
+            oauth2_storage=None, client_secrets=None):
+
+        self._project = project
+        self._zone = zone
 
         # Default name of the instance name from config file
-        self._instance_name = kwards['default_instance_name']
+        self._instance_name = default_instance_name
 
         # Perform OAuth 2.0 authorization.
         # based on OAuth 2.0 client IDs credentials from client_secretes file
-        if kwards['client_secrets'] and kwards['scope'] and kwards['oauth2_storage']:
-            flow = flow_from_clientsecrets(kwards['client_secrets'], scope=kwards['scope'])
-            storage = Storage(kwards['oauth2_storage'])
+        if client_secrets and scope and oauth2_storage:
+            flow = flow_from_clientsecrets(client_secrets, scope=scope)
+            storage = Storage(oauth2_storage)
             self._credentials = storage.get()
 
         if self._credentials is None or self._credentials.invalid:
