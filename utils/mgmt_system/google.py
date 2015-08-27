@@ -4,7 +4,6 @@
 Used to communicate with providers without using CFME facilities
 """
 
-import time
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import run
@@ -67,28 +66,24 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         else:
             raise VMInstanceNotFound(instance_name)
 
-    # didn't use the utils.wait -> wait_for because native way for cheking the status
-    # is more safety and we can get additional information about error
-    def wait_vm_running(self, operation_name):
-        logger.info("Waiting for {} operation to finish".format(operation_name))
-        while True:
-            result = self._compute.zoneOperations().get(
-                project=self._project,
-                zone=self._zone,
-                operation=operation_name).execute()
+    def _nested_wait_vm_running(self, operation_name):
+        result = self._compute.zoneOperations().get(
+            project=self._project,
+            zone=self._zone,
+            operation=operation_name).execute()
 
-            if result['status'] == 'DONE':
-                logger.info("DONE")
-                return True
-                if 'error' in result:
-                    logger.error("Error during {} operation.".format(operation_name))
-                    raise Exception(result['error'])
-            else:
-                time.sleep(1)
+        if result['status'] == 'DONE':
+            logger.info("The operation %s -> DONE" % operation_name)
+            return True
+            if 'error' in result:
+                logger.error("Error during {} operation.".format(operation_name))
+                raise Exception(result['error'])
+
+        return False
 
     def create_vm(self, instance_name=None, source_disk_image=None, machine_type=None,
-            startup_script=None):
-
+            startup_script=None, timeout=180):
+        logger.info("Creating %s instance" % instance_name)
         if not instance_name:
             instance_name = self._instance_name
 
@@ -100,7 +95,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         try:
             script = open(startup_script, 'r').read()
         except:
-            logger.error("Couldn't open the startup script %s for GoogleCloudSystem"
+            logger.debug("Couldn't open the startup script %s for GoogleCloudSystem"
                         % startup_script)
             script = "#!/bin/bash"
 
@@ -156,21 +151,24 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
         operation = self._compute.instances().insert(
             project=self._project, zone=self._zone, body=config).execute()
-        self.wait_vm_running(operation['name'])
+        wait_for(lambda: self._nested_wait_vm_running(operation['name']), delay=0.5,
+            num_sec=timeout, message=" Create %s" % instance_name)
         return True
 
-    def delete_vm(self, instance_name):
+    def delete_vm(self, instance_name, timeout=180):
         logger.info(" Deleting Google Cloud instance %s" % instance_name)
         operation = self._compute.instances().delete(
             project=self._project, zone=self._zone, instance=instance_name).execute()
-        self.wait_vm_running(operation['name'])
+        wait_for(lambda: self._nested_wait_vm_running(operation['name']), delay=0.5,
+            num_sec=timeout, message=" Delete %s" % instance_name)
         return True
 
     def restart_vm(self, instance_name):
         logger.info(" Restarting Google Cloud instance %s" % instance_name)
         operation = self._compute.instances().reset(
             project=self._project, zone=self._zone, instance=instance_name).execute()
-        self.wait_vm_running(operation['name'])
+        wait_for(lambda: self._nested_wait_vm_running(operation['name']),
+            message=" Restart %s" % instance_name)
         return True
 
     def stop_vm(self, instance_name):
@@ -181,8 +179,8 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         logger.info(" Stoping Google Cloud instance %s" % instance_name)
         operation = self._compute.instances().start(
             project=self._project, zone=self._zone, instance=instance_name).execute()
-
-        self.wait_vm_running(operation['name'])
+        wait_for(lambda: self._nested_wait_vm_running(operation['name']),
+            message=" Stop %s" % instance_name)
         return True
 
     def start_vm(self, instance_name):
@@ -195,7 +193,8 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         logger.info(" Starting Google Cloud instance %s" % instance_name)
         operation = self._compute.instances().start(
             project=self._project, zone=self._zone, instance=instance_name).execute()
-        self.wait_vm_running(operation['name'])
+        wait_for(lambda: self._nested_wait_vm_running(operation['name']),
+            message=" Start %s" % instance_name)
         return True
 
     def clone_vm(self):
@@ -254,6 +253,10 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
     def vm_status(self, vm_name):
         return self._find_instance_by_name(vm_name)['status']
+
+    def wait_vm_running(self, vm_name, num_sec=360):
+        logger.info(" Waiting for instance %s to change status to ACTIVE" % vm_name)
+        wait_for(self.is_vm_running, [vm_name], num_sec=num_sec)
 
     def wait_vm_stopped(self, vm_name, num_sec=360):
         logger.info(" Waiting for instance %s to change status to TERMINATED" % vm_name)
