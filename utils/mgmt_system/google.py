@@ -181,8 +181,9 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         return True
 
     def stop_vm(self, instance_name):
-        if self.is_vm_stopped(instance_name):
-            logger.info(" The %s instance is already stopped, skip termination" % instance_name)
+        if self.is_vm_stopped(instance_name) or not self.does_vm_exist(instance_name):
+            logger.info(" The %s instance is already stopped or doesn't exist, skip termination"
+                % instance_name)
             return True
 
         logger.info(" Stoping Google Cloud instance %s" % instance_name)
@@ -195,8 +196,9 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
     def start_vm(self, instance_name):
         # This method starts an instance that was stopped using the using the
         # instances().stop method.
-        if self.is_vm_running(instance_name):
-            logger.info(" The %s instance is already running, skip starting" % instance_name)
+        if self.is_vm_running(instance_name) or not self.does_vm_exist(instance_name):
+            logger.info("The %s instance is already running or doesn't exists, skip starting"
+                % instance_name)
             return True
 
         logger.info(" Starting Google Cloud instance %s" % instance_name)
