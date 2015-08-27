@@ -111,6 +111,8 @@ def test_tile_defaultview(request, setup_a_provider, key):
     default_view = get_default_view(name[0])
     set_tile_view(name[0])
     sel.force_navigate(name[1])
+    if name[1] == "clouds_providers" or "clouds_instances":
+        tb.set_vms_tile_view()
     assert tb.is_vms_tile_view(), "Tile Default view setting failed"
     reset_default_view(name[0], default_view)
 
@@ -121,6 +123,8 @@ def test_list_defaultview(request, setup_a_provider, key):
     default_view = get_default_view(name[0])
     set_list_view(name[0])
     sel.force_navigate(name[1])
+    if name[1] == "clouds_providers" or "clouds_instances":
+        tb.set_vms_list_view()
     assert tb.is_vms_list_view(), "List Default view setting failed"
     reset_default_view(name[0], default_view)
 
