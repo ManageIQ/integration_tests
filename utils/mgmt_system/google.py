@@ -75,10 +75,11 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
         if result['status'] == 'DONE':
             logger.info("The operation %s -> DONE" % operation_name)
-            return True
             if 'error' in result:
                 logger.error("Error during {} operation.".format(operation_name))
+                logger.error("Detailed information about error {}".format(result['error']))
                 raise Exception(result['error'])
+            return True
 
         return False
 
