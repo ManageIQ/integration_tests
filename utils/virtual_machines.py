@@ -8,7 +8,7 @@ from novaclient.exceptions import OverLimit as OSOverLimit
 from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
 from ssl import SSLError
 from utils.log import logger
-from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSystem, SCVMMSystem
+from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSystem, SCVMMSystem, AZURESystem
 from utils.mgmt_system.exceptions import VMInstanceNotCloned
 
 
@@ -40,6 +40,8 @@ def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **de
         if 'host_group' not in deploy_args:
             deploy_args.update(host_group=data.get("host_group", "All Hosts"))
     elif isinstance(mgmt, EC2System):
+        pass
+    elif isinstance(mgmt, AZURESystem):
         pass
     elif isinstance(mgmt, OpenstackSystem):
         if ('network_name' not in deploy_args) and data.get('network'):

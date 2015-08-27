@@ -31,6 +31,7 @@ infra_provider_type_map = {
 
 #: mapping of cloud provider type names to :py:mod:`utils.mgmt_system` classes
 cloud_provider_type_map = {
+    'azure': mgmt_system.AZURESystem,
     'ec2': mgmt_system.EC2System,
     'openstack': mgmt_system.OpenstackSystem,
 }
