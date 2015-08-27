@@ -50,9 +50,10 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             raise Exception("Incorrect credentials for Google Cloud System")
 
         self._compute = build('compute', 'v1', credentials=self._credentials)
+        self._instances = self._compute.instances()
 
     def _get_all_instances(self):
-        return self._compute.instances().list(project=self._project, zone=self._zone).execute()
+        return self._instances.list(project=self._project, zone=self._zone).execute()
 
     def list_vm(self):
         instance_list = self._get_all_instances()
@@ -60,7 +61,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
     def _find_instance_by_name(self, instance_name):
         try:
-            instance = self._compute.instances().get(
+            instance = self._instances.get(
                 project=self._project, zone=self._zone, instance=instance_name).execute()
             return instance
         except Exception:
@@ -153,7 +154,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             }
         }
 
-        operation = self._compute.instances().insert(
+        operation = self._instances.insert(
             project=self._project, zone=self._zone, body=config).execute()
         wait_for(lambda: self._nested_wait_vm_running(operation['name']), delay=0.5,
             num_sec=timeout, message=" Create %s" % instance_name)
@@ -165,7 +166,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             return True
 
         logger.info(" Deleting Google Cloud instance %s" % instance_name)
-        operation = self._compute.instances().delete(
+        operation = self._instances.delete(
             project=self._project, zone=self._zone, instance=instance_name).execute()
         wait_for(lambda: self._nested_wait_vm_running(operation['name']), delay=0.5,
             num_sec=timeout, message=" Delete %s" % instance_name)
@@ -173,7 +174,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
     def restart_vm(self, instance_name):
         logger.info(" Restarting Google Cloud instance %s" % instance_name)
-        operation = self._compute.instances().reset(
+        operation = self._instances.reset(
             project=self._project, zone=self._zone, instance=instance_name).execute()
         wait_for(lambda: self._nested_wait_vm_running(operation['name']),
             message=" Restart %s" % instance_name)
@@ -185,7 +186,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             return True
 
         logger.info(" Stoping Google Cloud instance %s" % instance_name)
-        operation = self._compute.instances().start(
+        operation = self._instances.stop(
             project=self._project, zone=self._zone, instance=instance_name).execute()
         wait_for(lambda: self._nested_wait_vm_running(operation['name']),
             message=" Stop %s" % instance_name)
@@ -199,7 +200,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             return True
 
         logger.info(" Starting Google Cloud instance %s" % instance_name)
-        operation = self._compute.instances().start(
+        operation = self._instances.start(
             project=self._project, zone=self._zone, instance=instance_name).execute()
         wait_for(lambda: self._nested_wait_vm_running(operation['name']),
             message=" Start %s" % instance_name)
