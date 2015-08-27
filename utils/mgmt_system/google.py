@@ -83,6 +83,10 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
     def create_vm(self, instance_name=None, source_disk_image=None, machine_type=None,
             startup_script=None, timeout=180):
+        if self.does_vm_exist(instance_name):
+            logger.info(" The %s instance is already exists, skipping" % instance_name)
+            return True
+
         logger.info("Creating %s instance" % instance_name)
         if not instance_name:
             instance_name = self._instance_name
@@ -156,6 +160,10 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         return True
 
     def delete_vm(self, instance_name, timeout=180):
+        if not self.does_vm_exist(instance_name):
+            logger.info(" The %s instance is not exists, skipping" % instance_name)
+            return True
+
         logger.info(" Deleting Google Cloud instance %s" % instance_name)
         operation = self._compute.instances().delete(
             project=self._project, zone=self._zone, instance=instance_name).execute()
@@ -210,9 +218,9 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
     def disconnect(self):
         raise NotImplementedError('disconnect not implemented.')
 
-    def does_vm_exist(self, name):
+    def does_vm_exist(self, instance_name):
         try:
-            self._find_instance_by_name(name)
+            self._find_instance_by_name(instance_name)
             return True
         except Exception:
             return False
