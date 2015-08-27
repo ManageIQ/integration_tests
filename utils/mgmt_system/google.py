@@ -6,7 +6,7 @@ Used to communicate with providers without using CFME facilities
 
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
-from oauth2client.tools import run
+from oauth2client.tools import run_flow, argparser
 from googleapiclient.discovery import build
 from utils.mgmt_system.base import MgmtSystemAPIBase, VMInfo
 from utils.mgmt_system.exceptions import VMInstanceNotFound
@@ -44,7 +44,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
             self._credentials = storage.get()
 
         if self._credentials is None or self._credentials.invalid:
-            self._credentials = run(flow, storage)
+            self._credentials = run_flow(flow, storage, argparser.parse_args([]))
 
         if self._credentials is None or self._credentials.invalid:
             raise Exception("Incorrect credentials for Google Cloud System")

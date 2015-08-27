@@ -30,7 +30,6 @@ pytest==2.7.0
 python-bugzilla>=1.2.0
 python-cinderclient
 python-dateutil
-python-gflags
 python-keystoneclient
 python-novaclient
 pywinrm
