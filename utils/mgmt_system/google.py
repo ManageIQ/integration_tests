@@ -59,11 +59,11 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         return result['items']
 
     def _find_instance_by_name(self, instance_name):
-        instance = self._compute.instances().get(
-            project=self._project, zone=self._zone, instance=instance_name).execute()
-        if instance:
+        try:
+            instance = self._compute.instances().get(
+                project=self._project, zone=self._zone, instance=instance_name).execute()
             return instance
-        else:
+        except Exception:
             raise VMInstanceNotFound(instance_name)
 
     def _nested_wait_vm_running(self, operation_name):
