@@ -543,7 +543,6 @@ def get_crud(provider_config_name):
         return GoogleCloudProvider(project=prov_config['project'],
             zone=prov_config['zone'],
             credentials={'default': credentials},
-            default_instance_name=prov_config['default_instance_name'],
             scope=prov_config['scope'],
             oauth2_storage=prov_config['oauth2_storage'],
             client_secrets=prov_config['client_secrets'],

@@ -122,7 +122,6 @@ management_systems:
     gcloud:
         project: cfme-1044
         zone: us-central1-f
-        default_instance_name: demo-instance
         scope: https://www.googleapis.com/auth/compute
         oauth2_storage: oauth2.dat
         client_secrets: client_secrets.json

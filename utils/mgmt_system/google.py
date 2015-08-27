@@ -27,14 +27,11 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         'stopping': ('STOPPING'),
     }
 
-    def __init__(self, project=None, zone=None, default_instance_name=None, scope=None,
-            oauth2_storage=None, client_secrets=None):
+    def __init__(self, project=None, zone=None, scope=None, oauth2_storage=None,
+            client_secrets=None):
 
         self._project = project
         self._zone = zone
-
-        # Default name of the instance name from config file
-        self._instance_name = default_instance_name
 
         # Perform OAuth 2.0 authorization.
         # based on OAuth 2.0 client IDs credentials from client_secretes file
@@ -83,15 +80,13 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
         return False
 
-    def create_vm(self, instance_name=None, source_disk_image=None, machine_type=None,
+    def create_vm(self, instance_name='test-instance', source_disk_image=None, machine_type=None,
             startup_script=None, timeout=180):
         if self.does_vm_exist(instance_name):
             logger.info(" The %s instance is already exists, skipping" % instance_name)
             return True
 
         logger.info("Creating %s instance" % instance_name)
-        if not instance_name:
-            instance_name = self._instance_name
 
         if not source_disk_image:
             source_disk_image = "projects/debian-cloud/global/images/debian-7-wheezy-v20150320"

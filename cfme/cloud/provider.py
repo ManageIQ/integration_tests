@@ -142,11 +142,10 @@ class OpenStackProvider(Provider):
 
 class GoogleCloudProvider(Provider):
     def __init__(self, project=None, credentials=None, zone=None, key=None,
-            default_instance_name=None, scope=None, oauth2_storage=None, client_secrets=None,
-            source_disk_image=None, machine_type=None, startup_script=None):
+            scope=None, oauth2_storage=None, client_secrets=None, source_disk_image=None,
+            machine_type=None, startup_script=None):
         super(GoogleCloudProvider, self).__init__(name=project, credentials=credentials,
             zone=zone, key=key)
-        self.default_instance_name = default_instance_name
         self.scope = scope
         self.oauth2_storage = oauth2_storage
         self.client_secrets = client_secrets
