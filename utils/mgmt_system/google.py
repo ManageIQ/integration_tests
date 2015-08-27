@@ -260,7 +260,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         raise NotImplementedError('suspend_vm not implemented.')
 
     def vm_status(self, vm_name):
-        if self.does_vm_exist:
+        if self.does_vm_exist(vm_name):
             return self._find_instance_by_name(vm_name)['status']
         return None
 
