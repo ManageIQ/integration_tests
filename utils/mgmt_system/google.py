@@ -55,8 +55,8 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         return self._compute.instances().list(project=self._project, zone=self._zone).execute()
 
     def list_vm(self):
-        result = self._get_all_instances()
-        return result['items']
+        instance_list = self._get_all_instances()
+        return [instance.get('name') for instance in instance_list.get('items', [])]
 
     def _find_instance_by_name(self, instance_name):
         try:
