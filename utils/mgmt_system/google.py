@@ -260,7 +260,9 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         raise NotImplementedError('suspend_vm not implemented.')
 
     def vm_status(self, vm_name):
-        return self._find_instance_by_name(vm_name)['status']
+        if self.does_vm_exist:
+            return self._find_instance_by_name(vm_name)['status']
+        return None
 
     def wait_vm_running(self, vm_name, num_sec=360):
         logger.info(" Waiting for instance %s to change status to ACTIVE" % vm_name)
