@@ -176,7 +176,7 @@ def wait_for_request(cells, partial_check=False):
         # Request not found at all, can't continue
         return False
 
-    if row.request_state.text == 'Finished':
+    if row.request_state.text in ['Migrated', 'Finished']:
         return row
     else:
         return False

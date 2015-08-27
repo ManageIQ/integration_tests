@@ -26,6 +26,7 @@ from utils.wait import wait_for, TimedOutError
 from utils.mgmt_system import ActionNotSupported, VMInstanceNotFound
 from utils import version
 
+
 QUADICON_TITLE_LOCATOR = ("//div[@id='quadicon']/../../../tr/td/a[contains(@href,'vm_infra/x_show')"
                          " or contains(@href, '/show/')]")  # for provider specific vm/template page
 
@@ -680,21 +681,26 @@ class Vm(Common):
     def migrate_vm(self, email=None, first_name=None, last_name=None,
                    host_name=None, datastore_name=None):
         sel.force_navigate("infra_vm_by_name", context={'vm': self})
-        lcl_btn("Migrate this VM", invokes_alert=True)
+        lcl_btn("Migrate this VM")
         first_name = first_name or fauxfactory.gen_alphanumeric()
         last_name = last_name or fauxfactory.gen_alphanumeric()
         email = email or "{}@{}.test".format(first_name, last_name)
+        try:
+            prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]
+        except (KeyError, IndexError):
+            raise ValueError("You have to specify the correct options in cfme_data.yaml")
         provisioning_data = {
             "first_name": first_name,
             "last_name": last_name,
             "email": email,
-            "host_name": host_name,
-            "datastore_name": datastore_name,
+            "host_name": {"name": prov_data.get("host")},
+            "datastore_name": {"name": prov_data.get("datastore")}
         }
         from cfme.provisioning import provisioning_form
         fill(provisioning_form, provisioning_data, action=provisioning_form.submit_button)
 
-    def clone_vm(self, email=None, first_name=None, last_name=None, vm_name=None):
+    def clone_vm(self, email=None, first_name=None, last_name=None,
+                 vm_name=None, provision_type=None):
         sel.force_navigate("infra_vm_by_name", context={'vm': self})
         lcl_btn("Clone this VM")
         first_name = first_name or fauxfactory.gen_alphanumeric()
@@ -704,11 +710,11 @@ class Vm(Common):
             prov_data = cfme_data["management_systems"][self.provider_crud.key]["provisioning"]
         except (KeyError, IndexError):
             raise ValueError("You have to specify the correct options in cfme_data.yaml")
-
         provisioning_data = {
             "first_name": first_name,
             "last_name": last_name,
             "email": email,
+            "provision_type": provision_type,
             "vm_name": vm_name,
             "host_name": {"name": prov_data.get("host")},
             "datastore_name": {"name": prov_data.get("datastore")},
