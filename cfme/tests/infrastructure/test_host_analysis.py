@@ -6,6 +6,7 @@ from cfme.infrastructure import host
 from cfme.web_ui import listaccordion as list_acc, tabstrip as tabs, toolbar as tb
 from utils import conf
 from utils import testgen
+from utils.blockers import BZ
 from utils.wait import wait_for
 
 
@@ -117,8 +118,10 @@ def test_run_host_analysis(request, setup_provider, provider, host_type, host_na
     sel.handle_alert()
 
     # Check results of the analysis
-    services_bug = bug(1156028)
-    if not (services_bug is not None and provider.type == "rhevm" and provider.version >= "3.3"):
+    # This is done on purpose; we cannot use the "bug" fixture here as
+    # the bug doesnt block streams other than 5.3
+    services_bug = BZ(1156028)
+    if provider.type == "rhevm" and (not services_bug.data.is_opened):
         soft_assert(test_host.get_detail('Configuration', 'Services') != '0',
             'No services found in host detail')
 
