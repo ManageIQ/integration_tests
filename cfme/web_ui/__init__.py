@@ -2991,15 +2991,16 @@ class DriftGrid(Pretty):
     def expand_all_sections(self):
         """ Expands all sections to make the row elements found therein available
         """
-        els_to_expand = sel.elements(
-            {
-                '5.3': './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
-                version.LOWEST: './/div/img[contains(@src, "plus")]'
-            },
-            root=self.loc
-        )
-        for el in els_to_expand:
-            el.click()
+        while True:
+            # We need to do this one by one because the DOM changes on every expansion
+            try:
+                el = sel.element({
+                    '5.3': './/div/span[contains(@class, "toggle") and contains(@class, "expand")]',
+                    version.LOWEST: './/div/img[contains(@src, "plus")]'},
+                    root=self.loc)
+                sel.click(el)
+            except NoSuchElementException:
+                break
 
 
 class ButtonGroup(object):

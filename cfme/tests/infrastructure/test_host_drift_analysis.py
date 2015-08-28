@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import pytest
+
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure import host
 from cfme.web_ui import DriftGrid, toolbar as tb
 from utils import conf, error, testgen
 from utils.wait import wait_for
-from utils.update import update
 
 
 def pytest_generate_tests(metafunc):
     argnames, argvalues, idlist = testgen.infra_providers(metafunc, 'hosts')
-    argnames += ['host_name', 'host_type']
+    argnames += ['host_type', 'host_name']
 
     new_idlist = []
     new_argvalues = []
@@ -40,6 +41,7 @@ def get_host_data_by_name(provider_key, host_name):
     return None
 
 
+@pytest.mark.meta(blockers=[1242655])
 def test_host_drift_analysis(request, setup_provider, provider, host_type, host_name, soft_assert):
     """Tests host drift analysis
 
@@ -92,15 +94,10 @@ def test_host_drift_analysis(request, setup_provider, provider, host_type, host_
         fail_func=sel.refresh
     )
 
-    # change host name + finalizer to change it back
-    orig_host_name = test_host.name
-    with update(test_host):
-        test_host.name = '{}_tmp_drift_rename'.format(test_host.name)
-
-    def host_reset_name():
-        with update(test_host):
-            test_host.name = orig_host_name
-    request.addfinalizer(host_reset_name)
+    # add a tag and a finalizer to remove it
+    tag = ('Department', 'Accounting')
+    test_host.tag(tag, single_value=False)
+    request.addfinalizer(lambda: test_host.untag(tag))
 
     # initiate 2nd analysis
     test_host.run_smartstate_analysis()
@@ -115,17 +112,17 @@ def test_host_drift_analysis(request, setup_provider, provider, host_type, host_
     )
 
     # check drift difference
-    soft_assert(not test_host.equal_drift_results('All Sections', 0, 1),
+    soft_assert(not test_host.equal_drift_results('Department (1)', 'My Company Tags', 0, 1),
         "Drift analysis results are equal when they shouldn't be")
 
     # Test UI features that modify the drift grid
     d_grid = DriftGrid()
 
-    # Name should not be displayed, because it was changed
+    # Accounting tag should not be displayed, because it was changed to True
     tb.select("Attributes with same values")
     with error.expected(sel.NoSuchElementException):
-        d_grid.get_cell('Name', 0)
+        d_grid.get_cell('Accounting', 0)
 
-    # Name should be displayed now
+    # Accounting tag should be displayed now
     tb.select("Attributes with different values")
-    d_grid.get_cell('Name', 0)
+    d_grid.get_cell('Accounting', 0)
