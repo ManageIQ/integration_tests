@@ -20,7 +20,7 @@ import utils.conf as conf
 from cfme.exceptions import HostNotFound
 from cfme.web_ui import (
     Region, Quadicon, Form, Select, CheckboxTree, CheckboxTable, DriftGrid, fill, form_buttons,
-    paginator, Input
+    paginator, Input, mixins
 )
 from cfme.web_ui.form_buttons import FormButton
 from cfme.web_ui import listaccordion as list_acc
@@ -357,11 +357,12 @@ class Host(Updateable, Pretty):
         sel.handle_alert()
         flash.assert_message_contain('"{}": Analysis successfully initiated'.format(self.name))
 
-    def equal_drift_results(self, row_text, *indexes):
+    def equal_drift_results(self, row_text, section, *indexes):
         """ Compares drift analysis results of a row specified by it's title text
 
         Args:
             row_text: Title text of the row to compare
+            section: Accordion section where the change happened; this section must be activated
             indexes: Indexes of results to compare starting with 0 for first row (latest result).
                      Compares all available drifts, if left empty (default).
 
@@ -388,12 +389,39 @@ class Host(Updateable, Pretty):
                 drift_table.select_all()
         tb.select("Select up to 10 timestamps for Drift Analysis")
 
-        d_grid = DriftGrid()
+        # Make sure the section we need is active/open
+        sec_loc_map = {
+            'Properties': 'Properties',
+            'Security': 'Security',
+            'Configuration': 'Configuration',
+            'My Company Tags': 'Categories'}
+        active_sec_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
+            "/span[contains(@class, 'dynatree-selected')]".format(sec_loc_map[section])
+        sec_checkbox_loc = "//div[@id='all_sections_treebox']//li[contains(@id, 'group_{}')]"\
+            "//span[contains(@class, 'dynatree-checkbox')]".format(sec_loc_map[section])
+        sec_apply_btn = "//div[@id='accordion']/a[contains(normalize-space(text()), 'Apply')]"
+
+        # If the section is not active yet, activate it
+        if not sel.is_displayed(active_sec_loc):
+            sel.click(sec_checkbox_loc)
+            sel.click(sec_apply_btn)
+
         if not tb.is_active("All attributes"):
             tb.select("All attributes")
+        d_grid = DriftGrid()
         if any(d_grid.cell_indicates_change(row_text, i) for i in range(0, len(indexes))):
             return False
         return True
+
+    def tag(self, tag, **kwargs):
+        """Tags the system by given tag"""
+        sel.force_navigate('infrastructure_host', context={'host': self})
+        mixins.add_tag(tag, **kwargs)
+
+    def untag(self, tag):
+        """Removes the selected tag off the system"""
+        sel.force_navigate('infrastructure_host', context={'host': self})
+        mixins.remove_tag(tag)
 
 
 @fill.method((Form, Host.Credential))
