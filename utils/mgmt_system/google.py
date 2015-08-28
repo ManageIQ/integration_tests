@@ -81,7 +81,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         return False
 
     def create_vm(self, instance_name='test-instance', source_disk_image=None, machine_type=None,
-            startup_script=None, timeout=180):
+            startup_script_data=None, timeout=180):
         if self.does_vm_exist(instance_name):
             logger.info(" The %s instance is already exists, skipping" % instance_name)
             return True
@@ -93,12 +93,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
         machine_type = machine_type or ("zones/%s/machineTypes/n1-standard-1" % self._zone)
 
-        try:
-            script = open(startup_script, 'r').read()
-        except:
-            logger.debug("Couldn't open the startup script %s for GoogleCloudSystem"
-                        % startup_script)
-            script = "#!/bin/bash"
+        script = startup_script_data or "#!/bin/bash"
 
         config = {
             'name': instance_name,

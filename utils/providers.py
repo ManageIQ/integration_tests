@@ -21,6 +21,8 @@ from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
 from utils.log import logger, perflog
 from utils.wait import wait_for
+from utils.datafile import load_data_file
+from utils.path import scripts_path
 
 #: mapping of infra provider type names to :py:mod:`utils.mgmt_system` classes
 infra_provider_type_map = {
@@ -540,6 +542,11 @@ def get_crud(provider_config_name):
             zone=prov_config['server_zone'],
             key=provider_config_name)
     elif prov_type == 'gcloud':
+        if prov_config.get('startup_script', None):
+            script = load_data_file(str(scripts_path.join(prov_config['startup_script'])))
+            script_data = script.read()
+        else:
+            script_data = None
         return GoogleCloudProvider(project=prov_config['project'],
             zone=prov_config['zone'],
             credentials={'default': credentials},
@@ -548,7 +555,7 @@ def get_crud(provider_config_name):
             client_secrets=prov_config['client_secrets'],
             source_disk_image=prov_config['source_disk_image'],
             machine_type=prov_config['machine_type'],
-            startup_script=prov_config['startup_script'],
+            startup_script_data=script_data,
             key=provider_config_name)
     elif prov_type == 'openstack':
         return OpenStackProvider(name=prov_config['name'],
