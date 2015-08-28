@@ -83,7 +83,7 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
     def create_vm(self, instance_name='test-instance', source_disk_image=None, machine_type=None,
             startup_script_data=None, timeout=180):
         if self.does_vm_exist(instance_name):
-            logger.info(" The %s instance is already exists, skipping" % instance_name)
+            logger.info("The %s instance is already exists, skipping" % instance_name)
             return True
 
         logger.info("Creating %s instance" % instance_name)
@@ -153,35 +153,35 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
 
     def delete_vm(self, instance_name, timeout=180):
         if not self.does_vm_exist(instance_name):
-            logger.info(" The %s instance is not exists, skipping" % instance_name)
+            logger.info("The %s instance is not exists, skipping" % instance_name)
             return True
 
-        logger.info(" Deleting Google Cloud instance %s" % instance_name)
+        logger.info("Deleting Google Cloud instance %s" % instance_name)
         operation = self._instances.delete(
             project=self._project, zone=self._zone, instance=instance_name).execute()
         wait_for(lambda: self._nested_wait_vm_running(operation['name']), delay=0.5,
-            num_sec=timeout, message=" Delete %s" % instance_name)
+            num_sec=timeout, message="Delete %s" % instance_name)
         return True
 
     def restart_vm(self, instance_name):
-        logger.info(" Restarting Google Cloud instance %s" % instance_name)
+        logger.info("Restarting Google Cloud instance %s" % instance_name)
         operation = self._instances.reset(
             project=self._project, zone=self._zone, instance=instance_name).execute()
         wait_for(lambda: self._nested_wait_vm_running(operation['name']),
-            message=" Restart %s" % instance_name)
+            message="Restart %s" % instance_name)
         return True
 
     def stop_vm(self, instance_name):
         if self.is_vm_stopped(instance_name) or not self.does_vm_exist(instance_name):
-            logger.info(" The %s instance is already stopped or doesn't exist, skip termination"
+            logger.info("The %s instance is already stopped or doesn't exist, skip termination"
                 % instance_name)
             return True
 
-        logger.info(" Stoping Google Cloud instance %s" % instance_name)
+        logger.info("Stoping Google Cloud instance %s" % instance_name)
         operation = self._instances.stop(
             project=self._project, zone=self._zone, instance=instance_name).execute()
         wait_for(lambda: self._nested_wait_vm_running(operation['name']),
-            message=" Stop %s" % instance_name)
+            message="Stop %s" % instance_name)
         return True
 
     def start_vm(self, instance_name):
@@ -192,11 +192,11 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
                 % instance_name)
             return True
 
-        logger.info(" Starting Google Cloud instance %s" % instance_name)
+        logger.info("Starting Google Cloud instance %s" % instance_name)
         operation = self._instances.start(
             project=self._project, zone=self._zone, instance=instance_name).execute()
         wait_for(lambda: self._nested_wait_vm_running(operation['name']),
-            message=" Start %s" % instance_name)
+            message="Start %s" % instance_name)
         return True
 
     def clone_vm(self):
@@ -259,11 +259,11 @@ class GoogleCloudSystem (MgmtSystemAPIBase):
         return None
 
     def wait_vm_running(self, vm_name, num_sec=360):
-        logger.info(" Waiting for instance %s to change status to ACTIVE" % vm_name)
+        logger.info("Waiting for instance %s to change status to ACTIVE" % vm_name)
         wait_for(self.is_vm_running, [vm_name], num_sec=num_sec)
 
     def wait_vm_stopped(self, vm_name, num_sec=360):
-        logger.info(" Waiting for instance %s to change status to TERMINATED" % vm_name)
+        logger.info("Waiting for instance %s to change status to TERMINATED" % vm_name)
         wait_for(self.is_vm_stopped, [vm_name], num_sec=num_sec)
 
     def wait_vm_suspended(self):
