@@ -19,11 +19,12 @@ from cfme import exceptions as cfme_exc
 from utils.log import logger
 from utils.mgmt_system.base import MgmtSystemAPIBase, VMInfo
 from utils.mgmt_system.exceptions import (
-    NoMoreFloatingIPs, NetworkNameNotFound, VMInstanceNotFound
+    NoMoreFloatingIPs, NetworkNameNotFound, VMInstanceNotFound, ActionTimedOutError
 )
 from utils.timeutil import local_tz
 from utils.version import current_version
 from utils.wait import wait_for
+from heatclient import client as heat_client
 
 
 # TODO The following monkeypatch nonsense is criminal, and would be
@@ -92,6 +93,25 @@ class OpenstackSystem(MgmtSystemAPIBase):
         else:
             filter_tenants = True
         return len(self._get_all_instances(filter_tenants))
+
+    def get_keystone_creds(self):
+        d = {}
+        d['username'] = self.username
+        d['password'] = self.password
+        d['auth_url'] = self.auth_url
+        d['tenant_name'] = self.tenant
+        return d
+
+    @property
+    def stackapi(self):
+        ks_client = oskclient.Client(username=self.username,
+                                     password=self.password,
+                                     tenant_name=self.tenant,
+                                     auth_url=self.auth_url)
+        heat_endpoint = ks_client.service_catalog.url_for(service_type='orchestration',
+                                                          endpoint_type='publicURL')
+        self._stackapi = heat_client.Client('1', heat_endpoint, token=ks_client.auth_token)
+        return self._stackapi
 
     @property
     def api(self):
@@ -660,3 +680,24 @@ class OpenstackSystem(MgmtSystemAPIBase):
         template = self._find_template_by_name(template_name)
         template.delete()
         wait_for(lambda: not self.does_template_exist(template_name), num_sec=120, delay=10)
+
+    def stack_exist(self, stack_name):
+        stack = self.stackapi.stacks.get(stack_name)
+        if stack:
+            return True
+        else:
+            return False
+
+    def delete_stack(self, stack_name):
+        """Deletes stack
+
+        Args:
+        stack_name: Unique name of stack
+        """
+
+        logger.info(" Terminating RHOS stack %s" % stack_name)
+        try:
+            self.stackapi.stacks.delete(stack_name)
+            return True
+        except ActionTimedOutError:
+            return False
