@@ -32,6 +32,7 @@ python-cinderclient
 python-dateutil
 python-keystoneclient
 python-novaclient
+python-heatclient
 pywinrm
 PyYAML
 requests
