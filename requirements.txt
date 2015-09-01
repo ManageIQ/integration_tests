@@ -11,7 +11,8 @@ ipython
 iso8601
 Jinja2
 kwargify
-layered-yaml-attrdict-config
+# 15.8.1 breaks yaycl: https://github.com/mk-fg/layered-yaml-attrdict-config/commit/ea12fbf31b96abf15543c7b436272d8854b5d324
+layered-yaml-attrdict-config==15.8.0
 multimethods.py
 numpy
 ovirt-engine-sdk-python
