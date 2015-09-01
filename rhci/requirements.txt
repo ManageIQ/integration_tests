@@ -1,0 +1,6 @@
+# the test runner
+pytest
+
+# requirements for rhci scripts
+requests
+vncdotool

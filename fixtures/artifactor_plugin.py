@@ -116,8 +116,12 @@ def pytest_runtest_protocol(item):
     global session_ver
 
     if not session_ver:
-        session_ver = str(version.current_version())
+        try:
+            session_ver = str(version.current_version())
+        except:
+            session_ver = 'Unknown'
         art_client.fire_hook('session_info', version=session_ver)
+
 
     name, location = get_test_idents(item)
     art_client.fire_hook('start_test', test_location=location, test_name=name,

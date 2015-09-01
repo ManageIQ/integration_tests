@@ -1,0 +1,8 @@
+2015-08-30 21:13:00 - robottelo.ui.locators - DEBUG - Accessing locator "login.username" by id: "login_login"
+2015-08-30 21:13:02 - robottelo.ui.locators - DEBUG - Accessing locator "login.username" by id: "login_login"
+2015-08-30 21:13:04 - robottelo.ui.locators - DEBUG - Accessing locator "login.password" by id: "login_password"
+2015-08-30 21:13:05 - robottelo.ui.locators - DEBUG - Accessing locator "submit" by name: "commit"
+2015-08-30 21:13:11 - robottelo.ui.locators - DEBUG - Accessing locator "notif.error" by xpath: "//div[contains(@class, 'jnotify-notification-error')]"
+2015-08-30 21:13:11 - robottelo.ui.base - DEBUG - NoSuchElementException: Could not locate element //div[contains(@class, 'jnotify-notification-error')].
+2015-08-30 21:13:11 - robottelo.ui.locators - DEBUG - Accessing locator "menu.rhci_installer" by xpath: "//div[contains(@style,'static') or contains(@style,'fixed')]//a[@id='fusor_menu']"
+2015-08-30 21:13:11 - robottelo.ui.locators - DEBUG - Accessing locator "menu.new_deployment" by xpath: "//div[contains(@style,'static') or contains(@style, 'fixed')]//a[@id='menu_item_new_fusor_deployment']"

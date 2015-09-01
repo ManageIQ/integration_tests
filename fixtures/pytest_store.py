@@ -185,8 +185,6 @@ def pytest_configure(config):
 
 def pytest_sessionstart(session):
     store.session = session
-    # populate my_ip_address if it hasn't been done yet
-    store.my_ip_address
 
 
 def write_line(line, **kwargs):

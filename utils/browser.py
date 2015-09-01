@@ -50,7 +50,7 @@ def wharf():
     return thread_locals.wharf
 
 
-def ensure_browser_open():
+def ensure_browser_open(url=None):
     """Ensures that there is a browser instance currently open
 
     Will reuse an existing browser or start a new one as-needed
@@ -73,6 +73,8 @@ def ensure_browser_open():
         start()
     if thread_locals.wharf:
         thread_locals.wharf.renew()
+    if url and browser().current_url != url:
+        browser().get(url)
     return browser()
 
 

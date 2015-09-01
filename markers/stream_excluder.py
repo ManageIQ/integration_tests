@@ -13,6 +13,8 @@ import pytest
 from fixtures.terminalreporter import reporter
 from utils.version import appliance_is_downstream, current_version, current_stream
 
+_streams_id = None
+
 
 def get_streams_id():
     if appliance_is_downstream():
@@ -36,7 +38,7 @@ def pytest_configure(config):
 
 
 def pytest_itemcollected(item):
-    streams_id = get_streams_id()
+    global _streams_id
     marker = item.get_marker("ignore_stream")
     if marker is None:
         return
@@ -44,6 +46,8 @@ def pytest_itemcollected(item):
         params = item.callspec.params
     else:
         params = {}
+    if not _streams_id:
+        _streams_id = get_streams_id()
     for arg in marker.args:
         if isinstance(arg, (tuple, list)):
             stream, conditions = arg
@@ -51,7 +55,7 @@ def pytest_itemcollected(item):
             stream = arg
             conditions = {}
         stream = stream.strip().lower()
-        if stream in streams_id:
+        if stream in _streams_id:
             # Candidate for uncollection
             if not conditions:
                 # Just uncollect it right away
@@ -70,8 +74,10 @@ def pytest_itemcollected(item):
 
 
 def pytest_collection_modifyitems(session, config, items):
+    if _streams_id is None:
+        return
     # Just to print out the appliance's streams
-    reporter(config).write("\nAppliance's streams: [{}]\n".format(", ".join(get_streams_id())))
+    reporter(config).write("\nAppliance's streams: [{}]\n".format(", ".join(_streams_id)))
     # Bail out if the appliance stream or version do not match
     check_stream = config.getvalue("check_stream").lower().strip()
     if check_stream:
