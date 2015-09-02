@@ -2,9 +2,11 @@
 # coding: utf-8
 
 import logging
+import subprocess
 import time
 from optparse import OptionParser
-import subprocess as sub
+
+from utils import db
 
 parser = OptionParser()
 parser.add_option('--backupfile', help='backup file to be restored')
@@ -25,7 +27,7 @@ logger = logging.getLogger('migration')
 # Execute command
 def run_command(cmd):
     logger.info('Running: %s' % cmd)
-    process = sub.Popen(cmd, shell=True, stdout=sub.PIPE, stderr=sub.PIPE)
+    process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
     logger.info("\nSTDOUT:\n%s" % output)
     if process.returncode != 0:
@@ -50,7 +52,7 @@ psql_output = run_command('psql -d vmdb_production -U root -c ' +
 count = psql_output.split("\n")[2].strip()
 if count > 2:
     logger.info("Too many postgres threads(" + str(count) + ")... restarting")
-    run_command("service postgresql92-postgresql restart")
+    run_command("service {}-postgresql restart".format(db.scl_name()))
     time.sleep(60)
 run_command("cd /var/www/miq/vmdb/backup_and_restore/;./miq_vmdb_background_restore " +
     options.backupfile + " > /tmp/restore.out 2>&1")
