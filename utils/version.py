@@ -276,6 +276,7 @@ version_stream_product_mapping = {
     '5.2': SPTuple('downstream-52z', '3.0'),
     '5.3': SPTuple('downstream-53z', '3.1'),
     '5.4': SPTuple('downstream-54z', '3.2'),
+    '5.5': SPTuple('downstream-55z', '4.0'),
     LATEST: SPTuple('upstream', 'master')
 }
 
