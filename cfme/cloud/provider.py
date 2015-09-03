@@ -140,6 +140,20 @@ class OpenStackProvider(Provider):
                 'ipaddress_text': kwargs.get('ip_address')}
 
 
+class GoogleCloudProvider(Provider):
+    def __init__(self, project=None, credentials=None, zone=None, key=None,
+            scope=None, oauth2_storage=None, client_secrets=None, source_disk_image=None,
+            machine_type=None, startup_script_data=None):
+        super(GoogleCloudProvider, self).__init__(name=project, credentials=credentials,
+            zone=zone, key=key)
+        self.scope = scope
+        self.oauth2_storage = oauth2_storage
+        self.client_secrets = client_secrets
+        self.source_disk_image = source_disk_image
+        self.machine_type = machine_type
+        self.startup_script_data = startup_script_data
+
+
 def get_all_providers(do_not_navigate=False):
     """Returns list of all providers"""
     if not do_not_navigate:

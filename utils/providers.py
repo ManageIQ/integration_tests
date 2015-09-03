@@ -16,11 +16,13 @@ from cfme.web_ui import Quadicon, paginator, toolbar
 from cfme.common.provider import BaseProvider
 from cfme.exceptions import UnknownProviderType
 from cfme.infrastructure.provider import RHEVMProvider, VMwareProvider, SCVMMProvider
-from cfme.cloud.provider import EC2Provider, OpenStackProvider
+from cfme.cloud.provider import EC2Provider, OpenStackProvider, GoogleCloudProvider
 from fixtures.prov_filter import filtered
 from utils import conf, mgmt_system
 from utils.log import logger, perflog
 from utils.wait import wait_for
+from utils.datafile import load_data_file
+from utils.path import scripts_path, conf_path
 
 #: mapping of infra provider type names to :py:mod:`utils.mgmt_system` classes
 infra_provider_type_map = {
@@ -33,6 +35,7 @@ infra_provider_type_map = {
 cloud_provider_type_map = {
     'ec2': mgmt_system.EC2System,
     'openstack': mgmt_system.OpenstackSystem,
+    'gcloud': mgmt_system.GoogleCloudSystem,
 }
 
 #: mapping of container provider type names to :py:mod:`utils.mgmt_system` classes
@@ -537,6 +540,36 @@ def get_crud(provider_config_name):
             region=prov_config['region'],
             credentials={'default': credentials},
             zone=prov_config['server_zone'],
+            key=provider_config_name)
+    elif prov_type == 'gcloud':
+        if prov_config.get('startup_script', None):
+            script = load_data_file(str(scripts_path.join(prov_config['startup_script'])))
+            script_data = script.read()
+        else:
+            script_data = None
+
+        if prov_config.get('oauth2_storage', None):
+            oauth2_path = str(conf_path.join(prov_config['oauth2_storage']))
+        else:
+            logger.error("The oauth2_storage path isn't defined")
+            raise Exception("The oauth2_storage path isn't defined")
+
+        if prov_config.get('client_secrets', None):
+            client_secrets_path = str(conf_path.join(prov_config['client_secrets']))
+        else:
+            logger.error(
+                "The client_secrets path isn't defined. Couldn't authorize Google Cloud API")
+            raise Exception("The oauth2_storage path isn't defined")
+
+        return GoogleCloudProvider(project=prov_config['project'],
+            zone=prov_config['zone'],
+            credentials={'default': credentials},
+            scope=prov_config['scope'],
+            oauth2_storage=oauth2_path,
+            client_secrets=client_secrets_path,
+            source_disk_image=prov_config['source_disk_image'],
+            machine_type=prov_config['machine_type'],
+            startup_script_data=script_data,
             key=provider_config_name)
     elif prov_type == 'openstack':
         return OpenStackProvider(name=prov_config['name'],

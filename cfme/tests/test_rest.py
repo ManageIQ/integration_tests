@@ -374,6 +374,99 @@ COLLECTIONS_IGNORED_53 = {
 }
 
 
+@pytest.fixture(scope="module")
+def user_data():
+    name = fauxfactory.gen_alphanumeric()
+    result = {
+        "name": "name_{}".format(name),
+        "userid": "userid_{}".format(name),
+        "email": "{}@local.com".format(name),
+    }
+
+    return result
+
+
+def test_add_delete_user(user_data, rest_api):
+    """Tests creating and deleting users.
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/users (method ``add``) with the ``name``, ``userid`` and ``email``
+
+        * DELETE /api/providers/<id> -> delete only one user
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+        * DELETE /api/users <- Insert a JSON with list of dicts containing ``href``s to
+            the users
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "add" in rest_api.users.action
+
+    users = [{
+        "name": "name_{}".format(fauxfactory.gen_alphanumeric()),
+        "userid": "userid_{}".format(fauxfactory.gen_alphanumeric()),
+        "email": "{}@local.com".format(fauxfactory.gen_alphanumeric()),
+    } for _ in range(4)]
+
+    for user in users:
+        rest_api.users.action.add(user)
+
+        wait_for(
+            lambda: rest_api.users.find_by(name=user.get("name")),
+            num_sec=180,
+            delay=10,
+        )
+
+    delete_user = rest_api.users.find_by(users[0].get('name'))
+    delete_user.action.delete()
+    wait_for(
+        lambda: rest_api.users.find_by(name=users[0].get('name')),
+        num_sec=180,
+        delay=10,
+    )
+
+    users = [user.id for user in rest_api.users]
+    rest_api.users.delete(users)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        rest_api.users.action.delete(users)
+
+
+def test_edit_user(user_data, rest_api):
+    """Tests editing a user.
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of users using GET /api/users , pick the first one
+        * POST /api/users/1 (method ``edit``) with the ``name``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "edit" in rest_api.users.action
+
+    try:
+        user = rest_api.users[0]
+    except:
+        rest_api.users.action.add(user_data)
+        user = rest_api.users.find_by(name=user_data.get('name'))
+
+    new_name = "name_{}".format(fauxfactory.gen_alphanumeric())
+
+    user.action.edit(name=new_name)
+    wait_for(
+        lambda: rest_api.users.find_by(name=new_name),
+        num_sec=180,
+        delay=10,
+    )
+
+
 # TODO: Gradually remove and write separate tests for those when they get extended
 @pytest.mark.parametrize(
     "collection_name",
