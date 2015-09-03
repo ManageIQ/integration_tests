@@ -17,7 +17,7 @@ def pytest_generate_tests(metafunc):
     testgen.parametrize(metafunc, argnames, argvalues, ids=idlist, scope="module")
 
 
-@pytest.mark.meta(blockers=[1174881])
+@pytest.mark.meta(blockers=[1256903])
 def test_vm_migrate(setup_provider, provider, request):
     """Tests migration of a vm
 
@@ -25,10 +25,10 @@ def test_vm_migrate(setup_provider, provider, request):
         test_flag: migrate, provision
     """
     vm = Vm("vmtest", provider)
-    vm.migrate_vm("email@xyz.com", "first", "last", "host", "datstore")
+    vm.migrate_vm("email@xyz.com", "first", "last")
     flash.assert_no_errors()
-    row_description = 'VM Migrate'
-    cells = {'Request Type': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
+    row_description = 'vmtest'
+    cells = {'Description': row_description}
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=600, delay=20)
-    assert row.last_message.text == 'Request complete'
+    assert row.request_state.text == 'Migrated'

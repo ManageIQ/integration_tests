@@ -124,15 +124,20 @@ def create_vm(provider, setup_provider, catalog_item, request):
 
 @pytest.mark.meta(blockers=[1255190])
 @pytest.mark.usefixtures("setup_provider")
+@pytest.mark.uncollectif(version.appliance_is_downstream())
 @pytest.mark.long_running
 def test_vm_clone(provisioning, provider, clone_vm_name, request, create_vm):
     vm_name = create_vm + "_0001"
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider))
     vm = Vm(vm_name, provider)
-    vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name)
-    row_description = 'Clone from [%s] to [%s]' % (vm_name, clone_vm_name)
+    if provider.type == 'rhevm':
+        provision_type = 'Native Clone'
+    elif provider.type == 'virtualcenter':
+        provision_type = 'VMware'
+    vm.clone_vm("email@xyz.com", "first", "last", clone_vm_name, provision_type)
+    row_description = clone_vm_name
     cells = {'Description': row_description}
-    row, __ = wait_for(requests.wait_for_request, [cells],
+    row, __ = wait_for(requests.wait_for_request, [cells, True],
         fail_func=requests.reload, num_sec=4000, delay=20)
     assert row.last_message.text == 'Vm Provisioned Successfully'

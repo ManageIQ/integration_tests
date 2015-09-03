@@ -4,7 +4,7 @@
 import pytest
 import re
 
-from utils import version
+from utils import db, version
 
 pytestmark = pytest.mark.smoke
 
@@ -68,10 +68,12 @@ def test_evm_running(ssh_client):
     'evminit',
     'sshd',
     'iptables',
-    'postgresql92-postgresql',
+    'postgresql',
 ])
 def test_service_enabled(ssh_client, service):
     """Verifies if key services are configured to start on boot up"""
+    if service == 'postgresql':
+        service = '{}-postgresql'.format(db.scl_name())
     if pytest.store.current_appliance.os_version >= '7':
         cmd = 'systemctl is-enabled {}'.format(service)
     else:

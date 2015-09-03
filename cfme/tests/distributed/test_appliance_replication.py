@@ -11,7 +11,7 @@ from cfme.infrastructure.virtual_machines import Vm
 import cfme.fixtures.pytest_selenium as sel
 from time import sleep
 from urlparse import urlparse
-from utils import testgen, version
+from utils import db, testgen, version
 from utils.appliance import provision_appliance
 from utils.conf import credentials
 from utils.log import logger
@@ -65,14 +65,14 @@ def get_ssh_client(hostname):
 
 def stop_db_process(address):
     with get_ssh_client(address) as ssh:
-        assert ssh.run_command('service postgresql92-postgresql stop')[0] == 0,\
-            "Could not stop postgres process on {}".format(address)
+        assert ssh.run_command('service {}-postgresql stop')[0] == 0,\
+            "Could not stop postgres process on {}".format(db.scl_name(), address)
 
 
 def start_db_process(address):
     with get_ssh_client(address) as ssh:
-        assert ssh.run_command('service postgresql92-postgresql start')[0] == 0,\
-            "Could not start postgres process on {}".format(address)
+        assert ssh.run_command('service {}-postgresql start')[0] == 0,\
+            "Could not start postgres process on {}".format(db.scl_name(), address)
 
 
 def update_appliance_uuid(address):

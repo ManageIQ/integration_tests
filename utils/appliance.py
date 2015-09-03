@@ -601,7 +601,8 @@ class IPAppliance(object):
         logger.info('Checking appliance database')
         if not self.db_online:
             # postgres isn't running, try to start it
-            result = self.db_ssh_client.run_command('service postgresql92-postgresql restart')
+            cmd = 'service {}-postgresql restart'.format(db.scl_name())
+            result = self.db_ssh_client.run_command(cmd)
             if result.rc != 0:
                 return 'postgres failed to start:\n{}'.format(result.output)
             else:
@@ -1017,8 +1018,9 @@ class IPAppliance(object):
         client.run_command(cmd)
 
         # back up pg_hba.conf
-        client.run_command('mv /opt/rh/postgresql92/root/var/lib/pgsql/data/pg_hba.conf '
-            '/opt/rh/postgresql92/root/var/lib/pgsql/data/pg_hba.conf.sav')
+        scl = db.scl_name()
+        client.run_command('mv /opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf '
+            '/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf.sav'.format(scl=scl))
 
         if with_ssl:
             ssl = 'hostssl all all all cert map=sslmap'
@@ -1027,18 +1029,18 @@ class IPAppliance(object):
 
         # rewrite pg_hba.conf
         write_pg_hba = dedent("""\
-        cat > /opt/rh/postgresql92/root/var/lib/pgsql/data/pg_hba.conf <<EOF
+        cat > /opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf <<EOF
         local all postgres,root trust
         host all all 0.0.0.0/0 md5
         {ssl}
         EOF
-        """.format(ssl=ssl))
+        """.format(ssl=ssl, scl=scl))
         client.run_command(write_pg_hba)
         client.run_command("chown postgres:postgres "
-            "/opt/rh/postgresql92/root/var/lib/pgsql/data/pg_hba.conf")
+            "/opt/rh/{scl}/root/var/lib/pgsql/data/pg_hba.conf".format(scl=scl))
 
         # restart postgres
-        status, out = client.run_command("service postgresql92-postgresql restart")
+        status, out = client.run_command("service {scl}-postgresql restart".format(scl=scl))
         return status
 
     def browser_session(self):
@@ -1090,7 +1092,8 @@ class IPAppliance(object):
             # no cli, use the enable internal db script
             rbt_repl = {
                 'miq_lib': '/var/www/miq/lib',
-                'region': region
+                'region': region,
+                'scl_name': db.scl_name()
             }
 
             # Find and load our rb template with replacements

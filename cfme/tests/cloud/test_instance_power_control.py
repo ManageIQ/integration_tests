@@ -11,7 +11,7 @@ pytestmark = [pytest.mark.usefixtures('test_power_control')]
 
 
 def pytest_generate_tests(metafunc):
-    final_argv, final_argn, final_ids = [], [], []
+    final_argv, final_ids = [], []
 
     # Get all providers and pick those, that have power control test enabled
     argnames, argvalues, idlist = testgen.provider_by_type(
@@ -20,12 +20,11 @@ def pytest_generate_tests(metafunc):
     for argn, argv, single_id in zip(argnames, argvalues, idlist):
         test_pwr_ctl_i = argnames.index('test_power_control')
         provider = argnames.index('provider')
-        final_argn = argnames
         if argv[test_pwr_ctl_i] is True:
             final_argv.append(argv)
             final_ids.append(argv[provider].key)
 
-    testgen.parametrize(metafunc, final_argn, final_argv, ids=final_ids, scope="function")
+    testgen.parametrize(metafunc, argnames, final_argv, ids=final_ids, scope="function")
 
 
 # This fixture must be named 'vm_name' because its tied to fixtures/virtual_machine
