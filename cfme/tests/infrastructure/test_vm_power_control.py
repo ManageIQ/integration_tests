@@ -458,7 +458,7 @@ class TestGrudViaREST(object):
             lambda: rest_api.collections.vms.find_by(name=new_name),
             num_sec=240, delay=5)
 
-    def test_add(self, rest_api):
+    def test_add_delete_all(self, vm_name, rest_api):
         vms = rest_api.collections.vms
         assert "add" in vms.action
         new_name = fauxfactory.gen_alphanumeric()
@@ -477,10 +477,12 @@ class TestGrudViaREST(object):
             lambda: rest_api.collections.vms.find_by(name=new_name),
             num_sec=240, delay=5)
 
-        vm = vms.get(name=new_name)
-        vm.action.delete()
+        vms.action.delete()
         wait_for(
             lambda: not rest_api.collections.vms.find_by(name=new_name),
+            num_sec=240, delay=5)
+        wait_for(
+            lambda: not rest_api.collections.vms.find_by(name=vm_name),
             num_sec=240, delay=5)
 
     def test_refresh(self, verify_vm_running, vm, rest_api):
