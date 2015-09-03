@@ -458,7 +458,7 @@ class TestGrudViaREST(object):
             lambda: rest_api.collections.vms.find_by(name=new_name),
             num_sec=240, delay=5)
 
-    def test_add(self, verify_vm_stopped, vm_name, rest_api):
+    def test_add(self, rest_api):
         vms = rest_api.collections.vms
         assert "add" in vms.action
         new_name = fauxfactory.gen_alphanumeric()
@@ -483,7 +483,14 @@ class TestGrudViaREST(object):
             lambda: not rest_api.collections.vms.find_by(name=new_name),
             num_sec=240, delay=5)
 
-    def test_refresh(self, verify_vm_stopped, vm, vm_name, rest_api):
+    def test_refresh(self, verify_vm_running, vm, rest_api):
         assert "refresh" in vm.action
-        vm.action.refresh()
-        wait_for(lambda: vm.power_state == "on", num_sec=300, delay=5, fail_func=vm.reload)
+        old_refresh_dt = vm.last_refresh_date
+        assert vm.action.refresh()["success"], "Refresh was unsuccessful"
+        wait_for(
+            lambda: vm.last_refresh_date,
+            fail_func=vm.reload,
+            fail_condition=lambda refresh_date: refresh_date == old_refresh_dt,
+            num_sec=720,
+            delay=5,
+        )
