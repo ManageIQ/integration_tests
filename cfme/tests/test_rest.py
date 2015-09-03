@@ -430,9 +430,10 @@ def test_add_delete_user(user_data, rest_api):
         delay=10,
     )
 
-    rest_api.users.delete(users[1:])
+    users = [user.id for user in rest_api.users]
+    rest_api.users.delete(users)
     with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.users.action.delete(users[1:])
+        rest_api.users.action.delete(users)
 
 
 def test_edit_user(user_data, rest_api):

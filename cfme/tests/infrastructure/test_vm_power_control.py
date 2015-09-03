@@ -463,13 +463,11 @@ class TestGrudViaREST(object):
         assert "add" in vms.action
         new_name = fauxfactory.gen_alphanumeric()
         request = {
-            "resource": {
-                "template": "",
-                "name": "{}".format(new_name),
-                "email": "jdoe@local.com",
-                "first_name": "John",
-                "last_name": "Doe",
-            },
+            "template": "",
+            "name": "{}".format(new_name),
+            "email": "jdoe@local.com",
+            "first_name": "John",
+            "last_name": "Doe",
         }
 
         vms.action.add(request)
@@ -477,7 +475,8 @@ class TestGrudViaREST(object):
             lambda: rest_api.collections.vms.find_by(name=new_name),
             num_sec=240, delay=5)
 
-        vms.action.delete()
+        delete_vms = [vm.id for vm in rest_api.collections.mvs]
+        vms.action.delete(delete_vms)
         wait_for(
             lambda: not rest_api.collections.vms.find_by(name=new_name),
             num_sec=240, delay=5)
