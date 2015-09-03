@@ -408,11 +408,31 @@ class TestPowerControlRESTAPI(object):
         vm.action.suspend()
         wait_for(lambda: vm.power_state == "suspended", num_sec=300, delay=5, fail_func=vm.reload)
 
+    def test_reset(self, verify_vm_running, vm):
+        assert "reset" in vm.action
+        vm.action.reset()
+        wait_for(lambda: vm.power_state == "on", num_sec=300, delay=5, fail_func=vm.reload)
+
+    def test_restart(self, verify_vm_running, vm):
+        assert "restart" in vm.action
+        vm.action.restart()
+        wait_for(lambda: vm.power_state == "on", num_sec=300, delay=5, fail_func=vm.reload)
+
+    def test_shutdown(self, verify_vm_running, vm):
+        assert "shutdown" in vm.action
+        vm.action.shutdown()
+        wait_for(lambda: vm.power_state == "off", num_sec=300, delay=5, fail_func=vm.reload)
+
+    def test_retire(self, verify_vm_running, vm):
+        assert "retire" in vm.action
+        vm.action.retire()
+        wait_for(lambda: vm.power_state == "off", num_sec=300, delay=5, fail_func=vm.reload)
+
 
 @pytest.mark.usefixtures("test_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
 @pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
-class TestDeleteViaREST(object):
+class TestGrudViaREST(object):
     # TODO: Put it somewhere else?
     @pytest.fixture(scope="function")
     def vm(self, rest_api, vm_name):
@@ -426,3 +446,52 @@ class TestDeleteViaREST(object):
         wait_for(
             lambda: not rest_api.collections.vms.find_by(name=vm_name),
             num_sec=240, delay=5)
+
+    def test_edit(self, verify_vm_running, vm, vm_name, rest_api):
+        assert "edit" in vm.action
+        new_name = fauxfactory.gen_alphanumeric()
+        vm.action.edit(name=new_name)
+        wait_for(
+            lambda: not rest_api.collections.vms.find_by(name=vm_name),
+            num_sec=240, delay=5)
+        wait_for(
+            lambda: rest_api.collections.vms.find_by(name=new_name),
+            num_sec=240, delay=5)
+
+    def test_add_delete_all(self, vm_name, rest_api):
+        vms = rest_api.collections.vms
+        assert "add" in vms.action
+        new_name = fauxfactory.gen_alphanumeric()
+        request = {
+            "template": "",
+            "name": "{}".format(new_name),
+            "email": "jdoe@local.com",
+            "first_name": "John",
+            "last_name": "Doe",
+        }
+
+        vms.action.add(request)
+        wait_for(
+            lambda: rest_api.collections.vms.find_by(name=new_name),
+            num_sec=240, delay=5)
+
+        delete_vms = [vm.id for vm in rest_api.collections.mvs]
+        vms.action.delete(delete_vms)
+        wait_for(
+            lambda: not rest_api.collections.vms.find_by(name=new_name),
+            num_sec=240, delay=5)
+        wait_for(
+            lambda: not rest_api.collections.vms.find_by(name=vm_name),
+            num_sec=240, delay=5)
+
+    def test_refresh(self, verify_vm_running, vm, rest_api):
+        assert "refresh" in vm.action
+        old_refresh_dt = vm.last_refresh_date
+        assert vm.action.refresh()["success"], "Refresh was unsuccessful"
+        wait_for(
+            lambda: vm.last_refresh_date,
+            fail_func=vm.reload,
+            fail_condition=lambda refresh_date: refresh_date == old_refresh_dt,
+            num_sec=720,
+            delay=5,
+        )
