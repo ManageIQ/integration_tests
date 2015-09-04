@@ -377,91 +377,127 @@ COLLECTIONS_IGNORED_53 = {
 @pytest.fixture(scope="module")
 def user_data():
     name = fauxfactory.gen_alphanumeric()
-    result = {
+    result = [{
         "name": "name_{}".format(name),
         "userid": "userid_{}".format(name),
         "email": "{}@local.com".format(name),
-    }
+    } for _ in range(1, 5)]
 
     return result
 
 
-def test_add_delete_user(user_data, rest_api):
-    """Tests creating and deleting users.
+@pytest.fixture(scope="module")
+def group_data():
+    name = fauxfactory.gen_alphanumeric()
+    result = [{
+        "description": "{}".format(name),
+        "miq_user_role_id": _,
+    } for _ in range(1, 5)]
+
+    return result
+
+
+@pytest.fixture(scope="module")
+def role_data():
+    name = fauxfactory.gen_alphanumeric()
+    result = [{
+        "name": "{}".format(name),
+        "settings": {
+            "restrictions": {
+                "vms": "user"
+            },
+        },
+    } for _ in range(1, 5)]
+
+    return result
+
+
+@pytest.fixture(scope="module", params=["users", "groups", "roles"])
+def rest_api_access_control(request, rest_api):
+    if request.param == 'users':
+        return (request.getfuncargvalue("user_data"), rest_api.users)
+    elif request.param == 'groups':
+        return (request.getfuncargvalue("group_data"), rest_api.groups)
+    elif request.param == 'roles':
+        return (request.getfuncargvalue("role_data"), rest_api.roles)
+
+
+def test_add_delete_access_control(rest_api_access_control):
+    """Tests creating and deleting access control entity: ['user', 'group', 'role'].
 
     Prerequisities:
         * An appliance with ``/api`` available.
 
     Steps:
-        * POST /api/users (method ``add``) with the ``name``, ``userid`` and ``email``
-
-        * DELETE /api/providers/<id> -> delete only one user
+        * access_control = ['users', 'groups', 'roles']
+        * POST /api/{access_control} (method ``add``)
+                for users: ``name``, ```userid`, ``email``
+                for groups: ``description``, ``miq_user_role_id``
+                for roles: ``name``, ``settings``
+        * DELETE /api/{access_control}/<id> -> delete only one entity
         * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
 
-        * DELETE /api/users <- Insert a JSON with list of dicts containing ``href``s to
-            the users
+        * DELETE /api/{access_control} <- Insert a JSON with list of dicts containing ``href``s to
+            the entity
         * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
 
     Metadata:
         test_flag: rest
     """
-    assert "add" in rest_api.users.action
+    entities, api = rest_api_access_control
+    assert "add" in api.action
 
-    users = [{
-        "name": "name_{}".format(fauxfactory.gen_alphanumeric()),
-        "userid": "userid_{}".format(fauxfactory.gen_alphanumeric()),
-        "email": "{}@local.com".format(fauxfactory.gen_alphanumeric()),
-    } for _ in range(4)]
-
-    for user in users:
-        rest_api.users.action.add(user)
+    for entity in entities:
+        api.action.add(entity)
 
         wait_for(
-            lambda: rest_api.users.find_by(name=user.get("name")),
+            lambda: api.find_by(name=entity.get("name")),
             num_sec=180,
             delay=10,
         )
 
-    delete_user = rest_api.users.find_by(users[0].get('name'))
-    delete_user.action.delete()
+    delete_entity = api.find_by(entities[0].get('name'))
+    delete_entity.action.delete()
     wait_for(
-        lambda: rest_api.users.find_by(name=users[0].get('name')),
+        lambda: api.find_by(name=entities[0].get('name')),
         num_sec=180,
         delay=10,
     )
 
-    users = [user.id for user in rest_api.users]
-    rest_api.users.delete(users)
+    entities = [entity.id for entity in api]
+    api.delete(entities)
     with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.users.action.delete(users)
+        api.action.delete(entities)
 
 
-def test_edit_user(user_data, rest_api):
-    """Tests editing a user.
+def test_edit_user(rest_api_access_control):
+    """Tests editing a access_control entity: ['user', 'group', 'role'].
 
     Prerequisities:
         * An appliance with ``/api`` available.
 
     Steps:
-        * Retrieve list of users using GET /api/users , pick the first one
-        * POST /api/users/1 (method ``edit``) with the ``name``
+        * access_control = ['users', 'groups', 'roles']
+        * Retrieve list of entities using GET /api/{access_control} , pick the first one
+        * POST /api/{access_control}/1 (method ``edit``) with the ``name``
 
     Metadata:
         test_flag: rest
     """
-    assert "edit" in rest_api.users.action
+    entities, api = rest_api_access_control
+    assert "edit" in api.action
 
     try:
-        user = rest_api.users[0]
+        entity = api[0]
     except:
-        rest_api.users.action.add(user_data)
-        user = rest_api.users.find_by(name=user_data.get('name'))
+        api.action.add(entities[0])
+        entity = api.find_by(name=entities[0].get('name'))
 
     new_name = "name_{}".format(fauxfactory.gen_alphanumeric())
 
-    user.action.edit(name=new_name)
+    entity.action.edit(name=new_name)
     wait_for(
-        lambda: rest_api.users.find_by(name=new_name),
+        lambda: api.find_by(name=new_name),
         num_sec=180,
         delay=10,
     )
