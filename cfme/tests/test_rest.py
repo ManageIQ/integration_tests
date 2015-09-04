@@ -669,6 +669,67 @@ def test_add_delete_policies_through_profile(added_policies, policy_profile_data
     )
 
 
+def test_add_delete_policy(added_policies, rest_api):
+    """Tests creating and deleting policy
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/policies (method ``add``)
+        * DELETE /api/polices/<id> -> delete only one policy
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+        * DELETE /api/policies <- Insert a JSON with list of dicts containing ``href``s to
+            the policy
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "add" in rest_api.policies.action and "delete" in rest_api.policies.action
+
+    delete_policy_profile = rest_api.policy_profiles.find_by(added_policies[0])
+    delete_policy_profile.action.delete()
+    wait_for(
+        lambda: not rest_api.policy_profiles.find_by(id=added_policies[0]),
+        num_sec=180,
+        delay=10,
+    )
+
+    policies = [policy for policy in rest_api.policies]
+    rest_api.policy_profiles.delete(policies)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        rest_api.policy_profiles.action.delete(policies)
+
+
+def test_edit_policy(added_policies, rest_api):
+    """Tests editing a policy
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/policies , pick the first one
+        * POST /api/policies/1 (method ``edit``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "edit" in rest_api.policies.action
+
+    policy = rest_api.policies[0]
+
+    new_description = "description_{}".format(fauxfactory.gen_alphanumeric())
+
+    policy.action.edit(description=new_description)
+    wait_for(
+        lambda: rest_api.policies.find_by(description=new_description),
+        num_sec=180,
+        delay=10,
+    )
+
+
 # TODO: Gradually remove and write separate tests for those when they get extended
 @pytest.mark.parametrize(
     "collection_name",
