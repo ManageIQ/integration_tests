@@ -445,7 +445,7 @@ def test_add_delete_access_control(rest_api_access_control):
         test_flag: rest
     """
     entities, api = rest_api_access_control
-    assert "add" in api.action
+    assert "add" in api.action and "delete" in api.action
 
     for entity in entities:
         api.action.add(entity)
@@ -459,7 +459,7 @@ def test_add_delete_access_control(rest_api_access_control):
     delete_entity = api.find_by(entities[0].get('name'))
     delete_entity.action.delete()
     wait_for(
-        lambda: api.find_by(name=entities[0].get('name')),
+        lambda: not api.find_by(name=entities[0].get('name')),
         num_sec=180,
         delay=10,
     )
@@ -491,7 +491,7 @@ def test_edit_user(rest_api_access_control):
         entity = api[0]
     except:
         api.action.add(entities[0])
-        entity = api.find_by(name=entities[0].get('name'))
+        entity = api.find_by(name=(entities[0].get('name') or entities[0].get('description')))
 
     new_name = "name_{}".format(fauxfactory.gen_alphanumeric())
 
@@ -503,13 +503,178 @@ def test_edit_user(rest_api_access_control):
     )
 
 
+@pytest.fixture(scope="module")
+def policy_data():
+    name = fauxfactory.gen_alphanumeric()
+    result = [{
+        "description": "description_{}".format(name),
+        "mode": "compliance",
+        "towhat": "Vm",
+    } for _ in range(1, 5)]
+
+    return result
+
+
+@pytest.fixture(scope="module")
+def policy_profile_data():
+    name = fauxfactory.gen_alphanumeric()
+    result = [{
+        "description": "description_{}".format(name),
+    } for _ in range(1, 5)]
+
+    return result
+
+
+@pytest.fixture(scope="module")
+def added_policies(policy_data, rest_api):
+    assert "add" in rest_api.policies.action
+
+    for policy in policy_data:
+        rest_api.policies.action.add(policy)
+        wait_for(
+            lambda: rest_api.policies.find_by(name=policy.get("description")),
+            num_sec=180,
+            delay=10,
+        )
+
+    return [policy.id for policy in rest_api.policies]
+
+
+def test_add_delete_policy_profile(policy_profile_data, rest_api):
+    """Tests creating and deleting policy_profile
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/policy_profiles (method ``add``)
+        * DELETE /api/policy_profiles/<id> -> delete only one policy profile
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+        * DELETE /api/policy_profiles <- Insert a JSON with list of dicts containing ``href``s to
+            the policy profile
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "add" in rest_api.policy_profiles.action and "delete" in rest_api.policy_profiles.action
+
+    for policy_profile in policy_profile_data:
+        rest_api.policy_profiles.action.add(policy_profile)
+
+        wait_for(
+            lambda: rest_api.policy_profiles.find_by(name=policy_profile.get("description")),
+            num_sec=180,
+            delay=10,
+        )
+
+    delete_policy_profile = rest_api.policy_profiles.find_by(
+        policy_profile_data[0].get('description'))
+    delete_policy_profile.action.delete()
+    wait_for(
+        lambda: not rest_api.policy_profiles.find_by(
+            name=policy_profile_data[0].get('description')),
+        num_sec=180,
+        delay=10,
+    )
+
+    policy_profiles = [policy_profile.id for policy_profile in rest_api.policy_profiles]
+    rest_api.policy_profiles.delete(policy_profiles)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        rest_api.policy_profiles.action.delete(policy_profiles)
+
+
+def test_edit_policy_profile(policy_profile_data, rest_api):
+    """Tests editing a policy_profile
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/policy_profiles , pick the first one
+        * POST /api/policy_profile/1 (method ``edit``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "edit" in rest_api.policy_profiles.action
+
+    try:
+        policy_profile = rest_api.policy_profiles[0]
+    except:
+        rest_api.policy_profiles.action.add(policy_profile_data[0])
+        policy_profile = rest_api.policy_profiles.find_by(
+            description=policy_profile_data[0].get('description'))
+
+    new_description = "description_{}".format(fauxfactory.gen_alphanumeric())
+
+    policy_profile.action.edit(description=new_description)
+    wait_for(
+        lambda: rest_api.policy_profiles.find_by(description=new_description),
+        num_sec=180,
+        delay=10,
+    )
+
+
+def test_add_delete_policies_through_profile(added_policies, policy_profile_data, rest_api):
+    """Tests adding a policy_profile with policies and deleting the policies
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/policy_profiles (method ``add``)
+        * DELETE DELETE /api/policy_profiles/4/policies/24 -> delete only one policy
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+        * DELETE /api/policy_profiles/4/policies <- Insert a JSON with list of dicts containing
+          ``href``s to the policies
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "add" in rest_api.policy_profiles.action and "delete" in rest_api.policy_profiles.action
+
+    policy_profile = policy_profile_data[0]
+    policy_profile["policies"] = [{"href": _} for _ in added_policies]
+    rest_api.policy_profiles.action.add(policy_profile)
+    wait_for(
+        lambda: rest_api.policy_profiles.find_by(name=policy_profile.get("description")),
+        num_sec=180,
+        delay=10,
+    )
+
+    delete_policy_profile = rest_api.policy_profiles.find_by(policy_profile.get("description"))
+    delete_policy = delete_policy_profile.policies[0]
+    delete_policy.action.delete()
+    wait_for(
+        lambda: not delete_policy_profile.find_by(name=policy_profile.get("description")),
+        num_sec=180,
+        delay=10,
+    )
+
+    policies = [policy.id for policy in delete_policy_profile.policies]
+    rest_api.policy_profiles.delete(policies)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        rest_api.policy_profiles.action.delete(policies)
+
+    delete_policy_profile.action.delete()
+    wait_for(
+        lambda: not rest_api.policy_profiles.find_by(name=policy_profile.get('description')),
+        num_sec=180,
+        delay=10,
+    )
+
+
 # TODO: Gradually remove and write separate tests for those when they get extended
 @pytest.mark.parametrize(
     "collection_name",
-    ["availability_zones", "clusters", "conditions", "data_stores", "events", "flavors", "groups",
-    "hosts", "policies", "policy_actions", "policy_profiles", "request_tasks", "requests",
-    "resource_pools", "roles", "security_groups", "servers", "service_requests", "tags", "tasks",
-    "templates", "users", "zones"])
+    ["availability_zones", "clusters", "conditions", "data_stores", "events", "flavors", "hosts",
+    "policies", "policy_actions", "request_tasks", "requests", "resource_pools",
+    "security_groups", "servers", "service_requests", "tags", "tasks", "templates", "zones"])
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
     have no usable actions that we could try to run
