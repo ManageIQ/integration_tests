@@ -454,9 +454,6 @@ class TestCrudViaREST(object):
         new_name = fauxfactory.gen_alphanumeric()
         vm.action.edit(name=new_name)
         wait_for(
-            lambda: not rest_api.collections.vms.find_by(name=vm_name),
-            num_sec=240, delay=5)
-        wait_for(
             lambda: rest_api.collections.vms.find_by(name=new_name),
             num_sec=240, delay=5)
 
