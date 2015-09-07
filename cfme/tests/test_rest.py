@@ -734,8 +734,8 @@ def test_edit_policy(added_policies, rest_api):
     )
 
 
-def test_delete_data_store(rest_api):
-    """Test deleting a data store
+def test_delete_data_stores(rest_api):
+    """Test deleting a data stores
 
     Prerequisities:
         * An appliance with ``/api`` available.
@@ -752,7 +752,10 @@ def test_delete_data_store(rest_api):
     """
     assert "delete" in rest_api.collections.data_stores
 
-    delete_data_store = rest_api.collections.data_stores[0]
+    try:
+        delete_data_store = rest_api.collections.data_stores[0]
+    except:
+        pytest.skip("There is no data store to be deleted")
 
     delete_data_store.action.delete()
     wait_for(
@@ -766,6 +769,43 @@ def test_delete_data_store(rest_api):
     rest_api.collections.data_stores.action.delete(data_stores)
     with error.expected("ActiveRecord::RecordNotFound"):
         rest_api.collections.data_stores.action.delete(data_stores)
+
+
+def test_delete_resource_pools(rest_api):
+    """Test deleting a resource_pools
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/resource_pools , pick the first one
+        * DELETE /api/resource_pools/<id> -> delete only one data store
+        * DELETE /api/resource_pools <- Insert a JSON with list of dicts containing ``href``s to
+            the resource_pools
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "delete" in rest_api.collections.resource_pools
+
+    try:
+        delete_resource_pool = rest_api.collections.resource_pools[0]
+    except:
+        pytest.skip("There is no resource pool to be deleted")
+
+    delete_resource_pool.action.delete()
+    wait_for(
+        lambda: not rest_api.collections.resource_pools.find_by(
+            id=resource_pool.id),
+        num_sec=180,
+        delay=10,
+    )
+
+    resource_pools = [resource_pool.id for resource_pool in rest_api.collections.resource_pools]
+    rest_api.collections.resource_pools.action.delete(resource_pools)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        rest_api.collections.resource_pools.action.delete(resource_pools)
 
 
 # TODO: Gradually remove and write separate tests for those when they get extended
