@@ -48,12 +48,12 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
     profile.create()
     # Now assign this malformed profile to a VM
     vm = VM.factory(Vm.get_first_vm_title(), setup_a_provider)
-    vm.assign_policy_profiles(profile.description, via_details=True)
+    vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
     pytest.sel.force_navigate("dashboard")
     pytest.sel.force_navigate("infrastructure_virtual_machines")
     assert "except" not in pytest.sel.title().lower()
-    vm.unassign_policy_profiles(profile.description, via_details=True)
+    vm.unassign_policy_profiles(profile.description)
 
 
 @pytest.mark.meta(blockers=[1209538], automates=[1209538])
