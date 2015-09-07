@@ -526,7 +526,7 @@ def policy_profile_data():
 
 
 @pytest.fixture(scope="module")
-def added_policies(policy_data, rest_api):
+def added_policies(request, policy_data, rest_api):
     assert "add" in rest_api.policies.action
 
     for policy in policy_data:
@@ -536,6 +536,11 @@ def added_policies(policy_data, rest_api):
             num_sec=180,
             delay=10,
         )
+
+    def fin():
+            policies = [policy.id for policy in rest_api.policies]
+            rest_api.policies.delete(policies)
+    request.addfinalizer(fin)
 
     return [policy.id for policy in rest_api.policies]
 
@@ -689,18 +694,18 @@ def test_add_delete_policy(added_policies, rest_api):
     """
     assert "add" in rest_api.policies.action and "delete" in rest_api.policies.action
 
-    delete_policy_profile = rest_api.policy_profiles.find_by(added_policies[0])
-    delete_policy_profile.action.delete()
+    delete_policy = rest_api.policies.find_by(id=added_policies[0])
+    delete_policy.action.delete()
     wait_for(
-        lambda: not rest_api.policy_profiles.find_by(id=added_policies[0]),
+        lambda: not rest_api.policies.find_by(id=added_policies[0]),
         num_sec=180,
         delay=10,
     )
 
     policies = [policy for policy in rest_api.policies]
-    rest_api.policy_profiles.delete(policies)
+    rest_api.policies.delete(policies)
     with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.policy_profiles.action.delete(policies)
+        rest_api.policies.action.delete(policies)
 
 
 def test_edit_policy(added_policies, rest_api):
@@ -734,7 +739,7 @@ def test_edit_policy(added_policies, rest_api):
 @pytest.mark.parametrize(
     "collection_name",
     ["availability_zones", "clusters", "conditions", "data_stores", "events", "flavors", "hosts",
-    "policies", "policy_actions", "request_tasks", "requests", "resource_pools",
+    "policy_actions", "request_tasks", "requests", "resource_pools",
     "security_groups", "servers", "service_requests", "tags", "tasks", "templates", "zones"])
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
