@@ -735,80 +735,6 @@ def test_edit_policy(added_policies, rest_api):
     )
 
 
-def test_delete_data_stores(rest_api):
-    """Test deleting a data stores
-
-    Prerequisities:
-        * An appliance with ``/api`` available.
-
-    Steps:
-        * Retrieve list of entities using GET /api/data_stores , pick the first one
-        * DELETE /api/data_stores/<id> -> delete only one data store
-        * DELETE /api/data_stores <- Insert a JSON with list of dicts containing ``href``s to
-            the data_stores
-        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
-
-    Metadata:
-        test_flag: rest
-    """
-    assert "delete" in rest_api.collections.data_stores
-
-    try:
-        delete_data_store = rest_api.collections.data_stores[0]
-    except:
-        pytest.skip("There is no data store to be deleted")
-
-    delete_data_store.action.delete()
-    wait_for(
-        lambda: not rest_api.collections.data_stores.find_by(
-            id=data_store.id),
-        num_sec=180,
-        delay=10,
-    )
-
-    data_stores = [data_store.id for data_store in rest_api.collections.data_stores]
-    rest_api.collections.data_stores.action.delete(data_stores)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.collections.data_stores.action.delete(data_stores)
-
-
-def test_delete_resource_pools(rest_api):
-    """Test deleting resource_pools
-
-    Prerequisities:
-        * An appliance with ``/api`` available.
-
-    Steps:
-        * Retrieve list of entities using GET /api/resource_pools , pick the first one
-        * DELETE /api/resource_pools/<id> -> delete only one data store
-        * DELETE /api/resource_pools <- Insert a JSON with list of dicts containing ``href``s to
-            the resource_pools
-        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
-
-    Metadata:
-        test_flag: rest
-    """
-    assert "delete" in rest_api.collections.resource_pools
-
-    try:
-        delete_resource_pool = rest_api.collections.resource_pools[0]
-    except:
-        pytest.skip("There is no resource pool to be deleted")
-
-    delete_resource_pool.action.delete()
-    wait_for(
-        lambda: not rest_api.collections.resource_pools.find_by(
-            id=delete_resource_pool.id),
-        num_sec=180,
-        delay=10,
-    )
-
-    resource_pools = [resource_pool.id for resource_pool in rest_api.collections.resource_pools]
-    rest_api.collections.resource_pools.action.delete(resource_pools)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.collections.resource_pools.action.delete(resource_pools)
-
-
 def test_edit_template(rest_api):
     """Test deleting a template
 
@@ -840,43 +766,6 @@ def test_edit_template(rest_api):
     )
 
 
-def test_delete_templates(rest_api):
-    """Test deleting templates
-
-    Prerequisities:
-        * An appliance with ``/api`` available.
-
-    Steps:
-        * Retrieve list of entities using GET /api/templates , pick the first one
-        * DELETE /api/templates/<id> -> delete only one data store
-        * DELETE /api/templates <- Insert a JSON with list of dicts containing ``href``s to
-            the templates
-        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
-
-    Metadata:
-        test_flag: rest
-    """
-    assert "delete" in rest_api.collections.templates
-
-    try:
-        delete_template = rest_api.collections.templates[0]
-    except:
-        pytest.skip("There is no template to be deleted")
-
-    delete_template.action.delete()
-    wait_for(
-        lambda: not rest_api.collections.templates.find_by(
-            id=delete_template.id),
-        num_sec=180,
-        delay=10,
-    )
-
-    templates = [template.id for template in rest_api.collections.templates]
-    rest_api.collections.templates.action.delete(templates)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        rest_api.collections.templates.action.delete(templates)
-
-
 def test_refresh_template(rest_api):
     """Test refreshing a template
 
@@ -906,6 +795,56 @@ def test_refresh_template(rest_api):
         num_sec=180,
         delay=10,
     )
+
+
+@pytest.fixture(scope="module", params=["resource_pools", "templates", "data_storages",
+    "clusters"])
+def rest_api_delete_service(request, rest_api):
+    if request.param == 'resource_pools':
+        return ("resource_pools", rest_api.collections.resource_pools)
+    elif request.param == 'templates':
+        return ("templates", rest_api.collections.templates)
+    elif request.param == 'data_storages':
+        return ("data_storages", rest_api.collections.data_storages)
+    elif request.param == 'clusters':
+        return ("clusters", rest_api.collections.clusters)
+
+
+def test_delete_service(rest_api_delete_service):
+    """Test deleting a service ["resource_pools", "templates", "data_storages", "clusters"]
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/<service> , pick the first one
+        * DELETE /api/<service>/<id> -> delete only one data store
+        * DELETE /api/<service> <- Insert a JSON with list of dicts containing ``href``s to
+            the services
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    service_name, api_service = rest_api_delete_service
+    assert "delete" in api_service
+
+    try:
+        delete_service = api_service[0]
+    except:
+        pytest.skip("There is no {} to be deleted".format(service_name))
+
+    delete_service.action.delete()
+    wait_for(
+        lambda: not api_service.find_by(id=delete_service.id),
+        num_sec=180,
+        delay=10,
+    )
+
+    services = [service.id for service in api_service]
+    api_service.action.delete(services)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        api_service.action.delete(services)
 
 
 # TODO: Gradually remove and write separate tests for those when they get extended
