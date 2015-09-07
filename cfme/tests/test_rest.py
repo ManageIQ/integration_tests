@@ -377,30 +377,30 @@ COLLECTIONS_IGNORED_53 = {
 @pytest.fixture(scope="module")
 def users_data():
     name = fauxfactory.gen_alphanumeric()
-    result = [{
+    users_data = [{
         "name": "name_{}_{}".format(index, name),
         "userid": "userid_{}_{}".format(index, name),
         "email": "{}_{}@local.com".format(index, name),
     } for index in range(1, 5)]
 
-    return result
+    return users_data
 
 
 @pytest.fixture(scope="module")
 def groups_data():
     name = fauxfactory.gen_alphanumeric()
-    result = [{
+    groups_data = [{
         "description": "description_{}_{}".format(index, name),
         "miq_user_role_id": index,
     } for index in range(1, 5)]
 
-    return result
+    return groups_data
 
 
 @pytest.fixture(scope="module")
 def roles_data():
     name = fauxfactory.gen_alphanumeric()
-    result = [{
+    roles_data = [{
         "name": "name_{}_{}".format(index, name),
         "settings": {
             "restrictions": {
@@ -409,7 +409,7 @@ def roles_data():
         },
     } for index in range(1, 5)]
 
-    return result
+    return roles_data
 
 
 @pytest.fixture(scope="module", params=["users", "groups", "roles"])
@@ -454,7 +454,7 @@ def test_add_delete_access_control(rest_api_access_control):
             delay=10,
         )
 
-    delete_entity = api.find_by(entities[0].get('name'))
+    delete_entity = api.find_by(name=entities[0].get('name'))
     delete_entity.action.delete()
     wait_for(
         lambda: not api.find_by(name=entities[0].get('name')),
@@ -504,23 +504,23 @@ def test_edit_access_control(rest_api_access_control):
 @pytest.fixture(scope="module")
 def policies_data():
     name = fauxfactory.gen_alphanumeric()
-    result = [{
+    policies_data = [{
         "description": "description_{}_{}".format(index, name),
         "mode": "compliance",
         "towhat": "Vm",
     } for index in range(1, 5)]
 
-    return result
+    return policies_data
 
 
 @pytest.fixture(scope="module")
 def policy_profiles_data():
     name = fauxfactory.gen_alphanumeric()
-    result = [{
+    policy_profiles_data = [{
         "description": "description_{}_{}".format(index, name),
     } for index in range(1, 5)]
 
-    return result
+    return policy_profiles_data
 
 
 @pytest.fixture(scope="module")
@@ -850,7 +850,7 @@ def test_delete_service(rest_api_delete_service):
 # TODO: Gradually remove and write separate tests for those when they get extended
 @pytest.mark.parametrize(
     "collection_name",
-    ["availability_zones", "clusters", "conditions", "events", "flavors", "hosts", "policy_actions",
+    ["availability_zones", "conditions", "events", "flavors", "hosts", "policy_actions",
     "request_tasks", "requests", "security_groups", "servers", "service_requests", "tags", "tasks",
     "zones"])
 def test_query_simple_collections(rest_api, collection_name):
