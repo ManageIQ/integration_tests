@@ -432,7 +432,7 @@ class TestPowerControlRESTAPI(object):
 @pytest.mark.usefixtures("test_vm")
 @pytest.mark.usefixtures("setup_provider_clsscope")
 @pytest.mark.uncollectif(lambda: appliance_is_downstream() and current_version() < "5.4")
-class TestGrudViaREST(object):
+class TestCrudViaREST(object):
     # TODO: Put it somewhere else?
     @pytest.fixture(scope="function")
     def vm(self, rest_api, vm_name):
