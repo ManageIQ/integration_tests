@@ -378,10 +378,10 @@ COLLECTIONS_IGNORED_53 = {
 def users_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "name": "name_{}_{}".format(_, name),
-        "userid": "userid_{}_{}".format(_, name),
-        "email": "{}_{}@local.com".format(_, name),
-    } for _ in range(1, 5)]
+        "name": "name_{}_{}".format(index, name),
+        "userid": "userid_{}_{}".format(index, name),
+        "email": "{}_{}@local.com".format(index, name),
+    } for index in range(1, 5)]
 
     return result
 
@@ -390,9 +390,9 @@ def users_data():
 def groups_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "description": "description_{}_{}".format(_, name),
+        "description": "description_{}_{}".format(index, name),
         "miq_user_role_id": _,
-    } for _ in range(1, 5)]
+    } for index in range(1, 5)]
 
     return result
 
@@ -401,13 +401,13 @@ def groups_data():
 def roles_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "name": "name_{}_{}".format(_, name),
+        "name": "name_{}_{}".format(index, name),
         "settings": {
             "restrictions": {
                 "vms": "user"
             },
         },
-    } for _ in range(1, 5)]
+    } for index in range(1, 5)]
 
     return result
 
@@ -505,10 +505,10 @@ def test_edit_access_control(rest_api_access_control):
 def policies_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "description": "description_{}_{}".format(_, name),
+        "description": "description_{}_{}".format(index, name),
         "mode": "compliance",
         "towhat": "Vm",
-    } for _ in range(1, 5)]
+    } for index in range(1, 5)]
 
     return result
 
@@ -517,8 +517,8 @@ def policies_data():
 def policy_profiles_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "description": "description_{}_{}".format(_, name),
-    } for _ in range(1, 5)]
+        "description": "description_{}_{}".format(index, name),
+    } for index in range(1, 5)]
 
     return result
 
