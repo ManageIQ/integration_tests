@@ -378,9 +378,9 @@ COLLECTIONS_IGNORED_53 = {
 def users_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "name": "name_{}".format(name),
-        "userid": "userid_{}".format(name),
-        "email": "{}@local.com".format(name),
+        "name": "name_{}_{}".format(_, name),
+        "userid": "userid_{}_{}".format(_, name),
+        "email": "{}_{}@local.com".format(_, name),
     } for _ in range(1, 5)]
 
     return result
@@ -390,7 +390,7 @@ def users_data():
 def groups_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "description": "{}".format(name),
+        "description": "description_{}_{}".format(_, name),
         "miq_user_role_id": _,
     } for _ in range(1, 5)]
 
@@ -401,7 +401,7 @@ def groups_data():
 def roles_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "name": "{}".format(name),
+        "name": "name_{}_{}".format(_, name),
         "settings": {
             "restrictions": {
                 "vms": "user"
@@ -505,7 +505,7 @@ def test_edit_access_control(rest_api_access_control):
 def policies_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "description": "description_{}".format(name),
+        "description": "description_{}_{}".format(_, name),
         "mode": "compliance",
         "towhat": "Vm",
     } for _ in range(1, 5)]
@@ -517,7 +517,7 @@ def policies_data():
 def policy_profiles_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
-        "description": "description_{}".format(name),
+        "description": "description_{}_{}".format(_, name),
     } for _ in range(1, 5)]
 
     return result
@@ -772,7 +772,7 @@ def test_delete_data_stores(rest_api):
 
 
 def test_delete_resource_pools(rest_api):
-    """Test deleting a resource_pools
+    """Test deleting resource_pools
 
     Prerequisities:
         * An appliance with ``/api`` available.
@@ -797,7 +797,7 @@ def test_delete_resource_pools(rest_api):
     delete_resource_pool.action.delete()
     wait_for(
         lambda: not rest_api.collections.resource_pools.find_by(
-            id=resource_pool.id),
+            id=delete_resource_pool.id),
         num_sec=180,
         delay=10,
     )
@@ -808,12 +808,112 @@ def test_delete_resource_pools(rest_api):
         rest_api.collections.resource_pools.action.delete(resource_pools)
 
 
+def test_edit_template(rest_api):
+    """Test deleting a template
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        Steps:
+        * Retrieve list of entities using GET /api/templates , pick the first one
+        * POST /api/templates/<id> (method ``edit``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "edit" in rest_api.collections.templates
+
+    try:
+        edit_template = rest_api.collections.templates[0]
+    except:
+        pytest.skip("There is no template to be edited")
+
+    new_description = "description_{}".format(fauxfactory.gen_alphanumeric())
+    edit_template.action.edit(description=new_description)
+    wait_for(
+        lambda: not rest_api.collections.resource_pools.find_by(
+            description=new_description),
+        num_sec=180,
+        delay=10,
+    )
+
+
+def test_delete_templates(rest_api):
+    """Test deleting templates
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/templates , pick the first one
+        * DELETE /api/templates/<id> -> delete only one data store
+        * DELETE /api/templates <- Insert a JSON with list of dicts containing ``href``s to
+            the templates
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "delete" in rest_api.collections.templates
+
+    try:
+        delete_template = rest_api.collections.templates[0]
+    except:
+        pytest.skip("There is no template to be deleted")
+
+    delete_template.action.delete()
+    wait_for(
+        lambda: not rest_api.collections.templates.find_by(
+            id=delete_template.id),
+        num_sec=180,
+        delay=10,
+    )
+
+    templates = [template.id for template in rest_api.collections.templates]
+    rest_api.collections.templates.action.delete(templates)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        rest_api.collections.templates.action.delete(templates)
+
+
+def test_refresh_template(rest_api):
+    """Test refreshing a template
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        Steps:
+        * Retrieve list of entities using GET /api/policies , pick the first one
+        * POST /api/templates/<id> (method ``edit``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "refresh" in rest_api.collections.templates
+
+    try:
+        template = rest_api.collections.templates[0]
+    except:
+        pytest.skip("There is no template to be refreshed")
+
+    old_refresh_dt = template.update_on
+    assert template.action.refresh()["success"], "Refresh was unsuccessful"
+    wait_for(
+        lambda: template.update_on,
+        fail_func=template.reload,
+        fail_condition=lambda refresh_date: refresh_date == old_refresh_dt,
+        num_sec=180,
+        delay=10,
+    )
+
+
 # TODO: Gradually remove and write separate tests for those when they get extended
 @pytest.mark.parametrize(
     "collection_name",
-    ["availability_zones", "clusters", "conditions", "data_stores", "events", "flavors", "hosts",
-    "policy_actions", "request_tasks", "requests", "resource_pools",
-    "security_groups", "servers", "service_requests", "tags", "tasks", "templates", "zones"])
+    ["availability_zones", "clusters", "conditions", "events", "flavors", "hosts", "policy_actions",
+    "request_tasks", "requests", "security_groups", "servers", "service_requests", "tags", "tasks",
+    "templates", "zones"])
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
     have no usable actions that we could try to run
