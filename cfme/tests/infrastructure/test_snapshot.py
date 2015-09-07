@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
+from cfme.automate.explorer import Domain, Namespace, Class, Instance, Method
+from cfme.automate.simulation import simulate
 from cfme.fixtures import pytest_selenium as sel
 from cfme.infrastructure.virtual_machines import Vm
 from utils import testgen
 from utils.conf import credentials
 from utils.log import logger
+from utils.path import data_path
 from utils.ssh import SSHClient
 from utils.wait import wait_for
 
@@ -19,6 +22,14 @@ pytest_generate_tests = testgen.generate(testgen.infra_providers, 'full_template
 @pytest.fixture(scope="module")
 def vm_name():
     return "test_snpsht_" + fauxfactory.gen_alphanumeric()
+
+
+@pytest.fixture(scope="module")
+def domain(request):
+    dom = Domain(fauxfactory.gen_alpha(), enabled=True)
+    dom.create()
+    request.addfinalizer(dom.delete)
+    return dom
 
 
 @pytest.fixture(scope="module")
@@ -107,3 +118,51 @@ def test_verify_revert_snapshot(test_vm, provider, soft_assert, register_event, 
         logger.info('Revert to snapshot %s successful', snapshot1.name)
     except:
         logger.info('Revert to snapshot %s Failed', snapshot1.name)
+
+
+@pytest.mark.uncollectif(lambda provider: provider.type != 'virtualcenter')
+@pytest.mark.meta(blockers=[1247664], automates=[1247664])
+def test_create_snapshot_via_ae(request, domain, test_vm):
+    """This test checks whether the vm.create_snapshot works in AE.
+
+    Prerequisities:
+        * A VMware provider
+        * A VM that has been discovered by CFME
+
+    Steps:
+        * Clone the Request class inside the System namespace into a new domain
+        * Add a method named ``snapshot`` and insert the provided code there.
+        * Add an instance named ``snapshot`` and set the methd from previous step
+            as ``meth5``
+        * Run the simulation of the method against the VM, preferably setting
+            ``snap_name`` to something that can be checked
+        * Wait until snapshot with such name appears.
+    """
+    # PREPARE
+    file = data_path.join("ui").join("automate").join("test_create_snapshot_via_ae.rb")
+    with file.open("r") as f:
+        method_contents = f.read()
+    miq_domain = Domain("ManageIQ (Locked)")
+    miq_class = Class("Request", namespace=Namespace("System", domain=miq_domain))
+    request_cls = miq_class.copy_to(domain)
+    request.addfinalizer(request_cls.delete)
+    method = Method("snapshot", data=method_contents, cls=request_cls)
+    method.create()
+    request.addfinalizer(method.delete)
+    instance = Instance("snapshot", values={"meth5": "snapshot"}, cls=request_cls)
+    instance.create()
+    request.addfinalizer(instance.delete)
+
+    # SIMULATE
+    snap_name = fauxfactory.gen_alpha()
+    snapshot = Vm.Snapshot(name=snap_name, parent_vm=test_vm)
+    simulate(
+        instance="Request", request="snapshot",
+        attribute=["VM and Instance", test_vm.name],
+        execute_methods=True,
+        avp={"snap_name": snap_name})
+
+    wait_for(snapshot.does_snapshot_exist, timeout="2m", delay=10)
+
+    # Clean up if it appeared
+    snapshot.delete()
