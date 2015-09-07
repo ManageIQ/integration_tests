@@ -728,7 +728,8 @@ def test_edit_policy(added_policies, rest_api):
 
     policy.action.edit(description=new_description)
     wait_for(
-        lambda: rest_api.collections.policies.find_by(description=new_description),
+        lambda: policy.description == new_description,
+        fail_func=policy.reload,
         num_sec=180,
         delay=10,
     )
@@ -912,7 +913,7 @@ def test_refresh_template(rest_api):
     "collection_name",
     ["availability_zones", "clusters", "conditions", "events", "flavors", "hosts", "policy_actions",
     "request_tasks", "requests", "security_groups", "servers", "service_requests", "tags", "tasks",
-    "templates", "zones"])
+    "zones"])
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
     have no usable actions that we could try to run
