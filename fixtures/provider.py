@@ -10,6 +10,7 @@ using the provider.
 """
 import pytest
 
+from fixtures.artifactor_plugin import art_client, get_test_idents
 from utils import providers
 from utils.log import logger
 
@@ -17,8 +18,14 @@ from utils.log import logger
 _failed_providers = set()
 
 
-def _setup_provider(provider_key):
+def _setup_provider(provider_key, request=None):
     def skip(provider_key, previous_fail=False):
+        if request:
+            node = request.node
+            name, location = get_test_idents(node)
+            skip_data = {'type': 'provider', 'reason': provider_key}
+            art_client.fire_hook('skip_test', test_location=location, test_name=name,
+                skip_data=skip_data)
         if previous_fail:
             raise pytest.skip('Provider {} failed to set up previously in another test, '
                               'skipping test'.format(provider_key))
@@ -40,25 +47,25 @@ def _setup_provider(provider_key):
 
 
 @pytest.fixture(scope='function')
-def setup_provider(provider):
+def setup_provider(request, provider):
     """Function-scoped fixture to set up a provider"""
-    _setup_provider(provider.key)
+    _setup_provider(provider.key, request)
 
 
 @pytest.fixture(scope='module')
-def setup_provider_modscope(provider):
+def setup_provider_modscope(request, provider):
     """Function-scoped fixture to set up a provider"""
-    _setup_provider(provider.key)
+    _setup_provider(provider.key, request)
 
 
 @pytest.fixture(scope='class')
-def setup_provider_clsscope(provider):
+def setup_provider_clsscope(request, provider):
     """Module-scoped fixture to set up a provider"""
-    _setup_provider(provider.key)
+    _setup_provider(provider.key, request)
 
 
 @pytest.fixture
-def setup_provider_funcscope(provider):
+def setup_provider_funcscope(request, provider):
     """Function-scoped fixture to set up a provider
 
     Note:
@@ -67,7 +74,7 @@ def setup_provider_funcscope(provider):
         be module-scoped the majority of the time.
 
     """
-    _setup_provider(provider.key)
+    _setup_provider(provider.key, request)
 
 
 @pytest.fixture(scope="session")
