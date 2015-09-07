@@ -391,7 +391,7 @@ def groups_data():
     name = fauxfactory.gen_alphanumeric()
     result = [{
         "description": "description_{}_{}".format(index, name),
-        "miq_user_role_id": _,
+        "miq_user_role_id": index,
     } for index in range(1, 5)]
 
     return result
@@ -900,9 +900,8 @@ def test_refresh_template(rest_api):
     old_refresh_dt = template.update_on
     assert template.action.refresh()["success"], "Refresh was unsuccessful"
     wait_for(
-        lambda: template.update_on,
+        lambda: template.update_on != old_refresh_dt,
         fail_func=template.reload,
-        fail_condition=lambda refresh_date: refresh_date == old_refresh_dt,
         num_sec=180,
         delay=10,
     )
