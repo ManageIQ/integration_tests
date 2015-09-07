@@ -409,18 +409,16 @@ class TestPowerControlRESTAPI(object):
         wait_for(lambda: vm.power_state == "suspended", num_sec=300, delay=5, fail_func=vm.reload)
 
     def test_reset(self, verify_vm_running, vm):
-        assert ("reset" in vm.action and "suspend" in vm.action)
-        vm.action.suspend()
-        wait_for(lambda: vm.power_state == "suspended", num_sec=300, delay=5, fail_func=vm.reload)
+        assert "reset" in vm.action
+        old_boot_time = vm.boot_time
         vm.action.reset()
-        wait_for(lambda: vm.power_state == "on", num_sec=300, delay=5, fail_func=vm.reload)
+        wait_for(lambda: vm.boot_time != old_boot_time, num_sec=300, delay=5, fail_func=vm.reload)
 
     def test_restart(self, verify_vm_running, vm):
-        assert ("restart" in vm.action and "suspend" in vm.action)
-        vm.action.suspend()
-        wait_for(lambda: vm.power_state == "suspended", num_sec=300, delay=5, fail_func=vm.reload)
+        assert "restart" in vm.action
+        old_boot_time = vm.boot_time
         vm.action.restart()
-        wait_for(lambda: vm.power_state == "on", num_sec=300, delay=5, fail_func=vm.reload)
+        wait_for(lambda: vm.boot_time != old_boot_time, num_sec=300, delay=5, fail_func=vm.reload)
 
     def test_shutdown(self, verify_vm_running, vm):
         assert "shutdown" in vm.action
