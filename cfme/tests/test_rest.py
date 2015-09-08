@@ -406,29 +406,42 @@ def roles_data():
     return roles_data
 
 
-@pytest.fixture(scope="module", params=["users", "groups", "roles"])
+@pytest.fixture(scope="module")
+def zones_data():
+    name = fauxfactory.gen_alphanumeric()
+    zones_data = [{
+        "name": "name_{}_{}".format(index, name),
+        "description": "description_{}_{}".format(index, name),
+    } for index in range(1, 5)]
+
+    return zones_data
+
+
+@pytest.fixture(scope="module", params=["users", "groups", "roles", "zones"])
 def rest_api_access_control(request, rest_api):
     if request.param == 'users':
-        return (request.getfuncargvalue("users_data"), rest_api.collections.users)
+        return ("users", request.getfuncargvalue("users_data"), rest_api.collections.users)
     elif request.param == 'groups':
-        return (request.getfuncargvalue("groups_data"), rest_api.collections.groups)
+        return ("groups", request.getfuncargvalue("groups_data"), rest_api.collections.groups)
     elif request.param == 'roles':
-        return (request.getfuncargvalue("roles_data"), rest_api.collections.roles)
+        return ("roles", request.getfuncargvalue("roles_data"), rest_api.collections.roles)
+    elif request.param == 'zones':
+        return ("zones", request.getfuncargvalue("zones_data"), rest_api.collections.zones)
 
 
 def test_add_delete_access_control(rest_api_access_control):
-    """Tests creating and deleting access control entity: ['users', 'groups', 'roles'].
+    """Tests creating and deleting access control entity: ['users', 'groups', 'roles', 'zones'].
 
     Prerequisities:
         * An appliance with ``/api`` available.
 
     Steps:
-        * access_control = ['users', 'groups', 'roles']
+        * access_control = ['users', 'groups', 'roles', 'zones']
         * POST /api/{access_control} (method ``add``)
                 for users: ``name``, ```userid`, ``email``
                 for groups: ``description``, ``miq_user_role_id``
                 for roles: ``name``, ``settings``
-        * DELETE /api/{access_control}/<id> -> delete only one entity
+        * DELETE /api/{access_control}/<id> -> delete only one entity (not working for zones)
         * DELETE /api/{access_control} <- Insert a JSON with list of dicts containing ``href``s to
             the entity
         * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
@@ -436,7 +449,7 @@ def test_add_delete_access_control(rest_api_access_control):
     Metadata:
         test_flag: rest
     """
-    entities, api = rest_api_access_control
+    service, entities, api = rest_api_access_control
     assert "delete" in api.action
 
     for entity in entities:
@@ -448,13 +461,14 @@ def test_add_delete_access_control(rest_api_access_control):
             delay=10,
         )
 
-    delete_entity = api.find_by(name=entities[0].get('name'))
-    delete_entity.action.delete()
-    wait_for(
-        lambda: not api.find_by(name=entities[0].get('name')),
-        num_sec=180,
-        delay=10,
-    )
+    if service != 'zones':
+        delete_entity = api.find_by(name=entities[0].get('name'))
+        delete_entity.action.delete()
+        wait_for(
+            lambda: not api.find_by(name=entities[0].get('name')),
+            num_sec=180,
+            delay=10,
+        )
 
     entities = [entity.id for entity in api]
     api.delete(entities)
@@ -476,7 +490,7 @@ def test_edit_access_control(rest_api_access_control):
     Metadata:
         test_flag: rest
     """
-    entities, api = rest_api_access_control
+    service, entities, api = rest_api_access_control
     assert "edit" in api.action
 
     try:
@@ -485,8 +499,16 @@ def test_edit_access_control(rest_api_access_control):
         api.action.add(entities[0])
         entity = api.find_by(name=(entities[0].get('name') or entities[0].get('description')))
 
-    new_name = "name_{}".format(fauxfactory.gen_alphanumeric())
+    if service == 'groups':
+        new_description = "description_{}".format(fauxfactory.gen_alphanumeric())
+        entity.action.edit(description=new_description)
+        wait_for(
+            lambda: api.find_by(description=new_description),
+            num_sec=180,
+            delay=10,
+        )
 
+    new_name = "name_{}".format(fauxfactory.gen_alphanumeric())
     entity.action.edit(name=new_name)
     wait_for(
         lambda: api.find_by(name=new_name),
