@@ -101,6 +101,37 @@ def test_provision(request, provision_data, provider, rest_api):
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
+def test_edit_service_catalog(rest_api):
+    """Test editing a service catalog
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        Steps:
+        * Retrieve list of entities using GET /api/service_catalogs , pick the first one
+        * POST /api/service_catalogs/<id> (method ``edit``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "edit" in rest_api.collections.service_catalogs
+
+    try:
+        edit_service_catalog = rest_api.collections.templates[0]
+    except IndexError:
+        pytest.skip("There is no template to be edited")
+
+    new_name = "name_{}".format(fauxfactory.gen_alphanumeric())
+    edit_service_catalog.action.edit(name=new_name)
+    wait_for(
+        lambda: not rest_api.collections.service_catalogs.find_by(
+            name=new_name),
+        num_sec=180,
+        delay=10,
+    )
+
+
 def test_add_delete_service_catalog(rest_api):
     """Tests creating and deleting a service catalog.
 
@@ -116,6 +147,9 @@ def test_add_delete_service_catalog(rest_api):
     Metadata:
         test_flag: rest
     """
+
+    assert "delete" in rest_api.collections.service_catalogs
+
     scl = rest_api.collections.service_catalogs.action.add(
         name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
@@ -143,6 +177,9 @@ def test_add_delete_multiple_service_catalogs(rest_api):
     Metadata:
         test_flag: rest
     """
+
+    assert "delete" in rest_api.collections.service_catalogs
+
     def _gen_ctl():
         return {
             "name": fauxfactory.gen_alphanumeric(),
