@@ -10,7 +10,6 @@ from utils.providers import setup_a_provider as _setup_a_provider, get_mgmt
 from utils.version import current_version
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for
-from utils.api import APIException
 
 pytest_generate_tests = testgen.generate(
     testgen.provider_by_type,
@@ -748,9 +747,8 @@ def test_edit_template(rest_api):
 
     try:
         edit_template = rest_api.collections.templates[0]
-    except APIException as e:
-        if "ActiveRecord::RecordNotFound" not in str(e):
-            pytest.skip("There is no template to be edited")
+    except IndexError:
+        pytest.skip("There is no template to be edited")
 
     new_description = "description_{}".format(fauxfactory.gen_alphanumeric())
     edit_template.action.edit(description=new_description)
@@ -780,9 +778,8 @@ def test_refresh_template(rest_api):
 
     try:
         template = rest_api.collections.templates[0]
-    except APIException as e:
-        if "ActiveRecord::RecordNotFound" not in str(e):
-            pytest.skip("There is no template to be refreshed")
+    except IndexError:
+        pytest.skip("There is no template to be refreshed")
 
     old_refresh_dt = template.update_on
     assert template.action.refresh()["success"], "Refresh was unsuccessful"
@@ -828,9 +825,8 @@ def test_delete_service(rest_api_delete_service):
 
     try:
         delete_service = api_service[0]
-    except APIException as e:
-        if "ActiveRecord::RecordNotFound" not in str(e):
-            pytest.skip("There is no {} to be deleted".format(service_name))
+    except IndexError:
+        pytest.skip("There is no {} to be deleted".format(service_name))
 
     delete_service.action.delete()
     wait_for(
