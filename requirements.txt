@@ -22,6 +22,7 @@ pdfminer
 progress
 psphere
 py
+pycurl
 pycrypto
 pygal
 PyGithub
