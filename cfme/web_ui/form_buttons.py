@@ -43,21 +43,37 @@ class FormButton(Pretty):
                 " and (contains(@class, 'button') or contains(@class, 'btn')"
                 " or contains(@src, 'button'))"
                 " and not(ancestor::*[contains(@style, 'display:none')"
-                " or contains(@style, 'display: none')])]".format(self.alt_expr(dimmed=False)))
+                " or contains(@style, 'display: none')])"
+                " and not("
+                " (ancestor::*[contains(@class, 'tabpane')]"
+                " and (ancestor::*[contains(@class, 'active')]))"
+                " or "
+                " not(ancestor::*[contains(@class, 'active')]"
+                " and not(ancestor::*[contains(@class, 'tabpane')])))]"
+                .format(self.alt_expr(dimmed=False)))
 
     @property
     def is_dimmed(self):
-        return sel.is_displayed("(//a | //button | //img | //input)[{}"
-            " and contains(@class, 'dimmed')"
+        pp = ("(//a | //button | //img | //input)[{}"
+              " and (contains(@class, 'dimmed') or ../../div/button[contains(@class, 'disabled')])"
             " and (contains(@class, 'button') or contains(@class, 'btn')"
             " or contains(@src, 'button'))"
             " and not(ancestor::*[contains(@style, 'display:none')"
             " or contains(@style, 'display: none')])]|//button[normalize-space(.)='{}' and"
             " (@disabled='true' or contains(@class, 'btn-disabled'))"
             " and not(ancestor::*[contains(@style, 'display:none')"
-            " or contains(@style, 'display: none')])]".format(
+            " or contains(@style, 'display: none')])"
+            " and not("
+            " (ancestor::*[contains(@class, 'tabpane')]"
+            " and (ancestor::*[contains(@class, 'active')]))"
+            " or "
+            " not(ancestor::*[contains(@class, 'active')]"
+            " and not(ancestor::*[contains(@class, 'tabpane')])))]"
+            .format(
                 self.alt_expr(dimmed=True), self._dimmed_alt or self._alt
             ))
+        print pp
+        return sel.is_displayed(pp)
 
     @property
     def can_be_clicked(self):
