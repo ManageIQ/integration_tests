@@ -437,7 +437,7 @@ def test_add_delete_access_control(rest_api_access_control):
         test_flag: rest
     """
     entities, api = rest_api_access_control
-    assert "add" in api.action and "delete" in api.action
+    assert "delete" in api.action
 
     for entity in entities:
         api.action.add(entity)
@@ -519,8 +519,6 @@ def policy_profiles_data():
 
 @pytest.fixture(scope="module")
 def added_policies(request, policies_data, rest_api):
-    assert "add" in rest_api.collections.policies.action
-
     for policy in policies_data:
         rest_api.collections.policies.action.add(policy)
         wait_for(
@@ -553,8 +551,7 @@ def test_add_delete_policy_profiles(policy_profiles_data, rest_api):
     Metadata:
         test_flag: rest
     """
-    assert ("add" in rest_api.collections.policy_profiles.action and
-        "delete" in rest_api.collections.policy_profiles.action)
+    assert "delete" in rest_api.collections.policy_profiles.action
 
     for policy_profile in policy_profiles_data:
         rest_api.collections.policy_profiles.action.add(policy_profile)
@@ -631,8 +628,7 @@ def test_add_delete_policies_through_profile(added_policies, policy_profiles_dat
     Metadata:
         test_flag: rest
     """
-    assert ("add" in rest_api.collections.policy_profiles.action and
-        "delete" in rest_api.collections.policy_profiles.action)
+    assert "delete" in rest_api.collections.policy_profiles.action
 
     policy_profile = policy_profiles_data[0]
     policy_profile["policies"] = [{"href": _} for _ in added_policies]
@@ -684,8 +680,7 @@ def test_add_delete_policies(added_policies, rest_api):
     Metadata:
         test_flag: rest
     """
-    assert ("add" in rest_api.collections.policies.action and
-        "delete" in rest_api.collections.policies.action)
+    assert "delete" in rest_api.collections.policies.action
 
     delete_policy = rest_api.collections.policies.find_by(id=added_policies[0])
     delete_policy.action.delete()
