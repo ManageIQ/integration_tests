@@ -12,6 +12,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 from celery import chain, chord, shared_task
+from celery.exceptions import MaxRetriesExceededError
 from datetime import timedelta
 from functools import wraps
 from novaclient.exceptions import OverLimit as OSOverLimit
@@ -525,7 +526,11 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
                     appl = unfinished.pop()
                     appl.appliance_pool = None
                     appl.save()
-        self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=120)
+        try:
+            self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=120)
+        except MaxRetriesExceededError:  # Bad luck, pool fulfillment failed. So destroy it.
+            pool.logger.error("Waiting for fulfillment failed. Initiating the destruction process.")
+            pool.kill()
 
 
 @singleton_task()
