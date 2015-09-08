@@ -368,12 +368,6 @@ def test_vm_add_lifecycle_event(request, setup_a_provider, rest_api, vm, from_de
     ))) == 1, "Could not find the lifecycle event in the database"
 
 
-COLLECTIONS_IGNORED_53 = {
-    "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
-    "tags", "tasks",
-}
-
-
 @pytest.fixture(scope="module")
 def users_data():
     name = fauxfactory.gen_alphanumeric()
@@ -846,13 +840,19 @@ def test_delete_service(rest_api_delete_service):
     with error.expected("ActiveRecord::RecordNotFound"):
         api_service.action.delete(services)
 
+COLLECTIONS_IGNORED_53 = {
+    "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
+    "tags", "tasks",
+}
+
 
 # TODO: Gradually remove and write separate tests for those when they get extended
 @pytest.mark.parametrize(
     "collection_name",
-    ["availability_zones", "conditions", "events", "flavors", "hosts", "policy_actions",
-    "request_tasks", "requests", "security_groups", "servers", "service_requests", "tags", "tasks",
-    "zones"])
+    ["availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
+    "tags", "tasks", "request_tasks", "requests", "servers", "service_requests", "zones", "hosts"])
+@pytest.mark.uncollectif(lambda collection_name: collection_name in COLLECTIONS_IGNORED_53 and
+    current_version() < "5.4")
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
     have no usable actions that we could try to run
@@ -863,8 +863,6 @@ def test_query_simple_collections(rest_api, collection_name):
     Metadata:
         test_flag: rest
     """
-    if current_version() < "5.4" and collection_name in COLLECTIONS_IGNORED_53:
-        pytest.skip("Collection {} not in 5.3.".format(collection_name))
     collection = getattr(rest_api.collections, collection_name)
     collection.reload()
     list(collection)
