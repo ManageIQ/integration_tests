@@ -474,7 +474,7 @@ class TestCrudViaREST(object):
             lambda: rest_api.collections.vms.find_by(name=new_name),
             num_sec=240, delay=5)
 
-        delete_vms = [vm.id for vm in rest_api.collections.mvs]
+        delete_vms = [vm.id for vm in rest_api.collections.vms]
         vms.action.delete(delete_vms)
         wait_for(
             lambda: not rest_api.collections.vms.find_by(name=new_name),
