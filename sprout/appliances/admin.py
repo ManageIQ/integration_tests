@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
+from celery import chain
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.helpers import ActionForm
@@ -70,7 +71,12 @@ class ApplianceAdmin(Admin):
     @action("Power on", "Power on selected appliance")
     def power_on(self, request, appliances):
         for appliance in appliances:
-            tasks.appliance_power_on.delay(appliance.id)
+            task_list = [tasks.appliance_power_on.si(appliance.id)]
+            if appliance.preconfigured:
+                task_list.append(tasks.wait_appliance_ready.si(appliance.id))
+            else:
+                task_list.append(tasks.mark_appliance_ready.si(appliance.id))
+            chain(*task_list)()
             self.message_user(request, "Initiated poweron of {}.".format(appliance.name))
             self.logger.info(
                 "User {}/{} requested poweron of appliance {}".format(

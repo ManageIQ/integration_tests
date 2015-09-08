@@ -879,6 +879,7 @@ class IPAppliance(object):
         log_callback_f = kwargs.pop("log_callback", lambda msg: self.log.info)
         skip_broken = kwargs.pop("skip_broken", False)
         reboot = kwargs.pop("reboot", True)
+        setup_repos = kwargs.pop("setup_repos", True)
         streaming = kwargs.pop("streaming", False)
         log_callback = lambda msg: log_callback_f("Update RHEL: {}".format(msg))
         log_callback('updating appliance')
@@ -903,24 +904,25 @@ class IPAppliance(object):
         else:
             client = self.ssh_client
 
-        # create repo file
-        log_callback('Creating repo file on appliance')
-        for url in urls:
-            repo_id = fauxfactory.gen_alphanumeric(8)
-            write_updates_repo = dedent('''\
-                cat > /etc/yum.repos.d/{repo_id}.repo <<EOF
-                [update-{repo_id}]
-                name=update-url-{repo_id}
-                baseurl={url}
-                enabled=1
-                gpgcheck=0
-                EOF
-                ''').format(repo_id=repo_id, url=url)
-            status, out = client.run_command(write_updates_repo)
-            if status != 0:
-                msg = 'Failed to write repo updates repo to appliance'
-                log_callback(msg)
-                raise Exception(msg)
+        if setup_repos:
+            # create repo file
+            log_callback('Creating repo file on appliance')
+            for url in urls:
+                repo_id = fauxfactory.gen_alphanumeric(8)
+                write_updates_repo = dedent('''\
+                    cat > /etc/yum.repos.d/{repo_id}.repo <<EOF
+                    [update-{repo_id}]
+                    name=update-url-{repo_id}
+                    baseurl={url}
+                    enabled=1
+                    gpgcheck=0
+                    EOF
+                    ''').format(repo_id=repo_id, url=url)
+                status, out = client.run_command(write_updates_repo)
+                if status != 0:
+                    msg = 'Failed to write repo updates repo to appliance'
+                    log_callback(msg)
+                    raise Exception(msg)
 
         # update
         log_callback('Running rhel updates on appliance')

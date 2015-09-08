@@ -12,6 +12,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 from celery import chain, chord, shared_task
+from celery.exceptions import MaxRetriesExceededError
 from datetime import timedelta
 from functools import wraps
 from novaclient.exceptions import OverLimit as OSOverLimit
@@ -525,7 +526,11 @@ def apply_lease_times_after_pool_fulfilled(self, appliance_pool_id, time_minutes
                     appl = unfinished.pop()
                     appl.appliance_pool = None
                     appl.save()
-        self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=120)
+        try:
+            self.retry(args=(appliance_pool_id, time_minutes), countdown=30, max_retries=120)
+        except MaxRetriesExceededError:  # Bad luck, pool fulfillment failed. So destroy it.
+            pool.logger.error("Waiting for fulfillment failed. Initiating the destruction process.")
+            pool.kill()
 
 
 @singleton_task()
@@ -603,7 +608,7 @@ def clone_template_to_pool(template_id, appliance_pool_id, time_minutes):
         pool.version = template.version
         pool.date = template.date
         pool.save()
-    clone_template_to_appliance.delay(appliance.id, time_minutes)
+    clone_template_to_appliance.delay(appliance.id, time_minutes, pool.yum_update)
 
 
 @logged_task()
@@ -631,13 +636,21 @@ def clone_template(self, template_id):
 
 
 @singleton_task()
-def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None):
-    Appliance.objects.get(id=appliance_id).set_status("Beginning deployment process")
+def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, yum_update=False):
+    appliance = Appliance.objects.get(id=appliance_id)
+    appliance.set_status("Beginning deployment process")
     tasks = [
         clone_template_to_appliance__clone_template.si(appliance_id, lease_time_minutes),
         clone_template_to_appliance__wait_present.si(appliance_id),
         appliance_power_on.si(appliance_id),
     ]
+    if yum_update:
+        tasks.append(appliance_yum_update.si(appliance_id))
+        tasks.append(appliance_reboot.si(appliance_id, if_needs_restarting=True))
+    if appliance.preconfigured:
+        tasks.append(wait_appliance_ready.si(appliance_id))
+    else:
+        tasks.append(mark_appliance_ready.si(appliance_id))
     workflow = chain(*tasks)
     if Appliance.objects.get(id=appliance_id).appliance_pool is not None:
         # Case of the appliance pool
@@ -767,11 +780,6 @@ def appliance_power_on(self, appliance_id):
                 appliance = Appliance.objects.get(id=appliance_id)
                 appliance.set_power_state(Appliance.Power.ON)
                 appliance.save()
-            flow = chain(
-                retrieve_appliance_ip.si(appliance_id),
-                (wait_appliance_ready if appliance.preconfigured else mark_appliance_ready).si(
-                    appliance_id))
-            flow()
             return
         elif not appliance.provider_api.in_steady_state(appliance.name):
             appliance.set_status("Waiting for appliance to be steady (current state: {}).".format(
@@ -781,6 +789,33 @@ def appliance_power_on(self, appliance_id):
             appliance.set_status("Powering on.")
             appliance.provider_api.start_vm(appliance.name)
             self.retry(args=(appliance_id, ), countdown=20, max_retries=40)
+    except Exception as e:
+        provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
+        self.retry(args=(appliance_id, ), exc=e, countdown=20, max_retries=30)
+
+
+@singleton_task()
+def appliance_reboot(self, appliance_id, if_needs_restarting=False):
+    try:
+        appliance = Appliance.objects.get(id=appliance_id)
+    except ObjectDoesNotExist:
+        # source objects are not present
+        return
+    try:
+        if if_needs_restarting:
+            with appliance.ssh as ssh:
+                if int(ssh.run_command("needs-restarting | wc -l").output.strip()) == 0:
+                    return  # No reboot needed
+        with transaction.atomic():
+            appliance = Appliance.objects.get(id=appliance_id)
+            appliance.set_power_state(Appliance.Power.REBOOTING)
+            appliance.ready = False
+            appliance.save()
+        appliance.ipapp.reboot(wait_for_web_ui=False, log_callback=appliance.set_status)
+        with transaction.atomic():
+            appliance = Appliance.objects.get(id=appliance_id)
+            appliance.set_power_state(Appliance.Power.ON)
+            appliance.save()
     except Exception as e:
         provider_error_logger().error("Exception {}: {}".format(type(e).__name__, str(e)))
         self.retry(args=(appliance_id, ), exc=e, countdown=20, max_retries=30)
@@ -1347,3 +1382,12 @@ def disconnect_direct_lun(self, appliance_id):
             appliance.lun_disk_connected = False
             appliance.save()
         return True
+
+
+@singleton_task()
+def appliance_yum_update(self, appliance_id):
+    appliance = Appliance.objects.get(id=appliance_id)
+    if appliance.preconfigured:
+        appliance.ipapp.update_rhel(setup_repos=False, reboot=False)
+    else:
+        appliance.ipapp.update_rhel(setup_repos=True, reboot=False)

@@ -7,7 +7,12 @@
 {% endblock %}
 {% block body-script %}
 <script type="text/javascript">
-  $('select').select2();
+    $('select').select2();
+    $('select#view_user').change(function(){
+        var url = $('select#view_user').val();
+        if(url != "")
+            window.location.href = url;
+    });
 </script>
 {% endblock %}
 {% block body %}
@@ -15,19 +20,28 @@
 {% if not request.user.is_superuser %}
     <h2>Listing and operation of your appliances</h2>
 {% else %}
-    {% if show_user == "my" %}
-        <h2>Listing and operation of your appliances - <a href="{% url 'all_appliances' %}">Show all</a></h2>
-    {% elif show_user == "all" %}
-        <h2>Listing and operation of all users&apos; appliances - <a href="{% url 'my_appliances' %}">Show mine</a></h2>
-    {% else %}
-        <h2>Listing and operation of all {{show_user}}&apos;s appliances - <a href="{% url 'all_appliances' %}">Show all</a>, <a href="{% url 'my_appliances' %}">Show mine</a></h2>
-    {% endif %}
+    <h2>Listing and operation of {% if show_user == "my" %}my{% else %}{{ show_user }}'s{% endif %} appliances - switch to: 
+        <select id="view_user">
+            <option value="">Select an user ...</option>
+        {% if show_user != "my" %}
+            <option value="{% url 'my_appliances' %}">My appliances</option>
+        {% endif %}
+        {% if show_user != "all" %}
+            <option value="{% url 'all_appliances' %}">All appliances</option>
+        {% endif %}
+        {% for user in other_users %}
+            {% if user.id != show_user %}
+                <option value="{% url 'user_appliances' user.username %}">{{ user.first_name }} {{ user.last_name }}</option>
+            {% endif %}
+        {% endfor %}
+        </select>
+    </h2>
 {% endif %}
 <div ng-app="myAppliancesApp">
 {% for pool in pools %}
     <div class="panel panel-primary" id="pool-{{ pool.id }}">
         <div class="panel-heading">
-            <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}
+            <strong>Pool #{{pool.id}}, {{ pool.current_count }}/{{ pool.total_count }} appliances - {{ pool.group.id }} ({% if pool.version %}{{ pool.version }}{% else %}{{ pool.date }}{% endif %}) - {% if pool.preconfigured %}Configured{% else %}Unconfigured{% endif %}{% if pool.yum_update %} with YUM updated appliances{% endif %}
             {% if not pool.finished %}
             - D: {{ pool.num_delayed_provisioning_tasks }}, Q: {{ pool.num_provisioning_tasks_before }}, PS: {{ pool.num_possible_provisioning_slots }}, AS: {{ pool.num_possible_appliance_slots}}, SA: {{ pool.num_shepherd_appliances }}
             {% endif %}</strong>
@@ -104,30 +118,31 @@
                         <div class="btn-toolbar" role="toolbar" aria-label="Appliance operations">
                             <div class="btn-group" role="group" aria-label="Power operations">
                                 {% if appliance.can_launch %}
-                                    <a href="{% url 'start_appliance' appliance.id %}" class="btn btn-success btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Launch</a>
+                                    <a href="{% url 'appliance_action' appliance.id 'start' %}" class="btn btn-success btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Launch</a>
                                 {% endif %}
                                 {% if appliance.can_stop %}
-                                    <a href="{% url 'stop_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                    <a href="{% url 'appliance_action' appliance.id 'stop' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                    <a href="{% url 'appliance_action' appliance.id 'reboot' %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-repeat"></span> Reboot</a>
                                 {% endif %}
                                 {% if appliance.can_suspend %}
-                                    <a href="{% url 'suspend_appliance' appliance.id %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
+                                    <a href="{% url 'appliance_action' appliance.id 'suspend' %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-pause"></span> Suspend</a>
                                 {% endif %}
                             </div>
                             <div class="btn-group" role="group" aria-label="">
-                                <a href="{% url 'kill_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
+                                <a href="{% url 'appliance_action' appliance.id 'kill' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-remove-sign"></span> Kill</a>
                             </div>
                         </div>
                     </td>
                     <td>
                         <div class="btn-toolbar" role="toolbar" aria-label="Appliance lease time control">
                             <div class="btn-group" role="group" aria-label="...">
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
-                            <a href="{% url 'prolong_lease_appliance' appliance.id 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 30 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 30m</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 60 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1h</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 240 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 4h</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 1440 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1d</a>
+                            <a href="{% url 'appliance_action' appliance.id 'set_lease' 10080 %}" class="btn btn-success btn-xs"><span class="glyphicon glyphicon-time"></span> 1w</a>
                             {% if appliance.leased_until and request.user.is_superuser %}
-                                <a href="{% url 'dont_expire_appliance' appliance.id %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
+                                <a href="{% url 'appliance_action' appliance.id 'dont_expire' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure? This means the appliances wont get deleted automatically')"><span class="glyphicon glyphicon-ban-circle"></span> Don't expire</a>
                             {% endif %}
                             </div>
                         </div>
@@ -210,6 +225,16 @@
                     <div class="checkbox">
                       <label>
                         <input type="checkbox" class="form-control" id="preconfigured" name="preconfigured" value="true" checked>
+                      </label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="yum_update" class="col-md-2 control-label">YUM updated?:</label>
+                <div class="col-md-4">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" class="form-control" id="yum_update" name="yum_update" value="true">
                       </label>
                     </div>
                 </div>

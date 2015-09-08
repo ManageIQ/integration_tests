@@ -479,7 +479,8 @@ function update_sprout() {
     git checkout master  >> $UPDATE_LOG 2>&1
     git pull origin master  >> $UPDATE_LOG 2>&1
     echo "> Installing requirements"
-    pip install -Ur requirements.txt >> $UPDATE_LOG
+    pip install -U pip
+    PYCURL_SSL_LIBRARY=nss pip install -Ur requirements.txt >> $UPDATE_LOG
     clearpyc
     echo "> Collecting static files"
     ./manage.py collectstatic --noinput >> $UPDATE_LOG
