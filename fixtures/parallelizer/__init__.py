@@ -55,7 +55,7 @@ from utils.log import create_sublogger
 from utils.net import random_port
 from utils.path import conf_path, project_path
 from utils.sprout import SproutClient, SproutException
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
 
 
 _appliance_help = '''specify appliance URLs to use for distributed testing.
@@ -95,6 +95,8 @@ def pytest_addoption(parser):
         '--sprout-date', dest='sprout_date', default=None, help="Which date to use.")
     group._addoption(
         '--sprout-desc', dest='sprout_desc', default=None, help="Set description of the pool.")
+    group._addoption('--sprout-permissive', dest='sprout_permissive', type=int,
+        default=100, help="Specifies how many appliances are required to be ready.")
 
 
 def pytest_addhooks(pluginmanager):
@@ -118,6 +120,7 @@ def pytest_configure(config):
 
 def dump_pool_info(printf, pool_data):
     printf("Fulfilled: {}".format(pool_data["fulfilled"]))
+    printf("Partially fulfilled: {}".format(pool_data["partially_fulfilled"]))
     printf("Progress: {}%".format(pool_data["progress"]))
     printf("Appliances:")
     for appliance in pool_data["appliances"]:
@@ -226,12 +229,30 @@ class ParallelSession(object):
                     delay=5,
                     message="requesting appliances was fulfilled"
                 )
-            except:
+            except TimedOutError:
                 pool = self.sprout_client.request_check(self.sprout_pool)
                 dump_pool_info(lambda x: self.terminal.write("{}\n".format(x)), pool)
-                self.terminal.write("Destroying the pool on error.\n")
-                self.sprout_client.destroy_pool(pool_id)
-                raise
+                if (not pool["partially_fulfilled"]) or self.config.option.sprout_permissive >= 100:
+                    # This is clear, failed
+                    self.terminal.write("Destroying the pool on error.\n")
+                    self.sprout_client.destroy_pool(pool_id)
+                    raise
+                percent_appls = int(round((
+                    float(len(pool["appliances"])) / float(self.config.option.sprout_appliances)
+                ) * 100.0))
+                if percent_appls >= self.config.option.sprout_permissive:
+                    # We can continue
+                    self.terminal.write(
+                        "We have only {}% of appliances but that is over threshold".format(
+                            percent_appls))
+                    self.sprout_client.pool_drop_remaining_provisioning_requests(self.sprout_pool)
+                else:
+                    # Under threshold
+                    self.terminal.write(
+                        "{}% is under limit so destroying the pool on error.\n".format(
+                            percent_appls))
+                    self.sprout_client.destroy_pool(pool_id)
+                    raise
             else:
                 pool = self.sprout_client.request_check(self.sprout_pool)
                 dump_pool_info(lambda x: self.terminal.write("{}\n".format(x)), pool)

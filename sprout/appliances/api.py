@@ -225,6 +225,7 @@ def request_check(user, request_id):
         "fulfilled": request.fulfilled,
         "finished": request.finished,
         "preconfigured": request.preconfigured,
+        "partially_fulfilled": request.partially_fulfilled,
         "progress": int(round(request.percent_finished * 100)),
         "appliances": [
             appliance.serialized
@@ -232,6 +233,15 @@ def request_check(user, request_id):
             in request.appliances
         ],
     }
+
+
+@jsonapi.authenticated_method
+def pool_drop_remaining_provisioning_requests(user, request_id):
+    """Remove all provisioning requests that are to be executed on the pool"""
+    request = AppliancePool.objects.get(id=request_id)
+    if user != request.owner and not user.is_staff:
+        raise Exception("This pool belongs to a different user!")
+    return request.drop_remaining_provisioning_tasks()
 
 
 @jsonapi.authenticated_method
