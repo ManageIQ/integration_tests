@@ -71,12 +71,18 @@ class Reporter(ArtifactorBasePlugin):
         self.register_plugin_hook('finish_session', self.run_provider_report)
         self.register_plugin_hook('build_report', self.run_report)
         self.register_plugin_hook('start_test', self.start_test)
+        self.register_plugin_hook('skip_test', self.skip_test)
         self.register_plugin_hook('finish_test', self.finish_test)
         self.register_plugin_hook('session_info', self.session_info)
 
     def configure(self):
         self.only_failed = self.data.get('only_failed', False)
         self.configured = True
+
+    @ArtifactorBasePlugin.check_configured
+    def skip_test(self, test_location, test_name, skip_data):
+        test_ident = "{}/{}".format(test_location, test_name)
+        return None, {'artifacts': {test_ident: {'skipped': skip_data}}}
 
     @ArtifactorBasePlugin.check_configured
     def start_test(self, test_location, test_name, slaveid):
@@ -130,7 +136,8 @@ class Reporter(ArtifactorBasePlugin):
             pass
 
     def process_data(self, artifacts, log_dir, version, name_filter=None):
-
+        blocker_skip_count = 0
+        provider_skip_count = 0
         template_data = {'tests': [], 'qa': []}
         template_data['version'] = version
         log_dir = local(log_dir).strpath + "/"
@@ -154,6 +161,14 @@ class Reporter(ArtifactorBasePlugin):
                          'slaveid': test.get('slaveid', "Unknown"), 'color': color}
             if 'composite' in test:
                 test_data['composite'] = test['composite']
+
+            if 'skipped' in test:
+                if test['skipped'].get('type', None) == 'provider':
+                    provider_skip_count += 1
+                    test_data['skip_provider'] = test['skipped'].get('reason', None)
+                if test['skipped'].get('type', None) == 'blocker':
+                    blocker_skip_count += 1
+                    test_data['skip_blocker'] = test['skipped'].get('reason', None)
 
             if test.get('start_time', None):
                 if test.get('finish_time', None):
@@ -212,6 +227,8 @@ class Reporter(ArtifactorBasePlugin):
                     test_data["urls"] = urls
             template_data['tests'].append(test_data)
         template_data['counts'] = counts
+        template_data['blocker_skip_count'] = blocker_skip_count
+        template_data['provider_skip_count'] = provider_skip_count
 
         if name_filter:
             template_data['tests'] = [x for x in template_data['tests']

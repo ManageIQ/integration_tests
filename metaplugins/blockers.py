@@ -38,6 +38,7 @@ import pytest
 
 from kwargify import kwargify as _kwargify
 
+from fixtures.artifactor_plugin import art_client, get_test_idents
 from markers.meta import plugin
 from utils import version
 from utils.blockers import Blocker
@@ -105,6 +106,11 @@ def resolve_blockers(item, blockers):
             action(**local_env)
     # And then skip
     if use_blockers:
+        name, location = get_test_idents(item)
+        bugs = [bug.bug_id for bug in use_blockers]
+        skip_data = {'type': 'blocker', 'reason': bugs}
+        art_client.fire_hook('skip_test', test_location=location, test_name=name,
+            skip_data=skip_data)
         pytest.skip("Skipping due to these blockers:\n{}".format(
             "\n".join(
                 "- {}".format(str(blocker))
