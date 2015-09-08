@@ -3,6 +3,8 @@ import atexit
 import inspect
 import re
 import subprocess
+from contextlib import contextmanager
+from copy import copy
 
 # import diaper for backward compatibility
 import diaper
@@ -201,3 +203,22 @@ def read_env(file):
                 env_vars[key] = value.strip()
         stdout, stderr = proc.communicate()
     return env_vars
+
+
+@contextmanager
+def letobj(o, **overrides):
+    """Context manager that overrides values in the object for the execution in ``with`` block.
+
+    Similar to ``let`` expression in lisp style languages.
+
+    Args:
+        o: Object to change.
+        **overrides: Keys and their values for overriding.
+    """
+    backup = o.__dict__
+    o.__dict__ = copy(o.__dict__)
+    try:
+        o.__dict__.update(overrides)
+        yield o
+    finally:
+        o.__dict__ = backup
