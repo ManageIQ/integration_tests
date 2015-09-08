@@ -22,7 +22,6 @@ pdfminer
 progress
 psphere
 py
-pycurl --global-option="--with-nss"
 pycrypto
 pygal
 PyGithub
