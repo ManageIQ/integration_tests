@@ -101,37 +101,6 @@ def test_provision(request, provision_data, provider, rest_api):
     assert provider.mgmt.does_vm_exist(vm_name), "The VM {} does not exist!".format(vm_name)
 
 
-def test_edit_service_catalog(rest_api):
-    """Test editing a service catalog
-
-    Prerequisities:
-        * An appliance with ``/api`` available.
-
-    Steps:
-        Steps:
-        * Retrieve list of entities using GET /api/service_catalogs , pick the first one
-        * POST /api/service_catalogs/<id> (method ``edit``) with the ``description``
-
-    Metadata:
-        test_flag: rest
-    """
-    assert "edit" in rest_api.collections.service_catalogs
-
-    try:
-        edit_service_catalog = rest_api.collections.service_catalogs[0]
-    except IndexError:
-        pytest.skip("There is no template to be edited")
-
-    new_name = "name_{}".format(fauxfactory.gen_alphanumeric())
-    edit_service_catalog.action.edit(name=new_name)
-    wait_for(
-        lambda: not rest_api.collections.service_catalogs.find_by(
-            name=new_name),
-        num_sec=180,
-        delay=10,
-    )
-
-
 def test_add_delete_service_catalog(rest_api):
     """Tests creating and deleting a service catalog.
 
@@ -245,32 +214,6 @@ def test_provider_refresh(request, setup_a_provider, rest_api):
     vms = rest_api.collections.vms.find_by(name=vm_name)
     if "delete" in vms[0].action.all:
         vms[0].action.delete()
-
-
-@pytest.mark.ignore_stream("5.3")
-def test_provider_edit(request, setup_a_provider, rest_api):
-    """Test editing a provider using REST API.
-
-    Prerequisities:
-        * A provider that is set up. Can be a dummy one.
-
-    Steps:
-        * Retrieve list of providers using GET /api/providers , pick the first one
-        * POST /api/providers/<id> (method ``edit``) -> {"name": <random name>}
-        * Query the provider again. The name should be set.
-
-    Metadata:
-        test_flag: rest
-    """
-    if "edit" not in rest_api.collections.providers.action.all:
-        pytest.skip("Refresh action is not implemented in this version")
-    provider = rest_api.collections.providers[0]
-    new_name = fauxfactory.gen_alphanumeric()
-    old_name = provider.name
-    request.addfinalizer(lambda: provider.action.edit(name=old_name))
-    provider.action.edit(name=new_name)
-    provider.reload()
-    assert provider.name == new_name
 
 
 @pytest.mark.parametrize(
@@ -638,38 +581,6 @@ def test_add_delete_policy_profiles(policy_profiles_data, rest_api):
         rest_api.collections.policy_profiles.action.delete(policy_profiles)
 
 
-def test_edit_policy_profile(policy_profiles_data, rest_api):
-    """Test editing a policy_profile
-
-    Prerequisities:
-        * An appliance with ``/api`` available.
-
-    Steps:
-        * Retrieve list of entities using GET /api/policy_profiles , pick the first one
-        * POST /api/policy_profile/1 (method ``edit``) with the ``description``
-
-    Metadata:
-        test_flag: rest
-    """
-    assert "edit" in rest_api.collections.policy_profiles.action
-
-    try:
-        policy_profile = rest_api.collections.policy_profiles[0]
-    except:
-        rest_api.collections.policy_profiles.action.add(policy_profiles_data[0])
-        policy_profile = rest_api.collections.policy_profiles.find_by(
-            description=policy_profiles_data[0].get('description'))
-
-    new_description = "description_{}".format(fauxfactory.gen_alphanumeric())
-
-    policy_profile.action.edit(description=new_description)
-    wait_for(
-        lambda: rest_api.collections.policy_profiles.find_by(description=new_description),
-        num_sec=180,
-        delay=10,
-    )
-
-
 def test_add_delete_policies_through_profile(added_policies, policy_profiles_data, rest_api):
     """Tests adding a policy_profile with policies and deleting the policies
 
@@ -755,65 +666,6 @@ def test_add_delete_policies(added_policies, rest_api):
         rest_api.collections.policies.action.delete(policies)
 
 
-def test_edit_policy(added_policies, rest_api):
-    """Test editing a policy
-
-    Prerequisities:
-        * An appliance with ``/api`` available.
-
-    Steps:
-        * Retrieve list of entities using GET /api/policies , pick the first one
-        * POST /api/policies/<id> (method ``edit``) with the ``description``
-
-    Metadata:
-        test_flag: rest
-    """
-    assert "edit" in rest_api.collections.policies.action
-
-    policy = rest_api.collections.policies[0]
-
-    new_description = "description_{}".format(fauxfactory.gen_alphanumeric())
-
-    policy.action.edit(description=new_description)
-    wait_for(
-        lambda: policy.description == new_description,
-        fail_func=policy.reload,
-        num_sec=180,
-        delay=10,
-    )
-
-
-def test_edit_template(rest_api):
-    """Test deleting a template
-
-    Prerequisities:
-        * An appliance with ``/api`` available.
-
-    Steps:
-        Steps:
-        * Retrieve list of entities using GET /api/templates , pick the first one
-        * POST /api/templates/<id> (method ``edit``) with the ``description``
-
-    Metadata:
-        test_flag: rest
-    """
-    assert "edit" in rest_api.collections.templates
-
-    try:
-        edit_template = rest_api.collections.templates[0]
-    except IndexError:
-        pytest.skip("There is no template to be edited")
-
-    new_description = "description_{}".format(fauxfactory.gen_alphanumeric())
-    edit_template.action.edit(description=new_description)
-    wait_for(
-        lambda: not rest_api.collections.resource_pools.find_by(
-            description=new_description),
-        num_sec=180,
-        delay=10,
-    )
-
-
 def test_refresh_template(rest_api):
     """Test refreshing a template
 
@@ -822,8 +674,8 @@ def test_refresh_template(rest_api):
 
     Steps:
         Steps:
-        * Retrieve list of entities using GET /api/policies , pick the first one
-        * POST /api/templates/<id> (method ``edit``) with the ``description``
+        * Retrieve list of entities using GET /api/templates , pick the first one
+        * POST /api/templates/<id> (method ``refresh``) with the ``description``
 
     Metadata:
         test_flag: rest
@@ -898,6 +750,67 @@ def test_delete_service(rest_api_delete_service):
     api_service.action.delete(services)
     with error.expected("ActiveRecord::RecordNotFound"):
         api_service.action.delete(services)
+
+
+@pytest.fixture(scope="module", params=["templates", "policies",
+    "policy_profiles", "service_catalogs", "providers"])
+def rest_api_edit_service(request, rest_api):
+    if request.param == 'templates':
+        return ("templates", rest_api.collections.templates)
+    elif request.param == 'policies':
+        return ("policies", rest_api.collections.policies)
+    elif request.param == 'policy_profiles':
+        return ("policy_profiles", rest_api.collections.policy_profiles)
+    elif request.param == 'service_catalogs':
+        return ("service_catalogs", rest_api.collections.service_catalogs)
+    elif request.param == 'providers':
+        @pytest.mark.ignore_stream("5.3")
+        def provider_wrapper():
+            return ("providers", rest_api.collections.providers)
+
+        return provider_wrapper()
+
+
+def test_edit_service(rest_api_edit_service):
+    """Test editing a service
+    ["policies", "templates", "policy_profiles", "service_catalogs", "providers"]
+
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/<service> , pick the first one
+        * POST /api/<service>/<id> (method ``edit``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    service_name, api_service = rest_api_delete_service
+    assert "edit" in api_service
+
+    try:
+        edit_service = api_service[0]
+    except IndexError:
+        pytest.skip("There is no {} to be deleted".format(service_name))
+
+    if service_name in ["template", "policies", "policy_profiles"]:
+        new_value = "description_{}".format(fauxfactory.gen_alphanumeric())
+        edit_service.action.edit(new_value)
+        wait_for(
+            lambda: not api_service.find_by(description=new_value),
+            num_sec=180,
+            delay=10,
+        )
+        return True
+
+    new_value = "name_{}".format(fauxfactory.gen_alphanumeric())
+    edit_service.action.edit(new_value)
+    wait_for(
+        lambda: not api_service.find_by(name=new_value),
+        num_sec=180,
+        delay=10,
+    )
 
 
 COLLECTIONS_IGNORED_53 = {
