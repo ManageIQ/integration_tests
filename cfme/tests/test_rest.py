@@ -118,7 +118,7 @@ def test_edit_service_catalog(rest_api):
     assert "edit" in rest_api.collections.service_catalogs
 
     try:
-        edit_service_catalog = rest_api.collections.templates[0]
+        edit_service_catalog = rest_api.collections.service_catalogs[0]
     except IndexError:
         pytest.skip("There is no template to be edited")
 
@@ -846,7 +846,7 @@ def test_refresh_template(rest_api):
 
 
 @pytest.fixture(scope="module", params=["resource_pools", "templates", "data_storages",
-    "clusters"])
+    "clusters", "service_templates", "services"])
 def rest_api_delete_service(request, rest_api):
     if request.param == 'resource_pools':
         return ("resource_pools", rest_api.collections.resource_pools)
@@ -856,10 +856,15 @@ def rest_api_delete_service(request, rest_api):
         return ("data_storages", rest_api.collections.data_storages)
     elif request.param == 'clusters':
         return ("clusters", rest_api.collections.clusters)
+    elif request.param == 'service_templates':
+        return ("service_templates", rest_api.collections.service_templates)
+    elif request.param == 'services':
+        return ("services", rest_api.collections.services)
 
 
 def test_delete_service(rest_api_delete_service):
-    """Test deleting a service ["resource_pools", "templates", "data_storages", "clusters"]
+    """Test deleting a service
+    ["resource_pools", "templates", "data_storages", "clusters", "service_templates", "services"]
 
     Prerequisities:
         * An appliance with ``/api`` available.
