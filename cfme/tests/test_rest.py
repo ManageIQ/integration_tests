@@ -753,7 +753,7 @@ def test_delete_service(rest_api_delete_service):
 
 
 @pytest.fixture(scope="module", params=["templates", "policies",
-    "policy_profiles", "service_catalogs", "providers"])
+    "policy_profiles", "service_catalogs", "providers", "services", "service_templates"])
 def rest_api_edit_service(request, rest_api):
     if request.param == 'templates':
         return ("templates", rest_api.collections.templates)
@@ -763,6 +763,10 @@ def rest_api_edit_service(request, rest_api):
         return ("policy_profiles", rest_api.collections.policy_profiles)
     elif request.param == 'service_catalogs':
         return ("service_catalogs", rest_api.collections.service_catalogs)
+    elif request.param == 'services':
+        return ("services", rest_api.collections.services)
+    elif request.param == 'service_templates':
+        return ("service_templates", rest_api.collections.service_templates)
     elif request.param == 'providers':
         @pytest.mark.ignore_stream("5.3")
         def provider_wrapper():
@@ -773,7 +777,8 @@ def rest_api_edit_service(request, rest_api):
 
 def test_edit_service(rest_api_edit_service):
     """Test editing a service
-    ["policies", "templates", "policy_profiles", "service_catalogs", "providers"]
+    ["policies", "templates", "policy_profiles", "service_catalogs", "providers", "services",
+    "service_templates"]
 
 
     Prerequisities:
