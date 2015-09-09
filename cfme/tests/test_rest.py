@@ -870,8 +870,9 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
         * An appliance with ``/api`` available.
 
     Steps:
-        * Retrieve list of entities using GET /api/<service>/:id/policies, pick the first one
-        * POST /api/<service>/:id/policies
+        * Retrieve list of entities using GET /api/<service>, pick the first one
+        * POST /api/<service>/:id/policies - add multiple policies
+        * POST /api/services/:id/policies - delete multiple policies
 
     Metadata:
         test_flag: rest
@@ -883,12 +884,15 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
         pytest.skip("There is no {} for adding the policies".format(service_name))
 
     service.policies.add(added_policies)
-
     wait_for(
         lambda: service.polices[0].id in added_policies,
         num_sec=180,
         delay=10,
     )
+
+    service.policies.action.delete(added_policies)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        service.policies.action.delete(added_policies)
 
 
 COLLECTIONS_IGNORED_53 = {
