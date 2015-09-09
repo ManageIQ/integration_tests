@@ -200,6 +200,10 @@ class User(Updateable, Pretty):
         form_buttons.save()
         flash.assert_success_message('Tag edits were successfully saved')
 
+    @property
+    def description(self):
+        return self.credential.principal
+
 
 class Group(Updateable, Pretty):
     group_form = Form(
