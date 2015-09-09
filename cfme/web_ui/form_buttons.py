@@ -23,6 +23,20 @@ class FormButton(Pretty):
     """
     pretty_attrs = ['_alt', '_dimmed_alt', '_force', '_partial']
 
+    class Button:
+        """Holds pieces of the XPath to be assembled."""
+        TAG_TYPES = "//a | //button | //img | //input"
+        TYPE_CONDITION = (
+            "(contains(@class, 'button') or contains(@class, 'btn') or contains(@src, 'button'))"
+        )
+        NOT_DIMMED = "not(contains(@class, 'dimmed'))"
+        DIMMED = "(contains(@class, 'dimmed') or ../../div/button[contains(@class, 'disabled')])"
+        IS_DISPLAYED = (
+            "not(ancestor::*[contains(@style, 'display:none') "
+            "or contains(@style, 'display: none')])")
+        ON_CURRENT_TAB = (
+            "not(ancestor::div[contains(@class, 'tab-pane') and not(contains(@class, 'active'))])")
+
     def __init__(self, alt, dimmed_alt=None, force_click=False, partial_alt=False):
         self._alt = alt
         self._dimmed_alt = dimmed_alt
@@ -37,43 +51,33 @@ class FormButton(Pretty):
             return "(normalize-space(@alt)={})".format(
                 quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
 
+    def _format_generator(self, dimmed=False, include_dimmed_alt=False):
+        """Generates a dict htat will be passed to the formatting strings."""
+        d = {}
+        for key, value in self.Button.__dict__.iteritems():
+            if not key.startswith("_"):
+                d[key] = value
+        d["ALT_EXPR"] = self.alt_expr(dimmed=dimmed)
+        if include_dimmed_alt:
+            d["DIMMED_ALT"] = quoteattr(self._dimmed_alt or self._alt)
+        return d
+
     def locate(self):
-        """This hairy locator ensures that the button is not dimmed and not hidden."""
-        return ("(//a | //button | //img | //input)[{} and not(contains(@class, 'dimmed'))"
-                " and (contains(@class, 'button') or contains(@class, 'btn')"
-                " or contains(@src, 'button'))"
-                " and not(ancestor::*[contains(@style, 'display:none')"
-                " or contains(@style, 'display: none')])"
-                " and not("
-                " (ancestor::*[contains(@class, 'tabpane')]"
-                " and (ancestor::*[contains(@class, 'active')]))"
-                " or "
-                " not(ancestor::*[contains(@class, 'active')]"
-                " and not(ancestor::*[contains(@class, 'tabpane')])))]"
-                .format(self.alt_expr(dimmed=False)))
+        return (
+            "({TAG_TYPES})[{ALT_EXPR} and {NOT_DIMMED} and {TYPE_CONDITION} and {IS_DISPLAYED} "
+            "and {ON_CURRENT_TAB}]"
+            .format(**self._format_generator(dimmed=False)))
 
     @property
     def is_dimmed(self):
-        pp = ("(//a | //button | //img | //input)[{}"
-              " and (contains(@class, 'dimmed') or ../../div/button[contains(@class, 'disabled')])"
-            " and (contains(@class, 'button') or contains(@class, 'btn')"
-            " or contains(@src, 'button'))"
-            " and not(ancestor::*[contains(@style, 'display:none')"
-            " or contains(@style, 'display: none')])]|//button[normalize-space(.)='{}' and"
-            " (@disabled='true' or contains(@class, 'btn-disabled'))"
-            " and not(ancestor::*[contains(@style, 'display:none')"
-            " or contains(@style, 'display: none')])"
-            " and not("
-            " (ancestor::*[contains(@class, 'tabpane')]"
-            " and (ancestor::*[contains(@class, 'active')]))"
-            " or "
-            " not(ancestor::*[contains(@class, 'active')]"
-            " and not(ancestor::*[contains(@class, 'tabpane')])))]"
-            .format(
-                self.alt_expr(dimmed=True), self._dimmed_alt or self._alt
-            ))
-        print pp
-        return sel.is_displayed(pp)
+        locator = (
+            "({TAG_TYPES})[{ALT_EXPR} and {DIMMED} and {TYPE_CONDITION} and {IS_DISPLAYED} "
+            "and {ON_CURRENT_TAB}]"
+            "|"  # A bit different type of a button
+            "({TAG_TYPES})[normalize-space(.)={DIMMED_ALT} and {IS_DISPLAYED} and "
+            "(@disabled='true' or contains(@class, 'btn-disabled')) and {ON_CURRENT_TAB}]"
+            .format(**self._format_generator(dimmed=True, include_dimmed_alt=True)))
+        return sel.is_displayed(locator)
 
     @property
     def can_be_clicked(self):
