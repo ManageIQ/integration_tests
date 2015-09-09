@@ -754,7 +754,7 @@ def test_delete_service(rest_api_delete_service):
 
 @pytest.fixture(scope="module", params=["templates", "policies",
     "policy_profiles", "service_catalogs", "providers", "services", "service_templates"])
-def rest_api_edit_service(request, rest_api):
+def rest_api_edit_service(request, rest_api, added_policies, setup_a_provider):
     if request.param == 'templates':
         return ("templates", rest_api.collections.templates)
     elif request.param == 'policies':
@@ -818,6 +818,34 @@ def test_edit_service(rest_api_edit_service):
     )
 
 
+def test_retire_services(rest_api):
+    """Test retiring a service
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/services , pick the first one
+        * POST /api/retire/<id> (method ``retire``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "retire" in rest_api.collections.services.action
+
+    try:
+        retire_service = rest_api.collections.services[0]
+    except IndexError:
+        pytest.skip("There is no service to be  retired")
+
+    retire_service.action.retire()
+    wait_for(
+        lambda: not rest_api.collections.services.action.find_by(name=retire_service.name),
+        num_sec=180,
+        delay=10,
+    )
+
+
 COLLECTIONS_IGNORED_53 = {
     "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
     "tags", "tasks",
@@ -828,7 +856,7 @@ COLLECTIONS_IGNORED_53 = {
 @pytest.mark.parametrize(
     "collection_name",
     ["availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
-    "tags", "tasks", "request_tasks", "requests", "servers", "service_requests", "zones", "hosts"])
+    "tags", "tasks", "request_tasks", "requests", "servers", "service_requests"])
 @pytest.mark.uncollectif(lambda collection_name: collection_name in COLLECTIONS_IGNORED_53 and
     current_version() < "5.4")
 def test_query_simple_collections(rest_api, collection_name):
