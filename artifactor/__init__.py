@@ -147,12 +147,17 @@ class Artifactor(Rigger):
         """
         if not self.config:
             return False
-        self.log_dir = local(self.config.get('log_dir', log_path.join('artifacts')))
+        self.log_dir = local(self.config.get('log_dir', log_path))
         self.log_dir.ensure(dir=True)
+        self.artifact_dir = local(self.config.get('artifact_dir', log_path.join('artifacts')))
+        self.artifact_dir.ensure(dir=True)
         self.logger = create_logger('artifactor', self.log_dir.join('artifactor.log').strpath)
         self.squash_exceptions = self.config.get('squash_exceptions', False)
         if not self.log_dir:
             print "!!! Log dir must be specified in yaml"
+            sys.exit(127)
+        if not self.artifact_dir:
+            print "!!! Artifact dir must be specified in yaml"
             sys.exit(127)
         self.config['zmq_socket_address'] = 'tcp://127.0.0.1:{}'.format(random_port())
         self.setup_plugin_instances()
@@ -160,6 +165,7 @@ class Artifactor(Rigger):
         self.global_data = {
             'artifactor_config': self.config,
             'log_dir': self.log_dir.strpath,
+            'artifact_dir': self.artifact_dir.strpath,
             'artifacts': dict()
         }
 
@@ -198,14 +204,14 @@ def start_session(run_id=None):
     return None, {'run_id': run_id}
 
 
-def parse_setup_dir(test_name, test_location, artifactor_config, log_dir, run_id):
+def parse_setup_dir(test_name, test_location, artifactor_config, artifact_dir, run_id):
     """
     Convenience fire_hook for built in hook
     """
     if test_name and test_location:
         run_type = artifactor_config.get('per_run', None)
         overwrite = artifactor_config.get('reuse_dir', False)
-        path = setup_artifact_dir(root_dir=log_dir, test_name=test_name,
+        path = setup_artifact_dir(root_dir=artifact_dir, test_name=test_name,
                                   test_location=test_location, run_type=run_type,
                                   run_id=run_id, overwrite=overwrite)
     else:
