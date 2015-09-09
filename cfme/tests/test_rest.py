@@ -465,7 +465,7 @@ def test_edit_access_control(rest_api_access_control):
     Steps:
         * access_control = ['users', 'groups', 'roles']
         * Retrieve list of entities using GET /api/{access_control} , pick the first one
-        * POST /api/{access_control}/<id> (method ``edit``) with the ``name``
+        * POST /api/{access_control}/<id> (method ``edit``) with the ``name`` or ``description``
 
     Metadata:
         test_flag: rest
@@ -589,7 +589,7 @@ def test_add_delete_policies_through_profile(added_policies, policy_profiles_dat
 
     Steps:
         * POST /api/policy_profiles (method ``add``)
-        * DELETE DELETE /api/policy_profiles/4/policies/24 -> delete only one policy
+        * DELETE DELETE /api/policy_profiles/<id>/policies/24 -> delete only one policy
         * DELETE /api/policy_profiles/<id>/policies <- Insert a JSON with list of dicts containing
           ``href``s to the policies
         * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
@@ -786,7 +786,7 @@ def test_edit_service(rest_api_edit_service):
 
     Steps:
         * Retrieve list of entities using GET /api/<service> , pick the first one
-        * POST /api/<service>/<id> (method ``edit``) with the ``description``
+        * POST /api/<service>/<id> (method ``edit``) with the ``name`` or ``description``
 
     Metadata:
         test_flag: rest
@@ -873,6 +873,7 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
         * Retrieve list of entities using GET /api/<service>, pick the first one
         * POST /api/<service>/:id/policies - (method ``add``) add multiple policies
         * POST /api/services/:id/policies - (method ``delete``) delete multiple policies
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
 
     Metadata:
         test_flag: rest
@@ -945,6 +946,7 @@ def test_add_delete_tags_subcollection(tags_data, sub_tags_api):
         * Retrieve list of entities using GET /api/<service>, pick the first one
         * POST /api/<service>/:id/tags - (method ``assign``) add multiple policies
         * POST /api/services/:id/tags - (method ``unassign``) delete multiple policies
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
 
     Metadata:
         test_flag: rest
@@ -978,7 +980,7 @@ COLLECTIONS_IGNORED_53 = {
 @pytest.mark.parametrize(
     "collection_name",
     ["availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
-    "tags", "tasks", "request_tasks", "requests", "servers", "service_requests"])
+    "tasks", "request_tasks", "requests", "servers", "service_requests"])
 @pytest.mark.uncollectif(lambda collection_name: collection_name in COLLECTIONS_IGNORED_53 and
     current_version() < "5.4")
 def test_query_simple_collections(rest_api, collection_name):
