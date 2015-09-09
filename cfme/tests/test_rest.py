@@ -847,9 +847,6 @@ def test_retire_services(rest_api):
 
 
 # Test subcollection
-# Policies = ["providers", "clusters", "hosts", "templates", "vms", "resource_pools"]
-# Tags = ["providers", "clusters", "hosts", "templates", "vms", "resource_pools",
-# "data_stores", "services", "service_templates", "users", "group"]
 @pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
     "resource_pools"])
 def sub_policies_api(request, rest_api, added_policies, setup_a_provider):
@@ -865,7 +862,20 @@ def sub_policies_api(request, rest_api, added_policies, setup_a_provider):
         return ("vms", rest_api.collections.vms)
 
 
-def test_policies_subcollection(sub_policies_api, added_policies):
+def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
+    """Test adding the policies to subcollection
+    ["providers", "clusters", "hosts", "templates", "vms", "resource_pools"]
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/<service>/:id/policies, pick the first one
+        * POST /api/<service>/:id/policies
+
+    Metadata:
+        test_flag: rest
+    """
     service_name, api = sub_policies_api
     try:
         service = api[0]
