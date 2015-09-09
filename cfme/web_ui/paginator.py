@@ -18,11 +18,7 @@ _check_all = Input("masterToggle")
 
 def page_controls_exist():
     """ Simple check to see if page controls exist. """
-    try:
-        rec_total()
-        return True
-    except NoSuchElementException:
-        return False
+    return sel.is_displayed(_locator + _page_cell)
 
 
 def _page_nums():
