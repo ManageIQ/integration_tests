@@ -846,6 +846,41 @@ def test_retire_services(rest_api):
     )
 
 
+# Test subcollection
+# Policies = ["providers", "clusters", "hosts", "templates", "vms", "resource_pools"]
+# Tags = ["providers", "clusters", "hosts", "templates", "vms", "resource_pools",
+# "data_stores", "services", "service_templates", "users", "group"]
+@pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
+    "resource_pools"])
+def sub_policies_api(request, rest_api, added_policies, setup_a_provider):
+    if request.param == 'providers':
+        return ("providers", rest_api.collections.providers)
+    elif request.param == 'clusters':
+        return ("clusters", rest_api.collections.clusters)
+    elif request.param == 'hosts':
+        return ("hosts", rest_api.collections.hosts)
+    elif request.param == 'templates':
+        return ("templates", rest_api.collections.templates)
+    elif request.param == 'vms':
+        return ("vms", rest_api.collections.vms)
+
+
+def test_policies_subcollection(sub_policies_api, added_policies):
+    service_name, api = sub_policies_api
+    try:
+        service = api[0]
+    except IndexError:
+        pytest.skip("There is no {} for adding the policies".format(service_name))
+
+    service.policies.add(added_policies)
+
+    wait_for(
+        lambda: service.polices[0].id in added_policies,
+        num_sec=180,
+        delay=10,
+    )
+
+
 COLLECTIONS_IGNORED_53 = {
     "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
     "tags", "tasks",
