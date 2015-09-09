@@ -7,6 +7,8 @@ from cfme.web_ui import toolbar as tb
 from cfme import web_ui as ui
 from xml.sax.saxutils import quoteattr
 from cfme.exceptions import CFMEException
+from utils.wait import wait_for
+
 
 details_page = Region(infoblock_type='detail')
 cfg_btn = partial(tb.select, "Configuration")
@@ -77,3 +79,15 @@ class Stack(Pretty):
     def nav_to_resources_link(self):
         sel.force_navigate('clouds_stack', context={'stack': self})
         sel.click(details_page.infoblock.element("Relationships", "Resources"))
+
+    def wait_for_delete(self):
+        sel.force_navigate("clouds_stacks")
+        quad = Quadicon(self.name, 'stack')
+        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
+            message="Wait stack to disappear", num_sec=500, fail_func=sel.refresh)
+
+    def wait_for_appear(self):
+        sel.force_navigate("clouds_stacks")
+        quad = Quadicon(self.name, 'stack')
+        wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
+            message="Wait stack to appear", num_sec=1000, fail_func=sel.refresh)
