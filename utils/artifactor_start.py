@@ -17,7 +17,9 @@ def run(port, run_id=None):
     art = Artifactor(None)
 
     if 'log_dir' not in art_config:
-        art_config['log_dir'] = log_path.join('artifacts').strpath
+        art_config['log_dir'] = log_path.strpath
+    if 'artifact_dir' not in art_config:
+        art_config['artifact_dir'] = log_path.join('artifacts').strpath
     art.set_config(art_config)
 
     art.register_plugin(merkyl.Merkyl, "merkyl")
