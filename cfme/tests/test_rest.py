@@ -871,8 +871,8 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
 
     Steps:
         * Retrieve list of entities using GET /api/<service>, pick the first one
-        * POST /api/<service>/:id/policies - add multiple policies
-        * POST /api/services/:id/policies - delete multiple policies
+        * POST /api/<service>/:id/policies - (method ``add``) add multiple policies
+        * POST /api/services/:id/policies - (method ``delete``) delete multiple policies
 
     Metadata:
         test_flag: rest
@@ -893,6 +893,79 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
     service.policies.action.delete(added_policies)
     with error.expected("ActiveRecord::RecordNotFound"):
         service.policies.action.delete(added_policies)
+
+
+@pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
+    "resource_pools", "data_stores", "services", "service_templates", "users", "groups"])
+def sub_tags_api(request, rest_api, added_policies, setup_a_provider):
+    if request.param == 'providers':
+        return ("providers", rest_api.collections.providers)
+    elif request.param == 'clusters':
+        return ("clusters", rest_api.collections.clusters)
+    elif request.param == 'hosts':
+        return ("hosts", rest_api.collections.hosts)
+    elif request.param == 'templates':
+        return ("templates", rest_api.collections.templates)
+    elif request.param == 'vms':
+        return ("vms", rest_api.collections.vms)
+    elif request.param == 'resource_pools':
+        return ("resource_pools", rest_api.collections.resource_pools)
+    elif request.param == 'data_stores':
+        return ("data_stores", rest_api.collections.data_stores)
+    elif request.param == 'services':
+        return ("services", rest_api.collections.services)
+    elif request.param == 'service_templates':
+        return ("service_templates", rest_api.collections.service_templates)
+    elif request.param == 'users':
+        return ("users", rest_api.collections.users)
+    elif request.param == 'groups':
+        return ("groups", rest_api.collections.groups)
+
+
+@pytest.fixture(scope="module")
+def tags_data():
+    name = fauxfactory.gen_alphanumeric()
+    tags_data = [{
+        "category": "category_{}".format(index, name),
+        "name": "name_{}_{}".format(index, name),
+    } for index in range(1, 5)]
+
+    return tags_data
+
+
+def test_add_delete_tags_subcollection(tags_data, sub_tags_api):
+    """Test adding the tags to subcollection
+    ["providers", "clusters", "hosts", "templates", "vms",
+    "resource_pools", "data_stores", "services", "service_templates", "users", "groups"]
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/<service>, pick the first one
+        * POST /api/<service>/:id/tags - (method ``assign``) add multiple policies
+        * POST /api/services/:id/tags - (method ``unassign``) delete multiple policies
+
+    Metadata:
+        test_flag: rest
+    """
+    service_name, api = sub_tags_api
+    try:
+        service = api[0]
+    except IndexError:
+        pytest.skip("There is no {} for adding the tags".format(service_name))
+
+    service.policies.add(tags_data)
+    tags_names = [name.get('name') for name in tags_data]
+    wait_for(
+        lambda: service.polices[0].name in tags_names,
+        num_sec=180,
+        delay=10,
+    )
+
+    service.policies.action.delete(added_policies)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        service.policies.action.delete(tags_data)
 
 
 COLLECTIONS_IGNORED_53 = {
