@@ -160,7 +160,8 @@ class Artifactor(Rigger):
         self.global_data = {
             'artifactor_config': self.config,
             'log_dir': self.log_dir.strpath,
-            'artifacts': dict()
+            'artifacts': dict(),
+            'rbac': dict()
         }
 
     def handle_failure(self, exc):
