@@ -109,8 +109,6 @@ class Provider(Updateable, Pretty, BaseProvider):
     string_name = "Infrastructure"
     page_name = "infrastructure"
     quad_name = "infra_prov"
-    vm_name = "VMs"
-    template_name = "Templates"
     properties_form = properties_form
     add_provider_button = add_infra_provider
 
@@ -123,6 +121,9 @@ class Provider(Updateable, Pretty, BaseProvider):
         self.key = key
         self.provider_data = provider_data
         self.zone = zone
+        self.vm_name = version.pick({version.LOWEST: "VMs", '5.5': "VMs and Instances"})
+        self.template_name = version.pick(
+            {version.LOWEST: "Templates", '5.5': "VM Templates and Images"})
 
     def _form_mapping(self, create=None, **kwargs):
         return {'name_text': kwargs.get('name')}
