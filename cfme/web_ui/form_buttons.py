@@ -29,8 +29,8 @@ class FormButton(Pretty):
         TYPE_CONDITION = (
             "(contains(@class, 'button') or contains(@class, 'btn') or contains(@src, 'button'))"
         )
-        NOT_DIMMED = "not(contains(@class, 'dimmed'))"
-        DIMMED = "(contains(@class, 'dimmed') or ../../div/button[contains(@class, 'disabled')])"
+        DIMMED = "(contains(@class, 'dimmed') or contains(@class, 'disabled'))"
+        NOT_DIMMED = "not{}".format(DIMMED)
         IS_DISPLAYED = (
             "not(ancestor::*[contains(@style, 'display:none') "
             "or contains(@style, 'display: none')])")
@@ -52,7 +52,7 @@ class FormButton(Pretty):
                 quoteattr((self._dimmed_alt or self._alt) if dimmed else self._alt))
 
     def _format_generator(self, dimmed=False, include_dimmed_alt=False):
-        """Generates a dict htat will be passed to the formatting strings."""
+        """Generates a dict that will be passed to the formatting strings."""
         d = {}
         for key, value in self.Button.__dict__.iteritems():
             if not key.startswith("_"):
@@ -83,8 +83,7 @@ class FormButton(Pretty):
     def can_be_clicked(self):
         """Whether the button is displayed, therefore clickable."""
         try:
-            sel.move_to_element(self)
-            return sel.is_displayed(self)
+            return sel.is_displayed(self, move_to=True)
         except NoSuchElementException:
             return False
 
@@ -96,7 +95,7 @@ class FormButton(Pretty):
         """Handler called from pytest_selenium"""
         sel.wait_for_ajax()
         if self.is_dimmed and not self._force:
-            logger.info("Not clicking {} because it is dimmed".format(str(repr(self))))
+            logger.info("Not clicking {} because it is dimmed".format(repr(self)))
             return
         sel.wait_for_element(self, timeout=5)
         return sel.click(self, no_custom_handler=True)
