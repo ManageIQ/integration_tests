@@ -12,7 +12,9 @@ from cfme.web_ui import Quadicon, fill
 from utils import testgen
 from utils import version
 
-config_option = version.pick({version.LOWEST: 'Edit Selected Hosts', '5.4': 'Edit Selected items'})
+
+def config_option():
+    return version.pick({version.LOWEST: 'Edit Selected Hosts', '5.4': 'Edit Selected items'})
 
 
 def pytest_generate_tests(metafunc):
@@ -50,7 +52,7 @@ def test_multiple_host_good_creds(setup_provider, provider, hosts, host_list):
     quads = Quadicon.all("host", this_page=True)
     for quad in quads:
             sel.check(quad.checkbox())
-    tb.select("Configuration", config_option)
+    tb.select("Configuration", config_option())
 
     cfme_host = random.choice(provider.get_yaml_data()["hosts"])
     cred = cfme_host['credentials']
@@ -76,7 +78,7 @@ def test_multiple_host_bad_creds(setup_provider, provider, hosts, host_list):
     quads = Quadicon.all("host", this_page=True)
     for quad in quads:
             sel.check(quad.checkbox())
-    tb.select("Configuration", config_option)
+    tb.select("Configuration", config_option())
 
     cfme_host = random.choice(provider.get_yaml_data()["hosts"])
     creds = conf.credentials['bad_credentials']
