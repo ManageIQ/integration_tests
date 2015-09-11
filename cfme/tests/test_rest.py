@@ -117,7 +117,7 @@ def test_add_delete_service_catalog(rest_api):
         test_flag: rest
     """
 
-    assert "delete" in rest_api.collections.service_catalogs
+    assert "delete" in rest_api.collections.service_catalogs.action.all
 
     scl = rest_api.collections.service_catalogs.action.add(
         name=fauxfactory.gen_alphanumeric(),
@@ -147,7 +147,7 @@ def test_add_delete_multiple_service_catalogs(rest_api):
         test_flag: rest
     """
 
-    assert "delete" in rest_api.collections.service_catalogs
+    assert "delete" in rest_api.collections.service_catalogs.action.all
 
     def _gen_ctl():
         return {
@@ -430,7 +430,7 @@ def test_add_delete_access_control(rest_api_access_control):
         test_flag: rest
     """
     service, entities, api = rest_api_access_control
-    assert "delete" in api.action
+    assert "delete" in api.action.all
 
     for entity in entities:
         api.action.add(entity)
@@ -471,7 +471,7 @@ def test_edit_access_control(rest_api_access_control):
         test_flag: rest
     """
     service, entities, api = rest_api_access_control
-    assert "edit" in api.action
+    assert "edit" in api.action.all
 
     try:
         entity = api[0]
@@ -580,7 +580,7 @@ def test_add_delete_policy_profiles(added_policy_profiles, rest_api):
     Metadata:
         test_flag: rest
     """
-    assert "delete" in rest_api.collections.policy_profiles.action
+    assert "delete" in rest_api.collections.policy_profiles.action.all
 
     delete_policy_profile = rest_api.collections.policy_profiles.find_by(
         policy_profiles_data[0].get('description'))
@@ -610,14 +610,14 @@ def test_add_delete_policies_through_profile(added_policies, added_policy_profil
     Metadata:
         test_flag: rest, policies
     """
-    assert "delete" in rest_api.collections.policy_profiles.action
+    assert "delete" in rest_api.collections.policy_profiles.action.all
 
     delete_policy_profile = rest_api.collections.policy_profiles.find_by(
         id=added_policy_profiles[0])
     delete_policy = delete_policy_profile.policies[0]
     delete_policy.action.delete()
     wait_for(
-        lambda: not delete_policy_profile.policies.action.find_by(id=delete_policy.id),
+        lambda: not delete_policy_profile.policies.find_by(id=delete_policy.id),
         num_sec=180,
         delay=10,
     )
@@ -639,7 +639,7 @@ def test_add_delete_policies(added_policies, rest_api):
     Metadata:
         test_flag: rest, policies
     """
-    assert "delete" in rest_api.collections.policies.action
+    assert "delete" in rest_api.collections.policies.action.all
 
     delete_policy = rest_api.collections.policies.find_by(id=added_policies[0])
     delete_policy.action.delete()
@@ -664,7 +664,7 @@ def test_refresh_template(rest_api):
     Metadata:
         test_flag: rest
     """
-    assert "refresh" in rest_api.collections.templates
+    assert "refresh" in rest_api.collections.templates.action.all
 
     try:
         template = rest_api.collections.templates[0]
@@ -716,7 +716,7 @@ def test_delete_service(rest_api_delete_service):
         test_flag: rest
     """
     service_name, api_service = rest_api_delete_service
-    assert "delete" in api_service
+    assert "delete" in api_service.action.all
 
     try:
         delete_service = api_service[0]
@@ -776,7 +776,7 @@ def test_edit_service(rest_api_edit_service):
         test_flag: rest
     """
     service_name, api_service = rest_api_delete_service
-    assert "edit" in api_service
+    assert "edit" in api_service.action.all
 
     try:
         edit_service = api_service[0]
@@ -815,7 +815,7 @@ def test_retire_services(rest_api):
     Metadata:
         test_flag: rest
     """
-    assert "retire" in rest_api.collections.services.action
+    assert "retire" in rest_api.collections.services.action.all
 
     try:
         retire_service = rest_api.collections.services[0]
@@ -824,7 +824,7 @@ def test_retire_services(rest_api):
 
     retire_service.action.retire()
     wait_for(
-        lambda: not rest_api.collections.services.action.find_by(name=retire_service.name),
+        lambda: not rest_api.collections.services.find_by(name=retire_service.name),
         num_sec=180,
         delay=10,
     )
@@ -870,7 +870,7 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
     except IndexError:
         pytest.skip("There is no {} for adding the policies".format(service_name))
 
-    assert service.policies.add(added_policies)["success"], \
+    assert service.policies.action.assing(added_policies)["success"], \
         "Adding the {} was unsuccessful".format(service_name)
     wait_for(
         lambda: service.polices[0].id in added_policies,
@@ -878,46 +878,38 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
         delay=10,
     )
 
-    assert service.policies.action.delete(added_policies)["success"], \
+    assert service.policies.action.unassign(added_policies)["success"], \
         "Deleting the {} was unsuccessful".format(service_name)
     with error.expected("ActiveRecord::RecordNotFound"):
-        service.policies.action.delete(added_policies)
+        service.policies.action.unassign(added_policies)
 
 
-def test_resolve_policies_policy_profiles(sub_policies_api, added_policies):
-    """Test adding the policies to subcollection
+def test_resolve_policies_policy_profiles(sub_policies_api, added_policies, added_policy_profiles):
+    """Test resolve the policies in services
     ["providers", "clusters", "hosts", "templates", "vms", "resource_pools"]
 
     Prerequisities:
         * An appliance with ``/api`` available.
 
     Steps:
-        * Retrieve list of entities using GET /api/<service>, pick the first one
-        * POST /api/<service>/:id/policies - (method ``add``) add multiple policies
-        * POST /api/services/:id/policies - (method ``delete``) delete multiple policies
-        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+        * POST /api/<service>/<id>/policy_profiles/<id> - (method ``retrive``) retrieve the policies
+            for service through policy_profile id
+        * POST /api/<service>/policies/<id> - (method ``retrive``) retrieve the policies for service
+            through policy_profile id
 
     Metadata:
         test_flag: rest
     """
     service_name, api = sub_policies_api
+    if "retrive" not in api.action.all:
+        pytest.skip("Retrive policies action is not implemented in this version")
     try:
         service = api[0]
     except IndexError:
-        pytest.skip("There is no {} for adding the policies".format(service_name))
+        pytest.skip("There is no {} for retrive the policies".format(service_name))
 
-    assert service.policies.add(added_policies)["success"], \
-        "Adding the {} was unsuccessful".format(service_name)
-    wait_for(
-        lambda: service.polices[0].id in added_policies,
-        num_sec=180,
-        delay=10,
-    )
-
-    assert service.policies.action.delete(added_policies)["success"], \
-        "Deleting the {} was unsuccessful".format(service_name)
-    with error.expected("ActiveRecord::RecordNotFound"):
-        service.policies.action.delete(added_policies)
+    service  # for checker
+    # TODO think about policy_profiles
 
 
 @pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
@@ -981,7 +973,7 @@ def test_add_delete_tags_subcollection(tags_data, sub_tags_api):
     except IndexError:
         pytest.skip("There is no {} for adding the tags".format(service_name))
 
-    service.policies.add(tags_data)
+    service.policies.action.add(tags_data)
     tags_names = [name.get('name') for name in tags_data]
     wait_for(
         lambda: service.polices[0].name in tags_names,
