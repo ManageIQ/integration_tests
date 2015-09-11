@@ -860,6 +860,8 @@ def sub_policies_api(request, rest_api, added_policies, setup_a_provider):
         return ("templates", rest_api.collections.templates)
     elif request.param == 'vms':
         return ("vms", rest_api.collections.vms)
+    elif request.param == 'resource_pools':
+        return ("resource_pools", rest_api.collections.resource_pools)
 
 
 def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
@@ -884,14 +886,16 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
     except IndexError:
         pytest.skip("There is no {} for adding the policies".format(service_name))
 
-    service.policies.add(added_policies)
+    assert service.policies.add(added_policies)["success"], \
+        "Adding the {} was unsuccessful".format(service_name)
     wait_for(
         lambda: service.polices[0].id in added_policies,
         num_sec=180,
         delay=10,
     )
 
-    service.policies.action.delete(added_policies)
+    assert service.policies.action.delete(added_policies)["success"], \
+        "Deleting the {} was unsuccessful".format(service_name)
     with error.expected("ActiveRecord::RecordNotFound"):
         service.policies.action.delete(added_policies)
 
