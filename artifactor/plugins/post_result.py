@@ -44,7 +44,13 @@ class PostResult(ArtifactorBasePlugin):
         report['tests'] = artifacts
 
         def _inc_test_count(test):
-            test_counts[test['statuses']['overall']] += 1
+            error = ""
+            if 'statuses' in test:
+                test_counts[test['statuses']['overall']] += 1
+            else:
+                error += str(test)
+            with log_path.join('no_status.log').open('a') as f:
+                f.write(error)
 
         map(_inc_test_count, artifacts.values())
         report['test_counts'] = test_counts
