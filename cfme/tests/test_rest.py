@@ -348,6 +348,49 @@ def test_vm_add_lifecycle_event(request, setup_a_provider, rest_api, vm, from_de
     ))) == 1, "Could not find the lifecycle event in the database"
 
 
+@pytest.mark.ignore_stream("5.3")
+def test_add_delete_custom_attributes_vm(rest_api, vm):
+    if "add" not in rest_api.collections.vms.custom_attributes.action.all:
+        pytest.skip("Custom attributes are not implemented in this version")
+
+    name = fauxfactory.gen_alphanumeric()
+    custom_attributes_data = {
+        "name": name,
+        "value": name,
+    }
+
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    rest_vm.custom_attributes.action.add(custom_attributes_data)
+    rest_vm.reload()
+    assert rest_vm.custom_attributes.find_by(name=custom_attributes_data.get('name'))
+
+    rest_vm.custom_attributes.action.delete(name=custom_attributes_data.get('name'))
+    rest_vm.reload()
+    assert not rest_vm.custom_attributes.find_by(name=custom_attributes_data.get('name'))
+
+
+@pytest.mark.ignore_stream("5.3")
+def test_edit_custom_attributes_vm(rest_api, vm):
+    if "add" not in rest_api.collections.vms.custom_attributes.action.all:
+        pytest.skip("Custom attributes are not implemented in this version")
+    name = fauxfactory.gen_alphanumeric()
+    custom_attributes_data = {
+        "name": name,
+        "value": name,
+    }
+
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    rest_vm.custom_attributes.action.add(custom_attributes_data)
+    rest_vm.reload()
+    assert rest_vm.custom_attributes.find_by(name=custom_attributes_data.get('name'))
+
+    custom_attributes_data["value"] = fauxfactory.gen_alphanumeric()
+    rest_vm.custom_attributes.action.edit(custom_attributes_data)
+    rest_vm.reload()
+    custom = rest_vm.custom_attributes.find_by(name=custom_attributes_data.get('name'))
+    assert custom.value != custom_attributes_data.get('name')
+
+
 @pytest.fixture(scope="module")
 def users_data():
     name = fauxfactory.gen_alphanumeric()
@@ -884,6 +927,7 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
         service.policies.action.unassign(added_policies)
 
 
+@pytest.mark.ignore_stream("5.3")
 def test_resolve_policies_policy_profiles(sub_policies_api, added_policies, added_policy_profiles,
         rest_api):
     """Test resolve the policies in services
@@ -927,6 +971,7 @@ def test_resolve_policies_policy_profiles(sub_policies_api, added_policies, adde
         service {}".format(service_name)
 
 
+@pytest.mark.ignore_stream("5.3")
 def test_automation_request(rest_api):
     """Test adding the automation request
 
