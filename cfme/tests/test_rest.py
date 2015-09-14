@@ -960,13 +960,15 @@ def test_automation_request(rest_api):
         }
     }
 
-    rest_api.collections.automation_request.action.create(structure_request)
-    wait_for(
-        lambda: rest_api.collections.automation_request.find_by(
-            instance=structure_request),
-        num_sec=180,
-        delay=10,
-    )
+    request = rest_api.collections.automation_request.action.create(structure_request)
+
+    def _finished():
+        request.reload()
+        if request.status.lower() in {"error"}:
+            pytest.fail("Error during automation request: `{}`".format(request.message))
+        return request.request_state.lower() in {"finished"}
+
+    wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
 
 
 @pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
