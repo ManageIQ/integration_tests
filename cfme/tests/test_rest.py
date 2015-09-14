@@ -884,7 +884,8 @@ def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
         service.policies.action.unassign(added_policies)
 
 
-def test_resolve_policies_policy_profiles(sub_policies_api, added_policies, added_policy_profiles):
+def test_resolve_policies_policy_profiles(sub_policies_api, added_policies, added_policy_profiles,
+        rest_api):
     """Test resolve the policies in services
     ["providers", "clusters", "hosts", "templates", "vms", "resource_pools"]
 
@@ -908,8 +909,22 @@ def test_resolve_policies_policy_profiles(sub_policies_api, added_policies, adde
     except IndexError:
         pytest.skip("There is no {} for retrive the policies".format(service_name))
 
-    service  # for checker
-    # TODO think about policy_profiles
+    policy = service.policies.action.resolve(id=added_policies[-1])
+    assert policy["success"], "Resolve the policy {} for {} was unsuccessful".format(
+        added_policies[-1], service_name)
+    assert policy["result"]["id"] == added_policies[-1], "IDs of the resolved policy and \
+        requested are different for service {}".format(service_name)
+
+    policy_profile = service.policy_profiles.action.resolve(added_policy_profiles[-1])
+    assert policy_profile["success"], "Resolve the policies by policy profile {} for {} was \
+        unsuccessful".format(added_policy_profiles[-1], service_name)
+    assert policy_profile["result"]["id"] == added_policy_profiles[-1], "IDs of the resolved \
+    policy profile and requested are different for service {}".format(service_name)
+    assert len(policy_profile["result"]["policies"]) == len(
+        rest_api.collections.policy_profiles.action.find_by(
+            id=added_policy_profiles[-1]).policies), "The number of resolved \
+        policies of the policy_profile and assigned to this profile are different for \
+        service {}".format(service_name)
 
 
 @pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
