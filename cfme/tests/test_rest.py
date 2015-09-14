@@ -928,6 +928,21 @@ def test_resolve_policies_policy_profiles(sub_policies_api, added_policies, adde
 
 
 def test_automation_request(rest_api):
+    """Test adding the automation request
+
+     Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/automation_request - (method ``create``) add request
+        * Retrieve list of entities using GET /api/automation_request and find just added request
+    Metadata:
+        test_flag: rest
+    """
+
+    if "automation_request" not in rest_api.collections:
+        pytest.skip("automation request collection is not implemented in this version")
+
     structure_request = {
         "uri_parts": {
             "namespace": fauxfactory.gen_alphanumeric(),
