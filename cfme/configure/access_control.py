@@ -4,7 +4,7 @@ import cfme
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons, Input, \
-    Table
+    Table, UpDownSelect
 from cfme.web_ui.menu import nav
 from utils.update import Updateable
 from utils import version
@@ -46,6 +46,11 @@ edit_tags_form = Form(
 
 tag_table = Table("//div[@id='assignments_div']//table")
 
+group_order_selector = UpDownSelect(
+    "select#seq_fields",
+    "//img[@alt='Move selected fields up']",
+    "//img[@alt='Move selected fields down']")
+
 nav.add_branch(
     'configuration',
     {
@@ -86,6 +91,16 @@ nav.add_branch(
                     {
                         'cfg_accesscontrol_group_edit':
                         lambda d: tb_select('Edit this Group')
+                    }
+                ],
+
+                'cfg_accesscontrol_group_order':
+                [
+                    lambda d: ac_tree("Groups"),
+                    {
+                        'cfg_accesscontrol_group_edit_seq':
+                        lambda d: tb.select("Configuration", 'Edit Sequence of User Groups '
+                        'for LDAP Look Up')
                     }
                 ],
 
@@ -254,6 +269,21 @@ class Group(Updateable, Pretty):
         sel.click(row[0])
         form_buttons.save()
         flash.assert_success_message('Tag edits were successfully saved')
+
+
+def get_group_order():
+    sel.force_navigate("cfg_accesscontrol_group_edit_seq")
+    return group_order_selector.get_items()
+
+
+def set_group_order(items):
+    original_order = get_group_order()
+    # We pick only the same amount of items for comparing
+    original_order = original_order[:len(items)]
+    if items == original_order:
+        return  # Ignore that, would cause error on Save click
+    fill(group_order_selector, items)
+    sel.click(form_buttons.save)
 
 
 class Role(Updateable, Pretty):
