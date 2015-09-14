@@ -7,6 +7,7 @@ import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme import Credential
 from cfme import login
+from cfme.configure.access_control import set_group_order
 from cfme.exceptions import OptionNotAvailable
 from cfme.infrastructure import virtual_machines
 from cfme.web_ui import flash, Table, toolbar as tb
@@ -284,6 +285,27 @@ def test_edit_default_group():
     sel.check(sel.element(".//input[@type='checkbox']", root=row[0]))
     tb.select('Configuration', 'Edit the selected Group')
     flash.assert_message_match(flash_msg.format(group.description))
+
+
+def test_edit_sequence_usergroups(request):
+    """Test for editing the sequence of user groups for LDAP lookup.
+
+    Steps:
+        * Login as Administrator user
+        * create a new group
+        * Edit the sequence of the new group
+        * Verify the changed sequence
+    """
+    group = new_group()
+    group.create()
+    request.addfinalizer(group.delete)
+    sel.force_navigate("cfg_accesscontrol_groups")
+    row = group_table.find_row_by_cells({'Name': group.description})
+    original_sequence = sel.text(row.sequence)
+    set_group_order([group.description])
+    row = group_table.find_row_by_cells({'Name': group.description})
+    changed_sequence = sel.text(row.sequence)
+    assert original_sequence != changed_sequence, "Edit Sequence Failed"
 
 
 # Role test cases
