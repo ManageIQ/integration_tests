@@ -6,6 +6,7 @@ from cfme.common.vm import VM
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyed
 from utils import testgen
+from utils import version
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -16,7 +17,7 @@ pytestmark = [pytest.mark.ignore_stream("upstream")]
 def delete_fx_provider_event(db, provider):
     logger.debug("Deleting timeline events for provider name {}".format(provider.name))
     ems = db['ext_management_systems']
-    ems_events = db['ems_events']
+    ems_events = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
     with db.transaction:
         providers = (
             db.session.query(ems_events.id)
