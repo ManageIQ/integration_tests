@@ -927,6 +927,33 @@ def test_resolve_policies_policy_profiles(sub_policies_api, added_policies, adde
         service {}".format(service_name)
 
 
+def test_automation_request(rest_api):
+    structure_request = {
+        "uri_parts": {
+            "namespace": fauxfactory.gen_alphanumeric(),
+            "class": "Request",
+            "instance": fauxfactory.gen_alphanumeric(),
+            "message": "create"
+        },
+        "parameters": {
+            "var1": "value 1",
+            "var2": "value 2",
+            "minimum_memory": 2048
+        },
+        "requester": {
+            "auto_approve": True
+        }
+    }
+
+    rest_api.collections.automation_request.action.create(structure_request)
+    wait_for(
+        lambda: rest_api.collections.automation_request.find_by(
+            instance=structure_request),
+        num_sec=180,
+        delay=10,
+    )
+
+
 @pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
     "resource_pools", "data_stores", "services", "service_templates", "users", "groups"])
 def sub_tags_api(request, rest_api, added_policies, setup_a_provider):
