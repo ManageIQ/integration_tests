@@ -20,7 +20,6 @@ from utils import ports
 from utils.log import logger
 from utils.path import data_path
 from utils.net import net_check
-from utils.version import current_version
 from utils.wait import TimedOutError
 
 
@@ -41,20 +40,6 @@ def pytest_addoption(parser):
 @pytest.fixture(scope="session", autouse=True)
 def set_session_timeout():
     store.current_appliance.set_session_timeout(86400)
-
-
-@pytest.fixture(scope="session", autouse=True)
-def set_default_domain():
-    if current_version() < "5.3":
-        return  # Domains are not in 5.2.x and lower
-    ssh_client = store.current_appliance.ssh_client
-    # The command ignores the case when the Default domain is not present (: true)
-    result = ssh_client.run_rails_command(
-        "\"d = MiqAeDomain.where :name => 'Default'; puts (d) ? d.first.enabled : true\"")
-    if result.output.lower().strip() != "true":
-        # Re-enable the domain
-        ssh_client.run_rails_command(
-            "\"d = MiqAeDomain.where :name => 'Default'; d = d.first; d.enabled = true; d.save!\"")
 
 
 @pytest.fixture(scope="session", autouse=True)
