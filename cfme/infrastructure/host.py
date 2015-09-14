@@ -57,7 +57,11 @@ credential_form = Form(
         ('ipmi_principal', Input("ipmi_userid")),
         ('ipmi_secret', Input("ipmi_password")),
         ('ipmi_verify_secret', Input("ipmi_verify")),
-        ('validate_btn', form_buttons.validate)
+        ('validate_btn', form_buttons.validate),
+        ('validate_multi_host', form_buttons.validate_multi_host),
+        ('save_btn', form_buttons.save),
+        ('cancel_changes', form_buttons.cancel_changes),
+        ('validate_host', Select('select#validate_id')),
     ])
 
 manage_policies_tree = CheckboxTree(
