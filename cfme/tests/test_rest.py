@@ -873,6 +873,48 @@ def test_retire_services(rest_api):
     )
 
 
+@pytest.mark.ignore_stream("5.3")
+def test_order_service(rest_api):
+    """Test order a service
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/services_catalog , pick the first one
+        * POST /api/service_catalogs/:id/service_templates
+
+    Metadata:
+        test_flag: rest
+    """
+
+    try:
+        service_catalog = rest_api.collections.service_catalogs[0]
+    except IndexError:
+        pytest.skip("There is no service_catalog for order testing")
+
+    try:
+        service_template = service_catalog.service_templates[0]
+    except IndexError:
+        pytest.skip("There is no service_catalog for order testing")
+
+    if "order" not in service_template.action.all:
+        pytest.skip("Order service action is not implemented in this version")
+
+    order_request = {
+        "href": service_template.id,
+        "option_0_vm_target_name": "test-vm-0001",
+        "option_0_vm_target_hostname": "test-vm-0001"
+    }
+
+    service_template.action.order(order_request)
+    wait_for(
+        lambda: rest_api.collections.service_requests.find_by(id=service_template.id),
+        num_sec=180,
+        delay=10,
+    )
+
+
 # Test subcollection
 @pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
     "resource_pools"])
