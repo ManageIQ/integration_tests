@@ -4,6 +4,7 @@
 :var edit_form: A :py:class:`cfme.web_ui.Form` object describing the instance edit form.
 """
 from xml.sax.saxutils import quoteattr
+from cfme import js
 
 from cfme.cloud.provider import OpenStackProvider, EC2Provider
 from cfme.exceptions import InstanceNotFound, OptionNotAvailable, UnknownProviderType
@@ -11,16 +12,18 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import (
     accordion, fill, flash, form_buttons, paginator, toolbar, CheckboxTree,
-    Form, Region, Select, Tree, Quadicon
+    Form, Region, Select, Tree, Quadicon, Calendar
 )
 from cfme.web_ui.menu import nav
+from datetime import date
 from functools import partial
 from utils import version
 from utils.virtual_machines import deploy_template
 from utils.log import logger
 from utils.pretty import Pretty
+from utils.timeutil import parsetime
 from utils.update import Updateable
-from utils.wait import wait_for
+from utils.wait import wait_for, TimedOutError
 
 
 cfg_btn = partial(toolbar.select, 'Configuration')
@@ -62,6 +65,33 @@ edit_form = Form(
         ('remove_all_btn', "//img[@alt='Move all VMs to right']"),
     ])
 
+
+def date_retire_element(fill_data):
+    """We need to call this function that will mimic clicking the calendar, picking the date and
+    the subsequent callbacks from the server"""
+    # TODO: Move the code in the Calendar itself? I did not check other calendars
+    if isinstance(fill_data, date):
+        date_str = '%s/%s/%s' % (fill_data.month, fill_data.day, fill_data.year)
+    else:
+        date_str = str(fill_data)
+    sel.execute_script(
+        js.update_retirement_date_function_script +
+        "updateDate(arguments[0]);",
+        date_str
+    )
+
+retire_form = Form(fields=[
+    ('date_retire', date_retire_element),
+    ('warn', sel.Select("select#retirement_warn"))
+])
+
+
+retirement_date_form = Form(fields=[
+    ('retirement_date_text', Calendar("miq_date_1")),
+    ('retirement_warning_select', Select("//select[@id='retirement_warn']"))
+])
+
+retire_remove_button = "//span[@id='remove_button']/a/img"
 
 nav.add_branch(
     "clouds_instances",
@@ -155,7 +185,10 @@ nav.add_branch(
                         "clouds_instances_filter":
                         lambda ctx: visible_tree.click_path(ctx["filter_name"])
                     }
-                ]
+                ],
+
+                    "cloud_instance_by_name": lambda ctx: sel.click(ctx['instance'].find_quadicon(
+                        do_not_navigate=True))
             }
         ],
 
@@ -499,6 +532,57 @@ class Instance(Updateable, Pretty):
                     quoteattr(tag))):
             tags.append(sel.text(row).strip())
         return tags
+
+    def retire(self):
+        sel.force_navigate("cloud_instance_by_name", context={'instance': self})
+        lcl_btn("Retire this Instance", invokes_alert=True)
+        sel.handle_alert()
+        flash.assert_success_message(
+            "Retire initiated for 1 VM and Instance from the CFME Database")
+
+    @property
+    def retirement_date(self):
+        """Returns the retirement date of the selected machine.
+
+        Returns:
+            :py:class:`NoneType` if there is none, or :py:class:`utils.timeutil.parsetime`
+        """
+        date_str = self.get_detail(properties=("Lifecycle", "Retirement Date")).strip()
+        if date_str.lower() == "never":
+            return None
+        return parsetime.from_american_date_only(date_str)
+
+    def set_retirement_date(self, when, warn=None):
+        """Sets the retirement date for this Vm object.
+
+        It incorporates some magic to make it work reliably since the retirement form is not very
+        pretty and it can't be just "done".
+
+        Args:
+            when: When to retire. :py:class:`str` in format mm/dd/yy of
+                :py:class:`datetime.datetime` or :py:class:`utils.timeutil.parsetime`.
+            warn: When to warn, fills the select in the form in case the ``when`` is specified.
+        """
+        self.load_details()
+        lcl_btn("Set Retirement Date")
+        sel.wait_for_element("#miq_date_1")
+        if when is None:
+            try:
+                wait_for(lambda: sel.is_displayed(retire_remove_button), num_sec=5, delay=0.2)
+                sel.click(retire_remove_button)
+                wait_for(lambda: not sel.is_displayed(retire_remove_button), num_sec=10, delay=0.2)
+                sel.click(form_buttons.save)
+            except TimedOutError:
+                pass
+        else:
+            if sel.is_displayed(retire_remove_button):
+                sel.click(retire_remove_button)
+                wait_for(lambda: not sel.is_displayed(retire_remove_button), num_sec=15, delay=0.2)
+            fill(retire_form.date_retire, when)
+            wait_for(lambda: sel.is_displayed(retire_remove_button), num_sec=15, delay=0.2)
+            if warn is not None:
+                fill(retire_form.warn, warn)
+            sel.click(form_buttons.save)
 
 
 class OpenStackInstance(Instance, Updateable):
