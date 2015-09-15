@@ -15,11 +15,15 @@ class Blocker(object):
     """Base class for all blockers
 
     REQUIRED THING! Any subclass' constructors must accept kwargs and after POPping the values
-    required for the blocker's operation, ``self.__dict__["kwargs"] = kwargs`` must be done!
+    required for the blocker's operation, `call to ``super`` with ``**kwargs`` must be done!
     Failing to do this will render some of the functionality disabled ;).
     """
     blocks = False
     kwargs = {}
+
+    def __init__(self, **kwargs):
+        self.forced_streams = kwargs.pop("forced_streams", [])
+        self.__dict__["kwargs"] = kwargs
 
     @classmethod
     def all_blocker_engines(cls):
@@ -75,7 +79,7 @@ class GH(Blocker):
         return cls._github
 
     def __init__(self, description, **kwargs):
-        self.__dict__["kwargs"] = kwargs
+        super(GH, self).__init__(**kwargs)
         self._repo = None
         self.issue = None
         if isinstance(description, (list, tuple)):
@@ -132,12 +136,13 @@ class BZ(Blocker):
 
     def __init__(self, bug_id, **kwargs):
         self.ignore_bugs = kwargs.pop("ignore_bugs", [])
-        self.__dict__["kwargs"] = kwargs
+        super(BZ, self).__init__(**kwargs)
         self.bug_id = int(bug_id)
 
     @property
     def data(self):
-        return self.bugzilla.resolve_blocker(self.bug_id, ignore_bugs=self.ignore_bugs)
+        return self.bugzilla.resolve_blocker(
+            self.bug_id, ignore_bugs=self.ignore_bugs, force_block_streams=self.forced_streams)
 
     @property
     def bugzilla_bug(self):

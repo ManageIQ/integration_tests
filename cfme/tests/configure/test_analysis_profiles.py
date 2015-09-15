@@ -5,6 +5,7 @@ import utils.error as error
 import cfme.fixtures.pytest_selenium as sel
 from cfme.configure.configuration import HostAnalysisProfile, VMAnalysisProfile
 from cfme.web_ui import Table, flash, toolbar as tb
+from utils.blockers import BZ
 from utils.update import update
 
 
@@ -33,7 +34,7 @@ def test_host_analysis_profile_crud():
     p.delete()
 
 
-@pytest.mark.meta(blockers=[1263073])
+@pytest.mark.meta(blockers=[BZ(1263073, forced_streams=["5.4"])])
 def test_vmanalysis_profile_description_validation():
     """ Test to validate description in vm profiles"""
     p = VMAnalysisProfile(
