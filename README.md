@@ -7,3 +7,12 @@ CloudForms: Management Engine - Tests
 - [Selenium over VNC](http://cfme-tests.readthedocs.org/guides/vnc_selenium.html)
 - [Setting up Sublime Text Editor](http://cfme-tests.readthedocs.org/guides/editors.html)
 - [Setting up Emacs](http://cfme-tests.readthedocs.org/guides/editors.html)
+
+Legal
+-----
+
+Copyright 2013 Red Hat, Inc. and/or its affiliates.
+
+License: GPL version 2 or any later version (see COPYING or
+http://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html for
+details).
