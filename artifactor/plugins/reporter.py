@@ -105,21 +105,21 @@ class Reporter(ArtifactorBasePlugin):
         return None, {'version': version}
 
     @ArtifactorBasePlugin.check_configured
-    def run_report(self, artifacts, log_dir, version=None):
-        template_data = self.process_data(artifacts, log_dir, version)
+    def run_report(self, artifacts, artifact_dir, version=None):
+        template_data = self.process_data(artifacts, artifact_dir, version)
 
         if self.only_failed:
             template_data['tests'] = [x for x in template_data['tests']
                                   if x['outcomes']['overall'] not in ['passed']]
 
-        self.render_report(template_data, 'report', log_dir, 'test_report.html')
+        self.render_report(template_data, 'report', artifact_dir, 'test_report.html')
 
     @ArtifactorBasePlugin.check_configured
-    def run_provider_report(self, artifacts, log_dir, version=None):
+    def run_provider_report(self, artifacts, artifact_dir, version=None):
         for mgmt in cfme_data['management_systems'].keys():
-            template_data = self.process_data(artifacts, log_dir, version, name_filter=mgmt)
+            template_data = self.process_data(artifacts, artifact_dir, version, name_filter=mgmt)
 
-            self.render_report(template_data, "report_{}".format(mgmt), log_dir,
+            self.render_report(template_data, "report_{}".format(mgmt), artifact_dir,
                                'test_report_provider.html')
 
     def render_report(self, report, filename, log_dir, template):
