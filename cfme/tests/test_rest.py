@@ -1090,6 +1090,21 @@ def test_add_delete_tags_subcollection(tags_data, sub_tags_api):
         service.policies.action.delete(tags_data)
 
 
+# TODO There is no add/create method according to the manageiq-docs, check it
+def test_policy_action(rest_api):
+    assert rest_api.collections.policy_actions.get('name', None) == 'policy_actions'
+
+
+# TODO There is no add/create method according to the manageiq-docs, check it
+def test_policy_condition(rest_api):
+    assert rest_api.collections.conditions.get('conditions', None) is not None
+
+
+# TODO There is no add/create method according to the manageiq-docs, check it
+def test_policy_events(rest_api):
+    assert rest_api.collections.events.get('name', None) == 'events'
+
+
 COLLECTIONS_IGNORED_53 = {
     "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
     "tags", "tasks",
@@ -1099,8 +1114,8 @@ COLLECTIONS_IGNORED_53 = {
 # TODO: Gradually remove and write separate tests for those when they get extended
 @pytest.mark.parametrize(
     "collection_name",
-    ["availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
-    "tasks", "request_tasks", "requests", "servers", "service_requests"])
+    ["availability_zones", "flavors", "security_groups", "tasks", "request_tasks",
+    "requests", "servers", "service_requests"])
 @pytest.mark.uncollectif(lambda collection_name: collection_name in COLLECTIONS_IGNORED_53 and
     current_version() < "5.4")
 def test_query_simple_collections(rest_api, collection_name):
