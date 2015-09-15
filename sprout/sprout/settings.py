@@ -26,8 +26,6 @@ SECRET_KEY = credentials["sprout"]["key"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "false") == "true"
 
-TEMPLATE_DEBUG = True
-
 ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1"
@@ -79,6 +77,7 @@ TEMPLATES = [
                 'appliances.context_processors.hubber_url',
                 'appliances.context_processors.sprout_needs_update',
             ],
+            'debug': True,
         },
     },
 ]
