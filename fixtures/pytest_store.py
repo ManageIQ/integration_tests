@@ -75,7 +75,11 @@ class Store(object):
 
     @property
     def user(self):
-        return self._user or 'default'
+        return self._user
+
+    @user.setter
+    def user(self, value):
+        self._user = value
 
     @property
     def current_appliance(self):
@@ -173,14 +177,6 @@ def _pop_appliance(app):
 def pytest_namespace():
     # Expose the pytest store as pytest.store
     return {'store': store}
-
-
-def set_user(user):
-    store._user = user
-
-
-def unset_user():
-    store._user = None
 
 
 def pytest_configure(config):

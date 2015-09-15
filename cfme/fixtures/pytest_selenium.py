@@ -969,7 +969,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
     recycle = False
 
     # remember the current user, if any
-    current_user = login.current_user()
+    current_user = store.user
 
     # Check if the page is blocked with blocker_div. If yes, let's headshot the browser right here
     if (
@@ -1030,7 +1030,7 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         if not current_user:  # default to admin user
             login.login_admin()
         else:  # we recycled and want to log back in
-            login.login(current_user.username, current_user.password)
+            login.login(store.user)
 
     try:
         try:

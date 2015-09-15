@@ -1,5 +1,6 @@
 import pytest
-from cfme import dashboard, login
+from cfme import dashboard, login, Credential
+from cfme.configure.access_control import User
 from utils import conf, error
 
 pytestmark = pytest.mark.usefixtures('browser')
@@ -31,6 +32,9 @@ def test_login(method):
 def test_bad_password():
     """ Tests logging in with a bad password. """
     pytest.sel.get(pytest.sel.base_url())
+    creds = Credential(principal=conf.credentials['default']['username'], secret="badpassword@#$")
+    user = User(credential=creds)
+
     with error.expected('Sorry, the username or password you entered is incorrect.'):
-        login.login(conf.credentials['default']['username'], "badpassword@#$")
+        login.login(user)
     assert login.page.is_displayed()

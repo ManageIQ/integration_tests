@@ -73,7 +73,8 @@ def test_user_login():
     user = new_user()
     user.create()
     try:
-        login.login(user.credential.principal, user.credential.secret)
+        with user:
+            sel.force_navigate('dashboard')
     finally:
         login.login_admin()
 
@@ -203,9 +204,9 @@ def test_current_user_login_delete(request):
     user.create()
     request.addfinalizer(user.delete)
     request.addfinalizer(login.login_admin)
-    login.login(user.credential.principal, user.credential.secret)
-    with error.expected("Current EVM User \"%s\" cannot be deleted" % user.name):
-        user.delete()
+    with user:
+        with error.expected("Current EVM User \"%s\" cannot be deleted" % user.name):
+            user.delete()
 
 
 # Group test cases
@@ -410,21 +411,21 @@ def test_permission_edit(request, product_features, action):
     group.create()
     user = new_user(group=group)
     user.create()
-    login.login(user.credential.principal, user.credential.secret)
-    try:
-        action()
-    except Exception:
-        pytest.fail('Incorrect permissions set')
+    with user:
+        try:
+            action()
+        except Exception:
+            pytest.fail('Incorrect permissions set')
     login.login_admin()
     role.update({'product_features': [(['Everything'], True)] +
                                      [(k, False) for k in product_features]
                  })
-    login.login(user.credential.principal, user.credential.secret)
-    try:
-        with error.expected(Exception):
-            action()
-    except error.UnexpectedSuccessException:
-        pytest.Fails('Permissions have not been updated')
+    with user:
+        try:
+            with error.expected(Exception):
+                action()
+        except error.UnexpectedSuccessException:
+            pytest.Fails('Permissions have not been updated')
 
 
 def _mk_role(name=None, vm_restriction=None, product_features=None):
@@ -478,23 +479,24 @@ def test_permissions(role, allowed_actions, disallowed_actions):
     user.create()
     fails = {}
     try:
-        login.login(user.credential.principal, user.credential.secret)
-        for name, action_thunk in allowed_actions.items():
-            try:
-                action_thunk()
-            except Exception:
-                fails[name] = "%s: %s" % (name, traceback.format_exc())
-        for name, action_thunk in disallowed_actions.items():
-            try:
-                with error.expected(Exception):
+        with user:
+            login.login(user)
+            for name, action_thunk in allowed_actions.items():
+                try:
                     action_thunk()
-            except error.UnexpectedSuccessException:
-                fails[name] = "%s: %s" % (name, traceback.format_exc())
-        if fails:
-            message = ''
-            for failure in fails.values():
-                message = "%s\n\n%s" % (message, failure)
-            raise Exception(message)
+                except Exception:
+                    fails[name] = "%s: %s" % (name, traceback.format_exc())
+            for name, action_thunk in disallowed_actions.items():
+                try:
+                    with error.expected(Exception):
+                        action_thunk()
+                except error.UnexpectedSuccessException:
+                    fails[name] = "%s: %s" % (name, traceback.format_exc())
+            if fails:
+                message = ''
+                for failure in fails.values():
+                    message = "%s\n\n%s" % (message, failure)
+                raise Exception(message)
     finally:
         login.login_admin()
 
@@ -593,10 +595,10 @@ def test_user_change_password(request):
     user.create()
     request.addfinalizer(user.delete)
     request.addfinalizer(login.login_admin)
-    login.logout()
-    assert not login.logged_in()
-    login.login(user.credential.principal, user.credential.secret)
-    assert login.current_full_name() == user.name
+    with user:
+        assert not login.logged_in()
+        login.login(user)
+        assert login.current_full_name() == user.name
     login.login_admin()
     with update(user):
         user.credential = Credential(
@@ -604,7 +606,7 @@ def test_user_change_password(request):
             secret="another_very_secret",
             verify_secret="another_very_secret",
         )
-    login.logout()
-    assert not login.logged_in()
-    login.login(user.credential.principal, user.credential.secret)
-    assert login.current_full_name() == user.name
+    with user:
+        assert not login.logged_in()
+        login.login(user)
+        assert login.current_full_name() == user.name
