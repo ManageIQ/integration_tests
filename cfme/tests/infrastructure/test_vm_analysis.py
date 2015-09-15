@@ -5,9 +5,9 @@ import random
 import time
 import urlparse
 
+from cfme.common.vm import VM
 from cfme.configure import tasks
 from cfme.exceptions import CFMEException
-from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version
@@ -135,13 +135,13 @@ def vm_name(vm_template_name):
 @pytest.fixture(scope="class")
 def template(request, vm_template_name, provider):
     logger.info("Starting template fixture")
-    return Vm(vm_template_name, provider)
+    return VM.factory(vm_template_name, provider)
 
 
 @pytest.fixture(scope="class")
 def vm(request, vm_template_name, vm_name, provider):
     logger.info("Starting vm fixture")
-    vm = Vm(vm_name, provider, template_name=vm_template_name)
+    vm = VM.factory(vm_name, provider, template_name=vm_template_name)
 
     if not provider.mgmt.does_vm_exist(vm_name):
         vm.create_on_provider(allow_skip="default")
@@ -246,11 +246,7 @@ def verify_no_data(provider_crud, vm):
     vm.load_details()
     if vm.get_detail(properties=('Security', 'Users')) != '0':
         logger.info("Analysis data already found, deleting/rediscovering vm...")
-        vm.remove_from_cfme(cancel=False, from_details=True)
-        wait_for(vm.does_vm_exist_in_cfme, fail_condition=True,
-                 num_sec=300, delay=15, fail_func=pytest.sel.refresh)
-        provider_crud.refresh_provider_relationships()
-        vm.wait_to_appear()
+        vm.rediscover()
 
 
 # Wait for the task to finish
@@ -291,7 +287,7 @@ def _scan_rest(rest_api, vm, rest):
 
 
 def _scan_ui(vm):
-    logger.info('Initiating vm smart scan on ' + vm.provider_crud.name + ":" + vm.name)
+    logger.info('Initiating vm smart scan on ' + vm.provider.name + ":" + vm.name)
     vm.smartstate_scan(cancel=False, from_details=True)
     flash.assert_message_contain("Smart State Analysis initiated")
 

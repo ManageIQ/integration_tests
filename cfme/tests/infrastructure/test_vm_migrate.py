@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.common.vm import VM
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils.wait import wait_for
@@ -24,7 +24,7 @@ def test_vm_migrate(setup_provider, provider, request):
     Metadata:
         test_flag: migrate, provision
     """
-    vm = Vm("vmtest", provider)
+    vm = VM.factory("vmtest", provider)
     vm.migrate_vm("email@xyz.com", "first", "last")
     flash.assert_no_errors()
     row_description = 'vmtest'

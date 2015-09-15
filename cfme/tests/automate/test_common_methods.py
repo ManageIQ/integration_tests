@@ -6,7 +6,7 @@ import pytest
 from datetime import timedelta
 
 from cfme.automate.buttons import ButtonGroup, Button
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.common.vm import VM
 from cfme.web_ui import toolbar
 from utils import testgen
 from utils.timeutil import parsetime
@@ -50,7 +50,7 @@ def vm_name():
 
 @pytest.fixture(scope="function")
 def testing_vm(request, vm_name, setup_provider, provider, provisioning):
-    vm_obj = Vm(vm_name, provider, provisioning["template"])
+    vm_obj = VM.factory(vm_name, provider, provisioning["template"])
 
     def _finalize():
         vm_obj.delete_from_provider()

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import fauxfactory
 import pytest
-from cfme.cloud.instance import instance_factory, details_page
-from cfme.web_ui import toolbar, jstimelines
+from cfme.cloud.instance import Instance
+from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyed
 from utils import testgen
 from utils.blockers import BZ
@@ -57,7 +57,7 @@ def delete_instances_fin(request):
 def test_instance(setup_provider, request, delete_instances_fin, provider, vm_name):
     """ Fixture to provision instance on the provider
     """
-    instance = instance_factory(vm_name, provider)
+    instance = Instance.factory(vm_name, provider)
     if not provider.mgmt.does_vm_exist(vm_name):
         delete_instances_fin[provider.key] = instance
         instance.create_on_provider(allow_skip="default")
@@ -136,7 +136,7 @@ def test_azone_event(setup_provider, provider, gen_events, test_instance):
     """
     def nav_step():
         test_instance.load_details()
-        pytest.sel.click(details_page.infoblock.element('Relationships', 'Availability Zone'))
+        pytest.sel.click(InfoBlock.element('Relationships', 'Availability Zone'))
         toolbar.select('Monitoring', 'Timelines')
     wait_for(count_events, [test_instance.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")

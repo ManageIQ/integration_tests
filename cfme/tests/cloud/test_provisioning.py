@@ -7,7 +7,7 @@ import pytest
 from textwrap import dedent
 
 from cfme.automate import explorer as automate
-from cfme.cloud.instance import instance_factory
+from cfme.cloud.instance import Instance
 from cfme.cloud.provider import OpenStackProvider
 from cfme.fixtures import pytest_selenium as sel
 from utils import testgen, version
@@ -56,7 +56,7 @@ def test_provision_from_template(request, setup_provider, provider, provisioning
     note = ('Testing provisioning from image %s to vm %s on provider %s' %
             (image, vm_name, provider.key))
 
-    instance = instance_factory(vm_name, provider, image)
+    instance = Instance.factory(vm_name, provider, image)
 
     request.addfinalizer(instance.delete_from_provider)
 
@@ -237,7 +237,7 @@ def test_provision_from_template_with_attached_disks(
             with update(method):
                 method.data = """prov = $evm.root["miq_provision"]"""
         request.addfinalizer(_finish_method)
-        instance = instance_factory(vm_name, provider, image)
+        instance = Instance.factory(vm_name, provider, image)
         request.addfinalizer(instance.delete_from_provider)
         inst_args = {
             'email': 'image_provisioner@example.com',
@@ -310,7 +310,7 @@ def test_provision_with_boot_volume(request, setup_provider, provider, provision
             with update(method):
                 method.data = """prov = $evm.root["miq_provision"]"""
         request.addfinalizer(_finish_method)
-        instance = instance_factory(vm_name, provider, image)
+        instance = Instance.factory(vm_name, provider, image)
         request.addfinalizer(instance.delete_from_provider)
         inst_args = {
             'email': 'image_provisioner@example.com',
@@ -386,7 +386,7 @@ def test_provision_with_additional_volume(request, setup_provider, provisioning,
         with update(method):
             method.data = """prov = $evm.root["miq_provision"]"""
     request.addfinalizer(_finish_method)
-    instance = instance_factory(vm_name, provider, image)
+    instance = Instance.factory(vm_name, provider, image)
     request.addfinalizer(instance.delete_from_provider)
     inst_args = {
         'email': 'image_provisioner@example.com',

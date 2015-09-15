@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+import inspect
 import ui_navigate as nav
 
 from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import accordion, toolbar
 from fixtures.pytest_store import store
+from lya import AttrDict
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from utils import version, classproperty
@@ -378,3 +380,82 @@ for (toplevel_dest, toplevel), secondlevels in sections.items():
     _branches[toplevel_dest] = [nav_to_fn(toplevel, None), {}]
 
 nav.add_branch('toplevel', _branches)
+
+
+##
+# Tree class DSL
+# TODOS:
+# * Maybe kwargify the functions? So we can then specify the args directly in the methods and not
+#   pull them from the context. (probably more question on ui_navigate itself)
+def _scavenge_class(cls, ignore_navigate=False):
+    """Scavenges locations and nav functions from the class. Recursively goes through so no loops.
+
+    Args:
+        ignore_navigate: Useful for the initial - root class that has no navigate function.
+    """
+    if "navigate" not in cls.__dict__ and not ignore_navigate:
+        raise ValueError(
+            "The nav class {} must contain navigation staticmethod".format(cls.__name__))
+    elif not ignore_navigate:
+        navigate = (
+            cls.navigate.im_func if hasattr(cls.navigate, "im_func") else cls.navigate)
+    contents = AttrDict({"subclasses": {}, "direct_navs": {}})
+    for key, value in cls.__dict__.iteritems():
+        if key.startswith("_") or key == "navigate":
+            continue
+        if inspect.isclass(value):
+            contents.subclasses[value.__name__] = _scavenge_class(value)
+        elif callable(value) and value.__name__ != "<lambda>":
+            contents.direct_navs[value.__name__] = value
+        elif hasattr(value, "im_func"):  # An unbound method, we just take the raw function from it
+            contents.direct_navs[value.__name__] = value.im_func
+        # Skipping others
+
+    if not contents.subclasses and not contents.direct_navs and not ignore_navigate:
+        # Leaf tree location generator
+        return navigate
+    elif ignore_navigate:
+        # Root tree location generator
+        result_dict = {}
+        result_dict.update(contents.subclasses)
+        result_dict.update(contents.direct_navs)
+        return result_dict
+    else:
+        # Non-leaf tree location generator
+        result_dict = {}
+        result_dict.update(contents.subclasses)
+        result_dict.update(contents.direct_navs)
+        return [navigate, result_dict]
+
+
+def extend_nav(cls):
+    """A decorator, that when placed on a class will turn it to a nav tree extension.
+
+    Takes the original class and "compiles" it into the nav tree in form of lists/dicts that
+    :py:mod:`ui_navigate` takes.
+
+    The classes in the structure are not instantiated during the scavenge process, they serve as a
+    sort of static container of namespaced functions.
+
+    Example:
+
+    .. code-block:: python
+
+       @extend_nav
+       class infra_vms(object):   # This will extend the node infra_vms
+           class node_a(object):  # with node a
+               def navigate(_):   # that can be reached this way from preceeding one
+                   pass
+
+               def leaf_location(ctx):  # Leaf location, no other child locations
+                   pass
+
+               class node_x(object):  # Or an another location that can contain locations
+                   def navigate(_):
+                       pass
+
+    Args:
+        cls: Class to be decorated.
+    """
+    nav.add_branch(cls.__name__, _scavenge_class(cls, ignore_navigate=True))
+    return cls

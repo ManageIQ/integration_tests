@@ -3,9 +3,8 @@
 import fauxfactory
 import pytest
 
-from cfme.cloud.instance import EC2Instance, OpenStackInstance
+from cfme.common.vm import VM
 from cfme.control.explorer import PolicyProfile, VMControlPolicy, Action
-from cfme.infrastructure.virtual_machines import Vm
 from utils import testgen
 from utils.wait import wait_for
 
@@ -26,17 +25,10 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def vm_crud(provider, setup_provider_modscope, small_template):
-    """To simplify the logic in the test, this fixture picks the correct class."""
-    # TODO: Use the factory after the provider unification is done
-    if provider.type == "ec2":
-        cls = EC2Instance
-    elif provider.type == "openstack":
-        cls = OpenStackInstance
-    else:
-        cls = Vm
-    return cls(
+    return VM.factory(
         'test_events_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
-        provider, template_name=small_template)
+        provider,
+        template_name=small_template)
 
 
 @pytest.fixture(scope="module")

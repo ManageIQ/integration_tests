@@ -2,9 +2,9 @@
 import fauxfactory
 import pytest
 
+from cfme.common.vm import VM
 from cfme.control.explorer import PolicyProfile, VMCompliancePolicy, Action, VMControlPolicy
-from cfme.infrastructure.virtual_machines import (assign_policy_profiles, get_first_vm_title,
-    unassign_policy_profiles, Vm)
+from cfme.infrastructure.virtual_machines import Vm
 from utils.log import logger
 from utils.providers import setup_a_provider as _setup_a_provider
 from utils.wait import wait_for
@@ -22,7 +22,7 @@ def vmware_provider():
 
 @pytest.fixture(scope="module")
 def vmware_vm(request, vmware_provider):
-    vm = Vm("test_control_{}".format(fauxfactory.gen_alpha().lower()), vmware_provider)
+    vm = VM.factory("test_control_{}".format(fauxfactory.gen_alpha().lower()), vmware_provider)
     vm.create_on_provider(find_in_cfme=True)
     request.addfinalizer(vm.delete_from_provider)
     return vm
@@ -47,13 +47,13 @@ def test_scope_windows_registry_stuck(request, setup_a_provider):
     request.addfinalizer(lambda: profile.delete() if profile.exists else None)
     profile.create()
     # Now assign this malformed profile to a VM
-    vm = get_first_vm_title()
-    assign_policy_profiles(vm, profile.description, via_details=True)
+    vm = VM.factory(Vm.get_first_vm_title(), setup_a_provider)
+    vm.assign_policy_profiles(profile.description)
     # It should be screwed here, but do additional check
     pytest.sel.force_navigate("dashboard")
     pytest.sel.force_navigate("infrastructure_virtual_machines")
     assert "except" not in pytest.sel.title().lower()
-    unassign_policy_profiles(vm, profile.description, via_details=True)
+    vm.unassign_policy_profiles(profile.description)
 
 
 @pytest.mark.meta(blockers=[1209538], automates=[1209538])
@@ -115,7 +115,7 @@ def test_folder_field_scope(request, vmware_provider, vmware_vm):
     request.addfinalizer(lambda: vmware_provider.unassign_policy_profiles(profile.description))
 
     # Delete and rediscover the VM
-    vmware_vm.remove_from_cfme()
+    vmware_vm.delete()
     vmware_vm.wait_for_delete()
     vmware_provider.refresh_provider_relationships()
     vmware_vm.wait_to_appear()

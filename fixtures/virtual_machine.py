@@ -7,7 +7,7 @@ from utils.log import logger
 from utils.wait import wait_for
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def verify_vm_running(provider, vm_name):
     """ Ensures that the VM/instance is in running state for the test
 
@@ -34,7 +34,7 @@ def verify_vm_running(provider, vm_name):
     return wait_for(_wait_for_vm_running, num_sec=360, delay=15)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def verify_vm_stopped(provider, vm_name):
     """ Ensures that the VM/instance is stopped for the test
 
@@ -62,7 +62,7 @@ def verify_vm_stopped(provider, vm_name):
     return wait_for(_wait_for_vm_stopped, num_sec=360, delay=15)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def verify_vm_suspended(provider, vm_name):
     """ Ensures that the VM/instance is suspended for the test
 
@@ -90,7 +90,7 @@ def verify_vm_suspended(provider, vm_name):
     return wait_for(_wait_for_vm_suspended, num_sec=360, delay=15)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def verify_vm_paused(provider, vm_name):
     """ Ensures that the VM/instance is paused for the test
 

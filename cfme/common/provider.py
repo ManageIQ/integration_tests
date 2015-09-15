@@ -18,6 +18,7 @@ from utils.stats import tol_check
 from utils.update import Updateable
 from utils import version
 
+from . import PolicyProfileAssignable, Taggable
 
 cfg_btn = partial(tb.select, 'Configuration')
 
@@ -48,7 +49,7 @@ credential_form = Form(
     ])
 
 
-class BaseProvider(object):
+class BaseProvider(PolicyProfileAssignable, Taggable):
     class Credential(cfme.Credential, Updateable):
         """Provider credentials
 
@@ -76,6 +77,17 @@ class BaseProvider(object):
     @property
     def version(self):
         return self.data['version']
+
+    @property
+    def category(self):
+        # Prevent circular imports
+        from utils.providers import cloud_provider_type_map, infra_provider_type_map
+        if self.type in cloud_provider_type_map:
+            return "cloud"
+        elif self.type in infra_provider_type_map:
+            return "infra"
+        else:
+            return "unknown"
 
     def get_yaml_data(self):
         """ Returns yaml data for this provider.
@@ -309,44 +321,6 @@ class BaseProvider(object):
         wait_for(lambda prov: not sel.is_displayed(prov), func_args=[quad], fail_condition=False,
                  message="Wait provider to disappear", num_sec=1000, fail_func=sel.refresh)
 
-    def assign_policy_profiles(self, *policy_profile_names):
-        """ Assign Policy Profiles to this Provider.
-
-        Args:
-            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
-                coverage goes in, PolicyProfile objects will be also passable.
-        """
-        self._assign_unassign_policy_profiles(True, *policy_profile_names)
-
-    def unassign_policy_profiles(self, *policy_profile_names):
-        """ Unssign Policy Profiles to this Provider.
-
-        Args:
-            policy_profile_names: :py:class:`str` with Policy Profile names. After Control/Explorer
-                coverage goes in, PolicyProfile objects will be also passable.
-        """
-        self._assign_unassign_policy_profiles(False, *policy_profile_names)
-
-    def _assign_unassign_policy_profiles(self, assign, *policy_profile_names):
-        """ Assign or unassign Policy Profiles to this Provider. DRY method
-
-        See :py:func:`assign_policy_profiles` and :py:func:`assign_policy_profiles`
-
-        Args:
-            assign: Whether this method assigns or unassigns policy profiles.
-            policy_profile_names: :py:class:`str` with Policy Profile's name. After Control/Explorer
-                coverage goes in, PolicyProfile object will be also passable.
-        """
-        sel.force_navigate('{}_provider_policy_assignment'.format(self.page_name),
-            context={'provider': self})
-        for policy_profile in policy_profile_names:
-            if assign:
-                manage_policies_tree.check_node(policy_profile)
-            else:
-                manage_policies_tree.uncheck_node(policy_profile)
-        sel.move_to_element('#tP')
-        form_buttons.save()
-
     @property
     def _assigned_policy_profiles(self):
         result = set([])
@@ -447,6 +421,15 @@ class BaseProvider(object):
         else:
             sel.click(details_page.infoblock.element("Relationships", self.template_name))
             return True
+
+    def load_details(self, refresh=False):
+        """To be compatible with the Taggable and PolicyProfileAssignable mixins."""
+        if not hasattr(self, "_on_detail_page") or not self._on_detail_page():
+            logger.debug("load_details: not on details already")
+            sel.force_navigate('{}_provider'.format(self.page_name), context={'provider': self})
+        else:
+            if refresh:
+                tb.refresh()
 
     def _on_detail_page(self):
         """ Returns ``True`` if on the providers detail page, ``False`` if not."""

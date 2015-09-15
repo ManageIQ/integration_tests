@@ -2,8 +2,8 @@
 import fauxfactory
 import pytest
 
-from cfme.cloud.instance import EC2Instance, OpenStackInstance, edit_form
-from cfme.infrastructure.virtual_machines import Vm
+from cfme.common.vm import VM
+from cfme.cloud.instance import edit_form
 from utils import testgen
 from utils.providers import is_cloud_provider
 
@@ -34,14 +34,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="function")
 def vm_crud(provider, small_template):
-    """To simplify the logic in the test, this fixture picks the correct"""
-    if provider.type == "ec2":
-        cls = EC2Instance
-    elif provider.type == "openstack":
-        cls = OpenStackInstance
-    else:
-        cls = Vm
-    return cls(
+    return VM.factory(
         'test_genealogy_{}'.format(fauxfactory.gen_alpha(length=8).lower()),
         provider, template_name=small_template)
 

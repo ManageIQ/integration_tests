@@ -1,39 +1,26 @@
 """ A model of Instances page in CFME
 
-:var details_page: A :py:class:`cfme.web_ui.Region` object describing the details page.
 :var edit_form: A :py:class:`cfme.web_ui.Form` object describing the instance edit form.
 """
-from xml.sax.saxutils import quoteattr
-
-from cfme.cloud.provider import OpenStackProvider, EC2Provider
-from cfme.exceptions import InstanceNotFound, OptionNotAvailable, UnknownProviderType
+from cfme.common.vm import VM, Template
+from cfme.exceptions import InstanceNotFound, OptionNotAvailable
 from cfme.fixtures import pytest_selenium as sel
 from cfme.services import requests
 from cfme.web_ui import (
-    accordion, fill, flash, form_buttons, paginator, toolbar, CheckboxTree,
-    Form, Region, Select, Tree, Quadicon
-)
+    accordion, fill, flash, paginator, toolbar, CheckboxTree, Form, Region, Select, Tree, Quadicon)
 from cfme.web_ui.menu import nav
 from functools import partial
 from utils import version
-from utils.virtual_machines import deploy_template
-from utils.log import logger
-from utils.pretty import Pretty
-from utils.update import Updateable
 from utils.wait import wait_for
 
 
 cfg_btn = partial(toolbar.select, 'Configuration')
-pol_btn = partial(toolbar.select, 'Policy')
-lcl_btn = partial(toolbar.select, 'Lifecycle')
-mon_btn = partial(toolbar.select, 'Monitoring')
 pwr_btn = partial(toolbar.select, 'Power')
 
+# TODO: use accordion.tree
 visible_tree = Tree("//div[@class='dhxcont_global_content_area']"
                     "[not(contains(@style, 'display: none'))]/div/div/div"
                     "/ul[@class='dynatree-container']")
-
-details_page = Region(infoblock_type='detail')
 
 list_page = Region(title='Instances')
 
@@ -177,8 +164,10 @@ nav.add_branch(
 )
 
 
-class Instance(Updateable, Pretty):
-    """Represents an instance in CFME
+@VM.register_for_provider_type("cloud")
+class Instance(VM):
+    """Represents a generic instance in CFME. This class is used if none of the inherited classes
+    will match.
 
     Args:
         name: Name of the instance
@@ -188,79 +177,15 @@ class Instance(Updateable, Pretty):
     Note:
         This class cannot be instantiated. Use :py:func:`instance_factory` instead.
     """
-    pretty_attrs = ['name', 'provider_crud']
-
-    def __init__(self, name, provider_crud, template_name=None):
-        if type(self) is Instance:
-            raise NotImplementedError(
-                'This class cannot be instantiated. Use instance_factory instead.')
-
-        self.name = name
-        self.template_name = template_name
-        self.provider_crud = provider_crud
-
-    def assign_policy_profiles(self, *policy_profile_names):
-        """Unify with VM behaviour."""
-        return assign_policy_profiles(
-            self.name, *policy_profile_names, provider_crud=self.provider_crud)
-
-    def unassign_policy_profiles(self, *policy_profile_names):
-        """Unify with VM behaviour."""
-        return unassign_policy_profiles(
-            self.name, *policy_profile_names, provider_crud=self.provider_crud)
+    ALL_LIST_LOCATION = "clouds_instances"
+    TO_OPEN_EDIT = "Edit this Instance"
+    TO_RETIRE = "Retire this Instance"
+    QUADICON_TYPE = "instance"
 
     def create(self):
         """Provisions an instance with the given properties through CFME
         """
         raise NotImplementedError('create is not implemented.')
-
-    def create_on_provider(self, timeout=900, **kwargs):
-        """Create the instance on the provider
-
-        Args:
-            timeout: Number of seconds to wait for the instance to appear in CFME
-                     Will not wait at all, if set to 0 (Defaults to ``900``)
-        """
-        deploy_template(self.provider_crud.key, self.name, self.template_name, **kwargs)
-        # To make it compatible with the infrastructure Vm which takes find_in_cfme
-        if "find_in_cfme" not in kwargs:
-            find_in_cfme = bool(timeout)
-        else:
-            find_in_cfme = kwargs["find_in_cfme"]
-        if find_in_cfme:
-            self.provider_crud.refresh_provider_relationships()
-            self.wait_for_vm_to_appear(timeout=timeout, load_details=False)
-
-    def delete(self, cancel=False):
-        sel.force_navigate('clouds_instances', context={'instance': self})
-        toolbar.select("Configuration", "Remove from the VMDB", invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-
-    def wait_for_delete(self):
-        quad = Quadicon(self.name, 'instance')
-        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-             message="Wait instance to disappear", num_sec=500, fail_func=sel.refresh)
-
-    def load_details(self, refresh=False):
-        """Navigates to an instance's details page.
-
-        Args:
-            refresh: Refreshes the instance page if already there
-
-        Raises:
-            InstanceNotFound:
-                When unable to find the instance passed
-        """
-        if not self.on_details():
-            logger.debug("load_details: not on details already")
-            sel.click(self.find_quadicon())
-        else:
-            if refresh:
-                toolbar.refresh()
-
-    def open_edit(self):
-        self.load_details(refresh=True)
-        toolbar.select("Configuration", "Edit this Instance")
 
     def on_details(self, force=False):
         """A function to determine if the browser is already on the proper instance details page.
@@ -296,212 +221,9 @@ class Instance(Updateable, Pretty):
             else:
                 return True
 
-    def find_quadicon(
-            self, do_not_navigate=False, mark=False, refresh=True, from_any_provider=False):
-        """Find and return a quadicon belonging to a specific instance
 
-        Args:
-            from_any_provider: Whether to look for it anywhere (root of the tree). Useful when
-                looking up archived or orphaned VMs
-
-        Returns: :py:class:`cfme.web_ui.Quadicon` instance
-        Raises: InstanceNotFound
-        """
-        if not do_not_navigate:
-            if from_any_provider:
-                sel.force_navigate("clouds_instances")
-            elif not self.provider_crud.load_all_provider_instances():
-                raise InstanceNotFound("No instances for the provider!")
-            toolbar.set_vms_grid_view()
-        elif refresh:
-            sel.refresh()
-        if not paginator.page_controls_exist():
-            raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
-
-        paginator.results_per_page(1000)
-        for page in paginator.pages():
-            quadicon = Quadicon(self.name, "instance")
-            if sel.is_displayed(quadicon):
-                if mark:
-                    sel.check(quadicon.checkbox())
-                return quadicon
-        else:
-            raise InstanceNotFound("Instance '{}' not found in UI!".format(self.name))
-
-    def does_vm_exist_on_provider(self):
-        """Check if instance exists on provider itself"""
-        return self.provider_crud.get_mgmt_system().does_vm_exist(self.name)
-
-    def does_vm_exist_in_cfme(self):
-        """A function to tell you if an instance exists or not.
-        """
-        try:
-            self.find_quadicon()
-            return True
-        except InstanceNotFound:
-            return False
-
-    def _method_helper(self, from_details=False):
-        if from_details:
-            self.load_details()
-        else:
-            self.find_quadicon(mark=True)
-
-    def remove_from_cfme(self, cancel=True, from_details=False):
-        """Removes an instance from CFME VMDB
-
-        Args:
-            cancel: Whether to cancel the deletion, defaults to True
-            from_details: whether to delete from the details page
-        """
-        self._method_helper(from_details)
-        if from_details:
-            cfg_btn('Remove from the VMDB', invokes_alert=True)
-        else:
-            cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-
-    def delete_from_provider(self):
-        provider_mgmt = self.provider_crud.get_mgmt_system()
-        if provider_mgmt.does_vm_exist(self.name):
-            return self.provider_crud.get_mgmt_system().delete_vm(self.name)
-        else:
-            return True
-
-    def get_detail(self, properties=None):
-        """Gets details from the details infoblock
-
-        The function first ensures that we are on the detail page for the specific instance.
-
-        Args:
-            properties: An InfoBlock title, followed by the Key name, e.g. "Relationships", "Images"
-
-        Returns:
-            A string representing the contents of the InfoBlock's value.
-        """
-        self.load_details(refresh=True)
-        return details_page.infoblock.text(*properties)
-
-    def refresh_relationships(self, from_details=False, cancel=False):
-        """Executes a refresh of relationships.
-
-        Args:
-            from_details: Whether or not to perform action from instance details page
-            cancel: Whether or not to cancel the refresh relationships action
-        """
-        if from_details:
-            self.load_details()
-        else:
-            self.find_quadicon(mark=True)
-        cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
-        sel.handle_alert(cancel=cancel)
-
-    def power_control_from_provider(self, option):
-        """Power control an instance from the provider
-
-        Args:
-            option: Power option param; for available power options, see
-                    :py:class:`EC2Instance` and :py:class:`OpenStackInstance`
-        Raises:
-            OptionNotAvailable: option param must have proper value
-        """
-        raise NotImplementedError('power_control_from_provider not implemented.')
-
-    def power_control_from_cfme(self, option, cancel=True, from_details=False):
-        """Power controls an instance from within CFME
-
-        Args:
-            option: corresponds to option values under the power button
-            cancel: Whether or not to cancel the power operation on confirmation
-            from_details: Whether or not to perform action from instance details page
-
-        Raises:
-            OptionNotAvailable: option param is not visible or enabled
-        """
-        if (self.is_pwr_option_available_in_cfme(option=option, from_details=from_details)):
-                pwr_btn(option, invokes_alert=True)
-                sel.handle_alert(cancel=cancel)
-                logger.info(
-                    "Power control action of instance %s, option %s, cancel %s executed" %
-                    (self.name, option, str(cancel)))
-        else:
-            raise OptionNotAvailable(option + " is not visible or enabled")
-
-    def is_pwr_option_available_in_cfme(self, option, from_details=False):
-        """Checks to see if a power option is available on the instance
-
-        Args:
-            option: corresponds to option values under the power button,
-                    see :py:class:`EC2Instance` and :py:class:`OpenStackInstance`
-            from_details: Whether or not to perform action from instance details page
-        """
-        self._method_helper(from_details=from_details)
-        try:
-            return not toolbar.is_greyed('Power', option)
-        except sel.NoSuchElementException:
-            return False
-
-    def wait_for_vm_state_change(self, desired_state=None, timeout=300, from_details=False,
-                                 with_relationship_refresh=True):
-        """Wait for instance to come to desired state.
-
-        This function waits just the needed amount of time thanks to wait_for.
-
-        Args:
-            desired_state: on, off, suspended... for available states, see
-                           :py:class:`EC2Instance` and :py:class:`OpenStackInstance`
-            timeout: Specify amount of time (in seconds) to wait
-        Raises:
-            TimedOutError:
-                When instance does not come up to desired state in specified period of time.
-            InstanceNotFound:
-                When unable to find the instance passed
-        """
-        def _looking_for_state_change():
-            if from_details:
-                self.load_details(refresh=True)
-                detail_t = ("Power Management", "Power State")
-                return self.get_detail(properties=detail_t) == desired_state
-            else:
-                return self.find_quadicon().state == 'currentstate-' + desired_state
-
-        return wait_for(
-            _looking_for_state_change,
-            num_sec=timeout,
-            delay=30,
-            fail_func=self.refresh_relationships if with_relationship_refresh else None)
-
-    def wait_for_vm_to_appear(self, timeout=600, load_details=True):
-        """Wait for an instance to appear within CFME
-
-        Args:
-            timeout: time (in seconds) to wait for it to appear
-            from_details: when found, should it load the instance details
-        """
-        wait_for(
-            self.does_vm_exist_in_cfme,
-            num_sec=timeout,
-            delay=30,
-            fail_func=self.provider_crud.refresh_provider_relationships)
-        if load_details:
-            self.load_details()
-
-    wait_to_appear = wait_for_vm_to_appear  # For compatibility with Vm
-    # TODO: Make a base class for Infra and Cloud VMs
-
-    def get_tags(self, tag="My Company Tags"):
-        """Returns all tags that are associated with this VM"""
-        self.load_details(refresh=True)
-        tags = []
-        for row in sel.elements(
-                "//*[(self::th or self::td) and normalize-space(.)={}]/../.."
-                "//td[img[contains(@src, 'smarttag')]]".format(
-                    quoteattr(tag))):
-            tags.append(sel.text(row).strip())
-        return tags
-
-
-class OpenStackInstance(Instance, Updateable):
+@VM.register_for_provider_type("openstack")
+class OpenStackInstance(Instance):
     # CFME & provider power control options
     START = "Start"  # START also covers RESUME and UNPAUSE (same as in CFME 5.4+ web UI)
     SUSPEND = "Suspend"
@@ -546,7 +268,7 @@ class OpenStackInstance(Instance, Updateable):
         """
         from cfme.provisioning import provisioning_form
         sel.force_navigate('clouds_provision_instances', context={
-            'provider': self.provider_crud,
+            'provider': self.provider,
             'template_name': self.template_name,
         })
 
@@ -592,26 +314,27 @@ class OpenStackInstance(Instance, Updateable):
             OptionNotAvailable: option param must have proper value
         """
         if option == OpenStackInstance.START:
-            self.provider_crud.get_mgmt_system().start_vm(self.name)
+            self.provider.mgmt.start_vm(self.name)
         elif option == OpenStackInstance.STOP:
-            self.provider_crud.get_mgmt_system().stop_vm(self.name)
+            self.provider.mgmt.stop_vm(self.name)
         elif option == OpenStackInstance.SUSPEND:
-            self.provider_crud.get_mgmt_system().suspend_vm(self.name)
+            self.provider.mgmt.suspend_vm(self.name)
         elif option == OpenStackInstance.RESUME:
-            self.provider_crud.get_mgmt_system().resume_vm(self.name)
+            self.provider.mgmt.resume_vm(self.name)
         elif option == OpenStackInstance.PAUSE:
-            self.provider_crud.get_mgmt_system().pause_vm(self.name)
+            self.provider.mgmt.pause_vm(self.name)
         elif option == OpenStackInstance.UNPAUSE:
-            self.provider_crud.get_mgmt_system().unpause_vm(self.name)
+            self.provider.mgmt.unpause_vm(self.name)
         elif option == OpenStackInstance.RESTART:
-            self.provider_crud.get_mgmt_system().restart_vm(self.name)
+            self.provider.mgmt.restart_vm(self.name)
         elif option == OpenStackInstance.TERMINATE:
-            self.provider_crud.get_mgmt_system().delete_vm(self.name)
+            self.provider.mgmt.delete_vm(self.name)
         else:
             raise OptionNotAvailable(option + " is not a supported action")
 
 
-class EC2Instance(Instance, Updateable):
+@VM.register_for_provider_type("ec2")
+class EC2Instance(Instance):
     # CFME & provider power control options
     START = "Start"
     STOP = "Stop"
@@ -649,7 +372,7 @@ class EC2Instance(Instance, Updateable):
         """
         from cfme.provisioning import provisioning_form
         sel.force_navigate('clouds_provision_instances', context={
-            'provider': self.provider_crud,
+            'provider': self.provider,
             'template_name': self.template_name,
         })
 
@@ -693,31 +416,20 @@ class EC2Instance(Instance, Updateable):
             OptionNotAvailable: option param must have proper value
         """
         if option == EC2Instance.START:
-            self.provider_crud.get_mgmt_system().start_vm(self.name)
+            self.provider.mgmt.start_vm(self.name)
         elif option == EC2Instance.STOP:
-            self.provider_crud.get_mgmt_system().stop_vm(self.name)
+            self.provider.mgmt.stop_vm(self.name)
         elif option == EC2Instance.RESTART:
-            self.provider_crud.get_mgmt_system().restart_vm(self.name)
+            self.provider.mgmt.restart_vm(self.name)
         elif option == EC2Instance.TERMINATE:
-            self.provider_crud.get_mgmt_system().delete_vm(self.name)
+            self.provider.mgmt.delete_vm(self.name)
         else:
             raise OptionNotAvailable(option + " is not a supported action")
 
 
-def instance_factory(vm_name, provider_crud, template_name=None):
-    if isinstance(provider_crud, OpenStackProvider):
-        instance = OpenStackInstance(vm_name, provider_crud, template_name)
-    elif isinstance(provider_crud, EC2Provider):
-        instance = EC2Instance(vm_name, provider_crud, template_name)
-    else:
-        raise UnknownProviderType(
-            'Unknown type of cloud provider CRUD object: {}'
-            .format(provider_crud.__class__.__name__)
-        )
-
-    return instance
-
-
+###
+# Multi-object functions
+#
 def _method_setup(vm_names, provider_crud=None):
     """ Reduces some redundant code shared between methods """
     if isinstance(vm_names, basestring):
@@ -860,83 +572,42 @@ def do_power_control(vm_names, option, provider_crud=None, cancel=True):
                 sel.handle_alert(cancel=cancel)
 
 
-def refresh_relationships(vm_names, provider_crud=None, cancel=True):
-    """Executes a refresh relationships action against a list of instances.
+@VM.register_for_provider_type("cloud")
+class Image(Template):
+    ALL_LIST_LOCATION = "clouds_images"
+    TO_OPEN_EDIT = "Edit this Image"
+    QUADICON_TYPE = "image"
 
-    Args:
-        vm_names: List of instances to interact with
-        provider_crud: provider object where instance resides (optional)
-        cancel: Whether or not to cancel the refresh relationships action
-    """
-    _method_setup(vm_names, provider_crud)
-    cfg_btn('Refresh Relationships and Power States', invokes_alert=True)
-    sel.handle_alert(cancel=cancel)
+    def on_details(self, force=False):
+        """A function to determine if the browser is already on the proper image details page.
+        """
+        locator = ("//div[@class='dhtmlxInfoBarLabel' and contains(. , 'Image \"%s\"')]" %
+            self.name)
 
-
-def _assign_unassign_policy_profiles(vm_name, assign, *policy_profile_names, **kwargs):
-    """DRY function for managing policy profiles.
-
-    See :py:func:`assign_policy_profiles` and :py:func:`assign_policy_profiles`
-
-    Args:
-        vm_name: Name of the instance.
-        assign: Wheter to assign or unassign.
-        policy_profile_names: :py:class:`str` with Policy Profile names.
-    """
-    _method_setup(vm_name, **kwargs)
-    toolbar.select("Policy", "Manage Policies")
-    for policy_profile in policy_profile_names:
-        if assign:
-            manage_policies_tree.check_node(policy_profile)
+        # If the locator isn't on the page, or if it _is_ on the page and contains
+        # 'Timelines' we are on the wrong page and take the appropriate action
+        if not sel.is_displayed(locator):
+            wrong_page = True
         else:
-            manage_policies_tree.uncheck_node(policy_profile)
-    sel.move_to_element('#tP')
-    sel.click(form_buttons.save)
+            wrong_page = 'Timelines' in sel.text(locator)
 
+        if wrong_page:
+            if not force:
+                return False
+            else:
+                self.load_details()
+                return True
 
-def assign_policy_profiles(vm_name, *policy_profile_names, **kwargs):
-    """Assign Policy Profiles to specified instance.
+        text = sel.text(locator).encode("utf-8")
+        pattern = r'("[A-Za-z0-9_\./\\-]*")'
+        import re
+        m = re.search(pattern, text)
 
-    Args:
-        vm_name: Name of the instance.
-        policy_profile_names: :py:class:`str` with Policy Profile names.
-    """
-    return _assign_unassign_policy_profiles(vm_name, True, *policy_profile_names, **kwargs)
-
-
-def unassign_policy_profiles(vm_name, *policy_profile_names, **kwargs):
-    """Unassign Policy Profiles to specified instance.
-
-    Args:
-        vm_name: Name of the instance.
-        policy_profile_names: :py:class:`str` with Policy Profile names.
-    """
-    return _assign_unassign_policy_profiles(vm_name, False, *policy_profile_names, **kwargs)
-
-
-class Image(object):
-
-    def __init__(self, name, provider_crud):
-        self.name = name
-        self.image_name = name
-        self.provider_crud = provider_crud
-
-    def delete(self):
-        """Remove template from CFME VMDB"""
-        sel.force_navigate("clouds_images")
-        quad = Quadicon(self.name, 'image')
-        sel.check(quad.checkbox())
-        cfg_btn('Remove selected items from the VMDB', invokes_alert=True)
-        sel.handle_alert()
-
-    def wait_for_delete(self):
-        sel.force_navigate("clouds_images")
-        quad = Quadicon(self.name, 'image')
-        wait_for(lambda: not sel.is_displayed(quad), fail_condition=False,
-             message="Wait Image to disappear", num_sec=500, fail_func=sel.refresh)
-
-    def wait_for_appear(self):
-        sel.force_navigate("clouds_images")
-        quad = Quadicon(self.name, 'image')
-        wait_for(sel.is_displayed, func_args=[quad], fail_condition=False,
-             message="Wait Image to appear", num_sec=1000, fail_func=sel.refresh)
+        if not force:
+            return self.name == m.group().replace('"', '')
+        else:
+            if self.name != m.group().replace('"', ''):
+                self.load_details()
+                return True
+            else:
+                return True

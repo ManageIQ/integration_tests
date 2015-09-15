@@ -3,11 +3,11 @@ import diaper
 import fauxfactory
 import pytest
 
+from cfme.common.vm import VM
 from cfme.configure.configuration import VMAnalysisProfile
 from cfme.control.explorer import (
     VMCompliancePolicy, VMCondition, PolicyProfile)
 from cfme.exceptions import VmNotFoundViaIP
-from cfme.infrastructure.virtual_machines import Vm
 from cfme.web_ui import flash, toolbar
 from fixtures.pytest_store import store
 from utils import testgen, version
@@ -56,7 +56,7 @@ def compliance_vm(request, provider):
             pytest.skip(
                 "Error during appliance configuration. Skipping:\n{}: {}".format(
                     type(e).__name__, str(e)))
-        vm = Vm(appl_name, provider)
+        vm = VM.factory(appl_name, provider)
     except VmNotFoundViaIP:
         logger.info("Provisioning a new appliance on provider {}.".format(provider.key))
         appliance = provision_appliance(
@@ -70,7 +70,7 @@ def compliance_vm(request, provider):
             pytest.skip(
                 "Error during appliance configuration. Skipping:\n{}: {}".format(
                     type(e).__name__, str(e)))
-        vm = Vm(appliance.vm_name, provider)
+        vm = VM.factory(appliance.vm_name, provider)
     if provider.type in {"rhevm"}:
         request.addfinalizer(appliance.remove_rhev_direct_lun_disk)
     # Do the final touches
@@ -106,7 +106,7 @@ def fleecing_vm(
         provider_name=provider.key)
     request.addfinalizer(lambda: diaper(appliance.destroy))
     logger.info("Appliance {} provisioned".format(appliance.vm_name))
-    vm = Vm(appliance.vm_name, provider)
+    vm = VM.factory(appliance.vm_name, provider)
     provider.refresh_provider_relationships()
     vm.wait_to_appear()
     return vm

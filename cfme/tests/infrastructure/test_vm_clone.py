@@ -3,11 +3,11 @@ import fauxfactory
 import pytest
 
 from cfme.common.provider import cleanup_vm
+from cfme.common.vm import VM
 from cfme.services.catalogs.catalog_item import CatalogItem
 from cfme.automate.service_dialogs import ServiceDialog
 from cfme.services.catalogs.catalog import Catalog
 from cfme.services.catalogs.service_catalogs import ServiceCatalogs
-from cfme.infrastructure.virtual_machines import Vm
 from cfme.services import requests
 from cfme.web_ui import flash
 from utils.wait import wait_for
@@ -130,7 +130,7 @@ def test_vm_clone(provisioning, provider, clone_vm_name, request, create_vm):
     vm_name = create_vm + "_0001"
     request.addfinalizer(lambda: cleanup_vm(vm_name, provider))
     request.addfinalizer(lambda: cleanup_vm(clone_vm_name, provider))
-    vm = Vm(vm_name, provider)
+    vm = VM.factory(vm_name, provider)
     if provider.type == 'rhevm':
         provision_type = 'Native Clone'
     elif provider.type == 'virtualcenter':
