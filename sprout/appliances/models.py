@@ -464,6 +464,8 @@ class Appliance(MetadataMixin):
         UNKNOWN = "unknown"
         ORPHANED = "orphaned"
 
+    BAD_POWER_STATES = {Power.UNKNOWN, Power.ORPHANED}
+
     POWER_STATES_MAPPING = {
         # vSphere
         "poweredOn": Power.ON,
@@ -600,6 +602,9 @@ class Appliance(MetadataMixin):
             appliance_reboot)
         limit = custom_limit if custom_limit is not None else pool.total_count
         appliances = []
+        if limit <= 0:
+            # Nothing to do
+            return 0
         with transaction.atomic():
             for template in pool.possible_templates:
                 for appliance in cls.unassigned().filter(
@@ -619,7 +624,10 @@ class Appliance(MetadataMixin):
                             tasks.append(mark_appliance_ready.si(appliance.id))
                         chain(*tasks)()
                         appliances.append(appliance)
-                if len(appliances) == limit:
+                        # We have the break twice, to be sure. For each for loop.
+                        if len(appliances) >= limit:
+                            break
+                if len(appliances) >= limit:
                     break
         return len(appliances)
 
@@ -683,12 +691,24 @@ class Appliance(MetadataMixin):
         return self.power_state in {self.Power.OFF, self.Power.SUSPENDED}
 
     @property
+    def can_reboot(self):
+        return self.power_state in {self.Power.ON}
+
+    @property
     def can_suspend(self):
         return self.power_state in {self.Power.ON}
 
     @property
     def can_stop(self):
         return self.power_state in {self.Power.ON}
+
+    @property
+    def has_uuid(self):
+        return self.uuid is not None
+
+    @property
+    def has_uuid_angular(self):
+        return "true" if self.has_uuid else "false"
 
     @property
     def version(self):
@@ -895,7 +915,8 @@ class AppliancePool(MetadataMixin):
                 if (
                         save_lives and appliance.ready and appliance.leased_until is None
                         and appliance.marked_for_deletion is False
-                        and not appliance.managed_providers):
+                        and not appliance.managed_providers
+                        and appliance.power_state not in appliance.BAD_POWER_STATES):
                     with transaction.atomic():
                         with appliance.kill_lock:
                             appliance.appliance_pool = None

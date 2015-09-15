@@ -76,7 +76,8 @@
                 {% for appliance in pool.appliances %}
                 <tr id="appliance-{{ appliance.id }}">
                     <td>{{ appliance.id }}</td>
-                    <td style=" overflow: auto;" ng-controller="EditVmName" ng-init="applianceId = '{{ appliance.id }}'; apiURL = '{% url 'rename_appliance' %}'; taskResultURL = '{% url 'task_result' %}'; applianceOriginalName = '{{ appliance.name }}';">
+                    <!-- There's gotta be a better way to do this angular thing, but that probably involves REST. -->
+                    <td style=" overflow: auto;" ng-controller="EditVmName" ng-init="applianceId = '{{ appliance.id }}'; apiURL = '{% url 'rename_appliance' %}'; taskResultURL = '{% url 'task_result' %}'; applianceOriginalName = '{{ appliance.name }}'; applianceHasUUID = {{ appliance.has_uuid_angular }} ;">
                     {% if appliance.vnc_link %}<a href="{{ appliance.vnc_link }}" target="_blank"><img src={% static "img/console.png" %}></a>{% endif %}
                         <div ng-hide="editing" ng-click="edit()">
                             {[{ vm.name }]}
@@ -122,6 +123,8 @@
                                 {% endif %}
                                 {% if appliance.can_stop %}
                                     <a href="{% url 'appliance_action' appliance.id 'stop' %}" class="btn btn-danger btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-off"></span> Stop</a>
+                                {% endif %}
+                                {% if appliance.can_reboot %}
                                     <a href="{% url 'appliance_action' appliance.id 'reboot' %}" class="btn btn-warning btn-xs" onclick="return confirm('Are you sure?')"><span class="glyphicon glyphicon-repeat"></span> Reboot</a>
                                 {% endif %}
                                 {% if appliance.can_suspend %}
@@ -234,7 +237,7 @@
                 <div class="col-md-4">
                     <div class="checkbox">
                       <label>
-                        <input type="checkbox" class="form-control" id="yum_update" name="yum_update" value="true">
+                        <input type="checkbox" class="form-control" id="yum_update" name="yum_update" value="true" disabled="true">
                       </label>
                     </div>
                 </div>

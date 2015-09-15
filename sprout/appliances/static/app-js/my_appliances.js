@@ -13,7 +13,7 @@ myAppliancesApp.config(['$httpProvider', function($httpProvider) {
 }]);
 
 
-myAppliancesApp.controller('EditVmName', function ($scope, $http, $timeout) {
+myAppliancesApp.controller('EditVmName', function ($scope, $http, $timeout, $window) {
     $scope.$watch("applianceOriginalName", function(){
         $scope.saved = {"name": $scope.applianceOriginalName};
         $scope.vm = {"name": $scope.saved.name};
@@ -63,6 +63,11 @@ myAppliancesApp.controller('EditVmName', function ($scope, $http, $timeout) {
      };
 
     $scope.edit = function() {
+        if(! $scope.applianceHasUUID) {
+            // No change, we can edit only when we have UUID to be 100% sure
+            $window.alert("Appliance " + $scope.applianceOriginalName + " did not receive its UUID yet so it cannot be renamed.")
+            return;
+        }
         $scope.vm = angular.copy($scope.saved);
         $scope.editing = true;
     };
