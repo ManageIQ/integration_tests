@@ -1091,18 +1091,23 @@ def test_add_delete_tags_subcollection(tags_data, sub_tags_api):
 
 
 # TODO There is no add/create method according to the manageiq-docs, check it
-def test_policy_action(rest_api):
+def test_policy_actions(rest_api):
     assert rest_api.collections.policy_actions.get('name', None) == 'policy_actions'
 
 
 # TODO There is no add/create method according to the manageiq-docs, check it
-def test_policy_condition(rest_api):
+def test_policy_conditions(rest_api):
     assert rest_api.collections.conditions.get('conditions', None) is not None
 
 
 # TODO There is no add/create method according to the manageiq-docs, check it
 def test_policy_events(rest_api):
     assert rest_api.collections.events.get('name', None) == 'events'
+
+
+# service_requests, automation_requests, provision_requests
+def test_tasks_and_requested_task(rest_api):
+    assert len(rest_api.collections.tasks) == len(rest_api.collections.request_tasks)
 
 
 COLLECTIONS_IGNORED_53 = {
