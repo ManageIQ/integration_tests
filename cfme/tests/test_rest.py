@@ -908,6 +908,7 @@ def test_order_service(rest_api):
     }
 
     service_template.action.order(order_request)
+    # the existence of order will be check through service_requests
     wait_for(
         lambda: rest_api.collections.service_requests.find_by(id=service_template.id),
         num_sec=180,
@@ -1132,22 +1133,26 @@ def test_add_delete_tags_subcollection(tags_data, sub_tags_api):
         service.policies.action.delete(tags_data)
 
 
-# TODO There is no add/create method according to the manageiq-docs, check it
+# TODO preriquirement for checking the existence of policy_action
+@pytest.mark.ignore_stream("5.3")
 def test_policy_actions(rest_api):
     assert rest_api.collections.policy_actions.get('name', None) == 'policy_actions'
 
 
-# TODO There is no add/create method according to the manageiq-docs, check it
+# TODO preriquirement for checking the existence of policy_condition
+@pytest.mark.ignore_stream("5.3")
 def test_policy_conditions(rest_api):
     assert rest_api.collections.conditions.get('conditions', None) is not None
 
 
-# TODO There is no add/create method according to the manageiq-docs, check it
+# TODO preriquirement for checking the existence of policy event
+@pytest.mark.ignore_stream("5.3")
 def test_policy_events(rest_api):
     assert rest_api.collections.events.get('name', None) == 'events'
 
 
-# service_requests, automation_requests, provision_requests
+# Collect tasks from service_requests, automation_requests, provision_requests
+@pytest.mark.ignore_stream("5.3")
 def test_tasks_and_requested_task(rest_api):
     assert len(rest_api.collections.tasks) == len(rest_api.collections.request_tasks)
 
