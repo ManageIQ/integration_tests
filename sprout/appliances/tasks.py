@@ -656,8 +656,9 @@ def clone_template_to_appliance(self, appliance_id, lease_time_minutes=None, yum
         # Case of the appliance pool
         if Appliance.objects.get(id=appliance_id).appliance_pool.not_needed_anymore:
             return
+        # TODO: Make replace_in_pool work again
         workflow.link_error(
-            kill_appliance.si(appliance_id, replace_in_pool=True, minutes=lease_time_minutes))
+            kill_appliance.si(appliance_id, replace_in_pool=False, minutes=lease_time_minutes))
     else:
         # Case of shepherd
         workflow.link_error(kill_appliance.si(appliance_id))
