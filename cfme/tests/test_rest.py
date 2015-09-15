@@ -2,6 +2,7 @@
 """This module contains REST API specific tests."""
 import fauxfactory
 import pytest
+import datetime
 
 from cfme.configure.configuration import server_roles_disabled
 
@@ -802,6 +803,7 @@ def rest_api_edit_service(request, rest_api, added_policies, setup_a_provider):
         return provider_wrapper()
 
 
+@pytest.mark.ignore_stream("5.3")
 def test_edit_service(rest_api_edit_service):
     """Test editing a service
     ["policies", "templates", "policy_profiles", "service_catalogs", "providers", "services",
@@ -845,7 +847,8 @@ def test_edit_service(rest_api_edit_service):
     )
 
 
-def test_retire_services(rest_api):
+@pytest.mark.ignore_stream("5.3")
+def test_retire_services_now(rest_api):
     """Test retiring a service
 
     Prerequisities:
@@ -853,7 +856,7 @@ def test_retire_services(rest_api):
 
     Steps:
         * Retrieve list of entities using GET /api/services , pick the first one
-        * POST /api/retire/<id> (method ``retire``) with the ``description``
+        * POST /api/service/<id> (method ``retire``) with the ``description``
 
     Metadata:
         test_flag: rest
@@ -868,6 +871,41 @@ def test_retire_services(rest_api):
     retire_service.action.retire()
     wait_for(
         lambda: not rest_api.collections.services.find_by(name=retire_service.name),
+        num_sec=180,
+        delay=10,
+    )
+
+
+@pytest.mark.ignore_stream("5.3")
+def test_retire_services_future(rest_api):
+    """Test retiring a service
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/services , pick the first one
+        * POST /api/service/<id> (method ``retire``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "retire" in rest_api.collections.services.action.all
+
+    try:
+        retire_service = rest_api.collections.services[0]
+    except IndexError:
+        pytest.skip("There is no service to be  retired")
+
+    date = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime('%m/%d/%y')
+    future = {
+        "date": date,
+        "warn": "5",
+    }
+    retire_service.action.retire(future)
+    retire_service.reload()
+    wait_for(
+        lambda: retire_service["retire_on"] == date,
         num_sec=180,
         delay=10,
     )
