@@ -5,7 +5,6 @@ from collections import namedtuple
 from urlparse import urlparse
 
 import paramiko
-from lya import AttrDict
 from scp import SCPClient
 import diaper
 
@@ -25,15 +24,6 @@ SSHResult = namedtuple("SSHResult", ["rc", "output"])
 _ssh_key_file = project_path.join('.generated_ssh_key')
 _ssh_pubkey_file = project_path.join('.generated_ssh_key.pub')
 
-# enum
-_ssh_keystate = AttrDict({
-    'not_installed': 0,
-    'installing': 1,
-    'installed': 2
-})
-# enum reverse lookup
-_ssh_keystate.update({v: k for k, v in _ssh_keystate.items()})
-
 _client_session = []
 
 
@@ -43,12 +33,11 @@ class SSHClient(paramiko.SSHClient):
     Allows copying/overriding and use as a context manager
     Constructor kwargs are handed directly to paramiko.SSHClient.connect()
     """
-    def __init__(self, stream_output=False, keystate=_ssh_keystate.not_installed,
-            **connect_kwargs):
+    def __init__(self, stream_output=False, **connect_kwargs):
         super(SSHClient, self).__init__()
         self._streaming = stream_output
-        self._keystate = keystate
-        logger.debug('client initialized with keystate {}'.format(_ssh_keystate[keystate]))
+        # deprecated/useless karg, included for backward-compat
+        self._keystate = connect_kwargs.pop('keystate', None)
 
         # Load credentials and destination from confs, set up sane defaults
         parsed_url = urlparse(store.base_url)
@@ -82,8 +71,6 @@ class SSHClient(paramiko.SSHClient):
         new_connect_kwargs.update(connect_kwargs)
         # pass the key state if the hostname is the same, under the assumption that the same
         # host will still have keys installed if they have already been
-        if self._connect_kwargs['hostname'] == new_connect_kwargs.get('hostname'):
-            new_connect_kwargs['keystate'] = self._keystate
         new_client = SSHClient(**new_connect_kwargs)
         return new_client
 
@@ -129,8 +116,6 @@ class SSHClient(paramiko.SSHClient):
             self._connect_kwargs.update(kwargs)
             self._check_port()
             # Only install ssh keys if they aren't installed (or currently being installed)
-            if self._keystate < _ssh_keystate.installing:
-                self.install_ssh_keys()
             return super(SSHClient, self).connect(**self._connect_kwargs)
 
     def get_transport(self, *args, **kwargs):
@@ -225,20 +210,6 @@ class SSHClient(paramiko.SSHClient):
 
     def appliance_has_netapp(self):
         return self.run_command("stat /var/www/miq/vmdb/HAS_NETAPP").rc == 0
-
-    def install_ssh_keys(self):
-        self._keystate = _ssh_keystate.installing
-        if not _ssh_key_file.check():
-            keygen()
-        self._connect_kwargs['key_filename'] = _ssh_key_file.strpath
-
-        if self.run_command('test -f ~/.ssh/authorized_keys').rc != 0:
-            self.run_command('mkdir -p ~/.ssh')
-            self.put_file(_ssh_key_file.strpath, '~/.ssh/id_rsa')
-            self.put_file(_ssh_pubkey_file.strpath, '~/.ssh/id_rsa.pub')
-            self.run_command('cp ~/.ssh/id_rsa.pub ~/.ssh/authorized_keys;'
-                'chmod 700 ~/.ssh; chmod 600 ~/.ssh/*')
-        self._keystate = _ssh_keystate.installed
 
     @property
     def status(self):
