@@ -468,6 +468,7 @@ cat_name = "Configure"
           'automate explorer': _go_to('automate_explorer')},
       {}]])
 # @pytest.mark.meta(blockers=[1035399]) # work around instead of skip
+@pytest.mark.meta(blockers=[1262759])
 def test_permissions(role, allowed_actions, disallowed_actions):
     # create a user and role
     role = role()  # call function to get role
@@ -514,7 +515,7 @@ def single_task_permission_test(product_features, actions):
                      actions)
 
 
-@pytest.mark.meta(blockers=[1136112])
+@pytest.mark.meta(blockers=[1136112, 1262764])
 def test_permissions_role_crud():
     single_task_permission_test([[cat_name, 'Configuration'],
                                  ['Services', 'Catalogs Explorer']],
