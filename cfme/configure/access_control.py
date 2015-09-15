@@ -6,6 +6,7 @@ import cfme.web_ui.toolbar as tb
 from cfme.web_ui import Form, Select, CheckboxTree, accordion, fill, flash, form_buttons, Input, \
     Table, UpDownSelect
 from cfme.web_ui.menu import nav
+from utils.log import logger
 from utils.update import Updateable
 from utils import version
 from utils.pretty import Pretty
@@ -152,6 +153,23 @@ class User(Updateable, Pretty):
         self.group = group
         self.cost_center = cost_center
         self.value_assign = value_assign
+        self._restore_user = None
+
+    def __enter__(self):
+        if self._restore_user != store.user:
+            from cfme.login import logout
+            logger.info('Switching to new user: {}'.format(self.credential.principal))
+            self._restore_user = store.user
+            logout()
+            store.user = self
+
+    def __exit__(self, *args, **kwargs):
+        if self._restore_user != store.user:
+            from cfme.login import logout
+            logger.info('Restoring to old user: {}'.format(self._restore_user.credential.principal))
+            logout()
+            store.user = self._restore_user
+            self._restore_user = None
 
     def create(self):
         sel.force_navigate('cfg_accesscontrol_user_add')

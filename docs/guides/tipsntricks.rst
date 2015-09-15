@@ -8,9 +8,6 @@ This document is intended to explain some of the extra bits of the framework tha
 make your life easier. Not everything is included here and we encourage people to add new tricks
 as they are developed and rediscovered.
 
-.. _blockers:
-
-
 Version Picking
 ---------------
 
@@ -31,6 +28,8 @@ To use version picking is easy::
 In this example, if the version is below 5.3, the ``Boat`` will be returned. Anything between 5.3 and 5.4
 will return ``House`` and anything over 5.4 will return ``Houses``. There is also a ``version.LATEST``
 which points to upstream appliances.
+
+.. _blockers:
 
 Defining blockers
 -----------------
@@ -104,6 +103,28 @@ context manager ``appl1.ipapp`` and are able to run operations like provider cre
 This is also why you should use ``ssh_client`` and ``db`` access from the ``store.current_appliance``
 and not from the modules directly. If someone else uses your code and is inside an appliance
 context manager, the commands could be run against the wrong appliance.
+
+Logging in as another user
+--------------------------
+
+In a similar way to the :ref:`appliance_stack` section above, we implement a context manager for user
+operations. This allows the test developer to execute a section of code as a different user and then
+return to the original user once complete.
+
+A major advantage of this, is that the User object used for the CM operations is the same as the
+``cfme.configure.access_control`` object. This means that you can *create* a new user using the
+:py:class:`cfme.configure.access_control.User` object and straight after use it as the context manager
+object::
+
+    cred = Credential(principal='uid', secret='redhat')
+    user = User(name='user' + fauxfactory.gen_alphanumeric(),
+        credential=cred)
+    with user:
+        sel.force_navigate('dashboard')
+
+The ``User`` object stores the previous ``User`` object in a cache inside itself and on exiting the
+context, returns this to the pytest store as the *current* user so that future operations are
+performed with the original user.
 
 Invalidating cached data
 ------------------------

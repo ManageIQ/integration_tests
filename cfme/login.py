@@ -6,33 +6,19 @@ the credentials in the cfme yamls.
 :var page: A :py:class:`cfme.web_ui.Region` holding locators on the login page
 """
 from __future__ import absolute_import
-from threading import local
 
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, ElementNotVisibleException
 
 import cfme.fixtures.pytest_selenium as sel
 import cfme.web_ui.flash as flash
-from cfme import dashboard
+from cfme import dashboard, Credential
+from cfme.configure.access_control import User
 from cfme.web_ui import Region, Form, fill, Input
 from utils import conf, version
 from utils.browser import ensure_browser_open, quit
 from utils.log import logger
-from utils.pretty import Pretty
 from fixtures.pytest_store import store
-
-
-thread_locals = local()
-thread_locals.current_user = None
-
-
-class User(Pretty):
-    pretty_attrs = ['username', 'full_name', 'password']
-
-    def __init__(self, username=None, password=None, full_name=None):
-        self.full_name = full_name
-        self.password = password
-        self.username = username
 
 
 page = Region(
@@ -90,7 +76,7 @@ def press_enter_after_password():
 LOGIN_METHODS = [click_on_login, press_enter_after_password]
 
 
-def login(username, password, submit_method=_js_auth_fn):
+def login(user, submit_method=_js_auth_fn):
     """
     Login to CFME with the given username and password.
     Optionally, submit_method can be press_enter_after_password
@@ -104,16 +90,23 @@ def login(username, password, submit_method=_js_auth_fn):
     Raises:
         RuntimeError: If the login fails, ie. if a flash message appears
     """
-    if not logged_in() or username is not current_username():
+
+    if not user:
+        username = conf.credentials['default']['username']
+        password = conf.credentials['default']['password']
+        cred = Credential(principal=username, secret=password)
+        user = User(credential=cred)
+
+    if not logged_in() or user.credential.principal is not current_username():
         if logged_in():
             logout()
         # workaround for strange bug where we are logged out
         # as soon as we click something on the dashboard
         sel.sleep(1.0)
 
-        logger.debug('Logging in as user %s' % username)
+        logger.debug('Logging in as user %s' % user.credential.principal)
         try:
-            fill(form, {'username': username, 'password': password})
+            fill(form, {'username': user.credential.principal, 'password': user.credential.secret})
         except sel.InvalidElementStateException as e:
             logger.warning("Got an error. Details follow.")
             msg = str(e).lower()
@@ -125,7 +118,8 @@ def login(username, password, submit_method=_js_auth_fn):
                 sel.sleep(1.0)
                 sel.wait_for_ajax()
                 # And try filling the form again
-                fill(form, {'username': username, 'password': password})
+                fill(form, {'username': user.credential.principal,
+                    'password': user.credential.secret})
             else:
                 logger.warning("Unknown error, reraising.")
                 logger.exception(e)
@@ -133,7 +127,8 @@ def login(username, password, submit_method=_js_auth_fn):
         with sel.ajax_timeout(90):
             submit_method()
         flash.assert_no_errors()
-        thread_locals.current_user = User(username, password, _full_name())
+        user.full_name = _full_name()
+        store.user = user
 
 
 def login_admin(**kwargs):
@@ -146,9 +141,11 @@ def login_admin(**kwargs):
     if current_full_name() != 'Administrator':
         logout()
 
-        username = conf.credentials[store.user]['username']
-        password = conf.credentials[store.user]['password']
-        login(username, password, **kwargs)
+        username = conf.credentials['default']['username']
+        password = conf.credentials['default']['password']
+        cred = Credential(principal=username, secret=password)
+        user = User(credential=cred)
+        login(user, **kwargs)
 
 
 def logout():
@@ -160,7 +157,7 @@ def logout():
             sel.click(dashboard.page.user_dropdown)
         sel.click(page.logout, wait_ajax=False)
         sel.handle_alert(wait=False)
-        thread_locals.current_user = None
+        store.user = None
 
 
 def _full_name():
@@ -179,12 +176,12 @@ def current_full_name():
 
 
 def current_user():
-    return thread_locals.current_user
+    return store.user
 
 
 def current_username():
     u = current_user()
-    return u and u.username
+    return u and u.credential.principal
 
 
 def fill_login_fields(username, password):

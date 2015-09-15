@@ -91,17 +91,15 @@ depending on if the test was run against *rhos* or *ec2*.
 
 """
 from utils.log import logger
-from cfme.login import logout
-from fixtures.pytest_store import set_user
+from cfme.login import logout, User
 from fixtures.artifactor_plugin import art_client, get_test_idents
 from cfme.fixtures.pytest_selenium import take_screenshot
 import pytest
 import traceback
 from utils.browser import browser, ensure_browser_open
+from utils import conf
 
 
-last_user = "default"
-old_user = None
 enable_rbac = False
 
 
@@ -163,24 +161,18 @@ def pytest_pyfunc_call(pyfuncitem):
         return
 
     # Login as the "new" user to run the test under
-    global last_user
-    global old_user
     if 'rbac_role' in pyfuncitem.fixturenames:
         user = pyfuncitem._request.getfuncargvalue('rbac_role')
         really_logout()
         logger.info("setting user to {}".format(user))
-        set_user(user)
+        user_obj = User(username=conf.credentials[user]['username'],
+            password=conf.credentials[user]['password'])
 
-    # Actually perform the test. outcome is set to be a result object from the test
-    outcome = yield
+        # Actually perform the test. outcome is set to be a result object from the test
+        with user_obj:
+            outcome = yield
 
-    screenshot, screenshot_error = take_screenshot()
-
-    # Set the user back again and log out
-    if 'rbac_role' in pyfuncitem.fixturenames:
-        really_logout()
-        logger.info("setting user to default")
-        set_user('default')
+            screenshot, screenshot_error = take_screenshot()
 
         # Handle the Exception
         logger.error(pyfuncitem.location[0])
