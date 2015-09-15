@@ -63,6 +63,15 @@ edit_form = Form(
     ])
 
 
+set_ownership_form = Form(fields=[
+    ('user_name', Select("//select[@id='user_name']")),
+    ('group_name', Select("//select[@id='group_name']")),
+    ('create_button', form_buttons.save),
+    ('reset_button', form_buttons.reset),
+    ('cancel_button', form_buttons.cancel)
+])
+
+
 nav.add_branch(
     "clouds_instances",
     {
@@ -499,6 +508,33 @@ class Instance(Updateable, Pretty):
                     quoteattr(tag))):
             tags.append(sel.text(row).strip())
         return tags
+
+    def set_ownership(self, user=None, group=None, click_cancel=False, click_reset=False):
+        sel.click(self.find_quadicon(False, False, False))
+        cfg_btn('Set Ownership')
+        if click_reset:
+            action = form_buttons.reset
+            msg_assert = lambda: flash.assert_message_match(
+                'All changes have been reset')
+        elif click_cancel:
+            action = form_buttons.cancel
+            msg_assert = lambda: flash.assert_success_message(
+                'Set Ownership was cancelled by the user')
+        else:
+            action = form_buttons.save
+            msg_assert = lambda: flash.assert_success_message(
+                'Ownership saved for selected Instance')
+        fill(set_ownership_form, {'user_name': user, 'group_name': group},
+             action=action)
+        msg_assert()
+
+    def unset_ownership(self):
+        # choose the vm code comes here
+        sel.click(self.find_quadicon(False, False, False))
+        cfg_btn('Set Ownership')
+        fill(set_ownership_form, {'user_name': '<No Owner>', 'group_name': '<No Group>'},
+            action=form_buttons.save)
+        flash.assert_success_message('Ownership saved for selected Instance')
 
 
 class OpenStackInstance(Instance, Updateable):
