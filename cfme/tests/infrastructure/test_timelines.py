@@ -3,8 +3,7 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.infrastructure.virtual_machines import details_page
-from cfme.web_ui import toolbar, jstimelines
+from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyed
 from utils import testgen
 from utils.log import logger
@@ -95,7 +94,7 @@ def test_host_event(provider, gen_events, test_vm):
     """
     def nav_step():
         test_vm.load_details()
-        pytest.sel.click(details_page.infoblock.element('Relationships', 'Host'))
+        pytest.sel.click(InfoBlock.element('Relationships', 'Host'))
         toolbar.select('Monitoring', 'Timelines')
     wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
@@ -122,7 +121,7 @@ def test_cluster_event(provider, gen_events, test_vm):
     """
     def nav_step():
         test_vm.load_details()
-        pytest.sel.click(details_page.infoblock.element('Relationships', 'Cluster'))
+        pytest.sel.click(InfoBlock.element('Relationships', 'Cluster'))
         toolbar.select('Monitoring', 'Timelines')
     wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
