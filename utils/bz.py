@@ -135,8 +135,8 @@ class Bugzilla(object):
                 expanded.add(b)
         return found
 
-    def resolve_blocker(self, blocker, version=None, ignore_bugs=set([])):
-        # ignore_bugs is mutable but is not mutated here!
+    def resolve_blocker(self, blocker, version=None, ignore_bugs=set([]), force_block_streams=[]):
+        # ignore_bugs is mutable but is not mutated here! Same force_block_streams
         if isinstance(id, BugWrapper):
             bug = blocker
         else:
@@ -167,9 +167,16 @@ class Bugzilla(object):
                         "Ignoring bug #{}, appliance version not in bug release flag"
                         .format(variant.id))
             else:
-                logger.info("No release flags, wrogn versions, ignoring {}".format(variant.id))
+                logger.info("No release flags, wrong versions, ignoring {}".format(variant.id))
         if not filtered:
-            return None
+            # No appropriate bug was found
+            for forced_stream in force_block_streams:
+                # Find out if we force this bug.
+                if current_version().is_in_series(forced_stream):
+                    return bug
+            else:
+                # No bug, yipee :)
+                return None
         # First, use versions
         for bug in filtered:
             if ((bug.version is not None and bug.target_release is not None) and
