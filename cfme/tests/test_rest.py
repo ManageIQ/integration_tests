@@ -1221,3 +1221,5 @@ def test_query_simple_collections(rest_api, collection_name):
     collection = getattr(rest_api.collections, collection_name)
     collection.reload()
     list(collection)
+
+# Comment for testing the gpg signature in commit.
