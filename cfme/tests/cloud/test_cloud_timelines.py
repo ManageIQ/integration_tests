@@ -5,6 +5,7 @@ from cfme.cloud.instance import Instance
 from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyed
 from utils import testgen
+from utils import version
 from utils.blockers import BZ
 from utils.log import logger
 from utils.version import current_version
@@ -22,7 +23,8 @@ pytest_generate_tests = testgen.generate(testgen.cloud_providers, scope="module"
 def delete_fx_provider_event(db, provider):
     logger.info("Deleting timeline events for provider name {}".format(provider.name))
     ems = db['ext_management_systems']
-    ems_events = db['ems_events']
+    ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
+    ems_events = db[ems_events_table_name]
     with db.transaction:
         providers = (
             db.session.query(ems_events.id)
@@ -90,10 +92,10 @@ def count_events(instance_name, nav_step):
 
 def db_event(db, provider):
     # Get event count from the DB
-
     logger.info("Getting event count from the DB for provider name {}".format(provider.name))
     ems = db['ext_management_systems']
-    ems_events = db['ems_events']
+    ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
+    ems_events = db[ems_events_table_name]
     with db.transaction:
         providers = (
             db.session.query(ems_events.id)

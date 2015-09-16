@@ -3,10 +3,10 @@ import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
-from cfme.infrastructure.virtual_machines import details_page
-from cfme.web_ui import toolbar, jstimelines
+from cfme.web_ui import InfoBlock, toolbar, jstimelines
 from cfme.exceptions import ToolbarOptionGreyed
 from utils import testgen
+from utils import version
 from utils.log import logger
 from utils.wait import wait_for
 
@@ -17,7 +17,8 @@ pytestmark = [pytest.mark.ignore_stream("upstream")]
 def delete_fx_provider_event(db, provider):
     logger.debug("Deleting timeline events for provider name {}".format(provider.name))
     ems = db['ext_management_systems']
-    ems_events = db['ems_events']
+    ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})
+    ems_events = db[ems_events_table_name]
     with db.transaction:
         providers = (
             db.session.query(ems_events.id)
@@ -34,6 +35,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def vm_name():
+    # We have to use "tt" here to avoid name truncating in the timelines view
     return "test_tt_" + fauxfactory.gen_alphanumeric(length=4)
 
 
@@ -95,7 +97,7 @@ def test_host_event(provider, gen_events, test_vm):
     """
     def nav_step():
         test_vm.load_details()
-        pytest.sel.click(details_page.infoblock.element('Relationships', 'Host'))
+        pytest.sel.click(InfoBlock.element('Relationships', 'Host'))
         toolbar.select('Monitoring', 'Timelines')
     wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
@@ -122,7 +124,7 @@ def test_cluster_event(provider, gen_events, test_vm):
     """
     def nav_step():
         test_vm.load_details()
-        pytest.sel.click(details_page.infoblock.element('Relationships', 'Cluster'))
+        pytest.sel.click(InfoBlock.element('Relationships', 'Cluster'))
         toolbar.select('Monitoring', 'Timelines')
     wait_for(count_events, [test_vm.name, nav_step], timeout=60, fail_condition=0,
              message="events to appear")
