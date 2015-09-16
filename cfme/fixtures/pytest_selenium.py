@@ -1074,7 +1074,8 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
         # The some of the navigation steps cannot succeed
         logger.info('Cannot continue with navigation due to: %s; Recycling browser' % str(e))
         recycle = True
-    except (NoSuchElementException, InvalidElementStateException, WebDriverException) as e:
+    except (NoSuchElementException, InvalidElementStateException, WebDriverException,
+            StaleElementReferenceException) as e:
         from cfme.web_ui import cfme_exception as cfme_exc  # To prevent circular imports
         # First check - if jquery is not found, there can be also another reason why this happened
         # so do not put the next branches in elif
@@ -1113,6 +1114,10 @@ def force_navigate(page_name, _tries=0, *args, **kwargs):
                 elements("//ul[@id='maintab']/li[@class='active']/ul/li"):
             # If upstream and is the bottom part of menu is not displayed
             logger.exception("Detected glitch from BZ#1112574. HEADSHOT!")
+            recycle = True
+        elif not login.logged_in():
+            # Session timeout or whatever like that, login screen appears.
+            logger.exception("Looks like we are logged out. Try again.")
             recycle = True
         else:
             logger.error("Could not determine the reason for failing the navigation. " +
