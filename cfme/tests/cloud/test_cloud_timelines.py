@@ -92,7 +92,6 @@ def count_events(instance_name, nav_step):
 
 def db_event(db, provider):
     # Get event count from the DB
-
     logger.info("Getting event count from the DB for provider name {}".format(provider.name))
     ems = db['ext_management_systems']
     ems_events_table_name = version.pick({version.LOWEST: 'ems_events', '5.5': 'event_streams'})

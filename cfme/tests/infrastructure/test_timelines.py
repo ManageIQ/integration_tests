@@ -35,6 +35,7 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture(scope="module")
 def vm_name():
+    # We have to use "tt" here to avoid name truncating in the timelines view
     return "test_tt_" + fauxfactory.gen_alphanumeric(length=4)
 
 
