@@ -46,6 +46,7 @@ suds
 tornado
 tzlocal
 ui-navigate
+wait_for
 yaycl
 yaycl-crypt
 
