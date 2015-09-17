@@ -10,13 +10,12 @@ Required YAML keys:
         nothing terrible happens, but provisioning can be then assigned to a datastore that does not
         work (iso datastore or whatever), therefore failing the provision.
 """
+# TODO: Move the SOAP calls to UI checks since SOAP is deprecated
 import fauxfactory
 import pytest
 
 from cfme.common.vm import VM
 from cfme.control import explorer
-from cfme.exceptions import FlashMessageException
-from cfme.infrastructure.provider import RHEVMProvider
 from datetime import datetime
 from functools import partial
 from utils import mgmt_system, testgen
@@ -24,7 +23,6 @@ from utils.blockers import BZ
 from utils.db import cfmedb
 from utils.log import logger
 from utils.miq_soap import MiqVM
-from utils.providers import setup_provider
 from utils.virtual_machines import deploy_template
 from utils.wait import wait_for, TimedOutError
 from utils.pretty import Pretty
@@ -70,7 +68,7 @@ def pytest_generate_tests(metafunc):
         if ((metafunc.function is test_action_create_snapshot_and_delete_last)
             or
             (metafunc.function is test_action_create_snapshots_and_delete_them)) \
-                and isinstance(args['provider'], RHEVMProvider):
+                and args['provider'].type == "rhevm":
             continue
 
         new_idlist.append(idlist[i])
@@ -113,17 +111,12 @@ def vm_name(provider):
 
 
 @pytest.fixture(scope="module")
-def vm(request, provider, small_template, vm_name):
-    try:
-        setup_provider(provider.key)
-    except FlashMessageException as e:
-        e.skip_and_log("Provider failed to set up")
-
-    if isinstance(provider.mgmt, mgmt_system.RHEVMSystem):
+def vm(request, provider, setup_provider_modscope, small_template, vm_name):
+    if provider.type == "rhevm":
         kwargs = {"cluster": provider.data["default_cluster"]}
-    elif isinstance(provider.mgmt, mgmt_system.VMWareSystem):
+    elif provider.type == "virtualcenter":
         kwargs = {}
-    elif isinstance(provider.mgmt, mgmt_system.SCVMMSystem):
+    elif provider.type == "scvmm":
         kwargs = {
             "host_group": provider.data.get("provisioning", {}).get("host_group", "All Hosts")}
     else:
@@ -149,7 +142,8 @@ def vm(request, provider, small_template, vm_name):
             pytest.skip("{} is quite likely overloaded! Check its status!\n{}: {}".format(
                 provider.key, type(e).__name__, str(e)))
 
-    def finalize():
+    @request.addfinalizer
+    def _finalize():
         """if getting SOAP object failed, we would not get the VM deleted! So explicit teardown."""
         logger.info("Shutting down VM with name {}".format(vm_name))
         if provider.mgmt.is_vm_suspended(vm_name):
@@ -161,7 +155,6 @@ def vm(request, provider, small_template, vm_name):
         if provider.mgmt.does_vm_exist(vm_name):
             logger.info("Deleting VM {} in {}".format(vm_name, provider.mgmt.__class__.__name__))
             provider.mgmt.delete_vm(vm_name)
-    request.addfinalizer(finalize)
 
     # Make it appear in the provider
     provider.refresh_provider_relationships()
@@ -345,8 +338,7 @@ def test_action_suspend_virtual_machine_after_starting(
 
 
 @pytest.mark.meta(blockers=[1142875])
-def test_action_prevent_event(
-        request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
+def test_action_prevent_event(request, assign_policy_for_testing, vm, vm_off, vm_crud_refresh):
     """ This test tests action 'Prevent current event from proceeding'
 
     Must be done with SOAP.
@@ -361,8 +353,9 @@ def test_action_prevent_event(
     assign_policy_for_testing.assign_actions_to_event("VM Power On Request",
                                                       ["Prevent current event from proceeding"])
     request.addfinalizer(lambda: assign_policy_for_testing.assign_events())
-    # Request VM's start
-    vm.soap.power_on()   # THROUGH SOAP, because through mgmt_sys would not generate req event.
+    # Request VM's start (through API)
+    # TODO: Convert to REST or web UI
+    vm.soap.power_on()
     try:
         wait_for(vm.is_vm_running, num_sec=600, delay=5)
     except TimedOutError:
@@ -468,10 +461,10 @@ def test_action_create_snapshot_and_delete_last(
     assign_policy_for_testing.assign_actions_to_event("VM Power On",
                                                       ["Delete Most Recent Snapshot"])
 
+    @request.addfinalizer
     def finalize():
         assign_policy_for_testing.assign_events()
         snapshot_create_action.delete()
-    request.addfinalizer(finalize)
 
     snapshots_before = vm.soap.ws_attributes["v_total_snapshots"]
     # Power off to invoke snapshot creation
@@ -509,10 +502,10 @@ def test_action_create_snapshots_and_delete_them(
     )
     assign_policy_for_testing.assign_actions_to_event("VM Power Off", [snapshot_create_action])
 
+    @request.addfinalizer
     def finalize():
         assign_policy_for_testing.assign_events()
         snapshot_create_action.delete()
-    request.addfinalizer(finalize)
 
     def create_one_snapshot(n):
         """
@@ -631,10 +624,10 @@ def test_action_tag(request, assign_policy_for_testing, vm, vm_off, vm_crud_refr
     )
     assign_policy_for_testing.assign_actions_to_event("VM Power On", [tag_assign_action])
 
+    @request.addfinalizer
     def finalize():
         assign_policy_for_testing.assign_events()
         tag_assign_action.delete()
-    request.addfinalizer(finalize)
 
     vm.start_vm()
     vm_crud_refresh()
@@ -664,10 +657,10 @@ def test_action_untag(request, assign_policy_for_testing, vm, vm_off, vm_crud_re
     )
     assign_policy_for_testing.assign_actions_to_event("VM Power On", [tag_unassign_action])
 
+    @request.addfinalizer
     def finalize():
         assign_policy_for_testing.assign_events()
         tag_unassign_action.delete()
-    request.addfinalizer(finalize)
 
     vm.start_vm()
     vm_crud_refresh()
