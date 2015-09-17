@@ -119,6 +119,17 @@ management_systems:
         network: defaultnetwork
         test_vm_power_control:
             - pwr-ctl-vm-1-dnd
+    gcloud:
+        project: cfme-1044
+        zone: us-central1-f
+        scope: https://www.googleapis.com/auth/compute
+        oauth2_storage: oauth2.dat
+        client_secrets: client_secrets.json
+        type: gcloud
+        credentials: gcloud
+        source_disk_image: projects/debian-cloud/global/images/debian-7-wheezy-v20150320
+        machine_type: zones/us-central1-f/machineTypes/n1-standard-1
+        startup_script: startup-script.sh
 configuration_managers:
     sat6:
         name: Satellite 6
