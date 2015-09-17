@@ -22,7 +22,7 @@ from cfme.infrastructure.virtual_machines import Vm  # For Vm.CfmeRelationship
 from fixtures import ui_coverage
 from fixtures.pytest_store import _push_appliance, _pop_appliance, store
 from utils import api, conf, datafile, db, lazycache, trackerbot, db_queries, ssh, ports
-from utils.log import logger, create_sublogger
+from utils.log import logger, create_sublogger, logger_wrap
 from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
@@ -172,6 +172,7 @@ class Appliance(object):
         self.ipapp.restart_evm_service(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
+    @logger_wrap("Configure Appliance: {}")
     def configure(self, setup_fleece=False, log_callback=None, **kwargs):
         """Configures appliance - database setup, rename, ntp sync, ajax wait patch
 
@@ -189,11 +190,8 @@ class Appliance(object):
                          ``None`` (default ``None``)
 
         """
-        if log_callback is None:
-            log_callback = lambda message: logger.info("Appliance {} configure: {}".format(
-                self.vmname,
-                message.strip()
-            ))
+
+        log_callback("Configuring appliance {}".format(self.vmname))
         with self.ipapp as ipapp:
             ipapp.wait_for_ssh()
             if kwargs:
@@ -324,9 +322,8 @@ class Appliance(object):
             log_callback(str(e))
             raise
 
+    @logger_wrap("Remove RHEV LUN: {}")
     def remove_rhev_direct_lun_disk(self, log_callback=None):
-        if log_callback is None:
-            log_callback = logger.info
         if not self.is_on_rhev:
             msg = "appliance {} NOT on rhev, unable to disconnect direct_lun".format(self.vmname)
             log_callback(msg)
@@ -623,10 +620,9 @@ class IPAppliance(object):
         # 3000, 4000, and 80 at this point, and waiting a reasonable amount of time
         # before exploding if any of them don't appear in time after evm restarts.
 
+    @logger_wrap("Fix NTP Clock: {}")
     def fix_ntp_clock(self, log_callback=None):
         """Fixes appliance time using ntpdate on appliance"""
-        if log_callback is None:
-            log_callback = self.log.info
         log_callback('Fixing appliance clock')
         client = self.ssh_client
         try:
@@ -644,6 +640,7 @@ class IPAppliance(object):
             log_callback(msg)
             raise Exception(msg)
 
+    @logger_wrap("Work around missing Gem file: {}")
     def workaround_missing_gemfile(self, log_callback=None):
         """Fix Gemfile issue.
 
@@ -653,8 +650,6 @@ class IPAppliance(object):
 
         When this issue is resolved, this method will do nothing.
         """
-        if log_callback is None:
-            log_callback = self.log.info
         client = self.ssh_client
         status, out = client.run_command("ls /opt/rh/cfme-gemset")
         if status != 0:
@@ -668,6 +663,7 @@ class IPAppliance(object):
         # To be 100% sure
         self.reboot(wait_for_web_ui=False, log_callback=log_callback)
 
+    @logger_wrap("Precompile assets: {}")
     def precompile_assets(self, log_callback=None):
         """Precompile the static assets (images, css, etc) on an appliance
 
@@ -677,8 +673,6 @@ class IPAppliance(object):
         # compile assets if required (not required on 5.2)
         if self.version.is_in_series("5.2"):
             return
-        if log_callback is None:
-            log_callback = self.log.info
         log_callback('Precompiling assets')
 
         client = self.ssh_client
@@ -693,12 +687,11 @@ class IPAppliance(object):
 
         return status
 
+    @logger_wrap("Backup database: {}")
     def backup_database(self, log_callback=None):
         """Backup VMDB database
 
         """
-        if log_callback is None:
-            log_callback = logger.info
         log_callback('Backing up database')
 
         with self.ssh_client as ssh:
@@ -709,12 +702,11 @@ class IPAppliance(object):
                 log_callback(msg)
                 raise ApplianceException(msg)
 
+    @logger_wrap("Restore database: {}")
     def restore_database(self, log_callback=None):
         """Restore VMDB database
 
         """
-        if log_callback is None:
-            log_callback = logger.info
         log_callback('Restoring database')
 
         self.stop_evm_service()
@@ -730,6 +722,7 @@ class IPAppliance(object):
             else:
                 self.start_evm_service()
 
+    @logger_wrap("Setup upstream DB: {}")
     def setup_upstream_db(self, log_callback=None):
         """Configure upstream database
 
@@ -739,12 +732,6 @@ class IPAppliance(object):
         """
         if self.version != LATEST:
             return
-
-        if log_callback is None:
-            log_callback = lambda msg: self.log.info("DB setup: {}".format(msg))
-        else:
-            cb = log_callback
-            log_callback = lambda msg: cb("DB setup: {}".format(msg))
 
         log_callback('Starting upstream db setup')
 
@@ -761,6 +748,7 @@ class IPAppliance(object):
 
         log_callback('DB setup complete')
 
+    @logger_wrap("Clone automate domain: {}")
     def clone_domain(self, source="ManageIQ", dest="Default", log_callback=None):
         """Clones Automate domain
 
@@ -774,12 +762,6 @@ class IPAppliance(object):
         """
         if self.version.is_in_series("5.2"):
             return
-
-        if log_callback is None:
-            log_callback = lambda msg: self.log.info("Clone automate domain: {}".format(msg))
-        else:
-            cb = log_callback
-            log_callback = lambda msg: cb("Clone automate domain: {}".format(msg))
 
         client = self.ssh_client
 
@@ -820,13 +802,9 @@ class IPAppliance(object):
 
         return status, output
 
+    @logger_wrap("Deploying Merkyl: {}")
     def deploy_merkyl(self, start=False, log_callback=None):
         """Deploys the Merkyl log relay service to the appliance"""
-        if log_callback is None:
-            log_callback = lambda msg: self.log.info("Deploying merkyl: {}".format(msg))
-        else:
-            cb = log_callback
-            log_callback = lambda msg: cb("Deploying merkyl: {}".format(msg))
 
         client = self.ssh_client
 
@@ -855,6 +833,7 @@ class IPAppliance(object):
             log_callback("Setting it to start after reboot")
             client.run_command("chkconfig merkyl on")
 
+    @logger_wrap("Update RHEL: {}")
     def update_rhel(self, *urls, **kwargs):
         """Update RHEL on appliance
 
@@ -877,12 +856,11 @@ class IPAppliance(object):
             self.log.critical('RHEL updates are currently broken in 5.5!')
             return
         urls = list(urls)
-        log_callback_f = kwargs.pop("log_callback", lambda msg: self.log.info)
+        log_callback = kwargs.pop("log_callback")
         skip_broken = kwargs.pop("skip_broken", False)
         reboot = kwargs.pop("reboot", True)
         setup_repos = kwargs.pop("setup_repos", True)
         streaming = kwargs.pop("streaming", False)
-        log_callback = lambda msg: log_callback_f("Update RHEL: {}".format(msg))
         log_callback('updating appliance')
         if not urls:
             basic_info = conf.cfme_data.get('basic_info', {})
@@ -950,6 +928,7 @@ class IPAppliance(object):
 
         return result
 
+    @logger_wrap("Patch ajax wait: {}")
     def patch_ajax_wait(self, reverse=False, log_callback=None):
         """Patches ajax wait code
 
@@ -962,12 +941,6 @@ class IPAppliance(object):
         """
         if self.version >= '5.3':
             return
-
-        if log_callback is None:
-            log_callback = lambda msg: self.log.info("Patch ajax wait: {}".format(msg))
-        else:
-            cb = log_callback
-            log_callback = lambda msg: cb("Patch ajax wait: {}".format(msg))
 
         log_callback('Starting')
 
@@ -999,6 +972,7 @@ class IPAppliance(object):
 
         return exitcode
 
+    @logger_wrap("Loosen pgssl: {}")
     def loosen_pgssl(self, with_ssl=False, log_callback=None):
         """Loosens postgres connections
 
@@ -1009,7 +983,7 @@ class IPAppliance(object):
         if self.version.is_in_series("5.2"):
             return
 
-        (log_callback or self.log.info)('Loosening postgres permissions')
+        log_callback('Loosening postgres permissions')
 
         # Init SSH client
         client = self.ssh_client
@@ -1057,6 +1031,7 @@ class IPAppliance(object):
         """
         return browser_session(base_url=self.url)
 
+    @logger_wrap("Enable internal DB: {}")
     def enable_internal_db(self, region=0, key_address=None, db_password=None,
                            ssh_password=None, log_callback=None):
         """Enables internal database
@@ -1068,8 +1043,7 @@ class IPAppliance(object):
         Note:
             If key_address is None, a new encryption key is generated for the appliance.
         """
-        (log_callback or self.log.info)(
-            'Enabling internal DB (region {}) on {}.'.format(region, self.address))
+        log_callback('Enabling internal DB (region {}) on {}.'.format(region, self.address))
         self.db_address = self.address
         del(self.db)
 
@@ -1113,6 +1087,7 @@ class IPAppliance(object):
 
         return status, out
 
+    @logger_wrap("Enable external DB: {}")
     def enable_external_db(self, db_address, region=0, db_name=None,
             db_username=None, db_password=None, log_callback=None):
         """Enables external database
@@ -1126,8 +1101,6 @@ class IPAppliance(object):
 
         Returns a tuple of (exitstatus, script_output) for reporting, if desired
         """
-        if log_callback is None:
-            log_callback = self.log.info
         log_callback('Enabling external DB (db_address {}, region {}) on {}.'
             .format(db_address, region, self.address))
         # reset the db address and clear the cached db object if we have one
@@ -1228,11 +1201,10 @@ class IPAppliance(object):
         else:
             return unsure
 
+    @logger_wrap("Restart EVM Service: {}")
     def restart_evm_service(self, rude=False, log_callback=None):
         """Restarts the ``evmserverd`` service on this appliance
         """
-        if log_callback is None:
-            log_callback = self.log.info
         log_callback('restarting evm service')
         with self.ssh_client as ssh:
             if rude:
@@ -1246,11 +1218,10 @@ class IPAppliance(object):
                 raise ApplianceException(msg)
         fire("server_details_changed")
 
+    @logger_wrap("Stop EVM Service: {}")
     def stop_evm_service(self, log_callback=None):
         """Stops the ``evmserverd`` service on this appliance
         """
-        if log_callback is None:
-            log_callback = self.log.info
         log_callback('stopping evm service')
 
         with self.ssh_client as ssh:
@@ -1261,11 +1232,10 @@ class IPAppliance(object):
                 log_callback(msg)
                 raise ApplianceException(msg)
 
+    @logger_wrap("Start EVM Service: {}")
     def start_evm_service(self, log_callback=None):
         """Starts the ``evmserverd`` service on this appliance
         """
-        if log_callback is None:
-            log_callback = self.log.info
         log_callback('starting evm service')
 
         with self.ssh_client as ssh:
@@ -1276,8 +1246,9 @@ class IPAppliance(object):
                 log_callback(msg)
                 raise ApplianceException(msg)
 
+    @logger_wrap("Rebooting Appliance: {}")
     def reboot(self, wait_for_web_ui=True, log_callback=None):
-        (log_callback or self.log.info)('Rebooting appliance')
+        log_callback('Rebooting appliance')
         client = self.ssh_client
 
         old_uptime = client.uptime()
@@ -1289,6 +1260,7 @@ class IPAppliance(object):
         if wait_for_web_ui:
             self.wait_for_web_ui()
 
+    @logger_wrap("Waiting for web_ui: {}")
     def wait_for_web_ui(self, timeout=900, running=True, log_callback=None):
         """Waits for the web UI to be running / to not be running
 
@@ -1297,15 +1269,14 @@ class IPAppliance(object):
             running: Specifies if we wait for web UI to start or stop (default ``True``)
                      ``True`` == start, ``False`` == stop
         """
-        (log_callback or self.log.info)('Waiting for web UI to appear')
+        log_callback('Waiting for web UI to appear')
         result, wait = wait_for(self._check_appliance_ui_wait_fn, num_sec=timeout,
             fail_condition=not running, delay=10)
         return result
 
+    @logger_wrap("Install VDDK: {}")
     def install_vddk(self, reboot=True, force=False, vddk_url=None, log_callback=None):
         """Install the vddk on a appliance"""
-        if log_callback is None:
-            log_callback = self.log.info
 
         def log_raise(exception_class, message):
             log_callback(message)

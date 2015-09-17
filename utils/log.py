@@ -163,6 +163,25 @@ logging.TRACE = 5
 logging.addLevelName(logging.TRACE, 'TRACE')
 
 
+class logger_wrap(object):
+    """ Sets up the logger by default, used as a decorator in utils.appliance
+
+    If the logger doesn't exist, sets up a sensible alternative
+    """
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, func):
+        def newfunc(*args, **kwargs):
+            cb = kwargs.get('log_callback', None)
+            if not cb:
+                cb = logger.info
+            kwargs['log_callback'] = lambda msg: cb(self.args[0].format(msg))
+            func(*args, **kwargs)
+        return newfunc
+
+
 class TraceLogger(logging.Logger):
     """A trace-loglevel-aware :py:class:`Logger <python:logging.Logger>`"""
     def trace(self, msg, *args, **kwargs):
