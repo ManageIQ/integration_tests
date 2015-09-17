@@ -354,7 +354,8 @@ def prepare_template_verify_version(self, template_id):
     appliance = CFMEAppliance(template.provider_name, template.name)
     appliance.ipapp.wait_for_ssh()
     try:
-        true_version = str(appliance.version).strip()
+        # Remove the suffix (1.2.3.4-alpha1 -> 1.2.3.4)
+        true_version = re.sub(r"-[^-]*$", "", str(appliance.version).strip())
     except Exception as e:
         template.set_status("Some SSH error happened during appliance version check.")
         self.retry(args=(template_id,), exc=e, countdown=20, max_retries=5)
