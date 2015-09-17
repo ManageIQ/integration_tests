@@ -240,14 +240,20 @@ class OpenStackInstance(Instance):
     STATE_ON = "on"
     STATE_OFF = "off"
     STATE_ERROR = "non-operational"
-    STATE_PAUSED = version.pick({
-        version.LOWEST: "off",
-        "5.4": "paused",
-    })
-    STATE_SUSPENDED = version.pick({
-        version.LOWEST: "off",
-        "5.4": "suspended",
-    })
+
+    @property
+    def STATE_PAUSED(self):
+        return version.pick({
+            version.LOWEST: "off",
+            "5.4": "paused",
+        })
+
+    @property
+    def STATE_SUSPENDED(self):
+        return version.pick({
+            version.LOWEST: "off",
+            "5.4": "suspended",
+        })
     STATE_UNKNOWN = "unknown"
 
     def create(self, email=None, first_name=None, last_name=None, cloud_network=None,
