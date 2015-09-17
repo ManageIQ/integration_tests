@@ -135,7 +135,8 @@ class Appliance(object):
                 region, key_address, db_password, ssh_password, log_callback=log_callback)
         else:
             self.ipapp.enable_external_db(
-                db_address, region, db_name, db_username, db_password, log_callback=log_callback)
+                db_address, region, db_name, db_username, db_password,
+                log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
         if kwargs.get('loosen_pgssl', True) is True:
             self.ipapp.loosen_pgssl(log_callback=log_callback)
@@ -193,18 +194,19 @@ class Appliance(object):
                 self.vmname,
                 message.strip()
             ))
-        self.ipapp.wait_for_ssh()
-        if kwargs:
-            self._custom_configure(**kwargs)
-        else:
-            configure_function = pick({
-                '5.2': self._configure_5_2,
-                '5.3': self._configure_5_3,
-                LATEST: self._configure_upstream,
-            })
-            configure_function(log_callback=log_callback)
-        if setup_fleece:
-            self.configure_fleecing(log_callback=log_callback)
+        with self.ipapp as ipapp:
+            ipapp.wait_for_ssh()
+            if kwargs:
+                self._custom_configure(**kwargs)
+            else:
+                configure_function = pick({
+                    '5.2': self._configure_5_2,
+                    '5.3': self._configure_5_3,
+                    LATEST: self._configure_upstream,
+                })
+                configure_function(log_callback=log_callback)
+            if setup_fleece:
+                self.configure_fleecing(log_callback=log_callback)
 
     def configure_fleecing(self, log_callback=None):
         if log_callback is None:
