@@ -9,7 +9,7 @@ from ovirtsdk.infrastructure.errors import RequestError as RHEVRequestError
 from ssl import SSLError
 from utils.log import logger
 from utils.mgmt_system import RHEVMSystem, VMWareSystem, EC2System, OpenstackSystem, SCVMMSystem
-from utils.mgmt_system.exceptions import VMInstanceNotCloned
+from utils.mgmt_system import VMInstanceNotCloned
 
 
 def deploy_template(provider_key, vm_name, template_name=None, timeout=900, **deploy_args):

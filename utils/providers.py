@@ -125,7 +125,8 @@ def get_mgmt(provider_key, providers=None, credentials=None):
     provider_kwargs = provider.copy()
     provider_kwargs.update(credentials)
     if isinstance(provider_key, basestring):
-        provider_kwargs["provider_key"] = provider_key
+        provider_kwargs['provider_key'] = provider_key
+    provider_kwargs['logger'] = logger
     provider_instance = provider_type_map[provider['type']](**provider_kwargs)
     return provider_instance
 

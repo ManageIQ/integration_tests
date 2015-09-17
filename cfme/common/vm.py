@@ -11,7 +11,7 @@ from cfme.fixtures import pytest_selenium as sel
 from cfme.web_ui import (
     Form, InfoBlock, Quadicon, Select, fill, flash, form_buttons, paginator, toolbar)
 from utils.log import logger
-from utils.mgmt_system.exceptions import ActionNotSupported, VMInstanceNotFound
+from utils.mgmt_system import ActionNotSupported, VMInstanceNotFound
 from utils.pretty import Pretty
 from utils.timeutil import parsetime
 from utils.update import Updateable
