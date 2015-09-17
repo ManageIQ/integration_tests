@@ -27,7 +27,7 @@ from utils.mgmt_system import RHEVMSystem, VMWareSystem
 from utils.net import net_check, resolve_hostname
 from utils.path import data_path, scripts_path
 from utils.providers import get_mgmt, get_crud
-from utils.version import Version, get_stream, LATEST
+from utils.version import Version, get_stream, pick, LATEST
 from utils.signals import fire
 from utils.wait import wait_for
 
@@ -163,9 +163,6 @@ class Appliance(object):
         self.ipapp.update_rhel(log_callback=log_callback)
         self.ipapp.wait_for_web_ui(timeout=1800, log_callback=log_callback)
 
-    def _configure_5_4(self, log_callback=None):
-        self._configure_5_3(log_callback=log_callback)
-
     def _configure_upstream(self, log_callback=None):
         self.ipapp.deploy_merkyl(start=True, log_callback=log_callback)
         self.ipapp.fix_ntp_clock(log_callback=log_callback)
@@ -200,14 +197,12 @@ class Appliance(object):
         if kwargs:
             self._custom_configure(**kwargs)
         else:
-            if self.version.is_in_series("5.2"):
-                self._configure_5_2(log_callback=log_callback)
-            elif self.version.is_in_series("5.3"):
-                self._configure_5_3(log_callback=log_callback)
-            elif self.version.is_in_series("5.4"):
-                self._configure_5_4(log_callback=log_callback)
-            elif self.version == LATEST:
-                self._configure_upstream(log_callback=log_callback)
+            configure_function = pick({
+                '5.2': self._configure_5_2,
+                '5.3': self._configure_5_3,
+                LATEST: self._configure_upstream,
+            })
+            configure_function(log_callback=log_callback)
         if setup_fleece:
             self.configure_fleecing(log_callback=log_callback)
 
@@ -876,6 +871,9 @@ class IPAppliance(object):
 
 
         """
+        if self.version.is_in_series('5.5'):
+            self.log.critical('RHEL updates are currently broken in 5.5!')
+            return
         urls = list(urls)
         log_callback_f = kwargs.pop("log_callback", lambda msg: self.log.info)
         skip_broken = kwargs.pop("skip_broken", False)
