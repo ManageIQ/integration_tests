@@ -2,6 +2,7 @@
 """This module contains REST API specific tests."""
 import fauxfactory
 import pytest
+import datetime
 
 from cfme.configure.configuration import server_roles_disabled
 
@@ -116,6 +117,9 @@ def test_add_delete_service_catalog(rest_api):
     Metadata:
         test_flag: rest
     """
+
+    assert "delete" in rest_api.collections.service_catalogs.action.all
+
     scl = rest_api.collections.service_catalogs.action.add(
         name=fauxfactory.gen_alphanumeric(),
         description=fauxfactory.gen_alphanumeric(),
@@ -143,6 +147,9 @@ def test_add_delete_multiple_service_catalogs(rest_api):
     Metadata:
         test_flag: rest
     """
+
+    assert "delete" in rest_api.collections.service_catalogs.action.all
+
     def _gen_ctl():
         return {
             "name": fauxfactory.gen_alphanumeric(),
@@ -208,32 +215,6 @@ def test_provider_refresh(request, setup_a_provider, rest_api):
     vms = rest_api.collections.vms.find_by(name=vm_name)
     if "delete" in vms[0].action.all:
         vms[0].action.delete()
-
-
-@pytest.mark.ignore_stream("5.3")
-def test_provider_edit(request, setup_a_provider, rest_api):
-    """Test editing a provider using REST API.
-
-    Prerequisities:
-        * A provider that is set up. Can be a dummy one.
-
-    Steps:
-        * Retrieve list of providers using GET /api/providers , pick the first one
-        * POST /api/providers/<id> (method ``edit``) -> {"name": <random name>}
-        * Query the provider again. The name should be set.
-
-    Metadata:
-        test_flag: rest
-    """
-    if "edit" not in rest_api.collections.providers.action.all:
-        pytest.skip("Refresh action is not implemented in this version")
-    provider = rest_api.collections.providers[0]
-    new_name = fauxfactory.gen_alphanumeric()
-    old_name = provider.name
-    request.addfinalizer(lambda: provider.action.edit(name=old_name))
-    provider.action.edit(name=new_name)
-    provider.reload()
-    assert provider.name == new_name
 
 
 @pytest.mark.parametrize(
@@ -368,6 +349,852 @@ def test_vm_add_lifecycle_event(request, setup_a_provider, rest_api, vm, from_de
     ))) == 1, "Could not find the lifecycle event in the database"
 
 
+@pytest.mark.ignore_stream("5.3")
+def test_add_delete_custom_attributes_vm(rest_api, vm):
+    if "add" not in rest_api.collections.vms.custom_attributes.action.all:
+        pytest.skip("Custom attributes are not implemented in this version")
+
+    name = fauxfactory.gen_alphanumeric()
+    custom_attributes_data = {
+        "name": name,
+        "value": name,
+    }
+
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    rest_vm.custom_attributes.action.add(custom_attributes_data)
+    rest_vm.reload()
+    assert rest_vm.custom_attributes.find_by(name=custom_attributes_data.get('name'))
+
+    rest_vm.custom_attributes.action.delete(name=custom_attributes_data.get('name'))
+    rest_vm.reload()
+    assert not rest_vm.custom_attributes.find_by(name=custom_attributes_data.get('name'))
+
+
+@pytest.mark.ignore_stream("5.3")
+def test_edit_custom_attributes_vm(rest_api, vm):
+    if "add" not in rest_api.collections.vms.custom_attributes.action.all:
+        pytest.skip("Custom attributes are not implemented in this version")
+    name = fauxfactory.gen_alphanumeric()
+    custom_attributes_data = {
+        "name": name,
+        "value": name,
+    }
+
+    rest_vm = rest_api.collections.vms.find_by(name=vm)[0]
+    rest_vm.custom_attributes.action.add(custom_attributes_data)
+    rest_vm.reload()
+    assert rest_vm.custom_attributes.find_by(name=custom_attributes_data.get('name'))
+
+    custom_attributes_data["value"] = fauxfactory.gen_alphanumeric()
+    rest_vm.custom_attributes.action.edit(custom_attributes_data)
+    rest_vm.reload()
+    custom = rest_vm.custom_attributes.find_by(name=custom_attributes_data.get('name'))
+    assert custom.value != custom_attributes_data.get('name')
+
+
+@pytest.fixture(scope="module")
+def users_data():
+    name = fauxfactory.gen_alphanumeric()
+    users_data = [{
+        "name": "name_{}_{}".format(index, name),
+        "userid": "userid_{}_{}".format(index, name),
+        "email": "{}_{}@local.com".format(index, name),
+    } for index in range(1, 5)]
+
+    return users_data
+
+
+@pytest.fixture(scope="module")
+def groups_data():
+    name = fauxfactory.gen_alphanumeric()
+    groups_data = [{
+        "description": "description_{}_{}".format(index, name),
+        "miq_user_role_id": index,
+    } for index in range(1, 5)]
+
+    return groups_data
+
+
+@pytest.fixture(scope="module")
+def roles_data():
+    name = fauxfactory.gen_alphanumeric()
+    roles_data = [{
+        "name": "name_{}_{}".format(index, name),
+        "settings": {
+            "restrictions": {
+                "vms": "user"
+            },
+        },
+    } for index in range(1, 5)]
+
+    return roles_data
+
+
+@pytest.fixture(scope="module")
+def zones_data():
+    name = fauxfactory.gen_alphanumeric()
+    zones_data = [{
+        "name": "name_{}_{}".format(index, name),
+        "description": "description_{}_{}".format(index, name),
+    } for index in range(1, 5)]
+
+    return zones_data
+
+
+@pytest.fixture(scope="module", params=["users", "groups", "roles", "zones"])
+def rest_api_access_control(request, rest_api):
+    if request.param == 'users':
+        return ("users", request.getfuncargvalue("users_data"), rest_api.collections.users)
+    elif request.param == 'groups':
+        return ("groups", request.getfuncargvalue("groups_data"), rest_api.collections.groups)
+    elif request.param == 'roles':
+        return ("roles", request.getfuncargvalue("roles_data"), rest_api.collections.roles)
+    elif request.param == 'zones':
+        return ("zones", request.getfuncargvalue("zones_data"), rest_api.collections.zones)
+
+
+def test_add_delete_access_control(rest_api_access_control):
+    """Tests creating and deleting access control entity: ['users', 'groups', 'roles', 'zones'].
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * access_control = ['users', 'groups', 'roles', 'zones']
+        * POST /api/{access_control} (method ``add``)
+                for users: ``name``, ```userid`, ``email``
+                for groups: ``description``, ``miq_user_role_id``
+                for roles: ``name``, ``settings``
+        * DELETE /api/{access_control}/<id> -> delete only one entity (not working for zones)
+        * DELETE /api/{access_control} <- Insert a JSON with list of dicts containing ``href``s to
+            the entity
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    service, entities, api = rest_api_access_control
+    assert "delete" in api.action.all
+
+    for entity in entities:
+        api.action.add(entity)
+
+        wait_for(
+            lambda: api.find_by(name=entity.get("name")),
+            num_sec=180,
+            delay=10,
+        )
+
+    if service != 'zones':
+        delete_entity = api.find_by(name=entities[0].get('name'))
+        delete_entity.action.delete()
+        wait_for(
+            lambda: not api.find_by(name=entities[0].get('name')),
+            num_sec=180,
+            delay=10,
+        )
+
+    entities = [entity.id for entity in api]
+    api.delete(entities)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        api.action.delete(entities)
+
+
+def test_edit_access_control(rest_api_access_control):
+    """Tests editing a access_control entity: ['user', 'group', 'role'].
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * access_control = ['users', 'groups', 'roles']
+        * Retrieve list of entities using GET /api/{access_control} , pick the first one
+        * POST /api/{access_control}/<id> (method ``edit``) with the ``name`` or ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    service, entities, api = rest_api_access_control
+    assert "edit" in api.action.all
+
+    try:
+        entity = api[0]
+    except:
+        api.action.add(entities[0])
+        entity = api.find_by(name=(entities[0].get('name') or entities[0].get('description')))
+
+    if service == 'groups':
+        new_description = "description_{}".format(fauxfactory.gen_alphanumeric())
+        entity.action.edit(description=new_description)
+        wait_for(
+            lambda: api.find_by(description=new_description),
+            num_sec=180,
+            delay=10,
+        )
+
+    new_name = "name_{}".format(fauxfactory.gen_alphanumeric())
+    entity.action.edit(name=new_name)
+    wait_for(
+        lambda: api.find_by(name=new_name),
+        num_sec=180,
+        delay=10,
+    )
+
+
+@pytest.fixture(scope="module")
+def policies_data():
+    name = fauxfactory.gen_alphanumeric()
+    policies_data = [{
+        "description": "description_{}_{}".format(index, name),
+        "mode": "compliance",
+        "towhat": "Vm",
+    } for index in range(1, 5)]
+
+    return policies_data
+
+
+@pytest.fixture(scope="module")
+def policy_profiles_data():
+    name = fauxfactory.gen_alphanumeric()
+    policy_profiles_data = [{
+        "description": "description_{}_{}".format(index, name),
+    } for index in range(1, 5)]
+
+    return policy_profiles_data
+
+
+@pytest.fixture(scope="module")
+def added_policies(request, policies_data, rest_api):
+    for policy in policies_data:
+        rest_api.collections.policies.action.add(policy)
+        wait_for(
+            lambda: rest_api.collections.policies.find_by(name=policy.get("description")),
+            num_sec=180,
+            delay=10,
+        )
+
+    def fin():
+        policies = [policy for policy in rest_api.collections.policies]
+        rest_api.collections.policies.delete(policies)
+        with error.expected("ActiveRecord::RecordNotFound"):
+            rest_api.collections.policies.action.delete(policies)
+
+    request.addfinalizer(fin)
+
+    return [policy.id for policy in rest_api.collections.policies]
+
+
+@pytest.fixture(scope="module")
+def added_policy_profiles(request, policy_profiles_data, rest_api):
+    for policy_profile in policy_profiles_data:
+        rest_api.collections.policy_profiles.action.add(policy_profile)
+
+        wait_for(
+            lambda: rest_api.collections.policy_profiles.find_by(
+                name=policy_profile.get("description")),
+            num_sec=180,
+            delay=10,
+        )
+
+    def fin():
+            policy_profiles = [policy_profile.id
+                for policy_profile in rest_api.collections.policy_profiles]
+            rest_api.collections.policy_profiles.delete(policy_profiles)
+            with error.expected("ActiveRecord::RecordNotFound"):
+                rest_api.collections.policy_profiles.action.delete(policy_profiles)
+
+    request.addfinalizer(fin)
+
+    return [policy.id for policy in rest_api.collections.policies]
+
+
+def test_add_delete_policy_profiles(added_policy_profiles, rest_api):
+    """Tests creating and deleting policy_profiles
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/policy_profiles (method ``add``)
+        * DELETE /api/policy_profiles/<id> -> delete only one policy profile
+        * DELETE /api/policy_profiles <- Insert a JSON with list of dicts containing ``href``s to
+            the policy profile
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "delete" in rest_api.collections.policy_profiles.action.all
+
+    delete_policy_profile = rest_api.collections.policy_profiles.find_by(
+        policy_profiles_data[0].get('description'))
+    delete_policy_profile.action.delete()
+    wait_for(
+        lambda: not rest_api.collections.policy_profiles.find_by(
+            name=policy_profiles_data[0].get('description')),
+        num_sec=180,
+        delay=10,
+    )
+
+
+def test_add_delete_policies_through_profile(added_policies, added_policy_profiles, rest_api):
+    """Tests adding a policy_profile with policies and deleting the policies
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/policy_profiles (method ``add``)
+        * DELETE DELETE /api/policy_profiles/<id>/policies/24 -> delete only one policy
+        * DELETE /api/policy_profiles/<id>/policies <- Insert a JSON with list of dicts containing
+          ``href``s to the policies
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+
+    Metadata:
+        test_flag: rest, policies
+    """
+    assert "delete" in rest_api.collections.policy_profiles.action.all
+
+    delete_policy_profile = rest_api.collections.policy_profiles.find_by(
+        id=added_policy_profiles[0])
+    delete_policy = delete_policy_profile.policies[0]
+    delete_policy.action.delete()
+    wait_for(
+        lambda: not delete_policy_profile.policies.find_by(id=delete_policy.id),
+        num_sec=180,
+        delay=10,
+    )
+
+
+def test_add_delete_policies(added_policies, rest_api):
+    """Tests creating and deleting policies
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/policies (method ``add``)
+        * DELETE /api/polices/<id> -> delete only one policy
+        * DELETE /api/policies <- Insert a JSON with list of dicts containing ``href``s to
+            the policy
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest, policies
+    """
+    assert "delete" in rest_api.collections.policies.action.all
+
+    delete_policy = rest_api.collections.policies.find_by(id=added_policies[0])
+    delete_policy.action.delete()
+    wait_for(
+        lambda: not rest_api.collections.policies.find_by(id=added_policies[0]),
+        num_sec=180,
+        delay=10,
+    )
+
+
+def test_refresh_template(rest_api):
+    """Test refreshing a template
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        Steps:
+        * Retrieve list of entities using GET /api/templates , pick the first one
+        * POST /api/templates/<id> (method ``refresh``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "refresh" in rest_api.collections.templates.action.all
+
+    try:
+        template = rest_api.collections.templates[0]
+    except IndexError:
+        pytest.skip("There is no template to be refreshed")
+
+    old_refresh_dt = template.update_on
+    assert template.action.refresh()["success"], "Refresh was unsuccessful"
+    wait_for(
+        lambda: template.update_on != old_refresh_dt,
+        fail_func=template.reload,
+        num_sec=180,
+        delay=10,
+    )
+
+
+@pytest.fixture(scope="module", params=["resource_pools", "templates", "data_storages",
+    "clusters", "service_templates", "services"])
+def rest_api_delete_service(request, rest_api):
+    if request.param == 'resource_pools':
+        return ("resource_pools", rest_api.collections.resource_pools)
+    elif request.param == 'templates':
+        return ("templates", rest_api.collections.templates)
+    elif request.param == 'data_storages':
+        return ("data_storages", rest_api.collections.data_storages)
+    elif request.param == 'clusters':
+        return ("clusters", rest_api.collections.clusters)
+    elif request.param == 'service_templates':
+        return ("service_templates", rest_api.collections.service_templates)
+    elif request.param == 'services':
+        return ("services", rest_api.collections.services)
+
+
+def test_delete_service(rest_api_delete_service):
+    """Test deleting a service
+    ["resource_pools", "templates", "data_storages", "clusters", "service_templates", "services"]
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/<service> , pick the first one
+        * DELETE /api/<service>/<id> -> delete only one data store
+        * DELETE /api/<service> <- Insert a JSON with list of dicts containing ``href``s to
+            the services
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    service_name, api_service = rest_api_delete_service
+    assert "delete" in api_service.action.all
+
+    try:
+        delete_service = api_service[0]
+    except IndexError:
+        pytest.skip("There is no {} to be deleted".format(service_name))
+
+    delete_service.action.delete()
+    wait_for(
+        lambda: not api_service.find_by(id=delete_service.id),
+        num_sec=180,
+        delay=10,
+    )
+
+    services = [service.id for service in api_service]
+    api_service.action.delete(services)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        api_service.action.delete(services)
+
+
+@pytest.fixture(scope="module", params=["templates", "policies",
+    "policy_profiles", "service_catalogs", "providers", "services", "service_templates"])
+def rest_api_edit_service(request, rest_api, added_policies, setup_a_provider):
+    if request.param == 'templates':
+        return ("templates", rest_api.collections.templates)
+    elif request.param == 'policies':
+        return ("policies", rest_api.collections.policies)
+    elif request.param == 'policy_profiles':
+        return ("policy_profiles", rest_api.collections.policy_profiles)
+    elif request.param == 'service_catalogs':
+        return ("service_catalogs", rest_api.collections.service_catalogs)
+    elif request.param == 'services':
+        return ("services", rest_api.collections.services)
+    elif request.param == 'service_templates':
+        return ("service_templates", rest_api.collections.service_templates)
+    elif request.param == 'providers':
+        @pytest.mark.ignore_stream("5.3")
+        def provider_wrapper():
+            return ("providers", rest_api.collections.providers)
+
+        return provider_wrapper()
+
+
+@pytest.mark.ignore_stream("5.3")
+def test_edit_service(rest_api_edit_service):
+    """Test editing a service
+    ["policies", "templates", "policy_profiles", "service_catalogs", "providers", "services",
+    "service_templates"]
+
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/<service> , pick the first one
+        * POST /api/<service>/<id> (method ``edit``) with the ``name`` or ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    service_name, api_service = rest_api_delete_service
+    assert "edit" in api_service.action.all
+
+    try:
+        edit_service = api_service[0]
+    except IndexError:
+        pytest.skip("There is no {} to be deleted".format(service_name))
+
+    if service_name in ["template", "policies", "policy_profiles"]:
+        new_value = "description_{}".format(fauxfactory.gen_alphanumeric())
+        edit_service.action.edit(new_value)
+        wait_for(
+            lambda: not api_service.find_by(description=new_value),
+            num_sec=180,
+            delay=10,
+        )
+        return True
+
+    new_value = "name_{}".format(fauxfactory.gen_alphanumeric())
+    edit_service.action.edit(new_value)
+    wait_for(
+        lambda: not api_service.find_by(name=new_value),
+        num_sec=180,
+        delay=10,
+    )
+
+
+@pytest.mark.ignore_stream("5.3")
+def test_retire_services_now(rest_api):
+    """Test retiring a service
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/services , pick the first one
+        * POST /api/service/<id> (method ``retire``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "retire" in rest_api.collections.services.action.all
+
+    try:
+        retire_service = rest_api.collections.services[0]
+    except IndexError:
+        pytest.skip("There is no service to be  retired")
+
+    retire_service.action.retire()
+    wait_for(
+        lambda: not rest_api.collections.services.find_by(name=retire_service.name),
+        num_sec=180,
+        delay=10,
+    )
+
+
+@pytest.mark.ignore_stream("5.3")
+def test_retire_services_future(rest_api):
+    """Test retiring a service
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/services , pick the first one
+        * POST /api/service/<id> (method ``retire``) with the ``description``
+
+    Metadata:
+        test_flag: rest
+    """
+    assert "retire" in rest_api.collections.services.action.all
+
+    try:
+        retire_service = rest_api.collections.services[0]
+    except IndexError:
+        pytest.skip("There is no service to be  retired")
+
+    date = (datetime.datetime.now() + datetime.timedelta(days=1)).strftime('%m/%d/%y')
+    future = {
+        "date": date,
+        "warn": "5",
+    }
+    retire_service.action.retire(future)
+    retire_service.reload()
+    wait_for(
+        lambda: retire_service["retire_on"] == date,
+        num_sec=180,
+        delay=10,
+    )
+
+
+@pytest.mark.ignore_stream("5.3")
+def test_order_service(rest_api):
+    """Test order a service
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/services_catalog , pick the first one
+        * POST /api/service_catalogs/:id/service_templates
+
+    Metadata:
+        test_flag: rest
+    """
+
+    try:
+        service_catalog = rest_api.collections.service_catalogs[0]
+    except IndexError:
+        pytest.skip("There is no service_catalog for order testing")
+
+    try:
+        service_template = service_catalog.service_templates[0]
+    except IndexError:
+        pytest.skip("There is no service_catalog for order testing")
+
+    if "order" not in service_template.action.all:
+        pytest.skip("Order service action is not implemented in this version")
+
+    order_request = {
+        "href": service_template.id,
+        "option_0_vm_target_name": "test-vm-0001",
+        "option_0_vm_target_hostname": "test-vm-0001"
+    }
+
+    service_template.action.order(order_request)
+    # the existence of order will be check through service_requests
+    wait_for(
+        lambda: rest_api.collections.service_requests.find_by(id=service_template.id),
+        num_sec=180,
+        delay=10,
+    )
+
+
+# Test subcollection
+@pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
+    "resource_pools"])
+def sub_policies_api(request, rest_api, added_policies, setup_a_provider):
+    if request.param == 'providers':
+        return ("providers", rest_api.collections.providers)
+    elif request.param == 'clusters':
+        return ("clusters", rest_api.collections.clusters)
+    elif request.param == 'hosts':
+        return ("hosts", rest_api.collections.hosts)
+    elif request.param == 'templates':
+        return ("templates", rest_api.collections.templates)
+    elif request.param == 'vms':
+        return ("vms", rest_api.collections.vms)
+    elif request.param == 'resource_pools':
+        return ("resource_pools", rest_api.collections.resource_pools)
+
+
+def test_add_delete_policies_subcollection(sub_policies_api, added_policies):
+    """Test adding the policies to subcollection
+    ["providers", "clusters", "hosts", "templates", "vms", "resource_pools"]
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/<service>, pick the first one
+        * POST /api/<service>/:id/policies - (method ``add``) add multiple policies
+        * POST /api/services/:id/policies - (method ``delete``) delete multiple policies
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    service_name, api = sub_policies_api
+    try:
+        service = api[0]
+    except IndexError:
+        pytest.skip("There is no {} for adding the policies".format(service_name))
+
+    assert service.policies.action.assing(added_policies)["success"], \
+        "Adding the {} was unsuccessful".format(service_name)
+    wait_for(
+        lambda: service.polices[0].id in added_policies,
+        num_sec=180,
+        delay=10,
+    )
+
+    assert service.policies.action.unassign(added_policies)["success"], \
+        "Deleting the {} was unsuccessful".format(service_name)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        service.policies.action.unassign(added_policies)
+
+
+@pytest.mark.ignore_stream("5.3")
+def test_resolve_policies_policy_profiles(sub_policies_api, added_policies, added_policy_profiles,
+        rest_api):
+    """Test resolve the policies in services
+    ["providers", "clusters", "hosts", "templates", "vms", "resource_pools"]
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/<service>/<id>/policy_profiles/<id> - (method ``retrive``) retrieve the policies
+            for service through policy_profile id
+        * POST /api/<service>/policies/<id> - (method ``retrive``) retrieve the policies for service
+            through policy_profile id
+
+    Metadata:
+        test_flag: rest
+    """
+    service_name, api = sub_policies_api
+    if "retrive" not in api.action.all:
+        pytest.skip("Retrive policies action is not implemented in this version")
+    try:
+        service = api[0]
+    except IndexError:
+        pytest.skip("There is no {} for retrive the policies".format(service_name))
+
+    policy = service.policies.action.resolve(id=added_policies[-1])
+    assert policy["success"], "Resolve the policy {} for {} was unsuccessful".format(
+        added_policies[-1], service_name)
+    assert policy["result"]["id"] == added_policies[-1], "IDs of the resolved policy and \
+        requested are different for service {}".format(service_name)
+
+    policy_profile = service.policy_profiles.action.resolve(added_policy_profiles[-1])
+    assert policy_profile["success"], "Resolve the policies by policy profile {} for {} was \
+        unsuccessful".format(added_policy_profiles[-1], service_name)
+    assert policy_profile["result"]["id"] == added_policy_profiles[-1], "IDs of the resolved \
+    policy profile and requested are different for service {}".format(service_name)
+    assert len(policy_profile["result"]["policies"]) == len(
+        rest_api.collections.policy_profiles.action.find_by(
+            id=added_policy_profiles[-1]).policies), "The number of resolved \
+        policies of the policy_profile and assigned to this profile are different for \
+        service {}".format(service_name)
+
+
+@pytest.mark.ignore_stream("5.3")
+def test_automation_request(rest_api):
+    """Test adding the automation request
+
+     Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * POST /api/automation_request - (method ``create``) add request
+        * Retrieve list of entities using GET /api/automation_request and find just added request
+    Metadata:
+        test_flag: rest
+    """
+
+    if "automation_request" not in rest_api.collections:
+        pytest.skip("automation request collection is not implemented in this version")
+
+    structure_request = {
+        "uri_parts": {
+            "namespace": fauxfactory.gen_alphanumeric(),
+            "class": "Request",
+            "instance": fauxfactory.gen_alphanumeric(),
+            "message": "create"
+        },
+        "parameters": {
+            "var1": "value 1",
+            "var2": "value 2",
+            "minimum_memory": 2048
+        },
+        "requester": {
+            "auto_approve": True
+        }
+    }
+
+    request = rest_api.collections.automation_request.action.create(structure_request)
+
+    def _finished():
+        request.reload()
+        if request.status.lower() in {"error"}:
+            pytest.fail("Error during automation request: `{}`".format(request.message))
+        return request.request_state.lower() in {"finished"}
+
+    wait_for(_finished, num_sec=600, delay=5, message="REST automation_request finishes")
+
+
+@pytest.fixture(scope="module", params=["providers", "clusters", "hosts", "templates", "vms",
+    "resource_pools", "data_stores", "services", "service_templates", "users", "groups"])
+def sub_tags_api(request, rest_api, added_policies, setup_a_provider):
+    if request.param == 'providers':
+        return ("providers", rest_api.collections.providers)
+    elif request.param == 'clusters':
+        return ("clusters", rest_api.collections.clusters)
+    elif request.param == 'hosts':
+        return ("hosts", rest_api.collections.hosts)
+    elif request.param == 'templates':
+        return ("templates", rest_api.collections.templates)
+    elif request.param == 'vms':
+        return ("vms", rest_api.collections.vms)
+    elif request.param == 'resource_pools':
+        return ("resource_pools", rest_api.collections.resource_pools)
+    elif request.param == 'data_stores':
+        return ("data_stores", rest_api.collections.data_stores)
+    elif request.param == 'services':
+        return ("services", rest_api.collections.services)
+    elif request.param == 'service_templates':
+        return ("service_templates", rest_api.collections.service_templates)
+    elif request.param == 'users':
+        return ("users", rest_api.collections.users)
+    elif request.param == 'groups':
+        return ("groups", rest_api.collections.groups)
+
+
+@pytest.fixture(scope="module")
+def tags_data():
+    name = fauxfactory.gen_alphanumeric()
+    tags_data = [{
+        "category": "category_{}".format(index, name),
+        "name": "name_{}_{}".format(index, name),
+    } for index in range(1, 5)]
+
+    return tags_data
+
+
+def test_add_delete_tags_subcollection(tags_data, sub_tags_api):
+    """Test adding the tags to subcollection
+    ["providers", "clusters", "hosts", "templates", "vms",
+    "resource_pools", "data_stores", "services", "service_templates", "users", "groups"]
+
+    Prerequisities:
+        * An appliance with ``/api`` available.
+
+    Steps:
+        * Retrieve list of entities using GET /api/<service>, pick the first one
+        * POST /api/<service>/:id/tags - (method ``assign``) add multiple policies
+        * POST /api/services/:id/tags - (method ``unassign``) delete multiple policies
+        * Repeat the DELETE query -> now it should return an ``ActiveRecord::RecordNotFound``.
+
+    Metadata:
+        test_flag: rest
+    """
+    service_name, api = sub_tags_api
+    try:
+        service = api[0]
+    except IndexError:
+        pytest.skip("There is no {} for adding the tags".format(service_name))
+
+    service.policies.action.add(tags_data)
+    tags_names = [name.get('name') for name in tags_data]
+    wait_for(
+        lambda: service.polices[0].name in tags_names,
+        num_sec=180,
+        delay=10,
+    )
+
+    service.policies.action.delete(added_policies)
+    with error.expected("ActiveRecord::RecordNotFound"):
+        service.policies.action.delete(tags_data)
+
+
+# TODO preriquirement for checking the existence of policy_action
+@pytest.mark.ignore_stream("5.3")
+def test_policy_actions(rest_api):
+    assert rest_api.collections.policy_actions.get('name', None) == 'policy_actions'
+
+
+# TODO preriquirement for checking the existence of policy_condition
+@pytest.mark.ignore_stream("5.3")
+def test_policy_conditions(rest_api):
+    assert rest_api.collections.conditions.get('conditions', None) is not None
+
+
+# TODO preriquirement for checking the existence of policy event
+@pytest.mark.ignore_stream("5.3")
+def test_policy_events(rest_api):
+    assert rest_api.collections.events.get('name', None) == 'events'
+
+
+# Collect tasks from service_requests, automation_requests, provision_requests
+@pytest.mark.ignore_stream("5.3")
+def test_tasks_and_requested_task(rest_api):
+    assert len(rest_api.collections.tasks) == len(rest_api.collections.request_tasks)
+
+
 COLLECTIONS_IGNORED_53 = {
     "availability_zones", "conditions", "events", "flavors", "policy_actions", "security_groups",
     "tags", "tasks",
@@ -377,10 +1204,10 @@ COLLECTIONS_IGNORED_53 = {
 # TODO: Gradually remove and write separate tests for those when they get extended
 @pytest.mark.parametrize(
     "collection_name",
-    ["availability_zones", "clusters", "conditions", "data_stores", "events", "flavors", "groups",
-    "hosts", "policies", "policy_actions", "policy_profiles", "request_tasks", "requests",
-    "resource_pools", "roles", "security_groups", "servers", "service_requests", "tags", "tasks",
-    "templates", "users", "zones"])
+    ["availability_zones", "flavors", "security_groups", "tasks", "request_tasks",
+    "requests", "servers", "service_requests"])
+@pytest.mark.uncollectif(lambda collection_name: collection_name in COLLECTIONS_IGNORED_53 and
+    current_version() < "5.4")
 def test_query_simple_collections(rest_api, collection_name):
     """This test tries to load each of the listed collections. 'Simple' collection means that they
     have no usable actions that we could try to run
@@ -391,8 +1218,6 @@ def test_query_simple_collections(rest_api, collection_name):
     Metadata:
         test_flag: rest
     """
-    if current_version() < "5.4" and collection_name in COLLECTIONS_IGNORED_53:
-        pytest.skip("Collection {} not in 5.3.".format(collection_name))
     collection = getattr(rest_api.collections, collection_name)
     collection.reload()
     list(collection)

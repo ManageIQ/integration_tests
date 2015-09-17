@@ -301,6 +301,8 @@ class Entity(object):
     # TODO: Extend
     SUBCOLLECTIONS = dict(
         service_catalogs={"service_templates"},
+        policies={"policies"},
+        tags={"tags"},
     )
 
     def __init__(self, collection, data, incomplete=False):
