@@ -173,3 +173,16 @@ We try to consolidate common test generation functions in the :py:mod:`utils.tes
 Working with file paths
 -----------------------
 For any path in the project root, there are several helper functions that can be used.  Look at the :py:mod:`utils.path` module for the complete list of pre-configured directories and available functions.
+
+Appliance object SSH gremlins
+-----------------------------
+If you get seemingly random SSH errors coming from :py:mod:`utils.appliance`, you might be facing the problem that some of the methods inside of the class does some version picking, or database connection outside of the object scope or whatever that is supposed to touch the target appliance but does not go through the object that you are in, but the :py:class:`utils.appliance.IPAppliance` object itself is not pushed to the appliance stack in :py:mod:`fixtures.pytest_store`. So instead of using the IP address of the appliance the object is pointed to, it uses whatever was set before, either the ``base_url`` one or something that was pushed before. The solution is to wrap that in a ``with`` block, like this (presuming we call this code inside :py:class:`utils.appliance.Appliance`)::
+
+    with self.ipapp as ipapp:
+        ipapp.wait_for_ssh()
+
+        self._i_do_verpicking("and fail randomly when not in with block")
+
+        success("!")
+
+Until we come with a better solution, this will bite us from time to time when we forget about it.
