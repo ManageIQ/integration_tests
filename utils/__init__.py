@@ -201,3 +201,16 @@ def read_env(file):
                 env_vars[key] = value.strip()
         stdout, stderr = proc.communicate()
     return env_vars
+
+
+def deferred_verpick(version_d):
+    """This turns a dictionary for verpick to a class property.
+
+    Useful for verpicked constants.
+    """
+    from utils.version import pick as _version_pick
+
+    @classproperty
+    def getter(self):
+        return _version_pick(version_d)
+    return getter
