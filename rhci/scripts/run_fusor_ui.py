@@ -48,3 +48,6 @@ del(deployment.kwargs['rhsm_password'])
 # a cfme_data.local.yaml containing the rhevm-rhci provider, which can then be used to
 # drive CFME provider testing. When we create the openstack provider as part of the RHCI
 # installer, we'll similarly add the "rhos-rhci" provider to cfme_data for provider testing
+
+from time import sleep
+sleep(600)
