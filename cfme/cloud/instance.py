@@ -10,7 +10,7 @@ from cfme.web_ui import (
     accordion, fill, flash, paginator, toolbar, CheckboxTree, Form, Region, Select, Tree, Quadicon)
 from cfme.web_ui.menu import nav
 from functools import partial
-from utils import version
+from utils import deferred_verpick, version
 from utils.wait import wait_for
 
 
@@ -240,11 +240,11 @@ class OpenStackInstance(Instance):
     STATE_ON = "on"
     STATE_OFF = "off"
     STATE_ERROR = "non-operational"
-    STATE_PAUSED = version.pick({
+    STATE_PAUSED = deferred_verpick({
         version.LOWEST: "off",
         "5.4": "paused",
     })
-    STATE_SUSPENDED = version.pick({
+    STATE_SUSPENDED = deferred_verpick({
         version.LOWEST: "off",
         "5.4": "suspended",
     })
