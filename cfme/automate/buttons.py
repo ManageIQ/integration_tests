@@ -87,12 +87,15 @@ class ButtonGroup(Updateable):
     """
     CLUSTER = "Cluster"
     DATASTORE = "Datastore"
-    HOST = version.pick({version.LOWEST: "Host",
-                         '5.4': "Host / Node"})
     PROVIDER = "Provider"
     SERVICE = "Service"
     TEMPLATE = "VM Template and Image"
     VM_INSTANCE = "VM and Instance"
+
+    @property
+    def HOST(self):
+        return version.pick({version.LOWEST: "Host",
+                             '5.4': "Host / Node"})
 
     def __init__(self, text=None, hover=None, type=None):
         self.text = text
