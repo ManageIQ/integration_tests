@@ -1,4 +1,5 @@
 from functools import partial
+from cfme import Credential
 from fixtures.pytest_store import store
 import cfme
 import cfme.fixtures.pytest_selenium as sel
@@ -130,6 +131,11 @@ nav.add_branch(
         nav.fn(partial(accordion.click, "Assignments"))
     }
 )
+
+
+def simple_user(userid, password):
+    creds = Credential(principal=userid, secret=password)
+    return User(name=userid, credential=creds)
 
 
 class User(Updateable, Pretty):
