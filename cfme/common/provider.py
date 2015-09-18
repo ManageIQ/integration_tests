@@ -34,9 +34,9 @@ details_page = Region(infoblock_type='detail')
 credential_form = Form(
     fields=[
         ('default_button', "//div[@id='auth_tabs']/ul/li/a[@href='#default']"),
-        ('default_principal', "#default_userid"),
-        ('default_secret', "#default_password"),
-        ('default_verify_secret', "#default_verify"),
+        ('default_principal', Input("default_userid")),
+        ('default_secret', Input("default_password")),
+        ('default_verify_secret', Input("default_verify")),
         ('amqp_button', "//div[@id='auth_tabs']/ul/li/a[@href='#amqp']"),
         ('amqp_principal', "#amqp_userid"),
         ('amqp_secret', "#amqp_password"),

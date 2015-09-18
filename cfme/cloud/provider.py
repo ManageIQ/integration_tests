@@ -16,17 +16,14 @@ from cfme.web_ui import form_buttons
 from cfme.web_ui import toolbar as tb
 from cfme.common.provider import BaseProvider
 from cfme.web_ui.menu import nav
-from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator
+from cfme.web_ui import Region, Quadicon, Form, Select, fill, paginator, AngularSelect
 from cfme.web_ui import Input
 from utils.log import logger
 from utils.update import Updateable
 from utils.wait import wait_for
-from utils import version
+from utils import version, deferred_verpick
 from utils.pretty import Pretty
 
-
-# Specific Add button
-add_provider_button = form_buttons.FormButton("Add this Cloud Provider")
 
 # Forms
 discover_form = Form(
@@ -39,17 +36,20 @@ discover_form = Form(
 
 properties_form = Form(
     fields=[
-        ('type_select', Select("select#server_emstype")),
+        ('type_select', {version.LOWEST: Select('select#server_emstype'),
+                         '5.5': AngularSelect("emstype")}),
         ('name_text', Input("name")),
         ('hostname_text', Input("hostname")),
         ('ipaddress_text', Input("ipaddress"), {"removed_since": "5.4.0.0.15"}),
-        ('amazon_region_select', Select(
+        ('amazon_region_select', {version.LOWEST: Select("select#hostname"),
+                                  "5.3.0.14": Select("select#provider_region"),
+                                  "5.5": AngularSelect("provider_region")}),
+        ('api_port', Input(
             {
-                version.LOWEST: "select#hostname",
-                "5.3.0.14": "select#provider_region",
+                version.LOWEST: "port",
+                "5.5": "api_port",
             }
         )),
-        ('api_port', Input("port")),
     ])
 
 details_page = Region(infoblock_type='detail')
@@ -97,7 +97,10 @@ class Provider(Updateable, Pretty, BaseProvider):
     vm_name = "Instances"
     template_name = "Images"
     properties_form = properties_form
-    add_provider_button = add_provider_button
+    # Specific Add button
+    add_provider_button = deferred_verpick(
+        {version.LOWEST: form_buttons.FormButton("Add this Cloud Provider"),
+         '5.5': form_buttons.FormButton("Add")})
 
     def __init__(self, name=None, credentials=None, zone=None, key=None):
         if not credentials:

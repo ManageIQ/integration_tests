@@ -107,9 +107,9 @@ def elements(o, **kwargs):
     Returns: A list of WebElement objects
     """
     if hasattr(o, "locate"):
-        return elements(o.locate(), **kwargs)
+        return [e for e in elements(o.locate(), **kwargs) if is_displayed(e)]
     elif callable(o):
-        return elements(o(), **kwargs)
+        return [e for e in elements(o(), **kwargs) if is_displayed(e)]
     else:
         raise TypeError("Unprocessable type for elements({}) -> class {} (kwargs: {})".format(
             str(repr(o)), o.__class__.__name__, str(repr(kwargs))
@@ -1266,7 +1266,7 @@ class Select(SeleniumSelect, Pretty):
             }
             return result_arr;
         """)
-        options = execute_script(script, element(self))
+        options = execute_script(script, element(self._loc))
         parser = HTMLParser()
         return [self.Option(parser.unescape(option[0]), option[1]) for option in options]
 
